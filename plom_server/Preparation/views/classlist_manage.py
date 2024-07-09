@@ -8,7 +8,7 @@ from django.shortcuts import render, redirect
 
 from django_htmx.http import HttpResponseClientRedirect
 
-from ..services import StagingStudentService, PrenameSettingService, PapersPrinted
+from ..services import StagingStudentService, PrenameSettingService
 
 from Base.base_group_views import ManagerRequiredView
 
@@ -23,10 +23,6 @@ class ClasslistDownloadView(ManagerRequiredView):
 
 class ClasslistView(ManagerRequiredView):
     def get(self, request):
-        # if papers have been printed then redirect to the readonly view
-        if PapersPrinted.have_papers_been_printed():
-            return redirect("prep_classlist_view")
-
         sss = StagingStudentService()
         pss = PrenameSettingService()
 
@@ -41,10 +37,6 @@ class ClasslistView(ManagerRequiredView):
         return render(request, "Preparation/classlist_manage.html", context)
 
     def post(self, request):
-        # if test is already prepared then redirect to the readonly view
-        if PapersPrinted.have_papers_been_printed():
-            return redirect("prep_classlist_view")
-
         context = self.build_context()
         ignore_warnings = request.POST.get("ignoreWarnings", False)
 
@@ -69,24 +61,6 @@ class ClasslistView(ManagerRequiredView):
 
     def delete(self, request):
         # if papers have been printed then redirect to the readonly view
-        if PapersPrinted.have_papers_been_printed():
-            return redirect("prep_classlist_view")
 
         StagingStudentService().remove_all_students()
         return HttpResponseClientRedirect(".")
-
-
-class ClasslistReadOnlyView(ManagerRequiredView):
-    def get(self, request):
-        context = self.build_context()
-        sss = StagingStudentService()
-        pss = PrenameSettingService()
-
-        context.update(
-            {
-                "prenaming": pss.get_prenaming_setting(),
-                "student_list": sss.get_students(),
-            }
-        )
-
-        return render(request, "Preparation/classlist_view.html", context)

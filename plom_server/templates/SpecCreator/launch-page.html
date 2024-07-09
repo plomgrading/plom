@@ -2,25 +2,25 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Edith Coates
     Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2024 Andrew Rechnitzer
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Create assessment specification
+    Create / modify assessment specification
 {% endblock title %}
 {% block page_heading %}
-    Create assessment specification
+    Create / modify assessment specification
 {% endblock page_heading %}
 {% block main_content %}
     <div class="d-grid gap-3">
         <div>
-            <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+            <a class="btn btn-primary" href="{% url 'prep_landing' %}">Assessment preparation page</a>
+            <a class="btn btn-primary" href="{% url 'spec_summary' %}">Specification summary page</a>
         </div>
         {% if is_there_a_spec %}
-            <div class="alert alert-primary" role="alert">
-                There is a spec in the database:
-                <a href="{% url 'spec_summary' %}">view</a>,
-                <a href="{% url 'spec_download' %}">download</a>.
-            </div>
+            <span class="alert alert-warning my-2" role="alert">There is a specification in the database. You may not be able to modify it if you have gone further preparing your assessment.</span>
+        {% else %}
+            <div class="alert alert-primary" role="alert">There is no assessment specification</div>
         {% endif %}
         <div class="card">
             <div class="card-body">

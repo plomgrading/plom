@@ -41,7 +41,13 @@ class BuildPaperPDFChore(HueyTaskTracker):
         return "Task Object " + str(self.paper.paper_number)
 
     def unlink_associated_pdf(self):
-        # NOTE - at present this is not called.
-        # TODO - call this when the associated task is out of date.
+        # this should be called whenever the associated chore is obsolete.
         if self.pdf_file:
             Path(self.pdf_file.path).unlink(missing_ok=True)
+
+    @classmethod
+    def set_every_task_obsolete(cls, *, unlink_files: bool = False):
+        super().set_every_task_obsolete()
+        # set every single task to be obsolete
+        for task in cls.objects.all():
+            task.unlink_associated_pdf()

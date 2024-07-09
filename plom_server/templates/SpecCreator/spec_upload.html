@@ -16,11 +16,7 @@
             <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
         {% if is_there_a_spec %}
-            <div class="alert alert-primary" role="alert">
-                There is a spec in the database:
-                <a href="{% url 'spec_summary' %}">view</a>,
-                <a href="{% url 'spec_download' %}">download</a>.
-            </div>
+            <span class="alert alert-warning my-2" role="alert">There is a specification in the database. You may not be able to modify it if you have gone further preparing your assessment.</span>
         {% endif %}
         <div class="card">
             <h4 class="card-header">

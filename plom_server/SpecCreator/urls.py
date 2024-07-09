@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from django.urls import path
 
@@ -10,6 +10,7 @@ from . import views
 
 urlpatterns = [
     path("", views.SpecEditorView.as_view(), name="creator_launch"),
+    path("delete", views.HTMXDeleteSpec.as_view(), name="spec_delete"),
     path("download", views.SpecDownloadView.as_view(), name="spec_download"),
     path("upload", views.SpecUploadView.as_view(), name="spec_upload"),
     path("summary", views.SpecSummaryView.as_view(), name="spec_summary"),

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 
 from django.urls import path
@@ -13,7 +13,6 @@ from .views import (
     StartAllPDFs,
     StartOnePDF,
     CancelAllPDFs,
-    CancelOnePDF,
     RetryAllPDF,
     DeleteAllPDFs,
 )
@@ -28,7 +27,6 @@ urlpatterns = [
     path("start/all/", StartAllPDFs.as_view(), name="start_all_PDFs"),
     path("start/<int:paper_number>", StartOnePDF.as_view(), name="start_one_PDF"),
     path("cancel/all", CancelAllPDFs.as_view(), name="cancel_all_PDFs"),
-    path("cancel/<int:paper_number>", CancelOnePDF.as_view(), name="cancel_one_PDF"),
     path("retry/all", RetryAllPDF.as_view(), name="retry_all_PDFs"),
     path("delete/all/", DeleteAllPDFs.as_view(), name="delete_all_PDFs"),
 ]

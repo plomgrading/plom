@@ -8,6 +8,10 @@ from django.shortcuts import render
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 
+from django.contrib import messages
+
+from plom.plom_exceptions import PlomDependencyConflict
+
 from Base.base_group_views import ManagerRequiredView
 from BuildPaperPDF.services import BuildPapersService
 from Papers.services import (
@@ -40,11 +44,11 @@ class PreparationLandingView(ManagerRequiredView):
             "can_qvmap": False,
             "student_list_present": sss.are_there_students(),
             "papers_staged": pinfo.is_paper_database_populated(),
-            "papers_built": bps.are_all_papers_built(),
+            "all_papers_built": bps.are_all_papers_built(),
+            "any_papers_built": bps.are_any_papers_built(),
             "extra_page_status": ExtraPageService().get_extra_page_task_status(),
             "scrap_paper_status": ScrapPaperService().get_scrap_paper_task_status(),
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
-            "can_unset_papers_printed": PapersPrinted.can_status_be_set_false(),
         }
 
         paper_number_list = pqvs.list_of_paper_numbers()
@@ -103,55 +107,38 @@ class PreparationLandingView(ManagerRequiredView):
         return render(request, "Preparation/home.html", context)
 
 
-class LandingResetSpec(ManagerRequiredView):
-    def delete(self, request):
-        SpecificationService.remove_spec()
+class PreparationDependencyConflictView(ManagerRequiredView):
+    """This view is used to display a preparation dependency conflict error message to users."""
 
-        SourceService.delete_all_source_pdfs()
+    def get(self, request: HttpRequest) -> HttpResponse:
+        context = self.build_context()
+        reasons = []
+        for msg in messages.get_messages(request):
+            reasons.append(f"{msg}")
 
-        qv_service = PQVMappingService()
-        qv_service.remove_pqv_map()
-
-        return HttpResponseClientRefresh()
-
-
-class LandingResetSources(ManagerRequiredView):
-    def delete(self, request):
-        SourceService.delete_all_source_pdfs()
-        return HttpResponseClientRefresh()
+        context.update({"reasons": reasons})
+        return render(request, "Preparation/dependency_conflict.html", context)
 
 
-class LandingPrenameToggle(ManagerRequiredView):
-    def post(self, request):
-        prename_service = PrenameSettingService()
-        curr_state = prename_service.get_prenaming_setting()
-        prename_service.set_prenaming_setting(not curr_state)
-        return HttpResponseClientRefresh()
-
-
-class LandingResetClasslist(ManagerRequiredView):
-    def delete(self, request):
-        students = StagingStudentService()
-        students.remove_all_students()
-        return HttpResponseClientRefresh()
-
-
-class LandingResetQVmap(ManagerRequiredView):
-    def delete(self, request):
-        qv_service = PQVMappingService()
-        qv_service.remove_pqv_map()
-        return HttpResponseClientRefresh()
-
-
-class LandingFinishedToggle(ManagerRequiredView):
+class PreparationFinishedView(ManagerRequiredView):
     """Toggle the PapersPrint state. When True, bundles are allowed to be pushed to the server."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        from Preparation.services.preparation_dependency_service import (
+            can_unset_papers_printed,
+        )
+
+        context = {
+            "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
+            "can_unset_papers_printed": can_unset_papers_printed,
+        }
+        return render(request, "Preparation/papers_printed_manage.html", context)
 
     def post(self, request):
         current_setting = PapersPrinted.have_papers_been_printed()
         try:
             PapersPrinted.set_papers_printed(not current_setting)
-        except RuntimeError as e:
-            # TODO: uses the troubles-afoot kludge (Issue #3251)
-            hint = f"maybe-started-uploads-{e}"
-            return HttpResponseClientRedirect(reverse("troubles_afoot", args=[hint]))
-        return HttpResponseClientRefresh()
+            return HttpResponseClientRefresh()
+        except PlomDependencyConflict as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
+            return HttpResponseClientRedirect(reverse("prep_conflict"))

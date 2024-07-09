@@ -446,10 +446,10 @@ class PageScene(QGraphicsScene):
         self.src_img_data = deepcopy(src_img_data)
         for x in self.src_img_data:
             # TODO: revisit moving this "visible" bit outside of PageScene
-            # and dedupe the business of pagedata and src_img_data.
+            # and dedupe the business of pagedata and src_img_data (Issue #3479)
             if "visible" not in x.keys():
                 x["visible"] = True
-                log.warn(f'Hacked in an "visible": {x}')
+                # log.warn(f'Hacked in an "visible": {x}')
         if not self.src_img_data:
             raise RuntimeError("Cannot start a pagescene with no visible pages")
         self.maxMark = maxMark

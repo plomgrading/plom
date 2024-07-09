@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 from django.urls import path
 
@@ -21,4 +22,6 @@ urlpatterns = [
     ),
     path("<int:rubric_key>/", views.RubricItemView.as_view(), name="rubric_item"),
     path("<int:rubric_key>/edit/", views.RubricItemView.post, name="rubric_edit"),
+    path("admin/download/", views.DownloadRubricView.as_view(), name="rubric_download"),
+    path("admin/upload/", views.UploadRubricView.as_view(), name="rubric_upload"),
 ]
