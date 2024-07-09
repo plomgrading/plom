@@ -3,10 +3,11 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024 Aden Chan
 
 from django.db import models
 
-from Base.models import SingletonBaseModel
+from Base.models import SingletonABCModel
 
 
 class SpecQuestion(models.Model):
@@ -36,7 +37,7 @@ class SpecQuestion(models.Model):
     question_index = models.PositiveIntegerField(null=False, unique=True)
 
 
-class Specification(SingletonBaseModel):
+class Specification(SingletonABCModel):
     """Store the json of the test specification dictionary.
 
     There can be at most one Specification entry.
@@ -95,7 +96,7 @@ class SolnSpecQuestion(models.Model):
     solution_number = models.PositiveIntegerField(null=False, unique=True)
 
 
-class SolnSpecification(SingletonBaseModel):
+class SolnSpecification(SingletonABCModel):
     """Store the json of the solution specification dictionary.
 
     Note that
@@ -122,3 +123,13 @@ class SolnSpecification(SingletonBaseModel):
     def get_soltion_list(self):
         """Return the solution questions in the form of a list."""
         return list(SolnSpecQuestion.objects.all())
+
+    @classmethod
+    def load(cls):
+        """Return the singleton instance of the SolnSpecification model.
+
+        Raises:
+            SolnSpecification.DoesNotExist: If the Solm=nSpecification model
+                does not exist.
+        """
+        return cls.objects.get(pk=1)

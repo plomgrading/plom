@@ -35,6 +35,10 @@
     {% else %}
         tagged <q>{{ the_tag }}</q>
     {% endif %}
+    {% if status == "*" %}
+    {% else %}
+        with status {{ status_label }}
+    {% endif %}
 {% endblock page_heading %}
 {% block main_content %}
     <a class="btn btn-primary" href="{% url 'overview_landing' %}">Overview</a>
@@ -103,6 +107,19 @@
                             <option>*</option>
                             {% for tg in tag_list %}
                                 <option {% if the_tag == tg %}selected{% endif %}>{{ tg }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row my-2">
+                    <label class="col-sm-1 col-form-label" for="username">Status:</label>
+                    <div class="col-sm-4">
+                        <select name="status" class="form-select">
+                            <option value="*" label="*" />
+                            {% for val, label in status_list %}
+                                <option value="{{ val }}"
+                                        label="{{ label }}"
+                                        {% if status == val %}selected{% endif %} />
                             {% endfor %}
                         </select>
                     </div>

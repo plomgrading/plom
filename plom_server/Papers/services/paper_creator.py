@@ -21,7 +21,10 @@ from ..models import (
     DNMPage,
     QuestionPage,
 )
-
+from Preparation.services.preparation_dependency_service import (
+    assert_can_modify_qv_mapping_database,
+)
+from plom.plom_exceptions import PlomDependencyConflict
 
 log = logging.getLogger("PaperCreatorService")
 
@@ -155,11 +158,18 @@ class PaperCreatorService:
                 as of November 2023.  Presumably its here in case we later have
                 a bottle-neck in Paper table creation...
 
+        Raises:
+            PlomDependencyConflict: if there are papers already in the database.
+
         Returns:
             A pair such that if all papers added to DB without errors then
             return `(True, [])` else return `(False, list_of_errors)` where
             the list of errors is a list of pairs `(paper_number, error)`.
         """
+        assert_can_modify_qv_mapping_database()
+        if Paper.objects.filter().exists():
+            raise PlomDependencyConflict("Already papers in the database.")
+
         errors = []
         for paper_number, qv_mapping in qv_map.items():
             try:
@@ -176,12 +186,16 @@ class PaperCreatorService:
         else:
             return True, []
 
+    @transaction.atomic()
     def remove_all_papers_from_db(self) -> None:
+        assert_can_modify_qv_mapping_database()
         # hopefully we don't actually need to call this outside of testing.
-        # Have to use a loop because of a bug/quirk in django_polymorphic
+        # Have to delete each sub-type of FixedPage separately due to a bug/quirk in django_polymorphic
         # see https://github.com/django-polymorphic/django-polymorphic/issues/34
-        for page in FixedPage.objects.all():
-            page.delete()
+        DNMPage.objects.all().delete()
+        IDPage.objects.all().delete()
+        QuestionPage.objects.all().delete()
+        # now delete all papers
         Paper.objects.all().delete()
 
     def update_page_image(
