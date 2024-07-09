@@ -7,10 +7,10 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 """
-This presents the abstract notion of a question, which are otherwise
-just integers of their question index. It exists mainly to support
-the ManyToManyField contained in it.
-TODO: it might be renamed or replaced some day.
+Abstract model for associating multiple tags with a question index.
+
+This model supports the many-to-many relationship between questions and tags.
+It keeps track of multiple tags associated with a single question.
 """
 
 
