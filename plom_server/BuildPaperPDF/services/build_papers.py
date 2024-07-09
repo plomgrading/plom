@@ -284,7 +284,7 @@ class BuildPapersService:
             res = huey_build_single_paper(
                 chore.paper.paper_number,
                 spec,
-                qvmap[paper.paper_number],
+                qvmap[chore.paper.paper_number],  # get pn from chore - see #3482
                 student_info=student_info,
                 tracker_pk=chore.pk,
                 _debug_be_flaky=False,
