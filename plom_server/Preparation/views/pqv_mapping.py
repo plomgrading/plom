@@ -69,6 +69,9 @@ class PQVMappingUploadView(ManagerRequiredView):
             PaperCreatorService().add_all_papers_in_qv_map(vm)
         except ValueError as e:
             context["errors"].append({"kind": "ValueError", "err_text": f"{e}"})
+        except PlomDependencyConflict as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
+            return HttpResponseClientRedirect(reverse("prep_conflict"))
 
         if context["errors"]:
             return render(request, "Preparation/pqv_mapping_attempt.html", context)

@@ -9,9 +9,7 @@ from typing import Any, Dict, List, Tuple
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction, IntegrityError
-from django_huey import db_task
 
-from Base.models import HueyTaskTracker
 from ..models import (
     Specification,
     Paper,
@@ -27,41 +25,6 @@ from Preparation.services.preparation_dependency_service import (
 from plom.plom_exceptions import PlomDependencyConflict
 
 log = logging.getLogger("PaperCreatorService")
-
-
-# The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks", context=True)
-def huey_create_paper_with_qvmapping(
-    paper_number: int,
-    qv_mapping: Dict[int, int],
-    *,
-    tracker_pk: int,
-    task=None,
-) -> bool:
-    """Creates a paper with the given paper number and the given question-version mapping.
-
-    Also initializes prename ID predictions in DB, if applicable.
-
-    Args:
-        paper_number: The number of the paper being created
-        qv_mapping: Mapping from each question index to
-            version for this particular paper. Of the form ``{q: v}``.
-
-    Keyword Args:
-        tracker_pk: a key into the database for anyone interested in
-            our progress.
-        task: includes our ID in the Huey process queue.
-
-    Returns:
-        True, no meaning, just as per the Huey docs: "if you need to
-        block or detect whether a task has finished".
-    """
-    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
-
-    PaperCreatorService()._create_paper_with_qvmapping(paper_number, qv_mapping)
-
-    HueyTaskTracker.transition_to_complete(tracker_pk)
-    return True
 
 
 class PaperCreatorService:
@@ -83,7 +46,7 @@ class PaperCreatorService:
         paper_number: int,
         qv_mapping: Dict[int, int],
     ) -> None:
-        """Creates tables for the given paper number and the given question-version mapping.
+        """(DEPRECATED) Creates tables for the given paper number and the given question-version mapping.
 
         Also initializes prename ID predictions in DB, if applicable.
 
@@ -130,73 +93,76 @@ class PaperCreatorService:
                 )
                 question_page.save()
 
-    def create_paper_with_qvmapping_huey_wrapper(
-        self, paper_number: int, qv_mapping: Dict[int, int]
-    ) -> None:
-        with transaction.atomic(durable=True):
-            tr = HueyTaskTracker.objects.create(status=HueyTaskTracker.STARTING)
-            tracker_pk = tr.pk
-
-        res = huey_create_paper_with_qvmapping(
-            paper_number, qv_mapping, tracker_pk=tracker_pk
-        )
-        print(f"Just enqueued Huey create paper task id={res.id}")
-        HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
-
-    def add_all_papers_in_qv_map(
-        self, qv_map: Dict[int, Dict[int, int]], *, background: bool = True
-    ) -> Tuple[bool, List[Tuple[int, Any]]]:
+    @transaction.atomic(durable=True)
+    def add_all_papers_in_qv_map(self, qv_map: Dict[int, Dict[int, int]]):
         """Build all the Paper and associated tables from the qv-map, but not the PDF files.
 
         Args:
             qv_map: For each paper give the question-version map.
                 Of the form `{paper_number: {q: v}}`
 
-        Keyword Args:
-            background (optional, bool): Run in the background. If false,
-                run with `call_local`.  This is currently never passed as True
-                as of November 2023.  Presumably its here in case we later have
-                a bottle-neck in Paper table creation...
-
         Raises:
             PlomDependencyConflict: if there are papers already in the database.
-
-        Returns:
-            A pair such that if all papers added to DB without errors then
-            return `(True, [])` else return `(False, list_of_errors)` where
-            the list of errors is a list of pairs `(paper_number, error)`.
         """
         assert_can_modify_qv_mapping_database()
         if Paper.objects.filter().exists():
             raise PlomDependencyConflict("Already papers in the database.")
 
-        errors = []
-        for paper_number, qv_mapping in qv_map.items():
-            try:
-                if background:
-                    self.create_paper_with_qvmapping_huey_wrapper(
-                        paper_number, qv_mapping
-                    )
-                else:
-                    self._create_paper_with_qvmapping(paper_number, qv_mapping)
-            except ValueError as err:
-                errors.append((paper_number, err))
-        if errors:
-            return False, errors
-        else:
-            return True, []
+        self._create_all_papers_in_qv_map(qv_map)
 
     @transaction.atomic()
+    def _create_all_papers_in_qv_map(self, qv_map: Dict[int, Dict[int, int]]):
+        spec_obj = Specification.load()
+        id_page_number = int(spec_obj.idPage)
+        dnm_page_numbers = [int(pg) for pg in spec_obj.doNotMarkPages]
+        for paper_number, qv_row in qv_map.items():
+            print(f"Constructing paper {paper_number} with {qv_row}")
+            # build all the objects, then save.
+            paper_obj = Paper(paper_number=paper_number)
+            # TODO - change how DNM and ID pages taken from versions
+            # currently ID page and DNM page both taken from version 1
+            id_page = IDPage(
+                paper=paper_obj, image=None, page_number=id_page_number, version=1
+            )
+            dnm_pages = [
+                DNMPage(paper=paper_obj, image=None, page_number=pg, version=1)
+                for pg in dnm_page_numbers
+            ]
+            question_pages = []
+            for index, question in spec_obj.question.items():
+                q_idx = int(index)
+                version = int(qv_row[q_idx])
+                for q_page in question.pages:
+                    question_pages.append(
+                        QuestionPage(
+                            paper=paper_obj,
+                            image=None,
+                            page_number=int(q_page),
+                            question_index=q_idx,
+                            version=version,
+                        )
+                    )
+            # now save all the objects
+            paper_obj.save()
+            id_page.save()
+            for X in dnm_pages:
+                X.save()
+            for X in question_pages:
+                X.save()
+
     def remove_all_papers_from_db(self) -> None:
         assert_can_modify_qv_mapping_database()
         # hopefully we don't actually need to call this outside of testing.
         # Have to delete each sub-type of FixedPage separately due to a bug/quirk in django_polymorphic
         # see https://github.com/django-polymorphic/django-polymorphic/issues/34
-        DNMPage.objects.all().delete()
-        IDPage.objects.all().delete()
-        QuestionPage.objects.all().delete()
-        # now delete all papers
-        Paper.objects.all().delete()
+        # first the different fixed-page types
+        with transaction.atomic(durable=True):
+            DNMPage.objects.all().delete()
+            IDPage.objects.all().delete()
+            QuestionPage.objects.all().delete()
+        # finally delete all papers
+        with transaction.atomic(durable=True):
+            Paper.objects.all().delete()
 
     def update_page_image(
         self, paper_number: int, page_index: int, image: Image
