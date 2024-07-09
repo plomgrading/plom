@@ -405,7 +405,8 @@ no-docstring-count:
     - python3 -m pip install ruff~=0.5.1
   script:
     - HOWMANY=`ruff check --select D100,D101,D102,D103,D104,D106,D107 | grep "Found .* errors" | grep -o "[0-9]*"`
-    - echo "$HOWMANY things without docstrings: please don't increase it"
+    - echo "$HOWMANY things without docstrings, please don't increase it"
+    - ruff check --select D100,D101,D102,D103,D104,D106,D107 --statistics
     # Dear hackers: please try to decrease this number
     - bash -c "[[ $HOWMANY -le 2633 ]]"
   allow_failure: true
