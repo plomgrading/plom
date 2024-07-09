@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Aden Chan
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -82,11 +83,11 @@ class RubricServiceTests_exceptions(TestCase):
         with self.assertRaises(ValidationError):
             RubricService().create_rubric(rub)
 
-    def test_no_kind_KeyError(self) -> None:
-        """Test KeyError in RubricService.create_rubric().
+    def test_no_kind_KeyValidationError(self) -> None:
+        """Test ValidationError in RubricService.create_rubric().
 
         This test case checks if the RubricService.create_rubric()
-        method raises a KeyError when attempting to create a rubric
+        method raises a ValidationError when attempting to create a rubric
         without providing the 'kind' key in the rubric dictionary.
         """
         rub = {
@@ -96,7 +97,7 @@ class RubricServiceTests_exceptions(TestCase):
             "question": 1,
         }
 
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ValidationError):
             RubricService().create_rubric(rub)
 
 
@@ -372,7 +373,7 @@ class RubricServiceTests(TestCase):
         username = user.username
 
         for kind in ("absolute", "relative", "neutral"):
-            rubric = baker.make(Rubric, user=user, kind=kind)
+            rubric = baker.make(Rubric, user=user, kind=kind, latest=True)
             key = rubric.key
             d = _Rubric_to_dict(rubric)
 
