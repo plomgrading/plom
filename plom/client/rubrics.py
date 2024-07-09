@@ -123,6 +123,12 @@ def compute_score_locabs(
             Any ``kind="absolute"`` must also have `out_of` fields.
         maxscore (int): the maximum anticipated score
 
+    Keyword Args:
+        tolerance: floating point values within this tolerance are
+            assumed to be the same.  Should be larger than machine
+            epsilon but much smaller than the smallest fractional
+            score.
+
     Returns:
         None/int/float: the computed score in the same type as ``rubric["value"]``
         or `None` if there are no mark-changing annotations on the page.
