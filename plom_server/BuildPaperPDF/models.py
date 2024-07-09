@@ -46,6 +46,8 @@ class BuildPaperPDFChore(HueyTaskTracker):
             Path(self.pdf_file.path).unlink(missing_ok=True)
 
     @classmethod
-    def set_every_task_obsolete(cls):
+    def set_every_task_obsolete(cls, *, unlink_files: bool = False):
+        super().set_every_task_obsolete()
         # set every single task to be obsolete
-        cls.objects.all().update(obsolete=True)
+        for task in cls.objects.all():
+            task.unlink_associated_pdf()

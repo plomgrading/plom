@@ -202,27 +202,26 @@ class BuildPapersService:
             How many tasks did we launch?
         """
         assert_can_rebuild_test_pdfs()
+        # first we set all tasks with status=error as obsolete.
+        BuildPaperPDFChore.set_every_task_with_status_error_obsolete()
+        # now iterate over papers that have zero non-obsolete chores.
         papers_to_build = []
         for paper in Paper.objects.all():
-            # if the paper has zero non-obsolete chores
-            if not paper.buildpaperpdfchore_set.filter(obsolete=False).exists():
-                papers_to_build.append(paper.paper_number)
-            # or if it has a non-obsolete chore that is ERROR
-            elif paper.buildpaperpdfchore_set.filter(
-                status=BuildPaperPDFChore.ERROR, obsolete=False
-            ).exists():
-                papers_to_build.append(paper.paper_number)
-            # otherwise it has a non-obsolete chore that is okay.
-            else:
+            # if the paper has some non-obsolete chore - do not rebuild
+            if paper.buildpaperpdfchore_set.filter(obsolete=False).exists():
                 pass
+            else:  # rebuild this paper's pdf
+                papers_to_build.append(paper.paper_number)
 
-        # TODO - this call needs to be in the background, because
-        # it can take a long time to queue up all the tasks
         self._send_list_of_tasks(papers_to_build)
-
         return len(papers_to_build)
 
-    def send_single_task(self, paper_num: int) -> None:
+    def send_single_task(self, paper_num: int):
+        """Start building the PDF for the given paper, provided it does not have a QUEUED or COMPLETE chore.
+
+        Raises:
+            PlomDependencyConflict: if dependencies not met.
+        """
         self._send_list_of_tasks([paper_num])
 
     def _send_list_of_tasks(self, paper_number_list: list[int]) -> None:
@@ -369,11 +368,8 @@ class BuildPapersService:
         assert_can_rebuild_test_pdfs()
         self.try_to_cancel_all_queued_tasks()
         with transaction.atomic():
-            # bulk set all obsolete
-            BuildPaperPDFChore.set_every_task_obsolete()
-            # now delete all the associated pdfs
-            for task in BuildPaperPDFChore.objects.all():
-                task.unlink_associated_pdf()
+            # bulk set all obsolete and delete associated files
+            BuildPaperPDFChore.set_every_task_obsolete(unlink_files=True)
 
     @transaction.atomic
     def get_all_task_status(self) -> dict[int, str]:
