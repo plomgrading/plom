@@ -398,6 +398,19 @@ ruff:
     # ruff format .
 
 
+no-docstring-count:
+  image: python:3
+  stage: static_analysis
+  before_script:
+    - python3 -m pip install ruff~=0.5.1
+  script:
+    - HOWMANY=`ruff check --select D100,D101,D102,D103,D104,D106,D107 | grep "Found .* errors" | grep -o "[0-9]*"`
+    - echo "$HOWMANY things without docstrings: please don't increase it"
+    # Dear hackers: please try to decrease this number
+    - bash -c "[[ $HOWMANY -le 2633 ]]"
+  allow_failure: true
+
+
 pydocstyle-plom-count:
   image: python:3
   stage: static_analysis
