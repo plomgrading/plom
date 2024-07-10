@@ -441,6 +441,10 @@ class BaseMessenger:
         Args:
             user: the username of the user.
 
+        Raises:
+            PlomAuthenticationException
+            PlomSeriousException: something unexpected happened.
+
         Returns:
             either of ["lead_marker", "marker", "scanner", "manager"] if the user
             is recognized. Otherwise returns None.
@@ -458,11 +462,10 @@ class BaseMessenger:
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
-                if response.status_code == 400:
-                    raise PlomRangeException(response.reason) from None
-                if response.status_code == 416:
-                    raise PlomRangeException(response.reason) from None
-                raise PlomSeriousException(f"Some other sort of error {e}") from None
+                else:
+                    raise PlomSeriousException(
+                        f"Some other sort of error {e}"
+                    ) from None
 
     def requestAndSaveToken(self, user: str, pw: str) -> None:
         """Get a authorisation token from the server.
