@@ -435,6 +435,34 @@ class BaseMessenger:
     # ------------------------
     # ------------------------
     # Authentication stuff
+    def get_user_role(self) -> str | None:
+        """Obtain user's role from the server.
+
+        Args:
+            user: the username of the user.
+
+        Returns:
+            either of ["lead_marker", "marker", "scanner", "manager"] if the user
+            is recognized. Otherwise returns None.
+        """
+        path = f"/info/user/{self.user}"
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    path,
+                    json={"user": self.user, "token": self.token},
+                )
+                # throw errors when response code != 200.
+                response.raise_for_status()
+                return response.text
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 400:
+                    raise PlomRangeException(response.reason) from None
+                if response.status_code == 416:
+                    raise PlomRangeException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def requestAndSaveToken(self, user: str, pw: str) -> None:
         """Get a authorisation token from the server.

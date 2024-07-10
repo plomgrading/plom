@@ -220,6 +220,7 @@ class Chooser(QDialog):
 
         tmpdir = tempfile.mkdtemp(prefix="plom_local_img_")
         self.Qapp.downloader = Downloader(tmpdir, msgr=self.messenger)
+        role = self.messenger.get_user_role()
 
         if which_subapp == "Manager":
             if not self.messenger.is_legacy_server():
@@ -243,6 +244,9 @@ class Chooser(QDialog):
             # store ref in Qapp to avoid garbase collection
             self.Qapp._manager_window = window
         elif which_subapp == "Marker":
+            if role not in ["marker", "lead_marker"]:
+                WarnMsg(self, "Only marker/lead marker can mark papers!").exec()
+                return
             question = self.getQuestion()
             v = self.getv()
             assert question is not None
@@ -256,6 +260,9 @@ class Chooser(QDialog):
             # store ref in Qapp to avoid garbase collection
             self.Qapp.marker = markerwin
         elif which_subapp == "Identifier":
+            if role != "lead_marker":
+                WarnMsg(self, "Only lead marker can identify papers!").exec()
+                return
             self.setEnabled(False)
             self.hide()
             idwin = IDClient(self.Qapp)
@@ -546,6 +553,7 @@ class Chooser(QDialog):
         Also update the UI with restricted questions and versions.
         """
         user = self.ui.userLE.text().strip()
+        self.username = user
         self.ui.userLE.setText(user)
         if not user:
             return

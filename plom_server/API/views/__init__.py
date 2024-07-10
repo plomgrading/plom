@@ -5,6 +5,7 @@
 # Copyright (C) 2024 Bryan Tanady
 
 from .server_info import (
+    UserRole,
     ExamInfo,
     GetSpecification,
     ServerVersion,
