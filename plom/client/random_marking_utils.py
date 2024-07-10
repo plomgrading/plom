@@ -74,9 +74,9 @@ class MockRubricWidget:
 
 
 class SceneParent(QWidget):
-    """This class is a cut-down annotator for mock-testing the PageScene."""
+    """This class is a cut-down Annotator for mock-testing the PageScene."""
 
-    def __init__(self, question, maxMark):
+    def __init__(self, question, maxMark, Qapp):
         super().__init__()
         self.view = PageView(self)
         self.ink = QPen(QColor("red"), 2)
@@ -84,9 +84,18 @@ class SceneParent(QWidget):
         self.maxMark = maxMark
         self.rubric_widget = MockRubricWidget()
         self.saveName = None
+        self._Qapp = Qapp
 
     def is_experimental(self):
         return False
+
+    def pause_to_process_events(self):
+        """Allow Qt's event loop to process events.
+
+        Typically we call this if we're in a loop of our own waiting
+        for something to happen which can only occur if we
+        """
+        self._Qapp.processEvents()
 
     def doStuff(self, src_img_data, saveName, maxMark, markStyle):
         self.saveName = Path(saveName)
@@ -204,13 +213,13 @@ def annotatePaper(
     question, maxMark, task, src_img_data, aname, tags, *, Qapp: QApplication
 ) -> tuple:
     print("Starting random marking to task {}".format(task))
-    annot = SceneParent(question, maxMark)
+    annot = SceneParent(question, maxMark, Qapp)
     annot.doStuff(src_img_data, aname, maxMark, random.choice([2, 3]))
     annot.doRandomAnnotations()
     # Issue #1391: settle annotation events, avoid races with QTimers
-    Qapp.processEvents()
+    annot.pause_to_process_events()
     time.sleep(0.25)
-    Qapp.processEvents()
+    annot.pause_to_process_events()
     return annot.doneAnnotating()
 
 

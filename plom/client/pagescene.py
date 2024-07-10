@@ -987,7 +987,7 @@ class PageScene(QGraphicsScene):
             page_view = self.views()[0]
             assert isinstance(page_view, PageView)
             # yuck, what a parenting nightmare
-            page_view._annotr.parentMarkerUI.Qapp.processEvents()
+            page_view._annotr.pause_to_process_events()
             log.warn("sleeping 50 ms waiting for animations to finish")
             sleep(0.05)
 
