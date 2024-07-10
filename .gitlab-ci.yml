@@ -406,13 +406,13 @@ count-no-docstring:
     - python3 -m pip install ruff~=0.5.1
   script:
     # run once just for log out but don't fail
-    - EXCEPTIONS="D100,D101,D102,D103,D104,D106,D107"
+    - EXCEPTIONS="D101,D102,D103,D104,D106"
     - ruff check --select $EXCEPTIONS --exit-zero
     - HOWMANY=`ruff check --select $EXCEPTIONS --exit-zero | grep "Found .* errors" | grep -o "[0-9]*"`
     - ruff check --select $EXCEPTIONS --statistics --exit-zero
     - echo "Total $HOWMANY things without docstrings, please don't increase it"
     # Dear hackers: please try to decrease this number
-    - bash -c "[[ $HOWMANY -le 2147 ]]"
+    - bash -c "[[ $HOWMANY -le 1644 ]]"
   allow_failure: true
 
 
