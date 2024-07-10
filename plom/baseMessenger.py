@@ -447,7 +447,7 @@ class BaseMessenger:
 
         Returns:
             either of ["lead_marker", "marker", "scanner", "manager"] if the user
-            is recognized. Otherwise returns None.
+            is recognized.
         """
         path = f"/info/user/{self.user}"
         with self.SRmutex:
