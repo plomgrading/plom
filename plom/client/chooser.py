@@ -553,7 +553,6 @@ class Chooser(QDialog):
         Also update the UI with restricted questions and versions.
         """
         user = self.ui.userLE.text().strip()
-        self.username = user
         self.ui.userLE.setText(user)
         if not user:
             return
