@@ -274,6 +274,8 @@ class BuildPapersService:
                         student_id=student_id,
                     )
                 )
+            del paper
+
         # for each of the newly created chores, actually ask Huey to run them
         chore_pk_huey_id_list = []
         for chore in chore_list:
@@ -284,7 +286,7 @@ class BuildPapersService:
             res = huey_build_single_paper(
                 chore.paper.paper_number,
                 spec,
-                qvmap[paper.paper_number],
+                qvmap[chore.paper.paper_number],
                 student_info=student_info,
                 tracker_pk=chore.pk,
                 _debug_be_flaky=False,
