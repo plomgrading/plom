@@ -103,6 +103,7 @@ log = logging.getLogger("marker")
 
 
 def task_id_str_to_paper_question_index(task: str) -> tuple[int, int]:
+    """Helper function to convert between task string and paper/question."""
     # TODO: I dislike this packed-string: overdue for refactor
     assert task[0] == "q", f"invalid task code {task}: no leading 'q'"
     assert task[5] == "g", f"invalid task code {task}: no middle 'g'"
@@ -112,6 +113,7 @@ def task_id_str_to_paper_question_index(task: str) -> tuple[int, int]:
 
 
 def paper_question_index_to_task_id_str(papernum: int, question_idx: int) -> str:
+    """Helper function to convert between paper/question and task string."""
     return f"q{papernum:04}g{question_idx}"
 
 
@@ -1218,6 +1220,7 @@ class MarkerClient(QWidget):
         return True
 
     def change_task_view(self, cbidx: int) -> None:
+        """Update task list in response to combobox changes."""
         if cbidx == 0:
             self._show_only_my_tasks()
         elif cbidx == 1:
@@ -1327,6 +1330,7 @@ class MarkerClient(QWidget):
         self.examModel.setStatusByTask(task, "reassigned")
 
     def claim_task(self) -> None:
+        """Try to claim the currently selected task for this user."""
         task = self.get_current_task_id_or_none()
         if not task:
             return

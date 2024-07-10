@@ -446,15 +446,22 @@ class MarkerExamModel(QStandardItemModel):
         self._setDataByTask(task, _idx_plom_file, str(pname))
 
     def set_username_by_task(self, task: str, user: str) -> None:
+        """Set the username of a task."""
         self._setDataByTask(task, _idx_user, user)
 
     def get_username_by_task(self, task: str) -> str:
+        """Get the username of a task."""
         return self._getDataByTask(task, _idx_user)
 
     def _get_username(self, r: int) -> str:
         return self.data(self.index(r, _idx_user))
 
     def is_our_task(self, task: str, username) -> bool:
+        """Does this task belong to a particular user.
+
+        TODO: includes some asserts about status, which may need
+        relaxing/adjusting in the future.
+        """
         task_username = self._getDataByTask(task, _idx_user)
         status = self._getDataByTask(task, _idx_status)
         if task_username == username:
@@ -468,10 +475,11 @@ class MarkerExamModel(QStandardItemModel):
         return False
 
     def set_integrity_by_task(self, task: str, integrity: str) -> None:
+        """Set the integrity check for a task."""
         self._setDataByTask(task, _idx_integrity, integrity)
 
     def getIntegrityCheck(self, task: str) -> str:
-        """Return integrity_check for task as string."""
+        """Return the integrity check string for a task."""
         return self._getDataByTask(task, _idx_integrity)
 
     def markPaperByTask(self, task, mark, aname, pname, marking_time, tdir) -> None:
@@ -553,8 +561,9 @@ class ProxyModel(QSortFilterProxyModel):
         return str(left.data()) < str(right.data())
 
     def set_show_only_this_user(self, user: str) -> None:
+        """Show only the tasks that belong to a particular user."""
         self.show_only_this_user = user
-        self.trigger_filter_change()
+        self._trigger_filter_change()
 
     def set_filter_tags(self, filter_str: str, *, invert: bool = False) -> None:
         """Filter the visible tasks based on a string.
@@ -571,9 +580,9 @@ class ProxyModel(QSortFilterProxyModel):
         """
         self.invert_tag_search = invert
         self.tag_search_terms = filter_str.casefold().split()
-        self.trigger_filter_change()
+        self._trigger_filter_change()
 
-    def trigger_filter_change(self) -> None:
+    def _trigger_filter_change(self) -> None:
         # trigger update (but filterAcceptsRow will be used)
         self.setFilterFixedString("")
 

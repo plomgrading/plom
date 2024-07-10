@@ -41,8 +41,7 @@ class TaskTableView(QTableView):
         self.horizontalHeader().setStretchLastSection(True)
 
     def keyPressEvent(self, event):
-        # If user hits enter or return, then fire off
-        # the annotateSignal, else pass the event on.
+        """Emit the annotateSignal on Return/Enter key, else pass the event onwards."""
         key = event.key()
         if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
             self.annotateSignal.emit()
@@ -50,6 +49,7 @@ class TaskTableView(QTableView):
             super().keyPressEvent(event)
 
     def contextMenuEvent(self, event: QContextMenuEvent | None) -> None:
+        """Open a context menu with options for the currently highlighted task."""
         if not event:
             return
         menu = QMenu(self)
