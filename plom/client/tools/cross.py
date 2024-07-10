@@ -36,11 +36,12 @@ class CrossItem(UndoStackMoveMixin, QGraphicsPathItem):
         # Draw a cross whose vertex is at pt (under mouse click)
         # import here to avoid circular import
         from plom.client.tools import TickItem
+
         tick_radius = TickItem.tick_radius
-        self.path.moveTo(pt.x() - 3*tick_radius//4, pt.y() - 3*tick_radius//4)
-        self.path.lineTo(pt.x() + 3*tick_radius//4, pt.y() + 3*tick_radius//4)
-        self.path.moveTo(pt.x() - 3*tick_radius//4, pt.y() + 3*tick_radius//4)
-        self.path.lineTo(pt.x() + 3*tick_radius//4, pt.y() - 3*tick_radius//4)
+        self.path.moveTo(pt.x() - 3 * tick_radius // 4, pt.y() - 3 * tick_radius // 4)
+        self.path.lineTo(pt.x() + 3 * tick_radius // 4, pt.y() + 3 * tick_radius // 4)
+        self.path.moveTo(pt.x() - 3 * tick_radius // 4, pt.y() + 3 * tick_radius // 4)
+        self.path.lineTo(pt.x() + 3 * tick_radius // 4, pt.y() - 3 * tick_radius // 4)
         self.setPath(self.path)
         self.restyle(style)
 
