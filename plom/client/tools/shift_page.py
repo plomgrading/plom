@@ -4,7 +4,7 @@
 from PyQt6.QtCore import QRectF
 from PyQt6.QtGui import QUndoCommand
 
-from .animations import AnimatingTempRectItem, AnimationDuration
+from .animations import AnimatingTempRectItemABC, AnimationDuration
 
 
 # this is a large-scale animation: slow it down a bit
@@ -42,7 +42,7 @@ class CommandShiftPage(QUndoCommand):
         self.scene.addItem(TmpAnimRectItem(self.scene, r1, r2))
 
 
-class TmpAnimRectItem(AnimatingTempRectItem):
+class TmpAnimRectItem(AnimatingTempRectItemABC):
     def __init__(self, scene, r1: QRectF, r2: QRectF) -> None:
         super().__init__(scene)
         self.r1 = r1

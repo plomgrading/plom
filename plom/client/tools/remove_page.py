@@ -4,7 +4,7 @@
 from PyQt6.QtCore import QRectF
 from PyQt6.QtGui import QUndoCommand
 
-from .animations import AnimatingTempRectItem
+from .animations import AnimatingTempRectItemABC
 from .shift_page import Duration
 
 
@@ -43,7 +43,7 @@ class CommandRemovePage(QUndoCommand):
         self.scene.addItem(TmpAnimDisappearingRectItem(self.scene, r, what="restore"))
 
 
-class TmpAnimDisappearingRectItem(AnimatingTempRectItem):
+class TmpAnimDisappearingRectItem(AnimatingTempRectItemABC):
     def __init__(self, scene, r: QRectF, *, what: str = "disappear_left") -> None:
         super().__init__(scene)
         assert what in ("disappear_left", "disappear_right", "restore")

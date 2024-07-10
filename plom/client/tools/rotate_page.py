@@ -4,7 +4,7 @@
 from PyQt6.QtCore import QRectF
 from PyQt6.QtGui import QUndoCommand
 
-from .animations import AnimatingTempRectItem
+from .animations import AnimatingTempRectItemABC
 from .shift_page import Duration
 
 
@@ -39,7 +39,7 @@ class CommandRotatePage(QUndoCommand):
         self.scene.addItem(TmpAnimRotatingRectItem(self.scene, -self.degrees, r1, r2))
 
 
-class TmpAnimRotatingRectItem(AnimatingTempRectItem):
+class TmpAnimRotatingRectItem(AnimatingTempRectItemABC):
     def __init__(self, scene, degrees: int, r1: QRectF, r2: QRectF) -> None:
         super().__init__(scene)
         self.anim.setDuration(Duration)

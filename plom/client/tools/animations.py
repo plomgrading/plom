@@ -12,7 +12,7 @@ from plom.client.tools import log
 
 # rough length of animations take in milliseconds: some might be shorter,
 # some longer but they will be scaled by this value.
-AnimationDuration: int = 200
+AnimationDuration: int = 1000
 
 AnimationPenColour = QColor(8, 232, 222, 128)
 AnimationPenThickness = 8
@@ -41,7 +41,13 @@ class AnimatingTempItemMixin:
     is_transcient_animation = True
 
     def anim_init(self, scene) -> None:
-        # basically __init__ but I cannot handle multiple inheritance
+        """Initialize the animation, basically this is the init method.
+
+        But the author doesn't grok multiple inheritance enough to do
+        it like that so this has a special name but is to be called
+        in the class this mixin is mixed into.  It should be followed
+        by a call to :method:`start`.
+        """
         self._scene = scene
         self.saveable = False
 
@@ -62,9 +68,11 @@ class AnimatingTempItemMixin:
         self.anim.destroyed.connect(self.remove_from_scene)
 
     def start(self):
+        """Start the animation, to be called at the end of init."""
         self.anim.start(QAbstractAnimation.DeletionPolicy.DeleteWhenStopped)
 
     def remove_from_scene(self) -> None:
+        """Remove this item from the scene."""
         log.debug(f"TmpAnimItem: removing {self} from scene")
         # TODO: can we be sure that scene survives until the end of the animation?
         # TODO: also, what if the scene removes the item early?
@@ -93,8 +101,8 @@ class _AnimatorCtrlr(QObject):
 
 
 # Note multiple inheritance with PyQt is ok as long as only one is a Qt class
-class AnimatingTempRectItem(QGraphicsRectItem, AnimatingTempItemMixin):
-    """A base class for new-style animated rectangles.
+class AnimatingTempRectItemABC(QGraphicsRectItem, AnimatingTempItemMixin):
+    """An abstract base class for new-style animated rectangles.
 
     At the end of your ``__init__`` function you must start the animation
     by calling `self.start()`.
