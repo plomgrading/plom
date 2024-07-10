@@ -19,7 +19,7 @@ from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService, PaperCreatorService
 
 from plom.misc_utils import format_int_list_with_runs
-from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
+from plom.plom_exceptions import PlomDependencyConflict
 
 from ..services import (
     PQVMappingService,

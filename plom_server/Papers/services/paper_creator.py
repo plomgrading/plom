@@ -203,7 +203,7 @@ class PaperCreatorService:
             qv_map: For each paper give the question-version map.
                 Of the form `{paper_number: {q: v}}`
         KWargs:
-            background: populate the datbase in the background, or, if false,
+            background: populate the database in the background, or, if false,
                 as a foreground process.
 
         Raises:
