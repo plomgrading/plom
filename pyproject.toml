@@ -304,8 +304,9 @@ exclude-file = ".codespell-ignorelines"
 [tool.ruff.lint]
 # enable docstring
 select = ["D"]
+# D107: perhaps init methods don't need docstrings
 # D10x: most of these are about missing docstrings
-ignore = ["D100", "D101", "D102", "D103", "D104", "D107", "D106"]
+ignore = ["D107", "D100", "D101", "D102", "D103", "D104", "D106"]
 # Legacy stuff: would need lots of edits to pass
 exclude = ["plom/server/**", "plom/db/**", "plom/canvas/**"]
 
