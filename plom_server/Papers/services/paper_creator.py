@@ -111,11 +111,11 @@ class PaperCreatorService:
         paper_number: int,
         qv_row: Dict[int, int],
         *,
-        id_page_number: int | None,
-        dnm_page_numbers: List[int] | None,
-        question_page_numbers: Dict[int, List[int]] | None,
+        id_page_number: int | None = None,
+        dnm_page_numbers: List[int] | None = None,
+        question_page_numbers: Dict[int, List[int]] | None = None,
     ) -> None:
-        """Creates tables for the given paper number from supplied information
+        """Creates tables for the given paper number from supplied information.
 
         Args:
             paper_number: The number of the paper being created
