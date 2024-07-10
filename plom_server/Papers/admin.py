@@ -15,7 +15,7 @@ from .models.paper_structure import (
     QuestionPage,
 )
 from .models.specifications import Specification
-from .models.background_tasks import CreateImageHueyTask
+from .models.background_tasks import CreateImageHueyTask, PopulateEvacuateDBChore
 from .models.image_bundle import Image, DiscardPage, Bundle
 
 # This makes models appear in the admin interface
@@ -27,6 +27,7 @@ admin.site.register(IDPage)
 admin.site.register(DNMPage)
 admin.site.register(QuestionPage)
 admin.site.register(CreateImageHueyTask)
+admin.site.register(PopulateEvacuateDBChore)
 admin.site.register(Bundle)
 admin.site.register(Image)
 admin.site.register(DiscardPage)

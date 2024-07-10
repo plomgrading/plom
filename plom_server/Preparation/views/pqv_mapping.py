@@ -19,7 +19,7 @@ from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService, PaperCreatorService
 
 from plom.misc_utils import format_int_list_with_runs
-from plom.plom_exceptions import PlomDependencyConflict
+from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 
 from ..services import (
     PQVMappingService,
@@ -114,6 +114,10 @@ class PQVMappingView(ManagerRequiredView):
             "number_of_students": StagingStudentService().how_many_students(),
             "student_list_present": StagingStudentService().are_there_students(),
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
+            "chore_in_progress": PaperCreatorService().is_chore_in_progress(),
+            "chore_message": PaperCreatorService().get_chore_message(),
+            "populate_in_progress": PaperCreatorService().is_populate_in_progress(),
+            "evacuate_in_progress": PaperCreatorService().is_evacuate_in_progress(),
         }
 
         prenamed_papers_list = list(

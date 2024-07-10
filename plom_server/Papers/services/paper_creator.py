@@ -26,7 +26,7 @@ from Papers.services import SpecificationService
 from Preparation.services.preparation_dependency_service import (
     assert_can_modify_qv_mapping_database,
 )
-from plom.plom_exceptions import PlomDependencyConflict
+from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 
 log = logging.getLogger("PaperCreatorService")
 
@@ -64,6 +64,8 @@ def huey_populate_whole_db(
     )
     print(f"Populated all {N} papers in database")
     PopulateEvacuateDBChore.transition_to_complete(tracker_pk)
+    # when chore is done it should be set to "obsolete"
+    PopulateEvacuateDBChore.objects.filter(pk=tracker_pk).update(obsolete=True)
     return True
 
 
@@ -88,6 +90,8 @@ def huey_evacuate_whole_db(*, tracker_pk: int, task=None) -> bool:
     )
     print(f"Deleted all {N} papers from database")
     PopulateEvacuateDBChore.transition_to_complete(tracker_pk)
+    # when chore is done it should be set to "obsolete"
+    PopulateEvacuateDBChore.objects.filter(pk=tracker_pk).update(obsolete=True)
     return True
 
 
@@ -155,6 +159,41 @@ class PaperCreatorService:
                     version=version,
                 )
 
+    def assert_no_existing_chore(self):
+        """Check that there is no existing (non-obsolate) populate / evacuate database chore.
+
+        Raises:
+            PlomDatabaseCreationError: when there is a chore already underway.
+        """
+        try:
+            chore = PopulateEvacuateDBChore.objects.get(obsolete=False)
+            if chore.action == PopulateEvacuateDBChore.POPULATE:
+                raise PlomDatabaseCreationError("Papers are being populated.")
+            else:
+                raise PlomDatabaseCreationError("Papers are being deleted.")
+        except ObjectDoesNotExist:
+            pass
+            # not currently being populated/evacuated.
+
+    def is_chore_in_progress(self):
+        return PopulateEvacuateDBChore.objects.filter(obsolete=False).exists()
+
+    def is_populate_in_progress(self):
+        return PopulateEvacuateDBChore.objects.filter(
+            obsolete=False, action=PopulateEvacuateDBChore.POPULATE
+        ).exists()
+
+    def is_evacuate_in_progress(self):
+        return PopulateEvacuateDBChore.objects.filter(
+            obsolete=False, action=PopulateEvacuateDBChore.EVACUATE
+        ).exists()
+
+    def get_chore_message(self):
+        try:
+            return PopulateEvacuateDBChore.objects.get(obsolete=False).message
+        except ObjectDoesNotExist:
+            return None
+
     def add_all_papers_in_qv_map(
         self, qv_map: Dict[int, Dict[int, int]], *, background: bool = True
     ):
@@ -173,8 +212,9 @@ class PaperCreatorService:
         assert_can_modify_qv_mapping_database()
         if Paper.objects.filter().exists():
             raise PlomDependencyConflict("Already papers in the database.")
+        # check if there is an existing non-obsolete task
+        self.assert_no_existing_chore()
 
-        # TODO - have background / foreground kwarg
         if background:
             self.populate_whole_db_huey_wrapper(qv_map)
         else:
@@ -208,6 +248,9 @@ class PaperCreatorService:
 
     def remove_all_papers_from_db(self, *, background: bool = True) -> None:
         assert_can_modify_qv_mapping_database()
+        # check if there is an existing non-obsolete task
+        self.assert_no_existing_chore()
+
         if background:
             self.evacuate_whole_db_huey_wrapper()
         else:
