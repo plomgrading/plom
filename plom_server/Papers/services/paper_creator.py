@@ -4,6 +4,8 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
+from __future__ import annotations
+
 import logging
 from typing import Dict, List
 
