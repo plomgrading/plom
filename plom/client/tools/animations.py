@@ -74,8 +74,11 @@ class AnimatingTempItemMixin:
     def remove_from_scene(self) -> None:
         """Remove this item from the scene."""
         log.debug(f"TmpAnimItem: removing {self} from scene")
-        # TODO: can we be sure that scene survives until the end of the animation?
-        # TODO: also, what if the scene removes the item early?
+        if self.scene() is None:
+            # its already been removed, or maybe the scene did not survive until
+            # the end of the animation
+            return
+        # TODO: is there still a case where its been deleted already or is that same as above?
         self._scene.removeItem(self)
 
     def interp(self, t: float) -> None:
