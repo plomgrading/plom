@@ -38,6 +38,8 @@ class AnimatingTempItemMixin:
             `setEndValue` of 1.
     """
 
+    is_transcient_animation = True
+
     def anim_init(self, scene) -> None:
         # basically __init__ but I cannot handle multiple inheritance
         self._scene = scene

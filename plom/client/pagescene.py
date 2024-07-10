@@ -12,6 +12,7 @@ from copy import deepcopy
 from itertools import cycle
 import logging
 from pathlib import Path
+from time import sleep
 from typing import Any
 
 import PIL.Image
@@ -972,6 +973,24 @@ class PageScene(QGraphicsScene):
         self.setSceneRect(self.getSaveableRectangle())
         self.update()
 
+    def squelch_animations(self):
+        """Wait for transient animations or perhaps hurry them along."""
+        while True:
+            have_anim = False
+            for x in self.items():
+                if getattr(x, "is_transcient_animation", False):
+                    have_anim = True
+                    break
+            if not have_anim:
+                break
+            # wait a little bit, processing events
+            page_view = self.views()[0]
+            assert isinstance(page_view, PageView)
+            # yuck, what a parenting nightmare
+            page_view._annotr.parentMarkerUI.Qapp.processEvents()
+            log.warn("sleeping 50 ms waiting for animations to finish")
+            sleep(0.05)
+
     def save(self, basename):
         """Save the annotated group-image.
 
@@ -983,6 +1002,8 @@ class PageScene(QGraphicsScene):
         Returns:
             pathlib.Path: the file we just saved to, including jpg or png.
         """
+        self.squelch_animations()
+
         # don't want to render these, but should we restore them after?
         # TODO: or setVisible(False) instead of remove?
         self.remove_page_action_buttons()
