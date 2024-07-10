@@ -1002,6 +1002,7 @@ class MarkerClient(QWidget):
         self._updateCurrentlySelectedRow()
 
     def background_download_failed(self, img_id):
+        """Callback when a nackground download has failed."""
         self.ui.labelTech2.setText(f"<p>last msg: failed download img id={img_id}</p>")
         log.info(f"failed download img id={img_id}")
         self.ui.labelTech2.setToolTip("")
@@ -1027,6 +1028,7 @@ class MarkerClient(QWidget):
         self.ui.labelTech3.setText(txt)
 
     def show_hide_technical(self):
+        """Toggle the technical panel in response to checking a button."""
         if self.ui.technicalButton.isChecked():
             self.ui.technicalButton.setText("Hide technical info")
             self.ui.technicalButton.setArrowType(Qt.ArrowType.DownArrow)
@@ -1043,6 +1045,7 @@ class MarkerClient(QWidget):
             self.ui.frameTechnical.setVisible(False)
 
     def toggle_fail_mode(self):
+        """Toggle artificial failures simulatiing flaky networking in response to ticking a button."""
         if self.ui.failmodeCB.isChecked():
             self.Qapp.downloader.enable_fail_mode()
             r = self.Qapp.downloader._simulate_failure_rate

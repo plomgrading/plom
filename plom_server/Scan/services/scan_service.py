@@ -293,6 +293,7 @@ class ScanService:
             return None
 
     def get_bundle_from_pk(self, pk: int) -> StagingBundle:
+        """Return a StagingBundle object from its pk."""
         return StagingBundle.objects.get(pk=pk)
 
     @transaction.atomic
