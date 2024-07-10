@@ -5,10 +5,10 @@
 # Copyright (C) 2023 Natalie Balashov
 
 import logging
-from typing import Dict
+from typing import Dict, List
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction, IntegrityError
+from django.db import transaction
 from django_huey import db_task
 
 from ..models import (
@@ -21,6 +21,8 @@ from ..models import (
     QuestionPage,
     PopulateEvacuateDBChore,
 )
+from Papers.services import SpecificationService
+
 from Preparation.services.preparation_dependency_service import (
     assert_can_modify_qv_mapping_database,
 )
@@ -36,33 +38,20 @@ def huey_populate_whole_db(
     PopulateEvacuateDBChore.transition_to_running(tracker_pk, task.id)
     N = len(qv_map)
 
-    spec_obj = Specification.load()
-    id_page_number = int(spec_obj.idPage)
-    dnm_page_numbers = [int(pg) for pg in spec_obj.doNotMarkPages]
+    id_page_number = SpecificationService.get_id_page_number()
+    dnm_page_numbers = SpecificationService.get_dnm_pages()
+    question_page_numbers = SpecificationService.get_question_pages()
+    pcs = PaperCreatorService()
 
+    # TODO - move much of this loop back into paper-creator.
     for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
-        log.info(f"Constructing paper {paper_number} with {qv_row}")
-        paper_obj = Paper.objects.create(paper_number=paper_number)
-        # TODO - change how DNM and ID pages taken from versions
-        # currently ID page and DNM page both taken from version 1
-        IDPage.objects.create(
-            paper=paper_obj, image=None, page_number=id_page_number, version=1
+        pcs._create_single_paper_from_qvmapping_and_pages(
+            paper_number,
+            qv_row,
+            id_page_number=id_page_number,
+            dnm_page_numbers=dnm_page_numbers,
+            question_page_numbers=question_page_numbers,
         )
-        for pg in dnm_page_numbers:
-            DNMPage.objects.create(
-                paper=paper_obj, image=None, page_number=pg, version=1
-            )
-        for index, question in spec_obj.question.items():
-            q_idx = int(index)
-            version = int(qv_row[q_idx])
-            for q_page in question.pages:
-                QuestionPage.objects.create(
-                    paper=paper_obj,
-                    image=None,
-                    page_number=int(q_page),
-                    question_index=q_idx,
-                    version=version,
-                )
 
         if idx % 16 == 0:
             PopulateEvacuateDBChore.set_message_to_user(
@@ -73,6 +62,7 @@ def huey_populate_whole_db(
     PopulateEvacuateDBChore.set_message_to_user(
         tracker_pk, f"Populated all {N} papers in database"
     )
+    print(f"Populated all {N} papers in database")
     PopulateEvacuateDBChore.transition_to_complete(tracker_pk)
     return True
 
@@ -96,6 +86,7 @@ def huey_evacuate_whole_db(*, tracker_pk: int, task=None) -> bool:
     PopulateEvacuateDBChore.set_message_to_user(
         tracker_pk, f"Deleted all {N} papers from database"
     )
+    print(f"Deleted all {N} papers from database")
     PopulateEvacuateDBChore.transition_to_complete(tracker_pk)
     return True
 
@@ -114,62 +105,67 @@ class PaperCreatorService:
                 "The database does not contain a test specification."
             ) from e
 
-    def _create_paper_with_qvmapping(
+    @transaction.atomic()
+    def _create_single_paper_from_qvmapping_and_pages(
         self,
         paper_number: int,
-        qv_mapping: Dict[int, int],
+        qv_row: Dict[int, int],
+        *,
+        id_page_number: int | None,
+        dnm_page_numbers: List[int] | None,
+        question_page_numbers: Dict[int, List[int]] | None,
     ) -> None:
-        """(DEPRECATED) Creates tables for the given paper number and the given question-version mapping.
+        """Creates tables for the given paper number from supplied information
 
         Args:
             paper_number: The number of the paper being created
-            qv_mapping: Mapping from each question index to
+            qv_row: Mapping from each question index to
                 version for this particular paper. Of the form ``{q: v}``.
-
-        Returns:
-            None
+        KWargs:
+            id_page_number: (optionally) the id-page page-number
+            dnm_page_numbers: (optionally) a list of the dnm pages
+            question_page_numbers: (optionally) the pages of each question
         """
-        spec_obj = Specification.load()
-        paper_obj = Paper(paper_number=paper_number)
-        try:
-            paper_obj.save()
-        except IntegrityError as err:
-            log.warn(f"Cannot create Paper {paper_number}: {err}")
-            raise IntegrityError(
-                f"An entry paper {paper_number} already exists in the database"
-            )
-        # TODO - idpage and dnmpage versions might be not one in future.
-        # For time being assume that IDpage and DNMPage are always version 1.
-        id_page = IDPage(
-            paper=paper_obj, image=None, page_number=int(spec_obj.idPage), version=1
+        if id_page_number is None:
+            id_page_number = SpecificationService.get_id_page_number()
+        if dnm_page_numbers is None:
+            dnm_page_numbers = SpecificationService.get_dnm_pages()
+        if question_page_numbers is None:
+            question_page_numbers = SpecificationService.get_question_pages()
+
+        paper_obj = Paper.objects.create(paper_number=paper_number)
+        # TODO - change how DNM and ID pages taken from versions
+        # currently ID page and DNM page both taken from version 1
+        IDPage.objects.create(
+            paper=paper_obj, image=None, page_number=id_page_number, version=1
         )
-        id_page.save()
-
-        for dnm_idx in spec_obj.doNotMarkPages:
-            dnm_page = DNMPage(
-                paper=paper_obj, image=None, page_number=int(dnm_idx), version=1
+        for pg in dnm_page_numbers:
+            DNMPage.objects.create(
+                paper=paper_obj, image=None, page_number=pg, version=1
             )
-            dnm_page.save()
-
-        for index, question in spec_obj.question.items():
-            index = int(index)
-            version = qv_mapping[index]
-            for q_page in question.pages:
-                question_page = QuestionPage(
+        for index, q_pages in question_page_numbers.items():
+            q_idx = int(index)
+            version = int(qv_row[q_idx])
+            for pg in q_pages:
+                QuestionPage.objects.create(
                     paper=paper_obj,
                     image=None,
-                    page_number=int(q_page),
-                    question_index=index,
-                    version=version,  # I don't like having to double-up here, but....
+                    page_number=int(pg),
+                    question_index=q_idx,
+                    version=version,
                 )
-                question_page.save()
 
-    def add_all_papers_in_qv_map(self, qv_map: Dict[int, Dict[int, int]]):
+    def add_all_papers_in_qv_map(
+        self, qv_map: Dict[int, Dict[int, int]], *, background: bool = True
+    ):
         """Build all the Paper and associated tables from the qv-map, but not the PDF files.
 
         Args:
             qv_map: For each paper give the question-version map.
                 Of the form `{paper_number: {q: v}}`
+        KWargs:
+            background: populate the datbase in the background, or, if false,
+                as a foreground process.
 
         Raises:
             PlomDependencyConflict: if there are papers already in the database.
@@ -178,7 +174,24 @@ class PaperCreatorService:
         if Paper.objects.filter().exists():
             raise PlomDependencyConflict("Already papers in the database.")
 
-        self.populate_whole_db_huey_wrapper(qv_map)
+        # TODO - have background / foreground kwarg
+        if background:
+            self.populate_whole_db_huey_wrapper(qv_map)
+        else:
+            id_page_number = SpecificationService.get_id_page_number()
+            dnm_page_numbers = SpecificationService.get_dnm_pages()
+            question_page_numbers = SpecificationService.get_question_pages()
+            for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
+                self._create_single_paper_from_qvmapping_and_pages(
+                    paper_number,
+                    qv_row,
+                    id_page_number=id_page_number,
+                    dnm_page_numbers=dnm_page_numbers,
+                    question_page_numbers=question_page_numbers,
+                )
+                if idx % 16 == 0:
+                    print(f"Added {idx} of {len(qv_map)} papers")
+            print(f"Added all {len(qv_map)} papers")
 
     def populate_whole_db_huey_wrapper(self, qv_map: Dict[int, Dict[int, int]]) -> None:
         # TODO - add seatbelt logic here
@@ -193,9 +206,17 @@ class PaperCreatorService:
         print(f"Just enqueued Huey populate-database task id={res.id}")
         PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
 
-    def remove_all_papers_from_db(self) -> None:
+    def remove_all_papers_from_db(self, *, background: bool = True) -> None:
         assert_can_modify_qv_mapping_database()
-        self.evacuate_whole_db_huey_wrapper()
+        if background:
+            self.evacuate_whole_db_huey_wrapper()
+        else:
+            with transaction.atomic():
+                DNMPage.objects.all().delete()
+                IDPage.objects.all().delete()
+                QuestionPage.objects.all().delete()
+            with transaction.atomic():
+                Paper.objects.all().delete()
 
     def evacuate_whole_db_huey_wrapper(self) -> None:
         # TODO - add seatbelt logic here

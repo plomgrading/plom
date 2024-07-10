@@ -64,7 +64,7 @@ class Command(BaseCommand):
         pcs = PaperCreatorService()
         qv_map = pqvs.get_pqv_map_dict()
         try:
-            pcs.add_all_papers_in_qv_map(qv_map)
+            pcs.add_all_papers_in_qv_map(qv_map, background=False)
         except ValueError as e:
             raise CommandError(e)
         self.stdout.write(f"Database populated with {len(qv_map)} test-papers.")
