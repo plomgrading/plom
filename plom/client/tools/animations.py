@@ -40,7 +40,7 @@ class AnimatingTempItemMixin:
 
     is_transcient_animation = True
 
-    def anim_init(self, scene) -> None:
+    def anim_init(self) -> None:
         """Initialize the animation, basically this is the init method.
 
         But the author doesn't grok multiple inheritance enough to do
@@ -48,7 +48,6 @@ class AnimatingTempItemMixin:
         in the class this mixin is mixed into.  It should be followed
         by a call to :method:`start`.
         """
-        self._scene = scene
         self.saveable = False
 
         # Crashes when calling our methods (probably b/c QGraphicsItem
@@ -73,13 +72,13 @@ class AnimatingTempItemMixin:
 
     def remove_from_scene(self) -> None:
         """Remove this item from the scene."""
-        log.debug(f"TmpAnimItem: removing {self} from scene")
         if self.scene() is None:
             # its already been removed, or maybe the scene did not survive until
             # the end of the animation
+            log.debug(f"TmpAnimItem: {self} was already scene-less")
             return
-        # TODO: is there still a case where its been deleted already or is that same as above?
-        self._scene.removeItem(self)
+        log.debug(f"TmpAnimItem: removing {self} from scene")
+        self.scene().removeItem(self)
 
     def interp(self, t: float) -> None:
         raise NotImplementedError(
@@ -120,7 +119,7 @@ class AnimatingTempRectItemABC(QGraphicsRectItem, AnimatingTempItemMixin):
 
     def __init__(self, scene) -> None:
         super().__init__()
-        self.anim_init(scene)
+        self.anim_init()
         self.setPen(QPen(AnimationPenColour, AnimationPenThickness))
         self.setBrush(QBrush(AnimationFillColour))
 
@@ -141,7 +140,7 @@ class AnimatingTempPathItem(QGraphicsPathItem, AnimatingTempItemMixin):
 
     def __init__(self, scene, path, backward: bool = False, start: bool = True) -> None:
         super().__init__()
-        self.anim_init(scene)
+        self.anim_init()
         self.setPath(path)
         self.setPen(QPen(AnimationPenColour, AnimationPenThickness))
         if backward:
