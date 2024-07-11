@@ -117,7 +117,7 @@ class AnimatingTempRectItemABC(QGraphicsRectItem, AnimatingTempItemMixin):
             `setEndValue` of 1.
     """
 
-    def __init__(self, scene) -> None:
+    def __init__(self) -> None:
         super().__init__()
         self.anim_init()
         self.setPen(QPen(AnimationPenColour, AnimationPenThickness))
@@ -127,8 +127,10 @@ class AnimatingTempRectItemABC(QGraphicsRectItem, AnimatingTempItemMixin):
 class AnimatingTempPathItem(QGraphicsPathItem, AnimatingTempItemMixin):
     """New-style animated path.
 
+    You can use this as-is, to animate the thickness of the path.
+
     If you subclass this, call the superclass ``__init__`` like this:
-    ``super().__init__(scene, start=False)``.
+    ``super().__init__(start=False)``.
     Then at the end of your ``__init__`` function you must start the
     animation by calling `self.
 
@@ -138,7 +140,7 @@ class AnimatingTempPathItem(QGraphicsPathItem, AnimatingTempItemMixin):
             `setEndValue` of 2.
     """
 
-    def __init__(self, scene, path, backward: bool = False, start: bool = True) -> None:
+    def __init__(self, path, backward: bool = False, start: bool = True) -> None:
         super().__init__()
         self.anim_init()
         self.setPath(path)

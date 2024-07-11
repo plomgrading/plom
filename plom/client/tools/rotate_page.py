@@ -27,7 +27,7 @@ class CommandRotatePage(QUndoCommand):
         img = self.scene.underImage.images[self.page_image_idx]
         r2 = img.mapRectToScene(img.boundingRect())
         # temporary animation, removes itself when done
-        self.scene.addItem(TmpAnimRotatingRectItem(self.scene, self.degrees, r1, r2))
+        self.scene.addItem(TmpAnimRotatingRectItem(self.degrees, r1, r2))
 
     def undo(self):
         img = self.scene.underImage.images[self.page_image_idx]
@@ -36,12 +36,12 @@ class CommandRotatePage(QUndoCommand):
         img = self.scene.underImage.images[self.page_image_idx]
         r2 = img.mapRectToScene(img.boundingRect())
         # temporary animation, removes itself when done
-        self.scene.addItem(TmpAnimRotatingRectItem(self.scene, -self.degrees, r1, r2))
+        self.scene.addItem(TmpAnimRotatingRectItem(-self.degrees, r1, r2))
 
 
 class TmpAnimRotatingRectItem(AnimatingTempRectItemABC):
-    def __init__(self, scene, degrees: int, r1: QRectF, r2: QRectF) -> None:
-        super().__init__(scene)
+    def __init__(self, degrees: int, r1: QRectF, r2: QRectF) -> None:
+        super().__init__()
         self.anim.setDuration(Duration)
         self.r1 = r1
         self.r2 = r2
