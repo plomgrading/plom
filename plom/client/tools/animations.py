@@ -12,7 +12,7 @@ from plom.client.tools import log
 
 # rough length of animations take in milliseconds: some might be shorter,
 # some longer but they will be scaled by this value.
-AnimationDuration: int = 1000
+AnimationDuration: int = 200
 
 AnimationPenColour = QColor(8, 232, 222, 128)
 AnimationPenThickness = 8
