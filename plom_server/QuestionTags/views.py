@@ -9,6 +9,7 @@ from QuestionTags.services import QuestionTagService
 from .models import TmpAbstractQuestion, PedagogyTag
 from .forms import AddTagForm, RemoveTagForm
 from django.http import JsonResponse
+from plom.tagging import plom_valid_tag_text_description
 
 
 class QTagsLandingView(ListView):
@@ -27,6 +28,7 @@ class QTagsLandingView(ListView):
         ).all()
         context["add_tag_form"] = AddTagForm()
         context["remove_tag_form"] = RemoveTagForm()
+        context["tagging_rulez"] = plom_valid_tag_text_description
         return context
 
     def post(self, request, *args, **kwargs):

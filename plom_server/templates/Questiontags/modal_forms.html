@@ -22,9 +22,7 @@
                 <form id="createTagForm" method="post" action="{% url 'create_tag' %}">
                     {% csrf_token %}
                     <div class="form-group">
-                        <p>
-                            Tag names can only contain letters, numbers, and the following special characters: _ - + : ; @. Spaces are not allowed.
-                        </p>
+                        <p>Tag name rules: {{ tagging_rulez|safe }}</p>
                         <label for="tagName">Tag Name</label>
                         <input type="text" class="form-control" id="tagName" name="tagName" required>
                     </div>
@@ -99,9 +97,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <p>
-                            Tag names can only contain letters, numbers, and the following special characters: _ - + : ; @. Spaces are not allowed.
-                        </p>
+                        <p>Tag name rules: {{ tagging_rulez|safe }}</p>
                         <label for="tagName_edit">Tag Name</label>
                         <input type="text"
                                class="form-control"

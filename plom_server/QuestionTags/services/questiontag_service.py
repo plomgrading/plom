@@ -2,7 +2,6 @@
 # Copyright (C) 2024 Elisa Pan
 
 from QuestionTags.models import TmpAbstractQuestion, PedagogyTag, QuestionTagLink
-from django.shortcuts import get_object_or_404
 from django.db.utils import IntegrityError
 from plom.tagging import is_valid_tag_text
 
@@ -75,8 +74,11 @@ class QuestionTagService:
         Returns:
             None on success or a string describing the error encountered.
         """
+        tag = PedagogyTag.objects.filter(id=tag_id).first()
+        if not tag:
+            return "Tag not found."
+
         try:
-            tag = get_object_or_404(PedagogyTag, id=tag_id)
             tag.delete()
             return None
         except Exception as e:
@@ -97,14 +99,14 @@ class QuestionTagService:
         if not is_valid_tag_text(tag_name):
             return f"Tag name '{tag_name}' contains invalid characters."
 
+        tag = PedagogyTag.objects.filter(id=tag_id).first()
+        if not tag:
+            return "Tag not found."
+
+        if PedagogyTag.objects.filter(tag_name=tag_name).exclude(id=tag_id).exists():
+            return f"A tag with the name '{tag_name}' already exists."
+
         try:
-            tag = get_object_or_404(PedagogyTag, id=tag_id)
-            if (
-                PedagogyTag.objects.filter(tag_name=tag_name)
-                .exclude(id=tag_id)
-                .exists()
-            ):
-                return f"A tag with the name '{tag_name}' already exists."
             tag.tag_name = tag_name
             tag.text = text
             tag.save()
@@ -122,8 +124,11 @@ class QuestionTagService:
         Returns:
             None on success or a string describing the error encountered.
         """
+        question_tag = QuestionTagLink.objects.filter(id=question_tag_id).first()
+        if not question_tag:
+            return "Question tag link not found."
+
         try:
-            question_tag = get_object_or_404(QuestionTagLink, id=question_tag_id)
             question_tag.delete()
             return None
         except Exception as e:
