@@ -23,7 +23,7 @@ pandas==2.0.3
 passlib==1.7.4
 Pillow==10.3.0
 platformdirs==4.2.2
-pymupdf==1.24.5
+pymupdf==1.24.7
 PyMySQL==1.1.1
 pyspellchecker==0.8.1
 requests==2.32.3
