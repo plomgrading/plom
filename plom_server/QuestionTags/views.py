@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
 
-from django.shortcuts import redirect, get_object_or_404, render
+from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from Papers.services import SpecificationService
 from QuestionTags.services import QuestionTagService
 from .models import TmpAbstractQuestion, PedagogyTag
 from .forms import AddTagForm, RemoveTagForm
+from django.http import JsonResponse
 
 
 class QTagsLandingView(ListView):
@@ -35,7 +36,7 @@ class QTagsLandingView(ListView):
                 question_index = form.cleaned_data["question_index"]
                 tag_id = form.cleaned_data["tag_id"].id
                 tag = get_object_or_404(PedagogyTag, id=tag_id)
-                QuestionTagService.add_question_tag(
+                QuestionTagService.add_question_tag_link(
                     question_index, [tag.tag_name], request.user
                 )
         elif "remove_tag" in request.POST:
@@ -46,14 +47,18 @@ class QTagsLandingView(ListView):
         return redirect(reverse("qtags_landing"))
 
 
-class AddQuestionTagView(CreateView):
+class AddQuestionTagLinkView(CreateView):
     template_name = "Questiontags/qtags_landing.html"
 
     def post(self, request, *args, **kwargs):
         question_index = request.POST.get("questionIndex")
         tag_names = request.POST.getlist("tagName")
-        QuestionTagService.add_question_tag(question_index, tag_names, request.user)
-        return redirect(reverse("qtags_landing"))
+        error_message = QuestionTagService.add_question_tag_link(
+            question_index, tag_names, request.user
+        )
+        if error_message:
+            return JsonResponse({"error": error_message})
+        return JsonResponse({"success": True})
 
 
 class CreateTagView(CreateView):
@@ -64,18 +69,8 @@ class CreateTagView(CreateView):
         text = request.POST.get("text")
         error_message = QuestionTagService.create_tag(tag_name, text, request.user)
         if error_message:
-            context = {
-                "error_message": error_message,
-                "add_tag_form": AddTagForm(),
-                "remove_tag_form": RemoveTagForm(),
-                "tags": PedagogyTag.objects.all(),
-                "question_tags": TmpAbstractQuestion.objects.prefetch_related(
-                    "questiontaglink_set__tag"
-                ).all(),
-                "question_label_triple": SpecificationService.get_question_html_label_triples(),
-            }
-            return render(request, self.template_name, context)
-        return redirect(reverse("qtags_landing"))
+            return JsonResponse({"error": error_message})
+        return JsonResponse({"success": True})
 
 
 class DeleteTagView(DeleteView):
@@ -94,5 +89,7 @@ class EditTagView(UpdateView):
         tag_id = request.POST.get("tag_id")
         tag_name = request.POST.get("tagName")
         text = request.POST.get("text")
-        QuestionTagService.edit_tag(tag_id, tag_name, text)
-        return redirect(reverse("qtags_landing"))
+        error_message = QuestionTagService.edit_tag(tag_id, tag_name, text)
+        if error_message:
+            return JsonResponse({"error": error_message})
+        return JsonResponse({"success": True})

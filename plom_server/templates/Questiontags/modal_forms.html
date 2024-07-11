@@ -22,6 +22,9 @@
                 <form id="createTagForm" method="post" action="{% url 'create_tag' %}">
                     {% csrf_token %}
                     <div class="form-group">
+                        <p>
+                            Tag names can only contain letters, numbers, and the following special characters: _ - + : ; @. Spaces are not allowed.
+                        </p>
                         <label for="tagName">Tag Name</label>
                         <input type="text" class="form-control" id="tagName" name="tagName" required>
                     </div>
@@ -96,6 +99,9 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <p>
+                            Tag names can only contain letters, numbers, and the following special characters: _ - + : ; @. Spaces are not allowed.
+                        </p>
                         <label for="tagName_edit">Tag Name</label>
                         <input type="text"
                                class="form-control"
@@ -140,3 +146,53 @@
         </div>
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const editTagForm = document.getElementById('editTagForm');
+        const createTagForm = document.getElementById('createTagForm');
+        const errorMessageElementEdit = document.createElement('div');
+        const errorMessageElementCreate = document.createElement('div');
+        errorMessageElementEdit.classList.add('alert', 'alert-danger', 'mt-2');
+        errorMessageElementCreate.classList.add('alert', 'alert-danger', 'mt-2');
+        editTagForm.appendChild(errorMessageElementEdit);
+        createTagForm.appendChild(errorMessageElementCreate);
+        errorMessageElementEdit.style.display = 'none';
+        errorMessageElementCreate.style.display = 'none';
+    
+        const handleFormSubmission = (form, errorMessageElement) => {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const formData = new FormData(form);
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        errorMessageElement.textContent = data.error;
+                        errorMessageElement.style.display = 'block';
+                    } else {
+                        errorMessageElement.style.display = 'none';
+                        // Close the modal and optionally refresh the page or update the tag list
+                        if (form.id === 'editTagForm') {
+                            $('#editTagModal').modal('hide');
+                        } else {
+                            $('#createTagModal').modal('hide');
+                        }
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            });
+        };
+    
+        handleFormSubmission(editTagForm, errorMessageElementEdit);
+        handleFormSubmission(createTagForm, errorMessageElementCreate);
+    });
+</script>
