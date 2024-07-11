@@ -409,10 +409,11 @@ count-no-docstring:
     - EXCEPTIONS="D101,D102,D103,D104,D106"
     - ruff check --select $EXCEPTIONS --exit-zero
     - HOWMANY=`ruff check --select $EXCEPTIONS --exit-zero | grep "Found .* errors" | grep -o "[0-9]*"`
+    - echo $EXCEPTIONS
     - ruff check --select $EXCEPTIONS --statistics --exit-zero
     - echo "Total $HOWMANY things without docstrings, please don't increase it"
     # Dear hackers: please try to decrease this number
-    - bash -c "[[ $HOWMANY -le 1644 ]]"
+    - bash -c "[[ $HOWMANY -le 1642 ]]"
   allow_failure: true
 
 
