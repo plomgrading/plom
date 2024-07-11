@@ -468,24 +468,21 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, *, which=None):
             student_name = x["name"]
             print(f"{f.name} - scribbled using {student_number} {student_name}")
 
-        # TODO: could do `with fitz.open(f) as pdf_document:`
-        pdf_document = fitz.open(f)
+        with fitz.open(f) as pdf_document:
+            if f not in named_papers_paths:
+                # TODO: use spec.IDpage
+                scribble_name_and_id(pdf_document, student_number, student_name)
 
-        if f not in named_papers_paths:
-            # TODO: use spec.IDpage
-            scribble_name_and_id(pdf_document, student_number, student_name)
+            # TODO: should match the ID page and DNM pages from spec settings
+            scribble_pages(pdf_document)
 
-        # TODO: should match the ID page and DNM pages from spec settings
-        scribble_pages(pdf_document)
+            # delete last page from the first test
+            if index == 0:
+                pdf_document.delete_page(-1)
+                print(f"Deleting last page of test {f}")
 
-        # delete last page from the first test
-        if index == 0:
-            pdf_document.delete_page(-1)
-            print(f"Deleting last page of test {f}")
-
-        # We then add the pdfs into the document collection
-        all_pdf_documents.insert_pdf(pdf_document)
-        pdf_document.close()
+            # We then add the pdfs into the document collection
+            all_pdf_documents.insert_pdf(pdf_document)
 
         # For a comprehensive test, we will add some extrapages with low probability
         if random.random() < extra_page_probability:
@@ -551,16 +548,18 @@ def make_garbage_pages(pdf_file, number_of_garbage_pages=2):
     """
     green = [0, 0.75, 0]
 
-    doc = fitz.open(pdf_file)
-    print("Doc has {} pages".format(len(doc)))
-    for _ in range(number_of_garbage_pages):
-        garbage_page_index = random.randint(-1, len(doc))
-        print(f"Insert garbage page at garbage_page_index={garbage_page_index}")
-        doc.insert_page(
-            garbage_page_index, text="This is a garbage page", fontsize=18, color=green
-        )
-    doc.saveIncr()
-    doc.close()
+    with fitz.open(pdf_file) as doc:
+        print("Doc has {} pages".format(len(doc)))
+        for _ in range(number_of_garbage_pages):
+            garbage_page_index = random.randint(-1, len(doc))
+            print(f"Insert garbage page at garbage_page_index={garbage_page_index}")
+            doc.insert_page(
+                garbage_page_index,
+                text="This is a garbage page",
+                fontsize=18,
+                color=green,
+            )
+        doc.saveIncr()
 
 
 def make_colliding_pages(paper_dir, outfile):
@@ -582,21 +581,20 @@ def make_colliding_pages(paper_dir, outfile):
 
     papers_paths = sorted(paper_dir.glob("exam_*.pdf"))
     for file_name in papers_paths[1:3]:  # just grab papers 2 and 3.
-        pdf_document = fitz.open(file_name)
-        test_length = len(pdf_document)
-        colliding_page_index = random.randint(-1, len(all_pdf_documents))
-        print(
-            "Insert colliding page at colliding_page_index={}".format(
-                colliding_page_index
+        with fitz.open(file_name) as pdf_document:
+            test_length = len(pdf_document)
+            colliding_page_index = random.randint(-1, len(all_pdf_documents))
+            print(
+                "Insert colliding page at colliding_page_index={}".format(
+                    colliding_page_index
+                )
             )
-        )
-        all_pdf_documents.insert_pdf(
-            pdf_document,
-            from_page=test_length - 1,
-            to_page=test_length - 1,
-            start_at=colliding_page_index,
-        )
-        pdf_document.close()
+            all_pdf_documents.insert_pdf(
+                pdf_document,
+                from_page=test_length - 1,
+                to_page=test_length - 1,
+                start_at=colliding_page_index,
+            )
         excess = all_pdf_documents[colliding_page_index].insert_textbox(
             fitz.Rect(100, 100, 500, 500),
             "I was dropped on the floor and rescanned.",
