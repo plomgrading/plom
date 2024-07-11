@@ -30,7 +30,7 @@
                     </div>
                     <div class="form-group">
                         <label for="text">Description</label>
-                        <input type="text" class="form-control" id="text" name="text" required>
+                        <textarea class="form-control" id="text" name="text" rows="4" required></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">Create</button>
                 </form>
@@ -111,7 +111,7 @@
                     </div>
                     <div class="form-group">
                         <label for="text_edit">Description</label>
-                        <input type="text" class="form-control" id="text_edit" name="text" required>
+                        <textarea class="form-control" id="text_edit" name="text" rows="4" required></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                 </form>
@@ -158,7 +158,7 @@
         createTagForm.appendChild(errorMessageElementCreate);
         errorMessageElementEdit.style.display = 'none';
         errorMessageElementCreate.style.display = 'none';
-    
+
         const handleFormSubmission = (form, errorMessageElement) => {
             form.addEventListener('submit', function(event) {
                 event.preventDefault();
@@ -177,7 +177,6 @@
                         errorMessageElement.style.display = 'block';
                     } else {
                         errorMessageElement.style.display = 'none';
-                        // Close the modal and optionally refresh the page or update the tag list
                         if (form.id === 'editTagForm') {
                             $('#editTagModal').modal('hide');
                         } else {
@@ -191,7 +190,7 @@
                 });
             });
         };
-    
+
         handleFormSubmission(editTagForm, errorMessageElementEdit);
         handleFormSubmission(createTagForm, errorMessageElementCreate);
     });
