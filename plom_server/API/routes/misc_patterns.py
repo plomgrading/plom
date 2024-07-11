@@ -32,7 +32,7 @@ class MiscURLPatterns:
             path("info/server/", ServerInfo.as_view(), name="api_server_info"),
             path("info/exam/", ExamInfo.as_view(), name="api_exam_info"),
             path("info/spec/", GetSpecification.as_view(), name="api_info_spec"),
-            path("info/user/<str:usr>", UserRole.as_view(), name="api_user_role"),
+            path("info/user/<str:username>", UserRole.as_view(), name="api_user_role"),
             path(
                 "maxmark/<int:question>",
                 QuestionMaxMark.as_view(),

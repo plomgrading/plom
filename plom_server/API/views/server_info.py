@@ -101,8 +101,8 @@ class UserRole(APIView):
         role = self._get_user_role(username)
         return HttpResponse(role, content_type="text/plain")
 
-    def _get_user_role(self, usr: str) -> str | None:
-        user = User.objects.get(username__iexact=usr)
+    def _get_user_role(self, username: str) -> str | None:
+        user = User.objects.get(username__iexact=username)
         group = user.groups.values_list("name", flat=True)
         if "lead_marker" in group:
             return "lead_marker"
