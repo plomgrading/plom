@@ -74,8 +74,7 @@ class BuildStudentReportView(ManagerRequiredView):
             input = student_report_form.cleaned_data["input"]
 
             if choice == "StudentID":
-                des = DataExtractionService()
-                student_df = des.get_student_data()
+                student_df = DataExtractionService().get_student_data()
                 student_df_filtered = student_df[student_df["StudentID"] == input]
                 if student_df_filtered.empty:
                     messages.info(
