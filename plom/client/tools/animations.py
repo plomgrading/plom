@@ -72,13 +72,15 @@ class AnimatingTempItemMixin:
 
     def remove_from_scene(self) -> None:
         """Remove this item from the scene."""
-        if self.scene() is None:
+        # Classes this is mixed into must have a `scene` method
+        scene = self.scene()  # type: ignore[attr-defined]
+        if scene is None:
             # its already been removed, or maybe the scene did not survive until
             # the end of the animation
             log.debug(f"TmpAnimItem: {self} was already scene-less")
             return
         log.debug(f"TmpAnimItem: removing {self} from scene")
-        self.scene().removeItem(self)
+        scene.removeItem(self)
 
     def interp(self, t: float) -> None:
         raise NotImplementedError(
