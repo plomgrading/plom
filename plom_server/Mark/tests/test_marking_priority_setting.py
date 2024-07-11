@@ -26,7 +26,6 @@ class MarkingTaskPriorityTests(ConfigTestCase):
 
     def test_taskorder_update(self):
         """Assert that TaskOrderService.update_priority_ordering() updates MarkingTaskPriority."""
-
         strategy = MarkingTaskPriority.load().strategy
         self.assertEqual(strategy, MarkingTaskPriority.PAPER_NUMBER)
 
@@ -46,7 +45,6 @@ class MarkingTaskPriorityTests(ConfigTestCase):
 
     def test_set_priority_papernum(self):
         """Test that PAPER_NUMBER is the default strategy."""
-
         n_papers = Paper.objects.count()
         tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).prefetch_related(
             "paper"
@@ -65,7 +63,6 @@ class MarkingTaskPriorityTests(ConfigTestCase):
 
     def test_set_priority_shuffle(self):
         """Test setting priority to SHUFFLE."""
-
         marking_priority.set_marking_piority_shuffle()
         tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).prefetch_related(
             "paper"
@@ -81,7 +78,6 @@ class MarkingTaskPriorityTests(ConfigTestCase):
 
     def test_set_priority_custom(self):
         """Test setting priority to CUSTOM."""
-
         custom_order = {(1, 1): 9, (2, 1): 356, (3, 2): 0}
         marking_priority.set_marking_priority_custom(custom_order)
 

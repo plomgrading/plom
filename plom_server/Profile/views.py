@@ -22,7 +22,7 @@ class Profile(LoginRequiredMixin, View):
         """Get the current user profile page.
 
         Args:
-            request
+            request: an Http request.
 
         Returns:
             Profile HTML page.
@@ -44,7 +44,7 @@ class Profile(LoginRequiredMixin, View):
         """Edit the current user profile page.
 
         Args:
-            request
+            request: an Http request.
 
         Returns:
             Profile HTML page.

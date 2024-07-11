@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: FSFAP
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -35,10 +35,9 @@ os.environ["DJANGO_SETTINGS_MODULE"] = "Web_Plom.settings"
 # -- Project information -----------------------------------------------------
 
 project = "Plom"
-copyright = "2018-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
+copyright = "2018-2024 Andrew Rechnitzer, Colin B. Macdonald, et al"
 author = "Andrew Rechnitzer, Colin B. Macdonald, and others"
 
-# The full version, including alpha/beta/rc tags
 from plom import __version__
 
 release = __version__

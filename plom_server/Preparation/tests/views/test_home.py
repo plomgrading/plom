@@ -64,7 +64,7 @@ class PreparationLandingTests(TestCase):
         self.assertFalse(context["pqv_mapping_present"])
         self.assertFalse(context["can_qvmap"])
 
-        self.assertFalse(context["papers_built"])
+        self.assertFalse(context["all_papers_built"])
 
     def test_after_spec_made(self) -> None:
         """Test the seatbelts after a specification is saved.

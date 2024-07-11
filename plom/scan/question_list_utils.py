@@ -16,15 +16,14 @@ def _parse_questions(s: Any) -> Any:
     return s
 
 
-def check_question_list(s, n_questions):
+def check_question_list(s: str | list | tuple, n_questions: int) -> list[int]:
     """Make a canonical list of questions.
 
     Args:
         s (str/list/tuple): the input, can be a special string "all"
             or a string which we will parse.  Or an integer.  Or a list
             of ints.
-        pages (int): how many pages, used for checking input.
-        numquestins (int): how many questions total, used for checking
+        n_questions (int): how many questions total, used for checking
             input.
 
     Returns:

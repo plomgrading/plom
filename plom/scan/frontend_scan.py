@@ -56,7 +56,14 @@ from plom.scan import readQRCodes
 log = logging.getLogger("scan")
 
 
-def processScans(pdf_fname, *, msgr, gamma=False, extractbmp=False, demo=False):
+def processScans(
+    pdf_fname,
+    *,
+    msgr,
+    gamma: bool = False,
+    extractbmp: bool = False,
+    demo: bool = False,
+):
     """Process PDF file into images and read QRcodes.
 
     Args:
@@ -66,11 +73,10 @@ def processScans(pdf_fname, *, msgr, gamma=False, extractbmp=False, demo=False):
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
-        bundle_name (str/None): Override the bundle name (which is by
-            default is generated from the PDF filename).
-        gamma (bool):
-        extractbmp (bool):
-        demo (bool): do things appropriate for a demo such as lower quality
+        gamma: do gamma correction
+        extractbmp: whether to try extracting bitmaps instead of the default
+            of rendering the page image.
+        demo: do things appropriate for a demo such as lower quality
             or various simulated rotations.
 
     Returns:
@@ -152,9 +158,9 @@ def uploadImages(
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
-        do_unknowns (bool):
-        do_collisions (bool):
-        prompt (bool): ok to interactively prompt (default: True).
+        do_unknowns: upload any unknown images.
+        do_collisions: upload any colliding images.
+        prompt: ok to interactively prompt (default: True).
 
     Returns:
         None

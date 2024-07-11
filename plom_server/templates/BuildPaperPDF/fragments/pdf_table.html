@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Edith Coates
     Copyright (C) 2022 Brennen Chiu
-    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2023-2024 Colin B. Macdonald
     Copyright (C) 2024 Bryan Tanady
 -->
@@ -85,11 +85,6 @@
                 <td>
                     {{ task.status }}
                     <div class="spinner-grow spinner-grow-sm text-secondary"></div>
-                </td>
-                <td>
-                    <a class="btn btn-danger"
-                       hx-post="{% url 'cancel_one_PDF' task.paper_number %}"
-                       hx-target="#pdf_table">Cancel</a>
                 </td>
             {% elif task.status == 'Running' %}
                 <td>

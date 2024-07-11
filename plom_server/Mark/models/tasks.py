@@ -4,10 +4,11 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 from django.db import models
 
-from Base.models import BaseTask, Tag, SingletonBaseModel
+from Base.models import BaseTask, Tag, SingletonABCModel
 from Papers.models import Paper
 
 
@@ -59,7 +60,7 @@ class MarkingTask(BaseTask):
         )
 
 
-class MarkingTaskPriority(SingletonBaseModel):
+class MarkingTaskPriority(SingletonABCModel):
     """Represents the current strategy for ordering tasks.
 
     Strategy is an enum of PAPER_NUMBER, SHUFFLE, or CUSTOM. The state of
@@ -77,6 +78,14 @@ class MarkingTaskPriority(SingletonBaseModel):
         null=False, choices=StrategyChoices.choices, default=PAPER_NUMBER
     )
     modified = models.BooleanField(default=False, null=False)
+
+    @classmethod
+    def load(cls):
+        """Return the singleton instance of the MarkingTaskPriority model."""
+        obj, created = cls.objects.get_or_create(
+            pk=1, defaults={"strategy": cls.PAPER_NUMBER, "modified": False}
+        )
+        return obj
 
 
 class MarkingTaskTag(Tag):

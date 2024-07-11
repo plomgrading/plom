@@ -19,6 +19,9 @@ from django.db import transaction
 from ..models import StagingStudent
 from ..services import PrenameSettingService
 
+from Preparation.services.preparation_dependency_service import (
+    assert_can_modify_classlist,
+)
 
 log = logging.getLogger("ClasslistService")
 
@@ -73,9 +76,14 @@ class StagingStudentService:
         return txt
 
     @transaction.atomic()
-    def add_student(self, student_id, student_name, paper_number=None):
-        # will raise an integrity error if id not unique
+    def _add_student(self, student_id, student_name, paper_number=None):
+        """Add a single student to the staging classlist.
 
+        Note - does not check dependencies.
+
+        Raises:
+            IntegrityException: if student-id is not unique.
+        """
         s_obj = StagingStudent(student_id=student_id, student_name=student_name)
         # set the paper_number if present
         if paper_number:
@@ -84,12 +92,25 @@ class StagingStudentService:
 
     @transaction.atomic()
     def remove_all_students(self):
+        """Remove all the students from the staging classlist.
+
+        Raises:
+            PlomDependencyConflict: if dependencies not met.
+        """
+        assert_can_modify_classlist()
         StagingStudent.objects.all().delete()
 
     @transaction.atomic()
     def validate_and_use_classlist_csv(
         self, in_memory_csv_file: File, ignore_warnings: bool = False
     ) -> tuple[bool, list[dict[str, Any]]]:
+        """Validate and store the classlist from the in-memory file.
+
+        Raises:
+            PlomDependencyConflict: If dependencies not met.
+        """
+        assert_can_modify_classlist()
+
         """Read the in-memory csv file, validate it and use if possible."""
         from plom.create.classlistValidator import PlomClasslistValidator
 
@@ -121,7 +142,7 @@ class StagingStudentService:
                 # need to get that value or stick in a None.
                 # related to #2274 and MR <<TODO>>
                 for row in csv_reader:
-                    self.add_student(
+                    self._add_student(
                         row["id"], row["name"], row.get("paper_number", None)
                     )
 

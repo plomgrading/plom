@@ -91,7 +91,7 @@ class ScanService:
         Keyword Args:
             force_render: Don't try to extract large bitmaps; always
                 render the page.
-            debug_jpeg (bool): off by default.  If True then we make some
+            debug_jpeg: off by default.  If True then we make some
                 rotations by non-multiples of 90, and save some
                 low-quality jpegs.
 
@@ -141,7 +141,7 @@ class ScanService:
             number_of_pages (int): the number of pages in the pdf
 
         Keyword Args:
-            debug_jpeg (bool): off by default.  If True then we make some rotations
+            debug_jpeg: off by default.  If True then we make some rotations
                 by non-multiples of 90, and save some low-quality jpegs.
 
         Returns:
@@ -182,7 +182,7 @@ class ScanService:
             number_of_chunks: the number of page-splitting jobs to run;
                 each huey-page-split-task will process approximately
                 number_of_pages_in_bundle / number_of_chunks pages.
-            debug_jpeg (bool): off by default.  If True then we make some rotations
+            debug_jpeg: off by default.  If True then we make some rotations
                 by non-multiples of 90, and save some low-quality jpegs.
 
         Returns:
@@ -292,18 +292,8 @@ class ScanService:
         except ObjectDoesNotExist:
             return None
 
-    @transaction.atomic
-    def get_bundle_from_timestamp(self, timestamp: float) -> StagingBundle:
-        return StagingBundle.objects.get(
-            timestamp=timestamp,
-        )
-
-    def get_bundle_pk_from_timestamp(self, timestamp: float) -> int:
-        return StagingBundle.objects.get(
-            timestamp=timestamp,
-        ).pk
-
     def get_bundle_from_pk(self, pk: int) -> StagingBundle:
+        """Return a StagingBundle object from its pk."""
         return StagingBundle.objects.get(pk=pk)
 
     @transaction.atomic
@@ -531,7 +521,7 @@ class ScanService:
         Args:
             bundle_pk: primary key of bundle DB object.
 
-        Keyword args:
+        Keyword Args:
             papernum (int): the number of the test-paper
             pages_to_question_indices: a list same length
                 as the bundle, each element is variable-length list
@@ -1387,6 +1377,8 @@ def huey_parent_split_bundle_task(
             pages in the bundle.
 
     Keyword Args:
+        debug_jpeg: off by default.  If True then we make some rotations by
+            non-multiplies of 90, and save some low-quality jpegs.
         tracker_pk: a key into the database for anyone interested in
             our progress.
         task: includes our ID in the Huey process queue.
@@ -1580,7 +1572,7 @@ def huey_child_get_page_images(
         basedir (pathlib.Path): were to put the image
 
     Keyword Args:
-        debug_jpeg (bool): off by default.  If True then we make some rotations by
+        debug_jpeg: off by default.  If True then we make some rotations by
             non-multiplies of 90, and save some low-quality jpegs.
 
     Returns:

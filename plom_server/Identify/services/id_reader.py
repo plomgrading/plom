@@ -554,6 +554,7 @@ class IDBoxProcessorService:
 
         Args:
             image_file_paths: A dictionary  {paper_number: path_to_id_box_image_file}
+            num_digits: how many digits in a student ID.
 
         Returns:
             dict: A dictionary which gives the probability that the number in the ID on a given paper is a particular digit.
@@ -697,9 +698,9 @@ class IDBoxProcessorService:
         """Compute the cost matrix between list of tests and list of student IDs.
 
         Args:
-            test_numbers (list): int, the ones we want to match.
-            probabilities (dict): keyed by testnum (int), to list of lists of floats.
+            paper_numbers (list): int, the ones we want to match.
             student_IDs (list): A list of student ID numbers
+            probabilities (dict): keyed by papernum (int), to list of lists of floats.
 
         Returns:
             list: list of lists of floats representing a matrix.

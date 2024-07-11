@@ -8,13 +8,25 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
+import csv
+import io
 import html
+import json
 import logging
+import sys
+import tomlkit
 from typing import Any
+
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
+
 
 from operator import itemgetter
 
@@ -66,8 +78,6 @@ def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
 class RubricService:
     """Class to encapsulate functions for creating and modifying rubrics."""
 
-    __valid_kinds = ("absolute", "neutral", "relative")
-
     def create_rubric(
         self, rubric_data: dict[str, Any], *, creating_user: User | None = None
     ) -> dict[str, Any]:
@@ -100,15 +110,15 @@ class RubricService:
         self, rubric_data: dict[str, Any], *, creating_user: User | None = None
     ) -> Rubric:
         rubric_data = rubric_data.copy()
-        # TODO: add a function to check if a rubric_data is valid/correct
-        self.check_rubric(rubric_data)
 
-        username = rubric_data.pop("username")
-        try:
-            user = User.objects.get(username=username)
-            rubric_data["user"] = user.pk
-        except ObjectDoesNotExist as e:
-            raise ValueError(f"User {username} does not exist.") from e
+        if "user" not in rubric_data.keys():
+            username = rubric_data.pop("username")
+            try:
+                user = User.objects.get(username=username)
+                rubric_data["user"] = user.pk
+                rubric_data["modified_by_user"] = user.pk
+            except ObjectDoesNotExist as e:
+                raise ValueError(f"User {username} does not exist.") from e
 
         s = SettingsModel.load()
         if creating_user is None:
@@ -123,15 +133,14 @@ class RubricService:
             # TODO: consult per-user permissions (not implemented yet)
             pass
 
-        kind = rubric_data["kind"]
-        if kind not in RubricService.__valid_kinds:
-            raise ValidationError(f"Cannot make rubric of kind '{kind}'.")
-
+        rubric_data["latest"] = True
         serializer = RubricSerializer(data=rubric_data)
-        serializer.is_valid()
-        serializer.save()
-        rubric_obj = serializer.instance
-        return rubric_obj
+        if serializer.is_valid():
+            serializer.save()
+            rubric_obj = serializer.instance
+            return rubric_obj
+        else:
+            raise ValidationError(serializer.errors)
 
     @transaction.atomic
     def modify_rubric(
@@ -147,7 +156,7 @@ class RubricService:
             key: a string that uniquely identify a specific rubric.
                 Generally not the same as the "private key" used
                 internally, although this could change in the future.
-            rubric_data: data for a rubric submitted by a web request.
+            new_rubric_data: data for a rubric submitted by a web request.
                 This input will not be modified by this call.
 
         Keyword Args:
@@ -167,23 +176,32 @@ class RubricService:
             PlomConflict: the new data is too old; someone else modified.
         """
         new_rubric_data = new_rubric_data.copy()
-        user = User.objects.get(username=new_rubric_data.pop("username"))
-        new_rubric_data["user"] = user.pk
+        username = new_rubric_data.pop("username")
 
-        kind = new_rubric_data["kind"]
-        if kind not in RubricService.__valid_kinds:
-            raise ValidationError(f"Cannot make rubric of kind '{kind}'.")
+        try:
+            user = User.objects.get(username=username)
+            new_rubric_data["user"] = user.pk
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"User {username} does not exist.") from e
 
-        rubric = Rubric.objects.filter(key=key).select_for_update().get()
+        try:
+            rubric = (
+                Rubric.objects.filter(key=key, latest=True).select_for_update().get()
+            )
+        except Rubric.DoesNotExist as e:
+            raise ValueError(f"Rubric {key} does not exist.") from e
 
         # default revision if missing from incoming data
         new_rubric_data.setdefault("revision", 0)
+
+        # incoming revision is not incremented to check if what the
+        # revision was based on is outdated
         if not new_rubric_data["revision"] == rubric.revision:
             # TODO: record who last modified and when
             raise PlomConflict(
-                f'Your rubric revision {new_rubric_data["revision"]} does not match '
-                f"database content (revision {rubric.revision}): most likely your "
-                "edits have collided with those of someone else."
+                f'The rubric your revision was based upon {new_rubric_data["revision"]} '
+                f"does not match database content (revision {rubric.revision}): "
+                f"most likely your  edits have collided with those of someone else."
             )
 
         # Generally, omitting modifying_user bypasses checks
@@ -213,11 +231,21 @@ class RubricService:
                 )
 
         new_rubric_data.pop("modified_by_username", None)
+
         if modifying_user is not None:
             new_rubric_data["modified_by_user"] = modifying_user.pk
+
         new_rubric_data["revision"] += 1
-        serializer = RubricSerializer(rubric, data=new_rubric_data)
-        serializer.is_valid()
+        new_rubric_data["latest"] = True
+        new_rubric_data["key"] = rubric.key
+        serializer = RubricSerializer(data=new_rubric_data)
+
+        if not serializer.is_valid():
+            raise ValidationError(serializer.errors)
+
+        rubric.latest = False
+        rubric.save()
+
         serializer.save()
         rubric_obj = serializer.instance
         return _Rubric_to_dict(rubric_obj)
@@ -247,21 +275,21 @@ class RubricService:
         return new_rubric_data
 
     def get_all_rubrics(self) -> QuerySet[Rubric]:
-        """Get all the rubrics lazily, so that lazy filtering is possible.
+        """Get all the rubrics (latest revisions) as a QuerySet, enabling further lazy filtering.
 
         See: https://docs.djangoproject.com/en/4.2/topics/db/queries/#querysets-are-lazy
 
         Returns:
             Lazy queryset of all rubrics.
         """
-        return Rubric.objects.all()
+        return Rubric.objects.filter(latest=True)
 
     def get_rubric_count(self) -> int:
-        """How many rubrics in total."""
-        return Rubric.objects.count()
+        """How many rubrics in total (excluding revisions)."""
+        return Rubric.objects.filter(latest=True).count()
 
     def get_rubric_by_key(self, rubric_key: str) -> Rubric:
-        """Get a rubric by its key/id.
+        """Get the latest rurbic revision by its key/id.
 
         Args:
             rubric_key: which rubric.  Note currently the key/id is not
@@ -271,7 +299,18 @@ class RubricService:
             The rubric object.  It is not "selected for update" so should
             be read-only.
         """
-        return Rubric.objects.get(key=rubric_key)
+        return Rubric.objects.get(key=rubric_key, latest=True)
+
+    def get_past_revisions_by_key(self, rubric_key: str) -> list[Rubric]:
+        """Get all earlier revisions of a rubric by the key, not including the latest one.
+
+        Args:
+            rubric_key: the key of the rubric.
+
+        Returns:
+            A list of rubrics with the specified key
+        """
+        return list(Rubric.objects.filter(key=rubric_key, latest=False).all())
 
     def get_all_paper_numbers_using_a_rubric(self, rubric_key: str) -> list[int]:
         """Get a list of paper number using the given rubric.
@@ -311,14 +350,14 @@ class RubricService:
         Returns:
             Key-value pairs representing the rubric.
         """
-        r = Rubric.objects.get(key=rubric_key)
+        r = Rubric.objects.get(key=rubric_key, latest=True)
         return _Rubric_to_dict(r)
 
     def init_rubrics(self, username: str) -> bool:
         """Add special rubrics such as deltas and per-question specific.
 
         Args:
-            Username to associate with the initialized rubrics.
+            username: which user to associate with the initialized rubrics.
 
         Returns:
             True if initialized or False if it was already initialized.
@@ -473,37 +512,27 @@ class RubricService:
         pane.data = data
         pane.save()
 
-    def check_rubric(self, rubric_data: dict[str, Any]) -> None:
-        """Check rubric data to ensure the data is consistent.
-
-        Args:
-            rubric_data: data for a rubric submitted by a web request.
-        """
-        # if rubric_data["kind"] not in ["relative", "neutral", "absolute"]:
-        #     raise ValidationError(f"Unrecognised rubric kind: {rubric_data.kind}")
-        pass
-
     def get_annotation_from_rubric(self, rubric: Rubric) -> QuerySet[Annotation]:
-        """Get the queryset of annotations that use this rubric.
+        """Get the QuerySet of Annotations that use this Rubric.
 
         Args:
-            Rubric instance
+            rubric: a Rubric object instance.
 
         Returns:
-            A query of Annotation instances
+            A query set of Annotation instances.
         """
         return rubric.annotations.all()
 
     def get_marking_tasks_with_rubric_in_latest_annotation(
         self, rubric: Rubric
     ) -> QuerySet[MarkingTask]:
-        """Get the queryset of marking tasks that use this rubric in their latest annotations.
+        """Get the QuerySet of MarkingTasks that use this Rubric in their latest annotations.
 
         Args:
-            Rubric instance
+            rubric: a Rubric object instance.
 
         Returns:
-            A query of MarkingTask instances
+            A query of MarkingTask instances.
         """
         return (
             MarkingTask.objects.filter(
@@ -575,3 +604,71 @@ class RubricService:
                 </tr>
             </table>
         """
+
+    def get_rubric_data(self, filetype: str, question: int | None) -> str:
+        """Get the rubric data as a file.
+
+        Args:
+            filetype: The type of file to generate. Supported file types are "json", "toml", and "csv".
+            question: The question ID to filter the rubric data. If None, all rubrics will be included.
+
+        Returns:
+            A string containing the rubric data from the specified file format.
+
+        Raises:
+            ValueError: If the specified file type is not supported.
+        """
+        rubrics = self.get_rubrics_as_dicts(question=question)
+
+        if filetype == "json":
+            if question is not None:
+                queryset = Rubric.objects.filter(question=question)
+            else:
+                queryset = Rubric.objects.all()
+            serializer = RubricSerializer(queryset, many=True)
+            data_string = json.dumps(serializer.data, indent="  ")
+        elif filetype == "toml":
+            for dictionary in rubrics:
+                filtered = {k: v for k, v in dictionary.items() if v is not None}
+                dictionary.clear()
+                dictionary.update(filtered)
+            data_string = tomlkit.dumps({"rubric": rubrics})
+        elif filetype == "csv":
+            f = io.StringIO()
+            writer = csv.DictWriter(f, fieldnames=rubrics[0].keys())
+            writer.writeheader()
+            writer.writerows(rubrics)
+            data_string = f.getvalue()
+        else:
+            raise ValueError(f"Unsupported file type: {filetype}")
+
+        return data_string
+
+    def update_rubric_data(self, data: str, filetype: str):
+        """Retrieves rubrics from a file.
+
+        Args:
+            data: The file object containing the rubrics.
+            filetype: The type of the file (json, toml, csv).
+
+        Returns:
+            A list of rubrics retrieved from the file.
+
+        Raises:
+            ValueError: If the file type is not supported.
+        """
+        if filetype == "json":
+            rubrics = json.loads(data)
+        elif filetype == "toml":
+            rubrics = tomllib.loads(data)["rubric"]
+        elif filetype == "csv":
+            f = io.StringIO(data)
+            reader = csv.DictReader(f)
+            rubrics = list(reader)
+        else:
+            raise ValueError(f"Unsupported file type: {filetype}")
+
+        service = RubricService()
+        for rubric in rubrics:
+            service.create_rubric(rubric)
+        return rubrics

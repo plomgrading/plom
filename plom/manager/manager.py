@@ -368,16 +368,17 @@ class Manager(QWidget):
         """Start a new Plom Manager window.
 
         Args:
-            Qapp (QApplication):
+            Qapp (QApplication): the application for whom we are opening
+                a window.
 
         Keyword Args:
             manager_msgr (ManagerMessenger/None): a connected ManagerMessenger.
                 Note that the plain 'ol Messenger will not work.  By default
                 or if `None` is passed, we'll make the user login or use
                 other kwargs.
-            server (str/None):
-            user (str/None):
-            password (str/None):
+            server (str/None): what server.
+            user (str/None): credientials.
+            password (str/None): credientials.
 
         Returns:
             None
@@ -603,8 +604,8 @@ class Manager(QWidget):
     # config tab stuff
 
     def refreshConfig(self):
-        check_mark = "\N{Check Mark}"
-        cross = "\N{Multiplication Sign}"
+        check_mark = "\N{CHECK MARK}"
+        cross = "\N{MULTIPLICATION SIGN}"
         try:
             spec = self.msgr.get_spec()
         except PlomServerNotReady as e:
@@ -811,10 +812,10 @@ class Manager(QWidget):
         self.refresh_scan_status_lists()
 
     def refresh_scan_status_lists(self):
-        I = self._refreshIList()
-        S = self._refreshSList()
-        countstr = str(I + S)
-        countstr += "*" if I != 0 else "\N{check mark}"
+        numI = self._refreshIList()
+        numS = self._refreshSList()
+        countstr = str(numI + numS)
+        countstr += "*" if numI != 0 else "\N{CHECK MARK}"
         self.ui.scanTabW.setTabText(
             self.ui.scanTabW.indexOf(self.ui.scanTab),
             f"&Scan Status ({countstr})",
@@ -1218,7 +1219,7 @@ class Manager(QWidget):
         self.ui.unknownTV.resizeColumnsToContents()
 
         countstr = str(len(unknowns))
-        countstr += "*" if countstr != "0" else "\N{Check Mark}"
+        countstr += "*" if countstr != "0" else "\N{CHECK MARK}"
         self.ui.scanTabW.setTabText(
             self.ui.scanTabW.indexOf(self.ui.unknownTab),
             f"&Unknown Pages ({countstr})",
@@ -1409,7 +1410,7 @@ class Manager(QWidget):
         self.ui.collideTV.resizeRowsToContents()
         self.ui.collideTV.resizeColumnsToContents()
         countstr = str(len(colDict.keys()))
-        countstr += "*" if countstr != "0" else "\N{Check Mark}"
+        countstr += "*" if countstr != "0" else "\N{CHECK MARK}"
         self.ui.scanTabW.setTabText(
             self.ui.scanTabW.indexOf(self.ui.collideTab),
             f"&Colliding Pages ({countstr})",
@@ -1600,7 +1601,7 @@ class Manager(QWidget):
         self.ui.danglingTV.resizeColumnsToContents()
 
         countstr = str(len(danglers))
-        countstr += "*" if countstr != "0" else "\N{Check Mark}"
+        countstr += "*" if countstr != "0" else "\N{CHECK MARK}"
         self.ui.scanTabW.setTabText(
             self.ui.scanTabW.indexOf(self.ui.dangleTab),
             f"Dan&gling Pages ({countstr})",
@@ -2544,8 +2545,8 @@ class Manager(QWidget):
         """Manage the tags of a task.
 
         Args:
-            paper_num (int/str):
-            question (int/str):
+            paper_num (int/str): paper number.
+            question (int/str): question idex.
 
         Keyword Args:
             parent (Window/None): Which window should be dialog's parent?

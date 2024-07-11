@@ -16,9 +16,9 @@ ansi_yellow = "\033[93m"
 ansi_red = "\033[91m"
 ansi_off = "\033[0m"
 warn_mark = "[" + ansi_yellow + "!" + ansi_off + "]"
-cross = "[" + ansi_red + "\N{Multiplication Sign}" + ansi_off + "]"
+cross = "[" + ansi_red + "\N{MULTIPLICATION SIGN}" + ansi_off + "]"
 question_mark = "[" + ansi_red + "?" + ansi_off + "]"
-check_mark = "[" + ansi_green + "\N{Check Mark}" + ansi_off + "]"
+check_mark = "[" + ansi_green + "\N{CHECK MARK}" + ansi_off + "]"
 
 
 @with_manager_messenger

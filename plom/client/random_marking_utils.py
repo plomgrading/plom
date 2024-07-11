@@ -74,9 +74,9 @@ class MockRubricWidget:
 
 
 class SceneParent(QWidget):
-    """This class is a cut-down annotator for mock-testing the PageScene."""
+    """This class is a cut-down Annotator for mock-testing the PageScene."""
 
-    def __init__(self, question, maxMark):
+    def __init__(self, question, maxMark, Qapp):
         super().__init__()
         self.view = PageView(self)
         self.ink = QPen(QColor("red"), 2)
@@ -84,9 +84,21 @@ class SceneParent(QWidget):
         self.maxMark = maxMark
         self.rubric_widget = MockRubricWidget()
         self.saveName = None
+        self._Qapp = Qapp
 
     def is_experimental(self):
         return False
+
+    def pause_to_process_events(self):
+        """Allow Qt's event loop to process events.
+
+        Typically we call this if we're in a loop of our own waiting
+        for something to happen which can only occur if we
+        """
+        self._Qapp.processEvents()
+
+    def rearrangePages(self):
+        pass
 
     def doStuff(self, src_img_data, saveName, maxMark, markStyle):
         self.saveName = Path(saveName)
@@ -204,13 +216,13 @@ def annotatePaper(
     question, maxMark, task, src_img_data, aname, tags, *, Qapp: QApplication
 ) -> tuple:
     print("Starting random marking to task {}".format(task))
-    annot = SceneParent(question, maxMark)
+    annot = SceneParent(question, maxMark, Qapp)
     annot.doStuff(src_img_data, aname, maxMark, random.choice([2, 3]))
     annot.doRandomAnnotations()
     # Issue #1391: settle annotation events, avoid races with QTimers
-    Qapp.processEvents()
+    annot.pause_to_process_events()
     time.sleep(0.25)
-    Qapp.processEvents()
+    annot.pause_to_process_events()
     return annot.doneAnnotating()
 
 
@@ -291,13 +303,13 @@ def do_random_marking_backend(
         remarking_counter += 1
 
 
-def build_random_rubrics(question, *, username, messenger) -> None:
+def build_random_rubrics(question_idx: int, *, username, messenger) -> None:
     """Push random rubrics into a server: only for testing/demo purposes.
 
     .. caution:: Do not use on a real production server.
 
     Args:
-        question (int)
+        question_idx: which question.
 
     Keyword Args:
         messenger: a messenger object already connected to the server.
@@ -315,14 +327,14 @@ def build_random_rubrics(question, *, username, messenger) -> None:
             "tags": "Random",
             "meta": "Randomness",
             "kind": "relative",
-            "question": question,
+            "question": question_idx,
             "username": username,
         }
         com = messenger.McreateRubric(com)
-        if question in positiveRubrics:
-            positiveRubrics[question].append(com)
+        if question_idx in positiveRubrics:
+            positiveRubrics[question_idx].append(com)
         else:
-            positiveRubrics[question] = [com]
+            positiveRubrics[question_idx] = [com]
     for d, t in negativeComments:
         com = {
             "value": int(d),
@@ -332,14 +344,14 @@ def build_random_rubrics(question, *, username, messenger) -> None:
             "tags": "Random",
             "meta": "Randomness",
             "kind": "relative",
-            "question": question,
+            "question": question_idx,
             "username": username,
         }
         com = messenger.McreateRubric(com)
-        if question in negativeRubrics:
-            negativeRubrics[question].append(com)
+        if question_idx in negativeRubrics:
+            negativeRubrics[question_idx].append(com)
         else:
-            negativeRubrics[question] = [com]
+            negativeRubrics[question_idx] = [com]
 
 
 def do_rando_marking(
@@ -359,9 +371,9 @@ def do_rando_marking(
     randomly selected tags.
 
     Args:
-        server (str)
-        user (str)
-        password (str)
+        server: which server.
+        user: credientials.
+        password: credientials.
 
     Keyword Args:
         partial: what percentage of papers to grade?

@@ -54,7 +54,7 @@ class MarkingTaskService:
             paper: a Paper instance, the test paper of the task.
             question_index: the question of the task, by 1-based index.
 
-        Keyword Args
+        Keyword Args:
             user: optional, User instance of user assigned to the task.
             copy_old_tags: copy any tags from the latest old task to the new task.
 
@@ -336,7 +336,7 @@ class MarkingTaskService:
             if ann[0] == "Rubric":
                 rubric_key = ann[3]
                 try:
-                    rubric = Rubric.objects.get(key=rubric_key)
+                    rubric = Rubric.objects.get(key=rubric_key, latest=True)
                 except ObjectDoesNotExist:
                     raise ValidationError(f"Invalid rubric key: {rubric_key}")
                 rubrics_used.append(rubric)
