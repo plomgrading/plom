@@ -57,6 +57,7 @@ from plom.plom_exceptions import (
     PlomExistingLoginException,
     PlomServerNotReady,
     PlomSSLError,
+    PlomNoServerSupportException,
 )
 from plom.messenger import Messenger, ManagerMessenger
 from plom.client import MarkerClient, IDClient
@@ -220,7 +221,10 @@ class Chooser(QDialog):
 
         tmpdir = tempfile.mkdtemp(prefix="plom_local_img_")
         self.Qapp.downloader = Downloader(tmpdir, msgr=self.messenger)
-        role = self.messenger.get_user_role()
+        try:
+            role = self.messenger.get_user_role()
+        except PlomNoServerSupport:
+            role = ""
 
         if which_subapp == "Manager":
             if not self.messenger.is_legacy_server():

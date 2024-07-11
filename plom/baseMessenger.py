@@ -446,16 +446,17 @@ class BaseMessenger:
             PlomSeriousException: something unexpected happened.
 
         Returns:
-            either of ["lead_marker", "marker", "scanner", "manager"] if the user
-            is recognized.
+            If it is legacy server, returns "". Otherwise returns
+            either of ["lead_marker", "marker", "scanner", "manager"]
+            if the user is recognized.
         """
+        if self.is_legacy_server():
+            return ""
+
         path = f"/info/user/{self.user}"
         with self.SRmutex:
             try:
-                response = self.get(
-                    path,
-                    json={"user": self.user, "token": self.token},
-                )
+                response = self.get_auth(path)
                 # throw errors when response code != 200.
                 response.raise_for_status()
                 return response.text

@@ -97,8 +97,8 @@ class UserRole(APIView):
             is recognized. Otherwise returns None.
     """
 
-    def get(self, request: Request, usr: str) -> HttpResponse:
-        role = self._get_user_role(usr)
+    def get(self, request: Request, *, username: str) -> HttpResponse:
+        role = self._get_user_role(username)
         return HttpResponse(role, content_type="text/plain")
 
     def _get_user_role(self, usr: str) -> str | None:
