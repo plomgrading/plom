@@ -980,9 +980,8 @@ class PageScene(QGraphicsScene):
             for x in self.items():
                 if getattr(x, "is_transcient_animation", False):
                     have_anim = True
-                    # force an early removal
+                    # force an early removal of the animation
                     self.removeItem(x)
-                    break
             if not have_anim:
                 break
             # wait a little bit, processing events
