@@ -17,7 +17,7 @@ from typing import Any
 
 # import pyqrcode
 import fitz
-from packaging import Version
+from packaging.version import Version
 import segno
 
 from plom.create import paperdir
