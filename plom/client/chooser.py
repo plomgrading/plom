@@ -223,7 +223,7 @@ class Chooser(QDialog):
         self.Qapp.downloader = Downloader(tmpdir, msgr=self.messenger)
         try:
             role = self.messenger.get_user_role()
-        except PlomNoServerSupportException as e:
+        except PlomNoServerSupportException:
             role = ""
 
         if which_subapp == "Manager":
