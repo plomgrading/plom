@@ -23,24 +23,23 @@ from ..forms import StudentMarksFilterForm
 class MarkingInformationView(ManagerRequiredView):
     """View for the Student Marks page."""
 
-    def __init__(self):
-        self.mts = MarkingTaskService()
-        self.sms = StudentMarkService()
-        self.smff = StudentMarksFilterForm()
-        self.tms = TaMarkingService()
-        self.des = DataExtractionService()
-        self.d3s = D3Service()
-
     template = "Finish/marking_landing.html"
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """Get the Student Marks HTML page."""
+        mts = MarkingTaskService()
+        sms = StudentMarkService()
+        d3s = D3Service()
+        des = DataExtractionService()
+        tms = TaMarkingService()
+
         context = self.build_context()
 
-        papers = self.sms.get_all_marks()
+        papers = sms.get_all_marks()
         n_questions = SpecificationService.get_n_questions()
         marked_question_counts = [
             [
-                self.mts.get_marking_progress(version=v, question=q_idx)
+                mts.get_marking_progress(version=v, question=q_idx)
                 for v in SpecificationService.get_list_of_versions()
             ]
             for q_idx in SpecificationService.get_question_indices()
@@ -49,29 +48,29 @@ class MarkingInformationView(ManagerRequiredView):
             total_times_spent,
             average_times_spent,
             std_times_spent,
-        ) = self.tms.all_marking_times_for_web(n_questions)
+        ) = tms.all_marking_times_for_web(n_questions)
 
         hours_estimate = [
-            self.tms.get_estimate_hours_remaining(qi)
+            tms.get_estimate_hours_remaining(qi)
             for qi in SpecificationService.get_question_indices()
         ]
 
-        total_tasks = self.mts.get_n_total_tasks()  # TODO: OUT_OF_DATE tasks? #2924
-        all_marked = self.sms.are_all_papers_marked() and total_tasks > 0
+        total_tasks = mts.get_n_total_tasks()  # TODO: OUT_OF_DATE tasks? #2924
+        all_marked = sms.are_all_papers_marked() and total_tasks > 0
 
         # histogram of grades per question
-        question_avgs = self.des.get_average_grade_on_all_questions()
+        question_avgs = des.get_average_grade_on_all_questions()
         grades_hist_data = json.dumps(
-            self.d3s.convert_stats_to_d3_hist_format(
+            d3s.convert_stats_to_d3_hist_format(
                 question_avgs, ylabel="Grade", title="Average Grade vs Question"
             )
         )
 
         # heatmap of correlation between questions
-        corr_df = self.des._get_question_correlation_heatmap_data()
+        corr_df = des._get_question_correlation_heatmap_data()
         # TODO: easily might've mixed up row/column here
         corr_heatmap_data = json.dumps(
-            self.d3s.convert_correlation_to_d3_heatmap_format(
+            d3s.convert_correlation_to_d3_heatmap_format(
                 corr_df.values,
                 title="Question correlation",
                 xlabels=corr_df.columns.to_list(),
@@ -89,7 +88,7 @@ class MarkingInformationView(ManagerRequiredView):
                 "average_times_spent": average_times_spent,
                 "std_times_spent": std_times_spent,
                 "all_marked": all_marked,
-                "student_marks_form": self.smff,
+                "student_marks_form": StudentMarksFilterForm(),
                 "hours_estimate": hours_estimate,
                 "grades_hist_data": grades_hist_data,
                 "corr_heatmap_data": corr_heatmap_data,
@@ -150,8 +149,8 @@ class MarkingInformationView(ManagerRequiredView):
 class MarkingInformationPaperView(ManagerRequiredView):
     """View for the Student Marks page as a JSON blob."""
 
-    sms = StudentMarkService()
-
     def get(self, request: HttpRequest, *, paper_num: int) -> JsonResponse:
-        marks_dict = self.sms.get_marks_from_paper(paper_num)
+        """Get the data for the Student Marks page as a JSON blob."""
+        sms = StudentMarkService()
+        marks_dict = sms.get_marks_from_paper(paper_num)
         return JsonResponse(marks_dict)
