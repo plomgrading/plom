@@ -248,7 +248,7 @@ class Chooser(QDialog):
             # store ref in Qapp to avoid garbase collection
             self.Qapp._manager_window = window
         elif which_subapp == "Marker":
-            if role not in ["marker", "lead_marker"]:
+            if len(role) and role not in ["marker", "lead_marker"]:
                 WarnMsg(self, "Only marker/lead marker can mark papers!").exec()
                 return
             question = self.getQuestion()
@@ -264,7 +264,7 @@ class Chooser(QDialog):
             # store ref in Qapp to avoid garbase collection
             self.Qapp.marker = markerwin
         elif which_subapp == "Identifier":
-            if role != "lead_marker":
+            if len(role) and role != "lead_marker":
                 WarnMsg(self, "Only lead marker can identify papers!").exec()
                 return
             self.setEnabled(False)

@@ -43,6 +43,7 @@ from plom.plom_exceptions import (
     PlomSSLError,
     PlomTaskChangedError,
     PlomTaskDeletedError,
+    PlomNoServerSupportException,
 )
 
 log = logging.getLogger("messenger")
@@ -451,7 +452,7 @@ class BaseMessenger:
             if the user is recognized.
         """
         if self.is_legacy_server():
-            return ""
+            raise PlomNoServerSupportException("Operation not supported in Legacy.")
 
         path = f"/info/user/{self.user}"
         with self.SRmutex:
