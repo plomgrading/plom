@@ -463,11 +463,8 @@ class BaseMessenger:
                 return response.text
             except requests.HTTPError as e:
                 if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
-                else:
-                    raise PlomSeriousException(
-                        f"Some other sort of error {e}"
-                    ) from None
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def requestAndSaveToken(self, user: str, pw: str) -> None:
         """Get a authorisation token from the server.
