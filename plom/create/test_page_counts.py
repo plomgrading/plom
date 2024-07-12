@@ -18,7 +18,7 @@ def test_equal_page_count_true(tmp_path) -> None:
 def test_equal_page_count_false(tmp_path) -> None:
     buildDemoSourceFiles(tmp_path)
     # create a new file with a single page
-    clone = fitz.open()
-    clone.new_page()
-    clone.save(tmp_path / "sourceVersions/version3.pdf")
+    with fitz.open() as clone:
+        clone.new_page()
+        clone.save(tmp_path / "sourceVersions/version3.pdf")
     assert not check_equal_page_count(tmp_path / "sourceVersions")

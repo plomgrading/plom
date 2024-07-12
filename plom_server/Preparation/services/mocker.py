@@ -29,18 +29,18 @@ class ExamMockerService:
         Returns: a bytes object containing the document.
         """
         with tempfile.TemporaryDirectory() as tmpdirname:
-            pdf_doc = fitz.open(source_path)
-            for i in range(n_pages):
-                qr_codes = create_QR_codes(
-                    1, i + 1, version, "00000", pathlib.Path(tmpdirname)
-                )  # dummy values
-                page = pdf_doc[i]
-                odd = i % 2 == 0
-                pdf_page_add_labels_QRs(
-                    page,
-                    short_name,
-                    f"Mock exam v {version} pg {i+1}",
-                    qr_codes,
-                    odd=odd,
-                )
-            return pdf_doc.tobytes()
+            with fitz.open(source_path) as pdf_doc:
+                for i in range(n_pages):
+                    qr_codes = create_QR_codes(
+                        1, i + 1, version, "00000", pathlib.Path(tmpdirname)
+                    )  # dummy values
+                    page = pdf_doc[i]
+                    odd = i % 2 == 0
+                    pdf_page_add_labels_QRs(
+                        page,
+                        short_name,
+                        f"Mock exam v {version} pg {i+1}",
+                        qr_codes,
+                        odd=odd,
+                    )
+                return pdf_doc.tobytes()
