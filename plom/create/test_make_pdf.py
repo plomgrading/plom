@@ -2,9 +2,6 @@
 # Copyright (C) 2022, 2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
-from pathlib import Path
-
-from pytest import raises
 import fitz
 
 from plom.create.demotools import buildDemoSourceFiles
@@ -13,7 +10,6 @@ from plom import SpecVerifier
 
 
 def test_make_pdf_non_ascii_stuff(tmp_path) -> None:
-    tmp_path = Path("/home/cbm/src/plom/plom.git/t1")
     assert buildDemoSourceFiles(basedir=tmp_path)
     r = SpecVerifier.demo().spec
     r["name"] = "시험"
@@ -38,7 +34,6 @@ def test_make_pdf_non_ascii_stuff(tmp_path) -> None:
 
 def test_make_pdf_non_ascii_names_font_subsetting(tmp_path) -> None:
     """Because of PyMuPDF's font subsetting, non-ascii names should not blowup the filesize."""
-    tmp_path = Path("/home/cbm/src/plom/plom.git/t1")
     assert buildDemoSourceFiles(basedir=tmp_path)
     spec = SpecVerifier.demo()
     spec.checkCodes()
