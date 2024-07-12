@@ -20,10 +20,9 @@ def makeFakeHW(numQuestions, paperNum, who, where, prefix, maxpages=3):
     doneQ = sorted(random.sample(list(range(1, 1 + numQuestions)), did))
     for q in doneQ:
         fname = where / "{}.{}.{}.pdf".format(prefix, student_num, q)
-        doc = fitz.open()
-        scribble_doc(doc, student_num, name, maxpages, q)
-        doc.save(fname)
-        doc.close()
+        with fitz.open() as doc:
+            scribble_doc(doc, student_num, name, maxpages, q)
+            doc.save(fname)
 
 
 def makeFakeHW2(numQuestions, paperNum, who, where, prefix, maxpages=4):
@@ -32,11 +31,10 @@ def makeFakeHW2(numQuestions, paperNum, who, where, prefix, maxpages=4):
     name = who["name"]
     doneQ = list(range(1, 1 + numQuestions))
     fname = where / "{}.{}.{}.pdf".format(prefix, student_num, "_")
-    doc = fitz.open()
-    for q in doneQ:
-        scribble_doc(doc, student_num, name, maxpages, q)
-    doc.save(fname)
-    doc.close()
+    with fitz.open() as doc:
+        for q in doneQ:
+            scribble_doc(doc, student_num, name, maxpages, q)
+        doc.save(fname)
 
 
 def scribble_doc(doc, student_num, name, maxpages, q):
