@@ -2,11 +2,17 @@
 # Copyright (C) 2024 Elisa Pan
 
 from QuestionTags.models import TmpAbstractQuestion, PedagogyTag, QuestionTagLink
-from django.db.utils import IntegrityError, OperationalError
+from django.db.utils import IntegrityError
 from plom.tagging import is_valid_tag_text
 
 
 class QuestionTagService:
+    """
+    Service class for managing question tags.
+
+    This class provides methods to add, create, edit, and delete tags associated
+    with questions, as well as to manage the links between questions and tags.
+    """
     @staticmethod
     def add_question_tag_link(question_index, tag_names, user):
         """Add a question tag to the database.
@@ -81,10 +87,8 @@ class QuestionTagService:
         try:
             tag.delete()
             return None
-        except OperationalError:
-            return "Database operation failed."
-        except IntegrityError:
-            return "Integrity error occurred during deletion."
+        except Exception as e:
+            return str(e)
 
     @staticmethod
     def edit_tag(tag_id, tag_name, text):
@@ -113,10 +117,8 @@ class QuestionTagService:
             tag.text = text
             tag.save()
             return None
-        except OperationalError:
-            return "Database operation failed."
-        except IntegrityError:
-            return "Integrity error occurred during update."
+        except Exception as e:
+            return str(e)
 
     @staticmethod
     def delete_question_tag_link(question_tag_id):
@@ -135,7 +137,5 @@ class QuestionTagService:
         try:
             question_tag.delete()
             return None
-        except OperationalError:
-            return "Database operation failed."
-        except IntegrityError:
-            return "Integrity error occurred during deletion."
+        except Exception as e:
+            return str(e)

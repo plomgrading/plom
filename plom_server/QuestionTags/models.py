@@ -57,6 +57,11 @@ class QuestionTagLink(models.Model):
     time = models.DateTimeField(default=timezone.now)
 
     class Meta:
+        """Meta class for QuestionTagLink model.
+
+        Defines the constraint for the QuestionTagLink model, ensuring
+        that each combination of question, tag, and user is unique.
+        """
         unique_together = ("question", "tag", "user")
 
     def __str__(self):
