@@ -23,8 +23,8 @@ from plom.scan import processFileToBitmaps
 from plom.create.scribble_utils import scribble_name_and_id
 
 
-def test_log_likelihood():
-    student_id = [i for i in range(0, 8)]
+def test_log_likelihood() -> None:
+    student_id = "01234567"
     probabilities = [
         [0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -40,9 +40,9 @@ def test_log_likelihood():
         5.545177444479562,
         1e-7,
     )
-    assert calc_log_likelihood([9] * 8, probabilities) > 100
+    assert calc_log_likelihood("99999999", probabilities) > 100
     with raises(ValueError):
-        calc_log_likelihood([1, 2, 3], probabilities)
+        calc_log_likelihood("123", probabilities)
 
 
 def test_download_or_train_model(tmp_path) -> None:
