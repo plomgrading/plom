@@ -47,8 +47,8 @@ def test_qr_reads_from_image_legacy() -> None:
 
 
 def test_qr_reads_slight_rotate() -> None:
-    im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
-    im = im.rotate(10, expand=True)
+    _im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
+    im = _im.rotate(10, expand=True)
     q = QRextract(im)
     assert not q["NE"]
     assert q["NW"]["tpv_signature"] == "00002806012823730"
@@ -63,8 +63,8 @@ def test_qr_reads_slight_rotate() -> None:
 
 
 def test_qr_reads_slight_rotate_legacy() -> None:
-    im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
-    im = im.rotate(10, expand=True)
+    _im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
+    im = _im.rotate(10, expand=True)
     p = QRextract_legacy(im, write_to_file=False)
     assert p is not None
     assert not p["NE"]
@@ -74,8 +74,8 @@ def test_qr_reads_slight_rotate_legacy() -> None:
 
 
 def test_qr_reads_upside_down() -> None:
-    im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
-    im = im.rotate(180)
+    _im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
+    im = _im.rotate(180)
     q = QRextract(im)
     assert not q["SW"]
     assert q["SE"]["tpv_signature"] == "00002806012823730"
@@ -90,8 +90,8 @@ def test_qr_reads_upside_down() -> None:
 
 
 def test_qr_reads_upside_down_legacy() -> None:
-    im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
-    im = im.rotate(180)
+    _im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
+    im = _im.rotate(180)
     p = QRextract_legacy(im, write_to_file=False)
     assert p is not None
     assert not p["SW"]
