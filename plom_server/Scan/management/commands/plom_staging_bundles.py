@@ -41,16 +41,15 @@ class Command(BaseCommand):
         except OSError as err:
             raise CommandError(err)
 
-        try:
-            pdf_doc = fitz.open(stream=file_bytes)
-        except fitz.FileDataError as err:
-            raise CommandError(err)
-
         filename_stem = pathlib.Path(source_pdf).stem
         slug = slugify(filename_stem)
         timestamp = datetime.timestamp(timezone.now())
         hashed = hashlib.sha256(file_bytes).hexdigest()
-        number_of_pages = pdf_doc.page_count
+        try:
+            with fitz.open(stream=file_bytes) as pdf_doc:
+                number_of_pages = pdf_doc.page_count
+        except fitz.FileDataError as err:
+            raise CommandError(err)
 
         if scanner.check_for_duplicate_hash(hashed):
             raise CommandError("Upload failed - Bundle was already uploaded.")

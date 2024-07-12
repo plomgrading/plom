@@ -43,6 +43,7 @@ from plom.plom_exceptions import (
     PlomSSLError,
     PlomTaskChangedError,
     PlomTaskDeletedError,
+    PlomNoServerSupportException,
 )
 
 log = logging.getLogger("messenger")
@@ -435,6 +436,35 @@ class BaseMessenger:
     # ------------------------
     # ------------------------
     # Authentication stuff
+    def get_user_role(self) -> str | None:
+        """Obtain user's role from the server.
+
+        Args:
+            user: the username of the user.
+
+        Raises:
+            PlomAuthenticationException
+            PlomSeriousException: something unexpected happened.
+
+        Returns:
+            If it is legacy server, returns "". Otherwise returns
+            either of ["lead_marker", "marker", "scanner", "manager"]
+            if the user is recognized.
+        """
+        if self.is_legacy_server():
+            raise PlomNoServerSupportException("Operation not supported in Legacy.")
+
+        path = f"/info/user/{self.user}"
+        with self.SRmutex:
+            try:
+                response = self.get_auth(path)
+                # throw errors when response code != 200.
+                response.raise_for_status()
+                return response.text
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def requestAndSaveToken(self, user: str, pw: str) -> None:
         """Get a authorisation token from the server.

@@ -2,12 +2,13 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
 from typing import Any
 
-from django.contrib.auth.models import update_last_login
+from django.contrib.auth.models import update_last_login, User
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 
@@ -86,6 +87,33 @@ class ServerInfo(APIView):
             # TODO: "acceptable_client_API": [100, 101, 107],
         }
         return Response(info)
+
+
+class UserRole(APIView):
+    """Get the user's role.
+
+    Returns:
+        either of ["lead_marker", "marker", "scanner", "manager"] if the user
+            is recognized. Otherwise returns None.
+    """
+
+    def get(self, request: Request, *, username: str) -> HttpResponse:
+        role = self._get_user_role(username)
+        return HttpResponse(role, content_type="text/plain")
+
+    def _get_user_role(self, username: str) -> str | None:
+        user = User.objects.get(username__iexact=username)
+        group = user.groups.values_list("name", flat=True)
+        if "lead_marker" in group:
+            return "lead_marker"
+        elif "marker" in group:
+            return "marker"
+        elif "manager" in group:
+            return "manager"
+        elif "scanner" in group:
+            return "scanner"
+        else:
+            return None
 
 
 class ExamInfo(APIView):
