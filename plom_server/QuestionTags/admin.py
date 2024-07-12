@@ -27,3 +27,7 @@ class TmpAbstractQuestionAdmin(admin.ModelAdmin):
 
     inlines = [QuestionTagInline]
     list_display = ["question_index"]
+
+
+admin.site.register(PedagogyTag)
+admin.site.register(QuestionTagLink)
