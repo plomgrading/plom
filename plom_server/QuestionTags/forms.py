@@ -6,8 +6,7 @@ from .models import PedagogyTag
 
 
 class AddTagForm(forms.Form):
-    """
-    Form for adding a tag to a question.
+    """Form for adding a tag to a question.
 
     Fields:
         question_index: The index of the question to be tagged.
@@ -19,8 +18,7 @@ class AddTagForm(forms.Form):
 
 
 class RemoveTagForm(forms.Form):
-    """
-    Form for removing a tag from a question.
+    """Form for removing a tag from a question.
 
     Fields:
         question_tag_id: The ID of the question-tag link to be removed.

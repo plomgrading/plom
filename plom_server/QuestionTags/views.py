@@ -13,17 +13,14 @@ from plom.tagging import plom_valid_tag_text_description
 
 
 class QTagsLandingView(ListView):
-    """
-    View for displaying and managing question tags.
-    """
+    """View for displaying and managing question tags."""
 
     model = TmpAbstractQuestion
     template_name = "Questiontags/qtags_landing.html"
     context_object_name = "question_tags"
 
     def get_context_data(self, **kwargs):
-        """
-        Get the context data for the view.
+        """Get the context data for the view.
 
         Returns:
             The context data for the view.
@@ -42,8 +39,7 @@ class QTagsLandingView(ListView):
         return context
 
     def post(self, request, *args, **kwargs):
-        """
-        Handle POST requests to add or remove tags.
+        """Handle POST requests to add or remove tags.
 
         Returns:
             An HTTP response object.
@@ -66,15 +62,12 @@ class QTagsLandingView(ListView):
 
 
 class AddQuestionTagLinkView(CreateView):
-    """
-    View for adding a question tag link.
-    """
+    """View for adding a question tag link."""
 
     template_name = "Questiontags/qtags_landing.html"
 
     def post(self, request, *args, **kwargs):
-        """
-        Handle POST requests to add a question tag link.
+        """Handle POST requests to add a question tag link.
 
         Returns:
             A JSON response object.
@@ -90,15 +83,12 @@ class AddQuestionTagLinkView(CreateView):
 
 
 class CreateTagView(CreateView):
-    """
-    View for creating a new tag.
-    """
+    """View for creating a new tag."""
 
     template_name = "Questiontags/qtags_landing.html"
 
     def post(self, request, *args, **kwargs):
-        """
-        Handle POST requests to create a new tag.
+        """Handle POST requests to create a new tag.
 
         Returns:
             A JSON response object.
@@ -112,15 +102,12 @@ class CreateTagView(CreateView):
 
 
 class DeleteTagView(DeleteView):
-    """
-    View for deleting a tag.
-    """
+    """View for deleting a tag."""
 
     model = PedagogyTag
 
     def post(self, request, *args, **kwargs):
-        """
-        Handle POST requests to delete a tag.
+        """Handle POST requests to delete a tag.
 
         Returns:
             An HTTP response object.
@@ -131,15 +118,12 @@ class DeleteTagView(DeleteView):
 
 
 class EditTagView(UpdateView):
-    """
-    View for editing a tag.
-    """
+    """View for editing a tag."""
 
     template_name = "Questiontags/qtags_landing.html"
 
     def post(self, request, *args, **kwargs):
-        """
-        Handle POST requests to edit a tag.
+        """Handle POST requests to edit a tag.
 
         Returns:
             A JSON response object.

@@ -6,8 +6,7 @@ from .models import TmpAbstractQuestion, PedagogyTag, QuestionTagLink
 
 
 class QuestionTagInline(admin.TabularInline):
-    """
-    Inline admin class to manage the relationship between questions and tags.
+    """Inline admin class to manage the relationship between questions and tags.
 
     This class allows the admin to manage QuestionTagLink objects directly
     from the TmpAbstractQuestion admin page.
@@ -19,8 +18,7 @@ class QuestionTagInline(admin.TabularInline):
 
 @admin.register(TmpAbstractQuestion)
 class TmpAbstractQuestionAdmin(admin.ModelAdmin):
-    """
-    Admin class for TmpAbstractQuestion model.
+    """Admin class for TmpAbstractQuestion model.
 
     This class customizes the admin interface for TmpAbstractQuestion objects,
     including inline editing of related QuestionTagLink objects and displaying
@@ -29,7 +27,3 @@ class TmpAbstractQuestionAdmin(admin.ModelAdmin):
 
     inlines = [QuestionTagInline]
     list_display = ["question_index"]
-
-
-admin.site.register(PedagogyTag)
-admin.site.register(QuestionTagLink)

@@ -7,8 +7,7 @@ from plom.tagging import is_valid_tag_text
 
 
 class QuestionTagService:
-    """
-    Service class for managing question tags.
+    """Service class for managing question tags.
 
     This class provides methods to add, create, edit, and delete tags associated
     with questions, as well as to manage the links between questions and tags.
