@@ -9,6 +9,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib import messages
 from django.views.generic import View
+from django_huey import get_queue
 
 from .base_group_views import ManagerRequiredView
 from .forms import CompleteWipeForm
@@ -44,6 +45,30 @@ class TroublesAfootGenericErrorView(View):
         """
         context = {"hint": hint}
         return render(request, "base/troubles_afoot.html", context)
+
+
+class ServerStatusView(ManagerRequiredView):
+    """View class for displaying server status."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        """Handles the GET request for the server status.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            An HTTP response object.
+        """
+        context = self.build_context()
+        # TODO: need a service?
+        queue = get_queue("tasks")
+
+        context.update(
+            {
+                "queue_length": len(queue),
+            }
+        )
+        return render(request, "base/server_status.html", context)
 
 
 class ResetView(ManagerRequiredView):

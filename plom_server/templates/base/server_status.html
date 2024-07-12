@@ -1,0 +1,40 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Server status
+{% endblock title %}
+{% block page_heading %}
+    Server status
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="card m-2">
+        <div class="card-body">
+            <h4 class="card-title">Plom server v{{ plom_version }}</h4>
+            <div class="card-text">
+                <p>TODO: some more version info, Django etc?</p>
+                <p>TODO: load levels available?</p>
+            </div>
+        </div>
+    </div>
+    <div class="card m-2">
+        <div class="card-body">
+            <h4 class="card-title">Huey queue</h4>
+            <div class="card-text">
+                <p>Current queue length: {{ queue_length }}</p>
+                <p>Plom's background processes are managed by Huey.</p>
+            </div>
+        </div>
+    </div>
+    <div class="card m-2">
+        <div class="card-body">
+            <h4 class="card-title">Database</h4>
+            <div class="card-text">
+                <p>The database must be working on you couldn't be here.</p>
+                <p>All data and settings other than page images are stored in a database.</p>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}
