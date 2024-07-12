@@ -66,6 +66,8 @@ def test_make_pdf_non_ascii_names_font_subsetting(tmp_path) -> None:
         where=tmp_path,
         source_versions_path=(tmp_path / "sourceVersions"),
     )
+    assert pdf1
+    assert pdf2
     size1 = pdf1.stat().st_size
     size2 = pdf2.stat().st_size
     assert size2 >= size1
