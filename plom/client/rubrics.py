@@ -108,7 +108,7 @@ def compute_score_legacy2022(
 
 
 def compute_score_locabs(
-    rubrics: list[dict[str, Any]], maxscore: int, tolerance: float = 1e-9
+    rubrics: list[dict[str, Any]], maxscore: int, *, tolerance: float = 1e-9
 ) -> int | float | None:
     """Compute score given a set of rubrics.
 
