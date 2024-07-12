@@ -268,6 +268,14 @@ class Annotator(QWidget):
     def is_experimental(self):
         return self.parentMarkerUI.is_experimental()
 
+    def pause_to_process_events(self):
+        """Allow Qt's event loop to process events.
+
+        Typically we call this if we're in a loop of our own waiting
+        for something to happen which can only occur if we
+        """
+        self.parentMarkerUI.Qapp.processEvents()
+
     def buildHamburger(self):
         # TODO: use QAction, share with other UI?
         keydata = self.get_key_bindings()
@@ -733,7 +741,7 @@ class Annotator(QWidget):
         self.parentMarkerUI.Qapp.setOverrideCursor(Qt.CursorShape.WaitCursor)
         # disable ui before calling process events
         self.setEnabled(False)
-        self.parentMarkerUI.Qapp.processEvents()
+        self.pause_to_process_events()
         testNumber = self.tgvID[:4]
         src_img_data = self.scene.get_src_img_data()
         image_md5_list = [x["md5"] for x in src_img_data]
@@ -784,7 +792,7 @@ class Annotator(QWidget):
         pd.setWindowModality(Qt.WindowModality.WindowModal)
         pd.setMinimumDuration(500)
         pd.setValue(0)
-        self.parentMarkerUI.Qapp.processEvents()
+        self.pause_to_process_events()
         for i, row in enumerate(pagedata):
             # TODO: would be nice to show the size in MiB here!
             pd.setLabelText(
@@ -792,7 +800,7 @@ class Annotator(QWidget):
                 f"img id {row['id']}"
             )
             pd.setValue(i + 1)
-            self.parentMarkerUI.Qapp.processEvents()
+            self.pause_to_process_events()
             row = dl.sync_download(row)
         pd.close()
 

@@ -292,18 +292,8 @@ class ScanService:
         except ObjectDoesNotExist:
             return None
 
-    @transaction.atomic
-    def get_bundle_from_timestamp(self, timestamp: float) -> StagingBundle:
-        return StagingBundle.objects.get(
-            timestamp=timestamp,
-        )
-
-    def get_bundle_pk_from_timestamp(self, timestamp: float) -> int:
-        return StagingBundle.objects.get(
-            timestamp=timestamp,
-        ).pk
-
     def get_bundle_from_pk(self, pk: int) -> StagingBundle:
+        """Return a StagingBundle object from its pk."""
         return StagingBundle.objects.get(pk=pk)
 
     @transaction.atomic

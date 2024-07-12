@@ -37,12 +37,12 @@ class Command(BaseCommand):
         # make sure we can actually open the pdf and check pages
         np = SolnSpecService.get_n_pages()
         try:
-            doc = fitz.open(pdf_path)
-            if len(doc) != np:
-                self.stderr.write(
-                    f"Solution source pdf must have {np} pages according to the soln spec; supplied file has {len(doc)} pages."
-                )
-                return
+            with fitz.open(pdf_path) as doc:
+                if len(doc) != np:
+                    raise CommandError(
+                        f"Solution source pdf must have {np} pages according to"
+                        f"the soln spec; supplied file has {len(doc)} pages."
+                    )
         except fitz.FileDataError as err:
             raise CommandError(err)
 

@@ -5,6 +5,7 @@
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024 Bryan Tanady
 
 # a different kind of annotations... this is about code typing
 from __future__ import annotations
@@ -13,6 +14,7 @@ from copy import deepcopy
 from itertools import cycle
 import logging
 from pathlib import Path
+from time import sleep
 from typing import Any
 
 import PIL.Image
@@ -975,6 +977,25 @@ class PageScene(QGraphicsScene):
         self.setSceneRect(self.getSaveableRectangle())
         self.update()
 
+    def squelch_animations(self):
+        """Wait for transient animations or perhaps hurry them along."""
+        while True:
+            have_anim = False
+            for x in self.items():
+                if getattr(x, "is_transcient_animation", False):
+                    have_anim = True
+                    # force an early removal of the animation
+                    self.removeItem(x)
+            if not have_anim:
+                break
+            # wait a little bit, processing events
+            page_view = self.views()[0]
+            assert isinstance(page_view, PageView)
+            # yuck, what a parenting nightmare
+            page_view._annotr.pause_to_process_events()
+            log.warn("sleeping 50 ms waiting for animations to finish")
+            sleep(0.05)
+
     def save(self, basename):
         """Save the annotated group-image.
 
@@ -986,6 +1007,8 @@ class PageScene(QGraphicsScene):
         Returns:
             pathlib.Path: the file we just saved to, including jpg or png.
         """
+        self.squelch_animations()
+
         # don't want to render these, but should we restore them after?
         # TODO: or setVisible(False) instead of remove?
         self.remove_page_action_buttons()
@@ -1234,8 +1257,16 @@ class PageScene(QGraphicsScene):
             self.addItem(self.boxItem)
         elif self.boxLineStampState == 2:  # finish the connecting line
             if ghost_rect is None:
+                tick_rad = TickItem.tick_radius
+                padding = tick_rad // 2
+                side = round(2 * padding + 7 * tick_rad / 4)
+                g_rect_top_left = QPointF(
+                    self.currentPos.x() - 3 * tick_rad // 4 - padding,
+                    self.currentPos.y() - tick_rad - padding,
+                )
+
                 ghost_rect = QRectF(
-                    self.currentPos.x() - 16, self.currentPos.y() - 8, 16, 16
+                    g_rect_top_left.x(), g_rect_top_left.y(), side, side
                 )
             connectingPath = self.whichLineToDraw(
                 ghost_rect,
@@ -1276,8 +1307,16 @@ class PageScene(QGraphicsScene):
             # update the connecting path
             self.currentPos = event.scenePos()
             if ghost_rect is None:
+                tick_rad = TickItem.tick_radius
+                padding = tick_rad // 2
+                side = round(2 * padding + 7 * tick_rad / 4)
+                g_rect_top_left = QPointF(
+                    self.currentPos.x() - 3 * tick_rad // 4 - padding,
+                    self.currentPos.y() - tick_rad - padding,
+                )
+
                 ghost_rect = QRectF(
-                    self.currentPos.x() - 16, self.currentPos.y() - 8, 16, 16
+                    g_rect_top_left.x(), g_rect_top_left.y(), side, side
                 )
             self.pathItem.setPath(
                 self.whichLineToDraw(

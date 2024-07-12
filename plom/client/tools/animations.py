@@ -38,9 +38,16 @@ class AnimatingTempItemMixin:
             `setEndValue` of 1.
     """
 
-    def anim_init(self, scene) -> None:
-        # basically __init__ but I cannot handle multiple inheritance
-        self._scene = scene
+    is_transcient_animation = True
+
+    def anim_init(self) -> None:
+        """Initialize the animation, basically this is the init method.
+
+        But the author doesn't grok multiple inheritance enough to do
+        it like that so this has a special name but is to be called
+        in the class this mixin is mixed into.  It should be followed
+        by a call to :method:`start`.
+        """
         self.saveable = False
 
         # Crashes when calling our methods (probably b/c QGraphicsItem
@@ -60,13 +67,20 @@ class AnimatingTempItemMixin:
         self.anim.destroyed.connect(self.remove_from_scene)
 
     def start(self):
+        """Start the animation, to be called at the end of init."""
         self.anim.start(QAbstractAnimation.DeletionPolicy.DeleteWhenStopped)
 
     def remove_from_scene(self) -> None:
+        """Remove this item from the scene."""
+        # Classes this is mixed into must have a `scene` method
+        scene = self.scene()  # type: ignore[attr-defined]
+        if scene is None:
+            # its already been removed, or maybe the scene did not survive until
+            # the end of the animation
+            log.debug(f"TmpAnimItem: {self} was already scene-less")
+            return
         log.debug(f"TmpAnimItem: removing {self} from scene")
-        # TODO: can we be sure that scene survives until the end of the animation?
-        # TODO: also, what if the scene removes the item early?
-        self._scene.removeItem(self)
+        scene.removeItem(self)
 
     def interp(self, t: float) -> None:
         raise NotImplementedError(
@@ -91,8 +105,8 @@ class _AnimatorCtrlr(QObject):
 
 
 # Note multiple inheritance with PyQt is ok as long as only one is a Qt class
-class AnimatingTempRectItem(QGraphicsRectItem, AnimatingTempItemMixin):
-    """A base class for new-style animated rectangles.
+class AnimatingTempRectItemABC(QGraphicsRectItem, AnimatingTempItemMixin):
+    """An abstract base class for new-style animated rectangles.
 
     At the end of your ``__init__`` function you must start the animation
     by calling `self.start()`.
@@ -105,9 +119,9 @@ class AnimatingTempRectItem(QGraphicsRectItem, AnimatingTempItemMixin):
             `setEndValue` of 1.
     """
 
-    def __init__(self, scene) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        self.anim_init(scene)
+        self.anim_init()
         self.setPen(QPen(AnimationPenColour, AnimationPenThickness))
         self.setBrush(QBrush(AnimationFillColour))
 
@@ -115,8 +129,10 @@ class AnimatingTempRectItem(QGraphicsRectItem, AnimatingTempItemMixin):
 class AnimatingTempPathItem(QGraphicsPathItem, AnimatingTempItemMixin):
     """New-style animated path.
 
+    You can use this as-is, to animate the thickness of the path.
+
     If you subclass this, call the superclass ``__init__`` like this:
-    ``super().__init__(scene, start=False)``.
+    ``super().__init__(start=False)``.
     Then at the end of your ``__init__`` function you must start the
     animation by calling `self.
 
@@ -126,9 +142,9 @@ class AnimatingTempPathItem(QGraphicsPathItem, AnimatingTempItemMixin):
             `setEndValue` of 2.
     """
 
-    def __init__(self, scene, path, backward: bool = False, start: bool = True) -> None:
+    def __init__(self, path, backward: bool = False, start: bool = True) -> None:
         super().__init__()
-        self.anim_init(scene)
+        self.anim_init()
         self.setPath(path)
         self.setPen(QPen(AnimationPenColour, AnimationPenThickness))
         if backward:

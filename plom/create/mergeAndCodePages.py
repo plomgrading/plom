@@ -72,7 +72,7 @@ def create_QR_codes(
     return qr_file
 
 
-def create_exam_and_insert_QR(
+def _create_exam_and_insert_QR(
     spec: dict[str, Any],
     papernum: int,
     question_versions: dict[int, int],
@@ -100,7 +100,8 @@ def create_exam_and_insert_QR(
             Defaults to "./sourceVersions"
 
     Returns:
-        fitz.Document: PDF document.
+        fitz.Document: PDF document, apparently open, which seems to me a scary
+        thing to be handling around.  Caller is responsible for closing it.
 
     Raises:
         RuntimeError: one or more of your version<N>.pdf files not found.
@@ -450,7 +451,7 @@ def make_PDF(
 
     # Build all relevant pngs in a temp directory
     with tempfile.TemporaryDirectory() as tmp_dir:
-        exam = create_exam_and_insert_QR(
+        exam = _create_exam_and_insert_QR(
             spec,
             papernum,
             question_versions,

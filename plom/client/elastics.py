@@ -342,5 +342,4 @@ def which_horizontal_step(g_rect, b_rect):
     else:  # too steep - so draw single connecting line segment
         thePath.lineTo(directLine.p2())
 
-    # now return the path
     return thePath

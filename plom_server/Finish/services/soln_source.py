@@ -111,27 +111,27 @@ class SolnSourceService:
         # read the file into here so we can do some correctness checks before saving it.
         file_bytes = in_memory_file.read()
 
-        doc = fitz.open(stream=file_bytes)
-        if len(doc) != SolnSpecService.get_n_pages():
-            raise ValueError(
-                f"Solution pdf does has {len(doc)} pages - needs {SolnSpecService.get_n_pages()}."
-            )
+        with fitz.open(stream=file_bytes) as doc:
+            if len(doc) != SolnSpecService.get_n_pages():
+                raise ValueError(
+                    f"Solution pdf does has {len(doc)} pages - needs {SolnSpecService.get_n_pages()}."
+                )
 
-        doc_hash = hashlib.sha256(file_bytes).hexdigest()
-        # check if there is an existing soluion with that has
-        if SolutionSourcePDF.objects.filter(pdf_hash=doc_hash).exists():
-            raise ValueError(
-                f"Another solution pdf with hash {doc_hash} has already been uploaded."
+            doc_hash = hashlib.sha256(file_bytes).hexdigest()
+            # check if there is an existing soluion with that has
+            if SolutionSourcePDF.objects.filter(pdf_hash=doc_hash).exists():
+                raise ValueError(
+                    f"Another solution pdf with hash {doc_hash} has already been uploaded."
+                )
+            # create the DB entry
+            SolutionSourcePDF.objects.create(
+                version=version,
+                source_pdf=File(io.BytesIO(file_bytes), name=f"solution{version}.pdf"),
+                pdf_hash=doc_hash,
             )
-        # create the DB entry
-        SolutionSourcePDF.objects.create(
-            version=version,
-            source_pdf=File(io.BytesIO(file_bytes), name=f"solution{version}.pdf"),
-            pdf_hash=doc_hash,
-        )
-        # We need to create solution images for display in the client
-        # Assembly of solutions for each paper will use the source pdfs, not these images.
-        self._create_solution_images(version, doc)
+            # We need to create solution images for display in the client
+            # Assembly of solutions for each paper will use the source pdfs, not these images.
+            self._create_solution_images(version, doc)
 
     def _create_solution_images(self, version: int, doc: fitz.Document) -> None:
         """Create one solution image for each question of the given version, for client."""

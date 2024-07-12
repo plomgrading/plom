@@ -72,6 +72,8 @@ class SignedSB(QSpinBox):
     # range is from -N,..,-1,1,...N
     # note - to fix #1561 include +/- N in this range.
     # else 1 point questions become very problematic
+    # TODO: its possible to manually enter zero (Issue #3446) we currently
+    # deal with that in the parent
     def __init__(self, maxMark: int) -> None:
         super().__init__()
         self.setRange(-maxMark, maxMark)
@@ -1026,6 +1028,10 @@ class AddRubricBox(QDialog):
 
     def accept(self):
         """Make sure rubric is valid before accepting."""
+        if self.relative_value_SB.value() == 0:
+            # Issue #3446: could also try to fix in the spinbox code
+            WarnMsg(self, "Relative rubric cannot be zero.").exec()
+            return
         if not self.version_specific_le.hasAcceptableInput():
             WarnMsg(
                 self, '"Versions" must be a comma-separated list of positive integers.'

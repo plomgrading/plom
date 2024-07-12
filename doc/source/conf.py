@@ -16,8 +16,6 @@
 import os
 import sys
 
-from plom import __version__
-
 # from django import setup as django_setup
 
 sys.path.insert(0, os.path.abspath("../../django/"))
@@ -39,6 +37,9 @@ os.environ["DJANGO_SETTINGS_MODULE"] = "Web_Plom.settings"
 project = "Plom"
 copyright = "2018-2024 Andrew Rechnitzer, Colin B. Macdonald, et al"
 author = "Andrew Rechnitzer, Colin B. Macdonald, and others"
+
+from plom import __version__
+
 release = __version__
 
 
