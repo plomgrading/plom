@@ -16,6 +16,7 @@ class QTagsLandingView(ListView):
     """
     View for displaying and managing question tags.
     """
+
     model = TmpAbstractQuestion
     template_name = "Questiontags/qtags_landing.html"
     context_object_name = "question_tags"
@@ -68,6 +69,7 @@ class AddQuestionTagLinkView(CreateView):
     """
     View for adding a question tag link.
     """
+
     template_name = "Questiontags/qtags_landing.html"
 
     def post(self, request, *args, **kwargs):
@@ -91,6 +93,7 @@ class CreateTagView(CreateView):
     """
     View for creating a new tag.
     """
+
     template_name = "Questiontags/qtags_landing.html"
 
     def post(self, request, *args, **kwargs):
@@ -112,6 +115,7 @@ class DeleteTagView(DeleteView):
     """
     View for deleting a tag.
     """
+
     model = PedagogyTag
 
     def post(self, request, *args, **kwargs):
@@ -130,6 +134,7 @@ class EditTagView(UpdateView):
     """
     View for editing a tag.
     """
+
     template_name = "Questiontags/qtags_landing.html"
 
     def post(self, request, *args, **kwargs):

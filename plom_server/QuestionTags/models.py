@@ -62,6 +62,7 @@ class QuestionTagLink(models.Model):
         Defines the constraint for the QuestionTagLink model, ensuring
         that each combination of question, tag, and user is unique.
         """
+
         unique_together = ("question", "tag", "user")
 
     def __str__(self):

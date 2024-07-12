@@ -13,6 +13,7 @@ class QuestionTagService:
     This class provides methods to add, create, edit, and delete tags associated
     with questions, as well as to manage the links between questions and tags.
     """
+
     @staticmethod
     def add_question_tag_link(question_index, tag_names, user):
         """Add a question tag to the database.
