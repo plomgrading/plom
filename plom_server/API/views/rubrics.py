@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024 Aden Chan
 
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from rest_framework.views import APIView
@@ -13,6 +14,7 @@ from rest_framework import status
 
 from plom.plom_exceptions import PlomConflict
 from Rubrics.services import RubricService
+from Mark.serializers.tasks import MarkingTaskSerializer
 
 from .utils import _error_response
 
@@ -134,3 +136,31 @@ class MmodifyRubric(APIView):
             return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
         except PlomConflict as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
+
+
+class MgetRubricMarkingTasks(APIView):
+    def get(self, request: Request, key: str) -> Response:
+        """Returns the marking tasks associated with a rubric.
+
+        Args:
+            request: HTTP Request of the API call
+            key: key of the rubric to get marking tasks for.
+
+        Returns:
+            On success, responds with the JSON representations of
+            the tasks associated with the rubric.
+            Returns 404 if the rubric is not found.
+        """
+        rs = RubricService()
+
+        try:
+            rubric = rs.get_rubric_by_key(key)
+        except ObjectDoesNotExist as e:
+            return _error_response(
+                f"Rubric with key {key} not found: {e}", status.HTTP_404_NOT_FOUND
+            )
+        tasks = rs.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
+        serializer = MarkingTaskSerializer(
+            tasks, many=True, context={"request": request}
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)

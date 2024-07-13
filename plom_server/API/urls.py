@@ -30,6 +30,8 @@ from .views import (
     REPcoverPageInfo,
 )
 
+from .views.rubrics import MgetRubricMarkingTasks
+
 """
 Handle URL patterns for the plom-client / server API.
 See docs for including other URLconfs:
@@ -85,4 +87,9 @@ marking_router.register("tasks", QuestionMarkingViewSet, basename="tasks")
 urlpatterns += [
     path("experimental/", include(experimental_router.urls)),
     path("MK/", include(marking_router.urls)),
+    path(
+        "rubrics/<str:key>/tasks",
+        MgetRubricMarkingTasks.as_view(),
+        name="api_rubrics_tasks",
+    ),
 ]
