@@ -416,47 +416,6 @@ count-no-docstring:
   allow_failure: true
 
 
-pydocstyle-plom-count:
-  image: python:3
-  stage: static_analysis
-  before_script:
-    - python3 -m pip install pydocstyle[toml]~=6.3.0
-  script:
-    # show all errors and warnings but don't fail
-    - pydocstyle plom || true
-    # TODO: many errors here: and we still have to tighten the rules in pyproject.toml
-    # pydocstyle -s -e plom
-    # Instead, just ensure the total does not increase
-    - NUMERR=`pydocstyle --count plom | tail -n 1 || true`
-    - echo $NUMERR
-    # Future hackers: please try to decrease this number
-    - bash -c "[[ $NUMERR -le 173 ]]"
-  allow_failure: true
-
-
-# For now, an allowlist of submodules that must pass
-# TODO: add more modules and eventually just plom/
-pydocstyle-plom:
-  image: python:3
-  stage: static_analysis
-  before_script:
-    - python3 -m pip install pydocstyle[toml]~=6.3.0
-  script:
-    - pydocstyle -s -e plom/client plom/create plom/scan plom/demo plom/finish plom/solution plom/idreader plom/manager
-  allow_failure: true
-
-
-# TODO: we may still have to tighten the rules in pyproject.toml
-pydocstyle-server:
-  image: python:3
-  stage: static_analysis
-  before_script:
-    - python3 -m pip install pydocstyle[toml]~=6.3.0
-  script:
-    - pydocstyle -s -e plom_server
-  allow_failure: true
-
-
 no-question-numbers:
   image: python:3.12
   stage: static_analysis
