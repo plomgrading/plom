@@ -444,6 +444,7 @@ class MarkerClient(QWidget):
 
         if not self.msgr.is_legacy_server():
             self.annotatorSettings["nextTaskPreferTagged"] = "@" + self.msgr.username
+        self.update_get_next_button()
 
         # Get list of papers already marked and add to table.
         # also read these into the history variable
