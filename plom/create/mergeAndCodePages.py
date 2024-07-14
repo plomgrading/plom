@@ -404,6 +404,7 @@ def make_PDF(
     *,
     where=None,
     source_versions_path=None,
+    font_subsetting: bool | None = None,
 ) -> pathlib.Path | None:
     """Make a PDF of particular versions, with QR codes, and optionally name stamped.
 
@@ -440,6 +441,17 @@ def make_PDF(
             default if omitted.
         source_versions_path (pathlib.Path/str/None): location of the
             source versions directory.
+        font_subsetting: if None/omitted, do a generally-sensible default
+            of using subsetting only when *we* added non-ascii characters.
+            True forces subsetting and False disables is.
+            We embed fonts for names and other overlay.  But if there are
+            non-Latin characters (e.g., CJK) in names, then the embedded
+            font is quite large (several megabytes).
+            Note: in theory, subsetting could muck around with fonts from
+            the source (i.e., if they were NOT previously subsetted).
+            So we only do the subsetting if we're added non-ascii chars
+            in any of the shortname, student name or question labels.
+            Non-ascii is a stronger requirement than needed,
 
     Returns:
         pathlib.Path: the file that was just written, or None in the slightly
@@ -475,13 +487,6 @@ def make_PDF(
     if extra:
         pdf_page_add_name_id_box(exam[0], extra["name"], extra["id"], xcoord, ycoord)
 
-    # We embed fonts for names and other overlay.  But if there are non-latin
-    # characters (e.g., CJK) in names, then the embedded font is quite large.
-    # Note: In theory, this could muck around with fonts from the source
-    # (i.e., if they were NOT subsetted).  So we only do the subsetting if
-    # we're added non-ascii chars in any of the shortname, student name or
-    # question labels.  Non-ascii is a stronger requirement than needed,
-    # but in theory the subsetting is harmless...
     do_subset = False
     if extra and not extra["name"].isascii():
         do_subset = True
@@ -491,7 +496,9 @@ def make_PDF(
         if not label.isascii():
             do_subset = True
 
-    if do_subset:
+    if font_subsetting is None:
+        font_subsetting = do_subset
+    if font_subsetting:
         if Version(fitz.version[0]) >= Version("1.24.6"):
             exam.subset_fonts()
         else:

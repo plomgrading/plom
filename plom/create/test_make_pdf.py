@@ -20,7 +20,7 @@ def test_make_pdf_non_ascii_stuff(tmp_path) -> None:
         spec,
         4,
         {1: 1, 2: 1, 3: 2},
-        extra={"name": "싸이", "id": "12345678"},
+        extra={"name": "싸이", "id": "22345678"},
         where=tmp_path,
         source_versions_path=(tmp_path / "sourceVersions"),
     )
@@ -49,11 +49,24 @@ def test_make_pdf_non_ascii_names_font_subsetting(tmp_path) -> None:
         where=tmp_path,
         source_versions_path=(tmp_path / "sourceVersions"),
     )
+    pdf3 = make_PDF(
+        spec,
+        7,
+        {1: 1, 2: 1, 3: 2},
+        extra={"name": "싸이", "id": "12345679"},
+        where=tmp_path,
+        source_versions_path=(tmp_path / "sourceVersions"),
+        font_subsetting=False,
+    )
     assert pdf1
     assert pdf2
+    assert pdf3
     size1 = pdf1.stat().st_size
     size2 = pdf2.stat().st_size
+    size3 = pdf3.stat().st_size
     # fallback font is subsetted so don't expect much increase
-    assert size2 < 1.5 * size1
+    assert size2 < 1.4 * size1
     # didn't expect it to get smaller, although sometimes it does!
     assert size2 > 0.9 * size1
+    # no subsetting adds more than a megabyte
+    assert size3 > size1 + 1024 * 1024
