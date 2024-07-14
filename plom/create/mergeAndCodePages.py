@@ -394,13 +394,13 @@ def pdf_page_add_name_id_box(
 
 def make_PDF(
     spec,
-    papernum,
-    question_versions,
-    extra=None,
-    no_qr=False,
-    fakepdf=False,
-    xcoord=None,
-    ycoord=None,
+    papernum: int,
+    question_versions: dict[int, int],
+    extra: dict[str, Any] | None = None,
+    no_qr: bool = False,
+    fakepdf: bool = False,
+    xcoord: float | None = None,
+    ycoord: float | None = None,
     *,
     where=None,
     source_versions_path=None,
@@ -413,13 +413,17 @@ def make_PDF(
     file into the `paperdir` (typically "papersToPrint").
 
     Arguments:
-        spec (dict): A validated test specification
-        papernum (int): the paper/test number.
-        question_versions (dict): the version of each question for this paper.
+        spec (dict | SpecVerifier): A validated specification
+        papernum: the paper number.
+        question_versions: the version of each question for this paper.
             Note this is an input and must be predetermined before
             calling.
-        extra (dict/None): Dictionary with student id and name or None
+        extra: Dictionary with student id and name or None
             to default not printing any prename.
+        xcoord: horizontal positioning of the prename box, or a default
+            if None or omitted.
+        ycoord: vertical positioning of the prename box, or a default
+            if None or omitted.
         no_qr (bool): determine whether or not to paste in qr-codes.
             Somewhat deprecated, definitely use it as kwarg if you're
             writing new code.
@@ -430,8 +434,6 @@ def make_PDF(
             something like that...
             Somewhat deprecated, definitely use it as kwarg if you're
             writing new code.
-        xcoord (float): horizontal positioning of the prename box.
-        ycoord (float): vertical positioning of the prename box.
 
     Keyword Args:
         where (pathlib.Path/None): where to save the files, with some
