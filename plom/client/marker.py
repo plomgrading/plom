@@ -442,6 +442,9 @@ class MarkerClient(QWidget):
             ErrorMsg(self, str(err)).exec()
             return
 
+        if not self.msgr.is_legacy_server():
+            self.annotatorSettings["nextTaskPreferTagged"] = "@" + self.msgr.username
+
         # Get list of papers already marked and add to table.
         # also read these into the history variable
         self.loadMarkedList()
