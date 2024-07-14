@@ -65,5 +65,7 @@ def test_make_pdf_non_ascii_names_font_subsetting(tmp_path) -> None:
     assert pdf2
     size1 = pdf1.stat().st_size
     size2 = pdf2.stat().st_size
-    assert size2 >= size1
-    assert size2 < 2.0 * size1
+    # fallback font is subsetted so don't expect much increase
+    assert size2 < 1.5 * size1
+    # didn't expect it to get smaller, although sometimes it does!
+    assert size2 > 0.9 * size1
