@@ -18,13 +18,9 @@ def test_make_pdf_non_ascii_stuff(tmp_path) -> None:
     spec.checkCodes()
     pdf_path = make_PDF(
         spec,
-        6,
+        4,
         {1: 1, 2: 1, 3: 2},
         extra={"name": "싸이", "id": "12345678"},
-        no_qr=False,
-        fakepdf=False,
-        xcoord=None,
-        ycoord=None,
         where=tmp_path,
         source_versions_path=(tmp_path / "sourceVersions"),
     )
@@ -42,10 +38,6 @@ def test_make_pdf_non_ascii_names_font_subsetting(tmp_path) -> None:
         5,
         {1: 1, 2: 1, 3: 2},
         extra={"name": "Bore Ring Ascii", "id": "87654321"},
-        no_qr=False,
-        fakepdf=False,
-        xcoord=None,
-        ycoord=None,
         where=tmp_path,
         source_versions_path=(tmp_path / "sourceVersions"),
     )
@@ -54,10 +46,6 @@ def test_make_pdf_non_ascii_names_font_subsetting(tmp_path) -> None:
         6,
         {1: 1, 2: 1, 3: 2},
         extra={"name": "싸이", "id": "12345678"},
-        no_qr=False,
-        fakepdf=False,
-        xcoord=None,
-        ycoord=None,
         where=tmp_path,
         source_versions_path=(tmp_path / "sourceVersions"),
     )

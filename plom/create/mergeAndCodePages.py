@@ -401,6 +401,7 @@ def make_PDF(
     fakepdf=False,
     xcoord=None,
     ycoord=None,
+    *,
     where=None,
     source_versions_path=None,
 ) -> pathlib.Path | None:
@@ -417,15 +418,22 @@ def make_PDF(
         question_versions (dict): the version of each question for this paper.
             Note this is an input and must be predetermined before
             calling.
-        extra (dict/None): Dictionary with student id and name or None.
+        extra (dict/None): Dictionary with student id and name or None
+            to default not printing any prename.
         no_qr (bool): determine whether or not to paste in qr-codes.
+            Somewhat deprecated, definitely use it as kwarg if you're
+            writing new code.
         fakepdf (bool): when true, the build empty "pdf" files by just
             touching fhe files.  This is could be used in testing or to
             save time when we have no use for the actual files.  Why?
             Maybe later confirmation steps check these files exist or
             something like that...
+            Somewhat deprecated, definitely use it as kwarg if you're
+            writing new code.
         xcoord (float): horizontal positioning of the prename box.
         ycoord (float): vertical positioning of the prename box.
+
+    Keyword Args:
         where (pathlib.Path/None): where to save the files, with some
             default if omitted.
         source_versions_path (pathlib.Path/str/None): location of the
