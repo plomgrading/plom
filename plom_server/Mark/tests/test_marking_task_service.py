@@ -4,7 +4,6 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Andrew Rechnitzer
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 from django.contrib.auth.models import User
 from model_bakery import baker
@@ -86,7 +85,6 @@ class MarkingTaskServiceTests(TestCase):
             s.get_task_from_code(code)
 
     def test_get_latest_task_asking_for_wrong_version(self) -> None:
-        s = MarkingTaskService()
         task = baker.make(
             MarkingTask,
             question_index=1,
