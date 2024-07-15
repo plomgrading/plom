@@ -7,6 +7,7 @@
 # Copyright (C) 2024 Aden Chan
 
 import random
+from django.urls import reverse
 import django_tables2 as tables
 
 from django.core.exceptions import ValidationError
@@ -138,6 +139,10 @@ class Rubric(models.Model):
             return f"{self.text}"
         return f"[{self.display_delta}] {self.text}"
 
+    def get_absolute_url(self):
+        """Return the URL to the rubric detail view."""
+        return reverse("rubric_item", kwargs={"rubric_key": self.key})
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -155,8 +160,11 @@ class RubricPane(models.Model):
 
 
 class RubricTable(tables.Table):
+    key = tables.Column("Key", linkify=True)
+
     class Meta:
         model = Rubric
+
         fields = (
             "key",
             "display_delta",
