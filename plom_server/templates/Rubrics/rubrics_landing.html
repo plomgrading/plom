@@ -16,6 +16,32 @@
     Rubrics
 {% endblock page_heading %}
 {% block main_content %}
+    <script>
+        function populateFields() {
+            updateQuestion();
+            updateKind();
+        }
+
+        function updateQuestion() {
+            var question_dict = JSON.parse('{{ questions|escapejs }}');
+            var question = document.getElementById("id_question").value;
+            var out_of = question_dict[question]["mark"];
+            console.log(out_of)
+            document.getElementById("id_out_of").value = out_of;
+        }
+
+        function updateKind() {
+            console.log("updateKind");
+            var kind = document.getElementById("id_kind").value;
+            if (kind === "absolute") {
+                document.getElementById("id_out_of").style.display = "block";
+                document.getElementById("id_out_of_label").style.display = "block";
+            } else {
+                document.getElementById("id_out_of").style.display = "none";
+                document.getElementById("id_out_of_label").style.display = "none";
+            }
+        }
+    </script>
     <div>
         <a class="btn btn-primary dinline-block"
            href="{% url 'rubrics_admin' %}">Rubric management&hellip;</a>
@@ -41,7 +67,8 @@
             <button type="submit"
                     class="btn btn-primary float-end"
                     data-bs-toggle="modal"
-                    data-bs-target="#createModal">
+                    data-bs-target="#createModal"
+                    onclick="populateFields()">
                 <i class="bi bi-plus-circle-fill"></i> Create Rubric
             </button>
         </div>
@@ -93,9 +120,9 @@
                             <label class="col-sm-2 col-form-label"
                                    for="{{ rubric_create_form.value.id_for_label }}">Value:</label>
                             <div class="col">{{ rubric_create_form.value }}</div>
-                            {{ rubric_create_form.out_of.errors }}
                             <label class="col-sm-2 col-form-label"
-                                   for="{{ rubric_create_form.out_of.id_for_label }}">out of</label>
+                                   for="{{ rubric_create_form.out_of.id_for_label }}"
+                                   id="id_out_of_label">out of</label>
                             <div class="col">{{ rubric_create_form.out_of }}</div>
                         </div>
                         <div class="row form-group">
