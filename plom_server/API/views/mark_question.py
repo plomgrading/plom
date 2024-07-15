@@ -118,9 +118,9 @@ class QuestionMarkingViewSet(ViewSet):
                     papernum, question_idx, question_version=version
                 )
             except ObjectDoesNotExist as e:
-                if "version" in str(e):
-                    return _error_response(e, status.HTTP_417_EXPECTATION_FAILED)
                 return _error_response(e, status.HTTP_404_NOT_FOUND)
+            except ValueError as e:
+                return _error_response(e, status.HTTP_417_EXPECTATION_FAILED)
 
             try:
                 MarkingTaskService.assign_task_to_user(task.pk, request.user)

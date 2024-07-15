@@ -38,38 +38,33 @@ def get_latest_task(
 
     Raises:
         ObjectDoesNotExist: no such marking task, either b/c the paper
-            does not exist or the question does not exist for that
-            paper, or that question/version pair does not exist for that
-            paper.
+            does not exist or the question does not exist for that paper.
+        ValueError: that paper/question pair does exist but not with the
+            specified version.
     """
     try:
         paper = Paper.objects.get(paper_number=paper_number)
     except ObjectDoesNotExist as e:
         # reraise with a more detailed error message
         raise ObjectDoesNotExist(f"Task for paper {paper_number} does not exist") from e
-    if question_version is None:
-        r = (
-            MarkingTask.objects.filter(paper=paper, question_index=question_idx)
-            .order_by("-time")
-            .first()
-        )
-    else:
-        r = (
-            MarkingTask.objects.filter(
-                paper=paper,
-                question_index=question_idx,
-                question_version=question_version,
-            )
-            .order_by("-time")
-            .first()
-        )
+    r = (
+        MarkingTask.objects.filter(paper=paper, question_index=question_idx)
+        .order_by("-time")
+        .first()
+    )
     # Issue #2851, special handling of the None return
     if r is None:
-        errmsg = f"Task does not exist: we have paper {paper_number}"
-        errmsg += f" but not question index {question_idx}"
-        if question_version is not None:
-            errmsg += f" version {question_version}"
-        raise ObjectDoesNotExist(errmsg)
+        raise ObjectDoesNotExist(
+            f"Task does not exist: we have paper {paper_number} but "
+            f"not question index {question_idx}"
+        )
+    if question_version is not None:
+        if r.question_version != question_version:
+            raise ValueError(
+                f"Task for paper {paper_number} question index {question_idx} "
+                f"exists with version {r.question_version} not {question_version}."
+                "  You're likely asking for the wrong version."
+            )
     return r
 
 

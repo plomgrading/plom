@@ -97,7 +97,7 @@ class MarkingTaskServiceTests(TestCase):
         code = "q0042g1"
         assert task.code == code
         mark_task.get_latest_task(42, 1, question_version=2)
-        with self.assertRaisesRegex(ObjectDoesNotExist, "but not .* version 1"):
+        with self.assertRaisesRegex(ValueError, "wrong version"):
             mark_task.get_latest_task(42, 1, question_version=1)
 
     def test_assign_task_to_user(self) -> None:
