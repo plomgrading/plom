@@ -107,6 +107,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "django_filters",
+    # Tables
+    "django_tables2",
     # Custom apps
     "Base",
     "Authentication",
