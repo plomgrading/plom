@@ -26,14 +26,92 @@
     </div>
     <hr />
     {% comment %} Filter {% endcomment %}
-    <div>
-        <form method="get" action="" class="form-inline">
-            <div class="form-group mr-2">
-                {{ rubric_filter_form }}
-                <button type="submit" class="btn btn-success">Filter</button>
-            </div>
-        </form>
+    <div class="row">
+        <div class="col">
+            <form method="get" action="" class="form-inline">
+                <div class="form-group mr-2">
+                    {{ rubric_filter_form }}
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-filter"></i> Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="col">
+            <button type="submit"
+                    class="btn btn-primary float-end"
+                    data-bs-toggle="modal"
+                    data-bs-target="#createModal">
+                <i class="bi bi-plus-circle-fill"></i> Create Rubric
+            </button>
+        </div>
     </div>
     {% comment %} Table {% endcomment %}
     <div class="mt-2">{% render_table rubrics %}</div>
+    <!-- Create Rubric Modal -->
+    <div class="modal fade"
+         id="createModal"
+         tabindex="-1"
+         aria-labelledby="createModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createModalLabel">Creating Rubric</h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <form action="{% url 'rubric_create' %}" method="post">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        {{ rubric_create_form.non_field_errors }}
+                        <div class="row form-group">
+                            <div class="col">
+                                {{ rubric_create_form.question.errors }}
+                                <label for="{{ rubric_create_form.question.id_for_label }}">Question:</label>
+                                {{ rubric_create_form.question }}
+                            </div>
+                        </div>
+                        <div class="row form-group">
+                            <div class="col">
+                                {{ rubric_create_form.text.errors }}
+                                <label for="{{ rubric_create_form.text.id_for_label }}">Rubric Text:</label>
+                                {{ rubric_create_form.text }}
+                            </div>
+                        </div>
+                        <div class="row form-group">
+                            <div class="col">
+                                {{ rubric_create_form.kind.errors }}
+                                <label for="{{ rubric_create_form.kind.id_for_label }}">Rubric Kind:</label>
+                                {{ rubric_create_form.kind }}
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            {{ rubric_create_form.value.errors }}
+                            <label class="col-sm-2 col-form-label"
+                                   for="{{ rubric_create_form.value.id_for_label }}">Value:</label>
+                            <div class="col">{{ rubric_create_form.value }}</div>
+                            {{ rubric_create_form.out_of.errors }}
+                            <label class="col-sm-2 col-form-label"
+                                   for="{{ rubric_create_form.out_of.id_for_label }}">out of</label>
+                            <div class="col">{{ rubric_create_form.out_of }}</div>
+                        </div>
+                        <div class="row form-group">
+                            <div class="col">
+                                {{ rubric_create_form.meta.errors }}
+                                <label for="{{ rubric_create_form.meta.id_for_label }}">Rubric Meta (not shown to students):</label>
+                                {{ rubric_create_form.meta }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <input type="submit" class="btn btn-primary" value="Create">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 {% endblock main_content %}

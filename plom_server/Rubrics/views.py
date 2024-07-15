@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 import difflib
+import json
 from typing import Any
 from io import TextIOWrapper, StringIO, BytesIO
 
@@ -24,8 +25,15 @@ from Base.base_group_views import ManagerRequiredView
 from Base.models import SettingsModel
 from Papers.services import SpecificationService
 from .services import RubricService
-from .forms import RubricAdminForm, RubricDiffForm, RubricWipeForm, RubricUploadForm
-from .forms import RubricFilterForm, RubricEditForm, RubricDownloadForm
+from .forms import (
+    RubricAdminForm,
+    RubricWipeForm,
+    RubricUploadForm,
+    RubricFilterForm,
+    RubricEditForm,
+    RubricDownloadForm,
+    RubricCreateForm,
+)
 from .models import RubricTable
 
 
@@ -203,6 +211,7 @@ class RubricLandingPageView(ManagerRequiredView):
     def get(self, request):
         template_name = "Rubrics/rubrics_landing.html"
         rubric_filter_form = RubricFilterForm
+        rubric_create_form = RubricCreateForm
 
         context = self.build_context()
 
@@ -221,11 +230,11 @@ class RubricLandingPageView(ManagerRequiredView):
 
         rubrics = RubricTable(rubrics, order_by=request.GET.get("sort"))
         rubrics.paginate(page=request.GET.get("page", 1), per_page=15)
-
         context.update(
             {
                 "rubrics": rubrics,
                 "rubric_filter_form": filter_form,
+                "rubric_create_form": rubric_create_form,
             }
         )
 
@@ -412,3 +421,24 @@ class UploadRubricView(ManagerRequiredView):
         service.update_rubric_data(data_string, suffix)
         messages.success(request, "Rubric file uploaded successfully.")
         return redirect("rubrics_admin")
+
+
+class RubricCreateView(ManagerRequiredView):
+    def post(self, request: HttpRequest):
+        form = RubricCreateForm(request.POST)
+        if form.is_valid():
+            rs = RubricService()
+            rubric_data = {
+                "user": request.user.pk,
+                "modified_by_user": request.user.pk,
+                "text": form.cleaned_data["text"],
+                "kind": form.cleaned_data["kind"],
+                "value": form.cleaned_data["value"],
+                "out_of": form.cleaned_data["out_of"],
+                "meta": form.cleaned_data["meta"],
+                "question": form.cleaned_data["question"],
+            }
+            print(rubric_data)
+            rs.create_rubric(rubric_data)
+        messages.success(request, "Rubric created successfully.")
+        return redirect("rubrics_landing")

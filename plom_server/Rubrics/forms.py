@@ -41,6 +41,7 @@ class RubricFilterForm(forms.Form):
             (str(q_idx), q_label)
             for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
         ]
+        question_choices.insert(0, ("", "All Questions"))
         self.fields["question_filter"].choices = question_choices
 
 
@@ -76,24 +77,21 @@ class RubricUploadForm(forms.Form):
     rubric_file = forms.FileField(label="")
 
 
-class RubricDiffForm(forms.Form):
-    """Form for comparing two rubrics."""
+class RubricCreateForm(forms.ModelForm):
+    question = forms.TypedChoiceField(required=False)
 
-    left_compare = forms.ModelChoiceField(queryset=None)
-    right_compare = forms.ModelChoiceField(queryset=None)
+    class Meta:
+        model = Rubric
+        fields = ["text", "kind", "value", "out_of", "meta"]
 
     def __init__(self, *args, **kwargs):
-        key = kwargs.pop("key", None)
         super().__init__(*args, **kwargs)
+        question_choices = [
+            (str(q_idx), q_label)
+            for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
+        ]
 
-        if key:
-            queryset = Rubric.objects.filter(key=key)
-            self.fields["left_compare"].queryset = queryset
-            self.fields["left_compare"].label_from_instance = (
-                lambda obj: "Rev. %i" % obj.revision
-            )
+        self.fields["question"].choices = question_choices
 
-            self.fields["right_compare"].queryset = queryset
-            self.fields["right_compare"].label_from_instance = (
-                lambda obj: "Rev. %i" % obj.revision
-            )
+        for field in self.fields:
+            self.fields[field].widget.attrs["class"] = "form-control"
