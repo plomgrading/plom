@@ -78,7 +78,17 @@ class RubricUploadForm(forms.Form):
 
 
 class RubricCreateForm(forms.ModelForm):
-    question = forms.TypedChoiceField(required=False)
+    question = forms.TypedChoiceField(
+        required=True,
+        widget=forms.Select(attrs={"onchange": "updateQuestion()"}),
+        empty_value="",
+    )
+    kind = forms.ChoiceField(
+        choices=Rubric.RubricKind.choices,
+        initial=Rubric.RubricKind.ABSOLUTE,
+        widget=forms.Select(attrs={"onchange": "updateKind()"}),
+    )
+    out_of = forms.IntegerField(required=False, disabled=True)
 
     class Meta:
         model = Rubric

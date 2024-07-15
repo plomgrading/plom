@@ -212,6 +212,7 @@ class RubricLandingPageView(ManagerRequiredView):
         template_name = "Rubrics/rubrics_landing.html"
         rubric_filter_form = RubricFilterForm
         rubric_create_form = RubricCreateForm
+        questions = SpecificationService.get_the_spec()["question"]
 
         context = self.build_context()
 
@@ -235,6 +236,7 @@ class RubricLandingPageView(ManagerRequiredView):
                 "rubrics": rubrics,
                 "rubric_filter_form": filter_form,
                 "rubric_create_form": rubric_create_form,
+                "questions": json.dumps(questions),
             }
         )
 
