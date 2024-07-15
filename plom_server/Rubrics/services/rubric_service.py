@@ -120,6 +120,18 @@ class RubricService:
             except ObjectDoesNotExist as e:
                 raise ValueError(f"User {username} does not exist.") from e
 
+        if "display_delta" not in rubric_data.keys():
+            if rubric_data["kind"] == "absolute":
+                rubric_data["display_delta"] = (
+                    f"{rubric_data['value']} of {rubric_data['out_of']}"
+                )
+            elif rubric_data["kind"] == "relative":
+                rubric_data["display_delta"] = f"{rubric_data['value']}"
+            elif rubric_data["kind"] == "neutral":
+                rubric_data["display_delta"] = "."
+            else:
+                raise ValidationError({"kind": "Invalid kind."})
+
         s = SettingsModel.load()
         if creating_user is None:
             pass
