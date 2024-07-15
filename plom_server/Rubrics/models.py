@@ -7,6 +7,7 @@
 # Copyright (C) 2024 Aden Chan
 
 import random
+import django_tables2 as tables
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -151,3 +152,26 @@ class RubricPane(models.Model):
     user = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
     question = models.PositiveIntegerField(default=0)
     data = models.JSONField(null=False, default=dict)
+
+
+class RubricTable(tables.Table):
+    class Meta:
+        model = Rubric
+        fields = (
+            "key",
+            "display_delta",
+            "last_modified",
+            "kind",
+            "system_rubric",
+            "question",
+            "text",
+        )
+        sequence = (
+            "key",
+            "display_delta",
+            "last_modified",
+            "kind",
+            "system_rubric",
+            "question",
+            "text",
+        )

@@ -26,6 +26,7 @@ from Papers.services import SpecificationService
 from .services import RubricService
 from .forms import RubricAdminForm, RubricDiffForm, RubricWipeForm, RubricUploadForm
 from .forms import RubricFilterForm, RubricEditForm, RubricDownloadForm
+from .models import RubricTable
 
 
 class RubricAdminPageView(ManagerRequiredView):
@@ -217,6 +218,9 @@ class RubricLandingPageView(ManagerRequiredView):
 
             if kind_filter:
                 rubrics = rubrics.filter(kind=kind_filter, latest=True)
+
+        rubrics = RubricTable(rubrics, order_by=request.GET.get("sort"))
+        rubrics.paginate(page=request.GET.get("page", 1), per_page=15)
 
         context.update(
             {
