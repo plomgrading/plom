@@ -107,6 +107,8 @@ class QuestionMarkingViewSet(ViewSet):
         """
         data = request.query_params
         version = data.get("version", None)
+        if version is not None:
+            version = int(version)
         try:
             papernum, question_idx = mark_task.unpack_code(code)
         except AssertionError as e:
