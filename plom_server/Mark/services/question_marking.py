@@ -13,7 +13,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 
 from ..models import MarkingTask
-from . import mark_task, page_data
+from . import mark_task
 from . import create_new_annotation_in_database
 
 
@@ -163,20 +163,6 @@ class QuestionMarkingService:
             return self._get_task_for_update()
         else:
             raise ValueError("Cannot find task - no public key or code specified.")
-
-    @transaction.atomic
-    def get_page_data(self) -> list[dict]:
-        """Return the relevant data for rendering task pages on the client."""
-        if self.task_pk:
-            task = MarkingTask.objects.get(pk=self.task_pk)
-            paper_number = task.paper.paper_number
-            question_index = task.question_index
-        elif self.code:
-            paper_number, question_index = mark_task.unpack_code(self.code)
-        else:
-            raise ValueError("Cannot find task to read from.")
-
-        return page_data.get_question_pages_list(paper_number, question_index)
 
     @transaction.atomic
     def mark_task(self) -> None:
