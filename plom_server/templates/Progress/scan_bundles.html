@@ -4,40 +4,42 @@
 -->
 {% extends "Progress/scan_base.html" %}
 {% block main_card_content %}
-    <div class="row ps-5 pe-5">
+    <div class="row">
         <h5>Pushed bundles: {{ number_of_pushed_bundles }}</h5>
-        <div class="card" style="max-height: 50vh">
-            <div class="card-body overflow-auto">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th scope="col">Name</th>
-                            <th scope="col">Pages</th>
-                            <th scope="col">Uploaded by</th>
-                            <th scope="col">When uploaded</th>
-                            <th scope="col">Pushed by</th>
-                            <th scope="col">when pushed</th>
-                            <th scope="col">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for bundle in pushed_bundles %}
+        <div class="col">
+            <div class="card" style="max-height: 50vh">
+                <div class="card-body overflow-auto">
+                    <table class="table table-striped">
+                        <thead>
                             <tr>
-                                <td>{{ bundle.name }}</td>
-                                <td>{{ bundle.pages }}</td>
-                                <td>{{ bundle.who_uploaded }}</td>
-                                <td>{{ bundle.when_uploaded }}</td>
-                                <td>{{ bundle.who_pushed }}</td>
-                                <td>{{ bundle.when_pushed }}</td>
-                                <td>
-                                    <div class="hstack gap-2">
-                                        <a class="btn btn-primary disabled">View</a>
-                                    </div>
-                                </td>
+                                <th scope="col">Name</th>
+                                <th scope="col">Pages</th>
+                                <th scope="col">Uploaded by</th>
+                                <th scope="col">When uploaded</th>
+                                <th scope="col">Pushed by</th>
+                                <th scope="col">when pushed</th>
+                                <th scope="col">Action</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {% for bundle in pushed_bundles %}
+                                <tr>
+                                    <td>{{ bundle.name }}</td>
+                                    <td>{{ bundle.pages }}</td>
+                                    <td>{{ bundle.who_uploaded }}</td>
+                                    <td>{{ bundle.when_uploaded }}</td>
+                                    <td>{{ bundle.who_pushed }}</td>
+                                    <td>{{ bundle.when_pushed }}</td>
+                                    <td>
+                                        <div class="hstack gap-2">
+                                            <a class="btn btn-primary disabled">View</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
