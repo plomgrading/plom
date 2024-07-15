@@ -34,11 +34,9 @@
             console.log("updateKind");
             var kind = document.getElementById("id_kind").value;
             if (kind === "absolute") {
-                document.getElementById("id_out_of").style.display = "block";
-                document.getElementById("id_out_of_label").style.display = "block";
+                document.getElementById("id_out_of_label").innerHTML = "out of";
             } else {
-                document.getElementById("id_out_of").style.display = "none";
-                document.getElementById("id_out_of_label").style.display = "none";
+                document.getElementById("id_out_of_label").innerHTML = "Max:";
             }
         }
     </script>
