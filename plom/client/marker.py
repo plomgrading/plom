@@ -443,6 +443,7 @@ class MarkerClient(QWidget):
             return
 
         if not self.msgr.is_legacy_server():
+            assert self.msgr.username
             self.annotatorSettings["nextTaskPreferTagged"] = "@" + self.msgr.username
         self.update_get_next_button()
 
