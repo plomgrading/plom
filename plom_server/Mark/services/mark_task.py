@@ -17,36 +17,59 @@ from ..models import MarkingTask
 
 
 @transaction.atomic
-def get_latest_task(paper_number: int, question_idx: int) -> MarkingTask:
-    """Get a marking task from its paper number and question index.
+def get_latest_task(
+    paper_number: int, question_idx: int, *, question_version: int | None = None
+) -> MarkingTask:
+    """Get a marking task from its paper number and question index, and optionally version.
+
+    No locks are held or atomic operations made, nor select for update:
+    this is a low-level routine.  Apply whatever safeguards you need in
+    the caller.
 
     Args:
         paper_number: which paper.
         question_idx: which question, by 1-based question index.
 
+    Keyword Args:
+        question_version: which version, or None/omit to ignore versions.
+
     Returns:
-        The MarkingTask.
+        The MarkingTask object.
 
     Raises:
         ObjectDoesNotExist: no such marking task, either b/c the paper
-            does not exist or the question does not exist for that paper.
+            does not exist or the question does not exist for that
+            paper, or that question/version pair does not exist for that
+            paper.
     """
     try:
         paper = Paper.objects.get(paper_number=paper_number)
     except ObjectDoesNotExist as e:
         # reraise with a more detailed error message
         raise ObjectDoesNotExist(f"Task for paper {paper_number} does not exist") from e
-    r = (
-        MarkingTask.objects.filter(paper=paper, question_index=question_idx)
-        .order_by("-time")
-        .first()
-    )
+    if question_version is None:
+        r = (
+            MarkingTask.objects.filter(paper=paper, question_index=question_idx)
+            .order_by("-time")
+            .first()
+        )
+    else:
+        r = (
+            MarkingTask.objects.filter(
+                paper=paper,
+                question_index=question_idx,
+                question_version=question_version,
+            )
+            .order_by("-time")
+            .first()
+        )
     # Issue #2851, special handling of the None return
     if r is None:
-        raise ObjectDoesNotExist(
-            f"Task does not exist: we have paper {paper_number} but "
-            f"not question index {question_idx}"
-        )
+        errmsg = f"Task does not exist: we have paper {paper_number}"
+        errmsg += f" but not question index {question_idx}"
+        if question_version is not None:
+            errmsg += f" version {question_version}"
+        raise ObjectDoesNotExist(errmsg)
     return r
 
 

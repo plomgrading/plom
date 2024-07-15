@@ -323,6 +323,18 @@ class BaseMessenger:
         assert self.session
         return self.session.patch(self.base + url, *args, **kwargs)
 
+    def patch_auth(self, url: str, *args, **kwargs) -> requests.Response:
+        if self.is_legacy_server():
+            raise RuntimeError("This routine does not work on legacy servers")
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
+        if not self.token:
+            raise PlomAuthenticationException("Trying auth'd operation w/o token")
+        assert isinstance(self.token, dict)
+        kwargs["headers"] = {"Authorization": f"Token {self.token['token']}"}
+        assert self.session
+        return self.session.patch(self.base + url, *args, **kwargs)
+
     def _start(self) -> str:
         """Start the messenger session, low-level.
 

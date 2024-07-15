@@ -4,6 +4,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Andrew Rechnitzer
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 from django.contrib.auth.models import User
 from model_bakery import baker
@@ -83,6 +84,21 @@ class MarkingTaskServiceTests(TestCase):
         assert task.code != code
         with self.assertRaisesRegex(RuntimeError, "Task .*does not exist"):
             s.get_task_from_code(code)
+
+    def test_get_latest_task_asking_for_wrong_version(self) -> None:
+        s = MarkingTaskService()
+        task = baker.make(
+            MarkingTask,
+            question_index=1,
+            question_version=2,
+            paper__paper_number=42,
+            code="q0042g1",
+        )
+        code = "q0042g1"
+        assert task.code == code
+        mark_task.get_latest_task(42, 1, question_version=2)
+        with self.assertRaisesRegex(ObjectDoesNotExist, "but not .* version 1"):
+            mark_task.get_latest_task(42, 1, question_version=1)
 
     def test_assign_task_to_user(self) -> None:
         """Test MarkingTaskService.assign_task_to_user()."""
