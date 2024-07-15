@@ -230,6 +230,7 @@ class BaseMessenger:
         return self.session.get(self.base + url, *args, **kwargs)
 
     def get_auth(self, url: str, *args, **kwargs) -> requests.Response:
+        """Perform a GET method on a URL with a token for authentication."""
         if self.is_legacy_server():
             raise RuntimeError("This routine does not work on legacy servers")
         if "timeout" not in kwargs:
@@ -242,7 +243,7 @@ class BaseMessenger:
         return self.session.get(self.base + url, *args, **kwargs)
 
     def post_raw(self, url: str, *args, **kwargs) -> requests.Response:
-        """Perform a POST operation without tokens."""
+        """Perform a POST method without tokens."""
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
@@ -250,7 +251,7 @@ class BaseMessenger:
         return self.session.post(self.base + url, *args, **kwargs)
 
     def post_auth(self, url: str, *args, **kwargs) -> requests.Response:
-        """Perform a POST operation with tokens for authentication."""
+        """Perform a POST method on a URL with a token for authentication."""
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
@@ -273,6 +274,7 @@ class BaseMessenger:
         return self.session.post(self.base + url, *args, **kwargs)
 
     def put(self, url: str, *args, **kwargs) -> requests.Response:
+        """Perform a PUT method on a URL."""
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
@@ -290,6 +292,7 @@ class BaseMessenger:
         return self.session.put(self.base + url, *args, **kwargs)
 
     def delete(self, url: str, *args, **kwargs) -> requests.Response:
+        """Perform a DELETE method on a URL."""
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
@@ -307,6 +310,7 @@ class BaseMessenger:
         return self.session.delete(self.base + url, *args, **kwargs)
 
     def patch(self, url: str, *args, **kwargs) -> requests.Response:
+        """Perform a PATCH method on a URL."""
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
@@ -324,6 +328,7 @@ class BaseMessenger:
         return self.session.patch(self.base + url, *args, **kwargs)
 
     def patch_auth(self, url: str, *args, **kwargs) -> requests.Response:
+        """Perform a DELETE method on a URL with a token for authentication."""
         if self.is_legacy_server():
             raise RuntimeError("This routine does not work on legacy servers")
         if "timeout" not in kwargs:
