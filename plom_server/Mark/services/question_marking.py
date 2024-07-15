@@ -83,13 +83,18 @@ class QuestionMarkingService:
         self.annotation_image = annotation_image
         self.annotation_image_md5sum = annotation_image_md5sum
 
+    @staticmethod
     @transaction.atomic
     def get_first_available_task(
-        self,
         *,
+        question_idx: int | None = None,
+        version: int | None = None,
+        user: User | None = None,
+        min_paper_num: int | None = None,
+        max_paper_num: int | None = None,
         tags: list[str] | None = None,
         exclude_tagged_for_others: bool = True,
-    ) -> Optional[MarkingTask]:
+    ) -> MarkingTask | None:
         """Return the first marking task with a 'todo' status, sorted by `marking_priority`.
 
         If ``question`` and/or ``version``, restrict tasks appropriately.
@@ -101,6 +106,12 @@ class QuestionMarkingService:
         If the priority is the same, defer to paper number and then question index.
 
         Keyword Args:
+            question_idx: optional question index for the task.
+            version: optional question version for the task.
+            user: reference to a user instance, used to filter out
+                tasks that are tagged for someone else.
+            min_paper_num: optional minimum paper number of the task.
+            max_paper_num: optional maximum paper number of the task.
             tags: a task must match at least one of the strings in this
                 list.
             exclude_tagged_for_others: don't return papers that are
@@ -114,24 +125,24 @@ class QuestionMarkingService:
         """
         available = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
 
-        if self.question:
-            available = available.filter(question_index=self.question)
+        if question_idx:
+            available = available.filter(question_index=question_idx)
 
-        if self.version:
-            available = available.filter(question_version=self.version)
+        if version:
+            available = available.filter(question_version=version)
 
-        if self.min_paper_num:
-            available = available.filter(paper__paper_number__gte=self.min_paper_num)
+        if min_paper_num:
+            available = available.filter(paper__paper_number__gte=min_paper_num)
 
-        if self.max_paper_num:
-            available = available.filter(paper__paper_number__lte=self.max_paper_num)
+        if max_paper_num:
+            available = available.filter(paper__paper_number__lte=max_paper_num)
 
         if tags:
             available = available.filter(markingtasktag__text__in=tags)
 
         if exclude_tagged_for_others:
             users = User.objects.all()
-            other_user_tags = [f"@{u}" for u in users if u != self.user]
+            other_user_tags = [f"@{u}" for u in users if u != user]
             # anything explicitly in tags should not be filtered here
             if tags:
                 other_user_tags = [x for x in other_user_tags if x not in tags]
@@ -143,7 +154,6 @@ class QuestionMarkingService:
         first_task = available.order_by(
             "-marking_priority", "paper__paper_number", "question_index"
         ).first()
-        self.task_pk = first_task.pk
         return first_task
 
     def _get_task_for_update(self) -> MarkingTask:

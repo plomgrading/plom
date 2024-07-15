@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Andrew Rechnitzer
 
@@ -38,10 +38,10 @@ class QuestionMarkingServiceTests(TestCase):
             marking_priority=1,
         )
 
-        task = QuestionMarkingService().get_first_available_task()
+        task = QuestionMarkingService.get_first_available_task()
         self.assertEqual(task, task3)
         task3.status = MarkingTask.OUT
         task3.save()
 
-        next_task = QuestionMarkingService().get_first_available_task()
+        next_task = QuestionMarkingService.get_first_available_task()
         self.assertEqual(next_task, task5)

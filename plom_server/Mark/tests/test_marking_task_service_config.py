@@ -59,7 +59,7 @@ class MarkingTaskTestsWithConfig(TestCase):
 
     @config_test()
     def test_get_first_filter(self) -> None:
-        """Test MarkingTaskService.get_first_available_task() with a specified question and version.
+        """Test get_first_available_task() with a specified question and version.
 
         Config:
         test_spec = "config_files/tiny_spec.toml"
@@ -71,17 +71,17 @@ class MarkingTaskTestsWithConfig(TestCase):
         task3 = MarkingTask.objects.get(question_index=2, question_version=1)
         task4 = MarkingTask.objects.get(question_index=2, question_version=2)
 
-        self.assertEqual(QuestionMarkingService().get_first_available_task(), task1)
+        self.assertEqual(QuestionMarkingService.get_first_available_task(), task1)
         self.assertEqual(
-            QuestionMarkingService(question=1, version=2).get_first_available_task(),
+            QuestionMarkingService.get_first_available_task(question_idx=1, version=2),
             task2,
         )
         self.assertEqual(
-            QuestionMarkingService(question=2, version=1).get_first_available_task(),
+            QuestionMarkingService.get_first_available_task(question_idx=2, version=1),
             task3,
         )
         self.assertEqual(
-            QuestionMarkingService(question=2, version=2).get_first_available_task(),
+            QuestionMarkingService.get_first_available_task(question_idx=2, version=2),
             task4,
         )
 
@@ -145,12 +145,12 @@ class MarkingTaskTestsWithConfig(TestCase):
         task2 = MarkingTask.objects.get(code="q0001g2")
         task3 = MarkingTask.objects.get(code="q0002g1")
 
-        self.assertEqual(QuestionMarkingService().get_first_available_task(), task1)
+        self.assertEqual(QuestionMarkingService.get_first_available_task(), task1)
 
         task1.status = MarkingTask.COMPLETE
         task1.save()
 
-        self.assertEqual(QuestionMarkingService().get_first_available_task(), task2)
+        self.assertEqual(QuestionMarkingService.get_first_available_task(), task2)
 
         # keep linter happy
         del task3

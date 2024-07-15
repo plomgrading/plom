@@ -56,23 +56,24 @@ class QuestionMarkingViewSet(ViewSet):
         else:
             tags = []
 
-        task = QuestionMarkingService(
-            question=question,
+        task = QuestionMarkingService.get_first_available_task(
+            question_idx=question,
             version=version,
             user=request.user,
             min_paper_num=min_paper_num,
             max_paper_num=max_paper_num,
-        ).get_first_available_task(tags=tags)
+            tags=tags,
+        )
 
         if not task and tags:
             # didn't find anything tagged, so try again without
-            task = QuestionMarkingService(
-                question=question,
+            task = QuestionMarkingService.get_first_available_task(
+                question_idx=question,
                 version=version,
                 user=request.user,
                 min_paper_num=min_paper_num,
                 max_paper_num=max_paper_num,
-            ).get_first_available_task()
+            )
 
         if not task:
             return Response(status=status.HTTP_204_NO_CONTENT)

@@ -109,9 +109,7 @@ class MarkingTaskPriorityTests(ConfigTestCase):
 
         for task in tasks:
             self.assertEqual(task.marking_priority, n_papers - task.paper.paper_number)
-        self.assertEqual(
-            QuestionMarkingService().get_first_available_task(), first_task
-        )
+        self.assertEqual(QuestionMarkingService.get_first_available_task(), first_task)
         self.assertEqual(
             marking_priority.get_mark_priority_strategy(),
             MarkingTaskPriority.PAPER_NUMBER,
@@ -127,7 +125,7 @@ class MarkingTaskPriorityTests(ConfigTestCase):
                 self.assertEqual(
                     task.marking_priority, n_papers - task.paper.paper_number
                 )
-        self.assertEqual(QuestionMarkingService().get_first_available_task(), last_task)
+        self.assertEqual(QuestionMarkingService.get_first_available_task(), last_task)
         self.assertEqual(
             marking_priority.get_mark_priority_strategy(),
             MarkingTaskPriority.PAPER_NUMBER,
