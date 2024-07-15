@@ -159,9 +159,8 @@ def check_equal_page_count(path) -> bool:
     source = Path(path)
     source_version = set()
     for f in source.glob("version*.pdf"):
-        doc = fitz.open(f)
-        num_pages = len(doc)
-        doc.close()
+        with fitz.open(f) as doc:
+            num_pages = len(doc)
         source_version.add(num_pages)
     if len(source_version) > 1:
         return False

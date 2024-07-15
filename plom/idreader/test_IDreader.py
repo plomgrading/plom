@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2022, 2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Sophia Vetrici
 
@@ -23,8 +23,8 @@ from plom.scan import processFileToBitmaps
 from plom.create.scribble_utils import scribble_name_and_id
 
 
-def test_log_likelihood():
-    student_id = [i for i in range(0, 8)]
+def test_log_likelihood() -> None:
+    student_id = "01234567"
     probabilities = [
         [0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -40,12 +40,12 @@ def test_log_likelihood():
         5.545177444479562,
         1e-7,
     )
-    assert calc_log_likelihood([9] * 8, probabilities) > 100
+    assert calc_log_likelihood("99999999", probabilities) > 100
     with raises(ValueError):
-        calc_log_likelihood([1, 2, 3], probabilities)
+        calc_log_likelihood("123", probabilities)
 
 
-def test_download_or_train_model(tmp_path):
+def test_download_or_train_model(tmp_path) -> None:
     with working_directory(tmp_path):
         assert not is_model_present()
         assert download_model()
@@ -59,17 +59,16 @@ def test_download_or_train_model(tmp_path):
 
 
 # Bit messy with so many subtests: refactor to a setup / teardown class?
-def test_get_digit_box(tmp_path):
+def test_get_digit_box(tmp_path) -> None:
     # for persistent debugging:
     # tmp_path = "/home/cbm/src/plom/plom.git/tmp"
 
     assert buildDemoSourceFiles(basedir=tmp_path)
 
-    d = fitz.open(tmp_path / "sourceVersions/version1.pdf")
-    scribble_name_and_id(d, "01234567", "Testy McTester")
-    f = tmp_path / "foo.pdf"
-    d.save(f)
-    d.close()
+    with fitz.open(tmp_path / "sourceVersions/version1.pdf") as d:
+        scribble_name_and_id(d, "01234567", "Testy McTester")
+        f = tmp_path / "foo.pdf"
+        d.save(f)
     files = processFileToBitmaps(f, tmp_path)
     id_img = files[0]
 
@@ -115,17 +114,16 @@ def test_get_digit_box(tmp_path):
         {"id": "01277777", "studentName": "MC Test-a-lot"},
         {"id": "01277788", "studentName": "DJ Testerella"},
     ]
-    id_imgs = []
+    _id_imgs = []
     for s in miniclass:
-        d = fitz.open(tmp_path / "sourceVersions/version1.pdf")
-        scribble_name_and_id(d, s["id"], s["studentName"], seed=42)
-        f = tmp_path / f"mytest_{s['id']}.pdf"
-        d.save(f)
-        d.close()
+        with fitz.open(tmp_path / "sourceVersions/version1.pdf") as d:
+            scribble_name_and_id(d, s["id"], s["studentName"], seed=42)
+            f = tmp_path / f"mytest_{s['id']}.pdf"
+            d.save(f)
         files = processFileToBitmaps(f, tmp_path)
-        id_imgs.append(files[0])
+        _id_imgs.append(files[0])
 
-    id_imgs = {(k + 1): x for k, x in enumerate(id_imgs)}
+    id_imgs = {(k + 1): x for k, x in enumerate(_id_imgs)}
     test_nums = list(range(1, len(id_imgs)))
     ids = [x["id"] for x in miniclass]
     with working_directory(tmp_path):

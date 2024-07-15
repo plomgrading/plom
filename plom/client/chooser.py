@@ -57,6 +57,7 @@ from plom.plom_exceptions import (
     PlomExistingLoginException,
     PlomServerNotReady,
     PlomSSLError,
+    PlomNoServerSupportException,
 )
 from plom.messenger import Messenger, ManagerMessenger
 from plom.client import MarkerClient, IDClient
@@ -220,6 +221,10 @@ class Chooser(QDialog):
 
         tmpdir = tempfile.mkdtemp(prefix="plom_local_img_")
         self.Qapp.downloader = Downloader(tmpdir, msgr=self.messenger)
+        try:
+            role = self.messenger.get_user_role()
+        except PlomNoServerSupportException:
+            role = ""
 
         if which_subapp == "Manager":
             if not self.messenger.is_legacy_server():
@@ -243,6 +248,9 @@ class Chooser(QDialog):
             # store ref in Qapp to avoid garbase collection
             self.Qapp._manager_window = window
         elif which_subapp == "Marker":
+            if len(role) and role not in ["marker", "lead_marker"]:
+                WarnMsg(self, "Only marker/lead marker can mark papers!").exec()
+                return
             question = self.getQuestion()
             v = self.getv()
             assert question is not None
@@ -256,6 +264,9 @@ class Chooser(QDialog):
             # store ref in Qapp to avoid garbase collection
             self.Qapp.marker = markerwin
         elif which_subapp == "Identifier":
+            if len(role) and role != "lead_marker":
+                WarnMsg(self, "Only lead marker can identify papers!").exec()
+                return
             self.setEnabled(False)
             self.hide()
             idwin = IDClient(self.Qapp)

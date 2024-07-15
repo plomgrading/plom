@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Bryan Tanady
 
 # a different kind of annotations... this is about code typing
 from __future__ import annotations
@@ -1253,8 +1254,16 @@ class PageScene(QGraphicsScene):
             self.addItem(self.boxItem)
         elif self.boxLineStampState == 2:  # finish the connecting line
             if ghost_rect is None:
+                tick_rad = TickItem.tick_radius
+                padding = tick_rad // 2
+                side = round(2 * padding + 7 * tick_rad / 4)
+                g_rect_top_left = QPointF(
+                    self.currentPos.x() - 3 * tick_rad // 4 - padding,
+                    self.currentPos.y() - tick_rad - padding,
+                )
+
                 ghost_rect = QRectF(
-                    self.currentPos.x() - 16, self.currentPos.y() - 8, 16, 16
+                    g_rect_top_left.x(), g_rect_top_left.y(), side, side
                 )
             connectingPath = self.whichLineToDraw(
                 ghost_rect,
@@ -1295,8 +1304,16 @@ class PageScene(QGraphicsScene):
             # update the connecting path
             self.currentPos = event.scenePos()
             if ghost_rect is None:
+                tick_rad = TickItem.tick_radius
+                padding = tick_rad // 2
+                side = round(2 * padding + 7 * tick_rad / 4)
+                g_rect_top_left = QPointF(
+                    self.currentPos.x() - 3 * tick_rad // 4 - padding,
+                    self.currentPos.y() - tick_rad - padding,
+                )
+
                 ghost_rect = QRectF(
-                    self.currentPos.x() - 16, self.currentPos.y() - 8, 16, 16
+                    g_rect_top_left.x(), g_rect_top_left.y(), side, side
                 )
             self.pathItem.setPath(
                 self.whichLineToDraw(
