@@ -29,10 +29,10 @@
                     </ul>
                     <a type="button" class="btn btn-primary m-1" href="{% url "home" %}">Cancel and return home</a>
                     <p class="mt-4">
-                        Confirm that you understand that this action is irreversible, will result in the complete loss of data on this Plom instance, and that you wish to continue anyways by entering the follow phrase below
+                        Confirm that you understand that this action is irreversible, will result in the complete loss of data on this Plom instance, and that you wish to continue anyways by entering the assessment shortname below
                     </p>
                     <p class="text-center">
-                        <strong>I wish to completely delete this Plom instance.</strong>
+                        <strong>{{ reset_phrase }}</strong>
                     </p>
                     <form method="post" action="" autocomplete="off">
                         {% csrf_token %}
