@@ -158,8 +158,6 @@ class QuestionMarkingViewSet(ViewSet):
             )
         except ObjectDoesNotExist as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
-        except RuntimeError as e:
-            return _error_response(e, status.HTTP_409_CONFLICT)
         # TODO: is something automatically catching ValidationErrors?
 
         annotation_image = files["annotation_image"]
