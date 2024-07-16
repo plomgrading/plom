@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
-# Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2021-2024 Colin B. Macdonald
 
 from plom.solutions import with_manager_messenger
 
@@ -17,7 +17,7 @@ def getSolutionImage(question, version, *, msgr):
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
 
-    Return:
+    Returns:
         bytes: the bitmap of the solution or None if there was no
         solution.  If you wish to know what sort of image it is,
         see recent changes to `get_annotations_image` which could

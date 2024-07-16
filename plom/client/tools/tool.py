@@ -46,7 +46,7 @@ class CommandTool(QUndoCommand):
     ) -> AnimatingTempItemMixin:
         """Return an object suitable for animating the undo/redo action.
 
-        Return:
+        Returns:
             A QGraphicsItem, that also has the AnimatingTempItemMixin.
             This is a special object that will animate and then remove
             itself from the scene.

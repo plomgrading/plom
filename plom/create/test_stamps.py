@@ -98,11 +98,6 @@ def test_qr_stamp_all_pages(tmp_path) -> None:
         spec,
         5,
         {1: 1, 2: 1, 3: 2},
-        extra=None,
-        no_qr=False,
-        fakepdf=False,
-        xcoord=None,
-        ycoord=None,
         where=tmp_path,
         source_versions_path=(tmp_path / "sourceVersions"),
     )

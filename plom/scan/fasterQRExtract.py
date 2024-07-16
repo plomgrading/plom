@@ -26,7 +26,7 @@ def findCorner(qr, dim):
         dim (tuple): pair of ints that correspond to the dimensions of
             the image that contains the QR code.
 
-    Return:
+    Returns:
         tuple: a triple ``(str, mx, my)`` where ``str`` is a 2-char string, one of
         "NE", "NE", "SW", "SE", depending on the relative location of the QR code,
         or "??" if the QR code cannot be detected. ``mx, my`` are either ints that correspond

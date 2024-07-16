@@ -165,7 +165,7 @@ def process_classlist_backend(student_csv_file_name):
     Arguments:
         student_csv_file_name (pathlib.Path/str): class info csv file.
 
-    Return:
+    Returns:
         pandas.DataFrame: the processed classlist data.
     """
     with open(student_csv_file_name) as csvfile:

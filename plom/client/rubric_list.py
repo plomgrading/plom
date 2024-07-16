@@ -987,7 +987,7 @@ class RubricWidget(QWidget):
         Args:
             name (str): name of the new tab.
 
-        Return:
+        Returns:
             RubricTable: the newly added table.
         """
         tab = RubricTable(self, shortname=name, tabType="group")
