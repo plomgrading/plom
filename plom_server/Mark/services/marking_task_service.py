@@ -275,7 +275,6 @@ class MarkingTaskService:
         """Validate the incoming marking data.
 
         Args:
-            user: reference to a User instance.
             code (str): key of the associated task.
             data (dict): information about the mark, rubrics, and annotation images.
             plomfile (str): a JSON field representing annotation data.
