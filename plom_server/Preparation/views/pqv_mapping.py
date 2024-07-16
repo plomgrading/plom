@@ -16,7 +16,7 @@ from django_htmx.http import HttpResponseClientRedirect
 from django.contrib import messages
 
 from Base.base_group_views import ManagerRequiredView
-from Papers.services import SpecificationService, PaperCreatorService
+from Papers.services import SpecificationService, PaperCreatorService, PaperInfoService
 
 from plom.misc_utils import format_int_list_with_runs
 from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
@@ -40,8 +40,8 @@ class PQVMappingUploadView(ManagerRequiredView):
         if not request.FILES["pqvmap_csv"]:
             return redirect("prep_qvmapping")
 
-        # if there is already a qv map redirect
-        if PQVMappingService().is_there_a_pqv_map():
+        # if database is populated then redirect
+        if PaperInfoService().is_paper_database_populated():
             return redirect("prep_qvmapping")
 
         prenamed_papers = list(StagingStudentService().get_prenamed_papers().keys())
@@ -53,28 +53,21 @@ class PQVMappingUploadView(ManagerRequiredView):
                 f = Path(td) / "file.csv"
                 with f.open("wb") as fh:
                     fh.write(request.FILES["pqvmap_csv"].read())
+                # this function also validates the version map
                 vm = version_map_from_file(f, required_papers=prenamed_papers)
         except ValueError as e:
             context["errors"].append({"kind": "ValueError", "err_text": f"{e}"})
         except KeyError as e:
             context["errors"].append({"kind": "KeyError", "err_text": f"{e}"})
-
+        # if any errors at this point, bail out and report them
         if context["errors"]:
             return render(request, "Preparation/pqv_mapping_attempt.html", context)
 
-        # if any errors at this point, bail out and report them
-
         try:
-            PQVMappingService().use_pqv_map(vm)
             PaperCreatorService().add_all_papers_in_qv_map(vm)
-        except ValueError as e:
-            context["errors"].append({"kind": "ValueError", "err_text": f"{e}"})
         except PlomDependencyConflict as err:
             messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(reverse("prep_conflict"))
-
-        if context["errors"]:
-            return render(request, "Preparation/pqv_mapping_attempt.html", context)
 
         # all successful, so return to the main pqvmapping-management page
         return redirect("prep_qvmapping")
@@ -82,8 +75,7 @@ class PQVMappingUploadView(ManagerRequiredView):
 
 class PQVMappingDownloadView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
-        pqvs = PQVMappingService()
-        pqvs_csv_txt = pqvs.get_pqv_map_as_csv_string()
+        pqvs_csv_txt = PQVMappingService().get_pqv_map_as_csv_string()
         return HttpResponse(pqvs_csv_txt, content_type="text/plain")
 
 
@@ -93,11 +85,10 @@ class PQVMappingDeleteView(ManagerRequiredView):
     def delete(self, request: HttpRequest) -> HttpResponse:
         try:
             PaperCreatorService().remove_all_papers_from_db()
-            PQVMappingService().remove_pqv_map()
         except PlomDependencyConflict as err:
             messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(reverse("prep_conflict"))
-        except PlomDatabaseCreationError as err:
+        except PlomDatabaseCreationError:
             # return to qvmap page since it will display a message with
             # info about what is happening to the db
             return HttpResponseClientRedirect(reverse("prep_qvmapping"))
@@ -107,6 +98,9 @@ class PQVMappingDeleteView(ManagerRequiredView):
 
 class PQVMappingView(ManagerRequiredView):
     def build_context(self) -> dict[str, Any]:
+        if not SpecificationService.is_there_a_spec():
+            return {"no_spec": True}
+
         context = {
             "number_of_questions": SpecificationService.get_n_questions(),
             "question_indices": SpecificationService.get_question_indices(),
@@ -114,7 +108,7 @@ class PQVMappingView(ManagerRequiredView):
             "fix_questions": SpecificationService.get_fix_questions(),
             "shuffle_questions": SpecificationService.get_shuffle_questions(),
             "prenaming": PrenameSettingService().get_prenaming_setting(),
-            "pqv_mapping_present": PQVMappingService().is_there_a_pqv_map(),
+            "pqv_mapping_present": PaperInfoService().is_paper_database_fully_populated(),
             "number_of_students": StagingStudentService().how_many_students(),
             "student_list_present": StagingStudentService().are_there_students(),
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
@@ -179,13 +173,12 @@ class PQVMappingView(ManagerRequiredView):
             return HttpResponseRedirect(".")
 
         try:
-            PQVMappingService().generate_and_set_pqvmap(number_to_produce, first=first)
-            vm = PQVMappingService().get_pqv_map_dict()
+            vm = PQVMappingService().make_version_map(number_to_produce, first=first)
             PaperCreatorService().add_all_papers_in_qv_map(vm)
         except PlomDependencyConflict as err:
             messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(reverse("prep_conflict"))
-        except PlomDatabaseCreationError as err:
+        except PlomDatabaseCreationError:
             # refresh the page since it will display a message with
             # info about what is happening to the db
             return HttpResponseRedirect(".")

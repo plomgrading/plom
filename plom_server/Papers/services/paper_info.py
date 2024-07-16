@@ -8,8 +8,13 @@ from typing import List
 
 from django.db import transaction
 
-from ..models import Paper, FixedPage, QuestionPage, PopulateEvacuateDBChore
-from Preparation.models import NumberOfPapersToProduceSetting
+from ..models import (
+    Paper,
+    FixedPage,
+    QuestionPage,
+    PopulateEvacuateDBChore,
+    NumberOfPapersToProduceSetting,
+)
 
 log = logging.getLogger("PaperInfoService")
 
@@ -128,10 +133,9 @@ class PaperInfoService:
         try:
             # to find the version, find the first fixed question page of that paper/question
             # and extract the version from that. Note - use "filter" and not "get" here.
-            # TODO: why not .first()?
             page = QuestionPage.objects.filter(
                 paper=paper, question_index=question_idx
-            )[0]
+            ).first()
             # This will either fail with a does-not-exist or index-out-of-range
         except (QuestionPage.DoesNotExist, IndexError):
             raise ValueError(
@@ -163,3 +167,20 @@ class PaperInfoService:
                     .values_list("paper__paper_number", flat=True)
                 )
             )
+
+    @transaction.atomic()
+    def get_pqv_map_dict(self) -> dict[int, dict[int, int]]:
+        """Get the paper-question-version mapping as a dict."""
+        # put into the dict in paper_number order.
+        pqvmapping: dict[int, dict[int, int]] = {}
+        # note that this gets all question pages, not just one for each question.
+        for qp_obj in QuestionPage.objects.all().prefetch_related("paper"):
+            pn = qp_obj.paper.paper_number
+            if pn in pqvmapping:
+                if qp_obj.question_index in pqvmapping[pn]:
+                    pass
+                else:
+                    pqvmapping[pn][qp_obj.question_index] = qp_obj.version
+            else:
+                pqvmapping[pn] = {qp_obj.question_index: qp_obj.version}
+        return pqvmapping

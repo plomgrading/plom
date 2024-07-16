@@ -22,6 +22,7 @@ from ..models import (
     DNMPage,
     QuestionPage,
     PopulateEvacuateDBChore,
+    NumberOfPapersToProduceSetting,
 )
 from Papers.services import SpecificationService
 
@@ -110,6 +111,14 @@ class PaperCreatorService:
             raise ObjectDoesNotExist(
                 "The database does not contain a test specification."
             ) from e
+
+    def _set_number_to_produce(self, numberToProduce: int):
+        nop = NumberOfPapersToProduceSetting.load()
+        nop.number_of_papers = numberToProduce
+        nop.save()
+
+    def _reset_number_to_produce(self):
+        self._set_number_to_produce(0)
 
     @transaction.atomic()
     def _create_single_paper_from_qvmapping_and_pages(
@@ -219,6 +228,7 @@ class PaperCreatorService:
             raise PlomDependencyConflict("Already papers in the database.")
         # check if there is an existing non-obsolete task
         self.assert_no_existing_chore()
+        self._set_number_to_produce(len(qv_map))
 
         if background:
             self.populate_whole_db_huey_wrapper(qv_map)
@@ -256,6 +266,7 @@ class PaperCreatorService:
         assert_can_modify_qv_mapping_database()
         # check if there is an existing non-obsolete task
         self.assert_no_existing_chore()
+        self._reset_number_to_produce()
 
         if background:
             self.evacuate_whole_db_huey_wrapper()

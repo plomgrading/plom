@@ -95,13 +95,14 @@ def upload_classlist(config: PlomServerConfig):
         raise PlomConfigCreationError(e) from e
 
 
-def create_qv_map(config: PlomServerConfig):
-    """Create a QVmap from a config.
+def create_qv_map_and_papers(config: PlomServerConfig):
+    """Create a QVmap from a config and use it to populate the paper database.
 
     Either generated from a number-to-produce value or a link to a QVmap CSV.
     """
+    qvmap: Dict[int, Dict[int, int]] = {}
     if config.num_to_produce:
-        PQVMappingService().generate_and_set_pqvmap(config.num_to_produce)
+        qvmap = PQVMappingService().make_version_map(config.num_to_produce)
     else:
         # TODO: extra validation steps here?
         try:
@@ -115,7 +116,6 @@ def create_qv_map(config: PlomServerConfig):
             qvmap_path = config.parent_dir / qvmap_path
             with open(qvmap_path, "rb") as qvmap_file:
                 qvmap_rows = tomllib.load(qvmap_file)
-                qvmap: Dict[int, Dict[int, int]] = {}
                 for i in range(len(qvmap_rows)):
                     paper_number = i + 1
                     row = qvmap_rows[str(paper_number)]
@@ -125,12 +125,7 @@ def create_qv_map(config: PlomServerConfig):
             PQVMappingService().use_pqv_map(qvmap)
         except Exception as e:
             raise PlomConfigCreationError(e) from e
-
-
-def create_papers(config: PlomServerConfig):
-    """Create test paper instances."""
     try:
-        qvmap = PQVMappingService().get_pqv_map_dict()
         PaperCreatorService().add_all_papers_in_qv_map(qvmap, background=False)
     except Exception as e:
         raise PlomConfigCreationError(e) from e
@@ -156,12 +151,8 @@ def create_test_preparation(config: PlomServerConfig, verbose: bool = False):
         upload_classlist(config)
 
     if config.num_to_produce or config.qvmap:
-        echo("Creating question-version map...")
-        create_qv_map(config)
-
-    if PQVMappingService().is_there_a_pqv_map():
-        echo("Creating test paper instances...")
-        create_papers(config)
+        echo("Creating question-version map and populating database...")
+        create_qv_map_and_papers(config)
 
     # here we override the dependency checking since
     # we do not want to actually build pdfs.

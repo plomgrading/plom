@@ -22,8 +22,7 @@ from django.db import transaction
 
 from plom import is_valid_tag_text
 
-from Preparation.services import PQVMappingService
-from Papers.services import ImageBundleService
+from Papers.services import ImageBundleService, PaperInfoService
 from Papers.models import Paper
 from Rubrics.models import Rubric
 
@@ -61,12 +60,13 @@ class MarkingTaskService:
         Returns:
             The newly created marking task object.
         """
-        pqvs = PQVMappingService()
-        if not pqvs.is_there_a_pqv_map():
-            raise RuntimeError("Server does not have a question-version map.")
-
-        pqv_map = pqvs.get_pqv_map_dict()
-        question_version = pqv_map[paper.paper_number][question_index]
+        # get the version of the given paper/question
+        try:
+            question_version = PaperInfoService().get_version_from_paper_question(
+                paper.paper_number, question_index
+            )
+        except ValueError as err:
+            raise RuntimeError(f"Server does not have a question-version map - {err}")
 
         task_code = f"q{paper.paper_number:04}g{question_index}"
 

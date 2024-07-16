@@ -11,21 +11,20 @@ from django.core.management.base import BaseCommand, CommandError
 
 from plom.misc_utils import format_int_list_with_runs
 from plom.version_maps import version_map_from_file
-from Papers.services import SpecificationService
+from Papers.services import SpecificationService, PaperInfoService, PaperCreationService
 
 from ...services import PQVMappingService, PapersPrinted
 
 
 class Command(BaseCommand):
-    help = "Displays the current status of the question-version map and allows user generate/download/remove it."
+    help = "Displays the current status of the question-version map and allows user generate/upload/download/remove it."
 
     def show_status(self) -> None:
         if not SpecificationService.is_there_a_spec():
             self.stdout.write("There is no valid test specification. Stopping.")
 
-        pqvms = PQVMappingService()
-        if pqvms.is_there_a_pqv_map():
-            paper_list = pqvms.list_of_paper_numbers()
+        if PaperInfoService().is_paper_database_populated():
+            paper_list = PaperInfoService().which_papers_in_database()
             self.stdout.write(
                 "There is a question-version mapping on the server "
                 f"with {len(paper_list)} rows: "
@@ -35,9 +34,11 @@ class Command(BaseCommand):
                 print("Papers have been printed: cannot change qvmap.")
 
         else:
-            self.stdout.write("There is no question-version mapping.")
             self.stdout.write(
-                f"Recommended minimum number of papers to produce is {pqvms.get_minimum_number_to_produce()}"
+                "There is no question-version mapping, nor papers in the database."
+            )
+            self.stdout.write(
+                f"Recommended minimum number of papers to produce is {PQVMappingService().get_minimum_number_to_produce()}"
             )
 
     def generate_pqv_map(
@@ -48,19 +49,19 @@ class Command(BaseCommand):
 
         if not SpecificationService.is_there_a_spec():
             raise CommandError("There no valid test specification.")
-        pqvms = PQVMappingService()
-        if pqvms.is_there_a_pqv_map():
-            raise CommandError(
-                "There is already a question-version mapping on the server."
-            )
-        min_production = pqvms.get_minimum_number_to_produce()
+
+        if PaperInfoService().is_paper_database_populated():
+            self.stderr.write("Test-papers already saved to database - stopping.")
+            return
+
+        min_production = PQVMappingService().get_minimum_number_to_produce()
 
         if number_to_produce is None:
             number_to_produce = min_production
             self.stdout.write(
                 f"Number-to-produce not supplied, using recommended number = {number_to_produce}."
             )
-        elif number_to_produce < pqvms.get_minimum_number_to_produce():
+        elif number_to_produce < min_production:
             self.stdout.write(
                 f"Warning: Supplied number-to-produce={number_to_produce} is less than the recommended minimum={min_production}."
             )
@@ -68,9 +69,13 @@ class Command(BaseCommand):
         if first is None:
             first = 1
 
-        pqvms.generate_and_set_pqvmap(number_to_produce, first=first)
+        qv_map = PQVMappingService().make_version_map(number_to_produce, first=first)
+        try:
+            PaperCreationService().add_all_papers_in_qv_map(qv_map, background=False)
+        except ValueError as e:
+            raise CommandError(e)
         self.stdout.write(
-            f"Question-version map generated: {number_to_produce} rows starting from {first}."
+            f"Database populated with {len(qv_map)} test-papers, starting from {first}."
         )
 
     def download_pqv_map(self) -> None:
@@ -96,9 +101,9 @@ class Command(BaseCommand):
         if PapersPrinted.have_papers_been_printed():
             raise CommandError("Paper have been printed. You cannot change qvmap.")
 
-        pqvms = PQVMappingService()
-        if pqvms.is_there_a_pqv_map():
-            raise CommandError("Already has a question-version map - remove it first")
+        if PaperInfoService().is_paper_database_populated():
+            self.stderr.write("Test-papers already saved to database - stopping.")
+            return
 
         self.stdout.write(f"Reading qvmap from {f}")
         try:
@@ -107,7 +112,7 @@ class Command(BaseCommand):
             raise CommandError(e)
 
         try:
-            pqvms.use_pqv_map(vm)
+            PaperCreationService().add_all_papers_in_qv_map(vm, background=False)
         except ValueError as e:
             raise CommandError(e)
         self.stdout.write(f"Uploaded qvmap from {f}")

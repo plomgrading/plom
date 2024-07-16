@@ -21,12 +21,29 @@ class Command(BaseCommand):
             "status", help="Show the current state of test-papers in the database."
         )
 
-        sp.add_parser(
+        b = sp.add_parser(
             "build_db",
             help="""
-                Populate the database with test-papers using information
-                provided in the spec and QV-map.
-                Also constructs the associate pdf-build tasks.
+                Populate the database with test-papers - uses a default
+                version map. Also constructs the associate pdf-build tasks.
+            """,
+        )
+        b.add_argument(
+            "-n",
+            "--number-to-produce",
+            metavar="N",
+            type=int,
+            help="""
+                The number of papers to produce.  If not present, the system will
+                compute this for you (not recommended).
+            """,
+        )
+        b.add_argument(
+            "--first-paper",
+            metavar="F",
+            type=int,
+            help="""
+                The paper number to start at.  Defaults to 1 if omitted.
             """,
         )
 
@@ -48,13 +65,10 @@ class Command(BaseCommand):
         else:
             self.stdout.write(f"Database still requires {qv_map_len - n_papers} papers")
 
-    def build_papers(self):
+    def build_papers(
+        self, *, number_to_produce: int | None = None, first: int | None = 1
+    ):
         """Write test-papers to the database, so long as the Papers table is empty and a QV map is present."""
-        pqvs = PQVMappingService()
-        if not pqvs.is_there_a_pqv_map():
-            self.stderr.write("No question-version map found - stopping.")
-            return
-
         paper_info = PaperInfoService()
         if paper_info.is_paper_database_populated():
             self.stderr.write("Test-papers already saved to database - stopping.")
@@ -62,7 +76,7 @@ class Command(BaseCommand):
 
         self.stdout.write("Creating test-papers...")
         pcs = PaperCreatorService()
-        qv_map = pqvs.get_pqv_map_dict()
+        qv_map = PQVMappingService().make_version_map(number_to_produce, first=first)
         try:
             pcs.add_all_papers_in_qv_map(qv_map, background=False)
         except ValueError as e:
@@ -85,7 +99,10 @@ class Command(BaseCommand):
         if options["command"] == "status":
             self.papers_status()
         elif options["command"] == "build_db":
-            self.build_papers()
+            self.build_papers(
+                number_to_produce=options["number_to_produce"],
+                first=options["first_paper"],
+            )
         elif options["command"] == "clear":
             self.clear_papers()
         else:
