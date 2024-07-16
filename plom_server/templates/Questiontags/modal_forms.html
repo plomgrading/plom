@@ -30,6 +30,10 @@
                         <label for="text">Description</label>
                         <textarea class="form-control" id="text" name="text" rows="4" required></textarea>
                     </div>
+                    <div class="form-group">
+                        <label for="meta">Meta (not shown to students):</label>
+                        <textarea class="form-control" id="meta" name="meta" rows="4"></textarea>
+                    </div>
                     <button type="submit" class="btn btn-primary">Create</button>
                 </form>
             </div>
@@ -92,7 +96,9 @@
                         <select class="form-control" id="tag_id_edit" name="tag_id">
                             <option value="" disabled selected>Select a tag</option>
                             {% for tag in tags %}
-                                <option value="{{ tag.id }}" data-description="{{ tag.text }}">{{ tag.tag_name }}</option>
+                                <option value="{{ tag.id }}"
+                                        data-description="{{ tag.text }}"
+                                        data-meta="{{ tag.meta }}">{{ tag.tag_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -108,6 +114,10 @@
                     <div class="form-group">
                         <label for="text_edit">Description</label>
                         <textarea class="form-control" id="text_edit" name="text" rows="4" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="meta_edit">Meta (not shown to students):</label>
+                        <textarea class="form-control" id="meta_edit" name="meta" rows="4"></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                 </form>

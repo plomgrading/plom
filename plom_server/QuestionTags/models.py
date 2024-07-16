@@ -18,6 +18,7 @@ class PedagogyTag(Tag):
     """Represents a tag with its description."""
 
     tag_name = models.TextField(unique=True)
+    meta = models.TextField(null=True, blank=True, default="")  # can be long
 
     def __str__(self):
         """Return the tag name."""

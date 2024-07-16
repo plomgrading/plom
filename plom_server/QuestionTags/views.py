@@ -8,8 +8,11 @@ from Papers.services import SpecificationService
 from QuestionTags.services import QuestionTagService
 from .models import TmpAbstractQuestion, PedagogyTag
 from .forms import AddTagForm, RemoveTagForm
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from plom.tagging import plom_valid_tag_text_description
+import json
+import csv
+from django.views import View
 
 
 class QTagsLandingView(ListView):
@@ -95,7 +98,10 @@ class CreateTagView(CreateView):
         """
         tag_name = request.POST.get("tagName")
         text = request.POST.get("text")
-        error_message = QuestionTagService.create_tag(tag_name, text, request.user)
+        meta = request.POST.get("meta")
+        error_message = QuestionTagService.create_tag(
+            tag_name, text, request.user, meta
+        )
         if error_message:
             return JsonResponse({"error": error_message})
         return JsonResponse({"success": True})
@@ -131,7 +137,70 @@ class EditTagView(UpdateView):
         tag_id = request.POST.get("tag_id")
         tag_name = request.POST.get("tagName")
         text = request.POST.get("text")
-        error_message = QuestionTagService.edit_tag(tag_id, tag_name, text)
+        meta = request.POST.get("meta")
+        error_message = QuestionTagService.edit_tag(tag_id, tag_name, text, meta)
         if error_message:
             return JsonResponse({"error": error_message})
         return JsonResponse({"success": True})
+
+
+class DownloadQuestionTagsView(View):
+    """View to download question tags as CSV or JSON file."""
+
+    def get(self, request, *args, **kwargs):
+        """Handle GET requests to download question tags as CSV or JSON."""
+
+        format = request.GET.get("format", "json")
+
+        if format == "csv":
+            return self.download_csv()
+        else:
+            return self.download_json()
+
+    def download_csv(self):
+        """Generate and return a CSV response."""
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="question_tags.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(["Question Index", "Question Label", "Tags"])
+
+        questions = TmpAbstractQuestion.objects.prefetch_related(
+            "questiontaglink_set__tag"
+        ).all()
+
+        for question in questions:
+            question_label = SpecificationService.get_question_label(
+                question.question_index
+            )
+            tags = ", ".join(
+                [qt.tag.tag_name for qt in question.questiontaglink_set.all()]
+            )
+            writer.writerow([question.question_index, question_label, tags])
+
+        return response
+
+    def download_json(self):
+        """Generate and return a JSON response."""
+
+        data = []
+        questions = TmpAbstractQuestion.objects.prefetch_related(
+            "questiontaglink_set__tag"
+        ).all()
+
+        for question in questions:
+            question_data = {
+                "question_index": question.question_index,
+                "question_label": SpecificationService.get_question_label(
+                    question.question_index
+                ),
+                "tags": [qt.tag.tag_name for qt in question.questiontaglink_set.all()],
+            }
+            data.append(question_data)
+
+        response = HttpResponse(
+            json.dumps(data, indent=4), content_type="application/json"
+        )
+        response["Content-Disposition"] = 'attachment; filename="question_tags.json"'
+        return response

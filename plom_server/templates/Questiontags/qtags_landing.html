@@ -83,6 +83,10 @@
             {% endfor %}
         </tbody>
     </table>
+    <a href="{% url 'download_question_tags' %}?format=json"
+       class="btn btn-primary">Download JSON</a>
+    <a href="{% url 'download_question_tags' %}?format=csv"
+       class="btn btn-primary">Download CSV</a>
     <br />
     <h3>Manage Tags</h3>
     <button type="button"
@@ -119,112 +123,114 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
           rel="stylesheet" />
     <script>
-        $(document).ready(function() {
-            $('#tag_id_edit').select2({
-                placeholder: 'Select or search for tags',
-                allowClear: true
+            $(document).ready(function() {
+                $('#tag_id_edit').select2({
+                    placeholder: 'Select or search for tags',
+                    allowClear: true
+                });
+                $('.tag-link').on('click', function() {
+                    var tagName = $(this).data('tag-name');
+                    var tagDescription = $(this).data('tag-description');
+                    $('#modalTagName').text(tagName);
+                    $('#modalTagDescription').text(tagDescription);
+                });
+        
+                $('#tag_id_edit').change(function() {
+                    var selectedTag = $(this).val();
+                    var selectedTagText = $(this).find('option:selected').text();
+                    $('#tagName_edit').val(selectedTagText);
+                    var selectedTagDescription = $(this).find('option:selected').data('description');
+                    $('#text_edit').val(selectedTagDescription);
+                    var selectedTagMeta = $(this).find('option:selected').data('meta');
+                    $('#meta_edit').val(selectedTagMeta);
+                });
+        
+                $('#tagModal').on('show.bs.modal', function(event) {
+                    var button = $(event.relatedTarget); // Button that triggered the modal
+                    var tagName = button.data('tag-name'); // Extract info from data-* attributes
+                    var tagDescription = button.data('tag-description');
+                    var modal = $(this);
+                    modal.find('#modalTagName').text(tagName);
+                    modal.find('#modalTagDescription').text(tagDescription);
+                    });
             });
-            $('.tag-link').on('click', function() {
-                var tagName = $(this).data('tag-name');
-                var tagDescription = $(this).data('tag-description');
-                $('#modalTagName').text(tagName);
-                $('#modalTagDescription').text(tagDescription);
-            });
-    
-            $('#tag_id_edit').change(function() {
-                var selectedTag = $(this).val();
-                var selectedTagText = $(this).find('option:selected').text();
-                $('#tagName_edit').val(selectedTagText);
-                var selectedTagDescription = $(this).find('option:selected').data('description');
-                $('#text_edit').val(selectedTagDescription);
-            });
-    
-            $('#tagModal').on('show.bs.modal', function(event) {
-                var button = $(event.relatedTarget); // Button that triggered the modal
-                var tagName = button.data('tag-name'); // Extract info from data-* attributes
-                var tagDescription = button.data('tag-description');
-                var modal = $(this);
-                modal.find('#modalTagName').text(tagName);
-                modal.find('#modalTagDescription').text(tagDescription);
-            });
-        });
     </script>
     <style>
-        .fixed-width-index {
-            width: 300px;
-            text-align: left;
-        }
-        .fixed-width-label {
-            width: 300px;
-            text-align: center;
-        }
-        .tag-container {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            flex-wrap: wrap;
-        }
-        .tag-link {
-            display: inline-block;
-            margin-right: 5px;
-            padding: 2px 5px;
-            border-radius: 3px;
-            text-decoration: none;
-            color: white;
-        }
-        .tag-link.blue-tag {
-            background-color: #007bff;
-        }
-        .tag-link.green-tag {
-            background-color: #28a745;
-        }
-        .tag-link:hover {
-            opacity: 0.8;
-        }
-        .select2-container {
-            z-index: 9999;
-        }
-        .tag {
-            margin-right: 5px;
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 3px;
-            background-color: #007bff;
-            color: white;
-            font-size: 0.875rem;
-        }
-        .tag .btn {
-            padding: 0;
-            margin-left: 5px;
-            background: none;
-            border: none;
-            color: white;
-        }
-        .tag .btn:hover {
-            color: red;
-        }
-        .add-tag-button {
-            flex-shrink: 0;
-            margin-right: 10px;
-        }
-        .btn-success {
-            width: 100px;
-        }
-        .fixed-width-name {
-            width: 250px;
-            text-align: left;
-            white-space: normal;
-            word-wrap: break-word;
-        }
-        .fixed-width-description {
-            width: 500px;
-            text-align: left;
-            white-space: normal;
-            word-wrap: break-word;
-        }
-        .form-error {
-            color: red;
-            font-weight: bold;
-        }
+            .fixed-width-index {
+                width: 300px;
+                text-align: left;
+            }
+            .fixed-width-label {
+                width: 300px;
+                text-align: center;
+            }
+            .tag-container {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                flex-wrap: wrap;
+            }
+            .tag-link {
+                display: inline-block;
+                margin-right: 5px;
+                padding: 2px 5px;
+                border-radius: 3px;
+                text-decoration: none;
+                color: white;
+            }
+            .tag-link.blue-tag {
+                background-color: #007bff;
+            }
+            .tag-link.green-tag {
+                background-color: #28a745;
+            }
+            .tag-link:hover {
+                opacity: 0.8;
+            }
+            .select2-container {
+                z-index: 9999;
+            }
+            .tag {
+                margin-right: 5px;
+                display: inline-block;
+                padding: 5px 10px;
+                border-radius: 3px;
+                background-color: #007bff;
+                color: white;
+                font-size: 0.875rem;
+            }
+            .tag .btn {
+                padding: 0;
+                margin-left: 5px;
+                background: none;
+                border: none;
+                color: white;
+            }
+            .tag .btn:hover {
+                color: red;
+            }
+            .add-tag-button {
+                flex-shrink: 0;
+                margin-right: 10px;
+            }
+            .btn-success {
+                width: 100px;
+            }
+            .fixed-width-name {
+                width: 250px;
+                text-align: left;
+                white-space: normal;
+                word-wrap: break-word;
+            }
+            .fixed-width-description {
+                width: 500px;
+                text-align: left;
+                white-space: normal;
+                word-wrap: break-word;
+            }
+            .form-error {
+                color: red;
+                font-weight: bold;
+            }
     </style>
 {% endblock main_content %}

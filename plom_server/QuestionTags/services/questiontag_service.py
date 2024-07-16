@@ -50,13 +50,14 @@ class QuestionTagService:
         question.save()
 
     @staticmethod
-    def create_tag(tag_name, text, user):
+    def create_tag(tag_name, text, user, meta=None):
         """Create a new tag.
 
         Args:
             tag_name: The short name of the tag we wish to create.
             text: The description of the tag.
             user: The user creating the tag.
+            meta: text shown only to markers, not the students.
 
         Returns:
             None on success or a string of an error message explaining that the tag already exists.
@@ -65,7 +66,9 @@ class QuestionTagService:
             return f"Tag name '{tag_name}' contains invalid characters."
 
         try:
-            PedagogyTag.objects.create(tag_name=tag_name, text=text, user=user)
+            PedagogyTag.objects.create(
+                tag_name=tag_name, text=text, user=user, meta=meta
+            )
             return None
         except IntegrityError:
             return f"A tag with the name '{tag_name}' already exists."
@@ -91,13 +94,14 @@ class QuestionTagService:
             return str(e)
 
     @staticmethod
-    def edit_tag(tag_id, tag_name, text):
+    def edit_tag(tag_id, tag_name, text, meta=None):
         """Edit an existing tag.
 
         Args:
             tag_id: The ID of the tag to edit.
             tag_name: The new name of the tag.
             text: The new description of the tag.
+            meta: text shown only to markers, not the students.
 
         Returns:
             None on success or a string describing the error encountered.
@@ -115,6 +119,7 @@ class QuestionTagService:
         try:
             tag.tag_name = tag_name
             tag.text = text
+            tag.meta = meta
             tag.save()
             return None
         except Exception as e:

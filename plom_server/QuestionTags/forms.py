@@ -11,10 +11,12 @@ class AddTagForm(forms.Form):
     Fields:
         question_index: The index of the question to be tagged.
         tag_id: The ID of the tag to be added, selected from existing PedagogyTag objects.
+        meta: text that is shown to instructors, hidden to students.
     """
 
     question_index = forms.IntegerField()
     tag_id = forms.ModelChoiceField(queryset=PedagogyTag.objects.all())
+    meta = forms.CharField(required=False)
 
 
 class RemoveTagForm(forms.Form):
