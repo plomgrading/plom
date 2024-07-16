@@ -150,7 +150,7 @@ class QuestionMarkingService:
         Raises:
             RuntimeError: not the assigned user.
             ValueError: anything related to a poorly formed bad request,
-                such as invalid code.
+                such as invalid code, or wrong image format.
         """
         try:
             papernum, question_idx = mark_task.unpack_code(code)
