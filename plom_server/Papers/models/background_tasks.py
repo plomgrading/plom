@@ -29,6 +29,6 @@ class PopulateEvacuateDBChore(HueyTaskTracker):
 
     @classmethod
     def set_message_to_user(cls, pk, message: str):
-        """Set the user-readible message string."""
+        """Set the user-readable message string."""
         with transaction.atomic(durable=True):
             cls.objects.select_for_update().filter(pk=pk).update(message=message)
