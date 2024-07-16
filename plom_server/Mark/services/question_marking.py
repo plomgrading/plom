@@ -163,6 +163,8 @@ class QuestionMarkingService:
             RuntimeError: not the assigned user.
             ValueError: anything related to a poorly formed bad request,
                 such as invalid code, or wrong image format.
+            ObjectDoesNotExist: task isn't there anymore, either you asked
+                for garbage or something has changed on the server.
         """
         try:
             papernum, question_idx = mark_task.unpack_code(code)
@@ -170,7 +172,6 @@ class QuestionMarkingService:
             raise ValueError(e) from e
 
         try:
-            # TODO: ObjectDoesNotExist, not ValueError (only with version checks)
             task = mark_task.get_latest_task(papernum, question_idx)
         except ObjectDoesNotExist as e:
             raise ObjectDoesNotExist(f"{str(e)}: perhaps something was deleted?")
