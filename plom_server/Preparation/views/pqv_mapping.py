@@ -178,7 +178,7 @@ class PQVMappingView(ManagerRequiredView):
         except PlomDependencyConflict as err:
             messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(reverse("prep_conflict"))
-        except PlomDatabaseCreationError:
+        except PlomDatabaseCreationError as err:
             # refresh the page since it will display a message with
             # info about what is happening to the db
             return HttpResponseRedirect(".")

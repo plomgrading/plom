@@ -63,7 +63,12 @@
                                 Database is currently being populated with papers
                                 {% if chore_message %}: {{ chore_message }}{% endif %}
                             </p>
-                            <p>Please reload page</p>
+                            <p>
+                                Please reload page
+                                <button class="btn btn-primary" onClick="window.location.reload();">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
+                            </p>
                         </div>
                     {% endif %}
                     {% if evacuate_in_progress %}
@@ -72,7 +77,12 @@
                                 Papers are currently being removed from the database
                                 {% if chore_message %}: {{ chore_message }}{% endif %}
                             </p>
-                            <p>Please reload page</p>
+                            <p>
+                                Please reload page
+                                <button class="btn btn-primary" onClick="window.location.reload();">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
+                            </p>
                         </div>
                     {% endif %}
                 {% else %}

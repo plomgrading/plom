@@ -315,23 +315,23 @@ class Command(BaseCommand):
         if options["solutions"]:
             self.upload_solutions()
 
-        if stop_at == "preparation" or not config.num_to_produce:
-            huey_worker_proc.terminate()
-            return
-
         print("*" * 40)
         server_proc = proc_service.launch_server(port=options["port"])
 
         try:  # We're guaranteed to hit the cleanup code in the "finally" block
-            self.post_server_init(creation_service, config, stop_at)
+            if stop_at == "preparation" or not config.num_to_produce:
+                pass
+            else:
+                self.post_server_init(creation_service, config, stop_at)
 
-            if options["randomarker"]:
-                self.run_randomarker(port=options["port"])
+                if options["randomarker"]:
+                    self.run_randomarker(port=options["port"])
 
             if not options["no_waiting"]:
                 sleep(2)
                 print("*" * 72)
                 self.wait_for_exit()
+
             sleep(0.1)
             print("v" * 40)
         finally:

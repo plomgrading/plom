@@ -221,11 +221,12 @@ class PaperCreatorService:
                 as a foreground process.
 
         Raises:
-            PlomDependencyConflict: if there are papers already in the database.
+            PlomDependencyConflict: if preparation dependencies are not met.
+            PlomDatabaseCreationError: if there are papers already in the database.
         """
         assert_can_modify_qv_mapping_database()
         if Paper.objects.filter().exists():
-            raise PlomDependencyConflict("Already papers in the database.")
+            raise PlomDatabaseCreationError("Already papers in the database.")
         # check if there is an existing non-obsolete task
         self.assert_no_existing_chore()
         self._set_number_to_produce(len(qv_map))
