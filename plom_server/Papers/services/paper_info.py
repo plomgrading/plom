@@ -8,7 +8,7 @@ from typing import List
 
 from django.db import transaction
 
-from ..models import Paper, FixedPage, QuestionPage
+from ..models import Paper, FixedPage, QuestionPage, PopulateEvacuateDBChore
 from Preparation.models import NumberOfPapersToProduceSetting
 
 log = logging.getLogger("PaperInfoService")
@@ -19,6 +19,17 @@ class PaperInfoService:
     def how_many_papers_in_database(self):
         """How many papers have been created in the database."""
         return Paper.objects.count()
+
+    def is_paper_database_being_updated_in_background(self):
+        """Returns true when the paper-db is being updated via background tasks.
+
+        Note that this function is the same as PaperCreatorService.is_chore_in_progress
+        """
+        print("v" * 20)
+        for X in PopulateEvacuateDBChore.objects.filter(obsolete=False).all():
+            print(X)
+        print("^" * 20)
+        return PopulateEvacuateDBChore.objects.filter(obsolete=False).exists()
 
     def is_paper_database_partially_populated(self):
         """Returns true when at least one paper exists in the DB."""

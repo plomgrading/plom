@@ -19,7 +19,7 @@ from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService, PaperCreatorService
 
 from plom.misc_utils import format_int_list_with_runs
-from plom.plom_exceptions import PlomDependencyConflict
+from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 
 from ..services import (
     PQVMappingService,
@@ -97,6 +97,10 @@ class PQVMappingDeleteView(ManagerRequiredView):
         except PlomDependencyConflict as err:
             messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(reverse("prep_conflict"))
+        except PlomDatabaseCreationError as err:
+            # return to qvmap page since it will display a message with
+            # info about what is happening to the db
+            return HttpResponseClientRedirect(reverse("prep_qvmapping"))
 
         return HttpResponseClientRedirect(reverse("prep_qvmapping"))
 
@@ -181,5 +185,9 @@ class PQVMappingView(ManagerRequiredView):
         except PlomDependencyConflict as err:
             messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(reverse("prep_conflict"))
+        except PlomDatabaseCreationError as err:
+            # refresh the page since it will display a message with
+            # info about what is happening to the db
+            return HttpResponseRedirect(".")
 
         return HttpResponseRedirect(".")
