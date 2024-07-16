@@ -52,7 +52,7 @@ class CommandTool(QUndoCommand):
             itself from the scene.
         """
         return AnimatingTempPathItem(
-            self.scene, self.get_undo_redo_animation_shape(), backward=backward
+            self.get_undo_redo_animation_shape(), backward=backward
         )
 
     def redo_animation(self) -> None:

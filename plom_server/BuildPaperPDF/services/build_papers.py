@@ -273,6 +273,8 @@ class BuildPapersService:
                         student_id=student_id,
                     )
                 )
+            del paper
+
         # for each of the newly created chores, actually ask Huey to run them
         chore_pk_huey_id_list = []
         for chore in chore_list:

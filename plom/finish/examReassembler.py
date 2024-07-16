@@ -121,7 +121,6 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
     )
 
     exam.save(outname, deflate=True)
-    # https://gitlab.com/plom/plom/-/issues/1777
     exam.close()
 
 
