@@ -72,7 +72,9 @@ class PQVMappingService:
                 txt = fh.readlines()
             return txt
 
-    def make_version_map(self, numberToProduce: int, *, first: int = 1):
+    def make_version_map(
+        self, numberToProduce: int, *, first: int = 1
+    ) -> dict[int, dict[int, int]]:
         """Generate a paper-question-version-map.
 
         Args:
@@ -81,11 +83,10 @@ class PQVMappingService:
         Keyword Args:
             first: the starting paper number.
 
-        Return:
+        Returns:
             dict: a dict-of-dicts keyed by paper number (int) and then
-            question number (int, but indexed from 1 not 0).  Values are
+            question index (int, but indexed from 1 not 0).  Values are
             integers.
-
         """
         from plom import make_random_version_map
 
