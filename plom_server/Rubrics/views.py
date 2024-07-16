@@ -8,22 +8,25 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import difflib
 from typing import Any
 from io import TextIOWrapper, StringIO, BytesIO
 
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.views.generic.detail import DetailView
 
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 
 from Base.base_group_views import ManagerRequiredView
 from Base.models import SettingsModel
 from Papers.services import SpecificationService
+from .models import Rubric
 from .services import RubricService
-from .forms import RubricAdminForm, RubricWipeForm, RubricUploadForm
+from .forms import RubricAdminForm, RubricDiffForm, RubricWipeForm, RubricUploadForm
 from .forms import RubricFilterForm, RubricEditForm, RubricDownloadForm
 
 
@@ -228,7 +231,7 @@ class RubricLandingPageView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
 
-class RubricItemView(ManagerRequiredView):
+class RubricItemView(DetailView, ManagerRequiredView):
     """A page for displaying a single rubric and its annotations."""
 
     def get(self, request, rubric_key):
@@ -253,6 +256,7 @@ class RubricItemView(ManagerRequiredView):
                 "form": form(instance=rubric),
                 "marking_tasks": marking_tasks,
                 "latest_rubric_as_html": rubric_as_html,
+                "diff_form": RubricDiffForm(key=rubric_key),
             }
         )
 
@@ -273,6 +277,26 @@ class RubricItemView(ManagerRequiredView):
                 rubric.__setattr__(key, value)
             rubric.save()
         return redirect("rubric_item", rubric_key=rubric_key)
+
+
+def compare_rubrics(request, rubric_key):
+    if request.method == "POST" and request.headers.get("HX-Request"):
+        form = RubricDiffForm(request.POST, key=str(rubric_key).zfill(12))
+        if form.is_valid():
+            left = [
+                f"{form.cleaned_data["left_compare"].display_delta} | {form.cleaned_data["left_compare"].text}"
+            ]
+            right = [
+                f"{form.cleaned_data["right_compare"].display_delta} | {form.cleaned_data["right_compare"].text}"
+            ]
+            html = difflib.HtmlDiff(wrapcolumn=20).make_table(
+                left,
+                right,
+                f"Rev. {form.cleaned_data["left_compare"].revision}",
+                f"Rev. {form.cleaned_data["right_compare"].revision}",
+            )
+            return render(request, "Rubrics/diff_partial.html", {"diff": html})
+        return JsonResponse({"errors": form.errors}, status=400)
 
 
 def _rules_as_list(rules: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
