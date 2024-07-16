@@ -6,15 +6,14 @@
 from math import sqrt
 
 from PyQt6.QtCore import QPointF
-from PyQt6.QtGui import QPen, QPainterPath, QBrush
+from PyQt6.QtGui import QBrush, QPainterPath, QPen
 from PyQt6.QtWidgets import (
+    QGraphicsItem,
     QGraphicsItemGroup,
     QGraphicsPathItem,
-    QGraphicsItem,
 )
 
-from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
-from plom.client.tools import UndoStackMoveMixin
+from plom.client.tools import OutOfBoundsFill, OutOfBoundsPen, UndoStackMoveMixin
 from plom.client.tools.pen import CommandPen, PenItem
 
 

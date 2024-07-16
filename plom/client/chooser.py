@@ -25,8 +25,8 @@ import time
 from typing import Any
 
 import arrow
-from packaging.version import Version
 import platformdirs
+from packaging.version import Version
 
 if sys.version_info >= (3, 9):
     from importlib import resources

@@ -4,7 +4,7 @@
 
 from PyQt6.QtGui import QPainterPath, QUndoCommand
 
-from .animations import AnimatingTempPathItem, AnimatingTempItemMixin
+from .animations import AnimatingTempItemMixin, AnimatingTempPathItem
 
 
 class CommandTool(QUndoCommand):

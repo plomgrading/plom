@@ -21,9 +21,7 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-
 from typing import Any
-
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
