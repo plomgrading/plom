@@ -303,7 +303,7 @@ coverage:
   needs: ["docker-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.5.3
+    - pip install pytest pytest-cov coverage[toml]~=7.6.0
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -335,8 +335,8 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
-    - python3 -m pip install astroid~=3.2.2  # codespell:ignore astroid
-    - python3 -m pip install pylint~=3.2.3
+    - python3 -m pip install astroid~=3.2.3  # codespell:ignore astroid
+    - python3 -m pip install pylint~=3.2.5
   script:
     - pylint plom
     - pylint plom_server
@@ -353,7 +353,7 @@ mypy-type-checking:
   needs: ["docker-image"]
   image: $IM
   before_script:
-    - python3 -m pip install mypy~=1.10.0
+    - python3 -m pip install mypy~=1.10.1
   script:
     - mypy plom --python-ver 3.8 --install-types --non-interactive || true
     - mypy plom --python-ver 3.8
@@ -367,7 +367,7 @@ pyright:
   needs: ["docker-image"]
   image: $IM
   before_script:
-    - python3 -m pip install pyright~=1.1.366
+    - python3 -m pip install pyright~=1.1.371
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -437,7 +437,7 @@ webplom_test:
   image: $IM
   script:
     - export PYTHONPATH=$PWD
-    - python3 -m pip install coverage~=7.5.3
+    - python3 -m pip install coverage~=7.6.0
     - pushd plom_server
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py makemigrations
@@ -1597,7 +1597,7 @@ winpyinst:
   - c:\python311\python -m pip install -r requirements.txt.client
   - refreshenv
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
-  - c:\python311\python -m pip install pyinstaller~=6.8.0
+  - c:\python311\python -m pip install pyinstaller~=6.9.0
   - refreshenv
   - c:\python311\python -m pip install . --no-deps  # pyinstaller spec needs version
   - refreshenv

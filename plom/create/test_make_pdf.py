@@ -18,13 +18,9 @@ def test_make_pdf_non_ascii_stuff(tmp_path) -> None:
     spec.checkCodes()
     pdf_path = make_PDF(
         spec,
-        6,
+        4,
         {1: 1, 2: 1, 3: 2},
-        extra={"name": "싸이", "id": "12345678"},
-        no_qr=False,
-        fakepdf=False,
-        xcoord=None,
-        ycoord=None,
+        extra={"name": "싸이", "id": "22345678"},
         where=tmp_path,
         source_versions_path=(tmp_path / "sourceVersions"),
     )
@@ -42,10 +38,6 @@ def test_make_pdf_non_ascii_names_font_subsetting(tmp_path) -> None:
         5,
         {1: 1, 2: 1, 3: 2},
         extra={"name": "Bore Ring Ascii", "id": "87654321"},
-        no_qr=False,
-        fakepdf=False,
-        xcoord=None,
-        ycoord=None,
         where=tmp_path,
         source_versions_path=(tmp_path / "sourceVersions"),
     )
@@ -54,16 +46,27 @@ def test_make_pdf_non_ascii_names_font_subsetting(tmp_path) -> None:
         6,
         {1: 1, 2: 1, 3: 2},
         extra={"name": "싸이", "id": "12345678"},
-        no_qr=False,
-        fakepdf=False,
-        xcoord=None,
-        ycoord=None,
         where=tmp_path,
         source_versions_path=(tmp_path / "sourceVersions"),
     )
+    pdf3 = make_PDF(
+        spec,
+        7,
+        {1: 1, 2: 1, 3: 2},
+        extra={"name": "싸이", "id": "12345679"},
+        where=tmp_path,
+        source_versions_path=(tmp_path / "sourceVersions"),
+        font_subsetting=False,
+    )
     assert pdf1
     assert pdf2
+    assert pdf3
     size1 = pdf1.stat().st_size
     size2 = pdf2.stat().st_size
-    assert size2 >= size1
-    assert size2 < 2.0 * size1
+    size3 = pdf3.stat().st_size
+    # fallback font is subsetted so don't expect much increase
+    assert size2 < 1.4 * size1
+    # didn't expect it to get smaller, although sometimes it does!
+    assert size2 > 0.9 * size1
+    # no subsetting adds more than a megabyte
+    assert size3 > size1 + 1024 * 1024

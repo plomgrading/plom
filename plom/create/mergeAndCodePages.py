@@ -16,8 +16,9 @@ from pathlib import Path
 from typing import Any
 
 # import pyqrcode
-import segno
 import fitz
+from packaging.version import Version
+import segno
 
 from plom.create import paperdir
 from plom.specVerifier import (
@@ -393,15 +394,17 @@ def pdf_page_add_name_id_box(
 
 def make_PDF(
     spec,
-    papernum,
-    question_versions,
-    extra=None,
-    no_qr=False,
-    fakepdf=False,
-    xcoord=None,
-    ycoord=None,
+    papernum: int,
+    question_versions: dict[int, int],
+    extra: dict[str, Any] | None = None,
+    no_qr: bool = False,
+    fakepdf: bool = False,
+    xcoord: float | None = None,
+    ycoord: float | None = None,
+    *,
     where=None,
     source_versions_path=None,
+    font_subsetting: bool | None = None,
 ) -> pathlib.Path | None:
     """Make a PDF of particular versions, with QR codes, and optionally name stamped.
 
@@ -411,24 +414,44 @@ def make_PDF(
     file into the `paperdir` (typically "papersToPrint").
 
     Arguments:
-        spec (dict): A validated test specification
-        papernum (int): the paper/test number.
-        question_versions (dict): the version of each question for this paper.
+        spec (dict | SpecVerifier): A validated specification
+        papernum: the paper number.
+        question_versions: the version of each question for this paper.
             Note this is an input and must be predetermined before
             calling.
-        extra (dict/None): Dictionary with student id and name or None.
+        extra: Dictionary with student id and name or None
+            to default not printing any prename.
+        xcoord: horizontal positioning of the prename box, or a default
+            if None or omitted.
+        ycoord: vertical positioning of the prename box, or a default
+            if None or omitted.
         no_qr (bool): determine whether or not to paste in qr-codes.
+            Somewhat deprecated, definitely use it as kwarg if you're
+            writing new code.
         fakepdf (bool): when true, the build empty "pdf" files by just
             touching fhe files.  This is could be used in testing or to
             save time when we have no use for the actual files.  Why?
             Maybe later confirmation steps check these files exist or
             something like that...
-        xcoord (float): horizontal positioning of the prename box.
-        ycoord (float): vertical positioning of the prename box.
+            Somewhat deprecated, definitely use it as kwarg if you're
+            writing new code.
+
+    Keyword Args:
         where (pathlib.Path/None): where to save the files, with some
             default if omitted.
         source_versions_path (pathlib.Path/str/None): location of the
             source versions directory.
+        font_subsetting: if None/omitted, do a generally-sensible default
+            of using subsetting only when *we* added non-ascii characters.
+            True forces subsetting and False disables is.
+            We embed fonts for names and other overlay.  But if there are
+            non-Latin characters (e.g., CJK) in names, then the embedded
+            font is quite large (several megabytes).
+            Note: in theory, subsetting could muck around with fonts from
+            the source (i.e., if they were NOT previously subsetted).
+            So we only do the subsetting if we're added non-ascii chars
+            in any of the shortname, student name or question labels.
+            Non-ascii is a stronger requirement than needed,
 
     Returns:
         pathlib.Path: the file that was just written, or None in the slightly
@@ -464,13 +487,6 @@ def make_PDF(
     if extra:
         pdf_page_add_name_id_box(exam[0], extra["name"], extra["id"], xcoord, ycoord)
 
-    # We embed fonts for names and other overlay.  But if there are non-latin
-    # characters (e.g., CJK) in names, then the embedded font is quite large.
-    # Note: In theory, this could muck around with fonts from the source
-    # (i.e., if they were NOT subsetted).  So we only do the subsetting if
-    # we're added non-ascii chars in any of the shortname, student name or
-    # question labels.  Non-ascii is a stronger requirement than needed,
-    # but in theory the subsetting is harmless...
     do_subset = False
     if extra and not extra["name"].isascii():
         do_subset = True
@@ -480,15 +496,20 @@ def make_PDF(
         if not label.isascii():
             do_subset = True
 
-    if do_subset:
-        # TODO: remove this fallback on a future PyMuPDF (see Plom Issue #3384)
-        # Fallback subsetting requires https://pypi.org/project/fonttools
-        try:
-            exam.subset_fonts(fallback=True)
-        except TypeError:
-            # PyMuPDF<=1.23 does not have fallback
-            # Subsetting requires https://pypi.org/project/fonttools
+    if font_subsetting is None:
+        font_subsetting = do_subset
+    if font_subsetting:
+        if Version(fitz.version[0]) >= Version("1.24.6"):
             exam.subset_fonts()
+        else:
+            # TODO: remove after minimum PyMuPDF is bumped (see Plom Issue #3384)
+            # Fallback subsetting requires https://pypi.org/project/fonttools
+            try:
+                exam.subset_fonts(fallback=True)
+            except TypeError:
+                # PyMuPDF<=1.23 does not have fallback
+                # Subsetting requires https://pypi.org/project/fonttools
+                exam.subset_fonts()
 
     # Add the deflate option to compress the embedded pngs
     # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save
