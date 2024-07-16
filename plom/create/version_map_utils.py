@@ -17,7 +17,7 @@ def download_version_map(*, msgr) -> Dict[int, Dict[int, int]]:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
 
-    Return:
+    Returns:
         keys are the paper numbers (`int`) and each value is a row
         of the version map: another dict with questions as question
         number (`int`) and value version (`int`).
@@ -43,7 +43,7 @@ def save_version_map(filename=None, *, msgr) -> Path:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
 
-    Return:
+    Returns:
         pathlib.Path: the name of the file saved.
 
     Raises:

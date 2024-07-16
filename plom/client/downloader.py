@@ -392,7 +392,7 @@ class Downloader(QObject):
                 `sync_download`.  Warning: we don't make a copy: it
                 will be modified (and returned).
 
-        Return:
+        Returns:
             list: a list of dicts which consists of the updated input with
             filenames added/updated for each image.
         """
@@ -410,7 +410,7 @@ class Downloader(QObject):
                 TODO: sometimes we seem to accept ``md5sum`` instead: should
                 fix that.
 
-        Return:
+        Returns:
             dict: the modified row.  If the file was already downloaded, put
             its name into the ``filename`` key.  If we had to download
             it we also put the filename into ``filename``.

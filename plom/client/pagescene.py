@@ -704,7 +704,7 @@ class PageScene(QGraphicsScene):
     def get_rubrics(self):
         """A list of the rubrics current used in the scene.
 
-        Return:
+        Returns:
             list: a list of dicts, one for each rubric that is on the page.
 
         TODO: we will be calling this function quite a lot: maybe its worth
