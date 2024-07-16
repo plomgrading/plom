@@ -47,6 +47,7 @@ def test_qr_reads_from_image_legacy() -> None:
 
 
 def test_qr_reads_slight_rotate() -> None:
+    # mypy unhappy about `im` changing types here
     _im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
     im = _im.rotate(10, expand=True)
     q = QRextract(im)
