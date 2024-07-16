@@ -622,12 +622,9 @@ class Messenger(BaseMessenger):
                 if response.status_code == 409:
                     raise PlomTaskChangedError(response.reason) from None
                 if response.status_code == 410:
-                    # TODO: just copy-paste from legacy handler, not implemented in new server
-                    raise PlomTaskDeletedError(
-                        "No such task - it has been deleted from server."
-                    ) from None
+                    raise PlomTaskDeletedError(response.reason) from None
                 if response.status_code == 400:
-                    raise PlomSeriousException(response.text) from None
+                    raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MgetUserRubricTabs(self, question):

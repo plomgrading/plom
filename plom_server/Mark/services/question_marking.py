@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -127,7 +128,7 @@ class QuestionMarkingService:
     ) -> None:
         """Accept a marker's annotation and grade for a task, store them in the database.
 
-        Not implemented yet: 406: integrity fail; 410 for task deleted
+        Not implemented yet: 406: integrity fail.
 
         Raises:
             RuntimeError: not the assigned user.
@@ -139,8 +140,11 @@ class QuestionMarkingService:
         except AssertionError as e:
             raise ValueError(e) from e
 
-        # TODO: ObjectDoesNotExist, not ValueError (only with version checks)
-        task = mark_task.get_latest_task(papernum, question_idx)
+        try:
+            # TODO: ObjectDoesNotExist, not ValueError (only with version checks)
+            task = mark_task.get_latest_task(papernum, question_idx)
+        except ObjectDoesNotExist as e:
+            raise ObjectDoesNotExist(f"{str(e)}: perhaps something was deleted?")
 
         if user != task.assigned_user:
             raise RuntimeError(

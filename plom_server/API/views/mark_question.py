@@ -176,6 +176,8 @@ class QuestionMarkingViewSet(ViewSet):
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
         except RuntimeError as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
+        except ObjectDoesNotExist as e:
+            return _error_response(e, status.HTTP_410_GONE)
 
         def int_or_None(x):
             return None if x is None else int(x)
