@@ -223,6 +223,7 @@ class PaperCreatorService:
         if background:
             self.populate_whole_db_huey_wrapper(qv_map)
         else:
+            print(f"Added {len(qv_map)} papers via foreground process")
             id_page_number = SpecificationService.get_id_page_number()
             dnm_page_numbers = SpecificationService.get_dnm_pages()
             question_page_numbers = SpecificationService.get_question_pages()

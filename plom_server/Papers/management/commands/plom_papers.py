@@ -78,7 +78,7 @@ class Command(BaseCommand):
 
         self.stdout.write("Removing test-papers and associated tasks...")
         # note when a paper is deleted its associated task is also deleted.
-        PaperCreatorService().remove_all_papers_from_db()
+        PaperCreatorService().remove_all_papers_from_db(background=False)
         self.stdout.write("Database cleared of test-papers.")
 
     def handle(self, *args, **options):

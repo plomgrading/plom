@@ -38,9 +38,9 @@ class Command(BaseCommand):
         ``PLOM_*`` variables.
     """
 
-    def papers_and_db(self, dcs: DemoCreationService):
+    def build_papers(self, dcs: DemoCreationService):
         print("*" * 40)
-        dcs.build_db_and_papers()
+        dcs.build_papers()
         dcs.wait_for_papers_to_be_ready()
 
         print("*" * 40)
@@ -116,7 +116,7 @@ class Command(BaseCommand):
                 )
 
     def post_server_init(self, dcs: DemoCreationService, config, stop_at: str):
-        self.papers_and_db(dcs)
+        self.build_papers(dcs)
 
         print("*" * 40)
         if config.bundles:
