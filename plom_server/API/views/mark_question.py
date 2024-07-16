@@ -103,7 +103,9 @@ class QuestionMarkingViewSet(ViewSet):
         Reply with status 200, or 409 if someone else has claimed this
         task, or a 404 if there it not yet such a task (not scanned yet).
         If a version query parameter (e.g., "?version=2") was supplied,
-        and it does not match the task, reply with a 417.
+        and it does not match the task, reply with a 417.  If you don't
+        send version, we set it to None which means no such check will
+        be made: you're claiming the task regardless of what version it is.
         """
         data = request.query_params
         version = data.get("version", None)
