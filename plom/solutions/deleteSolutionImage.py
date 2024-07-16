@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022, 2024 Colin B. Macdonald
 
 from plom.solutions import with_manager_messenger
 from plom.plom_exceptions import PlomNoSolutionException
@@ -18,7 +18,7 @@ def deleteSolutionImage(question, version, *, msgr):
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
 
-    Return:
+    Returns:
         None
 
     Raises:

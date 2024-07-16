@@ -59,7 +59,7 @@ class MarkingTaskTestsWithConfig(TestCase):
 
     @config_test()
     def test_get_first_filter(self) -> None:
-        """Test MarkingTaskService.get_first_available_task() with a specified question and version.
+        """Test get_first_available_task() with a specified question and version.
 
         Config:
         test_spec = "config_files/tiny_spec.toml"
@@ -71,17 +71,17 @@ class MarkingTaskTestsWithConfig(TestCase):
         task3 = MarkingTask.objects.get(question_index=2, question_version=1)
         task4 = MarkingTask.objects.get(question_index=2, question_version=2)
 
-        self.assertEqual(QuestionMarkingService().get_first_available_task(), task1)
+        self.assertEqual(QuestionMarkingService.get_first_available_task(), task1)
         self.assertEqual(
-            QuestionMarkingService(question=1, version=2).get_first_available_task(),
+            QuestionMarkingService.get_first_available_task(question_idx=1, version=2),
             task2,
         )
         self.assertEqual(
-            QuestionMarkingService(question=2, version=1).get_first_available_task(),
+            QuestionMarkingService.get_first_available_task(question_idx=2, version=1),
             task3,
         )
         self.assertEqual(
-            QuestionMarkingService(question=2, version=2).get_first_available_task(),
+            QuestionMarkingService.get_first_available_task(question_idx=2, version=2),
             task4,
         )
 
@@ -124,13 +124,13 @@ class MarkingTaskTestsWithConfig(TestCase):
         task6.status = MarkingTask.OUT_OF_DATE
         task6.save()
 
-        mts = MarkingTaskService()
-        self.assertTrue(mts.user_can_update_task(user1, task1.code))
-        self.assertFalse(mts.user_can_update_task(user1, task2.code))
-        self.assertTrue(mts.user_can_update_task(user1, task3.code))
-        self.assertFalse(mts.user_can_update_task(user1, task4.code))
-        self.assertFalse(mts.user_can_update_task(user1, task5.code))
-        self.assertFalse(mts.user_can_update_task(user1, task6.code))
+        srv = QuestionMarkingService
+        self.assertTrue(srv._user_can_update_task(user1, task1))
+        self.assertFalse(srv._user_can_update_task(user1, task2))
+        self.assertTrue(srv._user_can_update_task(user1, task3))
+        self.assertFalse(srv._user_can_update_task(user1, task4))
+        self.assertFalse(srv._user_can_update_task(user1, task5))
+        self.assertFalse(srv._user_can_update_task(user1, task6))
 
     @config_test()
     def test_task_priorities_by_papernum(self) -> None:
@@ -145,12 +145,12 @@ class MarkingTaskTestsWithConfig(TestCase):
         task2 = MarkingTask.objects.get(code="q0001g2")
         task3 = MarkingTask.objects.get(code="q0002g1")
 
-        self.assertEqual(QuestionMarkingService().get_first_available_task(), task1)
+        self.assertEqual(QuestionMarkingService.get_first_available_task(), task1)
 
         task1.status = MarkingTask.COMPLETE
         task1.save()
 
-        self.assertEqual(QuestionMarkingService().get_first_available_task(), task2)
+        self.assertEqual(QuestionMarkingService.get_first_available_task(), task2)
 
         # keep linter happy
         del task3
