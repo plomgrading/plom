@@ -114,24 +114,6 @@ class QuestionMarkingService:
         ).first()
         return first_task
 
-    def _get_task_for_update(self) -> MarkingTask:
-        """Retrieve the relevant marking task using self.code or self.task_pk, and select it for update.
-
-        Raises:
-            ObjectDoesNotExist: paper or paper with that question does not exist,
-                not raised directly but from ``get_latest_task``.
-            ValueError:
-        """
-        if self.task_pk:
-            return MarkingTask.objects.select_for_update().get(pk=self.task_pk)
-        elif self.code:
-            paper_number, question_index = mark_task.unpack_code(self.code)
-            task_to_assign = mark_task.get_latest_task(paper_number, question_index)
-            self.task_pk = task_to_assign.pk
-            return self._get_task_for_update()
-        else:
-            raise ValueError("Cannot find task - no public key or code specified.")
-
     @staticmethod
     @transaction.atomic
     def mark_task(
@@ -165,6 +147,9 @@ class QuestionMarkingService:
                 "User cannot create annotation for this task:"
                 " perhaps task has been reassigned"
             )
+
+        # regrab it, selected-for-update, b/c we're going to write to it
+        task = MarkingTask.objects.select_for_update().get(pk=task.pk)
 
         # Various work in creating the new Annotation object: linking it to the
         # associated Rubrics and managing the task's latest annotation link.
