@@ -193,10 +193,10 @@ def get_sis_id_to_canvas_id_table(*, workdir: Union[Path, str] = "."):
 def get_courses_teaching(user):
     """Get a list of the courses a particular user is teaching.
 
-    args:
+    Args:
         user (canvasapi.current_user.CurrentUser)
 
-    return:
+    Returns:
         list: List of `canvasapi.course.Course` objects.
     """
     courses_teaching = []
@@ -363,12 +363,12 @@ def canvas_login(
 ) -> Canvas.current_user.CurrentUser:
     """Login to a Canvas server using an API key.
 
-    args:
+    Args:
         api_url: server to login to, uses a default if omitted.
         api_key: the API key.  Will load from disc if
             omitted (deprecated!).
 
-    return:
+    Returns:
         The user who canvasapi.current_user.CurrentUser
     """
     if not api_url:
