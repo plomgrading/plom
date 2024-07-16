@@ -77,6 +77,8 @@ class RubricUploadForm(forms.Form):
 
 
 class RubricDiffForm(forms.Form):
+    """Form for comparing two rubrics."""
+
     left_compare = forms.ModelChoiceField(queryset=None)
     right_compare = forms.ModelChoiceField(queryset=None)
 

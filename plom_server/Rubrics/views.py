@@ -24,7 +24,6 @@ from plom.feedback_rules import feedback_rules as static_feedback_rules
 from Base.base_group_views import ManagerRequiredView
 from Base.models import SettingsModel
 from Papers.services import SpecificationService
-from .models import Rubric
 from .services import RubricService
 from .forms import RubricAdminForm, RubricDiffForm, RubricWipeForm, RubricUploadForm
 from .forms import RubricFilterForm, RubricEditForm, RubricDownloadForm
@@ -280,6 +279,7 @@ class RubricItemView(DetailView, ManagerRequiredView):
 
 
 def compare_rubrics(request, rubric_key):
+    """View for displaying a diff between two rubrics."""
     if request.method == "POST" and request.headers.get("HX-Request"):
         form = RubricDiffForm(request.POST, key=str(rubric_key).zfill(12))
         if form.is_valid():
