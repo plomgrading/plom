@@ -6,14 +6,21 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.contrib.auth.models import User
 from django.db import transaction
 
+from plom.plom_exceptions import (
+    PlomConflict,
+    PlomTaskDeletedError,
+    PlomTaskChangedError,
+)
+
 from ..models import MarkingTask
-from . import mark_task, page_data
+from . import mark_task
 from . import create_new_annotation_in_database
 
 
@@ -41,55 +48,18 @@ class QuestionMarkingService:
         8. Return to step 5 - Marker is free to keep sending new marks for the task.
     """
 
-    def __init__(
-        self,
-        *,
-        task_pk: Optional[int] = None,
-        code: Optional[str] = None,
-        question: Optional[int] = None,
-        version: Optional[int] = None,
-        user: Optional[User] = None,
-        min_paper_num: Optional[int] = None,
-        max_paper_num: Optional[int] = None,
-        marking_data: Optional[dict] = None,
-        annotation_data: Optional[dict] = None,
-        annotation_image: Optional[InMemoryUploadedFile] = None,
-        annotation_image_md5sum: Optional[str] = None,
-    ):
-        """Service constructor.
-
-        Keyword Args:
-            task_pk: public key of a task instance
-            code: string representing a paper number + question index pair
-            question: question index of task
-            version: question version of task
-            user: reference to a user instance
-            min_paper_num: the minimum paper number of the task
-            max_paper_num: the maximum paper number of the task
-            marking_data: dict representing a mark, rubrics used, etc
-            annotation_data: a dictionary representing an annotation SVG
-            annotation_image: an in-memory raster representation of an annotation
-            annotation_image_md5sum: the hash for annotation_image
-        """
-        self.task_pk = task_pk
-        self.code = code
-        self.question = question
-        self.version = version
-        self.user = user
-        self.min_paper_num = min_paper_num
-        self.max_paper_num = max_paper_num
-        self.marking_data = marking_data
-        self.annotation_data = annotation_data
-        self.annotation_image = annotation_image
-        self.annotation_image_md5sum = annotation_image_md5sum
-
+    @staticmethod
     @transaction.atomic
     def get_first_available_task(
-        self,
         *,
+        question_idx: int | None = None,
+        version: int | None = None,
+        user: User | None = None,
+        min_paper_num: int | None = None,
+        max_paper_num: int | None = None,
         tags: list[str] | None = None,
         exclude_tagged_for_others: bool = True,
-    ) -> Optional[MarkingTask]:
+    ) -> MarkingTask | None:
         """Return the first marking task with a 'todo' status, sorted by `marking_priority`.
 
         If ``question`` and/or ``version``, restrict tasks appropriately.
@@ -101,6 +71,12 @@ class QuestionMarkingService:
         If the priority is the same, defer to paper number and then question index.
 
         Keyword Args:
+            question_idx: optional question index for the task.
+            version: optional question version for the task.
+            user: reference to a user instance, used to filter out
+                tasks that are tagged for someone else.
+            min_paper_num: optional minimum paper number of the task.
+            max_paper_num: optional maximum paper number of the task.
             tags: a task must match at least one of the strings in this
                 list.
             exclude_tagged_for_others: don't return papers that are
@@ -114,24 +90,24 @@ class QuestionMarkingService:
         """
         available = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
 
-        if self.question:
-            available = available.filter(question_index=self.question)
+        if question_idx:
+            available = available.filter(question_index=question_idx)
 
-        if self.version:
-            available = available.filter(question_version=self.version)
+        if version:
+            available = available.filter(question_version=version)
 
-        if self.min_paper_num:
-            available = available.filter(paper__paper_number__gte=self.min_paper_num)
+        if min_paper_num:
+            available = available.filter(paper__paper_number__gte=min_paper_num)
 
-        if self.max_paper_num:
-            available = available.filter(paper__paper_number__lte=self.max_paper_num)
+        if max_paper_num:
+            available = available.filter(paper__paper_number__lte=max_paper_num)
 
         if tags:
             available = available.filter(markingtasktag__text__in=tags)
 
         if exclude_tagged_for_others:
             users = User.objects.all()
-            other_user_tags = [f"@{u}" for u in users if u != self.user]
+            other_user_tags = [f"@{u}" for u in users if u != user]
             # anything explicitly in tags should not be filtered here
             if tags:
                 other_user_tags = [x for x in other_user_tags if x not in tags]
@@ -143,71 +119,103 @@ class QuestionMarkingService:
         first_task = available.order_by(
             "-marking_priority", "paper__paper_number", "question_index"
         ).first()
-        self.task_pk = first_task.pk
         return first_task
 
-    def _get_task_for_update(self) -> MarkingTask:
-        """Retrieve the relevant marking task using self.code or self.task_pk, and select it for update.
+    @staticmethod
+    def _user_can_update_task(user: User, task: MarkingTask) -> bool:
+        """Return true if a user is allowed to update a certain task, false otherwise.
+
+        TODO: what if its not the latest task?
+        """
+        if task.assigned_user and task.assigned_user != user:
+            return False
+
+        if task.status not in (MarkingTask.OUT, MarkingTask.COMPLETE):
+            return False
+
+        return True
+
+    # @staticmethod
+    # def user_can_update_task_code(user: User, code: str) -> bool:
+    #     """Return true if a user is allowed to update a certain task, false otherwise.
+    #
+    #     TODO: should be possible to remove the "assigned user" and "status" fields
+    #     and infer both from querying ClaimTask and MarkAction instances.
+    #
+    #     Args:
+    #         user: reference to a User instance.
+    #         code: task code.
+    #     """
+    #     the_task = self.get_task_from_code(code)
+    #     return _user_can_update_task(user, the_task)
+
+    @classmethod
+    @transaction.atomic
+    def mark_task(
+        cls,
+        code: str,
+        *,
+        user: User,
+        marking_data: dict[str, Any],
+        annotation_data: dict,
+        annotation_image: InMemoryUploadedFile,
+        annotation_image_md5sum: str,
+    ) -> None:
+        """Accept a marker's annotation and grade for a task, store them in the database.
+
+        Not implemented yet: 406: integrity fail.
 
         Raises:
-            ObjectDoesNotExist: paper or paper with that question does not exist,
-                not raised directly but from ``get_latest_task``.
-            ValueError:
+            ValueError: anything related to a poorly formed bad request,
+                such as invalid code, or wrong image format.
+            PlomTaskChangedError: not the assigned user.
+            PlomTaskDeletedError: task isn't there anymore, either you asked
+                for garbage or something has changed on the server.
+            PlomConflict: fails "integrity check": client is trying
+                to submit to an out-of-date task.
+                TODO: not implemented yet.
         """
-        if self.task_pk:
-            return MarkingTask.objects.select_for_update().get(pk=self.task_pk)
-        elif self.code:
-            paper_number, question_index = mark_task.unpack_code(self.code)
-            task_to_assign = mark_task.get_latest_task(paper_number, question_index)
-            self.task_pk = task_to_assign.pk
-            return self._get_task_for_update()
-        else:
-            raise ValueError("Cannot find task - no public key or code specified.")
+        try:
+            papernum, question_idx = mark_task.unpack_code(code)
+        except AssertionError as e:
+            raise ValueError(e) from e
 
-    @transaction.atomic
-    def get_page_data(self) -> list[dict]:
-        """Return the relevant data for rendering task pages on the client."""
-        if self.task_pk:
-            task = MarkingTask.objects.get(pk=self.task_pk)
-            paper_number = task.paper.paper_number
-            question_index = task.question_index
-        elif self.code:
-            paper_number, question_index = mark_task.unpack_code(self.code)
-        else:
-            raise ValueError("Cannot find task to read from.")
+        # TODO: we could invert the logic here: from the integrity check
+        # we know which task the client is trying to modify.  We can later
+        # compare/check if they are allowed to write to it.
+        try:
+            task = mark_task.get_latest_task(papernum, question_idx)
+        except ObjectDoesNotExist as e:
+            raise PlomTaskDeletedError(f"{str(e)}: perhaps something was deleted?")
 
-        return page_data.get_question_pages_list(paper_number, question_index)
+        if not cls._user_can_update_task(user, task):
+            raise PlomTaskChangedError(
+                "User cannot create annotations for this task:"
+                " perhaps task has been reassigned"
+            )
 
-    @transaction.atomic
-    def mark_task(self) -> None:
-        """Accept a marker's annotation and grade for a task, store them in the database."""
-        task = self._get_task_for_update()
+        # old_pk = int(marking_data["integrity_check"])
+        # # todo: failure when not str-to-int
+        # if old_pk != task.pk:
+        if False:
+            old_pk = 42
+            raise PlomConflict(
+                f'Integrity failed: trying to modify "{old_pk}"'
+                f' but current server task is "{task.pk}"'
+            )
 
-        if self.annotation_image is None:
-            raise ValueError("Cannot find annotation image to save.")
-        if self.annotation_image_md5sum is None:
-            raise ValueError("Cannot find annotation image hash.")
-
-        if self.annotation_data is None:
-            raise ValueError("Cannot find annotation data.")
-        if self.user is None:
-            raise ValueError("Cannot find user.")
-        elif self.user != task.assigned_user:
-            raise RuntimeError("User cannot create annotation for this task.")
-
-        # keep MyPy happy but honestly I think its a sign we should refactor with args
-        assert self.marking_data is not None
+        # regrab it, selected-for-update, b/c we're going to write to it
+        task = MarkingTask.objects.select_for_update().get(pk=task.pk)
 
         # Various work in creating the new Annotation object: linking it to the
         # associated Rubrics and managing the task's latest annotation link.
-        # TODO: Issue #3231.
         create_new_annotation_in_database(
             task,
-            self.marking_data["score"],
-            self.marking_data["marking_time"],
-            self.annotation_image_md5sum,
-            self.annotation_image,
-            self.annotation_data,
+            marking_data["score"],
+            marking_data["marking_time"],
+            annotation_image_md5sum,
+            annotation_image,
+            annotation_data,
         )
         # Note the helper function above also performs `task.save`; that seems ok.
         task.status = MarkingTask.COMPLETE
