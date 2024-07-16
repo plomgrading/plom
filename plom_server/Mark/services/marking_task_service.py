@@ -257,28 +257,6 @@ class MarkingTaskService:
             assigned_user=None, status=MarkingTask.TO_DO
         )
 
-    def user_can_update_task(self, user: User, code: str) -> bool:
-        """Return true if a user is allowed to update a certain task, false otherwise.
-
-        TODO: should be possible to remove the "assigned user" and "status" fields
-        and infer both from querying ClaimTask and MarkAction instances.
-
-        Args:
-            user: reference to a User instance
-            code: (str) task code
-        """
-        the_task = self.get_task_from_code(code)
-        if the_task.assigned_user and the_task.assigned_user != user:
-            return False
-
-        if (
-            the_task.status != MarkingTask.OUT
-            and the_task.status != MarkingTask.COMPLETE
-        ):
-            return False
-
-        return True
-
     def get_n_marked_tasks(self) -> int:
         """Return the number of marking tasks that are completed."""
         return MarkingTask.objects.filter(status=MarkingTask.COMPLETE).count()

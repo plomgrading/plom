@@ -116,8 +116,37 @@ class QuestionMarkingService:
         return first_task
 
     @staticmethod
+    def _user_can_update_task(user: User, task: MarkingTask) -> bool:
+        """Return true if a user is allowed to update a certain task, false otherwise.
+
+        TODO: what if its not the latest task?
+        """
+        if task.assigned_user and task.assigned_user != user:
+            return False
+
+        if task.status not in (MarkingTask.OUT, MarkingTask.COMPLETE):
+            return False
+
+        return True
+
+    # @staticmethod
+    # def user_can_update_task_code(user: User, code: str) -> bool:
+    #     """Return true if a user is allowed to update a certain task, false otherwise.
+    #
+    #     TODO: should be possible to remove the "assigned user" and "status" fields
+    #     and infer both from querying ClaimTask and MarkAction instances.
+    #
+    #     Args:
+    #         user: reference to a User instance.
+    #         code: task code.
+    #     """
+    #     the_task = self.get_task_from_code(code)
+    #     return _user_can_update_task(user, the_task)
+
+    @classmethod
     @transaction.atomic
     def mark_task(
+        cls,
         code: str,
         *,
         user: User,
@@ -146,10 +175,7 @@ class QuestionMarkingService:
         except ObjectDoesNotExist as e:
             raise ObjectDoesNotExist(f"{str(e)}: perhaps something was deleted?")
 
-        # TODO: call user_can_update_task
-        # if not self.user_can_update_task(user, code):
-        #    raise RuntimeError("User cannot update task.")
-        if user != task.assigned_user:
+        if not cls._user_can_update_task(user, task):
             raise RuntimeError(
                 "User cannot create annotations for this task:"
                 " perhaps task has been reassigned"

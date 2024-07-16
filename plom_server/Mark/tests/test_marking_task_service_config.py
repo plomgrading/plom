@@ -124,13 +124,13 @@ class MarkingTaskTestsWithConfig(TestCase):
         task6.status = MarkingTask.OUT_OF_DATE
         task6.save()
 
-        mts = MarkingTaskService()
-        self.assertTrue(mts.user_can_update_task(user1, task1.code))
-        self.assertFalse(mts.user_can_update_task(user1, task2.code))
-        self.assertTrue(mts.user_can_update_task(user1, task3.code))
-        self.assertFalse(mts.user_can_update_task(user1, task4.code))
-        self.assertFalse(mts.user_can_update_task(user1, task5.code))
-        self.assertFalse(mts.user_can_update_task(user1, task6.code))
+        srv = QuestionMarkingService
+        self.assertTrue(srv._user_can_update_task(user1, task1))
+        self.assertFalse(srv._user_can_update_task(user1, task2))
+        self.assertTrue(srv._user_can_update_task(user1, task3))
+        self.assertFalse(srv._user_can_update_task(user1, task4))
+        self.assertFalse(srv._user_can_update_task(user1, task5))
+        self.assertFalse(srv._user_can_update_task(user1, task6))
 
     @config_test()
     def test_task_priorities_by_papernum(self) -> None:
