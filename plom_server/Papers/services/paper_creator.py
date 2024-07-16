@@ -123,6 +123,9 @@ class PaperCreatorService:
     ) -> None:
         """Creates tables for the given paper number from supplied information.
 
+        Note that this (optionally) takes several kwargs so that the spec does
+        not have to be polled for each paper.
+
         Args:
             paper_number: The number of the paper being created
             qv_row: Mapping from each question index to

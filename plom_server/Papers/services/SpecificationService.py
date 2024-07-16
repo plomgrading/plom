@@ -271,7 +271,7 @@ def get_dnm_pages() -> List[int]:
 
 @transaction.atomic
 def get_question_pages() -> Dict[int, List[int]]:
-    """Get the pages of each question.
+    """Get the pages of each question, indexed from one.
 
     Returns:
         A dictionary of question indices giving a list of the corresponding pages {question_index: question_pages}.
