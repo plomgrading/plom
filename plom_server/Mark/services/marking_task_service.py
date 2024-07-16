@@ -292,7 +292,7 @@ class MarkingTaskService:
         return MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE).count()
 
     def validate_and_clean_marking_data(
-        self, user: User, code: str, data: dict[str, Any], plomfile: str
+        self, code: str, data: dict[str, Any], plomfile: str
     ) -> tuple[dict[str, Any], dict, list[Rubric]]:
         """Validate the incoming marking data.
 
@@ -308,12 +308,12 @@ class MarkingTaskService:
             `annot_data (dict)`: annotation-image data parsed from a JSON string.
             `rubrics_used (list)`: a list of Rubric objects, extracted based on
             keys found inside the `annot_data`.
+
+        Raises:
+            ValidationError
         """
         annot_data = json.loads(plomfile)
         cleaned_data: dict[str, Any] = {}
-
-        if not self.user_can_update_task(user, code):
-            raise RuntimeError("User cannot update task.")
 
         try:
             for val in ("pg", "ver", "score"):

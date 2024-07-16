@@ -146,9 +146,12 @@ class QuestionMarkingService:
         except ObjectDoesNotExist as e:
             raise ObjectDoesNotExist(f"{str(e)}: perhaps something was deleted?")
 
+        # TODO: call user_can_update_task
+        # if not self.user_can_update_task(user, code):
+        #    raise RuntimeError("User cannot update task.")
         if user != task.assigned_user:
             raise RuntimeError(
-                "User cannot create annotation for this task:"
+                "User cannot create annotations for this task:"
                 " perhaps task has been reassigned"
             )
 
