@@ -14,6 +14,12 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.request import Request
 
+from plom.plom_exceptions import (
+    PlomConflict,
+    PlomTaskDeletedError,
+    PlomTaskChangedError,
+)
+
 from Mark.services import QuestionMarkingService, MarkingTaskService
 from Mark.services import mark_task, page_data
 from .utils import _error_response
@@ -59,23 +65,24 @@ class QuestionMarkingViewSet(ViewSet):
         else:
             tags = []
 
-        task = QuestionMarkingService(
-            question=question,
+        task = QuestionMarkingService.get_first_available_task(
+            question_idx=question,
             version=version,
             user=request.user,
             min_paper_num=min_paper_num,
             max_paper_num=max_paper_num,
-        ).get_first_available_task(tags=tags)
+            tags=tags,
+        )
 
         if not task and tags:
             # didn't find anything tagged, so try again without
-            task = QuestionMarkingService(
-                question=question,
+            task = QuestionMarkingService.get_first_available_task(
+                question_idx=question,
                 version=version,
                 user=request.user,
                 min_paper_num=min_paper_num,
                 max_paper_num=max_paper_num,
-            ).get_first_available_task()
+            )
 
         if not task:
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -144,9 +151,14 @@ class QuestionMarkingViewSet(ViewSet):
         """Accept a marker's grade and annotation for a task.
 
         Returns:
-        (200): returns two integers, first the number of marked papers
+            200: returns two integers, first the number of marked papers
             for this question/version and the total number of papers for
             this question/version.
+            400: malformed input of some sort.
+            404: no such task.
+            406: TODO: integrity fail: client submitted to out-of-date task.
+            409: task has changed.
+            410: task is gone.
         """
         mts = MarkingTaskService()
         data = request.POST
@@ -157,31 +169,32 @@ class QuestionMarkingViewSet(ViewSet):
 
         try:
             mark_data, annot_data, rubrics_used = mts.validate_and_clean_marking_data(
-                request.user, code, data, plomfile_data
+                code, data, plomfile_data
             )
         except ObjectDoesNotExist as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
-        except RuntimeError as e:
-            return _error_response(e, status.HTTP_409_CONFLICT)
+        # TODO: is something automatically catching ValidationErrors?
 
         annotation_image = files["annotation_image"]
         img_md5sum = data["md5sum"]
 
-        service = QuestionMarkingService(
-            code=code,
-            annotation_data=annot_data,
-            marking_data=mark_data,
-            user=request.user,
-            annotation_image=annotation_image,
-            annotation_image_md5sum=img_md5sum,
-        )
-
         try:
-            service.mark_task()
+            QuestionMarkingService.mark_task(
+                code,
+                user=request.user,
+                marking_data=mark_data,
+                annotation_data=annot_data,
+                annotation_image=annotation_image,
+                annotation_image_md5sum=img_md5sum,
+            )
         except ValueError as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
-        except RuntimeError as e:
+        except PlomTaskChangedError as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
+        except PlomTaskDeletedError as e:
+            return _error_response(e, status.HTTP_410_GONE)
+        except PlomConflict as e:
+            return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
 
         def int_or_None(x):
             return None if x is None else int(x)
