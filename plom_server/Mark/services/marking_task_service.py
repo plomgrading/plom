@@ -138,7 +138,7 @@ class MarkingTaskService:
             code: a unique string that includes the paper number and question index.
 
         Returns:
-            The marking task object the matches the code.
+            The latest marking task object that matches the code.
 
         Raises:
             ValueError: invalid code.
@@ -419,7 +419,7 @@ class MarkingTaskService:
         return [(tag.pk, tag.text) for tag in MarkingTaskTag.objects.all()]
 
     def get_tags_for_task(self, code: str) -> list[str]:
-        """Get a list of tags assigned to this marking task.
+        """Get a list of tags assigned to a marking task by its code.
 
         Args:
             code: the question/paper code for a task.
@@ -432,6 +432,21 @@ class MarkingTaskService:
         """
         # TODO: what if the client has an OLD task with the same code?
         task = self.get_task_from_code(code)
+        return [tag.text for tag in task.markingtasktag_set.all()]
+
+    def get_tags_for_task_pk(self, task_pk: int) -> list[str]:
+        """Get a list of tags assigned to a marking task by its pk.
+
+        Args:
+            task_pk: which task.
+
+        Returns:
+            A list of the text of all tags for this task.
+
+        Raises:
+            RuntimeError: no such code.
+        """
+        task = MarkingTask.objects.get(pk=task_pk)
         return [tag.text for tag in task.markingtasktag_set.all()]
 
     def get_tags_text_and_pk_for_task(self, task_pk: int) -> list[tuple[int, str]]:

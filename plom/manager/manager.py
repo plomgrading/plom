@@ -556,6 +556,16 @@ class Manager(QWidget):
             InfoMsg(self, "Could not authenticate:", info=e).exec()
             self.msgr = None  # reset to avoid Issue #1622
             return
+
+        if not self.msgr.is_legacy_server():
+            WarnMsg(
+                self,
+                "This deprecated tool only works on legacy servers.  "
+                "Instead, try connecting to the server with your webbrowser.",
+            ).exec()
+            self.msgr = None  # reset to avoid Issue #1622
+            return
+
         self.initial_login()
         self._enable_downloader()
 
