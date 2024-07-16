@@ -613,14 +613,16 @@ class Messenger(BaseMessenger):
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
                 if response.status_code == 406:
+                    # TODO: not working, just copy-pasted from legacy
                     if response.text == "integrity_fail":
                         raise PlomConflict(
                             "Integrity fail: can happen if manager altered task while you annotated"
                         ) from None
                     raise PlomSeriousException(response.text) from None
                 if response.status_code == 409:
-                    raise PlomTaskChangedError("Task ownership has changed.") from None
+                    raise PlomTaskChangedError(response.reason) from None
                 if response.status_code == 410:
+                    # TODO: just copy-paste from legacy handler, not implemented in new server
                     raise PlomTaskDeletedError(
                         "No such task - it has been deleted from server."
                     ) from None

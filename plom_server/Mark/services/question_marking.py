@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.contrib.auth.models import User
@@ -40,48 +40,6 @@ class QuestionMarkingService:
         7. Server saves mark, annotation data, and annotation image
         8. Return to step 5 - Marker is free to keep sending new marks for the task.
     """
-
-    def __init__(
-        self,
-        *,
-        task_pk: Optional[int] = None,
-        code: Optional[str] = None,
-        question: Optional[int] = None,
-        version: Optional[int] = None,
-        user: Optional[User] = None,
-        min_paper_num: Optional[int] = None,
-        max_paper_num: Optional[int] = None,
-        marking_data: Optional[dict] = None,
-        annotation_data: Optional[dict] = None,
-        annotation_image: Optional[InMemoryUploadedFile] = None,
-        annotation_image_md5sum: Optional[str] = None,
-    ):
-        """Service constructor.
-
-        Keyword Args:
-            task_pk: public key of a task instance
-            code: string representing a paper number + question index pair
-            question: question index of task
-            version: question version of task
-            user: reference to a user instance
-            min_paper_num: the minimum paper number of the task
-            max_paper_num: the maximum paper number of the task
-            marking_data: dict representing a mark, rubrics used, etc
-            annotation_data: a dictionary representing an annotation SVG
-            annotation_image: an in-memory raster representation of an annotation
-            annotation_image_md5sum: the hash for annotation_image
-        """
-        self.task_pk = task_pk
-        self.code = code
-        self.question = question
-        self.version = version
-        self.user = user
-        self.min_paper_num = min_paper_num
-        self.max_paper_num = max_paper_num
-        self.marking_data = marking_data
-        self.annotation_data = annotation_data
-        self.annotation_image = annotation_image
-        self.annotation_image_md5sum = annotation_image_md5sum
 
     @staticmethod
     @transaction.atomic
@@ -174,36 +132,50 @@ class QuestionMarkingService:
         else:
             raise ValueError("Cannot find task - no public key or code specified.")
 
+    @staticmethod
     @transaction.atomic
-    def mark_task(self) -> None:
-        """Accept a marker's annotation and grade for a task, store them in the database."""
-        task = self._get_task_for_update()
+    def mark_task(
+        code: str,
+        *,
+        user: User,
+        marking_data: dict[str, Any],
+        annotation_data: dict,
+        annotation_image: InMemoryUploadedFile,
+        annotation_image_md5sum: str,
+    ) -> None:
+        """Accept a marker's annotation and grade for a task, store them in the database.
 
-        if self.annotation_image is None:
-            raise ValueError("Cannot find annotation image to save.")
-        if self.annotation_image_md5sum is None:
-            raise ValueError("Cannot find annotation image hash.")
+        Not implemented yet: 406: integrity fail; 410 for task deleted
 
-        if self.annotation_data is None:
-            raise ValueError("Cannot find annotation data.")
-        if self.user is None:
-            raise ValueError("Cannot find user.")
-        elif self.user != task.assigned_user:
-            raise RuntimeError("User cannot create annotation for this task.")
+        Raises:
+            RuntimeError: not the assigned user.
+            ValueError: anything related to a poorly formed bad request,
+                such as invalid code.
+        """
+        try:
+            papernum, question_idx = mark_task.unpack_code(code)
+        except AssertionError as e:
+            raise ValueError(e) from e
 
-        # keep MyPy happy but honestly I think its a sign we should refactor with args
-        assert self.marking_data is not None
+        # TODO: ObjectDoesNotExist, not ValueError (only with version checks)
+        task = mark_task.get_latest_task(papernum, question_idx)
+
+        if user != task.assigned_user:
+            raise RuntimeError(
+                "User cannot create annotation for this task:"
+                " perhaps task has been reassigned"
+            )
 
         # Various work in creating the new Annotation object: linking it to the
         # associated Rubrics and managing the task's latest annotation link.
         # TODO: Issue #3231.
         create_new_annotation_in_database(
             task,
-            self.marking_data["score"],
-            self.marking_data["marking_time"],
-            self.annotation_image_md5sum,
-            self.annotation_image,
-            self.annotation_data,
+            marking_data["score"],
+            marking_data["marking_time"],
+            annotation_image_md5sum,
+            annotation_image,
+            annotation_data,
         )
         # Note the helper function above also performs `task.save`; that seems ok.
         task.status = MarkingTask.COMPLETE

@@ -163,17 +163,15 @@ class QuestionMarkingViewSet(ViewSet):
         annotation_image = files["annotation_image"]
         img_md5sum = data["md5sum"]
 
-        service = QuestionMarkingService(
-            code=code,
-            annotation_data=annot_data,
-            marking_data=mark_data,
-            user=request.user,
-            annotation_image=annotation_image,
-            annotation_image_md5sum=img_md5sum,
-        )
-
         try:
-            service.mark_task()
+            QuestionMarkingService.mark_task(
+                code,
+                user=request.user,
+                marking_data=mark_data,
+                annotation_data=annot_data,
+                annotation_image=annotation_image,
+                annotation_image_md5sum=img_md5sum,
+            )
         except ValueError as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
         except RuntimeError as e:
