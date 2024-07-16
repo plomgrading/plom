@@ -352,7 +352,7 @@ def check_for_illadvised(
             this question.
         maxscore: the maximum score for this question.
 
-    Return:
+    Returns:
         If there are no concerns, return tuple `(True, None, None)`.
         Otherwise, ``(False, code, msg)``, where ``code`` is a short
         string for machines and ``msg``

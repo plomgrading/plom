@@ -228,11 +228,6 @@ qt_api = "pyqt6"
 ignore="H006,H013,H021,H023,H030,H031"
 # indent=2
 
-[tool.pydocstyle]
-convention = "google"
-# TODO: many of these should be fixed instead of ignored!
-add-ignore = "D100,D101,D102,D103,D104,D107,D106"
-
 [tool.mypy]
 # pretty = true
 exclude = [

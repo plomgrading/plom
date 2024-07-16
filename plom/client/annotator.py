@@ -1720,7 +1720,7 @@ class Annotator(QWidget):
         Note: called "pickle" for historical reasons: it is neither a
         Python pickle nor a real-life pickle.
 
-        Return:
+        Returns:
             tuple: two `pathlib.Path`, one for the rendered image and
             one for the ``.plom`` file.
         """

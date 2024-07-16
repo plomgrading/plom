@@ -111,7 +111,7 @@ def _add_new_annotation_image_to_database(
         annot_img: the annotation image file.
             The filename including extension is taken from this.
 
-    Return:
+    Returns:
         Reference to the database object.
 
     Raises:
