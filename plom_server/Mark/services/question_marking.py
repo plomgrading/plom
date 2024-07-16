@@ -13,6 +13,12 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.contrib.auth.models import User
 from django.db import transaction
 
+from plom.plom_exceptions import (
+    PlomConflict,
+    PlomTaskDeletedError,
+    PlomTaskChangedError,
+)
+
 from ..models import MarkingTask
 from . import mark_task
 from . import create_new_annotation_in_database
@@ -160,26 +166,42 @@ class QuestionMarkingService:
         Not implemented yet: 406: integrity fail.
 
         Raises:
-            RuntimeError: not the assigned user.
             ValueError: anything related to a poorly formed bad request,
                 such as invalid code, or wrong image format.
-            ObjectDoesNotExist: task isn't there anymore, either you asked
+            PlomTaskChangedError: not the assigned user.
+            PlomTaskDeletedError: task isn't there anymore, either you asked
                 for garbage or something has changed on the server.
+            PlomConflict: fails "integrity check": client is trying
+                to submit to an out-of-date task.
+                TODO: not implemented yet.
         """
         try:
             papernum, question_idx = mark_task.unpack_code(code)
         except AssertionError as e:
             raise ValueError(e) from e
 
+        # TODO: we could invert the logic here: from the integrity check
+        # we know which task the client is trying to modify.  We can later
+        # compare/check if they are allowed to write to it.
         try:
             task = mark_task.get_latest_task(papernum, question_idx)
         except ObjectDoesNotExist as e:
-            raise ObjectDoesNotExist(f"{str(e)}: perhaps something was deleted?")
+            raise PlomTaskDeletedError(f"{str(e)}: perhaps something was deleted?")
 
         if not cls._user_can_update_task(user, task):
-            raise RuntimeError(
+            raise PlomTaskChangedError(
                 "User cannot create annotations for this task:"
                 " perhaps task has been reassigned"
+            )
+
+        # old_pk = int(marking_data["integrity_check"])
+        # # todo: failure when not str-to-int
+        # if old_pk != task.pk:
+        if False:
+            old_pk = 42
+            raise PlomConflict(
+                f'Integrity failed: trying to modify "{old_pk}"'
+                f' but current server task is "{task.pk}"'
             )
 
         # regrab it, selected-for-update, b/c we're going to write to it

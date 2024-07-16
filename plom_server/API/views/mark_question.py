@@ -14,6 +14,12 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.request import Request
 
+from plom.plom_exceptions import (
+    PlomConflict,
+    PlomTaskDeletedError,
+    PlomTaskChangedError,
+)
+
 from Mark.services import QuestionMarkingService, MarkingTaskService
 from Mark.services import mark_task, page_data
 from .utils import _error_response
@@ -143,7 +149,11 @@ class QuestionMarkingViewSet(ViewSet):
             200: returns two integers, first the number of marked papers
             for this question/version and the total number of papers for
             this question/version.
-            404, 409: TODO.
+            400: malformed input of some sort.
+            404: no such task.
+            406: TODO: integrity fail: client submitted to out-of-date task.
+            409: task has changed.
+            410: task is gone.
         """
         mts = MarkingTaskService()
         data = request.POST
@@ -174,10 +184,12 @@ class QuestionMarkingViewSet(ViewSet):
             )
         except ValueError as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
-        except RuntimeError as e:
+        except PlomTaskChangedError as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
-        except ObjectDoesNotExist as e:
+        except PlomTaskDeletedError as e:
             return _error_response(e, status.HTTP_410_GONE)
+        except PlomConflict as e:
+            return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
 
         def int_or_None(x):
             return None if x is None else int(x)
