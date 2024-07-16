@@ -29,7 +29,7 @@ from Papers.services import SpecificationService
 from Preparation.services.preparation_dependency_service import (
     assert_can_modify_qv_mapping_database,
 )
-from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
+from plom.plom_exceptions import PlomDatabaseCreationError
 
 log = logging.getLogger("PaperCreatorService")
 
