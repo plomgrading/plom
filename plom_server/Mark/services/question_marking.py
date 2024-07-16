@@ -168,7 +168,6 @@ class QuestionMarkingService:
 
         # Various work in creating the new Annotation object: linking it to the
         # associated Rubrics and managing the task's latest annotation link.
-        # TODO: Issue #3231.
         create_new_annotation_in_database(
             task,
             marking_data["score"],
