@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Bryan Tanady
 
 import statistics
 from typing import Any, Dict, List, Optional
@@ -48,12 +49,12 @@ class MarkingStatsService:
         }
 
         try:
-            all_tasks = MarkingTask.objects.filter(question_number=question).exclude(
+            all_tasks = MarkingTask.objects.filter(question_index=question).exclude(
                 status=MarkingTask.OUT_OF_DATE
             )
             completed_tasks = MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE,
-                question_number=question,
+                question_index=question,
             ).prefetch_related("latest_annotation")
             if version:
                 all_tasks = all_tasks.filter(question_version=version)
@@ -123,7 +124,7 @@ class MarkingStatsService:
         try:
             completed_tasks = MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE,
-                question_number=question,
+                question_index=question,
             ).prefetch_related("latest_annotation")
             if version:
                 completed_tasks = completed_tasks.filter(question_version=version)
@@ -150,7 +151,7 @@ class MarkingStatsService:
         """
         tasks = MarkingTask.objects.filter(
             status=MarkingTask.COMPLETE,
-            question_number=question,
+            question_index=question,
         )
         if version:
             tasks = tasks.filter(question_version=version)
@@ -179,7 +180,7 @@ class MarkingStatsService:
         try:
             completed_tasks = MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE,
-                question_number=question,
+                question_index=question,
                 question_version=version,
             ).prefetch_related(
                 "latest_annotation",
@@ -237,7 +238,7 @@ class MarkingStatsService:
         try:
             completed_tasks = MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE,
-                question_number=question,
+                question_index=question,
             ).prefetch_related(
                 "latest_annotation",
             )
@@ -276,7 +277,7 @@ class MarkingStatsService:
             data[ver]["remaining"] = (
                 MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
                 .exclude(status=MarkingTask.COMPLETE)
-                .filter(question_number=question, question_version=ver)
+                .filter(question_index=question, question_version=ver)
                 .count()
             )
 
@@ -287,7 +288,7 @@ class MarkingStatsService:
         task_info = {}
         for task in (
             MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
-            .filter(question_number=question, question_version=version)
+            .filter(question_index=question, question_version=version)
             .prefetch_related("latest_annotation", "paper", "assigned_user")
             .order_by("paper__paper_number")
         ):
@@ -318,6 +319,7 @@ class MarkingStatsService:
         version: Optional[int] = None,
         username: Optional[str] = None,
         the_tag: Optional[str] = None,
+        status: Optional[int] = None,
     ) -> List[Dict]:
         task_set = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
         if paper_min:
@@ -329,7 +331,7 @@ class MarkingStatsService:
         if score_max:
             task_set = task_set.filter(latest_annotation__score__lte=score_max)
         if question:
-            task_set = task_set.filter(question_number=question)
+            task_set = task_set.filter(question_index=question)
         if version:
             task_set = task_set.filter(question_version=version)
         if username:
@@ -341,6 +343,8 @@ class MarkingStatsService:
                 task_set = task_set.filter(markingtasktag=tag_obj)
             except MarkingTaskTag.DoesNotExist:
                 pass
+        if status:
+            task_set = task_set.filter(status=status)
         task_info = []
         for task in task_set.prefetch_related(
             "latest_annotation", "paper", "assigned_user"
@@ -348,7 +352,7 @@ class MarkingStatsService:
             dat = {
                 "paper_number": task.paper.paper_number,
                 "status": task.get_status_display(),
-                "question": task.question_number,
+                "question": task.question_index,
                 "version": task.question_version,
                 "task_pk": task.pk,
             }

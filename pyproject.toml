@@ -8,6 +8,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Bryan Tanady
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -52,7 +53,7 @@ dependencies = [
     "django-braces>=1.15.0",
     "django-filter>=23.2",
     "django-htmx>=1.14.0",
-    "django-mathfilters==1.0.0",
+    "django-mathfilters>=1.0.0",
     "django-huey>=1.1.1",
     "django-polymorphic>=3.1.0",
     "django-reset-migrations>=0.4.0",
@@ -60,7 +61,7 @@ dependencies = [
     "djangorestframework>=3.14.0",
     "exif>=1.2.2",
     "fonttools>=4.37.1",
-    "gunicorn==21.1.0",
+    "gunicorn>=21.1.0",
     'importlib_resources>=5.0.7 ; python_version<"3.9"',  # until we drop 3.8
     "imutils>=0.5.4",
     "matplotlib>=3.5.3",
@@ -75,6 +76,7 @@ dependencies = [
     "platformdirs>=3.0.0",
     "pymupdf>=1.22.5",
     "PyMySQL>=1.0.2",
+    "pyspellchecker>=0.8.1",
     "pytest>=6.0.0",
     "pytest-qt>=4.1.0",
     "PyQt6>=6.2.0",
@@ -163,7 +165,7 @@ packages = [
 "share/plom/testTemplates" = ["testTemplates/*"]
 "share/applications" = ["org.plomgrading.PlomClient.desktop"]
 "share/metainfo" = ["org.plomgrading.PlomClient.metainfo.xml"]
-"share/icons/hicolor/128x128/apps/" = ["org.plomgrading.PlomClient.png"]
+"share/icons/hicolor/128x128/apps" = ["org.plomgrading.PlomClient.png"]
 # "share/plom/contrib", ["contrib/**/*"]
 "share/plom/contrib" = [
             "contrib/README.txt",
@@ -226,11 +228,6 @@ qt_api = "pyqt6"
 ignore="H006,H013,H021,H023,H030,H031"
 # indent=2
 
-[tool.pydocstyle]
-convention = "google"
-# TODO: many of these should be fixed instead of ignored!
-add-ignore = "D100,D101,D102,D103,D104,D107,D106"
-
 [tool.mypy]
 # pretty = true
 exclude = [
@@ -281,3 +278,40 @@ module = [
     'Tags.admin',  # Issue #2849
 ]
 ignore_errors = true
+
+[tool.pyright]
+pythonVersion = "3.12"
+exclude = ['plom/manager', 'plom/server', '**/_digitHunter.py']
+# changing to "off" makes this much quieter
+typeCheckingMode = "basic"
+# lots of Django false positives?
+reportAttributeAccessIssue = false
+
+[tool.codespell]
+skip = "*.po,*.ts,*.pdf,*.png,*.jpg,*.svg,*.csv,*.json,.git"
+count = true
+check-filenames = true
+check-hidden = true
+quiet-level = 3
+ignore-words = ".codespell-ignorewords"
+exclude-file = ".codespell-ignorelines"
+
+[tool.ruff.lint]
+# enable docstring
+select = ["D"]
+# D107: perhaps init methods don't need docstrings
+# D100: public module docstrings: seem to get a lot of false positives
+# D10x: most of these are about missing docstrings
+ignore = ["D107", "D100", "D101", "D102", "D103", "D104", "D106"]
+# Legacy stuff: would need lots of edits to pass
+exclude = ["plom/server/**", "plom/db/**", "plom/canvas/**"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# F401: defining __all__ might be right fix
+# E402: re-ordering causes circular imports
+'__init__.py' = ['F401', 'E402']
+# tests don't need docstrings
+'plom*/**/test*.py' = ['D100', 'D101', 'D102', 'D103', 'D104']

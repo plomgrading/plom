@@ -102,6 +102,17 @@ def get_parser():
         """,
     )
     spAssemble.add_argument(
+        "--tmpdir",
+        type=str,
+        help="""
+            By default, we use OS-provided temporary space for downloads.
+            You can override that.  Then its your reasponsible to clean up.
+            Caution: its undefined whether two runs will reuse the images
+            etc, although currently it probably downloads them again
+            (because they could have changed).
+        """,
+    )
+    spAssemble.add_argument(
         "--ided_only",
         action="store_true",
         help="""
@@ -264,11 +275,16 @@ def main():
             plom.finish.reassemble_ID_only.main(args.server, args.password)
         elif args.testnum:
             reassemble_paper(
-                args.testnum, msgr=(args.server, args.password), skip=args.skip_existing
+                args.testnum,
+                msgr=(args.server, args.password),
+                skip=args.skip_existing,
+                tmpdir=args.tmpdir,
             )
         else:
             reassemble_all_papers(
-                msgr=(args.server, args.password), skip=args.skip_existing
+                msgr=(args.server, args.password),
+                skip=args.skip_existing,
+                tmpdir=args.tmpdir,
             )
     elif args.command == "solutions":
         assemble_solutions(

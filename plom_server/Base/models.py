@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 from huey.signals import SIGNAL_ERROR, SIGNAL_INTERRUPTED
 
@@ -151,6 +152,21 @@ class HueyTaskTracker(models.Model):
             # tr.save()
 
     @classmethod
+    def bulk_transition_to_queued_or_running(cls, pk_huey_id_pair_list):
+        """Move to the Queued state using locking, or a no-op if we're already Running.
+
+        A bulk version of method 'transition_to_queued_or_running'. Note that it
+        is set as a durable-transaction, so that it must be the outermost atomic
+        transaction and ensures that any database changes are committed when it
+        runs without errors. See django documentation for more details.
+        """
+        with transaction.atomic(durable=True):
+            for pk, huey_id in pk_huey_id_pair_list:
+                cls.objects.select_for_update().filter(
+                    pk=pk, status=cls.STARTING
+                ).update(huey_id=huey_id, status=cls.QUEUED)
+
+    @classmethod
     def transition_to_complete(cls, pk):
         """Move to the complete state.
 
@@ -174,12 +190,23 @@ class HueyTaskTracker(models.Model):
         self.obsolete = True
         self.save()
 
+    @classmethod
+    def set_every_task_obsolete(cls):
+        """Set every single task as obsolete."""
+        cls.objects.all().update(obsolete=True)
+
     def transition_to_error(self, errmsg: str) -> None:
         """Move to the error state."""
         self.huey_id = None
         self.status = self.ERROR
         self.message = errmsg
         self.save()
+
+    @classmethod
+    def set_every_task_with_status_error_obsolete(cls):
+        """Set every single task with status=error as obsolete."""
+        with transaction.atomic():
+            cls.objects.filter(status=cls.ERROR).update(obsolete=True)
 
 
 # ---------------------------------
@@ -190,7 +217,7 @@ class HueyTaskTracker(models.Model):
 # ---------------------------------
 
 
-class SingletonBaseModel(models.Model):
+class SingletonABCModel(models.Model):
     """We define a singleton model for the test-specification.
 
     This abstract model ensures that any derived models have at most a
@@ -209,8 +236,7 @@ class SingletonBaseModel(models.Model):
 
     @classmethod
     def load(cls):
-        obj, created = cls.objects.get_or_create(pk=1)
-        return obj
+        raise NotImplementedError("load() should be overridden in derived classes")
 
 
 class BaseTask(PolymorphicModel):
@@ -286,12 +312,26 @@ class Tag(models.Model):
         return str(self.text)
 
 
-class SettingsModel(SingletonBaseModel):
+class SettingsModel(SingletonABCModel):
     """Global configurable settings."""
 
     # TODO: intention is a tri-state: "permissive", "per-user", "locked"
     who_can_create_rubrics = models.TextField(default="permissive")
     who_can_modify_rubrics = models.TextField(default="per-user")
+    feedback_rules = models.JSONField(default=dict)
+
+    @classmethod
+    def load(cls):
+        """Return the singleton instance of the SettingsModel."""
+        obj, created = cls.objects.get_or_create(
+            pk=1,
+            defaults={
+                "who_can_create_rubrics": "permissive",
+                "who_can_modify_rubrics": "per-user",
+                "feedback_rules": {},
+            },
+        )
+        return obj
 
 
 # ---------------------------------

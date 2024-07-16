@@ -29,7 +29,6 @@ from Base.base_group_views import (
 )
 
 
-# Create your views here.
 # Set User Password
 class SetPassword(View):
     template_name = "Authentication/set_password.html"
@@ -43,7 +42,7 @@ class SetPassword(View):
         "Your password can’t be entirely numeric.",
     ]
 
-    def get(self, request, uidb64, token):
+    def get(self, request: HttpRequest, uidb64: str, token: str) -> HttpResponse:
         try:
             uid = force_str((urlsafe_base64_decode(uidb64)))
             user = User.objects.get(pk=uid)
@@ -63,7 +62,7 @@ class SetPassword(View):
         else:
             return render(request, self.reset_invalid)
 
-    def post(self, request, uidb64, token):
+    def post(self, request: HttpRequest, uidb64: str, token: str) -> HttpResponse:
         try:
             uid = force_str((urlsafe_base64_decode(uidb64)))
             user = User.objects.get(pk=uid)
@@ -88,6 +87,9 @@ class SetPassword(View):
                     tri_quote = '"""'
                     error_message = tri_quote + str(reset_form.errors) + tri_quote
                     parsed_error = BeautifulSoup(error_message, "html.parser")
+                    # MyPy unhappy with this code, me too a bit, hardcoded 13?!
+                    assert parsed_error is not None
+                    assert parsed_error.li is not None
                     error = parsed_error.li.text[13:]
                     context = {
                         "username": user.username,
@@ -110,6 +112,9 @@ class SetPassword(View):
                     tri_quote = '"""'
                     error_message = tri_quote + str(reset_form.errors) + tri_quote
                     parsed_error = BeautifulSoup(error_message, "html.parser")
+                    # MyPy unhappy with this code, me too a bit, hardcoded 13?!
+                    assert parsed_error is not None
+                    assert parsed_error.li is not None
                     error = parsed_error.li.text[13:]
                     context = {
                         "username": user.username,
@@ -129,7 +134,7 @@ class SetPasswordComplete(LoginRequiredMixin, GroupRequiredMixin, View):
     group_required = ["manager", "marker", "scanner"]
     raise_exception = True
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         return render(request, self.template_name, status=200)
 
 
@@ -178,7 +183,7 @@ class LoginView(View):
 
 # Logout User
 class LogoutView(View):
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         logout(request)
         return redirect("login")
 

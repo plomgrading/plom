@@ -56,7 +56,6 @@ class ScanServiceTests(TestCase):
 
     def test_upload_bundle(self) -> None:
         """Test ScanService.upload_bundle and assert uploaded PDF file saved to right place."""
-
         scanner = ScanService()
         timestamp = timezone.now().timestamp()
         # open the pdf-file to create a file-object to pass to the upload command.
@@ -116,19 +115,13 @@ class ScanServiceTests(TestCase):
 
 class MoreScanServiceTests(TestCase):
     def test_duplicate_hash(self) -> None:
-        """
-        Test ScanService.check_for_duplicate_hash()
-        """
         baker.make(StagingBundle, pdf_hash="abcde")
         scanner = ScanService()
         duplicate_detected = scanner.check_for_duplicate_hash("abcde")
         self.assertTrue(duplicate_detected)
 
     def test_parse_qr_codes(self) -> None:
-        """
-        Test ScanService.parse_qr_code() and assert that the test QR codes
-        have been successfully read and parsed into the correct format.
-        """
+        """Test QR codes read and parsed correctly."""
         img_path = resources.files(_Scan_tests) / "page_img_good.png"
         codes = QRextract(img_path)
         scanner = ScanService()
@@ -206,10 +199,7 @@ class MoreScanServiceTests(TestCase):
             )
 
     def test_parse_qr_codes_png_rotated_180(self) -> None:
-        """
-        Test ScanService.parse_qr_code() and assert that the QR codes
-        are read correctly after the page image is rotated.
-        """
+        """Test QR codes read correctly after rotation."""
         scanner = ScanService()
 
         image_upright_path = resources.files(_Scan_tests) / "page_img_good.png"
@@ -251,10 +241,7 @@ class MoreScanServiceTests(TestCase):
             self.assertTrue((original[1] - rotated[1]) / rotated[1] < 0.01)
 
     def test_parse_qr_codes_jpeg_rotated_180_no_exif(self) -> None:
-        """
-        Test ScanService.parse_qr_code() and assert that the QR codes are read correctly
-        after an upside down jpeg page image with no exif is rotated.
-        """
+        """Test QR codes are read correctly, after rotating an upside-down jpeg page image with no exif."""
         scanner = ScanService()
 
         image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
@@ -302,10 +289,7 @@ class MoreScanServiceTests(TestCase):
                 self.assertTrue((upright[1] - rotated[1]) / rotated[1] < 0.01)
 
     def test_parse_qr_codes_jpeg_upright_exif_rot_180(self) -> None:
-        """
-        Test ScanService.parse_qr_code() and assert that the QR codes are read correctly
-        after an upright page image with exif rotation of 180 is rotated.
-        """
+        """Test QR codes are read correctly after an upright page image with exif rotation of 180 is rotated."""
         scanner = ScanService()
 
         image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
@@ -332,9 +316,7 @@ class MoreScanServiceTests(TestCase):
             self.assertEqual(im.get("orientation"), orig_im.get("orientation"))
 
     def test_parse_qr_codes_jpeg_upside_down_exif_180(self) -> None:
-        """
-        Test ScanService.parse_qr_code() when image is upside down, but exif indicates 180 rotation
-        """
+        """Test ScanService.parse_qr_code() when image is upside down, but exif indicates 180 rotation."""
         scanner = ScanService()
 
         image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
@@ -379,9 +361,7 @@ class MoreScanServiceTests(TestCase):
                 self.assertTrue((original[1] - rotated[1]) / rotated[1] < 0.01)
 
     def test_parse_qr_codes_jpeg_exif_90(self) -> None:
-        """
-        Test ScanService.parse_qr_code() when image exif indicates 90 counterclockwise rotation
-        """
+        """Test ScanService.parse_qr_code() when image exif indicates 90 counterclockwise rotation."""
         scanner = ScanService()
 
         image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
@@ -429,9 +409,7 @@ class MoreScanServiceTests(TestCase):
                 self.assertTrue((original[1] - rotated[1]) / rotated[1] < 0.01)
 
     def test_known_images(self) -> None:
-        """
-        Test ScanService.get_all_known_images()
-        """
+        """Test ``ScanService.get_all_known_images()``."""
         user: User = baker.make(User, username="user")
         scanner = ScanService()
         bundle = baker.make(

@@ -1,16 +1,20 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
 from django.core.management.base import BaseCommand, CommandError
 
 from Papers.services import PaperInfoService, SpecificationService
 from ...services import (
-    TestSourceService,
+    SourceService,
     PrenameSettingService,
     PQVMappingService,
     PapersPrinted,
+)
+from Preparation.services.preparation_dependency_service import (
+    can_set_papers_printed,
+    can_unset_papers_printed,
 )
 
 
@@ -38,9 +42,9 @@ class Command(BaseCommand):
             self.stdout.write(f"Test specification present: {spec_status}")
 
             sources_total = SpecificationService.get_n_versions()
-            sources_present = TestSourceService().how_many_test_versions_uploaded()
+            num_sources_present = SourceService.how_many_source_versions_uploaded()
             self.stdout.write(
-                f"{sources_present} of {sources_total} test source(s) present"
+                f"{num_sources_present} of {sources_total} test source(s) present"
             )
 
             prename_status = PrenameSettingService().get_prenaming_setting()
@@ -58,13 +62,13 @@ class Command(BaseCommand):
         else:
             status = options["set"][0]
             if status == "finished":
-                if not PapersPrinted.can_status_be_set_true():
+                if not can_set_papers_printed():
                     raise CommandError(
                         "Unable to set paper-printing as finished - test-papers have not been saved to the database."
                     )
                 PapersPrinted.set_papers_printed(True)
             elif status == "todo":
-                if not PapersPrinted.can_status_be_set_false():
+                if not can_unset_papers_printed():
                     raise CommandError(
                         "Unable to set paper-printing as todo - bundles have been pushed to the database."
                     )

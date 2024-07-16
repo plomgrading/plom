@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 import fitz
 from pathlib import Path
@@ -20,11 +20,11 @@ class Command(BaseCommand):
         for v, h in soln_hash.items():
             self.stdout.write(f"Version {v}: {h}")
 
-    def upload_source(self, version: int, source_pdf_path: str):
-        nv = SpecificationService.get_n_versions()
-        if version < 1 or version > nv:
+    def upload_source(self, version: int, source_pdf_path: str) -> None:
+        versions = SpecificationService.get_list_of_versions()
+        if version not in versions:
             self.stderr.write(
-                f"Version is out of range - must be between [1, {nv}] inclusive according to the spec."
+                f"Version {version} is out of range - must be in {versions}."
             )
             return
 
@@ -37,12 +37,12 @@ class Command(BaseCommand):
         # make sure we can actually open the pdf and check pages
         np = SolnSpecService.get_n_pages()
         try:
-            doc = fitz.open(pdf_path)
-            if len(doc) != np:
-                self.stderr.write(
-                    f"Solution source pdf must have {np} pages according to the soln spec; supplied file has {len(doc)} pages."
-                )
-                return
+            with fitz.open(pdf_path) as doc:
+                if len(doc) != np:
+                    raise CommandError(
+                        f"Solution source pdf must have {np} pages according to"
+                        f"the soln spec; supplied file has {len(doc)} pages."
+                    )
         except fitz.FileDataError as err:
             raise CommandError(err)
 

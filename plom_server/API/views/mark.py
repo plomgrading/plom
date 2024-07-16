@@ -70,15 +70,20 @@ class MarkingProgressCount(APIView):
 
 
 class MgetDoneTasks(APIView):
-    """Retrieve data for questions which have already been graded by the user.
+    """Retrieve data for tasks which have already been graded by a particular user.
 
     Respond with status 200.
 
     Returns:
-        200: list of [group-ids, mark, marking_time, [list_of_tag_texts], integrity_check ] for each paper.
+        List of lists of info for each of the already-processed
+        questions by the calling user.  The first entry is the task
+        string of the form ``q0002g3``, the second is the score, the
+        floating-point time in seconds, a list of tags (strings), and
+        an "integrity code".  An empty list is returned if nothing has
+        been graded by this user.
     """
 
-    def get(self, request, *args):
+    def get(self, request: Request, *args) -> Response:
         data = request.data
         question = data["q"]
         version = data["v"]
@@ -88,13 +93,6 @@ class MgetDoneTasks(APIView):
             request.user, question_idx=question, version=version
         )
 
-        # TODO: 3rd entry here is marking time: in legacy, we trust the client's
-        # previously given value (which the client tracks including revisions)
-        # Currently this tries to estimate a value server-side.  Decisions?
-        # Previous code was `mark_action.time - mark_action.claim_action.time`
-        # which is a `datatime.timedelta`.  Not sure how to convert to seconds
-        # so currently using hardcoded value.
-        # TODO: legacy marking time is int, but we may decide to change to float.
         rows = map(
             lambda annotation: [
                 annotation.task.code,
@@ -170,7 +168,7 @@ class MgetPageDataQuestionInContext(APIView):
 
     `included`
         boolean, did the server *originally* have this page
-        included in question number `question`?.  Note that clients
+        included in question index `question`?.  Note that clients
         may pull other pages into their annotating; you can only
         rely on this information for initializing a new annotating
         session.  If you're e.g., editing an existing annotation,
@@ -284,12 +282,33 @@ class MgetAnnotations(APIView):
 class MgetAnnotationImage(APIView):
     """Get an annotation-image.
 
-    TODO: implement "edition".
+    Callers ask for paper number, question index (one-indexed) and
+    optionally edition.  If edition is omitted, they get the latest.
+    The edition must be for a valid (non-out-of-date) task: for example
+    if someone adds new papers then this call could fail (currently
+    with 404 but maybe should be 410, see discussion below).
+
+    I think there is still a race condition because of the above::
+
+      1. client asks for latest annotation, gets json.
+      2. client looks and sees edition 1.
+      3. During 2, new papers are uploaded AND very quickly someone
+         annotates.
+      4. client adks for edition 1.  They get the new annotated image
+         which does not match their json data.  This would require
+         precise timing and a VERY slow client...  "Anyone that unlucky
+         has already been hit by a bus" -- Jim Wilkinson.
+
+    The fix here is probably to use a id/pk-based image get.
 
     TODO: The legacy server sends 410 for "task deleted", and the client
     messenger is documented as expecting 406/410/416 (although the legacy
     server doesn't seem to send 406/416 for annotation image calls).
     I suspect here we have folded the "task deleted" case into the 404.
+
+    TODO: In the future, we might want to ensure that the username has
+    permission to look at these annotations: currently this is not
+    enforced or expected by the client.
 
     Returns:
         200: the image as a file.
@@ -302,9 +321,18 @@ class MgetAnnotationImage(APIView):
     def get(
         self, request: Request, *, paper: int, question: int, edition: int | None = None
     ) -> Response:
-        if edition is not None:
-            raise NotImplementedError('"edition" not implemented')
         mts = MarkingTaskService()
+        if edition is not None:
+            try:
+                annotation = mts.get_annotation_by_edition(paper, question, edition)
+            except ObjectDoesNotExist as e:
+                return _error_response(
+                    f"No edition={edition} annotations for paper {paper}"
+                    f" question idx {question}: {e}",
+                    status.HTTP_404_NOT_FOUND,
+                )
+            return FileResponse(annotation.image.image, status=status.HTTP_200_OK)
+
         try:
             annotation = mts.get_latest_annotation(paper, question)
         except (ObjectDoesNotExist, ValueError) as e:
@@ -325,18 +353,20 @@ class MgetAnnotationImage(APIView):
                 "Integrity error: task has been modified by server.",
                 status.HTTP_406_NOT_ACCEPTABLE,
             )
-
         return FileResponse(annotation_image.image, status=status.HTTP_200_OK)
 
 
 class TagsFromCodeView(APIView):
     """Handle getting and setting tags for marking tasks."""
 
-    def get(self, request, code):
+    def get(self, request: Request, *, code: str) -> Response:
         """Get all of the tags for a particular task.
 
         Args:
-            code: str, question/paper code for a task
+            request: an http request.
+
+        Keyword Args:
+            code: question/paper code for a task.
 
         Returns:
             200: list of tag texts
@@ -353,11 +383,14 @@ class TagsFromCodeView(APIView):
         except RuntimeError as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
 
-    def patch(self, request, code):
+    def patch(self, request: Request, *, code: str) -> Response:
         """Add a tag to a task. If the tag does not exist in the database, create it as a side effect.
 
         Args:
-            code: str, question/paper code for a task
+            request: an http request.
+
+        Keyword Args:
+            code: str, question/paper code for a task.
 
         Returns:
             200: OK response

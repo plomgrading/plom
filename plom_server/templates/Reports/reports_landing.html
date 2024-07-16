@@ -4,6 +4,8 @@
     Copyright (C) 2023 Colin B. Macdonald
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023-2024 Andrew Rechnitzer
+    Copyright (C) 2024 Bryan Tanady
+    Copyright (C) 2024 Elisa Pan
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -30,11 +32,10 @@
                 {% csrf_token %}
                 <div class="row">
                     <div class="col-auto">
-                        {% if all_marked %}
-                            <button type="submit" class="btn btn-primary">Download Grades</button>
-                        {% else %}
-                            <button type="submit" class="btn btn-warning">Download Grades</button>
-                        {% endif %}
+                        <button type="submit"
+                                class="btn {% if all_marked %}btn-primary{% else %}btn-warning{% endif %}">
+                            Download Grades
+                        </button>
                     </div>
                     <div class="col-auto">
                         <input type="checkbox" name="warning_info" checked>
@@ -66,11 +67,10 @@
                 {% csrf_token %}
                 <div class="row">
                     <div class="col-auto">
-                        {% if all_marked %}
-                            <button type="submit" class="btn btn-primary">Download marking information</button>
-                        {% else %}
-                            <button type="submit" class="btn btn-warning">Download marking information</button>
-                        {% endif %}
+                        <button type="submit"
+                                class="btn {% if all_marked %}btn-primary{% else %}btn-warning{% endif %}">
+                            Download marking information
+                        </button>
                     </div>
                 </div>
             </form>
@@ -85,27 +85,66 @@
     </div>
     <div class="card m-2">
         <div class="card-body">
+            <h5 class="card-title">Student Report</h5>
+            <p>Navigate to student report download page.</p>
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-auto">
+                    {% if all_marked %}
+                        <a href="{% url 'build_student_report' %}" class="btn btn-primary">Build Report</a>
+                    {% else %}
+                        <a href="{% url 'build_student_report' %}" class="btn btn-warning">Build Report</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card m-2">
+        <div class="card-body">
             <h5 class="card-title">Main Report</h5>
-            <p>Download the report with basic information and analysis.</p>
+            <p>
+                <ul>
+                    <li>Download the report with basic information and analysis.</li>
+                    <li>There are two reports: brief or full, please choose your graph options for brief</li>
+                    <li>By default, brief report will only include Histogram of total marks</li>
+                </ul>
+            </p>
             <form method="post" action="{% url 'report_download' %}">
                 {% csrf_token %}
                 <div class="row">
                     <div class="col-auto">
-                        {% if all_marked %}
-                            <button type="submit" class="btn btn-primary">Download report</button>
-                        {% else %}
-                            <button type="submit" class="btn btn-warning">Download report</button>
-                        {% endif %}
+                        <button type="submit"
+                                class="btn {% if all_marked %}btn-primary{% else %}btn-warning{% endif %}"
+                                id="brief-report-btn"
+                                onclick="document.getElementById('report_type').value='brief';">
+                            Download Brief Report
+                        </button>
+                    </div>
+                    <div class="col-auto">
+                        <div class="form-check">
+                            {% for graph in graph_list %}
+                                <div class="mb-2">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           name="{{ graph.name }}"
+                                           id="{{ graph.name }}"
+                                           {% if graph.default %}checked{% endif %}>
+                                    <label class="form-check-label" for="{{ graph.name }}">{{ graph.title }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit"
+                                class="btn {% if all_marked %}btn-primary{% else %}btn-warning{% endif %}"
+                                id="full-report-btn"
+                                onclick="document.getElementById('report_type').value='full';">
+                            Download Full Report
+                        </button>
                     </div>
                 </div>
+                <input type="hidden" name="report_type" id="report_type" value="">
             </form>
         </div>
     </div>
-    <!-- <h3 class="mt-5">Enhanced Report</h3> -->
-    <!-- <p>Download the report with enriched analysis and insights.</p> -->
-    <!-- <button type="button" class="btn btn-primary">Download Enhanced Report</button> -->
-    <!-- <h3 class="mt-5">Analysis Scripts</h3> -->
-    <!-- <p>Download the following data and scripts to reproduce the analysis and do some further analysis</p> -->
-    <!-- <button type="button" class="btn btn-primary">Download JSON data</button> -->
-    <!-- <button type="button" class="btn btn-primary">Download notebook scripts</button> -->
 {% endblock main_content %}

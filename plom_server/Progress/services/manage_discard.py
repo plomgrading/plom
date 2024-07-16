@@ -64,7 +64,7 @@ class ManageDiscardService:
             discard_reason=(
                 f"User {user_obj.username} discarded paper "
                 f"{qpage_obj.paper.paper_number} page {qpage_obj.page_number} "
-                f"question {qpage_obj.question_number}."
+                f"question index {qpage_obj.question_index}."
             ),
         )
         # Set the original question page to have no image, but **DO NOT** delete the question page
@@ -74,7 +74,7 @@ class ManageDiscardService:
         # set the associated Markinging task to "OUT_OF_DATE"
         # this also tries to make a new task if possible
         MarkingTaskService().set_paper_marking_task_outdated(
-            qpage_obj.paper.paper_number, qpage_obj.question_number
+            qpage_obj.paper.paper_number, qpage_obj.question_index
         )
 
     @transaction.atomic
@@ -94,15 +94,13 @@ class ManageDiscardService:
             discard_reason=(
                 f"User {user_obj.username} discarded mobile "
                 f"paper {paper_number} "
-                f"question {mpage_obj.question_number}."
+                f"question index {mpage_obj.question_index}."
             ),
         )
 
         # find all the mobile pages associated with this image
         # set the associated marking tasks to "OUT_OF_DATE"
-        qn_to_outdate = [
-            mpg.question_number for mpg in img_to_disc.mobilepage_set.all()
-        ]
+        qn_to_outdate = [mpg.question_index for mpg in img_to_disc.mobilepage_set.all()]
         # and now delete each of those mobile pages
         for mpg in img_to_disc.mobilepage_set.all():
             mpg.delete()
@@ -161,7 +159,7 @@ class ManageDiscardService:
             )
         elif isinstance(fp_obj, QuestionPage):
             msg = f"QuestionPage for paper {fp_obj.paper.paper_number} "
-            f"page {fp_obj.page_number} question {fp_obj.question_number}"
+            f"page {fp_obj.page_number} question index {fp_obj.question_index}"
             if dry_run:
                 return f"DRY-RUN: would drop {msg}"
             self._discard_question_page(user_obj, fp_obj)
@@ -201,7 +199,7 @@ class ManageDiscardService:
 
         msg = (
             f"a MobilePage for paper {mp_obj.paper.paper_number} "
-            f"question {mp_obj.question_number}"
+            f"question index {mp_obj.question_index}"
         )
         if dry_run:
             return f"DRY-RUN: would drop {msg}"
@@ -211,7 +209,7 @@ class ManageDiscardService:
             "flagged the associated marking task as 'out of date'"
         )
 
-    def discard_pushed_image_from_pk(self, user_obj: User, image_pk: int):
+    def discard_pushed_image_from_pk(self, user_obj: User, image_pk: int) -> None:
         """Given pk of a pushed image, discard it."""
         try:
             image_obj = Image.objects.get(pk=image_pk)
@@ -264,23 +262,25 @@ class ManageDiscardService:
     @transaction.atomic
     def _assign_discard_to_fixed_page(
         self, user_obj: User, discard_pk: int, paper_number: int, page_number: int
-    ):
+    ) -> None:
         try:
             discard_obj = DiscardPage.objects.get(pk=discard_pk)
-        except ObjectDoesNotExist:
-            raise ValueError(f"Cannot find a discard page with pk = {discard_pk}")
+        except ObjectDoesNotExist as e:
+            raise ValueError(
+                f"Cannot find a discard page with pk = {discard_pk}"
+            ) from e
 
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
-        except ObjectDoesNotExist:
-            raise ValueError(f"Cannot find a paper with number = {paper_number}")
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"Cannot find a paper with number = {paper_number}") from e
 
         try:
             fpage_obj = FixedPage.objects.get(paper=paper_obj, page_number=page_number)
-        except ObjectDoesNotExist:
+        except ObjectDoesNotExist as e:
             raise ValueError(
                 f"Paper {paper_number} does not have a fixed page with page number {page_number}"
-            )
+            ) from e
 
         if fpage_obj.image:
             raise ValueError(
@@ -299,11 +299,12 @@ class ManageDiscardService:
             IdentifyTaskService().set_paper_idtask_outdated(paper_number)
         elif isinstance(fpage_obj, QuestionPage):
             MarkingTaskService().set_paper_marking_task_outdated(
-                paper_number, fpage_obj.question_number
+                paper_number, fpage_obj.question_index
             )
         else:
             raise RuntimeError(
-                f"Cannot identify the type of the fixed page with pk = {fpage_obj.pk} in paper {paper_number} page {page_number}."
+                f"Cannot identify type of fixed page with pk = {fpage_obj.pk} "
+                "in paper {paper_number} page {page_number}."
             )
 
     @transaction.atomic
@@ -312,28 +313,30 @@ class ManageDiscardService:
         user_obj: User,
         discard_pk: int,
         paper_number: int,
-        question_list: list[int],
-    ):
+        assign_to_question_indices: list[int],
+    ) -> None:
         try:
             discard_obj = DiscardPage.objects.get(pk=discard_pk)
-        except ObjectDoesNotExist:
-            raise ValueError(f"Cannot find a discard page with pk = {discard_pk}")
+        except ObjectDoesNotExist as e:
+            raise ValueError(
+                f"Cannot find a discard page with pk = {discard_pk}"
+            ) from e
 
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
-        except ObjectDoesNotExist:
-            raise ValueError(f"Cannot find a paper with number = {paper_number}")
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"Cannot find a paper with number = {paper_number}") from e
 
-        for qn in question_list:
+        for qi in assign_to_question_indices:
             # get the version from an associated question-page
             version = (
-                QuestionPage.objects.filter(paper=paper_obj, question_number=qn)
+                QuestionPage.objects.filter(paper=paper_obj, question_index=qi)
                 .first()
                 .version
             )
             MobilePage.objects.create(
                 paper=paper_obj,
-                question_number=qn,
+                question_index=qi,
                 image=discard_obj.image,
                 version=version,
             )
@@ -341,44 +344,65 @@ class ManageDiscardService:
         # delete the discard page
         discard_obj.delete()
         # reset the associated marking tasks
-        for qn in question_list:
-            MarkingTaskService().set_paper_marking_task_outdated(paper_number, qn)
+        for qi in assign_to_question_indices:
+            MarkingTaskService().set_paper_marking_task_outdated(paper_number, qi)
 
     def assign_discard_image_to_fixed_page(
         self, user_obj: User, image_pk: int, paper_number: int, page_number: int
-    ):
+    ) -> None:
         try:
             image_obj = Image.objects.get(pk=image_pk)
-        except ObjectDoesNotExist:
-            raise ValueError("Cannot find image with pk = {image_pk}")
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"Cannot find image with pk = {image_pk}") from e
         try:
             self._assign_discard_to_fixed_page(
                 user_obj, image_obj.discardpage.pk, paper_number, page_number
             )
-        except DiscardPage.DoesNotExist:
+        except DiscardPage.DoesNotExist as e:
             raise ValueError(
-                f"Cannot discard image with pk {image_pk}. It is not attached to a discard page."
-            )
+                f"Cannot discard image with pk {image_pk}."
+                " It is not attached to a discard page."
+            ) from e
 
     def assign_discard_image_to_mobile_page(
-        self, user_obj: User, image_pk: int, paper_number: int, question_list: list[int]
-    ):
+        self,
+        user_obj: User,
+        image_pk: int,
+        paper_number: int,
+        assign_to_question_indices: list[int],
+    ) -> None:
+        """Reassign a discard image by attaching it to one or more questions in an ad hoc way.
+
+        Generally, this will be a page without QR codes such as a self-scanned
+        "homework" page or an "oops that wasn't scrap" or a sheet of plain paper.
+
+        Args:
+            user_obj: which user, as a database object.
+            image_pk: which image.
+            paper_number: which paper to assign it o.
+            assign_to_question_indices: which questions, by a list of
+                one-based indices, should we assign this discarded page to.
+        """
         try:
             image_obj = Image.objects.get(pk=image_pk)
-        except ObjectDoesNotExist:
-            raise ValueError("Cannot find image with pk = {image_pk}")
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"Cannot find image with pk = {image_pk}") from e
         try:
             self._assign_discard_to_mobile_page(
-                user_obj, image_obj.discardpage.pk, paper_number, question_list
+                user_obj,
+                image_obj.discardpage.pk,
+                paper_number,
+                assign_to_question_indices,
             )
-        except DiscardPage.DoesNotExist:
+        except DiscardPage.DoesNotExist as e:
             raise ValueError(
-                "Cannot reassign image with pk {image_pk}. It is not attached to a discard page."
-            )
+                f"Cannot reassign image with pk {image_pk}."
+                " It is not attached to a discard page."
+            ) from e
 
     def reassign_discard_page_to_fixed_page_cmd(
         self, username: str, discard_pk: int, paper_number: int, page_number: int
-    ):
+    ) -> None:
         try:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name="manager"
@@ -398,7 +422,7 @@ class ManageDiscardService:
         discard_pk: int,
         paper_number: int,
         question_list: list[int],
-    ):
+    ) -> None:
         try:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name="manager"

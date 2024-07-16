@@ -5,6 +5,7 @@
 # Copyright (C) 2022 Michael Deakin
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Tam Nguyen
+# Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
@@ -42,6 +43,7 @@ from plom.plom_exceptions import (
     PlomSSLError,
     PlomTaskChangedError,
     PlomTaskDeletedError,
+    PlomNoServerSupportException,
 )
 
 log = logging.getLogger("messenger")
@@ -228,6 +230,7 @@ class BaseMessenger:
         return self.session.get(self.base + url, *args, **kwargs)
 
     def get_auth(self, url: str, *args, **kwargs) -> requests.Response:
+        """Perform a GET method on a URL with a token for authentication."""
         if self.is_legacy_server():
             raise RuntimeError("This routine does not work on legacy servers")
         if "timeout" not in kwargs:
@@ -240,7 +243,7 @@ class BaseMessenger:
         return self.session.get(self.base + url, *args, **kwargs)
 
     def post_raw(self, url: str, *args, **kwargs) -> requests.Response:
-        """Perform a POST operation without tokens."""
+        """Perform a POST method without tokens."""
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
@@ -248,7 +251,7 @@ class BaseMessenger:
         return self.session.post(self.base + url, *args, **kwargs)
 
     def post_auth(self, url: str, *args, **kwargs) -> requests.Response:
-        """Perform a POST operation with tokens for authentication."""
+        """Perform a POST method on a URL with a token for authentication."""
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
@@ -271,6 +274,7 @@ class BaseMessenger:
         return self.session.post(self.base + url, *args, **kwargs)
 
     def put(self, url: str, *args, **kwargs) -> requests.Response:
+        """Perform a PUT method on a URL."""
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
@@ -288,6 +292,7 @@ class BaseMessenger:
         return self.session.put(self.base + url, *args, **kwargs)
 
     def delete(self, url: str, *args, **kwargs) -> requests.Response:
+        """Perform a DELETE method on a URL."""
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
@@ -305,6 +310,7 @@ class BaseMessenger:
         return self.session.delete(self.base + url, *args, **kwargs)
 
     def patch(self, url: str, *args, **kwargs) -> requests.Response:
+        """Perform a PATCH method on a URL."""
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
@@ -318,6 +324,19 @@ class BaseMessenger:
             json.pop("token")
             kwargs["json"] = json
 
+        assert self.session
+        return self.session.patch(self.base + url, *args, **kwargs)
+
+    def patch_auth(self, url: str, *args, **kwargs) -> requests.Response:
+        """Perform a PATCH method on a URL with a token for authentication."""
+        if self.is_legacy_server():
+            raise RuntimeError("This routine does not work on legacy servers")
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
+        if not self.token:
+            raise PlomAuthenticationException("Trying auth'd operation w/o token")
+        assert isinstance(self.token, dict)
+        kwargs["headers"] = {"Authorization": f"Token {self.token['token']}"}
         assert self.session
         return self.session.patch(self.base + url, *args, **kwargs)
 
@@ -434,6 +453,35 @@ class BaseMessenger:
     # ------------------------
     # ------------------------
     # Authentication stuff
+    def get_user_role(self) -> str | None:
+        """Obtain user's role from the server.
+
+        Args:
+            user: the username of the user.
+
+        Raises:
+            PlomAuthenticationException
+            PlomSeriousException: something unexpected happened.
+
+        Returns:
+            If it is legacy server, returns "". Otherwise returns
+            either of ["lead_marker", "marker", "scanner", "manager"]
+            if the user is recognized.
+        """
+        if self.is_legacy_server():
+            raise PlomNoServerSupportException("Operation not supported in Legacy.")
+
+        path = f"/info/user/{self.user}"
+        with self.SRmutex:
+            try:
+                response = self.get_auth(path)
+                # throw errors when response code != 200.
+                response.raise_for_status()
+                return response.text
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def requestAndSaveToken(self, user: str, pw: str) -> None:
         """Get a authorisation token from the server.
@@ -443,7 +491,8 @@ class BaseMessenger:
         Raises:
             PlomAPIException: a mismatch between server/client versions.
             PlomExistingLoginException: user already has a token:
-                currently, we do not support getting another one.
+                currently, we do not support getting another one on
+                legacy servers.  TBD on the new server.
             PlomAuthenticationException: wrong password, account
                 disabled, etc: check contents for details.
             PlomSeriousException: something else unexpected such as a
@@ -504,9 +553,9 @@ class BaseMessenger:
                 self.token = response.json()
                 self.user = user
             except requests.HTTPError as e:
-                if response.status_code == 400:
+                if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
-                elif response.status_code == 401:
+                elif response.status_code == 400:
                     raise PlomAPIException(response.reason) from None
                 elif response.status_code == 409:
                     # TODO: not sure django-server prevents simultaneous logins
@@ -881,7 +930,7 @@ class BaseMessenger:
         """Add a tag to a task.
 
         Args:
-            task: e.g., like ``q0013g1``, for paper 13 question 1.
+            code: e.g., like ``q0013g1``, for paper 13 question 1.
             tag_text: the tag.
 
         Returns:
@@ -958,40 +1007,102 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
-    def McreateRubric(self, new_rubric):
+    def McreateRubric(self, new_rubric: dict[str, Any]) -> dict[str, Any]:
         """Ask server to make a new rubric and get key back.
 
         Args:
-            new_rubric (dict): the new rubric info as dict.
+            new_rubric: the new rubric info as dict.  The server will
+                probably add other fields so you should not consider
+                this input data as canonical.  Instead, call back and
+                get the new rubric.
 
         Raises:
             PlomAuthenticationException: Authentication error.
             PlomSeriousException: Other error types, possible needs fix or debugging.
 
         Returns:
-            str: the key/id of the new rubric.
+            The dict key-value representation of the new rubric.  This is
+            generally not the same as the input data, for example, it has an
+            key/id.
         """
-        self.SRmutex.acquire()
+        with self.SRmutex:
+            try:
+                response = self.put(
+                    "/MK/rubric",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "rubric": new_rubric,
+                    },
+                )
+                response.raise_for_status()
+                new_rubric = response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 406:
+                    raise PlomSeriousException(response.reason) from None
+                raise PlomSeriousException(
+                    f"Error when creating new rubric: {e}"
+                ) from None
+        if self.is_legacy_server():
+            # On legacy servers, `new_rubric` will actually just be the key
+            assert isinstance(new_rubric, str)
+            return self.get_one_rubric(new_rubric)
+        return new_rubric
+
+    def MgetOtherRubricUsages(self, key: str) -> list[int]:
+        """Retrieve list of paper numbers using the given rubric.
+
+        Note: This only returns papers whose most recent annotation
+        use the rubric.
+
+        Args:
+            key: The identifier of the rubric.
+
+        Returns:
+            the list of paper numbers using the rubric, or an empty
+            list if no papers are using the rubric.
+        """
+        if self.is_legacy_server():
+            raise RuntimeError("This routine does not work on legacy servers")
+        with self.SRmutex:
+            url = f"/MK/rubric_usage/{key}"
+            try:
+                response = self.get_auth(url)
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(
+                    f"Error getting paper number list: {e}"
+                ) from None
+
+    def get_one_rubric(self, key: str) -> dict[str, Any]:
+        """Retrieve one rubric from its key.
+
+        I don't think we actually have an endpoint for this.  For now
+        we fake it by getting all rubrics and filtering.
+
+        Args:
+            key: The key/id of the rubric we want.
+
+        Raises:
+            PlomNoRubric: no such rubric.
+            PlomAuthenticationException: Authentication error.
+            PlomSeriousException: Other error types, possible needs fix or debugging.
+
+        Returns:
+            Dict representation of the rubric.
+        """
+        rubrics = self.MgetRubrics(None)
         try:
-            response = self.put(
-                "/MK/rubric",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "rubric": new_rubric,
-                },
-            )
-            response.raise_for_status()
-            new_key = response.json()
-            return new_key
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException(response.reason) from None
-            if response.status_code == 406:
-                raise PlomSeriousException(response.reason) from None
-            raise PlomSeriousException(f"Error when creating new rubric: {e}") from None
-        finally:
-            self.SRmutex.release()
+            # ensure there is exactly one matching rubric in each list and grab it
+            (r,) = [r for r in rubrics if r["id"] == key]
+        except ValueError:
+            raise PlomNoRubric(f"No rubric with key={key}") from None
+        return r
 
     def MgetRubrics(self, question: int | None = None) -> list[dict[str, Any]]:
         """Retrieve list of all rubrics from server for given question.
@@ -1004,24 +1115,26 @@ class BaseMessenger:
             PlomSeriousException: Other error types, possible needs fix or debugging.
 
         Returns:
-            list: list of dicts, possibly an empty list if server has no
-                rubrics for this question.
+            List of dicts, possibly an empty list if server has no
+            rubrics for this question.
         """
         if self.is_legacy_server():
             return self._legacy_getRubrics(question)
 
         with self.SRmutex:
             if question is None:
-                url = "/MK/rubric"
+                url = "/MK/rubrics"
             else:
-                url = f"/MK/rubric/{question}"
+                url = f"/MK/rubrics/{question}"
             try:
                 response = self.get_auth(url)
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
-                    raise PlomAuthenticationException() from None
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoRubric(response.reason) from None
                 raise PlomSeriousException(f"Error getting rubric list: {e}") from None
 
     def _legacy_getRubrics(self, question: int | None = None) -> list[dict[str, Any]]:
@@ -1051,17 +1164,23 @@ class BaseMessenger:
                     r["system_rubric"] = True
                 else:
                     r["system_rubric"] = False
+                # A special sentinel value for legacy server
+                # TODO: annoying b/c downstream needs to detect and not send to arrow
+                r.setdefault("last_modified", "unknown")
+                r.setdefault("modified_by_username", "")
             return rubrics
 
-    def MmodifyRubric(self, key, new_rubric):
+    def MmodifyRubric(self, key: str, new_rubric: dict[str, Any]) -> dict[str, Any]:
         """Ask server to modify a rubric and get key back.
 
         Args:
-            rubric (dict): the modified rubric info as dict.
+            key: the key/id of the rubric to change.
+            new_rubric: the changes we want to make as a key-value dict.
 
         Returns:
-            str: the key/id of the rubric.  Currently should be unchanged
-            from what you sent.  But this behaviour might change in the future.
+            The dict key-value representation of the new rubric.  This is
+            generally not the same as the input data, for example, it has an
+            key/id.  You should use this returned rubric and discard the input.
 
         Raises:
             PlomAuthenticationException: Authentication error.
@@ -1071,40 +1190,42 @@ class BaseMessenger:
             PlomConflict: two users try to modify the rubric.
             PlomSeriousException: Other error types, possible needs fix or debugging.
         """
-        self.SRmutex.acquire()
-        try:
-            response = self.patch(
-                f"/MK/rubric/{key}",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "rubric": new_rubric,
-                },
-            )
-            response.raise_for_status()
-            new_key = response.json()
-            return new_key
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException(response.reason) from None
-            elif response.status_code == 400:
-                raise PlomSeriousException(response.reason) from None
-            elif response.status_code == 403:
-                raise PlomNoPermission(response.reason) from None
-            elif response.status_code == 404:
-                raise PlomNoRubric(response.reason) from None
-            elif response.status_code == 406:
-                raise PlomInconsistentRubric(response.reason) from None
-            elif response.status_code == 409:
-                if self.is_legacy_server():
-                    # legacy sends 409 for not-found
+        with self.SRmutex:
+            try:
+                response = self.patch(
+                    f"/MK/rubric/{key}",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "rubric": new_rubric,
+                    },
+                )
+                response.raise_for_status()
+                new_rubric = response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                elif response.status_code == 400:
+                    raise PlomSeriousException(response.reason) from None
+                elif response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                elif response.status_code == 404:
                     raise PlomNoRubric(response.reason) from None
-                raise PlomConflict(response.reason) from None
-            raise PlomSeriousException(
-                f"Error of type {e} when creating new rubric"
-            ) from None
-        finally:
-            self.SRmutex.release()
+                elif response.status_code == 406:
+                    raise PlomInconsistentRubric(response.reason) from None
+                elif response.status_code == 409:
+                    if self.is_legacy_server():
+                        # legacy sends 409 for not-found
+                        raise PlomNoRubric(response.reason) from None
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(
+                    f"Error of type {e} when creating new rubric"
+                ) from None
+        if self.is_legacy_server():
+            # On legacy servers, `new_rubric` will actually just be the key
+            assert isinstance(new_rubric, str)
+            return self.get_one_rubric(new_rubric)
+        return new_rubric
 
     def get_pagedata(self, code):
         """Get metadata about the images in this paper."""
@@ -1145,14 +1266,14 @@ class BaseMessenger:
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def get_image(self, image_id, md5sum):
+    def get_image(self, image_id: int, md5sum: str) -> bytes:
         """Download one image from server by its database id.
 
         Args:
-            image_id (int): TODO: int/str?  The key into the server's
+            image_id: TODO: int/str?  The key into the server's
                 database of images.
-            md5sum (str): the expected md5sum, just for sanity checks or
-                something I suppose.
+            md5sum: the expected md5sum, just for correctness checks of
+                some sort.
 
         Returns:
             bytes: png/jpeg or whatever as bytes.

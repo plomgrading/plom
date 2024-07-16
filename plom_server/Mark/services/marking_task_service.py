@@ -4,13 +4,14 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Aden Chan
 
 from __future__ import annotations
 
 import json
 import pathlib
 import random
-from typing import Optional, Tuple
+from typing import Any
 
 from rest_framework.exceptions import ValidationError
 
@@ -42,18 +43,18 @@ class MarkingTaskService:
     def create_task(
         self,
         paper: Paper,
-        question_number: int,
+        question_index: int,
         *,
-        user: Optional[User] = None,
+        user: User | None = None,
         copy_old_tags: bool = True,
     ) -> MarkingTask:
         """Create a marking task.
 
         Args:
             paper: a Paper instance, the test paper of the task.
-            question_number: the question of the task.
+            question_index: the question of the task, by 1-based index.
 
-        Keyword Args
+        Keyword Args:
             user: optional, User instance of user assigned to the task.
             copy_old_tags: copy any tags from the latest old task to the new task.
 
@@ -65,9 +66,9 @@ class MarkingTaskService:
             raise RuntimeError("Server does not have a question-version map.")
 
         pqv_map = pqvs.get_pqv_map_dict()
-        question_version = pqv_map[paper.paper_number][question_number]
+        question_version = pqv_map[paper.paper_number][question_index]
 
-        task_code = f"q{paper.paper_number:04}g{question_number}"
+        task_code = f"q{paper.paper_number:04}g{question_index}"
 
         # other tasks with this code are now 'out of date'
         MarkingTask.objects.filter(code=task_code).exclude(
@@ -92,7 +93,7 @@ class MarkingTaskService:
             assigned_user=user,
             code=task_code,
             paper=paper,
-            question_number=question_number,
+            question_index=question_index,
             question_version=question_version,
             marking_priority=priority,
         )
@@ -103,7 +104,7 @@ class MarkingTaskService:
             the_task.save()
         return the_task
 
-    def get_marking_progress(self, question: int, version: int) -> Tuple[int, int]:
+    def get_marking_progress(self, question: int, version: int) -> tuple[int, int]:
         """Send back current marking progress counts to the client.
 
         Args:
@@ -119,11 +120,11 @@ class MarkingTaskService:
         try:
             completed = MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE,
-                question_number=question,
+                question_index=question,
                 question_version=version,
             )
             total = MarkingTask.objects.filter(
-                question_number=question, question_version=version
+                question_index=question, question_version=version
             ).exclude(status=MarkingTask.OUT_OF_DATE)
         except MarkingTask.DoesNotExist:
             return (0, 0)
@@ -134,52 +135,52 @@ class MarkingTaskService:
         """Get a marking task from its code.
 
         Args:
-            code: a unique string that includes the paper number and question number.
+            code: a unique string that includes the paper number and question index.
 
         Returns:
-            The marking task object the matches the code.
+            The latest marking task object that matches the code.
 
         Raises:
             ValueError: invalid code.
             RuntimeError: code valid but task does not exist.
         """
         try:
-            paper_number, question_number = mark_task.unpack_code(code)
+            paper_number, question_idx = mark_task.unpack_code(code)
         except AssertionError as e:
             raise ValueError(f"{code} is not a valid task code: {e}") from e
         try:
-            return mark_task.get_latest_task(paper_number, question_number)
+            return mark_task.get_latest_task(paper_number, question_idx)
         except ObjectDoesNotExist as e:
             raise RuntimeError(e) from e
 
     def get_user_tasks(
-        self, user, question=None, version=None
+        self, user: User, question_idx: int | None = None, version: int | None = None
     ) -> QuerySet[MarkingTask]:
         """Get all the marking tasks that are assigned to this user.
 
         Args:
             user: User instance
-            question (optional): int, the question number
-            version (optional): int, the version number
+            question_idx (optional): the question index.
+            version (optional): the version number
 
         Returns:
             Marking tasks assigned to user
         """
         tasks = MarkingTask.objects.filter(assigned_user=user)
-        if question:
-            tasks = tasks.filter(question_number=question)
+        if question_idx:
+            tasks = tasks.filter(question_index=question_idx)
         if version:
             tasks = tasks.filter(question_version=version)
 
         return tasks
 
     def get_tasks_from_question_with_annotation(
-        self, question: int, version: int
+        self, question_idx: int, version: int
     ) -> QuerySet[MarkingTask]:
         """Get all the marking tasks for this question/version.
 
         Args:
-            question: int, the question number
+            question_idx: the question index.
             version: int, the version number. If version == 0, then all versions are returned.
 
         Returns:
@@ -189,7 +190,7 @@ class MarkingTaskService:
             None expected
         """
         marking_tasks = MarkingTask.objects.filter(
-            question_number=question, status=MarkingTask.COMPLETE
+            question_index=question_idx, status=MarkingTask.COMPLETE
         )
         if version != 0:
             marking_tasks = marking_tasks.filter(question_version=version)
@@ -208,22 +209,39 @@ class MarkingTaskService:
             markingtask__status=MarkingTask.COMPLETE
         ).filter(markingtask__latest_annotation__isnull=False)
 
-    def are_there_tasks(self):
+    def are_there_tasks(self) -> bool:
         """Return True if there is at least one marking task in the database."""
         return MarkingTask.objects.exists()
 
-    def assign_task_to_user(self, user: User, task: MarkingTask) -> None:
+    @staticmethod
+    def assign_task_to_user(task_pk: int, user: User) -> None:
         """Associate a user to a marking task and update the task status.
 
+        The task must be TO_DO, and it will become OUT.
+
+        Note: this looks superficially like :method:`reassign_task_to_user`;
+        this current method is really about claiming "OUT" tasks for a user.
+
         Args:
-            user: reference to a User instance
-            task: reference to a MarkingTask instance
+            task_pk: a private key of a task.
+            user: reference to a User instance.
 
         Exceptions:
             RuntimeError: task is already assigned.
+            MarkingTask.DoesNotExist: if there is no such task.
         """
-        if task.status == MarkingTask.OUT:
+        task = MarkingTask.objects.select_for_update().get(pk=task_pk)
+        # TODO: != MarkingTask.TO_DO versus == MarkingTask.OUT
+        if task.status != MarkingTask.TO_DO:
             raise RuntimeError("Task is currently assigned.")
+
+        # the assigned_user is None, then okay, or if set to the current user okay,
+        # but otherwise throw an error.
+        if not (task.assigned_user is None or task.assigned_user == user):
+            raise RuntimeError(
+                f'Unable to assign task to user "{user}" - task has'
+                f'- a different assigned user "{task.assigned_user}".'
+            )
 
         task.assigned_user = user
         task.status = MarkingTask.OUT
@@ -239,7 +257,7 @@ class MarkingTaskService:
             assigned_user=None, status=MarkingTask.TO_DO
         )
 
-    def user_can_update_task(self, user, code):
+    def user_can_update_task(self, user: User, code: str) -> bool:
         """Return true if a user is allowed to update a certain task, false otherwise.
 
         TODO: should be possible to remove the "assigned user" and "status" fields
@@ -261,25 +279,21 @@ class MarkingTaskService:
 
         return True
 
-    def get_n_marked_tasks(self):
+    def get_n_marked_tasks(self) -> int:
         """Return the number of marking tasks that are completed."""
         return MarkingTask.objects.filter(status=MarkingTask.COMPLETE).count()
 
-    def get_n_total_tasks(self):
+    def get_n_total_tasks(self) -> int:
         """Return the total number of tasks in the database."""
         return MarkingTask.objects.all().count()
 
-    def get_n_valid_tasks(self):
+    def get_n_valid_tasks(self) -> int:
         """Return the total number of tasks in the database, excluding out of date tasks."""
         return MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE).count()
 
-    def mark_task_as_complete(self, code):
-        """Set a task as complete - assuming a client has made a successful request."""
-        task = self.get_task_from_code(code)
-        task.status = MarkingTask.COMPLETE
-        task.save()
-
-    def validate_and_clean_marking_data(self, user, code, data, plomfile):
+    def validate_and_clean_marking_data(
+        self, user: User, code: str, data: dict[str, Any], plomfile: str
+    ) -> tuple[dict[str, Any], dict, list[Rubric]]:
         """Validate the incoming marking data.
 
         Args:
@@ -296,7 +310,7 @@ class MarkingTaskService:
             keys found inside the `annot_data`.
         """
         annot_data = json.loads(plomfile)
-        cleaned_data = {}
+        cleaned_data: dict[str, Any] = {}
 
         if not self.user_can_update_task(user, code):
             raise RuntimeError("User cannot update task.")
@@ -310,7 +324,6 @@ class MarkingTaskService:
         except (ValueError, TypeError):
             raise ValidationError(f"Could not cast {val} as int: {elem}")
 
-        # TODO: decide int or float
         try:
             cleaned_data["marking_time"] = float(data["marking_time"])
         except (ValueError, TypeError) as e:
@@ -320,10 +333,10 @@ class MarkingTaskService:
         annotations = annot_data["sceneItems"]
         rubrics_used = []
         for ann in annotations:
-            if ann[0] == "GroupDeltaText":
+            if ann[0] == "Rubric":
                 rubric_key = ann[3]
                 try:
-                    rubric = Rubric.objects.get(key=rubric_key)
+                    rubric = Rubric.objects.get(key=rubric_key, latest=True)
                 except ObjectDoesNotExist:
                     raise ValidationError(f"Invalid rubric key: {rubric_key}")
                 rubrics_used.append(rubric)
@@ -355,7 +368,7 @@ class MarkingTaskService:
             assigned_user=user, status=MarkingTask.COMPLETE
         )
         if question_idx:
-            complete_tasks = complete_tasks.filter(question_number=question_idx)
+            complete_tasks = complete_tasks.filter(question_index=question_idx)
         if version:
             complete_tasks = complete_tasks.filter(question_version=version)
 
@@ -391,6 +404,42 @@ class MarkingTaskService:
             )
         return task.latest_annotation
 
+    def get_annotation_by_edition(
+        self, paper: int, question_idx: int, edition: int
+    ) -> Annotation:
+        """Get a particular edition of the Annotations for a paper/question.
+
+        Args:
+            paper: the paper number.
+            question_idx: the question index, from one.
+            edition: papers can be annotated many times, this controls
+                which revision is wanted.  To get the latest,
+                see :method:`get_latest_annotation`
+
+        Returns:
+            The matching Annotation instance.
+
+        Raises:
+            ObjectDoesNotExist: paper does not exist, question index does
+                not exist or the requested edition does not exist within
+                a valid (not out-of-date) task.
+
+        TODO: we might consider raising ValueError if there is such an
+        edition for an OUT_OF_DATE task: for now that case is folded into
+        the task not existing.
+
+        TODO: work would also be required, here and elsewhere, for multiple
+        concurrent tasks.  Most likely we would replace this with a pk-based
+        getter before trying that.
+        """
+        paper_obj = Paper.objects.get(paper_number=paper)
+        tasks = MarkingTask.objects.filter(paper=paper_obj, question_index=question_idx)
+        # many tasks could match edition; we want the unique non-out-of-date one.
+        # TODO: in principle, we could do some try-except to detect the edition
+        # exists but is out-of-date: not sure its worth the effort.
+        task = tasks.exclude(status=MarkingTask.OUT_OF_DATE).get()
+        return Annotation.objects.get(task=task, edition=edition)
+
     def get_all_tags(self):
         """Get all of the saved tags.
 
@@ -400,7 +449,7 @@ class MarkingTaskService:
         return [(tag.pk, tag.text) for tag in MarkingTaskTag.objects.all()]
 
     def get_tags_for_task(self, code: str) -> list[str]:
-        """Get a list of tags assigned to this marking task.
+        """Get a list of tags assigned to a marking task by its code.
 
         Args:
             code: the question/paper code for a task.
@@ -415,7 +464,22 @@ class MarkingTaskService:
         task = self.get_task_from_code(code)
         return [tag.text for tag in task.markingtasktag_set.all()]
 
-    def get_tags_text_and_pk_for_task(self, task_pk: int) -> list[Tuple[int, str]]:
+    def get_tags_for_task_pk(self, task_pk: int) -> list[str]:
+        """Get a list of tags assigned to a marking task by its pk.
+
+        Args:
+            task_pk: which task.
+
+        Returns:
+            A list of the text of all tags for this task.
+
+        Raises:
+            RuntimeError: no such code.
+        """
+        task = MarkingTask.objects.get(pk=task_pk)
+        return [tag.text for tag in task.markingtasktag_set.all()]
+
+    def get_tags_text_and_pk_for_task(self, task_pk: int) -> list[tuple[int, str]]:
         """Get a list of tag (text and pk) assigned to this marking task."""
         task = MarkingTask.objects.get(pk=task_pk)
         return [(tag.pk, tag.text) for tag in task.markingtasktag_set.all()]
@@ -431,12 +495,13 @@ class MarkingTaskService:
         """
         return tag_text.strip()
 
-    def create_tag(self, user, tag_text):
-        """Create a new tag that can be associated with marking task. Assumes the input text has already been sanitized.
+    def create_tag(self, user: User, tag_text: str) -> MarkingTaskTag:
+        """Create a new tag that can be associated with marking task.
 
         Args:
             user: reference to a User instance
-            tag_text: str, the text content of a tag.
+            tag_text: str, the proposed text content of a tag.
+                Assumes this input text has already been sanitized.
 
         Returns:
             MarkingTaskTag: reference to the newly created tag
@@ -448,29 +513,39 @@ class MarkingTaskService:
             raise ValidationError(
                 f'Invalid tag text: "{tag_text}"; contains disallowed characters'
             )
-        new_tag = MarkingTaskTag(user=user, text=tag_text)
-        new_tag.save()
+        new_tag = MarkingTaskTag.objects.create(user=user, text=tag_text)
         return new_tag
 
-    def add_tag(self, tag, task):
+    def _add_tag(self, tag: MarkingTaskTag, task: MarkingTask) -> None:
         """Add a tag to a marking task. Assumes the input text has already been sanitized.
 
+        Also assumes appropriate select_for_update's have been done although
+        from glancing at the code I doubt that's true.
+
         Args:
-            tag: reference to a MarkingTaskTag instance
-            task: reference to a MarkingTask instance
+            tag: reference to a MarkingTaskTag instance.
+            task: reference to a MarkingTask instance.
+
+        Returns:
+            None
         """
+        # TODO: port to select_for_update?
         tag.task.add(task)
         tag.save()
 
     @transaction.atomic
-    def add_tag_to_task_via_pks(self, tag_pk: int, task_pk: int):
-        """Add existing tag with given pk to the marking task with given pk."""
+    def add_tag_to_task_via_pks(self, tag_pk: int, task_pk: int) -> None:
+        """Add existing tag with given pk to the marking task with given pk.
+
+        Raises:
+            ValueError: no such task or tag.
+        """
         try:
             the_task = MarkingTask.objects.select_for_update().get(pk=task_pk)
             the_tag = MarkingTaskTag.objects.get(pk=tag_pk)
         except (MarkingTask.DoesNotExist, MarkingTaskTag.DoesNotExist):
             raise ValueError("Cannot find task or tag with given pk")
-        self.add_tag(the_tag, the_task)
+        self._add_tag(the_tag, the_task)
 
     def get_tag_from_text(self, text: str) -> MarkingTaskTag | None:
         """Get a tag object from its text contents. Assumes the input text has already been sanitized.
@@ -505,12 +580,11 @@ class MarkingTaskService:
             RuntimeError: task not found
             ValidationError: invalid tag text
         """
-        mts = MarkingTaskService()
-        the_task = mts.get_task_from_code(code)
-        the_tag = mts.get_tag_from_text(tag_text)
+        the_task = self.get_task_from_code(code)
+        the_tag = self.get_tag_from_text(tag_text)
         if not the_tag:
-            the_tag = mts.create_tag(user, tag_text)
-        mts.add_tag(the_tag, the_task)
+            the_tag = self.create_tag(user, tag_text)
+        self._add_tag(the_tag, the_task)
 
     def remove_tag_text_from_task_code(self, tag_text: str, code: str) -> None:
         """Remove a tag from a marking task.
@@ -538,6 +612,7 @@ class MarkingTaskService:
             tag: reference to a MarkingTaskTag instance
             task: reference to a MarkingTask instance
         """
+        # TODO: is tag opened with select_for_update?
         try:
             tag.task.remove(task)
             tag.save()
@@ -545,7 +620,7 @@ class MarkingTaskService:
             raise ValueError(f'Task {task.code} does not have tag "{tag.text}"')
 
     @transaction.atomic
-    def remove_tag_from_task_via_pks(self, tag_pk: int, task_pk: int):
+    def remove_tag_from_task_via_pks(self, tag_pk: int, task_pk: int) -> None:
         """Add existing tag with given pk to the marking task with given pk."""
         try:
             the_task = MarkingTask.objects.select_for_update().get(pk=task_pk)
@@ -556,7 +631,7 @@ class MarkingTaskService:
 
     @transaction.atomic
     def set_paper_marking_task_outdated(
-        self, paper_number: int, question_number: int
+        self, paper_number: int, question_index: int
     ) -> None:
         """Set the marking task for the given paper/question as OUT_OF_DATE.
 
@@ -565,8 +640,8 @@ class MarkingTaskService:
         pages have changed). This function is called when such changes occur.
 
         Args:
-            paper_number (int): the paper
-            question_number (int): the question
+            paper_number: the paper
+            question_index: the question
 
         Raises:
             ValueError: when there is no such paper.
@@ -584,7 +659,7 @@ class MarkingTaskService:
         # now we know there is at least one task (either valid or out of date)
         valid_tasks = MarkingTask.objects.exclude(
             status=MarkingTask.OUT_OF_DATE
-        ).filter(paper=paper_obj, question_number=question_number)
+        ).filter(paper=paper_obj, question_index=question_index)
         valid_task_count = valid_tasks.exclude(status=MarkingTask.OUT_OF_DATE).count()
         # do a integrity check - there can only at most one valid task
         if valid_task_count > 1:
@@ -592,7 +667,8 @@ class MarkingTaskService:
             # Any given question should have **at most** one valid task.
             # If we ever arrive here it indicates that there is a corruption of the database
             raise MultipleObjectsReturned(
-                f"Very serious error - have found multiple valid Marking-tasks for paper {paper_number} question {question_number}"
+                "Very serious error - have found multiple valid Marking-tasks"
+                f" for paper {paper_number} question idx {question_index}"
             )
         # we know there is at most one valid task.
         if valid_task_count == 1:
@@ -606,5 +682,87 @@ class MarkingTaskService:
             pass
 
         # now all existing tasks are out of date, so if the question is ready create a new marking task for it.
-        if ibs.is_given_paper_question_ready(paper_obj, question_number):
-            self.create_task(paper_obj, question_number)
+        if ibs.is_given_paper_question_ready(paper_obj, question_index):
+            self.create_task(paper_obj, question_index)
+
+    @transaction.atomic
+    def create_tag_and_attach_to_task(
+        self, user: User, task_pk: int, tag_text: str
+    ) -> None:
+        """Create a tag with given text and attach to given task.
+
+        Args:
+            user: the user creating/attaching the tag.
+            task_pk: the pk of the markingtask.
+            tag_text: the text of the tag being created/attached.
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: if the tag text is not legal.
+        """
+        # clean up the text and see if such a tag already exists
+        cleaned_tag_text = self.sanitize_tag_text(tag_text)
+        tag_obj = self.get_tag_from_text(cleaned_tag_text)
+        if tag_obj is None:  # no such tag exists, so create one
+            # note - will raise validationerror if tag_text not legal
+            tag_obj = self.create_tag(user, cleaned_tag_text)
+        # finally - attach it.
+        self.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
+
+    @transaction.atomic
+    def reassign_task_to_user(self, task_pk: int, username: str) -> None:
+        """Reassign a task to a different user.
+
+        If tasks status is "COMPLETE" then the assigned_user will be updated,
+        while if it is "OUT" or "TO_DO", then assigned user will be set to None.
+        ie - this function assumes that the task will also be tagged with
+        an appropriate @username tag (by the caller; we don't do it for you!)
+
+        Note: this looks superficially like :method:`assign_task_to_user` but
+        its used in a different way.  That method is about claiming tasks.
+        This current method is most useful for "unclaiming" tasks, and---with
+        extra tagging effort described above---pushing them toward a different
+        user.
+
+        Args:
+            task_pk: the private key of a task.
+            username: a string of a username.
+
+        Returns:
+            None.
+
+        Raises:
+            ValueError: cannot find user, or cannot find marking task.
+        """
+        # make sure the given username corresponds to a marker
+        try:
+            new_user = User.objects.get(username=username, groups__name="marker")
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find a marker-user {username}")
+        # grab the task
+        try:
+            with transaction.atomic():
+                task_obj = MarkingTask.objects.select_for_update().get(pk=task_pk)
+                if task_obj.assigned_user == new_user:
+                    # already assigned to new_user, nothing needs done
+                    return
+                if task_obj.status == MarkingTask.COMPLETE:
+                    task_obj.assigned_user = new_user
+                elif task_obj.status == MarkingTask.OUT_OF_DATE:
+                    # log.warn(f"Uselessly reassigning OUT_OF_DATE task {task_obj}")
+                    task_obj.assigned_user = new_user
+                elif task_obj.status in (MarkingTask.OUT, MarkingTask.TO_DO):
+                    # if out then set it as todo and clear the assigned_user.
+                    # Note: this makes it available to anyone; the caller
+                    # might want to additionally tag it for new_user.
+                    task_obj.status = MarkingTask.TO_DO
+                    task_obj.assigned_user = None
+                else:
+                    raise AssertionError(
+                        f'Tertium non datur: impossible status "{task_obj.status}"'
+                    )
+                task_obj.save()
+        except ObjectDoesNotExist:
+            raise ValueError(f"Cannot find marking task {task_pk}")

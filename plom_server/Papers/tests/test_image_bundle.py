@@ -25,9 +25,7 @@ from Preparation.models import StagingPQVMapping
 
 
 class ImageBundleTests(TestCase):
-    """
-    Tests for Papers.services.ImageBundelService
-    """
+    """Tests for Papers.services.ImageBundelService."""
 
     def setUp(self) -> None:
         # make a spec and a paper
@@ -72,13 +70,14 @@ class ImageBundleTests(TestCase):
             version=3,
         )
 
-        # Set preparation as finished
-        PapersPrinted.set_papers_printed(True)
+        # Set preparation as finished - since we are not actually
+        # building the pdfs, we set 'ignore_dependencies'
+        PapersPrinted.set_papers_printed(True, ignore_dependencies=True)
 
         return super().setUp()
 
     def test_create_bundle(self) -> None:
-        """Test ImageBundlseService.create_bundle()"""
+        """Test ImageBundlseService.create_bundle()."""
         n_bundles = Bundle.objects.all().count()
         self.assertEqual(n_bundles, 0)
 
@@ -134,7 +133,7 @@ class ImageBundleTests(TestCase):
         self.assertFalse(ibs.all_staged_imgs_valid(imgs))
 
     def test_find_internal_collisions(self) -> None:
-        """Test ImageBundleService.find_internal_collisions()"""
+        """Test ImageBundleService.find_internal_collisions()."""
         ibs = ImageBundleService()
         imgs = StagingImage.objects.all()
         res = ibs.find_internal_collisions(imgs)
@@ -247,7 +246,7 @@ class ImageBundleTests(TestCase):
         )
 
     def test_find_external_collisions(self) -> None:
-        """Test ImageBundleService.find_external_collisions()"""
+        """Test ImageBundleService.find_external_collisions()."""
         ibs = ImageBundleService()
         res = ibs.find_external_collisions(StagingImage.objects.all())
         self.assertEqual(res, [])
@@ -307,7 +306,7 @@ class ImageBundleTests(TestCase):
         baker.make(StagingPQVMapping, paper_number=2, question=1, version=1)
         paper2 = baker.make(Paper, paper_number=2)
         paper3 = baker.make(Paper, paper_number=3)
-        baker.make(QuestionPage, paper=paper2, page_number=1, question_number=1)
+        baker.make(QuestionPage, paper=paper2, page_number=1, question_index=1)
         baker.make(DNMPage, paper=paper3, page_number=2)
 
         img1 = baker.make(
@@ -360,7 +359,7 @@ class ImageBundleTests(TestCase):
             QuestionPage,
             paper=paper2,
             page_number=2,
-            question_number=1,
+            question_index=1,
             version=1,
             image=fp_img_1,
         )
@@ -368,20 +367,20 @@ class ImageBundleTests(TestCase):
             QuestionPage,
             paper=paper2,
             page_number=3,
-            question_number=2,
+            question_index=2,
             version=1,
             image=fp_img_2,
         )
         baker.make(
-            QuestionPage, paper=paper2, page_number=4, question_number=2, version=1
+            QuestionPage, paper=paper2, page_number=4, question_index=2, version=1
         )
         baker.make(
-            QuestionPage, paper=paper2, page_number=5, question_number=3, version=1
+            QuestionPage, paper=paper2, page_number=5, question_index=3, version=1
         )
         baker.make(
-            QuestionPage, paper=paper2, page_number=6, question_number=4, version=1
+            QuestionPage, paper=paper2, page_number=6, question_index=4, version=1
         )
-        baker.make(MobilePage, paper=paper2, question_number=4, image=mp_img_1)
+        baker.make(MobilePage, paper=paper2, question_index=4, image=mp_img_1)
 
         self.assertTrue(ibs.is_given_paper_question_ready(paper2, 1))
         self.assertFalse(ibs.is_given_paper_question_ready(paper2, 2))

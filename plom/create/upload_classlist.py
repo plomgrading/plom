@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 from plom.plom_exceptions import (
     PlomConflict,
     PlomRangeException,
 )
 from plom.create import with_manager_messenger
-from plom.rules import censorStudentName, censorStudentNumber
+from plom.rules import censorStudentName, censorStudentID
 from .buildClasslist import get_demo_classlist
 
 
@@ -15,11 +16,11 @@ from .buildClasslist import get_demo_classlist
 def upload_classlist(classlist, *, msgr, force=False):
     """Uploads a classlist file to the server.
 
-    Arguments:
+    Arg:
         classdict (list): list of dict, each has at least keys `"id"` and
             `"name"`, optionally other fields too.
 
-    Keyword Arguments:
+    Keyword Arg:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
         force (bool): Force uploading if a classlist already exists,
@@ -47,13 +48,13 @@ def _ultra_raw_upload_classlist(classlist, msgr, *, force=False):
         print(f"Uploaded classlist of length {len(classlist)}.")
         print(
             "  First student:  {} - {}".format(
-                censorStudentNumber(classlist[0]["id"]),
+                censorStudentID(classlist[0]["id"]),
                 censorStudentName(classlist[0]["name"]),
             )
         )
         print(
             "  Last student:  {} - {}".format(
-                censorStudentNumber(classlist[-1]["id"]),
+                censorStudentID(classlist[-1]["id"]),
                 censorStudentName(classlist[-1]["name"]),
             )
         )
@@ -73,11 +74,17 @@ def _ultra_raw_upload_classlist(classlist, msgr, *, force=False):
 def upload_demo_classlist(spec, *, msgr, force=False):
     """Uploads the demo classlist file to the server.
 
+    Args:
+        spec: the server assessment specification.
+
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
         force (bool): Force uploading if a classlist already exists,
             default `False`.
+
+    Returns:
+        None
     """
     print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
     classlist = get_demo_classlist(spec)

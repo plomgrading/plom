@@ -2,10 +2,11 @@
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 from django.db import models
 
-from Base.models import SingletonBaseModel
+from Base.models import SingletonABCModel
 
 
 class SpecQuestion(models.Model):
@@ -19,14 +20,18 @@ class SpecQuestion(models.Model):
         max_length=7,  # length of the string "shuffle"
     )
     label = models.TextField(null=True)
-    # TODO: rename to question_index, Issue #3264, Issue #2716.
-    question_number = models.PositiveIntegerField(null=False, unique=True)
+    question_index = models.PositiveIntegerField(null=False, unique=True)
 
 
-class Specification(SingletonBaseModel):
+class Specification(SingletonABCModel):
     """Store the json of the test specification dictionary.
 
     There can be at most one Specification entry.
+
+    WET alert: for some reason, changing code here also requires changing
+    the serializer as well in ``Papers/serializers.py``.  Both specify
+    defaults, with no verification that those defaults match (?).  Boo,
+    write everything twice :-(
     """
 
     name = models.TextField(null=False)
@@ -39,6 +44,7 @@ class Specification(SingletonBaseModel):
     publicCode = models.TextField()
     idPage = models.PositiveIntegerField()
     doNotMarkPages = models.JSONField()
+    allowSharedPages = models.BooleanField(default=False)
 
     def __getattr__(self, name):
         """If querying for questions, return a dictionary of all the spec questions."""
@@ -48,12 +54,25 @@ class Specification(SingletonBaseModel):
             raise AttributeError(f"Member {name} not found in test specification.")
 
     def get_question_dict(self):
-        """Return all the questions in the form of a dictionary, where keys are question numbers."""
-        return {str(q.question_number): q for q in SpecQuestion.objects.all()}
+        """Return all the questions in the form of a dictionary, where keys are question indices.
+
+        TODO: for some reason, the keys are strings.
+        TODO: is this used?
+        """
+        return {str(q.question_index): q for q in SpecQuestion.objects.all()}
 
     def get_question_list(self):
         """Return the questions in the form of a list."""
         return list(SpecQuestion.objects.all())
+
+    @classmethod
+    def load(cls):
+        """Return the singleton instance of the Specification model.
+
+        Raises:
+            Specification.DoesNotExist: If the Specification model does not exist.
+        """
+        return cls.objects.get(pk=1)
 
 
 class SolnSpecQuestion(models.Model):
@@ -63,7 +82,7 @@ class SolnSpecQuestion(models.Model):
     solution_number = models.PositiveIntegerField(null=False, unique=True)
 
 
-class SolnSpecification(SingletonBaseModel):
+class SolnSpecification(SingletonABCModel):
     """Store the json of the solution specification dictionary.
 
     Note that
@@ -84,9 +103,19 @@ class SolnSpecification(SingletonBaseModel):
             raise AttributeError(f"Member {name} not found in solution Specification.")
 
     def get_solution_dict(self):
-        """Return all the solution questions in the form of a dictionary, where keys are question numbers."""
+        """Return all the solution questions in the form of a dictionary, where keys are str question indices."""
         return {str(s.solution_number): s for s in SolnSpecQuestion.objects.all()}
 
     def get_soltion_list(self):
         """Return the solution questions in the form of a list."""
         return list(SolnSpecQuestion.objects.all())
+
+    @classmethod
+    def load(cls):
+        """Return the singleton instance of the SolnSpecification model.
+
+        Raises:
+            SolnSpecification.DoesNotExist: If the Solm=nSpecification model
+                does not exist.
+        """
+        return cls.objects.get(pk=1)

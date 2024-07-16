@@ -5,7 +5,7 @@
     Copyright (C) 2023 Natalie Balashov
 -->
 <div class="card-body p-0 d-flex align-items-center"
-     hx-get="{% url 'scan_bundle_page' bundle_id pg.order %}"
+     hx-get="{% url 'scan_bundle_page' the_filter bundle_id pg.order %}"
      hx-swap="innerHTML"
      hx-target="#updatePage">
     <div class="bundle-thumb">

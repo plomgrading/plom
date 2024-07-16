@@ -3,7 +3,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.db import models
 
@@ -14,6 +14,12 @@ class StagingImage(models.Model):
     """An image of a scanned page that isn't validated.
 
     Note that bundle_order is the 1-indexed position of the image with the pdf. This contrasts with pymupdf (for example) for which pages are 0-indexed.
+
+    TODO: document other fields.
+
+    Fields:
+        rotation: currently this only deals with 0, 90, 180, 270, -90.
+            fractional rotations are handled elsewhere,
     """
 
     ImageTypeChoices = models.TextChoices(

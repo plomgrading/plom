@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Aidan Murphy
 
 import hashlib
 import pathlib
@@ -26,6 +27,7 @@ class BundleUploadForm(forms.Form):
         label="",
         widget=forms.FileInput(attrs={"accept": "application/pdf"}),
     )
+    force_render = forms.BooleanField(required=False)
 
     def clean(self):
         data = self.cleaned_data
@@ -44,7 +46,10 @@ class BundleUploadForm(forms.Form):
             hashed = hashlib.sha256(file_bytes).hexdigest()
             scanner = ScanService()
             if scanner.check_for_duplicate_hash(hashed):
-                raise ValidationError("Bundle was already uploaded.")
+                original_bundle_name = scanner.get_bundle_name_from_hash(hashed)
+                raise ValidationError(
+                    f"Bundle was already uploaded as '{original_bundle_name}' and hash {hashed}"
+                )
 
             # get slug
             filename_stem = pathlib.Path(str(pdf)).stem
@@ -53,6 +58,10 @@ class BundleUploadForm(forms.Form):
             with fitz.open(stream=file_bytes) as pdf_doc:
                 if "PDF" not in pdf_doc.metadata["format"]:
                     raise ValidationError("File is not a valid PDF.")
+                if pdf_doc.page_count > settings.MAX_BUNDLE_PAGES:
+                    raise ValidationError(
+                        f"File exceeds {settings.MAX_BUNDLE_PAGES} page limit."
+                    )
                 data.update(
                     {
                         "number_of_pages": pdf_doc.page_count,

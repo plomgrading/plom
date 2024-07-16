@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 import logging
 from pathlib import Path
@@ -61,7 +62,7 @@ class ExtraPageService:
     def get_extra_page_task_status(self) -> str:
         """Status of the build extra page task, creating a "to do" task if it does not exist.
 
-        Return:
+        Returns:
             The status as string: "To do", "Starting", "Queued", "Running",
             "Error" or "Complete", as defined in the HueyTaskTracker class.
         """
@@ -75,7 +76,8 @@ class ExtraPageService:
     def delete_extra_page_pdf(self):
         # explicitly delete the file, and set status back to "todo" and huey-id back to none
         task_obj = ExtraPagePDFTask.load()
-        Path(task_obj.extra_page_pdf.path).unlink(missing_ok=True)
+        if task_obj.extra_page_pdf:
+            Path(task_obj.extra_page_pdf.path).unlink(missing_ok=True)
         task_obj.transition_back_to_todo()
 
     def build_extra_page_pdf(self):

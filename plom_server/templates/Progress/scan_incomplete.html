@@ -1,7 +1,8 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Andrew Rechnitzer
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2024 Aden Chan
 -->
 {% extends "Progress/scan_base.html" %}
 {% block main_card_content %}
@@ -12,10 +13,12 @@
                 <div class="card-body">
                     <div class="overflow-auto" style="max-height:66vh;">
                         <table class="table table-striped table-sm">
-                            <tr>
-                                <th>Paper</th>
-                                <th>Pages</th>
-                            </tr>
+                            <thead>
+                                <tr>
+                                    <th>Paper</th>
+                                    <th>Pages</th>
+                                </tr>
+                            </thead>
                             {% for pn,pages in incomplete_papers_list %}
                                 <tr>
                                     <td>{{ pn }}</td>
@@ -37,7 +40,7 @@
                                             <button hx-get="{% url 'progress_pushed_img_wrap' mp.img_pk %}"
                                                     hx-target="#incompleteImageHere"
                                                     hx-replace="incompletInnerHTML"
-                                                    class="btn btn-outline-info">q.{{ mp.question_number }}</button>
+                                                    class="btn btn-outline-info">qi.{{ mp.question_number }}</button>
                                         {% endfor %}
                                     </td>
                                 </tr>

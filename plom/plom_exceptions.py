@@ -2,6 +2,7 @@
 # Copyright (C) 2019-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2022 Michael Deakin
+# Copyright (C) 2024 Aden Chan
 
 
 """Exceptions for the Plom software.
@@ -44,6 +45,12 @@ class PlomConnectionError(PlomBenignException):
 
 class PlomConflict(PlomBenignException):
     """The action was contradictory to info already in the system."""
+
+    pass
+
+
+class PlomDependencyConflict(PlomConflict):
+    """Attempt to modify an object on which other objects depend."""
 
     pass
 
@@ -174,5 +181,11 @@ class PlomNoPermission(PlomBenignException):
 
 class PlomBundleLockedException(PlomBenignException):
     """For when a bundle is locked or pushed."""
+
+    pass
+
+
+class PlomNoServerSupportException(PlomBenignException):
+    """For when an action is not supported by the server."""
 
     pass

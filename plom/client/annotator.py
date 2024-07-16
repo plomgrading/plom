@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2022 Natalia Accomazzo Scotti
+# Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
@@ -196,6 +197,8 @@ class Annotator(QWidget):
             log.info("loaded custom overlay: %s", self.keybinding_custom_overlay)
 
         self.ui.hamMenuButton.setMenu(self.buildHamburger())
+        # heaven == hamburger? works for me!
+        self.ui.hamMenuButton.setText("\N{TRIGRAM FOR HEAVEN}")
         self.ui.hamMenuButton.setToolTip("Menu (F10)")
         self.ui.hamMenuButton.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.setToolShortCuts()
@@ -224,7 +227,7 @@ class Annotator(QWidget):
             # TODO: some kind of signal/slot, ontoggle...
             self._hold_crop_checkbox.setVisible(False)
             if self.scene:
-                self.scene.remove_page_hack_buttons()
+                self.scene.remove_page_action_buttons()
             return
 
         txt = """<p>Enable experimental and/or advanced options?</p>
@@ -235,9 +238,9 @@ class Annotator(QWidget):
         #     'None, but you can help us break stuff at <a href="https://gitlab.com/plom/plom">gitlab.com/plom/plom</a>',
         # )
         features = (
-            "Creating new rubrics parameterized over version.",
+            "Spelling checking in rubric creation",
             "Persistent held region between papers.",
-            # "Page manipulation in annotator.",  # Issue #2522 enable in pagescene.py
+            "Page manipulation in annotator.",
         )
         info = f"""
             <h4>Current experimental features</h4>
@@ -259,10 +262,18 @@ class Annotator(QWidget):
         # TODO: some kind of signal/slot, ontoggle...
         self._hold_crop_checkbox.setVisible(True)
         if self.scene:
-            self.scene.build_page_hack_buttons()
+            self.scene.build_page_action_buttons()
 
     def is_experimental(self):
         return self.parentMarkerUI.is_experimental()
+
+    def pause_to_process_events(self):
+        """Allow Qt's event loop to process events.
+
+        Typically we call this if we're in a loop of our own waiting
+        for something to happen which can only occur if we
+        """
+        self.parentMarkerUI.Qapp.processEvents()
 
     def buildHamburger(self):
         # TODO: use QAction, share with other UI?
@@ -496,16 +507,19 @@ class Annotator(QWidget):
         self.rubric_widget.setMaxMark(self.maxMark)
         self.rubric_widget.setEnabled(True)
 
-        # TODO: Make handling of rubric less hack.
         log.debug("Restore mode info = {}".format(self.modeInformation))
-        self.setToolMode(self.modeInformation[0])
-        # TODO: refactor, see also self.handleRubric() and self.rubricMode()
-        if self.modeInformation[0] == "rubric":
-            extra = self.modeInformation[1]
-            if self.rubric_widget.setCurrentRubricKeyAndTab(*extra):
-                self.rubric_widget.handleClick()
-            else:  # if that rubric-mode-set fails (eg - no such rubric)
+        which_mode = self.modeInformation[0]
+        cdr = self.modeInformation[1:]
+        if which_mode == "rubric":
+            # the remaining part of list should be a tuple in this case
+            (extra,) = cdr
+            if not self.rubric_widget.setCurrentRubricKeyAndTab(*extra):
+                # if no such rubric or no such tab, select move instead
                 self.toMoveMode()
+        else:
+            # ensure we get an error on unexpected extra info
+            assert not cdr
+            self.setToolMode(which_mode)
         # redo this after all the other rubric stuff initialised
         self.rubric_widget.updateLegalityOfRubrics()
 
@@ -640,6 +654,21 @@ class Annotator(QWidget):
         self.ui.hideableBox.show()
         self.ui.revealBox0.hide()
 
+    def next_rubric_or_reselect_rubric_tool(self):
+        """Changes the tool to rubric or pick the next rubric.
+
+        This allows the same key to switch back to rubrics (from say tick
+        or delete tool) as is used to select the next rubric.
+        """
+        if not self.scene:
+            self.rubric_widget.nextRubric()
+            return
+        if self.scene.mode == "rubric":
+            self.rubric_widget.nextRubric()
+        else:
+            self.rubric_widget.reselectCurrentRubric()
+
+    # currently no key bound to this; above used instead
     def next_rubric(self):
         self.rubric_widget.nextRubric()
 
@@ -707,7 +736,7 @@ class Annotator(QWidget):
         self.parentMarkerUI.Qapp.setOverrideCursor(Qt.CursorShape.WaitCursor)
         # disable ui before calling process events
         self.setEnabled(False)
-        self.parentMarkerUI.Qapp.processEvents()
+        self.pause_to_process_events()
         testNumber = self.tgvID[:4]
         src_img_data = self.scene.get_src_img_data()
         image_md5_list = [x["md5"] for x in src_img_data]
@@ -758,7 +787,7 @@ class Annotator(QWidget):
         pd.setWindowModality(Qt.WindowModality.WindowModal)
         pd.setMinimumDuration(500)
         pd.setValue(0)
-        self.parentMarkerUI.Qapp.processEvents()
+        self.pause_to_process_events()
         for i, row in enumerate(pagedata):
             # TODO: would be nice to show the size in MiB here!
             pd.setLabelText(
@@ -766,7 +795,7 @@ class Annotator(QWidget):
                 f"img id {row['id']}"
             )
             pd.setValue(i + 1)
-            self.parentMarkerUI.Qapp.processEvents()
+            self.pause_to_process_events()
             row = dl.sync_download(row)
         pd.close()
 
@@ -903,7 +932,7 @@ class Annotator(QWidget):
         # row is one less than key
         self.rubric_widget.selectRubricByVisibleRow(keyNumber - 1)
 
-    def setToolMode(self, newMode, *, cursor=None, imagePath=None):
+    def setToolMode(self, newMode, *, cursor=None, imagePath=None, rubric=None):
         """Changes the current tool mode and cursor.
 
         Args:
@@ -912,6 +941,8 @@ class Annotator(QWidget):
         Keyword Args:
             imagePath (?): an argument for the "image" tool, used
                 used only by the image tool.
+            rubric (dict[str, Any] | None): if we're changing to rubric,
+                use this include the rubric.
             cursor (str): if None or omitted default cursors are used
                for each tool.  If needed you could override this.
                (currently unused, semi-deprecated).
@@ -938,12 +969,15 @@ class Annotator(QWidget):
 
         # pass the new mode to the graphicsview, and set the cursor in view
         if self.scene:
+            if rubric:
+                self.scene.setCurrentRubric(rubric)
             self.scene.setToolMode(newMode)
             self.view.setCursor(cursor)
+        self._setModeLabels(newMode)
         # refresh everything.
         self.repaint()
 
-    def setModeLabels(self, mode):
+    def _setModeLabels(self, mode):
         if mode == "rubric":
             self.ui.narrowModeLabel.setText(
                 " rubric \n {} ".format(self.rubric_widget.getCurrentTabName())
@@ -1052,7 +1086,7 @@ class Annotator(QWidget):
         actions_and_methods = (
             ("undo", self.toUndo),
             ("redo", self.toRedo),
-            ("next-rubric", self.rubricMode),
+            ("next-rubric", self.next_rubric_or_reselect_rubric_tool),
             ("prev-rubric", self.prev_rubric),
             ("next-tab", self.next_tab),
             ("prev-tab", self.prev_tab),
@@ -1178,16 +1212,6 @@ class Annotator(QWidget):
             return
         self.scene.redo()
 
-    def rubricMode(self):
-        """Changes the tool to rubric."""
-        if not self.scene:
-            self.rubric_widget.nextRubric()
-            return
-        if self.scene.mode == "rubric":
-            self.rubric_widget.nextRubric()
-        else:
-            self.rubric_widget.reselectCurrentRubric()
-
     def toDeleteMode(self):
         self.ui.deleteButton.animateClick()
 
@@ -1223,7 +1247,7 @@ class Annotator(QWidget):
             msg.setText(
                 "Max image size (200kB) reached. Please try again with a smaller image."
             )
-            msg.setStandardButtons(QMessageBox.Ok)
+            msg.setStandardButtons(QMessageBox.StandardButton.Ok)
             msg.exec()
         else:
             self.setToolMode("image", imagePath=fileName)
@@ -1303,10 +1327,7 @@ class Annotator(QWidget):
         Returns:
             None: Modifies self.scene
         """
-        self.setToolMode("rubric")
-        # TODO: move to "args"/"extra" kwarg of setToolMode when we add that
-        if self.scene:  # TODO: not sure why, Issue #1283 workaround
-            self.scene.changeTheRubric(rubric)
+        self.setToolMode("rubric", rubric=rubric)
 
     def loadWindowSettings(self):
         """Loads the window settings."""
@@ -1397,8 +1418,8 @@ class Annotator(QWidget):
             msg = f"{len(out_objs)} annotations are outside the margins."
             msg += " Please move or delete them before saving."
             info = "<p>Out-of-bounds objects are highlighted in orange.</p>"
-            info += "<p><em>Note:</em> if you cannot see any such objects, "
-            info += "you may be experiencing "
+            info += "<p><em>Note:</em> if you cannot see any such objects "
+            info += "(even after zooming out) then you may be experiencing "
             info += '<a href="https://gitlab.com/plom/plom/-/issues/1792">Issue '
             info += "#1792</a>; please help us by copy-pasting the details below, "
             info += "along with any details about how to make this happen!</p>"
@@ -1431,30 +1452,19 @@ class Annotator(QWidget):
 
         assert self.getScore() is not None
 
-        # do some checks when score is zero
-        if self.getScore() == 0:
-            if not self._zeroMarksWarn():
-                return False
-
-        # do similar checks when score is full
-        if self.getScore() == self.maxMark:
-            if not self._fullMarksWarn():
-                return False
+        # do some checks when score is zero or full
+        if not self._zeroMarksWarn():
+            return False
+        if not self._fullMarksWarn():
+            return False
 
         # warn if points where lost but insufficient annotations
         # note spatial annotations (drag-box) is enough to sneak past this
         if (
             0 < self.getScore() < self.maxMark
         ) and self.scene.hasOnlyTicksCrossesDeltas():
-            msg = """
-                <p>You have given neither comments nor detailed annotations
-                (other than &#x2713; &#x2717; &plusmn;<i>n</i>).</p>
-                <p>This may make it difficult for students to learn from this
-                feedback.</p>
-                <p>Are you sure you wish to continue?</p>
-            """
             code = "lost-marks-but-insufficient-feedback"
-            if not self._continue_after_warning(code, msg):
+            if not self._continue_after_warning(code):
                 return False
 
         # some combinations of rubrics may seem ambiguous or potentially confusing
@@ -1465,6 +1475,9 @@ class Annotator(QWidget):
             assert isinstance(_msg, str)
             if not self._continue_after_warning(_code, _msg):
                 return False
+
+        if not self._check_all_pages_touched():
+            return False
 
         aname, plomfile = self.pickleIt()
         rubric_ids = self.scene.get_rubric_ids()
@@ -1485,12 +1498,50 @@ class Annotator(QWidget):
         self.annotator_upload.emit(self.tgvID, stuff)
         return True
 
-    def _continue_after_warning(
-        self, code: str, msg: str, *, force: bool = False
-    ) -> bool:
-        if self._config.get("dama-" + code):
+    @property
+    def _feedback_rules(self) -> dict[str, Any]:
+        return self.parentMarkerUI.annotatorSettings.get("feedback_rules")
+
+    def _continue_after_warning(self, code: str, msg: str | None = None) -> bool:
+        """Notify user about warnings/errors in their annotations.
+
+        Handle "don't ask me again" and associated settings.
+
+        Args:
+            code: a string code that identified the situation.
+            msg: an optional description of the situation.  If omitted
+                or ``None``, we'll load one from a central config.
+                You might need this if you need to fill in a templated
+                explanation, which we don't (yet) do for you.
+
+        Returns:
+            True if we should continue or False if either settings or
+            user choose to edit further.
+        """
+        situation = self._feedback_rules[code]
+
+        if msg is None:
+            # str() to shutup MyPy: we unit test that is a string
+            msg = str(situation["explanation"])
+
+        # The msg might already be phrased as a question such as "will this
+        # be understandable?" but we end with a concrete question
+        msg += "\n<p>Do you wish to submit?</p>"
+
+        if not situation["allowed"]:
+            InfoMsg(self, msg).exec()
+            return False
+
+        if not situation["warn"]:
             return True
-        if force:
+
+        dama = False
+        if situation["dama_allowed"]:
+            dama = self._config.get("dama-" + code, False)
+        if dama:
+            return True
+
+        if not situation["dama_allowed"]:
             if SimpleQuestion(self, msg).exec() == QMessageBox.StandardButton.No:
                 return False
             return True
@@ -1501,65 +1552,112 @@ class Annotator(QWidget):
             self._config["dama-" + code] = True
         return True
 
-    def _zeroMarksWarn(self):
+    def _will_we_warn(self, code: str) -> bool:
+        """Would we notify user about warnings/errors in their annotations?
+
+        Determines if the closely-related :method:`_continue_after_warning`
+        will popup a dialog asking and/or notifying the user of a situation.
+        Its intended use it to check if a dialog *might* appear so that we
+        can potentially save computation in the case it will not.
+
+        Args:
+            code: a string code that identified the situation.
+
+        Returns:
+            True if we might ask/notify the user (possibly depending on
+            further maybe expensive calculations).  False if we wouldn't
+            either because of global settings or b/c they have chosen
+            "don't-ask-me-again".
+        """
+        situation = self._feedback_rules[code]
+        if not situation["allowed"]:
+            return True
+        if situation["warn"]:
+            return True
+        dama = False
+        if situation["dama_allowed"]:
+            dama = self._config.get("dama-" + code, False)
+        if dama:
+            return False
+        return True
+
+    def _zeroMarksWarn(self) -> bool:
         """A helper method for saveAnnotations.
 
-        Controls warnings for when paper has 0 marks. If there are only-ticks or some-ticks then warns user.
+        Controls warnings for when paper has 0 marks.  If there are
+        only ticks or some ticks then warns user.
 
         Returns:
             False if user cancels, True otherwise.
         """
-        warn = False
-        forceWarn = False
-        msg = f"<p>You have given <b>0/{self.maxMark}</b>,"
+        if self.getScore() != 0:
+            return True
+        code = None
         if self.scene.hasOnlyTicks():
-            warn = True
-            forceWarn = True
-            msg += " but there are <em>only ticks on the page!</em>"
             code = "zero-marks-but-has-only-ticks"
         elif self.scene.hasAnyTicks():
-            warn = True
-            msg += " but there are some ticks on the page."
             code = "zero-marks-but-has-ticks"
-        if warn:
-            msg += "  Please confirm, or consider using comments to clarify.</p>"
-            msg += "\n<p>Do you wish to submit?</p>"
-            if not self._continue_after_warning(code, msg, force=forceWarn):
+        if code:
+            msg = self._feedback_rules[code]["explanation"]
+            assert isinstance(msg, str)
+            msg = msg.format(max_mark=self.maxMark)
+            if not self._continue_after_warning(code, msg):
                 return False
         return True
 
-    def _fullMarksWarn(self):
+    def _fullMarksWarn(self) -> bool:
         """A helper method for saveAnnotations.
 
-        Controls warnings for when paper has full marks. If there are some crosses or only crosses then warns user.
+        Controls warnings for when paper has full marks.  If there are
+        some crosses or only crosses then warns user.
 
         Returns:
             False if user cancels, True otherwise.
         """
-        msg = f"<p>You have given full {self.maxMark}/{self.maxMark},"
-        warn = False
-        forceWarn = False
+        if self.getScore() != self.maxMark:
+            return True
+
+        code = None
         if self.scene.hasOnlyCrosses():
-            warn = True
-            forceWarn = True
-            msg += " <em>but there are only crosses on the page!</em>"
             code = "full-marks-but-has-only-crosses"
         elif self.scene.hasAnyCrosses():
-            warn = True
-            msg += " but there are crosses on the page."
             code = "full-marks-but-has-crosses"
         elif self.scene.hasAnyComments():
-            warn = False
+            pass
         else:
-            warn = True
-            msg += " but there are other annotations on the page which might be contradictory."
             code = "full-marks-but-other-annotations-contradictory"
-        if warn:
-            msg += "  Please confirm, or consider using comments to clarify.</p>"
-            msg += "\n<p>Do you wish to submit?</p>"
-            if not self._continue_after_warning(code, msg, force=forceWarn):
+        if code:
+            msg = self._feedback_rules[code]["explanation"]
+            assert isinstance(msg, str)
+            msg = msg.format(max_mark=self.maxMark)
+            if not self._continue_after_warning(code, msg):
                 return False
         return True
+
+    def _check_all_pages_touched(self) -> bool:
+        """A helper method for saveAnnotations.
+
+        Are all pages touched by the hand of the annotator?
+
+        Returns:
+            False if user cancels, True otherwise.
+        """
+        code = "each-page-should-be-annotated"
+        # save computing cost if user won't be warned
+        if not self._will_we_warn(code):
+            return True
+        indices = self.scene.get_list_of_non_annotated_underimages()
+        if not indices:
+            return True
+
+        # the try behaves like "with highlighted_pages(indices):"
+        self.scene.highlight_pages(indices)
+        try:
+            msg = self._feedback_rules[code]["explanation"]
+            msg = msg.format(which_pages=", ".join([str(p + 1) for p in indices]))
+            return self._continue_after_warning(code, msg)
+        finally:
+            self.scene.highlight_pages_reset()
 
     def closeEvent(self, event: None | QtGui.QCloseEvent) -> None:
         """Overrides the usual QWidget close event.
@@ -1658,7 +1756,7 @@ class Annotator(QWidget):
         Note: called "pickle" for historical reasons: it is neither a
         Python pickle nor a real-life pickle.
 
-        Return:
+        Returns:
             tuple: two `pathlib.Path`, one for the rendered image and
             one for the ``.plom`` file.
         """
@@ -1669,9 +1767,8 @@ class Annotator(QWidget):
         # is 4-tuple (x,y,w,h) scaled by image width / height
         crop_rect_data = self.scene.current_crop_rectangle_as_proportions()
         # TODO: consider saving colour only if not red?
-        # TODO: someday src_img_data may have other images not used
         plomData = {
-            "base_images": self.scene.get_src_img_data(),
+            "base_images": self.scene.get_src_img_data(only_visible=True),
             "saveName": str(aname),
             "maxMark": self.maxMark,
             "currentMark": self.getScore(),
@@ -1790,6 +1887,46 @@ class Annotator(QWidget):
         """Request a latest rubric list for current question."""
         return self.parentMarkerUI.getRubricsFromServer(self.question_num)
 
+    def getOneRubricFromServer(self, key):
+        """Request a latest rubric list for current question."""
+        return self.parentMarkerUI.getOneRubricFromServer(key)
+
+    def getOtherRubricUsagesFromServer(self, key: str) -> list[int]:
+        """Request a list of paper numbers using the given rubric.
+
+        Args:
+            key: the identifier of the rubric.
+
+        Returns:
+            List of paper numbers using the rubric, excluding the paper
+            the annotator currently at.
+        """
+        curr_paper_number = int(self.tgvID[:4])
+        result = self.parentMarkerUI.getOtherRubricUsagesFromServer(key)
+        if curr_paper_number in result:
+            result.remove(curr_paper_number)
+        return result
+
+    def view_other_paper(
+        self, paper_number: int, *, _parent: QWidget | None = None
+    ) -> None:
+        """Opens another dialog to view a paper.
+
+        Args:
+            paper_number: the paper number of the paper to be viewed.
+
+        Keyword:
+            _parent: override the default parent which is ourselves.
+
+        Returns:
+            None
+        """
+        if _parent is None:
+            _parent = self
+        self.parentMarkerUI.view_other(
+            paper_number=paper_number, question_idx=self.question_num, _parent=_parent
+        )
+
     def saveTabStateToServer(self, tab_state):
         """Have Marker upload this tab state to the server."""
         self.parentMarkerUI.saveTabStateToServer(tab_state)
@@ -1802,11 +1939,11 @@ class Annotator(QWidget):
         """Ask the rubric widget to refresh rubrics."""
         self.rubric_widget.refreshRubrics()
 
-    def createNewRubric(self, new_rubric):
+    def createNewRubric(self, new_rubric) -> dict[str, Any]:
         """Ask server to create a new rubric with data supplied."""
         return self.parentMarkerUI.sendNewRubricToServer(new_rubric)
 
-    def modifyRubric(self, key, updated_rubric):
+    def modifyRubric(self, key, updated_rubric) -> dict[str, Any]:
         """Ask server to modify an existing rubric with the new data supplied."""
         return self.parentMarkerUI.modifyRubricOnServer(key, updated_rubric)
 

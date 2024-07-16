@@ -7,12 +7,6 @@
 Scanning and uploading
 ======================
 
-.. note::
-   These instructions are for scanning and uploading to legacy servers.
-   Much of the process is similar for the django-server, however the
-   command line tools are not needed.  TODO: update these docs.
-
-
 At this point we assume that you have printed that papers, fed them to
 your students (or the other way around), and collected the completed
 tests.
@@ -32,22 +26,46 @@ scanning hardware that is available.  We recommend that you:
 
     - Sort papers into test-number order before scanning, and keep them in order (opinions differ on this but if something goes wrong its very valuable).
     - Keep papers in sensible and physically manageable bundles, before, during and after scanning.
+      There is a strict upper limit on bundle size and page count; these exist for security reasons and far exceed what would be a sensible bundle size.
     - Have a good physical flow of papers from pre-scan to post-scan, so that each paper is scanned exactly once.
     - Give your scans clear filenames such as ``math123mt1-sec1-bundle2.pdf``.
     - You may need to find page in these hardcopies so physically label each bundle, for example with the above filename.
 
 
-Processing and uploading
-------------------------
+Uploading to the web-based server
+---------------------------------
 
-You'll also need to ensure your server is running.
+Create one or more "scanner" accounts.
+Login to your server using one of those accounts.
+Follow the instructions to upload bundles of papers as PDF files.
 
-The command-line tool :doc:`plom-scan` is the main tool for processing
-and uploading papers.
+
+Dealing with unknown pages, extra pages, etc
+............................................
+
+TODO
 
 
-Uploading to the server
-^^^^^^^^^^^^^^^^^^^^^^^
+Command-line tools
+..................
+
+At this time, there is no command-line tool similar to
+legacy :doc:`plom-scan` for uploading files to the new server.
+Such tools may be developed at a later date.
+
+
+--------------------------------------------------------------------
+
+
+Processing and uploading to a legacy server
+-------------------------------------------
+
+.. note::
+   The remainder of these instructions are for scanning, processing,
+   and uploading to legacy servers.
+
+The command-line tool :doc:`plom-scan` is only way to process
+and upload papers to a legacy server.
 
 The processing and uploading of scans need not be done on
 the same computer as the original PDF production.
@@ -166,7 +184,7 @@ To upload the "collisions" run ``plom-scan upload mABCmt1-s1-b2.pdf --collisions
 
 
 Getting a status report
-^^^^^^^^^^^^^^^^^^^^^^^
+.......................
 
 It is sometimes helpful to check what papers have and have not been uploaded. It is also very helpful to see if any papers have been *partially* uploaded. To get such a status-summary, run
 ``plom-scan status``. You will get a simple report such as::
@@ -186,16 +204,6 @@ It is sometimes helpful to check what papers have and have not been uploaded. It
     Number of scanned tests in the system: 10
     Incomplete scans - listed with their missing pages:
         1: t[6] h[]
-
-
-Something went wrong
-^^^^^^^^^^^^^^^^^^^^
-
-The scanning workflow is very much in flux and this documentation might lag behind.
-When in doubt, check the ``plom-scan --help`` and ``plom-scan <cmd> --help``, and please file issues about specific incorrect documentation.
-
-Note currently its not easy to wipe a bundle and start again,
-`see for example Issue #1189 <https://gitlab.com/plom/plom/-/issues/1189>`_.
 
 
 Technical docs

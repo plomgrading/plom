@@ -26,7 +26,7 @@
                     {% else %}
                         <button type="button"
                                 class="btn btn-secondary mx-2"
-                                hx-get="{% url 'scan_bundle_page' bundle_id prev_idx %}"
+                                hx-get="{% url 'scan_bundle_page' the_filter bundle_id prev_idx %}"
                                 hx-target="#updatePage"
                                 hx-swap="innerHTML">
                             <i class="bi bi-chevron-left"></i>
@@ -40,7 +40,7 @@
                     {% else %}
                         <button type="button"
                                 class="btn btn-secondary mx-2"
-                                hx-get="{% url 'scan_bundle_page' bundle_id next_idx %}"
+                                hx-get="{% url 'scan_bundle_page' the_filter bundle_id next_idx %}"
                                 hx-target="#updatePage"
                                 hx-swap="innerHTML">
                             <i class="bi bi-chevron-right"></i>
@@ -58,8 +58,11 @@
                                 <li>rotation: {{ current_page.rotation }}</li>
                                 <li>
                                     {{ current_page.qr_codes|length }} qr-codes read:
-                                    <ul>
-                                        {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code.tpv }}</li>{% endfor %}
+                                    <button type="button"
+                                            class="btn btn-outline-dark dropdown-toggle"
+                                            data-bs-toggle="dropdown">info</button>
+                                    <ul class="dropdown-menu">
+                                        {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code.tpv }}</li>{% endfor %}
                                     </ul>
                                 </li>
                             </ul>
@@ -74,8 +77,11 @@
                                 {% if current_page.qr_codes %}
                                     <li>
                                         {{ current_page.qr_codes|length }} qr-codes read:
-                                        <ul>
-                                            {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code.tpv }}</li>{% endfor %}
+                                        <button type="button"
+                                                class="btn btn-outline-dark dropdown-toggle"
+                                                data-bs-toggle="dropdown">info</button>
+                                        <ul class="dropdown-menu">
+                                            {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code.tpv }}</li>{% endfor %}
                                         </ul>
                                     </li>
                                 {% else %}
@@ -99,8 +105,11 @@
                                 {% if current_page.qr_codes %}
                                     <li>
                                         {{ current_page.qr_codes|length }} qr-codes read:
-                                        <ul>
-                                            {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code.tpv }}</li>{% endfor %}
+                                        <button type="button"
+                                                class="btn btn-outline-dark dropdown-toggle"
+                                                data-bs-toggle="dropdown">info</button>
+                                        <ul class="dropdown-menu">
+                                            {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code.tpv }}</li>{% endfor %}
                                         </ul>
                                     </li>
                                 {% else %}
@@ -116,11 +125,13 @@
                                 <li>rotation: {{ current_page.rotation }}</li>
                                 <li>
                                     {{ current_page.qr_codes|length }} qr-codes read:
-                                    <ul>
-                                        {% for crn, code in current_page.qr_codes.items %}<li>{{ crn }}: {{ code.tpv }}</li>{% endfor %}
+                                    <button type="button"
+                                            class="btn btn-outline-dark dropdown-toggle"
+                                            data-bs-toggle="dropdown">info</button>
+                                    <ul class="dropdown-menu">
+                                        {% for crn, code in current_page.qr_codes.items %}<li class="dropdown-item">{{ crn }}: {{ code }}</li>{% endfor %}
                                     </ul>
                                 </li>
-                                <li>{{ current_page.qr_codes }}</li>
                             </ul>
                         </div>
                     {% elif current_page.status == 'unread' %}
@@ -140,12 +151,12 @@
                         {% if current_page.status == 'known' %}
                             <!-- known page can discard -->
                             <a class="btn btn-danger text-center w-100 mb-3"
-                               hx-post="{% url 'discard_image' bundle_id index %}"
+                               hx-post="{% url 'discard_image' the_filter bundle_id index %}"
                                hx-confirm="Are you sure you wish to discard this known page?">Discard</a>
                         {% elif current_page.status == 'error' %}
                             <!-- error page can discard but not recommended -->
                             <a class="btn btn-danger text-center w-100 mb-3"
-                               hx-post="{% url 'discard_image' bundle_id index %}"
+                               hx-post="{% url 'discard_image' the_filter bundle_id index %}"
                                hx-confirm="Are you sure you wish to discard this error page? We do not generally recommend doing this since error pages tend to indicate larger scanning problems.">
                                 Discard
                             </a>
@@ -155,26 +166,26 @@
                             <!-- discard can cast to known, extra, unknown -->
                             <div>
                                 <a class="btn btn-warning text-center w-100 mb-3"
-                                   hx-put="{% url 'extralise_image' bundle_id index %}"
+                                   hx-put="{% url 'extralise_image' the_filter bundle_id index %}"
                                    hx-confirm="Are you sure you wish to set this discarded page as an extra page?">
                                     Cast to extra page
                                 </a>
                             </div>
                             <div>
                                 <a class="btn btn-outline-success text-center w-100 mb-3"
-                                   hx-get="{% url 'knowify_image' bundle_id index %}"
+                                   hx-get="{% url 'knowify_image' the_filter bundle_id index %}"
                                    hx-target="#bundlePageFragment">Cast to known page</a>
                             </div>
                             <div>
                                 <a class="btn btn-outline-warning text-center w-100 mb-3"
-                                   hx-post="{% url 'unknowify_image' bundle_id index %}"
+                                   hx-post="{% url 'unknowify_image' the_filter bundle_id index %}"
                                    hx-confirm="Are you sure you wish to set this discarded page as an unknown page?">
                                     Cast to unknown page
                                 </a>
                             </div>
                             <div>
                                 <a class="btn btn-outline-danger text-center w-100 mb-3"
-                                   hx-post="{% url 'unknowify_all_discards' bundle_id index %}"
+                                   hx-post="{% url 'unknowify_all_discards' the_filter bundle_id index %}"
                                    hx-confirm="Are you sure you want to set all discarded pages as unknown pages?">
                                     <i class="bi bi-exclamation-diamond-fill text-danger"></i>
                                     Cast all discards to unknown pages
@@ -185,24 +196,24 @@
                             <!-- unknown page can discard, extralise, knowify-->
                             <div>
                                 <a class="btn btn-danger text-center w-100 mb-3"
-                                   hx-post="{% url 'discard_image' bundle_id index %}"
+                                   hx-post="{% url 'discard_image' the_filter bundle_id index %}"
                                    hx-confirm="Are you sure you wish to discard this unknown page?">Discard</a>
                             </div>
                             <div>
                                 <a class="btn btn-warning text-center w-100 mb-3"
-                                   hx-put="{% url 'extralise_image' bundle_id index %}"
+                                   hx-put="{% url 'extralise_image' the_filter bundle_id index %}"
                                    hx-confirm="Are you sure you wish to set this unknown page as an extra page?">
                                     Cast to extra page
                                 </a>
                             </div>
                             <div>
                                 <a class="btn btn-outline-success text-center w-100 mb-3"
-                                   hx-get="{% url 'knowify_image' bundle_id index %}"
+                                   hx-get="{% url 'knowify_image' the_filter bundle_id index %}"
                                    hx-target="#bundlePageFragment">Cast to known page</a>
                             </div>
                             <div>
                                 <a class="btn btn-danger text-centre w-100 mb-3"
-                                   hx-post="{% url 'discard_all_unknowns' bundle_id index %}"
+                                   hx-post="{% url 'discard_all_unknowns' the_filter bundle_id index %}"
                                    hx-confirm="Are you sure you want to discard all remaining unknowns?">
                                     <i class="bi bi-exclamation-diamond-fill text-bg-danger"></i>
                                     Discard all unknown pages
@@ -213,13 +224,13 @@
                             <!-- can discard  -->
                             <div>
                                 <a class="btn btn-danger text-center w-100 mb-3"
-                                   hx-post="{% url 'discard_image' bundle_id index %}"
+                                   hx-post="{% url 'discard_image' the_filter bundle_id index %}"
                                    hx-confirm="Are you sure you wish to discard this extra page?">Discard</a>
                             </div>
                             {% if current_page.info.paper_number and current_page.info.question_index_list %}
                                 <div>
                                     <a class="btn btn-danger text-center w-100 mb-3"
-                                       hx-delete="{% url 'extralise_image' bundle_id index %}"
+                                       hx-delete="{% url 'extralise_image' the_filter bundle_id index %}"
                                        hx-confirm="Are you sure you wish to clear the extra page information?">
                                         Clear information
                                     </a>
@@ -227,7 +238,7 @@
                             {% else %}
                                 <div class="alert alert-secondary">
                                     <h6>Set extra page information</h6>
-                                    <form hx-post="{% url 'extralise_image' bundle_id index %}"
+                                    <form hx-post="{% url 'extralise_image' the_filter bundle_id index %}"
                                           hx-target="#invalidmessage"
                                           hx-swap="innerHTML">
                                         <div class="input-group p-3">
@@ -266,7 +277,7 @@
                                                                class="form-check-input"
                                                                type="checkbox"
                                                                id="questionall"
-                                                               x-model="allq">
+                                                               x-model="allq" />
                                                         <label class="form-check-label" for="questionall">all questions</label>
                                                     </div>
                                                     <div x-show="!allq" x-transition>

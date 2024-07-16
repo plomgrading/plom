@@ -4,6 +4,8 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Aidan Murphy
+
 
 from __future__ import annotations
 
@@ -18,6 +20,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
+from django.conf import settings
 
 from Base.base_group_views import ScannerRequiredView
 from Preparation.services import PapersPrinted
@@ -50,6 +53,8 @@ class ScannerHomeView(ScannerRequiredView):
                 "form": BundleUploadForm(),
                 "is_any_bundle_push_locked": False,
                 "papers_have_been_printed": PapersPrinted.have_papers_been_printed(),
+                "bundle_size_limit": settings.MAX_BUNDLE_SIZE / 1024 / 1024,
+                "bundle_page_limit": settings.MAX_BUNDLE_PAGES,
             }
         )
         staged_bundles = []
@@ -107,21 +112,28 @@ class ScannerHomeView(ScannerRequiredView):
 
             user = request.user
             slug = data["slug"]
-            time_uploaded = data["time_uploaded"]
             bundle_file = data["pdf"]
             pdf_hash = data["sha256"]
             number_of_pages = data["number_of_pages"]
-            timestamp = datetime.timestamp(time_uploaded)
+            timestamp = datetime.timestamp(data["time_uploaded"])
 
-            # Note that this does take a timestamp instead of a bundle_pk, because that bundle does not yet exist in the database and so has no pk.
             ScanService().upload_bundle(
-                bundle_file, slug, user, timestamp, pdf_hash, number_of_pages
+                bundle_file,
+                slug,
+                user,
+                timestamp,
+                pdf_hash,
+                number_of_pages,
+                force_render=data["force_render"],
             )
 
             return HttpResponseRedirect(reverse("scan_home"))
         else:
-            # TODO - fix this error handling
-            # context.update({"form": form})
+            # we can get the errors from the form and pass them into the context
+            # unfortunately form.errors is a dict of lists, so lets flatten it a bit.
+            # see = https://docs.djangoproject.com/en/5.0/ref/forms/api/#django.forms.Form.errors
+            error_list: list[str] = sum(form.errors.values(), [])
+            context.update({"upload_errors": error_list})
             return render(request, "Scan/home.html", context)
 
 

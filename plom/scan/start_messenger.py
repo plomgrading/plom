@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2018-2023 Colin B. Macdonald
+# Copyright (C) 2018-2024 Colin B. Macdonald
 
 import functools
 
@@ -30,7 +30,7 @@ def with_scanner_messenger(f):
     """Decorator for flexible credentials or open messenger.
 
     Arguments:
-        f (function):
+        f (function): the functiont to be decorated.
 
     Returns:
         function: the original wrapped with logging.

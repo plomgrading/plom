@@ -32,9 +32,9 @@ class MarkingTaskServiceTests(TestCase):
         with self.assertRaises(ValueError):
             mark_task.unpack_code("q000qge")
 
-        paper_number, question_number = mark_task.unpack_code("q0001g2")
+        paper_number, question_index = mark_task.unpack_code("q0001g2")
         self.assertEqual(paper_number, 1)
-        self.assertEqual(question_number, 2)
+        self.assertEqual(question_index, 2)
 
     def test_unpack_code_additional_tests(self) -> None:
         with self.assertRaises(AssertionError):
@@ -77,12 +77,26 @@ class MarkingTaskServiceTests(TestCase):
     def test_get_latest_task_has_paper_but_no_question(self) -> None:
         s = MarkingTaskService()
         task = baker.make(
-            MarkingTask, question_number=1, paper__paper_number=42, code="q0042g1"
+            MarkingTask, question_index=1, paper__paper_number=42, code="q0042g1"
         )
         code = "q0042g9"
         assert task.code != code
         with self.assertRaisesRegex(RuntimeError, "Task .*does not exist"):
             s.get_task_from_code(code)
+
+    def test_get_latest_task_asking_for_wrong_version(self) -> None:
+        task = baker.make(
+            MarkingTask,
+            question_index=1,
+            question_version=2,
+            paper__paper_number=42,
+            code="q0042g1",
+        )
+        code = "q0042g1"
+        assert task.code == code
+        mark_task.get_latest_task(42, 1, question_version=2)
+        with self.assertRaisesRegex(ValueError, "wrong version"):
+            mark_task.get_latest_task(42, 1, question_version=1)
 
     def test_assign_task_to_user(self) -> None:
         """Test MarkingTaskService.assign_task_to_user()."""
@@ -90,14 +104,13 @@ class MarkingTaskServiceTests(TestCase):
         user2: User = baker.make(User)
         task = baker.make(MarkingTask, status=MarkingTask.TO_DO)
 
-        mts = MarkingTaskService()
-        mts.assign_task_to_user(user1, task)
+        MarkingTaskService.assign_task_to_user(task.pk, user1)
         task.refresh_from_db()
         self.assertEqual(task.status, MarkingTask.OUT)
         self.assertEqual(task.assigned_user, user1)
 
         with self.assertRaisesMessage(RuntimeError, "Task is currently assigned."):
-            mts.assign_task_to_user(user2, task)
+            MarkingTaskService.assign_task_to_user(task.pk, user2)
 
         task.refresh_from_db()
         self.assertEqual(task.assigned_user, user1)

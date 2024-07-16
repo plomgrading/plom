@@ -2,8 +2,9 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Edith Coates
     Copyright (C) 2022 Brennen Chiu
-    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2024 Bryan Tanady
 -->
 <div class="d-grid gap-2">
     {% if not db_initialised %}
@@ -32,12 +33,10 @@
         <a class="btn btn-danger"
            data-bs-toggle="modal"
            data-bs-target="#deleteBtnModal">Delete All PDFs</a>
-        {% if tasks %}
-            <a class="btn btn-secondary"
-               onclick="document.getElementById('bottom').scrollIntoView()">
-                Scroll to bottom
-                <i class="bi bi-chevron-down"></i>
-            </a>
+        {% if zip_enabled %}
+            <a class="btn btn-primary" href="{% url 'zip_stream_paperPDFs' %}">Save as zip file</a>
+        {% else %}
+            <button class="btn btn-warning" disabled>Save as zip file (once build complete)</button>
         {% endif %}
     </div>
     <p class="mb-1">{{ message }}</p>
@@ -87,11 +86,6 @@
                     {{ task.status }}
                     <div class="spinner-grow spinner-grow-sm text-secondary"></div>
                 </td>
-                <td>
-                    <a class="btn btn-danger"
-                       hx-post="{% url 'cancel_one_PDF' task.paper_number %}"
-                       hx-target="#pdf_table">Cancel</a>
-                </td>
             {% elif task.status == 'Running' %}
                 <td>
                     {{ task.status }}
@@ -109,17 +103,3 @@
         </tr>
     {% endfor %}
 </table>
-<div id="bottom">
-    {% if zip_enabled %}
-        <a class="btn btn-primary" href="{% url 'zip_stream_paperPDFs' %}">Save as zip file</a>
-    {% else %}
-        <button class="btn btn-warning" disabled>Save as zip file (once build complete)</button>
-    {% endif %}
-    {% if tasks %}
-        <a class="btn btn-secondary"
-           onclick="document.querySelector('h1').scrollIntoView()">
-            Scroll to top
-            <i class="bi bi-chevron-up"></i>
-        </a>
-    {% endif %}
-</div>

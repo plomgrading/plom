@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020-2023 Andrew Rechnitzer
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
@@ -275,11 +275,11 @@ def scribble_name_and_id(
 ):
     """Write name/number on coverpage of fitz pdf_doc.
 
-    Arguments:
+    Args:
         pdf_doc (fitz.Document): an open pdf file, we'll modify it
             implicitly but not close it.
-        student_number (str)
-        student_name (str)
+        student_number (str): student number to write on page.
+        student_name (str): student name to write on page.
 
     Keyword Args:
         pagenum (int): which page is the coverpage, default 0 (1st page).
@@ -339,10 +339,12 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
         pdf_doc (fitz.Document): an open pdf file, we'll modify it
             implicitly but not close it.
 
+    Keyword Args:
+        exclude: which pages to exclude.  By default exclude pages 0 and 1
+            (the ID page and DNM page in our demo data).
+
     Returns:
         None: but modifies the open document as a side effect.
-
-    By default exclude pages 0 and 1 (the ID page and DNM page in our demo data).
     """
     # In principle you can put other fonts in plom.create.fonts
     # Can also use "helv" and `None` for the fontfile
@@ -406,130 +408,126 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, *, which=None):
     # build the extra pages pdf if needed.
     if not extra_pages_pdf_path.exists():
         build_extra_page_pdf(destination_dir=Path.cwd())
-    extra_pages_pdf = fitz.open(extra_pages_pdf_path)
 
-    print("Annotating papers with fake student data and scribbling on pages...")
-    if which:
-        papers_paths = sorted([paper_dir / f"exam_{i:04}.pdf" for i in which])
-    else:
-        papers_paths = sorted(paper_dir.glob("exam_*.pdf"))
+    with fitz.open(extra_pages_pdf_path) as extra_pages_pdf:
 
-    # those with an ID number
-    named_papers_paths = list(paper_dir.glob("exam_*_*.pdf"))
-    # extract student numbers used in prenaming
-    used_ids = [f.stem.split("_")[-1] for f in named_papers_paths]
-    # get those students not used in the the prename
-    available_classlist = [x for x in classlist if x["id"] not in used_ids]
-    random.shuffle(available_classlist)
-    # work out how many names actually needed
-    number_of_unnamed_papers = len(papers_paths) - len(named_papers_paths)
-
-    # how many extra names to generate
-    number_of_extra_students = max(
-        3, int(number_of_unnamed_papers * extra_student_probability)
-    )
-    print(
-        f"Note - {number_of_extra_students} papers will belong to students who are not on the classlist."
-    )
-    extra_names = []
-    real_ids = [x["id"] for x in classlist]
-    for _ in range(number_of_extra_students):
-        nm = "{}, {}".format(
-            random.choice(extra_last_names), random.choice(extra_first_names)
-        )
-        # make an 8 digit ID - TODO - move this function into rules.py
-        while True:
-            id = str(random.randint(10**7, 10**8))
-            if id not in real_ids:
-                break
-        real_ids.append(id)
-        extra_names.append({"id": id, "name": nm})
-
-    # cut the available_classlist and add in thenames from the extra list
-    use_these_students = (
-        available_classlist[: number_of_unnamed_papers - number_of_extra_students]
-        + extra_names
-    )
-    # now shuffle everything
-    random.shuffle(use_these_students)
-
-    # A complete collection of the pdfs created
-    all_pdf_documents = fitz.open()
-
-    for index, f in enumerate(papers_paths):
-        if f in named_papers_paths:
-            print(f"{f.name} - prenamed paper - scribbled")
+        print("Annotating papers with fake student data and scribbling on pages...")
+        if which:
+            papers_paths = sorted([paper_dir / f"exam_{i:04}.pdf" for i in which])
         else:
-            x = use_these_students.pop()
-            # TODO: Issue #1646: check for "student_number" fallback to id
-            student_number = x["id"]
-            student_name = x["name"]
-            print(f"{f.name} - scribbled using {student_number} {student_name}")
+            papers_paths = sorted(paper_dir.glob("exam_*.pdf"))
 
-        # TODO: could do `with fitz.open(f) as pdf_document:`
-        pdf_document = fitz.open(f)
+        # those with an ID number
+        named_papers_paths = list(paper_dir.glob("exam_*_*.pdf"))
+        # extract student numbers used in prenaming
+        used_ids = [f.stem.split("_")[-1] for f in named_papers_paths]
+        # get those students not used in the the prename
+        available_classlist = [x for x in classlist if x["id"] not in used_ids]
+        random.shuffle(available_classlist)
+        # work out how many names actually needed
+        number_of_unnamed_papers = len(papers_paths) - len(named_papers_paths)
 
-        if f not in named_papers_paths:
-            # TODO: use spec.IDpage
-            scribble_name_and_id(pdf_document, student_number, student_name)
-
-        # TODO: should match the ID page and DNM pages from spec settings
-        scribble_pages(pdf_document)
-
-        # delete last page from the first test
-        if index == 0:
-            pdf_document.delete_page(-1)
-            print(f"Deleting last page of test {f}")
-
-        # We then add the pdfs into the document collection
-        all_pdf_documents.insert_pdf(pdf_document)
-        pdf_document.close()
-
-        # For a comprehensive test, we will add some extrapages with low probability
-        if random.random() < extra_page_probability:
-            # folder_name/exam_XXXX.pdf or folder_name/exam_XXXX_YYYYYYY.pdf,
-            test_number = f.stem.split("_")[1]
-            if f in named_papers_paths:
-                # exam_XXXX_YYYYYYY.pdf
-                student_number = f.stem.split("_")[2]
-
-            print(
-                f"  making an extra page for test {test_number} and id {student_number}"
+        # how many extra names to generate
+        number_of_extra_students = max(
+            3, int(number_of_unnamed_papers * extra_student_probability)
+        )
+        print(
+            f"Note - {number_of_extra_students} papers will belong to students who are not on the classlist."
+        )
+        extra_names = []
+        real_ids = [x["id"] for x in classlist]
+        for _ in range(number_of_extra_students):
+            nm = "{}, {}".format(
+                random.choice(extra_last_names), random.choice(extra_first_names)
             )
+            # make an 8 digit ID - TODO - move this function into rules.py
+            while True:
+                id = str(random.randint(10**7, 10**8))
+                if id not in real_ids:
+                    break
+            real_ids.append(id)
+            extra_names.append({"id": id, "name": nm})
 
-            # insert a copy of the extra page from the extra page pdf
-            all_pdf_documents.insert_pdf(
-                extra_pages_pdf,
-                from_page=0,
-                to_page=0,
-                start_at=-1,
-            )
-            page_rect = all_pdf_documents[-1].rect
-            # stamp some info on it - TODO - make this look better.
-            tw = fitz.TextWriter(page_rect, color=(0, 0, 1))
-            # TODO - make these numbers less magical
-            maxbox = fitz.Rect(25, 400, 500, 600)
-            # page.draw_rect(maxbox, color=(1, 0, 0))
-            excess = tw.fill_textbox(
-                maxbox,
-                f"EXTRA PAGE - t{test_number} Q1 - {student_number}",
-                align=fitz.TEXT_ALIGN_LEFT,
-                fontsize=extra_page_font_size,
-                font=fitz.Font("helv"),
-            )
-            assert not excess, "Text didn't fit: is extra-page text too long?"
-            tw.write_text(all_pdf_documents[-1])
+        # cut the available_classlist and add in thenames from the extra list
+        use_these_students = (
+            available_classlist[: number_of_unnamed_papers - number_of_extra_students]
+            + extra_names
+        )
+        # now shuffle everything
+        random.shuffle(use_these_students)
 
-            # all_pdf_documents.insert_page(
-            #     -1,
-            #     text=f"EXTRA PAGE - t{test_number} Q1 - {student_number}",
-            #     fontsize=extra_page_font_size,
-            #     color=blue,
-            # )
+        # A complete collection of the pdfs created
+        with fitz.open() as all_pdf_documents:
 
-    all_pdf_documents.save(outfile)
-    all_pdf_documents.close()
-    extra_pages_pdf.close()
+            for index, f in enumerate(papers_paths):
+                if f in named_papers_paths:
+                    print(f"{f.name} - prenamed paper - scribbled")
+                else:
+                    x = use_these_students.pop()
+                    # TODO: Issue #1646: check for "student_number" fallback to id
+                    student_number = x["id"]
+                    student_name = x["name"]
+                    print(f"{f.name} - scribbled using {student_number} {student_name}")
+
+                with fitz.open(f) as pdf_document:
+                    if f not in named_papers_paths:
+                        # TODO: use spec.IDpage
+                        scribble_name_and_id(pdf_document, student_number, student_name)
+
+                    # TODO: should match the ID page and DNM pages from spec settings
+                    scribble_pages(pdf_document)
+
+                    # delete last page from the first test
+                    if index == 0:
+                        pdf_document.delete_page(-1)
+                        print(f"Deleting last page of test {f}")
+
+                    # We then add the pdfs into the document collection
+                    all_pdf_documents.insert_pdf(pdf_document)
+
+                # For a comprehensive test, we will add some extrapages with low probability
+                if random.random() < extra_page_probability:
+                    # folder_name/exam_XXXX.pdf or folder_name/exam_XXXX_YYYYYYY.pdf,
+                    test_number = f.stem.split("_")[1]
+                    if f in named_papers_paths:
+                        # exam_XXXX_YYYYYYY.pdf
+                        student_number = f.stem.split("_")[2]
+
+                    print(
+                        f"  making an extra page for test {test_number} and id {student_number}"
+                    )
+
+                    # insert a copy of the extra page from the extra page pdf
+                    all_pdf_documents.insert_pdf(
+                        extra_pages_pdf,
+                        from_page=0,
+                        to_page=0,
+                        start_at=-1,
+                    )
+                    page_rect = all_pdf_documents[-1].rect
+                    # stamp some info on it - TODO - make this look better.
+                    tw = fitz.TextWriter(page_rect, color=(0, 0, 1))
+                    # TODO - make these numbers less magical
+                    maxbox = fitz.Rect(25, 400, 500, 600)
+                    # page.draw_rect(maxbox, color=(1, 0, 0))
+                    excess = tw.fill_textbox(
+                        maxbox,
+                        f"EXTRA PAGE - t{test_number} Q1 - {student_number}",
+                        align=fitz.TEXT_ALIGN_LEFT,
+                        fontsize=extra_page_font_size,
+                        font=fitz.Font("helv"),
+                    )
+                    assert not excess, "Text didn't fit: is extra-page text too long?"
+                    tw.write_text(all_pdf_documents[-1])
+
+                    # all_pdf_documents.insert_page(
+                    #     -1,
+                    #     text=f"EXTRA PAGE - t{test_number} Q1 - {student_number}",
+                    #     fontsize=extra_page_font_size,
+                    #     color=blue,
+                    # )
+
+            all_pdf_documents.save(outfile)
     print(f'Assembled in "{outfile}"')
 
 
@@ -549,16 +547,18 @@ def make_garbage_pages(pdf_file, number_of_garbage_pages=2):
     """
     green = [0, 0.75, 0]
 
-    doc = fitz.open(pdf_file)
-    print("Doc has {} pages".format(len(doc)))
-    for _ in range(number_of_garbage_pages):
-        garbage_page_index = random.randint(-1, len(doc))
-        print(f"Insert garbage page at garbage_page_index={garbage_page_index}")
-        doc.insert_page(
-            garbage_page_index, text="This is a garbage page", fontsize=18, color=green
-        )
-    doc.saveIncr()
-    doc.close()
+    with fitz.open(pdf_file) as doc:
+        print("Doc has {} pages".format(len(doc)))
+        for _ in range(number_of_garbage_pages):
+            garbage_page_index = random.randint(-1, len(doc))
+            print(f"Insert garbage page at garbage_page_index={garbage_page_index}")
+            doc.insert_page(
+                garbage_page_index,
+                text="This is a garbage page",
+                fontsize=18,
+                color=green,
+            )
+        doc.saveIncr()
 
 
 def make_colliding_pages(paper_dir, outfile):
@@ -574,68 +574,64 @@ def make_colliding_pages(paper_dir, outfile):
     paper_dir = Path(paper_dir)
     outfile = Path(outfile)
 
-    all_pdf_documents = fitz.open(outfile)
-    # Customizable data
-    colliding_page_font_size = 18
+    with fitz.open(outfile) as all_pdf_documents:
+        # Customizable data
+        colliding_page_font_size = 18
 
-    papers_paths = sorted(paper_dir.glob("exam_*.pdf"))
-    for file_name in papers_paths[1:3]:  # just grab papers 2 and 3.
-        pdf_document = fitz.open(file_name)
-        test_length = len(pdf_document)
-        colliding_page_index = random.randint(-1, len(all_pdf_documents))
-        print(
-            "Insert colliding page at colliding_page_index={}".format(
-                colliding_page_index
+        papers_paths = sorted(paper_dir.glob("exam_*.pdf"))
+        for file_name in papers_paths[1:3]:  # just grab papers 2 and 3.
+            with fitz.open(file_name) as pdf_document:
+                test_length = len(pdf_document)
+                colliding_page_index = random.randint(-1, len(all_pdf_documents))
+                print(
+                    "Insert colliding page at colliding_page_index={}".format(
+                        colliding_page_index
+                    )
+                )
+                all_pdf_documents.insert_pdf(
+                    pdf_document,
+                    from_page=test_length - 1,
+                    to_page=test_length - 1,
+                    start_at=colliding_page_index,
+                )
+            excess = all_pdf_documents[colliding_page_index].insert_textbox(
+                fitz.Rect(100, 100, 500, 500),
+                "I was dropped on the floor and rescanned.",
+                fontsize=colliding_page_font_size,
+                color=blue,
+                fontname="helv",
+                fontfile=None,
+                align=0,
             )
-        )
-        all_pdf_documents.insert_pdf(
-            pdf_document,
-            from_page=test_length - 1,
-            to_page=test_length - 1,
-            start_at=colliding_page_index,
-        )
-        pdf_document.close()
-        excess = all_pdf_documents[colliding_page_index].insert_textbox(
-            fitz.Rect(100, 100, 500, 500),
-            "I was dropped on the floor and rescanned.",
-            fontsize=colliding_page_font_size,
-            color=blue,
-            fontname="helv",
-            fontfile=None,
-            align=0,
-        )
-        assert excess > 0
+            assert excess > 0
 
-    all_pdf_documents.saveIncr()
-    all_pdf_documents.close()
+        all_pdf_documents.saveIncr()
 
 
 def splitFakeFile(outfile, *, parts=3):
     """Split the scribble pdf into specified number of files (defaults to 3)."""
     outfile = Path(outfile)
-    originalPDF = fitz.open(outfile)
+    with fitz.open(outfile) as originalPDF:
 
-    if parts < 1:
-        raise ValueError("Cannot split PDF into fewer than 1 part")
-    if parts > len(originalPDF) // 2:
-        raise ValueError("Cannot split PDF into parts of less than 1 page")
+        if parts < 1:
+            raise ValueError("Cannot split PDF into fewer than 1 part")
+        if parts > len(originalPDF) // 2:
+            raise ValueError("Cannot split PDF into parts of less than 1 page")
 
-    print(f"Splitting PDF into {parts} in order to test bundles.")
-    length = len(originalPDF) // parts
+        print(f"Splitting PDF into {parts} in order to test bundles.")
+        length = len(originalPDF) // parts
 
-    for p in range(parts):
-        doc = fitz.open()
-        # be careful with last file.
-        if p != parts - 1:
-            doc.insert_pdf(
-                originalPDF, from_page=p * length, to_page=(p + 1) * length - 1
-            )
-        else:
-            doc.insert_pdf(originalPDF, from_page=p * length)
-        fname = outfile.stem + f"{p+1}.pdf"
-        doc.save(outfile.with_name(fname))
-        doc.close()
-    originalPDF.close()
+        for p in range(parts):
+            with fitz.open() as doc:
+                # be careful with last file.
+                if p != parts - 1:
+                    doc.insert_pdf(
+                        originalPDF, from_page=p * length, to_page=(p + 1) * length - 1
+                    )
+                else:
+                    doc.insert_pdf(originalPDF, from_page=p * length)
+                fname = outfile.stem + f"{p + 1}.pdf"
+                doc.save(outfile.with_name(fname))
 
 
 @with_manager_messenger

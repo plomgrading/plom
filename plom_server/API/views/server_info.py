@@ -2,12 +2,13 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
 from typing import Any
 
-from django.contrib.auth.models import update_last_login
+from django.contrib.auth.models import update_last_login, User
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 
@@ -20,6 +21,7 @@ from rest_framework import status
 
 from plom import __version__
 from plom import Plom_API_Version
+from plom.feedback_rules import feedback_rules
 
 from API.permissions import AllowAnyReadOnly
 
@@ -87,6 +89,33 @@ class ServerInfo(APIView):
         return Response(info)
 
 
+class UserRole(APIView):
+    """Get the user's role.
+
+    Returns:
+        either of ["lead_marker", "marker", "scanner", "manager"] if the user
+            is recognized. Otherwise returns None.
+    """
+
+    def get(self, request: Request, *, username: str) -> HttpResponse:
+        role = self._get_user_role(username)
+        return HttpResponse(role, content_type="text/plain")
+
+    def _get_user_role(self, username: str) -> str | None:
+        user = User.objects.get(username__iexact=username)
+        group = user.groups.values_list("name", flat=True)
+        if "lead_marker" in group:
+            return "lead_marker"
+        elif "marker" in group:
+            return "marker"
+        elif "manager" in group:
+            return "manager"
+        elif "scanner" in group:
+            return "scanner"
+        else:
+            return None
+
+
 class ExamInfo(APIView):
     """Get the assessment information in an extensible format.
 
@@ -100,6 +129,7 @@ class ExamInfo(APIView):
         # TODO: suggest progress info here too
         info: dict[str, Any] = {
             "current_largest_paper_num": 9999,
+            "feedback_rules": feedback_rules,
         }
         return Response(info)
 
@@ -173,13 +203,17 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
             return _error_response(
                 f"Client API version {client_api} is not supported by this server "
                 f"(server API version {Plom_API_Version})",
-                status.HTTP_401_UNAUTHORIZED,
+                status.HTTP_400_BAD_REQUEST,
             )
 
         serializer = self.serializer_class(
             data=request.data, context={"request": request}
         )
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            return _error_response(
+                "The username / password pair are not authorized",
+                status.HTTP_401_UNAUTHORIZED,
+            )
         user = serializer.validated_data["user"]
         token, created = Token.objects.get_or_create(user=user)
         update_last_login(None, token.user)

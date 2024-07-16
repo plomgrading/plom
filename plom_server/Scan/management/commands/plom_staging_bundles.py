@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 from datetime import datetime
@@ -30,11 +30,10 @@ class Command(BaseCommand):
 
     help = "Upload bundle pdf files to staging area"
 
-    def upload_pdf(self, username=None, source_pdf=None, *, debug_jpeg=False):
+    def upload_pdf(
+        self, username: str, source_pdf: str, *, debug_jpeg: bool = False
+    ) -> None:
         scanner = ScanService()
-
-        if source_pdf is None:
-            raise CommandError("No bundle supplied.")
 
         try:
             with open(source_pdf, "rb") as f:
@@ -42,16 +41,15 @@ class Command(BaseCommand):
         except OSError as err:
             raise CommandError(err)
 
-        try:
-            pdf_doc = fitz.open(stream=file_bytes)
-        except fitz.FileDataError as err:
-            raise CommandError(err)
-
         filename_stem = pathlib.Path(source_pdf).stem
         slug = slugify(filename_stem)
         timestamp = datetime.timestamp(timezone.now())
         hashed = hashlib.sha256(file_bytes).hexdigest()
-        number_of_pages = pdf_doc.page_count
+        try:
+            with fitz.open(stream=file_bytes) as pdf_doc:
+                number_of_pages = pdf_doc.page_count
+        except fitz.FileDataError as err:
+            raise CommandError(err)
 
         if scanner.check_for_duplicate_hash(hashed):
             raise CommandError("Upload failed - Bundle was already uploaded.")

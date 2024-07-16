@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 import logging
@@ -21,7 +21,10 @@ from ..models import (
     DNMPage,
     QuestionPage,
 )
-
+from Preparation.services.preparation_dependency_service import (
+    assert_can_modify_qv_mapping_database,
+)
+from plom.plom_exceptions import PlomDependencyConflict
 
 log = logging.getLogger("PaperCreatorService")
 
@@ -41,7 +44,7 @@ def huey_create_paper_with_qvmapping(
 
     Args:
         paper_number: The number of the paper being created
-        qv_mapping: Mapping from each question-number to
+        qv_mapping: Mapping from each question index to
             version for this particular paper. Of the form ``{q: v}``.
 
     Keyword Args:
@@ -86,7 +89,7 @@ class PaperCreatorService:
 
         Args:
             paper_number: The number of the paper being created
-            qv_mapping: Mapping from each question-number to
+            qv_mapping: Mapping from each question index to
                 version for this particular paper. Of the form ``{q: v}``.
 
         Returns:
@@ -122,7 +125,7 @@ class PaperCreatorService:
                     paper=paper_obj,
                     image=None,
                     page_number=int(q_page),
-                    question_number=index,
+                    question_index=index,
                     version=version,  # I don't like having to double-up here, but....
                 )
                 question_page.save()
@@ -155,11 +158,18 @@ class PaperCreatorService:
                 as of November 2023.  Presumably its here in case we later have
                 a bottle-neck in Paper table creation...
 
+        Raises:
+            PlomDependencyConflict: if there are papers already in the database.
+
         Returns:
             A pair such that if all papers added to DB without errors then
             return `(True, [])` else return `(False, list_of_errors)` where
             the list of errors is a list of pairs `(paper_number, error)`.
         """
+        assert_can_modify_qv_mapping_database()
+        if Paper.objects.filter().exists():
+            raise PlomDependencyConflict("Already papers in the database.")
+
         errors = []
         for paper_number, qv_mapping in qv_map.items():
             try:
@@ -176,12 +186,16 @@ class PaperCreatorService:
         else:
             return True, []
 
+    @transaction.atomic()
     def remove_all_papers_from_db(self) -> None:
+        assert_can_modify_qv_mapping_database()
         # hopefully we don't actually need to call this outside of testing.
-        # Have to use a loop because of a bug/quirk in django_polymorphic
+        # Have to delete each sub-type of FixedPage separately due to a bug/quirk in django_polymorphic
         # see https://github.com/django-polymorphic/django-polymorphic/issues/34
-        for page in FixedPage.objects.all():
-            page.delete()
+        DNMPage.objects.all().delete()
+        IDPage.objects.all().delete()
+        QuestionPage.objects.all().delete()
+        # now delete all papers
         Paper.objects.all().delete()
 
     def update_page_image(

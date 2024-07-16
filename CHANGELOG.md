@@ -9,6 +9,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Client: in experimental mode, add an on-page menu for manipulations such as rotating, reordered and removing.
+* Client can spell check rubrics.
+* Client can query for a list of other papers that used a particular rubric and display those annotations to the user.
+* Tasks can be reassigned between users on the server.
+
+### Changed
+* Client: improvements to the undo stack.
+
+### Fixed
+* Misc fixes and improvements.
+* Continued implementation of the new server.
+* legacy-server: minor fixes to legacy workflow.
+
+
+
+## [0.15.5] - 2024-06-12
+
+### Added
+* Users can change their own passwords.
+
+### Changed
+* Plom now allows sharing pages between questions.
+* Client: parameterized rubrics are no longer considered experimental.
+
+### Fixed
+* For now, you must manually create system rubrics before marking begins; to enforce this the client will crash if the server has no rubrics.
+* Misc fixes and documentation improvements.
+
+
+## [0.15.4] - 2024-05-21
+
+### Added
+* Scanning (on the new server) defaults to automatic image extraction (if its detected safe to do so).  Scanners can force "safe mode rendering" for the previous behaviour.
+
+### Changed
+* Plom is less aggressive about "font subsetting" when creating PDF files which might make generated PDFs a little bit safer.
+
+### Fixed
+* Workaround spurious characters appearing on generated pages when using certain versions of PyMuPDF.
+
+
+## [0.15.3] - 2024-05-11
+
+### Added
+* Server can now show and in some cases customize the feedback rules that nag clients before they submit annotations.
+* New feedback rule checks that each page is annotated.
+
+### Changed
+* Rubrics now keep more careful records about who modified them and when.
+
+### Fixed
+* Legacy workflow: `plom-scan upload ./foo.pdf` will now explicitly fail informing you to keep path info out of bundle names.
+* Processing PDF scans: don't complain about rounding errors when instead some metadata mixup about width/height has occurred.
+* Client: clicking "sync" to synchronous rubrics from server no longer resets selection.
+
+
+## [0.15.2] - 2024-03-11
+
+### Added
 * Server - scanner can now bulk-discard unknown pages from a bundle, and bulk change discards back to unknowns.
 * Server: supports tags in more places.
 
@@ -1144,7 +1203,11 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.15.1...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.15.5...main
+[0.15.5]: https://gitlab.com/plom/plom/-/compare/v0.15.4...v0.15.5
+[0.15.4]: https://gitlab.com/plom/plom/-/compare/v0.15.3...v0.15.4
+[0.15.3]: https://gitlab.com/plom/plom/-/compare/v0.15.2...v0.15.3
+[0.15.2]: https://gitlab.com/plom/plom/-/compare/v0.15.1...v0.15.2
 [0.15.1]: https://gitlab.com/plom/plom/-/compare/v0.15.0...v0.15.1
 [0.15.0]: https://gitlab.com/plom/plom/-/compare/v0.14.8...v0.15.0
 [0.14.8]: https://gitlab.com/plom/plom/-/compare/v0.14.7...v0.14.8

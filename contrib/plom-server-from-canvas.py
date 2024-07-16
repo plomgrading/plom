@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
-# Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2021-2024 Colin B. Macdonald
 # Copyright (C) 2022 Nicholas J H Lai
 # Copyright (C) 2023 Philip Loewen
 
@@ -22,9 +22,9 @@ your own risk, no warranty, etc, etc.
 3. Follow prompts.
 4. Go the directory you created and run `plom-server launch`.
 
-TODO:
-  * needs to log instead of just discarding so much output
-  * support an existing configured server in basedir: or fork
+Notes:
+  * TODO: needs to log instead of just discarding so much output
+  * TODO: support an existing configured server in basedir: or fork
 """
 
 import argparse
@@ -113,7 +113,7 @@ def make_toml(assignment, marks: List[int], *, dur: Union[str, Path] = ".") -> N
 
     Args:
         assignment: a canvasapi assignment object
-        marks:
+        marks: list of marks for each question.
 
     Keyword Args:
         dur: where to write the toml file.
@@ -187,7 +187,7 @@ def initialize(*, server_dir: Union[str, Path] = ".", port: Optional[int] = None
         print("\nSwitched into test server directory.\n")
         # TODO: we should replace all these with functions not cmdline?
         # TODO: capture and log all this output with capture_output=True?
-        if args.port is None:
+        if port is None:
             print("Running `plom-server init`...")
             subprocess.check_call(["plom-server", "init"])
         else:
@@ -216,10 +216,10 @@ def configure_running_server(
     and PLOM_MANAGER_PASSWORD.
 
     Args:
-        course:
-        section:
-        assignment:
-        marks:
+        course: which course by Canvas id.
+        section: which section by Canvas id.
+        assignment: which assignment by Canvas id.
+        marks: list of marks for each question.
 
     Keyword Args:
         work_dir: where to download the classlist and other incidental files.
@@ -292,20 +292,20 @@ def get_submissions(
     assignment,
     *,
     work_dir=".",
-    name_by_info=True,
-    dry_run=False,
-    replace_existing=False,
+    name_by_info: bool = True,
+    dry_run: bool = False,
+    replace_existing: bool = False,
 ):
     """Get the submission pdfs out of Canvas.
 
     Args:
-        assignment:
+        assignment: which assignmeny by Canvas id.
 
-    Keyword Args
-        work_dir:
+    Keyword Args:
+        work_dir: where to create files.
         name_by_info: Whether to make the filenames of the form ID_Last_First.pdf
-        dry_run:
-        replace_existing:
+        dry_run: go through steps but don't actually get anything.
+        replace_existing: TODO.
     """
     work_dir = Path(work_dir)
 
@@ -351,7 +351,11 @@ def get_submissions(
             ctype = getattr(obj, "content-type")
             # print(f"    Content type is {ctype}")
             if ctype == "null":
-                # TODO: in what cases does this occur?
+                print(
+                    "Unexpected null ctype: for now appending to error list\n"
+                    "TODO: in what cases does this occur?"
+                )
+                errors.append(sub)
                 continue
             elif ctype == "application/pdf":
                 suffix = "pdf"
@@ -363,9 +367,10 @@ def get_submissions(
                 suffix = ".jpeg"
             else:
                 print(
-                    f"unexpected content-type {ctype}: for now, appending to error list"
+                    f"Unexpected content-type {ctype}: for now appending to error list"
                 )
                 errors.append(sub)
+                continue
 
             filename = tmp_downloads / f"{i:02}-{sub_name}.{suffix}"
 
@@ -444,6 +449,7 @@ def scan_submissions(
         server: taken from env var PLOM_SERVER if omitted.
         manager_pwd: taken from env var PLOM_MANAGER_PASSWORD if omitted.
         scan_pwd: taken from env var PLOM_SCAN_PASSWORD if omitted.
+        page_question_map_params: TODO.
     """
     upload_dir = Path(upload_dir)
     errors = []

@@ -1,29 +1,30 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2024 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block title %}
     Build a template specification
 {% endblock title %}
 {% block page_heading %}
-    Build a template test specification
+    Build a template specification
 {% endblock page_heading %}
 {% block main_content %}
-    <div class="d-grid gap-2">
+    <div class="d-grid gap-3">
         <div>
-            <a class="btn btn-primary mb-3" href="{% url 'creator_launch' %}">Return to specification page</a>
+            <a class="btn btn-primary" href="{% url 'creator_launch' %}">Return to specification page</a>
         </div>
         <div class="card"
              x-data="{pages: {{ pages }}, questions: {{ questions }}, score: {{ score }}, shortName: '{{ shortName }}' }">
+            <h4 class="card-header">Enter information about your test</h4>
             <div class="card-body">
-                <h4 class="card-title">Enter information about your test</h4>
                 <form enctype="multipart/form-data"
                       id="form"
                       method="post"
                       action="{% url 'template_spec_builder' %}">
                     {% csrf_token %}
-                    <div class="row my-2">
+                    <div class="row">
                         <div class="col-4">
                             <div class="form-floating">
                                 <input type="text"
@@ -112,7 +113,11 @@
                         <p>The number of pages should be even.</p>
                     </template>
                     <template x-if="pages <= questions">
-                        <p>You should have at least one page per question, plus one for the ID page.</p>
+                        <p>
+                            You should have at least one page per question, plus one for the ID page.
+                            (Experts who need multiple questions per page?
+                            <a href="https://plom.readthedocs.io/en/latest/preparing_an_assessment.html#creating-a-spec-file">See the docs</a>).
+                        </p>
                     </template>
                     <template x-if="score < questions">
                         <p>
@@ -127,56 +132,49 @@
         </div>
         {% if generated_toml %}
             <div class="card" x-data="{the_toml: `{{ generated_toml }}` }">
-                <h5 class="card-header">Generated toml template</h5>
+                <h4 class="card-header">Generated toml template: edit to taste</h4>
                 <div class="card-body">
-                    <div class="card-title">
-                        <p>
-                            <ul>
-                                <li>
-                                    Download the generated toml and open in your favourite editor, or simply copy-paste the generated toml into your editor.
-                                </li>
-                                <li>Carefully check the the pages and marks for each question.</li>
-                                <li>Once you have made your changes go back to the specification page and paste in your toml.</li>
-                            </ul>
-                        </p>
-                        <p>
-                            <button class="btn btn-primary m-2" @click="downloadtoml(the_toml)">
-                                download toml
-                                <icon class="bi bi-file-earmark-arrow-down"></icon>
-                            </button>
-                            <button class="btn btn-primary m-2"
-                                    @click="navigator.clipboard.writeText(the_toml); alert('Copied toml to clipboard')">
-                                copy to clipboard
-                                <icon class="bi bi-clipboard2-plus"></icon>
-                            </button>
-                            <a class="btn btn-primary m-2" href="{% url 'creator_launch' %}">Return to specification page</a>
-                        </p>
-                    </div>
-                    <div class="card-text p-4 border rounded font-monospace">
-                        {% for line in toml_line_by_line %}
-                            {% if line.0 == '#' %}
-                                {% if line.1 == '#' %}
-                                    <span class="text-danger fw-medium">{{ line }}</span>
-                                {% else %}
-                                    <span class="text-primary fw-medium">{{ line }}</span>
-                                {% endif %}
-                            {% else %}
-                                <span>{{ line }}</span>
-                            {% endif %}
-                            <br>
-                        {% endfor %}
-                    </div>
+                    <form enctype="multipart/form-data"
+                          hx-post="{% url 'creator_launch' %}"
+                          hx-include="[name='spec']"
+                          hx-target="#saving-status">
+                        {% csrf_token %}
+                        <!--<label for="spec-toml-input" class="form-label">Test specification</label>-->
+                        <textarea class="form-control"
+                                  id="spec-toml-input"
+                                  name="spec"
+                                  rows="12"
+                                  spellcheck="false">{{ generated_toml }}</textarea>
+                        <button type="submit" class="btn btn-primary me-2">Submit</button>
+                        <!--
+                            <button type="submit" class="btn btn-primary" name="which_action" value="submit">Submit</button>
+                        -->
+                        <button type="submit"
+                                class="btn btn-secondary m-2"
+                                name="which_action"
+                                value="validate">Validate</button>
+                        <button class="btn btn-outline-secondary m-2" @click="downloadtoml(the_toml)">
+                            download toml
+                            <icon class="bi bi-file-earmark-arrow-down"></icon>
+                        </button>
+                        <button class="btn btn-outline-secondary m-2"
+                                @click="navigator.clipboard.writeText(the_toml); alert('Copied toml to clipboard')">
+                            copy to clipboard
+                            <icon class="bi bi-clipboard2-plus"></icon>
+                        </button>
+                        <div class="mt-2" id="saving-status"></div>
+                    </form>
                 </div>
             </div>
         {% endif %}
     </div>
     <script>
       function downloadtoml(stuff) {
-	  let filename = 'template_test_specification.toml';
-	  let element = document.createElement('a');
-	  element.setAttribute('href', 'data:text/toml;charset=utf-8,' + encodeURIComponent(stuff));
-	  element.setAttribute('download', filename);
-	  element.click();
-    }
+          let filename = 'template_test_specification.toml';
+          let element = document.createElement('a');
+          element.setAttribute('href', 'data:text/toml;charset=utf-8,' + encodeURIComponent(stuff));
+          element.setAttribute('download', filename);
+          element.click();
+      }
     </script>
 {% endblock main_content %}

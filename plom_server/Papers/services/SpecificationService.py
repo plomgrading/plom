@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2022 Brennen Chiu
@@ -9,9 +9,9 @@ from __future__ import annotations
 from copy import deepcopy
 import html
 import logging
-from typing import Any, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.text import slugify
 from django.db import transaction
 from django.db.models import Max
@@ -21,6 +21,7 @@ from plom import SpecVerifier
 from Base.compat import load_toml_from_path
 from ..models import Specification, SpecQuestion
 from ..serializers import SpecSerializer
+from Preparation.services.preparation_dependency_service import assert_can_modify_spec
 
 # TODO - build similar for solution specs
 # NOTE - this does not **validate** test specs, it assumes the spec is valid
@@ -65,14 +66,20 @@ def load_spec_from_dict(
     Will call the SpecSerializer on the loaded TOML string and validate.
 
     Args:
-        spec_dict:
+        spec_dict: the dictionary describing the assessment.
 
     Keyword Args:
         public_code: optionally pass a manually specified public code (mainly for unit testing)
 
     Returns:
         Specification: saved test spec instance.
+
+    Raises:
+        PlomDependencyConflict: if the spec cannot be modified.
     """
+    # this will Raise a PlomDependencyConflict if cannot modify the spec
+    assert_can_modify_spec()
+
     # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
     # Also, this function does not care if there are no questions in the spec dictionary. It assumes
     # the serializer/SpecVerifier will catch it.
@@ -125,11 +132,14 @@ def get_the_spec() -> dict:
 
 
 @transaction.atomic
-def get_the_spec_as_toml():
+def get_the_spec_as_toml() -> str:
     """Return the test-specification from the database.
 
     If present, remove the private seed.  But the public code
     is included (if present).
+
+    Exceptions:
+        ObjectDoesNotExist: no exam specification yet.
     """
     spec = get_the_spec()
     spec.pop("id", None)
@@ -141,7 +151,7 @@ def get_the_spec_as_toml():
                 question.pop(key, None)
 
     sv = SpecVerifier(spec)
-    return sv.as_toml_string()
+    return sv.as_toml_string(_legacy=False)
 
 
 @transaction.atomic
@@ -152,8 +162,11 @@ def get_private_seed() -> str:
 
 
 @transaction.atomic
-def get_the_spec_as_toml_with_codes():
+def get_the_spec_as_toml_with_codes() -> str:
     """Return the test-specification from the database.
+
+    Exceptions:
+        ObjectDoesNotExist: no exam specification yet.
 
     .. warning::
         Note this includes both the public code and the private
@@ -169,7 +182,7 @@ def get_the_spec_as_toml_with_codes():
                 question.pop(key, None)
 
     sv = SpecVerifier(spec)
-    return sv.as_toml_string()
+    return sv.as_toml_string(_legacy=False)
 
 
 @transaction.atomic
@@ -192,18 +205,14 @@ def remove_spec() -> None:
 
     Raises:
         ObjectDoesNotExist: no exam specification yet.
-        MultipleObjectsReturned: cannot remove spec because
-            there are already papers.
+        PlomDependencyConflict: cannot modify spec due to dependencies (eg sources uploaded, papers in database, etc)
     """
     if not is_there_a_spec():
         raise ObjectDoesNotExist("The database does not contain a test specification.")
 
-    from .paper_info import PaperInfoService
-
-    if PaperInfoService().is_paper_database_populated():
-        raise MultipleObjectsReturned("Database is already populated with test-papers.")
-
-    Specification.objects.filter().delete()
+    assert_can_modify_spec()
+    Specification.objects.all().delete()
+    SpecQuestion.objects.all().delete()
 
 
 @transaction.atomic
@@ -239,6 +248,28 @@ def get_short_name_slug() -> str:
 
 
 @transaction.atomic
+def get_id_page_number() -> int:
+    """Get the page number of the ID page.
+
+    Exceptions:
+        ObjectDoesNotExist: no exam specification yet.
+    """
+    spec = Specification.objects.get()
+    return spec.idPage
+
+
+@transaction.atomic
+def get_dnm_pages() -> List[int]:
+    """Get the list of do-no-mark page numbers.
+
+    Exceptions:
+        ObjectDoesNotExist: no exam specification yet.
+    """
+    spec = Specification.objects.get()
+    return spec.doNotMarkPages
+
+
+@transaction.atomic
 def get_n_questions() -> int:
     """Get the number of questions in the test.
 
@@ -260,6 +291,28 @@ def get_n_versions() -> int:
     return spec.numberOfVersions
 
 
+def get_list_of_versions() -> list[int]:
+    """Get a list of the versions.
+
+    If there is no spec, an empty list.
+    """
+    if not is_there_a_spec():
+        return []
+    return [v + 1 for v in range(get_n_versions())]
+
+
+def get_question_indices() -> list[int]:
+    """Get a list of the question indices.
+
+    Question indices start at one, not zero.
+
+    If there is no spec, return an empty list.
+    """
+    if not is_there_a_spec():
+        return []
+    return [n + 1 for n in range(get_n_questions())]
+
+
 @transaction.atomic
 def get_n_pages() -> int:
     """Get the number of pages in the test.
@@ -271,12 +324,23 @@ def get_n_pages() -> int:
     return spec.numberOfPages
 
 
+def get_list_of_pages() -> list[int]:
+    """Get a list of the pages.
+
+    If there is no spec, an empty list.
+    """
+    if not is_there_a_spec():
+        return []
+    return [p + 1 for p in range(get_n_pages())]
+
+
 @transaction.atomic
-def get_question_mark(question_one_index: str | int) -> int:
+def get_question_max_mark(question_index: str | int) -> int:
     """Get the max mark of a given question.
 
     Args:
-        question_one_index: question index, indexed from 1.
+        question_index: question index, indexed from 1.
+            TODO: is str really allowed/encouraged?
 
     Returns:
         The maximum mark.
@@ -284,13 +348,17 @@ def get_question_mark(question_one_index: str | int) -> int:
     Raises:
         ObjectDoesNotExist: no question exists with the given index.
     """
-    question = SpecQuestion.objects.get(question_number=question_one_index)
+    question = SpecQuestion.objects.get(question_index=question_index)
     return question.mark
+
+
+# Some code uses this older synonym but it confuses me without the word "max"
+get_question_mark = get_question_max_mark
 
 
 @transaction.atomic
 def get_max_all_question_mark() -> int:
-    """Get the maximum mark of all questions."""
+    """Get the maximum mark of all questions, or None if no questions."""
     # the aggregate function returns dict {"mark__max": n}
     return SpecQuestion.objects.all().aggregate(Max("mark"))["mark__max"]
 
@@ -307,17 +375,17 @@ def get_total_marks() -> int:
 
 
 @transaction.atomic
-def n_pages_for_question(question_one_index) -> int:
-    question = SpecQuestion.objects.get(question_number=question_one_index)
+def n_pages_for_question(question_index) -> int:
+    question = SpecQuestion.objects.get(question_index=question_index)
     return len(question.pages)
 
 
 @transaction.atomic
-def get_question_label(question_one_index: str | int) -> str:
+def get_question_label(question_index: str | int) -> str:
     """Get the question label from its one-index.
 
     Args:
-        question_one_index: question number indexed from 1.
+        question_index: question indexed from 1.
             TODO: does it really accept string input?
 
     Returns:
@@ -327,9 +395,9 @@ def get_question_label(question_one_index: str | int) -> str:
     Raises:
         ObjectDoesNotExist: no question exists with the given index.
     """
-    question = SpecQuestion.objects.get(question_number=question_one_index)
+    question = SpecQuestion.objects.get(question_index=question_index)
     if question.label is None:
-        return f"Q{question_one_index}"
+        return f"Q{question_index}"
     return question.label
 
 
@@ -340,7 +408,7 @@ def get_question_index_label_pairs() -> list[Tuple[int, str]]:
         The question indices and labels as pairs of tuples in a list.
         The pairs are ordered by their indices.
     """
-    return [(i, get_question_label(i)) for i in range(1, get_n_questions() + 1)]
+    return [(i, get_question_label(i)) for i in get_question_indices()]
 
 
 def get_question_labels() -> list[str]:
@@ -367,12 +435,12 @@ def get_question_html_label_triples() -> list[Tuple[int, str, str]]:
     """Get the question indices, string labels and fancy HTML labels as a list of triples."""
     return [
         (i, get_question_label(i), render_html_question_label(i))
-        for i in range(1, get_n_questions() + 1)
+        for i in get_question_indices()
     ]
 
 
 def question_list_to_dict(questions: list[dict]) -> dict[str, dict]:
-    """Convert a list of question dictionaries to a nested dict with question numbers as keys."""
+    """Convert a list of question dictionaries to a nested dict with question index as str keys."""
     return {str(i + 1): q for i, q in enumerate(questions)}
 
 
@@ -395,3 +463,51 @@ def render_html_flat_question_label_list(qindices: list[int] | None) -> str:
     if not qindices:
         return "None"
     return ", ".join(render_html_question_label(qidx) for qidx in qindices)
+
+
+def get_question_selection_method(question_index: int) -> str:
+    """Get the selection method (shuffle/fix) of the given question.
+
+    Args:
+        question_index: question indexed from 1.
+
+    Returns:
+        The version selection method (shuffle or fix) as string.
+
+    Raises:
+        ObjectDoesNotExist: no question exists with the given index.
+    """
+    question = SpecQuestion.objects.get(question_index=question_index)
+    return question.select
+
+
+def get_selection_method_of_all_questions() -> dict[int, str]:
+    """Get the selection method (shuffle/fix) all questions.
+
+    Returns:
+        Dict of {q_index: selection} where selection is 'fix' or 'shuffle'.
+    """
+    selection_method = {}
+    for question in SpecQuestion.objects.all().order_by("question_index"):
+        selection_method[question.question_index] = question.select
+    return selection_method
+
+
+def get_fix_questions() -> list[str]:
+    """Return list of html labels of questions that are select=fix."""
+    return [
+        render_html_question_label(question.question_index)
+        for question in SpecQuestion.objects.filter(select="fix").order_by(
+            "question_index"
+        )
+    ]
+
+
+def get_shuffle_questions() -> list[str]:
+    """Return list of html labels of questions that are select=shuffle."""
+    return [
+        render_html_question_label(question.question_index)
+        for question in SpecQuestion.objects.filter(select="shuffle").order_by(
+            "question_index"
+        )
+    ]

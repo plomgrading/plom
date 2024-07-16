@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2021-2024 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2023 Julian Lapenna
 
@@ -58,12 +58,17 @@ def build_papers(
     where the `paper_number` is specified.  If the server does not yet
     have a classlist, we create no prenamed papers.
     """
+    # decorator took care of this for us
+    assert msgr is not None
+
     basedir = Path(basedir)
     paperdir = basedir / paperdir_name
     paperdir.mkdir(exist_ok=True)
     classlist = None
 
     spec = msgr.get_spec()
+    if not spec:
+        raise PlomConflict("No version map and no spec")
     qvmap = msgr.getGlobalQuestionVersionMap()
     if not qvmap:
         raise PlomConflict("No version map: have you built the database?")
@@ -154,9 +159,8 @@ def check_equal_page_count(path) -> bool:
     source = Path(path)
     source_version = set()
     for f in source.glob("version*.pdf"):
-        doc = fitz.open(f)
-        num_pages = len(doc)
-        doc.close()
+        with fitz.open(f) as doc:
+            num_pages = len(doc)
         source_version.add(num_pages)
     if len(source_version) > 1:
         return False

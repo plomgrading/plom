@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2023 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2024 Aden Chan
 
 """Plom is Paperless Open Marking.
 
@@ -13,8 +14,8 @@ __copyright__ = "Copyright (C) 2018-2024 Andrew Rechnitzer, Colin B. Macdonald, 
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-# Also hardcoded in AppImageBuilder.yml and deprecated in plom/version.py
-__version__ = "0.15.2.dev0"
+# Also hardcoded in AppImageBuilder.yml
+__version__ = "0.15.6.dev0"
 
 import sys
 
@@ -23,7 +24,7 @@ if sys.version_info[0] == 2:
 
 from .specVerifier import SpecVerifier, specdir, get_question_label
 
-Plom_API_Version = "104"
+Plom_API_Version = "109"
 Plom_Legacy_Server_API_Version = "60"
 Default_Port = 41984
 
@@ -37,7 +38,7 @@ ScenePixelHeight = 2000
 # I don't know what units this is, especially after Issue #1071.
 AnnFontSizePts = 34.0
 
-from .rules import isValidStudentNumber
+from .rules import isValidStudentID
 
 from .version_maps import undo_json_packing_of_version_map
 from .version_maps import make_random_version_map, check_version_map

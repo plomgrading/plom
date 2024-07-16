@@ -1,13 +1,20 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
+# Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Bryan Tanady
+
+# a different kind of annotations... this is about code typing
+from __future__ import annotations
 
 from copy import deepcopy
 from itertools import cycle
-from pathlib import Path
 import logging
+from pathlib import Path
+from time import sleep
+from typing import Any
 
 import PIL.Image
 
@@ -37,7 +44,10 @@ from PyQt6.QtWidgets import (
     QGraphicsSceneDragDropEvent,
     QGraphicsTextItem,
     QGraphicsView,
+    QGraphicsItem,
     QGraphicsItemGroup,
+    QGraphicsColorizeEffect,
+    QGraphicsOpacityEffect,
     QMessageBox,
     QToolButton,
     QMenu,
@@ -47,11 +57,14 @@ from plom import AnnFontSizePts, ScenePixelHeight
 from plom.plom_exceptions import PlomInconsistentRubric
 from plom.client.image_view_widget import mousewheel_delta_to_scale
 
+# in some places we make assumptions that our view is this subclass
+from plom.client.pageview import PageView
+
 from .tools import (
     CrossItem,
     DeltaItem,
     GhostComment,
-    GroupDeltaTextItem,
+    RubricItem,
     TextItem,
     TickItem,
 )
@@ -63,7 +76,7 @@ from .tools import (
     CommandImage,
     CommandDelete,
     CommandText,
-    CommandGroupDeltaText,
+    CommandRubric,
     CommandLine,
     CommandTick,
     CommandQMark,
@@ -72,6 +85,9 @@ from .tools import (
     CommandHighlight,
     CommandPenArrow,
     CommandCrop,
+    CommandRotatePage,
+    CommandShiftPage,
+    CommandRemovePage,
 )
 from .elastics import (
     which_horizontal_step,
@@ -80,25 +96,34 @@ from .elastics import (
     which_centre_to_centre,
 )
 from plom.client.rubrics import compute_score
+from plom.client.useful_classes import SimpleQuestion
 
 
 log = logging.getLogger("pagescene")
 
 
 class ScoreBox(QGraphicsTextItem):
-    """A simple graphics item which is place on the top-left
-    corner of the group-image to indicate the current total mark.
+    """Indicate the current total mark in the top-left.
+
     Drawn with a rounded-rectangle border.
     """
 
-    def __init__(self, style, fontsize, maxScore, score, question_label=None):
+    def __init__(
+        self,
+        style: dict[str, Any],
+        fontsize,
+        maxScore: int,
+        score,
+        question_label: str | None = None,
+    ) -> None:
         """Initialize a new ScoreBox.
 
         Args:
+            style: a dict of pen width, annotation colour, etc.
             fontsize (int): A non-zero, positive font value.
             maxScore (int): A non-zero, positive maximum score.
             score (int): A non-zero, positive current score for the paper.
-            question_label (str/None): how to display the question
+            question_label: how to display the question
                 number, or `None` to display no label at the beginning
                 of the score box.
         """
@@ -136,12 +161,11 @@ class ScoreBox(QGraphicsTextItem):
         self.style = self.scene().style
         self.setDefaultTextColor(self.style["annot_color"])
 
-    def changeScore(self, x):
-        """
-        Set the score to x.
+    def changeScore(self, x: int | None) -> None:
+        """Set the score to x.
 
         Args:
-            x (int): A non-zero, positive new score.
+            x: a value or zero for no score yet assigned.
 
         Returns:
             None
@@ -149,35 +173,32 @@ class ScoreBox(QGraphicsTextItem):
         self.score = x
         self._update_text()
 
-    def changeMax(self, x):
-        """
-        Set the max possible mark to x.
+    def changeMax(self, x: int) -> None:
+        """Set the max possible mark to x.
 
         Args:
-            x (int): A non-zero, positive new maximum mark.
+            x: A non-zero, positive new maximum mark.
 
         Returns:
             None
-
         """
         # set the max-mark.
         self.maxScore = x
         self._update_text()
 
     def paint(self, painter, option, widget):
-        """
-        Paint a rounded rectangle border around the scorebox text.
+        """Paint a rounded rectangle border around the scorebox text.
 
         Args:
             painter (QPainter): Current painter object.
             option (QStyleOptionGraphicsItem): Style options.
             widget (QWidget): Associated widgets.
 
-        Notes:
-            Overrides parent method.
-
         Returns:
             None
+
+        Notes:
+            Overrides parent method.
         """
         painter.setPen(QPen(self.style["annot_color"], self.style["pen_width"]))
         painter.setBrush(QBrush(QColor(255, 255, 255, 192)))
@@ -186,8 +207,7 @@ class ScoreBox(QGraphicsTextItem):
 
 
 class UnderlyingRect(QGraphicsRectItem):
-    """
-    A simple white rectangle with dotted border
+    """A simple white rectangle with dotted border.
 
     Used to add a nice white margin with dotted border around everything.
     """
@@ -201,9 +221,7 @@ class UnderlyingRect(QGraphicsRectItem):
 
 
 class MaskingOverlay(QGraphicsItemGroup):
-    """
-    A transparent rectangular border to place over the images.
-    """
+    """A transparent rectangular border to place over the images."""
 
     def __init__(self, outer_rect, inner_rect):
         super().__init__()
@@ -289,26 +307,27 @@ class MaskingOverlay(QGraphicsItemGroup):
 
 
 class UnderlyingImages(QGraphicsItemGroup):
-    """
-    Group for the images of the underlying pages being marked.
+    """Group for the images of the underlying pages being marked.
 
     Puts a dotted border around all the images.
     """
 
-    def __init__(self, image_data):
-        """
-        Initialize a new series of underlying images.
+    def __init__(self, image_data: list[dict[str, Any]]):
+        """Initialize a new series of underlying images.
 
         Args:
-            image_data (list[dict]): each dict has keys 'filename'
-                and 'orientation' (and possibly others).  Currently
-                every image is used and the list order determines
-                the order.  That is subject to change.
+            image_data: each dict has keys 'filename', 'orientation',
+                and 'visible' (and possibly others).  Only images with
+                'visible' as True will be used.
+                The list order determines the order: subject to change!
         """
         super().__init__()
         self.images = {}
-        x = 0
-        for n, data in enumerate(image_data):
+        x = 0.0
+        n = 0
+        for data in image_data:
+            if not data["visible"]:
+                continue
             qir = QImageReader(str(data["filename"]))
             # deal with jpeg exif rotations
             qir.setAutoTransform(True)
@@ -340,6 +359,7 @@ class UnderlyingImages(QGraphicsItemGroup):
             x = int(x)
             self.images[n] = img
             self.addToGroup(self.images[n])
+            n += 1
 
         self.setZValue(-1)
 
@@ -404,14 +424,15 @@ minimum_box_side_length = 24
 
 
 class PageScene(QGraphicsScene):
-    """Extend the graphics scene so that it knows how to translate
+    """An extended QGraphicsScene for interacting with annotations on top of underlying images.
+
+    Extend the graphics scene so that it knows how to translate
     mouse-press/move/release into operations on QGraphicsItems and
     QTextItems.
     """
 
     def __init__(self, parent, src_img_data, maxMark, question_label):
-        """
-        Initialize a new PageScene.
+        """Initialize a new PageScene.
 
         Args:
             parent (Annotator): the parent of the scene.  Currently
@@ -426,9 +447,17 @@ class PageScene(QGraphicsScene):
         """
         super().__init__(parent)
         self.src_img_data = deepcopy(src_img_data)
+        for x in self.src_img_data:
+            # TODO: revisit moving this "visible" bit outside of PageScene
+            # and dedupe the business of pagedata and src_img_data (Issue #3479)
+            if "visible" not in x.keys():
+                x["visible"] = True
+                # log.warn(f'Hacked in an "visible": {x}')
+        if not self.src_img_data:
+            raise RuntimeError("Cannot start a pagescene with no visible pages")
         self.maxMark = maxMark
         self.score = None
-        self._page_hack_buttons = []
+        self._page_action_buttons = []
         # Tool mode - initially set it to "move"
         self.mode = "move"
 
@@ -474,6 +503,7 @@ class PageScene(QGraphicsScene):
         # Builds path for different tool items.
         self.path = QPainterPath()
         self.pathItem = QGraphicsPathItem()
+        # TODO: should we be reusing these instead of instantiating new ones later?
         self.boxItem = QGraphicsRectItem()
         self.delBoxItem = QGraphicsRectItem()
         self.zoomBoxItem = QGraphicsRectItem()
@@ -482,7 +512,7 @@ class PageScene(QGraphicsScene):
 
         # Add a ghost comment to scene, but make it invisible
         self.ghostItem = GhostComment("1", "blah", self.fontSize)
-        self.hideGhost()
+        self._hideGhost()
         self.addItem(self.ghostItem)
 
         # cache some data about the currently selected rubric
@@ -530,79 +560,50 @@ class PageScene(QGraphicsScene):
         self.addItem(self.underImage)
         self.addItem(self.overMask)
 
+        # TODO: for debugging:
+        # if True or self.parent().is_experimental():
         if self.parent().is_experimental():
-            self.build_page_hack_buttons()
+            self.build_page_action_buttons()
 
         # Build scene rectangle to fit the image, and place image into it.
         self.setSceneRect(self.underImage.boundingRect())
 
-    def remove_page_hack_buttons(self):
-        for h in self._page_hack_buttons:
+    def remove_page_action_buttons(self):
+        for h in self._page_action_buttons:
             self.removeItem(h)
             h.deleteLater()
-        self._page_hack_buttons = []
+        self._page_action_buttons = []
 
-    def build_page_hack_buttons(self):
-        # TODO: Issue #2522 remove early return to enable this feature
-        return
-
+    def build_page_action_buttons(self):
         def page_delete_func_factory(n):
             def page_delete():
-                img = self.underImage.images[n]
-                self.src_img_data.pop(n)
-                br = img.mapRectToScene(img.boundingRect())
-                log.debug(f"About to delete img {n}: left={br.left()} w={br.width()}")
-                # shift existing annotations leftward
-                loc = br.right()
-                if n == len(self.underImage.images) - 1:
-                    # special case when deleting right-most image
-                    loc = br.left()
-                stuff = self.find_items_right_of(loc)
-                self.move_some_items(stuff, -br.width(), 0)
-                # TODO: replace with emit signal (if needed)
-                # self.parent().report_new_or_permuted_image_data(self.src_img_data)
-                self.buildUnderLay()
+                self.dont_use_page_image(n)
 
             return page_delete
 
         def page_shift_func_factory(n, relative):
-            def page_shift():
-                d = self.src_img_data.pop(n)
-                self.src_img_data.insert(n + relative, d)
-                # self.parent().report_new_or_permuted_image_data(self.src_img_data)
-                self.buildUnderLay()
+            def _page_shift():
+                self.shift_page_image(n, relative)
 
-            return page_shift
+            return _page_shift
 
         def page_rotate_func_factory(n, degrees):
-            def page_rotate():
-                # get old page width and location, select rightward objects to shift
-                img = self.underImage.images[n]
-                br = img.mapRectToScene(img.boundingRect())
-                loc = br.right()
-                w = br.width()
-                log.debug(f"About to rotate img {n} by {degrees}: right pt {loc} w={w}")
-                stuff = self.find_items_right_of(loc)
-                # do the rotation in metadata and rebuild
-                self.src_img_data[n]["orientation"] += degrees
-                # self.parent().report_new_or_permuted_image_data(self.src_img_data)
-                self.buildUnderLay()
-                # shift previously-selected rightward annotations by diff in widths
-                img = self.underImage.images[n]
-                br = img.mapRectToScene(img.boundingRect())
-                log.debug(f"After rotation: old width {w} now {br.width()}")
-                self.move_some_items(stuff, br.width() - w, 0)
+            def _page_rotate():
+                self.rotate_page_image(n, degrees)
 
-            return page_rotate
+            return _page_rotate
 
-        self.remove_page_hack_buttons()
+        self.remove_page_action_buttons()
         for n in range(len(self.underImage.images)):
             img = self.underImage.images[n]
-            b = QToolButton(text=f"Page {n}")
-            # b = QToolButton(text=f"\N{Page}")
-            b.setStyleSheet("background-color: #ff6666")
+            # b = QToolButton(text=f"Page {n}")
+            # b = QToolButton(text="\N{Page}")
+            # heaven == hamburger? works for me!
+            button = QToolButton(text="\N{TRIGRAM FOR HEAVEN}")
+            button.setToolTip(f"Options for page {n + 1}")
+            button.setStyleSheet("QToolButton { background-color: #0000ff; }")
             # parenting the menu inside the scene
-            m = QMenu(b)
+            m = QMenu(button)
             # TODO: nicer to parent by Annotr but unsupported (?) and unpredictable
             # m = QMenu(self.parent())
             _ = m.addAction("Remove this page", page_delete_func_factory(n))
@@ -616,36 +617,43 @@ class PageScene(QGraphicsScene):
             if n == len(self.underImage.images) - 1:
                 _.setEnabled(False)
             m.addAction(
-                "\N{Anticlockwise Open Circle Arrow} Rotate CCW",
-                page_rotate_func_factory(n, -90),
+                "\N{ANTICLOCKWISE OPEN CIRCLE ARROW} Rotate CCW",
+                page_rotate_func_factory(n, 90),
             )
             m.addAction(
-                "\N{Clockwise Open Circle Arrow} Rotate CW",
-                page_rotate_func_factory(n, 90),
+                "\N{CLOCKWISE OPEN CIRCLE ARROW} Rotate CW",
+                page_rotate_func_factory(n, -90),
             )
             m.addAction("Flip", page_rotate_func_factory(n, 180))
             m.addSeparator()
             m.addAction("Find other pages...", self.parent().rearrangePages)
-            b.setMenu(m)
-            b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-            h = self.addWidget(b)
-            h.setScale(1.8)
+            button.setMenu(m)
+            button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+            proxy_widget = self.addWidget(button)
+            proxy_widget.setZValue(20)
+            # proxy_widget.setScale(0.9)
+            proxy_widget.setOpacity(0.66)
             br = img.mapRectToScene(img.boundingRect())
-            wbr = h.mapRectToScene(h.boundingRect())
-            # h.setPos(br.right() - wbr.width(), br.top() - wbr.height())
-            # h.setPos(br.right() - wbr.width(), br.top())
-            h.setPos(
-                br.left() + br.width() / 2 - wbr.width() / 2,
-                br.top() - wbr.height() / 2,
+            # wbr = h.mapRectToScene(h.boundingRect())
+            # TODO: positioning via right-edge not correct w/ ItemIgnoresTransformations
+            # maybe h.setTransformOriginPoint(...) would help?
+            proxy_widget.setPos(
+                # br.left() + br.width() - wbr.width(),
+                br.left() + 0.86 * br.width(),
+                br.top(),
             )
-            # h.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
-            b.setToolTip(f"Page options for page {n}")
-            self._page_hack_buttons.append(h)
+            proxy_widget.setFlag(
+                QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations
+            )
+            proxy_widget.setFlag(
+                QGraphicsItem.GraphicsItemFlag.ItemDoesntPropagateOpacityToChildren
+            )
+            self._page_action_buttons.append(proxy_widget)
 
     def getScore(self):
         return self.score
 
-    def is_neutral_state(self):
+    def is_neutral_state(self) -> bool:
         """Has the mark has been changed from the unmarked state?
 
         No annotations is a neutral state.  Annotations that do not change the
@@ -655,15 +663,27 @@ class PageScene(QGraphicsScene):
         neutral to non-neutral.
 
         Returns:
-            bool
+            True if the mark has been changed to a concrete value.
         """
         return self.getScore() is None
 
+    def _refreshScore(self):
+        # Note that this assumes that the rubrics are consistent as per currentMarkingState
+        self.score = compute_score(self.get_rubrics(), self.maxMark)
+
     def refreshStateAndScore(self):
-        self.refreshScore()
+        """Compute the current score by adding up the rubric items and update state.
+
+        This should be called after any change that might effect the score, but
+        normally should shouldn't have to do that manually: for example, adding
+        or removing items from the scene triggers this automatically.
+        """
+        self._refreshScore()
         # after score and state are recomputed, we need to update a few things
         # the scorebox
-        self.scoreBox.changeScore(self.score)
+        if hasattr(self, "scoreBox") and self.scoreBox is not None:
+            # if its too early, we may not yet have a scorebox
+            self.scoreBox.changeScore(self.score)
         # update the rubric-widget
         self.parent().rubric_widget.updateLegalityOfRubrics()
         # also update the marklabel in the annotator - same text as scorebox
@@ -671,16 +691,21 @@ class PageScene(QGraphicsScene):
 
         # update the ghostcomment if in rubric-mode.
         if self.mode == "rubric":
-            self.updateGhost(
-                self.current_rubric["display_delta"],
-                self.current_rubric["text"],
-                self.isLegalRubric(self.current_rubric),
-            )
+            self._updateGhost(self.current_rubric)
+
+    def addItem(self, X) -> None:
+        # X: QGraphicsItem; but typing it so gives the Liskov error
+        super().addItem(X)
+        self.refreshStateAndScore()
+
+    def removeItem(self, X) -> None:
+        super().removeItem(X)
+        self.refreshStateAndScore()
 
     def get_rubrics(self):
         """A list of the rubrics current used in the scene.
 
-        Return:
+        Returns:
             list: a list of dicts, one for each rubric that is on the page.
 
         TODO: we will be calling this function quite a lot: maybe its worth
@@ -690,30 +715,32 @@ class PageScene(QGraphicsScene):
         for X in self.items():
             # check if object has "saveable" attribute and it is set to true.
             if getattr(X, "saveable", False):
-                if isinstance(X, GroupDeltaTextItem):
+                if isinstance(X, RubricItem):
                     rubrics.append(X.as_rubric())
         return rubrics
 
-    def refreshScore(self):
-        """Compute the current score by adding up the rubric items on the page
-        Note that this assumes that the rubrics are consistent as per currentMarkingState
+    def get_src_img_data(self, *, only_visible: bool = True) -> list[dict[str, Any]]:
+        """Get the live source image data for this scene.
+
+        Note you get the actual data, not a copy so careful if you mess with it!
         """
-        self.score = compute_score(self.get_rubrics(), self.maxMark)
+        r = []
+        for x in self.src_img_data:
+            if x["visible"] or not only_visible:
+                r.append(x)
+        return r
 
-    def get_src_img_data(self):
-        return self.src_img_data
-
-    def how_many_underlying_images_wide(self):
-        """How many images wide is the bottom layer?
+    def how_many_underlying_images_wide(self) -> int:
+        """Count how many images wide the bottom layer is.
 
         Currently this is just the number of images (because we layout
         in one long row) but future revisions might support alternate
         layouts.
         """
-        return len(self.src_img_data)
+        return len(self.get_src_img_data(only_visible=True))
 
-    def how_many_underlying_images_high(self):
-        """How many images high is the bottom layer?
+    def how_many_underlying_images_high(self) -> int:
+        """How many images high is the bottom layer.
 
         Currently this is always 1 because we align the images in a
         single row but future revisions might support alternate layouts.
@@ -732,20 +759,20 @@ class PageScene(QGraphicsScene):
         self._scale = scale
         self._stuff_to_do_after_setting_scale()
 
-    def increase_scale_factor(self, r=1.1):
+    def increase_scale_factor(self, r: float = 1.1) -> None:
         """Scale up the annotations by 110%.
 
-        args:
-            r (float): the multiplicative factor, defaults to 1.1.
+        Args:
+            r: the multiplicative factor, defaults to 1.1.
         """
         self._scale *= r
         self._stuff_to_do_after_setting_scale()
 
-    def decrease_scale_factor(self, r=1.1):
+    def decrease_scale_factor(self, r: float = 1.1) -> None:
         """Scale down the annotations by 110%.
 
-        args:
-            r (float): the scale is multiplied by 1/r.
+        Args:
+            r: the scale is multiplied by 1/r.
         """
         self.increase_scale_factor(1.0 / r)
 
@@ -765,9 +792,9 @@ class PageScene(QGraphicsScene):
     def set_annotation_color(self, c):
         """Set the colour of annotations.
 
-        args:
+        Args:
             c (QColor/tuple): a QColor or an RGB triplet describing
-                athe new colour.
+                the new colour.
         """
         try:
             c = QColor(c)
@@ -793,12 +820,11 @@ class PageScene(QGraphicsScene):
         if self.scoreBox:
             self.scoreBox.update_style()
 
-    def setToolMode(self, mode):
-        """
-        Sets the current toolMode.
+    def setToolMode(self, mode: str) -> None:
+        """Sets the current toolMode.
 
         Args:
-            mode (str): One of "rubric", "pan", "move" etc..
+            mode: One of "rubric", "pan", "move" etc..
 
         Returns:
             None
@@ -807,26 +833,35 @@ class PageScene(QGraphicsScene):
         self.views()[0].setFocus(Qt.FocusReason.TabFocusReason)
 
         self.mode = mode
-        # if current mode is not rubric, make sure the ghostcomment is hidden
 
         # To fix issues with changing mode mid-draw - eg #1540
         # trigger this
         self.stopMidDraw()
 
+        # if current mode is not rubric, make sure the ghostcomment is hidden
         if self.mode != "rubric":
-            self.hideGhost()
+            self._hideGhost()
+        else:
+            # Careful, don't want it to appear at an old location
+            gpt = QCursor.pos()  # global mouse pos
+            vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
+            spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
+            self.ghostItem.setPos(spt)
+            self._exposeGhost()
 
         # if mode is "pan", allow the view to drag about, else turn it off
         if self.mode == "pan":
             self.views()[0].setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         else:
+            # We want "NoDrag" but some reason toggling thru ScrollHandDrag
+            # fixes the cursor Issue #3417.  I suspect the real issue is that
+            # we are overfiltering mouse events, and not calling the super
+            # mouse event handler somewhere (e.g., Issue #834).
+            self.views()[0].setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
             self.views()[0].setDragMode(QGraphicsView.DragMode.NoDrag)
-        # update the modelabels
-        self.parent().setModeLabels(self.mode)
 
     def get_nonrubric_text_from_page(self):
-        """
-        Get the current text items and rubrics associated with this paper.
+        """Get the current text items and rubrics associated with this paper.
 
         Returns:
             list: strings from each bit of text.
@@ -841,24 +876,22 @@ class PageScene(QGraphicsScene):
         return texts
 
     def get_rubric_ids(self):
-        """
-        Get the rubric IDs associated with this scene.
+        """Get the rubric IDs associated with this scene.
 
         Returns:
             list: of IDs.
         """
         rubrics = []
         for X in self.items():
-            if isinstance(X, GroupDeltaTextItem):
+            if isinstance(X, RubricItem):
                 rubrics.append(X.rubricID)
         return rubrics
 
-    def countComments(self):
-        """
-        Counts current text items and comments associated with the paper.
+    def countComments(self) -> int:
+        """Counts current text items and comments associated with the paper.
 
         Returns:
-            (int): total number of comments associated with this paper.
+            Total number of comments associated with this paper.
         """
         count = 0
         for X in self.items():
@@ -866,16 +899,15 @@ class PageScene(QGraphicsScene):
                 count += 1
         return count
 
-    def countRubrics(self):
-        """
-        Counts current rubrics (comments) associated with the paper.
+    def countRubrics(self) -> int:
+        """Counts current rubrics (comments) associated with the paper.
 
         Returns:
-            (int): total number of rubrics associated with this paper.
+            Total number of rubrics associated with this paper.
         """
         count = 0
         for X in self.items():
-            if type(X) is GroupDeltaTextItem:
+            if type(X) is RubricItem:
                 count += 1
         return count
 
@@ -895,7 +927,7 @@ class PageScene(QGraphicsScene):
         # self.undoStack.resetClean()
         self.undoStack.setClean()
 
-    def is_dirty(self):
+    def is_dirty(self) -> bool:
         """Has the scene had annotations modified since it was last clean?
 
         Note that annotations from a older session should not cause this
@@ -904,13 +936,12 @@ class PageScene(QGraphicsScene):
         """
         return not self.undoStack.isClean()
 
-    def hasAnnotations(self):
-        """
-        Checks for pickleable annotations.
+    def hasAnnotations(self) -> bool:
+        """Checks for pickleable annotations.
 
-        Returns
-            (bool): True if page scene has any pickle-able annotations,
-                False otherwise.
+        Returns:
+            True if page scene has any pickle-able annotations.
+            False otherwise.
         """
         for X in self.items():
             if getattr(X, "saveable", False):
@@ -944,23 +975,43 @@ class PageScene(QGraphicsScene):
         self.setSceneRect(self.getSaveableRectangle())
         self.update()
 
-    def save(self, basename):
-        """
-        Save the annotated group-image.
+    def squelch_animations(self):
+        """Wait for transient animations or perhaps hurry them along."""
+        while True:
+            have_anim = False
+            for x in self.items():
+                if getattr(x, "is_transcient_animation", False):
+                    have_anim = True
+                    # force an early removal of the animation
+                    self.removeItem(x)
+            if not have_anim:
+                break
+            # wait a little bit, processing events
+            page_view = self.views()[0]
+            assert isinstance(page_view, PageView)
+            # yuck, what a parenting nightmare
+            page_view._annotr.pause_to_process_events()
+            log.warn("sleeping 50 ms waiting for animations to finish")
+            sleep(0.05)
 
-        args:
+    def save(self, basename):
+        """Save the annotated group-image.
+
+        Args:
             basename (str/pathlib.Path): where to save, we will add a png
                 or jpg extension to it.  If the file already exists, it
                 will be overwritten.
 
-        returns:
+        Returns:
             pathlib.Path: the file we just saved to, including jpg or png.
         """
+        self.squelch_animations()
+
         # don't want to render these, but should we restore them after?
         # TODO: or setVisible(False) instead of remove?
-        self.remove_page_hack_buttons()
+        self.remove_page_action_buttons()
 
-        self.hideGhost()
+        self._hideGhost()
 
         # Get the width and height of the image
         br = self.getSaveableRectangle()
@@ -1028,8 +1079,7 @@ class PageScene(QGraphicsScene):
             return pngname
 
     def keyPressEvent(self, event):
-        """
-        Changes the focus or cursor based on key presses.
+        """Changes the focus or cursor based on key presses.
 
         Notes:
             Overrides parent method.
@@ -1042,7 +1092,6 @@ class PageScene(QGraphicsScene):
 
         Returns:
             None
-
         """
         # TODO: all this should somehow be an "alternative action" of the tool
         cursor = self.parent().cursor
@@ -1071,15 +1120,13 @@ class PageScene(QGraphicsScene):
             super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
-        """
-        Changes cursors back to their standard cursor when keys are released.
+        """Changes cursors back to their standard cursor when keys are released.
 
         Args:
             event (QKeyEvent): the key release.
 
         Returns:
             None
-
         """
         variableCursorRelease = {
             "cross": self.parent().cursor["cross"],
@@ -1096,7 +1143,7 @@ class PageScene(QGraphicsScene):
         else:
             pass
 
-    def wheelEvent(self, event):
+    def wheelEvent(self, event) -> None:
         if (
             QGuiApplication.queryKeyboardModifiers()
             == Qt.KeyboardModifier.ControlModifier
@@ -1104,20 +1151,21 @@ class PageScene(QGraphicsScene):
             s = mousewheel_delta_to_scale(event.delta())
             self.views()[0].scale(s, s)
             # sets the view rectangle and updates zoom-dropdown.
-            self.views()[0].setZoomSelector(True)
+            # convince MyPy we have a PageView, not just any QGraphicsView
+            page_view = self.views()[0]
+            assert isinstance(page_view, PageView)
+            page_view.setZoomSelector(True)
             self.zoomFlag = 0
             event.accept()
 
     def mousePressEvent(self, event):
-        """
-        Call various tool functions depending on the mouse press' location.
+        """Call various tool functions depending on the mouse press location.
 
         Args:
             event (QMouseEvent): The mouse press event.
 
         Returns:
             None
-
         """
         # check if mouseclick inside the avoidBox
         if self.avoidBox.contains(event.scenePos()):
@@ -1137,15 +1185,13 @@ class PageScene(QGraphicsScene):
         return super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-        """
-        Call various tool functions depending on the mouse's location.
+        """Call various tool functions depending on the mouse's location.
 
         Args:
             event (QMouseEvent): The mouse move event.
 
         Returns:
             None
-
         """
         functionName = mouseMove.get(self.mode, None)
         if functionName:
@@ -1167,23 +1213,23 @@ class PageScene(QGraphicsScene):
     # more permanent graphics item.
 
     def textUnderneathPoint(self, pt):
-        """Check to see if any text-like object under point"""
+        """Check to see if any text-like object under point."""
         for under in self.items(pt):
             if (
                 isinstance(under, DeltaItem)
                 or isinstance(under, TextItem)
-                or isinstance(under, GroupDeltaTextItem)
+                or isinstance(under, RubricItem)
             ):
                 return True
         return False
 
     def textUnderneathGhost(self):
-        """Check to see if any text-like object under current ghost-text"""
+        """Check to see if any text-like object under current ghost-text."""
         for under in self.ghostItem.collidingItems():
             if (
                 isinstance(under, DeltaItem)
                 or isinstance(under, TextItem)
-                or isinstance(under, GroupDeltaTextItem)
+                or isinstance(under, RubricItem)
             ):
                 return True
         return False
@@ -1201,14 +1247,24 @@ class PageScene(QGraphicsScene):
             self.boxLineStampState = 1
             self.originPos = event.scenePos()
             self.currentPos = self.originPos
-            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+            self.boxItem = QGraphicsRectItem(
+                QRectF(self.originPos, self.currentPos).normalized()
+            )
             self.boxItem.setPen(self.ink)
             self.boxItem.setBrush(self.lightBrush)
             self.addItem(self.boxItem)
         elif self.boxLineStampState == 2:  # finish the connecting line
             if ghost_rect is None:
+                tick_rad = TickItem.tick_radius
+                padding = tick_rad // 2
+                side = round(2 * padding + 7 * tick_rad / 4)
+                g_rect_top_left = QPointF(
+                    self.currentPos.x() - 3 * tick_rad // 4 - padding,
+                    self.currentPos.y() - tick_rad - padding,
+                )
+
                 ghost_rect = QRectF(
-                    self.currentPos.x() - 16, self.currentPos.y() - 8, 16, 16
+                    g_rect_top_left.x(), g_rect_top_left.y(), side, side
                 )
             connectingPath = self.whichLineToDraw(
                 ghost_rect,
@@ -1235,12 +1291,13 @@ class PageScene(QGraphicsScene):
         elif self.boxLineStampState == 1:  # mid box draw - keep drawing it. (1->1)
             self.currentPos = event.scenePos()
             if self.boxItem is None:
-                # oops - it isn't there yet, so start it
-                self.boxItem = QGraphicsRectItem(
-                    QRectF(self.originPos, self.currentPos)
-                )
-            else:  # update the box
-                self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
+                # 2024-05: not convinced this None case can happen
+                log.error("EEK: the boxItem was unexpectedly None, working around...")
+                self.boxItem = QGraphicsRectItem()
+                self.boxItem.setPen(self.ink)
+                self.boxItem.setBrush(self.lightBrush)
+                self.addItem(self.boxItem)
+            self.boxItem.setRect(QRectF(self.originPos, self.currentPos).normalized())
             return
         elif (
             self.boxLineStampState == 2
@@ -1248,8 +1305,16 @@ class PageScene(QGraphicsScene):
             # update the connecting path
             self.currentPos = event.scenePos()
             if ghost_rect is None:
+                tick_rad = TickItem.tick_radius
+                padding = tick_rad // 2
+                side = round(2 * padding + 7 * tick_rad / 4)
+                g_rect_top_left = QPointF(
+                    self.currentPos.x() - 3 * tick_rad // 4 - padding,
+                    self.currentPos.y() - tick_rad - padding,
+                )
+
                 ghost_rect = QRectF(
-                    self.currentPos.x() - 16, self.currentPos.y() - 8, 16, 16
+                    g_rect_top_left.x(), g_rect_top_left.y(), side, side
                 )
             self.pathItem.setPath(
                 self.whichLineToDraw(
@@ -1280,8 +1345,8 @@ class PageScene(QGraphicsScene):
             self.removeItem(self.boxItem)
             # make sure box is large enough
             if (
-                abs(self.boxItem.rect().width()) < minimum_box_side_length
-                or abs(self.boxItem.rect().height()) < minimum_box_side_length
+                self.boxItem.rect().width() < minimum_box_side_length
+                or self.boxItem.rect().height() < minimum_box_side_length
             ):
                 # is small box, so ignore it and draw no connecting path, just stamp final object
                 self.boxLineStampState = 3
@@ -1346,10 +1411,8 @@ class PageScene(QGraphicsScene):
                 command = CommandTick(self, pt)
         self.undoStack.push(command)  # push onto the stack.
 
-    def mousePressCross(self, event):
-        """
-        Selects the proper cross/?-mark/tick based on which mouse button or
-        mouse/key combination was pressed.
+    def mousePressCross(self, event) -> None:
+        """Selects the proper cross/?-mark/tick based on which mouse button/key combination.
 
         Notes:
             tick = right-click or shift+click.
@@ -1361,7 +1424,6 @@ class PageScene(QGraphicsScene):
 
         Returns:
             None.
-
         """
         # use the boxStampPress function to update things
         self.boxStampPress(event)
@@ -1375,7 +1437,7 @@ class PageScene(QGraphicsScene):
             self.undoStack.endMacro()
             self.boxLineStampState = 0
 
-    def mousePressTick(self, event):
+    def mousePressTick(self, event) -> None:
         # use the boxStampPress function to update things
         self.boxStampPress(event)
         # only have to do something if in states 3 or 4
@@ -1388,7 +1450,7 @@ class PageScene(QGraphicsScene):
             self.undoStack.endMacro()
             self.boxLineStampState = 0
 
-    def mouseMoveCross(self, event):
+    def mouseMoveCross(self, event) -> None:
         self.boxStampMove(event)
         if self.boxLineStampState >= 4:  # error has occurred
             log.debug(
@@ -1397,7 +1459,7 @@ class PageScene(QGraphicsScene):
             self.boxLineStampState = 0
             self.undoStack.endMacro()
 
-    def mouseMoveTick(self, event):
+    def mouseMoveTick(self, event) -> None:
         self.boxStampMove(event)
         if self.boxLineStampState >= 4:  # error has occurred
             log.debug(
@@ -1406,7 +1468,7 @@ class PageScene(QGraphicsScene):
             self.boxLineStampState = 0
             self.undoStack.endMacro()
 
-    def mouseReleaseCross(self, event):
+    def mouseReleaseCross(self, event) -> None:
         # update things
         self.boxStampRelease(event)
         # only have to do something if in states 3 or 4
@@ -1419,7 +1481,7 @@ class PageScene(QGraphicsScene):
             self.undoStack.endMacro()
             self.boxLineStampState = 0
 
-    def mouseReleaseTick(self, event):
+    def mouseReleaseTick(self, event) -> None:
         # update things
         self.boxStampRelease(event)
         # only have to do something if in states 3 or 4
@@ -1432,7 +1494,7 @@ class PageScene(QGraphicsScene):
             self.undoStack.endMacro()
             self.boxLineStampState = 0
 
-    def mousePressRubric(self, event):
+    def mousePressRubric(self, event) -> None:
         """Mouse press while holding rubric tool.
 
         Usually this creates a rubric, an object consisting of a delta
@@ -1467,14 +1529,13 @@ class PageScene(QGraphicsScene):
 
         if self.boxLineStampState == 3:  # time to stamp the rubric!
             pt = event.scenePos()  # grab the location of the mouse-click
-            command = CommandGroupDeltaText(self, pt, self.current_rubric)
+            command = CommandRubric(self, pt, self.current_rubric)
             log.debug(
-                "Making a GroupDeltaText: boxLineStampState is {}".format(
+                "Making a Rubric: boxLineStampState is {}".format(
                     self.boxLineStampState
                 )
             )
             self.undoStack.push(command)  # push the delta onto the undo stack.
-            self.refreshStateAndScore()  # and now refresh the markingstate and score
 
         if self.boxLineStampState >= 3:
             log.debug(
@@ -1483,9 +1544,8 @@ class PageScene(QGraphicsScene):
             self.boxLineStampState = 0
             self.undoStack.endMacro()
 
-    def mousePressMove(self, event):
-        """
-        Create closed hand cursor when move-tool is selected, otherwise does nothing.
+    def mousePressMove(self, event) -> None:
+        """Create closed hand cursor when move-tool is selected, otherwise does nothing.
 
         Notes:
             The actual moving of objects is handled by themselves since they
@@ -1496,15 +1556,12 @@ class PageScene(QGraphicsScene):
 
         Returns:
             None
-
         """
         self.views()[0].setCursor(Qt.CursorShape.ClosedHandCursor)
         super().mousePressEvent(event)
 
-    def mousePressPan(self, event):
-        """
-        While pan-tool selected changes the cursor to a closed hand,
-        otherwise does not do much.
+    def mousePressPan(self, event) -> None:
+        """While pan-tool selected changes the cursor to a closed hand, otherwise does not do much.
 
         Notes:
             Do not pass on event to superclass since we want to avoid
@@ -1515,12 +1572,11 @@ class PageScene(QGraphicsScene):
 
         Returns:
             None
-
         """
         self.views()[0].setCursor(Qt.CursorShape.ClosedHandCursor)
         return
 
-    def mousePressText(self, event):
+    def mousePressText(self, event) -> None:
         """Mouse press while holding text tool.
 
         Usually this creates a textobject, but if user drags then, it
@@ -1542,7 +1598,7 @@ class PageScene(QGraphicsScene):
         # If something is there... (fixes bug reported by MattC)
         if under is not None:
             # If it is part of a group then do nothing
-            if isinstance(under.group(), GroupDeltaTextItem):
+            if isinstance(under.group(), RubricItem):
                 return
             # If it is a textitem then fire up the editor.
             if isinstance(under, TextItem):
@@ -1568,7 +1624,7 @@ class PageScene(QGraphicsScene):
             # Construct empty text object, give focus to start editor
             ept = event.scenePos()
             command = CommandText(self, ept, "")
-            # move so centred under cursor   TODO: move into class!
+            # move so centred under cursor   TODO: move into class, Issue #3419
             pt = ept - QPointF(0, command.blurb.boundingRect().height() / 2)
             command.blurb.setPos(pt)
             command.blurb.enable_interactive()
@@ -1580,9 +1636,8 @@ class PageScene(QGraphicsScene):
             )
             self.undoStack.endMacro()
 
-    def mouseMoveText(self, event):
-        """
-        Handles mouse moving with a text.
+    def mouseMoveText(self, event) -> None:
+        """Handles mouse moving with a text.
 
         Args:
             event (QMouseEvent): the event of the mouse moving.
@@ -1592,7 +1647,7 @@ class PageScene(QGraphicsScene):
         """
         self.boxStampMove(event)
 
-    def mouseReleaseText(self, event):
+    def mouseReleaseText(self, event) -> None:
         # if haven't started drawing, or are mid draw of line be careful of what is underneath
         # if there is text under the ghost then do not stamp anything - ignore the event.
         if self.textUnderneathPoint(event.scenePos()) and self.boxLineStampState in [
@@ -1607,7 +1662,7 @@ class PageScene(QGraphicsScene):
             # Construct empty text object, give focus to start editor
             pt = event.scenePos()
             command = CommandText(self, pt, "")
-            # move so centred under cursor   TODO: move into class!
+            # move so centred under cursor   TODO: move into class, Issue #3419
             pt -= QPointF(0, command.blurb.boundingRect().height() / 2)
             command.blurb.setPos(pt)
             command.blurb.enable_interactive()
@@ -1621,16 +1676,14 @@ class PageScene(QGraphicsScene):
             self.undoStack.endMacro()
             self.boxLineStampState = 0
 
-    def mouseReleaseMove(self, event):
-        """
-        Handles mouse releases for move tool by setting cursor to an open hand.
+    def mouseReleaseMove(self, event) -> None:
+        """Handles mouse releases for move tool by setting cursor to an open hand.
 
         Args:
             event (QMouseEvent): given mouse release.
 
         Returns:
             None.
-
         """
         self.views()[0].setCursor(Qt.CursorShape.OpenHandCursor)
         super().mouseReleaseEvent(event)
@@ -1639,48 +1692,49 @@ class PageScene(QGraphicsScene):
         # self.updateSceneRectangle()
         # self.update()
 
-    def mouseReleasePan(self, event):
-        """
-        Handles mouse releases for pan tool by setting cursor to an open hand.
+    def mouseReleasePan(self, event) -> None:
+        """Handles mouse releases for pan tool by setting cursor to an open hand.
 
         Args:
             event (QMouseEvent): given mouse release.
 
         Returns:
             None.
-
         """
         self.views()[0].setCursor(Qt.CursorShape.OpenHandCursor)
-        super().mouseReleaseEvent(event)
-        self.views()[0].setZoomSelector()
+        # convince MyPy we have a PageView, not just any QGraphicsView
+        page_view = self.views()[0]
+        assert isinstance(page_view, PageView)
+        page_view.setZoomSelector()
 
-    def mousePressImage(self, event):
-        """
-        Adds the selected image at the location the mouse is pressed and
-        shows a message box with instructions.
+    def mousePressImage(self, event) -> None:
+        """Adds the selected image at the location the mouse is pressed and shows a message box with instructions.
 
         Args:
             event (QMouseEvent): given mouse click.
 
         Returns:
             None
-
         """
         if self.tempImagePath is not None:
             imageFilePath = self.tempImagePath
             command = CommandImage(self, event.scenePos(), QImage(imageFilePath))
             self.undoStack.push(command)
             self.tempImagePath = None
+            _parent = self.parent()
+            assert _parent is not None
             # set the mode back to move
-            self.parent().toMoveMode()
-
-            msg = QMessageBox(self.parent())
+            # MyPy is rightfully unsure parent is an Annotator:
+            # # assert isinstance(_parent, Annotator)
+            # but that's likely a circular import, so just add exception:
+            _parent.toMoveMode()  # type: ignore[attr-defined]
+            msg = QMessageBox(_parent)  # type: ignore[call-overload]
             msg.setIcon(QMessageBox.Icon.Information)
             msg.setWindowTitle("Image Information")
             msg.setText(
                 "You can double-click on an Image to modify its scale and border."
             )
-            msg.setStandardButtons(QMessageBox.Ok)
+            msg.setStandardButtons(QMessageBox.StandardButton.Ok)
             msg.exec()
 
     def dragEnterEvent(self, e):
@@ -1734,15 +1788,13 @@ class PageScene(QGraphicsScene):
         return self.parent().latexAFragment(*args, **kwargs)
 
     def event(self, event):
-        """
-        A fix for misread touchpad events on mac.
+        """A fix for misread touchpad events on macOS.
 
         Args:
             event (QEvent): A mouse event.
 
         Returns:
             (bool) True if the event is accepted, False otherwise.
-
         """
         if event.type() in [
             QEvent.Type.TouchBegin,
@@ -1762,13 +1814,13 @@ class PageScene(QGraphicsScene):
         for k in range(c):
             print(k, self.undoStack.text(k))
 
-    def is_user_placed(self, item):
+    def is_user_placed(self, item) -> bool:
         """Tell me if the user placed it or if its some autogen junk.
 
         Let's try to isolate this unpleasantness in one place.
 
         Returns:
-            bool: True if this is a user-generated object, False if not.
+            True if this is a user-generated object, False if not.
         """
         from plom.client.tools import (
             CrossItem,
@@ -1822,37 +1874,41 @@ class PageScene(QGraphicsScene):
                 log.debug(f"  discard: {item}: has x={myx} <= {x}")
         return keep
 
-    def move_some_items(self, I, dx, dy):
+    def move_some_items(self, L: list[QGraphicsItem], dx: float, dy: float) -> None:
         """Translate some of the objects in the scene.
 
-        args:
-            I (list): which objects to move.  TODO: not quite sure yet
+        Args:
+            L: list of objects to move.  TODO: not quite sure yet
                 what is admissible here but we will try to filter out
                 non-user-created stuff.
-            dx (float): translation delta in the horizontal direction.
-            dy (float): translation delta in the vertical direction.
+                TODO: typed as ``QGraphicsItem`` but maybe Groups too?
+            dx: translation delta in the horizontal direction.
+            dy: translation delta in the vertical direction.
 
-        Wraps the movement of all objects in a compound undo item.
+        Wraps the movement of all objects in a compound undo item.  If
+        you want this functionality without the macro (b/c you're doing
+        your own, see the low-level :py:method:`_move_some_items`.
         """
+        self.undoStack.beginMacro("Move several items at once")
+        self._move_some_items(L, dx, dy)
+        self.undoStack.endMacro()
+
+    def _move_some_items(self, L: list, dx: float, dy: float) -> None:
         from plom.client.tools import CommandMoveItem
 
-        log.debug(f"Shifting {len(I)} objects by ({dx}, {dy})")
-        self.undoStack.beginMacro("Speak at once while taking turns")
-        for item in I:
+        log.debug(f"Shifting {len(L)} objects by ({dx}, {dy})")
+        for item in L:
             if not self.is_user_placed(item):
                 continue
             log.debug(f"got user-placed item {item}, shifting by ({dx}, {dy})")
             command = CommandMoveItem(item, QPointF(dx, dy))
             self.undoStack.push(command)
-        self.undoStack.endMacro()
 
     def pickleSceneItems(self):
-        """
-        Pickles the saveable annotation items in the scene.
+        """Pickles the saveable annotation items in the scene.
 
         Returns:
             (list[str]): a list containing all pickled elements.
-
         """
         lst = []
         for X in self.items():
@@ -1862,8 +1918,7 @@ class PageScene(QGraphicsScene):
         return lst
 
     def unpickleSceneItems(self, lst):
-        """
-        Unpickles all items from the scene.
+        """Unpickles all items from the scene.
 
         Args:
             lst (list[list[str]]): a list containing lists of scene items'
@@ -1891,6 +1946,10 @@ class PageScene(QGraphicsScene):
                 self.undoStack.push(command)
         # now load up the new items
         for X in lst:
+            # Special hack for legacy server data:
+            if X[0] == "GroupDeltaText":
+                log.info("Rewrote legacy GroupDeltaText %s as a Rubric", X[3])
+                X[0] = "Rubric"
             CmdCls = globals().get("Command{}".format(X[0]), None)
             if CmdCls and getattr(CmdCls, "from_pickle", None):
                 # TODO: use try-except here?
@@ -1904,9 +1963,182 @@ class PageScene(QGraphicsScene):
         # finish the macro
         self.undoStack.endMacro()
 
-    def mousePressBox(self, event):
+    def shift_page_image(self, n: int, relative: int) -> None:
+        """Shift a page left or right on the undostack.
+
+        Currently does not attempt to adjust the positions of annotation items.
+
+        Args:
+            n: which page, indexed from 0.
+            relative: +1 or -1, but no error checking is done and its
+                not defined what happens for other values.
+
+        Returns:
+            None
         """
-        Handle mouse presses when box tool is selected.
+        if relative > 0:
+            # not obvious we need a macro, but maybe later we move annotations with it
+            macroname = f"Page {n} shift right {relative}"
+        else:
+            macroname = f"Page {n} shift left {abs(relative)}"
+        self.undoStack.beginMacro(macroname)
+
+        # like calling _shift_page_image_only but covered in undo sauce
+        cmd = CommandShiftPage(self, n, n + relative)
+        self.undoStack.push(cmd)
+
+        # TODO: adjust annotations, then end the macro
+        self.undoStack.endMacro()
+
+    def _idx_from_visible_idx(self, n: int) -> int:
+        """Find the index in the src_img_data for the nth visible image.
+
+        We often want to operate on the src_img_data, for a given visible image.
+        This helper routine helps us find the right index.
+
+        Args:
+            n: the nth visible image, indexed from 0.
+
+        Returns:
+            The corresponding 0-based index into the src_img_data.
+
+        Raises:
+            KeyError: cannot find such.
+        """
+        m = -1
+        for idx, x in enumerate(self.src_img_data):
+            if x["visible"]:
+                m += 1
+            if m == n:
+                return idx
+        raise KeyError(f"no row in src_img_data visible at n={n}")
+
+    def _id_from_visible_idx(self, n: int) -> int:
+        """Find the id from the src_img_data for the nth visible image.
+
+        We often want to operate on the src_img_data, for a given visible image.
+        This helper routine helps us find the right index.
+
+        Args:
+            n: the nth visible image, indexed from 0.
+
+        Returns:
+            The corresponding `id` which is one of the keys of the
+            rows in the src_img_data.
+
+        Raises:
+            KeyError: cannot find such.
+        """
+        n_idx = self._idx_from_visible_idx(n)
+        return self.src_img_data[n_idx]["id"]
+
+    def _shift_page_image_only(self, n: int, m: int) -> None:
+        n_idx = self._idx_from_visible_idx(n)
+        m_idx = self._idx_from_visible_idx(m)
+        d = self.src_img_data.pop(n_idx)
+        self.src_img_data.insert(m_idx, d)
+        # self.parent().report_new_or_permuted_image_data(self.src_img_data)
+        self.buildUnderLay()
+
+    def rotate_page_image(self, n: int, degrees: int) -> None:
+        """Rotate a page on the undostack, shifting objects on other pages appropriately.
+
+        The rotations happen within a single undoable "macro".
+
+        Args:
+            n: which page, indexed from 0.
+            degrees: rotation angle, positive means CCW.
+
+        Returns:
+            None.
+        """
+        self.undoStack.beginMacro(f"Page {n} rotation {degrees} and item move")
+
+        # get old page width and location, select rightward objects to shift
+        img = self.underImage.images[n]
+        br = img.mapRectToScene(img.boundingRect())
+        loc = br.right()
+        w = br.width()
+        log.debug(f"About to rotate img {n} by {degrees}: right pt {loc} w={w}")
+        stuff = self.find_items_right_of(loc)
+
+        # like calling _rotate_page_image_only but covered in undo sauce
+        cmd = CommandRotatePage(self, n, degrees)
+        self.undoStack.push(cmd)
+
+        # shift previously-selected rightward annotations by diff in widths
+        img = self.underImage.images[n]
+        br = img.mapRectToScene(img.boundingRect())
+        log.debug(f"After rotation: old width {w} now {br.width()}")
+        # enqueues appropriate CommmandMoves
+        self._move_some_items(stuff, br.width() - w, 0)
+
+        self.undoStack.endMacro()
+
+    def _rotate_page_image_only(self, n: int, degrees: int) -> None:
+        """Low-level rotate page support: only rotate page, no shifts."""
+        # do the rotation in metadata and rebuild
+        n_idx = self._idx_from_visible_idx(n)
+        self.src_img_data[n_idx]["orientation"] += degrees
+        # self.parent().report_new_or_permuted_image_data(self.src_img_data)
+        self.buildUnderLay()
+
+    def dont_use_page_image(self, n: int) -> None:
+        imgid = self._id_from_visible_idx(n)
+        img = self.underImage.images[n]
+        # the try behaves like "with highlighted_pages([n]):"
+        self.highlight_pages([n], "darkred")
+        try:
+            d = SimpleQuestion(
+                self.parent(),  # self.addWidget(d) instead?
+                """Remove this page? <ul>\n
+                  <li>You can undo or find the page again using
+                  <em>Rearrange Pages</em>.</li>\n
+                <li>Existing annotations will shift left or right.</li>\n
+                </ul>""",
+                "Are you sure you want to remove this page?",
+            )
+            # h = self.addWidget(d)
+            # Not sure opening a dialog from the scene is wise
+            if d.exec() == QMessageBox.StandardButton.No:
+                return
+        finally:
+            self.highlight_pages_reset()
+
+        self.undoStack.beginMacro(f"Page {n} remove and item move")
+
+        br = img.mapRectToScene(img.boundingRect())
+        log.debug(f"About to delete img {n}: left={br.left()} w={br.width()}")
+
+        if n == len(self.underImage.images) - 1:
+            # special case when deleting right-most image
+            loc = br.left()
+            go_left = False
+        else:
+            # shift existing annotations leftward
+            loc = br.right()
+            go_left = True
+        stuff = self.find_items_right_of(loc)
+
+        # like calling _set_visible_page_image but covered in undo sauce
+        cmd = CommandRemovePage(self, imgid, n, go_left=go_left)
+        self.undoStack.push(cmd)
+
+        # enqueues appropriate CommmandMoves
+        self._move_some_items(stuff, -br.width(), 0)
+
+        self.undoStack.endMacro()
+
+    def _set_visible_page_image(self, imgid: int, show: bool = True) -> None:
+        for row in self.src_img_data:
+            if row["id"] == imgid:
+                row["visible"] = show
+        # TODO: replace with emit signal (if needed)
+        # self.parent().report_new_or_permuted_image_data(self.src_img_data)
+        self.buildUnderLay()
+
+    def mousePressBox(self, event) -> None:
+        """Handle mouse presses when box tool is selected.
 
         Notes:
             Creates a temp box which is updated as the mouse moves
@@ -1944,19 +2176,21 @@ class PageScene(QGraphicsScene):
             # Create a temp box item for animating the drawing as the
             # user moves the mouse.
             # Do not push command onto undoStack until drawing finished.
-            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+            self.boxItem = QGraphicsRectItem(
+                QRectF(self.originPos, self.currentPos).normalized()
+            )
             self.boxItem.setPen(self.ink)
             self.boxItem.setBrush(self.lightBrush)
             self.addItem(self.boxItem)
 
-    def mouseMoveBox(self, event):
-        """
-        Update the size of the box as the mouse is moved.
+    def mouseMoveBox(self, event) -> None:
+        """Update the size of the box as the mouse is moved.
 
         Notes:
             This animates the drawing of the box for the user.
 
-        Args (QMouseEvent): the event of the mouse moving.
+        Args:
+            event (QMouseEvent): the event of the mouse moving.
 
         Returns:
             None
@@ -1977,17 +2211,18 @@ class PageScene(QGraphicsScene):
                 )
         elif self.boxFlag == 1:
             if self.boxItem is None:
-                self.boxItem = QGraphicsRectItem(
-                    QRectF(self.originPos, self.currentPos)
-                )
-            else:
-                self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
+                # 2024-05: not convinced this None case can happen
+                log.error("EEK: the boxItem was unexpectedly None, working around...")
+                self.boxItem = QGraphicsRectItem()
+                self.boxItem.setPen(self.ink)
+                self.boxItem.setBrush(self.lightBrush)
+                self.addItem(self.boxItem)
+            self.boxItem.setRect(QRectF(self.originPos, self.currentPos).normalized())
         else:
             return
 
-    def mouseReleaseBox(self, event):
-        """
-        Handle when the mouse is released after drawing a new box.
+    def mouseReleaseBox(self, event) -> None:
+        """Handle when the mouse is released after drawing a new box.
 
         Notes:
             Remove the temp boxitem (which was needed for animation)
@@ -2000,7 +2235,6 @@ class PageScene(QGraphicsScene):
 
         Returns:
             None
-
         """
         if self.boxFlag == 0:
             return
@@ -2013,8 +2247,7 @@ class PageScene(QGraphicsScene):
                 nrect.width() > minimum_box_side_length
                 and nrect.height() > minimum_box_side_length
             ):
-                command = CommandBox(self, nrect)
-                self.undoStack.push(command)
+                self.undoStack.push(CommandBox(self, nrect))
         else:
             self.removeItem(self.ellipseItem)
             # check if ellipse has some area (don't allow long/thin)
@@ -2022,14 +2255,12 @@ class PageScene(QGraphicsScene):
                 self.ellipseItem.rect().width() > minimum_box_side_length
                 and self.ellipseItem.rect().height() > minimum_box_side_length
             ):
-                command = CommandEllipse(self, self.ellipseItem.rect())
-                self.undoStack.push(command)
+                self.undoStack.push(CommandEllipse(self, self.ellipseItem.rect()))
 
         self.boxFlag = 0
 
-    def mousePressLine(self, event):
-        """
-        Handle the mouse press when using the line tool to draw a line.
+    def mousePressLine(self, event) -> None:
+        """Handle the mouse press when using the line tool to draw a line.
 
         Notes:
             Creates a temp line which is updated as the mouse moves
@@ -2068,9 +2299,8 @@ class PageScene(QGraphicsScene):
         self.lineItem.setPen(self.ink)
         self.addItem(self.lineItem)
 
-    def mouseMoveLine(self, event):
-        """
-        Update the length of the box as the mouse is moved.
+    def mouseMoveLine(self, event) -> None:
+        """Update the length of the box as the mouse is moved.
 
         Notes:
             This animates the drawing of the line for the user.
@@ -2085,9 +2315,8 @@ class PageScene(QGraphicsScene):
             self.currentPos = event.scenePos()
             self.lineItem.setLine(QLineF(self.originPos, self.currentPos))
 
-    def mouseReleaseLine(self, event):
-        """
-        Handle when the mouse is released after drawing a new line.
+    def mouseReleaseLine(self, event) -> None:
+        """Handle when the mouse is released after drawing a new line.
 
         Notes:
             Remove the temp lineitem (which was needed for animation)
@@ -2109,15 +2338,18 @@ class PageScene(QGraphicsScene):
             command = CommandArrow(self, self.originPos, self.currentPos)
         elif self.arrowFlag == 4:
             command = CommandArrowDouble(self, self.originPos, self.currentPos)
+        else:
+            raise RuntimeError(
+                f"Tertium non datur: arrowFlag={self.arrowFlag} should not be possible"
+            )
         self.arrowFlag = 0
         self.removeItem(self.lineItem)
         # don't add if too short
         if (self.originPos - self.currentPos).manhattanLength() > 24:
             self.undoStack.push(command)
 
-    def mousePressPen(self, event):
-        """
-        Handle the mouse press when using the pen tool to draw.
+    def mousePressPen(self, event) -> None:
+        """Handle the mouse press when using the pen tool to draw.
 
         Notes:
             normal pen = left click.
@@ -2129,7 +2361,6 @@ class PageScene(QGraphicsScene):
 
         Returns:
             None
-
         """
         if self.penFlag != 0:
             # in middle of drawing a path, so ignore
@@ -2166,14 +2397,14 @@ class PageScene(QGraphicsScene):
         # mouse-release.
         self.addItem(self.pathItem)
 
-    def mouseMovePen(self, event):
-        """
-        Update the pen-path as the mouse is moved.
+    def mouseMovePen(self, event) -> None:
+        """Update the pen-path as the mouse is moved.
 
         Notes:
             This animates the drawing for the user.
 
-        Args (QMouseEvent): the event of the mouse moving.
+        Args:
+            event (QMouseEvent): the event of the mouse moving.
 
         Returns:
             None
@@ -2184,9 +2415,8 @@ class PageScene(QGraphicsScene):
             self.pathItem.setPath(self.path)
         # do not add to path when flag is zero.
 
-    def mouseReleasePen(self, event):
-        """
-        Handle when the mouse is released after drawing.
+    def mouseReleasePen(self, event) -> None:
+        """Handle when the mouse is released after drawing.
 
         Notes:
             Remove the temp pen-path (which was needed for animation)
@@ -2218,6 +2448,10 @@ class PageScene(QGraphicsScene):
             command = CommandHighlight(self, self.path)
         elif self.penFlag == 4:
             command = CommandPenArrow(self, self.path)
+        else:
+            raise RuntimeError(
+                f"Tertium non datur: penFlag={self.penFlag} should not be possible"
+            )
         self.penFlag = 0
         self.removeItem(self.pathItem)
         self.undoStack.push(command)
@@ -2229,9 +2463,8 @@ class PageScene(QGraphicsScene):
         # ):
         #     self.undoStack.push(command)
 
-    def mousePressZoom(self, event):
-        """
-        Handle the mouse press when drawing a zoom box.
+    def mousePressZoom(self, event) -> None:
+        """Handle the mouse press when drawing a zoom box.
 
         Notes:
             If right-click (or shift) then zoom-out, else - don't do much
@@ -2242,7 +2475,6 @@ class PageScene(QGraphicsScene):
 
         Returns:
             None
-
         """
         if self.zoomFlag:
             return
@@ -2254,7 +2486,10 @@ class PageScene(QGraphicsScene):
             # sets the view rectangle and updates zoom-dropdown.
             self.views()[0].scale(0.8, 0.8)
             self.views()[0].centerOn(event.scenePos())
-            self.views()[0].setZoomSelector(True)
+            # convince MyPy we have a PageView, not just any QGraphicsView
+            page_view = self.views()[0]
+            assert isinstance(page_view, PageView)
+            page_view.setZoomSelector(True)
             self.zoomFlag = 0
             return
         else:
@@ -2262,19 +2497,21 @@ class PageScene(QGraphicsScene):
 
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
-        self.zoomBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+        self.zoomBoxItem = QGraphicsRectItem(
+            QRectF(self.originPos, self.currentPos).normalized()
+        )
         self.zoomBoxItem.setPen(QColor("blue"))
         self.zoomBoxItem.setBrush(self.zoomBrush)
         self.addItem(self.zoomBoxItem)
 
-    def mouseMoveZoom(self, event):
-        """
-        Update the size of the zoom box as the mouse is moved.
+    def mouseMoveZoom(self, event) -> None:
+        """Update the size of the zoom box as the mouse is moved.
 
         Notes:
             This animates the drawing of the box for the user.
 
-        Args (QMouseEvent): the event of the mouse moving.
+        Args:
+            event (QMouseEvent): the event of the mouse moving.
 
         Returns:
             None
@@ -2283,20 +2520,18 @@ class PageScene(QGraphicsScene):
             self.zoomFlag = 2  # drag started.
             self.currentPos = event.scenePos()
             if self.zoomBoxItem is None:
+                # somehow missed the mouse-press (2024: not convinced this can happen)
                 log.error("EEK: the zoombox was unexpectedly None, working around...")
-                # somehow missed the mouse-press
-                self.zoomBoxItem = QGraphicsRectItem(
-                    QRectF(self.originPos, self.currentPos)
-                )
+                self.zoomBoxItem = QGraphicsRectItem()
                 self.zoomBoxItem.setPen(self.ink)
                 self.zoomBoxItem.setBrush(self.zoomBrush)
                 self.addItem(self.zoomBoxItem)
-            else:
-                self.zoomBoxItem.setRect(QRectF(self.originPos, self.currentPos))
+            self.zoomBoxItem.setRect(
+                QRectF(self.originPos, self.currentPos).normalized()
+            )
 
-    def mouseReleaseZoom(self, event):
-        """
-        Handle when the mouse is released after drawing a new zoom box.
+    def mouseReleaseZoom(self, event) -> None:
+        """Handle when the mouse is released after drawing a new zoom box.
 
         Notes: Either zoom-in a little (if zoombox small), else fit the
             zoombox in view. Delete the zoombox afterwards and set the zoomflag
@@ -2307,13 +2542,15 @@ class PageScene(QGraphicsScene):
 
         Returns:
             None
-
         """
         if self.zoomFlag == 0:
             return
+
         # check to see if box is quite small (since very hard
         # to click button without moving a little)
         # if small then set flag to 1 and treat like a click
+        # TODO: These thresholds are in physical units ("page pixels"?) so are effected by zoom
+        # TODO: it would be much better to express them in (screen) pixels b/c they are a UI threshold
         if self.zoomBoxItem.rect().height() < 8 and self.zoomBoxItem.rect().width() < 8:
             self.zoomFlag = 1
 
@@ -2327,14 +2564,16 @@ class PageScene(QGraphicsScene):
             )
 
         # sets the view rectangle and updates zoom-dropdown.
-        self.views()[0].setZoomSelector(True)
+        # convince MyPy we have a PageView, not just any QGraphicsView
+        page_view = self.views()[0]
+        assert isinstance(page_view, PageView)
+        page_view.setZoomSelector(True)
         # remove the box and put flag back.
         self.removeItem(self.zoomBoxItem)
         self.zoomFlag = 0
 
-    def mousePressDelete(self, event):
-        """
-        Handle the mouse press when drawing a delete box.
+    def mousePressDelete(self, event) -> None:
+        """Handle the mouse press when drawing a delete box.
 
         Notes:
             Nothing happens until button is released.
@@ -2344,7 +2583,6 @@ class PageScene(QGraphicsScene):
 
         Returns:
             None
-
         """
         if self.deleteFlag:
             return
@@ -2352,19 +2590,22 @@ class PageScene(QGraphicsScene):
         self.deleteFlag = 1
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
-        self.delBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+        self.delBoxItem = QGraphicsRectItem(
+            QRectF(self.originPos, self.currentPos).normalized()
+        )
+        assert isinstance(self.style, dict)
         self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
         self.delBoxItem.setBrush(self.deleteBrush)
         self.addItem(self.delBoxItem)
 
-    def mouseMoveDelete(self, event):
-        """
-        Update the size of the delete box as the mouse is moved.
+    def mouseMoveDelete(self, event) -> None:
+        """Update the size of the delete box as the mouse is moved.
 
         Notes:
             This animates the drawing of the box for the user.
 
-        Args (QMouseEvent): the event of the mouse moving.
+        Args:
+            event (QMouseEvent): the event of the mouse moving.
 
         Returns:
             None
@@ -2373,37 +2614,50 @@ class PageScene(QGraphicsScene):
             self.deleteFlag = 2  # drag started.
             self.currentPos = event.scenePos()
             if self.delBoxItem is None:
+                # somehow missed the mouse-press (2024: not convinced this can happen)
                 log.error("EEK: the delbox was unexpectedly None, working around...")
-                # somehow missed the mouse-press
-                self.delBoxItem = QGraphicsRectItem(
-                    QRectF(self.originPos, self.currentPos)
-                )
+                self.delBoxItem = QGraphicsRectItem()
+                assert isinstance(self.style, dict)
                 self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
                 self.delBoxItem.setBrush(self.deleteBrush)
                 self.addItem(self.delBoxItem)
-            else:
-                self.delBoxItem.setRect(QRectF(self.originPos, self.currentPos))
+            self.delBoxItem.setRect(
+                QRectF(self.originPos, self.currentPos).normalized()
+            )
 
-    def deleteIfLegal(self, item):
-        """
-        Deletes the annotation item if that is a legal action.
+    def deleteIfLegal(self, item, *, dryrun: bool = False) -> bool:
+        """Deletes the annotation item if that is a legal action.
 
         Notes:
             Can't delete the pageimage, scorebox, delete-box, ghostitem and
             its constituents, probably other things too.  You can delete
             annotations: those all have a "saveable" attribute.
+            You also cannot delete objects that are part of a group: you need
+            to the parent.
 
         Args:
             item (QGraphicsItem): the item to possibly be deleted.
 
-        Returns:
-            None
-        """
-        if getattr(item, "saveable", False):  # we can only delete "saveable" items
-            command = CommandDelete(self, item)
-            self.undoStack.push(command)
+        Keyword Args:
+            dryrun: just check if we could delete but don't actually
+                do it.
 
-    def mouseReleaseRubric(self, event):
+        Returns:
+            True if the object was deleted, else False.
+        """
+        if item.group() is not None:
+            return False
+        if not getattr(item, "saveable", False):
+            # we can only delete "saveable" items
+            return False
+        # we're ready to delete, unless this is a dryrun
+        if dryrun:
+            return True
+        command = CommandDelete(self, item)
+        self.undoStack.push(command)
+        return True
+
+    def mouseReleaseRubric(self, event) -> None:
         # if haven't started drawing, or are mid draw of line be careful of what is underneath
         # if there is text under the ghost then do not stamp anything - ignore the event.
         if self.textUnderneathGhost() and self.boxLineStampState in [0, 2]:
@@ -2420,15 +2674,14 @@ class PageScene(QGraphicsScene):
                 self.boxLineStampState = 0
                 return
             # small box, so just stamp the rubric
-            command = CommandGroupDeltaText(self, event.scenePos(), self.current_rubric)
+            command = CommandRubric(self, event.scenePos(), self.current_rubric)
             log.debug(
-                "Making a GroupDeltaText: boxLineStampState is {}".format(
+                "Making a Rubric: boxLineStampState is {}".format(
                     self.boxLineStampState
                 )
             )
             # push the delta onto the undo stack.
             self.undoStack.push(command)
-            self.refreshStateAndScore()  # and now refresh the markingstate and score
 
         if self.boxLineStampState >= 3:  # stamp is done
             # TODO: how to get here?  In testing 2022-03-01, Colin could not make this code run
@@ -2438,9 +2691,8 @@ class PageScene(QGraphicsScene):
             self.undoStack.endMacro()
             self.boxLineStampState = 0
 
-    def mouseReleaseDelete(self, event):
-        """
-        Handle when the mouse is released after drawing a new delete box.
+    def mouseReleaseDelete(self, event) -> None:
+        """Handle when the mouse is released after drawing a new delete box.
 
         Notes:
              Remove the temp boxitem (which was needed for animation)
@@ -2452,7 +2704,6 @@ class PageScene(QGraphicsScene):
 
         Returns:
             None
-
         """
         if self.deleteFlag == 0:
             return
@@ -2474,33 +2725,38 @@ class PageScene(QGraphicsScene):
                 return
             else:
                 # delete the zeroth element of the list
-                if nearby[0].group() is not None:  # object part of GroupDeltaText
+                if nearby[0].group() is not None:  # object part of Rubric
                     self.deleteIfLegal(nearby[0].group())  # delete the group
                 else:
                     self.deleteIfLegal(nearby[0])
         elif self.deleteFlag == 2:
+            del_list = []
             # check all items against the delete-box - this is a little clumsy, but works and there are not so many items typically.
             for X in self.items():
                 # make sure is not background image or the scorebox, or the delbox itself.
                 if X.collidesWithItem(
                     self.delBoxItem, mode=Qt.ItemSelectionMode.ContainsItemShape
                 ):
-                    if X.group() is None:
-                        self.deleteIfLegal(X)
-                    else:
-                        pass  # is part of a group
+                    if self.deleteIfLegal(X, dryrun=True):
+                        del_list.append(X)
+
+            if del_list:
+                self.undoStack.beginMacro(f"Deleting {len(del_list)} items")
+                for X in del_list:
+                    self.deleteIfLegal(X)
+                self.undoStack.endMacro()
 
         self.removeItem(self.delBoxItem)
         self.deleteFlag = 0  # put flag back.
 
-    def hasAnyCrosses(self):
+    def hasAnyCrosses(self) -> bool:
         """Returns True if scene has any crosses, False otherwise."""
         for X in self.items():
             if isinstance(X, CrossItem):
                 return True
         return False
 
-    def hasOnlyCrosses(self):
+    def hasOnlyCrosses(self) -> bool:
         """Returns True if scene has only crosses, False otherwise."""
         for X in self.items():
             if getattr(X, "saveable", None):
@@ -2508,24 +2764,21 @@ class PageScene(QGraphicsScene):
                     return False
         return True
 
-    def hasAnyComments(self):
-        """
-        Returns True if scene has any rubrics or text items,
-        False otherwise.
-        """
+    def hasAnyComments(self) -> bool:
+        """Returns True if scene has any rubrics or text items, False otherwise."""
         for X in self.items():
-            if isinstance(X, (TextItem, GroupDeltaTextItem)):
+            if isinstance(X, (TextItem, RubricItem)):
                 return True
         return False
 
-    def hasAnyTicks(self):
+    def hasAnyTicks(self) -> bool:
         """Returns True if scene has any ticks. False otherwise."""
         for X in self.items():
             if isinstance(X, TickItem):
                 return True
         return False
 
-    def hasOnlyTicks(self):
+    def hasOnlyTicks(self) -> bool:
         """Returns True if scene has only ticks, False otherwise."""
         for X in self.items():
             if getattr(X, "saveable", None):
@@ -2533,18 +2786,17 @@ class PageScene(QGraphicsScene):
                     return False
         return True
 
-    def hasOnlyTicksCrossesDeltas(self):
-        """
-        Checks if the image only has crosses, ticks or deltas.
+    def hasOnlyTicksCrossesDeltas(self) -> bool:
+        """Checks if the image only has crosses, ticks or deltas.
 
         Returns:
-             True if scene only has ticks/crosses/deltas, False otherwise.
+            True if scene only has ticks/crosses/deltas, False otherwise.
         """
         for x in self.items():
             if getattr(x, "saveable", None):
                 if isinstance(x, (TickItem, CrossItem)):
                     continue
-                if isinstance(x, GroupDeltaTextItem):
+                if isinstance(x, RubricItem):
                     # check if this is a delta-rubric
                     # TODO: see rubrics_list.py: rubric_is_naked_delta
                     if x.kind == "relative" and x.blurb.toPlainText() == ".":
@@ -2552,18 +2804,61 @@ class PageScene(QGraphicsScene):
                 return False  # otherwise
         return True  # only tick,cross or delta-rubrics
 
-    def itemWithinBounds(self, item):
+    def highlight_pages(
+        self, indices: list[int], colour: str = "blue", *, fade_others: bool = True
+    ) -> None:
+        """Highlight some of the underlying images that we are annotating."""
+        for i in range(len(self.underImage.images)):
+            img = self.underImage.images[i]
+            if i in indices:
+                colour_effect = QGraphicsColorizeEffect()
+                colour_effect.setColor(QColor(colour))
+                img.setGraphicsEffect(colour_effect)
+            elif fade_others:
+                fade_effect = QGraphicsOpacityEffect()
+                fade_effect.setOpacity(0.25)
+                img.setGraphicsEffect(fade_effect)
+            else:
+                pass
+
+    def highlight_pages_reset(self) -> None:
+        """Remove any graphical effects from the underlying images that we are annotating."""
+        for i in range(len(self.underImage.images)):
+            img = self.underImage.images[i]
+            img.setGraphicsEffect(None)
+
+    def get_list_of_non_annotated_underimages(self) -> list[int]:
+        """Which images in the scene are not yet annotated.
+
+        Note these are indexed from zero.  Thinking of them as pages is
+        potentially misleading: we are annotating a scene made of a list
+        of images: which of those images are not yet annotated?
+        """
+        # TODO: Issue #3367: do nicer code without explicit N^2
+        lst = []
+        for n in range(len(self.underImage.images)):
+            img = self.underImage.images[n]
+            page_annotated = False
+            for x in self.items():
+                if self.is_user_placed(x) and x.collidesWithItem(img):
+                    page_annotated = True
+                    # no need to further check this img
+                    break
+            if not page_annotated:
+                lst.append(n)
+        return lst
+
+    def itemWithinBounds(self, item) -> bool:
         """Check if given item is within the margins or not."""
         return item.collidesWithItem(
             self.underRect, mode=Qt.ItemSelectionMode.ContainsItemShape
         )
 
-    def check_all_saveable_objects_inside(self):
-        """
-        Checks that all objects are within the boundary of the page.
+    def check_all_saveable_objects_inside(self) -> list:
+        """Checks that all objects are within the boundary of the page.
 
         Returns:
-            list: All annotation (saveable) objects that are outside
+            All annotation (saveable) objects that are outside
             of the boundaries of the margin box (annotable area).
             The list will be empty in the good case of no objects being
             outside.
@@ -2575,31 +2870,29 @@ class PageScene(QGraphicsScene):
                     out_objs.append(X)
         return out_objs
 
-    def updateGhost(self, dlt, txt, legal=True):
-        """
-        Updates the ghost object based on the delta and text.
+    def _updateGhost(self, rubric: dict[str, Any]) -> None:
+        """Updates the ghost object based on the delta and text.
 
         Args:
-            dlt (int): given mark-delta.
-            txt (str): the given text.
+            rubric: we need its delta, its text and whether its legal.
 
         Returns:
             None
-
         """
-        self.ghostItem.changeComment(dlt, txt, legal)
+        self.ghostItem.changeComment(
+            rubric["display_delta"], rubric["text"], self.isLegalRubric(rubric)
+        )
 
-    def exposeGhost(self):
+    def _exposeGhost(self) -> None:
         """Exposes the ghost object."""
         self.ghostItem.setVisible(True)
 
-    def hideGhost(self):
+    def _hideGhost(self) -> None:
         """Hides the ghost object."""
         self.ghostItem.setVisible(False)
 
-    def mouseMoveRubric(self, event):
-        """
-        Handles mouse moving with a rubric.
+    def mouseMoveRubric(self, event) -> None:
+        """Handles mouse moving with a rubric.
 
         Args:
             event (QMouseEvent): the event of the mouse moving.
@@ -2617,12 +2910,11 @@ class PageScene(QGraphicsScene):
             ghost_rect=self.ghostItem.mapRectToScene(self.ghostItem.boundingRect()),
         )
 
-    def setTheMark(self, newMark):
-        """
-        Sets the new mark/score for the paper.
+    def setTheMark(self, newMark: int) -> None:
+        """Sets the new mark/score for the paper.
 
         Args:
-            newMark(int): the new mark/score for the paper.
+            newMark: the new mark/score for the paper.
 
         Returns:
             None
@@ -2638,16 +2930,15 @@ class PageScene(QGraphicsScene):
         """Redoes a given action."""
         self.undoStack.redo()
 
-    def isLegalRubric(self, rubric):
-        """
-        Is this rubric-type legal for the current scene, and does it move score below 0 or above maxMark?
+    def isLegalRubric(self, rubric: dict[str, Any]) -> bool:
+        """Is this rubric-type legal for the current scene, and does it move score below 0 or above maxMark?
 
         Args:
             rubric (dict): must have at least the keys "kind", "value",
                 "display_delta", and "out_of".
 
         Returns:
-            bool: True if the delta is legal, False otherwise.
+            True if the delta is legal, False otherwise.
         """
         rubrics = self.get_rubrics()
         rubrics.append(rubric)
@@ -2660,9 +2951,12 @@ class PageScene(QGraphicsScene):
             return False
         return True
 
-    def changeTheRubric(self, rubric):
-        """
-        Changes the new rubric for the paper based on the delta and text.
+    def setCurrentRubric(self, rubric: dict[str, Any]) -> None:
+        """Changes the new rubric for the paper based on the delta and text.
+
+        This doesn't effect what is shown in the scene: its just a setter.
+        To force an update, see ``setToolMode``, which you likely want to call
+        after this method.
 
         Args:
             rubric (dict): must have at least the keys and values::
@@ -2677,16 +2971,7 @@ class PageScene(QGraphicsScene):
             None
         """
         self.current_rubric = rubric
-
-        gpt = QCursor.pos()  # global mouse pos
-        vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
-        spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
-        self.ghostItem.setPos(spt)
-        self.setToolMode("rubric")
-        self.exposeGhost()
-        self.updateGhost(
-            rubric["display_delta"], rubric["text"], self.isLegalRubric(rubric)
-        )
+        self._updateGhost(rubric)
 
     def stopMidDraw(self):
         # look at all the mid-draw flags and cancel accordingly.
@@ -2751,8 +3036,10 @@ class PageScene(QGraphicsScene):
         # set zoom to "fit-page"
         self.views()[0].zoomFitPage(update=True)
 
-    def current_crop_rectangle_as_proportions(self):
-        """Return the crop rectangle as proportions of original image"""
+    def current_crop_rectangle_as_proportions(
+        self,
+    ) -> tuple[float, float, float, float]:
+        """Return the crop rectangle as proportions of original image."""
         full_height = self.underImage.boundingRect().height()
         full_width = self.underImage.boundingRect().width()
         rect_in_pix = self.overMask.inner_rect
@@ -2790,9 +3077,8 @@ class PageScene(QGraphicsScene):
         # now set mode to move.
         self.parent().toMoveMode()
 
-    def mousePressCrop(self, event):
-        """
-        Handle the mouse press when drawing a crop box.
+    def mousePressCrop(self, event) -> None:
+        """Handle the mouse press when drawing a crop box.
 
         Notes:
             Nothing happens until button is released.
@@ -2802,7 +3088,6 @@ class PageScene(QGraphicsScene):
 
         Returns:
             None
-
         """
         if self.deleteFlag:
             return
@@ -2810,19 +3095,22 @@ class PageScene(QGraphicsScene):
         self.deleteFlag = 1
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
-        self.delBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+        self.delBoxItem = QGraphicsRectItem(
+            QRectF(self.originPos, self.currentPos).normalized()
+        )
+        assert isinstance(self.style, dict)
         self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
         self.delBoxItem.setBrush(self.deleteBrush)
         self.addItem(self.delBoxItem)
 
-    def mouseMoveCrop(self, event):
-        """
-        Update the size of the crop box as the mouse is moved.
+    def mouseMoveCrop(self, event) -> None:
+        """Update the size of the crop box as the mouse is moved.
 
         Notes:
             This animates the drawing of the box for the user.
 
-        Args (QMouseEvent): the event of the mouse moving.
+        Args:
+            event (QMouseEvent): the event of the mouse moving.
 
         Returns:
             None
@@ -2832,30 +3120,28 @@ class PageScene(QGraphicsScene):
             self.currentPos = event.scenePos()
             if self.delBoxItem is None:
                 log.error("EEK: the delbox was unexpectedly None, working around...")
-                # somehow missed the mouse-press
-                self.delBoxItem = QGraphicsRectItem(
-                    QRectF(self.originPos, self.currentPos)
-                )
+                # somehow missed the mouse-press (2024: not convinced this can happen)
+                self.delBoxItem = QGraphicsRectItem()
+                assert isinstance(self.style, dict)
                 self.delBoxItem.setPen(QPen(QColor("red"), self.style["pen_width"]))
                 self.delBoxItem.setBrush(self.deleteBrush)
                 self.addItem(self.delBoxItem)
-            else:
-                self.delBoxItem.setRect(QRectF(self.originPos, self.currentPos))
+            self.delBoxItem.setRect(
+                QRectF(self.originPos, self.currentPos).normalized()
+            )
 
-    def mouseReleaseCrop(self, event):
-        """
-        Handle when the mouse is released after drawing a new delete box.
+    def mouseReleaseCrop(self, event) -> None:
+        """Handle when the mouse is released after drawing a new delete box.
 
         Notes:
-             Remove the temp boxitem (which was needed for animation)
-             and push the crop command onto the undo stack
+            Remove the temp boxitem (which was needed for animation)
+            and push the crop command onto the undo stack
 
         Args:
             event (QMouseEvent): the given mouse release.
 
         Returns:
             None
-
         """
         if self.deleteFlag == 0:
             return

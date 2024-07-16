@@ -44,18 +44,8 @@ class REPcompletionStatus(APIView):
 class REPcoverPageInfo(APIView):
     def get(self, request: HttpRequest, *, papernum: int) -> HttpResponse:
         # Return value looks like this:
-        # [["10130103", "Vandeventer, Irene"], [1, 1, 0], [2, 1, 1], [3, 2, 5]]
+        # [["10130103", "Vandeventer, Irene"], [1, 1, 0], [2, 1, 1], [3, 2, 5], [q, v, m]]
         service = ReassembleService()
         paper = get_object_or_404(Paper, paper_number=papernum)
-        cover_page_info = service.get_cover_page_info(paper)
-        student_info = StudentMarkService.get_paper_id_or_none(paper)
-        if student_info:
-            student_id, student_name = student_info
-        else:
-            student_id, student_name = None, None
-
-        legacy_cover_page_info = [[student_id, student_name]]
-        for row in cover_page_info:
-            legacy_cover_page_info.append(row[1:])
-
+        legacy_cover_page_info = service.get_legacy_cover_page_info(paper)
         return Response(legacy_cover_page_info, status=status.HTTP_200_OK)

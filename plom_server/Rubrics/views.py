@@ -3,18 +3,28 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
+
+from __future__ import annotations
+
+from copy import deepcopy
+from typing import Any
+from io import TextIOWrapper, StringIO, BytesIO
 
 from django.http import HttpRequest, HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.models import User
+from django.contrib import messages
+
+from plom.feedback_rules import feedback_rules as static_feedback_rules
 
 from Base.base_group_views import ManagerRequiredView
 from Base.models import SettingsModel
 from Papers.services import SpecificationService
 from .services import RubricService
-from .forms import RubricAdminForm, RubricWipeForm
-from .forms import RubricFilterForm, RubricEditForm
+from .forms import RubricAdminForm, RubricWipeForm, RubricUploadForm
+from .forms import RubricFilterForm, RubricEditForm, RubricDownloadForm
 
 
 class RubricAdminPageView(ManagerRequiredView):
@@ -23,12 +33,16 @@ class RubricAdminPageView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/rubrics_admin.html"
         form = RubricAdminForm(request.GET)
+        download_form = RubricDownloadForm(request.GET)
+        upload_form = RubricUploadForm()
         context = self.build_context()
         rubrics = RubricService().get_all_rubrics()
         context.update(
             {
                 "rubrics": rubrics,
                 "rubric_admin_form": form,
+                "rubric_download_form": download_form,
+                "rubric_upload_form": upload_form,
             }
         )
         return render(request, template_name, context=context)
@@ -36,6 +50,8 @@ class RubricAdminPageView(ManagerRequiredView):
     def post(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/rubrics_admin.html"
         form = RubricAdminForm(request.POST)
+        download_form = RubricDownloadForm(request.GET)
+        upload_form = RubricUploadForm()
         context = self.build_context()
         if form.is_valid():
             # TODO: not necessarily the one who logged in; does it matter?
@@ -47,6 +63,8 @@ class RubricAdminPageView(ManagerRequiredView):
             {
                 "rubrics": rubrics,
                 "rubric_admin_form": form,
+                "rubric_download_form": download_form,
+                "rubric_upload_form": upload_form,
             }
         )
         return render(request, template_name, context=context)
@@ -195,10 +213,10 @@ class RubricLandingPageView(ManagerRequiredView):
             kind_filter = filter_form.cleaned_data["kind_filter"]
 
             if question_filter:
-                rubrics = rubrics.filter(question=question_filter)
+                rubrics = rubrics.filter(question=question_filter, latest=True)
 
             if kind_filter:
-                rubrics = rubrics.filter(kind=kind_filter)
+                rubrics = rubrics.filter(kind=kind_filter, latest=True)
 
         context.update(
             {
@@ -224,15 +242,17 @@ class RubricItemView(ManagerRequiredView):
         # with a zero, it will be interpreted as a 11 digit key, which result in an error
         rubric_key = str(rubric_key).zfill(12)
         rubric = rs.get_rubric_by_key(rubric_key)
+        revisions = rs.get_past_revisions_by_key(rubric_key)
         marking_tasks = rs.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
 
         rubric_as_html = rs.get_rubric_as_html(rubric)
         context.update(
             {
-                "rubric": rubric,
+                "latest_rubric": rubric,
+                "revisions": revisions,
                 "form": form(instance=rubric),
                 "marking_tasks": marking_tasks,
-                "rubric_as_html": rubric_as_html,
+                "latest_rubric_as_html": rubric_as_html,
             }
         )
 
@@ -255,17 +275,114 @@ class RubricItemView(ManagerRequiredView):
         return redirect("rubric_item", rubric_key=rubric_key)
 
 
-class AnnotationItemView(ManagerRequiredView):
-    """A page for displaying a single annotation."""
+def _rules_as_list(rules: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    # something (possible jsonfield) is randomly re-ordering the Python
+    # dict, so use a list, sorted alphabetically by code (TODO: for now!)
+    L = []
+    for code in sorted(rules.keys()):
+        data = rules[code].copy()
+        data.update({"code": code})
+        L.append(data)
+    return L
 
-    def get(self, request, annotation_key):
-        template_name = "Rubrics/annotation_item.html"
-        rs = RubricService()
 
+class FeedbackRulesView(ManagerRequiredView):
+    """Viewing and changing the defaults around potentially problem cases in annotation."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        template_name = "Rubrics/feedback_rules.html"
         context = self.build_context()
-
-        annotation = rs.get_all_annotations().get(pk=annotation_key)
-        rubrics = rs.get_rubrics_from_annotation(annotation)
-        context.update({"annotation": annotation, "rubrics": rubrics})
-
+        settings = SettingsModel.load()
+        rules = settings.feedback_rules
+        if not rules:
+            rules = static_feedback_rules
+        context.update(
+            {
+                "feedback_rules": _rules_as_list(rules),
+            }
+        )
         return render(request, template_name, context=context)
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        template_name = "Rubrics/feedback_rules.html"
+        settings = SettingsModel.load()
+        # decide if we are resetting or updating the rules from the form
+        if request.POST.get("_whut_do") == "reset":
+            rules = {}
+        else:
+            rules = settings.feedback_rules
+            if not rules:
+                # carefully make a copy so we don't mess with the static data
+                rules = deepcopy(static_feedback_rules)
+            for code in rules.keys():
+                x = request.POST.get(f"{code}-allowed", None)
+                rules[code]["allowed"] = True if x is not None else False
+                x = request.POST.get(f"{code}-warn", None)
+                rules[code]["warn"] = True if x is not None else False
+                x = request.POST.get(f"{code}-dama_allowed", None)
+                rules[code]["dama_allowed"] = True if x is not None else False
+        settings.feedback_rules = rules
+        settings.save()
+
+        # essentially a copy-paste of get from here :(
+        context = self.build_context()
+        settings = SettingsModel.load()
+        rules = settings.feedback_rules
+        if not rules:
+            rules = static_feedback_rules
+        context.update(
+            {
+                "successful_post": True,
+                "feedback_rules": _rules_as_list(rules),
+            }
+        )
+        return render(request, template_name, context=context)
+
+
+class DownloadRubricView(ManagerRequiredView):
+    def get(self, request: HttpRequest):
+        service = RubricService()
+        question = request.GET.get("question_filter")
+        filetype = request.GET.get("file_type")
+
+        if question is not None and len(question) != 0:
+            question = int(question)
+        else:
+            question = None
+
+        if filetype == "json":
+            data_string = service.get_rubric_data("json", question=question)
+            buf = StringIO(data_string)
+            response = HttpResponse(buf.getvalue(), content_type="text/json")
+            response["Content-Disposition"] = "attachment; filename=rubrics.json"
+        elif filetype == "toml":
+            data_string = service.get_rubric_data("toml", question=question)
+            buf2 = BytesIO(data_string.encode("utf-8"))
+            response = HttpResponse(buf2.getvalue(), content_type="application/toml")
+            response["Content-Disposition"] = "attachment; filename=rubrics.toml"
+        else:
+            data_string = service.get_rubric_data("csv", question=question)
+            buf3 = StringIO(data_string)
+            response = HttpResponse(buf3.getvalue(), content_type="text/csv")
+            response["Content-Disposition"] = "attachment; filename=rubrics.csv"
+        return response
+
+
+class UploadRubricView(ManagerRequiredView):
+    def post(self, request: HttpRequest):
+        service = RubricService()
+        suffix = request.FILES["rubric_file"].name.split(".")[-1]
+
+        if suffix == "csv" or suffix == "json":
+            f = TextIOWrapper(request.FILES["rubric_file"], encoding="utf-8")
+            data_string = f.read()
+        elif suffix == "toml":
+            f2 = BytesIO(request.FILES["rubric_file"].file.read())
+            data_string = f2.getvalue().decode("utf-8")
+        else:
+            messages.error(request, "Invalid rubric file format")
+            return redirect("rubrics_admin")
+
+        service.update_rubric_data(data_string, suffix)
+        messages.success(request, "Rubric file uploaded successfully.")
+        return redirect("rubrics_admin")

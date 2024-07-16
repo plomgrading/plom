@@ -179,7 +179,7 @@ def parse_paper_page_version(ppv: str) -> tuple[int, int, int]:
     """Parse string "TTTTTPPPVVV" into paper-number, page-number, version triple.
 
     Args:
-        tpv: a string of the form "TTTTTPPPVVV".
+        ppv: a string of the form "TTTTTPPPVVV".
 
     Returns:
         A triple of integers,
@@ -211,7 +211,7 @@ def encodePaperPageVersion(paper_number: str | int, p: str | int, v: str | int) 
     Typically used for collision detection.
 
     Args:
-        test: the test number, 0 ≤ test ≤ 99999
+        paper_number: the test number, 0 ≤ test ≤ 99999
         p: page number, 1 ≤ p ≤ 990
         v: version number, 1 ≤ v ≤ 909
 

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Colin B. Macdonald
@@ -19,6 +19,9 @@ from django.db import transaction
 from ..models import StagingStudent
 from ..services import PrenameSettingService
 
+from Preparation.services.preparation_dependency_service import (
+    assert_can_modify_classlist,
+)
 
 log = logging.getLogger("ClasslistService")
 
@@ -34,20 +37,12 @@ class StagingStudentService:
 
     @transaction.atomic()
     def get_students(self) -> list[dict[str, str | int]]:
+        """Get a list of students, empty if there are none."""
         return list(
             StagingStudent.objects.all().values(
                 "student_id", "student_name", "paper_number"
             )
         )
-
-    def get_classdict(self):
-        students = self.get_students()
-        for s in students:
-            s["id"] = s.pop("student_id")
-            s["studentName"] = s.pop("student_name")
-            if s["paper_number"] is None:
-                s["paper_number"] = -1
-        return students
 
     @transaction.atomic()
     def get_first_last_prenamed_paper(self):
@@ -81,9 +76,14 @@ class StagingStudentService:
         return txt
 
     @transaction.atomic()
-    def add_student(self, student_id, student_name, paper_number=None):
-        # will raise an integrity error if id not unique
+    def _add_student(self, student_id, student_name, paper_number=None):
+        """Add a single student to the staging classlist.
 
+        Note - does not check dependencies.
+
+        Raises:
+            IntegrityException: if student-id is not unique.
+        """
         s_obj = StagingStudent(student_id=student_id, student_name=student_name)
         # set the paper_number if present
         if paper_number:
@@ -92,12 +92,25 @@ class StagingStudentService:
 
     @transaction.atomic()
     def remove_all_students(self):
+        """Remove all the students from the staging classlist.
+
+        Raises:
+            PlomDependencyConflict: if dependencies not met.
+        """
+        assert_can_modify_classlist()
         StagingStudent.objects.all().delete()
 
     @transaction.atomic()
     def validate_and_use_classlist_csv(
         self, in_memory_csv_file: File, ignore_warnings: bool = False
     ) -> tuple[bool, list[dict[str, Any]]]:
+        """Validate and store the classlist from the in-memory file.
+
+        Raises:
+            PlomDependencyConflict: If dependencies not met.
+        """
+        assert_can_modify_classlist()
+
         """Read the in-memory csv file, validate it and use if possible."""
         from plom.create.classlistValidator import PlomClasslistValidator
 
@@ -125,8 +138,13 @@ class StagingStudentService:
                 assert old_headers is not None
                 csv_reader.fieldnames = [x.lower() for x in old_headers]
                 # now we have lower case field names
+                # Note that the paper_number field is optional, so we
+                # need to get that value or stick in a None.
+                # related to #2274 and MR <<TODO>>
                 for row in csv_reader:
-                    self.add_student(row["id"], row["name"], row["paper_number"])
+                    self._add_student(
+                        row["id"], row["name"], row.get("paper_number", None)
+                    )
 
         # don't forget to unlink the temp file
         tmp_csv.unlink()
@@ -154,14 +172,6 @@ class StagingStudentService:
             return max(N1, N2, N3)
         else:
             return max(N1, N2)
-
-    def get_classlist_sids_for_ID_matching(self) -> list[str]:
-        """Returns a list containing all student IDs on the classlist."""
-        students = []
-        classlist = self.get_students()
-        for entry in classlist:
-            students.append(entry.pop("student_id"))
-        return students
 
     def get_prename_for_paper(self, paper_number) -> str | None:
         """Return student ID for prenamed paper or None if paper is not prenamed."""

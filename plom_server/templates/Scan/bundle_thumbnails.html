@@ -55,7 +55,7 @@
                                             data-bs-toggle="tooltip"
                                             data-bs-placement="top"
                                             data-bs-title="Is missing pages"
-                                            hx-get="{% url 'scan_bundle_page' bundle_id pg.order %}"
+                                            hx-get="{% url 'scan_bundle_page' the_filter bundle_id pg.order %}"
                                             hx-swap="innerHTML"
                                             hx-target="#updatePage">paper {{ paper }}</button>
                                 {% else %}
@@ -63,7 +63,7 @@
                                             data-bs-toggle="tooltip"
                                             data-bs-placement="top"
                                             data-bs-title="Is complete"
-                                            hx-get="{% url 'scan_bundle_page' bundle_id pg.order %}"
+                                            hx-get="{% url 'scan_bundle_page' the_filter bundle_id pg.order %}"
                                             hx-swap="innerHTML"
                                             hx-target="#updatePage">paper {{ paper }}</button>
                                 {% endif %}
@@ -76,26 +76,31 @@
     </div>
     <div class="row pt-3">
         <div class="col-4">
-            <!-- some hackery here to persist the val of show_known, show_completed_extras in local storage -->
-            <!-- see https://stackoverflow.com/questions/66838886/alpine-js-with-local-storage-x-data-showing-old-wrong-value-after-page-refresh -->
-            <div class="card"
-                 x-data="{show_known: localStorage.getItem('show_known')=='true', show_completed_extras: localStorage.getItem('show_completed_extras')=='true', show_high_qr: localStorage.getItem('show_high_qr')=='true', }"
-                 x-init="$watch('show_known', val => localStorage.setItem('show_known', val)); $watch('show_completed_extras', val => localStorage.setItem('show_completed_extras', val)); $watch('show_high_qr', val => localStorage.setItem('show_high_qr', val)); ">
+            <div class="card">
                 <div class="card-header">
-                    <div class="row">
-                        <div class="col-auto">
-                            <input type="checkbox" id="check_known" x-model="show_known">
-                            <label for="check_known">Show knowns</label>
-                        </div>
-                        <div class="col-auto">
-                            <input type="checkbox"
-                                   id="check_completed_extras"
-                                   x-model="show_completed_extras">
-                            <label for="check_completed_extras">Show completed extras</label>
-                        </div>
-                        <div class="col-auto">
-                            <input type="checkbox" id="check_hide_high_qr" x-model="show_high_qr">
-                            <label for="check_hide_high_qr">Show 3+ qr</label>
+                    <div class="card-title">
+                        <div class="dropdown">
+                            <span>Showing:</span>
+                            <button class="btn btn-secondary fs-5 dropdown-toggle w-75"
+                                    type="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                {% for opt in filter_options %}
+                                    {% if opt.filter_code == the_filter %}{{ opt.filter_name }}{% endif %}
+                                {% endfor %}
+                            </button>
+                            <ul class="dropdown-menu">
+                                {% for opt in filter_options %}
+                                    <li>
+                                        {% if opt.filter_code != the_filter %}
+                                            <a class="dropdown-item"
+                                               href="{% url 'scan_bundle_thumbnails' opt.filter_code bundle_id %}">{{ opt.filter_name }}</a>
+                                        {% else %}
+                                            <a class="dropdown-item text-secondary disabled">{{ opt.filter_name }}</a>
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -105,8 +110,7 @@
                         <div class="row row-cols-6 gy-1 gx-1">
                             {% for pg in pages %}
                                 {% if pg.status == "known" %}
-                                    <div class="col"
-                                         x-show="show_known & ( show_high_qr | ( {{ pg.n_qr_read }} < 3 ) )">
+                                    <div class="col">
                                         <div class="card text-center bg-success-subtle p-1"
                                              data-bs-toggle="tooltip"
                                              data-bs-placement="top"
@@ -115,7 +119,7 @@
                                         </div>
                                     </div>
                                 {% elif pg.status == "unknown" %}
-                                    <div class="col"  x-show="( show_high_qr | ( {{ pg.n_qr_read }} < 3 ) )">
+                                    <div class="col">
                                         <div class="card text-center bg-warning-subtle col p-1 border-warning border-2"
                                              data-bs-toggle="tooltip"
                                              data-bs-placement="top"
@@ -127,8 +131,7 @@
                                     <!-- check if it has paper+question info -->
                                     {% if pg.info.paper_number %}
                                         <!-- extra page info is complete -->
-                                        <div class="col"
-                                             x-show="show_completed_extras & ( show_high_qr | ( {{ pg.n_qr_read }} < 3 ) )">
+                                        <div class="col">
                                             <div class="card text-center bg-primary-subtle col p-1"
                                                  data-bs-toggle="tooltip"
                                                  data-bs-placement="top"
@@ -138,7 +141,7 @@
                                             <!-- above div should say question_index_list, Issue #2716, but I think it works for now -->
                                         </div>
                                     {% else %}
-                                        <div class="col" x-show="( show_high_qr | ( {{ pg.n_qr_read }} < 3 ) )">
+                                        <div class="col">
                                             <!-- extra page info required -->
                                             <div class="card text-center bg-info-subtle col p-1  border-info border-2"
                                                  data-bs-toggle="tooltip"
@@ -149,7 +152,7 @@
                                         </div>
                                     {% endif %}
                                 {% elif pg.status == "error" %}
-                                    <div class="col" x-show="( show_high_qr | ( {{ pg.n_qr_read }} < 3 ) )">
+                                    <div class="col">
                                         <div class="card text-center bg-danger-subtle col p-1 border-error border-2"
                                              data-bs-toggle="tooltip"
                                              data-bs-placement="top"
@@ -167,7 +170,7 @@
                                         </div>
                                     </div>
                                 {% elif pg.status == "discard" %}
-                                    <div class="col" x-show="( show_high_qr | ( {{ pg.n_qr_read }} < 3 ) )">
+                                    <div class="col">
                                         <div class="card text-center bg-dark-subtle col p-1"
                                              data-bs-toggle="tooltip"
                                              data-bs-placement="top"
@@ -184,7 +187,7 @@
         </div>
         <div class="col-8" id="updatePage">
             {% if pop %}
-                <div hx-get="{% url 'scan_bundle_page' bundle_id pop %}"
+                <div hx-get="{% url 'scan_bundle_page' the_filter bundle_id pop %}"
                      hx-swap="innerHTML"
                      hx-target="#updatePage"
                      hx-trigger="load"></div>
@@ -193,9 +196,9 @@
         </div>
     </div>
     <script>
-  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl)
-  })
+      var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+      var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new bootstrap.Tooltip(tooltipTriggerEl, {trigger : 'hover'})
+      })
     </script>
 {% endblock main_content %}

@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Brennen Chiu
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2024 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -74,7 +74,7 @@
                             <thead>
                                 <tr>
                                     <th>Username</th>
-                                    <th>Question Number</th>
+                                    <th>Question Index</th>
                                     <th>Question Version</th>
                                     <th>Annotations Count</th>
                                     <th>Average Marking Time</th>
@@ -116,7 +116,7 @@
                         <table class="table text-center align-middle sortable">
                             <thead>
                                 <tr>
-                                    <th>Question (Number , Version)</th>
+                                    <th>Question (Index , Version)</th>
                                     <th>Username</th>
                                     <th>Annotations Count</th>
                                     <th>Average Marking Time</th>
@@ -124,7 +124,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for question, annotation_data in annotations_grouped_by_question_num_ver.items %}
+                                {% for question, annotation_data in annotations_grouped_by_question_ver.items %}
                                     {% for annotation in annotation_data.annotations %}
                                         <tr>
                                             <td>{{ question.0 }} , {{ question.1 }}</td>

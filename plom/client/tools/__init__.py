@@ -1,21 +1,32 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2019 Andrew Rechnitzer
 # Copyright (C) 2020 Victoria Schuster
-# Copyright (C) 2022 Colin B. Macdonald
+# Copyright (C) 2022, 2024 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 import logging
 
 log = logging.getLogger("tools")
 
+from PyQt6.QtGui import QBrush, QColor, QPen
+
+OutOfBoundsPenColour = QColor(255, 165, 0)
+OutOfBoundsFillColour = QColor(255, 165, 0, 128)
+OutOfBoundsPen = QPen(OutOfBoundsPenColour, 8)
+OutOfBoundsFill = QBrush(OutOfBoundsFillColour)
+
 from plom.client.tools.move import CommandMoveItem, UndoStackMoveMixin
-from plom.client.tools.tool import CommandTool, DeleteObject, DeleteItem
+from plom.client.tools.tool import CommandTool
 from plom.client.tools.delete import CommandDelete
 from plom.client.tools.crop import CommandCrop
+from plom.client.tools.rotate_page import CommandRotatePage
+from plom.client.tools.shift_page import CommandShiftPage
+from plom.client.tools.remove_page import CommandRemovePage
 
 from plom.client.tools.box import CommandBox
 from plom.client.tools.rubric import (
-    CommandGroupDeltaText,
-    GroupDeltaTextItem,
+    CommandRubric,
+    RubricItem,
     GhostComment,
 )
 from plom.client.tools.cross import CommandCross, CrossItem

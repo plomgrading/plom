@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 
 """Randomly ID papers for testing purposes."""
 
@@ -65,9 +65,9 @@ def do_rando_identifying(server: Union[str, None], user: str, password: str) -> 
     """Randomly associate papers with students: only for testing please.
 
     Args:
-        server (str)
-        user (str)
-        password (str)
+        server: which server.
+        user: credientials.
+        password: credientials.
 
     Returns:
         0 on success, non-zero on error/unexpected.

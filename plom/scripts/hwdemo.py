@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 """Plom script to start a demo server for homework submissions.
@@ -83,7 +83,7 @@ def main():
     ):
         if (args.server_dir / f).exists():
             raise RuntimeError(
-                f'Directory "{args.server_dir/f}" must not exist for this demo'
+                f'Directory "{args.server_dir / f}" must not exist for this demo'
             )
 
     init_cmd = f"plom-server init {args.server_dir}"

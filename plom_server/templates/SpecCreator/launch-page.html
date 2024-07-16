@@ -1,32 +1,71 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Edith Coates
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2024 Andrew Rechnitzer
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Create specification
+    Create / modify assessment specification
 {% endblock title %}
 {% block page_heading %}
-    Create a test specification
+    Create / modify assessment specification
 {% endblock page_heading %}
 {% block main_content %}
-    <div class="d-grid">
+    <div class="d-grid gap-3">
         <div>
-            <a class="btn btn-primary mb-3" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
-            {% if is_there_a_spec %}
-                <div class="alert alert-primary mb-3" role="alert">
-                    There is a spec in the database: <a href="{% url 'spec_summary' %}">view</a>
-                </div>
-            {% endif %}
+            <a class="btn btn-primary" href="{% url 'prep_landing' %}">Assessment preparation page</a>
+            <a class="btn btn-primary" href="{% url 'spec_summary' %}">Specification summary page</a>
         </div>
+        {% if is_there_a_spec %}
+            <span class="alert alert-warning my-2" role="alert">There is a specification in the database. You may not be able to modify it if you have gone further preparing your assessment.</span>
+        {% else %}
+            <div class="alert alert-primary" role="alert">There is no assessment specification</div>
+        {% endif %}
         <div class="card">
             <div class="card-body">
-                <p>
-                    Supply a <a href="https://toml.io/en/" target="_blank">.toml file</a> describing the structure of the exam, or
-                    <a class="btn btn-primary" href="{% url 'template_spec_builder' %}">build a template toml</a>
-                </p>
-                <div class="mb-3" hx-get="{% url 'spec_text_edit' %}" hx-trigger="load"></div>
+                <form enctype="multipart/form-data"
+                      hx-post="{% url 'creator_launch' %}"
+                      hx-include="[name='spec']"
+                      hx-target="#saving-status">
+                    {% csrf_token %}
+                    <p>
+                        You can use the
+                        <a class="btn btn-primary" href="{% url 'template_spec_builder' %}">Template
+                        Spec Builder</a>
+                        which helps you describe the structure of your assessment
+                        in <a href="https://toml.io/en/" target="_blank">.toml format</a>.
+                    </p>
+                    <p>
+                        <!-- TODO: moved to a new page: delete this later if we don't move it back
+                        Or you can upload a file:
+                        <div class="input-group">
+                            <input class="form-control" type="file" accept=".toml" name="toml_file" id="toml_file" />
+                            <button type="submit" class="btn btn-primary" name="which_action" value="upload_file">Upload</button>
+                        </div>
+                        -->
+                        Or you can
+                        <a class="btn btn-primary" href="{% url 'spec_upload' %}">Upload
+                        a <tt>.toml</tt> file</a>
+                        that you have prepared elsewhere.
+                    </p>
+                    <p>Or simply paste in your specification into the box below.</p>
+                    <label for="spec-toml-input" class="form-label">Test specification</label>
+                    <textarea class="form-control"
+                              id="spec-toml-input"
+                              name="spec"
+                              rows="12"
+                              spellcheck="false">{{ editable_toml }}</textarea>
+                    <button type="submit" class="btn btn-primary me-1 mt-2">Submit</button>
+                    <!--
+                        <button type="submit" class="btn btn-primary" name="which_action" value="submit">Submit</button>
+                    -->
+                    <button type="submit"
+                            class="btn btn-secondary mt-2"
+                            name="which_action"
+                            value="validate">Validate</button>
+                    <div class="mt-2" id="saving-status"></div>
+                </form>
             </div>
         </div>
     </div>

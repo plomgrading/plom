@@ -12,11 +12,15 @@ from typing import Any
 from django.db import transaction
 
 from plom import SpecVerifier
+from plom.plom_exceptions import PlomDependencyConflict
 from plom.version_maps import version_map_to_csv, check_version_map
 
 from Papers.services import SpecificationService
+from .preparation_dependency_service import (
+    assert_can_modify_qv_mapping_database,
+)
 
-from ..models import StagingPQVMapping
+from ..models import StagingPQVMapping, NumberOfPapersToProduceSetting
 from ..services import StagingStudentService
 
 
@@ -24,6 +28,18 @@ class PQVMappingService:
     @transaction.atomic()
     def is_there_a_pqv_map(self):
         return StagingPQVMapping.objects.exists()
+
+    def _set_number_to_produce(self, numberToProduce: int):
+        nop = NumberOfPapersToProduceSetting.load()
+        nop.number_of_papers = numberToProduce
+        nop.save()
+
+    def _reset_number_to_produce(self):
+        self._set_number_to_produce(0)
+
+    def get_number_of_papers_in_pqv_map(self) -> int:
+        # get the number of distinct paper-numbers in the staging pqv-map
+        return StagingPQVMapping.objects.values("paper_number").distinct().count()
 
     @transaction.atomic()
     def list_of_paper_numbers(self):
@@ -36,8 +52,15 @@ class PQVMappingService:
         return paper_numbers
 
     @transaction.atomic()
-    def remove_pqv_map(self):
+    def remove_pqv_map(self) -> None:
+        """Erase the question-version map.
+
+        Raises:
+            PlomDependencyConflict: cannot erase for example b/c papers already printed.
+        """
+        assert_can_modify_qv_mapping_database()
         StagingPQVMapping.objects.all().delete()
+        self._reset_number_to_produce()
 
     @transaction.atomic()
     def use_pqv_map(self, pqvmap: dict[int, dict[int, int]]):
@@ -47,14 +70,22 @@ class PQVMappingService:
         to the existing pqvmap.
 
         Raises:
+            PlomDependencyConflict: cannot modify qv map or database (eg papers printed)
             ValueError: invalid map.
         """
+        if self.is_there_a_pqv_map():
+            raise PlomDependencyConflict(
+                "There is already a qv-map, you cannot create a new one until you remove the existing one."
+            )
+        assert_can_modify_qv_mapping_database()
+
         check_version_map(pqvmap, spec=SpecificationService.get_the_spec())
         for paper_number, qvmap in pqvmap.items():
             for question, version in qvmap.items():
                 StagingPQVMapping.objects.create(
                     paper_number=paper_number, question=question, version=version
                 )
+        self._set_number_to_produce(len(pqvmap))
 
     @transaction.atomic()
     def get_pqv_map_dict(self) -> dict[int, dict[int, int]]:
@@ -82,14 +113,12 @@ class PQVMappingService:
         # in particular, a dict of lists.
         pqvmapping = self.get_pqv_map_dict()
         pqv_table = {}
-        question_list = [
-            q + 1 for q in range(SpecificationService.get_n_questions())
-        ]  # todo - replace with spec lookup
+        question_indices = SpecificationService.get_question_indices()
 
         for paper_number, qvmap in pqvmapping.items():
             pqv_table[paper_number] = {
                 "prename": None,
-                "qvlist": [qvmap[q] for q in question_list],
+                "qvlist": [qvmap[q] for q in question_indices],
             }
 
             # if prenaming then we need to put in those student details
@@ -147,15 +176,42 @@ class PQVMappingService:
         Keyword Args:
             first: the starting paper number.
 
+        Raises:
+            PlomDependencyConflict: cannot modify qv map or database (eg papers printed)
+
         Returns:
             None
         """
+        assert_can_modify_qv_mapping_database()
+
         self.remove_pqv_map()
         pqvmap = self.make_version_map(number_to_produce)
         # kind of hacky: we just increase/decrease the keys
         pqvmap = {k - 1 + first: v for k, v in pqvmap.items()}
+        # bit of a hack to ensure versions match per page
+        pqvmap = _fix_shared_pages(pqvmap)
         self.use_pqv_map(pqvmap)
 
     def get_minimum_number_to_produce(self):
         sss = StagingStudentService()
         return sss.get_minimum_number_to_produce()
+
+
+def _fix_shared_pages(vmap):
+    # Ensure any questions that share pages match versions.
+    # TODO: a read-only checker for this would be useful; at least a warning for self-uploaded
+    spec = SpecificationService.get_the_spec()
+    for q in reversed(SpecificationService.get_question_indices()):
+        # TODO: still don't like these str(qidx)
+        my_pages = spec["question"][str(q)]["pages"]
+        for pg in my_pages:
+            for qidx_str, v in spec["question"].items():
+                qidx = int(qidx_str)  # yuck, well this whole fcn but especially this
+                if qidx_str == str(q):
+                    continue
+                if pg in v["pages"]:
+                    # we are sharing a page with an earlier (b/c reverse) question
+                    # so copy all those versions
+                    for paper in vmap.keys():
+                        vmap[paper][q] = vmap[paper][qidx]
+    return vmap

@@ -56,7 +56,14 @@ from plom.scan import readQRCodes
 log = logging.getLogger("scan")
 
 
-def processScans(pdf_fname, *, msgr, gamma=False, extractbmp=False, demo=False):
+def processScans(
+    pdf_fname,
+    *,
+    msgr,
+    gamma: bool = False,
+    extractbmp: bool = False,
+    demo: bool = False,
+):
     """Process PDF file into images and read QRcodes.
 
     Args:
@@ -66,11 +73,10 @@ def processScans(pdf_fname, *, msgr, gamma=False, extractbmp=False, demo=False):
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
-        bundle_name (str/None): Override the bundle name (which is by
-            default is generated from the PDF filename).
-        gamma (bool):
-        extractbmp (bool):
-        demo (bool): do things appropriate for a demo such as lower quality
+        gamma: do gamma correction
+        extractbmp: whether to try extracting bitmaps instead of the default
+            of rendering the page image.
+        demo: do things appropriate for a demo such as lower quality
             or various simulated rotations.
 
     Returns:
@@ -136,20 +142,25 @@ def processScans(pdf_fname, *, msgr, gamma=False, extractbmp=False, demo=False):
 
 
 def uploadImages(
-    bundle_name, *, msgr, do_unknowns=False, do_collisions=False, prompt=True
-):
+    bundle_name: str,
+    *,
+    msgr,
+    do_unknowns: bool = False,
+    do_collisions: bool = False,
+    prompt: bool = True,
+) -> None:
     """Upload processed images from bundle.
 
     Args:
-        bundle_name (str): usually the PDF filename but in general
-            whatever string was used to define a bundle.
+        bundle_name: usually the PDF filename but in general whatever
+            string was used to define a bundle.  Do not send a path.
 
     Keyword Args:
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
-        do_unknowns (bool):
-        do_collisions (bool):
-        prompt (bool): ok to interactively prompt (default: True).
+        do_unknowns: upload any unknown images.
+        do_collisions: upload any colliding images.
+        prompt: ok to interactively prompt (default: True).
 
     Returns:
         None
@@ -164,7 +175,10 @@ def uploadImages(
     As part of the upload 'unknown' pages and 'collisions' may be detected.
     These will not be uploaded unless the appropriate flags are set.
     """
-    bundledir = Path("bundles") / bundle_name
+    assert (
+        Path(bundle_name).name == bundle_name
+    ), f'bundle name "{bundle_name}" should be just the filename, no path'
+    bundledir = get_bundle_dir(bundle_name)
     with open(bundledir / "source.toml", "rb") as f:
         info = tomllib.load(f)
     md5 = info["md5"]

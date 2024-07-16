@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Colin B. Macdonald
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
+
+from __future__ import annotations
 
 import io
 from pathlib import Path
 import random
 import tempfile
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional, Tuple
 
 import arrow
 import fitz
@@ -39,13 +41,13 @@ from .student_marks_service import StudentMarkService
 class BuildSolutionService:
     """Class that contains helper functions for sending data to plom-finish."""
 
-    def get_all_paper_status_for_solution_build(self) -> List[Dict[str, Any]]:
+    def get_all_paper_status_for_solution_build(self) -> list[dict[str, Any]]:
         """Get the status information for all papers for solution build.
 
         Returns:
             List of dicts representing each row of the data.
         """
-        status: Dict[str, Any] = {}
+        status: dict[str, Any] = {}
         all_papers = Paper.objects.all()
         for paper in all_papers:
             status[paper.paper_number] = {
@@ -123,7 +125,7 @@ class BuildSolutionService:
 
     def assemble_solution_for_paper(
         self, paper_number: int, *, watermark: Optional[bool] = False
-    ) -> Tuple[bytes, str]:
+    ) -> tuple[bytes, str]:
         """Reassemble the solutions for a particular question into a PDF file, returning bytes.
 
         Args:
@@ -147,7 +149,7 @@ class BuildSolutionService:
         # get the version of each question
         qv_map = {}
         for qp_obj in QuestionPage.objects.filter(paper=paper_obj):
-            qv_map[qp_obj.question_number] = qp_obj.version
+            qv_map[qp_obj.question_index] = qp_obj.version
         # get the solution pdfs
         soln_doc = {}
         for spdf_obj in SolutionSourcePDF.objects.all():
@@ -170,13 +172,15 @@ class BuildSolutionService:
                 shortname = SpecificationService.get_shortname()
                 sid_sname_pair = StudentMarkService.get_paper_id_or_none(paper_obj)
                 if sid_sname_pair:
-                    fname = f"{shortname}_solution_{sid_sname_pair[0]}.pdf"
+                    # make sure filename matches legacy - see #3405
+                    fname = f"{shortname}_solutions_{sid_sname_pair[0]}.pdf"
                     if watermark:
                         self.watermark_pages(
                             dest_doc, f"Solutions for {sid_sname_pair[0]}"
                         )
                 else:
-                    fname = f"{shortname}_solution_{paper_number:04}.pdf"
+                    # make sure filename matches legacy - see #3405
+                    fname = f"{shortname}_solutions_{paper_number:04}.pdf"
 
                 return (dest_doc.tobytes(), fname)
 
@@ -378,14 +382,14 @@ class BuildSolutionService:
         return N
 
     @transaction.atomic
-    def get_completed_pdf_files(self) -> List[File]:
-        """Get list of paths of pdf-files of solutions that are not obsolete.
+    def get_completed_pdf_files_and_names(self) -> list[Tuple[File, str]]:
+        """Get list of Files and recommended names of pdf-files of solutions.
 
         Returns:
-            A list of django-Files of the reassembled pdf.
+            A list of pairs of [django-File, display filename] of the solution pdf.
         """
         return [
-            task.pdf_file
+            (task.pdf_file, task.display_filename)
             for task in BuildSolutionPDFChore.objects.filter(
                 obsolete=False, status=HueyTaskTracker.COMPLETE
             )
@@ -396,9 +400,9 @@ class BuildSolutionService:
         paths = [
             {
                 "fs": pdf_file.path,
-                "n": pdf_file.name,
+                "n": f"solutions/{display_filename}",
             }
-            for pdf_file in self.get_completed_pdf_files()
+            for pdf_file, display_filename in self.get_completed_pdf_files_and_names()
         ]
 
         zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)
@@ -454,6 +458,7 @@ def huey_build_soln_for_paper(
         chore = BuildSolutionPDFChore.objects.select_for_update().get(pk=tracker_pk)
         if not chore.obsolete:
             chore.pdf_file = File(io.BytesIO(pdf_bytes), name=soln_pdf_name)
+            chore.display_filename = soln_pdf_name
             chore.save()
 
     HueyTaskTracker.transition_to_complete(tracker_pk)

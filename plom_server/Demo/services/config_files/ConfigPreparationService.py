@@ -29,7 +29,7 @@ from Papers.services import (
 )
 from Preparation import useful_files_for_testing as useful_files
 from Preparation.services import (
-    TestSourceService,
+    SourceService,
     PrenameSettingService,
     StagingStudentService,
     PQVMappingService,
@@ -55,7 +55,7 @@ def create_specification(config: PlomServerConfig):
         raise PlomConfigCreationError(e) from e
 
 
-def upload_test_sources(config: PlomServerConfig):
+def upload_test_sources(config: PlomServerConfig) -> None:
     """Upload test sources specified in a config."""
     source_paths = config.test_sources
     if source_paths == "demo":
@@ -66,7 +66,7 @@ def upload_test_sources(config: PlomServerConfig):
     assert isinstance(source_paths, list)
     try:
         for i, path in enumerate(source_paths):
-            TestSourceService().store_test_source(i + 1, path)
+            SourceService.store_source_pdf(i + 1, path)
     except Exception as e:
         raise PlomConfigCreationError(e) from e
 
@@ -163,6 +163,7 @@ def create_test_preparation(config: PlomServerConfig, verbose: bool = False):
         echo("Creating test paper instances...")
         create_papers(config)
 
-    if PapersPrinted.can_status_be_set_true():
-        PapersPrinted.set_papers_printed(True)
-        echo("Preparation complete, papers printed.")
+    # here we override the dependency checking since
+    # we do not want to actually build pdfs.
+    PapersPrinted.set_papers_printed(True, ignore_dependencies=True)
+    echo("Preparation complete, papers printed.")

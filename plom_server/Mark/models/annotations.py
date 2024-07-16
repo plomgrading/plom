@@ -41,7 +41,7 @@ class Annotation(models.Model):
     score = models.IntegerField(null=True)
     image = models.OneToOneField(AnnotationImage, on_delete=models.CASCADE)
     annotation_data = models.JSONField(null=True)
-    marking_time = models.PositiveIntegerField(null=True)
+    marking_time = models.FloatField(null=True)
     task = models.ForeignKey(MarkingTask, null=True, on_delete=models.SET_NULL)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     time_of_last_update = models.DateTimeField(auto_now=True)

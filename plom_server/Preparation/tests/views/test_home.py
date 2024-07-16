@@ -55,7 +55,7 @@ class PreparationLandingTests(TestCase):
         self.assertFalse(context["papers_staged"])
 
         self.assertFalse(context["can_upload_source_tests"])
-        self.assertEqual(context["uploaded_test_versions"], 0)
+        self.assertEqual(context["num_uploaded_source_versions"], 0)
 
         self.assertFalse(context["prename_enabled"])
 
@@ -64,7 +64,7 @@ class PreparationLandingTests(TestCase):
         self.assertFalse(context["pqv_mapping_present"])
         self.assertFalse(context["can_qvmap"])
 
-        self.assertFalse(context["papers_built"])
+        self.assertFalse(context["all_papers_built"])
 
     def test_after_spec_made(self) -> None:
         """Test the seatbelts after a specification is saved.

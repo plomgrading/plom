@@ -19,13 +19,12 @@ from ..models import MarkingTask
 class MarkingTaskTestsWithConfig(TestCase):
     @config_test()
     def test_create_task(self) -> None:
-        """Test MarkingTaskService.create_task()
+        """Test MarkingTaskService.create_task().
 
         Config:
         test_spec = "demo"
         num_to_produce = 2
         """
-
         paper1 = Paper.objects.get(paper_number=1)
         paper2 = Paper.objects.get(paper_number=2)
 
@@ -67,10 +66,10 @@ class MarkingTaskTestsWithConfig(TestCase):
         qvmap = "config_files/tiny_qvmap.toml"
         auto_init_tasks = true
         """
-        task1 = MarkingTask.objects.get(question_number=1, question_version=1)
-        task2 = MarkingTask.objects.get(question_number=1, question_version=2)
-        task3 = MarkingTask.objects.get(question_number=2, question_version=1)
-        task4 = MarkingTask.objects.get(question_number=2, question_version=2)
+        task1 = MarkingTask.objects.get(question_index=1, question_version=1)
+        task2 = MarkingTask.objects.get(question_index=1, question_version=2)
+        task3 = MarkingTask.objects.get(question_index=2, question_version=1)
+        task4 = MarkingTask.objects.get(question_index=2, question_version=2)
 
         self.assertEqual(QuestionMarkingService().get_first_available_task(), task1)
         self.assertEqual(
@@ -88,7 +87,7 @@ class MarkingTaskTestsWithConfig(TestCase):
 
     @config_test()
     def test_user_can_update_task(self) -> None:
-        """Test MarkingTaskService.user_can_update_task()
+        """Test MarkingTaskService.user_can_update_task().
 
         Config:
         test_spec = "config_files/tiny_spec.toml"

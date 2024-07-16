@@ -3,6 +3,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Bryan Tanady
 
 from django.urls import path
 
@@ -12,6 +13,7 @@ from ..views import (
     ServerInfo,
     ServerVersion,
     CloseUser,
+    UserRole,
     QuestionMaxMark,
     ObtainAuthTokenUpdateLastLogin,
 )
@@ -30,6 +32,7 @@ class MiscURLPatterns:
             path("info/server/", ServerInfo.as_view(), name="api_server_info"),
             path("info/exam/", ExamInfo.as_view(), name="api_exam_info"),
             path("info/spec/", GetSpecification.as_view(), name="api_info_spec"),
+            path("info/user/<str:username>", UserRole.as_view(), name="api_user_role"),
             path(
                 "maxmark/<int:question>",
                 QuestionMaxMark.as_view(),

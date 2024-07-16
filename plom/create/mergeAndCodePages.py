@@ -1,40 +1,51 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Julian Lapenna
 
+from __future__ import annotations
+
 import tempfile
 import math
+import pathlib
 from pathlib import Path
+from typing import Any
 
 # import pyqrcode
-import segno
 import fitz
+from packaging.version import Version
+import segno
 
 from plom.create import paperdir
-from plom.specVerifier import build_page_to_group_dict, build_page_to_version_dict
+from plom.specVerifier import (
+    build_page_to_group_dict,
+    get_question_labels,
+    build_page_to_version_dict,
+)
 from plom.tpv_utils import encodeTPV
 
 
 # from plom.misc_utils import run_length_encoding
 
 
-def create_QR_codes(papernum, pagenum, ver, code, dur):
+def create_QR_codes(
+    papernum: int, pagenum: int, ver: int, code: str, dur: pathlib.Path
+) -> list[pathlib.Path]:
     """Creates QR codes as png files and a dictionary of their filenames.
 
     Arguments:
-        papernum (int): the paper/test number.
-        pagenum (int): the page number.
-        ver (int): the version of this page.
-        code (str): 6 digits distinguishing this document from others.
-        dur (pathlib.Path): a directory to save the QR codes.
+        papernum: the paper/test number.
+        pagenum: the page number.
+        ver: the version of this page.
+        code: short digit code distinguishing this document from others.
+        dur: a directory to save the QR codes.
 
     Returns:
-        list: of ``pathlib.Path` for PNG files for each corner's QR code.
+        List of ``pathlib.Path` for PNG files for each corner's QR code.
         The corners are indexed counterclockwise from the top-right:
 
             index | meaning
@@ -54,22 +65,23 @@ def create_QR_codes(papernum, pagenum, ver, code, dur):
         # qr_code.png(filename, scale=4)
 
         qr_code = segno.make(tpv, error="H")
-        qr_code.save(filename, scale=4)
+        # MyPy complains about pathlib.Path here but it works
+        qr_code.save(filename, scale=4)  # type: ignore[arg-type]
 
         qr_file.append(filename)
 
     return qr_file
 
 
-def create_exam_and_insert_QR(
-    spec,
-    papernum,
-    question_versions,
-    tmpdir,
+def _create_exam_and_insert_QR(
+    spec: dict[str, Any],
+    papernum: int,
+    question_versions: dict[int, int],
+    tmpdir: pathlib.Path,
     *,
-    no_qr=False,
-    source_versions_path=None,
-):
+    no_qr: bool = False,
+    source_versions_path: str | pathlib.Path | None = None,
+) -> fitz.Document:
     """Creates the exam objects and insert the QR codes.
 
     Creates the exams objects from the pdfs stored at sourceVersions.
@@ -89,7 +101,8 @@ def create_exam_and_insert_QR(
             Defaults to "./sourceVersions"
 
     Returns:
-        fitz.Document: PDF document.
+        fitz.Document: PDF document, apparently open, which seems to me a scary
+        thing to be handling around.  Caller is responsible for closing it.
 
     Raises:
         RuntimeError: one or more of your version<N>.pdf files not found.
@@ -139,10 +152,10 @@ def create_exam_and_insert_QR(
         # name of the group to which page belongs
         group = page_to_group[p]
         text = f"Test {papernum:04} {group:5} p. {p}"
-        odd = (p - 1) % 2 == 0
+        odd: bool | None = (p - 1) % 2 == 0
         if no_qr:
             odd = None
-            qr_files = {}
+            qr_files = []
         else:
             ver = page_to_version[p]
             qr_files = create_QR_codes(papernum, p, ver, spec["publicCode"], tmpdir)
@@ -154,15 +167,15 @@ def create_exam_and_insert_QR(
     return exam
 
 
-def pdf_page_add_stamp(page, stamp):
+def pdf_page_add_stamp(page: fitz.Page, stamp: str) -> None:
     """Add top-middle stamp to a PDF page.
 
     Args:
-        page (fitz.Page): a particular page of a PDF file.
-        stamp (str): text for the top-middle
+        page: a particular page of a PDF file.
+        stamp: text for the top-middle
 
     Returns:
-        None: but modifies page as a side-effect.
+        None, but modifies page as a side-effect.
     """
     w = 70  # box width
     mx, my = (15, 20)  # margins
@@ -183,16 +196,22 @@ def pdf_page_add_stamp(page, stamp):
     tw.write_text(page)
 
 
-def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
+def pdf_page_add_labels_QRs(
+    page: fitz.Page,
+    shortname: str,
+    stamp: str,
+    qr_code: list[pathlib.Path],
+    odd: bool | None = True,
+) -> None:
     """Add top-middle stamp, QR codes and staple indicator to a PDF page.
 
     Args:
-        page (fitz.Page): a particular page of a PDF file.
-        shortname (str): a short string that we will write on the staple
+        page: a particular page of an open PDF file.  We will modify it.
+        shortname: a short string that we will write on the staple
             indicator.
-        stamp (str): text for the top-middle
-        qr_code (dict): QR images, if empty, don't do corner work.
-        odd (bool/None): True for an odd page number (counting from 1),
+        stamp: text for the top-middle
+        qr_code: QR images, if empty, don't do corner work.
+        odd: True for an odd page number (counting from 1),
             False for an even page, and None if you don't want to draw a
             staple corner.
 
@@ -264,7 +283,14 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
     page.draw_rect(BR, color=[0, 0, 0], width=0.5)
 
 
-def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
+def pdf_page_add_name_id_box(
+    page: fitz.Page,
+    name: str,
+    sid: str,
+    x: float | None = None,
+    y: float | None = None,
+    signherebox: bool = True,
+) -> None:
     """Creates the extra info (usually student name and id) boxes and places them in the first page.
 
     Arguments:
@@ -368,16 +394,18 @@ def pdf_page_add_name_id_box(page, name, sid, x=None, y=None, signherebox=True):
 
 def make_PDF(
     spec,
-    papernum,
-    question_versions,
-    extra=None,
-    no_qr=False,
-    fakepdf=False,
-    xcoord=None,
-    ycoord=None,
+    papernum: int,
+    question_versions: dict[int, int],
+    extra: dict[str, Any] | None = None,
+    no_qr: bool = False,
+    fakepdf: bool = False,
+    xcoord: float | None = None,
+    ycoord: float | None = None,
+    *,
     where=None,
     source_versions_path=None,
-):
+    font_subsetting: bool | None = None,
+) -> pathlib.Path | None:
     """Make a PDF of particular versions, with QR codes, and optionally name stamped.
 
     Take pages from each source (using `questions_versions`/`page_versions`) and
@@ -386,27 +414,48 @@ def make_PDF(
     file into the `paperdir` (typically "papersToPrint").
 
     Arguments:
-        spec (dict): A validated test specification
-        papernum (int): the paper/test number.
-        question_versions (dict): the version of each question for this paper.
+        spec (dict | SpecVerifier): A validated specification
+        papernum: the paper number.
+        question_versions: the version of each question for this paper.
             Note this is an input and must be predetermined before
             calling.
-        extra (dict/None): Dictionary with student id and name or None.
+        extra: Dictionary with student id and name or None
+            to default not printing any prename.
+        xcoord: horizontal positioning of the prename box, or a default
+            if None or omitted.
+        ycoord: vertical positioning of the prename box, or a default
+            if None or omitted.
         no_qr (bool): determine whether or not to paste in qr-codes.
+            Somewhat deprecated, definitely use it as kwarg if you're
+            writing new code.
         fakepdf (bool): when true, the build empty "pdf" files by just
             touching fhe files.  This is could be used in testing or to
             save time when we have no use for the actual files.  Why?
             Maybe later confirmation steps check these files exist or
             something like that...
-        xcoord (float): horizontal positioning of the prename box.
-        ycoord (float): vertical positioning of the prename box.
+            Somewhat deprecated, definitely use it as kwarg if you're
+            writing new code.
+
+    Keyword Args:
         where (pathlib.Path/None): where to save the files, with some
             default if omitted.
         source_versions_path (pathlib.Path/str/None): location of the
             source versions directory.
+        font_subsetting: if None/omitted, do a generally-sensible default
+            of using subsetting only when *we* added non-ascii characters.
+            True forces subsetting and False disables is.
+            We embed fonts for names and other overlay.  But if there are
+            non-Latin characters (e.g., CJK) in names, then the embedded
+            font is quite large (several megabytes).
+            Note: in theory, subsetting could muck around with fonts from
+            the source (i.e., if they were NOT previously subsetted).
+            So we only do the subsetting if we're added non-ascii chars
+            in any of the shortname, student name or question labels.
+            Non-ascii is a stronger requirement than needed,
 
     Returns:
-        pathlib.Path: the file that was just written.
+        pathlib.Path: the file that was just written, or None in the slightly
+        strange, perhaps deprecated ``fakepdf`` case.
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable
@@ -421,11 +470,11 @@ def make_PDF(
     # make empty files instead of PDFs
     if fakepdf:
         save_name.touch()
-        return
+        return None
 
     # Build all relevant pngs in a temp directory
     with tempfile.TemporaryDirectory() as tmp_dir:
-        exam = create_exam_and_insert_QR(
+        exam = _create_exam_and_insert_QR(
             spec,
             papernum,
             question_versions,
@@ -438,12 +487,29 @@ def make_PDF(
     if extra:
         pdf_page_add_name_id_box(exam[0], extra["name"], extra["id"], xcoord, ycoord)
 
-    # We embed fonts for names and other overlay.  But if there are non-latin
-    # characters (e.g., CJK) in names, then the embedded font is quite large.
-    # Subsetting requires https://pypi.org/project/fonttools
-    # Note: In theory, this could muck around with fonts from the source
-    # (i.e., if they were NOT subsetted).  Does not happen with LaTeX.
-    exam.subset_fonts()
+    do_subset = False
+    if extra and not extra["name"].isascii():
+        do_subset = True
+    if not spec["name"].isascii():
+        do_subset = True
+    for label in get_question_labels(spec):
+        if not label.isascii():
+            do_subset = True
+
+    if font_subsetting is None:
+        font_subsetting = do_subset
+    if font_subsetting:
+        if Version(fitz.version[0]) >= Version("1.24.6"):
+            exam.subset_fonts()
+        else:
+            # TODO: remove after minimum PyMuPDF is bumped (see Plom Issue #3384)
+            # Fallback subsetting requires https://pypi.org/project/fonttools
+            try:
+                exam.subset_fonts(fallback=True)
+            except TypeError:
+                # PyMuPDF<=1.23 does not have fallback
+                # Subsetting requires https://pypi.org/project/fonttools
+                exam.subset_fonts()
 
     # Add the deflate option to compress the embedded pngs
     # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save

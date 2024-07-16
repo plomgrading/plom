@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
@@ -83,14 +84,14 @@ class StudentMarkService:
             last_id_time = None
 
         # paper has multiple complete marking tasks, get the latest one
-        try:
+        if len(MarkingTask.objects.filter(status=MarkingTask.COMPLETE)):
             last_annotation_time = (
                 MarkingTask.objects.filter(status=MarkingTask.COMPLETE)
                 .order_by("-last_update")
                 .first()
                 .last_update
             )
-        except MarkingTask.DoesNotExist:
+        else:
             last_annotation_time = None
 
         if last_id_time and last_annotation_time:
@@ -146,7 +147,7 @@ class StudentMarkService:
             mark = (
                 MarkingTask.objects.filter(
                     paper=paper,
-                    question_number=question_idx,
+                    question_index=question_idx,
                     status=MarkingTask.COMPLETE,
                 )
                 .get()
@@ -157,26 +158,30 @@ class StudentMarkService:
         return version, mark
 
     def paper_spreadsheet_dict(self, paper: Paper) -> dict[str, Any]:
-        """Return a dictionary representing a paper for the reassembly spreadsheet.
+        """Return a dictionary representing a paper.
 
         Args:
             paper: a reference to a Paper instance.
+
+        Returns:
+            A dictionary whose keys are PaperNumber, StudentID, StudentName,
+            identified, marked, mark and version of each question, Total, and
+            last_update.
         """
-        paper_dict = {"paper_number": paper.paper_number}
+        paper_dict = {"PaperNumber": paper.paper_number}
         warnings = []
 
         paper_id_info = StudentMarkService.get_paper_id_or_none(paper)
         if paper_id_info:
             student_id, student_name = paper_id_info
-            paper_dict["student_id"] = student_id
-            paper_dict["student_name"] = student_name
+            paper_dict["StudentID"] = student_id
+            paper_dict["StudentName"] = student_name
         else:
-            paper_dict["student_id"] = ""
-            paper_dict["student_name"] = ""
+            paper_dict["StudentID"] = ""
+            paper_dict["StudentName"] = ""
             warnings.append("[Not identified]")
         paper_dict["identified"] = paper_id_info is not None
 
-        n_questions = SpecificationService.get_n_questions()
         paper_marked = self.is_paper_marked(paper)
 
         paper_dict["marked"] = paper_marked
@@ -184,9 +189,9 @@ class StudentMarkService:
             total = 0
         else:
             warnings.append("[Not marked]")
-            paper_dict["total_mark"] = None
+            paper_dict["Total"] = None
 
-        for i in range(1, n_questions + 1):
+        for i in SpecificationService.get_question_indices():
             version, mark = self.get_question_version_and_mark(paper, i)
             paper_dict[f"q{i}_mark"] = mark
             paper_dict[f"q{i}_version"] = version
@@ -195,13 +200,12 @@ class StudentMarkService:
                 assert mark is not None
                 total += mark
         if paper_marked:
-            paper_dict["total_mark"] = total
+            paper_dict["Total"] = total
 
         if warnings:
             paper_dict.update({"warnings": ",".join(warnings)})
 
         paper_dict["last_update"] = self.get_last_updated_timestamp(paper)
-
         return paper_dict
 
     def get_spreadsheet_data(self) -> dict[str, Any]:
@@ -266,18 +270,18 @@ class StudentMarkService:
             .exclude(status=MarkingTask.OUT_OF_DATE)
         )
         questions: dict[int, str | dict] = {}
-        for marking_task in marking_tasks.order_by("question_number"):
+        for marking_task in marking_tasks.order_by("question_index"):
             current_annotation = marking_task.latest_annotation
             if current_annotation:
-                questions[marking_task.question_number] = {
-                    "question": marking_task.question_number,
+                questions[marking_task.question_index] = {
+                    "question": marking_task.question_index,
                     "version": marking_task.question_version,
                     "out_of": current_annotation.annotation_data["maxMark"],
                     "student_mark": current_annotation.score,
                 }
             else:
                 # String value so that it questions.get(i) doesn't return None
-                questions[marking_task.question_number] = "Not marked"
+                questions[marking_task.question_index] = "Not marked"
 
         return {paper_num: questions}
 
@@ -318,7 +322,7 @@ class StudentMarkService:
         """Get the count of how many papers have marked a specific question.
 
         Args:
-            question: The question number.
+            question: The question index.
 
         Keyword Args:
             version: The version of the question.
@@ -329,10 +333,11 @@ class StudentMarkService:
         Raises:
             None expected
         """
-        service = MarkingTaskService()
-        return service.get_tasks_from_question_with_annotation(
-            question=question, version=version
-        ).count()
+        return (
+            MarkingTaskService()
+            .get_tasks_from_question_with_annotation(question, version)
+            .count()
+        )
 
     def get_student_info_from_paper(
         self,
@@ -344,7 +349,7 @@ class StudentMarkService:
             paper_num: The paper number.
 
         Returns:
-            Dict keyed by string information about the student (i.e. "student_id": 1234, "q1_version" : 2).
+            Dict keyed by string information about the student (i.e. "StudentID": 1234, "q1_version" : 2).
 
         Raises:
             Paper.DoesNotExist: If the paper does not exist in the database.
@@ -382,12 +387,11 @@ class StudentMarkService:
         return csv_data
 
     def get_csv_header(
-        self, spec: dict, version_info: bool, timing_info: bool, warning_info: bool
-    ) -> list:
+        self, version_info: bool, timing_info: bool, warning_info: bool
+    ) -> list[str]:
         """Get the header for the csv file.
 
         Args:
-            spec: The specification for the paper.
             version_info: Whether to include the version info.
             timing_info: Whether to include the timing info.
             warning_info: Whether to include the warning info.
@@ -399,12 +403,16 @@ class StudentMarkService:
         Raises:
             None expected
         """
-        keys = ["student_id", "student_name", "paper_number", "total_mark"]
-        numberOfQuestions = spec["numberOfQuestions"]
-        for q in range(1, numberOfQuestions + 1):
+        # keys match those in legacy-plom
+        # see issue #3405
+        # excepting paper_number = PaperNumber
+        # since in legacy was TestNumber (which we avoid in webplom)
+        keys = ["StudentID", "StudentName", "PaperNumber", "Total"]
+        # if the above changed then make sure that the dict-keys also changed
+        for q in SpecificationService.get_question_indices():
             keys.append(f"q{q}_mark")
         if version_info:
-            for q in range(1, numberOfQuestions + 1):
+            for q in SpecificationService.get_question_indices():
                 keys.append(f"q{q}_version")
         if timing_info:
             keys.extend(["last_update"])
@@ -416,9 +424,8 @@ class StudentMarkService:
     def build_marks_csv_as_string(
         self, version_info: bool, timing_info: bool, warning_info: bool
     ) -> str:
-        spec = SpecificationService.get_the_spec()
         sms = StudentMarkService()
-        keys = sms.get_csv_header(spec, version_info, timing_info, warning_info)
+        keys = sms.get_csv_header(version_info, timing_info, warning_info)
         student_marks = sms.get_all_students_download(
             version_info, timing_info, warning_info
         )

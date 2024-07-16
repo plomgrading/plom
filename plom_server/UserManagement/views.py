@@ -6,7 +6,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from django.shortcuts import redirect, render
-from django.http import HttpResponse, Http404
+from django.http import HttpRequest, HttpResponse, Http404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 
@@ -76,7 +76,10 @@ class PasswordResetPage(ManagerRequiredView):
 
 
 class HTMXExplodeView(ManagerRequiredView):
-    def get(self, request):
+    """For debugging, this view causes some sorts of errors non-deterministically."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        """For debugging, Getting this randomly fails with 404 or a server 500 error or succeeds."""
         import random
 
         if random.random() < 0.333:

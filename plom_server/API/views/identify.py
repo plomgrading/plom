@@ -1,16 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.db import IntegrityError
 from rest_framework.views import APIView
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
 
-from Preparation.services import StagingStudentService
+from Identify.services import ClasslistService
 from Identify.services import IdentifyTaskService, IDReaderService
 
 from .utils import _error_response
@@ -19,18 +20,9 @@ from .utils import _error_response
 class GetClasslist(APIView):
     """Get the classlist."""
 
-    def get(self, request):
-        sstu = StagingStudentService()
-        if sstu.are_there_students():
-            students = sstu.get_students()
-
-            # TODO: new StudentService or ClasslistService that implements
-            # the loop below?
-            for s in students:
-                s["id"] = s.pop("student_id")
-                s["name"] = s.pop("student_name")
-
-            return Response(students)
+    def get(self, request: Request) -> Response:
+        students = ClasslistService.get_students_in_api_format()
+        return Response(students)
 
 
 class GetIDPredictions(APIView):

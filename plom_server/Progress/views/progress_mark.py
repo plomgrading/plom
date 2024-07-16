@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.shortcuts import render
 
@@ -18,19 +18,12 @@ from Progress.services import ProgressOverviewService
 class ProgressMarkHome(MarkerLeadMarkerOrManagerView):
     def get(self, request):
         context = super().build_context()
-
-        version_numbers = [
-            v + 1
-            for v in range(
-                SpecificationService.get_n_versions(),
-            )
-        ]
-        question_numbers = [
-            q + 1 for q in range(SpecificationService.get_n_questions())
-        ]
-
-        context.update({"versions": version_numbers, "questions": question_numbers})
-
+        context.update(
+            {
+                "versions": SpecificationService.get_list_of_versions(),
+                "questions": SpecificationService.get_question_indices(),
+            }
+        )
         return render(request, "Progress/Mark/mark_home.html", context)
 
 
@@ -44,7 +37,7 @@ class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
                 "version": version,
                 "stats": mss.get_basic_marking_stats(question, version=version),
                 "status_counts": ProgressOverviewService().get_mark_task_status_counts_by_qv(
-                    question_number=question, version=version
+                    question, version
                 ),
             }
         )
@@ -88,7 +81,7 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
                 "user_hists": user_hists_and_stats,
                 "remaining_tasks": remaining_tasks,
                 "status_counts": ProgressOverviewService().get_mark_task_status_counts_by_qv(
-                    question_number=question, version=version
+                    question, version
                 ),
             }
         )
@@ -128,7 +121,7 @@ class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
                 "hist_values": list(hist_values),
                 "version_hists": version_hists_and_stats,
                 "status_counts": ProgressOverviewService().get_mark_task_status_counts_by_qv(
-                    question_number=question, version=None
+                    question, version=None
                 ),
             }
         )

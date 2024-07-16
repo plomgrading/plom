@@ -4,6 +4,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Bryan Tanady
 
 from datetime import timedelta
 
@@ -244,7 +245,7 @@ class IdentifyTaskTests(TestCase):
 
         # test re-id'ing a task
         for k in range(1, 3):
-            its.identify_paper(self.marker0, k, f"{k+2}", f"A{k+2}")
+            its.identify_paper(self.marker0, k, f"{k + 2}", f"A{k + 2}")
 
         # test task existence
         paper = baker.make(Paper, paper_number=10)
@@ -320,6 +321,7 @@ class IdentifyTaskTests(TestCase):
                 "status": "Complete",
                 "student_id": "991",
                 "student_name": "AB1",
+                "in_classlist": False,
             },
             2: {"idpageimage_pk": None, "status": "To Do"},
         }
@@ -342,12 +344,14 @@ class IdentifyTaskTests(TestCase):
                 "status": "Complete",
                 "student_id": "991",
                 "student_name": "AB1",
+                "in_classlist": False,
             },
             2: {
                 "idpageimage_pk": None,
                 "status": "Complete",
                 "student_id": "992",
                 "student_name": "AB2",
+                "in_classlist": False,
             },
         }
 

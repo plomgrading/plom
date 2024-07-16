@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 import sys
 
@@ -26,7 +26,6 @@ class MarkingTaskPriorityTests(ConfigTestCase):
 
     def test_taskorder_update(self):
         """Assert that TaskOrderService.update_priority_ordering() updates MarkingTaskPriority."""
-
         strategy = MarkingTaskPriority.load().strategy
         self.assertEqual(strategy, MarkingTaskPriority.PAPER_NUMBER)
 
@@ -46,7 +45,6 @@ class MarkingTaskPriorityTests(ConfigTestCase):
 
     def test_set_priority_papernum(self):
         """Test that PAPER_NUMBER is the default strategy."""
-
         n_papers = Paper.objects.count()
         tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).prefetch_related(
             "paper"
@@ -65,7 +63,6 @@ class MarkingTaskPriorityTests(ConfigTestCase):
 
     def test_set_priority_shuffle(self):
         """Test setting priority to SHUFFLE."""
-
         marking_priority.set_marking_piority_shuffle()
         tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).prefetch_related(
             "paper"
@@ -81,7 +78,6 @@ class MarkingTaskPriorityTests(ConfigTestCase):
 
     def test_set_priority_custom(self):
         """Test setting priority to CUSTOM."""
-
         custom_order = {(1, 1): 9, (2, 1): 356, (3, 2): 0}
         marking_priority.set_marking_priority_custom(custom_order)
 
@@ -90,7 +86,7 @@ class MarkingTaskPriorityTests(ConfigTestCase):
         )
         n_papers = Paper.objects.count()
         for task in tasks:
-            task_key = (task.paper.paper_number, task.question_number)
+            task_key = (task.paper.paper_number, task.question_index)
             if task_key in custom_order.keys():
                 self.assertEqual(task.marking_priority, custom_order[task_key])
             else:
@@ -108,8 +104,8 @@ class MarkingTaskPriorityTests(ConfigTestCase):
         tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).prefetch_related(
             "paper"
         )
-        first_task = tasks.get(paper__paper_number=1, question_number=1)
-        last_task = tasks.get(paper__paper_number=5, question_number=2)
+        first_task = tasks.get(paper__paper_number=1, question_index=1)
+        last_task = tasks.get(paper__paper_number=5, question_index=2)
 
         for task in tasks:
             self.assertEqual(task.marking_priority, n_papers - task.paper.paper_number)

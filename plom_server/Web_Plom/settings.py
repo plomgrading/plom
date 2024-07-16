@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024 Aidan Murphy
 
 """Django settings for Plom project.
 
@@ -125,6 +126,8 @@ INSTALLED_APPS = [
     "Finish",
     "Contrib",
     "TaskOrder",
+    "Rectangles",
+    "QuestionTags",
 ]
 
 MIDDLEWARE = [
@@ -134,6 +137,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "Web_Plom.middleware.OnlineNowMiddleware",
@@ -300,11 +304,15 @@ FIXTURE_DIRS = [BASE_DIR / "fixtures"]
 # Configurable variables for Web Plom
 # ----------------------------------------------
 
-# Max file size for bundle uploads (1 GB for now)
-MAX_BUNDLE_SIZE = 1e9
+# Max file size for bundle uploads in bytes (currently 512MiB), and other restrictions
+# Note if Nginx or another tool is proxying, its limit will apply too.
+# Most likely the proxy server's limit should be used for security.
+MAX_BUNDLE_SIZE = 536870912
+MAX_BUNDLE_PAGES = 2500
 
 # Max file size for a single file upload (1 MB for now)
 # MAX_FILE_SIZE = 1e6
+# TODO: this is (probably) UNUSED at the moment, possible for future use.
 
 LOGGING: dict[str, Any] = {
     "version": 1,

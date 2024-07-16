@@ -1,0 +1,193 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Elisa Pan
+-->
+<!-- Modal for Creating Tag -->
+<div class="modal fade"
+     id="createTagModal"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="createTagModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createTagModalLabel">Create Tag</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createTagForm" method="post" action="{% url 'create_tag' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <p>Tag name rules: {{ tagging_rulez|safe }}</p>
+                        <label for="tagName">Tag Name</label>
+                        <input type="text" class="form-control" id="tagName" name="tagName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="text">Description</label>
+                        <textarea class="form-control" id="text" name="text" rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal for Deleting Tag -->
+<div class="modal fade"
+     id="deleteTagModal"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="deleteTagModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteTagModalLabel">Delete Tag</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="deleteTagForm" method="post" action="{% url 'delete_tag' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="tag_id">Select Tag to Delete</label>
+                        <select class="form-control" id="tag_id" name="tag_id">
+                            <option value="" disabled selected>Select a tag</option>
+                            {% for tag in tags %}<option value="{{ tag.id }}">{{ tag.tag_name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal for Editing Tag -->
+<div class="modal fade"
+     id="editTagModal"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="editTagModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editTagModalLabel">Edit Tag</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editTagForm" method="post" action="{% url 'edit_tag' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="tag_id_edit">Select Tag to Edit</label>
+                        <select class="form-control" id="tag_id_edit" name="tag_id">
+                            <option value="" disabled selected>Select a tag</option>
+                            {% for tag in tags %}
+                                <option value="{{ tag.id }}" data-description="{{ tag.text }}">{{ tag.tag_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <p>Tag name rules: {{ tagging_rulez|safe }}</p>
+                        <label for="tagName_edit">Tag Name</label>
+                        <input type="text"
+                               class="form-control"
+                               id="tagName_edit"
+                               name="tagName"
+                               required>
+                    </div>
+                    <div class="form-group">
+                        <label for="text_edit">Description</label>
+                        <textarea class="form-control" id="text_edit" name="text" rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal for Viewing Tag Details -->
+<div class="modal fade"
+     id="tagModal"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="tagModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tagModalLabel">Tag Details</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <strong>Tag Name:</strong> <span id="modalTagName"></span>
+                </p>
+                <p>
+                    <strong>Description:</strong> <span id="modalTagDescription"></span>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const editTagForm = document.getElementById('editTagForm');
+        const createTagForm = document.getElementById('createTagForm');
+        const errorMessageElementEdit = document.createElement('div');
+        const errorMessageElementCreate = document.createElement('div');
+        errorMessageElementEdit.classList.add('alert', 'alert-danger', 'mt-2');
+        errorMessageElementCreate.classList.add('alert', 'alert-danger', 'mt-2');
+        editTagForm.appendChild(errorMessageElementEdit);
+        createTagForm.appendChild(errorMessageElementCreate);
+        errorMessageElementEdit.style.display = 'none';
+        errorMessageElementCreate.style.display = 'none';
+
+        const handleFormSubmission = (form, errorMessageElement) => {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const formData = new FormData(form);
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        errorMessageElement.textContent = data.error;
+                        errorMessageElement.style.display = 'block';
+                    } else {
+                        errorMessageElement.style.display = 'none';
+                        if (form.id === 'editTagForm') {
+                            $('#editTagModal').modal('hide');
+                        } else {
+                            $('#createTagModal').modal('hide');
+                        }
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            });
+        };
+
+        handleFormSubmission(editTagForm, errorMessageElementEdit);
+        handleFormSubmission(createTagForm, errorMessageElementCreate);
+    });
+</script>

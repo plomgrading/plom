@@ -4,20 +4,22 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 import pathlib
 import uuid
-from typing import Dict, List, Tuple, Union
 
 from plom.tpv_utils import encodePaperPageVersion
 
+from django.contrib.auth.models import User
 from django.core.files import File
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import QuerySet
 
-from Scan.models import (
-    StagingImage,
-)
+from Scan.models import StagingImage, StagingBundle
 
 from Preparation.services import PapersPrinted
 from Papers.models import (
@@ -37,31 +39,30 @@ from .paper_info import PaperInfoService
 class ImageBundleService:
     """Class to encapsulate all functions around validated page images and bundles."""
 
-    def create_bundle(self, name, hash):
+    def create_bundle(self, name: str, hash: str) -> Bundle:
         """Create a bundle and store its name and sha256 hash."""
         if Bundle.objects.filter(hash=hash).exists():
             raise RuntimeError("A bundle with that hash already exists.")
-        bundle = Bundle(name=name, hash=hash)
-        bundle.save()
+        bundle = Bundle.objects.create(name=name, hash=hash)
         return bundle
 
-    def get_bundle(self, hash):
+    def get_bundle(self, hash: str) -> Bundle:
         """Get a bundle from its hash."""
         return Bundle.objects.get(hash=hash)
 
-    def get_or_create_bundle(self, name, hash):
+    def get_or_create_bundle(self, name: str, hash: str) -> Bundle:
         """Get a Bundle instance, or create if it doesn't exist."""
         if not Bundle.objects.filter(hash=hash).exists():
             return self.create_bundle(name, hash)
         else:
             return self.get_bundle(hash)
 
-    def image_exists(self, hash) -> bool:
+    def image_exists(self, hash: str) -> bool:
         """Return True if a page image with the input hash exists in the database."""
         return Image.objects.filter(hash=hash).exists()
 
     @transaction.atomic
-    def get_image_pushing_status(self, staged_image) -> Union[str, None]:
+    def get_image_pushing_status(self, staged_image: StagingImage) -> str | None:
         """Return the status of a staged image's associated CreateImageHueyTask instance."""
         try:
             task_obj = CreateImageHueyTask.objects.get(staging_image=staged_image)
@@ -70,7 +71,7 @@ class ImageBundleService:
             return None
 
     @transaction.atomic
-    def get_image_pushing_message(self, staged_image) -> Union[str, None]:
+    def get_image_pushing_message(self, staged_image: StagingImage) -> str | None:
         """Return the error message of a staged image's CreateImageHueyTask instance."""
         try:
             task_obj = CreateImageHueyTask.objects.get(staging_image=staged_image)
@@ -87,7 +88,7 @@ class ImageBundleService:
                 return True
         return False
 
-    def upload_valid_bundle(self, staged_bundle, user_obj) -> None:
+    def upload_valid_bundle(self, staged_bundle: StagingBundle, user_obj: User) -> None:
         """Upload all the pages using bulk calls under certain assumptions.
 
         Assuming all of the pages in the bundle are valid (i.e. have a valid page number,
@@ -103,6 +104,7 @@ class ImageBundleService:
         Raises:
             RuntimeError
             ValueError
+            ObjectDoesNotExist
         """
         if not PapersPrinted.have_papers_been_printed():
             raise RuntimeError("Papers have not yet been printed.")
@@ -139,7 +141,7 @@ class ImageBundleService:
 
         pi_service = PaperInfoService()
 
-        def image_save_name(staged):
+        def image_save_name(staged) -> str:
             if staged.image_type == StagingImage.KNOWN:
                 known = staged.knownstagingimage
                 prefix = f"known_{known.paper_number}_{known.page_number}_"
@@ -180,12 +182,19 @@ class ImageBundleService:
             if staged.image_type == StagingImage.KNOWN:
                 known = staged.knownstagingimage
                 # Note that since fixedpage is polymorphic, this will handle question, ID and DNM pages.
-                page = FixedPage.objects.get(
+                pages = FixedPage.objects.filter(
                     paper__paper_number=known.paper_number,
                     page_number=known.page_number,
-                )
-                page.image = image
-                page.save(update_fields=["image"])
+                ).select_for_update()
+                if not pages:
+                    raise ObjectDoesNotExist(
+                        f"Paper {known.paper_number}"
+                        f" page {known.page_number} does not exist"
+                    )
+                # Can be more than one FixedPage when questions share pages
+                for page in pages:
+                    page.image = image
+                    page.save(update_fields=["image"])
             elif staged.image_type == StagingImage.EXTRA:
                 # need to make one mobile page for each question in the question-list
                 extra = staged.extrastagingimage
@@ -196,7 +205,7 @@ class ImageBundleService:
                         extra.paper_number, q
                     )
                     MobilePage.objects.create(
-                        paper=paper, image=image, question_number=q, version=v
+                        paper=paper, image=image, question_index=q, version=v
                     )
             elif staged.image_type == StagingImage.DISCARD:
                 disc = staged.discardstagingimage
@@ -235,8 +244,8 @@ class ImageBundleService:
                     )
 
     def get_staged_img_location(
-        self, staged_image
-    ) -> Tuple[Union[int, None], Union[int, None]]:
+        self, staged_image: StagingImage
+    ) -> tuple[int | None, int | None]:
         """Get the image's paper number and page number from its QR code dict.
 
         TODO: this same thing is implemented in ScanService. We need to choose which one stays!
@@ -290,18 +299,22 @@ class ImageBundleService:
         return True
 
     @transaction.atomic
-    def find_internal_collisions(self, staged_imgs):
+    def find_internal_collisions(
+        self, staged_imgs: QuerySet[StagingImage]
+    ) -> list[list[int]]:
         """Check for collisions *within* a bundle.
 
         Args:
             staged_imgs: QuerySet, a list of all staged images for a bundle
 
         Returns:
-            list [[StagingImage1.pk, StagingImage2.pk, StagingImage3.pk]]: list
-                of unordered collisions so that in each sub-list each image (as
-                determined by its primary key) collides with others in that sub-list.
+            A list of unordered collisions so that in each sub-list each image (as
+            determined by its primary key) collides with others in that sub-list.
+            Looks something like:
+            ``[[StagingImage1.pk, StagingImage2.pk, StagingImage3.pk], ...]``
         """
-        known_imgs = {}  # dict of short-tpv to list of known-images with that tpv
+        # temporary dict of short-tpv to list of known-images with that tpv
+        known_imgs: dict[str, list[int]] = {}
         # if that list is 2 or more then that it is an internal collision.
         collisions = []
 
@@ -320,7 +333,7 @@ class ImageBundleService:
         return collisions
 
     @transaction.atomic
-    def find_external_collisions(self, staged_imgs: QuerySet) -> List:
+    def find_external_collisions(self, staged_imgs: QuerySet) -> list:
         """Check for collisions between images in the input list and all the *currently uploaded* images.
 
         Args:
@@ -344,7 +357,7 @@ class ImageBundleService:
         return collisions
 
     @transaction.atomic
-    def get_ready_questions(self, bundle) -> Dict[str, List[Tuple[int, int]]]:
+    def get_ready_questions(self, bundle: Bundle) -> dict[str, list[tuple[int, int]]]:
         """Find questions across all test-papers in the database that now ready.
 
         A question is ready when either it has all of its
@@ -359,9 +372,9 @@ class ImageBundleService:
 
         Returns:
             Dict with two keys, each to a list of ints.
-            "ready" is the list of paper_number/question_number pairs
+            "ready" is the list of paper_number/question_index pairs
             that have pages in this bundle, and are now ready to be marked.
-            "not_ready" are paper_number/question_number pairs that have pages
+            "not_ready" are paper_number/question_index pairs that have pages
             in this bundle, but are not ready to be marked yet.
         """
         # find all question-pages (ie fixed pages) that attach to images in the current bundle.
@@ -372,8 +385,8 @@ class ImageBundleService:
         # now make list of all papers/questions updated by this bundle
         # note that values_list does not return a list, it returns a "query-set"
         papers_in_bundle = list(
-            question_pages.values_list("paper__paper_number", "question_number")
-        ) + list(extras.values_list("paper__paper_number", "question_number"))
+            question_pages.values_list("paper__paper_number", "question_index")
+        ) + list(extras.values_list("paper__paper_number", "question_index"))
         # remove duplicates by casting to a set
         papers_questions_updated_by_bundle = set(papers_in_bundle)
 
@@ -381,36 +394,36 @@ class ImageBundleService:
         # all fixed pages, or no fixed pages but some mobile-pages.
         # if some, but not all, fixed pages then is not ready.
 
-        result: Dict[str, List[Tuple[int, int]]] = {"ready": [], "not_ready": []}
+        result: dict[str, list[tuple[int, int]]] = {"ready": [], "not_ready": []}
 
-        for paper_number, question_number in papers_questions_updated_by_bundle:
+        for paper_number, question_index in papers_questions_updated_by_bundle:
             q_pages = QuestionPage.objects.filter(
-                paper__paper_number=paper_number, question_number=question_number
+                paper__paper_number=paper_number, question_index=question_index
             )
             pages_no_img = q_pages.filter(image__isnull=True).count()
             if pages_no_img == 0:  # all fixed pages have images
-                result["ready"].append((paper_number, question_number))
+                result["ready"].append((paper_number, question_index))
                 continue
             # question has some images
             pages_with_img = q_pages.filter(image__isnull=False).count()
             if (
                 pages_with_img > 0
             ):  # question has some pages with and some without images - not ready
-                result["not_ready"].append((paper_number, question_number))
+                result["not_ready"].append((paper_number, question_index))
                 continue
             # all fixed pages without images - check if has any mobile pages
             if (
                 MobilePage.objects.filter(
-                    paper__paper_number=paper_number, question_number=question_number
+                    paper__paper_number=paper_number, question_index=question_index
                 ).count()
                 > 0
             ):
-                result["ready"].append((paper_number, question_number))
+                result["ready"].append((paper_number, question_index))
 
         return result
 
     @transaction.atomic
-    def get_id_pages_in_bundle(self, bundle) -> QuerySet[IDPage]:
+    def get_id_pages_in_bundle(self, bundle: Bundle) -> QuerySet[IDPage]:
         """Get all of the ID pages in an uploaded bundle, in order to initialize ID tasks.
 
         Args:
@@ -422,7 +435,7 @@ class ImageBundleService:
         return IDPage.objects.filter(image__bundle=bundle)
 
     @transaction.atomic
-    def is_given_paper_ready_for_id_ing(self, paper_obj) -> bool:
+    def is_given_paper_ready_for_id_ing(self, paper_obj: Paper) -> bool:
         """Check if the id page of the given paper has an image and so is ready for id-ing.
 
         Args:
@@ -435,7 +448,7 @@ class ImageBundleService:
 
     @transaction.atomic
     def is_given_paper_question_ready(
-        self, paper_obj: Paper, question_number: int
+        self, paper_obj: Paper, question_index: int
     ) -> bool:
         """Check if a given paper/question is ready for marking.
 
@@ -446,28 +459,31 @@ class ImageBundleService:
 
 
         Args:
-            paper_obj (Paper): the database paper object to check
-            question_number (int): the question number to check
-        Returns:
-            bool: true when the question of the given paper is ready for marking, false otherwise
-        Raises:
-            ValueError: when there does not exist any question pages for that paper (eg when the question number is out of range).
+            paper_obj: the database paper object to check.
+            question_index: the question to check.
 
+        Returns:
+            True when the question of the given paper is ready for marking, false otherwise.
+
+        Raises:
+            ValueError: when there does not exist any question pages for
+                that paper (eg when the question index is out of range).
         """
         q_pages = QuestionPage.objects.filter(
-            paper=paper_obj, question_number=question_number
+            paper=paper_obj, question_index=question_index
         )
         # todo - this should likely be replaced with a spec check
         if not q_pages.exists():
             raise ValueError(
-                f"There are no question_pages at all for paper {paper_obj.paper_number} question {question_number}"
+                f"There are no question_pages at all for paper {paper_obj.paper_number}"
+                f"question index {question_index}"
             )
 
         qp_no_img = q_pages.filter(image__isnull=True).exists()
         qp_with_img = q_pages.filter(image__isnull=False).exists()
         # note that (qp_no_img or qp_with_img == True)
         mp_present = MobilePage.objects.filter(
-            paper=paper_obj, question_number=question_number
+            paper=paper_obj, question_index=question_index
         ).exists()
 
         if qp_with_img:

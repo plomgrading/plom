@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2024 Aden Chan
 
 import json
 from pathlib import Path
@@ -35,7 +36,7 @@ from plom.client.tools import (
     CommandPen,
     CommandHighlight,
     CommandPenArrow,
-    CommandGroupDeltaText,
+    CommandRubric,
     CommandText,
 )
 
@@ -73,9 +74,9 @@ class MockRubricWidget:
 
 
 class SceneParent(QWidget):
-    """This class is a cut-down annotator for mock-testing the PageScene."""
+    """This class is a cut-down Annotator for mock-testing the PageScene."""
 
-    def __init__(self, question, maxMark):
+    def __init__(self, question, maxMark, Qapp):
         super().__init__()
         self.view = PageView(self)
         self.ink = QPen(QColor("red"), 2)
@@ -83,9 +84,21 @@ class SceneParent(QWidget):
         self.maxMark = maxMark
         self.rubric_widget = MockRubricWidget()
         self.saveName = None
+        self._Qapp = Qapp
 
     def is_experimental(self):
         return False
+
+    def pause_to_process_events(self):
+        """Allow Qt's event loop to process events.
+
+        Typically we call this if we're in a loop of our own waiting
+        for something to happen which can only occur if we
+        """
+        self._Qapp.processEvents()
+
+    def rearrangePages(self):
+        pass
 
     def doStuff(self, src_img_data, saveName, maxMark, markStyle):
         self.saveName = Path(saveName)
@@ -137,23 +150,41 @@ class SceneParent(QWidget):
         c = random.choice([CommandPen, CommandHighlight, CommandPenArrow])
         self.scene.undoStack.push(c(self.scene, pth))
 
-    def doRubric(self):
+    def do_rubric_any(self) -> None:
+        """Place some rubric or maybe just some text, randomly."""
         if random.choice([-1, 1]) == 1:
             rubric = random.choice(positiveRubrics[self.question])
         else:
             rubric = random.choice(negativeRubrics[self.question])
 
-        self.scene.changeTheRubric(rubric)
+        self.scene.setCurrentRubric(rubric)
+        self.scene.setToolMode("rubric")
 
         # only do rubric if it is legal
         if self.scene.isLegalRubric(rubric):
-            self.scene.undoStack.push(
-                CommandGroupDeltaText(self.scene, self.rpt(), rubric)
-            )
+            self.scene.undoStack.push(CommandRubric(self.scene, self.rpt(), rubric))
         else:  # not legal - push text
             self.scene.undoStack.push(
                 CommandText(self.scene, self.rpt(), rubric["text"])
             )
+
+    def do_rubric_change_score(self) -> None:
+        """Keep trying to place score-changing rubric until we succeed."""
+        while True:
+            if random.choice([-1, 1]) == 1:
+                rubric = random.choice(positiveRubrics[self.question])
+            else:
+                rubric = random.choice(negativeRubrics[self.question])
+
+            self.scene.setCurrentRubric(rubric)
+            self.scene.setToolMode("rubric")
+
+            if self.scene.isLegalRubric(rubric):
+                if rubric["value"] > 0 or rubric["value"] < 0:
+                    self.scene.undoStack.push(
+                        CommandRubric(self.scene, self.rpt(), rubric)
+                    )
+                    return
 
     def doRandomAnnotations(self):
         br = self.scene.underImage.boundingRect()
@@ -162,9 +193,10 @@ class SceneParent(QWidget):
 
         for k in range(8):
             random.choice([self.TQX, self.BE, self.LA, self.PTH])()
-        for k in range(5):
-            # self.GDT()
-            self.doRubric()
+        #  we must do *something* to set the score, Issue #3323
+        self.do_rubric_change_score()
+        for k in range(4):
+            self.do_rubric_any()
         self.scene.undoStack.push(
             CommandText(
                 self.scene, QPointF(200, 100), "Random annotations for testing only."
@@ -179,22 +211,18 @@ class SceneParent(QWidget):
         # needed for compat with pagescene.py
         pass
 
-    def setModeLabels(self, mode) -> None:
-        # needed for compat with pagescene.py
-        pass
-
 
 def annotatePaper(
     question, maxMark, task, src_img_data, aname, tags, *, Qapp: QApplication
 ) -> tuple:
     print("Starting random marking to task {}".format(task))
-    annot = SceneParent(question, maxMark)
+    annot = SceneParent(question, maxMark, Qapp)
     annot.doStuff(src_img_data, aname, maxMark, random.choice([2, 3]))
     annot.doRandomAnnotations()
     # Issue #1391: settle annotation events, avoid races with QTimers
-    Qapp.processEvents()
+    annot.pause_to_process_events()
     time.sleep(0.25)
-    Qapp.processEvents()
+    annot.pause_to_process_events()
     return annot.doneAnnotating()
 
 
@@ -275,13 +303,13 @@ def do_random_marking_backend(
         remarking_counter += 1
 
 
-def build_random_rubrics(question, *, username, messenger) -> None:
+def build_random_rubrics(question_idx: int, *, username, messenger) -> None:
     """Push random rubrics into a server: only for testing/demo purposes.
 
     .. caution:: Do not use on a real production server.
 
     Args:
-        question (int)
+        question_idx: which question.
 
     Keyword Args:
         messenger: a messenger object already connected to the server.
@@ -299,14 +327,14 @@ def build_random_rubrics(question, *, username, messenger) -> None:
             "tags": "Random",
             "meta": "Randomness",
             "kind": "relative",
-            "question": question,
+            "question": question_idx,
             "username": username,
         }
-        com["id"] = messenger.McreateRubric(com)
-        if question in positiveRubrics:
-            positiveRubrics[question].append(com)
+        com = messenger.McreateRubric(com)
+        if question_idx in positiveRubrics:
+            positiveRubrics[question_idx].append(com)
         else:
-            positiveRubrics[question] = [com]
+            positiveRubrics[question_idx] = [com]
     for d, t in negativeComments:
         com = {
             "value": int(d),
@@ -316,14 +344,14 @@ def build_random_rubrics(question, *, username, messenger) -> None:
             "tags": "Random",
             "meta": "Randomness",
             "kind": "relative",
-            "question": question,
+            "question": question_idx,
             "username": username,
         }
-        com["id"] = messenger.McreateRubric(com)
-        if question in negativeRubrics:
-            negativeRubrics[question].append(com)
+        com = messenger.McreateRubric(com)
+        if question_idx in negativeRubrics:
+            negativeRubrics[question_idx].append(com)
         else:
-            negativeRubrics[question] = [com]
+            negativeRubrics[question_idx] = [com]
 
 
 def do_rando_marking(
@@ -343,9 +371,9 @@ def do_rando_marking(
     randomly selected tags.
 
     Args:
-        server (str)
-        user (str)
-        password (str)
+        server: which server.
+        user: credientials.
+        password: credientials.
 
     Keyword Args:
         partial: what percentage of papers to grade?

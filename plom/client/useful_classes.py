@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 import platform
 from typing import Any, Optional, Union
@@ -26,7 +27,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from plom import isValidStudentNumber
+from plom import isValidStudentID
 
 
 class _ErrorMsg(QMessageBox):
@@ -302,6 +303,8 @@ class SimpleQuestionCheckBox(QMessageBox):
 class SimpleTableView(QTableView):
     """A table-view widget that emits annotateSignal when the user hits enter or return."""
 
+    # Note: marker.ui knows about this via a "plom/client/useful_classes.h" header
+
     # This is picked up by the marker, lets it know to annotate
     annotateSignal = pyqtSignal()
 
@@ -322,10 +325,12 @@ class SimpleTableView(QTableView):
         if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
             self.annotateSignal.emit()
         else:
-            super(SimpleTableView, self).keyPressEvent(event)
+            super().keyPressEvent(event)
 
 
 class BlankIDBox(QDialog):
+    """Ask user what precisely is blank about a paper."""
+
     def __init__(self, parent, testNumber):
         super().__init__(parent)
         self.testNumber = testNumber
@@ -356,6 +361,8 @@ class BlankIDBox(QDialog):
 
 
 class SNIDBox(QDialog):
+    """Ask user to enter a student ID and student name, with dynamic lookup from a list."""
+
     def __init__(self, parent, id_name_text):
         super().__init__(parent)
         self.sidLE = QLineEdit()
@@ -396,9 +403,10 @@ class SNIDBox(QDialog):
         self.snameLE.setText(sname.strip())
 
     def check(self):
+        """Validate the user input, ensuring valid Student ID and non-blank name."""
         self.sid = self.sidLE.text().strip()
         self.sname = self.snameLE.text().strip()
-        if not isValidStudentNumber(self.sid):
+        if not isValidStudentID(self.sid):
             ErrorMsg(self, "Not a valid student number.").exec()
             return
         if not self.sname:
@@ -412,6 +420,8 @@ class SNIDBox(QDialog):
 
 
 class ClientSettingsDialog(QDialog):
+    """A settings dialog to change some of the Plom Client settings."""
+
     def __init__(self, parent, s, logdir, cfgfile, tmpdir):
         super().__init__(parent)
         self.setWindowTitle("Plom client options")
@@ -474,6 +484,7 @@ class ClientSettingsDialog(QDialog):
         buttons.rejected.connect(self.reject)
 
     def get_options_back(self):
+        """Return the options that have been changed by the dialog."""
         return {
             "FOREGROUND": self.checkFore.isChecked(),
             "LogLevel": self.comboLog.currentText(),

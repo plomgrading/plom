@@ -1,0 +1,103 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022 Andrew Rechnitzer
+    Copyright (C) 2022 Edith Coates
+    Copyright (C) 2022 Brennen Chiu
+    Copyright (C) 2023-2024 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Manage source versions
+{% endblock title %}
+{% block page_heading %}
+    Manage source versions
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="d-grid gap-2">
+        <div>
+            <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">
+                    You have uploaded {{ num_uploaded_source_versions }} of {{ num_versions }} source pdfs
+                    {% if all_sources_uploaded %}
+                        <i class="bi bi-check-circle text-success"></i>
+                    {% else %}
+                        <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                    {% endif %}
+                </h4>
+                <div class="card-text">
+                    {% if not all_sources_uploaded %}<p>Each PDF must have exactly {{ number_of_pages }} pages</p>{% endif %}
+                    {% if duplicates %}
+                        <div class="alert alert-danger" role="alert">
+                            There appear to be duplicate PDFs - please check
+                            <ul>
+                                {% for hash,vers in duplicates.items %}
+                                    <li>
+                                        versions {{ vers }} have sha256
+                                        <span class="badge bg-dark">{{ hash }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% for src in uploaded_sources %}
+            <div>
+                <div class="card">
+                    <div class="card-body">
+                        {% if src.uploaded %}
+                            <h5 class="card-title">
+                                PDF for version {{ src.version }} uploaded
+                                <i class="bi bi-check-circle text-success"></i>
+                            </h5>
+                            <p class="card-text">
+                                sha256: <span class="badge bg-info">{{ src.hash }}</span>
+                            </p>
+                            <div class="row row-cols-auto">
+                                <div class="p-1 col">
+                                    <a class="btn btn-success" target="_blank" href="{{ src.version }}">View</a>
+                                </div>
+                                <div class="p-1 col">
+                                    <form action="{% url 'prep_mock' src.version %}"
+                                          target="_blank"
+                                          method="post">
+                                        {% csrf_token %}
+                                        <input class="btn btn-primary" type="submit" value="Mock">
+                                    </form>
+                                </div>
+                                <div class="p-1 col">
+                                    <button class="btn btn-danger"
+                                            hx-delete="{{ src.version }}"
+                                            hx-confirm="Are you sure?"
+                                            hx-target="body"
+                                            hx-swap="outerHTML">Delete</button>
+                                </div>
+                            </div>
+                        {% else %}
+                            <h5 class="card-title">
+                                Upload PDF for version {{ src.version }}
+                                <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                            </h5>
+                            <div class="card-text">
+                                <form enctype="multipart/form-data"
+                                      id="form"
+                                      method="post"
+                                      action="{% url 'prep_source_upload' src.version %}">
+                                    {% csrf_token %}
+                                    <div>
+                                        <input type="file" accepts=".pdf" name="source_pdf" required />
+                                        <button class="btn btn-primary" type="submit">upload</button>
+                                    </div>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock main_content %}

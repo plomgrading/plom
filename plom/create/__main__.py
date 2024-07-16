@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2023 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2021 Peter Lee
@@ -47,11 +47,10 @@ from plom.create import version_map_from_file
 from plom.create import save_version_map
 from plom import check_version_map
 
-# we may want to shift some files around
-from plom.server.manageUserFiles import write_csv_user_list
-from plom.server.manageUserFiles import get_raw_user_dict_from_csv
-from plom.server.manageUserFiles import get_template_user_dict
-from plom.server.manageUserFiles import build_canned_users
+from plom.manage_user_files import write_csv_user_list
+from plom.manage_user_files import get_raw_user_dict_from_csv
+from plom.manage_user_files import get_template_user_dict
+from plom.manage_user_files import build_canned_users
 
 
 def ensure_toml_extension(fname):
@@ -626,7 +625,7 @@ def main():
                 "  **Optional** - Please edit the template solution spec if you are including solutions in your workflow."
             )
             SpecVerifier.create_solution_template("solutionSpec.toml")
-        print('Creating "sourceVersions" directory for your test source PDFs.')
+        print('Creating "sourceVersions/" directory for your test source PDFs.')
         Path("sourceVersions").mkdir(exist_ok=True)
         if not args.demo:
             print("  * Please copy your test in as version1.pdf, version2.pdf, etc.")
@@ -663,6 +662,8 @@ def main():
         finally:
             msgr.closeUser()
             msgr.stop()
+        print('Creating "sourceVersions/" directory for your test source PDFs.')
+        Path("sourceVersions").mkdir(exist_ok=True)
 
     elif args.command == "class":
         msgr = start_messenger(args.server, args.password)
@@ -773,6 +774,7 @@ def main():
                 print('WARNING: server has no "reviewer" user')
             return
 
+        f = None
         if args.demo or args.auto is not None:
             f = autogen_users_file(args.demo, args.auto, args.numbered)
             print(f'Template csv for user lists written to "{f}"')
@@ -782,6 +784,7 @@ def main():
             f = args.userlist
 
         if args.upload:
+            assert f is not None
             users = get_raw_user_dict_from_csv(f)
             msgr = start_messenger(args.server, args.password)
             all_ok = True

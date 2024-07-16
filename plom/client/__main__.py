@@ -44,7 +44,7 @@ def add_popup_to_toplevel_exception_handler() -> None:
         if len(lines) >= 9:
             lines = ["\N{VERTICAL ELLIPSIS}", *lines[-7:]]
         # no line too long
-        lines = [shorten(x, 88, placeholder="\N{Horizontal Ellipsis}") for x in lines]
+        lines = [shorten(x, 88, placeholder="\N{HORIZONTAL ELLIPSIS}") for x in lines]
         abbrev = "\n".join(lines)
 
         rawlines.insert(0, f"Timestamp: {utc_now_to_string()}\n\n")

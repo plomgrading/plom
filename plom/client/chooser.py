@@ -6,6 +6,7 @@
 # Copyright (C) 2020 Forest Kobayashi
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2024 Bryan Tanady
 
 """Plom's Chooser dialog."""
 
@@ -56,6 +57,7 @@ from plom.plom_exceptions import (
     PlomExistingLoginException,
     PlomServerNotReady,
     PlomSSLError,
+    PlomNoServerSupportException,
 )
 from plom.messenger import Messenger, ManagerMessenger
 from plom.client import MarkerClient, IDClient
@@ -144,6 +146,9 @@ class Chooser(QDialog):
         self.ui.getServerInfoButton.clicked.connect(self.validate_server)
         self.ui.logoutButton.setVisible(False)
         self.ui.logoutButton.clicked.connect(self.logout)
+        # Chooser is a QDialog and has special Enter behaviour
+        # TODO: but it doesn't work, Issue #3423.
+        self.ui.loginButton.setDefault(True)
         self.ui.loginButton.clicked.connect(self.login)
         # clear the validation on server edit
         self.ui.serverLE.textEdited.connect(self.ungetInfo)
@@ -163,6 +168,16 @@ class Chooser(QDialog):
         self.ui.pgSB.setValue(int(self.lastTime["question"]))
         self.ui.vSB.setValue(int(self.lastTime["v"]))
         self.ui.fontSB.setValue(int(self.lastTime["fontSize"]))
+
+    # TODO: see Issue #3423, this below workaround doesn't work for me
+    # def keyPressEvent(self, event):
+    #     if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+    #         # Only connect to login if the current focus is at password line edit
+    #         # Otherwise the return key works as default.
+    #         if self.focusWidget() == self.ui.passwordLE:
+    #             self.login()
+    #         else:
+    #             super().keyPressEvent(event)
 
     def setServer(self, s: str) -> None:
         """Set the server and port UI widgets from a string.
@@ -192,6 +207,7 @@ class Chooser(QDialog):
             if not self.is_logged_in():
                 return
 
+        assert self.messenger is not None
         if self.messenger.is_legacy_server() and self.messenger.username == "manager":
             if which_subapp != "Manager":
                 InfoMsg(
@@ -205,6 +221,10 @@ class Chooser(QDialog):
 
         tmpdir = tempfile.mkdtemp(prefix="plom_local_img_")
         self.Qapp.downloader = Downloader(tmpdir, msgr=self.messenger)
+        try:
+            role = self.messenger.get_user_role()
+        except PlomNoServerSupportException:
+            role = ""
 
         if which_subapp == "Manager":
             if not self.messenger.is_legacy_server():
@@ -228,6 +248,9 @@ class Chooser(QDialog):
             # store ref in Qapp to avoid garbase collection
             self.Qapp._manager_window = window
         elif which_subapp == "Marker":
+            if len(role) and role not in ["marker", "lead_marker"]:
+                WarnMsg(self, "Only marker/lead marker can mark papers!").exec()
+                return
             question = self.getQuestion()
             v = self.getv()
             assert question is not None
@@ -241,6 +264,9 @@ class Chooser(QDialog):
             # store ref in Qapp to avoid garbase collection
             self.Qapp.marker = markerwin
         elif which_subapp == "Identifier":
+            if len(role) and role != "lead_marker":
+                WarnMsg(self, "Only lead marker can identify papers!").exec()
+                return
             self.setEnabled(False)
             self.hide()
             idwin = IDClient(self.Qapp)
@@ -596,8 +622,7 @@ class Chooser(QDialog):
         except PlomSeriousException as e:
             ErrorMsg(
                 self,
-                "Could not get authentication token.\n\n"
-                "Unexpected error: {}".format(e),
+                f"Could not get authentication token.\n\nUnexpected error: {str(e)}",
             ).exec()
             self.messenger = None
             return

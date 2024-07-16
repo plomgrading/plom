@@ -18,6 +18,8 @@
            href="{% url 'rubrics_admin' %}">Rubric management&hellip;</a>
         <a class="btn btn-primary dinline-block ms-2"
            href="{% url 'rubrics_access' %}">Rubric access controls&hellip;</a>
+        <a class="btn btn-primary dinline-block ms-2"
+           href="{% url 'feedback_rules' %}">Feedback rules&hellip;</a>
     </div>
     <hr />
     {% comment %} Filter {% endcomment %}
@@ -38,7 +40,8 @@
                     <th scope="col">Display Delta</th>
                     <th scope="col">Kind</th>
                     <th scope="col">System</th>
-                    <th scope="col">Question</th>
+                    <!-- This column should use the question label html -->
+                    <th scope="col">Question index</th>
                     <th scope="col"># used</th>
                     <th scope="col">Text</th>
                 </tr>

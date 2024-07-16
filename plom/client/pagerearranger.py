@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 
@@ -392,8 +392,8 @@ class RearrangementViewer(QDialog):
         self.revertB = QPushButton("Revert to original state")
         self.revertB.clicked.connect(self.populateListOriginal)
 
-        self.rotateB_cw = QPushButton("\N{Clockwise Open Circle Arrow} Rotate CW")
-        self.rotateB_ccw = QPushButton("\N{Anticlockwise Open Circle Arrow} Rotate CCW")
+        self.rotateB_cw = QPushButton("\N{CLOCKWISE OPEN CIRCLE ARROW} Rotate CW")
+        self.rotateB_ccw = QPushButton("\N{ANTICLOCKWISE OPEN CIRCLE ARROW} Rotate CCW")
 
         self.closeB = QPushButton("&Cancel")
         self.acceptB = QPushButton("&Accept")
@@ -813,7 +813,7 @@ class RearrangementViewer(QDialog):
         self.permute = []
         for n in self.listB.getNameList():
             row = self.nameToIrefNFile[n]
-            assert row["id"] == self.listB.item_id[n], "something we did not forsee!"
+            assert row["id"] == self.listB.item_id[n], "something we did not foresee!"
             row["orientation"] = self.listB.item_orientation[n]
             self.permute.append(row)
         self.accept()

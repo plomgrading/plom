@@ -1,13 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024 Elisa Pan
+
+from __future__ import annotations
 
 import base64
 from io import BytesIO
-from typing import List, Optional, Union
 
 import matplotlib
-import matplotlib.cm as cm
+import matplotlib.patches
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -15,7 +18,6 @@ import seaborn as sns
 
 from . import DataExtractionService
 from Papers.services import SpecificationService
-
 
 RANGE_BIN_OFFSET = 2
 
@@ -52,7 +54,7 @@ class MatplotlibService:
         png_bytes = BytesIO()
         fig.savefig(png_bytes, format="png")
         png_bytes.seek(0)
-        plt.close()
+        plt.close(fig)  # Ensure the figure is closed after saving
 
         return png_bytes
 
@@ -68,13 +70,15 @@ class MatplotlibService:
         return base64.b64encode(bytes.read()).decode()
 
     def histogram_of_total_marks(
-        self, *, format: str = "base64"
-    ) -> Union[BytesIO, str]:
+        self, *, highlighted_sid: str | None = None, format: str = "base64"
+    ) -> BytesIO | str:
         """Generate a histogram of the total marks.
 
         Keyword Args:
             format: The format to return the graph in. Should be either "base64"
                 or "bytes". If omitted, defaults to "base64".
+            highlighted_sid: The identifier of the student whose standing
+                will be highlighted in the chart.
 
         Returns:
             Base64 encoded string or bytes containing the histogram.
@@ -94,6 +98,22 @@ class MatplotlibService:
             width=0.8,
             align="mid",
         )
+        # Overlay the student's score by highlighting the bar
+        if highlighted_sid:
+            df = self.des.get_student_data()
+            student = df[df["StudentID"] == highlighted_sid]
+            student_score = student["Total"].values[0]
+            highlight_color = "#3061FF"
+
+            ax = plt.gca()
+            for bar in ax.patches:
+                assert isinstance(bar, matplotlib.patches.Rectangle)
+                bar_left = bar.get_x()
+                bar_right = bar_left + bar.get_width()
+                if bar_left <= student_score <= bar_right:
+                    bar.set_color(highlight_color)
+                    bar.set_edgecolor("black")
+                    bar.set_linewidth(1.5)
         ax.set_title("Histogram of total marks")
         ax.set_xlabel("Total mark")
         ax.set_ylabel("# of students")
@@ -109,16 +129,17 @@ class MatplotlibService:
 
     def histogram_of_grades_on_question_version(
         self,
-        question: int,
+        question_idx: int,
         *,
         versions: bool = False,
-        student_df: Optional[pd.DataFrame] = None,
+        student_df: pd.DataFrame | None = None,
+        highlighted_sid: str | None = None,
         format: str = "base64",
-    ) -> Union[BytesIO, str]:
+    ) -> BytesIO | str:
         """Generate a histogram of the grades on a specific question.
 
         Args:
-            question: The question index number, one-based.
+            question_idx: The question index number, one-based.
 
         Keyword Args:
             versions: Whether to split the histogram into versions. If omitted,
@@ -126,6 +147,8 @@ class MatplotlibService:
             student_df: Optional dataframe containing the student data. Should be
                 a copy or filtered version of self.student_df. If omitted, defaults
                 to None and self.student_df is used.
+            highlighted_sid: Optional student ID, to show the student's standing
+                on the chart.
             format: The format to return the graph in. Should be either "base64"
                 or "bytes". If omitted, defaults to "base64".
 
@@ -139,30 +162,48 @@ class MatplotlibService:
         assert format in self.formats
         self.ensure_all_figures_closed()
 
-        qlabel = SpecificationService.get_question_label(question)
-        ver_column = "q" + str(question) + "_version"
-        mark_column = "q" + str(question) + "_mark"
+        qlabel = SpecificationService.get_question_label(question_idx)
+        ver_column = "q" + str(question_idx) + "_version"
+        mark_column = "q" + str(question_idx) + "_mark"
         plot_series = []
         if versions:
-            maxver = round(student_df[ver_column].max())
+            if pd.isna(student_df[ver_column].max()):
+                maxver = 0
+            else:
+                maxver = round(student_df[ver_column].max())
             for version in range(1, maxver + 1):
                 plot_series.append(
                     student_df[(student_df[ver_column] == version)][mark_column]
                 )
-            labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
         else:
             plot_series.append(student_df[mark_column])
-
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
-        maxmark = SpecificationService.get_question_mark(question)
+        maxmark = SpecificationService.get_question_mark(question_idx)
         bins = np.arange(maxmark + RANGE_BIN_OFFSET) - 0.5
 
         ax.hist(plot_series, bins=bins, ec="black", alpha=0.5)
         ax.set_title(f"Histogram of {qlabel} marks")
         ax.set_xlabel(f"{qlabel} mark")
         ax.set_ylabel("# of students")
-        if versions is True:
+        if highlighted_sid:
+            # Overlay the student's score by highlighting the bar
+            df = self.des.get_student_data()
+            highlight_color = "#3061FF"
+            student_score = df[df["StudentID"] == highlighted_sid][mark_column].values[
+                0
+            ]
+            ax = plt.gca()
+            for bar in ax.patches:
+                assert isinstance(bar, matplotlib.patches.Rectangle)
+                bar_left = bar.get_x()
+                bar_right = bar_left + bar.get_width()
+                if bar_left <= student_score <= bar_right:
+                    bar.set_color(highlight_color)
+                    bar.set_edgecolor("black")
+                    bar.set_linewidth(1.5)
+        if versions:
+            labels = [f"Version {i}" for i in range(1, len(plot_series) + 1)]
             ax.legend(
                 labels,
                 loc="center left",
@@ -181,8 +222,8 @@ class MatplotlibService:
             return self.get_graph_as_base64(graph_bytes)
 
     def correlation_heatmap_of_questions(
-        self, *, corr_df: Optional[pd.DataFrame] = None, format: str = "base64"
-    ) -> Union[BytesIO, str]:
+        self, *, corr_df: pd.DataFrame | None = None, format: str = "base64"
+    ) -> BytesIO | str:
         """Generate a correlation heatmap of the questions.
 
         Keyword Args:
@@ -234,17 +275,17 @@ class MatplotlibService:
 
     def histogram_of_grades_on_question_by_ta(
         self,
-        question: int,
+        question_idx: int,
         ta_name: str,
         *,
-        ta_df: Optional[pd.DataFrame] = None,
+        ta_df: pd.DataFrame | None = None,
         versions: bool = False,
         format: str = "base64",
-    ) -> Union[BytesIO, str]:
+    ) -> BytesIO | str:
         """Generate a histogram of the grades on a specific question by a specific TA.
 
         Args:
-            question: The question index to generate the histogram for.
+            question_idx: The question index to generate the histogram for.
             ta_name: The name of the TA to generate the histogram for.
 
         Keyword Args:
@@ -259,11 +300,11 @@ class MatplotlibService:
         Returns:
             Base64 encoded string or bytes containing the histogram.
         """
-        qlabel = SpecificationService.get_question_label(question)
+        qlabel = SpecificationService.get_question_label(question_idx)
         if ta_df is None:
             ta_df = self.des._get_ta_data_for_ta(
                 ta_name,
-                ta_df=self.des._get_ta_data_for_question(question_number=question),
+                ta_df=self.des._get_ta_data_for_question(question_index=question_idx),
             )
 
         assert isinstance(ta_df, pd.DataFrame)
@@ -274,12 +315,11 @@ class MatplotlibService:
         bins = np.arange(ta_df["max_score"].max() + RANGE_BIN_OFFSET) - 0.5
 
         plot_series = []
-        if versions is True:
+        if versions:
             for version in range(1, round(ta_df["question_version"].max()) + 1):
                 plot_series.append(
                     ta_df[(ta_df["question_version"] == version)]["score_given"]
                 )
-            labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
         else:
             plot_series.append(ta_df["score_given"])
 
@@ -292,7 +332,8 @@ class MatplotlibService:
         ax.set_title(f"Grades for {qlabel} (by {ta_name})")
         ax.set_xlabel("Mark given")
         ax.set_ylabel("# of times assigned")
-        if versions is True:
+        if versions:
+            labels = [f"Version {i}" for i in range(1, len(plot_series) + 1)]
             ax.legend(
                 labels,
                 loc="center left",
@@ -313,18 +354,18 @@ class MatplotlibService:
 
     def histogram_of_time_spent_marking_each_question(
         self,
-        question_number: int,
+        question_idx: int,
         *,
-        marking_times_df: Optional[pd.DataFrame] = None,
+        marking_times_df: pd.DataFrame | None = None,
         versions: bool = False,
         max_time: int = 0,
         bin_width: int = 15,
         format: str = "base64",
-    ) -> Union[BytesIO, str]:
+    ) -> BytesIO | str:
         """Generate a histogram of the time spent marking a question.
 
         Args:
-            question_number: The question index to generate the histogram for.
+            question_idx: The question index to generate the histogram for.
 
         Keyword Args:
             marking_times_df: Optional dataframe containing the marking data. Should be
@@ -343,7 +384,7 @@ class MatplotlibService:
         Returns:
             Base64 encoded string or bytes containing the histogram.
         """
-        qlabel = SpecificationService.get_question_label(question_number)
+        qlabel = SpecificationService.get_question_label(question_idx)
         if marking_times_df is None:
             marking_times_df = self.ta_df
 
@@ -360,25 +401,24 @@ class MatplotlibService:
         bins = (np.arange(0, max_time + bin_width, bin_width) - (bin_width / 2)) / 60.0
 
         plot_series = []
-        if versions is True:
+        if versions:
             for version in range(
                 1, round(marking_times_df["question_version"].max()) + 1
             ):
                 plot_series.append(
                     marking_times_df[
-                        (marking_times_df["question_number"] == question_number)
+                        (marking_times_df["question_number"] == question_idx)
                     ][(marking_times_df["question_version"] == version)][
                         "seconds_spent_marking"
                     ].div(
                         60
                     )
                 )
-            labels = ["Version " + str(i) for i in range(1, len(plot_series) + 1)]
         else:
             plot_series.append(
-                marking_times_df[
-                    (marking_times_df["question_number"] == question_number)
-                ]["seconds_spent_marking"].div(60)
+                marking_times_df[(marking_times_df["question_number"] == question_idx)][
+                    "seconds_spent_marking"
+                ].div(60)
             )
 
         ax.hist(
@@ -390,7 +430,8 @@ class MatplotlibService:
         ax.set_title(f"Time spent marking {qlabel}")
         ax.set_xlabel("Time spent (min)")
         ax.set_ylabel("# of papers")
-        if versions is True:
+        if versions:
+            labels = [f"Version {i}" for i in range(1, len(plot_series) + 1)]
             ax.legend(
                 labels,
                 loc="center left",
@@ -410,17 +451,17 @@ class MatplotlibService:
 
     def scatter_time_spent_vs_mark_given(
         self,
-        question_number: int,
-        times_spent_minutes: Union[List[int], List[List[float]]],
-        marks_given: Union[List[int], List[List[float]]],
+        question_idx: int,
+        times_spent_minutes: list[float] | list[list[float]],
+        marks_given: list[float] | list[list[float]],
         *,
         versions: bool = False,
         format: str = "base64",
-    ) -> Union[BytesIO, str]:
+    ) -> BytesIO | str:
         """Generate a scatter plot of the time spent marking a question vs the mark given.
 
         Args:
-            question_number: The question index to generate the scatter plot for.
+            question_idx: The question index to generate the scatter plot for.
             times_spent_minutes: Listlike containing the marking times in minutes or
                 a list of listlikes containing the marking times in minutes for each
                 version.
@@ -436,16 +477,14 @@ class MatplotlibService:
         Returns:
             Base64 encoded string or bytes containing the scatter plot.
         """
-        qlabel = SpecificationService.get_question_label(question_number)
+        qlabel = SpecificationService.get_question_label(question_idx)
         assert format in self.formats
         self.ensure_all_figures_closed()
 
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
         if versions is True:
-            graphs = len(times_spent_minutes)
-            assert graphs == len(marks_given)
-            for i in range(0, graphs):
+            for i in range(len(times_spent_minutes)):
                 ax.scatter(
                     marks_given[i],
                     times_spent_minutes[i],
@@ -469,7 +508,7 @@ class MatplotlibService:
             ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), ncol=1, fancybox=True)
 
         plt.grid(True, alpha=0.5)
-        maxmark = SpecificationService.get_question_mark(question_number)
+        maxmark = SpecificationService.get_question_mark(question_idx)
         plt.xlim(left=-0.5, right=maxmark + 0.5)
         plt.ylim(bottom=-0.2)
 
@@ -483,12 +522,12 @@ class MatplotlibService:
 
     def boxplot_of_marks_given_by_ta(
         self,
-        marks: List[List[int]],
-        marker_names: List[str],
-        question: int,
+        marks: list[list[float]],
+        marker_names: list[str],
+        question_idx: int,
         *,
         format: str = "base64",
-    ) -> Union[BytesIO, str]:
+    ) -> BytesIO | str:
         """Generate a boxplot of the marks given by each TA for the specified question.
 
         The length and order of marks and marker_names should be the same such
@@ -497,7 +536,7 @@ class MatplotlibService:
         Args:
             marks: The dataframe of marks to plot.
             marker_names: The names of the markers.
-            question: The question index to plot the boxplot for.
+            question_idx: The question index to plot the boxplot for.
 
         Keyword Args:
             format: The format to return the graph in. Should be either "base64"
@@ -506,27 +545,26 @@ class MatplotlibService:
         Returns:
             Base64 encoded string or bytes containing the boxplot.
         """
-        qlabel = SpecificationService.get_question_label(question)
+        qlabel = SpecificationService.get_question_label(question_idx)
         assert len(marks) == len(marker_names)
         assert format in self.formats
         self.ensure_all_figures_closed()
 
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
-        # create boxplot and set colours
-        for i, mark in reversed(list(enumerate(marks))):
-            bp = ax.boxplot(mark, positions=[i], vert=False)
-            self._boxplot_set_colors(bp, i / len(marks))
-            (hL,) = plt.plot([], c=cm.hsv(i / len(marks)), label=marker_names[i])
+        # Create a DataFrame to use with Seaborn
+        data = pd.DataFrame(marks).T
+        data.columns = pd.Index(marker_names)
 
-        # set legend
-        plt.legend(
-            loc="center left",
-            bbox_to_anchor=(1, 0.5),
-            ncol=1,
-            fancybox=True,
+        sns.boxplot(
+            data=data,
+            ax=ax,
+            orient="h",
         )
-        plt.grid(True, alpha=0.5)
+
+        # Set y-ticks and y-tick labels
+        ax.set_yticks(range(len(marker_names)))
+        ax.set_yticklabels(marker_names)
 
         ax.set_title(f"{qlabel} boxplot by marker")
         ax.set_xlabel(f"{qlabel} mark")
@@ -535,18 +573,19 @@ class MatplotlibService:
             which="both",  # both major and minor ticks are affected
             left=False,  # ticks along the bottom edge are off
             right=False,  # ticks along the top edge are off
-            labelleft=False,
+            labelleft=True,
         )
 
         plt.xlim(
             [
                 0,
-                self.des._get_ta_data_for_question(question_number=question)[
+                self.des._get_ta_data_for_question(question_index=question_idx)[
                     "max_score"
                 ].max(),
             ]
         )
 
+        sns.despine()
         graph_bytes = self.get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
 
@@ -555,24 +594,9 @@ class MatplotlibService:
         else:
             return self.get_graph_as_base64(graph_bytes)
 
-    def _boxplot_set_colors(self, bp, colour):
-        """Set the colours of a boxplot.
-
-        Args:
-            bp: The boxplot to set the colours of.
-            colour: The colour to set the boxplot to.
-        """
-        plt.setp(bp["boxes"][0], color=cm.hsv(colour))
-        plt.setp(bp["caps"][0], color=cm.hsv(colour))
-        plt.setp(bp["caps"][1], color=cm.hsv(colour))
-        plt.setp(bp["whiskers"][0], color=cm.hsv(colour))
-        plt.setp(bp["whiskers"][1], color=cm.hsv(colour))
-        plt.setp(bp["fliers"][0], color=cm.hsv(colour))
-        plt.setp(bp["medians"][0], color=cm.hsv(colour))
-
     def line_graph_of_avg_marks_by_question(
         self, *, versions: bool = False, format: str = "base64"
-    ) -> Union[BytesIO, str]:
+    ) -> BytesIO | str:
         """Generate a line graph of the average percentage marks by question.
 
         Keyword Args:
@@ -589,30 +613,30 @@ class MatplotlibService:
 
         plt.figure(figsize=(6.8, 4.2), tight_layout=True)
 
-        numquestions = SpecificationService.get_n_questions()
+        question_indices = SpecificationService.get_question_indices()
         if versions is True:
             averages = self.des.get_averages_on_all_questions_versions_as_percentage(
                 overall=True
             )
             for i, v in enumerate(averages):
                 if i == 0:
-                    plt.plot(
-                        range(1, numquestions + 1),
-                        v,
+                    sns.lineplot(
+                        x=question_indices,
+                        y=v,
                         marker="o",
                         label="Overall",
                     )
                 else:
-                    plt.plot(
-                        range(1, numquestions + 1),
-                        v,
+                    sns.lineplot(
+                        x=question_indices,
+                        y=v,
                         marker="x",
                         label="Version " + str(i),
                     )
         else:
-            plt.plot(
-                range(1, numquestions + 1),
-                self.des.get_averages_on_all_questions_as_percentage(),
+            sns.lineplot(
+                x=question_indices,
+                y=self.des.get_averages_on_all_questions_as_percentage(),
                 marker="o",
                 label="All versions",
             )
@@ -623,13 +647,13 @@ class MatplotlibService:
                 ncol=1,
                 fancybox=True,
             )
-        plt.grid(True, alpha=0.5)
+        sns.despine()
         plt.ylim([0, 100])
         plt.title("Average percentage by question")
         # plt.xlabel("Question")
         plt.ylabel("Average mark (%)")
         plt.xticks(
-            range(1, numquestions + 1),
+            question_indices,
             labels=SpecificationService.get_question_labels(),
         )
 

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 
@@ -40,8 +40,11 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
 
     You may want to check first with `check_is_non_canvas_csv`.
 
-    Arguments:
+    Args:
         csv_file_name (pathlib.Path/str): the csv file.
+
+    Keyword Args:
+        minimalist: discard unnecessary columns.
 
     Returns:
         pandas.DataFrame: data with columns `id` and `name`
@@ -94,11 +97,11 @@ def clean_non_canvas_csv(csv_file_name, minimalist=True):
     return df
 
 
-def find_paper_number_column(df, make=True):
+def find_paper_number_column(df, *, make=True):
     """Find or make a paper_number column.
 
     Args:
-        df (Pandas):
+        df: a Pandas dataframe.
 
     Keyword Args:
         make (bool): make an placeholder `paper_number` column if one
@@ -162,7 +165,7 @@ def process_classlist_backend(student_csv_file_name):
     Arguments:
         student_csv_file_name (pathlib.Path/str): class info csv file.
 
-    Return:
+    Returns:
         pandas.DataFrame: the processed classlist data.
     """
     with open(student_csv_file_name) as csvfile:

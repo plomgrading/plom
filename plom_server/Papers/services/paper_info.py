@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 import logging
 from typing import List
@@ -9,6 +9,7 @@ from typing import List
 from django.db import transaction
 
 from ..models import Paper, FixedPage, QuestionPage
+from Preparation.models import NumberOfPapersToProduceSetting
 
 log = logging.getLogger("PaperInfoService")
 
@@ -18,6 +19,25 @@ class PaperInfoService:
     def how_many_papers_in_database(self):
         """How many papers have been created in the database."""
         return Paper.objects.count()
+
+    def is_paper_database_partially_populated(self):
+        """Returns true when at least one paper exists in the DB."""
+        return Paper.objects.filter().exists()
+
+    def is_paper_database_fully_populated(self):
+        """Returns true when number of papers in the database equals the number to produce."""
+        nop = NumberOfPapersToProduceSetting.load().number_of_papers
+        db_count = Paper.objects.count()
+        if db_count > 0 and db_count == nop:
+            return True
+        else:
+            return False
+
+    def is_paper_database_partially_but_not_fully_populated(self):
+        """Returns true when number of papers in the database is positive but strictly less than the number to produce."""
+        nop = NumberOfPapersToProduceSetting.load().number_of_papers
+        db_count = Paper.objects.count()
+        return db_count > 0 and db_count < nop
 
     @transaction.atomic
     def is_paper_database_populated(self):
@@ -45,36 +65,90 @@ class PaperInfoService:
         return page.image is not None
 
     @transaction.atomic
-    def get_version_from_paper_page(self, paper_number, page_number) -> int:
-        """Given a paper_number and page_number, return the version of that page."""
+    def get_version_from_paper_page(self, paper_number: int, page_number: int) -> int:
+        """Given a paper_number and page_number, return the version of that page.
+
+        .. warning::
+            This is a bit poorly defined; if two questions share a page
+            their versions could (theoretically) differ.  Our tooling
+            does not allow this situation but someone doing something
+            exotic creating their own PDF tests could: they will get
+            a NotImplementedError.
+
+        Args:
+            paper_number: which paper.
+            page_number: which page.
+
+        Returns:
+            The version.
+
+        Raises:
+            ValueError: paper and/or page does not exist.
+            NotImplementedError: multiple versions on the page that do not agree.
+        """
         try:
             paper = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
             raise ValueError(f"Paper {paper_number} does not exist in the database.")
-        try:
-            page = FixedPage.objects.get(paper=paper, page_number=page_number)
-        except FixedPage.DoesNotExist:
+        pages = FixedPage.objects.filter(paper=paper, page_number=page_number)
+        if not pages:
             raise ValueError(
                 f"Page {page_number} of paper {paper_number} does not exist in the database."
             )
-        return page.version
+        vers = [pg.version for pg in pages]
+        try:
+            (ver,) = set(vers)
+            return ver
+        except ValueError:
+            raise NotImplementedError(
+                f"Heterogeneous versions per page not supported: got versions {vers}"
+                f" for page {page_number} of paper {paper_number}"
+            ) from None
 
     @transaction.atomic
-    def get_version_from_paper_question(self, paper_number, question_number) -> int:
-        """Given a paper_number and question_number, return the version of that question."""
+    def get_version_from_paper_question(
+        self, paper_number: int, question_idx: int
+    ) -> int:
+        """Given a paper number and question index, return the version of that question."""
         try:
             paper = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
             raise ValueError(f"Paper {paper_number} does not exist in the database.")
         try:
-            # to find the version, find the first fixed question page of that paper with the question-number
+            # to find the version, find the first fixed question page of that paper/question
             # and extract the version from that. Note - use "filter" and not "get" here.
+            # TODO: why not .first()?
             page = QuestionPage.objects.filter(
-                paper=paper, question_number=question_number
+                paper=paper, question_index=question_idx
             )[0]
             # This will either fail with a does-not-exist or index-out-of-range
         except (QuestionPage.DoesNotExist, IndexError):
             raise ValueError(
-                f"Question {question_number} of paper {paper_number} does not exist in the database."
+                f"Question {question_idx} of paper {paper_number}"
+                " does not exist in the database."
             )
         return page.version
+
+    @transaction.atomic
+    def get_paper_numbers_containing_given_page_version(
+        self, version, page_number, *, scanned=True
+    ) -> List[int]:
+        """Given the version and page-number, return list of paper numbers that contain that page/version."""
+        if scanned:
+            return sorted(
+                list(
+                    FixedPage.objects.filter(
+                        page_number=page_number, version=version, image__isnull=False
+                    )
+                    .prefetch_related("paper")
+                    .values_list("paper__paper_number", flat=True)
+                )
+            )
+        else:
+            return sorted(
+                list(
+                    FixedPage.objects.filter(page_number=page_number, version=version)
+                    .prefetch_related("paper")
+                    .values_list("paper__paper_number", flat=True)
+                )
+            )

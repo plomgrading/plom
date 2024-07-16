@@ -1,14 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-
+# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Bryan Tanady
+import html
 from django.contrib.auth.models import User
-from django.http import FileResponse
+from django.http import HttpRequest, HttpResponse, FileResponse
 from django.shortcuts import render, reverse, redirect
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 from rest_framework.exceptions import ValidationError
 
 from plom import plom_valid_tag_text_pattern, plom_valid_tag_text_description
-from Base.base_group_views import LeadMarkerOrManagerView, ManagerRequiredView
+from Base.base_group_views import LeadMarkerOrManagerView
 from Mark.services import (
     MarkingStatsService,
     MarkingTaskService,
@@ -30,45 +32,71 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
 
         paper = request.GET.get("paper", "*")
         question = request.GET.get("question", "*")
+        if question == "*":
+            question_label = "*"
+        else:
+            question_label = SpecificationService.get_question_label(
+                question_index=question
+            )
         version = request.GET.get("version", "*")
         username = request.GET.get("username", "*")
         score = request.GET.get("score", "*")
         the_tag = request.GET.get("the_tag", "*")
+        status = request.GET.get("status", "*")
+        if status != "*":
+            status = int(status)
+            status_label = MarkingTask.StatusChoices(status).label
+        else:
+            status_label = "*"
 
         (pl, pu) = ProgressOverviewService().get_first_last_used_paper_number()
         paper_list = [str(pn) for pn in range(pl, pu + 1)]
 
-        question_list = [
-            str(q + 1) for q in range(SpecificationService.get_n_questions())
+        question_index_label_pairs = [
+            (str(q_idx), q_label)
+            for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
         ]
-        version_list = [
-            str(v + 1) for v in range(SpecificationService.get_n_versions())
-        ]
-        mark_list = [
-            str(m) for m in range(SpecificationService.get_max_all_question_mark() + 1)
-        ]
+        version_list = [str(vn) for vn in SpecificationService.get_list_of_versions()]
+        maxmark = SpecificationService.get_max_all_question_mark()
+        if not maxmark:
+            mark_list = []
+        else:
+            mark_list = [str(m) for m in range(maxmark + 1)]
         tag_list = sorted([X[1] for X in MarkingTaskService().get_all_tags()])
+        # the item in status_list will be tuple (value, label), eg: (1, To Do)
+        status_list = MarkingTask._meta.get_field("status").choices
+
+        # get rid of "Out Of Date"
+        if (4, "Out Of Date") in status_list:
+            status_list.remove((4, "Out Of Date"))
 
         context.update(
             {
                 "paper": paper,
                 "question": question,
+                "question_index_label_pairs": question_index_label_pairs,
+                "question_label": html.escape(question_label),
                 "version": version,
                 "username": username,
                 "score": score,
+                "status": status,
                 "the_tag": the_tag,
                 "paper_list": paper_list,
-                "question_list": question_list,
                 "version_list": version_list,
                 "mark_list": mark_list,
                 "username_list": mss.get_list_of_users_who_marked_anything(),
                 "tag_list": tag_list,
+                "status_list": status_list,
+                "status_label": status_label,
             }
         )
 
         # if all filters set to * then ask user to set at least one
         # don't actually filter **all** tasks
-        if all(X == "*" for X in [paper, question, version, username, score, the_tag]):
+        if all(
+            X == "*"
+            for X in [paper, question, version, username, score, the_tag, status]
+        ):
             context.update({"warning": True})
             return render(request, "Progress/Mark/task_filter.html", context)
 
@@ -90,6 +118,7 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
             score_min=optional_arg(score),
             score_max=optional_arg(score),
             the_tag=optional_arg(the_tag),
+            status=optional_arg(status),
         )
         context.update({"task_info": task_info})
 
@@ -125,11 +154,7 @@ class OriginalImageWrapView(LeadMarkerOrManagerView):
 
 
 class AllTaskOverviewView(LeadMarkerOrManagerView):
-    def get(self, request):
-        question_indices = [
-            q + 1 for q in range(SpecificationService.get_n_questions())
-        ]
-
+    def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
         pos = ProgressOverviewService()  # acronym excellence
         id_task_overview, marking_task_overview = pos.get_task_overview()
@@ -143,7 +168,7 @@ class AllTaskOverviewView(LeadMarkerOrManagerView):
 
         context.update(
             {
-                "question_indices": question_indices,
+                "question_indices": SpecificationService.get_question_indices(),
                 "question_labels": SpecificationService.get_question_index_label_pairs(),
                 "papers_with_a_task": papers_with_a_task,
                 "id_task_overview": id_task_overview,
@@ -165,7 +190,7 @@ class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
             {
                 "task_pk": task_pk,
                 "paper_number": task_obj.paper.paper_number,
-                "question": task_obj.question_number,
+                "question": task_obj.question_index,
                 "version": task_obj.question_version,
                 "status": task_obj.get_status_display(),
                 "lead_markers": User.objects.filter(groups__name="lead_marker"),
@@ -221,6 +246,7 @@ class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
 
         context.update(
             {
+                "all_markers": all_markers,
                 # the current tags, and then separated into normal and attn-marker
                 "current_normal_tags": current_normal_tags,
                 "current_attn_tags": current_attn_user_tags,
@@ -249,22 +275,16 @@ class MarkingTaskTagView(LeadMarkerOrManagerView):
         # make sure have the correct field from the form
         if "newTagText" not in request.POST:
             return HttpResponseClientRefresh()
-        # sanitize the text, check if such a tag already exists
-        # (create it otherwise) then add to the task
-        mts = MarkingTaskService()
-        tag_text = mts.sanitize_tag_text(request.POST.get("newTagText"))
+        try:
+            # note - this will sanitise the tag_text
+            MarkingTaskService().create_tag_and_attach_to_task(
+                request.user, task_pk, request.POST.get("newTagText")
+            )
+        except ValidationError:
+            # the form *should* catch validation errors.
+            # we don't throw an explicit error here instead just refresh the page.
+            return HttpResponseClientRefresh()
 
-        tag_obj = mts.get_tag_from_text(tag_text)
-        if tag_obj is None:  # no such tag exists, so create one
-            try:
-                tag_obj = mts.create_tag(request.user, tag_text)
-            except ValidationError:
-                # the form *should* catch validation errors.
-                # we don't throw an explicit error here
-                # instead just refresh the page.
-                return HttpResponseClientRefresh()
-
-        mts.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
         return HttpResponseClientRefresh()
 
 
@@ -274,21 +294,48 @@ class ProgressNewestMarkingTaskDetailsView(LeadMarkerOrManagerView):
         # then find the latest task for that pn, qn.
         task_obj = MarkingTask.objects.get(pk=task_pk)
         pn = task_obj.paper.paper_number
-        qn = task_obj.question_number
-        new_task_pk = mark_task.get_latest_task(pn, qn).pk
+        qi = task_obj.question_index
+        new_task_pk = mark_task.get_latest_task(pn, qi).pk
         return redirect("progress_marking_task_details", task_pk=new_task_pk)
 
 
-class MarkingTaskResetView(ManagerRequiredView):
+class MarkingTaskResetView(LeadMarkerOrManagerView):
     def put(self, request, task_pk: int):
         task_obj = MarkingTask.objects.get(pk=task_pk)
         pn = task_obj.paper.paper_number
-        qn = task_obj.question_number
+        qi = task_obj.question_index
         MarkingTaskService().set_paper_marking_task_outdated(
-            paper_number=pn, question_number=qn
+            paper_number=pn, question_index=qi
         )
         # now grab the pk of the new task with that paper,question and redirect the user there.
-        new_task_pk = mark_task.get_latest_task(pn, qn).pk
+        new_task_pk = mark_task.get_latest_task(pn, qi).pk
         return HttpResponseClientRedirect(
             reverse("progress_marking_task_details", args=[new_task_pk])
+        )
+
+
+class MarkingTaskReassignView(LeadMarkerOrManagerView):
+    def post(self, request, task_pk: int):
+        if "newUser" not in request.POST:
+            return HttpResponseClientRefresh()
+        new_username = request.POST.get("newUser")
+
+        # Note a task is reassigned by both tagging it @username,
+        # and also clearing / changing the task.assigned_user field.
+        # accordingly we call two functions.
+        try:
+            # first reassign the task - this checks if the username
+            # corresponds to an existing marker-user
+            MarkingTaskService().reassign_task_to_user(task_pk, new_username)
+            # note - the service creates the tag if needed
+            attn_user_tag_text = f"@{new_username}"
+            MarkingTaskService().create_tag_and_attach_to_task(
+                request.user, task_pk, attn_user_tag_text
+            )
+        except ValueError:
+            # TO DO - report the error
+            pass
+
+        return HttpResponseClientRedirect(
+            reverse("progress_marking_task_details", args=[task_pk])
         )

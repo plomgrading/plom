@@ -36,7 +36,7 @@ def check_version_map(
             is more strict about contiguous range of papers for example.
         required_papers: A list of paper_numbers that the qv map must have.
 
-    Return:
+    Returns:
         None
 
     Raises:
@@ -118,7 +118,7 @@ def make_random_version_map(
             pseudo-random number generator.  Unknown how portable this
             is between Python versions or OSes.
 
-    Return:
+    Returns:
         dict: a dict-of-dicts keyed by paper number (int) and then
             question number (int, but indexed from 1 not 0).  Values are
             integers.
@@ -175,7 +175,7 @@ def make_random_version_map(
 
 
 def undo_json_packing_of_version_map(
-    vermap_in: dict[str, dict[str, int]]
+    vermap_in: dict[str, dict[str, int]],
 ) -> dict[int, dict[int, int]]:
     """JSON must have string keys; undo such to int keys for version map.
 
@@ -287,7 +287,7 @@ def version_map_from_file(
     """
     f = Path(f)
     if f.suffix.casefold() not in (".json", ".csv"):
-        filename = f.with_suffix(f.suffix + ".csv")
+        f = f.with_suffix(f.suffix + ".csv")
     suffix = f.suffix
 
     if suffix.casefold() == ".json":
@@ -295,7 +295,7 @@ def version_map_from_file(
     elif suffix.casefold() == ".csv":
         return _version_map_from_csv(f, required_papers=required_papers)
     else:
-        raise NotImplementedError(f'Don\'t know how to import from "{filename}"')
+        raise NotImplementedError(f'Don\'t know how to import from "{f}"')
 
 
 def version_map_to_csv(

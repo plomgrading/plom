@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Andreas Buttenschoen
+
+from __future__ import annotations
 
 import logging
 from pathlib import Path
@@ -145,7 +147,7 @@ def processFileToBitmaps(
             Must exist.
 
     Keyword Args:
-        do_not_extract (bool): always render, do no extract even if
+        do_not_extract (bool): always render, do not extract even if
             it seems possible to do so.  This is off-by-default until
             we are confident extracting won't miss anything.
             See more detailed description in the user-facing command-line
@@ -212,7 +214,7 @@ def processFileToBitmaps(
                 add_metadata=add_metadata,
             )
             # For testing, randomly make jpegs, rotated a bit, of various qualities
-            if debug_jpeg and random.uniform(0, 1) <= 0.5:
+            if debug_jpeg and random.uniform(0, 1) <= 0.9:
                 _ = make_mucked_up_jpeg(outname, dest / ("muck-" + basename + ".jpg"))
                 outname.unlink()
                 outname = _
@@ -222,7 +224,14 @@ def processFileToBitmaps(
 
 
 def try_to_extract_image(
-    p, doc, dest, basename, bundle_name, *, do_not_extract=False, add_metadata=True
+    p: fitz.Page,
+    doc: fitz.Document,
+    dest: Path,
+    basename: str,
+    bundle_name: str | Path,
+    *,
+    do_not_extract: bool = False,
+    add_metadata: bool = True,
 ):
     """If possible/desirable, extract an image from a PDF page and save to disc.
 
@@ -231,20 +240,24 @@ def try_to_extract_image(
     instead of the original page.
 
     Args:
-        p (fitz.Page):
-        doc (fitz.Document):
-        dest (pathlib.Path): where to save the resulting bitmap file.
-        basename (str):
-        bundle_name (str/pathlib.Path): only used for metadata hackery
+        p: a page of a PDF document.
+        doc: the document containing that page.  Yes it is indeed a
+            bit strange to pass both the page and the document containing
+            the page.  Bad things probably happen if you pass a page from
+            a different document!
+        dest: where to save the resulting bitmap file.
+        basename: part of filename, used to influence the
+            filename of the output.
+        bundle_name: only used for metadata hackery
             uniqifying pages, you can pass whatever you want.
 
     Keyword Args:
-        do_not_extract (bool): always render, do no extract even if
+        do_not_extract: always render, do no extract even if
             it seems possible to do so.  This is off-by-default until
             we are confident extracting won't miss anything.
             See more detailed description in the user-facing command-line
             tool `plom-scan`.
-        add_metadata (bool): add invisible metadata to each image
+        add_metadata: add invisible metadata to each image
             including bundle name and random numbers.  Default: True.
             If you disable this, you can get two identical images
             (from different pages) giving identical hashes, which
@@ -323,19 +336,27 @@ def try_to_extract_image(
 
 
 def render_page_to_bitmap(
-    p, dest, basename, bundle_name, debug_jpeg=False, add_metadata=True
-):
+    p: fitz.Page,
+    dest: Path,
+    basename: str,
+    bundle_name: str | Path,
+    *,
+    add_metadata: bool = True,
+) -> Path:
     """Use PyMuPDF to render a PDF page to an image.
 
     Args:
-        p (fitz.Page):
-        dest (pathlib.Path): where to save the resulting bitmap file.
-        basename (str):
-        bundle_name (str/pathlib.Path): only used for metadata hackery
-            uniqifying pages, you can pass whatever you want.
+        p: a page of a PDF document.
+        dest: where (directory) to save the resulting
+            bitmap file.
+        basename: part of filename, used to influence the
+            filename of the output.
+        bundle_name: the name and/or path of the bundle, only used for
+            metadata hackery to uniqify page images: you can pass
+            whatever you want.
 
     Keyword Args:
-        add_metadata (bool): add invisible metadata to each image
+        add_metadata: add invisible metadata to each image
             including bundle name and random numbers.  Default: True.
             If you disable this, you can get two identical images
             (from different pages) giving identical hashes, which
@@ -389,9 +410,11 @@ def render_page_to_bitmap(
     # z = random.uniform(1, 5)
     log.info(f"{basename}: Fitz render z={z:4.2f}.")
     pix = p.get_pixmap(matrix=fitz.Matrix(z, z), annots=True)
-    if not (W == pix.width or H == pix.height):
+    # TODO: sometimes width and height get mixed up: Issues #1148, #1935
+    # but one of them should match the target, without worrying which is which
+    if not (pix.width in (W, H) or pix.height in (W, H)):
         _m = (
-            "Debug: some kind of rounding error in scaling image?"
+            f"Debug: {p}: some kind of rounding error in scaling image?"
             f" Rendered to {pix.width}x{pix.height} from target {W}x{H}"
         )
         warn(_m)
@@ -425,12 +448,15 @@ def render_page_to_bitmap(
     # WebP here is also an option, Issue #1864.
 
 
-def make_mucked_up_jpeg(f, outname):
+def make_mucked_up_jpeg(f: Path, outname: Path) -> Path:
     """Given an input file, do horrid things to it in the name of debugging.
 
     Args:
-        f (pathlib.Path): input
-        outname (pathlib.Path): output file
+        f: input
+        outname: output file to be created.
+
+    Returns:
+        The output file again.
     """
     img = pil_load_with_jpeg_exif_rot_applied(f)
 
@@ -441,7 +467,7 @@ def make_mucked_up_jpeg(f, outname):
     except AttributeError:
         # Remove this workaround once minimum Pillow is 9.1.x
         # pylint: disable=no-member
-        bilinear = PIL.Image.BILINEAR
+        bilinear = PIL.Image.BILINEAR  # type: ignore
     img = img.rotate(
         angle,
         resample=bilinear,
@@ -460,8 +486,9 @@ def make_mucked_up_jpeg(f, outname):
     # im_shell.set("user_comment", generate_metadata_str(bundle_name, p.number))
     if r:
         im_shell.set("orientation", r)
-    with open(outname, "wb") as f:
-        f.write(im_shell.get_file())
+    # TODO: MyPy seems concerned with these lines
+    with open(outname, "wb") as f:  # type: ignore
+        f.write(im_shell.get_file())  # type: ignore
     # add_metadata_jpeg_comment(outname, file_name, p.number)
     return outname
 
@@ -543,13 +570,13 @@ def gamma_adjust(fn):
     )
 
 
-def postProcessing(thedir, dest, skip_gamma=False):
+def postProcessing(thedir, dest, skip_gamma: bool = False) -> None:
     """Do post processing on a directory of scanned bitmaps.
 
     Args:
         thedir (str, Path): a directory full of bitmaps.
         dest (str, Path): move images here (???).
-        skip_gamma_shift (bool): skip the white balancing.
+        skip_gamma: skip the white balancing.
 
     Returns:
         None

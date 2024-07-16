@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
 import random
@@ -27,7 +27,7 @@ class SpecQuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SpecQuestion
-        exclude = ["question_number"]
+        exclude = ["question_index"]
 
 
 def new_private_seed() -> str:
@@ -49,6 +49,7 @@ class SpecSerializer(serializers.ModelSerializer):
     idPage = serializers.IntegerField(min_value=1)
     doNotMarkPages = serializers.ListField(child=serializers.IntegerField(min_value=1))
     question = serializers.DictField(child=SpecQuestionSerializer())
+    allowSharedPages = serializers.BooleanField(default=False)
 
     class Meta:
         model = Specification
@@ -69,14 +70,13 @@ class SpecSerializer(serializers.ModelSerializer):
             ValidationError: in this case the ``.detail`` field will contain
                 a list of what is wrong.
         """
-        is_valid = super().is_valid(raise_exception=raise_exception)
-        if not is_valid:
+        if not super().is_valid(raise_exception=raise_exception):
             return False
 
         data_with_dummy_num_to_produce = {**deepcopy(self.data), "numberToProduce": -1}
         try:
             vlad = SpecVerifier(data_with_dummy_num_to_produce)
-            vlad.verify()
+            vlad.verify(_legacy=False)
             return True
         except ValueError as e:
             if raise_exception:
@@ -94,7 +94,7 @@ class SpecSerializer(serializers.ModelSerializer):
 
         questions = validated_data.pop("question")
         for idx, question in questions.items():
-            question["question_number"] = int(idx)
+            question["question_index"] = int(idx)
             SpecQuestion.objects.create(**question)
         return Specification.objects.create(**validated_data)
 
@@ -136,7 +136,7 @@ class SolnSpecSerializer(serializers.ModelSerializer):
                 f"Number of solutions {len(self.data['solution'])} does not match "
                 f"number of questions {spec.numberOfQuestions}"
             )
-        # check that the solution numbers match question-numbers
+        # check that the solution numbers match question indices
         for sn in range(1, spec.numberOfQuestions + 1):
             if str(sn) not in self.data["solution"]:
                 raise ValueError(f"Cannot find solution for question {sn}")

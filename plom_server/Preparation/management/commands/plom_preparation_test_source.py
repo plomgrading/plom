@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
+
+from __future__ import annotations
 
 from pathlib import Path
 
@@ -9,41 +11,39 @@ from django.core.management.base import BaseCommand, CommandError
 
 from Papers.services import SpecificationService
 
-from ...services import TestSourceService, PapersPrinted
+from ...services import SourceService, PapersPrinted
 
 
 class Command(BaseCommand):
-    help = "Displays the uploaded test source pdfs and allows users to upload/download/remove test source pdfs."
+    help = "Displays the uploaded source pdfs and allows users to upload/download/remove source pdfs."
 
     def check_duplicates(self):
-        tss = TestSourceService()
-        duplicates = tss.check_pdf_duplication()
+        duplicates = SourceService.check_pdf_duplication()
         if duplicates:
             self.stderr.write("There appear to be duplicate source pdfs on the server:")
             for sha, versions in duplicates.items():
                 self.stderr.write(f"\tVersions {versions} have sha256 {sha}")
 
     def show_status(self):
-        tss = TestSourceService()
-        vup = tss.how_many_test_versions_uploaded()
+        vup = SourceService.how_many_source_versions_uploaded()
         if vup:
             self.stdout.write(f"{vup} test source pdf(s) uploaded.")
         else:
             self.stdout.write("No test source pdfs uploaded.")
-        up_list = tss.get_list_of_sources()
-        for v, source in up_list.items():
-            if source:  # source = None or (internal filepath, sha256)
-                self.stdout.write(f"Version {v} - pdf with sha256:{source[1]}")
+        src_list = SourceService.get_list_of_sources()
+        for src in src_list:
+            if src["uploaded"]:
+                self.stdout.write(
+                    f"Version {src['version']} - pdf with sha256:{src['hash']}"
+                )
             else:
-                self.stdout.write(f"Version {v} - no pdf uploaded")
+                self.stdout.write(f"Version {src['version']} - no pdf uploaded")
         # Now report any duplicated hashes
         self.check_duplicates()
 
     def copy_source_into_place(self, version, pdf_file_bytes):
-        self.stdout.write(
-            f"Downloading version {version} to 'test_source.{version}.pdf'"
-        )
-        save_path = Path(f"test_source.{version}.pdf")
+        self.stdout.write(f"Downloading version {version} to 'source{version}.pdf'")
+        save_path = Path(f"source{version}.pdf")
         if save_path.exists():
             self.stdout.write(f"A file exists at {save_path} - overwrite it? [y/N]")
             choice = input().lower()
@@ -56,53 +56,54 @@ class Command(BaseCommand):
         with open(save_path, "wb") as fh:
             fh.write(pdf_file_bytes)
 
-    def download_source(self, version=None, all=False):
-        tss = TestSourceService()
-        up_list = tss.get_list_of_uploaded_sources()
+    def download_source(self, version: int | None = None, all: bool = False) -> None:
+        src_list = SourceService.get_list_of_sources()
+        up_list = [x for x in src_list if x["uploaded"]]
         if len(up_list) == 0:
             self.stdout.write("There are no test sources on the server.")
             return
 
         if all:
+            if version is not None:
+                raise CommandError("Cannot specify 'all' and 'version'")
             self.stdout.write("Downloading all versions on the server.")
-            for v, source in up_list.items():
-                self.copy_source_into_place(v, tss.get_source_as_bytes(v))
+            for src in up_list:
+                v = src["version"]
+                self.copy_source_into_place(v, SourceService.get_source_as_bytes(v))
             return
 
-        if version in up_list:
-            self.copy_source_into_place(version, tss.get_source_as_bytes(version))
-        else:
-            self.stderr.write(
-                f"Test pdf source Version {version} is not on the server."
+        if version in [x["version"] for x in up_list]:
+            self.copy_source_into_place(
+                version, SourceService.get_source_as_bytes(version)
             )
+        else:
+            raise CommandError(f"Source PDF version {version} is not on the server.")
 
-    def remove_source(self, version=None, all=False):
+    def remove_source(self, version: int | None = None, all: bool = False) -> None:
         if PapersPrinted.have_papers_been_printed():
             raise CommandError(
                 "Papers have been printed. You cannot change the sources."
             )
 
-        tss = TestSourceService()
-        up_list = tss.get_list_of_uploaded_sources()
+        src_list = SourceService.get_list_of_sources()
+        up_list = [x for x in src_list if x["uploaded"]]
         if len(up_list) == 0:
-            self.stdout.write("There are no test sources on the server.")
+            self.stdout.write("There are no sources on the server.")
             return
 
         if all:
+            if version is not None:
+                raise CommandError("Cannot specify 'all' and 'version'")
             self.stdout.write(
                 f"Removing all {len(up_list)} test source pdfs on server."
             )
-            tss.delete_all_test_sources()
+            SourceService.delete_all_source_pdfs()
             return
-        if version in up_list:
-            tss.delete_test_source(version)
-            self.stdout.write(
-                f"Removing test pdf source version {version} from server."
-            )
+        if version in [x["version"] for x in up_list]:
+            SourceService.delete_source_pdf(version)
+            self.stdout.write(f"Removed test pdf source version {version} from server.")
         else:
-            self.stderr.write(
-                f"Test pdf source Version {version} is not on the server."
-            )
+            raise CommandError(f"Source PDF version {version} is not on the server.")
 
     def upload_source(self, version=None, source_pdf=None):
         if PapersPrinted.have_papers_been_printed():
@@ -115,18 +116,18 @@ class Command(BaseCommand):
                 "There is not a valid test specification on the server. Cannot upload."
             )
 
-        tss = TestSourceService()
-        src_list = tss.get_list_of_sources()
-        if version not in src_list:
-            version_list = sorted(list(src_list.keys()))
+        src_list = SourceService.get_list_of_sources()
+        version_list = [x["version"] for x in src_list]
+        if version not in version_list:
             raise CommandError(
                 f"Version {version} is invalid - must be one of {version_list}"
             )
 
-        existing_src = src_list[version]
-        if existing_src is not None:
+        (existing_src,) = [x for x in src_list if x["version"] == version]
+        if existing_src["uploaded"]:
             raise CommandError(
-                f"Version {version} already on server with sha256 = {existing_src[1]}. Delete or upload to a different version."
+                f"Version {version} already on server with sha256 {existing_src['hash']}."
+                "  Delete or upload to a different version."
             )
 
         source_path = Path(source_pdf)
@@ -134,12 +135,11 @@ class Command(BaseCommand):
             raise CommandError(f"Cannot open file {source_path}.")
 
         # send the PDF
-        # TODO - fix 6 to get the required number of pages from the spec.
         # we should not be able to upload unless we have a spec
         with open(source_path, "rb") as fh:
-            success, msg = tss.take_source_from_upload(
-                version, SpecificationService.get_n_pages(), fh
-            )
+            # TODO: confused by the type of fh: here we have a plain
+            # file handle but the function talks about "in memory file"...
+            success, msg = SourceService.take_source_from_upload(version, fh)
             if success:
                 self.stdout.write(
                     f"Upload of source pdf for version {version} succeeded."

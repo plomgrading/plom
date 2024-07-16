@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
-# Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2021-2024 Colin B. Macdonald
 
 """Misc utils for interacting with Canvas."""
+
+from __future__ import annotations
 
 import csv
 from pathlib import Path
@@ -191,10 +193,10 @@ def get_sis_id_to_canvas_id_table(*, workdir: Union[Path, str] = "."):
 def get_courses_teaching(user):
     """Get a list of the courses a particular user is teaching.
 
-    args:
+    Args:
         user (canvasapi.current_user.CurrentUser)
 
-    return:
+    Returns:
         list: List of `canvasapi.course.Course` objects.
     """
     courses_teaching = []
@@ -356,17 +358,18 @@ def get_section_by_id_number(course, num):
     raise ValueError(f"Could not find section matching id={num}")
 
 
-def canvas_login(api_url=None, api_key=None):
+def canvas_login(
+    api_url: str | None = None, api_key: str | None = None
+) -> Canvas.current_user.CurrentUser:
     """Login to a Canvas server using an API key.
 
-    args:
-        api_url (str/None): server to login to, uses a default
-            if omitted.
-        api_key (str/None): the API key.  Will load from disc if
-            omitted.  TODO: Could consider prompting in future.
+    Args:
+        api_url: server to login to, uses a default if omitted.
+        api_key: the API key.  Will load from disc if
+            omitted (deprecated!).
 
-    return:
-        canvasapi.current_user.CurrentUser
+    Returns:
+        The user who canvasapi.current_user.CurrentUser
     """
     if not api_url:
         api_url = __DEFAULT_CANVAS_API_URL__
@@ -375,7 +378,7 @@ def canvas_login(api_url=None, api_key=None):
             "Loading from `api_secrets.py` is deprecated: consider changing your script to use env vars instead",
             category=DeprecationWarning,
         )
-        from api_secrets import my_key as API_KEY
+        from api_secrets import my_key as API_KEY  # pyright: ignore
 
         api_key = API_KEY
         del API_KEY

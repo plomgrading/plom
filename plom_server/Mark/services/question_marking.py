@@ -4,7 +4,9 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
-from typing import Optional, List
+from __future__ import annotations
+
+from typing import Optional
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.contrib.auth.models import User
@@ -58,8 +60,8 @@ class QuestionMarkingService:
 
         Keyword Args:
             task_pk: public key of a task instance
-            code: string representing a paper number + question number pair
-            question: question number of task
+            code: string representing a paper number + question index pair
+            question: question index of task
             version: question version of task
             user: reference to a user instance
             min_paper_num: the minimum paper number of the task
@@ -85,7 +87,7 @@ class QuestionMarkingService:
     def get_first_available_task(
         self,
         *,
-        tags: Optional[List[str]] = None,
+        tags: list[str] | None = None,
         exclude_tagged_for_others: bool = True,
     ) -> Optional[MarkingTask]:
         """Return the first marking task with a 'todo' status, sorted by `marking_priority`.
@@ -96,7 +98,7 @@ class QuestionMarkingService:
         range (including end points) are required.
 
         The results are sorted by priority.
-        If the priority is the same, defer to paper number and then question number.
+        If the priority is the same, defer to paper number and then question index.
 
         Keyword Args:
             tags: a task must match at least one of the strings in this
@@ -113,7 +115,7 @@ class QuestionMarkingService:
         available = MarkingTask.objects.filter(status=MarkingTask.TO_DO)
 
         if self.question:
-            available = available.filter(question_number=self.question)
+            available = available.filter(question_index=self.question)
 
         if self.version:
             available = available.filter(question_version=self.version)
@@ -139,7 +141,7 @@ class QuestionMarkingService:
             return None
 
         first_task = available.order_by(
-            "-marking_priority", "paper__paper_number", "question_number"
+            "-marking_priority", "paper__paper_number", "question_index"
         ).first()
         self.task_pk = first_task.pk
         return first_task
@@ -155,48 +157,29 @@ class QuestionMarkingService:
         if self.task_pk:
             return MarkingTask.objects.select_for_update().get(pk=self.task_pk)
         elif self.code:
-            paper_number, question_number = mark_task.unpack_code(self.code)
-            task_to_assign = mark_task.get_latest_task(paper_number, question_number)
+            paper_number, question_index = mark_task.unpack_code(self.code)
+            task_to_assign = mark_task.get_latest_task(paper_number, question_index)
             self.task_pk = task_to_assign.pk
             return self._get_task_for_update()
         else:
             raise ValueError("Cannot find task - no public key or code specified.")
 
     @transaction.atomic
-    def assign_task_to_user(self) -> None:
-        """Assign a specific marking task to a user.
-
-        Fails if the relevant task can't be found, or the task cannot be
-        assigned to that user.
-        """
-        task_to_assign = self._get_task_for_update()
-
-        if task_to_assign.status != MarkingTask.TO_DO:
-            raise ValueError("Task is currently assigned.")
-
-        if not self.user or task_to_assign.assigned_user is not None:
-            raise RuntimeError("Unable to assign task to user.")
-
-        task_to_assign.assigned_user = self.user
-        task_to_assign.status = MarkingTask.OUT
-        task_to_assign.save()
-
-    @transaction.atomic
-    def get_page_data(self) -> List[dict]:
+    def get_page_data(self) -> list[dict]:
         """Return the relevant data for rendering task pages on the client."""
         if self.task_pk:
             task = MarkingTask.objects.get(pk=self.task_pk)
             paper_number = task.paper.paper_number
-            question_number = task.question_number
+            question_index = task.question_index
         elif self.code:
-            paper_number, question_number = mark_task.unpack_code(self.code)
+            paper_number, question_index = mark_task.unpack_code(self.code)
         else:
             raise ValueError("Cannot find task to read from.")
 
-        return page_data.get_question_pages_list(paper_number, question_number)
+        return page_data.get_question_pages_list(paper_number, question_index)
 
     @transaction.atomic
-    def mark_task(self):
+    def mark_task(self) -> None:
         """Accept a marker's annotation and grade for a task, store them in the database."""
         task = self._get_task_for_update()
 
@@ -211,6 +194,9 @@ class QuestionMarkingService:
             raise ValueError("Cannot find user.")
         elif self.user != task.assigned_user:
             raise RuntimeError("User cannot create annotation for this task.")
+
+        # keep MyPy happy but honestly I think its a sign we should refactor with args
+        assert self.marking_data is not None
 
         # Various work in creating the new Annotation object: linking it to the
         # associated Rubrics and managing the task's latest annotation link.

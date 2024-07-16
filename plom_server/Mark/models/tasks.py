@@ -4,10 +4,11 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 from django.db import models
 
-from Base.models import BaseTask, Tag, SingletonBaseModel
+from Base.models import BaseTask, Tag, SingletonABCModel
 from Papers.models import Paper
 
 
@@ -16,7 +17,7 @@ class MarkingTask(BaseTask):
 
     paper: reference to Paper, the test-paper of the question
     code: str, a unique string for indexing a marking task
-    question_number: int, the question to mark
+    question_index: int, the question to mark
     question_version: int, the version of the question
     latest_annotation: reference to Annotation, the latest annotation for this task
     marking_priority: int, the priority of this task.
@@ -44,8 +45,7 @@ class MarkingTask(BaseTask):
 
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     code = models.TextField(default="", unique=False)
-    # TODO: rename to question_index, Issue #3264, Issue #2716.
-    question_number = models.PositiveIntegerField(null=False, default=0)
+    question_index = models.PositiveIntegerField(null=False, default=0)
     question_version = models.PositiveIntegerField(null=False, default=0)
     latest_annotation = models.OneToOneField(
         "Annotation", unique=True, null=True, on_delete=models.SET_NULL
@@ -54,10 +54,13 @@ class MarkingTask(BaseTask):
 
     def __str__(self):
         """Return information about the paper and the question."""
-        return f"MarkingTask (paper={self.paper.paper_number}, question={self.question_number})"
+        return (
+            f"MarkingTask (paper={self.paper.paper_number}, "
+            f"question_index={self.question_index})"
+        )
 
 
-class MarkingTaskPriority(SingletonBaseModel):
+class MarkingTaskPriority(SingletonABCModel):
     """Represents the current strategy for ordering tasks.
 
     Strategy is an enum of PAPER_NUMBER, SHUFFLE, or CUSTOM. The state of
@@ -75,6 +78,14 @@ class MarkingTaskPriority(SingletonBaseModel):
         null=False, choices=StrategyChoices.choices, default=PAPER_NUMBER
     )
     modified = models.BooleanField(default=False, null=False)
+
+    @classmethod
+    def load(cls):
+        """Return the singleton instance of the MarkingTaskPriority model."""
+        obj, created = cls.objects.get_or_create(
+            pk=1, defaults={"strategy": cls.PAPER_NUMBER, "modified": False}
+        )
+        return obj
 
 
 class MarkingTaskTag(Tag):

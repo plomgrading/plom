@@ -16,13 +16,13 @@ ansi_yellow = "\033[93m"
 ansi_red = "\033[91m"
 ansi_off = "\033[0m"
 warn_mark = "[" + ansi_yellow + "!" + ansi_off + "]"
-cross = "[" + ansi_red + "\N{Multiplication Sign}" + ansi_off + "]"
+cross = "[" + ansi_red + "\N{MULTIPLICATION SIGN}" + ansi_off + "]"
 question_mark = "[" + ansi_red + "?" + ansi_off + "]"
-check_mark = "[" + ansi_green + "\N{Check Mark}" + ansi_off + "]"
+check_mark = "[" + ansi_green + "\N{CHECK MARK}" + ansi_off + "]"
 
 
 @with_manager_messenger
-def status(*, msgr):
+def status(*, msgr) -> None:
     """Status information about a server.
 
     Keyword Args:
@@ -58,6 +58,7 @@ def status(*, msgr):
         print(cross + " Server does not yet have a spec")
         print("    You will need to add specification for your test.")
         spec = None
+        exam_info = None
     else:
         print(check_mark + " Server has a spec ")
         sv = SpecVerifier(spec)
@@ -112,7 +113,7 @@ def status(*, msgr):
             )
     else:
         papernums = []
-    if spec:
+    if spec and exam_info:
         # TODO: Issue #1745: this assumes contiguous test numbers
         not_named = set(range(1, exam_info["current_largest_paper_num"]))
         not_named.difference_update(papernums)
@@ -120,7 +121,9 @@ def status(*, msgr):
             check_mark
             + f" {len(not_named)} unassigned paper numbers (these will not be prenamed):"
         )
-        print("    " + "\n    ".join(wrap(format_int_list_with_runs(not_named), 72)))
+        print(
+            "    " + "\n    ".join(wrap(format_int_list_with_runs(list(not_named)), 72))
+        )
 
     print("\nDatabase")
     print("--------\n")

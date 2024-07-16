@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Aden Chan
 
-import json
+from __future__ import annotations
+
+import pathlib
 from pathlib import Path
 import sys
-from typing import Optional
 
 if sys.version_info >= (3, 10):
     from importlib import resources
@@ -16,7 +18,6 @@ if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
-import tomlkit
 
 # try to avoid importing Pandas unless we use specific functions: Issue #2154
 # import pandas
@@ -37,7 +38,7 @@ class Command(BaseCommand):
     help = "Manipulate rubrics"
 
     def upload_demo_rubrics(
-        self, username: str, *, numquestions: Optional[int] = None
+        self, username: str, *, _numquestions: int | None = None
     ) -> int:
         """Load some demo rubrics and upload to server.
 
@@ -45,8 +46,8 @@ class Command(BaseCommand):
             username: rubrics need to be associated to a rubric.
 
         Keyword Args:
-            numquestions (None/int): how many questions should we build for.
-                Get it from the spec if omitted.
+            _numquestions: how many questions should we build for.
+                Get it from the spec if omitted / None.
 
         Returns:
             The number of rubrics uploaded.
@@ -54,9 +55,10 @@ class Command(BaseCommand):
         The demo data is a bit sparse: we fill in missing pieces and
         multiply over questions.
         """
-        if numquestions is None:
-            spec = SpecificationService.get_the_spec()
-            numquestions = spec["numberOfQuestions"]
+        if _numquestions is None:
+            question_indices = SpecificationService.get_question_indices()
+        else:
+            question_indices = list(range(1, _numquestions + 1))
 
         with open(resources.files(plom) / "demo_rubrics.toml", "rb") as f:
             rubrics_in = tomllib.load(f)["rubric"]
@@ -80,9 +82,9 @@ class Command(BaseCommand):
 
             rub["username"] = username
 
-            # Multiply rubrics w/o question numbers, avoids repetition in demo file
+            # Multiply rubrics w/o questions, avoids repetition in demo file
             if rub.get("question") is None:
-                for q in range(1, numquestions + 1):
+                for q in question_indices:
                     r = rub.copy()
                     r["question"] = q
                     rubrics.append(r)
@@ -110,28 +112,31 @@ class Command(BaseCommand):
         return service.erase_all_rubrics()
 
     def download_rubrics_to_file(
-        self, filename, *, verbose=True, question=None
+        self,
+        filename: None | str | pathlib.Path,
+        *,
+        verbose: bool = True,
+        question: int | None = None,
     ) -> None:
         """Download the rubrics from a server and save them to a file.
 
         Args:
-            filename (None/str/pathlib.Path): A filename to save to.  The
-                extension is used to determine what format, supporting:
+            filename: What filename to save to or None to display to stdout.
+                The extension is used to determine what format, supporting:
                 `.json`, `.toml`, and `.csv`.
                 If no extension is included, default to `.toml`.
-                If None, display on stdout.
 
         Keyword Args:
-            verbose (bool):
-            question (int/None): download for question index
+            verbose: print stuff.
+            question: download for question index, or ``None`` for all.
 
         Returns:
             None: but saves a file as a side effect.
         """
         service = RubricService()
-        rubrics = service.get_rubrics_as_dicts(question=question)
 
         if not filename:
+            rubrics = service.get_rubrics_as_dicts(question=question)
             if not rubrics and question:
                 self.stdout.write(f"No rubrics for question index {question}")
                 return
@@ -144,26 +149,14 @@ class Command(BaseCommand):
         filename = Path(filename)
         if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
             filename = filename.with_suffix(filename.suffix + ".toml")
-        suffix = filename.suffix
+        suffix = filename.suffix[1:]
 
         if verbose:
             self.stdout.write(f'Saving server\'s current rubrics to "{filename}"')
 
         with open(filename, "w") as f:
-            if suffix == ".json":
-                json.dump(rubrics, f, indent="  ")
-            elif suffix == ".toml":
-                tomlkit.dump({"rubric": rubrics}, f)
-            elif suffix == ".csv":
-                try:
-                    import pandas
-                except ImportError as e:
-                    raise CommandError(f'CSV writing needs "pandas" library: {e}')
-
-                df = pandas.json_normalize(rubrics)
-                df.to_csv(f, index=False, sep=",", encoding="utf-8")
-            else:
-                raise CommandError(f'Don\'t know how to export to "{filename}"')
+            data = service.get_rubric_data(suffix, question=question)
+            f.write(data)
 
     def upload_rubrics_from_file(self, filename):
         """Load rubrics from a file and upload them to the server.
@@ -181,40 +174,20 @@ class Command(BaseCommand):
         autogenerted.  See `upload_rubrics` in `push_pull_rubrics.py`.
         """
         if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
-            filename = filename.with_suffix(filename.suffix + ".toml")
+            raise CommandError(f"Unsupported file type: {filename}")
         suffix = filename.suffix
 
-        if suffix == ".json":
-            with open(filename, "r") as f:
-                rubrics = json.load(f)
+        if suffix in (".json", ".csv"):
+            f = open(filename, "r")
+            data = f.read()
         elif suffix == ".toml":
-            with open(filename, "rb") as f:
-                rubrics = tomllib.load(f)["rubric"]
-        elif suffix == ".csv":
-            with open(filename, "r") as f:
-                try:
-                    import pandas
-                except ImportError as e:
-                    raise CommandError(f'CSV reading needs "pandas" library: {e}')
-
-                df = pandas.read_csv(f)
-                df.fillna("", inplace=True)
-                # TODO: flycheck is whining about this to_json
-                rubrics = json.loads(df.to_json(orient="records"))
+            f = open(filename, "rb")
+            data = f.read().decode("utf-8")
         else:
-            raise CommandError(f'Don\'t know how to import from "{filename}"')
+            raise CommandError(f"Unsupported file type: {filename}")
 
         service = RubricService()
-        for rubric in rubrics:
-            # rubric.pop("id")
-            try:
-                service.create_rubric(rubric)
-            except KeyError as e:
-                raise CommandError(f"{e} field(s) missing from rubrics file.")
-            except ValidationError as e:
-                raise CommandError(e.args[0])
-            except ValueError as e:
-                raise CommandError(e)
+        rubrics = service.update_rubric_data(data, suffix[1:])
         return len(rubrics)
 
     def add_arguments(self, parser):
