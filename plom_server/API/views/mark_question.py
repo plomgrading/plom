@@ -15,6 +15,7 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 
 from Mark.services import QuestionMarkingService, MarkingTaskService
+from Mark.services import mark_task, page_data
 from .utils import _error_response
 
 
@@ -92,33 +93,47 @@ class QuestionMarkingViewSet(ViewSet):
             POST: see self.mark_task()
         """
         if request.method == "PATCH":
-            return self.claim_task(request, code)
+            return self.claim_task(request, code=code)
         elif request.method == "POST":
-            return self.mark_task(request, code)
+            return self.mark_task(request, code=code)
 
-    def claim_task(self, request: Request, code: str) -> Response:
+    def claim_task(self, request: Request, *, code: str) -> Response:
         """Attach a user to a marking task and return the task's metadata.
 
         Reply with status 200, or 409 if someone else has claimed this
-        task, or a 404 if there it not yet such a task (not scanned yet)
-        or 410 if there will never be such a task.
-
-        Notes: legacy would use 417 when the version requested does not
-        match the version of the task.  But I think we ignore the version.
+        task, or a 404 if there it not yet such a task (not scanned yet).
+        If a version query parameter (e.g., "?version=2") was supplied,
+        and it does not match the task, reply with a 417.  If you don't
+        send version, we set it to None which means no such check will
+        be made: you're claiming the task regardless of what version it is.
         """
-        service = QuestionMarkingService(code=code, user=request.user)
+        data = request.query_params
+        version = data.get("version", None)
+        if version is not None:
+            version = int(version)
         try:
-            with transaction.atomic():
-                task = service._get_task_for_update()
-                MarkingTaskService.assign_task_to_user(task.pk, request.user)
-                question_data = service.get_page_data()
-                tags = MarkingTaskService().get_tags_for_task(code)
-
-            return Response([question_data, tags, service.task_pk])
-        except (ValueError, ObjectDoesNotExist) as e:
+            papernum, question_idx = mark_task.unpack_code(code)
+        except AssertionError as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
-        except RuntimeError as e:
-            return _error_response(e, status.HTTP_409_CONFLICT)
+
+        with transaction.atomic():
+            try:
+                task = mark_task.get_latest_task(
+                    papernum, question_idx, question_version=version
+                )
+            except ObjectDoesNotExist as e:
+                return _error_response(e, status.HTTP_404_NOT_FOUND)
+            except ValueError as e:
+                return _error_response(e, status.HTTP_417_EXPECTATION_FAILED)
+
+            try:
+                MarkingTaskService.assign_task_to_user(task.pk, request.user)
+            except RuntimeError as e:
+                return _error_response(e, status.HTTP_409_CONFLICT)
+
+            question_data = page_data.get_question_pages_list(papernum, question_idx)
+            tags = MarkingTaskService().get_tags_for_task_pk(task.pk)
+            return Response([question_data, tags, task.pk])
 
     def mark_task(self, request: Request, code: str) -> Response:
         """Accept a marker's grade and annotation for a task.

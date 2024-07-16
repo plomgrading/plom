@@ -326,7 +326,7 @@ class Messenger(BaseMessenger):
         """Claim a task from server and get back metadata.
 
         Args:
-            code (str): a task code such as `"q0123g2"`.
+            code: a task code such as `"q0123g2"`.
             version: we should know which version we are claiming.
 
         Returns:
@@ -342,10 +342,17 @@ class Messenger(BaseMessenger):
         """
         with self.SRmutex:
             try:
-                response = self.patch(
-                    f"/MK/tasks/{code}",
-                    json={"user": self.user, "token": self.token, "version": version},
-                )
+                if self.is_legacy_server():
+                    response = self.patch(
+                        f"/MK/tasks/{code}",
+                        json={
+                            "user": self.user,
+                            "token": self.token,
+                            "version": version,
+                        },
+                    )
+                else:
+                    response = self.patch_auth(f"/MK/tasks/{code}?version={version}")
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:

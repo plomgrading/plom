@@ -17,19 +17,30 @@ from ..models import MarkingTask
 
 
 @transaction.atomic
-def get_latest_task(paper_number: int, question_idx: int) -> MarkingTask:
-    """Get a marking task from its paper number and question index.
+def get_latest_task(
+    paper_number: int, question_idx: int, *, question_version: int | None = None
+) -> MarkingTask:
+    """Get a marking task from its paper number and question index, and optionally version.
+
+    No locks are held or atomic operations made, nor select for update:
+    this is a low-level routine.  Apply whatever safeguards you need in
+    the caller.
 
     Args:
         paper_number: which paper.
         question_idx: which question, by 1-based question index.
 
+    Keyword Args:
+        question_version: which version, or None/omit to ignore versions.
+
     Returns:
-        The MarkingTask.
+        The MarkingTask object.
 
     Raises:
         ObjectDoesNotExist: no such marking task, either b/c the paper
             does not exist or the question does not exist for that paper.
+        ValueError: that paper/question pair does exist but not with the
+            specified version.
     """
     try:
         paper = Paper.objects.get(paper_number=paper_number)
@@ -47,6 +58,13 @@ def get_latest_task(paper_number: int, question_idx: int) -> MarkingTask:
             f"Task does not exist: we have paper {paper_number} but "
             f"not question index {question_idx}"
         )
+    if question_version is not None:
+        if r.question_version != question_version:
+            raise ValueError(
+                f"Task for paper {paper_number} question index {question_idx} "
+                f"exists with version {r.question_version} not {question_version}."
+                "  You're likely asking for the wrong version."
+            )
     return r
 
 
