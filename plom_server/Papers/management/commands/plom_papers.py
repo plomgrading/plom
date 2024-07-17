@@ -5,10 +5,15 @@
 # Copyright (C) 2023 Natalie Balashov
 from __future__ import annotations
 
+from pathlib import Path
+
 from django.core.management.base import BaseCommand, CommandError
 
 from Papers.services import PaperCreatorService, PaperInfoService
 from Preparation.services import PQVMappingService
+
+from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
+from plom.version_maps import version_map_from_file
 
 
 class Command(BaseCommand):
@@ -46,6 +51,10 @@ class Command(BaseCommand):
                 The paper number to start at.  Defaults to 1 if omitted.
             """,
         )
+        sp.add_parser("download", help="Download the question-version map.")
+
+        p = sp.add_parser("upload", help="Upload a question-version map")
+        p.add_argument("csv_or_json_file")
 
         sp.add_parser("clear", help="Clear the database of test-papers.")
 
@@ -69,8 +78,7 @@ class Command(BaseCommand):
         """Create a version map and use it to populate the database with papers."""
         paper_info = PaperInfoService()
         if paper_info.is_paper_database_populated():
-            self.stderr.write("Test-papers already saved to database - stopping.")
-            return
+            raise CommandError("Test-papers already saved to database - stopping.")
 
         self.stdout.write("Creating test-papers...")
         min_production = PQVMappingService().get_minimum_number_to_produce()
@@ -101,6 +109,34 @@ class Command(BaseCommand):
         PaperCreatorService().remove_all_papers_from_db(background=False)
         self.stdout.write("Database cleared of test-papers.")
 
+    def download_pqv_map(self) -> None:
+        save_path = Path("question_version_map.csv")
+        if save_path.exists():
+            s = f"A file exists at {save_path} - overwrite it? [y/N] "
+            choice = input(s).lower()
+            if choice != "y":
+                self.stdout.write("Skipping.")
+                return
+            else:
+                self.stdout.write(f"Trying to overwrite {save_path}...")
+        try:
+            PQVMappingService().pqv_map_to_csv(save_path)
+        except ValueError as e:
+            raise CommandError(e) from e
+        self.stdout.write(f"Wrote {save_path}")
+
+    def upload_pqv_map(self, f: Path) -> None:
+        self.stdout.write(f"Reading qvmap from {f}")
+        try:
+            vm = version_map_from_file(f)
+        except ValueError as e:
+            raise CommandError(e)
+        try:
+            PaperCreatorService().add_all_papers_in_qv_map(vm, background=False)
+        except (ValueError, PlomDependencyConflict, PlomDatabaseCreationError) as e:
+            raise CommandError(e) from e
+        self.stdout.write(f"Uploaded qvmap from {f}")
+
     def handle(self, *args, **options):
         if options["command"] == "status":
             self.papers_status()
@@ -109,6 +145,10 @@ class Command(BaseCommand):
                 number_to_produce=options["number_to_produce"],
                 first=options["first_paper"],
             )
+        elif options["command"] == "download":
+            self.download_pqv_map()
+        elif options["command"] == "upload":
+            self.upload_pqv_map(options["csv_or_json_file"])
         elif options["command"] == "clear":
             self.clear_papers()
         else:
