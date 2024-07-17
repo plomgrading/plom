@@ -11,7 +11,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from plom.misc_utils import format_int_list_with_runs
 from plom.version_maps import version_map_from_file
-from plom.plom_exceptions import PlomDependencyConflict
+from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 
 from Papers.services import SpecificationService, PaperInfoService, PaperCreatorService
 from ...services import PQVMappingService, PapersPrinted
@@ -96,13 +96,6 @@ class Command(BaseCommand):
         self.stdout.write(f"Wrote {save_path}")
 
     def upload_pqv_map(self, f: Path) -> None:
-        if PapersPrinted.have_papers_been_printed():
-            raise CommandError("Paper have been printed. You cannot change qvmap.")
-
-        if PaperInfoService().is_paper_database_populated():
-            self.stderr.write("Test-papers already saved to database - stopping.")
-            return
-
         self.stdout.write(f"Reading qvmap from {f}")
         try:
             vm = version_map_from_file(f)
@@ -111,8 +104,8 @@ class Command(BaseCommand):
 
         try:
             PaperCreatorService().add_all_papers_in_qv_map(vm, background=False)
-        except ValueError as e:
-            raise CommandError(e)
+        except (ValueError, PlomDependencyConflict, PlomDatabaseCreationError) as e:
+            raise CommandError(e) from e
         self.stdout.write(f"Uploaded qvmap from {f}")
 
     def remove_pqv_map(self) -> None:
