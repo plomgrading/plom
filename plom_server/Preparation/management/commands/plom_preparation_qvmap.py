@@ -118,13 +118,6 @@ class Command(BaseCommand):
         self.stdout.write(f"Uploaded qvmap from {f}")
 
     def remove_pqv_map(self) -> None:
-        if PapersPrinted.have_papers_been_printed():
-            raise CommandError("Paper have been printed. You cannot change qvmap.")
-
-        if PaperInfoService().how_many_papers_in_database() == 0:
-            self.stderr.write("No test-papers in the database - stopping.")
-            return
-
         try:
             PaperCreatorService().remove_all_papers_from_db(background=False)
         except PlomDependencyConflict as e:
