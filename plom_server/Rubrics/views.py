@@ -18,6 +18,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.views.generic.detail import DetailView
 
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 
@@ -244,13 +245,12 @@ class RubricLandingPageView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
 
-class RubricItemView(ManagerRequiredView):
+class RubricItemView(DetailView, ManagerRequiredView):
     """A page for displaying a single rubric and its annotations."""
 
     def get(self, request, rubric_key):
         template_name = "Rubrics/rubric_item.html"
         rs = RubricService()
-        form = RubricEditForm
 
         context = self.build_context()
 
@@ -266,7 +266,6 @@ class RubricItemView(ManagerRequiredView):
             {
                 "latest_rubric": rubric,
                 "revisions": revisions,
-                "form": form(instance=rubric),
                 "marking_tasks": marking_tasks,
                 "latest_rubric_as_html": rubric_as_html,
                 "diff_form": RubricDiffForm(key=rubric_key),
@@ -274,22 +273,6 @@ class RubricItemView(ManagerRequiredView):
         )
 
         return render(request, template_name, context=context)
-
-    @staticmethod
-    def post(request, rubric_key):
-        form = RubricEditForm(request.POST)
-
-        # we need to pad the number with zeros on the left since if the keystarts
-        # with a zero, it will be interpreted as a 11 digit key, which result in an error
-        rubric_key = str(rubric_key).zfill(12)
-
-        if form.is_valid():
-            rs = RubricService()
-            rubric = rs.get_rubric_by_key(rubric_key)
-            for key, value in form.cleaned_data.items():
-                rubric.__setattr__(key, value)
-            rubric.save()
-        return redirect("rubric_item", rubric_key=rubric_key)
 
 
 def compare_rubrics(request, rubric_key):
