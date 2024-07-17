@@ -120,6 +120,9 @@ class RubricService:
             except ObjectDoesNotExist as e:
                 raise ValueError(f"User {username} does not exist.") from e
 
+        if "kind" not in rubric_data.keys():
+            raise ValidationError({"kind": "Kind is required."})
+
         if "display_delta" not in rubric_data.keys():
             if rubric_data["kind"] == "absolute":
                 rubric_data["display_delta"] = (
