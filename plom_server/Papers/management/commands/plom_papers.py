@@ -58,7 +58,7 @@ class Command(BaseCommand):
 
         sp.add_parser("clear", help="Clear the database of test-papers.")
 
-    def papers_status(self):
+    def papers_status(self) -> None:
         """Get the status of test-papers in the database."""
         paper_info = PaperInfoService()
         n_papers = paper_info.how_many_papers_in_database()
