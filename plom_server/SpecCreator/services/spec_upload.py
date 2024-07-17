@@ -116,14 +116,12 @@ class SpecificationUploadService:
         To be able to modify (i.e. upload or replace) the test spec, these conditions must be met:
             - Test preparation must be set as "in progress"
             - There must be no existing test-papers
-            - There must be no existing QV-map
 
         Keyword Args:
             raise_exception: if true, raise exceptions on assertion failure.
         """
         papers_printed = PapersPrinted.have_papers_been_printed()
         papers_created = PaperInfoService().is_paper_database_populated()
-        qvmap_created = PQVMappingService().is_there_a_pqv_map()
 
         if papers_printed:
             if raise_exception:
@@ -134,13 +132,6 @@ class SpecificationUploadService:
             if raise_exception:
                 raise ValueError(
                     "Cannot save a new spec with test papers saved to the database."
-                )
-            return False
-
-        if qvmap_created:
-            if raise_exception:
-                raise ValueError(
-                    "Cannot save a new spec while a question-version map exists."
                 )
             return False
 

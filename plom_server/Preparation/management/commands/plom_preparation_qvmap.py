@@ -11,7 +11,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from plom.misc_utils import format_int_list_with_runs
 from plom.version_maps import version_map_from_file
-from Papers.services import SpecificationService, PaperInfoService, PaperCreationService
+from Papers.services import SpecificationService, PaperInfoService, PaperCreatorService
 
 from ...services import PQVMappingService, PapersPrinted
 
@@ -71,7 +71,7 @@ class Command(BaseCommand):
 
         qv_map = PQVMappingService().make_version_map(number_to_produce, first=first)
         try:
-            PaperCreationService().add_all_papers_in_qv_map(qv_map, background=False)
+            PaperCreatorService().add_all_papers_in_qv_map(qv_map, background=False)
         except ValueError as e:
             raise CommandError(e)
         self.stdout.write(
@@ -79,8 +79,7 @@ class Command(BaseCommand):
         )
 
     def download_pqv_map(self) -> None:
-        pqvms = PQVMappingService()
-        if not pqvms.is_there_a_pqv_map():
+        if not PaperInfoService().is_paper_database_fully_populated():
             raise CommandError(
                 "There is no a question-version mapping on the server. Stopping"
             )
@@ -94,7 +93,7 @@ class Command(BaseCommand):
                 return
             else:
                 self.stdout.write(f"Overwriting {save_path}.")
-        pqvms.pqv_map_to_csv(save_path)
+        PQVMappingService().pqv_map_to_csv(save_path)
         self.stdout.write(f"Wrote {save_path}")
 
     def upload_pqv_map(self, f: Path) -> None:
@@ -112,7 +111,7 @@ class Command(BaseCommand):
             raise CommandError(e)
 
         try:
-            PaperCreationService().add_all_papers_in_qv_map(vm, background=False)
+            PaperCreatorService().add_all_papers_in_qv_map(vm, background=False)
         except ValueError as e:
             raise CommandError(e)
         self.stdout.write(f"Uploaded qvmap from {f}")
@@ -121,14 +120,11 @@ class Command(BaseCommand):
         if PapersPrinted.have_papers_been_printed():
             raise CommandError("Paper have been printed. You cannot change qvmap.")
 
-        pqvms = PQVMappingService()
-        if not pqvms.is_there_a_pqv_map():
-            self.stderr.write(
-                "There is no a question-version mapping on the server. Stopping"
-            )
+        if PaperInfoService().how_many_papers_in_database() == 0:
+            self.stderr.write("No test-papers in the database - stopping.")
             return
-        pqvms.remove_pqv_map()
-        self.stdout.write("Question-version map removed from server.")
+        PaperCreatorService().remove_all_papers_from_db(background=False)
+        self.stdout.write("Question-version map and papers removed from server.")
 
     def add_arguments(self, parser):
         sub = parser.add_subparsers(

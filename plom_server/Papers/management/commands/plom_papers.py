@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+from __future__ import annotations
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -65,9 +66,7 @@ class Command(BaseCommand):
         else:
             self.stdout.write(f"Database still requires {qv_map_len - n_papers} papers")
 
-    def build_papers(
-        self, *, number_to_produce: int | None = None, first: int | None = 1
-    ):
+    def build_papers(self, *, number_to_produce: int | None = None, first: int = 1):
         """Write test-papers to the database, so long as the Papers table is empty and a QV map is present."""
         paper_info = PaperInfoService()
         if paper_info.is_paper_database_populated():
@@ -75,10 +74,18 @@ class Command(BaseCommand):
             return
 
         self.stdout.write("Creating test-papers...")
-        pcs = PaperCreatorService()
+        min_production = PQVMappingService().get_minimum_number_to_produce()
+        # make sure number to produce is at least min recommended
+        if number_to_produce is None:
+            number_to_produce = min_production
+        elif number_to_produce < min_production:
+            number_to_produce = min_production
+
+        assert number_to_produce is not None
+
         qv_map = PQVMappingService().make_version_map(number_to_produce, first=first)
         try:
-            pcs.add_all_papers_in_qv_map(qv_map, background=False)
+            PaperCreatorService().add_all_papers_in_qv_map(qv_map, background=False)
         except ValueError as e:
             raise CommandError(e)
         self.stdout.write(f"Database populated with {len(qv_map)} test-papers.")
