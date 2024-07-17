@@ -31,9 +31,8 @@ from .forms import (
     RubricWipeForm,
     RubricUploadForm,
     RubricFilterForm,
-    RubricEditForm,
     RubricDownloadForm,
-    RubricCreateForm,
+    RubricItemForm,
 )
 from .models import RubricTable
 
@@ -213,7 +212,7 @@ class RubricLandingPageView(ManagerRequiredView):
         template_name = "Rubrics/rubrics_landing.html"
         rs = RubricService()
         rubric_filter_form = RubricFilterForm
-        rubric_create_form = RubricCreateForm
+        rubric_create_form = RubricItemForm
         questions = SpecificationService.get_the_spec()["question"]
 
         context = self.build_context()
@@ -261,7 +260,7 @@ class RubricItemView(UpdateView, ManagerRequiredView):
         rubric = rs.get_rubric_by_key(rubric_key)
         revisions = rs.get_past_revisions_by_key(rubric_key)
         marking_tasks = rs.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
-        form = RubricCreateForm(instance=rubric)
+        form = RubricItemForm(instance=rubric)
 
         rubric_as_html = rs.get_rubric_as_html(rubric)
         context.update(
@@ -416,7 +415,7 @@ class UploadRubricView(ManagerRequiredView):
 
 class RubricCreateView(ManagerRequiredView):
     def post(self, request: HttpRequest):
-        form = RubricCreateForm(request.POST)
+        form = RubricItemForm(request.POST)
         if form.is_valid():
             rs = RubricService()
             rubric_data = {
@@ -438,7 +437,7 @@ class RubricEditView(ManagerRequiredView):
     def post(self, request: HttpRequest, rubric_key):
         rubric_key = str(rubric_key).zfill(12)
         print(rubric_key)
-        form = RubricCreateForm(request.POST)
+        form = RubricItemForm(request.POST)
         if form.is_valid():
             rs = RubricService()
             rubric = rs.get_rubric_by_key(rubric_key)

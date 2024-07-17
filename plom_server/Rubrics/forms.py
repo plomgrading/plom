@@ -45,15 +45,6 @@ class RubricFilterForm(forms.Form):
         self.fields["question_filter"].choices = question_choices
 
 
-class RubricEditForm(forms.ModelForm):
-    class Meta:
-        model = Rubric
-        fields = ["meta"]
-        widgets = {
-            "meta": forms.Textarea(attrs={"rows": 2, "cols": 50}),
-        }
-
-
 class RubricDownloadForm(forms.Form):
     FILE_TYPE_CHOICES = [("csv", ".csv"), ("json", ".json"), ("toml", ".toml")]
     question_filter = forms.TypedChoiceField(required=False)
@@ -77,7 +68,9 @@ class RubricUploadForm(forms.Form):
     rubric_file = forms.FileField(label="")
 
 
-class RubricCreateForm(forms.ModelForm):
+class RubricItemForm(forms.ModelForm):
+    """Form for creating or updating a Rubric."""
+
     question = forms.TypedChoiceField(
         required=True,
         widget=forms.Select(attrs={"onchange": "updateQuestion()"}),

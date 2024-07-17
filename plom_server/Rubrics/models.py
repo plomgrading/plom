@@ -160,6 +160,8 @@ class RubricPane(models.Model):
 
 
 class RubricTable(tables.Table):
+    """Table for displaying rubrics."""
+
     key = tables.Column("Key", linkify=True)
 
     class Meta:
