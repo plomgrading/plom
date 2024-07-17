@@ -348,7 +348,7 @@ class ScanService:
         Args:
             list_qr_codes: (list) QR codes returned from QRextract() method as a dictionary
 
-        Return:
+        Returns:
             groupings: (dict) Set of data from raw-qr-strings
             {
                 'NE': {

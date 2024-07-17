@@ -62,7 +62,7 @@ class ScrapPaperService:
     def get_scrap_paper_task_status(self) -> str:
         """Status of the build scrap paper task, creating a "to do" task if it does not exist.
 
-        Return:
+        Returns:
             The status as string: "To do", "Starting", "Queued", "Running",
             "Error" or "Complete", as defined in the HueyTaskTracker class.
         """

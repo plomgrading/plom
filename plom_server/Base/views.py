@@ -81,8 +81,13 @@ class ResetConfirmView(ManagerRequiredView):
         """
         context = self.build_context()
         form = CompleteWipeForm()
+        reset_phrase = SpecificationService.get_shortname()
         context.update(
-            {"bundles_staged": ScanService().staging_bundles_exist(), "wipe_form": form}
+            {
+                "bundles_staged": ScanService().staging_bundles_exist(),
+                "wipe_form": form,
+                "reset_phrase": reset_phrase,
+            }
         )
         return render(request, "base/reset_confirm.html", context=context)
 
@@ -97,7 +102,7 @@ class ResetConfirmView(ManagerRequiredView):
         """
         context = self.build_context()
         form = CompleteWipeForm(request.POST)
-        reset_phrase = "I wish to completely delete this Plom instance."
+        reset_phrase = SpecificationService.get_shortname()
         _confirm_field = "confirmation_field"
         if form.is_valid():
             if form.cleaned_data[_confirm_field] == reset_phrase:
