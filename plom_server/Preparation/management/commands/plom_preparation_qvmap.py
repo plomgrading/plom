@@ -11,7 +11,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from plom.misc_utils import format_int_list_with_runs
 from plom.version_maps import version_map_from_file
-from plom.plom_exceptions import PlomDependencyConflict
+from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 
 from Papers.services import SpecificationService, PaperInfoService, PaperCreatorService
 from ...services import PQVMappingService, PapersPrinted
@@ -80,11 +80,6 @@ class Command(BaseCommand):
         )
 
     def download_pqv_map(self) -> None:
-        if not PaperInfoService().is_paper_database_fully_populated():
-            raise CommandError(
-                "There is no a question-version mapping on the server. Stopping"
-            )
-
         save_path = Path("question_version_map.csv")
         if save_path.exists():
             s = f"A file exists at {save_path} - overwrite it? [y/N] "
@@ -93,18 +88,14 @@ class Command(BaseCommand):
                 self.stdout.write("Skipping.")
                 return
             else:
-                self.stdout.write(f"Overwriting {save_path}.")
-        PQVMappingService().pqv_map_to_csv(save_path)
+                self.stdout.write(f"Trying to overwrite {save_path}...")
+        try:
+            PQVMappingService().pqv_map_to_csv(save_path)
+        except ValueError as e:
+            raise CommandError(e) from e
         self.stdout.write(f"Wrote {save_path}")
 
     def upload_pqv_map(self, f: Path) -> None:
-        if PapersPrinted.have_papers_been_printed():
-            raise CommandError("Paper have been printed. You cannot change qvmap.")
-
-        if PaperInfoService().is_paper_database_populated():
-            self.stderr.write("Test-papers already saved to database - stopping.")
-            return
-
         self.stdout.write(f"Reading qvmap from {f}")
         try:
             vm = version_map_from_file(f)
@@ -113,18 +104,11 @@ class Command(BaseCommand):
 
         try:
             PaperCreatorService().add_all_papers_in_qv_map(vm, background=False)
-        except ValueError as e:
-            raise CommandError(e)
+        except (ValueError, PlomDependencyConflict, PlomDatabaseCreationError) as e:
+            raise CommandError(e) from e
         self.stdout.write(f"Uploaded qvmap from {f}")
 
     def remove_pqv_map(self) -> None:
-        if PapersPrinted.have_papers_been_printed():
-            raise CommandError("Paper have been printed. You cannot change qvmap.")
-
-        if PaperInfoService().how_many_papers_in_database() == 0:
-            self.stderr.write("No test-papers in the database - stopping.")
-            return
-
         try:
             PaperCreatorService().remove_all_papers_from_db(background=False)
         except PlomDependencyConflict as e:

@@ -175,7 +175,12 @@ class PaperInfoService:
 
     @transaction.atomic()
     def get_pqv_map_dict(self) -> dict[int, dict[int, int]]:
-        """Get the paper-question-version mapping as a dict."""
+        """Get the paper-question-version mapping as a dict.
+
+        Note if there is no version map (no papers) then this returns
+        an empty dict.  If you'd prefer an error message you have to
+        check for the empty return yourself.
+        """
         # put into the dict in paper_number order.
         pqvmapping: dict[int, dict[int, int]] = {}
         # note that this gets all question pages, not just one for each question.
