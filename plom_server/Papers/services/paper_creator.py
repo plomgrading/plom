@@ -77,7 +77,6 @@ def huey_evacuate_whole_db(*, tracker_pk: int, task=None) -> bool:
     PopulateEvacuateDBChore.transition_to_running(tracker_pk, task.id)
     all_papers = Paper.objects.all().prefetch_related("fixedpage_set")
     N = all_papers.count()
-
     for idx, paper_obj in enumerate(all_papers):
         for fp in paper_obj.fixedpage_set.all():
             fp.delete()
@@ -87,6 +86,14 @@ def huey_evacuate_whole_db(*, tracker_pk: int, task=None) -> bool:
                 tracker_pk, f"Deleted {idx} of {N} papers from database"
             )
             print(f"Deleted {idx} of {N} papers from database")
+    # TODO - decide if we should delete by table rather than by paper.
+    # Table delete code follows below
+    # with transaction.atomic():
+    #     DNMPage.objects.all().delete()
+    #     IDPage.objects.all().delete()
+    #     QuestionPage.objects.all().delete()
+    # with transaction.atomic():
+    #     Paper.objects.all().delete()
 
     PopulateEvacuateDBChore.set_message_to_user(
         tracker_pk, f"Deleted all {N} papers from database"
@@ -231,26 +238,28 @@ class PaperCreatorService:
         self.assert_no_existing_chore()
         self._set_number_to_produce(len(qv_map))
 
-        if background:
-            self.populate_whole_db_huey_wrapper(qv_map)
-        else:
-            print(f"Added {len(qv_map)} papers via foreground process")
-            id_page_number = SpecificationService.get_id_page_number()
-            dnm_page_numbers = SpecificationService.get_dnm_pages()
-            question_page_numbers = SpecificationService.get_question_pages()
-            for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
-                self._create_single_paper_from_qvmapping_and_pages(
-                    paper_number,
-                    qv_row,
-                    id_page_number=id_page_number,
-                    dnm_page_numbers=dnm_page_numbers,
-                    question_page_numbers=question_page_numbers,
-                )
-                if idx % 16 == 0:
-                    print(f"Added {idx} of {len(qv_map)} papers")
-            print(f"Added all {len(qv_map)} papers")
+        self.populate_whole_db_huey_wrapper(qv_map, background=background)
+        # deprecated foreground constructor code follows
+        # if false:
+        #     print(f"Added {len(qv_map)} papers via foreground process")
+        #     id_page_number = SpecificationService.get_id_page_number()
+        #     dnm_page_numbers = SpecificationService.get_dnm_pages()
+        #     question_page_numbers = SpecificationService.get_question_pages()
+        #     for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
+        #         self._create_single_paper_from_qvmapping_and_pages(
+        #             paper_number,
+        #             qv_row,
+        #             id_page_number=id_page_number,
+        #             dnm_page_numbers=dnm_page_numbers,
+        #             question_page_numbers=question_page_numbers,
+        #         )
+        #         if idx % 16 == 0:
+        #             print(f"Added {idx} of {len(qv_map)} papers")
+        #     print(f"Added all {len(qv_map)} papers")
 
-    def populate_whole_db_huey_wrapper(self, qv_map: Dict[int, Dict[int, int]]) -> None:
+    def populate_whole_db_huey_wrapper(
+        self, qv_map: Dict[int, Dict[int, int]], *, background: bool = True
+    ) -> None:
         # TODO - add seatbelt logic here
         with transaction.atomic(durable=True):
             tr = PopulateEvacuateDBChore.objects.create(
@@ -261,6 +270,11 @@ class PaperCreatorService:
 
         res = huey_populate_whole_db(qv_map, tracker_pk=tracker_pk)
         print(f"Just enqueued Huey populate-database task id={res.id}")
+        if background is False:
+            print("Running the task in foreground - will block until completed.")
+            res.get(blocking=True)
+            print("Completed.")
+
         PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
 
     def remove_all_papers_from_db(self, *, background: bool = True) -> None:
@@ -269,17 +283,9 @@ class PaperCreatorService:
         self.assert_no_existing_chore()
         self._reset_number_to_produce()
 
-        if background:
-            self.evacuate_whole_db_huey_wrapper()
-        else:
-            with transaction.atomic():
-                DNMPage.objects.all().delete()
-                IDPage.objects.all().delete()
-                QuestionPage.objects.all().delete()
-            with transaction.atomic():
-                Paper.objects.all().delete()
+        self.evacuate_whole_db_huey_wrapper(background=background)
 
-    def evacuate_whole_db_huey_wrapper(self) -> None:
+    def evacuate_whole_db_huey_wrapper(self, *, background: bool = True) -> None:
         # TODO - add seatbelt logic here
         with transaction.atomic(durable=True):
             tr = PopulateEvacuateDBChore.objects.create(
@@ -290,6 +296,10 @@ class PaperCreatorService:
 
         res = huey_evacuate_whole_db(tracker_pk=tracker_pk)
         print(f"Just enqueued Huey evacuate-database task id={res.id}")
+        if background is False:
+            print("Running the task in foreground - will block until completed.")
+            res.get(blocking=True)
+            print("Completed.")
         PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
 
     def update_page_image(
