@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
@@ -11,8 +11,9 @@ from django.core.management.base import BaseCommand, CommandError
 
 from plom.misc_utils import format_int_list_with_runs
 from plom.version_maps import version_map_from_file
-from Papers.services import SpecificationService
+from plom.plom_exceptions import PlomDependencyConflict
 
+from Papers.services import SpecificationService
 from ...services import PQVMappingService, PapersPrinted
 
 
@@ -122,7 +123,10 @@ class Command(BaseCommand):
                 "There is no a question-version mapping on the server. Stopping"
             )
             return
-        pqvms.remove_pqv_map()
+        try:
+            pqvms.remove_pqv_map()
+        except PlomDependencyConflict as e:
+            raise CommandError(e) from e
         self.stdout.write("Question-version map removed from server.")
 
     def add_arguments(self, parser):
