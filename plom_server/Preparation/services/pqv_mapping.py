@@ -59,7 +59,16 @@ class PQVMappingService:
 
     @transaction.atomic()
     def pqv_map_to_csv(self, f: Path) -> None:
+        """Write a non-empty version map to a CSV file.
+
+        Raises:
+            ValueError: map seems to be empty.
+        """
         pqvmap = self.get_pqv_map_dict()
+        if not pqvmap:
+            raise ValueError(
+                "No version map: cowardly refusing to create an empty CSV file."
+            )
         version_map_to_csv(pqvmap, f, _legacy=False)
 
     @transaction.atomic()

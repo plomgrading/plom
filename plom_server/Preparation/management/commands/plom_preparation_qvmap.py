@@ -80,11 +80,6 @@ class Command(BaseCommand):
         )
 
     def download_pqv_map(self) -> None:
-        if not PaperInfoService().is_paper_database_fully_populated():
-            raise CommandError(
-                "There is no a question-version mapping on the server. Stopping"
-            )
-
         save_path = Path("question_version_map.csv")
         if save_path.exists():
             s = f"A file exists at {save_path} - overwrite it? [y/N] "
@@ -93,8 +88,11 @@ class Command(BaseCommand):
                 self.stdout.write("Skipping.")
                 return
             else:
-                self.stdout.write(f"Overwriting {save_path}.")
-        PQVMappingService().pqv_map_to_csv(save_path)
+                self.stdout.write(f"Trying to overwrite {save_path}...")
+        try:
+            PQVMappingService().pqv_map_to_csv(save_path)
+        except ValueError as e:
+            raise CommandError(e) from e
         self.stdout.write(f"Wrote {save_path}")
 
     def upload_pqv_map(self, f: Path) -> None:
