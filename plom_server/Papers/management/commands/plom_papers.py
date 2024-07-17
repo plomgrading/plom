@@ -60,19 +60,13 @@ class Command(BaseCommand):
 
     def papers_status(self):
         """Get the status of test-papers in the database."""
-        pqvs = PQVMappingService()
-        if not pqvs.is_there_a_pqv_map():
-            self.stdout.write("Question-version map not present.")
-            return
-        qv_map_len = len(pqvs.get_pqv_map_dict())
-
         paper_info = PaperInfoService()
         n_papers = paper_info.how_many_papers_in_database()
         self.stdout.write(f"{n_papers} test-papers saved to the database.")
-        if qv_map_len == n_papers:
+        if PaperInfoService().is_database_fully_populated():
             self.stdout.write("Database is ready")
         else:
-            self.stdout.write(f"Database still requires {qv_map_len - n_papers} papers")
+            self.stdout.write("Database is not yet ready")
 
     def build_papers(self, *, number_to_produce: int | None = None, first: int = 1):
         """Create a version map and use it to populate the database with papers."""
