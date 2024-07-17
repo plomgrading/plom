@@ -284,16 +284,16 @@ def compare_rubrics(request, rubric_key):
         form = RubricDiffForm(request.POST, key=str(rubric_key).zfill(12))
         if form.is_valid():
             left = [
-                f"{form.cleaned_data["left_compare"].display_delta} | {form.cleaned_data["left_compare"].text}"
+                f'{form.cleaned_data["left_compare"].display_delta} | {form.cleaned_data["left_compare"].text}'
             ]
             right = [
-                f"{form.cleaned_data["right_compare"].display_delta} | {form.cleaned_data["right_compare"].text}"
+                f'{form.cleaned_data["right_compare"].display_delta} | {form.cleaned_data["right_compare"].text}'
             ]
             html = difflib.HtmlDiff(wrapcolumn=20).make_table(
                 left,
                 right,
-                f"Rev. {form.cleaned_data["left_compare"].revision}",
-                f"Rev. {form.cleaned_data["right_compare"].revision}",
+                f'Rev. {form.cleaned_data["left_compare"].revision}',
+                f'Rev. {form.cleaned_data["right_compare"].revision}',
             )
             return render(request, "Rubrics/diff_partial.html", {"diff": html})
         return JsonResponse({"errors": form.errors}, status=400)
