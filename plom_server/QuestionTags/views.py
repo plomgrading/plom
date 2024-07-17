@@ -13,7 +13,7 @@ from plom.tagging import plom_valid_tag_text_description
 import json
 import csv
 from django.views import View
-
+from Papers.models.paper_structure import QuestionPage
 
 class QTagsLandingView(ListView):
     """View for displaying and managing question tags."""
@@ -149,10 +149,10 @@ class DownloadQuestionTagsView(View):
 
     def get(self, request, *args, **kwargs):
         """Handle GET requests to download question tags as CSV or JSON."""
-
-        format = request.GET.get("format", "json")
-
-        if format == "csv":
+        
+        format = request.GET.get('format', 'json')
+        
+        if format == 'csv':
             return self.download_csv()
         else:
             return self.download_json()
@@ -160,24 +160,22 @@ class DownloadQuestionTagsView(View):
     def download_csv(self):
         """Generate and return a CSV response."""
 
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = 'attachment; filename="question_tags.csv"'
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="question_tags.csv"'
 
         writer = csv.writer(response)
-        writer.writerow(["Question Index", "Question Label", "Tags"])
+        writer.writerow(['Paper Number', 'Question Index', 'Question Label', 'Tags', 'Page Numbers'])
 
-        questions = TmpAbstractQuestion.objects.prefetch_related(
-            "questiontaglink_set__tag"
-        ).all()
-
+        questions = TmpAbstractQuestion.objects.all()
+        
         for question in questions:
-            question_label = SpecificationService.get_question_label(
-                question.question_index
-            )
-            tags = ", ".join(
-                [qt.tag.tag_name for qt in question.questiontaglink_set.all()]
-            )
-            writer.writerow([question.question_index, question_label, tags])
+            question_label = SpecificationService.get_question_label(question.question_index)
+            tags = ', '.join([qt.tag.tag_name for qt in question.questiontaglink_set.all()])
+            question_pages = QuestionPage.objects.filter(question_index=question.question_index)
+            for qp in question_pages:
+                paper_number = qp.paper.paper_number
+                pages = ', '.join([str(page.page_number) for page in QuestionPage.objects.filter(paper=qp.paper, question_index=question.question_index)])
+                writer.writerow([paper_number, question.question_index, question_label, tags, pages])
 
         return response
 
@@ -185,22 +183,22 @@ class DownloadQuestionTagsView(View):
         """Generate and return a JSON response."""
 
         data = []
-        questions = TmpAbstractQuestion.objects.prefetch_related(
-            "questiontaglink_set__tag"
-        ).all()
+        questions = TmpAbstractQuestion.objects.all()
 
         for question in questions:
-            question_data = {
-                "question_index": question.question_index,
-                "question_label": SpecificationService.get_question_label(
-                    question.question_index
-                ),
-                "tags": [qt.tag.tag_name for qt in question.questiontaglink_set.all()],
-            }
-            data.append(question_data)
+            question_label = SpecificationService.get_question_label(question.question_index)
+            tags = [qt.tag.tag_name for qt in question.questiontaglink_set.all()]
+            question_pages = QuestionPage.objects.filter(question_index=question.question_index)
+            for qp in question_pages:
+                question_data = {
+                    'paper_number': qp.paper.paper_number,
+                    'question_index': question.question_index,
+                    'question_label': question_label,
+                    'tags': tags,
+                    'page_numbers': [page.page_number for page in QuestionPage.objects.filter(paper=qp.paper, question_index=question.question_index)]
+                }
+                data.append(question_data)
 
-        response = HttpResponse(
-            json.dumps(data, indent=4), content_type="application/json"
-        )
-        response["Content-Disposition"] = 'attachment; filename="question_tags.json"'
+        response = HttpResponse(json.dumps(data, indent=4), content_type="application/json")
+        response['Content-Disposition'] = 'attachment; filename="question_tags.json"'
         return response
