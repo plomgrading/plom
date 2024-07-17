@@ -54,7 +54,7 @@ def outputProductionCSV(spec, make_PDF_args) -> None:
         csv_writer = csv.writer(csvfile)
         csv_writer.writerow(header)
         for paper in make_PDF_args:
-            # args = spec, paper_index, qv-map, student-info, no-qr, fakepdf, xcoord, ycoord
+            # args = spec, paper_index, qv-map, student-info, other stuff
             # we need only a few bits of the tuple - paper_index, qvmap and student-info
             idx, qver, student_info = paper[1:4]
             # make page to version from the qvmap
@@ -126,17 +126,17 @@ def build_papers_backend(
                 paper_index,
                 question_version_map,
                 student_info,
-                no_qr,
-                fakepdf,
                 xcoord,
                 ycoord,
+                no_qr,
+                fakepdf,
             )
         )
 
     if os.name == "nt":
         # Issue #2172, Pool/multiproc failing on Windows, use loop
         for x in tqdm(make_PDF_args):
-            make_PDF(*x)
+            make_PDF(*x)  # type: ignore
     else:
         num_PDFs = len(make_PDF_args)
         with Pool() as pool:

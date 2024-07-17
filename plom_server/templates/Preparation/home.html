@@ -113,23 +113,23 @@
             <a href="{% url 'misc_extras' %}"
                class="list-group-item list-group-item-action border">Create extra-page and scrap-paper pdfs</a>
         </div>
-    </div>
-    <div class="accordion m-3" id="resetAccordion">
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingOne">
-                <button class="accordion-button bg-danger text-white collapsed"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#collapseOne"
-                        aria-expanded="false"
-                        aria-controls="collapseOne">Danger Zone</button>
-            </h2>
-            <div id="collapseOne"
-                 class="accordion-collapse collapse"
-                 aria-labelledby="headingOne"
-                 data-bs-parent="#resetAccordion">
-                <div class="accordion-body">
-                    <a type="button" class="btn btn-danger m-1" href="{% url "reset" %}">Reset Server</a>
+        <div class="accordion mt-2" id="resetAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOne">
+                    <button class="accordion-button bg-danger text-white collapsed"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#collapseOne"
+                            aria-expanded="false"
+                            aria-controls="collapseOne">Danger Zone</button>
+                </h2>
+                <div id="collapseOne"
+                     class="accordion-collapse collapse"
+                     aria-labelledby="headingOne"
+                     data-bs-parent="#resetAccordion">
+                    <div class="accordion-body">
+                        <a type="button" class="btn btn-danger m-1" href="{% url "reset" %}">Reset Server</a>
+                    </div>
                 </div>
             </div>
         </div>
