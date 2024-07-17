@@ -18,7 +18,14 @@
         <div class="row">
             <div class="col">
                 <div class="card">
-                    <h5 class="card-header">Rubric {{ latest_rubric.key }}, revision {{ latest_rubric.revision }}</h5>
+                    <div class="card-header row">
+                        <div class="col-8">
+                            <h5>Rubric {{ latest_rubric.key }}, revision {{ latest_rubric.revision }}</h5>
+                        </div>
+                        <div class="col">
+                            <a class="btn btn-outline-primary float-end">Edit</a>
+                        </div>
+                    </div>
                     <div class="card-body">
                         <table class="table">
                             <tbody>
