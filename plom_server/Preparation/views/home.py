@@ -22,7 +22,6 @@ from ..services import (
     SourceService,
     PrenameSettingService,
     StagingStudentService,
-    PQVMappingService,
     ExtraPageService,
     ScrapPaperService,
     PapersPrinted,
@@ -33,7 +32,6 @@ class PreparationLandingView(ManagerRequiredView):
     def build_context(self):
         pss = PrenameSettingService()
         sss = StagingStudentService()
-        pqvs = PQVMappingService()
         bps = BuildPapersService()
         pinfo = PaperInfoService()
 
@@ -41,7 +39,6 @@ class PreparationLandingView(ManagerRequiredView):
             "num_uploaded_source_versions": SourceService.how_many_source_versions_uploaded(),
             "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
             "prename_enabled": pss.get_prenaming_setting(),
-            "can_qvmap": False,
             "student_list_present": sss.are_there_students(),
             "papers_staged": pinfo.is_paper_database_populated(),
             "all_papers_built": bps.are_all_papers_built(),
@@ -51,32 +48,11 @@ class PreparationLandingView(ManagerRequiredView):
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
         }
 
-        paper_number_list = pqvs.list_of_paper_numbers()
-        if paper_number_list:
-            context.update(
-                {
-                    "pqv_mapping_present": True,
-                    "pqv_number_of_papers": len(paper_number_list),
-                    "pqv_first_paper": paper_number_list[0],
-                    "pqv_last_paper": paper_number_list[-1],
-                }
-            )
-        else:
-            context.update(
-                {
-                    "pqv_mapping_present": False,
-                    "pqv_number_of_papers": 0,
-                    "pqv_first_paper": None,
-                    "pqv_last_paper": None,
-                }
-            )
-
         if SpecificationService.is_there_a_spec():
             context.update(
                 {
                     "valid_spec": True,
                     "can_upload_source_tests": True,
-                    "can_qvmap": True,
                     "spec_longname": SpecificationService.get_longname(),
                     "spec_shortname": SpecificationService.get_shortname(),
                     "slugged_spec_shortname": SpecificationService.get_short_name_slug(),
@@ -89,16 +65,8 @@ class PreparationLandingView(ManagerRequiredView):
                     "valid_spec": False,
                     "can_upload_source_tests": False,
                     "num_versions": 0,
-                    "can_qvmap": False,
                 }
             )
-
-        if pss.get_prenaming_setting() and not sss.are_there_students():
-            context.update({"can_build_papers": False})
-        elif not pqvs.is_there_a_pqv_map():
-            context.update({"can_build_papers": False})
-        else:
-            context.update({"can_build_papers": True})
 
         return context
 

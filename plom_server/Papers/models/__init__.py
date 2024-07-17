@@ -22,6 +22,7 @@ from .specifications import (
     Specification,
     SolnSpecification,
     SolnSpecQuestion,
+    NumberOfPapersToProduceSetting,
 )
 
 # TODO: Issue #3140

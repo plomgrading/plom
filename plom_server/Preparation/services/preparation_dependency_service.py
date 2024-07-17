@@ -93,7 +93,7 @@ def assert_can_modify_prenaming():
 
 def assert_can_modify_qv_mapping_database():
     from . import PapersPrinted, PrenameSettingService, StagingStudentService
-    from Papers.services import SpecificationService, PaperInfoService
+    from Papers.services import SpecificationService
     from BuildPaperPDF.services import BuildPapersService
 
     # cannot modify qv mapping / database if papers printed

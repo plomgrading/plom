@@ -17,7 +17,6 @@ from Preparation.services import (
     PapersPrinted,
     ScrapPaperService,
     ExtraPageService,
-    PQVMappingService,
     StagingStudentService,
     PrenameSettingService,
     SourceService,
@@ -122,9 +121,6 @@ class ResetConfirmView(ManagerRequiredView):
                     PaperCreatorService().remove_all_papers_from_db()
                 except ObjectDoesNotExist:
                     pass
-
-                # Remove QV Mappings
-                PQVMappingService().remove_pqv_map()
 
                 # Remove classlist
                 StagingStudentService().remove_all_students()

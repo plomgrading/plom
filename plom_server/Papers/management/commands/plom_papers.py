@@ -3,11 +3,17 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+from __future__ import annotations
+
+from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 
 from Papers.services import PaperCreatorService, PaperInfoService
 from Preparation.services import PQVMappingService
+
+from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
+from plom.version_maps import version_map_from_file
 
 
 class Command(BaseCommand):
@@ -21,50 +27,66 @@ class Command(BaseCommand):
             "status", help="Show the current state of test-papers in the database."
         )
 
-        sp.add_parser(
+        b = sp.add_parser(
             "build_db",
             help="""
-                Populate the database with test-papers using information
-                provided in the spec and QV-map.
-                Also constructs the associate pdf-build tasks.
+                Populate the database with test-papers - uses a default
+                version map.            """,
+        )
+        b.add_argument(
+            "-n",
+            "--number-to-produce",
+            metavar="N",
+            type=int,
+            help="""
+                The number of papers to produce.  If not present, the system will
+                compute this for you (not recommended).
             """,
         )
+        b.add_argument(
+            "--first-paper",
+            metavar="F",
+            type=int,
+            help="""
+                The paper number to start at.  Defaults to 1 if omitted.
+            """,
+        )
+        sp.add_parser("download", help="Download the question-version map.")
+
+        p = sp.add_parser("upload", help="Upload a question-version map")
+        p.add_argument("csv_or_json_file")
 
         sp.add_parser("clear", help="Clear the database of test-papers.")
 
     def papers_status(self):
         """Get the status of test-papers in the database."""
-        pqvs = PQVMappingService()
-        if not pqvs.is_there_a_pqv_map():
-            self.stdout.write("Question-version map not present.")
-            return
-        qv_map_len = len(pqvs.get_pqv_map_dict())
-
         paper_info = PaperInfoService()
         n_papers = paper_info.how_many_papers_in_database()
         self.stdout.write(f"{n_papers} test-papers saved to the database.")
-        if qv_map_len == n_papers:
+        if PaperInfoService().is_database_fully_populated():
             self.stdout.write("Database is ready")
         else:
-            self.stdout.write(f"Database still requires {qv_map_len - n_papers} papers")
+            self.stdout.write("Database is not yet ready")
 
-    def build_papers(self):
-        """Write test-papers to the database, so long as the Papers table is empty and a QV map is present."""
-        pqvs = PQVMappingService()
-        if not pqvs.is_there_a_pqv_map():
-            self.stderr.write("No question-version map found - stopping.")
-            return
-
+    def build_papers(self, *, number_to_produce: int | None = None, first: int = 1):
+        """Create a version map and use it to populate the database with papers."""
         paper_info = PaperInfoService()
         if paper_info.is_paper_database_populated():
-            self.stderr.write("Test-papers already saved to database - stopping.")
-            return
+            raise CommandError("Test-papers already saved to database - stopping.")
 
         self.stdout.write("Creating test-papers...")
-        pcs = PaperCreatorService()
-        qv_map = pqvs.get_pqv_map_dict()
+        min_production = PQVMappingService().get_minimum_number_to_produce()
+        # make sure number to produce is at least min recommended
+        if number_to_produce is None:
+            number_to_produce = min_production
+        elif number_to_produce < min_production:
+            number_to_produce = min_production
+
+        assert number_to_produce is not None
+
+        qv_map = PQVMappingService().make_version_map(number_to_produce, first=first)
         try:
-            pcs.add_all_papers_in_qv_map(qv_map, background=False)
+            PaperCreatorService().add_all_papers_in_qv_map(qv_map, background=False)
         except ValueError as e:
             raise CommandError(e)
         self.stdout.write(f"Database populated with {len(qv_map)} test-papers.")
@@ -81,11 +103,46 @@ class Command(BaseCommand):
         PaperCreatorService().remove_all_papers_from_db(background=False)
         self.stdout.write("Database cleared of test-papers.")
 
+    def download_pqv_map(self) -> None:
+        save_path = Path("question_version_map.csv")
+        if save_path.exists():
+            s = f"A file exists at {save_path} - overwrite it? [y/N] "
+            choice = input(s).lower()
+            if choice != "y":
+                self.stdout.write("Skipping.")
+                return
+            else:
+                self.stdout.write(f"Trying to overwrite {save_path}...")
+        try:
+            PQVMappingService().pqv_map_to_csv(save_path)
+        except ValueError as e:
+            raise CommandError(e) from e
+        self.stdout.write(f"Wrote {save_path}")
+
+    def upload_pqv_map(self, f: Path) -> None:
+        self.stdout.write(f"Reading qvmap from {f}")
+        try:
+            vm = version_map_from_file(f)
+        except ValueError as e:
+            raise CommandError(e)
+        try:
+            PaperCreatorService().add_all_papers_in_qv_map(vm, background=False)
+        except (ValueError, PlomDependencyConflict, PlomDatabaseCreationError) as e:
+            raise CommandError(e) from e
+        self.stdout.write(f"Uploaded qvmap from {f}")
+
     def handle(self, *args, **options):
         if options["command"] == "status":
             self.papers_status()
         elif options["command"] == "build_db":
-            self.build_papers()
+            self.build_papers(
+                number_to_produce=options["number_to_produce"],
+                first=options["first_paper"],
+            )
+        elif options["command"] == "download":
+            self.download_pqv_map()
+        elif options["command"] == "upload":
+            self.upload_pqv_map(options["csv_or_json_file"])
         elif options["command"] == "clear":
             self.clear_papers()
         else:

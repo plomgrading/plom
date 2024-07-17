@@ -80,10 +80,11 @@ class DemoCreationService:
         if (
             config.num_to_produce is not None
         ):  # TODO: users should be able to specify path to custom qvmap
+            print("Populating database in foreground")
             n_to_produce = config.num_to_produce
             call_command(
-                "plom_preparation_qvmap",
-                "generate",
+                "plom_papers",
+                "build_db",
                 "-n",
                 str(n_to_produce),
                 "--first-paper",
@@ -92,8 +93,6 @@ class DemoCreationService:
         else:
             print("No papers to produce. Stopping.")
             return
-        print("Populating database in foreground")
-        call_command("plom_papers", "build_db")
 
     def build_papers(self):
         call_command("plom_preparation_extrapage", "build")

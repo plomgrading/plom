@@ -3,13 +3,20 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
+from __future__ import annotations
+
 import logging
 from typing import List
 
 from django.db import transaction
 
-from ..models import Paper, FixedPage, QuestionPage, PopulateEvacuateDBChore
-from Preparation.models import NumberOfPapersToProduceSetting
+from ..models import (
+    Paper,
+    FixedPage,
+    QuestionPage,
+    PopulateEvacuateDBChore,
+    NumberOfPapersToProduceSetting,
+)
 
 log = logging.getLogger("PaperInfoService")
 
@@ -25,10 +32,6 @@ class PaperInfoService:
 
         Note that this function is the same as PaperCreatorService.is_chore_in_progress
         """
-        print("v" * 20)
-        for X in PopulateEvacuateDBChore.objects.filter(obsolete=False).all():
-            print(X)
-        print("^" * 20)
         return PopulateEvacuateDBChore.objects.filter(obsolete=False).exists()
 
     def is_paper_database_partially_populated(self):
@@ -128,11 +131,13 @@ class PaperInfoService:
         try:
             # to find the version, find the first fixed question page of that paper/question
             # and extract the version from that. Note - use "filter" and not "get" here.
-            # TODO: why not .first()?
             page = QuestionPage.objects.filter(
                 paper=paper, question_index=question_idx
             )[0]
-            # This will either fail with a does-not-exist or index-out-of-range
+            # notice we use blah()[0] rather than blah.first() in order
+            # to raise the exception. blah.first() will return None if
+            # no such object exists. Hence this will either fail with
+            # a does-not-exist or index-out-of-range
         except (QuestionPage.DoesNotExist, IndexError):
             raise ValueError(
                 f"Question {question_idx} of paper {paper_number}"
@@ -163,3 +168,24 @@ class PaperInfoService:
                     .values_list("paper__paper_number", flat=True)
                 )
             )
+
+    @transaction.atomic()
+    def get_pqv_map_dict(self) -> dict[int, dict[int, int]]:
+        """Get the paper-question-version mapping as a dict.
+
+        Note if there is no version map (no papers) then this returns
+        an empty dict.  If you'd prefer an error message you have to
+        check for the empty return yourself.
+        """
+        pqvmapping: dict[int, dict[int, int]] = {}
+        # note that this gets all question pages, not just one for each question.
+        for qp_obj in QuestionPage.objects.all().prefetch_related("paper"):
+            pn = qp_obj.paper.paper_number
+            if pn in pqvmapping:
+                if qp_obj.question_index in pqvmapping[pn]:
+                    pass
+                else:
+                    pqvmapping[pn][qp_obj.question_index] = qp_obj.version
+            else:
+                pqvmapping[pn] = {qp_obj.question_index: qp_obj.version}
+        return pqvmapping
