@@ -229,7 +229,9 @@ class PaperCreatorService:
                 Of the form `{paper_number: {q: v}}`
         KWargs:
             background: populate the database in the background, or, if false,
-                as a foreground process.
+                as a blocking huey process
+            testing: when set true, blocking is ignored, and the db-build is done as
+                a foreground process without huey involved.
 
         Raises:
             PlomDependencyConflict: if preparation dependencies are not met.
@@ -284,6 +286,18 @@ class PaperCreatorService:
     def remove_all_papers_from_db(
         self, *, background: bool = True, testing=False
     ) -> None:
+        """Remove all the papers and associated objects from the database.
+
+        KWargs:
+            background: de-populate the database in the background, or, if false,
+                as a blocking huey process
+            testing: when set true, blocking is ignored, and the db depopulation is done as
+                a foreground process without huey involved.
+
+        Raises:
+            PlomDependencyConflict: if preparation dependencies are not met.
+            PlomDatabaseCreationError: if a database populate/evacuate chore already underway.
+        """
         assert_can_modify_qv_mapping_database()
         # check if there is an existing non-obsolete task
         self.assert_no_existing_chore()
