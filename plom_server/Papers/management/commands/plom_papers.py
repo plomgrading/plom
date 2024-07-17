@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -31,7 +32,8 @@ class Command(BaseCommand):
             "build_db",
             help="""
                 Populate the database with test-papers - uses a default
-                version map.            """,
+                version map.
+            """,
         )
         b.add_argument(
             "-n",
@@ -68,7 +70,9 @@ class Command(BaseCommand):
         else:
             self.stdout.write("Database is not yet ready")
 
-    def build_papers(self, *, number_to_produce: int | None = None, first: int = 1):
+    def build_papers(
+        self, *, number_to_produce: int | None = None, first: int = 1
+    ) -> None:
         """Create a version map and use it to populate the database with papers."""
         paper_info = PaperInfoService()
         if paper_info.is_paper_database_populated():
@@ -91,7 +95,7 @@ class Command(BaseCommand):
             raise CommandError(e)
         self.stdout.write(f"Database populated with {len(qv_map)} test-papers.")
 
-    def clear_papers(self):
+    def clear_papers(self) -> None:
         """Remove all test-papers from the database."""
         paper_info = PaperInfoService()
         if paper_info.how_many_papers_in_database() == 0:
