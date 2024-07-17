@@ -135,8 +135,11 @@ class PaperInfoService:
             # and extract the version from that. Note - use "filter" and not "get" here.
             page = QuestionPage.objects.filter(
                 paper=paper, question_index=question_idx
-            ).first()
-            # This will either fail with a does-not-exist or index-out-of-range
+            )[0]
+            # notice we use blah()[0] rather than blah.first() in order
+            # to raise the exception. blah.first() will return None if
+            # no such object exists. Hence this will either fail with
+            # a does-not-exist or index-out-of-range
         except (QuestionPage.DoesNotExist, IndexError):
             raise ValueError(
                 f"Question {question_idx} of paper {paper_number}"

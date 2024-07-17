@@ -122,7 +122,6 @@ def create_qv_map_and_papers(config: PlomServerConfig):
                     qvmap[paper_number] = {
                         j: row[j - 1] for j in range(1, len(row) + 1)
                     }
-            PQVMappingService().use_pqv_map(qvmap)
         except Exception as e:
             raise PlomConfigCreationError(e) from e
     try:
