@@ -147,6 +147,7 @@ class EditTagView(UpdateView):
 
 class DownloadQuestionTagsView(View):
     """View to download question tags as CSV or JSON file."""
+
     def get(self, request, *args, **kwargs):
         """Handle GET requests to download question tags as CSV or JSON."""
         format = request.GET.get("format", "json")
