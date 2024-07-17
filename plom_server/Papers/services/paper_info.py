@@ -32,10 +32,6 @@ class PaperInfoService:
 
         Note that this function is the same as PaperCreatorService.is_chore_in_progress
         """
-        print("v" * 20)
-        for X in PopulateEvacuateDBChore.objects.filter(obsolete=False).all():
-            print(X)
-        print("^" * 20)
         return PopulateEvacuateDBChore.objects.filter(obsolete=False).exists()
 
     def is_paper_database_partially_populated(self):

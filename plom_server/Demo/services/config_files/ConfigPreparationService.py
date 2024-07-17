@@ -125,7 +125,7 @@ def create_qv_map_and_papers(config: PlomServerConfig):
         except Exception as e:
             raise PlomConfigCreationError(e) from e
     try:
-        PaperCreatorService().add_all_papers_in_qv_map(qvmap, background=False)
+        PaperCreatorService().add_all_papers_in_qv_map(qvmap, testing=True)
     except Exception as e:
         raise PlomConfigCreationError(e) from e
 

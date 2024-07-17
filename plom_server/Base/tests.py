@@ -17,6 +17,7 @@ from Demo.services import (
     ConfigFileService,
     ConfigPreparationService,
     ConfigTaskService,
+    DemoProcessesService,
     PlomServerConfig,
 )
 
@@ -65,9 +66,13 @@ def config_test(config_input: str | dict | None = None):
                 config_input["parent_dir"] = Path(getfile(method)).parent
                 config = PlomServerConfig(**config_input)
 
+            # set huey running
+            huey_worker_proc = DemoProcessesService().launch_huey_workers()
             ConfigPreparationService.create_test_preparation(config)
             ConfigTaskService.init_all_tasks(config)
             method(self, *args, **kwargs)
+            # tear down huey
+            huey_worker_proc.terminate()
 
         return wrapper_config_test
 

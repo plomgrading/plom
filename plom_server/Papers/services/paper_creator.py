@@ -216,7 +216,11 @@ class PaperCreatorService:
             return None
 
     def add_all_papers_in_qv_map(
-        self, qv_map: Dict[int, Dict[int, int]], *, background: bool = True
+        self,
+        qv_map: Dict[int, Dict[int, int]],
+        *,
+        background: bool = True,
+        testing: bool = False,
     ):
         """Build all the Paper and associated tables from the qv-map, but not the PDF files.
 
@@ -238,24 +242,24 @@ class PaperCreatorService:
         self.assert_no_existing_chore()
         self._set_number_to_produce(len(qv_map))
 
-        self.populate_whole_db_huey_wrapper(qv_map, background=background)
-        # deprecated foreground constructor code follows
-        # if false:
-        #     print(f"Added {len(qv_map)} papers via foreground process")
-        #     id_page_number = SpecificationService.get_id_page_number()
-        #     dnm_page_numbers = SpecificationService.get_dnm_pages()
-        #     question_page_numbers = SpecificationService.get_question_pages()
-        #     for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
-        #         self._create_single_paper_from_qvmapping_and_pages(
-        #             paper_number,
-        #             qv_row,
-        #             id_page_number=id_page_number,
-        #             dnm_page_numbers=dnm_page_numbers,
-        #             question_page_numbers=question_page_numbers,
-        #         )
-        #         if idx % 16 == 0:
-        #             print(f"Added {idx} of {len(qv_map)} papers")
-        #     print(f"Added all {len(qv_map)} papers")
+        if not testing:
+            self.populate_whole_db_huey_wrapper(qv_map, background=background)
+        else:
+            print(f"Added {len(qv_map)} papers via foreground process for testing")
+            id_page_number = SpecificationService.get_id_page_number()
+            dnm_page_numbers = SpecificationService.get_dnm_pages()
+            question_page_numbers = SpecificationService.get_question_pages()
+            for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
+                self._create_single_paper_from_qvmapping_and_pages(
+                    paper_number,
+                    qv_row,
+                    id_page_number=id_page_number,
+                    dnm_page_numbers=dnm_page_numbers,
+                    question_page_numbers=question_page_numbers,
+                )
+                if idx % 16 == 0:
+                    print(f"Added {idx} of {len(qv_map)} papers")
+            print(f"Added all {len(qv_map)} papers")
 
     def populate_whole_db_huey_wrapper(
         self, qv_map: Dict[int, Dict[int, int]], *, background: bool = True
@@ -274,16 +278,27 @@ class PaperCreatorService:
             print("Running the task in foreground - will block until completed.")
             res.get(blocking=True)
             print("Completed.")
+        else:
+            PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
 
-        PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
-
-    def remove_all_papers_from_db(self, *, background: bool = True) -> None:
+    def remove_all_papers_from_db(
+        self, *, background: bool = True, testing=False
+    ) -> None:
         assert_can_modify_qv_mapping_database()
         # check if there is an existing non-obsolete task
         self.assert_no_existing_chore()
         self._reset_number_to_produce()
 
-        self.evacuate_whole_db_huey_wrapper(background=background)
+        if not testing:
+            self.evacuate_whole_db_huey_wrapper(background=background)
+        else:
+            # for testing purposes we delete in foreground
+            with transaction.atomic():
+                DNMPage.objects.all().delete()
+                IDPage.objects.all().delete()
+                QuestionPage.objects.all().delete()
+            with transaction.atomic():
+                Paper.objects.all().delete()
 
     def evacuate_whole_db_huey_wrapper(self, *, background: bool = True) -> None:
         # TODO - add seatbelt logic here
@@ -300,7 +315,8 @@ class PaperCreatorService:
             print("Running the task in foreground - will block until completed.")
             res.get(blocking=True)
             print("Completed.")
-        PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
+        else:
+            PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
 
     def update_page_image(
         self, paper_number: int, page_index: int, image: Image

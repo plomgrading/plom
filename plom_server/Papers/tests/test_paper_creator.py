@@ -92,7 +92,7 @@ class PaperCreatorTests(TestCase):
         self.assertEqual(n_question, 1)
 
         pcs = PaperCreatorService()
-        pcs.remove_all_papers_from_db(background=False)
+        pcs.remove_all_papers_from_db(testing=True)
 
         n_papers, n_pages, n_id, n_dnm, n_question = self.get_n_models()
 
