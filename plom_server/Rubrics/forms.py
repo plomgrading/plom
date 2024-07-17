@@ -89,10 +89,15 @@ class RubricCreateForm(forms.ModelForm):
         widget=forms.Select(attrs={"onchange": "updateKind()"}),
     )
     out_of = forms.IntegerField(required=False, disabled=True)
+    versions = forms.MultipleChoiceField()
 
     class Meta:
         model = Rubric
-        fields = ["text", "kind", "value", "out_of", "meta"]
+        fields = ["text", "kind", "value", "out_of", "meta", "versions", "parameters"]
+        widgets = {
+            "text": forms.Textarea(attrs={"rows": 3}),
+            "meta": forms.Textarea(attrs={"rows": 3}),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -102,6 +107,12 @@ class RubricCreateForm(forms.ModelForm):
         ]
 
         self.fields["question"].choices = question_choices
+
+        version_choices = [
+            (str(v_idx), v_idx)
+            for v_idx in range(1, SpecificationService.get_n_versions() + 1)
+        ]
+        self.fields["versions"].choices = version_choices
 
         for field in self.fields:
             self.fields[field].widget.attrs["class"] = "form-control"
