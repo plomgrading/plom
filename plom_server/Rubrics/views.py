@@ -18,7 +18,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.views.generic.detail import DetailView
+from django.views.generic.edit import UpdateView
 
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 
@@ -244,12 +244,13 @@ class RubricLandingPageView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
 
-class RubricItemView(DetailView, ManagerRequiredView):
+class RubricItemView(UpdateView, ManagerRequiredView):
     """A page for displaying a single rubric and its annotations."""
 
     def get(self, request, rubric_key):
         template_name = "Rubrics/rubric_item.html"
         rs = RubricService()
+        questions = SpecificationService.get_the_spec()["question"]
 
         context = self.build_context()
 
@@ -259,15 +260,19 @@ class RubricItemView(DetailView, ManagerRequiredView):
         rubric = rs.get_rubric_by_key(rubric_key)
         revisions = rs.get_past_revisions_by_key(rubric_key)
         marking_tasks = rs.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
+        form = RubricCreateForm(instance=rubric)
 
         rubric_as_html = rs.get_rubric_as_html(rubric)
         context.update(
             {
                 "latest_rubric": rubric,
+                "rubric_key": rubric_key,
                 "revisions": revisions,
                 "marking_tasks": marking_tasks,
                 "latest_rubric_as_html": rubric_as_html,
                 "diff_form": RubricDiffForm(key=rubric_key),
+                "form": form,
+                "questions": json.dumps(questions),
             }
         )
 
@@ -423,7 +428,33 @@ class RubricCreateView(ManagerRequiredView):
                 "meta": form.cleaned_data["meta"],
                 "question": form.cleaned_data["question"],
             }
-            print(rubric_data)
             rs.create_rubric(rubric_data)
         messages.success(request, "Rubric created successfully.")
         return redirect("rubrics_landing")
+
+
+class RubricEditView(ManagerRequiredView):
+    def post(self, request: HttpRequest, rubric_key):
+        rubric_key = str(rubric_key).zfill(12)
+        print(rubric_key)
+        form = RubricCreateForm(request.POST)
+        if form.is_valid():
+            rs = RubricService()
+            rubric = rs.get_rubric_by_key(rubric_key)
+            rubric_data = {
+                "username": request.user.username,
+                "text": form.cleaned_data["text"],
+                "kind": form.cleaned_data["kind"],
+                "value": form.cleaned_data["value"],
+                "out_of": form.cleaned_data["out_of"],
+                "meta": form.cleaned_data["meta"],
+                "question": form.cleaned_data["question"],
+                "revision": rubric.revision,
+            }
+            rs.modify_rubric(
+                key=rubric_key,
+                new_rubric_data=rubric_data,
+                modifying_user=User.objects.get(username=request.user.username),
+            )
+        messages.success(request, "Rubric created successfully.")
+        return redirect("rubric_item", rubric_key)

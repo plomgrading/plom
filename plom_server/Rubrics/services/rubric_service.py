@@ -200,7 +200,6 @@ class RubricService:
 
         try:
             user = User.objects.get(username=username)
-            new_rubric_data["user"] = user.pk
         except ObjectDoesNotExist as e:
             raise ValueError(f"User {username} does not exist.") from e
 
@@ -260,6 +259,7 @@ class RubricService:
         if modifying_user is not None:
             new_rubric_data["modified_by_user"] = modifying_user.pk
 
+        new_rubric_data["user"] = rubric.user.pk
         new_rubric_data["revision"] += 1
         new_rubric_data["latest"] = True
         new_rubric_data["key"] = rubric.key

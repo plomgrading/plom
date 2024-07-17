@@ -25,4 +25,5 @@ urlpatterns = [
     path("admin/upload/", views.UploadRubricView.as_view(), name="rubric_upload"),
     path("<int:rubric_key>/compare", views.compare_rubrics, name="compare_rubrics"),
     path("rubrics/create", views.RubricCreateView.as_view(), name="rubric_create"),
+    path("<int:rubric_key>/edit/", views.RubricEditView.as_view(), name="rubric_edit"),
 ]

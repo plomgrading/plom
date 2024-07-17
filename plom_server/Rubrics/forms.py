@@ -88,8 +88,8 @@ class RubricCreateForm(forms.ModelForm):
         initial=Rubric.RubricKind.ABSOLUTE,
         widget=forms.Select(attrs={"onchange": "updateKind()"}),
     )
-    out_of = forms.IntegerField(required=False, disabled=True)
-    versions = forms.MultipleChoiceField()
+    out_of = forms.IntegerField(required=False)
+    versions = forms.MultipleChoiceField(required=False)
 
     class Meta:
         model = Rubric
@@ -107,6 +107,7 @@ class RubricCreateForm(forms.ModelForm):
         ]
 
         self.fields["question"].choices = question_choices
+        self.fields["out_of"].widget.attrs["readonly"] = True
 
         version_choices = [
             (str(v_idx), v_idx)
