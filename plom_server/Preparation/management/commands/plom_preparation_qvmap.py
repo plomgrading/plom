@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
@@ -11,8 +11,9 @@ from django.core.management.base import BaseCommand, CommandError
 
 from plom.misc_utils import format_int_list_with_runs
 from plom.version_maps import version_map_from_file
-from Papers.services import SpecificationService, PaperInfoService, PaperCreatorService
+from plom.plom_exceptions import PlomDependencyConflict
 
+from Papers.services import SpecificationService, PaperInfoService, PaperCreatorService
 from ...services import PQVMappingService, PapersPrinted
 
 
@@ -123,7 +124,11 @@ class Command(BaseCommand):
         if PaperInfoService().how_many_papers_in_database() == 0:
             self.stderr.write("No test-papers in the database - stopping.")
             return
-        PaperCreatorService().remove_all_papers_from_db(background=False)
+
+        try:
+            PaperCreatorService().remove_all_papers_from_db(background=False)
+        except PlomDependencyConflict as e:
+            raise CommandError(e) from e
         self.stdout.write("Question-version map and papers removed from server.")
 
     def add_arguments(self, parser):
