@@ -75,7 +75,13 @@ class PQVMappingUploadView(ManagerRequiredView):
 
 class PQVMappingDownloadView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
-        pqvs_csv_txt = PQVMappingService().get_pqv_map_as_csv_string()
+        try:
+            pqvs_csv_txt = PQVMappingService().get_pqv_map_as_csv_string()
+        except ValueError as err:  # triggered by empty qv-map
+            messages.add_message(request, messages.ERROR, f"{err}")
+            # redirect here (not htmx) since this is called by normal http
+            return redirect(reverse("prep_conflict"))
+
         return HttpResponse(pqvs_csv_txt, content_type="text/plain")
 
 

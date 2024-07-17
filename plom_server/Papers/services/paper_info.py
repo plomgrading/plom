@@ -181,7 +181,6 @@ class PaperInfoService:
         an empty dict.  If you'd prefer an error message you have to
         check for the empty return yourself.
         """
-        # put into the dict in paper_number order.
         pqvmapping: dict[int, dict[int, int]] = {}
         # note that this gets all question pages, not just one for each question.
         for qp_obj in QuestionPage.objects.all().prefetch_related("paper"):

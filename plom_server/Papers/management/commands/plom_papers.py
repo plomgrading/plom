@@ -26,8 +26,7 @@ class Command(BaseCommand):
             "build_db",
             help="""
                 Populate the database with test-papers - uses a default
-                version map. Also constructs the associate pdf-build tasks.
-            """,
+                version map.            """,
         )
         b.add_argument(
             "-n",
@@ -67,7 +66,7 @@ class Command(BaseCommand):
             self.stdout.write(f"Database still requires {qv_map_len - n_papers} papers")
 
     def build_papers(self, *, number_to_produce: int | None = None, first: int = 1):
-        """Write test-papers to the database, so long as the Papers table is empty and a QV map is present."""
+        """Create a version map and use it to populate the database with papers."""
         paper_info = PaperInfoService()
         if paper_info.is_paper_database_populated():
             self.stderr.write("Test-papers already saved to database - stopping.")

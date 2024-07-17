@@ -38,7 +38,9 @@ class PQVMappingService:
         pqvmapping = self.get_pqv_map_dict()
         pqv_table = {}
         question_indices = SpecificationService.get_question_indices()
-
+        # sort in paper-number-order so that the table renders in this order
+        # python keeps keys in insertion order since v3.7
+        # see https://docs.python.org/3/whatsnew/3.7.html
         for paper_number, qvmap in sorted(pqvmapping.items()):
             pqv_table[paper_number] = {
                 "prename": None,
