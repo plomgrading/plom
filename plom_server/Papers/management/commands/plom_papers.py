@@ -104,7 +104,10 @@ class Command(BaseCommand):
 
         self.stdout.write("Removing test-papers and associated tasks...")
         # note when a paper is deleted its associated task is also deleted.
-        PaperCreatorService().remove_all_papers_from_db(background=False)
+        try:
+            PaperCreatorService().remove_all_papers_from_db(background=False)
+        except PlomDependencyConflict as e:
+            raise CommandError(e) from e
         self.stdout.write("Database cleared of test-papers.")
 
     def download_pqv_map(self) -> None:
