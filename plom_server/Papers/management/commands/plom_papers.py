@@ -65,7 +65,7 @@ class Command(BaseCommand):
         paper_info = PaperInfoService()
         n_papers = paper_info.how_many_papers_in_database()
         self.stdout.write(f"{n_papers} test-papers saved to the database.")
-        if PaperInfoService().is_database_fully_populated():
+        if PaperInfoService().is_paper_database_fully_populated():
             self.stdout.write("Database is ready")
         else:
             self.stdout.write("Database is not yet ready")
