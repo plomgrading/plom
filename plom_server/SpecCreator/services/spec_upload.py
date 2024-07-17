@@ -12,7 +12,7 @@ from django.db import transaction
 
 from Base.compat import load_toml_from_path, load_toml_from_string, TOMLDecodeError
 
-from Preparation.services import PapersPrinted, PQVMappingService
+from Preparation.services import PapersPrinted
 
 from Papers.services import SpecificationService, PaperInfoService
 
