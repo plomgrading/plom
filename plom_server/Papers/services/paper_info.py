@@ -3,6 +3,8 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
+from __future__ import annotations
+
 import logging
 from typing import List
 
