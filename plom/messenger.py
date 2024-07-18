@@ -26,6 +26,7 @@ from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomConflict,
+    PlomNoServerSupportException,
     PlomTakenException,
     PlomRangeException,
     PlomVersionMismatchException,
@@ -60,7 +61,7 @@ class Messenger(BaseMessenger):
     def IDprogressCount(self) -> list[int]:
         """Return info about progress on identifying.
 
-        Return:
+        Returns:
             list: with two integers, indicating the number of papers
             identified and the total number of papers to be identified.
 
@@ -85,7 +86,7 @@ class Messenger(BaseMessenger):
     def IDaskNextTask(self):
         """Return the TGV of a paper that needs IDing.
 
-        Return:
+        Returns:
             string or None if no papers need IDing.
 
         Raises:
@@ -194,7 +195,14 @@ class Messenger(BaseMessenger):
             seconds), a list of tags (strings), and an "integrity code".
             An empty list is returned if nothing has been graded by this
             user.
+
+        Deprecated: only for supporting legacy servers.
         """
+        if not self.is_legacy_server():
+            raise PlomNoServerSupportException(
+                "Only legacy servers support list of tasks"
+            )
+
         self.SRmutex.acquire()
         try:
             response = self.get(
@@ -210,6 +218,51 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
+    def get_tasks(
+        self, qidx: int | None = None, v: int | None = None, *, username: str = ""
+    ) -> list[list[Any]]:
+        """Information about all tasks.
+
+        Args:
+            qidx: which question index, or None.
+            v: which version, or None.
+
+        Keyword Args:
+            username: find the tasks assigned to a particular user.  If
+                omitted we get the tasks for all users (and those unassigned)..
+
+        Returns:
+            List of info the tasks.  Each entry is a list of the task
+            string (of the form ``q0002g3``), the score, the time (in
+            seconds), a list of tags (strings), and which user its assigned to.
+            An empty list is returned if there are no tasks.
+            TODO: right now it might be a list-of-dicts.
+        """
+        if self.is_legacy_server():
+            raise PlomNoServerSupportException(
+                "Legacy server does not support list of tasks"
+            )
+
+        with self.SRmutex:
+            try:
+                query_params = []
+                if qidx is not None:
+                    query_params.append(f"q={qidx}")
+                if v is not None:
+                    query_params.append(f"v={v}")
+                if username:
+                    query_params.append(f"username={username}")
+                url = "/MK/tasks/all"
+                if query_params:
+                    url += "?" + "&".join(query_params)
+                response = self.get_auth(url)
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
     def MprogressCount(self, q, v) -> list[int]:
         """Return info about progress on a particular question-version pair.
 
@@ -217,7 +270,7 @@ class Messenger(BaseMessenger):
             q (str/int): a question number.
             v (str/int): a version number.
 
-        Return:
+        Returns:
             A list of two integers, indicating the number of questions
             graded and the total number of questions to be graded of
             this question-version pair.
@@ -326,7 +379,7 @@ class Messenger(BaseMessenger):
         """Claim a task from server and get back metadata.
 
         Args:
-            code (str): a task code such as `"q0123g2"`.
+            code: a task code such as `"q0123g2"`.
             version: we should know which version we are claiming.
 
         Returns:
@@ -342,10 +395,17 @@ class Messenger(BaseMessenger):
         """
         with self.SRmutex:
             try:
-                response = self.patch(
-                    f"/MK/tasks/{code}",
-                    json={"user": self.user, "token": self.token, "version": version},
-                )
+                if self.is_legacy_server():
+                    response = self.patch(
+                        f"/MK/tasks/{code}",
+                        json={
+                            "user": self.user,
+                            "token": self.token,
+                            "version": version,
+                        },
+                    )
+                else:
+                    response = self.patch_auth(f"/MK/tasks/{code}?version={version}")
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
@@ -606,19 +666,18 @@ class Messenger(BaseMessenger):
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
                 if response.status_code == 406:
+                    # TODO: not working, just copy-pasted from legacy
                     if response.text == "integrity_fail":
                         raise PlomConflict(
                             "Integrity fail: can happen if manager altered task while you annotated"
                         ) from None
                     raise PlomSeriousException(response.text) from None
                 if response.status_code == 409:
-                    raise PlomTaskChangedError("Task ownership has changed.") from None
+                    raise PlomTaskChangedError(response.reason) from None
                 if response.status_code == 410:
-                    raise PlomTaskDeletedError(
-                        "No such task - it has been deleted from server."
-                    ) from None
+                    raise PlomTaskDeletedError(response.reason) from None
                 if response.status_code == 400:
-                    raise PlomSeriousException(response.text) from None
+                    raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MgetUserRubricTabs(self, question):

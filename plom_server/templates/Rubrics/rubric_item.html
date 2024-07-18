@@ -3,6 +3,7 @@
     Copyright (C) 2023 Divy Patel
     Copyright (C) 2023-2024 Colin B. Macdonald
     Copyright (C) 2024 Aidan Murphy
+    Copyright (C) 2024 Aden Chan
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -63,6 +64,26 @@
                 </div>
             </div>
             <div class="col">
+                {% if revisions %}
+                    <div class="card mb-2">
+                        <h5 class="card-header">Compare Revisions</h5>
+                        <div class="card-body">
+                            <form method="post"
+                                  class="form-inline"
+                                  hx-post="{% url 'compare_rubrics' latest_rubric.key %}"
+                                  hx-target="#diff-result"
+                                  hx-swap="innerHTML">
+                                {% csrf_token %}
+                                <label class="sr-only" for="inlineFormInputName2">Compare</label>
+                                {{ diff_form.left_compare }}
+                                <label for="inlineFormInputGroupUsername2">with</label>
+                                {{ diff_form.right_compare }}
+                                <button type="submit" class="btn btn-primary">Compare</button>
+                            </form>
+                            <div id="diff-result"></div>
+                        </div>
+                    </div>
+                {% endif %}
                 <div class="card">
                     <h5 class="card-header">Past Revisions</h5>
                     <div class="card-body">

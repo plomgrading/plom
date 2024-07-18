@@ -139,7 +139,7 @@ class MarkingTaskService:
             code: a unique string that includes the paper number and question index.
 
         Returns:
-            The marking task object the matches the code.
+            The latest marking task object that matches the code.
 
         Raises:
             ValueError: invalid code.
@@ -232,9 +232,10 @@ class MarkingTaskService:
             MarkingTask.DoesNotExist: if there is no such task.
         """
         task = MarkingTask.objects.select_for_update().get(pk=task_pk)
-        # TODO: != MarkingTask.TO_DO versus == MarkingTask.OUT
         if task.status != MarkingTask.TO_DO:
-            raise RuntimeError("Task is currently assigned.")
+            raise RuntimeError(
+                f'Task is not available: currently assigned to "{task.assigned_user}"'
+            )
 
         # the assigned_user is None, then okay, or if set to the current user okay,
         # but otherwise throw an error.
@@ -258,28 +259,6 @@ class MarkingTaskService:
             assigned_user=None, status=MarkingTask.TO_DO
         )
 
-    def user_can_update_task(self, user: User, code: str) -> bool:
-        """Return true if a user is allowed to update a certain task, false otherwise.
-
-        TODO: should be possible to remove the "assigned user" and "status" fields
-        and infer both from querying ClaimTask and MarkAction instances.
-
-        Args:
-            user: reference to a User instance
-            code: (str) task code
-        """
-        the_task = self.get_task_from_code(code)
-        if the_task.assigned_user and the_task.assigned_user != user:
-            return False
-
-        if (
-            the_task.status != MarkingTask.OUT
-            and the_task.status != MarkingTask.COMPLETE
-        ):
-            return False
-
-        return True
-
     def get_n_marked_tasks(self) -> int:
         """Return the number of marking tasks that are completed."""
         return MarkingTask.objects.filter(status=MarkingTask.COMPLETE).count()
@@ -293,12 +272,11 @@ class MarkingTaskService:
         return MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE).count()
 
     def validate_and_clean_marking_data(
-        self, user: User, code: str, data: dict[str, Any], plomfile: str
+        self, code: str, data: dict[str, Any], plomfile: str
     ) -> tuple[dict[str, Any], dict, list[Rubric]]:
         """Validate the incoming marking data.
 
         Args:
-            user: reference to a User instance.
             code (str): key of the associated task.
             data (dict): information about the mark, rubrics, and annotation images.
             plomfile (str): a JSON field representing annotation data.
@@ -309,12 +287,12 @@ class MarkingTaskService:
             `annot_data (dict)`: annotation-image data parsed from a JSON string.
             `rubrics_used (list)`: a list of Rubric objects, extracted based on
             keys found inside the `annot_data`.
+
+        Raises:
+            ValidationError
         """
         annot_data = json.loads(plomfile)
         cleaned_data: dict[str, Any] = {}
-
-        if not self.user_can_update_task(user, code):
-            raise RuntimeError("User cannot update task.")
 
         try:
             cleaned_data["pg"] = int(data["pg"])
@@ -342,6 +320,12 @@ class MarkingTaskService:
         except (ValueError, TypeError) as e:
             raise ValidationError(f"Could not cast 'marking_time' as float: {e}")
 
+        # TODO: waiting on client-side edits?
+        # try:
+        #     cleaned_data["integrity_check"] = int(data["integrity_check"])
+        # except (ValueError, TypeError) as e:
+        #     raise ValidationError(f"Could not get 'integrity_check' as a int: {e}")
+
         # unpack the rubrics, potentially record which ones were used
         annotations = annot_data["sceneItems"]
         rubrics_used = []
@@ -361,37 +345,6 @@ class MarkingTaskService:
                 raise ValidationError("Invalid original-image in request.")
 
         return cleaned_data, annot_data, rubrics_used
-
-    def get_user_mark_results(
-        self, user: User, *, question_idx: int | None = None, version: int | None = None
-    ) -> list[Annotation]:
-        """For each completed task, get the latest annotation instances for a particular user.
-
-        Args:
-            user: User instance.
-
-        Keyword Args:
-            question_idx: int, the question index number from 1, or ``None``.
-            version: int, the version number, or ``None``.
-
-        Returns:
-            List of Annotation objects.
-        """
-        complete_tasks = MarkingTask.objects.filter(
-            assigned_user=user, status=MarkingTask.COMPLETE
-        )
-        if question_idx:
-            complete_tasks = complete_tasks.filter(question_index=question_idx)
-        if version:
-            complete_tasks = complete_tasks.filter(question_version=version)
-
-        complete_tasks.prefetch_related("latest_annotation")
-        annotations = map(
-            lambda task: task.latest_annotation,
-            complete_tasks,
-        )
-
-        return list(annotations)
 
     def get_latest_annotation(self, paper: int, question_idx: int) -> Annotation:
         """Get the latest annotation for a particular paper/question.
@@ -462,7 +415,7 @@ class MarkingTaskService:
         return [(tag.pk, tag.text) for tag in MarkingTaskTag.objects.all()]
 
     def get_tags_for_task(self, code: str) -> list[str]:
-        """Get a list of tags assigned to this marking task.
+        """Get a list of tags assigned to a marking task by its code.
 
         Args:
             code: the question/paper code for a task.
@@ -475,6 +428,21 @@ class MarkingTaskService:
         """
         # TODO: what if the client has an OLD task with the same code?
         task = self.get_task_from_code(code)
+        return [tag.text for tag in task.markingtasktag_set.all()]
+
+    def get_tags_for_task_pk(self, task_pk: int) -> list[str]:
+        """Get a list of tags assigned to a marking task by its pk.
+
+        Args:
+            task_pk: which task.
+
+        Returns:
+            A list of the text of all tags for this task.
+
+        Raises:
+            RuntimeError: no such code.
+        """
+        task = MarkingTask.objects.get(pk=task_pk)
         return [tag.text for tag in task.markingtasktag_set.all()]
 
     def get_tags_text_and_pk_for_task(self, task_pk: int) -> list[tuple[int, str]]:
@@ -710,7 +678,8 @@ class MarkingTaskService:
         self.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
 
     @transaction.atomic
-    def reassign_task_to_user(self, task_pk: int, username: str) -> None:
+    @staticmethod
+    def reassign_task_to_user(task_pk: int, username: str) -> None:
         """Reassign a task to a different user.
 
         If tasks status is "COMPLETE" then the assigned_user will be updated,

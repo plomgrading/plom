@@ -36,7 +36,7 @@ def check_version_map(
             is more strict about contiguous range of papers for example.
         required_papers: A list of paper_numbers that the qv map must have.
 
-    Return:
+    Returns:
         None
 
     Raises:
@@ -118,7 +118,7 @@ def make_random_version_map(
             pseudo-random number generator.  Unknown how portable this
             is between Python versions or OSes.
 
-    Return:
+    Returns:
         dict: a dict-of-dicts keyed by paper number (int) and then
             question number (int, but indexed from 1 not 0).  Values are
             integers.

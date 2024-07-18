@@ -4,6 +4,8 @@
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Bryan Tanady
 
+from __future__ import annotations
+
 import statistics
 from typing import Any, Dict, List, Optional
 from numpy import histogram
@@ -329,12 +331,12 @@ class MarkingStatsService:
         paper_max: Optional[int] = None,
         score_min: Optional[int] = None,
         score_max: Optional[int] = None,
-        question: Optional[int] = None,
+        question_idx: Optional[int] = None,
         version: Optional[int] = None,
         username: Optional[str] = None,
         the_tag: Optional[str] = None,
         status: Optional[int] = None,
-    ) -> List[Dict]:
+    ) -> list[dict[str, Any]]:
         task_set = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
         if paper_min:
             task_set = task_set.filter(paper__paper_number__gte=paper_min)
@@ -344,8 +346,8 @@ class MarkingStatsService:
             task_set = task_set.filter(latest_annotation__score__gte=score_min)
         if score_max:
             task_set = task_set.filter(latest_annotation__score__lte=score_max)
-        if question:
-            task_set = task_set.filter(question_index=question)
+        if question_idx:
+            task_set = task_set.filter(question_index=question_idx)
         if version:
             task_set = task_set.filter(question_version=version)
         if username:
@@ -386,6 +388,15 @@ class MarkingStatsService:
                         ).humanize(),
                         "score": task.latest_annotation.score,
                         "score_str": pprint_score(task.latest_annotation.score),
+                        "marking_time": task.latest_annotation.marking_time,
+                        "integrity": str(task.pk),  # TODO: not implemented yet
+                    }
+                )
+            elif task.status == MarkingTask.OUT:
+                dat.update(
+                    {
+                        "username": task.assigned_user.username,
+                        "integrity": str(task.pk),  # TODO: not implemented yet
                     }
                 )
 

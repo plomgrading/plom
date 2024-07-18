@@ -42,7 +42,7 @@ class BuildStudentReportService:
     def get_status_for_student_report(self) -> list[int]:
         """Retrieve status, such as number of scanned, marked, identified and ready to build papers.
 
-        Return:
+        Returns:
             A list comprising number of scanned, marked, identified,
             and built-ready papers respectively.
         """

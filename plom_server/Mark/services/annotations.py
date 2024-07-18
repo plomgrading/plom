@@ -51,7 +51,7 @@ def create_new_annotation_in_database(
         side effects noted above.
 
     Raises:
-        VaueError: unsupported type of image, based on extension.
+        ValueError: unsupported type of image, based on extension.
     """
     annotation_image = _add_new_annotation_image_to_database(
         annot_img_md5sum,
@@ -112,7 +112,7 @@ def _add_new_annotation_image_to_database(
         annot_img: the annotation image file.
             The filename including extension is taken from this.
 
-    Return:
+    Returns:
         Reference to the database object.
 
     Raises:

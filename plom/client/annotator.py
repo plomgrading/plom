@@ -1557,6 +1557,35 @@ class Annotator(QWidget):
             self._config["dama-" + code] = True
         return True
 
+    def _will_we_warn(self, code: str) -> bool:
+        """Would we notify user about warnings/errors in their annotations?
+
+        Determines if the closely-related :method:`_continue_after_warning`
+        will popup a dialog asking and/or notifying the user of a situation.
+        Its intended use it to check if a dialog *might* appear so that we
+        can potentially save computation in the case it will not.
+
+        Args:
+            code: a string code that identified the situation.
+
+        Returns:
+            True if we might ask/notify the user (possibly depending on
+            further maybe expensive calculations).  False if we wouldn't
+            either because of global settings or b/c they have chosen
+            "don't-ask-me-again".
+        """
+        situation = self._feedback_rules[code]
+        if not situation["allowed"]:
+            return True
+        if situation["warn"]:
+            return True
+        dama = False
+        if situation["dama_allowed"]:
+            dama = self._config.get("dama-" + code, False)
+        if dama:
+            return False
+        return True
+
     def _zeroMarksWarn(self) -> bool:
         """A helper method for saveAnnotations.
 
@@ -1618,15 +1647,22 @@ class Annotator(QWidget):
         Returns:
             False if user cancels, True otherwise.
         """
+        code = "each-page-should-be-annotated"
+        # save computing cost if user won't be warned
+        if not self._will_we_warn(code):
+            return True
         indices = self.scene.get_list_of_non_annotated_underimages()
         if not indices:
             return True
-        code = "each-page-should-be-annotated"
-        msg = self._feedback_rules[code]["explanation"]
-        msg = msg.format(which_pages=", ".join([str(p + 1) for p in indices]))
-        if not self._continue_after_warning(code, msg):
-            return False
-        return True
+
+        # the try behaves like "with highlighted_pages(indices):"
+        self.scene.highlight_pages(indices)
+        try:
+            msg = self._feedback_rules[code]["explanation"]
+            msg = msg.format(which_pages=", ".join([str(p + 1) for p in indices]))
+            return self._continue_after_warning(code, msg)
+        finally:
+            self.scene.highlight_pages_reset()
 
     def closeEvent(self, event: None | QtGui.QCloseEvent) -> None:
         """Overrides the usual QWidget close event.
@@ -1725,7 +1761,7 @@ class Annotator(QWidget):
         Note: called "pickle" for historical reasons: it is neither a
         Python pickle nor a real-life pickle.
 
-        Return:
+        Returns:
             tuple: two `pathlib.Path`, one for the rendered image and
             one for the ``.plom`` file.
         """

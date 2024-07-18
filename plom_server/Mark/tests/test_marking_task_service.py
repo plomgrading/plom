@@ -84,6 +84,20 @@ class MarkingTaskServiceTests(TestCase):
         with self.assertRaisesRegex(RuntimeError, "Task .*does not exist"):
             s.get_task_from_code(code)
 
+    def test_get_latest_task_asking_for_wrong_version(self) -> None:
+        task = baker.make(
+            MarkingTask,
+            question_index=1,
+            question_version=2,
+            paper__paper_number=42,
+            code="q0042g1",
+        )
+        code = "q0042g1"
+        assert task.code == code
+        mark_task.get_latest_task(42, 1, question_version=2)
+        with self.assertRaisesRegex(ValueError, "wrong version"):
+            mark_task.get_latest_task(42, 1, question_version=1)
+
     def test_assign_task_to_user(self) -> None:
         """Test MarkingTaskService.assign_task_to_user()."""
         user1: User = baker.make(User)
@@ -95,7 +109,7 @@ class MarkingTaskServiceTests(TestCase):
         self.assertEqual(task.status, MarkingTask.OUT)
         self.assertEqual(task.assigned_user, user1)
 
-        with self.assertRaisesMessage(RuntimeError, "Task is currently assigned."):
+        with self.assertRaisesRegex(RuntimeError, "Task .* not available.* assigned"):
             MarkingTaskService.assign_task_to_user(task.pk, user2)
 
         task.refresh_from_db()

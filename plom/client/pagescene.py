@@ -47,10 +47,11 @@ from PyQt6.QtWidgets import (
     QGraphicsView,
     QGraphicsItem,
     QGraphicsItemGroup,
+    QGraphicsColorizeEffect,
+    QGraphicsOpacityEffect,
     QMessageBox,
     QToolButton,
     QMenu,
-    QGraphicsColorizeEffect,
 )
 
 from plom import AnnFontSizePts, ScenePixelHeight
@@ -707,7 +708,7 @@ class PageScene(QGraphicsScene):
     def get_rubrics(self):
         """A list of the rubrics current used in the scene.
 
-        Return:
+        Returns:
             list: a list of dicts, one for each rubric that is on the page.
 
         TODO: we will be calling this function quite a lot: maybe its worth
@@ -2088,23 +2089,24 @@ class PageScene(QGraphicsScene):
     def dont_use_page_image(self, n: int) -> None:
         imgid = self._id_from_visible_idx(n)
         img = self.underImage.images[n]
-        e = QGraphicsColorizeEffect()
-        e.setColor(QColor("darkred"))
-        img.setGraphicsEffect(e)
-        d = SimpleQuestion(
-            self.parent(),  # self.addWidget(d) instead?
-            """Remove this page? <ul>\n
-              <li>You can undo or find the page again using
-                <em>Rearrange Pages</em>.</li>\n
-            <li>Existing annotations will shift left or right.</li>\n
-            </ul>""",
-            "Are you sure you want to remove this page?",
-        )
-        # h = self.addWidget(d)
-        # Not sure opening a dialog from the scene is wise
-        if d.exec() == QMessageBox.StandardButton.No:
-            img.setGraphicsEffect(None)
-            return
+        # the try behaves like "with highlighted_pages([n]):"
+        self.highlight_pages([n], "darkred")
+        try:
+            d = SimpleQuestion(
+                self.parent(),  # self.addWidget(d) instead?
+                """Remove this page? <ul>\n
+                  <li>You can undo or find the page again using
+                  <em>Rearrange Pages</em>.</li>\n
+                <li>Existing annotations will shift left or right.</li>\n
+                </ul>""",
+                "Are you sure you want to remove this page?",
+            )
+            # h = self.addWidget(d)
+            # Not sure opening a dialog from the scene is wise
+            if d.exec() == QMessageBox.StandardButton.No:
+                return
+        finally:
+            self.highlight_pages_reset()
 
         self.undoStack.beginMacro(f"Page {n} remove and item move")
 
@@ -2804,6 +2806,29 @@ class PageScene(QGraphicsScene):
                         continue
                 return False  # otherwise
         return True  # only tick,cross or delta-rubrics
+
+    def highlight_pages(
+        self, indices: list[int], colour: str = "blue", *, fade_others: bool = True
+    ) -> None:
+        """Highlight some of the underlying images that we are annotating."""
+        for i in range(len(self.underImage.images)):
+            img = self.underImage.images[i]
+            if i in indices:
+                colour_effect = QGraphicsColorizeEffect()
+                colour_effect.setColor(QColor(colour))
+                img.setGraphicsEffect(colour_effect)
+            elif fade_others:
+                fade_effect = QGraphicsOpacityEffect()
+                fade_effect.setOpacity(0.25)
+                img.setGraphicsEffect(fade_effect)
+            else:
+                pass
+
+    def highlight_pages_reset(self) -> None:
+        """Remove any graphical effects from the underlying images that we are annotating."""
+        for i in range(len(self.underImage.images)):
+            img = self.underImage.images[i]
+            img.setGraphicsEffect(None)
 
     def get_list_of_non_annotated_underimages(self) -> list[int]:
         """Which images in the scene are not yet annotated.
