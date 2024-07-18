@@ -5,6 +5,7 @@
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.contrib import messages
 from django.views.generic import View
 from Base.base_group_views import ManagerRequiredView
@@ -13,6 +14,8 @@ from .services import big_red_button
 
 from Papers.services import SpecificationService
 from Scan.services import ScanService
+
+from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 
 
 class TroublesAfootGenericErrorView(View):
