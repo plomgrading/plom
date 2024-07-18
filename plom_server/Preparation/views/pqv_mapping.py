@@ -64,7 +64,7 @@ class PQVMappingUploadView(ManagerRequiredView):
             return render(request, "Preparation/pqv_mapping_attempt.html", context)
 
         try:
-            PaperCreatorService().add_all_papers_in_qv_map(vm)
+            PaperCreatorService.add_all_papers_in_qv_map(vm)
         except PlomDependencyConflict as err:
             messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(reverse("prep_conflict"))
@@ -180,7 +180,7 @@ class PQVMappingView(ManagerRequiredView):
 
         try:
             vm = PQVMappingService().make_version_map(number_to_produce, first=first)
-            PaperCreatorService().add_all_papers_in_qv_map(vm)
+            PaperCreatorService.add_all_papers_in_qv_map(vm)
         except PlomDependencyConflict as err:
             messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(reverse("prep_conflict"))

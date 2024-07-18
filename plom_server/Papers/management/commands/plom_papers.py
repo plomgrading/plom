@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 from __future__ import annotations
@@ -90,7 +90,7 @@ class Command(BaseCommand):
 
         qv_map = PQVMappingService().make_version_map(number_to_produce, first=first)
         try:
-            PaperCreatorService().add_all_papers_in_qv_map(qv_map, background=False)
+            PaperCreatorService.add_all_papers_in_qv_map(qv_map, background=False)
         except ValueError as e:
             raise CommandError(e)
         self.stdout.write(f"Database populated with {len(qv_map)} test-papers.")
@@ -127,7 +127,7 @@ class Command(BaseCommand):
         except ValueError as e:
             raise CommandError(e)
         try:
-            PaperCreatorService().add_all_papers_in_qv_map(vm, background=False)
+            PaperCreatorService.add_all_papers_in_qv_map(vm, background=False)
         except (ValueError, PlomDependencyConflict, PlomDatabaseCreationError) as e:
             raise CommandError(e) from e
         self.stdout.write(f"Uploaded qvmap from {f}")

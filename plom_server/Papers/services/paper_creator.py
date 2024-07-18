@@ -101,7 +101,10 @@ def huey_evacuate_whole_db(*, tracker_pk: int, task=None) -> bool:
 
 
 class PaperCreatorService:
-    """Class to encapsulate functions to build the test-papers and groups in the DB."""
+    """Class to encapsulate functions to build the test-papers and groups in the DB.
+
+    No need to instantiate: all methods can be called from the class.
+    """
 
     @staticmethod
     def _set_number_to_produce(numberToProduce: int):
@@ -214,8 +217,9 @@ class PaperCreatorService:
         except ObjectDoesNotExist:
             return None
 
+    @classmethod
     def add_all_papers_in_qv_map(
-        self,
+        cls,
         qv_map: dict[int, dict[int, int]],
         *,
         background: bool = True,
@@ -241,18 +245,18 @@ class PaperCreatorService:
         if Paper.objects.filter().exists():
             raise PlomDatabaseCreationError("Already papers in the database.")
         # check if there is an existing non-obsolete task
-        self.assert_no_existing_chore()
-        self._set_number_to_produce(len(qv_map))
+        cls.assert_no_existing_chore()
+        cls._set_number_to_produce(len(qv_map))
 
         if not _testing:
-            self._populate_whole_db_huey_wrapper(qv_map, background=background)
+            cls._populate_whole_db_huey_wrapper(qv_map, background=background)
         else:
             # log(f"Adding {len(qv_map)} papers via foreground process for testing")
             id_page_number = SpecificationService.get_id_page_number()
             dnm_page_numbers = SpecificationService.get_dnm_pages()
             question_page_numbers = SpecificationService.get_question_pages()
             for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
-                self._create_single_paper_from_qvmapping_and_pages(
+                cls._create_single_paper_from_qvmapping_and_pages(
                     paper_number,
                     qv_row,
                     id_page_number=id_page_number,
