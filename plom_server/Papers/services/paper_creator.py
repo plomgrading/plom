@@ -220,17 +220,18 @@ class PaperCreatorService:
         qv_map: Dict[int, Dict[int, int]],
         *,
         background: bool = True,
-        testing: bool = False,
+        _testing: bool = False,
     ):
         """Build all the Paper and associated tables from the qv-map, but not the PDF files.
 
         Args:
             qv_map: For each paper give the question-version map.
                 Of the form `{paper_number: {q: v}}`
-        KWargs:
+
+        Keyword Args:
             background: populate the database in the background, or, if false,
                 as a blocking huey process
-            testing: when set true, blocking is ignored, and the db-build is done as
+            _testing: when set true, blocking is ignored, and the db-build is done as
                 a foreground process without huey involved.
 
         Raises:
@@ -244,10 +245,10 @@ class PaperCreatorService:
         self.assert_no_existing_chore()
         self._set_number_to_produce(len(qv_map))
 
-        if not testing:
+        if not _testing:
             self.populate_whole_db_huey_wrapper(qv_map, background=background)
         else:
-            print(f"Added {len(qv_map)} papers via foreground process for testing")
+            # log(f"Adding {len(qv_map)} papers via foreground process for testing")
             id_page_number = SpecificationService.get_id_page_number()
             dnm_page_numbers = SpecificationService.get_dnm_pages()
             question_page_numbers = SpecificationService.get_question_pages()
@@ -259,9 +260,6 @@ class PaperCreatorService:
                     dnm_page_numbers=dnm_page_numbers,
                     question_page_numbers=question_page_numbers,
                 )
-                if idx % 16 == 0:
-                    print(f"Added {idx} of {len(qv_map)} papers")
-            print(f"Added all {len(qv_map)} papers")
 
     def populate_whole_db_huey_wrapper(
         self, qv_map: Dict[int, Dict[int, int]], *, background: bool = True
@@ -284,14 +282,14 @@ class PaperCreatorService:
             PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
 
     def remove_all_papers_from_db(
-        self, *, background: bool = True, testing=False
+        self, *, background: bool = True, _testing: bool = False
     ) -> None:
         """Remove all the papers and associated objects from the database.
 
         KWargs:
             background: de-populate the database in the background, or, if false,
                 as a blocking huey process
-            testing: when set true, blocking is ignored, and the db depopulation is done as
+            _testing: when set true, blocking is ignored, and the db depopulation is done as
                 a foreground process without huey involved.
 
         Raises:
@@ -303,7 +301,7 @@ class PaperCreatorService:
         self.assert_no_existing_chore()
         self._reset_number_to_produce()
 
-        if not testing:
+        if not _testing:
             self.evacuate_whole_db_huey_wrapper(background=background)
         else:
             # for testing purposes we delete in foreground
