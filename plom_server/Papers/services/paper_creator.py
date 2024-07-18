@@ -14,10 +14,7 @@ from django.db import transaction
 from django_huey import db_task
 
 from ..models import (
-    Specification,
     Paper,
-    Image,
-    FixedPage,
     IDPage,
     DNMPage,
     QuestionPage,
