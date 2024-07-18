@@ -560,9 +560,6 @@ class MarkerClient(QWidget):
 
         self.prxM.setSourceModel(self.examModel)
         self.ui.tableView.setModel(self.prxM)
-        # hide various columns without end-user useful info
-        for i in self.ui.examModel.columns_to_hide:
-            self.ui.tableView.hideColumn(i)
 
         # Double-click or signal fires up the annotator window
         self.ui.tableView.doubleClicked.connect(self.annotateTest)
@@ -1137,10 +1134,15 @@ class MarkerClient(QWidget):
             )
             # future use
             self.ui.labelTech4.setVisible(False)
+            # toggle various columns without end-user useful info
+            for i in self.ui.examModel.columns_to_hide:
+                self.ui.tableView.showColumn(i)
         else:
             self.ui.technicalButton.setText("Show technical info")
             self.ui.technicalButton.setArrowType(Qt.ArrowType.RightArrow)
             self.ui.frameTechnical.setVisible(False)
+            for i in self.ui.examModel.columns_to_hide:
+                self.ui.tableView.hideColumn(i)
 
     def toggle_fail_mode(self):
         """Toggle artificial failures simulatiing flaky networking in response to ticking a button."""
