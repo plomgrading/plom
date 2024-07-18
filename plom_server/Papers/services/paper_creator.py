@@ -119,13 +119,15 @@ class PaperCreatorService:
                 "The database does not contain a test specification."
             ) from e
 
-    def _set_number_to_produce(self, numberToProduce: int):
+    @staticmethod
+    def _set_number_to_produce(numberToProduce: int):
         nop = NumberOfPapersToProduceSetting.load()
         nop.number_of_papers = numberToProduce
         nop.save()
 
-    def _reset_number_to_produce(self):
-        self._set_number_to_produce(0)
+    @classmethod
+    def _reset_number_to_produce(cls):
+        cls._set_number_to_produce(0)
 
     @transaction.atomic()
     def _create_single_paper_from_qvmapping_and_pages(
@@ -180,7 +182,8 @@ class PaperCreatorService:
                     version=version,
                 )
 
-    def assert_no_existing_chore(self):
+    @staticmethod
+    def assert_no_existing_chore():
         """Check that there is no existing (non-obsolate) populate / evacuate database chore.
 
         Raises:
@@ -281,12 +284,15 @@ class PaperCreatorService:
         else:
             PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
 
+    # Issue #3493: the ctor could raise exceptions before we even get to this code
+    # so instead we use a class method so that the ctor (__init__) is never run
+    @classmethod
     def remove_all_papers_from_db(
-        self, *, background: bool = True, _testing: bool = False
+        cls, *, background: bool = True, _testing: bool = False
     ) -> None:
         """Remove all the papers and associated objects from the database.
 
-        KWargs:
+        Keyword Args:
             background: de-populate the database in the background, or, if false,
                 as a blocking huey process
             _testing: when set true, blocking is ignored, and the db depopulation is done as
@@ -298,11 +304,11 @@ class PaperCreatorService:
         """
         assert_can_modify_qv_mapping_database()
         # check if there is an existing non-obsolete task
-        self.assert_no_existing_chore()
-        self._reset_number_to_produce()
+        cls.assert_no_existing_chore()
+        cls._reset_number_to_produce()
 
         if not _testing:
-            self.evacuate_whole_db_huey_wrapper(background=background)
+            cls.evacuate_whole_db_huey_wrapper(background=background)
         else:
             # for testing purposes we delete in foreground
             with transaction.atomic():
@@ -312,7 +318,8 @@ class PaperCreatorService:
             with transaction.atomic():
                 Paper.objects.all().delete()
 
-    def evacuate_whole_db_huey_wrapper(self, *, background: bool = True) -> None:
+    @staticmethod
+    def evacuate_whole_db_huey_wrapper(*, background: bool = True) -> None:
         # TODO - add seatbelt logic here
         with transaction.atomic(durable=True):
             tr = PopulateEvacuateDBChore.objects.create(

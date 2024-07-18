@@ -99,7 +99,7 @@ class Command(BaseCommand):
         """Remove all test-papers from the database."""
         self.stdout.write("Removing test-papers and associated tasks...")
         try:
-            PaperCreatorService().remove_all_papers_from_db(background=False)
+            PaperCreatorService.remove_all_papers_from_db(background=False)
         except PlomDependencyConflict as e:
             raise CommandError(e) from e
         self.stdout.write("Database cleared of test-papers.")
