@@ -1282,7 +1282,7 @@ class MarkerClient(QWidget):
             status = t["status"]
             # mismatch b/w server status and how we represent claimed tasks locally
             if status.casefold() == "out" and username == our_username:
-                status = "unmarked"
+                status = "untouched"
             try:
                 self.examModel.add_task(
                     task_id_str,
