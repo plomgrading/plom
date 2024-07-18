@@ -43,7 +43,7 @@ def huey_populate_whole_db(
 
     # TODO - move much of this loop back into paper-creator.
     for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
-        PaperCreatorService.create_single_paper_from_qvmapping_and_pages(
+        PaperCreatorService._create_single_paper_from_qvmapping_and_pages(
             paper_number,
             qv_row,
             id_page_number=id_page_number,
