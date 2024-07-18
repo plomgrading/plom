@@ -1534,9 +1534,8 @@ class MarkerClient(QWidget):
                 )
                 return None
 
-        # stash the previous state, not ideal because makes column wider
-        prevState = self.examModel.getStatusByTask(task)
-        self.examModel.setStatusByTask(task, "ann:" + prevState)
+        # we used to set status to indicate annotation-in-progress; removed as
+        # it doesn't seem necessary (it was tricky to set it back afterwards)
 
         exam_name = self.exam_spec["name"]
 
@@ -1647,11 +1646,6 @@ class MarkerClient(QWidget):
             None
         """
         self.setEnabled(True)
-        if task:
-            # strip the "ann:"
-            prevState = self.examModel.getStatusByTask("q" + task).split(":")[-1]
-            # TODO: could also erase the paperdir
-            self.examModel.setStatusByTask("q" + task, prevState)
         # update image view b/c its image might have changed
         self._updateCurrentlySelectedRow()
 
