@@ -1836,7 +1836,7 @@ class MarkerClient(QWidget):
         # "Server changed under us: {}".format(error_message)
         # ) from None
 
-    def backgroundUploadFailed(self, task, errmsg):
+    def backgroundUploadFailed(self, task: str, errmsg: str) -> None:
         """An upload has failed, we don't know why, do something LOUDLY.
 
         Args:
@@ -1852,8 +1852,9 @@ class MarkerClient(QWidget):
             None,
             "Unfortunately, there was an unexpected error; the server did "
             f"not accept our marked paper {task}.\n\n"
-            "If the problem persists consider filing an issue. "
-            "Please close this window and log in again.",
+            "Your internet connection may be unstable or something unexpected "
+            "has gone wrong. "
+            "Please consider logging out and restarting your client.",
             info=errmsg,
         ).exec()
         return
