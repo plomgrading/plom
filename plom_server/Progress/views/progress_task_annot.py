@@ -112,7 +112,7 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
         task_info = mss.filter_marking_task_annotation_info(
             paper_min=optional_arg(paper),
             paper_max=optional_arg(paper),
-            question=optional_arg(question),
+            question_idx=optional_arg(question),
             version=optional_arg(version),
             username=optional_arg(username),
             score_min=optional_arg(score),
@@ -326,7 +326,7 @@ class MarkingTaskReassignView(LeadMarkerOrManagerView):
         try:
             # first reassign the task - this checks if the username
             # corresponds to an existing marker-user
-            MarkingTaskService().reassign_task_to_user(task_pk, new_username)
+            MarkingTaskService.reassign_task_to_user(task_pk, new_username)
             # note - the service creates the tag if needed
             attn_user_tag_text = f"@{new_username}"
             MarkingTaskService().create_tag_and_attach_to_task(
