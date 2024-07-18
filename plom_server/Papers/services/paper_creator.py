@@ -248,7 +248,7 @@ class PaperCreatorService:
         if not _testing:
             self.populate_whole_db_huey_wrapper(qv_map, background=background)
         else:
-            print(f"Added {len(qv_map)} papers via foreground process for testing")
+            # log(f"Adding {len(qv_map)} papers via foreground process for testing")
             id_page_number = SpecificationService.get_id_page_number()
             dnm_page_numbers = SpecificationService.get_dnm_pages()
             question_page_numbers = SpecificationService.get_question_pages()
@@ -260,9 +260,6 @@ class PaperCreatorService:
                     dnm_page_numbers=dnm_page_numbers,
                     question_page_numbers=question_page_numbers,
                 )
-                if idx % 16 == 0:
-                    print(f"Added {idx} of {len(qv_map)} papers")
-            print(f"Added all {len(qv_map)} papers")
 
     def populate_whole_db_huey_wrapper(
         self, qv_map: Dict[int, Dict[int, int]], *, background: bool = True
