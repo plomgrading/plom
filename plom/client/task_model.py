@@ -51,7 +51,7 @@ local_possible_statuses = (
     "marked",  # deprecated, legacy still uses
     "complete",
     "uploading...",
-    "???",
+    "failed upload",
     "deferred",
 )
 
