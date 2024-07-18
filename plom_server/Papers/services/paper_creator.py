@@ -7,11 +7,16 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, List
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django_huey import db_task
+
+from plom.plom_exceptions import PlomDatabaseCreationError
+from Papers.services import SpecificationService
+from Preparation.services.preparation_dependency_service import (
+    assert_can_modify_qv_mapping_database,
+)
 
 from ..models import (
     Paper,
@@ -21,19 +26,13 @@ from ..models import (
     PopulateEvacuateDBChore,
     NumberOfPapersToProduceSetting,
 )
-from Papers.services import SpecificationService
-
-from Preparation.services.preparation_dependency_service import (
-    assert_can_modify_qv_mapping_database,
-)
-from plom.plom_exceptions import PlomDatabaseCreationError
 
 log = logging.getLogger("PaperCreatorService")
 
 
 @db_task(queue="tasks", context=True)
 def huey_populate_whole_db(
-    qv_map: Dict[int, Dict[int, int]], *, tracker_pk: int, task=None
+    qv_map: dict[int, dict[int, int]], *, tracker_pk: int, task=None
 ) -> bool:
     PopulateEvacuateDBChore.transition_to_running(tracker_pk, task.id)
     N = len(qv_map)
@@ -118,11 +117,11 @@ class PaperCreatorService:
     @transaction.atomic()
     def _create_single_paper_from_qvmapping_and_pages(
         paper_number: int,
-        qv_row: Dict[int, int],
+        qv_row: dict[int, int],
         *,
         id_page_number: int | None = None,
-        dnm_page_numbers: List[int] | None = None,
-        question_page_numbers: Dict[int, List[int]] | None = None,
+        dnm_page_numbers: list[int] | None = None,
+        question_page_numbers: dict[int, list[int]] | None = None,
     ) -> None:
         """Creates tables for the given paper number from supplied information.
 
@@ -217,7 +216,7 @@ class PaperCreatorService:
 
     def add_all_papers_in_qv_map(
         self,
-        qv_map: Dict[int, Dict[int, int]],
+        qv_map: dict[int, dict[int, int]],
         *,
         background: bool = True,
         _testing: bool = False,
@@ -262,7 +261,7 @@ class PaperCreatorService:
                 )
 
     def populate_whole_db_huey_wrapper(
-        self, qv_map: Dict[int, Dict[int, int]], *, background: bool = True
+        self, qv_map: dict[int, dict[int, int]], *, background: bool = True
     ) -> None:
         # TODO - add seatbelt logic here
         with transaction.atomic(durable=True):
