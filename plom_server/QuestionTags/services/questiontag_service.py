@@ -50,14 +50,16 @@ class QuestionTagService:
         question.save()
 
     @staticmethod
-    def create_tag(tag_name, text, user, meta=None):
+    def create_tag(tag_name, text, *, user, meta=None):
         """Create a new tag.
 
         Args:
             tag_name: The short name of the tag we wish to create.
             text: The description of the tag.
+
+        Keyword Args:
             user: The user creating the tag.
-            meta: text shown only to markers, not the students.
+            meta: Text shown only to markers, not the students.
 
         Returns:
             None on success or a string of an error message explaining that the tag already exists.

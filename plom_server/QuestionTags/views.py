@@ -13,7 +13,6 @@ from plom.tagging import plom_valid_tag_text_description
 import json
 import csv
 from django.views import View
-from Papers.models.paper_structure import QuestionPage
 
 
 class QTagsLandingView(ListView):
@@ -101,7 +100,7 @@ class CreateTagView(CreateView):
         text = request.POST.get("text")
         meta = request.POST.get("meta")
         error_message = QuestionTagService.create_tag(
-            tag_name, text, request.user, meta
+            tag_name, text, user=request.user, meta=meta
         )
         if error_message:
             return JsonResponse({"error": error_message})
@@ -163,12 +162,9 @@ class DownloadQuestionTagsView(View):
         response["Content-Disposition"] = 'attachment; filename="question_tags.csv"'
 
         writer = csv.writer(response)
-        writer.writerow(
-            ["Paper Number", "Question Index", "Question Label", "Tags", "Page Numbers"]
-        )
+        writer.writerow(["Question Index", "Question Label", "Tags"])
 
         questions = TmpAbstractQuestion.objects.all()
-
         for question in questions:
             question_label = SpecificationService.get_question_label(
                 question.question_index
@@ -176,22 +172,7 @@ class DownloadQuestionTagsView(View):
             tags = ", ".join(
                 [qt.tag.tag_name for qt in question.questiontaglink_set.all()]
             )
-            question_pages = QuestionPage.objects.filter(
-                question_index=question.question_index
-            )
-            for qp in question_pages:
-                paper_number = qp.paper.paper_number
-                pages = ", ".join(
-                    [
-                        str(page.page_number)
-                        for page in QuestionPage.objects.filter(
-                            paper=qp.paper, question_index=question.question_index
-                        )
-                    ]
-                )
-                writer.writerow(
-                    [paper_number, question.question_index, question_label, tags, pages]
-                )
+            writer.writerow([question.question_index, question_label, tags])
 
         return response
 
@@ -205,23 +186,12 @@ class DownloadQuestionTagsView(View):
                 question.question_index
             )
             tags = [qt.tag.tag_name for qt in question.questiontaglink_set.all()]
-            question_pages = QuestionPage.objects.filter(
-                question_index=question.question_index
-            )
-            for qp in question_pages:
-                question_data = {
-                    "paper_number": qp.paper.paper_number,
-                    "question_index": question.question_index,
-                    "question_label": question_label,
-                    "tags": tags,
-                    "page_numbers": [
-                        page.page_number
-                        for page in QuestionPage.objects.filter(
-                            paper=qp.paper, question_index=question.question_index
-                        )
-                    ],
-                }
-                data.append(question_data)
+            question_data = {
+                "question_index": question.question_index,
+                "question_label": question_label,
+                "tags": tags,
+            }
+            data.append(question_data)
 
         response = HttpResponse(
             json.dumps(data, indent=4), content_type="application/json"
