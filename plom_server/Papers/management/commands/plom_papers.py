@@ -97,11 +97,6 @@ class Command(BaseCommand):
 
     def clear_papers(self) -> None:
         """Remove all test-papers from the database."""
-        paper_info = PaperInfoService()
-        if paper_info.how_many_papers_in_database() == 0:
-            self.stdout.write("No test-papers found in database - stopping.")
-            return
-
         self.stdout.write("Removing test-papers and associated tasks...")
         # note when a paper is deleted its associated task is also deleted.
         try:
