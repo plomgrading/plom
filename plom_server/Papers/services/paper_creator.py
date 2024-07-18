@@ -334,20 +334,3 @@ class PaperCreatorService:
             print("Completed.")
         else:
             PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
-
-    def update_page_image(
-        self, paper_number: int, page_index: int, image: Image
-    ) -> None:
-        """Add a reference to an Image instance.
-
-        Args:
-            paper_number: a Paper instance id.
-                TODO: which is it?  not sure paper number will always be
-                the same as the pk of the paper!
-            page_index: the page number
-            image: the page-image
-        """
-        paper = Paper.objects.get(paper_number=paper_number)
-        page = FixedPage.objects.get(paper=paper, page_number=page_index)
-        page.image = image
-        page.save()
