@@ -963,7 +963,6 @@ newOS_newdeps_webplom:
 oldOS_mindeps:
   stage: alt_build
   image: ubuntu:20.04
-  allow_failure: true
   before_script:
     - apt-get update
     - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
