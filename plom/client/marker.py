@@ -448,6 +448,8 @@ class MarkerClient(QWidget):
         self.annotatorSettings["feedback_rules"] = info.get(
             "feedback_rules", static_feedback_rules_data
         )
+        # TODO: wire up to server via lead_marker
+        self.annotatorSettings["user_can_view_all_tasks"] = False
 
         self.UIInitialization()
         self.applyLastTimeOptions(lastTime)
@@ -1228,16 +1230,23 @@ class MarkerClient(QWidget):
         return True
 
     def change_task_view(self, cbidx: int) -> None:
-        """Update task list in response to combobox changes."""
+        """Update task list in response to combobox changes.
+
+        In some cases we reject the change and change the index ourselves.
+        """
         if cbidx == 0:
             self._show_only_my_tasks()
-        elif cbidx == 1:
-            self._show_all_tasks()
-            if not self.download_task_list():
-                # could not update (maybe legacy server) so go back to only mine
-                self.ui.tasksComboBox.setCurrentIndex(0)
-        else:
+            return
+        if cbidx != 1:
             raise NotImplementedError(f"Unexpected cbidx={cbidx}")
+        if not self.annotatorSettings["user_can_view_all_tasks"]:
+            InfoMsg(self, "You don't have permission to view all tasks").exec()
+            self.ui.tasksComboBox.setCurrentIndex(0)
+            return
+        self._show_all_tasks()
+        if not self.download_task_list():
+            # could not update (maybe legacy server) so go back to only mine
+            self.ui.tasksComboBox.setCurrentIndex(0)
 
     def download_task_list(self, *, username: str = "") -> bool:
         """Download and fill/update the task list.
