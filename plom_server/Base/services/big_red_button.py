@@ -31,10 +31,7 @@ def reset_assessment_preparation_database():
     BuildPapersService().reset_all_tasks()
 
     # Remove all test database rows
-    try:
-        PaperCreatorService().remove_all_papers_from_db(background=False)
-    except ObjectDoesNotExist:
-        pass
+    PaperCreatorService.remove_all_papers_from_db(background=False)
 
     # Remove classlist
     StagingStudentService().remove_all_students()
