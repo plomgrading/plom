@@ -1399,7 +1399,7 @@ class MarkerClient(QWidget):
             "complete",
             "marked",
             "uploading...",
-            "???",
+            "failed upload",
         ):
             InfoMsg(self, "Cannot defer a marked test.").exec()
             return
@@ -1473,7 +1473,7 @@ class MarkerClient(QWidget):
             "complete",
             "marked",
             "uploading...",
-            "???",
+            "failed upload",
             "untouched",
         ):
             # TODO: should this make a dialog somewhere?
@@ -1491,7 +1491,7 @@ class MarkerClient(QWidget):
         aname = paperdir / Gtask
         pdict = None
 
-        if status.casefold() in ("complete", "marked", "uploading...", "???"):
+        if status.casefold() in ("complete", "marked", "uploading...", "failed upload"):
             msg = SimpleQuestion(self, "Continue marking paper?")
             if not msg.exec() == QMessageBox.StandardButton.Yes:
                 return None
@@ -1808,7 +1808,7 @@ class MarkerClient(QWidget):
         Returns:
             None
         """
-        self.examModel.setStatusByTask(task, "???")
+        self.examModel.setStatusByTask(task, "failed upload")
         # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
         ErrorMsg(
             None,
@@ -1845,9 +1845,8 @@ class MarkerClient(QWidget):
 
         Returns:
             None
-
         """
-        self.examModel.setStatusByTask(task, "???")
+        self.examModel.setStatusByTask(task, "failed upload")
         # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
         ErrorMsg(
             None,
