@@ -40,7 +40,6 @@ from packaging.version import Version
 
 
 from PyQt6 import uic, QtGui
-from PyQt6.QtGui import QAction
 from PyQt6.QtCore import (
     Qt,
     QTimer,
