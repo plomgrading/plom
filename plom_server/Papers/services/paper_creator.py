@@ -106,18 +106,7 @@ def huey_evacuate_whole_db(*, tracker_pk: int, task=None) -> bool:
 
 
 class PaperCreatorService:
-    """Class to encapsulate functions to build the test-papers and groups in the DB.
-
-    DB must have a validated test spec before we can use this.
-    """
-
-    def __init__(self):
-        try:
-            _ = Specification.load()
-        except Specification.DoesNotExist as e:
-            raise ObjectDoesNotExist(
-                "The database does not contain a test specification."
-            ) from e
+    """Class to encapsulate functions to build the test-papers and groups in the DB."""
 
     @staticmethod
     def _set_number_to_produce(numberToProduce: int):
@@ -148,10 +137,18 @@ class PaperCreatorService:
             paper_number: The number of the paper being created
             qv_row: Mapping from each question index to
                 version for this particular paper. Of the form ``{q: v}``.
-        KWargs:
+
+        Keyword Args:
             id_page_number: (optionally) the id-page page-number
             dnm_page_numbers: (optionally) a list of the dnm pages
             question_page_numbers: (optionally) the pages of each question
+
+        Returns:
+            None
+
+        Raises:
+            ObjectDoesNotExist: no spec.
+            IntegrityError: that paper number already exists.
         """
         if id_page_number is None:
             id_page_number = SpecificationService.get_id_page_number()
@@ -284,8 +281,6 @@ class PaperCreatorService:
         else:
             PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
 
-    # Issue #3493: the ctor could raise exceptions before we even get to this code
-    # so instead we use a class method so that the ctor (__init__) is never run
     @classmethod
     def remove_all_papers_from_db(
         cls, *, background: bool = True, _testing: bool = False
