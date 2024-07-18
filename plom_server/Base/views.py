@@ -81,6 +81,7 @@ class ResetConfirmView(ManagerRequiredView):
             return render(request, "base/reset_confirm.html", context=context)
         context.update(
             {
+                "no_spec": False,
                 "bundles_staged": ScanService().staging_bundles_exist(),
                 "wipe_form": form,
                 "reset_phrase": reset_phrase,
