@@ -80,10 +80,13 @@ class GetTasks(APIView):
     Respond with status 200.
 
     Returns:
-        List of dicts of info for each task...  TODO: docs.
+        List of dicts of info for each task, as documented elsewhere.
         An empty list might be returned if no tasks.
-        This is potentially a lot of data so we use a list
-        of lists instead of a list of dicts for compactness.
+        This is potentially a lot of data, perhaps a megabyte of json
+        for 4000 test papers.
+
+    Note that this might leak info to non-lead-markers, we may want non-lead-markers
+    to only be able to query their own tasks.
     """
 
     def get(self, request: Request) -> Response:
@@ -92,15 +95,14 @@ class GetTasks(APIView):
         version = data.get("v")
         username = data.get("username")
         # TODO: much more optional things we could support: tag, paper_min, paper_max
-        # TODO: see progress_task_annot.py
+        # see progress_task_annot.py, lots of extensibility possible here in future.
+        # TODO: priority might be useful for client
 
         data = MarkingStatsService().filter_marking_task_annotation_info(
             question_idx=question_idx,
             version=version,
             username=username,
         )
-        # TODO: priority might be useful for client
-        # TODO: this is list of dicts, edit docs above?
         return Response(data, status=status.HTTP_200_OK)
 
 
