@@ -90,7 +90,7 @@ class PQVMappingDeleteView(ManagerRequiredView):
 
     def delete(self, request: HttpRequest) -> HttpResponse:
         try:
-            PaperCreatorService().remove_all_papers_from_db()
+            PaperCreatorService.remove_all_papers_from_db()
         except PlomDependencyConflict as err:
             messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(reverse("prep_conflict"))
@@ -118,10 +118,10 @@ class PQVMappingView(ManagerRequiredView):
             "number_of_students": StagingStudentService().how_many_students(),
             "student_list_present": StagingStudentService().are_there_students(),
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
-            "chore_in_progress": PaperCreatorService().is_chore_in_progress(),
-            "chore_message": PaperCreatorService().get_chore_message(),
-            "populate_in_progress": PaperCreatorService().is_populate_in_progress(),
-            "evacuate_in_progress": PaperCreatorService().is_evacuate_in_progress(),
+            "chore_in_progress": PaperCreatorService.is_chore_in_progress(),
+            "chore_message": PaperCreatorService.get_chore_message(),
+            "populate_in_progress": PaperCreatorService.is_populate_in_progress(),
+            "evacuate_in_progress": PaperCreatorService.is_evacuate_in_progress(),
         }
 
         prenamed_papers_list = list(

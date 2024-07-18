@@ -44,11 +44,10 @@ def huey_populate_whole_db(
     id_page_number = SpecificationService.get_id_page_number()
     dnm_page_numbers = SpecificationService.get_dnm_pages()
     question_page_numbers = SpecificationService.get_question_pages()
-    pcs = PaperCreatorService()
 
     # TODO - move much of this loop back into paper-creator.
     for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
-        pcs._create_single_paper_from_qvmapping_and_pages(
+        PaperCreatorService.create_single_paper_from_qvmapping_and_pages(
             paper_number,
             qv_row,
             id_page_number=id_page_number,
@@ -118,9 +117,9 @@ class PaperCreatorService:
     def _reset_number_to_produce(cls):
         cls._set_number_to_produce(0)
 
+    @staticmethod
     @transaction.atomic()
     def _create_single_paper_from_qvmapping_and_pages(
-        self,
         paper_number: int,
         qv_row: Dict[int, int],
         *,
@@ -196,20 +195,24 @@ class PaperCreatorService:
             pass
             # not currently being populated/evacuated.
 
-    def is_chore_in_progress(self):
+    @staticmethod
+    def is_chore_in_progress():
         return PopulateEvacuateDBChore.objects.filter(obsolete=False).exists()
 
-    def is_populate_in_progress(self):
+    @staticmethod
+    def is_populate_in_progress():
         return PopulateEvacuateDBChore.objects.filter(
             obsolete=False, action=PopulateEvacuateDBChore.POPULATE
         ).exists()
 
-    def is_evacuate_in_progress(self):
+    @staticmethod
+    def is_evacuate_in_progress():
         return PopulateEvacuateDBChore.objects.filter(
             obsolete=False, action=PopulateEvacuateDBChore.EVACUATE
         ).exists()
 
-    def get_chore_message(self):
+    @staticmethod
+    def get_chore_message():
         try:
             return PopulateEvacuateDBChore.objects.get(obsolete=False).message
         except ObjectDoesNotExist:
