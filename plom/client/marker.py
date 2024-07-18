@@ -809,6 +809,7 @@ class MarkerClient(QWidget):
 
         # next we try to download annotated image for certain hardcoded states
         if status.casefold() in ("complete", "marked"):
+            # Note: "marked" is only on legacy servers
             self.get_files_for_previously_annotated(task)
             self._updateImage(pr)  # recurse
             return
