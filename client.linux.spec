@@ -4,12 +4,14 @@
 
 from pathlib import Path
 from plom import __version__
+import spellchecker
 
 block_cipher = None
+dict_path = spellchecker.__path__[0] + '/resources'
 
 a = Analysis(['plom/client/__main__.py'],
              pathex=['./'],
-             binaries=[],
+             binaries=[(dict_path, 'spellchecker/resources')],
              datas=[
                  ('plom/client/*.svg', 'plom/client'),
                  ('plom/client/*.png', 'plom/client'),
