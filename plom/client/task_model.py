@@ -18,8 +18,6 @@ from typing import Any
 from PyQt6.QtCore import QModelIndex, QSortFilterProxyModel
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
 
-from .useful_classes import ErrorMsg
-
 
 log = logging.getLogger("marker")
 
@@ -39,11 +37,27 @@ _idx_status = 1
 _idx_mark = 2
 _idx_marking_time = 3
 _idx_tags = 4
-_idx_annotated_file = 5
-_idx_plom_file = 6
-_idx_paper_dir = 7
-_idx_src_img_data = 8
-_idx_integrity = 9
+_idx_user = 5
+_idx_annotated_file = 6
+_idx_plom_file = 7
+_idx_paper_dir = 8
+_idx_src_img_data = 9
+_idx_integrity = 10
+
+# the possible status that we make locally
+# TODO: "reassigned"?
+local_possible_statuses = (
+    "untouched",
+    "marked",  # deprecated, legacy still uses
+    "complete",
+    "uploading...",
+    "failed upload",
+    "deferred",
+)
+
+# there is some overlap with the servers's status strings
+# note: we don't casefold these ones
+server_possible_statuses = ("Complete", "To Do", "Out")
 
 
 class MarkerExamModel(QStandardItemModel):
@@ -71,6 +85,7 @@ class MarkerExamModel(QStandardItemModel):
                 "Mark",
                 "Time (s)",
                 "Tag",
+                "User",
                 "AnnotatedFile",
                 "PlomFile",
                 "PaperDir",
@@ -79,22 +94,25 @@ class MarkerExamModel(QStandardItemModel):
             ]
         )
 
-    def addPaper(
+    def add_task(
         self,
         task_id_str: str,
         *,
         src_img_data: list[dict[str, Any]] = [],
         status: str = "untouched",
         mark: int = -1,
-        marking_time: float = 0,
+        marking_time: float = 0.0,
         tags: list[str] = [],
         integrity_check: str = "",
+        username: str = "",
     ) -> int:
-        """Adds a paper to self.
+        """Add a new row to the task table.
 
         Args:
             task_id_str: the Task ID for the page being uploaded. Takes the form
                 "q1234g9" for paper 1234 question 9.
+
+        Keyword Args:
             status: test status string.
             mark: the mark of the question.
             marking_time (float/int): marking time spent on that page in seconds.
@@ -106,30 +124,29 @@ class MarkerExamModel(QStandardItemModel):
                 The server expects us to be able to give it back to them.
             src_img_data: a list of dicts of md5sums, filenames and other
                 metadata of the images for the test question.
+            username: who owns this task.
 
         Returns:
             The integer row identifier of the added paper.
+
+        Raises:
+            KeyError: already have a task matching that task_id_str.
         """
-        # check if paper is already in model - if so, delete it and add it back with the new data.
-        # **but** be careful - if annotation in progress then ??
         try:
             r = self._findTask(task_id_str)
-        except ValueError:
+        except ValueError as e:
+            assert "not found" in str(e), f"Oh my, unexpected stuff: {e}"
             pass
         else:
-            # TODO: why is the model opening dialogs?!  Issue #2145.
-            ErrorMsg(
-                None,
-                f"Task {task_id_str} has been modified by server - you will need to annotate it again.",
-            ).exec()
-            self.removeRow(r)
-        # Append new groupimage to list and append new row to table.
-        r = self.rowCount()
+            raise KeyError(f"We already have task {task_id_str} in the table at r={r}.")
+
         # hide -1 which something might be using for "not yet marked"
         try:
             markstr = str(mark) if int(mark) >= 0 else ""
         except ValueError:
             markstr = ""
+
+        r = self.rowCount()
         # these *must* be strings but I don't understand why
         self.appendRow(
             [
@@ -138,6 +155,7 @@ class MarkerExamModel(QStandardItemModel):
                 QStandardItem(markstr),
                 QStandardItem(_marking_time_as_str(marking_time)),
                 QStandardItem(" ".join(tags)),
+                QStandardItem(username),
                 QStandardItem(""),  # annotatedFile,
                 QStandardItem(""),  # plomFile
                 QStandardItem(""),  # paperdir
@@ -145,6 +163,58 @@ class MarkerExamModel(QStandardItemModel):
                 QStandardItem(integrity_check),
             ]
         )
+        return r
+
+    def modify_task(
+        self,
+        task_id_str: str,
+        *,
+        src_img_data: list[dict[str, Any]] = [],
+        status: str = "untouched",
+        mark: int = -1,
+        marking_time: float = 0.0,
+        tags: list[str] = [],
+        integrity_check: str = "",
+        username: str = "",
+    ) -> int:
+        """Modify an existing row, or add a new one if it does not yet exist.
+
+        Args:
+            task_id_str: the Task ID for the page being uploaded. Takes the form
+                "q1234g9" for paper 1234 question 9.
+
+        Keywords Args:
+            status: task status string.
+            mark: the mark of the question.
+            marking_time (float/int): marking time spent on that page in seconds.
+            tags: Tags corresponding to the exam.  We will flatten to a
+                space-separated string.  TODO: maybe we should do that for display
+                but store as repr/json.
+            integrity_check: something from the server, especially legacy
+                servers, generally a concat of md5sums of underlying images.
+                The server expects us to be able to give it back to them.
+            src_img_data: a list of dicts of md5sums, filenames and other
+                metadata of the images for the test question.
+            username: who owns this task.
+
+        Returns:
+            The integer row identifier of the added/modified paper.
+        """
+        try:
+            r = self._findTask(task_id_str)
+        except ValueError as e:
+            assert "not found" in str(e), f"Oh my, unexpected stuff: {e}"
+            r = self.add_task(task_id_str)
+        else:
+            log.debug(f"Found task {task_id_str} in the table at r={r}, updating...")
+
+        self.set_source_image_data(task_id_str, src_img_data)
+        self._setStatus(r, status)
+        self._set_mark(r, mark)
+        self._set_marking_time(r, marking_time)
+        self.setTagsByTask(task_id_str, tags)
+        self.set_integrity_by_task(task_id_str, integrity_check)
+        self.set_username_by_task(task_id_str, username)
         return r
 
     def _getPrefix(self, r: int) -> str:
@@ -179,7 +249,11 @@ class MarkerExamModel(QStandardItemModel):
         Returns:
             None
         """
-        self.setData(self.index(r, 1), status)
+        assert (
+            status.casefold() in local_possible_statuses
+            or status in server_possible_statuses
+        ), f'Task status "{status}" is not in the allow lists'
+        self.setData(self.index(r, _idx_status), status)
 
     def _setAnnotatedFile(self, r: int, aname: Path | str, pname: Path | str) -> None:
         self.setData(self.index(r, _idx_annotated_file), str(aname))
@@ -220,6 +294,14 @@ class MarkerExamModel(QStandardItemModel):
             Name of a temporary directory for this paper.
         """
         return self.data(self.index(r, _idx_paper_dir))
+
+    def _set_mark(self, r: int, mark: int) -> None:
+        # hide -1 which something might be using for "not yet marked"
+        try:
+            markstr = str(mark) if int(mark) >= 0 else ""
+        except ValueError:
+            markstr = ""
+        self.setData(self.index(r, _idx_mark), markstr)
 
     def _get_marking_time(self, r):
         column_idx = _idx_marking_time
@@ -363,8 +445,41 @@ class MarkerExamModel(QStandardItemModel):
         self._setDataByTask(task, _idx_annotated_file, str(aname))
         self._setDataByTask(task, _idx_plom_file, str(pname))
 
+    def set_username_by_task(self, task: str, user: str) -> None:
+        """Set the username of a task."""
+        self._setDataByTask(task, _idx_user, user)
+
+    def get_username_by_task(self, task: str) -> str:
+        """Get the username of a task."""
+        return self._getDataByTask(task, _idx_user)
+
+    def _get_username(self, r: int) -> str:
+        return self.data(self.index(r, _idx_user))
+
+    def is_our_task(self, task: str, username) -> bool:
+        """Does this task belong to a particular user.
+
+        TODO: includes some asserts about status, which may need
+        relaxing/adjusting in the future.
+        """
+        task_username = self._getDataByTask(task, _idx_user)
+        status = self._getDataByTask(task, _idx_status)
+        if task_username == username:
+            assert (
+                status.casefold() in local_possible_statuses
+            ), f'Unexpected status "{status}" seen in one of our tasks'
+            return True
+        assert (
+            status in server_possible_statuses
+        ), f'Unexpected server task status "{status}"'
+        return False
+
+    def set_integrity_by_task(self, task: str, integrity: str) -> None:
+        """Set the integrity check for a task."""
+        self._setDataByTask(task, _idx_integrity, integrity)
+
     def getIntegrityCheck(self, task: str) -> str:
-        """Return integrity_check for task as string."""
+        """Return the integrity check string for a task."""
         return self._getDataByTask(task, _idx_integrity)
 
     def markPaperByTask(self, task, mark, aname, pname, marking_time, tdir) -> None:
@@ -424,6 +539,7 @@ class ProxyModel(QSortFilterProxyModel):
         self.setFilterKeyColumn(_idx_tags)
         self.tag_search_terms = []
         self.invert_tag_search = False
+        self.show_only_this_user = ""
 
     def lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
         """Sees if left data is less than right data.
@@ -444,6 +560,11 @@ class ProxyModel(QSortFilterProxyModel):
         # else compare as strings
         return str(left.data()) < str(right.data())
 
+    def set_show_only_this_user(self, user: str) -> None:
+        """Show only the tasks that belong to a particular user."""
+        self.show_only_this_user = user
+        self._trigger_filter_change()
+
     def set_filter_tags(self, filter_str: str, *, invert: bool = False) -> None:
         """Filter the visible tasks based on a string.
 
@@ -459,6 +580,9 @@ class ProxyModel(QSortFilterProxyModel):
         """
         self.invert_tag_search = invert
         self.tag_search_terms = filter_str.casefold().split()
+        self._trigger_filter_change()
+
+    def _trigger_filter_change(self) -> None:
         # trigger update (but filterAcceptsRow will be used)
         self.setFilterFixedString("")
 
@@ -480,6 +604,11 @@ class ProxyModel(QSortFilterProxyModel):
         inverts that logic: at least one of the words must not be in the
         tags.
         """
+        if self.show_only_this_user:
+            user = self.sourceModel().data(self.sourceModel().index(pos, _idx_user))
+            if user != self.show_only_this_user:
+                return False
+
         tags = (
             self.sourceModel().data(self.sourceModel().index(pos, _idx_tags)).casefold()
         )
