@@ -230,7 +230,7 @@ class RubricLandingPageView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
 
-class RubricItemView(DetailView, ManagerRequiredView):
+class RubricItemView(ManagerRequiredView):
     """A page for displaying a single rubric and its annotations."""
 
     def get(self, request, rubric_key):
