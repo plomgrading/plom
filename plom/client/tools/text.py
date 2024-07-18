@@ -309,6 +309,7 @@ class GhostText(QGraphicsTextItem):
         font = QFont("Helvetica")
         font.setPixelSize(round(fontsize))
         self.setFont(font)
+        self.setOpacity(0.7)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         # If displaying png-rendered-latex, store the original text here
