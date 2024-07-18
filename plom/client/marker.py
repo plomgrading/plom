@@ -1475,6 +1475,7 @@ class MarkerClient(QWidget):
             "uploading...",
             "failed upload",
             "untouched",
+            "deferred",
         ):
             # TODO: should this make a dialog somewhere?
             log.warn(f"task {task} status '{status}' is not your's to annotate")
