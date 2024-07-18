@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2024 Bryan Tanady
 
 from pathlib import Path
 from plom import __version__
+import spellchecker
 
 block_cipher = None
 dict_path = spellchecker.__path__[0] + '/resources'
