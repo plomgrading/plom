@@ -3,6 +3,7 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -73,7 +74,11 @@ class ResetConfirmView(ManagerRequiredView):
         """
         context = self.build_context()
         form = CompleteWipeForm()
-        reset_phrase = SpecificationService.get_shortname()
+        try:
+            reset_phrase = SpecificationService.get_shortname()
+        except ObjectDoesNotExist:
+            context.update({"no_spec": True})
+            return render(request, "base/reset_confirm.html", context=context)
         context.update(
             {
                 "bundles_staged": ScanService().staging_bundles_exist(),
