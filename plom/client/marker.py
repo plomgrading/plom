@@ -360,6 +360,8 @@ class MarkerClient(QWidget):
         uic.loadUi(resources.files(plom.client.ui_files) / "marker.ui", self)
         # TODO: temporary workaround
         self.ui = self
+        # Keep the original format around in case we need to change it
+        self._cachedProgressFormatStr = self.ui.mProgressBar.format()
 
         # Save the local temp directory for image files and the class list.
         if not tmpdir:
@@ -440,15 +442,6 @@ class MarkerClient(QWidget):
         # Get the number of Tests, Pages, Questions and Versions
         # Note: if this fails UI is not yet in a usable state
         self.exam_spec = self.msgr.get_spec()
-        info = self.msgr.get_exam_info()
-        # TODO: is never changed even if server changes it
-        self.max_papernum = info["current_largest_paper_num"]
-        # legacy won't provide this; fallback to a static value
-        self.annotatorSettings["feedback_rules"] = info.get(
-            "feedback_rules", static_feedback_rules_data
-        )
-        # TODO: wire up to server via lead_marker
-        self.annotatorSettings["user_can_view_all_tasks"] = False
 
         self.UIInitialization()
         self.applyLastTimeOptions(lastTime)
@@ -468,13 +461,7 @@ class MarkerClient(QWidget):
         # Get list of papers already marked and add to table.
         if self.msgr.is_legacy_server():
             self.loadMarkedList()
-        else:
-            assert self.msgr.username is not None
-            self.download_task_list(username=self.msgr.username)
-
-        # Keep the original format around in case we need to change it
-        self._cachedProgressFormatStr = self.ui.mProgressBar.format()
-        self.updateProgress()  # Update counts
+        self.refresh_server_data()
 
         # Connect the view **after** list updated.
         # Connect the table-model's selection change to Marker functions
@@ -603,6 +590,9 @@ class MarkerClient(QWidget):
         self.ui.deferButton.setMenu(m)
         self.ui.deferButton.clicked.connect(self.defer_task)
         self.ui.tasksComboBox.currentIndexChanged.connect(self.change_task_view)
+        self.ui.refreshTaskListButton.clicked.connect(self.refresh_server_data)
+        self.ui.refreshTaskListButton.setText("\N{CLOCKWISE OPEN CIRCLE ARROW}")
+        self.ui.refreshTaskListButton.setToolTip("Refresh server data")
         self.ui.tagButton.clicked.connect(self.manage_tags)
         self.ui.filterLE.returnPressed.connect(self.setFilter)
         self.ui.filterLE.textEdited.connect(self.setFilter)
@@ -1245,6 +1235,34 @@ class MarkerClient(QWidget):
         if not self.download_task_list():
             # could not update (maybe legacy server) so go back to only mine
             self.ui.tasksComboBox.setCurrentIndex(0)
+
+    def refresh_server_data(self):
+        """Refresh various server data including the current task last from the server."""
+        # TODO: update user permissions
+        info = self.msgr.get_exam_info()
+        self.max_papernum = info["current_largest_paper_num"]
+        # legacy won't provide this; fallback to a static value
+        self.annotatorSettings["feedback_rules"] = info.get(
+            "feedback_rules", static_feedback_rules_data
+        )
+        # TODO: self.msgr.get_user_role()
+        self.annotatorSettings["user_can_view_all_tasks"] = False
+        if not self.annotatorSettings["user_can_view_all_tasks"]:
+            # it might've changed, so reset combobox selection
+            self.ui.tasksComboBox.setCurrentIndex(0)
+            self._show_only_my_tasks()
+
+        # legacy does it own thing earlier in the workflow
+        if not self.msgr.is_legacy_server():
+            if self.ui.tasksComboBox.currentIndex() == 0:
+                assert self.msgr.username is not None
+                self.download_task_list(username=self.msgr.username)
+            else:
+                self.download_task_list()
+
+        # TODO: re-queue any failed uploads, Issue #3497
+
+        self.updateProgress()
 
     def download_task_list(self, *, username: str = "") -> bool:
         """Download and fill/update the task list.
