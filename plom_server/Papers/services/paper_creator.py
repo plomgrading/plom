@@ -245,7 +245,7 @@ class PaperCreatorService:
         self._set_number_to_produce(len(qv_map))
 
         if not _testing:
-            self.populate_whole_db_huey_wrapper(qv_map, background=background)
+            self._populate_whole_db_huey_wrapper(qv_map, background=background)
         else:
             # log(f"Adding {len(qv_map)} papers via foreground process for testing")
             id_page_number = SpecificationService.get_id_page_number()
@@ -260,7 +260,7 @@ class PaperCreatorService:
                     question_page_numbers=question_page_numbers,
                 )
 
-    def populate_whole_db_huey_wrapper(
+    def _populate_whole_db_huey_wrapper(
         self, qv_map: dict[int, dict[int, int]], *, background: bool = True
     ) -> None:
         # TODO - add seatbelt logic here
@@ -302,7 +302,7 @@ class PaperCreatorService:
         cls._reset_number_to_produce()
 
         if not _testing:
-            cls.evacuate_whole_db_huey_wrapper(background=background)
+            cls._evacuate_whole_db_huey_wrapper(background=background)
         else:
             # for testing purposes we delete in foreground
             with transaction.atomic():
@@ -313,7 +313,7 @@ class PaperCreatorService:
                 Paper.objects.all().delete()
 
     @staticmethod
-    def evacuate_whole_db_huey_wrapper(*, background: bool = True) -> None:
+    def _evacuate_whole_db_huey_wrapper(*, background: bool = True) -> None:
         # TODO - add seatbelt logic here
         with transaction.atomic(durable=True):
             tr = PopulateEvacuateDBChore.objects.create(
