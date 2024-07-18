@@ -17,7 +17,6 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.views.generic.detail import DetailView
 
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 
