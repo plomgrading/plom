@@ -601,11 +601,6 @@ class MarkerClient(QWidget):
         m = QMenu(self)
         # TODO: once enabled we don't need the explicit QAction
         # m.addAction("Reassign task to...", self.reassign_task)
-        a = QAction("Reassign task to...", self)
-        a.triggered.connect(self.reassign_task)
-        # TODO: future work
-        a.setEnabled(False)
-        m.addAction(a)
         m.addAction("Claim task for me", self.claim_task)
         self.ui.deferButton.setMenu(m)
         self.ui.deferButton.clicked.connect(self.defer_task)
