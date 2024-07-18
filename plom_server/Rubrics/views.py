@@ -280,7 +280,7 @@ class RubricItemView(ManagerRequiredView):
 
 def compare_rubrics(request, rubric_key):
     """View for displaying a diff between two rubrics."""
-    if request.method == "POST" and request.headers.get("HX-Request"):
+    if request.method == "POST" and request.htmx:
         form = RubricDiffForm(request.POST, key=str(rubric_key).zfill(12))
         if form.is_valid():
             left = [
