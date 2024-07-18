@@ -98,7 +98,6 @@ class Command(BaseCommand):
     def clear_papers(self) -> None:
         """Remove all test-papers from the database."""
         self.stdout.write("Removing test-papers and associated tasks...")
-        # note when a paper is deleted its associated task is also deleted.
         try:
             PaperCreatorService().remove_all_papers_from_db(background=False)
         except PlomDependencyConflict as e:
