@@ -253,8 +253,10 @@ class GhostComment(QGraphicsItemGroup):
         Note: does not fix up the size of the boxes, see changeComment which does.
         """
         pt = self.pos()
-        self.blurb.setPos(pt)
-        self.di.setPos(pt)
+        offset = 10
+        shifted_pt = QPointF(pt.x() + offset, pt.y())
+        self.blurb.setPos(shifted_pt)
+        self.di.setPos(shifted_pt)
 
         # if no delta, then move things accordingly
         if display_delta == ".":
