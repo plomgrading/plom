@@ -95,7 +95,12 @@ class ResetConfirmView(ManagerRequiredView):
         _confirm_field = "confirmation_field"
         if form.is_valid():
             if form.cleaned_data[_confirm_field] == reset_phrase:
-                big_red_button.reset_assessment_preparation_database()
+                try:
+                    big_red_button.reset_assessment_preparation_database()
+                except (PlomDependencyConflict, PlomDatabaseCreationError) as err:
+                    messages.add_message(request, messages.ERROR, f"{err}")
+                    return redirect(reverse("prep_conflict"))
+
                 messages.success(request, "Plom instance successfully wiped.")
                 return redirect("home")
             else:
