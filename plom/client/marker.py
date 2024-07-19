@@ -447,6 +447,7 @@ class MarkerClient(QWidget):
         self.applyLastTimeOptions(lastTime)
         self.connectGuiButtons()
 
+        # self.maxMark = self.exam_spec["question"][str(question_idx)]["mark"]
         try:
             self.maxMark = self.msgr.getMaxMark(self.question_idx)
         except PlomRangeException as err:
