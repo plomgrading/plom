@@ -123,8 +123,13 @@ class RubricService:
         if "kind" not in rubric_data.keys():
             raise ValidationError({"kind": "Kind is required."})
 
+        if rubric_data["kind"] not in ["absolute", "relative", "neutral"]:
+            raise ValidationError({"kind": "Invalid kind."})
+
         rubric_data["display_delta"] = self._generate_display_delta(
-            rubric_data["value"], rubric_data["kind"], rubric_data["out_of"]
+            rubric_data.get("value", 0),
+            rubric_data["kind"],
+            rubric_data.get("out_of", None),
         )
 
         s = SettingsModel.load()
@@ -247,7 +252,9 @@ class RubricService:
         new_rubric_data["key"] = rubric.key
 
         new_rubric_data["display_delta"] = self._generate_display_delta(
-            new_rubric_data["value"], new_rubric_data["kind"], new_rubric_data["out_of"]
+            new_rubric_data.get("value", 0),
+            new_rubric_data["kind"],
+            new_rubric_data.get("out_of", None),
         )
 
         serializer = RubricSerializer(data=new_rubric_data)
@@ -291,7 +298,7 @@ class RubricService:
         elif kind == "neutral":
             return "."
         else:
-            raise ValueError("Invalid kind.")
+            raise ValueError(f"Invalid kind: {kind}.")
 
     def get_rubrics_as_dicts(
         self, *, question: int | None = None
