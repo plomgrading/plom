@@ -466,7 +466,6 @@ class MarkerClient(QWidget):
         self.update_get_next_button()
 
         # Get list of papers already marked and add to table.
-        # also read these into the history variable
         if self.msgr.is_legacy_server():
             self.loadMarkedList()
         else:
@@ -667,6 +666,10 @@ class MarkerClient(QWidget):
             None
 
         Deprecated: only called on legacy servers.
+
+        Note: this tries to update the history between sessions; we don't
+        try to do that on the new server, partially b/c the ordering seems
+        fragile and I'm not sure its necessary.
         """
         # Ask server for list of previously marked papers
         markedList = self.msgr.MrequestDoneTasks(self.question_idx, self.version)
