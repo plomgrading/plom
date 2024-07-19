@@ -21,10 +21,9 @@ from rest_framework import status
 
 from plom import __version__
 from plom import Plom_API_Version
-from plom.feedback_rules import feedback_rules
 
 from API.permissions import AllowAnyReadOnly
-
+from Base.models import SettingsModel
 from Mark.services import MarkingTaskService
 from Identify.services import IdentifyTaskService
 from Papers.services import SpecificationService
@@ -121,15 +120,19 @@ class ExamInfo(APIView):
 
     Returns:
         (200): a dict of information about the exam/assessment as
-           key-value pairs,
+            key-value pairs.  ``feedback_rules`` might be an empty
+            dict in which case clients are supposed to have their
+            own static copy.
     """
 
     def get(self, request: Request) -> Response:
-        # TODO: hardcoded, and needs more info, Issue #2938
+        # TODO: who_can_create_rubrics
+        # TODO: who_can_modify_rubrics
         # TODO: suggest progress info here too
         info: dict[str, Any] = {
+            # TODO: hardcoded, Issue #2938
             "current_largest_paper_num": 9999,
-            "feedback_rules": feedback_rules,
+            "feedback_rules": SettingsModel.load().feedback_rules,
         }
         return Response(info)
 
