@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
@@ -102,6 +101,8 @@ def populate_the_database(length="normal"):
     )
     print("Paper database is now populated")
 
+def build_all_papers():
+    run_django_manage_command("plom_build_papers")
 
 def run_demo_commands(
     *, stop_after=None, solutions=True, length="normal", prename=True
@@ -113,6 +114,7 @@ def run_demo_commands(
     # >> will also upload solutions at this point if instructed by user
     # >> will also upload the classlist
     # (populate): make the qv-map and populate the database
+    # (papers_built): make the paper-pdfs
 
     run_django_manage_command("plom_create_demo_users")
     if stop_after == "users":
@@ -137,6 +139,10 @@ def run_demo_commands(
         print("Stopping after paper-database populated.")
         return
 
+    build_all_papers()
+    if stop_after == "papers_built":
+        print("Stopping after papers_built.")
+        return
 
 def wait_for_user_to_type_quit() -> None:
     while True:
