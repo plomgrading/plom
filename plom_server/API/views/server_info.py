@@ -120,7 +120,9 @@ class ExamInfo(APIView):
 
     Returns:
         (200): a dict of information about the exam/assessment as
-           key-value pairs,
+            key-value pairs.  ``feedback_rules`` might be an empty
+            dict in which case clients are supposed to have their
+            own static copy.
     """
 
     def get(self, request: Request) -> Response:
