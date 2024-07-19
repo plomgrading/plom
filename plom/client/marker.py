@@ -1248,8 +1248,14 @@ class MarkerClient(QWidget):
         self.annotatorSettings["feedback_rules"] = info.get(
             "feedback_rules", static_feedback_rules_data
         )
-        # TODO: self.msgr.get_user_role()
-        self.annotatorSettings["user_can_view_all_tasks"] = False
+        if not self.msgr.is_legacy_server():
+            print(self.msgr.get_user_role())
+            if self.msgr.get_user_role() == "lead_marker":
+                self.annotatorSettings["user_can_view_all_tasks"] = True
+            else:
+                self.annotatorSettings["user_can_view_all_tasks"] = False
+        else:
+            self.annotatorSettings["user_can_view_all_tasks"] = False
         if not self.annotatorSettings["user_can_view_all_tasks"]:
             # it might've changed, so reset combobox selection
             self.ui.tasksComboBox.setCurrentIndex(0)
