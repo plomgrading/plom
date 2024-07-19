@@ -1241,7 +1241,6 @@ class MarkerClient(QWidget):
 
     def refresh_server_data(self):
         """Refresh various server data including the current task last from the server."""
-        # TODO: update user permissions
         info = self.msgr.get_exam_info()
         self.max_papernum = info["current_largest_paper_num"]
         # legacy won't provide this; fallback to a static value
@@ -1249,7 +1248,10 @@ class MarkerClient(QWidget):
             "feedback_rules", static_feedback_rules_data
         )
         if not self.msgr.is_legacy_server():
-            print(self.msgr.get_user_role())
+            # TODO: in future, I think a prefer a rules-based framework
+            # Not "you are lead marker" but "you can view all tasks".
+            # To my mind, "lead_marker" etc is some server detail that
+            # could stay on the server.
             if self.msgr.get_user_role() == "lead_marker":
                 self.annotatorSettings["user_can_view_all_tasks"] = True
             else:
