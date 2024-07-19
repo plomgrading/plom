@@ -589,7 +589,7 @@ class MarkerClient(QWidget):
         m.addAction("Claim task for me", self.claim_task)
         self.ui.deferButton.setMenu(m)
         self.ui.deferButton.clicked.connect(self.defer_task)
-        self.ui.tasksComboBox.currentIndexChanged.connect(self.change_task_view)
+        self.ui.tasksComboBox.activated.connect(self.change_task_view)
         self.ui.refreshTaskListButton.clicked.connect(self.refresh_server_data)
         self.ui.refreshTaskListButton.setText("\N{CLOCKWISE OPEN CIRCLE ARROW}")
         self.ui.refreshTaskListButton.setToolTip("Refresh server data")
@@ -1218,7 +1218,7 @@ class MarkerClient(QWidget):
         return True
 
     def change_task_view(self, cbidx: int) -> None:
-        """Update task list in response to combobox changes.
+        """Update task list in response to combobox activation.
 
         In some cases we reject the change and change the index ourselves.
         """
@@ -1230,11 +1230,13 @@ class MarkerClient(QWidget):
         if not self.annotatorSettings["user_can_view_all_tasks"]:
             InfoMsg(self, "You don't have permission to view all tasks").exec()
             self.ui.tasksComboBox.setCurrentIndex(0)
+            self._show_only_my_tasks()
             return
         self._show_all_tasks()
         if not self.download_task_list():
             # could not update (maybe legacy server) so go back to only mine
             self.ui.tasksComboBox.setCurrentIndex(0)
+            self._show_only_my_tasks()
 
     def refresh_server_data(self):
         """Refresh various server data including the current task last from the server."""
