@@ -29,6 +29,8 @@ def pre_launch():
     run_django_manage_command("plom_clean_all_and_build_db")
     # build the user-groups and the admin and manager users
     run_django_manage_command("plom_make_groups_and_first_users")
+    # build extra-page and scrap-paper PDFs
+    run_django_manage_command("plom_build_scrap_extra_pdfs")
 
 
 def launch_huey_process():
