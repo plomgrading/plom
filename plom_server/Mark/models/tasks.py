@@ -25,6 +25,9 @@ class MarkingTask(BaseTask):
         MarkingTaskService.create_task(), the default is replaced with
         a value determined by the MarkingTaskPriority strategy enum.
 
+    It also has fields it inherits from BaseTask, including "assigned_user",
+    "time", "last_update" and "status".
+
     Status
     ~~~~~~
 
@@ -33,6 +36,8 @@ class MarkingTask(BaseTask):
       - `StatusChoices.TO_DO`: No user has started work on this task.
       - `StatusChoices.OUT`: Some user has this task signed out.  If they
         surrender the task later, it goes back to being TO_DO.
+        You can find out who it is assigned to by checking the
+        "assigned_user" field.
       - `StatusChoices.COMPLETE`: The task is finished.  However the
         new annotations associated with it could arrive: this is tracked
         via idea of the "Latest Annotation".
