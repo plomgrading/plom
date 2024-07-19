@@ -151,7 +151,7 @@ class RubricService:
             new_rubric = serializer.save()
 
             new_rubric.pedagogy_tags.clear()
-            for tag in rubric_data["pedagogy_tags"]:
+            for tag in rubric_data.get("pedagogy_tags", []):
                 new_rubric.pedagogy_tags.add(tag)
 
             rubric_obj = serializer.instance
@@ -273,7 +273,7 @@ class RubricService:
         new_rubric = serializer.save()
 
         new_rubric.pedagogy_tags.clear()
-        for tag in new_rubric_data["pedagogy_tags"]:
+        for tag in new_rubric_data.get("pedagogy_tags", []):
             new_rubric.pedagogy_tags.add(tag)
 
         rubric_obj = serializer.instance
