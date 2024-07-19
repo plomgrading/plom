@@ -7,36 +7,32 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, List
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django_huey import db_task
 
+from plom.plom_exceptions import PlomDatabaseCreationError
+from Papers.services import SpecificationService
+from Preparation.services.preparation_dependency_service import (
+    assert_can_modify_qv_mapping_database,
+)
+
 from ..models import (
-    Specification,
     Paper,
-    Image,
-    FixedPage,
     IDPage,
     DNMPage,
     QuestionPage,
     PopulateEvacuateDBChore,
     NumberOfPapersToProduceSetting,
 )
-from Papers.services import SpecificationService
-
-from Preparation.services.preparation_dependency_service import (
-    assert_can_modify_qv_mapping_database,
-)
-from plom.plom_exceptions import PlomDatabaseCreationError
 
 log = logging.getLogger("PaperCreatorService")
 
 
 @db_task(queue="tasks", context=True)
 def huey_populate_whole_db(
-    qv_map: Dict[int, Dict[int, int]], *, tracker_pk: int, task=None
+    qv_map: dict[int, dict[int, int]], *, tracker_pk: int, task=None
 ) -> bool:
     PopulateEvacuateDBChore.transition_to_running(tracker_pk, task.id)
     N = len(qv_map)
@@ -44,11 +40,10 @@ def huey_populate_whole_db(
     id_page_number = SpecificationService.get_id_page_number()
     dnm_page_numbers = SpecificationService.get_dnm_pages()
     question_page_numbers = SpecificationService.get_question_pages()
-    pcs = PaperCreatorService()
 
     # TODO - move much of this loop back into paper-creator.
     for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
-        pcs._create_single_paper_from_qvmapping_and_pages(
+        PaperCreatorService._create_single_paper_from_qvmapping_and_pages(
             paper_number,
             qv_row,
             id_page_number=id_page_number,
@@ -108,34 +103,28 @@ def huey_evacuate_whole_db(*, tracker_pk: int, task=None) -> bool:
 class PaperCreatorService:
     """Class to encapsulate functions to build the test-papers and groups in the DB.
 
-    DB must have a validated test spec before we can use this.
+    No need to instantiate: all methods can be called from the class.
     """
 
-    def __init__(self):
-        try:
-            _ = Specification.load()
-        except Specification.DoesNotExist as e:
-            raise ObjectDoesNotExist(
-                "The database does not contain a test specification."
-            ) from e
-
-    def _set_number_to_produce(self, numberToProduce: int):
+    @staticmethod
+    def _set_number_to_produce(numberToProduce: int):
         nop = NumberOfPapersToProduceSetting.load()
         nop.number_of_papers = numberToProduce
         nop.save()
 
-    def _reset_number_to_produce(self):
-        self._set_number_to_produce(0)
+    @classmethod
+    def _reset_number_to_produce(cls):
+        cls._set_number_to_produce(0)
 
+    @staticmethod
     @transaction.atomic()
     def _create_single_paper_from_qvmapping_and_pages(
-        self,
         paper_number: int,
-        qv_row: Dict[int, int],
+        qv_row: dict[int, int],
         *,
         id_page_number: int | None = None,
-        dnm_page_numbers: List[int] | None = None,
-        question_page_numbers: Dict[int, List[int]] | None = None,
+        dnm_page_numbers: list[int] | None = None,
+        question_page_numbers: dict[int, list[int]] | None = None,
     ) -> None:
         """Creates tables for the given paper number from supplied information.
 
@@ -146,10 +135,18 @@ class PaperCreatorService:
             paper_number: The number of the paper being created
             qv_row: Mapping from each question index to
                 version for this particular paper. Of the form ``{q: v}``.
-        KWargs:
+
+        Keyword Args:
             id_page_number: (optionally) the id-page page-number
             dnm_page_numbers: (optionally) a list of the dnm pages
             question_page_numbers: (optionally) the pages of each question
+
+        Returns:
+            None
+
+        Raises:
+            ObjectDoesNotExist: no spec.
+            IntegrityError: that paper number already exists.
         """
         if id_page_number is None:
             id_page_number = SpecificationService.get_id_page_number()
@@ -180,7 +177,8 @@ class PaperCreatorService:
                     version=version,
                 )
 
-    def assert_no_existing_chore(self):
+    @staticmethod
+    def assert_no_existing_chore():
         """Check that there is no existing (non-obsolate) populate / evacuate database chore.
 
         Raises:
@@ -196,28 +194,33 @@ class PaperCreatorService:
             pass
             # not currently being populated/evacuated.
 
-    def is_chore_in_progress(self):
+    @staticmethod
+    def is_chore_in_progress():
         return PopulateEvacuateDBChore.objects.filter(obsolete=False).exists()
 
-    def is_populate_in_progress(self):
+    @staticmethod
+    def is_populate_in_progress():
         return PopulateEvacuateDBChore.objects.filter(
             obsolete=False, action=PopulateEvacuateDBChore.POPULATE
         ).exists()
 
-    def is_evacuate_in_progress(self):
+    @staticmethod
+    def is_evacuate_in_progress():
         return PopulateEvacuateDBChore.objects.filter(
             obsolete=False, action=PopulateEvacuateDBChore.EVACUATE
         ).exists()
 
-    def get_chore_message(self):
+    @staticmethod
+    def get_chore_message():
         try:
             return PopulateEvacuateDBChore.objects.get(obsolete=False).message
         except ObjectDoesNotExist:
             return None
 
+    @classmethod
     def add_all_papers_in_qv_map(
-        self,
-        qv_map: Dict[int, Dict[int, int]],
+        cls,
+        qv_map: dict[int, dict[int, int]],
         *,
         background: bool = True,
         _testing: bool = False,
@@ -242,18 +245,18 @@ class PaperCreatorService:
         if Paper.objects.filter().exists():
             raise PlomDatabaseCreationError("Already papers in the database.")
         # check if there is an existing non-obsolete task
-        self.assert_no_existing_chore()
-        self._set_number_to_produce(len(qv_map))
+        cls.assert_no_existing_chore()
+        cls._set_number_to_produce(len(qv_map))
 
         if not _testing:
-            self.populate_whole_db_huey_wrapper(qv_map, background=background)
+            cls._populate_whole_db_huey_wrapper(qv_map, background=background)
         else:
             # log(f"Adding {len(qv_map)} papers via foreground process for testing")
             id_page_number = SpecificationService.get_id_page_number()
             dnm_page_numbers = SpecificationService.get_dnm_pages()
             question_page_numbers = SpecificationService.get_question_pages()
             for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
-                self._create_single_paper_from_qvmapping_and_pages(
+                cls._create_single_paper_from_qvmapping_and_pages(
                     paper_number,
                     qv_row,
                     id_page_number=id_page_number,
@@ -261,8 +264,9 @@ class PaperCreatorService:
                     question_page_numbers=question_page_numbers,
                 )
 
-    def populate_whole_db_huey_wrapper(
-        self, qv_map: Dict[int, Dict[int, int]], *, background: bool = True
+    @staticmethod
+    def _populate_whole_db_huey_wrapper(
+        qv_map: dict[int, dict[int, int]], *, background: bool = True
     ) -> None:
         # TODO - add seatbelt logic here
         with transaction.atomic(durable=True):
@@ -281,12 +285,13 @@ class PaperCreatorService:
         else:
             PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
 
+    @classmethod
     def remove_all_papers_from_db(
-        self, *, background: bool = True, _testing: bool = False
+        cls, *, background: bool = True, _testing: bool = False
     ) -> None:
         """Remove all the papers and associated objects from the database.
 
-        KWargs:
+        Keyword Args:
             background: de-populate the database in the background, or, if false,
                 as a blocking huey process
             _testing: when set true, blocking is ignored, and the db depopulation is done as
@@ -298,11 +303,11 @@ class PaperCreatorService:
         """
         assert_can_modify_qv_mapping_database()
         # check if there is an existing non-obsolete task
-        self.assert_no_existing_chore()
-        self._reset_number_to_produce()
+        cls.assert_no_existing_chore()
+        cls._reset_number_to_produce()
 
         if not _testing:
-            self.evacuate_whole_db_huey_wrapper(background=background)
+            cls._evacuate_whole_db_huey_wrapper(background=background)
         else:
             # for testing purposes we delete in foreground
             with transaction.atomic():
@@ -312,7 +317,8 @@ class PaperCreatorService:
             with transaction.atomic():
                 Paper.objects.all().delete()
 
-    def evacuate_whole_db_huey_wrapper(self, *, background: bool = True) -> None:
+    @staticmethod
+    def _evacuate_whole_db_huey_wrapper(*, background: bool = True) -> None:
         # TODO - add seatbelt logic here
         with transaction.atomic(durable=True):
             tr = PopulateEvacuateDBChore.objects.create(
@@ -329,20 +335,3 @@ class PaperCreatorService:
             print("Completed.")
         else:
             PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
-
-    def update_page_image(
-        self, paper_number: int, page_index: int, image: Image
-    ) -> None:
-        """Add a reference to an Image instance.
-
-        Args:
-            paper_number: a Paper instance id.
-                TODO: which is it?  not sure paper number will always be
-                the same as the pk of the paper!
-            page_index: the page number
-            image: the page-image
-        """
-        paper = Paper.objects.get(paper_number=paper_number)
-        page = FixedPage.objects.get(paper=paper, page_number=page_index)
-        page.image = image
-        page.save()
