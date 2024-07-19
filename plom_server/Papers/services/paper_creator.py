@@ -264,8 +264,9 @@ class PaperCreatorService:
                     question_page_numbers=question_page_numbers,
                 )
 
+    @staticmethod
     def _populate_whole_db_huey_wrapper(
-        self, qv_map: dict[int, dict[int, int]], *, background: bool = True
+        qv_map: dict[int, dict[int, int]], *, background: bool = True
     ) -> None:
         # TODO - add seatbelt logic here
         with transaction.atomic(durable=True):
