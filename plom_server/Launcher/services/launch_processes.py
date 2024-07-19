@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2024 Andrew Rechnitzer
 
 from pathlib import Path
 import shutil
@@ -14,21 +14,12 @@ from django.conf import settings
 from Base.services import database_service
 
 
-class DemoProcessesService:
+class LaunchProcessesService:
     """Handle starting and stopping the server and the Huey background process."""
 
     def remove_misc_user_files(self, engine):
-        print("Removing any misc user-generated files")
-
-        # TODO: Issue #2926:  where should these live?  And there are three
-        # hardcoded here but seems to me the toml could specify something else...
-        for fname in Path(".").glob("fake_*bundle*.pdf"):
-            Path(fname).unlink(missing_ok=True)
-
+        print("Removing any user-generated files from django's MEDIA_ROOT director")
         shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
-
-        # surely Django will do this?  Else we need the settings here
-        # Path("media").mkdir()
 
     def rebuild_migrations_and_migrate(self, engine):
         # print("Rebuild the database migrations and migrate")

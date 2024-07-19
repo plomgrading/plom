@@ -16,8 +16,8 @@ else:
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 
+from Launcher.services import LaunchProcessesService
 from ...services import (
-    DemoProcessesService,
     DemoCreationService,
     DemoBundleService,
     DemoHWBundleService,
@@ -291,7 +291,7 @@ class Command(BaseCommand):
                 raise CommandError(e)
         print(config)
 
-        proc_service = DemoProcessesService()
+        proc_service = LaunchProcessesService()
         proc_service.initialize_server_and_db()
 
         if stop_at == "migrate":

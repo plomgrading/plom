@@ -11,8 +11,7 @@ class LaunchConfig(AppConfig):
     # This function is called on Django startup
     def ready(self):
         print("v" * 50)
-        print("This app is run on django start-up.")
         print(
-            "This should perhaps check if we are running a demo or production or testing."
+            "This app is run on django start-up, including running a management command."
         )
         print("^" * 50)
