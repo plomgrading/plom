@@ -443,7 +443,6 @@ class RubricCreateView(ManagerRequiredView):
 class RubricEditView(ManagerRequiredView):
     def post(self, request: HttpRequest, rubric_key):
         rubric_key = str(rubric_key).zfill(12)
-        print(rubric_key)
         form = RubricItemForm(request.POST)
         if form.is_valid():
             rs = RubricService()
