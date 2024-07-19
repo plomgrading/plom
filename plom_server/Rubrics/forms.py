@@ -124,7 +124,7 @@ class RubricItemForm(forms.ModelForm):
             "meta",
             "versions",
             "parameters",
-            "tags",
+            "pedagogy_tags",
         ]
         widgets = {
             "text": forms.Textarea(attrs={"rows": 3}),

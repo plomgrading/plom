@@ -457,6 +457,7 @@ class RubricEditView(ManagerRequiredView):
                 "meta": form.cleaned_data["meta"],
                 "question": form.cleaned_data["question"],
                 "revision": rubric.revision,
+                "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
             }
             rs.modify_rubric(
                 key=rubric_key,

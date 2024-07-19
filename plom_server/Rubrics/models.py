@@ -112,7 +112,7 @@ class Rubric(models.Model):
     )
     revision = models.IntegerField(null=False, blank=True, default=0)
     latest = models.BooleanField(null=False, blank=True, default=True)
-    tags = models.ManyToManyField("QuestionTags.PedagogyTag", blank=True)
+    pedagogy_tags = models.ManyToManyField("QuestionTags.PedagogyTag", blank=True)
 
     def clean(self):
         if self.latest:
