@@ -117,21 +117,3 @@ class RubricItemForm(forms.ModelForm):
 
         for field in self.fields:
             self.fields[field].widget.attrs["class"] = "form-control"
-
-    def clean(self):
-        """Validate the form data."""
-        super(RubricItemForm, self).clean()
-        value = self.cleaned_data["value"]
-        out_of = self.cleaned_data["out_of"]
-        kind = self.cleaned_data["kind"]
-
-        if abs(value) > out_of:
-            self.add_error(
-                "value",
-                "The value of the rubric must be within the range of the out_of value.",
-            )
-        if kind == "absolute" and value < 0:
-            self.add_error(
-                "value",
-                "The value of an absolute rubric must be positive",
-            )
