@@ -79,24 +79,28 @@ def upload_demo_classlist(length="normal", prename=True):
         cl_path = preparation_useful_file_directory / "cl_for_long_demo.csv"
     elif length == "plaid":
         cl_path = preparation_useful_file_directory / "cl_for_plaid_demo.csv"
-    else:  # for normal / quick
+    elif length == "quick":
+        cl_path = preparation_useful_file_directory / "cl_for_quick_demo.csv"
+    else:  # for normal
         cl_path = preparation_useful_file_directory / "cl_for_demo.csv"
 
     run_django_manage_command(f"plom_preparation_classlist upload {cl_path}")
+
     if prename:
-        run_django_manage_command("plom_prearation_prenaming --enable")
+        run_django_manage_command("plom_preparation_prenaming --enable")
     else:
-        run_django_manage_command("plom_prearation_prenaming --disable")
+        run_django_manage_command("plom_preparation_prenaming --disable")
 
 
 def populate_the_database(length="normal"):
-    production = {"quick": 25, "normal": 70, "long": 600, "plaid": 2000}
+    production = {"quick": 35, "normal": 70, "long": 600, "plaid": 2000}
     print(
-        "Building a question-version map and populating the database with {production[length]} papers"
+        f"Building a question-version map and populating the database with {production[length]} papers"
     )
     run_django_manage_command(
         f"plom_papers build_db -n {production[length]} --first-paper 1"
     )
+    print("Paper database is now populated")
 
 
 def run_demo_commands(
@@ -112,10 +116,12 @@ def run_demo_commands(
 
     run_django_manage_command("plom_create_demo_users")
     if stop_after == "users":
+        print("Stopping after users created.")
         return
 
     run_django_manage_command("plom_demo_spec")
     if stop_after == "spec":
+        print("Stopping after assessment specification uploaded.")
         return
 
     upload_demo_test_source_files()
@@ -123,10 +129,12 @@ def run_demo_commands(
         upload_demo_solution_files()
     upload_demo_classlist(length, prename)
     if stop_after == "sources":
+        print("Stopping after assessment sources and classlist uploaded.")
         return
 
     populate_the_database(length)
     if stop_after == "populate":
+        print("Stopping after paper-database populated.")
         return
 
 
@@ -181,6 +189,11 @@ def set_argparse_and_get_args():
 
 if __name__ == "__main__":
     args = set_argparse_and_get_args()
+    # cast stop-after from list of options to a singleton or None
+    if args.stop_after:
+        stop_after = args.stop_after[0]
+    else:
+        stop_after = None
 
     # make sure we are in the correct directory to run things.
     confirm_run_from_correct_directory()
@@ -198,7 +211,7 @@ if __name__ == "__main__":
         print("*" * 50)
         print("> Running demo specific commands")
         run_demo_commands(
-            stop_after=args.stop_after,
+            stop_after=stop_after,
             length=args.length,
             solutions=args.solutions,
             prename=args.prename,
