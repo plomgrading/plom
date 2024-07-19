@@ -7,6 +7,16 @@ from shlex import split
 import subprocess
 
 
+def run_django_manage_command(cmd) -> None:
+    full_cmd = "python3 manage.py " + cmd
+    subprocess.run(split(full_cmd))
+
+
+def popen_django_manage_command(cmd) -> subprocess.Popen:
+    full_cmd = "python3 manage.py " + cmd
+    return subprocess.Popen(split(full_cmd))
+
+
 def confirm_run_from_correct_directory():
     if not Path("./manage.py").exists():
         raise RuntimeError(
@@ -16,27 +26,26 @@ def confirm_run_from_correct_directory():
 
 def pre_launch():
     # start by cleaning out the old db and misc files.
-    clean_command = "python3 manage.py plom_clean_all_and_build_db"
-    subprocess.run(split(clean_command))
+    run_django_manage_command("plom_clean_all_and_build_db")
     # build the user-groups and the admin and manager users
-    users_command = "python3 manage.py plom_make_groups_and_first_users"
-    subprocess.run(split(users_command))
+    run_django_manage_command("plom_make_groups_and_first_users")
 
 
 def launch_huey_process():
-    huey_launch_command = "python3 manage.py djangohuey --quiet"
-    return subprocess.Popen(split(huey_launch_command))
+    # this needs to be run in the background
+    return popen_django_manage_command("djangohuey --quiet")
 
 
 def launch_django_dev_server_process(*, port: int | None = None):
     # this needs to be run in the background
-    server_launch_command = "python3 manage.py runserver"
     if port:
-        server_launch_command += f" {port}"
-    return subprocess.Popen(split(server_launch_command))
+        print(f"Dev server will run on port {port}")
+        return popen_django_manage_command(f"runserver {port}")
+    else:
+        return popen_django_manage_command("runserver")
 
 
-def wait_for_user_to_type_quit():
+def wait_for_user_to_type_quit() -> None:
     while True:
         x = input("Type 'quit' and press Enter to exit the demo: ")
         if x.casefold() == "quit":
@@ -47,7 +56,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", help="Port number on which to launch server")
     args = parser.parse_args()
-    server_port = args.port
 
     # make sure we are in the correct directory to run things.
     confirm_run_from_correct_directory()
@@ -58,10 +66,8 @@ if __name__ == "__main__":
     try:
         print("v" * 50)
         print("Launching huey and django dev server")
-        if port:
-            print(f"Dev server will run on port {port}")
         huey_process = launch_huey_process()
-        server_process = launch_django_dev_server_process(port=server_port)
+        server_process = launch_django_dev_server_process(port=args.port)
         print("^" * 50)
         wait_for_user_to_type_quit()
 
