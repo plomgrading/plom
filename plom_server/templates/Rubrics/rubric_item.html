@@ -114,7 +114,11 @@
                                 </tr>
                                 <tr>
                                     <th scope="row">Tags</th>
-                                    <td>{{ latest_rubric.pedagogy_tags }}</td>
+                                    <td>
+                                        {% for tag in latest_rubric.pedagogy_tags.all %}
+                                            <span class="badge bg-primary" title={{ tag.text }}>{{ tag }}</span>
+                                        {% endfor %}
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
