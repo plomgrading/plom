@@ -72,10 +72,12 @@ class Command(BaseCommand):
             self.stdout.write("No admin login details provided: autogenerating...")
             admin_username = "admin"
             admin_password = simple_password(6)
+            self.stdout.write("v" * 40)
             self.stdout.write(
                 f"Admin username: {admin_username}\n"
                 f"Admin password: {admin_password}\n"
             )
+            self.stdout.write("^" * 40)
         else:
             admin_username, admin_password = options["admin_login"]
         self.create_admin(username=admin_username, password=admin_password)
@@ -85,10 +87,12 @@ class Command(BaseCommand):
             self.stdout.write("No manager login details provided: autogenerating...")
             manager_username = "manager"
             manager_password = simple_password(6)
+            self.stdout.write("v" * 40)
             self.stdout.write(
                 f"Manager username: {manager_username}\n"
                 f"Manager password: {manager_password}\n"
             )
+            self.stdout.write("^" * 40)
         else:
             manager_username, manager_password = options["manager_login"]
         self.create_manager(username=manager_username, password=manager_password)

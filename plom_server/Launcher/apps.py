@@ -8,10 +8,7 @@ class LaunchConfig(AppConfig):
     name = "Launcher"
     verbose_name = "A launcher app for where start-up things should go"
 
-    # This function is called on Django startup
+    # This function is called on django startup, including
+    # when a django-command is called
     def ready(self):
-        print("v" * 50)
-        print(
-            "This app is run on django start-up, including running a management command."
-        )
-        print("^" * 50)
+        pass
