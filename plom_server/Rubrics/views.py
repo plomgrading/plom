@@ -231,9 +231,10 @@ class RubricLandingPageView(ManagerRequiredView):
                 rubrics = rubrics.filter(kind=kind_filter, latest=True)
 
             if system_filter:
-                rubrics = rubrics.filter(system_rubric=True, latest=True)
-            else:
-                rubrics = rubrics.filter(system_rubric=False, latest=True)
+                if system_filter == "System":
+                    rubrics = rubrics.filter(system_rubric=True, latest=True)
+                elif system_filter == "User":
+                    rubrics = rubrics.filter(system_rubric=False, latest=True)
 
         rubrics = RubricTable(rubrics, order_by=request.GET.get("sort"))
         rubrics.paginate(page=request.GET.get("page", 1), per_page=15)
