@@ -977,7 +977,8 @@ oldOS_mindeps:
       python3-requests-toolbelt python3-pil python3-tqdm
       python3-defusedxml python3-jsmin python3-packaging
       iproute2 psmisc file python3-magic
-    - python3 -m pip install --upgrade pip setuptools wheel
+    # For now, try to run with OOTB pip
+    # python3 -m pip install --upgrade pip setuptools wheel
     - python3 -m pip --version
   script:
     - python3 -m pip install -r requirements.txt.tempminima
