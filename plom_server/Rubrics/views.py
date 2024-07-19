@@ -435,6 +435,7 @@ class RubricCreateView(ManagerRequiredView):
                 "out_of": form.cleaned_data["out_of"],
                 "meta": form.cleaned_data["meta"],
                 "question": form.cleaned_data["question"],
+                "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
             }
             rs.create_rubric(rubric_data)
         messages.success(request, "Rubric created successfully.")

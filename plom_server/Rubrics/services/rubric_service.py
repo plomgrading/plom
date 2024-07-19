@@ -148,7 +148,12 @@ class RubricService:
         rubric_data["latest"] = True
         serializer = RubricSerializer(data=rubric_data)
         if serializer.is_valid():
-            serializer.save()
+            new_rubric = serializer.save()
+
+            new_rubric.pedagogy_tags.clear()
+            for tag in rubric_data["pedagogy_tags"]:
+                new_rubric.pedagogy_tags.add(tag)
+
             rubric_obj = serializer.instance
             return rubric_obj
         else:
@@ -265,7 +270,12 @@ class RubricService:
         rubric.latest = False
         rubric.save()
 
-        serializer.save()
+        new_rubric = serializer.save()
+
+        new_rubric.pedagogy_tags.clear()
+        for tag in new_rubric_data["pedagogy_tags"]:
+            new_rubric.pedagogy_tags.add(tag)
+
         rubric_obj = serializer.instance
         return _Rubric_to_dict(rubric_obj)
 
