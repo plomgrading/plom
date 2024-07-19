@@ -301,6 +301,13 @@
                                                 {{ form.parameters }}
                                             </div>
                                         </div>
+                                        <div class="row form-group">
+                                            <div class="col">
+                                                {{ form.tags.errors }}
+                                                <label for="{{ form.tags.id_for_label }}">Tags:</label>
+                                                {{ form.tags }}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
