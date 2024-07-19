@@ -4,7 +4,6 @@
 from rest_framework import serializers
 
 from .models import PedagogyTag
-from django.contrib.auth.models import User
 
 
 class PedagogyTagSerializer(serializers.ModelSerializer):
