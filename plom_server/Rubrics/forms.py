@@ -34,6 +34,7 @@ class RubricFilterForm(forms.Form):
 
     question_filter = forms.TypedChoiceField(required=False)
     kind_filter = forms.TypedChoiceField(choices=KIND_CHOICES, required=False)
+    system_filter = forms.BooleanField(required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
