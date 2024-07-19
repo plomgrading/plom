@@ -123,17 +123,9 @@ class RubricService:
         if "kind" not in rubric_data.keys():
             raise ValidationError({"kind": "Kind is required."})
 
-        if "display_delta" not in rubric_data.keys():
-            if rubric_data["kind"] == "absolute":
-                rubric_data["display_delta"] = (
-                    f"{rubric_data['value']} of {rubric_data['out_of']}"
-                )
-            elif rubric_data["kind"] == "relative":
-                rubric_data["display_delta"] = f"{rubric_data['value']}"
-            elif rubric_data["kind"] == "neutral":
-                rubric_data["display_delta"] = "."
-            else:
-                raise ValidationError({"kind": "Invalid kind."})
+        rubric_data["display_delta"] = self._generate_display_delta(
+            rubric_data["value"], rubric_data["kind"], rubric_data["out_of"]
+        )
 
         s = SettingsModel.load()
         if creating_user is None:
@@ -266,6 +258,11 @@ class RubricService:
         new_rubric_data["revision"] += 1
         new_rubric_data["latest"] = True
         new_rubric_data["key"] = rubric.key
+
+        new_rubric_data["display_delta"] = self._generate_display_delta(
+            new_rubric_data["value"], new_rubric_data["kind"], new_rubric_data["out_of"]
+        )
+
         serializer = RubricSerializer(data=new_rubric_data)
 
         if not serializer.is_valid():
@@ -277,6 +274,37 @@ class RubricService:
         serializer.save()
         rubric_obj = serializer.instance
         return _Rubric_to_dict(rubric_obj)
+
+    def _generate_display_delta(
+        self, value: int, kind: str, out_of: int | None = None
+    ) -> str:
+        """Generate the display delta for a rubric.
+
+        Keyword Args:
+            value: the value of the rubric.
+            kind: the kind of the rubric.
+            out_of: the maximum value of the rubric, required for
+            absolute rubrics.
+
+        Raises:
+            ValueError: if the kind is not valid.
+            ValueError: if the kind is absolute and out_of is not provided.
+
+        """
+        if kind == "absolute":
+            if out_of is None:
+                raise ValueError("out_of is required for absolute rubrics.")
+            else:
+                return f"{value} of {out_of}"
+        elif kind == "relative":
+            if value > 0:
+                return f"+{value}"
+            else:
+                return f"{value}"
+        elif kind == "neutral":
+            return "."
+        else:
+            raise ValueError("Invalid kind.")
 
     @classmethod
     def get_rubrics_as_dicts(
