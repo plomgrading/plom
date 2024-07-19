@@ -865,7 +865,8 @@ newOS_newdeps_legacy:
       python3-pip
       iproute2 psmisc file python3-magic
     # apt-get --no-install-recommends --yes install libimage-exiftool-perl
-    - python3 -m pip install --upgrade pip setuptools wheel
+    # temporarily pin setuptools for Issue #3491
+    - python3 -m pip install --upgrade pip setuptools<71 wheel
     - pip --version
   script:
     - pip install .
@@ -942,7 +943,8 @@ newOS_newdeps_webplom:
       python3-pip
       iproute2 psmisc file python3-magic
     # apt-get --no-install-recommends --yes install libimage-exiftool-perl
-    - python3 -m pip install --upgrade pip setuptools wheel
+    # temporarily pin setuptools for Issue #3491
+    - python3 -m pip install --upgrade pip setuptools<71 wheel
     - pip --version
   script:
     - pip install .
