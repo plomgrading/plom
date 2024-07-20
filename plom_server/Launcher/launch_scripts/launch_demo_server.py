@@ -7,11 +7,59 @@ from pathlib import Path
 from shlex import split
 import subprocess
 
-# we specify these directories relative to the plom_server
+# we specify this directory relative to the plom_server
 # root directory, rather than getting Django things up and
 # running, just to get at these useful files.
-preparation_useful_file_directory = Path("./Preparation/useful_files_for_testing")
-finish_useful_file_directory = Path("./Finish/useful_files_for_testing")
+
+demo_file_directory = Path("./Launcher/launch_scripts/demo_files/")
+
+
+def wait_for_user_to_type_quit() -> None:
+    while True:
+        x = input("Type 'quit' and press Enter to exit the demo: ")
+        if x.casefold() == "quit":
+            break
+
+
+def set_argparse_and_get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port", help="Port number on which to launch server")
+    parser.add_argument(
+        "--length",
+        action="store",
+        choices=["quick", "normal", "long", "plaid"],
+        default="normal",
+        help="Describe length of demo",
+    )
+    parser.add_argument(
+        "--solutions",
+        default=True,
+        action=argparse.BooleanOptionalAction,
+        help="Upload solutions to demo server",
+    )
+    parser.add_argument(
+        "--prename",
+        default=True,
+        action=argparse.BooleanOptionalAction,
+        help="Prename papers as determined by the demo classlist",
+    )
+    parser.add_argument(
+        "--stop-after",
+        action="store",
+        choices=[
+            "users",
+            "spec",
+            "sources",
+            "populate",
+            "papers_built",
+            "bundles-created",
+            "bundles-read",
+            "bundles-pushed",
+        ],
+        nargs=1,
+        help="Stop the demo sequence at a certain breakpoint.",
+    )
+    return parser.parse_args()
 
 
 def run_django_manage_command(cmd) -> None:
@@ -54,10 +102,16 @@ def launch_django_dev_server_process(*, port: int | None = None):
         return popen_django_manage_command("runserver")
 
 
+def upload_demo_assessment_spec_file():
+    print("Uploading demo assessment spec")
+    spec_file = demo_file_directory / f"demo_assessment_spec.toml"
+    run_django_manage_command(f"plom_preparation_test_spec upload {spec_file}")
+
+
 def upload_demo_test_source_files():
     print("Uploading demo assessment source pdfs")
     for v in [1, 2]:
-        source_pdf = preparation_useful_file_directory / f"test_version{v}.pdf"
+        source_pdf = demo_file_directory / f"source_version{v}.pdf"
         run_django_manage_command(
             f"plom_preparation_test_source upload -v {v} {source_pdf}"
         )
@@ -65,23 +119,23 @@ def upload_demo_test_source_files():
 
 def upload_demo_solution_files():
     print("Uploading demo solution spec")
-    soln_spec_path = finish_useful_file_directory / "soln_specification.toml"
+    soln_spec_path = demo_file_directory / "soln_specification.toml"
     print("Uploading demo solution pdfs")
     run_django_manage_command(f"plom_soln_spec upload {soln_spec_path}")
     for v in [1, 2]:
-        soln_pdf_path = finish_useful_file_directory / f"solutions{v}.pdf"
+        soln_pdf_path = demo_file_directory / f"solutions{v}.pdf"
         run_django_manage_command(f"plom_soln_sources upload -v {v} {soln_pdf_path}")
 
 
 def upload_demo_classlist(length="normal", prename=True):
     if length == "long":
-        cl_path = preparation_useful_file_directory / "cl_for_long_demo.csv"
+        cl_path = demo_file_directory / "cl_for_long_demo.csv"
     elif length == "plaid":
-        cl_path = preparation_useful_file_directory / "cl_for_plaid_demo.csv"
+        cl_path = demo_file_directory / "cl_for_plaid_demo.csv"
     elif length == "quick":
-        cl_path = preparation_useful_file_directory / "cl_for_quick_demo.csv"
+        cl_path = demo_file_directory / "cl_for_quick_demo.csv"
     else:  # for normal
-        cl_path = preparation_useful_file_directory / "cl_for_demo.csv"
+        cl_path = demo_file_directory / "cl_for_demo.csv"
 
     run_django_manage_command(f"plom_preparation_classlist upload {cl_path}")
 
@@ -120,7 +174,7 @@ def build_all_papers_and_wait():
     print("All paper PDFs are now built.")
 
 
-def run_demo_commands(
+def run_demo_preparation_commands(
     *, stop_after=None, solutions=True, length="normal", prename=True
 ):
     # in order the demo will
@@ -131,7 +185,9 @@ def run_demo_commands(
     # >> will also upload the classlist
     # (populate): make the qv-map and populate the database
     # (papers_built): make the paper-pdfs
+    # finally - set preparation as completed.
 
+    # TODO = remove this demo-specific command
     run_django_manage_command("plom_create_demo_users")
     if stop_after == "users":
         print("Stopping after users created.")
@@ -166,53 +222,13 @@ def run_demo_commands(
     return
 
 
-def wait_for_user_to_type_quit() -> None:
-    while True:
-        x = input("Type 'quit' and press Enter to exit the demo: ")
-        if x.casefold() == "quit":
-            break
+def download_zip() -> None:
+    run_django_manage_command("plom_build_papers --download-all")
+    print("Downloaded a zip of all the papers")
 
 
-def set_argparse_and_get_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--port", help="Port number on which to launch server")
-    parser.add_argument(
-        "--length",
-        action="store",
-        choices=["quick", "normal", "long", "plaid"],
-        default="normal",
-        help="Describe length of demo",
-    )
-    parser.add_argument(
-        "--solutions",
-        default=True,
-        action=argparse.BooleanOptionalAction,
-        help="Upload solutions to demo server",
-    )
-    parser.add_argument(
-        "--prename",
-        default=True,
-        action=argparse.BooleanOptionalAction,
-        help="Prename papers as determined by the demo classlist",
-    )
-    parser.add_argument(
-        "--stop-after",
-        action="store",
-        choices=[
-            "users",
-            "spec",
-            "sources",
-            "populate",
-            "papers_built",
-            "bundles-created",
-            "bundles-uploaded",
-            "bundles-read",
-            "bundles-pushed",
-        ],
-        nargs=1,
-        help="Stop the demo sequence at a certain breakpoint.",
-    )
-    return parser.parse_args()
+def run_demo_preparation_commands(*, stop_after=None):
+    download_zip()
 
 
 if __name__ == "__main__":
@@ -238,11 +254,16 @@ if __name__ == "__main__":
 
         print("*" * 50)
         print("> Running demo specific commands")
-        run_demo_commands(
+        print(">> Preparation of assessment")
+        run_demo_preparation_commands(
             stop_after=stop_after,
             length=args.length,
             solutions=args.solutions,
             prename=args.prename,
+        )
+        print(">> Scanning of papers")
+        run_demo_scanning_commands(
+            stop_after=stop_after,
         )
         print("*" * 50)
         wait_for_user_to_type_quit()
