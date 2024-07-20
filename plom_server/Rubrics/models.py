@@ -143,6 +143,10 @@ class Rubric(models.Model):
         """Return the URL to the rubric detail view."""
         return reverse("rubric_item", kwargs={"rubric_key": self.key})
 
+    # @property
+    # def times_used(self):
+    #     return self.annotations.all().count()
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -163,6 +167,7 @@ class RubricTable(tables.Table):
     """Table for displaying rubrics."""
 
     key = tables.Column("Key", linkify=True)
+    times_used = tables.Column(verbose_name="# Used")
 
     class Meta:
         model = Rubric
@@ -173,6 +178,7 @@ class RubricTable(tables.Table):
             "last_modified",
             "kind",
             "system_rubric",
+            "times_used",
             "question",
             "text",
         )
@@ -182,6 +188,7 @@ class RubricTable(tables.Table):
             "last_modified",
             "kind",
             "system_rubric",
+            "times_used",
             "question",
             "text",
         )

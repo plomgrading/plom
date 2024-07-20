@@ -19,6 +19,7 @@ import html
 import json
 import logging
 import sys
+from django.db.models.aggregates import Count
 import tomlkit
 from typing import Any
 
@@ -347,6 +348,15 @@ class RubricService:
             Lazy queryset of all rubrics.
         """
         return Rubric.objects.filter(latest=True)
+
+    def get_all_rubrics_with_counts(self) -> QuerySet[Rubric]:
+        """Get all latest rubrics but also annotate with how many times it has been used.
+
+        Returns:
+            Lazy queryset of all rubrics with counts.
+        """
+        qs = self.get_all_rubrics()
+        return qs.annotate(times_used=Count("annotations"))
 
     def get_rubric_count(self) -> int:
         """How many rubrics in total (excluding revisions)."""
