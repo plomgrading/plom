@@ -33,6 +33,7 @@ from .forms import (
     RubricFilterForm,
     RubricDownloadForm,
     RubricItemForm,
+    RubricDiffForm,
 )
 from .models import RubricTable
 
