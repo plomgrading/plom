@@ -114,9 +114,7 @@ def upload_demo_test_source_files():
     print("Uploading demo assessment source pdfs")
     for v in [1, 2]:
         source_pdf = demo_file_directory / f"source_version{v}.pdf"
-        run_django_manage_command(
-            f"plom_preparation_test_source upload -v {v} {source_pdf}"
-        )
+        run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
 
 
 def upload_demo_solution_files():
