@@ -101,8 +101,24 @@ def populate_the_database(length="normal"):
     )
     print("Paper database is now populated")
 
-def build_all_papers():
-    run_django_manage_command("plom_build_papers")
+
+def build_all_papers_and_wait():
+    from time import sleep
+
+    run_django_manage_command("plom_build_papers --start-all")
+    # since this is a background huey job, we need to
+    # wait until all those pdfs are actually built -
+    # we can get that by looking at output from plom_build_papers --status
+    pdf_status_cmd = "python3 manage.py plom_build_papers --count-done"
+    while True:
+        out_papers = subprocess.check_output(split(pdf_status_cmd)).decode("utf-8")
+        if "all" in out_papers.casefold():
+            break
+        else:
+            print(out_papers.strip())
+            sleep(1)
+    print("All paper PDFs are now built.")
+
 
 def run_demo_commands(
     *, stop_after=None, solutions=True, length="normal", prename=True
@@ -139,10 +155,11 @@ def run_demo_commands(
         print("Stopping after paper-database populated.")
         return
 
-    build_all_papers()
+    build_all_papers_and_wait()
     if stop_after == "papers_built":
         print("Stopping after papers_built.")
         return
+
 
 def wait_for_user_to_type_quit() -> None:
     while True:
