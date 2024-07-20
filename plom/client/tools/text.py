@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2024 Bryan Tanady
 
 from PyQt6.QtCore import Qt, QPointF, QTimer
 from PyQt6.QtGui import QColor, QFont, QUndoCommand
