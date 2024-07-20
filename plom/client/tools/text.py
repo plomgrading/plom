@@ -4,7 +4,7 @@
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt6.QtCore import Qt, QPointF, QTimer
-from PyQt6.QtGui import QColor, QFont, QImage, QUndoCommand
+from PyQt6.QtGui import QColor, QFont, QUndoCommand
 from PyQt6.QtWidgets import QGraphicsItem, QGraphicsTextItem
 
 from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
@@ -161,7 +161,6 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         Args:
             image_path: image path.
         """
-
         html_content = f"""
         <div style="text-align: center;">
             <img src="{image_path}" style="vertical-align: middle;" />
@@ -332,7 +331,6 @@ class GhostText(QGraphicsTextItem):
         Args:
             image_path: image path.
         """
-
         html_content = f"""
         <div style="text-align: center;">
             <img src="{image_path}" style="vertical-align: middle;" />
@@ -359,7 +357,6 @@ class GhostText(QGraphicsTextItem):
 
             fragfilename = self.scene().latexAFragment(texIt, quiet=True)
             if fragfilename:
-                print(type(fragfilename))
                 self._tex_src_cache = txt
                 self.setPlainText("")
                 self.insert_image(fragfilename)
