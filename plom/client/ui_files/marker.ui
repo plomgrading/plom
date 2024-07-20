@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <author>
-  Copyright (C) 2018-2023 The Plom Project Developers
+  Copyright (C) 2018-2024 The Plom Project Developers
   SPDX-License-Identifier: AGPL-3.0-or-later
  </author>
  <class>MarkerWindow</class>
  <widget class="QWidget" name="MarkerWindow">
   <property name="windowModality">
-   <enum>Qt::WindowModal</enum>
+   <enum>Qt::WindowModality::WindowModal</enum>
   </property>
   <property name="geometry">
    <rect>
@@ -24,7 +24,7 @@
    <item>
     <widget class="QSplitter" name="splitter">
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <property name="handleWidth">
       <number>10</number>
@@ -34,10 +34,10 @@
      </property>
      <widget class="QFrame" name="frame">
       <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
+       <enum>QFrame::Shape::NoFrame</enum>
       </property>
       <property name="frameShadow">
-       <enum>QFrame::Plain</enum>
+       <enum>QFrame::Shadow::Plain</enum>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
        <property name="leftMargin">
@@ -81,7 +81,97 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="SimpleTableView" name="tableView">
+           <widget class="QFrame" name="frameFilter">
+            <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QComboBox" name="tasksComboBox">
+               <item>
+                <property name="text">
+                 <string>Show only my tasks</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Show all tasks</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item>
+              <widget class="QToolButton" name="refreshTaskListButton">
+               <property name="text">
+                <string>...</string>
+               </property>
+               <property name="autoRaise">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Orientation::Horizontal</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Policy::MinimumExpanding</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>16</width>
+                 <height>8</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="filterLE">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::FocusPolicy::StrongFocus</enum>
+               </property>
+               <property name="maxLength">
+                <number>256</number>
+               </property>
+               <property name="placeholderText">
+                <string>Filter on tag text</string>
+               </property>
+               <property name="clearButtonEnabled">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="filterInvCB">
+               <property name="toolTip">
+                <string>Invert filter</string>
+               </property>
+               <property name="text">
+                <string>inv</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="TaskTableView" name="tableView">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
@@ -95,16 +185,16 @@
              </size>
             </property>
             <property name="editTriggers">
-             <set>QAbstractItemView::NoEditTriggers</set>
+             <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
             </property>
             <property name="selectionMode">
-             <enum>QAbstractItemView::SingleSelection</enum>
+             <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
             </property>
             <property name="selectionBehavior">
-             <enum>QAbstractItemView::SelectRows</enum>
+             <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
             </property>
             <property name="gridStyle">
-             <enum>Qt::DotLine</enum>
+             <enum>Qt::PenStyle::DotLine</enum>
             </property>
             <attribute name="verticalHeaderVisible">
              <bool>false</bool>
@@ -129,27 +219,17 @@
              <item row="0" column="0" colspan="2">
               <widget class="QPushButton" name="annButton">
                <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
+                <enum>Qt::FocusPolicy::NoFocus</enum>
                </property>
                <property name="text">
                 <string>&amp;Annotate &amp;&amp; mark</string>
                </property>
               </widget>
              </item>
-             <item row="1" column="0">
-              <widget class="QPushButton" name="deferButton">
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="text">
-                <string>&amp;Defer</string>
-               </property>
-              </widget>
-             </item>
              <item row="1" column="1">
               <widget class="QPushButton" name="tagButton">
                <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
+                <enum>Qt::FocusPolicy::NoFocus</enum>
                </property>
                <property name="text">
                 <string>&amp;Tags</string>
@@ -172,67 +252,26 @@
                 </sizepolicy>
                </property>
                <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
+                <enum>Qt::FocusPolicy::NoFocus</enum>
                </property>
                <property name="text">
                 <string>&amp;Get next</string>
                </property>
               </widget>
              </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <widget class="QFrame" name="frame">
-            <layout class="QHBoxLayout" name="horizontalLayout_2">
-             <property name="leftMargin">
-              <number>0</number>
-             </property>
-             <property name="topMargin">
-              <number>0</number>
-             </property>
-             <property name="rightMargin">
-              <number>0</number>
-             </property>
-             <property name="bottomMargin">
-              <number>0</number>
-             </property>
-             <item>
-              <widget class="QPushButton" name="filterButton">
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="text">
-                <string>Filter</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QCheckBox" name="filterInvCB">
-               <property name="text">
-                <string>Inv</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="filterLE">
+             <item row="1" column="0">
+              <widget class="QToolButton" name="deferButton">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
                <property name="focusPolicy">
-                <enum>Qt::StrongFocus</enum>
+                <enum>Qt::FocusPolicy::NoFocus</enum>
                </property>
-               <property name="maxLength">
-                <number>256</number>
-               </property>
-               <property name="placeholderText">
-                <string>Filter on tag text</string>
-               </property>
-               <property name="clearButtonEnabled">
-                <bool>true</bool>
+               <property name="text">
+                <string>&amp;Defer</string>
                </property>
               </widget>
              </item>
@@ -298,20 +337,20 @@
              <bool>true</bool>
             </property>
             <property name="toolButtonStyle">
-             <enum>Qt::ToolButtonTextBesideIcon</enum>
+             <enum>Qt::ToolButtonStyle::ToolButtonTextBesideIcon</enum>
             </property>
             <property name="autoRaise">
              <bool>true</bool>
             </property>
             <property name="arrowType">
-             <enum>Qt::DownArrow</enum>
+             <enum>Qt::ArrowType::DownArrow</enum>
             </property>
            </widget>
           </item>
           <item>
            <spacer name="horizontalSpacer">
             <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <enum>Qt::Orientation::Horizontal</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -324,7 +363,7 @@
           <item>
            <widget class="QPushButton" name="closeButton">
             <property name="focusPolicy">
-             <enum>Qt::NoFocus</enum>
+             <enum>Qt::FocusPolicy::NoFocus</enum>
             </property>
             <property name="text">
              <string>&amp;Close</string>
@@ -420,9 +459,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>SimpleTableView</class>
+   <class>TaskTableView</class>
    <extends>QTableView</extends>
-   <header location="global">plom/client/useful_classes.h</header>
+   <header location="global">plom/client/task_table_view.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

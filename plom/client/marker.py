@@ -72,6 +72,7 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomException,
     PlomNoPaper,
+    PlomNoServerSupportException,
     PlomNoSolutionException,
 )
 from plom.messenger import Messenger
@@ -98,6 +99,21 @@ if platform.system() == "Darwin":
 
 
 log = logging.getLogger("marker")
+
+
+def task_id_str_to_paper_question_index(task: str) -> tuple[int, int]:
+    """Helper function to convert between task string and paper/question."""
+    # TODO: I dislike this packed-string: overdue for refactor
+    assert task[0] == "q", f"invalid task code {task}: no leading 'q'"
+    assert task[5] == "g", f"invalid task code {task}: no middle 'g'"
+    papernum = int(task[1:5])
+    question_idx = int(task[6:])
+    return papernum, question_idx
+
+
+def paper_question_index_to_task_id_str(papernum: int, question_idx: int) -> str:
+    """Helper function to convert between paper/question and task string."""
+    return f"q{papernum:04}g{question_idx}"
 
 
 class BackgroundUploader(QThread):
@@ -344,6 +360,8 @@ class MarkerClient(QWidget):
         uic.loadUi(resources.files(plom.client.ui_files) / "marker.ui", self)
         # TODO: temporary workaround
         self.ui = self
+        # Keep the original format around in case we need to change it
+        self._cachedProgressFormatStr = self.ui.mProgressBar.format()
 
         # Save the local temp directory for image files and the class list.
         if not tmpdir:
@@ -424,18 +442,12 @@ class MarkerClient(QWidget):
         # Get the number of Tests, Pages, Questions and Versions
         # Note: if this fails UI is not yet in a usable state
         self.exam_spec = self.msgr.get_spec()
-        info = self.msgr.get_exam_info()
-        # TODO: is never changed even if server changes it
-        self.max_papernum = info["current_largest_paper_num"]
-        # legacy won't provide this; fallback to a static value
-        self.annotatorSettings["feedback_rules"] = info.get(
-            "feedback_rules", static_feedback_rules_data
-        )
 
         self.UIInitialization()
         self.applyLastTimeOptions(lastTime)
         self.connectGuiButtons()
 
+        # self.maxMark = self.exam_spec["question"][str(question_idx)]["mark"]
         try:
             self.maxMark = self.msgr.getMaxMark(self.question_idx)
         except PlomRangeException as err:
@@ -448,12 +460,9 @@ class MarkerClient(QWidget):
         self.update_get_next_button()
 
         # Get list of papers already marked and add to table.
-        # also read these into the history variable
-        self.loadMarkedList()
-
-        # Keep the original format around in case we need to change it
-        self._cachedProgressFormatStr = self.ui.mProgressBar.format()
-        self.updateProgress()  # Update counts
+        if self.msgr.is_legacy_server():
+            self.loadMarkedList()
+        self.refresh_server_data()
 
         # Connect the view **after** list updated.
         # Connect the table-model's selection change to Marker functions
@@ -537,13 +546,14 @@ class MarkerClient(QWidget):
 
         self.prxM.setSourceModel(self.examModel)
         self.ui.tableView.setModel(self.prxM)
-        # hide various columns without end-user useful info
-        for i in self.ui.examModel.columns_to_hide:
-            self.ui.tableView.hideColumn(i)
 
         # Double-click or signal fires up the annotator window
         self.ui.tableView.doubleClicked.connect(self.annotateTest)
         self.ui.tableView.annotateSignal.connect(self.annotateTest)
+        self.ui.tableView.tagSignal.connect(self.manage_tags)
+        self.ui.tableView.claimSignal.connect(self.claim_task)
+        self.ui.tableView.deferSignal.connect(self.defer_task)
+        self.ui.tableView.reassignSignal.connect(self.reassign_task)
 
         if Version(__version__).is_devrelease:
             self.ui.technicalButton.setChecked(True)
@@ -568,15 +578,25 @@ class MarkerClient(QWidget):
         """
         self.ui.closeButton.clicked.connect(self.close)
         m = QMenu(self)
-        m.addAction("Get \N{MATHEMATICAL ITALIC SMALL N}th...", self.requestInteractive)
+        s = "Get \N{MATHEMATICAL ITALIC SMALL N}th..."
+        m.addAction(s, self.claim_task_interactive)
         m.addAction("Which papers...", self.change_tag_range_options)
         self.ui.getNextButton.setMenu(m)
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
-        self.ui.deferButton.clicked.connect(self.deferTest)
+        m = QMenu(self)
+        # TODO: once enabled we don't need the explicit QAction
+        # m.addAction("Reassign task to...", self.reassign_task)
+        m.addAction("Claim task for me", self.claim_task)
+        self.ui.deferButton.setMenu(m)
+        self.ui.deferButton.clicked.connect(self.defer_task)
+        self.ui.tasksComboBox.activated.connect(self.change_task_view)
+        self.ui.refreshTaskListButton.clicked.connect(self.refresh_server_data)
+        self.ui.refreshTaskListButton.setText("\N{CLOCKWISE OPEN CIRCLE ARROW}")
+        self.ui.refreshTaskListButton.setToolTip("Refresh server data")
         self.ui.tagButton.clicked.connect(self.manage_tags)
-        self.ui.filterButton.clicked.connect(self.setFilter)
         self.ui.filterLE.returnPressed.connect(self.setFilter)
+        self.ui.filterLE.textEdited.connect(self.setFilter)
         self.ui.filterInvCB.stateChanged.connect(self.setFilter)
         self.ui.viewButton.clicked.connect(self.choose_and_view_other)
         self.ui.technicalButton.clicked.connect(self.show_hide_technical)
@@ -635,13 +655,19 @@ class MarkerClient(QWidget):
 
         Returns:
             None
+
+        Deprecated: only called on legacy servers.
+
+        Note: this tries to update the history between sessions; we don't
+        try to do that on the new server, partially b/c the ordering seems
+        fragile and I'm not sure its necessary.
         """
         # Ask server for list of previously marked papers
         markedList = self.msgr.MrequestDoneTasks(self.question_idx, self.version)
         self.marking_history = []
         for x in markedList:
             # TODO: might not the "markedList" have some other statuses?
-            self.examModel.addPaper(
+            self.examModel.add_task(
                 x[0],
                 src_img_data=[],
                 status="marked",
@@ -649,11 +675,15 @@ class MarkerClient(QWidget):
                 marking_time=x[2],
                 tags=x[3],
                 integrity_check=x[4],
+                username=self.msgr.username,
             )
             self.marking_history.append(x[0])
 
     def get_files_for_previously_annotated(self, task: str) -> bool:
         """Loads the annotated image, the plom file, and the original source images.
+
+        TODO: maybe it could not aggressively download the src images: sometimes
+        people just want to look at the annotated image.
 
         Args:
             task (str): the task for the image files to be loaded from.
@@ -669,20 +699,23 @@ class MarkerClient(QWidget):
         if len(self.examModel.get_source_image_data(task)) > 0:
             return True
 
-        assert task[0] == "q"
-        assert task[5] == "g"
-        num = int(task[1:5])
-        question_idx = int(task[6:])
-        assert question_idx == self.question_idx
+        num, question_idx = task_id_str_to_paper_question_index(task)
+        assert question_idx == self.question_idx, f"wrong qidx={question_idx}"
 
+        # TODO: this integrity is almost certainly not important unless I want
+        # to modify.  If just looking...?  Anyway, non-legacy doesn't enforce it
+        integrity = self.examModel.getIntegrityCheck(task)
         try:
-            integrity = self.examModel.getIntegrityCheck(task)
             plomdata = self.msgr.get_annotations(
                 num, question_idx, edition=None, integrity=integrity
             )
             annot_img_info, annot_img_bytes = self.msgr.get_annotations_image(
                 num, question_idx, edition=plomdata["annotation_edition"]
             )
+        except PlomNoPaper as e:
+            ErrorMsg(None, f"no annotations for task {task}: {e}").exec()
+            # TODO: need something more significant to happen
+            return True
         except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
             # TODO: better action we can take here?
             # TODO: the real problem here is that the full_pagedata is potentially out of date!
@@ -735,8 +768,11 @@ class MarkerClient(QWidget):
         self.examModel.setAnnotatedFile(task, aname, pname)
         return True
 
-    def _updateImage(self, pr):
+    def _updateImage(self, pr: int) -> None:
         """Updates the preview image for a particular row of the table.
+
+        Try various things to get an appropriate image to display.
+        Lots of side effects as we update the table as needed.
 
         .. note::
            This function is a workaround used to keep the preview
@@ -747,31 +783,81 @@ class MarkerClient(QWidget):
            some future Qt expert will help us...
 
         Args:
-            pr (int): which row is highlighted.
+            pr: which row is highlighted, via row index.
 
         Returns:
             None
         """
-        if not self.get_files_for_previously_annotated(self.prxM.getPrefix(pr)):
+        # simplest first: if we have the annotated image then display that
+        ann_img_file = self.prxM.getAnnotatedFile(pr)
+        # TODO: special hack as empty "" comes back as Path which is "."
+        if str(ann_img_file) == ".":
+            ann_img_file = ""
+        if ann_img_file:
+            self.testImg.updateImage(ann_img_file)
             return
 
-        if self.prxM.getStatus(pr) in ("marked", "uploading...", "???"):
-            self.testImg.updateImage(self.prxM.getAnnotatedFile(pr))
-        else:
-            # Colin doesn't understand this proxy: just pull task and query examModel
-            task = self.prxM.getPrefix(pr)
-            src_img_data = self.examModel.get_source_image_data(task)
-            for r in src_img_data:
-                if not r.get("filename") and not r.get("local_filename"):
-                    print(r)
-                    raise PlomSeriousException(
-                        f"Unexpected Issue #2327: src_img_data is {src_img_data}, task={task}"
-                    )
-            self.get_downloads_for_src_img_data(src_img_data, trigger=False)
+        task = self.prxM.getPrefix(pr)
+        status = self.prxM.getStatus(pr)
+
+        # next we try to download annotated image for certain hardcoded states
+        if status.casefold() in ("complete", "marked"):
+            # Note: "marked" is only on legacy servers
+            self.get_files_for_previously_annotated(task)
+            self._updateImage(pr)  # recurse
+            return
+
+        # try the raw page images instead from the cached src_img_data
+        src_img_data = self.examModel.get_source_image_data(task)
+        if src_img_data:
+            self.get_downloads_for_src_img_data(src_img_data)
             self.testImg.updateImage(src_img_data)
-        # TODO: seems to behave ok without this hack: delete?
-        # self.testImg.forceRedrawOrSomeBullshit()
-        self.ui.tableView.setFocus()
+            return
+
+        # but if the src_img_data isn't present, get and trigger background downloads
+        src_img_data = self.get_src_img_data(task, cache=True)
+        if src_img_data:
+            self.get_downloads_for_src_img_data(src_img_data)
+            self.testImg.updateImage(src_img_data)
+
+        # All else fails, just wipe the display (e.g., pages removed from server)
+        self.testImg.updateImage(None)
+
+    def get_src_img_data(
+        self, task: str, *, cache: bool = False
+    ) -> list[dict[str, Any]]:
+        """Download the pagedate/src_img_data for a particular task.
+
+        Note this does not trigger downloads of the page images.  For
+        that, see :method:`get_downloads_for_src_img_data`.
+
+        Args:
+            task: which task to download the page data for.
+
+        Keyword Args:
+            cache: if this is one of the questions that we're marking,
+                also fill-in or update the client-side cache of pagedata.
+                Caution: page-arranger might mess with the local copy,
+                so for now be careful using this option.  Default: False.
+
+        Returns:
+            The source image data.
+
+        Raises:
+            PlomConflict: no paper.
+        """
+        papernum, qidx = task_id_str_to_paper_question_index(task)
+        pagedata = self.msgr.get_pagedata_context_question(papernum, qidx)
+
+        # TODO: is this the main difference between pagedata and src_img_data?
+        pagedata = [x for x in pagedata if x["included"]]
+
+        if cache and self.question_idx == qidx:
+            try:
+                self.examModel.set_source_image_data(task, pagedata)
+            except KeyError:
+                pass
+        return pagedata
 
     def _updateCurrentlySelectedRow(self) -> None:
         """Updates the preview image for the currently selected row of the table.
@@ -830,7 +916,7 @@ class MarkerClient(QWidget):
         self.ui.mProgressBar.setMaximum(maxm)
         self.ui.mProgressBar.setValue(val)
 
-    def requestInteractive(self):
+    def claim_task_interactive(self) -> None:
         """Ask user for paper number and then ask server for that paper.
 
         If available, download stuff, add to list, update view.
@@ -844,18 +930,8 @@ class MarkerClient(QWidget):
         )
         if not ok:
             return
-        log.info("getting paper num %s", n)
         task = f"q{n:04}g{self.question_idx}"
-        try:
-            self.claim_task_and_trigger_downloads(task)
-        except (
-            PlomTakenException,
-            PlomRangeException,
-            PlomVersionMismatchException,
-        ) as err:
-            WarnMsg(self, f"Cannot get paper {n}.", info=err).exec()
-            return
-        self.moveSelectionToTask(task)
+        self._claim_task(task)
 
     def requestNext(self, *, update_select=True):
         """Ask server for an unmarked paper, get file, add to list, update view.
@@ -953,12 +1029,13 @@ class MarkerClient(QWidget):
             row["filename"] = self.downloader.get_placeholder_path()
         return all_present
 
-    def claim_task_and_trigger_downloads(self, task):
+    def claim_task_and_trigger_downloads(self, task: str) -> None:
         """Claim a particular task for the current user and start image downloads.
 
         Notes:
             Side effects: on success, updates the table of tasks by adding
-            a new row.  The new row is *not* automatically selected.
+            a new row (or modifying an existing one).  But the new row is
+            *not* automatically selected.
 
         Returns:
             None
@@ -967,22 +1044,24 @@ class MarkerClient(QWidget):
             PlomTakenException
             PlomVersionMismatchException
         """
+        _, qidx = task_id_str_to_paper_question_index(task)
+        assert qidx == self.question_idx, f"wrong question: question_idx={qidx}"
         src_img_data, tags, integrity_check = self.msgr.MclaimThisTask(
             task, version=self.version
         )
-        # TODO: I dislike this packed-string: overdue for refactor
-        assert task[0] == "q"
-        assert task[5] == "g"
-        question_idx = int(task[6:])
-        assert question_idx == self.question_idx
 
         self.get_downloads_for_src_img_data(src_img_data)
 
-        self.examModel.addPaper(
+        # TODO: do we really want to just hardcode "untouched" here?
+        self.examModel.modify_task(
             task,
             src_img_data=src_img_data,
+            status="untouched",
+            mark=-1,
+            marking_time=0.0,
             tags=tags,
             integrity_check=integrity_check,
+            username=self.msgr.username,
         )
 
     def moveSelectionToTask(self, task):
@@ -1044,10 +1123,15 @@ class MarkerClient(QWidget):
             )
             # future use
             self.ui.labelTech4.setVisible(False)
+            # toggle various columns without end-user useful info
+            for i in self.ui.examModel.columns_to_hide:
+                self.ui.tableView.showColumn(i)
         else:
             self.ui.technicalButton.setText("Show technical info")
             self.ui.technicalButton.setArrowType(Qt.ArrowType.RightArrow)
             self.ui.frameTechnical.setVisible(False)
+            for i in self.ui.examModel.columns_to_hide:
+                self.ui.tableView.hideColumn(i)
 
     def toggle_fail_mode(self):
         """Toggle artificial failures simulatiing flaky networking in response to ticking a button."""
@@ -1098,7 +1182,7 @@ class MarkerClient(QWidget):
             # it might be hidden by filters
             prstart = 0  # put 'start' at row=0
         pr = prstart
-        while self.prxM.getStatus(pr) in ["marked", "uploading...", "deferred", "???"]:
+        while self.prxM.getStatus(pr).casefold() != "untouched":
             pr = (pr + 1) % prt
             if pr == prstart:  # don't get stuck in a loop
                 break
@@ -1134,14 +1218,216 @@ class MarkerClient(QWidget):
 
         return True
 
-    def deferTest(self):
-        """Mark test as "defer" - to be skipped until later."""
+    def change_task_view(self, cbidx: int) -> None:
+        """Update task list in response to combobox activation.
+
+        In some cases we reject the change and change the index ourselves.
+        """
+        if cbidx == 0:
+            self._show_only_my_tasks()
+            return
+        if cbidx != 1:
+            raise NotImplementedError(f"Unexpected cbidx={cbidx}")
+        if not self.annotatorSettings["user_can_view_all_tasks"]:
+            InfoMsg(self, "You don't have permission to view all tasks").exec()
+            self.ui.tasksComboBox.setCurrentIndex(0)
+            self._show_only_my_tasks()
+            return
+        self._show_all_tasks()
+        if not self.download_task_list():
+            # could not update (maybe legacy server) so go back to only mine
+            self.ui.tasksComboBox.setCurrentIndex(0)
+            self._show_only_my_tasks()
+
+    def refresh_server_data(self):
+        """Refresh various server data including the current task last from the server."""
+        info = self.msgr.get_exam_info()
+        self.max_papernum = info["current_largest_paper_num"]
+        # legacy won't provide this; fallback to a static value
+        self.annotatorSettings["feedback_rules"] = info.get(
+            "feedback_rules", static_feedback_rules_data
+        )
+        if not self.msgr.is_legacy_server():
+            # TODO: in future, I think a prefer a rules-based framework
+            # Not "you are lead marker" but "you can view all tasks".
+            # To my mind, "lead_marker" etc is some server detail that
+            # could stay on the server.
+            if self.msgr.get_user_role() == "lead_marker":
+                self.annotatorSettings["user_can_view_all_tasks"] = True
+            else:
+                self.annotatorSettings["user_can_view_all_tasks"] = False
+        else:
+            self.annotatorSettings["user_can_view_all_tasks"] = False
+        if not self.annotatorSettings["user_can_view_all_tasks"]:
+            # it might've changed, so reset combobox selection
+            self.ui.tasksComboBox.setCurrentIndex(0)
+            self._show_only_my_tasks()
+
+        # legacy does it own thing earlier in the workflow
+        if not self.msgr.is_legacy_server():
+            if self.ui.tasksComboBox.currentIndex() == 0:
+                assert self.msgr.username is not None
+                self.download_task_list(username=self.msgr.username)
+            else:
+                self.download_task_list()
+
+        # TODO: re-queue any failed uploads, Issue #3497
+
+        self.updateProgress()
+
+    def download_task_list(self, *, username: str = "") -> bool:
+        """Download and fill/update the task list.
+
+        Danger: there is quite a bit of subtly here about how to update
+        tasks when we already have local cached data or when the local
+        state might be mid-upload.
+
+        Keyword Args:
+            username: find tasks assigned to this user, or all tasks if
+                omitted.
+
+        Returns:
+            True if the donload was successful, False if the server
+            does not support this.
+        """
+        try:
+            tasks = self.msgr.get_tasks(
+                self.question_idx, self.version, username=username
+            )
+        except PlomNoServerSupportException as e:
+            WarnMsg(self, str(e)).exec()
+            return False
+        our_username = self.msgr.username
+        for t in tasks:
+            task_id_str = paper_question_index_to_task_id_str(
+                t["paper_number"], t["question"]
+            )
+            username = t.get("username", "")
+            integrity = t.get("integrity", "")
+            # TODO: maybe task_model can support None for mark too...?
+            mark = t.get("score", -1)  # not keen on this -1 sentinel
+            status = t["status"]
+            # mismatch b/w server status and how we represent claimed tasks locally
+            if status.casefold() == "out" and username == our_username:
+                status = "untouched"
+            try:
+                self.examModel.add_task(
+                    task_id_str,
+                    src_img_data=[],
+                    mark=mark,
+                    marking_time=t.get("marking_time", 0.0),
+                    status=status,
+                    tags=t["tags"],
+                    username=username,
+                    integrity_check=integrity,
+                )
+            except KeyError:
+                if username != our_username:
+                    # If server says its not our task, then overwrite local state
+                    # b/c the task may have been reassigned.
+                    # TODO: but this stomps on local cached annotation data, so that's wasteful
+                    # TODO: use the integrity_check?
+                    self.examModel.modify_task(
+                        task_id_str,
+                        src_img_data=[],
+                        mark=mark,
+                        marking_time=t.get("marking_time", 0.0),
+                        status=status,
+                        tags=t["tags"],
+                        username=username,
+                    )
+                    continue
+                # If it is our task, be careful b/c we don't want to stomp local state
+                # such as downloaded images, in-progress uploads etc.
+                # Currently we just keep the local state but this may not be correct
+                # if server has changed something.  TODO: use the integrity_check
+                # print(f"keeping local copy for {task_id_str}:\n\t{t}")
+        return True
+
+    def reassign_task(self):
+        """TODO: just a stub for now, no one is calling this."""
+        task = self.get_current_task_id_or_none()
+        if not task:
+            return
+        # TODO: combobox
+        assign_to, ok = QInputDialog.getText(
+            self, "Reassign to", f"Who would you like to reassign {task} to?"
+        )
+        if not ok:
+            return
+        # try:
+        #     self.msgr.TODO_New_Function(task, self.user, assign_to, reason="help")
+        # except PlomNoServerSupportException as e:
+        #     InfoMsg(self, e).exec()
+        #     return
+        # except PlomNoPermission as e:
+        #     InfoMsg(self, "You don't have permission to reassign that task: {e}").exec()
+        #     return
+        if random.random() < 0.5:
+            WarnMsg(
+                self, f'TODO: faked error reassigning {task} to "{assign_to}"'
+            ).exec()
+            return
+        InfoMsg(self, f'TODO: faked success reassigning {task} to "{assign_to}"').exec()
+        # TODO, now what?
+        # TODO: adding a new possibility here will have some fallout
+        self.examModel.setStatusByTask(task, "reassigned")
+
+    def claim_task(self) -> None:
+        """Try to claim the currently selected task for this user."""
+        task = self.get_current_task_id_or_none()
+        if not task:
+            return
+        # TODO: if its "To Do" we can just claim it
+        # TODO: in fact, I'd expect double-click to do that.
+        user = self.examModel.get_username_by_task(task)
+        if user == self.msgr.username:
+            InfoMsg(
+                self,
+                f"Note: task {task} appears to already belong to you,"
+                " trying to claim anyway...",
+            ).exec()
+        elif self.examModel.getStatusByTask(task).casefold() != "to do":
+            WarnMsg(
+                self, f'Not implemented yet: cannot claim {task} from user "{user}"'
+            ).exec()
+            return
+        self._claim_task(task)
+
+    def _claim_task(self, task: str) -> None:
+        log.info("claiming task %s", task)
+        try:
+            self.claim_task_and_trigger_downloads(task)
+        except (
+            PlomTakenException,
+            PlomRangeException,
+            PlomVersionMismatchException,
+        ) as err:
+            WarnMsg(self, f"Cannot get task {task}.", info=err).exec()
+            return
+        # maybe it was there already: should be harmless
+        self.moveSelectionToTask(task)
+
+    def defer_task(self):
+        """Mark task as "defer" - to be skipped until later."""
         task = self.get_current_task_id_or_none()
         if not task:
             return
         if self.examModel.getStatusByTask(task) == "deferred":
             return
-        if self.examModel.getStatusByTask(task) in ("marked", "uploading...", "???"):
+        if not self.examModel.is_our_task(task, self.msgr.username):
+            s = f"Cannot defer task {task} b/c it isn't yours"
+            user = self.examModel.get_username_by_task(task)
+            if user:
+                s += f': {task} belongs to "{user}"'
+            InfoMsg(self, s).exec()
+            return
+        if self.examModel.getStatusByTask(task).casefold() in (
+            "complete",
+            "marked",
+            "uploading...",
+            "failed upload",
+        ):
             InfoMsg(self, "Cannot defer a marked test.").exec()
             return
         self.examModel.deferPaper(task)
@@ -1178,9 +1464,17 @@ class MarkerClient(QWidget):
         task = self.get_current_task_id_or_none()
         if not task:
             return
+        if not self.examModel.is_our_task(task, self.msgr.username):
+            InfoMsg(self, f"Cannot annotate {task}: it is not assigned to you").exec()
+            return
         inidata = self.getDataForAnnotator(task)
-        # make sure getDataForAnnotator did not fail
         if inidata is None:
+            InfoMsg(
+                self,
+                f"Cannot annotate {task},"
+                " perhaps it is not assigned to you, or a download failed"
+                " perhaps due to poor or missing internet connection.",
+            ).exec()
             return
 
         if self.allowBackgroundOps:
@@ -1200,6 +1494,20 @@ class MarkerClient(QWidget):
         Returns:
             A tuple of data or None.
         """
+        status = self.examModel.getStatusByTask(task)
+
+        if status.casefold() not in (
+            "complete",
+            "marked",
+            "uploading...",
+            "failed upload",
+            "untouched",
+            "deferred",
+        ):
+            # TODO: should this make a dialog somewhere?
+            log.warn(f"task {task} status '{status}' is not your's to annotate")
+            return None
+
         # Create annotated filename.
         assert task.startswith("q")
         paperdir = Path(
@@ -1211,7 +1519,7 @@ class MarkerClient(QWidget):
         aname = paperdir / Gtask
         pdict = None
 
-        if self.examModel.getStatusByTask(task) in ("marked", "uploading...", "???"):
+        if status.casefold() in ("complete", "marked", "uploading...", "failed upload"):
             msg = SimpleQuestion(self, "Continue marking paper?")
             if not msg.exec() == QMessageBox.StandardButton.Yes:
                 return None
@@ -1253,17 +1561,14 @@ class MarkerClient(QWidget):
                 )
                 return None
 
-        # stash the previous state, not ideal because makes column wider
-        prevState = self.examModel.getStatusByTask(task)
-        self.examModel.setStatusByTask(task, "ann:" + prevState)
+        # we used to set status to indicate annotation-in-progress; removed as
+        # it doesn't seem necessary (it was tricky to set it back afterwards)
 
         exam_name = self.exam_spec["name"]
 
-        # TODO: I dislike this packed-string: overdue for refactor
-        assert task[5] == "g"
-        question_num = int(task[6:])
+        papernum, question_idx = task_id_str_to_paper_question_index(task)
         taskid = task[1:]
-        question_label = get_question_label(self.exam_spec, question_num)
+        question_label = get_question_label(self.exam_spec, question_idx)
         integrity_check = self.examModel.getIntegrityCheck(task)
         return (
             taskid,
@@ -1368,11 +1673,6 @@ class MarkerClient(QWidget):
             None
         """
         self.setEnabled(True)
-        if task:
-            # strip the "ann:"
-            prevState = self.examModel.getStatusByTask("q" + task).split(":")[-1]
-            # TODO: could also erase the paperdir
-            self.examModel.setStatusByTask("q" + task, prevState)
         # update image view b/c its image might have changed
         self._updateCurrentlySelectedRow()
 
@@ -1514,7 +1814,10 @@ class MarkerClient(QWidget):
         stat = self.examModel.getStatusByTask(task)
         # maybe it changed while we waited for the upload
         if stat == "uploading...":
-            self.examModel.setStatusByTask(task, "marked")
+            if self.msgr.is_legacy_server():
+                self.examModel.setStatusByTask(task, "marked")
+            else:
+                self.examModel.setStatusByTask(task, "Complete")
         self.updateProgress(numDone, numtotal)
 
     def backgroundUploadFailedServerChanged(self, task, error_message):
@@ -1527,7 +1830,7 @@ class MarkerClient(QWidget):
         Returns:
             None
         """
-        self.examModel.setStatusByTask(task, "???")
+        self.examModel.setStatusByTask(task, "failed upload")
         # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
         ErrorMsg(
             None,
@@ -1555,7 +1858,7 @@ class MarkerClient(QWidget):
         # "Server changed under us: {}".format(error_message)
         # ) from None
 
-    def backgroundUploadFailed(self, task, errmsg):
+    def backgroundUploadFailed(self, task: str, errmsg: str) -> None:
         """An upload has failed, we don't know why, do something LOUDLY.
 
         Args:
@@ -1564,16 +1867,16 @@ class MarkerClient(QWidget):
 
         Returns:
             None
-
         """
-        self.examModel.setStatusByTask(task, "???")
+        self.examModel.setStatusByTask(task, "failed upload")
         # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
         ErrorMsg(
             None,
             "Unfortunately, there was an unexpected error; the server did "
             f"not accept our marked paper {task}.\n\n"
-            "If the problem persists consider filing an issue. "
-            "Please close this window and log in again.",
+            "Your internet connection may be unstable or something unexpected "
+            "has gone wrong. "
+            "Please consider logging out and restarting your client.",
             info=errmsg,
         ).exec()
         return
@@ -1961,6 +2264,12 @@ class MarkerClient(QWidget):
         else:
             self.prxM.set_filter_tags(search_terms)
 
+    def _show_only_my_tasks(self) -> None:
+        self.prxM.set_show_only_this_user(self.msgr.username)
+
+    def _show_all_tasks(self) -> None:
+        self.prxM.set_show_only_this_user("")
+
     def choose_and_view_other(self) -> None:
         """Ask user to choose a paper number and question, then show images."""
         max_question_idx = self.exam_spec["numberOfQuestions"]
@@ -2031,29 +2340,24 @@ class MarkerClient(QWidget):
 
         if stuff is None:
             try:
-                pagedata = self.msgr.get_pagedata_context_question(tn, q)
+                # TODO: later we might be able to cache here
+                # ("q" might not be our question number)
+                pagedata = self.get_src_img_data(
+                    paper_question_index_to_task_id_str(tn, q)
+                )
             except PlomBenignException as e:
                 WarnMsg(self, f"Could not get page data: {e}").exec()
                 return
             if not pagedata:
                 WarnMsg(
                     self,
-                    f"No page images for paper {tn:04}:"
-                    " it may not be scanned or was not written.",
-                ).exec()
-                return
-            # also, discard the non-included pages
-            pagedata = [x for x in pagedata if x["included"]]
-            if not pagedata:
-                WarnMsg(
-                    self,
                     f"No page images for paper {tn:04} question index {q}:"
-                    " possibly that question is not yet scanned"
+                    " perhaps it was not written, not yet scanned,"
+                    " or possibly that question is not yet scanned"
                     " or has been discarded.",
                 ).exec()
                 return
-            # don't cache this pagedata: "q" might not be our question number
-            # (but the images are cacheable)
+            # (even if pagedata not cached, the images will be here)
             pagedata = self.downloader.sync_downloads(pagedata)
             stuff = pagedata
             s = f"Original ungraded images for paper {tn:04} question index {q}"

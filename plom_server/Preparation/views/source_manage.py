@@ -81,7 +81,7 @@ class SourceManageView(ManagerRequiredView):
                 messages.add_message(request, messages.ERROR, f"{err}")
                 return HttpResponseClientRedirect(reverse("prep_conflict"))
 
-        return render(request, "Preparation/test_source_attempt.html", context)
+        return render(request, "Preparation/source_attempt.html", context)
 
     def delete(self, request, version=None):
         if version:
