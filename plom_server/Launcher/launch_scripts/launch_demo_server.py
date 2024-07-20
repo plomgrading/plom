@@ -9,6 +9,14 @@ from pathlib import Path
 from shlex import split
 import subprocess
 
+# sigh.... python dependent import - sorry.
+import sys
+
+if sys.version_info < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
+
 # we specify this directory relative to the plom_server
 # root directory, rather than getting Django things up and
 # running, just to get at these useful files.
@@ -227,8 +235,34 @@ def download_zip() -> None:
     print("Downloaded a zip of all the papers")
 
 
-def run_demo_bundle_scan_commands(*, stop_after=None):
+def _read_bundle_config(length):
+    # read the config toml file
+    if length == "quick":
+        fname = "bundle_for_quick_demo.toml"
+    elif length == "long":
+        fname = "bundle_for_long_demo.toml"
+    elif length == "plaid":
+        fname = "bundle_for_plaid_demo.toml"
+    else:
+        fname = "bundle_for_demo.toml"
+    with open(demo_file_directory / fname, "rb") as fh:
+        try:
+            return tomllib.load(fh)
+        except tomllib.TOMLDecodeError as e:
+            raise RuntimeError(e)
+
+
+def build_bundles(length="normal"):
+    bundle_config_dict = _read_bundle_config(length)
+    # HACKED UP TO HERE
+    print(bundle_config_dict)
+
+
+def run_demo_bundle_scan_commands(*, stop_after=None, length="normal"):
     download_zip()
+    build_bundles(length)
+    if stop_after == "bundles_created":
+        return
 
 
 if __name__ == "__main__":
@@ -238,6 +272,8 @@ if __name__ == "__main__":
         stop_after = args.stop_after[0]
     else:
         stop_after = None
+
+    build_bundles(length=args.length)
 
     # make sure we are in the correct directory to run things.
     confirm_run_from_correct_directory()
