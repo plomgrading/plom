@@ -75,6 +75,29 @@ class RubricUploadForm(forms.Form):
     rubric_file = forms.FileField(label="")
 
 
+class RubricDiffForm(forms.Form):
+    """Form for comparing two rubrics."""
+
+    left_compare = forms.ModelChoiceField(queryset=None)
+    right_compare = forms.ModelChoiceField(queryset=None)
+
+    def __init__(self, *args, **kwargs):
+        key = kwargs.pop("key", None)
+        super().__init__(*args, **kwargs)
+
+        if key:
+            queryset = Rubric.objects.filter(key=key)
+            self.fields["left_compare"].queryset = queryset
+            self.fields["left_compare"].label_from_instance = (
+                lambda obj: "Rev. %i" % obj.revision
+            )
+
+            self.fields["right_compare"].queryset = queryset
+            self.fields["right_compare"].label_from_instance = (
+                lambda obj: "Rev. %i" % obj.revision
+            )
+
+
 class RubricItemForm(forms.ModelForm):
     """Form for creating or updating a Rubric."""
 
