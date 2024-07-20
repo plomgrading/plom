@@ -106,7 +106,7 @@ def launch_django_dev_server_process(*, port: int | None = None):
 
 def upload_demo_assessment_spec_file():
     print("Uploading demo assessment spec")
-    spec_file = demo_file_directory / f"demo_assessment_spec.toml"
+    spec_file = demo_file_directory / "demo_assessment_spec.toml"
     run_django_manage_command(f"plom_preparation_test_spec upload {spec_file}")
 
 
@@ -121,7 +121,7 @@ def upload_demo_test_source_files():
 
 def upload_demo_solution_files():
     print("Uploading demo solution spec")
-    soln_spec_path = demo_file_directory / "soln_specification.toml"
+    soln_spec_path = demo_file_directory / "demo_solution_spec.toml"
     print("Uploading demo solution pdfs")
     run_django_manage_command(f"plom_soln_spec upload {soln_spec_path}")
     for v in [1, 2]:
@@ -177,7 +177,7 @@ def build_all_papers_and_wait():
 
 
 def run_demo_preparation_commands(
-    *, stop_after=None, solutions=True, length="normal", prename=True
+    *, length="normal", stop_after=None, solutions=True, prename=True
 ):
     # in order the demo will
     # (users): create demo users,
@@ -229,7 +229,7 @@ def download_zip() -> None:
     print("Downloaded a zip of all the papers")
 
 
-def run_demo_preparation_commands(*, stop_after=None):
+def run_demo_bundle_scan_commands(*, stop_after=None):
     download_zip()
 
 
@@ -258,13 +258,13 @@ if __name__ == "__main__":
         print("> Running demo specific commands")
         print(">> Preparation of assessment")
         run_demo_preparation_commands(
-            stop_after=stop_after,
             length=args.length,
+            stop_after=stop_after,
             solutions=args.solutions,
             prename=args.prename,
         )
         print(">> Scanning of papers")
-        run_demo_scanning_commands(
+        run_demo_bundle_scan_commands(
             stop_after=stop_after,
         )
         print("*" * 50)
