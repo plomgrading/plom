@@ -155,6 +155,20 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         shp.translate(self.pos())
         return shp
 
+    def insert_image(self, image_path: str) -> None:
+        """Insert image (from image_path) to current instance of GhostText.
+
+        Args:
+            image_path: image path.
+        """
+
+        html_content = f"""
+        <div style="text-align: center;">
+            <img src="{image_path}" style="vertical-align: middle;" />
+        </div>
+        """
+        self.setHtml(html_content)
+
     def enable_interactive(self):
         """Set it as editable with the text-editor."""
         self.setTextInteractionFlags(Qt.TextInteractionFlag.TextEditorInteraction)
@@ -249,9 +263,7 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         if fragfilename:
             self._tex_src_cache = src
             self.setPlainText("")
-            tc = self.textCursor()
-            qi = QImage(fragfilename)
-            tc.insertImage(qi)
+            self.insert_image(fragfilename)
 
     def pngToText(self):
         """If displaying rendered latex, switch back to source."""
@@ -314,6 +326,20 @@ class GhostText(QGraphicsTextItem):
         # If displaying png-rendered-latex, store the original text here
         self._tex_src_cache = None
 
+    def insert_image(self, image_path: str) -> None:
+        """Insert image (from image_path) to current instance of GhostText.
+
+        Args:
+            image_path: image path.
+        """
+
+        html_content = f"""
+        <div style="text-align: center;">
+            <img src="{image_path}" style="vertical-align: middle;" />
+        </div>
+        """
+        self.setHtml(html_content)
+
     def is_rendered(self):
         """Is this TextItem displaying a PNG, e.g., of LaTeX?"""
         return self._tex_src_cache is not None
@@ -333,11 +359,10 @@ class GhostText(QGraphicsTextItem):
 
             fragfilename = self.scene().latexAFragment(texIt, quiet=True)
             if fragfilename:
+                print(type(fragfilename))
                 self._tex_src_cache = txt
                 self.setPlainText("")
-                tc = self.textCursor()
-                qi = QImage(fragfilename)
-                tc.insertImage(qi)
+                self.insert_image(fragfilename)
         if legal:
             self.setDefaultTextColor(QColor("blue"))
         else:
