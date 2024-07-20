@@ -6,7 +6,7 @@ from django.conf import settings
 
 
 class Command(BaseCommand):
-    """Build the extra-page and scrap-paper PDFs and put them into static storage"""
+    """Build the extra-page and scrap-paper PDFs and put them into static storage."""
 
     def handle(self, *args, **options):
         from plom.create import build_extra_page_pdf, build_scrap_paper_pdf

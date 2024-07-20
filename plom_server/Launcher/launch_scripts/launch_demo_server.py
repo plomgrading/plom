@@ -160,6 +160,11 @@ def run_demo_commands(
         print("Stopping after papers_built.")
         return
 
+    # now set preparation status as done
+    run_django_manage_command("plom_preparation_status --set finished")
+
+    return
+
 
 def wait_for_user_to_type_quit() -> None:
     while True:
