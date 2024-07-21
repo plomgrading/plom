@@ -209,7 +209,7 @@ class RubricService:
             raise PlomConflict(
                 f'The rubric your revision was based upon {new_rubric_data["revision"]} '
                 f"does not match database content (revision {rubric.revision}): "
-                f"most likely your  edits have collided with those of someone else."
+                f"most likely your edits have collided with those of someone else."
             )
 
         # Generally, omitting modifying_user bypasses checks
