@@ -254,8 +254,8 @@ class BaseTask(PolymorphicModel):
     time: the time the task was originally created.
         TODO: is this used for anything?
     last_update: the time of the last update to the task (updated whenever model is saved)
-    status: str, represents the status of the task: not started, sent to a client, completed, out of date.
-
+    status: str, represents the status of the task: not started, sent
+        to a client, completed, out of date.
     """
 
     # TODO: UUID for indexing

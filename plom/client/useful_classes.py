@@ -6,9 +6,8 @@
 import platform
 from typing import Any, Optional, Union
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-    QAbstractItemView,
     QCheckBox,
     QComboBox,
     QDialog,
@@ -20,7 +19,6 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
-    QTableView,
     QTextEdit,
     QToolButton,
     QVBoxLayout,
@@ -298,34 +296,6 @@ class SimpleQuestionCheckBox(QMessageBox):
         self.setDefaultButton(QMessageBox.StandardButton.Yes)
         self.setIcon(QMessageBox.Icon.Question)
         self.setCheckBox(self.cb)
-
-
-class SimpleTableView(QTableView):
-    """A table-view widget that emits annotateSignal when the user hits enter or return."""
-
-    # Note: marker.ui knows about this via a "plom/client/useful_classes.h" header
-
-    # This is picked up by the marker, lets it know to annotate
-    annotateSignal = pyqtSignal()
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        # User can sort, cannot edit, selects by rows.
-        self.setSortingEnabled(True)
-        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        # Resize to fit the contents
-        self.resizeRowsToContents()
-        self.horizontalHeader().setStretchLastSection(True)
-
-    def keyPressEvent(self, event):
-        # If user hits enter or return, then fire off
-        # the annotateSignal, else pass the event on.
-        key = event.key()
-        if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
-            self.annotateSignal.emit()
-        else:
-            super().keyPressEvent(event)
 
 
 class BlankIDBox(QDialog):

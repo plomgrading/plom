@@ -27,9 +27,9 @@ class Command(BaseCommand):
     def show_status(self):
         vup = SourceService.how_many_source_versions_uploaded()
         if vup:
-            self.stdout.write(f"{vup} test source pdf(s) uploaded.")
+            self.stdout.write(f"{vup} source pdf(s) uploaded.")
         else:
-            self.stdout.write("No test source pdfs uploaded.")
+            self.stdout.write("No source pdfs uploaded.")
         src_list = SourceService.get_list_of_sources()
         for src in src_list:
             if src["uploaded"]:
@@ -60,7 +60,7 @@ class Command(BaseCommand):
         src_list = SourceService.get_list_of_sources()
         up_list = [x for x in src_list if x["uploaded"]]
         if len(up_list) == 0:
-            self.stdout.write("There are no test sources on the server.")
+            self.stdout.write("There are no source PDFs on the server.")
             return
 
         if all:
@@ -88,32 +88,30 @@ class Command(BaseCommand):
         src_list = SourceService.get_list_of_sources()
         up_list = [x for x in src_list if x["uploaded"]]
         if len(up_list) == 0:
-            self.stdout.write("There are no sources on the server.")
+            self.stdout.write("There are no source PDFs on the server.")
             return
 
         if all:
             if version is not None:
                 raise CommandError("Cannot specify 'all' and 'version'")
-            self.stdout.write(
-                f"Removing all {len(up_list)} test source pdfs on server."
-            )
+            self.stdout.write(f"Removing all {len(up_list)} source PDFs on server.")
             SourceService.delete_all_source_pdfs()
             return
         if version in [x["version"] for x in up_list]:
             SourceService.delete_source_pdf(version)
-            self.stdout.write(f"Removed test pdf source version {version} from server.")
+            self.stdout.write(f"Removed source PDF version {version} from server.")
         else:
             raise CommandError(f"Source PDF version {version} is not on the server.")
 
     def upload_source(self, version=None, source_pdf=None):
         if PapersPrinted.have_papers_been_printed():
             raise CommandError(
-                "Papers have been printed. You cannot change the sources."
+                "Papers have been printed. You cannot change the source PDFs."
             )
 
         if not SpecificationService.is_there_a_spec():
             raise CommandError(
-                "There is not a valid test specification on the server. Cannot upload."
+                "There is not a valid specification on the server. Cannot upload."
             )
 
         src_list = SourceService.get_list_of_sources()
@@ -142,11 +140,11 @@ class Command(BaseCommand):
             success, msg = SourceService.take_source_from_upload(version, fh)
             if success:
                 self.stdout.write(
-                    f"Upload of source pdf for version {version} succeeded."
+                    f"Upload of source PDF for version {version} succeeded."
                 )
             else:
                 self.stderr.write(
-                    f"Upload of source pdf for version {version} failed = {msg}"
+                    f"Upload of source PDF for version {version} failed: {msg}"
                 )
                 return
 
@@ -156,14 +154,14 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         sub = parser.add_subparsers(
             dest="command",
-            description="Perform tasks related to uploading/downloading/deleting test source pdfs.",
+            description="Perform tasks related to uploading/downloading/deleting source PDFs.",
         )
         sub.add_parser("status", help="Show which sources have been uploaded")
-        sp_U = sub.add_parser("upload", help="Upload a test source pdf")
-        sp_D = sub.add_parser("download", help="Download a test source pdf")
-        sp_R = sub.add_parser("remove", help="Remove a test source pdf")
+        sp_U = sub.add_parser("upload", help="Upload a source PDF")
+        sp_D = sub.add_parser("download", help="Download a source PDF")
+        sp_R = sub.add_parser("remove", help="Remove a source PDF")
 
-        sp_U.add_argument("source_pdf", type=str, help="The source pdf to upload")
+        sp_U.add_argument("source_pdf", type=str, help="The source PDF to upload")
         sp_U.add_argument(
             "-v", "--version", type=int, help="The version to upload", required=True
         )
@@ -192,4 +190,4 @@ class Command(BaseCommand):
         elif options["command"] == "remove":
             self.remove_source(version=options["version"], all=options["all"])
         else:
-            self.print_help("manage.py", "plom_preparation_test_source")
+            self.print_help("manage.py", "plom_preparation_source")
