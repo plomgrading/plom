@@ -75,7 +75,7 @@ class McreateRubric(APIView):
             Responds with 406 not acceptable if the proposed data is
             invalid in some way.
             Responds with 403 if you are
-            not allowed to create new rubrics.  TODO: check this.
+            not allowed to create new rubrics.
         """
         rs = RubricService()
         try:
@@ -87,6 +87,8 @@ class McreateRubric(APIView):
             return _error_response(
                 f"Invalid rubric: {e}", status.HTTP_406_NOT_ACCEPTABLE
             )
+        except PermissionDenied as e:
+            return _error_response(e, status.HTTP_403_FORBIDDEN)
 
 
 class MmodifyRubric(APIView):
