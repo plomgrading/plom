@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django import forms
 from .models import PedagogyTag
@@ -16,6 +17,8 @@ class AddTagForm(forms.Form):
 
     question_index = forms.IntegerField()
     tag_id = forms.ModelChoiceField(queryset=PedagogyTag.objects.all())
+    # TODO: Colin confused by CharField here and TextField in the model.
+    # TODO: Elisa: CharField(widget=forms.Textarea) might be better (?)
     meta = forms.CharField(required=False)
 
 
