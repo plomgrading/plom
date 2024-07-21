@@ -1248,7 +1248,7 @@ class MarkerClient(QWidget):
             "feedback_rules", static_feedback_rules_data
         )
         if not self.msgr.is_legacy_server():
-            # TODO: in future, I think a prefer a rules-based framework
+            # TODO: in future, I think I prefer a rules-based framework
             # Not "you are lead marker" but "you can view all tasks".
             # To my mind, "lead_marker" etc is some server detail that
             # could stay on the server.
