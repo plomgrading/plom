@@ -389,7 +389,7 @@ class BaseMessenger:
             The version string of the server.
 
         Raises:
-            PlomAPIException: server is too old (or maybe just non-existent.
+            PlomAPIException: server is too old (or maybe just non-existent).
         """
         s = self._start()
         if self.webplom is not None:

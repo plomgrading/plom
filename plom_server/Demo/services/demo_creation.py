@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 
@@ -53,7 +53,7 @@ class DemoCreationService:
                 ]
             for i, src in enumerate(sources):
                 call_command(
-                    "plom_preparation_test_source",
+                    "plom_preparation_source",
                     "upload",
                     f"-v {i + 1}",
                     src,
