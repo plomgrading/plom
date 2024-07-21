@@ -263,8 +263,9 @@ class RubricService:
         rubric_obj = serializer.instance
         return _Rubric_to_dict(rubric_obj)
 
+    @classmethod
     def get_rubrics_as_dicts(
-        self, *, question: int | None = None
+        cls, *, question: int | None = None
     ) -> list[dict[str, Any]]:
         """Get the rubrics, possibly filtered by question.
 
@@ -274,20 +275,20 @@ class RubricService:
         Returns:
             Collection of dictionaries, one for each rubric.
         """
-        if question is None:
-            rubric_list = Rubric.objects.all()
-        else:
-            rubric_list = Rubric.objects.filter(question=question)
+        rubric_queryset = cls.get_all_rubrics()
+        if question is not None:
+            rubric_queryset = rubric_queryset.filter(question=question)
         rubric_data = []
 
-        for r in rubric_list.prefetch_related("user"):
+        for r in rubric_queryset.prefetch_related("user"):
             rubric_data.append(_Rubric_to_dict(r))
 
         new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))
 
         return new_rubric_data
 
-    def get_all_rubrics(self) -> QuerySet[Rubric]:
+    @staticmethod
+    def get_all_rubrics() -> QuerySet[Rubric]:
         """Get all the rubrics (latest revisions) as a QuerySet, enabling further lazy filtering.
 
         See: https://docs.djangoproject.com/en/4.2/topics/db/queries/#querysets-are-lazy

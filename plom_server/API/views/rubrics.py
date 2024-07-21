@@ -19,8 +19,7 @@ from .utils import _error_response
 
 class MgetAllRubrics(APIView):
     def get(self, request: Request) -> Response:
-        rs = RubricService()
-        all_rubric_data = rs.get_rubrics_as_dicts(question=None)
+        all_rubric_data = RubricService.get_rubrics_as_dicts(question=None)
         if not all_rubric_data:
             return _error_response(
                 "Server has no rubrics: check server settings",
@@ -31,8 +30,7 @@ class MgetAllRubrics(APIView):
 
 class MgetRubricsByQuestion(APIView):
     def get(self, request: Request, *, question: int) -> Response:
-        rs = RubricService()
-        all_rubric_data = rs.get_rubrics_as_dicts(question=question)
+        all_rubric_data = RubricService.get_rubrics_as_dicts(question=question)
         if not all_rubric_data:
             return _error_response(
                 "Server has no rubrics: check server settings",
