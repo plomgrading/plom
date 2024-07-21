@@ -71,7 +71,7 @@ class Command(BaseCommand):
             self.stdout.write("Database is not yet ready")
 
     def build_papers(
-        self, *, number_to_produce: int | None = None, first: int = 1
+        self, *, number_to_produce: int | None = None, first: int | None = 1
     ) -> None:
         """Create a version map and use it to populate the database with papers."""
         paper_info = PaperInfoService()
@@ -88,7 +88,12 @@ class Command(BaseCommand):
 
         assert number_to_produce is not None
 
-        qv_map = PQVMappingService().make_version_map(number_to_produce, first=first)
+        if first is None:
+            qv_map = PQVMappingService().make_version_map(number_to_produce)
+        else:
+            qv_map = PQVMappingService().make_version_map(
+                number_to_produce, first=first
+            )
         try:
             PaperCreatorService.add_all_papers_in_qv_map(qv_map, background=False)
         except ValueError as e:
