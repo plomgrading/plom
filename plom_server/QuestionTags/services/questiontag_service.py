@@ -62,7 +62,9 @@ class QuestionTagService:
             meta: Text shown only to markers, not the students.
 
         Returns:
-            None on success or a string of an error message explaining that the tag already exists.
+            None on success or a string of an error message explaining
+            that the tag already exists, or the proposed tag contains
+            invalid characters.
         """
         if not is_valid_tag_text(tag_name):
             return f"Tag name '{tag_name}' contains invalid characters."
@@ -96,13 +98,15 @@ class QuestionTagService:
             return str(e)
 
     @staticmethod
-    def edit_tag(tag_id, tag_name, text, meta=None):
+    def edit_tag(tag_id, tag_name, text, *, meta=None):
         """Edit an existing tag.
 
         Args:
             tag_id: The ID of the tag to edit.
             tag_name: The new name of the tag.
             text: The new description of the tag.
+
+        Keyword Args:
             meta: text shown only to markers, not the students.
 
         Returns:
