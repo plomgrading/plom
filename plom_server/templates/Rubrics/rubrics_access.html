@@ -38,19 +38,18 @@
                                         <strong>Permissive:</strong> any user can create rubrics.
                                     </label>
                                 </div>
-                                <div class="form-check mt-3 disabled">
+                                <div class="form-check mt-3">
                                     <input class="form-check-input"
                                            type="radio"
                                            id="create1"
                                            name="create"
                                            value="per-user"
-                                           disabled
                                            {% if create1_checked %}checked{% endif %} />
                                     <label class="form-check-label" for="create1">
                                         <strong>Some users</strong> can create rubrics,
-                                        depending on their account settings.
-                                        <em>Not implemented yet,</em>
-                                        but this will eventually be the default setting.
+                                        depending on their account settings
+                                        (you can add users to the &ldquo;lead markers&rdquo;
+                                        group).
                                     </label>
                                 </div>
                                 <div class="form-check mt-3">
@@ -92,12 +91,8 @@
                                            {% if modify1_checked %}checked{% endif %} />
                                     <label class="form-check-label" for="modify1">
                                         Users can modify rubrics <strong>they created.</strong>
-                                        <br />
-                                        <span class="text-muted">
-                                            <strong>Some users</strong> may modify all non-system rubrics,
-                                            depending on their account settings
-                                            <em>(Not implemented yet).</em>
-                                        </span>
+                                        Users in the &ldquo;<strong>lead markers</strong>&rdquo;
+                                        group may modify all non-system rubrics.
                                     </label>
                                 </div>
                                 <div class="form-check mt-3">
