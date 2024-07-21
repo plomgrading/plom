@@ -131,7 +131,8 @@ class RubricService:
             )
         else:
             # neither permissive nor locked so consult per-user permissions
-            if True:  # if is_lead_marker(creating_user):
+            if creating_user.groups.filter(name="lead_marker").exists():
+                # lead markers can modify any non-system-rubric
                 pass
             else:
                 raise PermissionDenied(
