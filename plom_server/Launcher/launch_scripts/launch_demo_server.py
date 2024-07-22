@@ -48,21 +48,24 @@ def set_argparse_and_get_args() -> None:
     parser.add_argument(
         "--solutions",
         default=True,
-        action=argparse.BooleanOptionalAction,
+        action="store_true",
         help="Upload solutions to demo server",
     )
+    parser.add_argument("--no-solutions", dest="solutions", action="store_false")
     parser.add_argument(
         "--prename",
         default=True,
-        action=argparse.BooleanOptionalAction,
+        action="store_true",
         help="Prename papers as determined by the demo classlist",
     )
+    parser.add_argument("--no-prename", dest="prename", action="store_false")
     parser.add_argument(
         "--muck",
-        default=False,
-        action=argparse.BooleanOptionalAction,
+        default=True,
+        action="store_true",
         help="Run pdf-mucking to simulate poor scanning of papers",
     )
+    parser.add_argument("--no-muck", dest="muck", action="store_false")
     parser.add_argument(
         "--stop-after",
         action="store",
@@ -335,7 +338,7 @@ def run_demo_bundle_scan_commands(*, stop_after=None, length="normal", muck=Fals
     KWargs:
         stop_after = after which step should the demo be stopped, see list above.
         length = the length of the demo: quick, normal, long, plaid.
-        muck = whether or not to "muck" with the mock test bundles - this is intended to immitate the effects of poor scanning.
+        muck = whether or not to "muck" with the mock test bundles - this is intended to imitate the effects of poor scanning.
     """
     download_zip()
     build_bundles(length)
@@ -376,7 +379,7 @@ if __name__ == "__main__":
             prename=args.prename,
         )
         print(">> Scanning of papers")
-        run_demo_bundle_scan_commands(stop_after=stop_after, muck=options.muck)
+        run_demo_bundle_scan_commands(stop_after=stop_after, muck=args.muck)
         print("*" * 50)
         wait_for_user_to_type_quit()
 
