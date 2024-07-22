@@ -490,10 +490,10 @@ class ClickDragPage(QWidget):
         # load the gif from resources - needs a little subterfuge
         # https://stackoverflow.com/questions/71072485/qmovie-from-qbuffer-from-qbytearray-not-displaying-gif
         res = resources.files(plom.client.help_img) / "click_drag.gif"
-        film_bytes = QByteArray(res.read_bytes())
-        film_buffer = QBuffer(film_bytes)
+        film_qbytesarray = QByteArray(res.read_bytes())
+        film_qbuffer = QBuffer(film_qbytesarray)
         film = QMovie()
-        film.setDevice(film_buffer)
+        film.setDevice(film_qbuffer)
         film.setCacheMode(QMovie.CacheMode.CacheAll)
 
         film_label = QLabel()
@@ -548,8 +548,11 @@ class ClickDragPage(QWidget):
         grid.addSpacing(6)
 
         self.setLayout(grid)
-        # as per https://stackoverflow.com/questions/71072485/qmovie-from-qbuffer-from-qbytearray-not-displaying-gif#comment125714355_71072485
-        # force film to jump to end to force the qmovie to actually load from the buffer before we
-        # return from this function, else buffer closed and will crash qmovie.
+        # as fer link, try to force QMove to load from the buffer before the buffer
+        # and bytearray are closed and/or garbage collected
         film.jumpToFrame(film.frameCount() - 1)
+        film.jumpToFrame(0)
         film.start()
+        # But it seems in PyQt6 (at least Qt6-6.7.1) need ref to prevent SIGSEGV
+        self._film_buffer = film_qbuffer
+        self._film_bytesarray = film_qbytesarray
