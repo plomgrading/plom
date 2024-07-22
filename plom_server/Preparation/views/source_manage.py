@@ -17,7 +17,6 @@ from django.http import (
 )
 from django.urls import reverse
 from django.shortcuts import render, redirect
-from django_htmx.http import HttpResponseClientRedirect
 from django.contrib import messages
 
 from plom.plom_exceptions import PlomDependencyConflict
