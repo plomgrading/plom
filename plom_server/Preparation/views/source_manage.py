@@ -69,61 +69,63 @@ class SourceManageView(ManagerRequiredView):
         return render(request, "Preparation/source_manage.html", context)
 
     def post(self, request, version=None):
-        if request.htmx:
-            context = {}
-            if not request.FILES["source_pdf"]:
-                context.update(
-                    {"success": False, "message": "Form invalid", "version": version}
+        # This function is HTMX only
+        if not request.htmx:
+            return HttpResponseBadRequest("Only HTMX POST requests are allowed")
+
+        context = {}
+        if not request.FILES["source_pdf"]:
+            context.update(
+                {"success": False, "message": "Form invalid", "version": version}
+            )
+        elif version is None:
+            context.update(
+                {
+                    "success": False,
+                    "message": "Version not specified",
+                    "version": version,
+                }
+            )
+        else:
+            try:
+                success, message = SourceService.take_source_from_upload(
+                    version, request.FILES["source_pdf"]
                 )
-            elif version is None:
                 context.update(
                     {
-                        "success": False,
-                        "message": "Version not specified",
-                        "version": version,
+                        "error": not success,
+                        "message": message,
+                        "src": SourceService.get_source(version),
                     }
                 )
-            else:
-                try:
-                    success, message = SourceService.take_source_from_upload(
-                        version, request.FILES["source_pdf"]
-                    )
-                    context.update(
-                        {
-                            "error": not success,
-                            "message": message,
-                            "src": SourceService.get_source(version),
-                        }
-                    )
-                except PlomDependencyConflict as err:
-                    context.update(
-                        {
-                            "error": True,
-                            "message": err,
-                            "src": SourceService.get_source(version),
-                        }
-                    )
+            except PlomDependencyConflict as err:
+                context.update(
+                    {
+                        "error": True,
+                        "message": err,
+                        "src": SourceService.get_source(version),
+                    }
+                )
 
-            context.update(self.build_context())
-            context.update({"htmx": request.htmx})
+        context.update(self.build_context())
+        context.update({"htmx": request.htmx})
 
-            return render(request, "Preparation/source_item_view.html", context)
-        else:
-            return HttpResponseBadRequest("Invalid request")
+        return render(request, "Preparation/source_item_view.html", context)
 
     def delete(self, request, version=None):
-        if version and request.htmx:
-            try:
-                SourceService.delete_source_pdf(version)
-            except PlomDependencyConflict as err:
-                context = {
-                    "error": True,
-                    "message": err,
-                    "src": SourceService.get_source(version),
-                }
-                return render(request, "Preparation/source_item_view.html", context)
-        else:
-            return HttpResponseBadRequest("Invalid request")
+        # This function is HTMX only
+        if not version or not request.htmx:
+            return HttpResponseBadRequest("Only HTMX DELETE requests are allowed")
+
+        try:
+            SourceService.delete_source_pdf(version)
+        except PlomDependencyConflict as err:
+            context = {
+                "error": True,
+                "message": err,
+                "src": SourceService.get_source(version),
+            }
+            return render(request, "Preparation/source_item_view.html", context)
 
         context = self.build_context()
         context.update(
