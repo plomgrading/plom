@@ -389,7 +389,7 @@ class BaseMessenger:
             The version string of the server.
 
         Raises:
-            PlomAPIException: server is too old (or maybe just non-existent.
+            PlomAPIException: server is too old (or maybe just non-existent).
         """
         s = self._start()
         if self.webplom is not None:
@@ -1040,6 +1040,8 @@ class BaseMessenger:
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
+                elif response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
                 if response.status_code == 406:
                     raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(
@@ -1219,7 +1221,7 @@ class BaseMessenger:
                         raise PlomNoRubric(response.reason) from None
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(
-                    f"Error of type {e} when creating new rubric"
+                    f"Error when modifying rubric: {e}"
                 ) from None
         if self.is_legacy_server():
             # On legacy servers, `new_rubric` will actually just be the key

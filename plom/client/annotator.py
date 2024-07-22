@@ -867,11 +867,11 @@ class Annotator(QWidget):
     def experimental_cycle(self):
         self.scene.whichLineToDraw_next()
 
-    def keyPopUp(self, *, tab_idx=None):
+    def keyPopUp(self, *, tab_idx: int | None = None) -> None:
         """View help and keyboard shortcuts, eventually edit them.
 
         Keyword Arg:
-            tab_idx (int/None): which tab to open in the help.  If None
+            tab_idx: which tab to open in the help.  If None
                 then we try to re-open on the same tab from last run.
         """
         if tab_idx is None:
