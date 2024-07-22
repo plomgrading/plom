@@ -45,7 +45,7 @@ urlpatterns = [
     path(
         "qvmapping/download",
         PQVMappingDownloadView.as_view(),
-        name="prep_qvmapping_download",
+        name="xnload",
     ),
     path(
         "qvmapping/delete", PQVMappingDeleteView.as_view(), name="prep_qvmapping_delete"

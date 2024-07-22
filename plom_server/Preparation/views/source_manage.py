@@ -8,7 +8,13 @@ from __future__ import annotations
 
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpRequest, HttpResponse, FileResponse, Http404
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    FileResponse,
+    Http404,
+    HttpResponseBadRequest,
+)
 from django.urls import reverse
 from django.shortcuts import render, redirect
 from django_htmx.http import HttpResponseClientRedirect
@@ -64,34 +70,74 @@ class SourceManageView(ManagerRequiredView):
         return render(request, "Preparation/source_manage.html", context)
 
     def post(self, request, version=None):
-        context = self.build_context()
-        if not request.FILES["source_pdf"]:
-            context.update(
-                {"success": False, "message": "Form invalid", "version": version}
-            )
-        else:
-            try:
-                success, message = SourceService.take_source_from_upload(
-                    version, request.FILES["source_pdf"]
-                )
+        if request.htmx:
+            context = {}
+            if not request.FILES["source_pdf"]:
                 context.update(
-                    {"version": version, "success": success, "message": message}
+                    {"success": False, "message": "Form invalid", "version": version}
                 )
-            except PlomDependencyConflict as err:
-                messages.add_message(request, messages.ERROR, f"{err}")
-                return HttpResponseClientRedirect(reverse("prep_conflict"))
+            elif version is None:
+                context.update(
+                    {
+                        "success": False,
+                        "message": "Version not specified",
+                        "version": version,
+                    }
+                )
+            else:
+                try:
+                    success, message = SourceService.take_source_from_upload(
+                        version, request.FILES["source_pdf"]
+                    )
+                    context.update(
+                        {
+                            "error": not success,
+                            "message": message,
+                            "src": SourceService.get_source(version),
+                        }
+                    )
+                except PlomDependencyConflict as err:
+                    context.update(
+                        {
+                            "error": True,
+                            "message": err,
+                            "src": SourceService.get_source(version),
+                        }
+                    )
 
-        return render(request, "Preparation/source_attempt.html", context)
+            context.update(self.build_context())
+            context.update({"htmx": request.htmx})
+
+            return render(request, "Preparation/source_item_view.html", context)
+        else:
+            return HttpResponseBadRequest("Invalid request")
 
     def delete(self, request, version=None):
-        if version:
+        if version and request.htmx:
             try:
                 SourceService.delete_source_pdf(version)
             except PlomDependencyConflict as err:
-                messages.add_message(request, messages.ERROR, f"{err}")
-                return HttpResponseClientRedirect(reverse("prep_conflict"))
+                context = {
+                    "error": True,
+                    "message": err,
+                    "src": SourceService.get_source(version),
+                }
+                return render(request, "Preparation/source_item_view.html", context)
+        else:
+            return HttpResponseBadRequest("Invalid request")
 
-        return HttpResponseClientRedirect(reverse("prep_sources"))
+        context = self.build_context()
+        context.update(
+            {
+                "src": {
+                    "version": version,
+                    "uploaded": False,
+                },
+                "htmx": request.htmx,
+            }
+        )
+
+        return render(request, "Preparation/source_item_view.html", context)
 
 
 class ReferenceImageView(ManagerRequiredView):

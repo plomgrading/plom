@@ -83,6 +83,22 @@ def delete_all_source_pdfs() -> None:
         pdf_obj.delete()
 
 
+def get_source(version: int) -> dict[str, Any]:
+    """Return a dictionary with the source version.
+
+    Args:
+        version: which version, indexed from one.
+
+    Returns:
+        A dictionary with the version and uploaded status.
+    """
+    try:
+        pdf_obj = PaperSourcePDF.objects.filter(version=version).get()
+        return {"version": pdf_obj.version, "uploaded": True, "hash": pdf_obj.hash}
+    except PaperSourcePDF.DoesNotExist:
+        return {"version": version, "uploaded": False}
+
+
 @transaction.atomic
 def get_list_of_sources() -> list[dict[str, Any]]:
     """Return a list of sources, indicating if each is uploaded or not along with other info.
