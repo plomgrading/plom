@@ -231,7 +231,7 @@ class RubricService:
             )
         else:
             # neither permissive nor locked so consult per-user permissions
-            if user.username == modifying_user:
+            if user == modifying_user:
                 # users can modify their own
                 pass
             elif modifying_user.groups.filter(name="lead_marker").exists():
@@ -277,7 +277,7 @@ class RubricService:
         """
         rubric_queryset = cls.get_all_rubrics()
         if question is not None:
-            rubric_queryset = rubric_queryset.filter(question=question)
+            rubric_queryset = rubric_queryset.filter(question=question, latest=True)
         rubric_data = []
 
         for r in rubric_queryset.prefetch_related("user"):
