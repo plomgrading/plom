@@ -156,8 +156,8 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         shp.translate(self.pos())
         return shp
 
-    def insert_image(self, image_path: str) -> None:
-        """Insert image (from image_path) to current instance of GhostText.
+    def set_image(self, image_path: str) -> None:
+        """Set an image (from image_path) to current instance of TextItem.
 
         Args:
             image_path: image path.
@@ -263,7 +263,7 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         if fragfilename:
             self._tex_src_cache = src
             self.setPlainText("")
-            self.insert_image(fragfilename)
+            self.set_image(fragfilename)
 
     def pngToText(self):
         """If displaying rendered latex, switch back to source."""
@@ -326,8 +326,8 @@ class GhostText(QGraphicsTextItem):
         # If displaying png-rendered-latex, store the original text here
         self._tex_src_cache = None
 
-    def insert_image(self, image_path: str) -> None:
-        """Insert image (from image_path) to current instance of GhostText.
+    def set_image(self, image_path: str) -> None:
+        """Set image (from image_path) to current instance of GhostText.
 
         Args:
             image_path: image path.
@@ -360,7 +360,7 @@ class GhostText(QGraphicsTextItem):
             if fragfilename:
                 self._tex_src_cache = txt
                 self.setPlainText("")
-                self.insert_image(fragfilename)
+                self.set_image(fragfilename)
         if legal:
             self.setDefaultTextColor(QColor("blue"))
         else:
