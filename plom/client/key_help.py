@@ -2,6 +2,8 @@
 # Copyright (C) 2019-2022 Andrew Rechnitzer
 # Copyright (C) 2021-2024 Colin B. Macdonald
 
+from __future__ import annotations
+
 from copy import deepcopy
 import logging
 import sys
@@ -56,18 +58,27 @@ log = logging.getLogger("keybindings")
 # * no validity checking done
 #   - use code from old KeyWrangler
 class KeyHelp(QDialog):
-    def __init__(self, parent, keybinding_name, *, custom_overlay={}, initial_tab=0):
+    """The KeyHelp dialog shows hints, keyboard shortcuts and allows their customization."""
+
+    def __init__(
+        self,
+        parent: QWidget,
+        keybinding_name: str,
+        *,
+        custom_overlay: dict = {},
+        initial_tab: int = 0,
+    ) -> None:
         """Construct the KeyHelp dialog.
 
         Args:
-            parent (QWidget): what widget to parent this dialog.
-            keybinding_name (str): which keybinding to initially display.
+            parent: what widget to parent this dialog.
+            keybinding_name: which keybinding to initially display.
 
         Keyword Args:
-            custom_overlay (dict): if there was already a custom keybinding,
+            custom_overlay: if there was already a custom keybinding,
                pass its overlay here.  We will copy it, not change it.  This
                is because the user may make local changes and then cancel.
-            initial_tab (int): index of the tab we'd like to open on.
+            initial_tab: index of the tab we'd like to open on.
 
         Returns:
             None
@@ -118,7 +129,7 @@ class KeyHelp(QDialog):
         # do we still get flicker: this still isn't the right way to force resize?
         self.tabs.currentChanged.connect(self._hacky_resizer)
 
-    def _hacky_resizer(self, n):
+    def _hacky_resizer(self, n: int) -> None:
         # on tab change, we sadly need some hacks to zoom the QGraphicViews
         for thing in self._things_to_hack_zoom:
             thing.resetView()
@@ -358,6 +369,8 @@ def _label(lambda_factory, scene, keydata, w, x, y, route, d="N", *, sep=(0, 0))
 
 
 class RubricNavDiagram(QFrame):
+    """A page for our inline help about changing rubrics with keyboard shortcuts."""
+
     wants_to_change_key = pyqtSignal(str)
 
     def __init__(self, keydata):
@@ -421,6 +434,8 @@ class RubricNavDiagram(QFrame):
 
 
 class ToolNavDiagram(QFrame):
+    """A page for our inline help about changing tools with keyboard shortcuts."""
+
     wants_to_change_key = pyqtSignal(str)
 
     def __init__(self, keydata):
@@ -484,7 +499,9 @@ class ToolNavDiagram(QFrame):
 
 
 class ClickDragPage(QWidget):
-    def __init__(self):
+    """A page for our inline help about click-drag and other hints."""
+
+    def __init__(self) -> None:
         super().__init__()
         grid = QVBoxLayout()
         # load the gif from resources - needs a little subterfuge
