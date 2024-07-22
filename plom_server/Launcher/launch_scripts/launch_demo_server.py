@@ -20,6 +20,7 @@ if sys.version_info < (3, 11):
 else:
     import tomllib
 
+
 # we specify this directory relative to the plom_server
 # root directory, rather than getting Django things up and
 # running, just to get at these useful files.
@@ -238,6 +239,12 @@ def build_all_papers_and_wait():
     print("All paper PDFs are now built.")
 
 
+def download_zip() -> None:
+    """Use 'plom_build_papers' to download a zip of all paper-pdfs."""
+    run_django_manage_command("plom_build_papers --download-all")
+    print("Downloaded a zip of all the papers")
+
+
 def run_demo_preparation_commands(
     *, length="normal", stop_after=None, solutions=True, prename=True
 ):
@@ -251,7 +258,7 @@ def run_demo_preparation_commands(
             >> will also upload the classlist
         * (populate): make the qv-map and populate the database
         * (papers_built): make the paper-pdfs
-        * finally - set preparation as completed.
+        * finally - download a zip of all the papers, and set preparation as completed.
 
     KWargs:
         length = the length of the demo: quick, normal, long, plaid.
@@ -289,17 +296,13 @@ def run_demo_preparation_commands(
     if stop_after == "papers_built":
         print("Stopping after papers_built.")
         return
+    # download a zip of all the papers.
+    download_zip()
 
     # now set preparation status as done
     run_django_manage_command("plom_preparation_status --set finished")
 
     return
-
-
-def download_zip() -> None:
-    """Use 'plom_build_papers' to download a zip of all paper-pdfs."""
-    run_django_manage_command("plom_build_papers --download-all")
-    print("Downloaded a zip of all the papers")
 
 
 def _read_bundle_config(length):
@@ -325,9 +328,17 @@ def build_bundles(length="normal"):
     KWargs:
         length = the length of the demo.
     """
-    bundle_config_dict = _read_bundle_config(length)
-    # HACKED UP TO HERE
-    print(bundle_config_dict)
+    pass
+    # bundle_config_dict = _read_bundle_config(length)
+    # if bundle_config_dict.bundles:
+    #     DemoBundleCreationService().scribble_on_exams(bundle_config_dict)
+    #
+    # for bundle in bundle_config_dict.hw_bundles:
+    #     DemoHWBundleCreationService().make_hw_bundle(bundle)
+
+
+def upload_bundles(length="normal", stop_after=None):
+    pass
 
 
 def run_demo_bundle_scan_commands(*, stop_after=None, length="normal", muck=False):
@@ -335,15 +346,17 @@ def run_demo_bundle_scan_commands(*, stop_after=None, length="normal", muck=Fals
 
     In order it runs:
         * (bundles_created): create bundles of papers; system will also make random annotations on these papers to simulate student work. (Optionally) the system will "muck" the papers to simulate poor scanning.
-            >> will also download a zip of all build papers from which mock-bundles are created.
     KWargs:
         stop_after = after which step should the demo be stopped, see list above.
         length = the length of the demo: quick, normal, long, plaid.
         muck = whether or not to "muck" with the mock test bundles - this is intended to imitate the effects of poor scanning.
     """
-    download_zip()
     build_bundles(length)
     if stop_after == "bundles_created":
+        return
+
+    upload_bundles(length, stop_after)
+    if stop_after == "bundles_uploaded":
         return
 
 
@@ -389,7 +402,7 @@ if __name__ == "__main__":
     finally:
         print("v" * 50)
         print("Shutting down huey and django dev server")
-        if huey_process: 
+        if huey_process:
             huey_process.terminate()
         if server_process:
             server_process.terminate()

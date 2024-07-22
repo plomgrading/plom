@@ -117,7 +117,7 @@ if __name__ == "__main__":
     finally:
         print("v" * 50)
         print("Shutting down huey and django dev server")
-        if huey_process: 
+        if huey_process:
             huey_process.terminate()
         if server_process:
             server_process.terminate()

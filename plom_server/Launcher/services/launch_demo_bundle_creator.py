@@ -19,7 +19,6 @@ from django.conf import settings
 from plom import SpecVerifier
 from plom.create.mergeAndCodePages import create_QR_codes
 from plom.create.scribble_utils import scribble_name_and_id, scribble_pages
-from Papers.services import SpecificationService
 
 
 class DemoBundleCreationService:
@@ -44,7 +43,13 @@ class DemoBundleCreationService:
 
     def get_default_paper_length(self):
         """Get the default number of pages in a paper from the specification."""
-        return SpecificationService.get_n_pages()
+        # some contortions here to avoid using django services, but
+        # instead get things using management commands.
+        #
+        with tempfile.TemporaryDirectory() as td:
+            spec_file = Path(td) / "the_spec.toml"
+            call_command("plom_preparation_test_spec", "download", f"{spec_file}")
+            return SpecVerifier.from_toml_file(spec_file)["numberOfPages"]
 
     def split_into_bundle_files(self, out_file, config):
         """Split the single scribble PDF file into the designated number of bundles.
