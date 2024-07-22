@@ -107,10 +107,7 @@ def get_list_of_sources() -> list[dict[str, Any]]:
     The list is sorted by the version.
     """
     vers = SpecificationService.get_list_of_versions()
-    status = []
-    for v in vers:
-        status.append(get_source(v))
-    return status
+    return [get_source(v) for v in vers]
 
 
 @transaction.atomic
