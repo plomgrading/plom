@@ -243,7 +243,7 @@ class RubricService:
             )
         else:
             # neither permissive nor locked so consult per-user permissions
-            if user.username == modifying_user:
+            if user == modifying_user:
                 # users can modify their own
                 pass
             elif modifying_user.groups.filter(name="lead_marker").exists():
@@ -384,7 +384,11 @@ class RubricService:
         Returns:
             A list of rubrics with the specified key
         """
-        return list(Rubric.objects.filter(key=rubric_key, latest=False).all())
+        return list(
+            Rubric.objects.filter(key=rubric_key, latest=False)
+            .all()
+            .order_by("revision")
+        )
 
     def get_all_paper_numbers_using_a_rubric(self, rubric_key: str) -> list[int]:
         """Get a list of paper number using the given rubric.
