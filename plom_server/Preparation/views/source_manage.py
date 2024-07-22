@@ -108,7 +108,7 @@ class SourceManageView(ManagerRequiredView):
                 )
 
         context.update(self.build_context())
-        context.update({"htmx": request.htmx})
+        context.update({"request_is_htmx": request.htmx})
 
         return render(request, "Preparation/source_item_view.html", context)
 
@@ -134,7 +134,7 @@ class SourceManageView(ManagerRequiredView):
                     "version": version,
                     "uploaded": False,
                 },
-                "htmx": request.htmx,
+                "request_is_htmx": request.htmx,
             }
         )
 
