@@ -133,18 +133,6 @@ class RubricService:
             rubric_data.get("out_of", None),
         )
 
-        if "kind" not in rubric_data.keys():
-            raise ValidationError({"kind": "Kind is required."})
-
-        if rubric_data["kind"] not in ["absolute", "relative", "neutral"]:
-            raise ValidationError({"kind": "Invalid kind."})
-
-        rubric_data["display_delta"] = self._generate_display_delta(
-            rubric_data.get("value", 0),
-            rubric_data["kind"],
-            rubric_data.get("out_of", None),
-        )
-
         s = SettingsModel.load()
         if creating_user is None:
             pass
@@ -278,16 +266,9 @@ class RubricService:
             new_rubric_data["modified_by_user"] = modifying_user.pk
 
         new_rubric_data["user"] = rubric.user.pk
-        new_rubric_data["user"] = rubric.user.pk
         new_rubric_data["revision"] += 1
         new_rubric_data["latest"] = True
         new_rubric_data["key"] = rubric.key
-
-        new_rubric_data["display_delta"] = self._generate_display_delta(
-            new_rubric_data.get("value", 0),
-            new_rubric_data["kind"],
-            new_rubric_data.get("out_of", None),
-        )
 
         new_rubric_data["display_delta"] = self._generate_display_delta(
             new_rubric_data.get("value", 0),

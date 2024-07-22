@@ -38,15 +38,8 @@ class RubricFilterForm(forms.Form):
         ("User", "User"),
     ]
 
-    SYSTEM_CHOICES = [
-        ("", "All Types"),
-        ("System", "System"),
-        ("User", "User"),
-    ]
-
     question_filter = forms.TypedChoiceField(required=False)
     kind_filter = forms.TypedChoiceField(choices=KIND_CHOICES, required=False)
-    system_filter = forms.TypedChoiceField(choices=SYSTEM_CHOICES, required=False)
     system_filter = forms.TypedChoiceField(choices=SYSTEM_CHOICES, required=False)
 
     def __init__(self, *args, **kwargs):
@@ -55,7 +48,6 @@ class RubricFilterForm(forms.Form):
             (str(q_idx), q_label)
             for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
         ]
-        question_choices.insert(0, ("", "All Questions"))
         question_choices.insert(0, ("", "All Questions"))
         self.fields["question_filter"].choices = question_choices
 

@@ -9,8 +9,6 @@
 import random
 from django.urls import reverse
 import django_tables2 as tables
-from django.urls import reverse
-import django_tables2 as tables
 
 from django.core.exceptions import ValidationError
 from django.db import models

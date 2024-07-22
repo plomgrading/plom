@@ -10,7 +10,6 @@ from __future__ import annotations
 from copy import deepcopy
 import difflib
 import json
-import json
 from typing import Any
 from io import TextIOWrapper, StringIO, BytesIO
 
@@ -27,16 +26,6 @@ from Base.base_group_views import ManagerRequiredView
 from Base.models import SettingsModel
 from Papers.services import SpecificationService
 from .services import RubricService
-from .forms import (
-    RubricAdminForm,
-    RubricWipeForm,
-    RubricUploadForm,
-    RubricFilterForm,
-    RubricDownloadForm,
-    RubricItemForm,
-    RubricDiffForm,
-)
-from .models import RubricTable
 from .forms import (
     RubricAdminForm,
     RubricWipeForm,
