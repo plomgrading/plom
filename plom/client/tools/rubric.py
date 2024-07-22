@@ -294,7 +294,13 @@ class GhostComment(QGraphicsItemGroup):
             self.blurb.setVisible(True)
             self.addToGroup(self.blurb)
 
-    def change_font_size(self, fontsize: int | None, annot_scale: float):
+    def change_comment_size(self, fontsize: int | None, annot_scale: float) -> None:
+        """Change comment size.
+
+        Args:
+            fontsize: the fontsize that will be applied in the comment.
+            annot_scale: the scene's global scale.
+        """
         if not fontsize:
             fontsize = 10
 

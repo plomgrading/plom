@@ -793,7 +793,7 @@ class PageScene(QGraphicsScene):
         font = QFont("Helvetica")
         font.setPixelSize(round(1.25 * self.fontSize))
         self.scoreBox.setFont(font)
-        self.ghostItem.change_font_size(
+        self.ghostItem.change_comment_size(
             fontsize=int(self.fontSize), annot_scale=self._scale
         )
 
