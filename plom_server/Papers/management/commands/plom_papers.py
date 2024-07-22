@@ -110,6 +110,10 @@ class Command(BaseCommand):
         self.stdout.write("Database cleared of test-papers.")
 
     def download_pqv_map(self) -> None:
+        # check if a populate/evacuate running
+        if PaperInfoService().is_paper_database_being_updated_in_background():
+            raise CommandError("Database is being updated - try again shortly.")
+
         save_path = Path("question_version_map.csv")
         if save_path.exists():
             s = f"A file exists at {save_path} - overwrite it? [y/N] "
