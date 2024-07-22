@@ -19,6 +19,7 @@ import html
 import json
 import logging
 import sys
+from django.db.models.aggregates import Count
 import tomlkit
 from typing import Any
 
@@ -132,6 +133,18 @@ class RubricService:
             rubric_data.get("out_of", None),
         )
 
+        if "kind" not in rubric_data.keys():
+            raise ValidationError({"kind": "Kind is required."})
+
+        if rubric_data["kind"] not in ["absolute", "relative", "neutral"]:
+            raise ValidationError({"kind": "Invalid kind."})
+
+        rubric_data["display_delta"] = self._generate_display_delta(
+            rubric_data.get("value", 0),
+            rubric_data["kind"],
+            rubric_data.get("out_of", None),
+        )
+
         s = SettingsModel.load()
         if creating_user is None:
             pass
@@ -142,7 +155,15 @@ class RubricService:
                 "No users are allowed to create rubrics on this server"
             )
         else:
-            # TODO: consult per-user permissions (not implemented yet)
+            # neither permissive nor locked so consult per-user permissions
+            if creating_user.groups.filter(name="lead_marker").exists():
+                # lead markers can modify any non-system-rubric
+                pass
+            else:
+                raise PermissionDenied(
+                    f'You ("{creating_user}") are not allowed to create'
+                    " rubrics on this server"
+                )
             pass
 
         rubric_data["latest"] = True
@@ -217,7 +238,7 @@ class RubricService:
             raise PlomConflict(
                 f'The rubric your revision was based upon {new_rubric_data["revision"]} '
                 f"does not match database content (revision {rubric.revision}): "
-                f"most likely your  edits have collided with those of someone else."
+                f"most likely your edits have collided with those of someone else."
             )
 
         # Generally, omitting modifying_user bypasses checks
@@ -238,9 +259,14 @@ class RubricService:
                 "No users are allowed to modify rubrics on this server"
             )
         else:
-            # TODO: consult per-user permissions (not implemented yet)
-            # For now, we have only the default case: users can modify their own rubrics
-            if user != modifying_user:
+            # neither permissive nor locked so consult per-user permissions
+            if user == modifying_user:
+                # users can modify their own
+                pass
+            elif modifying_user.groups.filter(name="lead_marker").exists():
+                # lead markers can modify any non-system-rubric
+                pass
+            else:
                 raise PermissionDenied(
                     f'You ("{modifying_user}") are not allowed to modify'
                     f' rubrics created by other users (here "{user}")'
@@ -252,9 +278,16 @@ class RubricService:
             new_rubric_data["modified_by_user"] = modifying_user.pk
 
         new_rubric_data["user"] = rubric.user.pk
+        new_rubric_data["user"] = rubric.user.pk
         new_rubric_data["revision"] += 1
         new_rubric_data["latest"] = True
         new_rubric_data["key"] = rubric.key
+
+        new_rubric_data["display_delta"] = self._generate_display_delta(
+            new_rubric_data.get("value", 0),
+            new_rubric_data["kind"],
+            new_rubric_data.get("out_of", None),
+        )
 
         new_rubric_data["display_delta"] = self._generate_display_delta(
             new_rubric_data.get("value", 0),
@@ -311,7 +344,7 @@ class RubricService:
             raise ValueError(f"Invalid kind: {kind}.")
 
     def get_rubrics_as_dicts(
-        self, *, question: int | None = None
+        cls, *, question: int | None = None
     ) -> list[dict[str, Any]]:
         """Get the rubrics, possibly filtered by question.
 
@@ -321,20 +354,20 @@ class RubricService:
         Returns:
             Collection of dictionaries, one for each rubric.
         """
-        if question is None:
-            rubric_list = Rubric.objects.all()
-        else:
-            rubric_list = Rubric.objects.filter(question=question)
+        rubric_queryset = cls.get_all_rubrics()
+        if question is not None:
+            rubric_queryset = rubric_queryset.filter(question=question)
         rubric_data = []
 
-        for r in rubric_list.prefetch_related("user"):
+        for r in rubric_queryset.prefetch_related("user"):
             rubric_data.append(_Rubric_to_dict(r))
 
         new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))
 
         return new_rubric_data
 
-    def get_all_rubrics(self) -> QuerySet[Rubric]:
+    @staticmethod
+    def get_all_rubrics() -> QuerySet[Rubric]:
         """Get all the rubrics (latest revisions) as a QuerySet, enabling further lazy filtering.
 
         See: https://docs.djangoproject.com/en/4.2/topics/db/queries/#querysets-are-lazy
@@ -343,6 +376,15 @@ class RubricService:
             Lazy queryset of all rubrics.
         """
         return Rubric.objects.filter(latest=True)
+
+    def get_all_rubrics_with_counts(self) -> QuerySet[Rubric]:
+        """Get all latest rubrics but also annotate with how many times it has been used.
+
+        Returns:
+            Lazy queryset of all rubrics with counts.
+        """
+        qs = self.get_all_rubrics()
+        return qs.annotate(times_used=Count("annotations"))
 
     def get_rubric_count(self) -> int:
         """How many rubrics in total (excluding revisions)."""
@@ -370,7 +412,11 @@ class RubricService:
         Returns:
             A list of rubrics with the specified key
         """
-        return list(Rubric.objects.filter(key=rubric_key, latest=False).all())
+        return list(
+            Rubric.objects.filter(key=rubric_key, latest=False)
+            .all()
+            .order_by("revision")
+        )
 
     def get_all_paper_numbers_using_a_rubric(self, rubric_key: str) -> list[int]:
         """Get a list of paper number using the given rubric.
