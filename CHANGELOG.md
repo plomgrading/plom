@@ -13,9 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Client can spell check rubrics.
 * Client can query for a list of other papers that used a particular rubric and display those annotations to the user.
 * Tasks can be reassigned between users on the server.
+* Questions can be tagged with, for example, learning objectives.
+* The revision history of rubrics is stored and viewable.
 
 ### Changed
 * Client: improvements to the undo stack.
+* Its easier to wipe the new server back to its initial empty state, at least before scanning begins.
 
 ### Fixed
 * Misc fixes and improvements.

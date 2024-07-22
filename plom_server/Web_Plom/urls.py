@@ -3,6 +3,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2024 Andrew Rechnitzer
 
 """Web_Plom URL Configuration.
 
@@ -36,7 +37,6 @@ urlpatterns = [
     path("create/", include("Preparation.urls")),
     path("create/spec/", include("SpecCreator.urls")),
     path("create/paperpdfs/", include("BuildPaperPDF.urls")),
-    path("papers/", include("Papers.urls")),
     path("scan/", include("Scan.urls")),
     path("progress/", include("Progress.urls")),
     path("rubrics/", include("Rubrics.urls")),

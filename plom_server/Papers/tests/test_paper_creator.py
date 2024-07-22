@@ -46,7 +46,7 @@ class PaperCreatorTests(TestCase):
     def test_create_with_qvmapping(self) -> None:
         """Basic tests for creating paper tables."""
         qv_map = {1: 2, 2: 1}
-        PaperCreatorService()._create_paper_with_qvmapping(1, qv_map)
+        PaperCreatorService._create_single_paper_from_qvmapping_and_pages(1, qv_map)
 
         n_papers, n_pages, n_id, n_dnm, n_question = self.get_n_models()
 
@@ -67,10 +67,10 @@ class PaperCreatorTests(TestCase):
     def test_remake_paper_raises(self) -> None:
         """Test creating paper tables raises an IntegrityError if called on a paper that already exists."""
         qv_map = {1: 2, 2: 1}
-        PaperCreatorService()._create_paper_with_qvmapping(1, qv_map)
+        PaperCreatorService._create_single_paper_from_qvmapping_and_pages(1, qv_map)
 
         with self.assertRaises(IntegrityError):
-            PaperCreatorService()._create_paper_with_qvmapping(1, qv_map)
+            PaperCreatorService._create_single_paper_from_qvmapping_and_pages(1, qv_map)
 
     def test_clear_papers(self) -> None:
         """Test PaperCreatorService.remove_papers_from_db()."""
@@ -89,8 +89,7 @@ class PaperCreatorTests(TestCase):
         self.assertEqual(n_dnm, 1)
         self.assertEqual(n_question, 1)
 
-        pcs = PaperCreatorService()
-        pcs.remove_all_papers_from_db()
+        PaperCreatorService.remove_all_papers_from_db(_testing=True)
 
         n_papers, n_pages, n_id, n_dnm, n_question = self.get_n_models()
 

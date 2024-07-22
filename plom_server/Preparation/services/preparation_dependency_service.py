@@ -59,14 +59,16 @@ def assert_can_modify_classlist():
     # cannot modify classlist if papers printed
     if PapersPrinted.have_papers_been_printed():
         raise PlomDependencyConflict("Papers have been printed.")
-    # if db populated and prenaming is set, then cannot modify classlist
-    if (
-        PaperInfoService().is_paper_database_populated()
-        and PrenameSettingService().get_prenaming_setting()
-    ):
-        raise PlomDependencyConflict(
-            "Database has been populated with some prenamed papers, cannot change the classlist."
-        )
+    # if db populated (or being populated) and prenaming is set, then cannot modify classlist
+    if PrenameSettingService().get_prenaming_setting():
+        if PaperInfoService().is_paper_database_populated():
+            raise PlomDependencyConflict(
+                "Database has been populated with some prenamed papers, cannot change the classlist."
+            )
+        if PaperInfoService().is_paper_database_being_updated_in_background():
+            raise PlomDependencyConflict(
+                "Database is being updated currently with some prenamed papers, cannot change the classlist."
+            )
 
 
 # 3b - does not depend on spec, but qvmap/database depends on it (since prenamed papers have 'predictions' stored with those names)
@@ -82,6 +84,10 @@ def assert_can_modify_prenaming():
     if PaperInfoService().is_paper_database_populated():
         raise PlomDependencyConflict(
             "The database has been populated, so cannot change the prenaming setting."
+        )
+    if PaperInfoService().is_paper_database_being_updated_in_background():
+        raise PlomDependencyConflict(
+            "Database is being updated currently, so cannot change the prenaming setting."
         )
 
 
@@ -129,6 +135,8 @@ def assert_can_rebuild_test_pdfs():
         raise PlomDependencyConflict(
             "The qv-mapping has been built and the database have been populated."
         )
+    if PaperInfoService().is_paper_database_being_updated_in_background():
+        raise PlomDependencyConflict("Database is being updated.")
 
 
 # now the true/false versions of these functions
