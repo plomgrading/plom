@@ -511,7 +511,12 @@ class PageScene(QGraphicsScene):
         self.lineItem = QGraphicsLineItem()
 
         # Add a ghost comment to scene, but make it invisible
-        self.ghostItem = GhostComment(annot_scale=self._scale, display_delta="1", txt="blah", fontsize=self.fontSize)
+        self.ghostItem = GhostComment(
+            annot_scale=self._scale,
+            display_delta="1",
+            txt="blah",
+            fontsize=self.fontSize,
+        )
 
         self._hideGhost()
         self.addItem(self.ghostItem)
@@ -766,7 +771,6 @@ class PageScene(QGraphicsScene):
         Args:
             r: the multiplicative factor, defaults to 1.1.
         """
-        print(self.ghostItem.blurb.toPlainText())
         self._scale *= r
         self._stuff_to_do_after_setting_scale()
 
@@ -789,7 +793,9 @@ class PageScene(QGraphicsScene):
         font = QFont("Helvetica")
         font.setPixelSize(round(1.25 * self.fontSize))
         self.scoreBox.setFont(font)
-        self.ghostItem.change_font_size(fontsize=int(self.fontSize), annot_scale=self._scale)
+        self.ghostItem.change_font_size(
+            fontsize=int(self.fontSize), annot_scale=self._scale
+        )
 
     def set_annotation_color(self, c):
         """Set the colour of annotations.

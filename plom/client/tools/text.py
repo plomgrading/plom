@@ -82,7 +82,7 @@ class CommandText(CommandTool):
         self.blurb = TextItem(
             pt,
             text,
-            annot_scale = scene._scale,
+            annot_scale=scene._scale,
             fontsize=scene.fontSize,
             color=scene.style["annot_color"],
             _texmaker=scene,
@@ -129,7 +129,15 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
     TODO: try to remove this with some future refactor?
     """
 
-    def __init__(self, pt, text: str, annot_scale: float, fontsize: int=10, color=QColor("red"), _texmaker=None):
+    def __init__(
+        self,
+        pt,
+        text: str,
+        annot_scale: float,
+        fontsize: int = 10,
+        color=QColor("red"),
+        _texmaker=None,
+    ):
         super().__init__()
         self.saveable = True
         self._texmaker = _texmaker
@@ -169,7 +177,7 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         pixmap = QPixmap(image_path)
         original_width = pixmap.width()
         original_height = pixmap.height()
-        
+
         scaled_width = int(original_width * self.annot_scale)
         scaled_height = int(original_height * self.annot_scale)
 
@@ -350,7 +358,7 @@ class GhostText(QGraphicsTextItem):
         pixmap = QPixmap(image_path)
         original_width = pixmap.width()
         original_height = pixmap.height()
-        
+
         scaled_width = int(original_width * self.annot_scale)
         scaled_height = int(original_height * self.annot_scale)
 
@@ -364,6 +372,12 @@ class GhostText(QGraphicsTextItem):
     def is_rendered(self):
         """Is this TextItem displaying a PNG, e.g., of LaTeX?"""
         return self._tex_src_cache is not None
+
+    def toPlainText(self):
+        """The text itself or underlying source if displaying latex."""
+        if self.is_rendered():
+            return self._tex_src_cache
+        return super().toPlainText()
 
     def changeText(self, txt, legal):
         self._tex_src_cache = None

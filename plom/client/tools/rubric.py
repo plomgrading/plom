@@ -296,7 +296,7 @@ class GhostComment(QGraphicsItemGroup):
     def change_font_size(self, fontsize: int | None, annot_scale: float):
         if not fontsize:
             fontsize = 10
-        print("text: ", self.blurb.toPlainText())
+
         font = QFont("Helvetica")
         font.setPixelSize(round(fontsize))
         self.blurb.setFont(font)
@@ -304,7 +304,6 @@ class GhostComment(QGraphicsItemGroup):
         font.setPixelSize(round(1.25 * fontsize))
         self.di.setFont(font)
         self.annot_scale = annot_scale
-        print("text2: ", self.blurb.toPlainText())
         self.changeComment(
             self.di.display_delta, self.blurb.toPlainText(), legal=self.legal
         )
