@@ -347,6 +347,11 @@ class GhostText(QGraphicsTextItem):
         self._tex_src_cache = None
 
     def update_annot_scale(self, annot_scale: float) -> None:
+        """Update the annotation scale being used.
+
+        Args:
+            annot_scale: scene's global annotation scale.
+        """
         self.annot_scale = annot_scale
 
     def set_image(self, image_path: str) -> None:
