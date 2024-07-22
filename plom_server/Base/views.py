@@ -1,29 +1,22 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Andrew Rechnitzer
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.contrib import messages
 from django.views.generic import View
 from Base.base_group_views import ManagerRequiredView
 from .forms import CompleteWipeForm
-from django.core.exceptions import ObjectDoesNotExist
+from .services import big_red_button
 
+from Papers.services import SpecificationService
 from Scan.services import ScanService
 
-# from Rubrics.services import RubricService
-from Preparation.services import (
-    PapersPrinted,
-    ScrapPaperService,
-    ExtraPageService,
-    PQVMappingService,
-    StagingStudentService,
-    PrenameSettingService,
-    SourceService,
-)
-from BuildPaperPDF.services import BuildPapersService
-from Papers.services import PaperCreatorService, SpecificationService
+from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 
 
 class TroublesAfootGenericErrorView(View):
@@ -81,9 +74,14 @@ class ResetConfirmView(ManagerRequiredView):
         """
         context = self.build_context()
         form = CompleteWipeForm()
-        reset_phrase = SpecificationService.get_shortname()
+        try:
+            reset_phrase = SpecificationService.get_shortname()
+        except ObjectDoesNotExist:
+            context.update({"no_spec": True})
+            return render(request, "base/reset_confirm.html", context=context)
         context.update(
             {
+                "no_spec": False,
                 "bundles_staged": ScanService().staging_bundles_exist(),
                 "wipe_form": form,
                 "reset_phrase": reset_phrase,
@@ -106,38 +104,11 @@ class ResetConfirmView(ManagerRequiredView):
         _confirm_field = "confirmation_field"
         if form.is_valid():
             if form.cleaned_data[_confirm_field] == reset_phrase:
-                # Essentially the "Create Test" page in reverse
-                # Unset printed status
-                PapersPrinted.set_papers_printed(False)
-
-                # Remove Extra and Scrap Pages
-                ScrapPaperService().delete_scrap_paper_pdf()
-                ExtraPageService().delete_extra_page_pdf()
-
-                # Remove all test PDFs
-                BuildPapersService().reset_all_tasks()
-
-                # Remove all test database rows
                 try:
-                    PaperCreatorService().remove_all_papers_from_db()
-                except ObjectDoesNotExist:
-                    pass
-
-                # Remove QV Mappings
-                PQVMappingService().remove_pqv_map()
-
-                # Remove classlist
-                StagingStudentService().remove_all_students()
-                PrenameSettingService().set_prenaming_setting(False)
-
-                # Remove and delete source PDFs
-                SourceService.delete_all_source_pdfs()
-
-                # Remove test spec
-                try:
-                    SpecificationService.remove_spec()
-                except ObjectDoesNotExist:
-                    pass
+                    big_red_button.reset_assessment_preparation_database()
+                except (PlomDependencyConflict, PlomDatabaseCreationError) as err:
+                    messages.add_message(request, messages.ERROR, f"{err}")
+                    return redirect(reverse("prep_conflict"))
 
                 messages.success(request, "Plom instance successfully wiped.")
                 return redirect("home")

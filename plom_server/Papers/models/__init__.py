@@ -22,9 +22,10 @@ from .specifications import (
     Specification,
     SolnSpecification,
     SolnSpecQuestion,
+    NumberOfPapersToProduceSetting,
 )
 
 # TODO: Issue #3140
-from .background_tasks import CreateImageHueyTask
+from .background_tasks import CreateImageHueyTask, PopulateEvacuateDBChore
 
 from .reference_image import ReferenceImage

@@ -22,8 +22,7 @@ from django.db import transaction
 
 from plom import is_valid_tag_text
 
-from Preparation.services import PQVMappingService
-from Papers.services import ImageBundleService
+from Papers.services import ImageBundleService, PaperInfoService
 from Papers.models import Paper
 from Rubrics.models import Rubric
 
@@ -61,12 +60,13 @@ class MarkingTaskService:
         Returns:
             The newly created marking task object.
         """
-        pqvs = PQVMappingService()
-        if not pqvs.is_there_a_pqv_map():
-            raise RuntimeError("Server does not have a question-version map.")
-
-        pqv_map = pqvs.get_pqv_map_dict()
-        question_version = pqv_map[paper.paper_number][question_index]
+        # get the version of the given paper/question
+        try:
+            question_version = PaperInfoService().get_version_from_paper_question(
+                paper.paper_number, question_index
+            )
+        except ValueError as err:
+            raise RuntimeError(f"Server does not have a question-version map - {err}")
 
         task_code = f"q{paper.paper_number:04}g{question_index}"
 
@@ -231,9 +231,10 @@ class MarkingTaskService:
             MarkingTask.DoesNotExist: if there is no such task.
         """
         task = MarkingTask.objects.select_for_update().get(pk=task_pk)
-        # TODO: != MarkingTask.TO_DO versus == MarkingTask.OUT
         if task.status != MarkingTask.TO_DO:
-            raise RuntimeError("Task is currently assigned.")
+            raise RuntimeError(
+                f'Task is not available: currently assigned to "{task.assigned_user}"'
+            )
 
         # the assigned_user is None, then okay, or if set to the current user okay,
         # but otherwise throw an error.
@@ -331,37 +332,6 @@ class MarkingTaskService:
                 raise ValidationError("Invalid original-image in request.")
 
         return cleaned_data, annot_data, rubrics_used
-
-    def get_user_mark_results(
-        self, user: User, *, question_idx: int | None = None, version: int | None = None
-    ) -> list[Annotation]:
-        """For each completed task, get the latest annotation instances for a particular user.
-
-        Args:
-            user: User instance.
-
-        Keyword Args:
-            question_idx: int, the question index number from 1, or ``None``.
-            version: int, the version number, or ``None``.
-
-        Returns:
-            List of Annotation objects.
-        """
-        complete_tasks = MarkingTask.objects.filter(
-            assigned_user=user, status=MarkingTask.COMPLETE
-        )
-        if question_idx:
-            complete_tasks = complete_tasks.filter(question_index=question_idx)
-        if version:
-            complete_tasks = complete_tasks.filter(question_version=version)
-
-        complete_tasks.prefetch_related("latest_annotation")
-        annotations = map(
-            lambda task: task.latest_annotation,
-            complete_tasks,
-        )
-
-        return list(annotations)
 
     def get_latest_annotation(self, paper: int, question_idx: int) -> Annotation:
         """Get the latest annotation for a particular paper/question.
@@ -695,7 +665,8 @@ class MarkingTaskService:
         self.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
 
     @transaction.atomic
-    def reassign_task_to_user(self, task_pk: int, username: str) -> None:
+    @staticmethod
+    def reassign_task_to_user(task_pk: int, username: str) -> None:
         """Reassign a task to a different user.
 
         If tasks status is "COMPLETE" then the assigned_user will be updated,

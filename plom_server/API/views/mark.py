@@ -15,8 +15,12 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse
 
 from Finish.services import SolnImageService
-from Mark.services import mark_task
-from Mark.services import MarkingTaskService, PageDataService
+from Mark.services import (
+    mark_task,
+    MarkingTaskService,
+    PageDataService,
+    MarkingStatsService,
+)
 from Papers.services import SpecificationService
 from Papers.models import Image
 
@@ -69,43 +73,41 @@ class MarkingProgressCount(APIView):
         return Response(progress, status=status.HTTP_200_OK)
 
 
-class MgetDoneTasks(APIView):
-    """Retrieve data for tasks which have already been graded by a particular user.
+# GET: /MK/tasks/all
+class GetTasks(APIView):
+    """Retrieve data for tasks.
 
     Respond with status 200.
 
     Returns:
-        List of lists of info for each of the already-processed
-        questions by the calling user.  The first entry is the task
-        string of the form ``q0002g3``, the second is the score, the
-        floating-point time in seconds, a list of tags (strings), and
-        an "integrity code".  An empty list is returned if nothing has
-        been graded by this user.
+        List of dicts of info for each task, as documented elsewhere.
+        An empty list might be returned if no tasks.
+        This is potentially a lot of data, perhaps a megabyte of json
+        for 4000 test papers.
+
+    Note that this might leak info to non-lead-markers, we may want non-lead-markers
+    to only be able to query their own tasks.
     """
 
-    def get(self, request: Request, *args) -> Response:
-        data = request.data
-        question = data["q"]
-        version = data["v"]
+    def get(self, request: Request) -> Response:
+        data = request.query_params
+        question_idx = data.get("q")
+        version = data.get("v")
+        username = data.get("username")
+        # TODO: much more optional things we could support: tag, paper_min, paper_max
+        # see progress_task_annot.py, lots of extensibility possible here in future.
+        # TODO: priority might be useful for client
 
-        mts = MarkingTaskService()
-        marks = mts.get_user_mark_results(
-            request.user, question_idx=question, version=version
+        data = MarkingStatsService().filter_marking_task_annotation_info(
+            question_idx=question_idx,
+            version=version,
+            username=username,
         )
-
-        rows = map(
-            lambda annotation: [
-                annotation.task.code,
-                annotation.score,
-                annotation.marking_time,
-                mts.get_tags_for_task(annotation.task.code),
-                annotation.task.pk,  # TODO: integrity check is not implemented yet
-            ],
-            marks,
-        )
-        return Response(rows, status=status.HTTP_200_OK)
+        return Response(data, status=status.HTTP_200_OK)
 
 
+# GET: /pagedata/{papernum}
+# GET: /pagedata/{papernum}/context/{questionidx}
 class MgetPageDataQuestionInContext(APIView):
     """Get page metadata for a particular test-paper optionally with a question highlighted.
 
@@ -197,7 +199,9 @@ class MgetPageDataQuestionInContext(APIView):
         ]
     """
 
-    def get(self, request, paper, question=None):
+    def get(
+        self, request: Request, *, papernum: int, questionidx: int | None = None
+    ) -> Response:
         service = PageDataService()
 
         try:
@@ -207,11 +211,14 @@ class MgetPageDataQuestionInContext(APIView):
             # anonymous grading) should filter this out.  This is the current behaviour
             # of the Plom Client UI tool.
             page_metadata = service.get_question_pages_metadata(
-                paper, question=question, include_idpage=True, include_dnmpages=True
+                papernum,
+                question=questionidx,
+                include_idpage=True,
+                include_dnmpages=True,
             )
         except ObjectDoesNotExist as e:
             return _error_response(
-                f"Paper {paper} does not exist: {e}", status.HTTP_409_CONFLICT
+                f"Paper {papernum} does not exist: {e}", status.HTTP_409_CONFLICT
             )
         return Response(page_metadata, status=status.HTTP_200_OK)
 

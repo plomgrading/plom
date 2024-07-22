@@ -387,6 +387,7 @@ class ManageDiscardService:
             image_obj = Image.objects.get(pk=image_pk)
         except ObjectDoesNotExist as e:
             raise ValueError(f"Cannot find image with pk = {image_pk}") from e
+
         try:
             self._assign_discard_to_mobile_page(
                 user_obj,

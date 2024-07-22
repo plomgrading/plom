@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 
@@ -32,7 +32,7 @@ class DemoCreationService:
     def prepare_assessment(self, config):
         print("Prepare assessment: ")
         print(
-            "\tUpload demo spec, upload source pdfs and classlist, enable prenaming, and generate qv-map"
+            "\tUpload demo spec, upload source pdfs and classlist, enable prenaming, generate qv-map and populate the db"
         )
         spec_path = config.test_spec
         if spec_path == "demo":
@@ -53,7 +53,7 @@ class DemoCreationService:
                 ]
             for i, src in enumerate(sources):
                 call_command(
-                    "plom_preparation_test_source",
+                    "plom_preparation_source",
                     "upload",
                     f"-v {i + 1}",
                     src,
@@ -80,10 +80,11 @@ class DemoCreationService:
         if (
             config.num_to_produce is not None
         ):  # TODO: users should be able to specify path to custom qvmap
+            print("Populating database in foreground")
             n_to_produce = config.num_to_produce
             call_command(
-                "plom_preparation_qvmap",
-                "generate",
+                "plom_papers",
+                "build_db",
                 "-n",
                 str(n_to_produce),
                 "--first-paper",
@@ -93,10 +94,7 @@ class DemoCreationService:
             print("No papers to produce. Stopping.")
             return
 
-    def build_db_and_papers(self):
-        print("Populating database in background")
-        call_command("plom_papers", "build_db")
-
+    def build_papers(self):
         call_command("plom_preparation_extrapage", "build")
         call_command("plom_preparation_scrap_paper", "build")
         call_command("plom_build_papers", "--start-all")

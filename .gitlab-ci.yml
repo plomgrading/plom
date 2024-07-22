@@ -196,7 +196,7 @@ pypi:
    - if: $CI_COMMIT_TAG
   cache: {}
   script:
-    - pip install --upgrade twine wheel setuptools build
+    - pip install --upgrade twine wheel setuptools packaging build
     - python3 -m build
     - python3 -m twine check dist/*
     - python3 -m twine upload --verbose dist/*
@@ -335,8 +335,8 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
-    - python3 -m pip install astroid~=3.2.3  # codespell:ignore astroid
-    - python3 -m pip install pylint~=3.2.5
+    - python3 -m pip install astroid~=3.2.4  # codespell:ignore astroid
+    - python3 -m pip install pylint~=3.2.6
   script:
     - pylint plom
     - pylint plom_server
@@ -367,7 +367,7 @@ pyright:
   needs: ["docker-image"]
   image: $IM
   before_script:
-    - python3 -m pip install pyright~=1.1.371
+    - python3 -m pip install pyright~=1.1.372
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -391,7 +391,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.5.1
+    - python3 -m pip install ruff~=0.5.4
   script:
     - ruff check .
     # ruff format .
@@ -402,7 +402,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.5.1
+    - python3 -m pip install ruff~=0.5.4
   script:
     # run once just for log out but don't fail
     - EXCEPTIONS="D101,D102,D103,D104,D106"
@@ -412,7 +412,7 @@ count-no-docstring:
     - ruff check --select $EXCEPTIONS --statistics --exit-zero
     - echo "Total $HOWMANY things without docstrings, please don't increase it"
     # Dear hackers: please try to decrease this number
-    - bash -c "[[ $HOWMANY -le 1635 ]]"
+    - bash -c "[[ $HOWMANY -le 1605 ]]"
   allow_failure: true
 
 
@@ -865,7 +865,7 @@ newOS_newdeps_legacy:
       python3-pip
       iproute2 psmisc file python3-magic
     # apt-get --no-install-recommends --yes install libimage-exiftool-perl
-    - python3 -m pip install --upgrade pip setuptools wheel
+    - python3 -m pip install --upgrade pip setuptools packaging wheel
     - pip --version
   script:
     - pip install .
@@ -942,7 +942,7 @@ newOS_newdeps_webplom:
       python3-pip
       iproute2 psmisc file python3-magic
     # apt-get --no-install-recommends --yes install libimage-exiftool-perl
-    - python3 -m pip install --upgrade pip setuptools wheel
+    - python3 -m pip install --upgrade pip setuptools packaging wheel
     - pip --version
   script:
     - pip install .
@@ -977,7 +977,8 @@ oldOS_mindeps:
       python3-requests-toolbelt python3-pil python3-tqdm
       python3-defusedxml python3-jsmin python3-packaging
       iproute2 psmisc file python3-magic
-    - python3 -m pip install --upgrade pip setuptools wheel
+    # TODO: is it possible to run with OOTB pip etc?
+    - python3 -m pip install --upgrade pip setuptools packaging wheel
     - python3 -m pip --version
   script:
     - python3 -m pip install -r requirements.txt.tempminima
@@ -1591,7 +1592,7 @@ winpyinst:
   - c:\python311\python -m pip --version
   - c:\python311\python -m pip install --user --upgrade pip
   - c:\python311\python -m pip --version
-  - c:\python311\python -m pip install --user --upgrade setuptools wheel
+  - c:\python311\python -m pip install --user --upgrade setuptools packaging wheel
   - refreshenv
   script:
   - c:\python311\python -m pip install -r requirements.txt.client

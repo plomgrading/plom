@@ -22,16 +22,18 @@ class PagedataPatterns:
 
     prefix = "pagedata/"
 
+    # GET: /pagedata/{papernum}
+    # GET: /pagedata/{papernum}/context/{questionidx}
     @classmethod
     def patterns(cls):
         pagedata_patterns = [
             path(
-                "<int:paper>",
+                "<int:papernum>",
                 MgetPageDataQuestionInContext.as_view(),
                 name="api_pagedata",
             ),
             path(
-                "<int:paper>/context/<int:question>",
+                "<int:papernum>/context/<int:questionidx>",
                 MgetPageDataQuestionInContext.as_view(),
                 name="api_pagedata_context_question",
             ),
