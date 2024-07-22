@@ -54,6 +54,12 @@ def set_argparse_and_get_args():
         help="Prename papers as determined by the demo classlist",
     )
     parser.add_argument(
+        "--muck",
+        default=False,
+        action=argparse.BooleanOptionalAction,
+        help="Run pdf-mucking to simulate poor scanning of papers",
+    )
+    parser.add_argument(
         "--stop-after",
         action="store",
         choices=[
@@ -258,7 +264,7 @@ def build_bundles(length="normal"):
     print(bundle_config_dict)
 
 
-def run_demo_bundle_scan_commands(*, stop_after=None, length="normal"):
+def run_demo_bundle_scan_commands(*, stop_after=None, length="normal", muck=False):
     download_zip()
     build_bundles(length)
     if stop_after == "bundles_created":
@@ -300,6 +306,7 @@ if __name__ == "__main__":
         print(">> Scanning of papers")
         run_demo_bundle_scan_commands(
             stop_after=stop_after,
+            muck=options.muck
         )
         print("*" * 50)
         wait_for_user_to_type_quit()
