@@ -4,6 +4,8 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
+from __future__ import annotations
+
 import argparse
 from pathlib import Path
 from shlex import split
@@ -25,13 +27,15 @@ demo_file_directory = Path("./Launcher/launch_scripts/demo_files/")
 
 
 def wait_for_user_to_type_quit() -> None:
+    """Wait for correct user input and then return."""
     while True:
         x = input("Type 'quit' and press Enter to exit the demo: ")
         if x.casefold() == "quit":
             break
 
 
-def set_argparse_and_get_args():
+def set_argparse_and_get_args() -> None:
+    """Configure argparse to collect commandline options."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", help="Port number on which to launch server")
     parser.add_argument(
@@ -79,16 +83,29 @@ def set_argparse_and_get_args():
 
 
 def run_django_manage_command(cmd) -> None:
+    """Run the given command with 'python3 manage.py' and wait for return.
+
+    Args:
+        cmd: the command to run.
+    """
     full_cmd = "python3 manage.py " + cmd
     subprocess.run(split(full_cmd))
 
 
 def popen_django_manage_command(cmd) -> subprocess.Popen:
+    """Run the given command with 'python3 manage.py' using process Popen and return a handle to the process.
+
+    Args:
+        cmd: the command to run.
+
+    Returns a subprocess.Popen class that can be used to terminate the background command.
+    """
     full_cmd = "python3 manage.py " + cmd
     return subprocess.Popen(split(full_cmd))
 
 
-def confirm_run_from_correct_directory():
+def confirm_run_from_correct_directory() -> None:
+    """Confirm that the script is being run from the directory containing django's manage.py command."""
     if not Path("./manage.py").exists():
         raise RuntimeError(
             "This script needs to be run from the same directory as django's manage.py script."
@@ -96,6 +113,15 @@ def confirm_run_from_correct_directory():
 
 
 def pre_launch():
+    """Run commands required before the plom-server can be launched.
+
+    Note that this runs:
+        * plom_clean_all_and_build_db: cleans out any old database and misc user-generated file, then rebuilds the blank db.
+        * plom_make_groups_and_first_users: creates user-groups needed by plom, and an admin user and a manager-user.
+        * plom_build_scrap_extra_pdfs: build the scrap-paper and extra-page pdfs.
+
+    Note that this can easily be extended in the future to run more commands as required.
+    """
     # start by cleaning out the old db and misc files.
     run_django_manage_command("plom_clean_all_and_build_db")
     # build the user-groups and the admin and manager users
@@ -104,12 +130,26 @@ def pre_launch():
     run_django_manage_command("plom_build_scrap_extra_pdfs")
 
 
-def launch_huey_process():
+def launch_huey_process() -> subprocess.Popen:
+    """Launch the huey-consumer for processing background tasks.
+
+    Note that this runs the django manage command 'djangohuey --quiet'.
+    """
     # this needs to be run in the background
     return popen_django_manage_command("djangohuey --quiet")
 
 
-def launch_django_dev_server_process(*, port: int | None = None):
+def launch_django_dev_server_process(*, port: int | None = None) -> subprocess.Popen:
+    """Launch django's native development server.
+
+    Note that this should never be used in production.
+
+    KWargs:
+        port: the port for the server.
+
+    """
+    # TODO - put in an 'are we in production' check.
+
     # this needs to be run in the background
     if port:
         print(f"Dev server will run on port {args.port}")
@@ -119,12 +159,14 @@ def launch_django_dev_server_process(*, port: int | None = None):
 
 
 def upload_demo_assessment_spec_file():
+    """Use 'plom_preparation_test_spec' to upload a demo assessment spec."""
     print("Uploading demo assessment spec")
     spec_file = demo_file_directory / "demo_assessment_spec.toml"
     run_django_manage_command(f"plom_preparation_test_spec upload {spec_file}")
 
 
 def upload_demo_test_source_files():
+    """Use 'plom_preparation_source' to upload a demo assessment source pdfs."""
     print("Uploading demo assessment source pdfs")
     for v in [1, 2]:
         source_pdf = demo_file_directory / f"source_version{v}.pdf"
@@ -132,6 +174,7 @@ def upload_demo_test_source_files():
 
 
 def upload_demo_solution_files():
+    """Use 'plom_solution_spec' to upload demo solution spec and source pdfs."""
     print("Uploading demo solution spec")
     soln_spec_path = demo_file_directory / "demo_solution_spec.toml"
     print("Uploading demo solution pdfs")
@@ -142,6 +185,7 @@ def upload_demo_solution_files():
 
 
 def upload_demo_classlist(length="normal", prename=True):
+    """Use 'plom_preparation_classlist' to the appropriate classlist for the demo."""
     if length == "long":
         cl_path = demo_file_directory / "cl_for_long_demo.csv"
     elif length == "plaid":
@@ -160,6 +204,7 @@ def upload_demo_classlist(length="normal", prename=True):
 
 
 def populate_the_database(length="normal"):
+    """Use 'plom_papers' to build a qv-map for the demo and populate the database."""
     production = {"quick": 35, "normal": 70, "long": 600, "plaid": 2000}
     print(
         f"Building a question-version map and populating the database with {production[length]} papers"
@@ -171,6 +216,7 @@ def populate_the_database(length="normal"):
 
 
 def build_all_papers_and_wait():
+    """Trigger build all the printable paper pdfs and wait for completion."""
     from time import sleep
 
     run_django_manage_command("plom_build_papers --start-all")
@@ -191,15 +237,25 @@ def build_all_papers_and_wait():
 def run_demo_preparation_commands(
     *, length="normal", stop_after=None, solutions=True, prename=True
 ):
+    """Run commands to prepare a demo assessment.
+
+    In order it runs:
+        * (users): create demo users,
+        * (spec): upload the demo spec,
+        * (sources): upload the test-source pdfs
+            >> will also upload solutions at this point if instructed by user
+            >> will also upload the classlist
+        * (populate): make the qv-map and populate the database
+        * (papers_built): make the paper-pdfs
+        * finally - set preparation as completed.
+
+    KWargs:
+        length = the length of the demo: quick, normal, long, plaid.
+        stop_after = after which step should the demo be stopped, see list above.
+        solutions = whether or not to upload solutions as part of the demo.
+        prename = whether or not to prename some papers in the demo.
+    """
     # in order the demo will
-    # (users): create demo users,
-    # (spec): upload the demo spec,
-    # (sources): upload the test-source pdfs
-    # >> will also upload solutions at this point if instructed by user
-    # >> will also upload the classlist
-    # (populate): make the qv-map and populate the database
-    # (papers_built): make the paper-pdfs
-    # finally - set preparation as completed.
 
     # TODO = remove this demo-specific command
     run_django_manage_command("plom_create_demo_users")
@@ -237,6 +293,7 @@ def run_demo_preparation_commands(
 
 
 def download_zip() -> None:
+    """Use 'plom_build_papers' to download a zip of all paper-pdfs."""
     run_django_manage_command("plom_build_papers --download-all")
     print("Downloaded a zip of all the papers")
 
@@ -259,12 +316,27 @@ def _read_bundle_config(length):
 
 
 def build_bundles(length="normal"):
+    """Create bundles of papers to simulate scanned student papers.
+
+    KWargs:
+        length = the length of the demo.
+    """
     bundle_config_dict = _read_bundle_config(length)
     # HACKED UP TO HERE
     print(bundle_config_dict)
 
 
 def run_demo_bundle_scan_commands(*, stop_after=None, length="normal", muck=False):
+    """Run commands to step through the scanning process in the demo.
+
+    In order it runs:
+        * (bundles_created): create bundles of papers; system will also make random annotations on these papers to simulate student work. (Optionally) the system will "muck" the papers to simulate poor scanning.
+            >> will also download a zip of all build papers from which mock-bundles are created.
+    KWargs:
+        stop_after = after which step should the demo be stopped, see list above.
+        length = the length of the demo: quick, normal, long, plaid.
+        muck = whether or not to "muck" with the mock test bundles - this is intended to immitate the effects of poor scanning.
+    """
     download_zip()
     build_bundles(length)
     if stop_after == "bundles_created":
@@ -304,10 +376,7 @@ if __name__ == "__main__":
             prename=args.prename,
         )
         print(">> Scanning of papers")
-        run_demo_bundle_scan_commands(
-            stop_after=stop_after,
-            muck=options.muck
-        )
+        run_demo_bundle_scan_commands(stop_after=stop_after, muck=options.muck)
         print("*" * 50)
         wait_for_user_to_type_quit()
 

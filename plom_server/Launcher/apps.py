@@ -11,4 +11,5 @@ class LaunchConfig(AppConfig):
     # This function is called on django startup, including
     # when a django-command is called
     def ready(self):
+        """A placeholder, for now, that is called on each django start-up."""
         pass
