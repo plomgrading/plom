@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
@@ -12,99 +12,23 @@ from typing import Any
 from django.db import transaction
 
 from plom import SpecVerifier
-from plom.plom_exceptions import PlomDependencyConflict
-from plom.version_maps import version_map_to_csv, check_version_map
+from plom.version_maps import version_map_to_csv
 
 from Papers.services import SpecificationService
-from .preparation_dependency_service import (
-    assert_can_modify_qv_mapping_database,
-)
 
-from ..models import StagingPQVMapping, NumberOfPapersToProduceSetting
 from ..services import StagingStudentService
 
 
 class PQVMappingService:
-    @transaction.atomic()
-    def is_there_a_pqv_map(self):
-        return StagingPQVMapping.objects.exists()
-
-    def _set_number_to_produce(self, numberToProduce: int):
-        nop = NumberOfPapersToProduceSetting.load()
-        nop.number_of_papers = numberToProduce
-        nop.save()
-
-    def _reset_number_to_produce(self):
-        self._set_number_to_produce(0)
-
-    def get_number_of_papers_in_pqv_map(self) -> int:
-        # get the number of distinct paper-numbers in the staging pqv-map
-        return StagingPQVMapping.objects.values("paper_number").distinct().count()
-
-    @transaction.atomic()
-    def list_of_paper_numbers(self):
-        paper_numbers = [
-            x
-            for x in StagingPQVMapping.objects.values_list("paper_number", flat=True)
-            .order_by("paper_number")
-            .distinct()
-        ]
-        return paper_numbers
-
-    @transaction.atomic()
-    def remove_pqv_map(self) -> None:
-        """Erase the question-version map.
-
-        Raises:
-            PlomDependencyConflict: cannot erase for example b/c papers already printed.
-        """
-        assert_can_modify_qv_mapping_database()
-        StagingPQVMapping.objects.all().delete()
-        self._reset_number_to_produce()
-
-    @transaction.atomic()
-    def use_pqv_map(self, pqvmap: dict[int, dict[int, int]]):
-        """Populate the database with this particular version map.
-
-        Note: assumes that there is no current pqvmap or that you are adding
-        to the existing pqvmap.
-
-        Raises:
-            PlomDependencyConflict: cannot modify qv map or database (eg papers printed)
-            ValueError: invalid map.
-        """
-        if self.is_there_a_pqv_map():
-            raise PlomDependencyConflict(
-                "There is already a qv-map, you cannot create a new one until you remove the existing one."
-            )
-        assert_can_modify_qv_mapping_database()
-
-        check_version_map(pqvmap, spec=SpecificationService.get_the_spec())
-        for paper_number, qvmap in pqvmap.items():
-            for question, version in qvmap.items():
-                StagingPQVMapping.objects.create(
-                    paper_number=paper_number, question=question, version=version
-                )
-        self._set_number_to_produce(len(pqvmap))
+    # Note that this service should not modify the database
+    # It should now simply construct qvmaps in various forms
+    # and know how to read the paper-database to get pqv info
 
     @transaction.atomic()
     def get_pqv_map_dict(self) -> dict[int, dict[int, int]]:
-        # put into the dict in paper_number order.
-        pqvmapping: dict[int, dict[int, int]] = {}
-        for pqv_obj in StagingPQVMapping.objects.all().order_by("paper_number"):
-            if pqv_obj.paper_number in pqvmapping:
-                pqvmapping[pqv_obj.paper_number][pqv_obj.question] = pqv_obj.version
-            else:
-                pqvmapping[pqv_obj.paper_number] = {pqv_obj.question: pqv_obj.version}
+        from Papers.services import PaperInfoService
 
-        return pqvmapping
-
-    @transaction.atomic()
-    def get_pqv_map_length(self) -> int:
-        # TODO: likely not the most efficient way!
-        return len(self.get_pqv_map_dict())
-        # But careful, its certainly not this:
-        # return StagingPQVMapping.objects.count()
+        return PaperInfoService().get_pqv_map_dict()
 
     def get_pqv_map_as_table(
         self, prenaming: bool = False
@@ -114,8 +38,10 @@ class PQVMappingService:
         pqvmapping = self.get_pqv_map_dict()
         pqv_table = {}
         question_indices = SpecificationService.get_question_indices()
-
-        for paper_number, qvmap in pqvmapping.items():
+        # sort in paper-number-order so that the table renders in this order
+        # python keeps keys in insertion order since v3.7
+        # see https://docs.python.org/3/whatsnew/3.7.html
+        for paper_number, qvmap in sorted(pqvmapping.items()):
             pqv_table[paper_number] = {
                 "prename": None,
                 "qvlist": [qvmap[q] for q in question_indices],
@@ -135,7 +61,16 @@ class PQVMappingService:
 
     @transaction.atomic()
     def pqv_map_to_csv(self, f: Path) -> None:
+        """Write a non-empty version map to a CSV file.
+
+        Raises:
+            ValueError: map seems to be empty.
+        """
         pqvmap = self.get_pqv_map_dict()
+        if not pqvmap:
+            raise ValueError(
+                "No version map: cowardly refusing to create an empty CSV file."
+            )
         version_map_to_csv(pqvmap, f, _legacy=False)
 
     @transaction.atomic()
@@ -148,7 +83,22 @@ class PQVMappingService:
                 txt = fh.readlines()
             return txt
 
-    def make_version_map(self, numberToProduce):
+    def make_version_map(
+        self, numberToProduce: int, *, first: int = 1
+    ) -> dict[int, dict[int, int]]:
+        """Generate a paper-question-version-map.
+
+        Args:
+            numberToProduce: how many items in the version map.
+
+        Keyword Args:
+            first: the starting paper number.
+
+        Returns:
+            dict: a dict-of-dicts keyed by paper number (int) and then
+            question index (int, but indexed from 1 not 0).  Values are
+            integers.
+        """
         from plom import make_random_version_map
 
         # grab the spec as dict from the test creator services
@@ -163,34 +113,11 @@ class PQVMappingService:
         speck = SpecVerifier(spec_dict)
 
         seed = SpecificationService.get_private_seed()
-        return make_random_version_map(speck, seed=seed)
-
-    def generate_and_set_pqvmap(
-        self, number_to_produce: int, *, first: int = 1
-    ) -> None:
-        """Remove any existing question-version map, generate a new map and set it in the database.
-
-        Args:
-            number_to_produce: how many items in the version map.
-
-        Keyword Args:
-            first: the starting paper number.
-
-        Raises:
-            PlomDependencyConflict: cannot modify qv map or database (eg papers printed)
-
-        Returns:
-            None
-        """
-        assert_can_modify_qv_mapping_database()
-
-        self.remove_pqv_map()
-        pqvmap = self.make_version_map(number_to_produce)
+        pqvmap = make_random_version_map(speck, seed=seed)
         # kind of hacky: we just increase/decrease the keys
         pqvmap = {k - 1 + first: v for k, v in pqvmap.items()}
         # bit of a hack to ensure versions match per page
-        pqvmap = _fix_shared_pages(pqvmap)
-        self.use_pqv_map(pqvmap)
+        return _fix_shared_pages(pqvmap)
 
     def get_minimum_number_to_produce(self):
         sss = StagingStudentService()

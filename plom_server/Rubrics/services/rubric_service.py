@@ -131,7 +131,15 @@ class RubricService:
                 "No users are allowed to create rubrics on this server"
             )
         else:
-            # TODO: consult per-user permissions (not implemented yet)
+            # neither permissive nor locked so consult per-user permissions
+            if creating_user.groups.filter(name="lead_marker").exists():
+                # lead markers can modify any non-system-rubric
+                pass
+            else:
+                raise PermissionDenied(
+                    f'You ("{creating_user}") are not allowed to create'
+                    " rubrics on this server"
+                )
             pass
 
         rubric_data["latest"] = True
@@ -202,7 +210,7 @@ class RubricService:
             raise PlomConflict(
                 f'The rubric your revision was based upon {new_rubric_data["revision"]} '
                 f"does not match database content (revision {rubric.revision}): "
-                f"most likely your  edits have collided with those of someone else."
+                f"most likely your edits have collided with those of someone else."
             )
 
         # Generally, omitting modifying_user bypasses checks
@@ -223,9 +231,14 @@ class RubricService:
                 "No users are allowed to modify rubrics on this server"
             )
         else:
-            # TODO: consult per-user permissions (not implemented yet)
-            # For now, we have only the default case: users can modify their own rubrics
-            if user != modifying_user:
+            # neither permissive nor locked so consult per-user permissions
+            if user == modifying_user:
+                # users can modify their own
+                pass
+            elif modifying_user.groups.filter(name="lead_marker").exists():
+                # lead markers can modify any non-system-rubric
+                pass
+            else:
                 raise PermissionDenied(
                     f'You ("{modifying_user}") are not allowed to modify'
                     f' rubrics created by other users (here "{user}")'
@@ -251,8 +264,9 @@ class RubricService:
         rubric_obj = serializer.instance
         return _Rubric_to_dict(rubric_obj)
 
+    @classmethod
     def get_rubrics_as_dicts(
-        self, *, question: int | None = None
+        cls, *, question: int | None = None
     ) -> list[dict[str, Any]]:
         """Get the rubrics, possibly filtered by question.
 
@@ -262,20 +276,20 @@ class RubricService:
         Returns:
             Collection of dictionaries, one for each rubric.
         """
-        if question is None:
-            rubric_list = Rubric.objects.all()
-        else:
-            rubric_list = Rubric.objects.filter(question=question)
+        rubric_queryset = cls.get_all_rubrics()
+        if question is not None:
+            rubric_queryset = rubric_queryset.filter(question=question, latest=True)
         rubric_data = []
 
-        for r in rubric_list.prefetch_related("user"):
+        for r in rubric_queryset.prefetch_related("user"):
             rubric_data.append(_Rubric_to_dict(r))
 
         new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))
 
         return new_rubric_data
 
-    def get_all_rubrics(self) -> QuerySet[Rubric]:
+    @staticmethod
+    def get_all_rubrics() -> QuerySet[Rubric]:
         """Get all the rubrics (latest revisions) as a QuerySet, enabling further lazy filtering.
 
         See: https://docs.djangoproject.com/en/4.2/topics/db/queries/#querysets-are-lazy

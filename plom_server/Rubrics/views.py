@@ -39,7 +39,7 @@ class RubricAdminPageView(ManagerRequiredView):
         download_form = RubricDownloadForm(request.GET)
         upload_form = RubricUploadForm()
         context = self.build_context()
-        rubrics = RubricService().get_all_rubrics()
+        rubrics = RubricService.get_all_rubrics()
         context.update(
             {
                 "rubrics": rubrics,
@@ -61,7 +61,7 @@ class RubricAdminPageView(ManagerRequiredView):
             any_manager = User.objects.filter(groups__name="manager").first()
             RubricService().init_rubrics(any_manager.username)
         # and if not valid, this just kinda DTRT (?)
-        rubrics = RubricService().get_all_rubrics()
+        rubrics = RubricService.get_all_rubrics()
         context.update(
             {
                 "rubrics": rubrics,
@@ -203,13 +203,12 @@ class RubricLandingPageView(ManagerRequiredView):
 
     def get(self, request):
         template_name = "Rubrics/rubrics_landing.html"
-        rs = RubricService()
         rubric_filter_form = RubricFilterForm
 
         context = self.build_context()
 
         filter_form = rubric_filter_form(request.GET)
-        rubrics = rs.get_all_rubrics()
+        rubrics = RubricService.get_all_rubrics()
 
         if filter_form.is_valid():
             question_filter = filter_form.cleaned_data["question_filter"]
