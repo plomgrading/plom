@@ -129,8 +129,10 @@ class Command(BaseCommand):
         self.stdout.write(tabulate(tab, headers="keys", tablefmt="simple_outline"))
 
     def delete_all_tasks(self) -> None:
+        self.stdout.write("Deleting all PDF building chores and associated PDFs...")
         bp_service = BuildPapersService()
         bp_service.reset_all_tasks()
+        self.stdout.write("Deletion complete")
 
     def cancel_all_tasks(self) -> None:
         bp_service = BuildPapersService()

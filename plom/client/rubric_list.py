@@ -1807,7 +1807,11 @@ class RubricWidget(QWidget):
                 self._parent.modifyRubric(_tmp["id"], _tmp)
 
         else:
-            new_rubric = self._parent.createNewRubric(new_rubric)
+            try:
+                new_rubric = self._parent.createNewRubric(new_rubric)
+            except PlomNoPermission as e:
+                InfoMsg(self, f"No permission to create rubrics: {e}").exec()
+                return
             self.rubrics.append(new_rubric)
 
         self.setRubricTabsFromState(self.get_tab_rubric_lists())

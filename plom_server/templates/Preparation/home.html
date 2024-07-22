@@ -76,7 +76,9 @@
             <a href="{% url 'prep_qvmapping' %}"
                class="list-group-item list-group-item-action border mb-1">
                 <p class="fs-4">
-                    {% if papers_staged %}
+                    {% if is_db_chore_running %}
+                        <i class="bi bi-dash-square-dotted text-info"></i>
+                    {% elif is_db_fully_populated %}
                         <i class="bi bi-check-square text-success"></i>
                     {% else %}
                         <i class="bi bi-square"></i>

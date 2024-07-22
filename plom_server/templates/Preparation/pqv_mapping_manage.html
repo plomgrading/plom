@@ -60,8 +60,11 @@
                     {% if populate_in_progress %}
                         <div class="alert alert-info">
                             <p>
-                                Database is currently being populated with papers
-                                {% if chore_message %}: {{ chore_message }}{% endif %}
+                                {% if chore_message %}
+                                    Database is currently being populated with papers: {{ chore_message }}
+                                {% else %}
+                                    Database is currently being populated with papers.
+                                {% endif %}
                             </p>
                             <p>
                                 Please reload page
@@ -74,8 +77,11 @@
                     {% if evacuate_in_progress %}
                         <div class="alert alert-warning">
                             <p>
-                                Papers are currently being removed from the database
-                                {% if chore_message %}: {{ chore_message }}{% endif %}
+                                {% if chore_message %}
+                                    Papers are currently being removed from the database: {{ chore_message }}
+                                {% else %}
+                                    Papers are currently being removed from the database.
+                                {% endif %}
                             </p>
                             <p>
                                 Please reload page
@@ -284,4 +290,10 @@
             {% endif %}
         {% endif %}
     </div>
+    {% if populate_in_progress or evacuate_in_progress %}
+        <script>
+  // reload page after 2 sec
+setTimeout(function () { window.location.reload(1); }, 5000); 
+        </script>
+    {% endif %}
 {% endblock main_content %}

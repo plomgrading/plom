@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Andrew Rechnitzer
 
 import sys
 
@@ -52,7 +53,6 @@ class PreparationLandingTests(TestCase):
         context = landing_view.build_context()
 
         self.assertFalse(context["valid_spec"])
-        self.assertFalse(context["papers_staged"])
 
         self.assertFalse(context["can_upload_source_tests"])
         self.assertEqual(context["num_uploaded_source_versions"], 0)
@@ -61,7 +61,8 @@ class PreparationLandingTests(TestCase):
 
         self.assertFalse(context["student_list_present"])
 
-        self.assertFalse(context["papers_staged"])
+        self.assertFalse(context["is_db_chore_running"])
+        self.assertFalse(context["is_db_fully_populated"])
 
         self.assertFalse(context["all_papers_built"])
 
