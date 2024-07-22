@@ -120,6 +120,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.blurb = TextItem(
             pt,
             rubric["text"],
+            annot_scale=_scene._scale,
             fontsize=fontsize,
             color=style["annot_color"],
             _texmaker=_scene,
@@ -239,11 +240,12 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
 
 
 class GhostComment(QGraphicsItemGroup):
-    def __init__(self, display_delta, txt, fontsize):
+    def __init__(self, annot_scale: float, display_delta: str, txt: str, fontsize: int):
         super().__init__()
         self.legal = False
+        self.annot_scale = annot_scale
         self.di = GhostDelta(display_delta, fontsize, legal=self.legal)
-        self.blurb = GhostText(txt, fontsize, legal=self.legal)
+        self.blurb = GhostText(txt, annot_scale, fontsize, legal=self.legal)
         self.changeComment(display_delta, txt)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
 
@@ -275,6 +277,7 @@ class GhostComment(QGraphicsItemGroup):
         # change things
         self.legal = legal
         self.di.changeDelta(display_delta, legal)
+        self.blurb.update_annot_scale(self.annot_scale)
         self.blurb.changeText(txt, legal)
         # move to correct positions
         self._tweakPositions(display_delta, txt)
@@ -290,13 +293,18 @@ class GhostComment(QGraphicsItemGroup):
             self.blurb.setVisible(True)
             self.addToGroup(self.blurb)
 
-    def change_font_size(self, fontsize):
+    def change_font_size(self, fontsize: int | None, annot_scale: float):
+        if not fontsize:
+            fontsize = 10
+        print("text: ", self.blurb.toPlainText())
         font = QFont("Helvetica")
         font.setPixelSize(round(fontsize))
         self.blurb.setFont(font)
         font = QFont("Helvetica")
         font.setPixelSize(round(1.25 * fontsize))
         self.di.setFont(font)
+        self.annot_scale = annot_scale
+        print("text2: ", self.blurb.toPlainText())
         self.changeComment(
             self.di.display_delta, self.blurb.toPlainText(), legal=self.legal
         )
