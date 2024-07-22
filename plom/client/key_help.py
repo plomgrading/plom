@@ -565,11 +565,12 @@ class ClickDragPage(QWidget):
         grid.addSpacing(6)
 
         self.setLayout(grid)
-        # as fer link, try to force QMove to load from the buffer before the buffer
-        # and bytearray are closed and/or garbage collected
+        # as per link above, try to force QMove to load from the buffer before the
+        # buffer and bytearray are closed and/or garbage collected
         film.jumpToFrame(film.frameCount() - 1)
         film.jumpToFrame(0)
         film.start()
-        # But it seems in PyQt6 (at least Qt6-6.7.1) need ref to prevent SIGSEGV
+        # But it seems in PyQt6 (at least Qt6-6.7.1) we need ref to prevent SIGSEGV
+        # Note Qt docs: "QBuffer doesn't take ownership of the QByteArray"
         self._film_buffer = film_qbuffer
         self._film_bytesarray = film_qbytesarray
