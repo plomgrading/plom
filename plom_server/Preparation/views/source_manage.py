@@ -112,9 +112,9 @@ class SourceManageView(ManagerRequiredView):
 
         return render(request, "Preparation/source_item_view.html", context)
 
-    def delete(self, request, version=None):
+    def delete(self, request, version):
         # This function is HTMX only
-        if not version or not request.htmx:
+        if not request.htmx:
             return HttpResponseBadRequest("Only HTMX DELETE requests are allowed")
 
         try:
