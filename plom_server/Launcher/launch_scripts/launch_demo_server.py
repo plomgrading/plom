@@ -325,7 +325,6 @@ def build_bundles(length="normal"):
     KWargs:
         length = the length of the demo.
     """
-
     bundle_config_dict = _read_bundle_config(length)
     # HACKED UP TO HERE
     print(bundle_config_dict)
@@ -365,6 +364,7 @@ if __name__ == "__main__":
     pre_launch()
     # now put main things inside a try/finally so that we
     # can clean up the huey/server processes on exit.
+    huey_process, server_process = None, None
     try:
         print("v" * 50)
         print("Launching huey and django dev server")
@@ -389,6 +389,8 @@ if __name__ == "__main__":
     finally:
         print("v" * 50)
         print("Shutting down huey and django dev server")
-        huey_process.terminate()
-        server_process.terminate()
+        if huey_process: 
+            huey_process.terminate()
+        if server_process:
+            server_process.terminate()
         print("^" * 50)
