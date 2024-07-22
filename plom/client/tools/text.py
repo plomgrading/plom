@@ -157,7 +157,7 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         return shp
 
     def set_image(self, image_path: str) -> None:
-        """Set an image (from image_path) to current instance of TextItem.
+        """Replace the current content with an image.
 
         Args:
             image_path: image path.
@@ -327,7 +327,7 @@ class GhostText(QGraphicsTextItem):
         self._tex_src_cache = None
 
     def set_image(self, image_path: str) -> None:
-        """Set image (from image_path) to current instance of GhostText.
+        """Replace the current content with an image.
 
         Args:
             image_path: image path.
