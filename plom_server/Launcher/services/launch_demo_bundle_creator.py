@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from collections import defaultdict
 import csv
@@ -22,7 +22,7 @@ from plom.create.scribble_utils import scribble_name_and_id, scribble_pages
 from Papers.services import SpecificationService
 
 
-class DemoBundleService:
+class DemoBundleCreationService:
     """Handle generating demo bundles."""
 
     def get_classlist_as_dict(self):

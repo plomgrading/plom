@@ -16,11 +16,13 @@ else:
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 
-from Launcher.services import LaunchProcessesService
+from Launcher.services import (
+    LaunchProcessesService,
+    DemoBundleCreationService,
+    DemoHWBundleCreationService,
+)
 from ...services import (
     DemoCreationService,
-    DemoBundleService,
-    DemoHWBundleService,
     ConfigFileService,
 )
 from Demo import config_files as demo_config_files
@@ -48,8 +50,8 @@ class Command(BaseCommand):
 
     def create_bundles(
         self,
-        dbs: DemoBundleService,
-        dhs: DemoHWBundleService,
+        dbs: DemoBundleCreationService,
+        dhs: DemoHWBundleCreationService,
         config,
         homework_bundles,
     ) -> None:
@@ -74,7 +76,7 @@ class Command(BaseCommand):
     def read_bundles(
         self,
         dcs: DemoCreationService,
-        dhs: DemoHWBundleService,
+        dhs: DemoHWBundleCreationService,
         config,
         number_of_bundles,
         homework_bundles,
@@ -121,14 +123,14 @@ class Command(BaseCommand):
         print("*" * 40)
         if config.bundles:
             number_of_bundles = len(config.bundles)
-            bundle_service = DemoBundleService()
+            bundle_service = DemoBundleCreationService()
         else:
             bundle_service = None
             number_of_bundles = 0
 
         if config.hw_bundles:
             homework_bundles = config.hw_bundles
-            homework_service = DemoHWBundleService()
+            homework_service = DemoHWBundleCreationService()
         else:
             homework_bundles = []
             homework_service = None

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 import fitz
 from pathlib import Path
@@ -10,7 +10,7 @@ from time import sleep
 from django.core.management import call_command
 
 
-class DemoHWBundleService:
+class DemoHWBundleCreationService:
     """Handle creating homework bundles in the demo."""
 
     def make_hw_bundle(self, bundle: dict):

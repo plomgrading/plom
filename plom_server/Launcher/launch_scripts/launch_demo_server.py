@@ -11,6 +11,7 @@ from pathlib import Path
 from shlex import split
 import subprocess
 
+
 # sigh.... python dependent import - sorry.
 import sys
 
@@ -34,7 +35,7 @@ def wait_for_user_to_type_quit() -> None:
             break
 
 
-def set_argparse_and_get_args() -> None:
+def set_argparse_and_get_args() -> argparse.Namespace:
     """Configure argparse to collect commandline options."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", help="Port number on which to launch server")
@@ -324,6 +325,7 @@ def build_bundles(length="normal"):
     KWargs:
         length = the length of the demo.
     """
+
     bundle_config_dict = _read_bundle_config(length)
     # HACKED UP TO HERE
     print(bundle_config_dict)
@@ -355,6 +357,7 @@ if __name__ == "__main__":
         stop_after = None
 
     build_bundles(length=args.length)
+    quit()
 
     # make sure we are in the correct directory to run things.
     confirm_run_from_correct_directory()
