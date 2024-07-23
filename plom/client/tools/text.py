@@ -5,7 +5,7 @@
 # Copyright (C) 2024 Bryan Tanady
 
 from PyQt6.QtCore import Qt, QPointF, QTimer
-from PyQt6.QtGui import QColor, QFont, QUndoCommand
+from PyQt6.QtGui import QColor, QFont, QUndoCommand, QPixmap
 from PyQt6.QtWidgets import QGraphicsItem, QGraphicsTextItem
 
 from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
@@ -82,6 +82,7 @@ class CommandText(CommandTool):
         self.blurb = TextItem(
             pt,
             text,
+            annot_scale=scene._scale,
             fontsize=scene.fontSize,
             color=scene.style["annot_color"],
             _texmaker=scene,
@@ -128,13 +129,23 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
     TODO: try to remove this with some future refactor?
     """
 
-    def __init__(self, pt, text, fontsize=10, color=QColor("red"), _texmaker=None):
+    def __init__(
+        self,
+        pt,
+        text: str,
+        annot_scale: float,
+        fontsize: int = 10,
+        color=QColor("red"),
+        _texmaker=None,
+    ):
         super().__init__()
         self.saveable = True
         self._texmaker = _texmaker
         self.setDefaultTextColor(color)
         self.setPlainText(text)
         font = QFont("Helvetica")
+        self.annot_scale = annot_scale
+        self.fontsize = fontsize
         font.setPixelSize(round(fontsize))
         self.setFont(font)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
@@ -161,10 +172,18 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
 
         Args:
             image_path: image path.
+            fontsize: scene's fontsize which will be used to scale the image.
         """
+        pixmap = QPixmap(image_path)
+        original_width = pixmap.width()
+        original_height = pixmap.height()
+
+        scaled_width = int(original_width * self.annot_scale)
+        scaled_height = int(original_height * self.annot_scale)
+
         html_content = f"""
         <div style="text-align: center;">
-            <img src="{image_path}" style="vertical-align: middle;" />
+            <img src="{image_path}" width="{scaled_width}" height="{scaled_height}" style="vertical-align: middle;" />
         </div>
         """
         self.setHtml(html_content)
@@ -311,7 +330,7 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
 class GhostText(QGraphicsTextItem):
     """Blue "ghost" of text indicating what text will be placed in scene."""
 
-    def __init__(self, txt, fontsize, *, legal=True):
+    def __init__(self, txt: str, annot_scale: float, fontsize: int, *, legal=True):
         super().__init__()
         if legal:
             self.setDefaultTextColor(QColor("blue"))
@@ -321,10 +340,19 @@ class GhostText(QGraphicsTextItem):
         font = QFont("Helvetica")
         font.setPixelSize(round(fontsize))
         self.setFont(font)
+        self.annot_scale = annot_scale
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         # If displaying png-rendered-latex, store the original text here
         self._tex_src_cache = None
+
+    def update_annot_scale(self, annot_scale: float) -> None:
+        """Update the annotation scale being used.
+
+        Args:
+            annot_scale: scene's global annotation scale.
+        """
+        self.annot_scale = annot_scale
 
     def set_image(self, image_path: str) -> None:
         """Replace the current content with an image.
@@ -332,9 +360,16 @@ class GhostText(QGraphicsTextItem):
         Args:
             image_path: image path.
         """
+        pixmap = QPixmap(image_path)
+        original_width = pixmap.width()
+        original_height = pixmap.height()
+
+        scaled_width = int(original_width * self.annot_scale)
+        scaled_height = int(original_height * self.annot_scale)
+
         html_content = f"""
         <div style="text-align: center;">
-            <img src="{image_path}" style="vertical-align: middle;" />
+            <img src="{image_path}" width="{scaled_width}" height="{scaled_height}" style="vertical-align: middle;" />
         </div>
         """
         self.setHtml(html_content)
@@ -342,6 +377,12 @@ class GhostText(QGraphicsTextItem):
     def is_rendered(self):
         """Is this TextItem displaying a PNG, e.g., of LaTeX?"""
         return self._tex_src_cache is not None
+
+    def toPlainText(self):
+        """The text itself or underlying source if displaying latex."""
+        if self.is_rendered():
+            return self._tex_src_cache
+        return super().toPlainText()
 
     def changeText(self, txt, legal):
         self._tex_src_cache = None

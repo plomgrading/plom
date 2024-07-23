@@ -3,8 +3,10 @@
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Bryan Tanady
 
 from copy import deepcopy
+from typing import Union
 
 from PyQt6.QtCore import Qt, QPointF
 from PyQt6.QtGui import QColor, QFont, QPen
@@ -120,6 +122,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.blurb = TextItem(
             pt,
             rubric["text"],
+            annot_scale=_scene._scale,
             fontsize=fontsize,
             color=style["annot_color"],
             _texmaker=_scene,
@@ -239,11 +242,12 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
 
 
 class GhostComment(QGraphicsItemGroup):
-    def __init__(self, display_delta, txt, fontsize):
+    def __init__(self, annot_scale: float, display_delta: str, txt: str, fontsize: int):
         super().__init__()
         self.legal = False
+        self.annot_scale = annot_scale
         self.di = GhostDelta(display_delta, fontsize, legal=self.legal)
-        self.blurb = GhostText(txt, fontsize, legal=self.legal)
+        self.blurb = GhostText(txt, annot_scale, fontsize, legal=self.legal)
         self.changeComment(display_delta, txt)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
 
@@ -275,6 +279,7 @@ class GhostComment(QGraphicsItemGroup):
         # change things
         self.legal = legal
         self.di.changeDelta(display_delta, legal)
+        self.blurb.update_annot_scale(self.annot_scale)
         self.blurb.changeText(txt, legal)
         # move to correct positions
         self._tweakPositions(display_delta, txt)
@@ -290,13 +295,25 @@ class GhostComment(QGraphicsItemGroup):
             self.blurb.setVisible(True)
             self.addToGroup(self.blurb)
 
-    def change_font_size(self, fontsize):
+    def change_rubric_size(
+        self, fontsize: Union[int, None], annot_scale: float
+    ) -> None:
+        """Change comment size.
+
+        Args:
+            fontsize: the fontsize that will be applied in the comment.
+            annot_scale: the scene's global scale.
+        """
+        if not fontsize:
+            fontsize = 10
+
         font = QFont("Helvetica")
         font.setPixelSize(round(fontsize))
         self.blurb.setFont(font)
         font = QFont("Helvetica")
         font.setPixelSize(round(1.25 * fontsize))
         self.di.setFont(font)
+        self.annot_scale = annot_scale
         self.changeComment(
             self.di.display_delta, self.blurb.toPlainText(), legal=self.legal
         )
