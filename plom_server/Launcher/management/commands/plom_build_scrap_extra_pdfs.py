@@ -9,6 +9,7 @@ class Command(BaseCommand):
     """Build the extra-page and scrap-paper PDFs and put them into static storage."""
 
     def handle(self, *args, **options):
+        """Build and store the extra-page and scrap paper pdfs."""
         from plom.create import build_extra_page_pdf, build_scrap_paper_pdf
 
         dest_dir = settings.STATICFILES_DIRS[0]

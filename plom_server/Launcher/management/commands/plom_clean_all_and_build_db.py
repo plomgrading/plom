@@ -20,10 +20,13 @@ class Command(BaseCommand):
     """
 
     def remove_misc_user_files(self):
-        print("Removing any user-generated files from django's MEDIA_ROOT director")
+        """Remove any user-generated files from django's MEDIA directory."""
+
+        print("Removing any user-generated files from django's MEDIA_ROOT directory")
         shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
 
     def remove_old_migration_files(self):
+        """Remove old db migration files from the source tree."""
         print("Avoid perplexing errors by removing autogen migration droppings")
         for path in Path(".").glob("*/migrations/*.py"):
             if path.name == "__init__.py":
@@ -38,6 +41,7 @@ class Command(BaseCommand):
             path.unlink(missing_ok=True)
 
     def handle(self, *args, **options):
+        """Clean up source tree, remove old DB and huey files, and rebuild db."""
         self.stdout.write("Removing old files, database, huey-db.")
         self.remove_misc_user_files()
         self.remove_old_migration_files()

@@ -356,6 +356,11 @@ def upload_the_bundles(length="normal"):
 
 
 def push_the_bundles(length):
+    """Pushes the demo bundles from staging to the server.
+
+    Only pushes 'perfect' bundles (those without errors). It
+    also IDs any (pushed) homework bundles.
+    """
     run_django_manage_command(f"plom_demo_bundles --length {length} --action push")
     run_django_manage_command(f"plom_demo_bundles --length {length} --action id_hw")
 
@@ -384,6 +389,10 @@ def run_demo_bundle_scan_commands(*, stop_after=None, length="normal", muck=Fals
 
 
 def run_the_randomarker(*, port):
+    """Run the rando-IDer and rando-Marker.
+
+    All papers will be ID'd and marked after this call.
+    """
     # TODO: hardcoded http://
     srv = f"http://localhost:{port}"
     # list of markers and their passwords and percentage to mark
@@ -399,7 +408,7 @@ def run_the_randomarker(*, port):
     subprocess.check_call(split(cmd))
 
     for X in users:
-        cmd = f"python3 -m plom.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial X[2]"
+        cmd = f"python3 -m plom.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial {X[2]}"
         print(f"RandoMarking!  calling: {cmd}")
         subprocess.check_call(split(cmd))
 

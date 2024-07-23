@@ -14,6 +14,7 @@ class DemoHWBundleCreationService:
     """Handle creating homework bundles in the demo."""
 
     def make_hw_bundle(self, bundle: dict):
+        """Construct a hw bundle pdf for use with demo."""
         paper_number = bundle["paper_number"]
         question_list = bundle["pages"]
 
@@ -42,6 +43,7 @@ class DemoHWBundleCreationService:
         doc.save(out_file)
 
     def map_homework_pages(self, homework_bundles=[]):
+        """Assign question numbers to the pages homework bundles."""
         print("Mapping homework pages to questions")
         for bundle in homework_bundles:
             paper_number = bundle["paper_number"]

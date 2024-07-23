@@ -58,6 +58,7 @@ class DemoAllBundlesConfig:
 
 
 def _read_bundle_config(length: str) -> DemoAllBundlesConfig:
+    """Read and parse the appropriate demo bundle config file."""
     demo_file_directory = settings.BASE_DIR / "Launcher/launch_scripts/demo_files"
     # read the config toml file
     if length == "quick":
@@ -80,6 +81,7 @@ class Command(BaseCommand):
     """Build the mock scan paper bundles for the demo."""
 
     def add_arguments(self, parser):
+        """Process and parse commandline arguments."""
         parser.add_argument(
             "--length",
             action="store",
@@ -95,6 +97,7 @@ class Command(BaseCommand):
         )
 
     def build_the_bundles(self, demo_config: DemoAllBundlesConfig) -> None:
+        """Build demo bundles as per the chosen demo-config."""
         # at present the bundle-creator assumes that the
         # scrap-paper and extra-page pdfs are in media/papersToPrint
         # so we make a copy of them from static to there.
@@ -128,6 +131,7 @@ class Command(BaseCommand):
                 break
 
     def upload_the_bundles_and_wait(self, demo_config: DemoAllBundlesConfig) -> None:
+        """Upload the created demo bundles, and wait for process to finish."""
         scanner_user = "demoScanner1"
         if demo_config.bundles is not None:
             for n in range(len(demo_config.bundles)):
@@ -147,6 +151,8 @@ class Command(BaseCommand):
         self._wait_for_upload()
 
     def read_qr_codes_and_wait(self, demo_config: DemoAllBundlesConfig) -> None:
+        """Read QR-codes of the uploaded bundles, and wait for process to finish."""
+
         if demo_config.bundles is not None:
             for n in range(len(demo_config.bundles)):
                 bundle_name = f"fake_bundle{n+1}"
@@ -174,6 +180,10 @@ class Command(BaseCommand):
                 break
 
     def push_and_wait(self):
+        """Push staged bundles and wait for the process to finish.
+
+        Note that only perfect bundles (no errors, and no missing data) are pushed.
+        """
         scanner_user = "demoScanner1"
         bundle_status = ScanService().are_bundles_perfect()
         perfect = [k for k, v in bundle_status.items() if v]
@@ -188,6 +198,7 @@ class Command(BaseCommand):
         print(f"The following bundles had issues, and so were skipped: {cannot}")
 
     def direct_id_hw(self, demo_config: DemoAllBundlesConfig):
+        """IDs the papers in HW bundles as per the demo config."""
         manager_user = "demoManager1"
         if demo_config.hw_bundles is None:
             return
@@ -211,6 +222,7 @@ class Command(BaseCommand):
         pass
 
     def handle(self, *args, **options):
+        """Handle demo bundle, build, upload, read, push and hw-id."""
         demo_config = _read_bundle_config(options["length"])
 
         if options["action"] == "build":

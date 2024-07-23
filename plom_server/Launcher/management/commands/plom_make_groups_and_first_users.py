@@ -16,6 +16,7 @@ class Command(BaseCommand):
     """Build user groups, the admin and manager users."""
 
     def add_arguments(self, parser: CommandParser) -> None:
+        """Process commandline arguments."""
         parser.add_argument(
             "--admin-login",
             nargs=2,
@@ -63,6 +64,7 @@ class Command(BaseCommand):
             manager.save()
 
     def handle(self, *args, **options):
+        """Make groups and users for the plom-server."""
         self.stdout.write("Make user groups")
         call_command("plom_create_groups")
 

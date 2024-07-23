@@ -8,7 +8,7 @@ from collections import defaultdict
 import csv
 from pathlib import Path
 import tempfile
-from typing import List, Dict
+from typing import List, Dict, Any
 from dataclasses import asdict
 
 import fitz
@@ -24,7 +24,8 @@ from plom.create.scribble_utils import scribble_name_and_id, scribble_pages
 class DemoBundleCreationService:
     """Handle generating demo bundles."""
 
-    def get_classlist_as_dict(self):
+    def get_classlist_as_dict(self) -> List[Dict[str, Any]]:
+        """Download the classlist and return as a list of dicts."""
         with tempfile.TemporaryDirectory() as td:
             classlist_file = Path(td) / "classlist.csv"
             classlist = []
@@ -98,6 +99,7 @@ class DemoBundleCreationService:
                 to_page_idx = from_page_idx + default_n_pages - 1
 
     def get_extra_page(self) -> None:
+        """Download the extra-page pdf to the working directory."""
         # Assumes that the extra page has been generated
         call_command(
             "plom_preparation_extrapage",
@@ -106,6 +108,7 @@ class DemoBundleCreationService:
         )
 
     def get_scrap_paper(self) -> None:
+        """Download the scrap-paper pdf to the working directory."""
         # Assumes that the scrap paper has been generated
         call_command(
             "plom_preparation_scrap_paper",
@@ -114,6 +117,7 @@ class DemoBundleCreationService:
         )
 
     def assign_students_to_papers(self, paper_list, classlist) -> List[Dict]:
+        """Map papers to names and IDs from the classlist, skipping any prenamed ones."""
         # prenamed papers are "exam_XXXX_YYYYYYY" and normal are "exam_XXXX"
         id_to_name = {X["id"]: X["name"] for X in classlist}
         sids_not_in_prename = [
@@ -272,6 +276,13 @@ class DemoBundleCreationService:
             pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[1]), overlay=True)
 
     def append_extra_page(self, pdf_doc, paper_number, student_id, extra_page_path):
+        """Append a simulated extra page to the pdf from the given student.
+
+        Students frequently require extra paper during tests and the included page
+        should be automatically marked as 'extra paper' by plom at bundle upload.
+        A scanner-user then needs to enter the details (which are stamped on the
+        page by this function).
+        """
         with fitz.open(extra_page_path) as extra_pages_pdf:
             pdf_doc.insert_pdf(
                 extra_pages_pdf,
@@ -297,6 +308,12 @@ class DemoBundleCreationService:
             tw.write_text(pdf_doc[-2])
 
     def append_scrap_page(self, pdf_doc, paper_number, student_id, scrap_paper_path):
+        """Appends a scrap-paper page to the pdf.
+
+        This is to simulate a student including some of the 'scrap paper' in with
+        their assessment and it being included in the bundle. This should then
+        be automatically marked as 'discard' by plom-scan on upload.
+        """
         with fitz.open(scrap_paper_path) as scrap_paper_pdf:
             pdf_doc.insert_pdf(
                 scrap_paper_pdf,
@@ -322,6 +339,11 @@ class DemoBundleCreationService:
             tw.write_text(pdf_doc[-2])
 
     def append_duplicate_page(self, pdf_doc: fitz.Document, page_number: int) -> None:
+        """Makes a (deep) copy of the last page of the PDF and appends it.
+
+        This is to simulate sloppy scanning procedures in which a given
+        page of the assessment might be scanned twice by accident.
+        """
         last_page = len(pdf_doc) - 1
         pdf_doc.fullcopy_page(last_page)
 
@@ -363,11 +385,21 @@ class DemoBundleCreationService:
             pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[1]), overlay=True)
 
     def append_garbage_page(self, pdf_doc):
+        """Append a 'garbage' page to the pdf.
+
+        This is intended to simulate the scanner accidentally including
+        a non-assessment page in their bundle (eg a shopping receipt).
+        """
         pdf_doc.insert_page(
             -1, text="This is a garbage page", fontsize=18, color=[0, 0.75, 0]
         )
 
     def append_page_from_another_assessment(self, pdf_doc):
+        """Append a (simulated) page from an assessment with a different public-code.
+
+        This is intended to simulate the user accidentally uploading a page ffom a
+        different assessment (as the developers may have done earlier in plom development).
+        """
         # a rather cludge way to get at the spec via commandline tools
         # really we just need the public code.
         with tempfile.TemporaryDirectory() as td:
@@ -536,6 +568,11 @@ class DemoBundleCreationService:
         return self._flatten([bundle[key] for bundle in filtered])
 
     def scribble_on_exams(self, config):
+        """Add simulated student-annotations to the pages of papers.
+
+        Note: Also, if dictated by the demo config, simulates poor
+            scanning of physical papers.
+        """
         bundles = config.bundles
         n_bundles = len(bundles)
 
