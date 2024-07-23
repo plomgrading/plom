@@ -295,7 +295,7 @@ class GhostComment(QGraphicsItemGroup):
             self.blurb.setVisible(True)
             self.addToGroup(self.blurb)
 
-    def change_comment_size(
+    def change_rubric_size(
         self, fontsize: Union[int, None], annot_scale: float
     ) -> None:
         """Change comment size.
