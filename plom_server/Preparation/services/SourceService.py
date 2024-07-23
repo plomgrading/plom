@@ -83,6 +83,23 @@ def delete_all_source_pdfs() -> None:
         pdf_obj.delete()
 
 
+@transaction.atomic()
+def get_source(version: int) -> dict[str, Any]:
+    """Return a dictionary with the source version.
+
+    Args:
+        version: which version, indexed from one.
+
+    Returns:
+        A dictionary with the version and uploaded status.
+    """
+    try:
+        pdf_obj = PaperSourcePDF.objects.filter(version=version).get()
+        return {"version": pdf_obj.version, "uploaded": True, "hash": pdf_obj.hash}
+    except PaperSourcePDF.DoesNotExist:
+        return {"version": version, "uploaded": False}
+
+
 @transaction.atomic
 def get_list_of_sources() -> list[dict[str, Any]]:
     """Return a list of sources, indicating if each is uploaded or not along with other info.
@@ -90,17 +107,7 @@ def get_list_of_sources() -> list[dict[str, Any]]:
     The list is sorted by the version.
     """
     vers = SpecificationService.get_list_of_versions()
-    status = [{"version": v, "uploaded": False} for v in vers]
-    # pdf_objs exist, and we slot them in the above constructed lists
-    for pdf_obj in PaperSourcePDF.objects.all():
-        # in theory, all versions must match spec
-        assert pdf_obj.version in vers, f"ver {pdf_obj.version} out of range {vers}"
-        status[pdf_obj.version - 1] = {
-            "version": pdf_obj.version,
-            "uploaded": True,
-            "hash": pdf_obj.hash,
-        }
-    return status
+    return [get_source(v) for v in vers]
 
 
 @transaction.atomic
