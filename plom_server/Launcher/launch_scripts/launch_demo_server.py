@@ -453,7 +453,7 @@ def run_finishing_commands(*, stop_after=None, solutions=True) -> bool:
     run_django_manage_command("plom_reassemble")
     if solutions:
         print("Constructing individual solution pdfs for students.")
-        run_django_manage_command("plom_build_all_solutions")
+        run_django_manage_command("plom_build_all_soln")
 
     if stop_after == "reassembly":
         return False
