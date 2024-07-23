@@ -2,6 +2,8 @@
 # Copyright (C) 2019-2022 Andrew Rechnitzer
 # Copyright (C) 2021-2024 Colin B. Macdonald
 
+from __future__ import annotations
+
 from copy import deepcopy
 import logging
 import sys
@@ -56,18 +58,27 @@ log = logging.getLogger("keybindings")
 # * no validity checking done
 #   - use code from old KeyWrangler
 class KeyHelp(QDialog):
-    def __init__(self, parent, keybinding_name, *, custom_overlay={}, initial_tab=0):
+    """The KeyHelp dialog shows hints, keyboard shortcuts and allows their customization."""
+
+    def __init__(
+        self,
+        parent: QWidget,
+        keybinding_name: str,
+        *,
+        custom_overlay: dict = {},
+        initial_tab: int = 0,
+    ) -> None:
         """Construct the KeyHelp dialog.
 
         Args:
-            parent (QWidget): what widget to parent this dialog.
-            keybinding_name (str): which keybinding to initially display.
+            parent: what widget to parent this dialog.
+            keybinding_name: which keybinding to initially display.
 
         Keyword Args:
-            custom_overlay (dict): if there was already a custom keybinding,
+            custom_overlay: if there was already a custom keybinding,
                pass its overlay here.  We will copy it, not change it.  This
                is because the user may make local changes and then cancel.
-            initial_tab (int): index of the tab we'd like to open on.
+            initial_tab: index of the tab we'd like to open on.
 
         Returns:
             None
@@ -118,7 +129,7 @@ class KeyHelp(QDialog):
         # do we still get flicker: this still isn't the right way to force resize?
         self.tabs.currentChanged.connect(self._hacky_resizer)
 
-    def _hacky_resizer(self, n):
+    def _hacky_resizer(self, n: int) -> None:
         # on tab change, we sadly need some hacks to zoom the QGraphicViews
         for thing in self._things_to_hack_zoom:
             thing.resetView()
@@ -358,6 +369,8 @@ def _label(lambda_factory, scene, keydata, w, x, y, route, d="N", *, sep=(0, 0))
 
 
 class RubricNavDiagram(QFrame):
+    """A page for our inline help about changing rubrics with keyboard shortcuts."""
+
     wants_to_change_key = pyqtSignal(str)
 
     def __init__(self, keydata):
@@ -421,6 +434,8 @@ class RubricNavDiagram(QFrame):
 
 
 class ToolNavDiagram(QFrame):
+    """A page for our inline help about changing tools with keyboard shortcuts."""
+
     wants_to_change_key = pyqtSignal(str)
 
     def __init__(self, keydata):
@@ -484,16 +499,18 @@ class ToolNavDiagram(QFrame):
 
 
 class ClickDragPage(QWidget):
-    def __init__(self):
+    """A page for our inline help about click-drag and other hints."""
+
+    def __init__(self) -> None:
         super().__init__()
         grid = QVBoxLayout()
         # load the gif from resources - needs a little subterfuge
         # https://stackoverflow.com/questions/71072485/qmovie-from-qbuffer-from-qbytearray-not-displaying-gif
         res = resources.files(plom.client.help_img) / "click_drag.gif"
-        film_bytes = QByteArray(res.read_bytes())
-        film_buffer = QBuffer(film_bytes)
+        film_qbytesarray = QByteArray(res.read_bytes())
+        film_qbuffer = QBuffer(film_qbytesarray)
         film = QMovie()
-        film.setDevice(film_buffer)
+        film.setDevice(film_qbuffer)
         film.setCacheMode(QMovie.CacheMode.CacheAll)
 
         film_label = QLabel()
@@ -548,8 +565,12 @@ class ClickDragPage(QWidget):
         grid.addSpacing(6)
 
         self.setLayout(grid)
-        # as per https://stackoverflow.com/questions/71072485/qmovie-from-qbuffer-from-qbytearray-not-displaying-gif#comment125714355_71072485
-        # force film to jump to end to force the qmovie to actually load from the buffer before we
-        # return from this function, else buffer closed and will crash qmovie.
+        # as per link above, try to force QMove to load from the buffer before the
+        # buffer and bytearray are closed and/or garbage collected
         film.jumpToFrame(film.frameCount() - 1)
+        film.jumpToFrame(0)
         film.start()
+        # But it seems in PyQt6 (at least Qt6-6.7.1) we need ref to prevent SIGSEGV
+        # Note Qt docs: "QBuffer doesn't take ownership of the QByteArray"
+        self._film_buffer = film_qbuffer
+        self._film_bytesarray = film_qbytesarray

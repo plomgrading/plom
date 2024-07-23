@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 test_spec = "demo"
 test_sources = "demo"
 prenaming_enabled = true
 classlist = "long_demo"
-num_to_produce = 250
+num_to_produce = 550
 
 # bundle 1
 [[bundles]]
