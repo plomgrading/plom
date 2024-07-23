@@ -458,6 +458,7 @@ class PageScene(QGraphicsScene):
         self.maxMark = maxMark
         self.score = None
         self._page_action_buttons = []
+        self.default_pen_width = 2
         # Tool mode - initially set it to "move"
         self.mode = "move"
 
@@ -776,6 +777,11 @@ class PageScene(QGraphicsScene):
         """
         self.increase_scale_factor(1.0 / r)
 
+    def _refresh_ink_scaling(self) -> None:
+        """Refresh both pen width and ink to reflect global scene's scale."""
+        self.style["pen_width"] = self._scale * 2
+        self.ink = QPen(self.style["annot_color"], self.style["pen_width"])
+
     def _stuff_to_do_after_setting_scale(self):
         """Private method for tasks after changing scale.
 
@@ -788,6 +794,8 @@ class PageScene(QGraphicsScene):
         font.setPixelSize(round(1.25 * self.fontSize))
         self.scoreBox.setFont(font)
         self.ghostItem.change_font_size(self.fontSize)
+        TickItem.scale_tick(self._scale)
+        self._refresh_ink_scaling()
 
     def set_annotation_color(self, c):
         """Set the colour of annotations.
@@ -802,7 +810,7 @@ class PageScene(QGraphicsScene):
             c = QColor.fromRgb(*c)
         style = {
             "annot_color": c,
-            "pen_width": 2,
+            "pen_width": self.default_pen_width,
             # TODO: 64 hardcoded elsewhere
             "highlight_color": QColor(255, 255, 0, 64),
             "highlight_width": 50,
@@ -1255,7 +1263,7 @@ class PageScene(QGraphicsScene):
             self.addItem(self.boxItem)
         elif self.boxLineStampState == 2:  # finish the connecting line
             if ghost_rect is None:
-                tick_rad = TickItem.tick_radius
+                tick_rad = TickItem.scaled_tick_radius
                 padding = tick_rad // 2
                 side = round(2 * padding + 7 * tick_rad / 4)
                 g_rect_top_left = QPointF(
@@ -1305,7 +1313,7 @@ class PageScene(QGraphicsScene):
             # update the connecting path
             self.currentPos = event.scenePos()
             if ghost_rect is None:
-                tick_rad = TickItem.tick_radius
+                tick_rad = TickItem.scaled_tick_radius
                 padding = tick_rad // 2
                 side = round(2 * padding + 7 * tick_rad / 4)
                 g_rect_top_left = QPointF(

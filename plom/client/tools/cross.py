@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2024 Bryan Tanady
 
 from PyQt6.QtCore import QPointF
 from PyQt6.QtGui import QPen, QPainterPath
@@ -38,7 +39,7 @@ class CrossItem(UndoStackMoveMixin, QGraphicsPathItem):
         from plom.client.tools import TickItem
 
         # slightly smaller than the tick
-        rad = (3 * TickItem.tick_radius) // 5
+        rad = (3 * TickItem.scaled_tick_radius) // 5
         self.path.moveTo(pt.x() - rad, pt.y() - rad)
         self.path.lineTo(pt.x() + rad, pt.y() + rad)
         self.path.moveTo(pt.x() - rad, pt.y() + rad)

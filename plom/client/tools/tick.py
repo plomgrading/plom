@@ -28,7 +28,8 @@ class CommandTick(CommandTool):
 
 
 class TickItem(UndoStackMoveMixin, QGraphicsPathItem):
-    tick_radius = 20
+    default_tick_radius = 20
+    scaled_tick_radius = 20
 
     def __init__(self, pt, style):
         super().__init__()
@@ -36,9 +37,13 @@ class TickItem(UndoStackMoveMixin, QGraphicsPathItem):
         self.pt = pt
         self.path = QPainterPath()
         # Draw the checkmark with barycentre under mouseclick.
-        self.path.moveTo(pt.x() - self.tick_radius / 2, pt.y() - self.tick_radius / 2)
+        self.path.moveTo(
+            pt.x() - self.scaled_tick_radius / 2, pt.y() - self.scaled_tick_radius / 2
+        )
         self.path.lineTo(pt.x(), pt.y())
-        self.path.lineTo(pt.x() + self.tick_radius, pt.y() - self.tick_radius)
+        self.path.lineTo(
+            pt.x() + self.scaled_tick_radius, pt.y() - self.scaled_tick_radius
+        )
         self.setPath(self.path)
         self.restyle(style)
 
@@ -60,3 +65,7 @@ class TickItem(UndoStackMoveMixin, QGraphicsPathItem):
             painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method
         super().paint(painter, option, widget)
+
+    @classmethod
+    def scale_tick(cls, scale) -> None:
+        cls.scaled_tick_radius = cls.default_tick_radius * scale

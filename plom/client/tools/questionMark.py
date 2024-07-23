@@ -34,19 +34,50 @@ class QMarkItem(UndoStackMoveMixin, QGraphicsPathItem):
         self.pt = pt
         self.path = QPainterPath()
         # Draw a ?-mark with barycentre under mouseclick
-        self.path.moveTo(pt.x() - 6, pt.y() - 10)
-        self.path.quadTo(pt.x() - 6, pt.y() - 15, pt.x(), pt.y() - 15)
-        self.path.quadTo(pt.x() + 6, pt.y() - 15, pt.x() + 6, pt.y() - 10)
-        self.path.cubicTo(
-            pt.x() + 6, pt.y() - 1, pt.x(), pt.y() - 7, pt.x(), pt.y() + 2
+
+        self.path.moveTo(pt.x() - self._scaler(6), pt.y() - self._scaler(10))
+        self.path.quadTo(
+            pt.x() - self._scaler(6),
+            pt.y() - self._scaler(15),
+            pt.x(),
+            pt.y() - self._scaler(15),
         )
-        self.path.moveTo(pt.x(), pt.y() + 12)
-        self.path.lineTo(pt.x(), pt.y() + 10)
+        self.path.quadTo(
+            pt.x() + self._scaler(6),
+            pt.y() - self._scaler(15),
+            pt.x() + self._scaler(6),
+            pt.y() - self._scaler(10),
+        )
+        self.path.cubicTo(
+            pt.x() + self._scaler(6),
+            pt.y() - self._scaler(1),
+            pt.x(),
+            pt.y() - self._scaler(7),
+            pt.x(),
+            pt.y() + self._scaler(2),
+        )
+        self.path.moveTo(pt.x(), pt.y() + self._scaler(12))
+        self.path.lineTo(pt.x(), pt.y() + self._scaler(10))
         self.setPath(self.path)
         self.restyle(style)
 
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
+
+    def _scaler(self, num: float) -> float:
+        """Scale a number based on global scene's scale.
+
+        Args:
+            num: the number to be scaled
+
+        Returns:
+            the scaled number.
+        """
+        # import here to avoid circular import
+        from plom.client.tools import TickItem
+
+        global_scale = TickItem.scaled_tick_radius / TickItem.default_tick_radius
+        return global_scale * num
 
     def restyle(self, style):
         self.normal_thick = 3 * style["pen_width"] / 2
