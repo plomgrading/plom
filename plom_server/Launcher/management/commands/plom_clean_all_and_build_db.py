@@ -21,7 +21,6 @@ class Command(BaseCommand):
 
     def remove_misc_user_files(self):
         """Remove any user-generated files from django's MEDIA directory."""
-
         print("Removing any user-generated files from django's MEDIA_ROOT directory")
         shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
 

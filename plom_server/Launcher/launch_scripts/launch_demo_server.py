@@ -82,6 +82,11 @@ def set_argparse_and_get_args() -> argparse.Namespace:
             "bundles-created",
             "bundles-read",
             "bundles-pushed",
+            "randomarking",
+            "tagging",
+            "spreadsheet",
+            "reassembly",
+            "reports",
         ],
         nargs=1,
         help="Stop the demo sequence at a certain breakpoint.",
@@ -254,7 +259,7 @@ def download_zip() -> None:
 
 def run_demo_preparation_commands(
     *, length="normal", stop_after=None, solutions=True, prename=True
-):
+) -> bool:
     """Run commands to prepare a demo assessment.
 
     In order it runs:
@@ -272,6 +277,8 @@ def run_demo_preparation_commands(
         stop_after = after which step should the demo be stopped, see list above.
         solutions = whether or not to upload solutions as part of the demo.
         prename = whether or not to prename some papers in the demo.
+
+    Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
     # in order the demo will
 
@@ -279,12 +286,12 @@ def run_demo_preparation_commands(
     run_django_manage_command("plom_create_demo_users")
     if stop_after == "users":
         print("Stopping after users created.")
-        return
+        return False
 
     run_django_manage_command("plom_demo_spec")
     if stop_after == "spec":
         print("Stopping after assessment specification uploaded.")
-        return
+        return False
 
     upload_demo_test_source_files()
     if solutions:
@@ -292,24 +299,24 @@ def run_demo_preparation_commands(
     upload_demo_classlist(length, prename)
     if stop_after == "sources":
         print("Stopping after assessment sources and classlist uploaded.")
-        return
+        return False
 
     populate_the_database(length)
     if stop_after == "populate":
         print("Stopping after paper-database populated.")
-        return
+        return False
 
     build_all_papers_and_wait()
     if stop_after == "papers_built":
         print("Stopping after papers_built.")
-        return
+        return False
     # download a zip of all the papers.
     download_zip()
 
     # now set preparation status as done
     run_django_manage_command("plom_preparation_status --set finished")
 
-    return
+    return True
 
 
 def _read_bundle_config(length):
@@ -365,7 +372,9 @@ def push_the_bundles(length):
     run_django_manage_command(f"plom_demo_bundles --length {length} --action id_hw")
 
 
-def run_demo_bundle_scan_commands(*, stop_after=None, length="normal", muck=False):
+def run_demo_bundle_scan_commands(
+    *, stop_after=None, length="normal", muck=False
+) -> bool:
     """Run commands to step through the scanning process in the demo.
 
     In order it runs:
@@ -376,16 +385,21 @@ def run_demo_bundle_scan_commands(*, stop_after=None, length="normal", muck=Fals
     KWargs:
         stop_after = after which step should the demo be stopped, see list above.
         length = the length of the demo: quick, normal, long, plaid.
-        muck = whether or not to "muck" with the mock test bundles - this is intended to imitate the effects of poor scanning.
+        muck = whether or not to "muck" with the mock test bundles - this is intended to imitate the effects of poor scanning. Not yet functional.
+
+    Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
     build_the_bundles(length)
     if stop_after == "bundles_created":
-        return
+        return False
 
     upload_the_bundles(length)
     if stop_after == "bundles_uploaded":
-        return
+        return False
+
     push_the_bundles(length)
+
+    return True
 
 
 def run_the_randomarker(*, port):
@@ -411,6 +425,47 @@ def run_the_randomarker(*, port):
         cmd = f"python3 -m plom.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial {X[2]}"
         print(f"RandoMarking!  calling: {cmd}")
         subprocess.check_call(split(cmd))
+
+
+def run_marking_commands(*, port: int, stop_after=None) -> bool:
+    """Run commands to step through the marking process in the demo.
+
+    In order it runs:
+        * (randomarker): make random marking-annotations on papers and assign random student-ids.
+
+    KWargs:
+        stop_after = after which step should the demo be stopped, see list above.
+        port = the port on which the demo is running.
+
+    Returns: a bool to indicate if the demo should continue (true) or stop (false).
+    """
+    # add rubrics and tags, and then run the randomaker.
+    run_the_randomarker(port=args.port)
+    if stop_after == "randomarker":
+        return False
+
+    print(">> Future plom dev will include pedagogy tagging here.")
+    return True
+
+
+def run_finishing_commands(*, stop_after=None, solutions=True) -> bool:
+    print("Reassembling all marked papers.")
+    run_django_manage_command("plom_reassemble")
+    if solutions:
+        print("Constructing individual solution pdfs for students.")
+        run_django_manage_command("plom_build_all_solutions")
+
+    if stop_after == "reassembly":
+        return False
+
+    print("Downloading a csv of student marks.")
+    run_django_manage_command("plom_download_marks_csv")
+    if stop_after == "spreadsheet":
+        return False
+
+    print(">> Future plom dev will include instructor-report download here.")
+    print(">> Future plom dev will include strudent-reports download here.")
+    return True
 
 
 if __name__ == "__main__":
@@ -440,26 +495,32 @@ if __name__ == "__main__":
         print("*" * 50)
         print("> Running demo specific commands")
         print(">> Preparation of assessment")
-        run_demo_preparation_commands(
-            length=args.length,
-            stop_after=stop_after,
-            solutions=args.solutions,
-            prename=args.prename,
-        )
-        if huey_process.poll():
-            print("Problem with the huey-process. eek!")
+        while True:
+            if not run_demo_preparation_commands(
+                length=args.length,
+                stop_after=stop_after,
+                solutions=args.solutions,
+                prename=args.prename,
+            ):
+                break
 
-        print(">> Scanning of papers")
-        run_demo_bundle_scan_commands(
-            length=args.length, stop_after=stop_after, muck=args.muck
-        )
-        print("*" * 50)
-        print(">> Ready for marking")
-        if args.randomarker:
-            run_the_randomarker(port=args.port)
+            print(">> Scanning of papers")
+            if not run_demo_bundle_scan_commands(
+                length=args.length, stop_after=stop_after, muck=args.muck
+            ):
+                break
+
+            print("*" * 50)
+            print(">> Ready for marking")
+            if not run_marking_commands(port=args.port, stop_after=stop_after):
+                break
+
+            print("*" * 50)
+            print(">> Ready for finishing")
+            run_finishing_commands(stop_after=stop_after, solutions=args.solutions)
+            break
 
         wait_for_user_to_type_quit()
-
     finally:
         print("v" * 50)
         print("Shutting down huey and django dev server")

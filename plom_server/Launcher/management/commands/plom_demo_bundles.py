@@ -152,7 +152,6 @@ class Command(BaseCommand):
 
     def read_qr_codes_and_wait(self, demo_config: DemoAllBundlesConfig) -> None:
         """Read QR-codes of the uploaded bundles, and wait for process to finish."""
-
         if demo_config.bundles is not None:
             for n in range(len(demo_config.bundles)):
                 bundle_name = f"fake_bundle{n+1}"
