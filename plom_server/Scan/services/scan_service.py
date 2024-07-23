@@ -229,7 +229,7 @@ class ScanService:
             return False
 
     def are_bundles_mid_splitting(self) -> Dict[str, bool]:
-        """Returns a dict of each staging bundle (slug) and whether it is still mid-split"""
+        """Returns a dict of each staging bundle (slug) and whether it is still mid-split."""
         return {
             bundle_obj.slug: self.is_bundle_mid_splitting(bundle_obj.pk)
             for bundle_obj in StagingBundle.objects.all()
@@ -597,7 +597,7 @@ class ScanService:
             return False
 
     def are_bundles_mid_qr_read(self) -> Dict[str, bool]:
-        """Returns a dict of each staging bundle (slug) and whether it is still mid-qr-read"""
+        """Returns a dict of each staging bundle (slug) and whether it is still mid-qr-read."""
         return {
             bundle_obj.slug: self.is_bundle_mid_qr_read(bundle_obj.pk)
             for bundle_obj in StagingBundle.objects.all()
@@ -814,6 +814,20 @@ class ScanService:
             return False
 
         return True
+
+    def are_bundles_perfect(self) -> Dict[str, bool]:
+        """Returns a dict of each staging bundle (slug) and whether it is perfect."""
+        return {
+            bundle_obj.slug: self.is_bundle_perfect(bundle_obj.pk)
+            for bundle_obj in StagingBundle.objects.all()
+        }
+
+    def are_bundles_pushed(self) -> Dict[str, bool]:
+        """Returns a dict of each staging bundle (slug) and whether it is pushed."""
+        return {
+            bundle_obj.slug: bundle_obj.pushed
+            for bundle_obj in StagingBundle.objects.all()
+        }
 
     @transaction.atomic
     def get_bundle_push_lock_information(

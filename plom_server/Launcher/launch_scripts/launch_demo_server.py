@@ -349,7 +349,8 @@ def upload_the_bundles(length="normal"):
 
 
 def push_the_bundles(length):
-    pass
+    run_django_manage_command(f"plom_demo_bundles --length {length} --action push")
+    run_django_manage_command(f"plom_demo_bundles --length {length} --action id_hw")
 
 
 def run_demo_bundle_scan_commands(*, stop_after=None, length="normal", muck=False):
@@ -357,6 +358,9 @@ def run_demo_bundle_scan_commands(*, stop_after=None, length="normal", muck=Fals
 
     In order it runs:
         * (bundles_created): create bundles of papers; system will also make random annotations on these papers to simulate student work. (Optionally) the system will "muck" the papers to simulate poor scanning.
+        * (bundles_uploaded): upload the bundles and read their qr-codes
+        * finally - push the bundles and id any homework bundles.
+
     KWargs:
         stop_after = after which step should the demo be stopped, see list above.
         length = the length of the demo: quick, normal, long, plaid.
