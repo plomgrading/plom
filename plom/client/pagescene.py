@@ -511,7 +511,13 @@ class PageScene(QGraphicsScene):
         self.lineItem = QGraphicsLineItem()
 
         # Add a ghost comment to scene, but make it invisible
-        self.ghostItem = GhostComment("1", "blah", self.fontSize)
+        self.ghostItem = GhostComment(
+            annot_scale=self._scale,
+            display_delta="1",
+            txt="blah",
+            fontsize=self.fontSize,
+        )
+
         self._hideGhost()
         self.addItem(self.ghostItem)
 
@@ -534,7 +540,8 @@ class PageScene(QGraphicsScene):
         # holds the path images uploaded from annotator
         self.tempImagePath = None
 
-        self.rubric_cursor_offset = 10
+        # Offset is physical unit which will cause the gap gets bigger when zoomed in.
+        self.rubric_cursor_offset = 0
 
     def buildUnderLay(self):
         if self.underImage:
@@ -789,7 +796,9 @@ class PageScene(QGraphicsScene):
         font = QFont("Helvetica")
         font.setPixelSize(round(1.25 * self.fontSize))
         self.scoreBox.setFont(font)
-        self.ghostItem.change_font_size(self.fontSize)
+        self.ghostItem.change_rubric_size(
+            fontsize=int(self.fontSize), annot_scale=self._scale
+        )
 
     def set_annotation_color(self, c):
         """Set the colour of annotations.
