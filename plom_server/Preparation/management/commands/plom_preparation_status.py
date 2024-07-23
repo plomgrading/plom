@@ -9,7 +9,6 @@ from Papers.services import PaperInfoService, SpecificationService
 from ...services import (
     SourceService,
     PrenameSettingService,
-    PQVMappingService,
     PapersPrinted,
 )
 from Preparation.services.preparation_dependency_service import (
@@ -49,9 +48,6 @@ class Command(BaseCommand):
 
             prename_status = PrenameSettingService().get_prenaming_setting()
             self.stdout.write(f"Prenaming enabled: {prename_status}")
-
-            qvmap_status = PQVMappingService().is_there_a_pqv_map()
-            self.stdout.write(f"Question-version map present: {qvmap_status}")
 
             papers_status = PaperInfoService().is_paper_database_populated()
             self.stdout.write(f"Test papers saved to database: {papers_status}")
