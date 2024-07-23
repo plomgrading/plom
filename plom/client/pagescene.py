@@ -779,6 +779,7 @@ class PageScene(QGraphicsScene):
 
     def _refresh_ink_scaling(self) -> None:
         """Refresh both pen width and ink to reflect global scene's scale."""
+        assert isinstance(self.style, dict)
         self.style["pen_width"] = self._scale * 2
         self.ink = QPen(self.style["annot_color"], self.style["pen_width"])
 
