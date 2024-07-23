@@ -157,7 +157,7 @@ def launch_django_dev_server_process(*, port: int | None = None) -> subprocess.P
 
     # this needs to be run in the background
     if port:
-        print(f"Dev server will run on port {args.port}")
+        print(f"Dev server will run on port {port}")
         return popen_django_manage_command(f"runserver {port}")
     else:
         return popen_django_manage_command("runserver")
@@ -322,22 +322,33 @@ def _read_bundle_config(length):
             raise RuntimeError(e)
 
 
-def build_bundles(length="normal"):
+def build_the_bundles(length="normal"):
     """Create bundles of papers to simulate scanned student papers.
+
+    Note: takes the pdf of each paper directly from the file
+        system, not the downloaded zip. The bundles are then
+        saved in the current directory.
 
     KWargs:
         length = the length of the demo.
     """
-    pass
-    # bundle_config_dict = _read_bundle_config(length)
-    # if bundle_config_dict.bundles:
-    #     DemoBundleCreationService().scribble_on_exams(bundle_config_dict)
-    #
-    # for bundle in bundle_config_dict.hw_bundles:
-    #     DemoHWBundleCreationService().make_hw_bundle(bundle)
+    run_django_manage_command(f"plom_demo_bundles --length {length} --action build")
 
 
-def upload_bundles(length="normal", stop_after=None):
+def upload_the_bundles(length="normal"):
+    """Uploads the demo bundles from the working directory.
+
+    Note that this waits for the uploads to process and then also
+    triggers the qr-code reading and waits for that to finish.
+
+    KWargs:
+        length = the length of the demo.
+    """
+    run_django_manage_command(f"plom_demo_bundles --length {length} --action upload")
+    run_django_manage_command(f"plom_demo_bundles --length {length} --action read")
+
+
+def push_the_bundles(length):
     pass
 
 
@@ -351,13 +362,14 @@ def run_demo_bundle_scan_commands(*, stop_after=None, length="normal", muck=Fals
         length = the length of the demo: quick, normal, long, plaid.
         muck = whether or not to "muck" with the mock test bundles - this is intended to imitate the effects of poor scanning.
     """
-    build_bundles(length)
+    build_the_bundles(length)
     if stop_after == "bundles_created":
         return
 
-    upload_bundles(length, stop_after)
+    upload_the_bundles(length)
     if stop_after == "bundles_uploaded":
         return
+    push_the_bundles(length)
 
 
 if __name__ == "__main__":
@@ -367,9 +379,6 @@ if __name__ == "__main__":
         stop_after = args.stop_after[0]
     else:
         stop_after = None
-
-    build_bundles(length=args.length)
-    quit()
 
     # make sure we are in the correct directory to run things.
     confirm_run_from_correct_directory()
@@ -384,6 +393,8 @@ if __name__ == "__main__":
         huey_process = launch_huey_process()
         server_process = launch_django_dev_server_process(port=args.port)
         print("^" * 50)
+        if huey_process.poll():
+            print("Problem with the huey-process. eek!")
 
         print("*" * 50)
         print("> Running demo specific commands")
@@ -394,8 +405,13 @@ if __name__ == "__main__":
             solutions=args.solutions,
             prename=args.prename,
         )
+        if huey_process.poll():
+            print("Problem with the huey-process. eek!")
+
         print(">> Scanning of papers")
-        run_demo_bundle_scan_commands(stop_after=stop_after, muck=args.muck)
+        run_demo_bundle_scan_commands(
+            length=args.length, stop_after=stop_after, muck=args.muck
+        )
         print("*" * 50)
         wait_for_user_to_type_quit()
 
