@@ -487,8 +487,8 @@ class RubricService:
                 r = self.create_rubric(rubric)
                 log.info("Built delta-rubric -%d for Q%s: %s", m, q, r["id"])
 
-            # non-integer rubrics in demo: easy to turn off: change True to False
-            if True:
+            # TODO: testing non-integer rubrics in demo: change to True
+            if False:
                 for rubric in [
                     {
                         "display_delta": "+1\N{Vulgar Fraction One Half}",
