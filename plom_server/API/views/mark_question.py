@@ -156,7 +156,7 @@ class QuestionMarkingViewSet(ViewSet):
             this question/version.
             400: malformed input of some sort.
             404: no such task.
-            406: TODO: integrity fail: client submitted to out-of-date task.
+            406: integrity fail: client submitted to out-of-date task.
             409: task has changed.
             410: task is gone.
         """
