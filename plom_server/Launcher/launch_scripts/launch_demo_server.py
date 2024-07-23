@@ -39,7 +39,9 @@ def wait_for_user_to_type_quit() -> None:
 def set_argparse_and_get_args() -> argparse.Namespace:
     """Configure argparse to collect commandline options."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port", help="Port number on which to launch server")
+    parser.add_argument(
+        "--port", type=int, default=8000, help="Port number on which to launch server"
+    )
     parser.add_argument(
         "--length",
         action="store",
@@ -65,7 +67,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         "--muck",
         default=True,
         action="store_true",
-        help="Run pdf-mucking to simulate poor scanning of papers",
+        help="Run pdf-mucking to simulate poor scanning of papers (not functional yet)",
     )
     parser.add_argument("--no-muck", dest="muck", action="store_false")
     parser.add_argument(
@@ -83,6 +85,11 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         ],
         nargs=1,
         help="Stop the demo sequence at a certain breakpoint.",
+    )
+    parser.add_argument(
+        "--randomarker",
+        action="store_true",
+        help="Run the plom-client randomarker and rando-ider.",
     )
     return parser.parse_args()
 
@@ -376,6 +383,27 @@ def run_demo_bundle_scan_commands(*, stop_after=None, length="normal", muck=Fals
     push_the_bundles(length)
 
 
+def run_the_randomarker(*, port):
+    # TODO: hardcoded http://
+    srv = f"http://localhost:{port}"
+    # list of markers and their passwords and percentage to mark
+    users = [
+        ("demoMarker1", "demoMarker1", 33),
+        ("demoMarker2", "demoMarker2", 50),
+        ("demoMarker3", "demoMarker3", 100),
+    ]
+
+    # rando-id and then rando-mark
+    cmd = f"python3 -m plom.client.randoIDer -s {srv} -u {users[0][0]} -w {users[0][1]}"
+    print(f"RandoIDing!  calling: {cmd}")
+    subprocess.check_call(split(cmd))
+
+    for X in users:
+        cmd = f"python3 -m plom.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial X[2]"
+        print(f"RandoMarking!  calling: {cmd}")
+        subprocess.check_call(split(cmd))
+
+
 if __name__ == "__main__":
     args = set_argparse_and_get_args()
     # cast stop-after from list of options to a singleton or None
@@ -417,6 +445,10 @@ if __name__ == "__main__":
             length=args.length, stop_after=stop_after, muck=args.muck
         )
         print("*" * 50)
+        print(">> Ready for marking")
+        if args.randomarker:
+            run_the_randomarker(port=args.port)
+
         wait_for_user_to_type_quit()
 
     finally:
