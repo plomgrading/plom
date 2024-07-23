@@ -614,7 +614,7 @@ class Annotator(QWidget):
         cursor["Highlight"] = QCursor(_pixmap_from("highlighter.png"), 4, 4)
         cursor["arrow"] = QCursor(_pixmap_from("arrow.png"), 4, 4)
         cursor["DoubleArrow"] = QCursor(_pixmap_from("double_arrow.png"), 4, 4)
-        cursor["text"] = Qt.CursorShape.ArrowCursor
+        cursor["text"] = Qt.CursorShape.IBeamCursor
         cursor["rubric"] = Qt.CursorShape.ArrowCursor
         cursor["image"] = Qt.CursorShape.CrossCursor
         cursor["zoom"] = Qt.CursorShape.SizeFDiagCursor
