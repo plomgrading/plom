@@ -407,13 +407,16 @@ def run_the_randomarker(*, port):
 
     All papers will be ID'd and marked after this call.
     """
+    from time import sleep
+
     # TODO: hardcoded http://
     srv = f"http://localhost:{port}"
     # list of markers and their passwords and percentage to mark
     users = [
-        ("demoMarker1", "demoMarker1", 33),
-        ("demoMarker2", "demoMarker2", 50),
-        ("demoMarker3", "demoMarker3", 100),
+        ("demoMarker1", "demoMarker1", 100),
+        ("demoMarker2", "demoMarker2", 33),
+        ("demoMarker3", "demoMarker3", 33),
+        ("demoMarker4", "demoMarker4", 33),
     ]
 
     # rando-id and then rando-mark
@@ -421,8 +424,23 @@ def run_the_randomarker(*, port):
     print(f"RandoIDing!  calling: {cmd}")
     subprocess.check_call(split(cmd))
 
-    for X in users:
+    randomarker_processes = []
+    for X in users[1:]:
         cmd = f"python3 -m plom.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial {X[2]}"
+        print(f"RandoMarking!  calling: {cmd}")
+        randomarker_processes.append(subprocess.Popen(split(cmd)))
+        sleep(0.5)
+    # now wait for those markers
+    while True:
+        if any(X.poll() is None for X in randomarker_processes):
+            # we are still waiting on a rando-marker.
+            sleep(2)
+        else:  # all rando-markers are done
+            break
+
+    # now a final run to do any remaining tasks
+    for X in users[:1]:
+        cmd = f"python3 -m plom.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial 100"
         print(f"RandoMarking!  calling: {cmd}")
         subprocess.check_call(split(cmd))
 
