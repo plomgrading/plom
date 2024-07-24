@@ -257,8 +257,11 @@ class GhostComment(QGraphicsItemGroup):
         Note: does not fix up the size of the boxes, see changeComment which does.
         """
         pt = self.pos()
-        self.blurb.setPos(pt)
-        self.di.setPos(pt)
+        # Offset is physical unit which will cause the gap gets bigger when zoomed in.
+        offset = 0
+        shifted_pt = QPointF(pt.x() + offset, pt.y())
+        self.blurb.setPos(shifted_pt)
+        self.di.setPos(shifted_pt)
 
         # if no delta, then move things accordingly
         if display_delta == ".":

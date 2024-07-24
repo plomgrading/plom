@@ -540,6 +540,9 @@ class PageScene(QGraphicsScene):
         # holds the path images uploaded from annotator
         self.tempImagePath = None
 
+        # Offset is physical unit which will cause the gap gets bigger when zoomed in.
+        self.rubric_cursor_offset = 0
+
     def buildUnderLay(self):
         if self.underImage:
             log.debug("removing underImage")
@@ -1537,7 +1540,8 @@ class PageScene(QGraphicsScene):
 
         if self.boxLineStampState == 3:  # time to stamp the rubric!
             pt = event.scenePos()  # grab the location of the mouse-click
-            command = CommandRubric(self, pt, self.current_rubric)
+            shifted_pt = QPointF(pt.x() + self.rubric_cursor_offset, pt.y())
+            command = CommandRubric(self, shifted_pt, self.current_rubric)
             log.debug(
                 "Making a Rubric: boxLineStampState is {}".format(
                     self.boxLineStampState
@@ -2682,7 +2686,9 @@ class PageScene(QGraphicsScene):
                 self.boxLineStampState = 0
                 return
             # small box, so just stamp the rubric
-            command = CommandRubric(self, event.scenePos(), self.current_rubric)
+            pt = event.scenePos()
+            shifted_pt = QPointF(pt.x() + self.rubric_cursor_offset, pt.y())
+            command = CommandRubric(self, shifted_pt, self.current_rubric)
             log.debug(
                 "Making a Rubric: boxLineStampState is {}".format(
                     self.boxLineStampState
