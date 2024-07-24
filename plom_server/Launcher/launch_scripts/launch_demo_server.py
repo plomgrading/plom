@@ -91,11 +91,6 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         nargs=1,
         help="Stop the demo sequence at a certain breakpoint.",
     )
-    parser.add_argument(
-        "--randomarker",
-        action="store_true",
-        help="Run the plom-client randomarker and rando-ider.",
-    )
     return parser.parse_args()
 
 
@@ -414,9 +409,10 @@ def run_the_randomarker(*, port):
     # list of markers and their passwords and percentage to mark
     users = [
         ("demoMarker1", "demoMarker1", 100),
-        ("demoMarker2", "demoMarker2", 33),
-        ("demoMarker3", "demoMarker3", 33),
-        ("demoMarker4", "demoMarker4", 33),
+        ("demoMarker2", "demoMarker2", 75),
+        ("demoMarker3", "demoMarker3", 75),
+        ("demoMarker4", "demoMarker4", 50),
+        ("demoMarker5", "demoMarker5", 50),
     ]
 
     # rando-id and then rando-mark
