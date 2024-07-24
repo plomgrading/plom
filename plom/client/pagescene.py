@@ -119,7 +119,7 @@ class ScoreBox(QGraphicsTextItem):
         """Initialize a new ScoreBox.
 
         Args:
-            style: a dict of pen width, annotation colour, etc.
+            style: a dict of pen width, annotation colour, default tick radius, scale, etc.
             fontsize (int): A non-zero, positive font value.
             maxScore (int): A non-zero, positive maximum score.
             score (int): A non-zero, positive current score for the paper.
@@ -475,6 +475,7 @@ class PageScene(QGraphicsScene):
         # we don't want current font size from UI; use fixed physical size
         self.fontSize = AnnFontSizePts
         self._scale = 1.0
+        self.default_tick_radius = 20
 
         self.scoreBox = None
         # Define standard pen, highlight, fill, light-fill
@@ -795,7 +796,8 @@ class PageScene(QGraphicsScene):
         font.setPixelSize(round(1.25 * self.fontSize))
         self.scoreBox.setFont(font)
         self.ghostItem.change_font_size(self.fontSize)
-        TickItem.scale_tick(self._scale)
+        self.style["scale"] = self._scale
+        # TickItem.scale_tick(self._scale)
         self._refresh_ink_scaling()
 
     def set_annotation_color(self, c):
@@ -811,7 +813,9 @@ class PageScene(QGraphicsScene):
             c = QColor.fromRgb(*c)
         style = {
             "annot_color": c,
-            "pen_width": self.default_pen_width,
+            "pen_width": self._scale * self.default_pen_width,
+            "scale": self._scale,
+            "default_tick_radius": self.default_tick_radius,
             # TODO: 64 hardcoded elsewhere
             "highlight_color": QColor(255, 255, 0, 64),
             "highlight_width": 50,
@@ -1264,7 +1268,7 @@ class PageScene(QGraphicsScene):
             self.addItem(self.boxItem)
         elif self.boxLineStampState == 2:  # finish the connecting line
             if ghost_rect is None:
-                tick_rad = TickItem.scaled_tick_radius
+                tick_rad = self._scale * self.default_tick_radius
                 padding = tick_rad // 2
                 side = round(2 * padding + 7 * tick_rad / 4)
                 g_rect_top_left = QPointF(
@@ -1314,7 +1318,7 @@ class PageScene(QGraphicsScene):
             # update the connecting path
             self.currentPos = event.scenePos()
             if ghost_rect is None:
-                tick_rad = TickItem.scaled_tick_radius
+                tick_rad = self._scale * self.default_tick_radius
                 padding = tick_rad // 2
                 side = round(2 * padding + 7 * tick_rad / 4)
                 g_rect_top_left = QPointF(

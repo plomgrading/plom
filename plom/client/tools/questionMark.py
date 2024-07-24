@@ -28,11 +28,12 @@ class CommandQMark(CommandTool):
 
 
 class QMarkItem(UndoStackMoveMixin, QGraphicsPathItem):
-    def __init__(self, pt, style):
+    def __init__(self, pt, style: dict):
         super().__init__()
         self.saveable = True
         self.pt = pt
         self.path = QPainterPath()
+        self.style = style
         # Draw a ?-mark with barycentre under mouseclick
 
         self.path.moveTo(pt.x() - self._scaler(6), pt.y() - self._scaler(10))
@@ -73,11 +74,7 @@ class QMarkItem(UndoStackMoveMixin, QGraphicsPathItem):
         Returns:
             the scaled number.
         """
-        # import here to avoid circular import
-        from plom.client.tools import TickItem
-
-        global_scale = TickItem.scaled_tick_radius / TickItem.default_tick_radius
-        return global_scale * num
+        return self.style["scale"] * num
 
     def restyle(self, style):
         self.normal_thick = 3 * style["pen_width"] / 2

@@ -28,11 +28,9 @@ class CommandTick(CommandTool):
 
 
 class TickItem(UndoStackMoveMixin, QGraphicsPathItem):
-    default_tick_radius = 20
-    scaled_tick_radius = 20
-
-    def __init__(self, pt, style):
+    def __init__(self, pt, style: dict):
         super().__init__()
+        self.scaled_tick_radius = style["scale"] * style["default_tick_radius"]
         self.saveable = True
         self.pt = pt
         self.path = QPainterPath()
@@ -65,7 +63,3 @@ class TickItem(UndoStackMoveMixin, QGraphicsPathItem):
             painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method
         super().paint(painter, option, widget)
-
-    @classmethod
-    def scale_tick(cls, scale) -> None:
-        cls.scaled_tick_radius = cls.default_tick_radius * scale

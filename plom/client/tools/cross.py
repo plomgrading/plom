@@ -29,17 +29,17 @@ class CommandCross(CommandTool):
 
 
 class CrossItem(UndoStackMoveMixin, QGraphicsPathItem):
-    def __init__(self, pt, style):
+    def __init__(self, pt, style: dict):
         super().__init__()
         self.saveable = True
         self.pt = pt
         self.path = QPainterPath()
         # Draw a cross whose vertex is at pt (under mouse click)
         # import here to avoid circular import
-        from plom.client.tools import TickItem
+        scaled_tick_radius = style["scale"] * style["default_tick_radius"]
 
         # slightly smaller than the tick
-        rad = (3 * TickItem.scaled_tick_radius) // 5
+        rad = (3 * scaled_tick_radius) // 5
         self.path.moveTo(pt.x() - rad, pt.y() - rad)
         self.path.lineTo(pt.x() + rad, pt.y() + rad)
         self.path.moveTo(pt.x() - rad, pt.y() + rad)
