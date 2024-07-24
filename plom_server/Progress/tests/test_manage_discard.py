@@ -120,6 +120,7 @@ class ManageScanTests(TestCase):
         img1 = baker.make(Image)
         img2 = baker.make(Image)
         baker.make(DiscardPage, image=img1)
+
         baker.make(
             QuestionPage,
             paper=self.paper1,
@@ -146,11 +147,7 @@ class ManageScanTests(TestCase):
             1,
             1,
         )
-        # cannot test this completely as we don't have a qv-map
-        # so this will raise a runtimeerror
-        self.assertRaises(
-            RuntimeError,
-            mds.assign_discard_image_to_mobile_page,
+        mds.assign_discard_image_to_mobile_page(
             self.user0,
             img1.pk,
             1,
@@ -212,10 +209,8 @@ class ManageScanTests(TestCase):
             1,
             2,
         )
-        # now assign to a question page, will cause runtime error since we don't have a qvmap.
-        self.assertRaises(
-            RuntimeError,
-            mds.assign_discard_image_to_fixed_page,
+        # now assign to a question page
+        mds.assign_discard_image_to_fixed_page(
             self.user0,
             img1.pk,
             1,

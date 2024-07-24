@@ -34,7 +34,7 @@ from PyQt6.QtWidgets import (
 )
 
 from plom.misc_utils import next_in_longest_subsequence
-from .useful_classes import SimpleQuestion, ErrorMsg, InfoMsg
+from .useful_classes import SimpleQuestion, ErrorMsg, InfoMsg, WarnMsg
 from .useful_classes import BigMessageDialog
 from .rubric_wrangler import RubricWrangler
 from .rubrics import compute_score, diff_rubric, render_rubric_as_html
@@ -47,6 +47,7 @@ from plom.plom_exceptions import (
     PlomInconsistentRubric,
     PlomNoPermission,
     PlomNoRubric,
+    PlomNoServerSupportException,
 )
 
 
@@ -1639,7 +1640,11 @@ class RubricWidget(QWidget):
         Args:
             key: the identifier of the rubric.
         """
-        paper_numbers = self._parent.getOtherRubricUsagesFromServer(key)
+        try:
+            paper_numbers = self._parent.getOtherRubricUsagesFromServer(key)
+        except PlomNoServerSupportException as e:
+            WarnMsg(self, str(e)).exec()
+            return
         # dialog's parent is set to Annotator.
         RubricOtherUsageDialog(self._parent, paper_numbers).exec()
 
