@@ -28,7 +28,7 @@ class CommandTick(CommandTool):
 
 
 class TickItem(UndoStackMoveMixin, QGraphicsPathItem):
-    def __init__(self, pt, style: dict):
+    def __init__(self, pt, style):
         super().__init__()
         self.scaled_tick_radius = style["scale"] * style["default_tick_radius"]
         self.saveable = True

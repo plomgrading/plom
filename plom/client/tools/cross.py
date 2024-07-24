@@ -29,7 +29,7 @@ class CommandCross(CommandTool):
 
 
 class CrossItem(UndoStackMoveMixin, QGraphicsPathItem):
-    def __init__(self, pt, style: dict):
+    def __init__(self, pt, style):
         super().__init__()
         self.saveable = True
         self.pt = pt
