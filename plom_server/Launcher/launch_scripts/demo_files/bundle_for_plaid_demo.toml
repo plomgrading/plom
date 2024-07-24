@@ -33,6 +33,26 @@ last_paper = 400
 [[bundles]]
 first_paper = 401
 last_paper = 500
+# bundle 9
+[[bundles]]
+first_paper = 501
+last_paper = 600
+# bundle 10
+[[bundles]]
+first_paper = 601
+last_paper = 700
+# bundle 11
+[[bundles]]
+first_paper = 701
+last_paper = 800
+
+# bundle 12
+[[bundles]]
+first_paper = 801
+last_paper = 900
+
+
+
 
 
 

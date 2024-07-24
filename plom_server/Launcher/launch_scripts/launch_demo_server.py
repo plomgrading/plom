@@ -222,7 +222,7 @@ def upload_demo_classlist(length="normal", prename=True):
 
 def populate_the_database(length="normal"):
     """Use 'plom_papers' to build a qv-map for the demo and populate the database."""
-    production = {"quick": 35, "normal": 70, "long": 600, "plaid": 2000}
+    production = {"quick": 35, "normal": 70, "long": 600, "plaid": 1200}
     print(
         f"Building a question-version map and populating the database with {production[length]} papers"
     )
