@@ -64,6 +64,7 @@ def launch_huey_process() -> subprocess.Popen:
 
     Note that this runs the django manage command 'djangohuey --quiet'.
     """
+    print("Launching huey.")
     # this needs to be run in the background
     return popen_django_manage_command("djangohuey --quiet")
 
@@ -79,11 +80,26 @@ def launch_django_dev_server_process(*, port: int | None = None) -> subprocess.P
     # TODO - put in an 'are we in production' check.
 
     # this needs to be run in the background
+    print("Launching django's development server.")
     if port:
         print(f"Dev server will run on port {port}")
         return popen_django_manage_command(f"runserver {port}")
     else:
         return popen_django_manage_command("runserver")
+
+
+def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
+    """Launch the gunicorn web server.
+
+    Note that this should always be used in production.
+
+    Args:
+        port: the port for the server.
+    """
+    print("Launching gunicorn web-server.")
+    # TODO - put in an 'are we in production' check.
+    cmd = f"gunicorn Web_Plom.wsgi --bind 0.0.0.0:{port}"
+    return subprocess.Popen(split(cmd))
 
 
 def wait_for_user_to_type_quit() -> None:
@@ -96,23 +112,48 @@ def wait_for_user_to_type_quit() -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--hot-restart", help="Attempt a hot-restart of huey and the server."
+    )
     parser.add_argument("--port", help="Port number on which to launch server")
+    prod_dev_group = parser.add_mutually_exclusive_group()
+    prod_dev_group.add_argument(
+        "--development",
+        action="store_true",
+        help="Run the django development webserver - definitely do not use in production.",
+    )
+    prod_dev_group.add_argument(
+        "--production", action="store_true", help="Run a production gunicorn server."
+    )
     args = parser.parse_args()
+
+    if args.production and not args.port:
+        print("You must supply a port for the production server.")
 
     # make sure we are in the correct directory to run things.
     confirm_run_from_correct_directory()
     # clean up and rebuild things before launching.
-    pre_launch()
+    if args.hot_restart:
+        print("Attempting a hot-restart of the server and huey.")
+    else:
+        pre_launch()
     # now put main things inside a try/finally so that we
     # can clean up the huey/server processes on exit.
     huey_process, server_process = None, None
     try:
         print("v" * 50)
-        print("Launching huey and django dev server")
         huey_process = launch_huey_process()
-        server_process = launch_django_dev_server_process(port=args.port)
+        if args.production:
+            server_process = launch_gunicorn_production_server_process(port=args.port)
+        else:
+            server_process = launch_django_dev_server_process(port=args.port)
         print("^" * 50)
-        wait_for_user_to_type_quit()
+        if args.development:
+            wait_for_user_to_type_quit()
+        else:
+            print("Running production server, will not quit on user-input.")
+            while True:
+                pass
 
     finally:
         print("v" * 50)
