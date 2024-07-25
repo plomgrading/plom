@@ -212,13 +212,21 @@ class PageDataService:
             .order_by("pk")
             .prefetch_related("image")
         ):
-            question_mobile_page_count.setdefault(page.question_index, 0)
-            question_mobile_page_count[page.question_index] += 1
+            qidx = page.question_index
+            # no question index, add to DNM pile
+            if qidx is None or qidx < 1:
+                qidx = 0
+            question_mobile_page_count.setdefault(qidx, 0)
+            question_mobile_page_count[qidx] += 1
+            if qidx == 0:
+                pagename = f"ednm.{question_mobile_page_count[qidx]}"
+            else:
+                pagename = f"e{qidx}.{question_mobile_page_count[qidx]}"
             pages_metadata.append(
                 {
-                    "pagename": f"e{page.question_index}.{question_mobile_page_count[page.question_index]}",
+                    "pagename": pagename,
                     "md5": page.image.hash,
-                    "included": page.question_index == question,
+                    "included": qidx == question,
                     # WARNING - HACKERY HERE vvvvvvvv
                     "order": len(pages_metadata) + 1,
                     # WARNING - HACKERY HERE ^^^^^^^^
