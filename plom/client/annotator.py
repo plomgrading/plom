@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2024 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
@@ -133,7 +133,7 @@ class Annotator(QWidget):
         self.ui = self
 
         # ordered list of minor mode tools, must match the UI order
-        self._list_of_minor_modes = ["box", "tick", "cross", "text", "line", "pen"]
+        self._list_of_minor_modes = ["tick", "cross", "text", "line", "box", "pen"]
         # current or last used tool, tracked so we can switch back
         self._which_tool = self._list_of_minor_modes[0]
 
