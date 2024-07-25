@@ -253,6 +253,7 @@ module = [
     'debugpy',
     'django.*',
     'django_huey',
+    'django_tables2',
     'huey.*',
     'matplotlib.*',
     'polymorphic.models',
