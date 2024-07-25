@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2022 Andrew Rechnitzer
+# Copyright (C) 2020-2024 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Brennen Chiu
@@ -690,6 +690,7 @@ class SpecVerifier:
             )
         print('    has long name "{}"{}'.format(self["longName"], chk))
 
+
         print("  Checking production numbers")
         for x in ("numberOfVersions", "numberOfPages"):
             if not isPositiveInt(self.spec[x]):
@@ -697,6 +698,10 @@ class SpecVerifier:
                     'Specification error - "{}" must be a positive integer.'.format(x)
                 )
             print('    "{}" = {} is positive integer{}'.format(x, self.spec[x], chk))
+
+        print("  Check an even number of pages:")
+        if self.spec["numberOfPages"] % 2 == 1:
+            raise ValueError(f"Specification error - numberOfPages must be an even number.")
 
         for x in ["numberToProduce"]:
             try:
