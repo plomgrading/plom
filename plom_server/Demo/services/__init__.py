@@ -3,7 +3,6 @@
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
-from .demo_creation import DemoCreationService
 from .config_files import (
     ConfigFileService,
     PlomConfigError,
