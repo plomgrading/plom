@@ -61,8 +61,8 @@ class MobilePage(models.Model):
 
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)
-    question_index = models.NonNegativeIntegerField(null=True, default=None)
-    version = models.NonNegativeIntegerField(null=True, default=None)
+    question_index = models.IntegerField(null=True, default=None)
+    version = models.IntegerField(null=True, default=None)
 
 
 class FixedPage(PolymorphicModel):
