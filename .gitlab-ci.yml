@@ -471,7 +471,7 @@ webplom_demo:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - ./Launcher/launch_scripts/launch_demo_server.py --length quick --stop-after
+    - ./Launcher/launch_scripts/launch_demo_server.py --length quick --stop-after reports
     - popd
 
 
@@ -841,7 +841,7 @@ fedora_webplom:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - ./Launcher/launch_scripts/launch_demo_server.py --stop-after
+    - ./Launcher/launch_scripts/launch_demo_server.py --stop-after reports
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
     - popd
