@@ -70,24 +70,33 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         help="Run pdf-mucking to simulate poor scanning of papers (not functional yet)",
     )
     parser.add_argument("--no-muck", dest="muck", action="store_false")
-    parser.add_argument(
+    stop_wait_choices = [
+        "users",
+        "spec",
+        "sources",
+        "populate",
+        "papers_built",
+        "bundles-created",
+        "bundles-read",
+        "bundles-pushed",
+        "randomarking",
+        "tagging",
+        "spreadsheet",
+        "reassembly",
+        "reports",
+    ]
+    stop_wait_group = parser.add_mutually_exclusive_group()
+    stop_wait_group.add_argument(
         "--stop-after",
         action="store",
-        choices=[
-            "users",
-            "spec",
-            "sources",
-            "populate",
-            "papers_built",
-            "bundles-created",
-            "bundles-read",
-            "bundles-pushed",
-            "randomarking",
-            "tagging",
-            "spreadsheet",
-            "reassembly",
-            "reports",
-        ],
+        choices=stop_wait_choices,
+        nargs=1,
+        help="Stop the demo sequence at a certain breakpoint.",
+    )
+    stop_wait_group.add_argument(
+        "--wait-after",
+        action="store",
+        choices=stop_wait_choices,
         nargs=1,
         help="Stop the demo sequence at a certain breakpoint.",
     )
@@ -484,11 +493,16 @@ def run_finishing_commands(*, stop_after=None, solutions=True) -> bool:
 
 if __name__ == "__main__":
     args = set_argparse_and_get_args()
-    # cast stop-after from list of options to a singleton or None
+    # cast stop-after, wait-after from list of options to a singleton or None
     if args.stop_after:
         stop_after = args.stop_after[0]
+        wait_at_end = False
     else:
-        stop_after = None
+        wait_at_end = True
+        if args.wait_after:
+            stop_after = args.wait_after[0]
+        else:
+            stop_after = None
 
     # make sure we are in the correct directory to run things.
     confirm_run_from_correct_directory()
@@ -533,8 +547,8 @@ if __name__ == "__main__":
             print(">> Ready for finishing")
             run_finishing_commands(stop_after=stop_after, solutions=args.solutions)
             break
-
-        wait_for_user_to_type_quit()
+        if wait_at_end:
+            wait_for_user_to_type_quit()
     finally:
         print("v" * 50)
         print("Shutting down huey and django dev server")
