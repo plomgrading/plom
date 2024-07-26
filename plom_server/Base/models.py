@@ -11,7 +11,6 @@ from django.db import transaction
 from django.contrib.auth.models import User
 from django_huey import get_queue
 from django.utils import timezone
-from polymorphic.models import PolymorphicModel
 
 import logging
 
