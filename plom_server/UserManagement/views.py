@@ -18,6 +18,10 @@ from .services import PermissionChanger
 
 from Authentication.services import AuthenticationServices
 
+from django.shortcuts import get_object_or_404
+from django.urls import reverse
+from .models import ProbationPeriod
+
 
 class UserPage(ManagerRequiredView):
     def get(self, request):
@@ -27,11 +31,13 @@ class UserPage(ManagerRequiredView):
         markers = User.objects.filter(groups__name="marker").prefetch_related(
             "auth_token"
         )
+        probation_users = ProbationPeriod.objects.values_list("user_id", flat=True)
         context = {
             "scanners": scanners,
             "markers": markers,
             "lead_markers": lead_markers,
             "managers": managers,
+            "probation_users": probation_users,
         }
         return render(request, "UserManagement/users.html", context)
 
@@ -87,3 +93,23 @@ class HTMXExplodeView(ManagerRequiredView):
         if random.random() < 0.5:
             raise Http404("Should happen 1/3 of the time")
         return HttpResponse("Button pushed", status=200)
+
+
+class SetProbationView(ManagerRequiredView):
+    def post(self, request, username):
+        user = get_object_or_404(User, username=username)
+        probation_period, created = ProbationPeriod.objects.get_or_create(
+            user=user, defaults={"limit": 20}
+        )
+        if not created:
+            probation_period.limit = 20
+            probation_period.save()
+        return redirect(reverse("users"))
+
+
+class UnsetProbationView(ManagerRequiredView):
+    def post(self, request, username):
+        user = get_object_or_404(User, username=username)
+        probation_period = ProbationPeriod.objects.filter(user=user)
+        probation_period.delete()
+        return redirect(reverse("users"))

@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Elisa Pan
 
 from django.urls import path
 
@@ -28,4 +29,14 @@ urlpatterns = [
         name="toggleLeadMarker",
     ),
     path("explosion", views.HTMXExplodeView.as_view(), name="htmx_explode"),
+    path(
+        "set_probation/<str:username>/",
+        views.SetProbationView.as_view(),
+        name="set_probation",
+    ),
+    path(
+        "unset_probation/<str:username>/",
+        views.UnsetProbationView.as_view(),
+        name="unset_probation",
+    ),
 ]
