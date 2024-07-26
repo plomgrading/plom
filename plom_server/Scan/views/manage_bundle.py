@@ -28,17 +28,29 @@ class GetBundleImageView(ScannerRequiredView):
 
 class BundleThumbnailsView(ScannerRequiredView):
     def filter_bundle_pages(self, page_list, filter_kind):
+        def is_extra_without_info(page):
+            if page["status"] == "extra":
+                # is an extra page with both page number and question list
+                if page["info"]["paper_number"] and page["info"]["question_list"]:
+                    return False
+                else:  # is an extra page without its info
+                    return True
+            else:  # is not an extra page
+                return False
+
         if filter_kind in ["known", "unknown", "error", "extra", "discard", "unread"]:
             return [pg for pg in page_list if pg["status"] == filter_kind]
         elif filter_kind == "lowqr":
             return [pg for pg in page_list if pg["n_qr_read"] <= 2]
-        elif filter_kind == "ex_no_info":
+        elif filter_kind == "attn":
+            # need unknowns, errors and extras without info
             return [
                 pg
                 for pg in page_list
-                if pg["status"] == "extra"
-                and not (pg["info"]["paper_number"] or pg["info"]["question_list"])
+                if is_extra_without_info(pg) or pg["status"] in ["unknown", "error"]
             ]
+        elif filter_kind == "ex_no_info":
+            return [pg for pg in page_list if is_extra_without_info(pg)]
         else:
             return page_list
 
@@ -80,6 +92,7 @@ class BundleThumbnailsView(ScannerRequiredView):
             {"filter_code": X[0], "filter_name": X[1]}
             for X in [
                 ("all", "all"),
+                ("attn", "needs your attention"),
                 ("known", "known pages"),
                 ("extra", "extra pages"),
                 ("ex_no_info", "extra pages without information"),
