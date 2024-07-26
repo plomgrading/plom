@@ -163,9 +163,6 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="toolTip">
-              <string>press a</string>
-             </property>
              <property name="text">
               <string>...</string>
              </property>
@@ -190,9 +187,6 @@
                <horstretch>1</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
-             </property>
-             <property name="toolTip">
-              <string>press q</string>
              </property>
              <property name="text">
               <string>...</string>
@@ -239,9 +233,6 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="toolTip">
-              <string>press x</string>
-             </property>
              <property name="text">
               <string>...</string>
              </property>
@@ -267,9 +258,6 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="toolTip">
-              <string>press s</string>
-             </property>
              <property name="text">
               <string>...</string>
              </property>
@@ -289,9 +277,6 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="toolTip">
-              <string>press w</string>
-             </property>
              <property name="text">
               <string>...</string>
              </property>
@@ -310,9 +295,6 @@
                <horstretch>1</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
-             </property>
-             <property name="toolTip">
-              <string>press z</string>
              </property>
              <property name="text">
               <string>...</string>
@@ -356,12 +338,6 @@
                <height>0</height>
               </size>
              </property>
-             <property name="toolTip">
-              <string>press d</string>
-             </property>
-             <property name="toolTipDuration">
-              <number>-1</number>
-             </property>
              <property name="text">
               <string>...</string>
              </property>
@@ -392,9 +368,6 @@
                <width>45</width>
                <height>0</height>
               </size>
-             </property>
-             <property name="toolTip">
-              <string>press e</string>
              </property>
              <property name="text">
               <string>...</string>
@@ -427,9 +400,6 @@
                <height>0</height>
               </size>
              </property>
-             <property name="toolTip">
-              <string>press g</string>
-             </property>
              <property name="text">
               <string>...</string>
              </property>
@@ -460,9 +430,6 @@
                <width>45</width>
                <height>0</height>
               </size>
-             </property>
-             <property name="toolTip">
-              <string>press b</string>
              </property>
              <property name="text">
               <string>...</string>
@@ -495,9 +462,6 @@
                <height>0</height>
               </size>
              </property>
-             <property name="toolTip">
-              <string>press c</string>
-             </property>
              <property name="text">
               <string>...</string>
              </property>
@@ -528,9 +492,6 @@
                <width>45</width>
                <height>0</height>
               </size>
-             </property>
-             <property name="toolTip">
-              <string>press t</string>
              </property>
              <property name="text">
               <string>...</string>
