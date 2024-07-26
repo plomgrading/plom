@@ -1129,6 +1129,10 @@ class MarkerClient(QWidget):
             # toggle various columns without end-user useful info
             for i in self.ui.examModel.columns_to_hide:
                 self.ui.tableView.showColumn(i)
+                # Limit the widths of the debugging columns, otherwise ridiculous
+                # TODO: no initial effect (before view setModel, does self.setHorizontalHeaderLabels)
+
+                self.ui.tableView.setColumnWidth(i, 128)
         else:
             self.ui.technicalButton.setText("Show technical info")
             self.ui.technicalButton.setArrowType(Qt.ArrowType.RightArrow)
