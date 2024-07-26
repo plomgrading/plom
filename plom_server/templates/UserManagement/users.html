@@ -26,6 +26,7 @@
             <p>
                 <a class="btn btn-success" href="{% url 'enableMarkers' %}">Enable Markers</a>
                 <a class="btn btn-danger" href="{% url 'disableMarkers' %}">Disable Markers</a>
+                <a class="btn btn-info" href="{% url 'progress_user_info_home' %}">Markers Info</a>
             </p>
             <div class="table-responsive">
                 <table class="table table-striped">
@@ -38,6 +39,7 @@
                         <th>Lead Marker</th>
                         <th>Enable</th>
                         <th>Password</th>
+                        <th>Probation</th>
                     </thead>
                     {% for user in markers %}
                         <tr>
@@ -87,6 +89,18 @@
                             <td>
                                 <a href="{% url 'reset_user_password' user.username %}"
                                    class="btn btn-danger">reset</a>
+                            </td>
+                            <!-- Probationary period button -->
+                            <td>
+                                <!-- Check if marker is in probation (show -> Unset probation), otherwise show -> set probation -->
+                                
+                                <!-- If marker is not in rprobation: -->
+                                <!-- <a class="btn btn-warning"
+                                    href="{% url 'toggleLeadMarker' user.username %}">Set Probation</a> -->
+                                <!-- else: -->
+                                <a class="btn btn-info"
+                                    href="{% url 'toggleLeadMarker' user.username %}">Unset Probation</a>
+                                
                             </td>
                         </tr>
                     {% endfor %}
