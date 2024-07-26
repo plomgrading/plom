@@ -85,10 +85,10 @@ tipText = {
         "Pen: L = freehand pen, M/Ctrl = pen with arrows, "
         + "R/Shift = freehand highlighter."
     ),
-    "redo": "Redo: Redo last action",
+    "redo": "Redo last action",
     "text": "Text: Enter = newline, Shift-Enter/ESC = finish.",
     "tick": "Tick: L = checkmark, M/Ctrl = ?-mark, R/Shift = cross.",
-    "undo": "Undo: Undo last action",
+    "undo": "Undo last action",
     "zoom": "Zoom: L = Zoom in, R = zoom out.",
 }
 
