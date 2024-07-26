@@ -1,0 +1,35 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Bryan Tanady
+    Copyright (C) 2024 Elisa Pan
+-->
+<!-- Modal for Editing Probationary Limit -->
+<div class="modal fade"
+     id="editLimit"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="editLimitLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editLimitLabel">Edit Probationary Limit</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editLimitForm" method="post" action="">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <input type="number" class="form-control" id="limit" name="limit" required>
+                    </div>
+                    <div>
+                        <button type="submit" class="btn btn-primary" style="margin-top: 10px">Set</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
