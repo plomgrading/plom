@@ -4,6 +4,7 @@
     Copyright (C) 2022 Edith Coates
     Copyright (C) 2023 Colin B. Macdonald
     Copyright (C) 2023-2024 Andrew Rechnitzer
+    Copyright (C) 2024 Bryan Tanady
 -->
 {% extends "base/base.html" %}
 {% load humanize %}
@@ -26,6 +27,7 @@
             <p>
                 <a class="btn btn-success" href="{% url 'enableMarkers' %}">Enable Markers</a>
                 <a class="btn btn-danger" href="{% url 'disableMarkers' %}">Disable Markers</a>
+                <a class="btn btn-info" href="{% url 'progress_user_info_home' %}">Markers Info</a>
             </p>
             <div class="table-responsive">
                 <table class="table table-striped">
@@ -38,6 +40,7 @@
                         <th>Lead Marker</th>
                         <th>Enable</th>
                         <th>Password</th>
+                        <th>Probation</th>
                     </thead>
                     {% for user in markers %}
                         <tr>
@@ -87,6 +90,19 @@
                             <td>
                                 <a href="{% url 'reset_user_password' user.username %}"
                                    class="btn btn-danger">reset</a>
+                            </td>
+                            <!-- Probationary period button -->
+                            <td>
+                                <form action="{% url 'set_probation' user.username %}" method="post">
+                                    {% csrf_token %}
+                                    {% if user.pk in probation_users %}
+                                        <button formaction="{% url 'unset_probation' user.username %}"
+                                                type="submit"
+                                                class="btn btn-info">Unset Probation</button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-warning">Set Probation</button>
+                                    {% endif %}
+                                </form>
                             </td>
                         </tr>
                     {% endfor %}

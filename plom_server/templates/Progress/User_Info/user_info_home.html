@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Brennen Chiu
     Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2024 Bryan Tanady
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -12,19 +13,39 @@
 {% endblock page_heading %}
 {% block main_content %}
     <div>
-        {% if annotations_exist %}
-            <table class="table text-center align-middle">
-                <tr>
-                    <th>Username</th>
-                    <th>Question Marked</th>
-                </tr>
-                {% for user, annotation_count in annotation_count_dict.items %}
-                    <tr>
-                        <td>{{ user }}</td>
-                        <td>{{ annotation_count }}</td>
-                    </tr>
-                {% endfor %}
-            </table>
+        <div class="card w-100">
+            <div class="card-body">
+                <button class="btn btn-success m-2" type="submit">Modify probationary state/limit</button>
+                <!-- Do some counting here and display how many are in prob -->
+                <div>
+                    <i class="bi bi-exclamation-diamond-fill text-info"></i> 8 Markers are in probation
+                </div>
+                {% if annotations_exist %}
+                    <table class="table text-center align-middle">
+                        <tr>
+                            <th>Username</th>
+                            <th>Question Marked</th>
+                            <th>Limit</th>
+                            <th>Limit Modifier</th>
+                        </tr>
+                        {% for user, annotation_count in annotation_count_dict.items %}
+                            <tr>
+                                <td>
+                                    {{ user }}
+                                    <i class="bi bi-exclamation-diamond-fill text-info"
+                                       data-bs-toggle="tooltip"
+                                       title="In Probation"></i>
+                                </td>
+                                <td>{{ annotation_count }}</td>
+                                <td>20 (DEMO)</td>
+                                <td>
+                                    <a class="btn btn-warning" href="{}">set limit</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
             <div class="mb-3">
                 <form method="get" action="">
                     <div>
