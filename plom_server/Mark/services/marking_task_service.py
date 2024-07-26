@@ -184,10 +184,10 @@ class MarkingTaskService:
             version: int, the version number. If version == 0, then all versions are returned.
 
         Returns:
-            A PolymorphicQuerySet of tasks
+            A QuerySet of tasks.
 
         Raises:
-            None expected
+            None expected.
         """
         marking_tasks = MarkingTask.objects.filter(
             question_index=question_idx, status=MarkingTask.COMPLETE
