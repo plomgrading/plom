@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2024 Andrew Rechnitzer
 
 from copy import deepcopy
 from pathlib import Path
@@ -65,10 +66,17 @@ def test_spec_question_pages_non_positive():
         SpecVerifier(r).verify()
 
 
-def test_spec_question_pages_non_contiguous():
+def test_spec_pages_not_even():
     r = deepcopy(raw)
     r["numberOfPages"] = 17
-    r["question"]["1"]["pages"] = [3, 17]
+    with raises(ValueError, match="even"):
+        SpecVerifier(r).verify()
+
+
+def test_spec_question_pages_non_contiguous():
+    r = deepcopy(raw)
+    r["numberOfPages"] = 16
+    r["question"]["1"]["pages"] = [3, 16]
     with raises(ValueError, match="contiguous"):
         SpecVerifier(r).verify()
 
