@@ -7,7 +7,7 @@
  <class>annotator</class>
  <widget class="QWidget" name="annotator">
   <property name="windowModality">
-   <enum>Qt::NonModal</enum>
+   <enum>Qt::WindowModality::WindowModal</enum>
   </property>
   <property name="geometry">
    <rect>
