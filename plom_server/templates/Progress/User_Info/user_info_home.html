@@ -47,13 +47,11 @@
                                 <!-- TODO: Retrieve the limit for each user -->
                                 <td>20 (DEMO)</td>
                                 <td>
-                                    <button
-                                        class="btn btn-primary m-2"
-                                        type="button"
-                                        data-bs-toggle="modal"
-                                        data-username= "{{ user }}""
-                                        data-bs-target="#editLimit">Edit Limit
-                                    </button>
+                                    <button class="btn btn-primary m-2"
+                                            type="button"
+                                            data-bs-toggle="modal"
+                                            data-username="{{ user }}"
+                                            data-bs-target="#editLimit">Edit Limit</button>
                                     <!-- TODO: edit limit button must not be pressable or pops up warning box if marker is not in prob. -->
                                 </td>
                             </tr>
