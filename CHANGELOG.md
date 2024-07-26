@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Client: improvements to the undo stack.
 * Its easier to wipe the new server back to its initial empty state, at least before scanning begins.
+* Minor tools in annotator are reordered to put tick first and box later.
 
 ### Fixed
 * Misc fixes and improvements.
