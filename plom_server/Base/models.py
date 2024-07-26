@@ -6,7 +6,6 @@
 # Copyright (C) 2024 Aden Chan
 
 from huey.signals import SIGNAL_ERROR, SIGNAL_INTERRUPTED
-
 from django.db import models
 from django.db import transaction
 from django.contrib.auth.models import User
@@ -237,41 +236,6 @@ class SingletonABCModel(models.Model):
     @classmethod
     def load(cls):
         raise NotImplementedError("load() should be overridden in derived classes")
-
-
-class BaseTask(PolymorphicModel):
-    """A base class for all "tasks" that are sent from the server to the PyQT client.
-
-    Status is represented by a choice kwarg, see
-    https://docs.djangoproject.com/en/4.2/ref/models/fields/#choices
-    for more info
-
-    assigned_user: reference to User, the user currently attached to
-        the task.  Can be null, can change over time. Notice that when
-        a tasks has status "out" or "complete" then it must have an
-        assigned_user, and when it is set to "to do" or "out of date"
-        it must have assigned_user set to none.
-    time: the time the task was originally created.
-        TODO: is this used for anything?
-    last_update: the time of the last update to the task (updated whenever model is saved)
-    status: str, represents the status of the task: not started, sent
-        to a client, completed, out of date.
-    """
-
-    # TODO: UUID for indexing
-
-    StatusChoices = models.IntegerChoices("Status", "TO_DO OUT COMPLETE OUT_OF_DATE")
-    TO_DO = StatusChoices.TO_DO
-    OUT = StatusChoices.OUT
-    COMPLETE = StatusChoices.COMPLETE
-    OUT_OF_DATE = StatusChoices.OUT_OF_DATE
-
-    assigned_user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
-    time = models.DateTimeField(default=timezone.now)
-    status = models.IntegerField(
-        null=False, choices=StatusChoices.choices, default=TO_DO
-    )
-    last_update = models.DateTimeField(auto_now=True)
 
 
 class BaseAction(PolymorphicModel):

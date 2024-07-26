@@ -6,12 +6,13 @@
 
 from django.db import models, transaction
 from django.contrib.auth.models import User
+from django.utils import timezone
 
-from Base.models import BaseTask, BaseAction, HueyTaskTracker
+from Base.models import BaseAction, HueyTaskTracker
 from Papers.models import Paper
 
 
-class PaperIDTask(BaseTask):
+class PaperIDTask(models.Model):
     """Represents a test-paper that needs to be identified.
 
     paper: reference to Paper that needs to be IDed.
@@ -20,9 +21,21 @@ class PaperIDTask(BaseTask):
         moved around to different `PaperIDAction`s if you wish.
     priority: a float priority that provides the ordering for tasks
         presented for IDing, zero by default.
+    assigned_user: reference to User, the user currently attached to
+        the task.  Can be null, can change over time. Notice that when
+        a tasks has status "out" or "complete" then it must have an
+        assigned_user, and when it is set to "to do" or "out of date"
+        it must have assigned_user set to none.
+    time: the time the task was originally created.
+        TODO: is this used for anything?
+    last_update: the time of the last update to the task (updated whenever model is saved)
+    status: str, represents the status of the task: not started, sent
+        to a client, completed, out of date.
 
-    These also have a ``status`` that they inherit from their parent
-    ``BaseTask``.  There is *currently* some complexity about updating
+    PaperIDTasks have a ``status``, represented by a choice kwarg, see
+    https://docs.djangoproject.com/en/4.2/ref/models/fields/#choices
+    for more info.
+    There is *currently* some complexity about updating
     this b/c there are changes that MUST be made (but are not automatically
     made) in the Actions which are attached to this Task.
     """
@@ -32,6 +45,19 @@ class PaperIDTask(BaseTask):
         "PaperIDAction", unique=True, null=True, on_delete=models.SET_NULL
     )
     iding_priority = models.FloatField(null=True, default=0.0)
+
+    StatusChoices = models.IntegerChoices("Status", "TO_DO OUT COMPLETE OUT_OF_DATE")
+    TO_DO = StatusChoices.TO_DO
+    OUT = StatusChoices.OUT
+    COMPLETE = StatusChoices.COMPLETE
+    OUT_OF_DATE = StatusChoices.OUT_OF_DATE
+
+    assigned_user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    time = models.DateTimeField(default=timezone.now)
+    status = models.IntegerField(
+        null=False, choices=StatusChoices.choices, default=TO_DO
+    )
+    last_update = models.DateTimeField(auto_now=True)
 
 
 class PaperIDAction(BaseAction):
