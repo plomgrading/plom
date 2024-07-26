@@ -4,6 +4,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Elisa Pan
 
 from django.shortcuts import redirect, render
 from django.http import HttpRequest, HttpResponse, Http404
@@ -96,7 +97,18 @@ class HTMXExplodeView(ManagerRequiredView):
 
 
 class SetProbationView(ManagerRequiredView):
+    """View to handle setting a probation period for a user."""
+
     def post(self, request, username):
+        """Handle the POST request to set the probation period for the specified user.
+
+        Args:
+            request: The HTTP request object.
+            username: The username of the user to set the probation period for.
+
+        Returns:
+            HttpResponse: A redirect to the users page.
+        """
         user = get_object_or_404(User, username=username)
         probation_period, created = ProbationPeriod.objects.get_or_create(
             user=user, defaults={"limit": 20}
@@ -108,7 +120,18 @@ class SetProbationView(ManagerRequiredView):
 
 
 class UnsetProbationView(ManagerRequiredView):
+    """View to handle unsetting a probation period for a user."""
+
     def post(self, request, username):
+        """Handle the POST request to unset the probation period for the specified user.
+
+        Args:
+            request: The HTTP request object.
+            username: The username of the user to unset the probation period for.
+
+        Returns:
+            HttpResponse: A redirect to the users page.
+        """
         user = get_object_or_404(User, username=username)
         probation_period = ProbationPeriod.objects.filter(user=user)
         probation_period.delete()
