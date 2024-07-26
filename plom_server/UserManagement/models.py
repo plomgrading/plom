@@ -12,4 +12,9 @@ class ProbationPeriod(models.Model):
     limit = models.IntegerField(default=20)
 
     def __str__(self):
+        """Return a string representation of the probation period.
+
+        Returns:
+            str: A string describing the probation period and limit for the user.
+        """
         return f"Probation Period for {self.user.username} with limit {self.limit}"
