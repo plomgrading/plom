@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from shutil import copy
 from time import sleep
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 # sigh.... python dependent import of toml - sorry.
 import sys
@@ -53,8 +53,12 @@ class DemoHWBundleConfig:
 
 @dataclass()
 class DemoAllBundlesConfig:
-    bundles: Optional[List[DemoBundleConfig]] = None
-    hw_bundles: Optional[List[DemoHWBundleConfig]] = None
+    # The dataclasses above are not yet working because
+    # dataclass init needs to be told explicitly to
+    # handle sub-dataclasses via __post_init__.
+    # TODO - fix this when we fix up pdf mucking
+    bundles: Optional[List[Dict[str, Any]]] = None
+    hw_bundles: Optional[List[Dict[str, Any]]] = None
 
 
 def _read_bundle_config(length: str) -> DemoAllBundlesConfig:
