@@ -4,6 +4,7 @@
     Copyright (C) 2022 Edith Coates
     Copyright (C) 2023 Colin B. Macdonald
     Copyright (C) 2023-2024 Andrew Rechnitzer
+    Copyright (C) 2024 Bryan Tanady
 -->
 {% extends "base/base.html" %}
 {% load humanize %}
@@ -93,14 +94,12 @@
                             <!-- Probationary period button -->
                             <td>
                                 <!-- Check if marker is in probation (show -> Unset probation), otherwise show -> set probation -->
-                                
                                 <!-- If marker is not in rprobation: -->
                                 <!-- <a class="btn btn-warning"
-                                    href="{% url 'toggleLeadMarker' user.username %}">Set Probation</a> -->
+    href="{% url 'toggleLeadMarker' user.username %}">Set Probation</a> -->
                                 <!-- else: -->
                                 <a class="btn btn-info"
-                                    href="{% url 'toggleLeadMarker' user.username %}">Unset Probation</a>
-                                
+                                   href="{% url 'toggleLeadMarker' user.username %}">Unset Probation</a>
                             </td>
                         </tr>
                     {% endfor %}
