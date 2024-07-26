@@ -47,7 +47,7 @@ class IdentifyTaskService:
             old_task.save()
             # make sure that **all** outdated actions are marked as invalid.
             # don't assume that we only have to set the latest action
-            for prev_action in old_task.paperidaction_set.instance_of(PaperIDAction).all():
+            for prev_action in old_task.paperidaction_set.all():
                 prev_action.is_valid = False
                 prev_action.save()
 
