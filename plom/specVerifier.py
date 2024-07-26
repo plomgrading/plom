@@ -690,7 +690,6 @@ class SpecVerifier:
             )
         print('    has long name "{}"{}'.format(self["longName"], chk))
 
-
         print("  Checking production numbers")
         for x in ("numberOfVersions", "numberOfPages"):
             if not isPositiveInt(self.spec[x]):
@@ -701,7 +700,9 @@ class SpecVerifier:
 
         print("  Check an even number of pages:")
         if self.spec["numberOfPages"] % 2 == 1:
-            raise ValueError(f"Specification error - numberOfPages must be an even number.")
+            raise ValueError(
+                "Specification error - numberOfPages must be an even number."
+            )
 
         for x in ["numberToProduce"]:
             try:
