@@ -15,7 +15,7 @@ def testValidUBCStudentID(n):
     Input must be a string or string like or convertible by str().
     """
     if len(str(n)) == 0:  # for 3091 - explicit error for blank ID.
-        return (False, f"SID is blank")
+        return (False, "SID is blank")
     try:
         sid = int(str(n))
     except:  # noqa: E722
