@@ -43,7 +43,7 @@ class BundleThumbnailsView(ScannerRequiredView):
         elif filter_kind == "lowqr":
             return [pg for pg in page_list if pg["n_qr_read"] <= 2]
         elif filter_kind == "attn":
-            # need unknows, errors and extras without info
+            # need unknowns, errors and extras without info
             return [
                 pg
                 for pg in page_list
