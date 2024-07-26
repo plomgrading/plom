@@ -140,7 +140,10 @@ class PlomClasslistValidator:
             ids_used[x[id_key]].append(x["_src_line"])
         for x, v in ids_used.items():
             if len(v) > 1:
-                err.append([v[0], f"ID '{x}' is used multiple times - on lines {v}"])
+                if len(str(x))==0:  # for #3091 - explicit error for blank ID
+                    err.append([v[0], f"Blank ID appears on multiple lines {v}"])
+                else:
+                    err.append([v[0], f"ID '{x}' is used multiple times - on lines {v}"])
         if len(err) > 0:
             return (False, err)
         else:

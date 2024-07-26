@@ -53,6 +53,7 @@ class ClasslistView(ManagerRequiredView):
         )
         if (not success) or (warn_err and not ignore_warnings):
             # errors or non-ignorable warnings
+            print(warn_err)
             context.update({"success": success, "warn_err": warn_err})
             return render(request, "Preparation/classlist_attempt.html", context)
         else:

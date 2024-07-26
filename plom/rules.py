@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2023 Colin B. Macdonald
-# Copyright (C) 2021-2022 Andrew Rechnitzer
+# Copyright (C) 2021-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Philip Loewen
 # Copyright (C) 2024 Aden Chan
 
@@ -14,6 +14,8 @@ def testValidUBCStudentID(n):
 
     Input must be a string or string like or convertible by str().
     """
+    if len(str(n)) == 0:  # for 3091 - explicit error for blank ID.
+        return (False, f"SID is blank")
     try:
         sid = int(str(n))
     except:  # noqa: E722
@@ -92,9 +94,9 @@ def validateStudentID(n):
     else:  # Could still be z-padded int
         s, msg2 = test_z_padded_integer(n)
         if s:
-            return (s, msg2)
+            return (s, msg1)
         else:
-            return (s, msg1 + ", ", msg2)
+            return (s, msg1 + ", " + msg2)
 
 
 def isValidStudentID(n):
