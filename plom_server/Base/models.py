@@ -238,22 +238,6 @@ class SingletonABCModel(models.Model):
         raise NotImplementedError("load() should be overridden in derived classes")
 
 
-class BaseAction(PolymorphicModel):
-    """A base class for all "actions" that pertain to marker user management.
-
-    I.E., grading a question, assigning a task, assigning the task to a new user, etc
-    with the goal of saving a "history" of all marking/user management actions.
-
-    user: reference to User, the user who performed the action
-    time: datetime, the time the action took place
-    task: reference to BaseTask, the task connected to the action
-    """
-
-    user = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
-    time = models.DateTimeField(default=timezone.now)
-    task = models.ForeignKey(BaseTask, null=True, on_delete=models.SET_NULL)
-
-
 class Tag(models.Model):
     """Represents a text entry that can have a many-to-one relationship with another table.
 
