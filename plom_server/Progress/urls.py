@@ -41,6 +41,7 @@ from UserManagement.views import (
     SetProbationView,
     UnsetProbationView,
     EditProbationLimitView,
+    ModifyProbationView,
 )
 
 urlpatterns = [
@@ -197,4 +198,5 @@ urlpatterns = [
         EditProbationLimitView.as_view(),
         name="edit_probation_limit",
     ),
+    path("modify_probation/", ModifyProbationView.as_view(), name="modify_probation"),
 ]

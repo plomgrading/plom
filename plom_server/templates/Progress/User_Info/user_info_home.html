@@ -16,8 +16,10 @@
     <div>
         <div class="card w-100">
             <div class="card-body">
-                <button class="btn btn-success m-2" type="submit">Modify probationary state/limit</button>
-                <!-- Do some counting here and display how many are in prob -->
+                <button class="btn btn-success m-2"
+                        type="button"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modifyProbationModal">Modify probationary state/limit</button>
                 <div>
                     <i class="bi bi-exclamation-diamond-fill text-info"></i> {{ probation_users|length }} Markers are in probation
                 </div>
@@ -39,7 +41,7 @@
                             <tr>
                                 <td>
                                     {{ user.username }}
-                                    {% if user.pk in probation_users %}
+                                    {% if user.username in probation_users %}
                                         <i class="bi bi-exclamation-diamond-fill text-info"
                                            data-bs-toggle="tooltip"
                                            title="In Probation"></i>
@@ -47,7 +49,7 @@
                                 </td>
                                 <td>{{ annotation_count }}</td>
                                 <td>
-                                    {% if user.pk in probation_users %}
+                                    {% if user.username in probation_users %}
                                         <form action="{% url 'unset_probation' user.username %}" method="post">
                                             {% csrf_token %}
                                             <button type="submit" class="btn btn-info">Unset Probation</button>
@@ -60,8 +62,8 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if user.pk in probation_users %}
-                                        {{ user.probationperiod.limit }}
+                                    {% if user.username in probation_users %}
+                                        {{ probation_limits|get_item:user.username }}
                                     {% else %}
                                         N/A
                                     {% endif %}
@@ -71,6 +73,7 @@
                                             type="button"
                                             data-bs-toggle="modal"
                                             data-username="{{ user.username }}"
+                                            data-limit="{{ probation_limits|get_item:user.username }}"
                                             data-bs-target="#editLimit">Edit Limit</button>
                                 </td>
                             </tr>
@@ -210,6 +213,8 @@
     {% include "./modal_forms.html" %}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+          rel="stylesheet" />
     <script>
         $('#editLimit').on('show.bs.modal', function (event) {
             var button = $(event.relatedTarget);
@@ -222,4 +227,14 @@
             modal.find('input[name="limit"]').val(limit);
         });
     </script>
+    <script>
+        $(document).ready(function() {
+            $('.select2').select2();
+        });
+    </script>
+    <style>
+        .select2-container {
+            z-index: 9999;
+        }
+    </style>
 {% endblock main_content %}
