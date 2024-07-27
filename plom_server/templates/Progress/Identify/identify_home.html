@@ -73,7 +73,13 @@
                             <td></td>
                             <td></td>
                             <td></td>
-                            <td>-</td>
+                            <td>
+                                {% if data.prediction %}
+                                    predicted ID: {{ data.prediction|join:', ' }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
                         {% endif %}
                     </tr>
                 {% endfor %}

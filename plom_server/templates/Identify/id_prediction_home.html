@@ -12,6 +12,11 @@
 {% endblock page_heading %}
 {% block main_content %}
     <div>
+        <p>
+            <a class="btn btn-primary" href="{% url 'overview_landing' %}">Overview</a>
+        </p>
+    </div>
+    <div>
         {% if id_reader_task_status.status == "Complete" %}
             <p class="my-4">
                 <a class="btn btn-primary" href="{% url 'get_id_box_rectangle' %}">Re-run ID auto-reader tool</a>
