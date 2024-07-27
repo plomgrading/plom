@@ -77,7 +77,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         "populate",
         "papers_built",
         "bundles-created",
-        "bundles-read",
+        "bundles-uploaded",
         "bundles-pushed",
         "randomarking",
         "tagging",
