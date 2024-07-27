@@ -241,7 +241,7 @@ class MarkingTaskService:
         if user_info["in_probation"]:
             if user_info["task_claimed"] >= user_info["probation_limit"]:
                 raise PlomProbationaryLimitExceededException(
-                    "Task cannot be claimed due to reaching probationary limit."
+                    "Probationary Limit has been reached. Contact the instructor to continue claiming more tasks."
                 )
 
         task = MarkingTask.objects.select_for_update().get(pk=task_pk)
