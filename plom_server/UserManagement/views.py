@@ -107,7 +107,7 @@ class SetProbationView(ManagerRequiredView):
             username: The username of the user to set the probation period for.
 
         Returns:
-            HttpResponse: A redirect to the users page.
+            HttpResponse: A redirect to the previous page or the users page if no referrer is found.
         """
         user = get_object_or_404(User, username=username)
         probation_period, created = ProbationPeriod.objects.get_or_create(
@@ -116,7 +116,11 @@ class SetProbationView(ManagerRequiredView):
         if not created:
             probation_period.limit = 20
             probation_period.save()
-        return redirect(reverse("users"))
+
+        next_page = request.POST.get(
+            "next", request.META.get("HTTP_REFERER", reverse("users"))
+        )
+        return redirect(next_page)
 
 
 class UnsetProbationView(ManagerRequiredView):
@@ -130,9 +134,13 @@ class UnsetProbationView(ManagerRequiredView):
             username: The username of the user to unset the probation period for.
 
         Returns:
-            HttpResponse: A redirect to the users page.
+            HttpResponse: A redirect to the previous page or the users page if no referrer is found.
         """
         user = get_object_or_404(User, username=username)
         probation_period = ProbationPeriod.objects.filter(user=user)
         probation_period.delete()
-        return redirect(reverse("users"))
+
+        next_page = request.POST.get(
+            "next", request.META.get("HTTP_REFERER", reverse("users"))
+        )
+        return redirect(next_page)

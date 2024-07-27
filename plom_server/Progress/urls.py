@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Elisa Pan
 
 from django.urls import path
 
@@ -36,6 +37,7 @@ from Progress.views import (
     ClearID,
     IDImageWrapView,
 )
+from UserManagement.views import SetProbationView, UnsetProbationView
 
 urlpatterns = [
     path("scan/overview/", ScanOverview.as_view(), name="progress_scan_overview"),
@@ -175,5 +177,15 @@ urlpatterns = [
         "mark/reassign_task/<int:task_pk>",
         MarkingTaskReassignView.as_view(),
         name="reassign_marking_task",
+    ),
+    path(
+        "set_probation/<str:username>/",
+        SetProbationView.as_view(),
+        name="set_probation",
+    ),
+    path(
+        "unset_probation/<str:username>/",
+        UnsetProbationView.as_view(),
+        name="unset_probation",
     ),
 ]
