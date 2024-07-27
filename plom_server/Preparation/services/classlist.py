@@ -106,6 +106,19 @@ class StagingStudentService:
     ) -> tuple[bool, list[dict[str, Any]]]:
         """Validate and store the classlist from the in-memory file, if possible.
 
+        Args:
+            in_memory_csv_file: some kind of Django file thing.
+
+        Keyword Args:
+            ignore_warnings: try to proceed with opening the file even if
+                the validator expressed warnings.
+
+        Returns:
+            2-tuple, the first entry is a bool indicating success.  In case of
+            success the 2nd entry is an empty list (TODO: or maybe contains
+            ignored warnings).  In case of errors the second list contains dicts
+            which elaborate on errors or warnings.
+
         Raises:
             PlomDependencyConflict: If dependencies not met.
         """
