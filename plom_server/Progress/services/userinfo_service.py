@@ -37,7 +37,11 @@ class UserInfoServices:
         complete_claimed_task_dict = (
             self.get_total_annotated_and_claimed_count_based_on_user()
         )
-        task_marked, task_claimed = complete_claimed_task_dict[username]
+        try:
+            task_marked, task_claimed = complete_claimed_task_dict[username]
+        except KeyError as e:
+            # User hasn't marked nor claimed any paper yet:
+            task_marked, task_claimed = 0, 0
         user = User.objects.get(username=username)
         in_probation = ProbationPeriod.objects.filter(user=user).exists()
         if in_probation:
