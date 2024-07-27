@@ -37,7 +37,11 @@ from Progress.views import (
     ClearID,
     IDImageWrapView,
 )
-from UserManagement.views import SetProbationView, UnsetProbationView
+from UserManagement.views import (
+    SetProbationView,
+    UnsetProbationView,
+    EditProbationLimitView,
+)
 
 urlpatterns = [
     path("scan/overview/", ScanOverview.as_view(), name="progress_scan_overview"),
@@ -187,5 +191,10 @@ urlpatterns = [
         "unset_probation/<str:username>/",
         UnsetProbationView.as_view(),
         name="unset_probation",
+    ),
+    path(
+        "edit_probation_limit/",
+        EditProbationLimitView.as_view(),
+        name="edit_probation_limit",
     ),
 ]

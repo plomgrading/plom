@@ -21,6 +21,11 @@
                 <div>
                     <i class="bi bi-exclamation-diamond-fill text-info"></i> {{ probation_users|length }} Markers are in probation
                 </div>
+                {% if messages %}
+                    <div>
+                        {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
+                    </div>
+                {% endif %}
                 {% if annotations_exist %}
                     <table class="table text-center align-middle">
                         <tr>
@@ -207,15 +212,14 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         $('#editLimit').on('show.bs.modal', function (event) {
-            var button = $(event.relatedTarget); 
-            var username = button.data('username'); 
+            var button = $(event.relatedTarget);
+            var username = button.data('username');
+            var limit = button.data('limit');
             var modal = $(this);
-            
-            // Update the modal title
+    
             modal.find('.modal-title').text('Edit Limit for ' + username);
-            
-            // Update the hidden input field with the username
             modal.find('input[name="username"]').val(username);
+            modal.find('input[name="limit"]').val(limit);
         });
     </script>
 {% endblock main_content %}

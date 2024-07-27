@@ -62,6 +62,9 @@ class ProgressUserInfoHome(ManagerRequiredView):
             ProbationPeriod.objects.values_list("user_id", flat=True)
         )
 
+        probation_limits = {
+            prob.user.pk: prob.limit for prob in ProbationPeriod.objects.all()
+        }
         context.update(
             {
                 "annotations_exist": annotations_exist,
@@ -71,6 +74,7 @@ class ProgressUserInfoHome(ManagerRequiredView):
                 "annotation_filter_form": filter_form,
                 "latest_updated_annotation_human_time": latest_annotation_human_time,
                 "probation_users": probation_users,
+                "probation_limits": probation_limits,
             }
         )
         return render(request, "Progress/User_Info/user_info_home.html", context)

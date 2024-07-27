@@ -22,6 +22,7 @@ from Authentication.services import AuthenticationServices
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from .models import ProbationPeriod
+from django.contrib import messages
 
 
 class UserPage(ManagerRequiredView):
@@ -144,3 +145,21 @@ class UnsetProbationView(ManagerRequiredView):
             "next", request.META.get("HTTP_REFERER", reverse("users"))
         )
         return redirect(next_page)
+
+
+class EditProbationLimitView(ManagerRequiredView):
+    def post(self, request):
+        username = request.POST.get("username")
+        new_limit = request.POST.get("limit")
+        user = get_object_or_404(User, username=username)
+
+        probation_period = ProbationPeriod.objects.filter(user=user).first()
+        if probation_period:
+            probation_period.limit = new_limit
+            probation_period.save()
+            messages.success(request, "Probation limit updated successfully.")
+        else:
+            messages.info(request, "User is not in probation.")
+
+        previous_url = request.META.get("HTTP_REFERER", reverse("users"))
+        return redirect(previous_url)
