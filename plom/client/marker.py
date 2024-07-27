@@ -997,10 +997,7 @@ class MarkerClient(QWidget):
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
             except PlomProbationaryLimitExceededException as err:
-                WarnMsg(
-                    self,
-                    "You can't mark/claim task, because you have reached your probationary limit.",
-                ).exec()
+                WarnMsg(self, str(err)).exec()
                 return
         if update_select:
             self.moveSelectionToTask(task)
