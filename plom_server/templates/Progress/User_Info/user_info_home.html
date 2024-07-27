@@ -16,12 +16,18 @@
     <div>
         <div class="card w-100">
             <div class="card-body">
-                <a class="btn btn-success m-2" type="submit" href="">Modify probationary state/limit</a>
-                <a class="btn btn-primary" href="{% url 'users' %}">User List</a>
-                <!-- Do some counting here and display how many are in prob -->
+                <button class="btn btn-success m-2"
+                        type="button"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modifyProbationModal">Modify probationary state/limit</button>
                 <div>
                     <i class="bi bi-exclamation-diamond-fill text-info"></i> {{ probation_users|length }} Markers are in probation
                 </div>
+                {% if messages %}
+                    <div>
+                        {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
+                    </div>
+                {% endif %}
                 {% if annotations_exist %}
                     <table class="table text-center align-middle">
                         <tr>
@@ -36,7 +42,7 @@
                             <tr>
                                 <td>
                                     {{ user.username }}
-                                    {% if user.pk in probation_users %}
+                                    {% if user.username in probation_users %}
                                         <i class="bi bi-exclamation-diamond-fill text-info"
                                            data-bs-toggle="tooltip"
                                            title="In Probation"></i>
@@ -45,7 +51,7 @@
                                 <td>{{ annotation_and_claimedTask_count.0 }}</td>
                                 <td>{{ annotation_and_claimedTask_count.1 }}</td>
                                 <td>
-                                    {% if user.pk in probation_users %}
+                                    {% if user.username in probation_users %}
                                         <form action="{% url 'unset_probation' user.username %}" method="post">
                                             {% csrf_token %}
                                             <button type="submit" class="btn btn-info">Unset Probation</button>
@@ -58,8 +64,8 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if user.pk in probation_users %}
-                                        {{ user.probationperiod.limit }}
+                                    {% if user.username in probation_users %}
+                                        {{ probation_limits|get_item:user.username }}
                                     {% else %}
                                         N/A
                                     {% endif %}
@@ -69,6 +75,7 @@
                                             type="button"
                                             data-bs-toggle="modal"
                                             data-username="{{ user.username }}"
+                                            data-limit="{{ probation_limits|get_item:user.username }}"
                                             data-bs-target="#editLimit">Edit Limit</button>
                                 </td>
                             </tr>
@@ -208,17 +215,28 @@
     {% include "./modal_forms.html" %}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+          rel="stylesheet" />
     <script>
         $('#editLimit').on('show.bs.modal', function (event) {
-            var button = $(event.relatedTarget); 
-            var username = button.data('username'); 
+            var button = $(event.relatedTarget);
+            var username = button.data('username');
+            var limit = button.data('limit');
             var modal = $(this);
-            
-            // Update the modal title
+    
             modal.find('.modal-title').text('Edit Limit for ' + username);
-            
-            // Update the hidden input field with the username
             modal.find('input[name="username"]').val(username);
+            modal.find('input[name="limit"]').val(limit);
         });
     </script>
+    <script>
+        $(document).ready(function() {
+            $('.select2').select2();
+        });
+    </script>
+    <style>
+        .select2-container {
+            z-index: 9999;
+        }
+    </style>
 {% endblock main_content %}

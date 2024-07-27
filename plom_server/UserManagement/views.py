@@ -22,6 +22,7 @@ from Authentication.services import AuthenticationServices
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from .models import ProbationPeriod
+from django.contrib import messages
 
 
 class UserPage(ManagerRequiredView):
@@ -100,15 +101,7 @@ class SetProbationView(ManagerRequiredView):
     """View to handle setting a probation period for a user."""
 
     def post(self, request, username):
-        """Handle the POST request to set the probation period for the specified user.
-
-        Args:
-            request: The HTTP request object.
-            username: The username of the user to set the probation period for.
-
-        Returns:
-            HttpResponse: A redirect to the previous page or the users page if no referrer is found.
-        """
+        """Handle the POST request to set the probation period for the specified user."""
         user = get_object_or_404(User, username=username)
         probation_period, created = ProbationPeriod.objects.get_or_create(
             user=user, defaults={"limit": 5}
@@ -127,15 +120,7 @@ class UnsetProbationView(ManagerRequiredView):
     """View to handle unsetting a probation period for a user."""
 
     def post(self, request, username):
-        """Handle the POST request to unset the probation period for the specified user.
-
-        Args:
-            request: The HTTP request object.
-            username: The username of the user to unset the probation period for.
-
-        Returns:
-            HttpResponse: A redirect to the previous page or the users page if no referrer is found.
-        """
+        """Handle the POST request to unset the probation period for the specified user."""
         user = get_object_or_404(User, username=username)
         probation_period = ProbationPeriod.objects.filter(user=user)
         probation_period.delete()
@@ -144,3 +129,46 @@ class UnsetProbationView(ManagerRequiredView):
             "next", request.META.get("HTTP_REFERER", reverse("users"))
         )
         return redirect(next_page)
+
+
+class EditProbationLimitView(ManagerRequiredView):
+    """View to handle editing the probation limit for a user."""
+
+    def post(self, request):
+        """Handle the POST request to update the probation limit for the specified user."""
+        username = request.POST.get("username")
+        new_limit = request.POST.get("limit")
+        user = get_object_or_404(User, username=username)
+
+        probation_period = ProbationPeriod.objects.filter(user=user).first()
+        if probation_period:
+            probation_period.limit = new_limit
+            probation_period.save()
+            messages.success(request, "Probation limit updated successfully.")
+        else:
+            messages.info(request, "User is not in probation.")
+
+        previous_url = request.META.get("HTTP_REFERER", reverse("users"))
+        return redirect(previous_url)
+
+
+class ModifyProbationView(ManagerRequiredView):
+    """View to handle modifying the probation state or limit for multiple users."""
+
+    def post(self, request):
+        """Handle the POST request to update the probation limits for the specified users."""
+        user_ids = request.POST.getlist("users")
+        new_limit = request.POST.get("limit")
+
+        if not user_ids:
+            messages.error(request, "No users selected.")
+            return redirect(reverse("progress_user_info_home"))
+
+        for user_id in user_ids:
+            user = get_object_or_404(User, pk=user_id)
+            probation_period, created = ProbationPeriod.objects.get_or_create(user=user)
+            probation_period.limit = new_limit
+            probation_period.save()
+
+        messages.success(request, "Probation limits updated successfully.")
+        return redirect(reverse("progress_user_info_home"))

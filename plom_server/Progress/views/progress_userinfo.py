@@ -60,9 +60,19 @@ class ProgressUserInfoHome(ManagerRequiredView):
             for username, count in annotated_and_claimed_count_dict.items()
         }
 
-        probation_users = list(
-            ProbationPeriod.objects.values_list("user_id", flat=True)
+        probation_users = ProbationPeriod.objects.values_list(
+            "user__username", flat=True
         )
+        probation_users_with_limits = ProbationPeriod.objects.select_related(
+            "user"
+        ).all()
+
+        probation_limits = {
+            prob.user.username: prob.limit for prob in probation_users_with_limits
+        }
+
+        # Fetch user objects for users in probation
+        probation_user_objects = User.objects.filter(username__in=probation_users)
 
         context.update(
             {
@@ -73,6 +83,8 @@ class ProgressUserInfoHome(ManagerRequiredView):
                 "annotation_filter_form": filter_form,
                 "latest_updated_annotation_human_time": latest_annotation_human_time,
                 "probation_users": probation_users,
+                "probation_limits": probation_limits,
+                "probation_user_objects": probation_user_objects,  # Pass user objects
             }
         )
         return render(request, "Progress/User_Info/user_info_home.html", context)
