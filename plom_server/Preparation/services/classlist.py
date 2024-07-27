@@ -104,14 +104,13 @@ class StagingStudentService:
     def validate_and_use_classlist_csv(
         self, in_memory_csv_file: File, ignore_warnings: bool = False
     ) -> tuple[bool, list[dict[str, Any]]]:
-        """Validate and store the classlist from the in-memory file.
+        """Validate and store the classlist from the in-memory file, if possible.
 
         Raises:
             PlomDependencyConflict: If dependencies not met.
         """
         assert_can_modify_classlist()
 
-        """Read the in-memory csv file, validate it and use if possible."""
         from plom.create.classlistValidator import PlomClasslistValidator
 
         # now save the in-memory file to a tempfile and validate
