@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Bryan Tanady
+
 
 from datetime import timedelta
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple, Union, Any
 
 import arrow
 
@@ -14,11 +16,46 @@ from django.db.models.query import QuerySet
 from django.utils import timezone
 
 from Mark.models import Annotation, MarkingTask
-from Mark.services import MarkingTaskService
+from Mark.services import MarkingTaskService, MarkingStatsService
+
+from UserManagement.models import ProbationPeriod
 
 
 class UserInfoServices:
     """Functions for User Info HTML page."""
+
+    @transaction.atomic
+    def get_user_progress(self, username: str) -> Dict[str, Any]:
+        """Get marking progress of a user.
+
+        Args:
+            username: the user's username.
+
+        Returns:
+            A dict whose keys are ["task_claimed", "task_marked", "in_probation", "probation_limit"].
+        """
+        annotation_count_dict = self.get_total_annotations_count_based_on_user()
+        task_marked = annotation_count_dict[username]
+        task_claimed_but_not_marked = len(
+            MarkingStatsService().filter_marking_task_annotation_info(
+                username=username, status=MarkingTask.OUT
+            )
+        )
+        task_claimed = task_marked + task_claimed_but_not_marked
+        user = User.objects.get(username=username)
+        in_probation = ProbationPeriod.objects.filter(user=user).exists()
+        if in_probation:
+            probation_limit = ProbationPeriod.objects.get(user=user).limit
+        else:
+            probation_limit = None
+
+        data = {
+            "task_claimed": task_claimed,
+            "task_marked": task_marked,
+            "in_probation": in_probation,
+            "probation_limit": probation_limit,
+        }
+        return data
 
     @transaction.atomic
     def annotation_exists(self) -> bool:

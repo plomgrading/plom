@@ -111,7 +111,7 @@ class SetProbationView(ManagerRequiredView):
         """
         user = get_object_or_404(User, username=username)
         probation_period, created = ProbationPeriod.objects.get_or_create(
-            user=user, defaults={"limit": 20}
+            user=user, defaults={"limit": 5}
         )
         if not created:
             probation_period.limit = 20
