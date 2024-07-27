@@ -26,11 +26,12 @@
                         <tr>
                             <th>Username</th>
                             <th>Question Marked</th>
+                            <th>Question Claimed</th>
                             <th>Probation</th>
                             <th>Probation Limit</th>
                             <th>Limit Modifier</th>
                         </tr>
-                        {% for user, annotation_count in annotation_count_dict.items %}
+                        {% for user, annotation_and_claimedTask_count in annotation_count_dict.items %}
                             <tr>
                                 <td>
                                     {{ user.username }}
@@ -40,7 +41,8 @@
                                            title="In Probation"></i>
                                     {% endif %}
                                 </td>
-                                <td>{{ annotation_count }}</td>
+                                <td>{{ annotation_and_claimedTask_count.0 }}</td>
+                                <td>{{ annotation_and_claimedTask_count.1 }}</td>
                                 <td>
                                     {% if user.pk in probation_users %}
                                         <form action="{% url 'unset_probation' user.username %}" method="post">

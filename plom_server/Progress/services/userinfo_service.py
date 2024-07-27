@@ -34,14 +34,10 @@ class UserInfoServices:
         Returns:
             A dict whose keys are ["task_claimed", "task_marked", "in_probation", "probation_limit"].
         """
-        annotation_count_dict = self.get_total_annotations_count_based_on_user()
-        task_marked = annotation_count_dict[username]
-        task_claimed_but_not_marked = len(
-            MarkingStatsService().filter_marking_task_annotation_info(
-                username=username, status=MarkingTask.OUT
-            )
+        complete_claimed_task_dict = (
+            self.get_total_annotated_and_claimed_count_based_on_user()
         )
-        task_claimed = task_marked + task_claimed_but_not_marked
+        task_marked, task_claimed = complete_claimed_task_dict[username]
         user = User.objects.get(username=username)
         in_probation = ProbationPeriod.objects.filter(user=user).exists()
         if in_probation:
@@ -67,15 +63,21 @@ class UserInfoServices:
         return Annotation.objects.exists()
 
     @transaction.atomic
-    def get_total_annotations_count_based_on_user(self) -> Dict[str, int]:
-        """Retrieve annotations based on user.
+    def get_total_annotated_and_claimed_count_based_on_user(
+        self,
+    ) -> Dict[str, Tuple[int, int]]:
+        """Retrieve count of complete and total claimed tas based on user.
+
+        claimed tasks are those tasks associated with the user with status OUT and Complete.
 
         Returns:
-            A dictionary of all annotations (Value) corresponding with the markers (key).
+            A dictionary mapping the marker to a tuple of the count of the complete and claimed tasks.
 
         Raises:
             Not expected to raise any exceptions.
         """
+        result = dict()
+
         annotations = (
             MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
         )
@@ -90,7 +92,45 @@ class UserInfoServices:
             if annotation.user.username in annotation_count_dict:
                 annotation_count_dict[annotation.user.username] += 1
 
-        return annotation_count_dict
+        for usr in annotation_count_dict:
+            complete_task = annotation_count_dict[usr]
+            claimed_task = (
+                complete_task + self.get_total_claimed_but_unmarked_task_by_a_user(usr)
+            )
+            result[usr] = (complete_task, claimed_task)
+
+        return result
+
+    @transaction.atomic
+    def get_total_claimed_task_for_each_user(self) -> Dict[str, int]:
+        """Retrieve the number of tasks claimed by the user."""
+        total_complete_annot_dict = self.get_annotations_based_on_user()
+        claimed_task_count_dict = dict()
+
+        for usr in total_complete_annot_dict.key():
+            claimed_task_count_dict[usr] = total_complete_annot_dict[
+                usr
+            ] + self.get_total_claimed_but_unmarked_task_by_a_user(usr)
+
+        return claimed_task_count_dict
+
+    @transaction.atomic
+    def get_total_claimed_but_unmarked_task_by_a_user(self, username: str) -> int:
+        """Retrieve the number of tasks claimed but unmarked by a user.
+
+        These retrieve the tasks claimed by the users that have MarkingTask status of OUT.
+
+        Args:
+            username: user's username
+
+        Returns:
+            number of tasks claimed by the user whose status is still 'OUT'.
+        """
+        return len(
+            MarkingStatsService().filter_marking_task_annotation_info(
+                username=username, status=MarkingTask.OUT
+            )
+        )
 
     @transaction.atomic
     def get_annotations_based_on_user(

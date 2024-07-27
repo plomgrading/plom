@@ -21,7 +21,9 @@ class ProgressUserInfoHome(ManagerRequiredView):
         filter_form = AnnotationFilterForm(request.GET)
 
         annotations_exist = uis.annotation_exists()
-        annotation_count_dict = uis.get_total_annotations_count_based_on_user()
+        annotated_and_claimed_count_dict = (
+            uis.get_total_annotated_and_claimed_count_based_on_user()
+        )
         latest_annotation_human_time = uis.get_time_of_latest_updated_annotation()
         request_time_filter_seconds = request.GET.get("time_filter_seconds")
 
@@ -53,9 +55,9 @@ class ProgressUserInfoHome(ManagerRequiredView):
             )
         )
 
-        annotation_count_dict = {
+        annotated_and_claimed_count_dict = {
             User.objects.get(username=username): count
-            for username, count in annotation_count_dict.items()
+            for username, count in annotated_and_claimed_count_dict.items()
         }
 
         probation_users = list(
@@ -65,7 +67,7 @@ class ProgressUserInfoHome(ManagerRequiredView):
         context.update(
             {
                 "annotations_exist": annotations_exist,
-                "annotation_count_dict": annotation_count_dict,
+                "annotation_count_dict": annotated_and_claimed_count_dict,
                 "annotations_grouped_by_user": annotations_grouped_by_user,
                 "annotations_grouped_by_question_ver": annotations_grouped_by_question_ver,
                 "annotation_filter_form": filter_form,
