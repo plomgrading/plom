@@ -15,7 +15,7 @@ class ProbationService:
 
         Args:
             limit: the new probationary limit to be applied.
-            username: user's username whose limit will be modified.
+            user: user's username whose limit will be modified.
 
         Returns:
             True if the new limit can be applied to the user.
