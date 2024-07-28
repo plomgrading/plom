@@ -20,7 +20,6 @@ class ProbationService:
         Returns:
             True if the new limit can be applied to the user.
         """
-
         if limit >= 0:
             return True
         else:
