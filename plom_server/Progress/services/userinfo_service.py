@@ -108,7 +108,10 @@ class UserInfoServices:
     @transaction.atomic
     def get_total_claimed_task_for_each_user(self) -> Dict[str, int]:
         """Retrieve the number of tasks claimed by the user."""
-        total_complete_annot_dict = self.get_annotations_based_on_user()
+        annotations = (
+            MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
+        )
+        total_complete_annot_dict = self.get_annotations_based_on_user(annotations)
         claimed_task_count_dict = dict()
 
         for usr in total_complete_annot_dict.key():
