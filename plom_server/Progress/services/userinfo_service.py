@@ -39,7 +39,7 @@ class UserInfoServices:
         )
         try:
             task_marked, task_claimed = complete_claimed_task_dict[username]
-        except KeyError as _:
+        except KeyError:
             # User hasn't marked nor claimed any paper yet:
             task_marked, task_claimed = 0, 0
         user = User.objects.get(username=username)
