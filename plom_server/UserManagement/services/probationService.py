@@ -2,7 +2,6 @@
 # Copyright (C) 2024 Bryan Tanady
 from django.db import transaction
 from django.contrib.auth.models import User
-from ..models import ProbationPeriod
 
 
 class ProbationService:
@@ -12,8 +11,7 @@ class ProbationService:
     def new_limit_is_valid(self, limit: int, user: User) -> bool:
         """Check if the new limit is valid for the user.
 
-        Current restriction: New limit must be non-negative and greater than
-        current limit (if exists).
+        Current restriction: New limit must be non-negative.
 
         Args:
             limit: the new probationary limit to be applied.
@@ -23,11 +21,7 @@ class ProbationService:
             True if the new limit can be applied to the user.
         """
 
-        try:
-            current_limit = ProbationPeriod.objects.get(user=user).limit
-        except ProbationPeriod.DoesNotExist:
-            current_limit = 0
-        if limit >= current_limit:
+        if limit >= 0:
             return True
         else:
             return False
