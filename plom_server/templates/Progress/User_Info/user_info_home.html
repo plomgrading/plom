@@ -69,12 +69,16 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <button class="btn btn-primary m-2"
-                                            type="button"
-                                            data-bs-toggle="modal"
-                                            data-username="{{ user.username }}"
-                                            data-limit="{{ probation_limits|get_item:user.username }}"
-                                            data-bs-target="#editLimit">Edit Limit</button>
+                                    {% if user.username in probation_users %}
+                                        <button class="btn btn-primary m-2"
+                                                type="button"
+                                                data-bs-toggle="modal"
+                                                data-username="{{ user.username }}"
+                                                data-limit="{{ probation_limits|get_item:user.username }}"
+                                                data-bs-target="#editLimit">Edit Limit</button>
+                                    {% else %}
+                                        <button type="button" disabled>Edit Limit</button>
+                                    {% endif %}
                                 </td>
                             </tr>
                         {% endfor %}
