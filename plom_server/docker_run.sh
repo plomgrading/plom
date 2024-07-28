@@ -31,9 +31,9 @@ else
 	# start either a canned demo or an empty server
 	if [[ "$PLOM_DEMO" -eq 1 ]]; then
 		if [ "x$PLOM_DEBUG" = "x0" ]; then
-			python3 Launcher/launch_scripts/launch_demo_server --production --port $PORT --stop-after bundles-pushed
+			python3 Launcher/launch_scripts/launch_plom_demo_server --production --port $PORT --stop-after bundles-pushed
 		else
-			python3 Launcher/launch_scripts/launch_demo_server --development --port $PORT --stop-after bundles-pushed
+			python3 Launcher/launch_scripts/launch_plom_demo_server --development --port $PORT --stop-after bundles-pushed
 		fi
 	else
 		if [ "x$PLOM_DEBUG" = "x0" ]; then
