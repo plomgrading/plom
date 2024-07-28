@@ -14,7 +14,7 @@ class ProbationService:
         Current restriction: New limit must be non-negative.
 
         Args:
-            limit: the new probationary limit to be applied.
+            limit: the new probation limit to be applied.
             user: user's username whose limit will be modified.
 
         Returns:
