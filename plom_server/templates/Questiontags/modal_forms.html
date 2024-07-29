@@ -169,11 +169,18 @@
                         aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="importTagForm" method="post" action="{% url 'import_tags' %}" enctype="multipart/form-data">
+                <form id="importTagForm"
+                      method="post"
+                      action="{% url 'import_tags' %}"
+                      enctype="multipart/form-data">
                     {% csrf_token %}
                     <div class="form-group">
                         <label for="csv_file">Upload CSV file</label>
-                        <input type="file" class="form-control" id="csv_file" name="csv_file" required>
+                        <input type="file"
+                               class="form-control"
+                               id="csv_file"
+                               name="csv_file"
+                               required>
                     </div>
                     <button type="submit" class="btn btn-primary">Submit</button>
                 </form>
