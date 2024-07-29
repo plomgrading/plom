@@ -1488,7 +1488,8 @@ class MarkerClient(QWidget):
             return
 
         if self.allowBackgroundOps:
-            if self.examModel.countReadyToMark() == 0:
+            # If just one in the queue (which we are grading) then ask for more
+            if self.examModel.countReadyToMark() <= 1:
                 self.requestNextInBackgroundStart()
 
         self.startTheAnnotator(inidata)
@@ -1776,11 +1777,12 @@ class MarkerClient(QWidget):
         # now update the marking history with the task.
         self.marking_history.append(task)
 
-    def getMorePapers(self, oldtgvID) -> tuple | None:
+    def getMorePapers(self, oldtgvID: str) -> tuple | None:
         """Loads more tests.
 
         Args:
-            oldtgvID(str): the Test-Group-Version ID for the previous test.
+            oldtgvID: the task code with no leading "q" for the previous
+                thing marked.
 
         Returns:
             The data for the annotator or None as described in
@@ -1803,9 +1805,8 @@ class MarkerClient(QWidget):
         assert pdict is None, "Annotator should not pull a regrade"
 
         if self.allowBackgroundOps:
-            # while annotator is firing up request next paper in background
-            # after giving system a moment to do `annotator.exec()`
-            if self.examModel.countReadyToMark() == 0:
+            # If just one in the queue (which we are grading) then ask for more
+            if self.examModel.countReadyToMark() <= 1:
                 self.requestNextInBackgroundStart()
 
         return data
