@@ -163,7 +163,11 @@ class StagingStudentService:
                     # in theory, we "asked permission" using vlad the validator
                     # so the input must be perfect and this can never fail---haha.
                     success = False
-                    werr = [f"unexpected error, likely a Plom bug: {str(e)}"]
+                    errmsg = f"unexpected error, likely a Plom bug: {str(e)}"
+                    # see :method:`PlomClasslistValidator.validate_csv` for this format
+                    werr.append(
+                        {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
+                    )
 
         # don't forget to unlink the temp file
         tmp_csv.unlink()
