@@ -96,8 +96,9 @@ class Command(BaseCommand):
         parser.add_argument(
             "--action",
             action="store",
-            choices=["build", "upload", "read", "push", "id_hw"],
+            choices=["build", "upload", "read", "wait", "push", "id_hw"],
             required=True,
+            help="(build) demo bundles, (upload) demo bundles, (read) qr-codes in uploaded demo bundles, (wait) for background processing of upload and qr-code reading, (push) processed bundles from staging, (id_hw) ID pushed demo homework bundles.",
         )
 
     def build_the_bundles(self, demo_config: DemoAllBundlesConfig) -> None:
@@ -152,7 +153,6 @@ class Command(BaseCommand):
                     "plom_staging_bundles", "upload", scanner_user, bundle_name
                 )
                 sleep(0.5)  # small sleep to not overwhelm huey's db
-        self._wait_for_upload()
 
     def read_qr_codes_and_wait(self, demo_config: DemoAllBundlesConfig) -> None:
         """Read QR-codes of the uploaded bundles, and wait for process to finish."""
@@ -168,8 +168,6 @@ class Command(BaseCommand):
                 homework_bundles=demo_config.hw_bundles
             )
 
-        self._wait_for_qr_read()
-
     def _wait_for_qr_read(self) -> None:
         scanner = ScanService()
         while True:
@@ -182,6 +180,11 @@ class Command(BaseCommand):
                 sleep(2)
             else:
                 break
+
+    def wait_for_upload_or_read(self):
+        print("Waiting for bundle uploads and qr-code reading")
+        self._wait_for_upload()
+        self._wait_for_qr_read()
 
     def push_and_wait(self):
         """Push staged bundles and wait for the process to finish.
@@ -237,5 +240,7 @@ class Command(BaseCommand):
             self.read_qr_codes_and_wait(demo_config)
         elif options["action"] == "push":
             self.push_and_wait()
+        elif options["action"] == "wait":
+            self.wait_for_upload_or_read()
         elif options["action"] == "id_hw":
             self.direct_id_hw(demo_config)
