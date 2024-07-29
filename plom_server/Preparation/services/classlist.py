@@ -82,7 +82,8 @@ class StagingStudentService:
         Note - does not check dependencies.
 
         Raises:
-            IntegrityException: if student-id is not unique.
+            IntegrityError: if student-id is not unique, or other database
+                checks failed, for example invalid paper number.
         """
         s_obj = StagingStudent(student_id=student_id, student_name=student_name)
         # set the paper_number if present
