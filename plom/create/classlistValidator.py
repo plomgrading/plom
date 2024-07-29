@@ -228,7 +228,7 @@ class PlomClasslistValidator:
             ``(valid, warnings_and_errors)`` where "valid" is either
             True or False and "warnings_and_errors" is a list of
             dicts.  Each dict encodes a single warning or an error: see
-            doc for precise format.  It is possible for "valid" to be True
+            code for precise format.  It is possible for "valid" to be True
             and still have non-empty "warnings_and_errors" for example
             when there are only warnings.
         """

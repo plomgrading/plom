@@ -77,6 +77,7 @@ class StagingStudent(models.Model):
     # must have unique id.
     student_name = models.TextField(null=False)
     # optional paper-number for prenaming
+    # Note: PositiveIntegerField means NonNegative
     paper_number = models.PositiveIntegerField(null=True)
 
 
