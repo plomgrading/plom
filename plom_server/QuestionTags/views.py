@@ -138,7 +138,7 @@ class EditTagView(UpdateView):
         tag_name = request.POST.get("tagName")
         text = request.POST.get("text")
         meta = request.POST.get("meta")
-        error_message = QuestionTagService.edit_tag(tag_id, tag_name, text, meta)
+        error_message = QuestionTagService.edit_tag(tag_id, tag_name, text, meta=meta)
         if error_message:
             return JsonResponse({"error": error_message})
         return JsonResponse({"success": True})
