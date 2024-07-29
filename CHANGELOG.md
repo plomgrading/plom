@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * For now, you must manually create system rubrics before marking begins; to enforce this the client will crash if the server has no rubrics.
 * Misc fixes and documentation improvements.
+* Spec verifier now checks that numberOfPages is even.
 
 
 ## [0.15.4] - 2024-05-21

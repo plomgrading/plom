@@ -722,6 +722,12 @@ class SpecVerifier:
                 )
             print('    "{}" = {} is positive integer{}'.format(x, self.spec[x], chk))
 
+        print("  Check an even number of pages:")
+        if self.spec["numberOfPages"] % 2 == 1:
+            raise ValueError(
+                "Specification error - numberOfPages must be an even number."
+            )
+
         for x in ["numberToProduce"]:
             try:
                 self.spec[x] = int(self.spec[x])
