@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2022 Andrew Rechnitzer
+# Copyright (C) 2020-2024 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Brennen Chiu
@@ -45,6 +45,22 @@ check_mark = " [check]"
 chk = check_mark
 
 MAX_PAPERS_TO_PRODUCE = 9999
+
+# a canonical ordering of spec keys for output to toml
+# not used by legacy.
+spec_key_order_for_toml_output = [
+    "name",
+    "longName",
+    "publicCode",
+    "numberOfVersions",
+    "numberOfPages",
+    "allowSharedPages",
+    "idPage",
+    "doNotMarkPages",
+    "numberOfQuestions",
+    "totalMarks",
+    "question",
+]
 
 
 def get_question_label(spec, n: int | str) -> str:
@@ -418,10 +434,18 @@ class SpecVerifier:
         s["question"] = []
         for g in range(len(self.spec["question"])):
             s["question"].append(self.spec["question"][str(g + 1)])
-        if not _legacy:
-            # this is deprecated; hide it from the new server
-            s.pop("numberToProduce", None)
-        return tomlkit.dumps(s)
+        # legacy spec is ready to go.
+        if _legacy:
+            return tomlkit.dumps(s)
+
+        # this is deprecated; hide it from the new server
+        s.pop("numberToProduce", None)
+        # put the keys in a particular order by constructing a
+        # new dict since python orders by insertion
+        ordered_toml = dict()
+        for k in spec_key_order_for_toml_output:
+            ordered_toml.update({k: s[k]})
+        return tomlkit.dumps(ordered_toml)
 
     def __getitem__(self, what):
         """Pass access to the keys to underlying dict.
