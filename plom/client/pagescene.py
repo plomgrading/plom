@@ -511,7 +511,13 @@ class PageScene(QGraphicsScene):
         self.lineItem = QGraphicsLineItem()
 
         # Add a ghost comment to scene, but make it invisible
-        self.ghostItem = GhostComment("1", "blah", self.fontSize)
+        self.ghostItem = GhostComment(
+            annot_scale=self._scale,
+            display_delta="1",
+            txt="blah",
+            fontsize=self.fontSize,
+        )
+
         self._hideGhost()
         self.addItem(self.ghostItem)
 
@@ -533,6 +539,9 @@ class PageScene(QGraphicsScene):
         self.avoidBox = self.scoreBox.boundingRect().adjusted(-16, -16, 64, 24)
         # holds the path images uploaded from annotator
         self.tempImagePath = None
+
+        # Offset is physical unit which will cause the gap gets bigger when zoomed in.
+        self.rubric_cursor_offset = 0
 
     def buildUnderLay(self):
         if self.underImage:
@@ -787,7 +796,9 @@ class PageScene(QGraphicsScene):
         font = QFont("Helvetica")
         font.setPixelSize(round(1.25 * self.fontSize))
         self.scoreBox.setFont(font)
-        self.ghostItem.change_font_size(self.fontSize)
+        self.ghostItem.change_rubric_size(
+            fontsize=int(self.fontSize), annot_scale=self._scale
+        )
 
     def set_annotation_color(self, c):
         """Set the colour of annotations.
@@ -1529,7 +1540,8 @@ class PageScene(QGraphicsScene):
 
         if self.boxLineStampState == 3:  # time to stamp the rubric!
             pt = event.scenePos()  # grab the location of the mouse-click
-            command = CommandRubric(self, pt, self.current_rubric)
+            shifted_pt = QPointF(pt.x() + self.rubric_cursor_offset, pt.y())
+            command = CommandRubric(self, shifted_pt, self.current_rubric)
             log.debug(
                 "Making a Rubric: boxLineStampState is {}".format(
                     self.boxLineStampState
@@ -2674,7 +2686,9 @@ class PageScene(QGraphicsScene):
                 self.boxLineStampState = 0
                 return
             # small box, so just stamp the rubric
-            command = CommandRubric(self, event.scenePos(), self.current_rubric)
+            pt = event.scenePos()
+            shifted_pt = QPointF(pt.x() + self.rubric_cursor_offset, pt.y())
+            command = CommandRubric(self, shifted_pt, self.current_rubric)
             log.debug(
                 "Making a Rubric: boxLineStampState is {}".format(
                     self.boxLineStampState

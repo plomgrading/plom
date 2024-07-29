@@ -184,10 +184,10 @@ class MarkingTaskService:
             version: int, the version number. If version == 0, then all versions are returned.
 
         Returns:
-            A PolymorphicQuerySet of tasks
+            A QuerySet of tasks.
 
         Raises:
-            None expected
+            None expected.
         """
         marking_tasks = MarkingTask.objects.filter(
             question_index=question_idx, status=MarkingTask.COMPLETE
@@ -307,11 +307,10 @@ class MarkingTaskService:
         except (ValueError, TypeError) as e:
             raise ValidationError(f"Could not cast 'marking_time' as float: {e}")
 
-        # TODO: waiting on client-side edits?
-        # try:
-        #     cleaned_data["integrity_check"] = int(data["integrity_check"])
-        # except (ValueError, TypeError) as e:
-        #     raise ValidationError(f"Could not get 'integrity_check' as a int: {e}")
+        try:
+            cleaned_data["integrity_check"] = int(data["integrity_check"])
+        except (ValueError, TypeError) as e:
+            raise ValidationError(f"Could not get 'integrity_check' as a int: {e}")
 
         # unpack the rubrics, potentially record which ones were used
         annotations = annot_data["sceneItems"]

@@ -666,12 +666,7 @@ class Messenger(BaseMessenger):
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
                 if response.status_code == 406:
-                    # TODO: not working, just copy-pasted from legacy
-                    if response.text == "integrity_fail":
-                        raise PlomConflict(
-                            "Integrity fail: can happen if manager altered task while you annotated"
-                        ) from None
-                    raise PlomSeriousException(response.text) from None
+                    raise PlomConflict(response.reason) from None
                 if response.status_code == 409:
                     raise PlomTaskChangedError(response.reason) from None
                 if response.status_code == 410:

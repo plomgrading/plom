@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2024 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
@@ -85,10 +85,10 @@ tipText = {
         "Pen: L = freehand pen, M/Ctrl = pen with arrows, "
         + "R/Shift = freehand highlighter."
     ),
-    "redo": "Redo: Redo last action",
+    "redo": "Redo last action",
     "text": "Text: Enter = newline, Shift-Enter/ESC = finish.",
     "tick": "Tick: L = checkmark, M/Ctrl = ?-mark, R/Shift = cross.",
-    "undo": "Undo: Undo last action",
+    "undo": "Undo last action",
     "zoom": "Zoom: L = Zoom in, R = zoom out.",
 }
 
@@ -133,7 +133,7 @@ class Annotator(QWidget):
         self.ui = self
 
         # ordered list of minor mode tools, must match the UI order
-        self._list_of_minor_modes = ["box", "tick", "cross", "text", "line", "pen"]
+        self._list_of_minor_modes = ["tick", "cross", "text", "line", "box", "pen"]
         # current or last used tool, tracked so we can switch back
         self._which_tool = self._list_of_minor_modes[0]
 
@@ -615,7 +615,7 @@ class Annotator(QWidget):
         cursor["arrow"] = QCursor(_pixmap_from("arrow.png"), 4, 4)
         cursor["DoubleArrow"] = QCursor(_pixmap_from("double_arrow.png"), 4, 4)
         cursor["text"] = Qt.CursorShape.IBeamCursor
-        cursor["rubric"] = Qt.CursorShape.IBeamCursor
+        cursor["rubric"] = Qt.CursorShape.ArrowCursor
         cursor["image"] = Qt.CursorShape.CrossCursor
         cursor["zoom"] = Qt.CursorShape.SizeFDiagCursor
         # note ClosedHandCursor and OpenHandCursor also hardcoded in pagescene

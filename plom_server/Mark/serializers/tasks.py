@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2024 Colin B. Macdonald
 
 from rest_framework.serializers import (
     ModelSerializer,
@@ -8,19 +9,14 @@ from rest_framework.serializers import (
     HyperlinkedRelatedField,
 )
 
-from ..models.tasks import MarkingTask
-
 
 class MarkingTaskSerializer(ModelSerializer):
     assigned_user = StringRelatedField()
     status = SerializerMethodField()
     paper = StringRelatedField()
     tags = SerializerMethodField()
+    # TODO: I don't see how this can know the external port number
     latest_annotation = HyperlinkedRelatedField("annotations-detail", read_only=True)
-
-    class Meta:
-        model = MarkingTask
-        exclude = ["polymorphic_ctype"]
 
     def get_tags(self, obj):
         return [str(tag) for tag in obj.markingtasktag_set.all()]
