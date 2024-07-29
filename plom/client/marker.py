@@ -755,7 +755,10 @@ class MarkerClient(QWidget):
 
         self.examModel.set_source_image_data(task, src_img_data)
 
-        paperdir = Path(tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory))
+        assert task.startswith("q")
+        paperdir = Path(
+            tempfile.mkdtemp(prefix=task[1:] + "_", dir=self.workingDirectory)
+        )
         log.debug("create paperdir %s for already-graded download", paperdir)
         self.examModel.setPaperDirByTask(task, paperdir)
         aname = paperdir / f"G{task[1:]}.{annot_img_info['extension']}"
@@ -1126,6 +1129,10 @@ class MarkerClient(QWidget):
             # toggle various columns without end-user useful info
             for i in self.ui.examModel.columns_to_hide:
                 self.ui.tableView.showColumn(i)
+                # Limit the widths of the debugging columns, otherwise ridiculous
+                # TODO: no initial effect (before view setModel, does self.setHorizontalHeaderLabels)
+
+                self.ui.tableView.setColumnWidth(i, 128)
         else:
             self.ui.technicalButton.setText("Show technical info")
             self.ui.technicalButton.setArrowType(Qt.ArrowType.RightArrow)
