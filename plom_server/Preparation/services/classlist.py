@@ -14,7 +14,7 @@ from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
-from django.db import transaction
+from django.db import transaction, IntegrityError
 
 from ..models import StagingStudent
 from ..services import PrenameSettingService
@@ -154,10 +154,16 @@ class StagingStudentService:
                 # Note that the paper_number field is optional, so we
                 # need to get that value or stick in a None.
                 # related to #2274 and MR <<TODO>>
-                for row in csv_reader:
-                    self._add_student(
-                        row["id"], row["name"], row.get("paper_number", None)
-                    )
+                try:
+                    for row in csv_reader:
+                        self._add_student(
+                            row["id"], row["name"], row.get("paper_number", None)
+                        )
+                except IntegrityError as e:
+                    # in theory, we "asked permission" using vlad the validator
+                    # so the input must be perfect and this can never fail---haha.
+                    success = False
+                    werr = [f"unexpected error, likely a Plom bug: {str(e)}"]
 
         # don't forget to unlink the temp file
         tmp_csv.unlink()
