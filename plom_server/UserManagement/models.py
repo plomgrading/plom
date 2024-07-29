@@ -9,7 +9,7 @@ class ProbationPeriod(models.Model):
     """Represents a probation period of a marker with its limit."""
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    limit = models.IntegerField(default=20)
+    limit = models.IntegerField(default=5)
 
     def __str__(self):
         """Return a string representation of the probation period.

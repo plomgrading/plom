@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2024 Bryan Tanady
 
 """Backend bits 'n bobs to talk to a Plom server."""
 
@@ -33,6 +34,7 @@ from plom.plom_exceptions import (
     PlomTaskChangedError,
     PlomTaskDeletedError,
     PlomTimeoutError,
+    PlomProbationaryLimitExceededException,
 )
 
 
@@ -419,6 +421,10 @@ class Messenger(BaseMessenger):
                     raise PlomRangeException(response.reason) from None
                 if response.status_code == 410:
                     raise PlomRangeException(response.reason) from None
+                if response.status_code == 406:
+                    raise PlomProbationaryLimitExceededException(
+                        response.reason
+                    ) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MlatexFragment(self, latex: str) -> tuple[bool, bytes | str]:

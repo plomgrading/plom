@@ -74,6 +74,7 @@ from plom.plom_exceptions import (
     PlomNoPaper,
     PlomNoServerSupportException,
     PlomNoSolutionException,
+    PlomProbationaryLimitExceededException,
 )
 from plom.messenger import Messenger
 from plom.feedback_rules import feedback_rules as static_feedback_rules_data
@@ -945,6 +946,8 @@ class MarkerClient(QWidget):
         Returns:
             None
         """
+        # Get the probationary status from current marker
+        # The status is a dict of (prob_state), total task_marked, and limit
         attempts = 0
         tag = self.annotatorSettings["nextTaskPreferTagged"]
         paper_range = (
@@ -993,6 +996,9 @@ class MarkerClient(QWidget):
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
+            except PlomProbationaryLimitExceededException as err:
+                WarnMsg(self, str(err)).exec()
+                return
         if update_select:
             self.moveSelectionToTask(task)
 
@@ -1405,6 +1411,7 @@ class MarkerClient(QWidget):
             PlomTakenException,
             PlomRangeException,
             PlomVersionMismatchException,
+            PlomProbationaryLimitExceededException,
         ) as err:
             WarnMsg(self, f"Cannot get task {task}.", info=err).exec()
             return

@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2022 Michael Deakin
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Bryan Tanady
 
 
 """Exceptions for the Plom software.
@@ -21,6 +22,12 @@ class PlomException(Exception):
 
 class PlomSeriousException(PlomException):
     """Serious or unexpected problems that are generally not recoverable."""
+
+    pass
+
+
+class PlomProbationaryLimitExceededException(PlomException):
+    """Attempt to claim/mark task will exceed user's probationary limit."""
 
     pass
 

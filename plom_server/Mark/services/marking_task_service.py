@@ -5,6 +5,8 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Bryan Tanady
+
 
 from __future__ import annotations
 
@@ -21,6 +23,7 @@ from django.db.models import QuerySet
 from django.db import transaction
 
 from plom import is_valid_tag_text
+from plom.plom_exceptions import PlomProbationaryLimitExceededException
 
 from Papers.services import ImageBundleService, PaperInfoService
 from Papers.models import Paper
@@ -229,7 +232,18 @@ class MarkingTaskService:
         Exceptions:
             RuntimeError: task is already assigned.
             MarkingTask.DoesNotExist: if there is no such task.
+            PlomProbationaryLimitExceededException: if the user has reached their task limit due to probationary.
         """
+        from Progress.services import UserInfoServices
+
+        uis = UserInfoServices()
+        user_info = uis.get_user_progress(username=user.username)
+        if user_info["in_probation"]:
+            if user_info["task_claimed"] >= user_info["probation_limit"]:
+                raise PlomProbationaryLimitExceededException(
+                    "Probationary Limit has been reached. Contact the instructor to continue claiming more tasks."
+                )
+
         task = MarkingTask.objects.select_for_update().get(pk=task_pk)
         if task.status != MarkingTask.TO_DO:
             raise RuntimeError(
