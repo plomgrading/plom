@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021-2024 Colin B. Macdonald
-# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 
 from pytest import raises
 from pathlib import Path
@@ -222,12 +222,12 @@ def test_missing_student_info(tmpdir) -> None:
             {
                 "warn_or_err": "error",
                 "werr_line": 5,
-                "werr_text": "SID '' is not an integer, ",
+                "werr_text": "SID is blank, SID  has incorrect length - expecting 8 digits",
             },
             {
                 "warn_or_err": "error",
                 "werr_line": 6,
-                "werr_text": "SID 'x' is not an integer, ",
+                "werr_text": "SID 'x' is not an integer, SID x has incorrect length - expecting 8 digits",
             },
             {
                 "warn_or_err": "warning",
