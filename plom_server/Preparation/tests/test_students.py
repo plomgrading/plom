@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.test import TestCase
 from model_bakery import baker
@@ -26,3 +26,20 @@ class StagingStudentsTests(TestCase):
 
         min_to_produce = sstu.get_minimum_number_to_produce()
         self.assertEqual(min_to_produce, 35)
+
+    def test_valid_paper_number_sentinels(self):
+        n = 10000000
+        for p in (None, -1, "", "-1", "-1.0"):
+            n += 1
+            sid = str(n)
+            StagingStudentService()._add_student(sid, "mdme X", paper_number=p)
+
+    def test_valid_paper_number_integers_in_strings(self):
+        n = 10000000
+        n += 1
+        StagingStudentService()._add_student(str(n), "X", paper_number=17)
+        n += 1
+        StagingStudentService()._add_student(str(n), "X", paper_number="17")
+        n += 1
+        with self.assertRaises(ValueError):
+            StagingStudentService()._add_student(str(n), "X", paper_number="MCML")

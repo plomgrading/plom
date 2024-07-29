@@ -105,12 +105,16 @@ class StagingStudentService:
         """
         s_obj = StagingStudent(student_id=student_id, student_name=student_name)
         # note that zero is not a sentinel so "if paper_number" is NOT appropriate
-        if paper_number in (-1, "", None):
+        if paper_number in (-1, "-1", "-1.0", "", None):
             paper_number = None
-        if not (paper_number is None or isinstance(paper_number, int)):
-            raise ValueError(
-                "paper_number must a non-negative integer or a valid sentinel value"
-            )
+        if paper_number is not None:
+            try:
+                # 1.1 would become 1; validator before us should've complained
+                paper_number = int(paper_number)
+            except ValueError as e:
+                raise ValueError(
+                    f"paper_number cannot be converted to int: str{e}"
+                ) from None
         s_obj.paper_number = paper_number
         s_obj.save()
 
