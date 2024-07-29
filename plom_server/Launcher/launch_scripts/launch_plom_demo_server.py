@@ -389,9 +389,9 @@ def upload_the_bundles(length="normal"):
         length = the length of the demo.
     """
     run_django_manage_command(f"plom_demo_bundles --length {length} --action upload")
-    run_django_manage_command(f"plom_demo_bundles --length {length} --action wait")
+    run_django_manage_command("plom_staging_bundles wait")
     run_django_manage_command(f"plom_demo_bundles --length {length} --action read")
-    run_django_manage_command(f"plom_demo_bundles --length {length} --action wait")
+    run_django_manage_command("plom_staging_bundles wait")
 
 
 def push_the_bundles(length):

@@ -122,20 +122,7 @@ class Command(BaseCommand):
                 # map pages to questions and to ID the paper
                 DemoHWBundleCreationService().make_hw_bundle(bundle)
 
-    def _wait_for_upload(self) -> None:
-        scanner = ScanService()
-        while True:
-            bundle_status = scanner.are_bundles_mid_splitting()
-            mid_split = [k for k, v in bundle_status.items() if v]
-            done = [k for k, v in bundle_status.items() if not v]
-            print(f"Uploaded bundles = {done}")
-            if mid_split:
-                print(f"Still waiting on {mid_split}")
-                sleep(5)
-            else:
-                break
-
-    def upload_the_bundles_and_wait(self, demo_config: DemoAllBundlesConfig) -> None:
+    def upload_the_bundles(self, demo_config: DemoAllBundlesConfig) -> None:
         """Upload the created demo bundles, and wait for process to finish."""
         scanner_user = "demoScanner1"
         if demo_config.bundles is not None:
@@ -154,7 +141,7 @@ class Command(BaseCommand):
                 )
                 sleep(0.5)  # small sleep to not overwhelm huey's db
 
-    def read_qr_codes_and_wait(self, demo_config: DemoAllBundlesConfig) -> None:
+    def read_qr_codes_in_bundles(self, demo_config: DemoAllBundlesConfig) -> None:
         """Read QR-codes of the uploaded bundles, and wait for process to finish."""
         if demo_config.bundles is not None:
             for n in range(len(demo_config.bundles)):
@@ -167,24 +154,6 @@ class Command(BaseCommand):
             DemoHWBundleCreationService().map_homework_pages(
                 homework_bundles=demo_config.hw_bundles
             )
-
-    def _wait_for_qr_read(self) -> None:
-        scanner = ScanService()
-        while True:
-            bundle_status = scanner.are_bundles_mid_qr_read()
-            mid_split = [k for k, v in bundle_status.items() if v]
-            done = [k for k, v in bundle_status.items() if not v]
-            print(f"Read all qr codes in bundles = {done}")
-            if mid_split:
-                print(f"Still waiting on {mid_split}")
-                sleep(2)
-            else:
-                break
-
-    def wait_for_upload_or_read(self):
-        print("Waiting for bundle uploads and qr-code reading")
-        self._wait_for_upload()
-        self._wait_for_qr_read()
 
     def push_and_wait(self):
         """Push staged bundles and wait for the process to finish.
@@ -235,12 +204,10 @@ class Command(BaseCommand):
         if options["action"] == "build":
             self.build_the_bundles(demo_config)
         elif options["action"] == "upload":
-            self.upload_the_bundles_and_wait(demo_config)
+            self.upload_the_bundles(demo_config)
         elif options["action"] == "read":
-            self.read_qr_codes_and_wait(demo_config)
+            self.read_qr_codes_in_bundles(demo_config)
         elif options["action"] == "push":
             self.push_and_wait()
-        elif options["action"] == "wait":
-            self.wait_for_upload_or_read()
         elif options["action"] == "id_hw":
             self.direct_id_hw(demo_config)
