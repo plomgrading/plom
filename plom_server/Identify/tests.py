@@ -323,7 +323,7 @@ class IdentifyTaskTests(TestCase):
                 "student_name": "AB1",
                 "in_classlist": False,
             },
-            2: {"idpageimage_pk": None, "status": "To Do"},
+            2: {"idpageimage_pk": None, "status": "To Do", "prediction": None},
         }
 
         self.assertEqual(info_dict, ids.get_all_id_task_info())

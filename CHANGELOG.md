@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * The revision history of rubrics is stored and viewable.
 
 ### Changed
+* Assessments with an odd number of pages now generate errors, which seems like a major change but has always been our best-practice.
 * Client: improvements to the undo stack.
 * Its easier to wipe the new server back to its initial empty state, at least before scanning begins.
 * Minor tools in annotator are reordered to put tick first and box later.
@@ -40,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * For now, you must manually create system rubrics before marking begins; to enforce this the client will crash if the server has no rubrics.
 * Misc fixes and documentation improvements.
+* Spec verifier now checks that numberOfPages is even.
 
 
 ## [0.15.4] - 2024-05-21
