@@ -76,19 +76,42 @@ class StagingStudentService:
         return txt
 
     @transaction.atomic()
-    def _add_student(self, student_id, student_name, paper_number=None):
+    def _add_student(
+        self,
+        student_id: str,
+        student_name: str,
+        *,
+        paper_number: int | str | None = None,
+    ) -> None:
         """Add a single student to the staging classlist.
 
         Note - does not check dependencies.
 
+        Args:
+            student_id: a string.
+            student_name: a string.
+
+        Keyword Args:
+            paper_number: either None or a non-negative integer.  Sentinel values
+                of ``-1``, ``None`` and ``""`` are accepted as None.
+
+        Returns:
+            None.
+
         Raises:
             IntegrityError: if student-id is not unique, or other database
                 checks failed, for example invalid paper number.
+            ValueError: invalid paper_number such as inappropriate sentinel value
         """
         s_obj = StagingStudent(student_id=student_id, student_name=student_name)
-        # set the paper_number if present
-        if paper_number:
-            s_obj.paper_number = paper_number
+        # note that zero is not a sentinel so "if paper_number" is NOT appropriate
+        if paper_number in (-1, "", None):
+            paper_number = None
+        if not (paper_number is None or isinstance(paper_number, int)):
+            raise ValueError(
+                "paper_number must a non-negative integer or a valid sentinel value"
+            )
+        s_obj.paper_number = paper_number
         s_obj.save()
 
     @transaction.atomic()
@@ -157,13 +180,16 @@ class StagingStudentService:
                 try:
                     for row in csv_reader:
                         self._add_student(
-                            row["id"], row["name"], row.get("paper_number", None)
+                            row["id"],
+                            row["name"],
+                            paper_number=row.get("paper_number", None),
                         )
-                except IntegrityError as e:
+                except (IntegrityError, ValueError) as e:
                     # in theory, we "asked permission" using vlad the validator
                     # so the input must be perfect and this can never fail---haha.
                     success = False
-                    errmsg = f"unexpected error, likely a Plom bug: {str(e)}"
+                    errmsg = "Unexpected error, "
+                    errmsg += f"likely a bug in Plom's classlist validator: {str(e)}"
                     # see :method:`PlomClasslistValidator.validate_csv` for this format
                     werr.append(
                         {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
