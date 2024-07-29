@@ -58,6 +58,10 @@ class MarkingTask(models.Model):
         case the task becomes out-of-date, in lieu of being deleted.
         It cannot transition back to earlier states.
         OUT_OF_DATE can still have a Latest Annotation.
+
+    Note: Another table, :class:`PaperIDTask`, shares similar status
+    choices and some other fields; once upon a time they shared a common
+    subclass.
     """
 
     StatusChoices = models.IntegerChoices("Status", "TO_DO OUT COMPLETE OUT_OF_DATE")

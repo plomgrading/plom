@@ -38,6 +38,10 @@ class PaperIDTask(models.Model):
     There is *currently* some complexity about updating
     this b/c there are changes that MUST be made (but are not automatically
     made) in the Actions which are attached to this Task.
+
+    Note: Another table, :class:`MarkingTask`, shares similar status
+    choices and some other fields; once upon a time they shared a common
+    subclass.
     """
 
     paper = models.ForeignKey(Paper, on_delete=models.CASCADE)
