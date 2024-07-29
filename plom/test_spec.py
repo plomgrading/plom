@@ -68,7 +68,8 @@ def test_spec_question_pages_non_positive():
 
 def test_spec_pages_not_even():
     r = deepcopy(raw)
-    r["numberOfPages"] = 17
+    r["numberOfPages"] = 7
+    r["question"]["3"]["pages"] = [5, 6, 7]
     with raises(ValueError, match="even"):
         SpecVerifier(r).verify()
 
