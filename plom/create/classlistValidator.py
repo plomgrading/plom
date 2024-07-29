@@ -147,11 +147,18 @@ class PlomClasslistValidator:
             return (True, [])
 
     def check_papernumber_column(self, papernum_key, classList) -> tuple[bool, list]:
-        """Check the papernumber column of the classlist."""
+        """Check the papernumber column of the classlist.
+
+        Entries must either be blank, or integers >= -1.
+        Note that:
+            * no integer >=0 can be used twice, and
+            * blank or -1 are sentinel values used to indicate 'do not prename'
+        """
         err = []
         numbers_used = defaultdict(list)
         for x in classList:
-            if x[papernum_key] == "":
+            # see #3099 - we can reuse papernum = -1 since it is a sentinel value, so ignore any -1's
+            if x[papernum_key] in ["", "-1"]:
                 continue
             try:
                 int(x[papernum_key])
@@ -162,9 +169,16 @@ class PlomClasslistValidator:
                         f"Paper-number {x[papernum_key]} is not an integer",
                     ]
                 )
-            # see #3099 - we can reuse papernum = -1 since it is a sentinel value, so ignore any -1's
-            if int(x[papernum_key]) == -1:
                 continue
+            if int(x[papernum_key]) < -1:
+                err.append(
+                    [
+                        x["_src_line"],
+                        f"Paper-number {x[papernum_key]} must be a non-negative integer, or blank or '-1' to indicate 'do not prename'",
+                    ]
+                )
+                continue
+
             # otherwise store the used papernumber.
             numbers_used[x[papernum_key]].append(x["_src_line"])
         for x, v in numbers_used.items():
