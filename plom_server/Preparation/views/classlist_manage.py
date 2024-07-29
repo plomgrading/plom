@@ -5,12 +5,15 @@
 
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
+from django.urls import reverse
+from django.contrib import messages
 
 from django_htmx.http import HttpResponseClientRedirect
 
 from ..services import StagingStudentService, PrenameSettingService
 
 from Base.base_group_views import ManagerRequiredView
+from plom.plom_exceptions import PlomDependencyConflict
 
 
 class ClasslistDownloadView(ManagerRequiredView):
@@ -48,20 +51,25 @@ class ClasslistView(ManagerRequiredView):
         if sss.are_there_students():
             return HttpResponseClientRedirect(".")
 
-        success, warn_err = sss.validate_and_use_classlist_csv(
-            request.FILES["classlist_csv"], ignore_warnings=ignore_warnings
-        )
-        if (not success) or (warn_err and not ignore_warnings):
-            # errors or non-ignorable warnings
-            print(warn_err)
-            context.update({"success": success, "warn_err": warn_err})
-            return render(request, "Preparation/classlist_attempt.html", context)
-        else:
-            # success!
-            return redirect("prep_classlist")
+        try:
+            success, warn_err = sss.validate_and_use_classlist_csv(
+                request.FILES["classlist_csv"], ignore_warnings=ignore_warnings
+            )
+            if (not success) or (warn_err and not ignore_warnings):
+                # errors or non-ignorable warnings
+                context.update({"success": success, "warn_err": warn_err})
+                return render(request, "Preparation/classlist_attempt.html", context)
+            else:
+                # success!
+                return redirect("prep_classlist")
+        except PlomDependencyConflict as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
+            return HttpResponseClientRedirect(reverse("prep_conflict"))
 
     def delete(self, request):
-        # if papers have been printed then redirect to the readonly view
-
-        StagingStudentService().remove_all_students()
+        try:
+            StagingStudentService().remove_all_students()
+        except PlomDependencyConflict as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
+            return HttpResponseClientRedirect(reverse("prep_conflict"))
         return HttpResponseClientRedirect(".")
