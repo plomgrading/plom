@@ -28,7 +28,7 @@
             <p>
                 <a class="btn btn-success" href="{% url 'enableMarkers' %}">Enable Markers</a>
                 <a class="btn btn-danger" href="{% url 'disableMarkers' %}">Disable Markers</a>
-                <a class="btn btn-info" href="{% url 'progress_user_info_home' %}">Markers Info</a>
+                <a class="btn btn-info" href="{% url 'progress_user_info_home' %}">User Info</a>
             </p>
             <div class="table-responsive">
                 <table class="table table-striped">
@@ -118,6 +118,10 @@
                     <li>Disabling a marker also logs them out and surrenders any outstanding tasks.</li>
                     <li>
                         If you wish to <q>force-logout</q> a user then click disable/enable twice in a row.
+                    </li>
+                    <li>
+                        Setting a marker to probation, limits the amount of questions they can grade. The exact limit can be changed in User Info page.
+                        User Info page.
                     </li>
                 </ul>
             </p>
