@@ -17,6 +17,8 @@
     </p>
     {% if error_message %}<div class="alert alert-danger">{{ error_message }}</div>{% endif %}
     <h3>Questions</h3>
+    <a href="{% url 'download_question_tags' %}?format=csv&csv_type=questions"
+       class="btn btn-primary">Download qtags-link CSV</a>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -83,10 +85,8 @@
             {% endfor %}
         </tbody>
     </table>
-    <a href="{% url 'download_question_tags' %}?format=json"
-       class="btn btn-primary">Download JSON</a>
-    <a href="{% url 'download_question_tags' %}?format=csv"
-       class="btn btn-primary">Download CSV</a>
+    <a href="{% url 'download_question_tags' %}?format=csv&csv_type=tags"
+    class="btn btn-primary">Download tags CSV</a>
     <br />
     <h3>Manage Tags</h3>
     <button type="button"
@@ -101,6 +101,10 @@
             class="btn btn-primary"
             data-bs-toggle="modal"
             data-bs-target="#deleteTagModal">Delete Tag</button>
+    <button type="button"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#importTagModal">Import Tag</button>
     <table class="table table-striped">
         <thead>
             <tr>

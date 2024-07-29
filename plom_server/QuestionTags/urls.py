@@ -9,6 +9,7 @@ from .views import (
     DeleteTagView,
     EditTagView,
     DownloadQuestionTagsView,
+    ImportTagsView,
 )
 
 urlpatterns = [
@@ -20,4 +21,5 @@ urlpatterns = [
     path(
         "download/", DownloadQuestionTagsView.as_view(), name="download_question_tags"
     ),
+    path("import-tags/", ImportTagsView.as_view(), name="import_tags"),
 ]

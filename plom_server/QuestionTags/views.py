@@ -10,7 +10,6 @@ from .models import TmpAbstractQuestion, PedagogyTag
 from .forms import AddTagForm, RemoveTagForm
 from django.http import JsonResponse, HttpResponse
 from plom.tagging import plom_valid_tag_text_description
-import json
 import csv
 from django.views import View
 
@@ -150,14 +149,18 @@ class DownloadQuestionTagsView(View):
     def get(self, request, *args, **kwargs):
         """Handle GET requests to download question tags as CSV or JSON."""
         format = request.GET.get("format", "json")
+        csv_type = request.GET.get("csv_type", "questions")
 
         if format == "csv":
-            return self.download_csv()
+            if csv_type == "tags":
+                return self.download_tags_csv()
+            else:
+                return self.download_questions_csv()
         else:
             return self.download_json()
 
-    def download_csv(self):
-        """Generate and return a CSV response."""
+    def download_questions_csv(self):
+        """Generate and return a CSV response for questions."""
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="question_tags.csv"'
 
@@ -176,25 +179,49 @@ class DownloadQuestionTagsView(View):
 
         return response
 
-    def download_json(self):
-        """Generate and return a JSON response."""
-        data = []
-        questions = TmpAbstractQuestion.objects.all()
+    def download_tags_csv(self):
+        """Generate and return a CSV response for tags."""
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="tags.csv"'
 
-        for question in questions:
-            question_label = SpecificationService.get_question_label(
-                question.question_index
-            )
-            tags = [qt.tag.tag_name for qt in question.questiontaglink_set.all()]
-            question_data = {
-                "question_index": question.question_index,
-                "question_label": question_label,
-                "tags": tags,
-            }
-            data.append(question_data)
+        writer = csv.writer(response)
+        writer.writerow(["Tag Name", "Tag Description", "Meta"])
 
-        response = HttpResponse(
-            json.dumps(data, indent=4), content_type="application/json"
-        )
-        response["Content-Disposition"] = 'attachment; filename="question_tags.json"'
+        tags = PedagogyTag.objects.all()
+        for tag in tags:
+            writer.writerow([tag.tag_name, tag.text, tag.meta or ""])
+
         return response
+
+
+class ImportTagsView(View):
+    """View to handle importing tags from a CSV file."""
+
+    def post(self, request, *args, **kwargs):
+        """Handle POST requests to import tags from a CSV file."""
+        csv_file = request.FILES.get("csv_file")
+        if not csv_file or not csv_file.name.endswith(".csv"):
+            return JsonResponse({"error": "File is not CSV type"})
+
+        if csv_file.multiple_chunks():
+            return JsonResponse({"error": "Uploaded file is too big"})
+
+        file_data = csv_file.read().decode("utf-8").splitlines()
+        csv_reader = csv.reader(file_data)
+
+        next(csv_reader, None)
+
+        for row in csv_reader:
+            if len(row) == 3:
+                tag_name, text, meta = row
+            elif len(row) == 2:
+                tag_name, text = row
+                meta = ""
+            else:
+                continue
+
+            PedagogyTag.objects.get_or_create(
+                tag_name=tag_name, defaults={"text": text, "meta": meta}
+            )
+
+        return JsonResponse({"success": True})
