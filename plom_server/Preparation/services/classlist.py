@@ -16,6 +16,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import transaction, IntegrityError
 
+from plom.create import PlomClasslistValidator
 from Preparation.services.preparation_dependency_service import (
     assert_can_modify_classlist,
 )
@@ -103,8 +104,6 @@ class StagingStudentService:
                 checks failed, for example invalid paper number.
             ValueError: invalid paper_number such as inappropriate sentinel value
         """
-        from plom.create.classlistValidator import PlomClasslistValidator
-
         s_obj = StagingStudent(student_id=student_id, student_name=student_name)
         # note that zero is not a sentinel so "if paper_number" is NOT appropriate
         if PlomClasslistValidator.is_paper_number_sentinel(paper_number):
@@ -153,8 +152,6 @@ class StagingStudentService:
             PlomDependencyConflict: If dependencies not met.
         """
         assert_can_modify_classlist()
-
-        from plom.create.classlistValidator import PlomClasslistValidator
 
         # now save the in-memory file to a tempfile and validate
         tmp_csv = Path(NamedTemporaryFile(delete=False).name)
