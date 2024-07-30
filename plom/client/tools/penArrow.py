@@ -44,14 +44,14 @@ class PenArrowItem(UndoStackMoveMixin, QGraphicsItemGroup):
         arBase = ptf - 16 * ndelta
         arLeft = arBase - 10 * northog - 4 * ndelta
         arRight = arBase + 10 * northog - 4 * ndelta
-        self.ari = QPainterPath()
-        self.ari.moveTo(ptf)
-        self.ari.lineTo(arLeft)
-        self.ari.lineTo(arBase)
-        self.ari.lineTo(arRight)
-        self.ari.lineTo(ptf)
+        ari = QPainterPath()
+        ari.moveTo(ptf)
+        ari.lineTo(arLeft)
+        ari.lineTo(arBase)
+        ari.lineTo(arRight)
+        ari.lineTo(ptf)
         self.endi = QGraphicsPathItem()
-        self.endi.setPath(self.ari)
+        self.endi.setPath(ari)
         # set arrowhead final
         e2 = path.elementAt(path.elementCount() - 2)
         e3 = path.elementAt(path.elementCount() - 1)
@@ -64,14 +64,14 @@ class PenArrowItem(UndoStackMoveMixin, QGraphicsItemGroup):
         arBase = ptf - 16 * ndelta
         arLeft = arBase - 10 * northog - 4 * ndelta
         arRight = arBase + 10 * northog - 4 * ndelta
-        self.arf = QPainterPath()
-        self.arf.moveTo(ptf)
-        self.arf.lineTo(arLeft)
-        self.arf.lineTo(arBase)
-        self.arf.lineTo(arRight)
-        self.arf.lineTo(ptf)
+        arf = QPainterPath()
+        arf.moveTo(ptf)
+        arf.lineTo(arLeft)
+        arf.lineTo(arBase)
+        arf.lineTo(arRight)
+        arf.lineTo(ptf)
         self.endf = QGraphicsPathItem()
-        self.endf.setPath(self.arf)
+        self.endf.setPath(arf)
         # put everything together
         self.pi.setPath(path)
         self.restyle(style)
