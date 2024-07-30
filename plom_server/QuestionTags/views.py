@@ -97,9 +97,9 @@ class CreateTagView(CreateView):
         """
         tag_name = request.POST.get("tagName")
         text = request.POST.get("text")
-        meta = request.POST.get("meta")
+        confidential_info = request.POST.get("confidential_info")
         error_message = QuestionTagService.create_tag(
-            tag_name, text, user=request.user, meta=meta
+            tag_name, text, user=request.user, confidential_info=confidential_info
         )
         if error_message:
             return JsonResponse({"error": error_message})
@@ -136,8 +136,10 @@ class EditTagView(UpdateView):
         tag_id = request.POST.get("tag_id")
         tag_name = request.POST.get("tagName")
         text = request.POST.get("text")
-        meta = request.POST.get("meta")
-        error_message = QuestionTagService.edit_tag(tag_id, tag_name, text, meta=meta)
+        confidential_info = request.POST.get("confidential_info")
+        error_message = QuestionTagService.edit_tag(
+            tag_id, tag_name, text, confidential_info=confidential_info
+        )
         if error_message:
             return JsonResponse({"error": error_message})
         return JsonResponse({"success": True})
@@ -185,11 +187,11 @@ class DownloadQuestionTagsView(View):
         response["Content-Disposition"] = 'attachment; filename="tags.csv"'
 
         writer = csv.writer(response)
-        writer.writerow(["Tag Name", "Tag Description", "Meta"])
+        writer.writerow(["Tag Name", "Tag Description", "confidential_info"])
 
         tags = PedagogyTag.objects.all()
         for tag in tags:
-            writer.writerow([tag.tag_name, tag.text, tag.meta or ""])
+            writer.writerow([tag.tag_name, tag.text, tag.confidential_info or ""])
 
         return response
 
@@ -213,15 +215,16 @@ class ImportTagsView(View):
 
         for row in csv_reader:
             if len(row) == 3:
-                tag_name, text, meta = row
+                tag_name, text, confidential_info = row
             elif len(row) == 2:
                 tag_name, text = row
-                meta = ""
+                confidential_info = ""
             else:
                 continue
 
             PedagogyTag.objects.get_or_create(
-                tag_name=tag_name, defaults={"text": text, "meta": meta}
+                tag_name=tag_name,
+                defaults={"text": text, "confidential_info": confidential_info},
             )
 
         return JsonResponse({"success": True})

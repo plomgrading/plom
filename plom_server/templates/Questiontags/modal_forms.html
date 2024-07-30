@@ -31,8 +31,11 @@
                         <textarea class="form-control" id="text" name="text" rows="4" required></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="meta">Meta (not shown to students):</label>
-                        <textarea class="form-control" id="meta" name="meta" rows="4"></textarea>
+                        <label for="confidential_info">confidential_info (not shown to students):</label>
+                        <textarea class="form-control"
+                                  id="confidential_info"
+                                  name="confidential_info"
+                                  rows="4"></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">Create</button>
                 </form>
@@ -98,7 +101,9 @@
                             {% for tag in tags %}
                                 <option value="{{ tag.id }}"
                                         data-description="{{ tag.text }}"
-                                        data-meta="{{ tag.meta }}">{{ tag.tag_name }}</option>
+                                        data-confidential_info="{{ tag.confidential_info }}">
+                                    {{ tag.tag_name }}
+                                </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -116,8 +121,11 @@
                         <textarea class="form-control" id="text_edit" name="text" rows="4" required></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="meta_edit">Meta (not shown to students):</label>
-                        <textarea class="form-control" id="meta_edit" name="meta" rows="4"></textarea>
+                        <label for="confidential_info_edit">confidential_info (not shown to students):</label>
+                        <textarea class="form-control"
+                                  id="confidential_info_edit"
+                                  name="confidential_info"
+                                  rows="4"></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                 </form>

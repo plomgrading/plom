@@ -50,7 +50,7 @@ class QuestionTagService:
         question.save()
 
     @staticmethod
-    def create_tag(tag_name, text, *, user, meta=None):
+    def create_tag(tag_name, text, *, user, confidential_info=None):
         """Create a new tag.
 
         Args:
@@ -59,7 +59,7 @@ class QuestionTagService:
 
         Keyword Args:
             user: The user creating the tag.
-            meta: Text shown only to markers, not the students.
+            confidential_info: Text shown only to markers, not the students.
 
         Returns:
             None on success or a string of an error message explaining
@@ -71,7 +71,10 @@ class QuestionTagService:
 
         try:
             PedagogyTag.objects.create(
-                tag_name=tag_name, text=text, user=user, meta=meta
+                tag_name=tag_name,
+                text=text,
+                user=user,
+                confidential_info=confidential_info,
             )
             return None
         except IntegrityError:
@@ -98,7 +101,7 @@ class QuestionTagService:
             return str(e)
 
     @staticmethod
-    def edit_tag(tag_id, tag_name, text, *, meta=None):
+    def edit_tag(tag_id, tag_name, text, *, confidential_info=None):
         """Edit an existing tag.
 
         Args:
@@ -107,7 +110,7 @@ class QuestionTagService:
             text: The new description of the tag.
 
         Keyword Args:
-            meta: text shown only to markers, not the students.
+            confidential_info: text shown only to markers, not the students.
 
         Returns:
             None on success or a string describing the error encountered.
@@ -125,7 +128,7 @@ class QuestionTagService:
         try:
             tag.tag_name = tag_name
             tag.text = text
-            tag.meta = meta
+            tag.confidential_info = confidential_info
             tag.save()
             return None
         except Exception as e:
