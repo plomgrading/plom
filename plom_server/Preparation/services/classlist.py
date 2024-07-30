@@ -16,12 +16,13 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import transaction, IntegrityError
 
-from ..models import StagingStudent
-from ..services import PrenameSettingService
-
+from plom.create import PlomClasslistValidator
 from Preparation.services.preparation_dependency_service import (
     assert_can_modify_classlist,
 )
+from ..models import StagingStudent
+from ..services import PrenameSettingService
+
 
 log = logging.getLogger("ClasslistService")
 
@@ -105,7 +106,7 @@ class StagingStudentService:
         """
         s_obj = StagingStudent(student_id=student_id, student_name=student_name)
         # note that zero is not a sentinel so "if paper_number" is NOT appropriate
-        if paper_number in (-1, "-1", "-1.0", "", None):
+        if PlomClasslistValidator.is_paper_number_sentinel(paper_number):
             paper_number = None
         if paper_number is not None:
             try:
@@ -151,8 +152,6 @@ class StagingStudentService:
             PlomDependencyConflict: If dependencies not met.
         """
         assert_can_modify_classlist()
-
-        from plom.create.classlistValidator import PlomClasslistValidator
 
         # now save the in-memory file to a tempfile and validate
         tmp_csv = Path(NamedTemporaryFile(delete=False).name)

@@ -29,7 +29,7 @@ class StagingStudentsTests(TestCase):
 
     def test_valid_paper_number_sentinels(self):
         n = 10000000
-        for p in (None, -1, "", "-1", "-1.0"):
+        for p in (None, -1, "", "-1"):
             n += 1
             sid = str(n)
             StagingStudentService()._add_student(sid, "mdme X", paper_number=p)

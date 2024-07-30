@@ -146,6 +146,14 @@ class PlomClasslistValidator:
         else:
             return (True, [])
 
+    @staticmethod
+    def is_paper_number_sentinel(x: int | float | str | None) -> bool:
+        """True if the input is None, blank, -1 or '-1'.
+
+        Note: zero is not sentinel.
+        """
+        return x in ("", None, "-1", -1)
+
     def check_papernumber_column(self, papernum_key, classList) -> tuple[bool, list]:
         """Check the papernumber column of the classlist.
 
@@ -154,10 +162,6 @@ class PlomClasslistValidator:
             * no integer >=0 can be used twice, and
             * blank or -1 are sentinel values used to indicate 'do not prename'
         """
-
-        def is_sentinel(x: int | float | str | None) -> bool:
-            """True if the input is None, blank, -1 or '-1'."""
-            return x in ("", None, "-1", -1)
 
         def is_an_int(x: int | float | str) -> bool:
             """True if input can be converted to an int."""
@@ -183,7 +187,7 @@ class PlomClasslistValidator:
         for x in classList:
             pn = x[papernum_key]
             # see #3099 - we can reuse papernum = -1 since it is a sentinel value, so ignore any -1's
-            if is_sentinel(pn):
+            if self.is_paper_number_sentinel(pn):
                 continue  # notice that this handles pn being None.
             if is_an_int(pn):
                 if int(pn) < 0:
