@@ -60,7 +60,7 @@ from plom.client.image_view_widget import mousewheel_delta_to_scale
 # in some places we make assumptions that our view is this subclass
 from plom.client.pageview import PageView
 
-from .tools import DefaultTickRadius
+from .tools import DefaultTickRadius, DefaultPenWidth
 from .tools import (
     CrossItem,
     DeltaItem,
@@ -459,7 +459,6 @@ class PageScene(QGraphicsScene):
         self.maxMark = maxMark
         self.score = None
         self._page_action_buttons = []
-        self.default_pen_width = 2
         # Tool mode - initially set it to "move"
         self.mode = "move"
 
@@ -787,7 +786,7 @@ class PageScene(QGraphicsScene):
     def _refresh_ink_scaling(self) -> None:
         """Refresh both pen width and ink to reflect global scene's scale."""
         assert isinstance(self.style, dict)
-        self.style["pen_width"] = self._scale * self.default_pen_width
+        self.style["pen_width"] = self._scale * DefaultPenWidth
         self.ink = QPen(self.style["annot_color"], self.style["pen_width"])
 
     def _stuff_to_do_after_setting_scale(self):
@@ -821,7 +820,7 @@ class PageScene(QGraphicsScene):
             c = QColor.fromRgb(*c)
         style = {
             "annot_color": c,
-            "pen_width": self._scale * self.default_pen_width,
+            "pen_width": self._scale * DefaultPenWidth,
             "scale": self._scale,
             # TODO: 64 hardcoded elsewhere
             "highlight_color": QColor(255, 255, 0, 64),
