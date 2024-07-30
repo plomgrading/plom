@@ -361,6 +361,68 @@ def test_repeated_papernumbers(tmpdir) -> None:
         assert X in warn_err
 
 
+def test_sentinel_papernumbers(tmpdir) -> None:
+    tmpdir = Path(tmpdir)
+    vlad = PlomClasslistValidator()
+    with working_directory(tmpdir):
+        foo = tmpdir / "foo.csv"
+        with open(foo, "w") as f:
+            f.write('"id","name","paper_number"\n')
+            f.write('12345677,"Doe, Ursula",1\n')
+            f.write('12345678,"Doe, Bob",\n')
+            f.write('12345679,"Doe, Bobby",-1\n')
+    success, warn_err = vlad.validate_csv(foo)
+    assert success
+    assert warn_err == []
+
+
+def test_bad_papernumbers(tmpdir) -> None:
+    tmpdir = Path(tmpdir)
+    vlad = PlomClasslistValidator()
+    with working_directory(tmpdir):
+        foo = tmpdir / "foo.csv"
+        with open(foo, "w") as f:
+            f.write('"id","name","paper_number"\n')
+            f.write('12345677,"Doe, Ursula",1\n')
+            f.write('12345678,"Doe, Bob",1.1\n')
+            f.write('12345679,"Doe, Bobby",-17\n')
+            f.write('12345680,"Doe, Rob",-17.3\n')
+            f.write('12345681,"Doe, Robby",-7.0\n')
+            f.write('12345682,"Doe, Bobbert",7.0\n')
+    success, warn_err = vlad.validate_csv(foo)
+    assert not success
+    expected = [
+        {
+            "warn_or_err": "error",
+            "werr_line": 3,
+            "werr_text": "Paper-number 1.1 is not a non-negative integer",
+        },
+        {
+            "warn_or_err": "error",
+            "werr_line": 4,
+            "werr_text": "Paper-number -17 must be a non-negative integer, or blank or '-1' to indicate 'do not prename'",
+        },
+        {
+            "warn_or_err": "error",
+            "werr_line": 5,
+            "werr_text": "Paper-number -17.3 is not a non-negative integer",
+        },
+        {
+            "warn_or_err": "error",
+            "werr_line": 6,
+            "werr_text": "Paper-number -7.0 is not a non-negative integer",
+        },
+        {
+            "warn_or_err": "error",
+            "werr_line": 7,
+            "werr_text": "Paper-number 7.0 is nearly, but not quite, a non-negative integer",
+        },
+    ]
+    assert len(warn_err) == len(expected)
+    for X in expected:
+        assert X in warn_err
+
+
 def test_leading_zero_sid(tmp_path) -> None:
     vlad = PlomClasslistValidator()
     foo = tmp_path / "foo.csv"
