@@ -61,7 +61,7 @@ class QuestionMarkingViewSet(ViewSet):
             min_paper_num = int_or_None(data.get("min_paper_num"))
             max_paper_num = int_or_None(data.get("max_paper_num"))
         except ValueError as e:
-            return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
+            return _error_response(e, status.HTTP_423_LOCKED)
 
         _tag: str | None = data.get("tags")
         if _tag:

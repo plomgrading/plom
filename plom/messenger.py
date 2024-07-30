@@ -421,7 +421,7 @@ class Messenger(BaseMessenger):
                     raise PlomRangeException(response.reason) from None
                 if response.status_code == 410:
                     raise PlomRangeException(response.reason) from None
-                if response.status_code == 406:
+                if response.status_code == 423:
                     raise PlomProbationaryLimitExceededException(
                         response.reason
                     ) from None
