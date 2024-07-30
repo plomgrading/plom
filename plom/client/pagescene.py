@@ -785,7 +785,7 @@ class PageScene(QGraphicsScene):
         """Refresh both pen width and ink to reflect global scene's scale."""
         assert isinstance(self.style, dict)
         self.style["pen_width"] = self._scale * DefaultPenWidth
-        self.ink = QPen(self.style["annot_color"], self.style["pen_width"])
+        self.ink: QPen = QPen(self.style["annot_color"], self.style["pen_width"])
 
     def _stuff_to_do_after_setting_scale(self):
         """Private method for tasks after changing scale.
@@ -805,7 +805,7 @@ class PageScene(QGraphicsScene):
             fontsize=int(self._scale * AnnFontSizePts), annot_scale=self._scale
         )
 
-    def set_annotation_color(self, c):
+    def set_annotation_color(self, c) -> None:
         """Set the colour of annotations.
 
         Args:
@@ -827,15 +827,16 @@ class PageScene(QGraphicsScene):
             "box_tint": QColor(255, 255, 0, 16),
             "fontsize": self._scale * AnnFontSizePts,
         }
-        self.ink = QPen(style["annot_color"], style["pen_width"])
         self.lightBrush = QBrush(style["box_tint"])
         self.highlight = QPen(style["highlight_color"], style["highlight_width"])
-        self.style = style
+        # TODO: Issue 3514: this is an agrecious overwrite of a Qt built-in method
+        self.style = style  # type: ignore[method-assign,assignment]
+        self._refresh_ink_scaling()
         for X in self.items():
             # check if object has "restyle" function and if so then use it to set the colour
             if getattr(X, "restyle", False):
                 # TODO: this loop catches rubric subobjects twice (minor for now)
-                X.restyle(self.style)
+                X.restyle(self.style)  # type: ignore[attr-defined]
         if self.scoreBox:
             self.scoreBox.update_style()
 
