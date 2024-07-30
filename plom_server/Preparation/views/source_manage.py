@@ -8,10 +8,15 @@ from __future__ import annotations
 
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpRequest, HttpResponse, FileResponse, Http404
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    FileResponse,
+    Http404,
+    HttpResponseBadRequest,
+)
 from django.urls import reverse
 from django.shortcuts import render, redirect
-from django_htmx.http import HttpResponseClientRedirect
 from django.contrib import messages
 
 from plom.plom_exceptions import PlomDependencyConflict
@@ -64,10 +69,22 @@ class SourceManageView(ManagerRequiredView):
         return render(request, "Preparation/source_manage.html", context)
 
     def post(self, request, version=None):
-        context = self.build_context()
+        # This function is HTMX only
+        if not request.htmx:
+            return HttpResponseBadRequest("Only HTMX POST requests are allowed")
+
+        context = {}
         if not request.FILES["source_pdf"]:
             context.update(
                 {"success": False, "message": "Form invalid", "version": version}
+            )
+        elif version is None:
+            context.update(
+                {
+                    "success": False,
+                    "message": "Version not specified",
+                    "version": version,
+                }
             )
         else:
             try:
@@ -75,23 +92,53 @@ class SourceManageView(ManagerRequiredView):
                     version, request.FILES["source_pdf"]
                 )
                 context.update(
-                    {"version": version, "success": success, "message": message}
+                    {
+                        "error": not success,
+                        "message": message,
+                        "src": SourceService.get_source(version),
+                    }
                 )
             except PlomDependencyConflict as err:
-                messages.add_message(request, messages.ERROR, f"{err}")
-                return HttpResponseClientRedirect(reverse("prep_conflict"))
+                context.update(
+                    {
+                        "error": True,
+                        "message": err,
+                        "src": SourceService.get_source(version),
+                    }
+                )
 
-        return render(request, "Preparation/source_attempt.html", context)
+        context.update(self.build_context())
+        context.update({"request_is_htmx": request.htmx})
 
-    def delete(self, request, version=None):
-        if version:
-            try:
-                SourceService.delete_source_pdf(version)
-            except PlomDependencyConflict as err:
-                messages.add_message(request, messages.ERROR, f"{err}")
-                return HttpResponseClientRedirect(reverse("prep_conflict"))
+        return render(request, "Preparation/source_item_view.html", context)
 
-        return HttpResponseClientRedirect(reverse("prep_sources"))
+    def delete(self, request, version):
+        # This function is HTMX only
+        if not request.htmx:
+            return HttpResponseBadRequest("Only HTMX DELETE requests are allowed")
+
+        try:
+            SourceService.delete_source_pdf(version)
+        except PlomDependencyConflict as err:
+            context = {
+                "error": True,
+                "message": err,
+                "src": SourceService.get_source(version),
+            }
+            return render(request, "Preparation/source_item_view.html", context)
+
+        context = self.build_context()
+        context.update(
+            {
+                "src": {
+                    "version": version,
+                    "uploaded": False,
+                },
+                "request_is_htmx": request.htmx,
+            }
+        )
+
+        return render(request, "Preparation/source_item_view.html", context)
 
 
 class ReferenceImageView(ManagerRequiredView):
