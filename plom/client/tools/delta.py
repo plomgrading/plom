@@ -80,6 +80,7 @@ class GhostDelta(QGraphicsTextItem):
         self.setFont(font)
         # Is not editable.
         self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
+        self.setOpacity(0.7)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
 
     def changeDelta(self, display_delta, legal):
