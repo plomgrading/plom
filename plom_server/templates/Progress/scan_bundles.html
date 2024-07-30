@@ -1,6 +1,6 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2024 Aden Chan
 -->
 {% extends "Progress/scan_base.html" %}
@@ -33,7 +33,8 @@
                                     <td>{{ bundle.when_pushed }}</td>
                                     <td>
                                         <div class="hstack gap-2">
-                                            <a class="btn btn-primary disabled">View</a>
+                                            <a class="btn btn-primary"
+                                               href="{% url 'scan_bundle_thumbnails' 'all' bundle.id %}">View</a>
                                         </div>
                                     </td>
                                 </tr>

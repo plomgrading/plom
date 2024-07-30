@@ -10,10 +10,14 @@
 {% endblock title %}
 {% block page_heading %}
     Bundle thumbnails
-    <a class="btn btn-success" href="{% url 'scan_home' %}">
-        <i class="bi bi-chevron-left"></i>
-        Return to upload
-    </a>
+    <a class="btn btn-success" href="{% url 'scan_home' %}">Bundle upload</a>
+    {% if user_is_manager %}
+        {% if is_pushed %}
+            <a class="btn btn-success" href="{% url 'progress_scan_bundles' %}">Pushed bundle overview</a>
+        {% else %}
+            <a class="btn btn-success" href="{% url 'progress_scan_overview' %}">Bundle overview</a>
+        {% endif %}
+    {% endif %}
 {% endblock page_heading %}
 {% block main_content %}
     <div class="card">

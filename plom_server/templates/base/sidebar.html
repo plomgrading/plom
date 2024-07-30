@@ -37,12 +37,22 @@
             <a class="nav-link" href="{% url 'prep_landing' %}">Prepare Assessment</a>
         </li>
         <li class="nav-item accordion accordion-flush">
-            <a class="nav-link" href="#progress">Progress</a>
+            <a class="nav-link" href="#scanning">Scanning</a>
+            <div id="scanning">
+                <ul>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'scan_home' %}">Upload</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'progress_scan_overview' %}">Overview</a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+        <li class="nav-item accordion accordion-flush">
+            <a class="nav-link" href="#progress">Mark / ID Progress</a>
             <div id="progress">
                 <ul style="list-style-type: none">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'progress_scan_overview' %}">Scan</a>
-                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'overview_landing' %}">Task overview</a>
                     </li>
