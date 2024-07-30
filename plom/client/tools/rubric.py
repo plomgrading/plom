@@ -114,14 +114,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.kind = rubric["kind"]
         # centre under click
         self.di = DeltaItem(pt, rubric["value"], rubric["display_delta"], style=style)
-        self.blurb = TextItem(
-            pt,
-            rubric["text"],
-            annot_scale=_scene._scale,
-            fontsize=style["fontsize"],
-            color=style["annot_color"],
-            _texmaker=_scene,
-        )
+        self.blurb = TextItem(pt, rubric["text"], style=style, _texmaker=_scene)
         # TODO: probably we "restyle" the child objects twice as each init did this too
         self.restyle(style)
         # Set the underlying delta and text to not pickle - since the GDTI will handle that
