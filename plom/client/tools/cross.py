@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2024 Bryan Tanady
 
 from PyQt6.QtCore import QPointF
 from PyQt6.QtGui import QPen, QPainterPath
@@ -9,6 +10,7 @@ from PyQt6.QtWidgets import QGraphicsPathItem, QGraphicsItem
 
 from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
 from plom.client.tools import CommandTool, UndoStackMoveMixin
+from plom.client.tools import DefaultTickRadius
 
 
 class CommandCross(CommandTool):
@@ -32,18 +34,17 @@ class CrossItem(UndoStackMoveMixin, QGraphicsPathItem):
         super().__init__()
         self.saveable = True
         self.pt = pt
-        self.path = QPainterPath()
+        path = QPainterPath()
         # Draw a cross whose vertex is at pt (under mouse click)
-        # import here to avoid circular import
-        from plom.client.tools import TickItem
+        scaled_tick_radius = style["scale"] * DefaultTickRadius
 
         # slightly smaller than the tick
-        rad = (3 * TickItem.tick_radius) // 5
-        self.path.moveTo(pt.x() - rad, pt.y() - rad)
-        self.path.lineTo(pt.x() + rad, pt.y() + rad)
-        self.path.moveTo(pt.x() - rad, pt.y() + rad)
-        self.path.lineTo(pt.x() + rad, pt.y() - rad)
-        self.setPath(self.path)
+        rad = (3 * scaled_tick_radius) // 5
+        path.moveTo(pt.x() - rad, pt.y() - rad)
+        path.lineTo(pt.x() + rad, pt.y() + rad)
+        path.moveTo(pt.x() - rad, pt.y() + rad)
+        path.lineTo(pt.x() + rad, pt.y() - rad)
+        self.setPath(path)
         self.restyle(style)
 
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
