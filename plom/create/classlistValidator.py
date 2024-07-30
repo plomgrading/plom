@@ -155,17 +155,23 @@ class PlomClasslistValidator:
             * blank or -1 are sentinel values used to indicate 'do not prename'
         """
 
-        def is_sentinel(x):
-            return x in ["", "-1"]
+        def is_sentinel(x: int | float | str | None) -> bool:
+            """True if the input is None, blank, -1 or '-1'."""
+            return x in ("", None, "-1", -1)
 
-        def is_an_int(x):
+        def is_an_int(x: int | float | str) -> bool:
+            """True if input can be converted to an int."""
             try:
                 int(x)
             except ValueError:
                 return False
             return True
 
-        def is_nearly_a_non_negative_int(x):
+        def is_nearly_a_non_negative_int(x: int | float | str) -> bool:
+            """True input can be converted to a non-negative float which has integer value.
+
+            eg - returns true for "1.0", but false for "0.9", "-2", "-2.1", "13.2" and so on.
+            """
             try:
                 v = float(x)
             except ValueError:
@@ -178,7 +184,7 @@ class PlomClasslistValidator:
             pn = x[papernum_key]
             # see #3099 - we can reuse papernum = -1 since it is a sentinel value, so ignore any -1's
             if is_sentinel(pn):
-                continue
+                continue  # notice that this handles pn being None.
             if is_an_int(pn):
                 if int(pn) < 0:
                     err.append(
