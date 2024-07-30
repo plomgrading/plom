@@ -53,8 +53,7 @@ class PenItem(UndoStackMoveMixin, QGraphicsPathItem):
     def __init__(self, path, style):
         super().__init__()
         self.saveable = True
-        self.path = path
-        self.setPath(self.path)
+        self.setPath(path)
         self.restyle(style)
 
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
@@ -67,16 +66,16 @@ class PenItem(UndoStackMoveMixin, QGraphicsPathItem):
     def pickle(self):
         name = self.__class__.__name__.replace("Item", "")  # i.e., "Pen",
         pth = []
-        for k in range(self.path.elementCount()):
+        for k in range(self.path().elementCount()):
             # e should be either a moveTo or a lineTo
-            e = self.path.elementAt(k)
+            e = self.path().elementAt(k)
             if e.isMoveTo():
                 pth.append(["m", e.x + self.x(), e.y + self.y()])
             else:
                 if e.isLineTo():
                     pth.append(["l", e.x + self.x(), e.y + self.y()])
                 else:
-                    log.error("Problem pickling Pen-like path {}".format(self.path))
+                    log.error("Problem pickling Pen-like path %s", str(self.path()))
         return [name, pth]
 
     def paint(self, painter, option, widget):
