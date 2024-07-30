@@ -149,11 +149,11 @@
                                                         {% endif %}
                                                     </li>
                                                     <li>
-                                                        We recommend that you produce the maximum of the following numbers
+                                                        We recommend that you produce <em>the maximum</em> of the following numbers
                                                         <ul>
-                                                            <li>110% of the number of students in your classlist</li>
-                                                            <li>the number of students in your classlist plus 20</li>
-                                                            <li>the paper-number of the last prenamed paper plus 10</li>
+                                                            <li>110% of the number of students in your classlist = {{ number_times_1dot1 }}</li>
+                                                            <li>the number of students in your classlist plus 20 = {{ number_plus_twenty }}</li>
+                                                            {% if prenaming %}<li>the paper-number of the last prenamed paper plus 10 = {{ last_plus_ten }}</li>{% endif %}
                                                         </ul>
                                                     </li>
                                                     <li>
@@ -209,7 +209,10 @@
                                         <details>
                                             <summary>First paper:</summary>
                                             <p>
-                                                Typically the first paper has paper-number <q>1</q>, but you can choose to start from zero, or any other positive integer.
+                                            <ul>
+                                                <li>Typically the first paper has paper-number <q>1</q>, but you can choose to start from zero, or any other positive integer. </li>
+                                                <li>The system will then generate a contiguous block of papers starting from your first paper, and of the chosen length.</li>
+                                                </ul>
                                             </p>
                                         </details>
                                         <ul>
@@ -218,11 +221,20 @@
                                             <br />
                                             <input type="radio" id="startn" name="first_paper_num" value="n" />
                                             <label for="startn">Start at number</label>
-                                            <input id="startn_value"
-                                                   type="number"
-                                                   name="startn_value"
-                                                   min="0"
-                                                   max="9999">
+                                            {% if prenaming %}
+                                                <input id="startn_value"
+                                                       type="number"
+                                                       name="startn_value"
+                                                       min="0"
+                                                       max="{{ first_prenamed_paper }}">
+                                                &mdash; note that the first prenamed paper is {{ first_prenamed_paper }}
+                                            {% else %}
+                                                <input id="startn_value"
+                                                       type="number"
+                                                       name="startn_value"
+                                                       min="0"
+                                                       max="9999">
+                                            {% endif %}
                                             <br />
                                             <input type="radio" id="start0" name="first_paper_num" value="0" />
                                             <label for="start0">Start at number zero (warning: experimental!)</label>
