@@ -30,11 +30,11 @@ class PenArrowItem(UndoStackMoveMixin, QGraphicsItemGroup):
         super().__init__()
         self.saveable = True
         self.pi = QGraphicsPathItem()
-        self.path = path
+        self._original_path = path
 
         # set arrowhead initial
-        e0 = self.path.elementAt(0)
-        e1 = self.path.elementAt(1)
+        e0 = path.elementAt(0)
+        e1 = path.elementAt(1)
         pti = QPointF(e1.x, e1.y)
         ptf = QPointF(e0.x, e0.y)
         delta = ptf - pti
@@ -53,8 +53,8 @@ class PenArrowItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.endi = QGraphicsPathItem()
         self.endi.setPath(self.ari)
         # set arrowhead final
-        e2 = self.path.elementAt(self.path.elementCount() - 2)
-        e3 = self.path.elementAt(self.path.elementCount() - 1)
+        e2 = path.elementAt(path.elementCount() - 2)
+        e3 = path.elementAt(path.elementCount() - 1)
         pti = QPointF(e2.x, e2.y)
         ptf = QPointF(e3.x, e3.y)
         delta = ptf - pti
@@ -73,7 +73,7 @@ class PenArrowItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.endf = QGraphicsPathItem()
         self.endf.setPath(self.arf)
         # put everything together
-        self.pi.setPath(self.path)
+        self.pi.setPath(path)
         self.restyle(style)
 
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)

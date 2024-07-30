@@ -18,14 +18,16 @@ class CommandHighlight(CommandPen):
         self.setText("Highlight")
 
     def get_undo_redo_animation_shape(self) -> QPainterPath:
-        return self.obj._path
+        # Not entirely sure why this helps but the default shape() draws
+        # unpleasant blue lines orthogonal to the path.
+        return self.obj._original_path
 
 
 class HighlightItem(UndoStackMoveMixin, QGraphicsPathItem):
     def __init__(self, path, style):
         super().__init__()
         self.saveable = True
-        self._path = path
+        self._original_path = path
         self.setPath(path)
         self.restyle(style)
 
