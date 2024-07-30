@@ -154,30 +154,56 @@ class PlomClasslistValidator:
             * no integer >=0 can be used twice, and
             * blank or -1 are sentinel values used to indicate 'do not prename'
         """
+
+        def is_sentinel(x):
+            return x in ["", "-1"]
+
+        def is_an_int(x):
+            try:
+                int(x)
+            except ValueError:
+                return False
+            return True
+
+        def is_nearly_a_non_negative_int(x):
+            try:
+                v = float(x)
+            except ValueError:
+                return False
+            return (int(v) == v) and (v >= 0)
+
         err = []
         numbers_used = defaultdict(list)
         for x in classList:
+            pn = x[papernum_key]
             # see #3099 - we can reuse papernum = -1 since it is a sentinel value, so ignore any -1's
-            if x[papernum_key] in ["", "-1"]:
+            if is_sentinel(pn):
                 continue
-            try:
-                int(x[papernum_key])
-            except ValueError:
-                err.append(
-                    [
-                        x["_src_line"],
-                        f"Paper-number {x[papernum_key]} is not an integer",
-                    ]
-                )
-                continue
-            if int(x[papernum_key]) < -1:
-                err.append(
-                    [
-                        x["_src_line"],
-                        f"Paper-number {x[papernum_key]} must be a non-negative integer, or blank or '-1' to indicate 'do not prename'",
-                    ]
-                )
-                continue
+            if is_an_int(pn):
+                if int(pn) < 0:
+                    err.append(
+                        [
+                            x["_src_line"],
+                            f"Paper-number {x[papernum_key]} must be a non-negative integer, or blank or '-1' to indicate 'do not prename'",
+                        ]
+                    )
+            else:
+                if is_nearly_a_non_negative_int(x[papernum_key]):
+                    err.append(
+                        [
+                            x["_src_line"],
+                            f"Paper-number {x[papernum_key]} is nearly, but not quite, a non-negative integer",
+                        ]
+                    )
+                    continue
+                else:
+                    err.append(
+                        [
+                            x["_src_line"],
+                            f"Paper-number {x[papernum_key]} is not a non-negative integer",
+                        ]
+                    )
+                    continue
 
             # otherwise store the used papernumber.
             numbers_used[x[papernum_key]].append(x["_src_line"])

@@ -387,13 +387,15 @@ def test_bad_papernumbers(tmpdir) -> None:
             f.write('12345678,"Doe, Bob",1.1\n')
             f.write('12345679,"Doe, Bobby",-17\n')
             f.write('12345680,"Doe, Rob",-17.3\n')
+            f.write('12345681,"Doe, Robby",-7.0\n')
+            f.write('12345682,"Doe, Bobbert",7.0\n')
     success, warn_err = vlad.validate_csv(foo)
     assert not success
     expected = [
         {
             "warn_or_err": "error",
             "werr_line": 3,
-            "werr_text": "Paper-number 1.1 is not an integer",
+            "werr_text": "Paper-number 1.1 is not a non-negative integer",
         },
         {
             "warn_or_err": "error",
@@ -403,7 +405,17 @@ def test_bad_papernumbers(tmpdir) -> None:
         {
             "warn_or_err": "error",
             "werr_line": 5,
-            "werr_text": "Paper-number -17.3 is not an integer",
+            "werr_text": "Paper-number -17.3 is not a non-negative integer",
+        },
+        {
+            "warn_or_err": "error",
+            "werr_line": 6,
+            "werr_text": "Paper-number -7.0 is not a non-negative integer",
+        },
+        {
+            "warn_or_err": "error",
+            "werr_line": 7,
+            "werr_text": "Paper-number 7.0 is nearly, but not quite, a non-negative integer",
         },
     ]
     assert len(warn_err) == len(expected)
