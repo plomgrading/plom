@@ -34,17 +34,17 @@ class CrossItem(UndoStackMoveMixin, QGraphicsPathItem):
         super().__init__()
         self.saveable = True
         self.pt = pt
-        self.path = QPainterPath()
+        path = QPainterPath()
         # Draw a cross whose vertex is at pt (under mouse click)
         scaled_tick_radius = style["scale"] * DefaultTickRadius
 
         # slightly smaller than the tick
         rad = (3 * scaled_tick_radius) // 5
-        self.path.moveTo(pt.x() - rad, pt.y() - rad)
-        self.path.lineTo(pt.x() + rad, pt.y() + rad)
-        self.path.moveTo(pt.x() - rad, pt.y() + rad)
-        self.path.lineTo(pt.x() + rad, pt.y() - rad)
-        self.setPath(self.path)
+        path.moveTo(pt.x() - rad, pt.y() - rad)
+        path.lineTo(pt.x() + rad, pt.y() + rad)
+        path.moveTo(pt.x() - rad, pt.y() + rad)
+        path.lineTo(pt.x() + rad, pt.y() - rad)
+        self.setPath(path)
         self.restyle(style)
 
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)

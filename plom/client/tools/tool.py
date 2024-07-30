@@ -36,7 +36,7 @@ class CommandTool(QUndoCommand):
             A QPainterPath used to draw the undo and redo temporary animations.
             Subclasses are free to return a different, perhaps simpler
             QPainterPath.  For example, :py:class:`CommandHighlight` returns
-            its ``obj.path`` instead.  Another example would be a subclass
+            its ``obj._path`` instead.  Another example would be a subclass
             that does not use the ``.obj`` instantance variable.
         """
         return self.obj.shape()

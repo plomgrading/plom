@@ -12,7 +12,7 @@ from plom.client.tools.text import UndoStackMoveTextMixin
 
 
 class DeltaItem(UndoStackMoveTextMixin, QGraphicsTextItem):
-    def __init__(self, pt, value, display_delta, style):
+    def __init__(self, pt, value, display_delta, *, style):
         super().__init__()
         self.saveable = True
         self.display_delta = display_delta

@@ -32,49 +32,30 @@ class QMarkItem(UndoStackMoveMixin, QGraphicsPathItem):
         super().__init__()
         self.saveable = True
         self.pt = pt
-        self.path = QPainterPath()
-        self.style = style
-        # Draw a ?-mark with barycentre under mouseclick
+        path = QPainterPath()
 
-        self.path.moveTo(pt.x() - self._scaler(6), pt.y() - self._scaler(10))
-        self.path.quadTo(
-            pt.x() - self._scaler(6),
-            pt.y() - self._scaler(15),
+        def s(num: float) -> float:
+            return style["scale"] * num
+
+        # Draw a ?-mark with barycentre under mouseclick
+        path.moveTo(pt.x() - s(6), pt.y() - s(10))
+        path.quadTo(pt.x() - s(6), pt.y() - s(15), pt.x(), pt.y() - s(15))
+        path.quadTo(pt.x() + s(6), pt.y() - s(15), pt.x() + s(6), pt.y() - s(10))
+        path.cubicTo(
+            pt.x() + s(6),
+            pt.y() - s(1),
             pt.x(),
-            pt.y() - self._scaler(15),
-        )
-        self.path.quadTo(
-            pt.x() + self._scaler(6),
-            pt.y() - self._scaler(15),
-            pt.x() + self._scaler(6),
-            pt.y() - self._scaler(10),
-        )
-        self.path.cubicTo(
-            pt.x() + self._scaler(6),
-            pt.y() - self._scaler(1),
+            pt.y() - s(7),
             pt.x(),
-            pt.y() - self._scaler(7),
-            pt.x(),
-            pt.y() + self._scaler(2),
+            pt.y() + s(2),
         )
-        self.path.moveTo(pt.x(), pt.y() + self._scaler(12))
-        self.path.lineTo(pt.x(), pt.y() + self._scaler(10))
-        self.setPath(self.path)
+        path.moveTo(pt.x(), pt.y() + s(12))
+        path.lineTo(pt.x(), pt.y() + s(10))
+        self.setPath(path)
         self.restyle(style)
 
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
-
-    def _scaler(self, num: float) -> float:
-        """Scale a number based on global scene's scale.
-
-        Args:
-            num: the number to be scaled
-
-        Returns:
-            the scaled number.
-        """
-        return self.style["scale"] * num
 
     def restyle(self, style):
         self.normal_thick = 3 * style["pen_width"] / 2

@@ -18,15 +18,15 @@ class CommandHighlight(CommandPen):
         self.setText("Highlight")
 
     def get_undo_redo_animation_shape(self) -> QPainterPath:
-        return self.obj.path
+        return self.obj._path
 
 
 class HighlightItem(UndoStackMoveMixin, QGraphicsPathItem):
     def __init__(self, path, style):
         super().__init__()
         self.saveable = True
-        self.path = path
-        self.setPath(self.path)
+        self._path = path
+        self.setPath(path)
         self.restyle(style)
 
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)

@@ -31,19 +31,15 @@ class CommandTick(CommandTool):
 class TickItem(UndoStackMoveMixin, QGraphicsPathItem):
     def __init__(self, pt, style):
         super().__init__()
-        self.scaled_tick_radius = style["scale"] * DefaultTickRadius
+        tick_radius = style["scale"] * DefaultTickRadius
         self.saveable = True
         self.pt = pt
-        self.path = QPainterPath()
+        path = QPainterPath()
         # Draw the checkmark with barycentre under mouseclick.
-        self.path.moveTo(
-            pt.x() - self.scaled_tick_radius / 2, pt.y() - self.scaled_tick_radius / 2
-        )
-        self.path.lineTo(pt.x(), pt.y())
-        self.path.lineTo(
-            pt.x() + self.scaled_tick_radius, pt.y() - self.scaled_tick_radius
-        )
-        self.setPath(self.path)
+        path.moveTo(pt.x() - tick_radius / 2, pt.y() - tick_radius / 2)
+        path.lineTo(pt.x(), pt.y())
+        path.lineTo(pt.x() + tick_radius, pt.y() - tick_radius)
+        self.setPath(path)
         self.restyle(style)
 
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
