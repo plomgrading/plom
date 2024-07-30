@@ -53,14 +53,14 @@ from PyQt6.QtWidgets import (
     QMenu,
 )
 
-from plom import AnnFontSizePts, ScenePixelHeight
+from plom import ScenePixelHeight
 from plom.plom_exceptions import PlomInconsistentRubric
 from plom.client.image_view_widget import mousewheel_delta_to_scale
 
 # in some places we make assumptions that our view is this subclass
 from plom.client.pageview import PageView
 
-from .tools import DefaultTickRadius, DefaultPenWidth
+from .tools import DefaultTickRadius, DefaultPenWidth, AnnFontSizePts
 from .tools import (
     CrossItem,
     DeltaItem,

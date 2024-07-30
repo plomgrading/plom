@@ -17,6 +17,9 @@ OutOfBoundsFill = QBrush(OutOfBoundsFillColour)
 
 DefaultTickRadius = 20
 DefaultPenWidth = 2
+# I don't know what units this is, especially after Issue #1071.
+# see also, ScenePixelHeight in plom __init__
+AnnFontSizePts = 34.0
 
 from plom.client.tools.move import CommandMoveItem, UndoStackMoveMixin
 from plom.client.tools.tool import CommandTool
