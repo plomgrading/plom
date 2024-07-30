@@ -39,9 +39,7 @@ class CommandRubric(CommandTool):
                 automatically update this object,
         """
         super().__init__(scene)
-        self.gdt = RubricItem(
-            pt, rubric, _scene=scene, style=scene.style, fontsize=scene.fontSize
-        )
+        self.gdt = RubricItem(pt, rubric, _scene=scene, style=scene.style)
         self.setText("Rubric")
 
     @classmethod
@@ -88,7 +86,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
     someone about building LaTeX... can we refactor that somehow?
     """
 
-    def __init__(self, pt, rubric, *, _scene, style, fontsize):
+    def __init__(self, pt, rubric, *, _scene, style):
         """Constructor for this class.
 
         Args:
@@ -103,7 +101,6 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         Keyword Args:
             _scene (PageScene): Plom's annotation scene.
             style (dict): various things effecting color, linewidths etc.
-            fontsize (float): size to render the rubric.
 
         Returns:
             None
@@ -116,14 +113,12 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.rubricID = rubric["id"]
         self.kind = rubric["kind"]
         # centre under click
-        self.di = DeltaItem(
-            pt, rubric["value"], rubric["display_delta"], style=style, fontsize=fontsize
-        )
+        self.di = DeltaItem(pt, rubric["value"], rubric["display_delta"], style=style)
         self.blurb = TextItem(
             pt,
             rubric["text"],
             annot_scale=_scene._scale,
-            fontsize=fontsize,
+            fontsize=style["fontsize"],
             color=style["annot_color"],
             _texmaker=_scene,
         )

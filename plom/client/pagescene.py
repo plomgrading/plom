@@ -472,8 +472,6 @@ class PageScene(QGraphicsScene):
         # initialise the undo-stack
         self.undoStack = QUndoStack()
 
-        # we don't want current font size from UI; use fixed physical size
-        self.fontSize = AnnFontSizePts
         self._scale = 1.0
 
         self.scoreBox = None
@@ -516,7 +514,7 @@ class PageScene(QGraphicsScene):
             annot_scale=self._scale,
             display_delta="1",
             txt="blah",
-            fontsize=self.fontSize,
+            fontsize=AnnFontSizePts,
         )
 
         self._hideGhost()
@@ -529,7 +527,7 @@ class PageScene(QGraphicsScene):
         # so that it cannot be overwritten.
         # set up "k out of n" where k=current score, n = max score.
         self.scoreBox = ScoreBox(
-            self.style, self.fontSize, self.maxMark, self.score, question_label
+            self.style, AnnFontSizePts, self.maxMark, self.score, question_label
         )
         self.scoreBox.setZValue(10)
         self.addItem(self.scoreBox)
@@ -795,16 +793,16 @@ class PageScene(QGraphicsScene):
         TODO: I'd like to move to a model where fontSize is constant
         and all things (line widths, fonts, etc) get multiplied by scale
         """
-        self.fontSize = self._scale * AnnFontSizePts
         # TODO: don't like this 1.25 hardcoded
         font = QFont("Helvetica")
-        font.setPixelSize(round(1.25 * self.fontSize))
+        font.setPixelSize(round(1.25 * self._scale * AnnFontSizePts))
         self.scoreBox.setFont(font)
         assert isinstance(self.style, dict)
         self.style["scale"] = self._scale
+        self.style["fontsize"] = self._scale * AnnFontSizePts
         self._refresh_ink_scaling()
         self.ghostItem.change_rubric_size(
-            fontsize=int(self.fontSize), annot_scale=self._scale
+            fontsize=int(self._scale * AnnFontSizePts), annot_scale=self._scale
         )
 
     def set_annotation_color(self, c):
@@ -827,6 +825,7 @@ class PageScene(QGraphicsScene):
             "highlight_width": 50,
             # light highlight for backgrounds
             "box_tint": QColor(255, 255, 0, 16),
+            "fontsize": self._scale * AnnFontSizePts,
         }
         self.ink = QPen(style["annot_color"], style["pen_width"])
         self.lightBrush = QBrush(style["box_tint"])

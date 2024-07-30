@@ -83,7 +83,7 @@ class CommandText(CommandTool):
             pt,
             text,
             annot_scale=scene._scale,
-            fontsize=scene.fontSize,
+            fontsize=scene.style["fontsize"],
             color=scene.style["annot_color"],
             _texmaker=scene,
         )
@@ -145,7 +145,6 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         self.setPlainText(text)
         font = QFont("Helvetica")
         self.annot_scale = annot_scale
-        self.fontsize = fontsize
         font.setPixelSize(round(fontsize))
         self.setFont(font)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)

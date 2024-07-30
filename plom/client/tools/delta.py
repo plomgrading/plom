@@ -12,7 +12,7 @@ from plom.client.tools.text import UndoStackMoveTextMixin
 
 
 class DeltaItem(UndoStackMoveTextMixin, QGraphicsTextItem):
-    def __init__(self, pt, value, display_delta, style, fontsize=10):
+    def __init__(self, pt, value, display_delta, style):
         super().__init__()
         self.saveable = True
         self.display_delta = display_delta
@@ -21,7 +21,7 @@ class DeltaItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         self.setPlainText(" {} ".format(self.display_delta))
         font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
-        font.setPixelSize(round(1.25 * fontsize))
+        font.setPixelSize(round(1.25 * style["fontsize"]))
         self.setFont(font)
         # Is not editable.
         self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
