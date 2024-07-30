@@ -122,7 +122,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
             color=style["annot_color"],
             _texmaker=_scene,
         )
-        # set style
+        # TODO: probably we "restyle" the child objects twice as each init did this too
         self.restyle(style)
         # Set the underlying delta and text to not pickle - since the GDTI will handle that
         self.saveable = True

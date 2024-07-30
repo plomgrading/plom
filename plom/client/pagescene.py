@@ -834,6 +834,7 @@ class PageScene(QGraphicsScene):
         for X in self.items():
             # check if object has "restyle" function and if so then use it to set the colour
             if getattr(X, "restyle", False):
+                # TODO: this loop catches rubric subobjects twice (minor for now)
                 X.restyle(self.style)
         if self.scoreBox:
             self.scoreBox.update_style()
