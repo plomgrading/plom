@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
@@ -22,6 +23,8 @@ from plom.plom_exceptions import (
 from ..models import MarkingTask
 from . import mark_task
 from . import create_new_annotation_in_database
+from UserManagement.models import ProbationPeriod
+from Mark.services import MarkingTaskService
 
 
 class QuestionMarkingService:
@@ -203,6 +206,13 @@ class QuestionMarkingService:
 
         # regrab it, selected-for-update, b/c we're going to write to it
         task = MarkingTask.objects.select_for_update().get(pk=task.pk)
+        marked_by_probationary_marker_tag = "Probation"
+
+        # Check if the user is in probation
+        if ProbationPeriod.objects.filter(user=user).exists():
+            MarkingTaskService().create_tag_and_attach_to_task(
+                user=user, task_pk=task.pk, tag_text=marked_by_probationary_marker_tag
+            )
 
         # Various work in creating the new Annotation object: linking it to the
         # associated Rubrics and managing the task's latest annotation link.
