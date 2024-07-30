@@ -15,6 +15,8 @@ OutOfBoundsFillColour = QColor(255, 165, 0, 128)
 OutOfBoundsPen = QPen(OutOfBoundsPenColour, 8)
 OutOfBoundsFill = QBrush(OutOfBoundsFillColour)
 
+DefaultTickRadius = 20
+
 from plom.client.tools.move import CommandMoveItem, UndoStackMoveMixin
 from plom.client.tools.tool import CommandTool
 from plom.client.tools.delete import CommandDelete

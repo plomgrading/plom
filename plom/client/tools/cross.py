@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import QGraphicsPathItem, QGraphicsItem
 
 from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
 from plom.client.tools import CommandTool, UndoStackMoveMixin
+from plom.client.tools import DefaultTickRadius
 
 
 class CommandCross(CommandTool):
@@ -35,8 +36,7 @@ class CrossItem(UndoStackMoveMixin, QGraphicsPathItem):
         self.pt = pt
         self.path = QPainterPath()
         # Draw a cross whose vertex is at pt (under mouse click)
-        # import here to avoid circular import
-        scaled_tick_radius = style["scale"] * style["default_tick_radius"]
+        scaled_tick_radius = style["scale"] * DefaultTickRadius
 
         # slightly smaller than the tick
         rad = (3 * scaled_tick_radius) // 5

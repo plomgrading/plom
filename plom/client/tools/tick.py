@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QGraphicsPathItem, QGraphicsItem
 
 from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
 from plom.client.tools import CommandTool, UndoStackMoveMixin
+from plom.client.tools import DefaultTickRadius
 
 
 class CommandTick(CommandTool):
@@ -30,7 +31,7 @@ class CommandTick(CommandTool):
 class TickItem(UndoStackMoveMixin, QGraphicsPathItem):
     def __init__(self, pt, style):
         super().__init__()
-        self.scaled_tick_radius = style["scale"] * style["default_tick_radius"]
+        self.scaled_tick_radius = style["scale"] * DefaultTickRadius
         self.saveable = True
         self.pt = pt
         self.path = QPainterPath()

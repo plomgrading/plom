@@ -60,6 +60,7 @@ from plom.client.image_view_widget import mousewheel_delta_to_scale
 # in some places we make assumptions that our view is this subclass
 from plom.client.pageview import PageView
 
+from .tools import DefaultTickRadius
 from .tools import (
     CrossItem,
     DeltaItem,
@@ -119,7 +120,7 @@ class ScoreBox(QGraphicsTextItem):
         """Initialize a new ScoreBox.
 
         Args:
-            style: a dict of pen width, annotation colour, default tick radius, scale, etc.
+            style: a dict of pen width, annotation colour, scale, etc.
             fontsize (int): A non-zero, positive font value.
             maxScore (int): A non-zero, positive maximum score.
             score (int): A non-zero, positive current score for the paper.
@@ -475,7 +476,6 @@ class PageScene(QGraphicsScene):
         # we don't want current font size from UI; use fixed physical size
         self.fontSize = AnnFontSizePts
         self._scale = 1.0
-        self.default_tick_radius = 20
 
         self.scoreBox = None
         # Define standard pen, highlight, fill, light-fill
@@ -823,7 +823,6 @@ class PageScene(QGraphicsScene):
             "annot_color": c,
             "pen_width": self._scale * self.default_pen_width,
             "scale": self._scale,
-            "default_tick_radius": self.default_tick_radius,
             # TODO: 64 hardcoded elsewhere
             "highlight_color": QColor(255, 255, 0, 64),
             "highlight_width": 50,
@@ -1276,7 +1275,7 @@ class PageScene(QGraphicsScene):
             self.addItem(self.boxItem)
         elif self.boxLineStampState == 2:  # finish the connecting line
             if ghost_rect is None:
-                tick_rad = self._scale * self.default_tick_radius
+                tick_rad = self._scale * DefaultTickRadius
                 padding = tick_rad // 2
                 side = round(2 * padding + 7 * tick_rad / 4)
                 g_rect_top_left = QPointF(
@@ -1326,7 +1325,7 @@ class PageScene(QGraphicsScene):
             # update the connecting path
             self.currentPos = event.scenePos()
             if ghost_rect is None:
-                tick_rad = self._scale * self.default_tick_radius
+                tick_rad = self._scale * DefaultTickRadius
                 padding = tick_rad // 2
                 side = round(2 * padding + 7 * tick_rad / 4)
                 g_rect_top_left = QPointF(
