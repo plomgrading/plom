@@ -24,7 +24,12 @@ from .mergeAndCodePages import make_PDF
 from .build_extra_page_with_qrcodes import build_extra_page_pdf
 from .build_scrap_paper_with_qrcodes import build_scrap_paper_pdf
 
-from .classlistValidator import sid_field, fullname_field, papernumber_field
+from .classlistValidator import (
+    sid_field,
+    fullname_field,
+    papernumber_field,
+    PlomClasslistValidator,
+)
 from .buildClasslist import process_classlist_file, get_demo_classlist
 from .upload_classlist import upload_classlist, upload_demo_classlist
 
@@ -62,4 +67,5 @@ __all__ = [
     "download_version_map",
     "save_version_map",
     "status",
+    "PlomClasslistValidator",
 ]
