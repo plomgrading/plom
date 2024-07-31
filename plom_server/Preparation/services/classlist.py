@@ -14,14 +14,15 @@ from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
-from django.db import transaction
+from django.db import transaction, IntegrityError
 
-from ..models import StagingStudent
-from ..services import PrenameSettingService
-
+from plom.create import PlomClasslistValidator
 from Preparation.services.preparation_dependency_service import (
     assert_can_modify_classlist,
 )
+from ..models import StagingStudent
+from ..services import PrenameSettingService
+
 
 log = logging.getLogger("ClasslistService")
 
@@ -76,18 +77,46 @@ class StagingStudentService:
         return txt
 
     @transaction.atomic()
-    def _add_student(self, student_id, student_name, paper_number=None):
+    def _add_student(
+        self,
+        student_id: str,
+        student_name: str,
+        *,
+        paper_number: int | str | None = None,
+    ) -> None:
         """Add a single student to the staging classlist.
 
         Note - does not check dependencies.
 
+        Args:
+            student_id: a string.
+            student_name: a string.
+
+        Keyword Args:
+            paper_number: either None or a non-negative integer.  Sentinel values
+                of ``-1``, ``None`` and ``""`` are accepted as None.
+
+        Returns:
+            None.
+
         Raises:
-            IntegrityException: if student-id is not unique.
+            IntegrityError: if student-id is not unique, or other database
+                checks failed, for example invalid paper number.
+            ValueError: invalid paper_number such as inappropriate sentinel value
         """
         s_obj = StagingStudent(student_id=student_id, student_name=student_name)
-        # set the paper_number if present
-        if paper_number:
-            s_obj.paper_number = paper_number
+        # note that zero is not a sentinel so "if paper_number" is NOT appropriate
+        if PlomClasslistValidator.is_paper_number_sentinel(paper_number):
+            paper_number = None
+        if paper_number is not None:
+            try:
+                # 1.1 would become 1; validator before us should've complained
+                paper_number = int(paper_number)
+            except ValueError as e:
+                raise ValueError(
+                    f"paper_number cannot be converted to int: str{e}"
+                ) from None
+        s_obj.paper_number = paper_number
         s_obj.save()
 
     @transaction.atomic()
@@ -104,15 +133,25 @@ class StagingStudentService:
     def validate_and_use_classlist_csv(
         self, in_memory_csv_file: File, ignore_warnings: bool = False
     ) -> tuple[bool, list[dict[str, Any]]]:
-        """Validate and store the classlist from the in-memory file.
+        """Validate and store the classlist from the in-memory file, if possible.
+
+        Args:
+            in_memory_csv_file: some kind of Django file thing.
+
+        Keyword Args:
+            ignore_warnings: try to proceed with opening the file even if
+                the validator expressed warnings.
+
+        Returns:
+            2-tuple, the first entry is a bool indicating success.  In case of
+            success the 2nd entry is an empty list (TODO: or maybe contains
+            ignored warnings).  In case of errors the second list contains dicts
+            which elaborate on errors or warnings.
 
         Raises:
             PlomDependencyConflict: If dependencies not met.
         """
         assert_can_modify_classlist()
-
-        """Read the in-memory csv file, validate it and use if possible."""
-        from plom.create.classlistValidator import PlomClasslistValidator
 
         # now save the in-memory file to a tempfile and validate
         tmp_csv = Path(NamedTemporaryFile(delete=False).name)
@@ -141,9 +180,22 @@ class StagingStudentService:
                 # Note that the paper_number field is optional, so we
                 # need to get that value or stick in a None.
                 # related to #2274 and MR <<TODO>>
-                for row in csv_reader:
-                    self._add_student(
-                        row["id"], row["name"], row.get("paper_number", None)
+                try:
+                    for row in csv_reader:
+                        self._add_student(
+                            row["id"],
+                            row["name"],
+                            paper_number=row.get("paper_number", None),
+                        )
+                except (IntegrityError, ValueError) as e:
+                    # in theory, we "asked permission" using vlad the validator
+                    # so the input must be perfect and this can never fail---haha.
+                    success = False
+                    errmsg = "Unexpected error, "
+                    errmsg += f"likely a bug in Plom's classlist validator: {str(e)}"
+                    # see :method:`PlomClasslistValidator.validate_csv` for this format
+                    werr.append(
+                        {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
                     )
 
         # don't forget to unlink the temp file

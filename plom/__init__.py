@@ -15,7 +15,7 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 # Also hardcoded in AppImageBuilder.yml
-__version__ = "0.15.6.dev0"
+__version__ = "0.15.7.dev0"
 
 import sys
 
@@ -34,9 +34,6 @@ PlomImageExts = ("png", "jpg", "jpeg")
 
 # TODO: this should be a default and the PageScene should have a physical size.
 ScenePixelHeight = 2000
-
-# I don't know what units this is, especially after Issue #1071.
-AnnFontSizePts = 34.0
 
 from .rules import isValidStudentID
 

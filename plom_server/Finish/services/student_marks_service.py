@@ -4,6 +4,7 @@
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024 Aidan Murphy
 
 from __future__ import annotations
 
@@ -125,20 +126,20 @@ class StudentMarkService:
 
     def get_question_version_and_mark(
         self, paper: Paper, question_idx: int
-    ) -> tuple[int, int | None]:
-        """For a given question, return the test's question version and score.
+    ) -> tuple[int, float | None]:
+        """For a particular paper and question index, return the question version and score.
 
         Args:
             paper: a reference to a Paper instance.
-            question_idx: int, question index, one based.
+            question_idx: question index, one based.
 
         Returns:
-            tuple (int, int or None): question version and score, where score
-            might be `None`.
+            Tuple of the question version and score, where score might
+            be `None`.
 
         Raises:
             ObjectDoesNotExist: no such marking task, either b/c the paper
-            does not exist or the question does not exist for that paper.
+                does not exist or the question does not exist for that paper.
         """
         version = PaperInfoService().get_version_from_paper_question(
             paper.paper_number, question_idx
@@ -186,7 +187,7 @@ class StudentMarkService:
 
         paper_dict["marked"] = paper_marked
         if paper_marked:
-            total = 0
+            total = 0.0
         else:
             warnings.append("[Not marked]")
             paper_dict["Total"] = None

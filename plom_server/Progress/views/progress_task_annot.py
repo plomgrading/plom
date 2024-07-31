@@ -2,7 +2,9 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
+
 import html
+
 from django.contrib.auth.models import User
 from django.http import HttpRequest, HttpResponse, FileResponse
 from django.shortcuts import render, reverse, redirect
@@ -10,6 +12,7 @@ from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedire
 from rest_framework.exceptions import ValidationError
 
 from plom import plom_valid_tag_text_pattern, plom_valid_tag_text_description
+from plom.misc_utils import pprint_score
 from Base.base_group_views import LeadMarkerOrManagerView
 from Mark.services import (
     MarkingStatsService,
@@ -20,7 +23,6 @@ from Mark.services import (
 from Papers.services import SpecificationService
 from Progress.services import ProgressOverviewService
 from Rubrics.services import RubricService
-
 from Mark.models import MarkingTask
 
 
@@ -201,6 +203,7 @@ class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
                 {
                     "annotation_pk": task_obj.latest_annotation.pk,
                     "score": task_obj.latest_annotation.score,
+                    "score_str": pprint_score(task_obj.latest_annotation.score),
                     "username": task_obj.assigned_user.username,
                     "edition": task_obj.latest_annotation.edition,
                     "last_update": task_obj.latest_annotation.time_of_last_update,
@@ -268,7 +271,13 @@ class MarkingTaskTagView(LeadMarkerOrManagerView):
         return HttpResponseClientRefresh()
 
     def delete(self, request, task_pk: int, tag_pk: int):
-        MarkingTaskService().remove_tag_from_task_via_pks(tag_pk, task_pk)
+        try:
+            MarkingTaskService().remove_tag_from_task_via_pks(tag_pk, task_pk)
+        except ValueError:
+            # this will happen if (say) client removes a task out from
+            # underneath us before we click here. In that case just
+            # refresh the page.  See #2810
+            pass
         return HttpResponseClientRefresh()
 
     def post(self, request, task_pk: int):

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 import fitz
 from pathlib import Path
@@ -10,10 +10,11 @@ from time import sleep
 from django.core.management import call_command
 
 
-class DemoHWBundleService:
+class DemoHWBundleCreationService:
     """Handle creating homework bundles in the demo."""
 
     def make_hw_bundle(self, bundle: dict):
+        """Construct a hw bundle pdf for use with demo."""
         paper_number = bundle["paper_number"]
         question_list = bundle["pages"]
 
@@ -42,6 +43,7 @@ class DemoHWBundleService:
         doc.save(out_file)
 
     def map_homework_pages(self, homework_bundles=[]):
+        """Assign questions to the pages homework bundles."""
         print("Mapping homework pages to questions")
         for bundle in homework_bundles:
             paper_number = bundle["paper_number"]

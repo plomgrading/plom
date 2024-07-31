@@ -1,19 +1,59 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
 import statistics
 from typing import Any, Dict, List, Optional
+from numpy import histogram
 
 import arrow
 
 from django.db import transaction
 
+from plom.misc_utils import pprint_score
+
 from Papers.services import SpecificationService
 from ..models import MarkingTask, MarkingTaskTag
+
+
+def generic_stats_dict_from_list(mark_list):
+    stats_dict = {}
+    stats_dict["mark_max"] = max(mark_list)
+    stats_dict["mark_min"] = min(mark_list)
+    stats_dict["mark_median"] = statistics.median(mark_list)
+    stats_dict["mark_mean"] = statistics.mean(mark_list)
+    stats_dict["mark_mode"] = statistics.mode(mark_list)
+
+    stats_dict["mark_max_str"] = pprint_score(stats_dict["mark_max"])
+    stats_dict["mark_min_str"] = pprint_score(stats_dict["mark_min"])
+    stats_dict["mark_median_str"] = f"{stats_dict['mark_median']:.1f}"
+    stats_dict["mark_mean_str"] = f"{stats_dict['mark_mean']:.1f}"
+    stats_dict["mark_mode_str"] = pprint_score(stats_dict["mark_mode"])
+
+    if len(mark_list) >= 2:
+        stats_dict["mark_stdev"] = statistics.stdev(mark_list)
+        stats_dict["mark_stdev_str"] = f"{stats_dict['mark_stdev']:.1f}"
+    else:
+        stats_dict["mark_stdev"] = stats_dict["mark_stdev_str"] = "n/a"
+
+    return stats_dict
+
+
+def score_histogram(score_list, max_score, min_score=0, bin_width=1):
+    """Helper function to make histogram dicts."""
+    bins = [edge for edge in range(min_score, max_score + bin_width, bin_width)]
+
+    # np.histogram doesn't consider the rightmost edge as a separate bin
+    bins.append(max_score)
+    bin_values, _ = histogram(score_list, bins)
+    # remove placeholder right bin edge
+    bins.pop()
+
+    return dict(zip(bins, bin_values))
 
 
 class MarkingStatsService:
@@ -33,23 +73,30 @@ class MarkingStatsService:
 
         Returns:
             Dictionary containing the following, 'number_of_completed_tasks',
-                'all_task_count', 'completed_percentage', 'mark_max', 'mark_min',
-                'mark_median', 'mark_mean', 'mark_mode', 'mark_stdev', 'mark_full'
+                'all_task_count', 'completed_percentage', 'mark_max',
+                'mark_max_str', 'mark_min', 'mark_min_str', 'mark_median',
+                'mark_median_str', 'mark_mean', 'mark_mean_str', 'mark_mode',
+                'mark_mode_str', 'mark_stdev', 'mark_stdev_str', 'mark_full'
         """
         stats_dict = {
             "number_of_completed_tasks": 0,
             "all_task_count": 0,
             "completed_percentage": 0,
             "mark_max": 0,
+            "mark_max_str": "n/a",
             "mark_min": 0,
+            "mark_min_str": "n/a",
             "mark_median": 0,
-            "mode_mean": 0,
-            "mode_mode": 0,
+            "mark_median_str": "n/a",
+            "mark_mean": 0,
+            "mark_mean_str": "n/a",
+            "mark_mode": 0,
+            "mark_mode_str": "n/a",
             "mark_stdev": "n/a",
+            "mark_stdev_str": "n/a",
             "avg_marking_time": 0,
             "mark_full": SpecificationService.get_question_mark(question),
         }
-
         try:
             all_tasks = MarkingTask.objects.filter(question_index=question).exclude(
                 status=MarkingTask.OUT_OF_DATE
@@ -77,7 +124,6 @@ class MarkingStatsService:
         stats_dict["completed_percentage"] = round(
             stats_dict["number_of_completed_tasks"] / stats_dict["all_task_count"] * 100
         )
-
         if stats_dict["number_of_completed_tasks"]:
             stats_dict["avg_marking_time"] = round(
                 sum([X.latest_annotation.marking_time for X in completed_tasks])
@@ -91,16 +137,7 @@ class MarkingStatsService:
             )
             # the following don't make sense until something is marked
             mark_list = [X.latest_annotation.score for X in completed_tasks]
-            stats_dict["mark_max"] = max(mark_list)
-            stats_dict["mark_min"] = min(mark_list)
-            stats_dict["mark_median"] = round(statistics.median(mark_list), 1)
-            stats_dict["mark_mean"] = round(statistics.mean(mark_list), 1)
-            stats_dict["mark_mode"] = statistics.mode(mark_list)
-            if len(mark_list) >= 2:
-                stats_dict["mark_stdev"] = round(statistics.stdev(mark_list), 1)
-            else:
-                stats_dict["mark_stdev"] = "n/a"
-
+            stats_dict.update(generic_stats_dict_from_list(mark_list))
         return stats_dict
 
     @transaction.atomic
@@ -120,9 +157,9 @@ class MarkingStatsService:
             The histogram as a dict of mark vs count.
 
         """
-        hist = {
-            qm: 0 for qm in range(SpecificationService.get_question_mark(question) + 1)
-        }
+        max_question_mark = SpecificationService.get_question_mark(question)
+        scores = []
+
         try:
             completed_tasks = MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE,
@@ -131,9 +168,11 @@ class MarkingStatsService:
             if version:
                 completed_tasks = completed_tasks.filter(question_version=version)
         except MarkingTask.DoesNotExist:
-            return hist
+            return score_histogram([], max_question_mark)
         for X in completed_tasks:
-            hist[X.latest_annotation.score] += 1
+            scores.append(X.latest_annotation.score)
+
+        hist = score_histogram(scores, max_question_mark)
         return hist
 
     @transaction.atomic
@@ -171,12 +210,14 @@ class MarkingStatsService:
 
         Args:
             question (int): The question
-            version (int): THe version
+            version (int): The version
 
         Returns:
             dict (int, dict[str,any]): for each user-pk give a dict that
-            contains 'username', 'histogram', 'number', 'mark_max, 'mark_min',
-            'mark_median', 'mark_mean', 'mark_mode', 'mark_stdev'.
+            contains 'username', 'histogram', 'scores', 'number',
+            'mark_max', 'mark_max_str', 'mark_min', 'mark_min_str',
+            'mark_median', 'mark_median_str', 'mark_mean', 'mark_mean_str',
+            'mark_mode', 'mark_mode_str', 'mark_stdev', 'mark_stdev_str'.
         """
         data: Dict[int, Dict[str, Any]] = {}
         try:
@@ -190,36 +231,21 @@ class MarkingStatsService:
             )
         except MarkingTask.DoesNotExist:
             return data
+
         for X in completed_tasks:
             if X.assigned_user.pk not in data:
                 data[X.assigned_user.pk] = {
                     "username": X.assigned_user.username,
-                    "histogram": {
-                        qm: 0
-                        for qm in range(
-                            SpecificationService.get_question_mark(question) + 1
-                        )
-                    },
+                    "scores": [],
                 }
-            data[X.assigned_user.pk]["histogram"][X.latest_annotation.score] += 1
+            data[X.assigned_user.pk]["scores"].append(X.latest_annotation.score)
 
         for upk in data:
-            mark_list = [
-                key
-                for key, value in data[upk]["histogram"].items()
-                for _ in range(value)
-            ]
+            mark_list = data[upk]["scores"]
+            max_question_mark = SpecificationService.get_question_mark(question)
+            data[upk]["histogram"] = score_histogram(mark_list, max_question_mark)
             data[upk]["number"] = len(mark_list)
-            data[upk]["mark_max"] = max(mark_list)
-            data[upk]["mark_min"] = min(mark_list)
-            data[upk]["mark_median"] = round(statistics.median(mark_list), 1)
-            data[upk]["mark_mean"] = round(statistics.mean(mark_list), 1)
-            data[upk]["mark_mode"] = statistics.mode(mark_list)
-            if len(mark_list) >= 2:
-                data[upk]["mark_stdev"] = round(statistics.stdev(mark_list), 1)
-            else:
-                data[upk]["mark_stdev"] = "n/a"
-
+            data[upk].update(generic_stats_dict_from_list(mark_list))
         return data
 
     @transaction.atomic
@@ -233,8 +259,10 @@ class MarkingStatsService:
 
         Returns:
             dict (int, dict[str,any]): for each version give a dict that
-            contains 'histogram', 'number', 'mark_max, 'mark_min',
-            'mark_median', 'mark_mean', 'mark_mode', 'mark_stdev', 'remaining'.
+            contains 'histogram', 'scores', 'number', 'mark_max', 'mark_max_str',
+            'mark_min', 'mark_min_str', 'mark_median', 'mark_median_str',
+            'mark_mean','mark_mean_str', 'mark_mode','mark_mode_str',
+            'mark_stdev','mark_stdev_str', 'remaining'.
         """
         data: Dict[int, Dict[str, Any]] = {}
         try:
@@ -249,31 +277,16 @@ class MarkingStatsService:
         for X in completed_tasks:
             if X.question_version not in data:
                 data[X.question_version] = {
-                    "histogram": {
-                        qm: 0
-                        for qm in range(
-                            SpecificationService.get_question_mark(question) + 1
-                        )
-                    },
+                    "scores": [],
                 }
-            data[X.question_version]["histogram"][X.latest_annotation.score] += 1
+            data[X.question_version]["scores"].append(X.latest_annotation.score)
 
         for ver in data:
-            mark_list = [
-                key
-                for key, value in data[ver]["histogram"].items()
-                for _ in range(value)
-            ]
+            mark_list = data[ver]["scores"]
+            max_question_mark = SpecificationService.get_question_mark(question)
+            data[ver]["histogram"] = score_histogram(mark_list, max_question_mark)
             data[ver]["number"] = len(mark_list)
-            data[ver]["mark_max"] = max(mark_list)
-            data[ver]["mark_min"] = min(mark_list)
-            data[ver]["mark_median"] = round(statistics.median(mark_list), 1)
-            data[ver]["mark_mean"] = round(statistics.mean(mark_list), 1)
-            data[ver]["mark_mode"] = statistics.mode(mark_list)
-            if len(mark_list) >= 2:
-                data[ver]["mark_stdev"] = round(statistics.stdev(mark_list), 1)
-            else:
-                data[ver]["mark_stdev"] = "n/a"
+            data[ver].update(generic_stats_dict_from_list(mark_list))
             # get remaining tasks by excluding COMPLETE and OUT_OF_DATE
             # TODO - can we optimise this a bit? one query per version is okay, but can likely do in 1.
             data[ver]["remaining"] = (
@@ -302,6 +315,7 @@ class MarkingStatsService:
                     {
                         "username": task.assigned_user.username,
                         "score": task.latest_annotation.score,
+                        "score_str": pprint_score(task.latest_annotation.score),
                         "annotation_image": task.latest_annotation.image.pk,
                     }
                 )
@@ -373,6 +387,7 @@ class MarkingStatsService:
                             task.latest_annotation.time_of_last_update
                         ).humanize(),
                         "score": task.latest_annotation.score,
+                        "score_str": pprint_score(task.latest_annotation.score),
                         "marking_time": task.latest_annotation.marking_time,
                         "integrity": str(task.pk),  # TODO: not implemented yet
                     }
