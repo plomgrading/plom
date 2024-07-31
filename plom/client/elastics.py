@@ -64,46 +64,6 @@ def shape_to_sample_points_on_boundary(shape, corners=False, all_sides=True):
         raise ValueError(f"Don't know how find points on perimeter of {shape}")
 
 
-def LeftMidPoint(shape):
-    if isinstance(shape, QRectF):
-        x, y, w, h = shape.getRect()
-        return QPointF(x, y + h / 2)
-    elif isinstance(shape, QPointF):
-        return shape
-    else:
-        raise ValueError(f"Don't know how find points on perimeter of {shape}")
-
-
-def RightMidPoint(shape):
-    if isinstance(shape, QRectF):
-        x, y, w, h = shape.getRect()
-        return QPointF(x + w, y + h / 2)
-    elif isinstance(shape, QPointF):
-        return shape
-    else:
-        raise ValueError(f"Don't know how find points on perimeter of {shape}")
-
-
-def BottomMidPoint(shape):
-    if isinstance(shape, QRectF):
-        x, y, w, h = shape.getRect()
-        return QPointF(x + w / 2, y + h)
-    elif isinstance(shape, QPointF):
-        return shape
-    else:
-        raise ValueError(f"Don't know how find points on perimeter of {shape}")
-
-
-def TopMidPoint(shape):
-    if isinstance(shape, QRectF):
-        x, y, w, h = shape.getRect()
-        return QPointF(x + w / 2, y)
-    elif isinstance(shape, QPointF):
-        return shape
-    else:
-        raise ValueError(f"Don't know how find points on perimeter of {shape}")
-
-
 def sqrDistance(vect):
     """Return the l2 norm of a 2d-vector."""
     return vect.x() * vect.x() + vect.y() * vect.y()
@@ -348,79 +308,106 @@ def which_sticky_corners(g, r):
     return path
 
 
-def short_line(b_pts, a_pt, *, below=False):
-    if below:
-        distances_and_lines = sorted(
-            [
-                (sqrDistance(a_pt - b), QLineF(b, a_pt))
-                for b in b_pts
-                if b.y() < a_pt.y()
-            ],
-            key=lambda X: X[0],
-        )
+def get_midpoints(shape):
+    """Get a dict of the midpoints of each side of the given shape."""
+    if isinstance(shape, QRectF):
+        x, y, w, h = shape.getRect()
+        return {
+            "west": QPointF(x, y + h / 2),
+            "east": QPointF(x + w, y + h / 2),
+            "north": QPointF(x + w / 2, y),
+            "south": QPointF(x + w / 2, y + h),
+        }
+    elif isinstance(shape, QPointF):
+        return {
+            "west": shape,
+            "east": shape,
+            "north": shape,
+            "south": shape,
+        }
     else:
-        distances_and_lines = sorted(
-            [(sqrDistance(a_pt - b), QLineF(b, a_pt)) for b in b_pts],
-            key=lambda X: X[0],
-        )
-    return distances_and_lines[0][1]
+        raise ValueError(f"Don't know how find points on perimeter of {shape}")
 
 
-def short_lines(b_pts, a_pt, *, N=2, below=False):
-    if below:
-        distances_and_lines = sorted(
-            [
-                (sqrDistance(a_pt - b), QLineF(b, a_pt))
-                for b in b_pts
-                if b.y() < a_pt.y()
-            ],
-            key=lambda X: X[0],
-        )
-    else:
-        distances_and_lines = sorted(
-            [(sqrDistance(a_pt - b), QLineF(b, a_pt)) for b in b_pts],
-            key=lambda X: X[0],
-        )
+def short_lines(
+    b_pts,
+    a_pt,
+    *,
+    N=2,
+    check_only_north=False,
+    check_only_west=False,
+    check_only_east=False,
+):
+    """Get lines from b_pts to a_pt sorted shortest to longest.
+
+    KWargs:
+        N: how many short lines to return.
+        check_only_north: when True, only check b_pts that lie
+            to the north of a_pt.
+        check_only_west: when True, only check b_pts that lie
+            to the west of a_pt.
+        check_only_east: when True, only check b_pts that lie
+            to the east of a_pt.
+
+    Returns: List of the shortest N lines from points in b_pts to a_pt.
+    """
+    if check_only_north:
+        b_pts = [b for b in b_pts if b.y() < a_pt.y()]
+    if check_only_west:
+        b_pts = [b for b in b_pts if b.x() < a_pt.x()]
+    if check_only_east:
+        b_pts = [b for b in b_pts if b.x() > a_pt.x()]
+
+    distances_and_lines = sorted(
+        [(sqrDistance(a_pt - b), QLineF(b, a_pt)) for b in b_pts],
+        key=lambda X: X[0],
+    )
     return [X[1] for X in distances_and_lines[:N]]
 
 
 def shortestToSideLine(g_rect, b_rect):
-    g_y_mid = g_rect.center().y()
-    if g_y_mid < b_rect.top():
-        below = False  # ghost is above the box
-    else:
-        below = True
+    """Find a 'nice' line connecting the ghost-rect to the box.
+
+    Returns the line and a bool. The bool indicates whether or not the
+    line connects to the east or west side of the ghost-rect.
+    """
+    # get the midpoints of the ghost-rect boundary,
+    g_midpoints = get_midpoints(g_rect)
+    # and the midpoints and corners of the box-boundary
     bvert = shape_to_sample_points_on_boundary(b_rect, corners=True)
-    # first try to connect left-mid-side of g_rect to box.
-    lmp = LeftMidPoint(g_rect)
-    lines_to_left = short_lines(bvert, lmp, below=below)
+    # determine if center of ghost is north of the box
+    ghost_is_south = g_rect.center().y() > b_rect.top()
+    # we first try to connect the west side of the g_rect to the box.
+    # however, if the centre of the ghost is south of the top-edge of the box,
+    # then we try to connect west/north
+    # first try to connect left-mid-side of g_rect to box, and make sure
+    # the connecting line goes to the west.
+    lines_to_west = short_lines(
+        bvert,
+        g_midpoints["west"],
+        check_only_north=ghost_is_south,
+        check_only_west=True,
+    )
+    for line in lines_to_west:
+        return line, True
 
-    # make sure that line goes from left-to-right
-    # this avoids the line intersecting the box around the ghost
-    for line_to_left in lines_to_left:
-        if line_to_left.p1().x() <= line_to_left.p2().x():
-            return line_to_left, "left"
-    # otherwise try a different line
-
-    # now try to connect to right mid-point
-    rmp = RightMidPoint(g_rect)
-    line_to_right = short_line(bvert, rmp, below=below)
-    # make sure line goes right-to-left **and** also
-    # that ghost is west of the box.
-    if (b_rect.left() >= rmp.x()) and (
-        line_to_right.p1().x() >= line_to_right.p2().x()
-    ):
-        return line_to_right, "right"
-    # if that doesnt work try to connect to middle of top
-    tmp = TopMidPoint(g_rect)
-    line_to_top = short_line(bvert, tmp)
+    # if no suitable line try to connect to the east with similar reasoning.
+    lines_to_east = short_lines(
+        bvert,
+        g_midpoints["east"],
+        check_only_north=ghost_is_south,
+        check_only_east=True,
+    )
+    for line in lines_to_east:
+        return line, True
+    # if that doesnt work try to connect to middle of north side
+    line_to_north = short_lines(bvert, g_midpoints["north"], N=1)[0]
     # but only if line runs in correct direction
-    if line_to_top.p1().y() <= line_to_top.p2().y():
-        return line_to_top, "top"
-    # all else fails - connect to the bottom midpoint
-    bmp = BottomMidPoint(g_rect)
-    line_to_bottom = short_line(bvert, bmp)
-    return line_to_bottom, "bottom"
+    if line_to_north.p1().y() <= line_to_north.p2().y():
+        return line_to_north, False
+    # all else fails - connect to the middle of south side
+    line_to_south = short_lines(bvert, g_midpoints["south"], N=1)[0]
+    return line_to_south, False
 
 
 def which_horizontal_step(g_rect, b_rect):
@@ -434,7 +421,7 @@ def which_horizontal_step(g_rect, b_rect):
         QPainterPath
     """
     # direct line from the box-rect to the ghost-rect
-    directLine, side = shortestToSideLine(g_rect, b_rect)
+    directLine, connects_east_west = shortestToSideLine(g_rect, b_rect)
     thePath = QPainterPath(directLine.p1())
 
     # iteration 1
@@ -462,7 +449,7 @@ def which_horizontal_step(g_rect, b_rect):
     # as #2 but steeper diagonal
     slope = 3
     sg = directLine.dy() * directLine.dx()  # get sign of gradient
-    if (side in ["left", "right"]) and (
+    if connects_east_west and (
         abs(directLine.dy()) < slope * abs(directLine.dx())
     ):  # end in horizontal
         sx = directLine.dy() / slope
