@@ -38,7 +38,27 @@ def wait_for_user_to_type_quit() -> None:
 
 def set_argparse_and_get_args() -> argparse.Namespace:
     """Configure argparse to collect commandline options."""
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog="""
+    The --stop-after and --wait-after options take many possible values. 
+
+    * users = the basic plom-system (server, db, etc) are set up, and demo-users are created.
+    * spec = a demo assessment specification is uploaded.
+    * sources = demo assessment sources are uploaded. Also a classlist and (if selected) solutions.
+    * populate = the database is populated with papers.
+    * papers-built = assessment PDFs are created from the sources.
+    * bundles-created = PDF bundles are created to simulate scanned student work.
+    * bundles-uploaded = those PDF bundles are uploaded and their qr-codes read (but not processed further).
+    * bundles-pushed = those bundles are "pushed" so that they can be graded.
+    * rubrics = system and demo rubrics are created for marking.
+    * randomarking = several rando-markers are run in parallel to leave comments and annotations on student work. Random ID-ing of papers is also done.
+    * tagging = (future/not-yet-implemented) = pedagogy tags will be applied to questions to label them with learning goals.
+    * spreadsheet = a marking spreadsheet is downloaded 
+    * reassembly = marked papers are reassembled (along, optionally, with solutions).
+    * reports = (future/not-yet-implemented) = instructor and student reports are built.
+    """,
+    )
     parser.add_argument(
         "--port", type=int, default=8000, help="Port number on which to launch server"
     )
@@ -75,7 +95,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         "spec",
         "sources",
         "populate",
-        "papers_built",
+        "papers-built",
         "bundles-created",
         "bundles-uploaded",
         "bundles-pushed",
@@ -300,7 +320,7 @@ def run_demo_preparation_commands(
             >> will also upload solutions at this point if instructed by user
             >> will also upload the classlist
         * (populate): make the qv-map and populate the database
-        * (papers_built): make the paper-pdfs
+        * (papers-built): make the paper-pdfs
         * finally - download a zip of all the papers, and set preparation as completed.
 
     KWargs:
@@ -338,7 +358,7 @@ def run_demo_preparation_commands(
         return False
 
     build_all_papers_and_wait()
-    if stop_after == "papers_built":
+    if stop_after == "papers-built":
         print("Stopping after papers_built.")
         return False
     # download a zip of all the papers.
