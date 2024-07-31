@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2022 Andrew Rechnitzer
+# Copyright (C) 2018-2024 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
@@ -27,28 +27,79 @@ log = logging.getLogger("pagescene")
 minimum_box_side_length = 24
 
 
-def shape_to_sample_points_on_boundary(shape, N=2, corners=False):
+def shape_to_sample_points_on_boundary(shape, corners=False, all_sides=True):
     """Return some points on the perimeter of a shape.
 
     If the input is a point, just return that point.
 
-    If the input is a rectangle, dy default, list of vertices in the
+    If the input is a rectangle, by default, list of vertices in the
     middle of each side, but this can be adjusted.
     """
     if isinstance(shape, QRectF):
         x, y, w, h = shape.getRect()
-        if corners:
-            trange = range(0, N + 1)
+        # start with midpoints of the rectangle sides
+        if all_sides:
+            pts = [
+                QPointF(x + w / 2, y),
+                QPointF(x + w / 2, y + h),
+                QPointF(x, y + h / 2),
+                QPointF(x + w, y + h / 2),
+            ]
         else:
-            trange = range(1, N)
-        return [
-            *(QPointF(x + w * n / N, y) for n in trange),
-            *(QPointF(x + w * n / N, y + h) for n in trange),
-            *(QPointF(x, y + h * n / N) for n in range(1, N)),
-            *(QPointF(x + w, y + h * n / N) for n in range(1, N)),
-        ]
+            pts = [
+                QPointF(x, y + h / 2),
+                QPointF(x + w, y + h / 2),
+            ]
+        if corners:
+            pts += [
+                QPointF(x, y),
+                QPointF(x + w, y),
+                QPointF(x, y + h),
+                QPointF(x + w, y + h),
+            ]
+        return pts
     elif isinstance(shape, QPointF):
         return [shape]
+    else:
+        raise ValueError(f"Don't know how find points on perimeter of {shape}")
+
+
+def LeftMidPoint(shape):
+    if isinstance(shape, QRectF):
+        x, y, w, h = shape.getRect()
+        return QPointF(x, y + h / 2)
+    elif isinstance(shape, QPointF):
+        return shape
+    else:
+        raise ValueError(f"Don't know how find points on perimeter of {shape}")
+
+
+def RightMidPoint(shape):
+    if isinstance(shape, QRectF):
+        x, y, w, h = shape.getRect()
+        return QPointF(x + w, y + h / 2)
+    elif isinstance(shape, QPointF):
+        return shape
+    else:
+        raise ValueError(f"Don't know how find points on perimeter of {shape}")
+
+
+def BottomMidPoint(shape):
+    if isinstance(shape, QRectF):
+        x, y, w, h = shape.getRect()
+        return QPointF(x + w / 2, y + h)
+    elif isinstance(shape, QPointF):
+        return shape
+    else:
+        raise ValueError(f"Don't know how find points on perimeter of {shape}")
+
+
+def TopMidPoint(shape):
+    if isinstance(shape, QRectF):
+        x, y, w, h = shape.getRect()
+        return QPointF(x + w / 2, y)
+    elif isinstance(shape, QPointF):
+        return shape
     else:
         raise ValueError(f"Don't know how find points on perimeter of {shape}")
 
@@ -63,8 +114,11 @@ def shortestLine(g_rect, b_rect):
 
     More precisely, given two rectangles, return shortest line between the midpoints of their sides. A single-vertex is treated as a rectangle of height/width=0 for this purpose.
     """
-    gvert = shape_to_sample_points_on_boundary(g_rect, 2, corners=False)
-    bvert = shape_to_sample_points_on_boundary(b_rect, 2, corners=True)
+    gvert = shape_to_sample_points_on_boundary(g_rect, corners=False)
+    bvert = shape_to_sample_points_on_boundary(
+        b_rect,
+        corners=True,
+    )
     gp = gvert[0]
     bp = bvert[0]
     dd = sqrDistance(gp - bp)
@@ -294,6 +348,58 @@ def which_sticky_corners(g, r):
     return path
 
 
+def short_line(b_pts, a_pt):
+    b_min = b_pts[0]
+    dd = sqrDistance(a_pt - b_min)
+    for b in b_pts:
+        dst = sqrDistance(a_pt - b)
+        if dst < dd:
+            b_min = b
+            dd = dst
+    return QLineF(b_min, a_pt)
+
+
+def short_lines(b_pts, a_pt, *, N=2):
+    distances_and_lines = sorted(
+        [(sqrDistance(a_pt - b), QLineF(b, a_pt)) for b in b_pts], key=lambda X: X[0]
+    )
+    return [X[1] for X in distances_and_lines[:N]]
+
+
+def shortestToSideLine(g_rect, b_rect):
+    bvert = shape_to_sample_points_on_boundary(b_rect, corners=True)
+    # first try to connect left-mid-side of g_rect to box.
+    lmp = LeftMidPoint(g_rect)
+    lines_to_left = short_lines(bvert, lmp)
+
+    # make sure that line goes from left-to-right
+    # this avoids the line intersecting the box around the ghost
+    for line_to_left in lines_to_left:
+        if line_to_left.p1().x() <= line_to_left.p2().x():
+            return line_to_left, "left"
+    # otherwise try a different line
+
+    # now try to connect to right mid-point
+    rmp = RightMidPoint(g_rect)
+    line_to_right = short_line(bvert, rmp)
+    # make sure line goes right-to-left **and** also
+    # that ghost is west of the box.
+    if (b_rect.left() >= rmp.x()) and (
+        line_to_right.p1().x() >= line_to_right.p2().x()
+    ):
+        return line_to_right, "right"
+    # if that doesnt work try to connect to middle of top
+    tmp = TopMidPoint(g_rect)
+    line_to_top = short_line(bvert, tmp)
+    # but only if line runs in correct direction
+    if line_to_top.p1().y() <= line_to_top.p2().y():
+        return line_to_top, "top"
+    # all else fails - connect to the bottom midpoint
+    bmp = BottomMidPoint(g_rect)
+    line_to_bottom = short_line(bvert, bmp)
+    return line_to_bottom, "bottom"
+
+
 def which_horizontal_step(g_rect, b_rect):
     """WIP on a beautiful horizontally stepped labelling system.
 
@@ -305,7 +411,7 @@ def which_horizontal_step(g_rect, b_rect):
         QPainterPath
     """
     # direct line from the box-rect to the ghost-rect
-    directLine = shortestLine(g_rect, b_rect)
+    directLine, side = shortestToSideLine(g_rect, b_rect)
     thePath = QPainterPath(directLine.p1())
 
     # iteration 1
@@ -333,7 +439,9 @@ def which_horizontal_step(g_rect, b_rect):
     # as #2 but steeper diagonal
     slope = 3
     sg = directLine.dy() * directLine.dx()  # get sign of gradient
-    if abs(directLine.dy()) < slope * abs(directLine.dx()):  # end in horizontal
+    if (side in ["left", "right"]) and (
+        abs(directLine.dy()) < slope * abs(directLine.dx())
+    ):  # end in horizontal
         sx = directLine.dy() / slope
         if sg < 0:  # flip sign if gradient negative
             sx = -sx
