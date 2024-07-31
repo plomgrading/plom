@@ -79,6 +79,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         "bundles-created",
         "bundles-uploaded",
         "bundles-pushed",
+        "rubrics",
         "randomarking",
         "tagging",
         "spreadsheet",
@@ -410,8 +411,8 @@ def run_demo_bundle_scan_commands(
     """Run commands to step through the scanning process in the demo.
 
     In order it runs:
-        * (bundles_created): create bundles of papers; system will also make random annotations on these papers to simulate student work. (Optionally) the system will "muck" the papers to simulate poor scanning.
-        * (bundles_uploaded): upload the bundles and read their qr-codes
+        * (bundles-created): create bundles of papers; system will also make random annotations on these papers to simulate student work. (Optionally) the system will "muck" the papers to simulate poor scanning.
+        * (bundles-uploaded): upload the bundles and read their qr-codes
         * finally - push the bundles and id any homework bundles.
 
     KWargs:
@@ -422,14 +423,16 @@ def run_demo_bundle_scan_commands(
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
     build_the_bundles(length)
-    if stop_after == "bundles_created":
+    if stop_after == "bundles-created":
         return False
 
     upload_the_bundles(length)
-    if stop_after == "bundles_uploaded":
+    if stop_after == "bundles-uploaded":
         return False
 
     push_the_bundles(length)
+    if stop_after == "bundles-pushed":
+        return True
 
     return True
 
@@ -482,6 +485,7 @@ def run_marking_commands(*, port: int, stop_after=None) -> bool:
     """Run commands to step through the marking process in the demo.
 
     In order it runs:
+        * (rubrics): Make system and demo rubrics.
         * (randomarker): make random marking-annotations on papers and assign random student-ids.
 
     KWargs:
@@ -491,6 +495,11 @@ def run_marking_commands(*, port: int, stop_after=None) -> bool:
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
     # add rubrics and tags, and then run the randomaker.
+    run_django_manage_command("plom_rubrics init manager")
+    run_django_manage_command("plom_rubrics push --demo manager")
+    if stop_after == "rubrics":
+        return False
+
     run_the_randomarker(port=args.port)
     if stop_after == "randomarker":
         return False
