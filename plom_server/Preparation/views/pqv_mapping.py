@@ -116,6 +116,9 @@ class PQVMappingView(ManagerRequiredView):
             "prenaming": PrenameSettingService().get_prenaming_setting(),
             "pqv_mapping_present": PaperInfoService().is_paper_database_fully_populated(),
             "number_of_students": StagingStudentService().how_many_students(),
+            "number_plus_twenty": StagingStudentService().how_many_students() + 20,
+            "number_times_1dot1": (StagingStudentService().how_many_students() * 11)
+            // 10,
             "student_list_present": StagingStudentService().are_there_students(),
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
             "chore_in_progress": PaperCreatorService.is_chore_in_progress(),
@@ -134,7 +137,9 @@ class PQVMappingView(ManagerRequiredView):
                     "prenamed_papers_list": format_int_list_with_runs(
                         prenamed_papers_list
                     ),
+                    "first_prenamed_paper": min(prenamed_papers_list),
                     "last_prenamed_paper": max(prenamed_papers_list),
+                    "last_plus_ten": max(prenamed_papers_list) + 10,
                 }
             )
         else:

@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Bryan Tanady
 
 # a different kind of annotations... this is about code typing
@@ -53,13 +54,15 @@ from PyQt6.QtWidgets import (
     QMenu,
 )
 
-from plom import AnnFontSizePts, ScenePixelHeight
+from plom import ScenePixelHeight
 from plom.plom_exceptions import PlomInconsistentRubric
+from plom.misc_utils import pprint_score
 from plom.client.image_view_widget import mousewheel_delta_to_scale
 
 # in some places we make assumptions that our view is this subclass
 from plom.client.pageview import PageView
 
+from .tools import DefaultTickRadius, DefaultPenWidth, AnnFontSizePts
 from .tools import (
     CrossItem,
     DeltaItem,
@@ -113,18 +116,19 @@ class ScoreBox(QGraphicsTextItem):
         style: dict[str, Any],
         fontsize,
         maxScore: int,
-        score,
+        score: float | None,
         question_label: str | None = None,
     ) -> None:
         """Initialize a new ScoreBox.
 
         Args:
-            style: a dict of pen width, annotation colour, etc.
+            style: a dict of pen width, annotation colour, scale, etc.
             fontsize (int): A non-zero, positive font value.
-            maxScore (int): A non-zero, positive maximum score.
-            score (int): A non-zero, positive current score for the paper.
-            question_label: how to display the question
-                number, or `None` to display no label at the beginning
+            maxScore: A non-zero, positive integer maximum score.
+            score: A current score for the paper, which can be zero,
+                ``None``, or a positive float.
+            question_label: how to display the name of this question to
+                users, or `None` to display no label at the beginning
                 of the score box.
         """
         super().__init__()
@@ -151,7 +155,7 @@ class ScoreBox(QGraphicsTextItem):
         if self.score is None:
             s += "Unmarked"
         else:
-            s += "{} out of {}".format(self.score, self.maxScore)
+            s += f"{pprint_score(self.score)} out of {self.maxScore}"
         self.setPlainText(s)
 
     def get_text(self):
@@ -161,7 +165,7 @@ class ScoreBox(QGraphicsTextItem):
         self.style = self.scene().style
         self.setDefaultTextColor(self.style["annot_color"])
 
-    def changeScore(self, x: int | None) -> None:
+    def changeScore(self, x: int | float | None) -> None:
         """Set the score to x.
 
         Args:
@@ -471,8 +475,6 @@ class PageScene(QGraphicsScene):
         # initialise the undo-stack
         self.undoStack = QUndoStack()
 
-        # we don't want current font size from UI; use fixed physical size
-        self.fontSize = AnnFontSizePts
         self._scale = 1.0
 
         self.scoreBox = None
@@ -511,7 +513,13 @@ class PageScene(QGraphicsScene):
         self.lineItem = QGraphicsLineItem()
 
         # Add a ghost comment to scene, but make it invisible
-        self.ghostItem = GhostComment("1", "blah", self.fontSize)
+        self.ghostItem = GhostComment(
+            annot_scale=self._scale,
+            display_delta="1",
+            txt="blah",
+            fontsize=AnnFontSizePts,
+        )
+
         self._hideGhost()
         self.addItem(self.ghostItem)
 
@@ -522,7 +530,7 @@ class PageScene(QGraphicsScene):
         # so that it cannot be overwritten.
         # set up "k out of n" where k=current score, n = max score.
         self.scoreBox = ScoreBox(
-            self.style, self.fontSize, self.maxMark, self.score, question_label
+            self.style, AnnFontSizePts, self.maxMark, self.score, question_label
         )
         self.scoreBox.setZValue(10)
         self.addItem(self.scoreBox)
@@ -533,6 +541,9 @@ class PageScene(QGraphicsScene):
         self.avoidBox = self.scoreBox.boundingRect().adjusted(-16, -16, 64, 24)
         # holds the path images uploaded from annotator
         self.tempImagePath = None
+
+        # Offset is physical unit which will cause the gap gets bigger when zoomed in.
+        self.rubric_cursor_offset = 0
 
     def buildUnderLay(self):
         if self.underImage:
@@ -776,20 +787,31 @@ class PageScene(QGraphicsScene):
         """
         self.increase_scale_factor(1.0 / r)
 
+    def _refresh_ink_scaling(self) -> None:
+        """Refresh both pen width and ink to reflect global scene's scale."""
+        assert isinstance(self.style, dict)
+        self.style["pen_width"] = self._scale * DefaultPenWidth
+        self.ink: QPen = QPen(self.style["annot_color"], self.style["pen_width"])
+
     def _stuff_to_do_after_setting_scale(self):
         """Private method for tasks after changing scale.
 
         TODO: I'd like to move to a model where fontSize is constant
         and all things (line widths, fonts, etc) get multiplied by scale
         """
-        self.fontSize = self._scale * AnnFontSizePts
         # TODO: don't like this 1.25 hardcoded
         font = QFont("Helvetica")
-        font.setPixelSize(round(1.25 * self.fontSize))
+        font.setPixelSize(round(1.25 * self._scale * AnnFontSizePts))
         self.scoreBox.setFont(font)
-        self.ghostItem.change_font_size(self.fontSize)
+        assert isinstance(self.style, dict)
+        self.style["scale"] = self._scale
+        self.style["fontsize"] = self._scale * AnnFontSizePts
+        self._refresh_ink_scaling()
+        self.ghostItem.change_rubric_size(
+            fontsize=int(self._scale * AnnFontSizePts), annot_scale=self._scale
+        )
 
-    def set_annotation_color(self, c):
+    def set_annotation_color(self, c) -> None:
         """Set the colour of annotations.
 
         Args:
@@ -802,21 +824,25 @@ class PageScene(QGraphicsScene):
             c = QColor.fromRgb(*c)
         style = {
             "annot_color": c,
-            "pen_width": 2,
+            "pen_width": self._scale * DefaultPenWidth,
+            "scale": self._scale,
             # TODO: 64 hardcoded elsewhere
             "highlight_color": QColor(255, 255, 0, 64),
             "highlight_width": 50,
             # light highlight for backgrounds
             "box_tint": QColor(255, 255, 0, 16),
+            "fontsize": self._scale * AnnFontSizePts,
         }
-        self.ink = QPen(style["annot_color"], style["pen_width"])
         self.lightBrush = QBrush(style["box_tint"])
         self.highlight = QPen(style["highlight_color"], style["highlight_width"])
-        self.style = style
+        # TODO: Issue 3514: this is an agrecious overwrite of a Qt built-in method
+        self.style = style  # type: ignore[method-assign,assignment]
+        self._refresh_ink_scaling()
         for X in self.items():
             # check if object has "restyle" function and if so then use it to set the colour
             if getattr(X, "restyle", False):
-                X.restyle(self.style)
+                # TODO: this loop catches rubric subobjects twice (minor for now)
+                X.restyle(self.style)  # type: ignore[attr-defined]
         if self.scoreBox:
             self.scoreBox.update_style()
 
@@ -1255,7 +1281,7 @@ class PageScene(QGraphicsScene):
             self.addItem(self.boxItem)
         elif self.boxLineStampState == 2:  # finish the connecting line
             if ghost_rect is None:
-                tick_rad = TickItem.tick_radius
+                tick_rad = self._scale * DefaultTickRadius
                 padding = tick_rad // 2
                 side = round(2 * padding + 7 * tick_rad / 4)
                 g_rect_top_left = QPointF(
@@ -1305,7 +1331,7 @@ class PageScene(QGraphicsScene):
             # update the connecting path
             self.currentPos = event.scenePos()
             if ghost_rect is None:
-                tick_rad = TickItem.tick_radius
+                tick_rad = self._scale * DefaultTickRadius
                 padding = tick_rad // 2
                 side = round(2 * padding + 7 * tick_rad / 4)
                 g_rect_top_left = QPointF(
@@ -1529,7 +1555,8 @@ class PageScene(QGraphicsScene):
 
         if self.boxLineStampState == 3:  # time to stamp the rubric!
             pt = event.scenePos()  # grab the location of the mouse-click
-            command = CommandRubric(self, pt, self.current_rubric)
+            shifted_pt = QPointF(pt.x() + self.rubric_cursor_offset, pt.y())
+            command = CommandRubric(self, shifted_pt, self.current_rubric)
             log.debug(
                 "Making a Rubric: boxLineStampState is {}".format(
                     self.boxLineStampState
@@ -2674,7 +2701,9 @@ class PageScene(QGraphicsScene):
                 self.boxLineStampState = 0
                 return
             # small box, so just stamp the rubric
-            command = CommandRubric(self, event.scenePos(), self.current_rubric)
+            pt = event.scenePos()
+            shifted_pt = QPointF(pt.x() + self.rubric_cursor_offset, pt.y())
+            command = CommandRubric(self, shifted_pt, self.current_rubric)
             log.debug(
                 "Making a Rubric: boxLineStampState is {}".format(
                     self.boxLineStampState
@@ -2910,7 +2939,7 @@ class PageScene(QGraphicsScene):
             ghost_rect=self.ghostItem.mapRectToScene(self.ghostItem.boundingRect()),
         )
 
-    def setTheMark(self, newMark: int) -> None:
+    def setTheMark(self, newMark: int | float) -> None:
         """Sets the new mark/score for the paper.
 
         Args:

@@ -98,7 +98,12 @@ class Command(BaseCommand):
             action="store",
             choices=["build", "upload", "read", "wait", "push", "id_hw"],
             required=True,
-            help="(build) demo bundles, (upload) demo bundles, (read) qr-codes in uploaded demo bundles, (wait) for background processing of upload and qr-code reading, (push) processed bundles from staging, (id_hw) ID pushed demo homework bundles.",
+            help="""(build) demo bundles,
+            (upload) demo bundles,
+            (read) qr-codes in uploaded demo bundles,
+            (wait) for background processing of upload and qr-code reading,
+            (push) processed bundles from staging,
+            (id_hw) ID pushed demo homework bundles.""",
         )
 
     def build_the_bundles(self, demo_config: DemoAllBundlesConfig) -> None:

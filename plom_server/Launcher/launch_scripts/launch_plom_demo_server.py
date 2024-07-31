@@ -38,7 +38,27 @@ def wait_for_user_to_type_quit() -> None:
 
 def set_argparse_and_get_args() -> argparse.Namespace:
     """Configure argparse to collect commandline options."""
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog="""
+    The --stop-after and --wait-after options take many possible values.
+
+    * users = the basic plom-system (server, db, etc) are set up, and demo-users are created.
+    * spec = a demo assessment specification is uploaded.
+    * sources = demo assessment sources are uploaded. Also a classlist and (if selected) solutions.
+    * populate = the database is populated with papers.
+    * papers-built = assessment PDFs are created from the sources.
+    * bundles-created = PDF bundles are created to simulate scanned student work.
+    * bundles-uploaded = those PDF bundles are uploaded and their qr-codes read (but not processed further).
+    * bundles-pushed = those bundles are "pushed" so that they can be graded.
+    * rubrics = system and demo rubrics are created for marking.
+    * randomarking = several rando-markers are run in parallel to leave comments and annotations on student work. Random ID-ing of papers is also done.
+    * tagging = (future/not-yet-implemented) = pedagogy tags will be applied to questions to label them with learning goals.
+    * spreadsheet = a marking spreadsheet is downloaded.
+    * reassembly = marked papers are reassembled (along, optionally, with solutions).
+    * reports = (future/not-yet-implemented) = instructor and student reports are built.
+    """,
+    )
     parser.add_argument(
         "--port", type=int, default=8000, help="Port number on which to launch server"
     )
@@ -75,10 +95,11 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         "spec",
         "sources",
         "populate",
-        "papers_built",
+        "papers-built",
         "bundles-created",
         "bundles-uploaded",
         "bundles-pushed",
+        "rubrics",
         "randomarking",
         "tagging",
         "spreadsheet",
@@ -299,7 +320,7 @@ def run_demo_preparation_commands(
             >> will also upload solutions at this point if instructed by user
             >> will also upload the classlist
         * (populate): make the qv-map and populate the database
-        * (papers_built): make the paper-pdfs
+        * (papers-built): make the paper-pdfs
         * finally - download a zip of all the papers, and set preparation as completed.
 
     KWargs:
@@ -337,7 +358,7 @@ def run_demo_preparation_commands(
         return False
 
     build_all_papers_and_wait()
-    if stop_after == "papers_built":
+    if stop_after == "papers-built":
         print("Stopping after papers_built.")
         return False
     # download a zip of all the papers.
@@ -410,8 +431,8 @@ def run_demo_bundle_scan_commands(
     """Run commands to step through the scanning process in the demo.
 
     In order it runs:
-        * (bundles_created): create bundles of papers; system will also make random annotations on these papers to simulate student work. (Optionally) the system will "muck" the papers to simulate poor scanning.
-        * (bundles_uploaded): upload the bundles and read their qr-codes
+        * (bundles-created): create bundles of papers; system will also make random annotations on these papers to simulate student work. (Optionally) the system will "muck" the papers to simulate poor scanning.
+        * (bundles-uploaded): upload the bundles and read their qr-codes
         * finally - push the bundles and id any homework bundles.
 
     KWargs:
@@ -422,14 +443,16 @@ def run_demo_bundle_scan_commands(
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
     build_the_bundles(length)
-    if stop_after == "bundles_created":
+    if stop_after == "bundles-created":
         return False
 
     upload_the_bundles(length)
-    if stop_after == "bundles_uploaded":
+    if stop_after == "bundles-uploaded":
         return False
 
     push_the_bundles(length)
+    if stop_after == "bundles-pushed":
+        return True
 
     return True
 
@@ -482,6 +505,7 @@ def run_marking_commands(*, port: int, stop_after=None) -> bool:
     """Run commands to step through the marking process in the demo.
 
     In order it runs:
+        * (rubrics): Make system and demo rubrics.
         * (randomarker): make random marking-annotations on papers and assign random student-ids.
 
     KWargs:
@@ -491,6 +515,11 @@ def run_marking_commands(*, port: int, stop_after=None) -> bool:
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
     # add rubrics and tags, and then run the randomaker.
+    run_django_manage_command("plom_rubrics init manager")
+    run_django_manage_command("plom_rubrics push --demo manager")
+    if stop_after == "rubrics":
+        return False
+
     run_the_randomarker(port=args.port)
     if stop_after == "randomarker":
         return False

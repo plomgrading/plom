@@ -755,7 +755,10 @@ class MarkerClient(QWidget):
 
         self.examModel.set_source_image_data(task, src_img_data)
 
-        paperdir = Path(tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory))
+        assert task.startswith("q")
+        paperdir = Path(
+            tempfile.mkdtemp(prefix=task[1:] + "_", dir=self.workingDirectory)
+        )
         log.debug("create paperdir %s for already-graded download", paperdir)
         self.examModel.setPaperDirByTask(task, paperdir)
         aname = paperdir / f"G{task[1:]}.{annot_img_info['extension']}"
@@ -1126,6 +1129,10 @@ class MarkerClient(QWidget):
             # toggle various columns without end-user useful info
             for i in self.ui.examModel.columns_to_hide:
                 self.ui.tableView.showColumn(i)
+                # Limit the widths of the debugging columns, otherwise ridiculous
+                # TODO: no initial effect (before view setModel, does self.setHorizontalHeaderLabels)
+
+                self.ui.tableView.setColumnWidth(i, 128)
         else:
             self.ui.technicalButton.setText("Show technical info")
             self.ui.technicalButton.setArrowType(Qt.ArrowType.RightArrow)
@@ -1481,7 +1488,8 @@ class MarkerClient(QWidget):
             return
 
         if self.allowBackgroundOps:
-            if self.examModel.countReadyToMark() == 0:
+            # If just one in the queue (which we are grading) then ask for more
+            if self.examModel.countReadyToMark() <= 1:
                 self.requestNextInBackgroundStart()
 
         self.startTheAnnotator(inidata)
@@ -1769,11 +1777,12 @@ class MarkerClient(QWidget):
         # now update the marking history with the task.
         self.marking_history.append(task)
 
-    def getMorePapers(self, oldtgvID) -> tuple | None:
+    def getMorePapers(self, oldtgvID: str) -> tuple | None:
         """Loads more tests.
 
         Args:
-            oldtgvID(str): the Test-Group-Version ID for the previous test.
+            oldtgvID: the task code with no leading "q" for the previous
+                thing marked.
 
         Returns:
             The data for the annotator or None as described in
@@ -1796,9 +1805,8 @@ class MarkerClient(QWidget):
         assert pdict is None, "Annotator should not pull a regrade"
 
         if self.allowBackgroundOps:
-            # while annotator is firing up request next paper in background
-            # after giving system a moment to do `annotator.exec()`
-            if self.examModel.countReadyToMark() == 0:
+            # If just one in the queue (which we are grading) then ask for more
+            if self.examModel.countReadyToMark() <= 1:
                 self.requestNextInBackgroundStart()
 
         return data

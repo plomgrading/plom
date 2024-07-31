@@ -1,5 +1,5 @@
 <!--
-__copyright__ = "Copyright (C) 2023 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2023-2024 Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2023 Colin B. Macdonald"
 __copyright__ = "Copyright (C) 2023 Edith Coates"
 __copyright__ = "Copyright (C) 2023 Natalie Balashov"
@@ -8,9 +8,17 @@ __license__ = "AGPL-3.0-or-later"
 
 # Running the demo
 
-Roughly `python3 manage.py plom_demo` from inside the `plom_server/` directory,
-but for details see https://gitlab.com/plom/plom/-/issues/2604
-
+As of 31 July 2024, run the demo from the `plom_server` directory, by running 
+```
+python3 Launcher/launch_scripts/launch_plom_demo_server.py
+```
+This runs the entire demo through to reassembling papers. 
+You should probably run it with a `--wait-after` option:
+  * 'users' - will wait after creating demo-users
+  * 'spec' - wait after a demo-spec is uploaded
+  * 'papers_built' - wait after paper pdfs are built
+  * 'rubrics' - wait after bundles are uploaded and system+demo rubrics set up - useful for playing with the client 
+  * 'randomarker' - wait after papers are marked and ID'd by the rando-marker
 To stop the demo type "quit" and press enter.
 
 ## Problems
