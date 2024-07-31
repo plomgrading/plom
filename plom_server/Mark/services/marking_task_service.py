@@ -499,8 +499,11 @@ class MarkingTaskService:
             raise ValueError("Cannot find task or tag with given pk")
         self._add_tag(the_tag, the_task)
 
-    def get_tag_from_text(self, text: str) -> MarkingTaskTag | None:
-        """Get a tag object from its text contents. Assumes the input text has already been sanitized. Selects it for update.
+    def _get_tag_from_text_for_update(self, text: str) -> MarkingTaskTag | None:
+        """Get a tag object from its text contents.
+
+        Assumes the input text has already been sanitized.
+        Selects it for update.
 
         Args:
             text: the text contents of a tag.
@@ -536,7 +539,7 @@ class MarkingTaskService:
             ValidationError: invalid tag text
         """
         the_task = self.get_task_from_code(code)
-        the_tag = self.get_tag_from_text(tag_text)
+        the_tag = self._get_tag_from_text_for_update(tag_text)
         if not the_tag:
             the_tag = self.create_tag(user, tag_text)
         self._add_tag(the_tag, the_task)
@@ -556,7 +559,7 @@ class MarkingTaskService:
             RuntimeError: task not found.
         """
         # note - is select_for_update
-        the_tag = self.get_tag_from_text(tag_text)
+        the_tag = self._get_tag_from_text_for_update(tag_text)
         # does not raise exception - rather it returns a None if can't find the tag
         if not the_tag:
             raise ValueError(f'No such tag "{tag_text}"')
@@ -571,6 +574,8 @@ class MarkingTaskService:
 
         Args:
             tag: reference to a MarkingTaskTag instance
+                - should be selected for update since we
+                  are going to modify it.
             task: reference to a MarkingTask instance
         """
         # check if the tag and task are linked - see #2810
@@ -665,7 +670,7 @@ class MarkingTaskService:
         """
         # clean up the text and see if such a tag already exists
         cleaned_tag_text = self.sanitize_tag_text(tag_text)
-        tag_obj = self.get_tag_from_text(cleaned_tag_text)
+        tag_obj = self._get_tag_from_text_for_update(cleaned_tag_text)
         if tag_obj is None:  # no such tag exists, so create one
             # note - will raise validationerror if tag_text not legal
             tag_obj = self.create_tag(user, cleaned_tag_text)

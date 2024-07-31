@@ -151,6 +151,8 @@ class MarkingTaskServiceRemovingTaggingTests(TestCase):
             s.remove_tag_text_from_task_code("no_such_tag_411d1b1443e5", task.code)
 
     def test_tag_remove_no_such_local_tag(self) -> None:
+        # this tests issue #2810 - which was fixed in !2792
+        # now an appropriate exception is raised.
         s = MarkingTaskService()
         user: User = baker.make(User)
         s.create_tag(user, "hello")
@@ -159,7 +161,6 @@ class MarkingTaskServiceRemovingTaggingTests(TestCase):
         )
         with self.assertRaisesMessage(ValueError, "does not have tag"):
             s.remove_tag_text_from_task_code("hello", task.code)
-        # There was a problem here in #2810, but fixed in !2792
 
     def test_tag_remove_invalid_code(self) -> None:
         s = MarkingTaskService()
