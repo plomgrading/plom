@@ -108,6 +108,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "django_filters",
     # Custom apps
+    "Launcher",
     "Base",
     "Authentication",
     "UserManagement",
