@@ -208,12 +208,14 @@ class RubricTable(QTableWidget):
         self._parent.update_tab_names()
 
     def is_user_tab(self) -> bool:
+        """Is this a user-created tab."""
         return self.tabType is None
 
     def is_group_tab(self) -> bool:
         return self.tabType == "group"
 
     def is_delta_tab(self) -> bool:
+        """Is this a one of the delta tabs."""
         return self.tabType == "delta"
 
     def is_hidden_tab(self) -> bool:
