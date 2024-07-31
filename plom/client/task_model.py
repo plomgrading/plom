@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2024 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
@@ -141,6 +141,11 @@ class MarkerExamModel(QStandardItemModel):
             pass
         else:
             raise KeyError(f"We already have task {task_id_str} in the table at r={r}.")
+
+        # if you can't find the task then append the new
+        # one at the end of the table, so set r appropriately.
+        print("Ask Colin about this when he comes back from canoeing.")
+        r = self.rowCount()
 
         # some processes might use -1 for unmarked papers
         if mark is not None and mark < 0:
