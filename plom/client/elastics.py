@@ -348,29 +348,52 @@ def which_sticky_corners(g, r):
     return path
 
 
-def short_line(b_pts, a_pt):
-    b_min = b_pts[0]
-    dd = sqrDistance(a_pt - b_min)
-    for b in b_pts:
-        dst = sqrDistance(a_pt - b)
-        if dst < dd:
-            b_min = b
-            dd = dst
-    return QLineF(b_min, a_pt)
+def short_line(b_pts, a_pt, *, below=False):
+    if below:
+        distances_and_lines = sorted(
+            [
+                (sqrDistance(a_pt - b), QLineF(b, a_pt))
+                for b in b_pts
+                if b.y() < a_pt.y()
+            ],
+            key=lambda X: X[0],
+        )
+    else:
+        distances_and_lines = sorted(
+            [(sqrDistance(a_pt - b), QLineF(b, a_pt)) for b in b_pts],
+            key=lambda X: X[0],
+        )
+    return distances_and_lines[0][1]
 
 
-def short_lines(b_pts, a_pt, *, N=2):
-    distances_and_lines = sorted(
-        [(sqrDistance(a_pt - b), QLineF(b, a_pt)) for b in b_pts], key=lambda X: X[0]
-    )
+def short_lines(b_pts, a_pt, *, N=2, below=False):
+    if below:
+        distances_and_lines = sorted(
+            [
+                (sqrDistance(a_pt - b), QLineF(b, a_pt))
+                for b in b_pts
+                if b.y() < a_pt.y()
+            ],
+            key=lambda X: X[0],
+        )
+    else:
+        distances_and_lines = sorted(
+            [(sqrDistance(a_pt - b), QLineF(b, a_pt)) for b in b_pts],
+            key=lambda X: X[0],
+        )
     return [X[1] for X in distances_and_lines[:N]]
 
 
 def shortestToSideLine(g_rect, b_rect):
+    g_y_mid = g_rect.center().y()
+    if g_y_mid < b_rect.top():
+        below = False  # ghost is above the box
+    else:
+        below = True
     bvert = shape_to_sample_points_on_boundary(b_rect, corners=True)
     # first try to connect left-mid-side of g_rect to box.
     lmp = LeftMidPoint(g_rect)
-    lines_to_left = short_lines(bvert, lmp)
+    lines_to_left = short_lines(bvert, lmp, below=below)
 
     # make sure that line goes from left-to-right
     # this avoids the line intersecting the box around the ghost
@@ -381,7 +404,7 @@ def shortestToSideLine(g_rect, b_rect):
 
     # now try to connect to right mid-point
     rmp = RightMidPoint(g_rect)
-    line_to_right = short_line(bvert, rmp)
+    line_to_right = short_line(bvert, rmp, below=below)
     # make sure line goes right-to-left **and** also
     # that ghost is west of the box.
     if (b_rect.left() >= rmp.x()) and (
