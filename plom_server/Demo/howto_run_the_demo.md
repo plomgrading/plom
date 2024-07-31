@@ -10,7 +10,7 @@ __license__ = "AGPL-3.0-or-later"
 
 As of 31 July 2024, run the demo from the `plom_server` directory, by running 
 ```
-python3 Launcher/launch_scripts/launch_plom_demo.py
+python3 Launcher/launch_scripts/launch_plom_demo_server.py
 ```
 This runs the entire demo through to reassembling papers. 
 You should probably run it with a `--wait-after` option:
