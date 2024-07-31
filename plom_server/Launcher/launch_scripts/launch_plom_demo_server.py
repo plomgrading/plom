@@ -41,7 +41,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
         epilog="""
-    The --stop-after and --wait-after options take many possible values. 
+    The --stop-after and --wait-after options take many possible values.
 
     * users = the basic plom-system (server, db, etc) are set up, and demo-users are created.
     * spec = a demo assessment specification is uploaded.
@@ -54,7 +54,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
     * rubrics = system and demo rubrics are created for marking.
     * randomarking = several rando-markers are run in parallel to leave comments and annotations on student work. Random ID-ing of papers is also done.
     * tagging = (future/not-yet-implemented) = pedagogy tags will be applied to questions to label them with learning goals.
-    * spreadsheet = a marking spreadsheet is downloaded 
+    * spreadsheet = a marking spreadsheet is downloaded.
     * reassembly = marked papers are reassembled (along, optionally, with solutions).
     * reports = (future/not-yet-implemented) = instructor and student reports are built.
     """,
