@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
@@ -10,6 +10,7 @@ import pathlib
 
 import fitz
 from tabulate import tabulate
+from time import sleep
 
 from django.utils import timezone
 from django.utils.text import slugify
@@ -200,6 +201,37 @@ class Command(BaseCommand):
             tabulate(bundle_page_list, headers="firstrow", tablefmt="simple_outline")
         )
 
+    def _wait_for_upload(self) -> None:
+        scanner = ScanService()
+        while True:
+            bundle_status = scanner.are_bundles_mid_splitting()
+            mid_split = [k for k, v in bundle_status.items() if v]
+            done = [k for k, v in bundle_status.items() if not v]
+            print(f"Uploaded bundles = {done}")
+            if mid_split:
+                print(f"Still waiting on {mid_split}")
+                sleep(5)
+            else:
+                break
+
+    def _wait_for_qr_read(self) -> None:
+        scanner = ScanService()
+        while True:
+            bundle_status = scanner.are_bundles_mid_qr_read()
+            mid_split = [k for k, v in bundle_status.items() if v]
+            done = [k for k, v in bundle_status.items() if not v]
+            print(f"Read all qr codes in bundles = {done}")
+            if mid_split:
+                print(f"Still waiting on {mid_split}")
+                sleep(2)
+            else:
+                break
+
+    def wait_for_upload_or_read(self):
+        print("Waiting for bundle uploads and qr-code reading")
+        self._wait_for_upload()
+        self._wait_for_qr_read()
+
     def add_arguments(self, parser):
         sp = parser.add_subparsers(
             dest="command",
@@ -263,6 +295,9 @@ class Command(BaseCommand):
             choices=["all", "unknown", "known", "extra", "discard", "error"],
             default="all",
         )
+        sp.add_parser(
+            "wait", help="Wait for background processing of bundle upload and read."
+        )
 
     def handle(self, *args, **options):
         if options["command"] == "upload":
@@ -286,5 +321,7 @@ class Command(BaseCommand):
             self.show_bundle_pages(
                 bundle_name=options["bundle_name"], show=options["show"]
             )
+        elif options["command"] == "wait":
+            self.wait_for_upload_or_read()
         else:
             self.print_help("manage.py", "plom_staging_bundles")

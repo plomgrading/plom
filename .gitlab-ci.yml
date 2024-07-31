@@ -6,7 +6,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -471,7 +471,7 @@ webplom_demo:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - python3 manage.py plom_demo --no-waiting --randomarker --quick --solutions
+    - ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after reports
     - popd
 
 
@@ -841,7 +841,7 @@ fedora_webplom:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - python3 manage.py plom_demo --no-waiting --randomarker
+    - ./Launcher/launch_scripts/launch_plom_demo_server.py --stop-after reports
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
     - popd
@@ -949,7 +949,7 @@ newOS_newdeps_webplom:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - python3 manage.py plom_demo --no-waiting --randomarker --quick
+    - ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
     - popd
@@ -1070,7 +1070,7 @@ minpy_mindeps_webplom:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - python3 manage.py plom_demo --no-waiting --randomarker --quick
+    - ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
     - popd
@@ -1559,7 +1559,7 @@ macos_server_webplom:
   - echo $PYTHONPATH
   - pushd plom_server
   # no postgres yet
-  # python manage.py plom_demo --no-waiting --randomarker
+  # ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
   - export PLOM_DATABASE_BACKEND=sqlite
   - python manage.py test
   - popd

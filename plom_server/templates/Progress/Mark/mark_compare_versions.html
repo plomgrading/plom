@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Andrew Rechnitzer
     Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2024 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -57,10 +58,10 @@
                         <tbody>
                             <tr>
                                 <td>{{ stats.number_of_completed_tasks }}</td>
-                                <td>{{ stats.mark_mean }}</td>
-                                <td>{{ stats.mark_median }}</td>
-                                <td>{{ stats.mark_mode }}</td>
-                                <td>{{ stats.mark_stdev }}</td>
+                                <td>{{ stats.mark_mean_str }}</td>
+                                <td>{{ stats.mark_median_str }}</td>
+                                <td>{{ stats.mark_mode_str }}</td>
+                                <td>{{ stats.mark_stdev_str }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -96,20 +97,20 @@
                                     <tr>
                                         <td>{{ data.username }}</td>
                                         <td>{{ data.number }}</td>
-                                        <td>{{ data.mark_mean }}</td>
-                                        <td>{{ data.mark_median }}</td>
-                                        <td>{{ data.mark_mode }}</td>
-                                        <td>{{ data.mark_stdev }}</td>
+                                        <td>{{ data.mark_mean_str }}</td>
+                                        <td>{{ data.mark_median_str }}</td>
+                                        <td>{{ data.mark_mode_str }}</td>
+                                        <td>{{ data.mark_stdev_str }}</td>
                                     </tr>
                                 </tbody>
                                 <tfoot class="table-secondary">
                                     <tr>
                                         <td>vs All</td>
                                         <td>{{ stats.number_of_completed_tasks }}</td>
-                                        <td>{{ stats.mark_mean }}</td>
-                                        <td>{{ stats.mark_median }}</td>
-                                        <td>{{ stats.mark_mode }}</td>
-                                        <td>{{ stats.mark_stdev }}</td>
+                                        <td>{{ stats.mark_mean_str }}</td>
+                                        <td>{{ stats.mark_median_str }}</td>
+                                        <td>{{ stats.mark_mode_str }}</td>
+                                        <td>{{ stats.mark_stdev_str }}</td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -182,7 +183,7 @@
       the_pie_chart.data.datasets[0].backgroundColor[{{version_hists|length|add:ver|add:'-1'}}]='#eee';
       {% endfor %}
       the_pie_chart.update();
-      
+
     </script>
     {% for ver, data in version_hists.items %}
         <script>

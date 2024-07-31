@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Bryan Tanady
 
 # a different kind of annotations... this is about code typing
@@ -55,6 +56,7 @@ from PyQt6.QtWidgets import (
 
 from plom import ScenePixelHeight
 from plom.plom_exceptions import PlomInconsistentRubric
+from plom.misc_utils import pprint_score
 from plom.client.image_view_widget import mousewheel_delta_to_scale
 
 # in some places we make assumptions that our view is this subclass
@@ -114,7 +116,7 @@ class ScoreBox(QGraphicsTextItem):
         style: dict[str, Any],
         fontsize,
         maxScore: int,
-        score,
+        score: float | None,
         question_label: str | None = None,
     ) -> None:
         """Initialize a new ScoreBox.
@@ -122,10 +124,11 @@ class ScoreBox(QGraphicsTextItem):
         Args:
             style: a dict of pen width, annotation colour, scale, etc.
             fontsize (int): A non-zero, positive font value.
-            maxScore (int): A non-zero, positive maximum score.
-            score (int): A non-zero, positive current score for the paper.
-            question_label: how to display the question
-                number, or `None` to display no label at the beginning
+            maxScore: A non-zero, positive integer maximum score.
+            score: A current score for the paper, which can be zero,
+                ``None``, or a positive float.
+            question_label: how to display the name of this question to
+                users, or `None` to display no label at the beginning
                 of the score box.
         """
         super().__init__()
@@ -152,7 +155,7 @@ class ScoreBox(QGraphicsTextItem):
         if self.score is None:
             s += "Unmarked"
         else:
-            s += "{} out of {}".format(self.score, self.maxScore)
+            s += f"{pprint_score(self.score)} out of {self.maxScore}"
         self.setPlainText(s)
 
     def get_text(self):
@@ -162,7 +165,7 @@ class ScoreBox(QGraphicsTextItem):
         self.style = self.scene().style
         self.setDefaultTextColor(self.style["annot_color"])
 
-    def changeScore(self, x: int | None) -> None:
+    def changeScore(self, x: int | float | None) -> None:
         """Set the score to x.
 
         Args:
@@ -2936,7 +2939,7 @@ class PageScene(QGraphicsScene):
             ghost_rect=self.ghostItem.mapRectToScene(self.ghostItem.boundingRect()),
         )
 
-    def setTheMark(self, newMark: int) -> None:
+    def setTheMark(self, newMark: int | float) -> None:
         """Sets the new mark/score for the paper.
 
         Args:

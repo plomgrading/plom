@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Aidan Murphy
 
 from __future__ import annotations
 
@@ -294,13 +295,25 @@ class MarkingTaskService:
         cleaned_data: dict[str, Any] = {}
 
         try:
-            for val in ("pg", "ver", "score"):
-                elem = data[val]
-                cleaned_data[val] = int(elem)
+            cleaned_data["pg"] = int(data["pg"])
         except IndexError:
-            raise ValidationError(f"Multiple values for '{val}', expected 1.")
+            raise ValidationError('Multiple values for "pg", expected 1.')
         except (ValueError, TypeError):
-            raise ValidationError(f"Could not cast {val} as int: {elem}")
+            raise ValidationError(f'Could not cast "pg" as int: {data["pg"]}')
+
+        try:
+            cleaned_data["ver"] = int(data["ver"])
+        except IndexError:
+            raise ValidationError('Multiple values for "ver", expected 1.')
+        except (ValueError, TypeError):
+            raise ValidationError(f'Could not cast "ver" as int: {data["ver"]}')
+
+        try:
+            cleaned_data["score"] = float(data["score"])
+        except IndexError:
+            raise ValidationError('Multiple values for "score", expected 1.')
+        except (ValueError, TypeError):
+            raise ValidationError(f'Could not cast "score" as float: {data["score"]}')
 
         try:
             cleaned_data["marking_time"] = float(data["marking_time"])
