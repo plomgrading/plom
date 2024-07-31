@@ -138,9 +138,6 @@ class MarkerExamModel(QStandardItemModel):
             r = self._findTask(task_id_str)
         except ValueError as e:
             assert "not found" in str(e), f"Oh my, unexpected stuff: {e}"
-            # TODO - ask CBM to fix whatever is going wrong.
-            print("ASK COLIN ABOUT THIS LINE")
-            r = self.rowCount()
             pass
         else:
             raise KeyError(f"We already have task {task_id_str} in the table at r={r}.")

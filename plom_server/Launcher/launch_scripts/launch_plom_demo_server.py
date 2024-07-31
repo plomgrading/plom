@@ -76,9 +76,9 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         "sources",
         "populate",
         "papers_built",
-        "bundles_created",
-        "bundles_uploaded",
-        "bundles_pushed",
+        "bundles-created",
+        "bundles-uploaded",
+        "bundles-pushed",
         "randomarking",
         "tagging",
         "spreadsheet",
@@ -91,14 +91,14 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         action="store",
         choices=stop_wait_choices,
         nargs=1,
-        help="Stop the demo sequence at a certain breakpoint. Be careful of underscores.",
+        help="Stop the demo sequence at a certain breakpoint.",
     )
     stop_wait_group.add_argument(
         "--wait-after",
         action="store",
         choices=stop_wait_choices,
         nargs=1,
-        help="Stop the demo sequence at a certain breakpoint. Be careful of underscores.",
+        help="Stop the demo sequence at a certain breakpoint.",
     )
     prod_dev_group = parser.add_mutually_exclusive_group()
     prod_dev_group.add_argument(
@@ -430,8 +430,6 @@ def run_demo_bundle_scan_commands(
         return False
 
     push_the_bundles(length)
-    if stop_after == "bundles_pushed":
-        return False
 
     return True
 
