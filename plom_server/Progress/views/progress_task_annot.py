@@ -271,7 +271,13 @@ class MarkingTaskTagView(LeadMarkerOrManagerView):
         return HttpResponseClientRefresh()
 
     def delete(self, request, task_pk: int, tag_pk: int):
-        MarkingTaskService().remove_tag_from_task_via_pks(tag_pk, task_pk)
+        try:
+            MarkingTaskService().remove_tag_from_task_via_pks(tag_pk, task_pk)
+        except ValueError:
+            # this will happen if (say) client removes a task out from
+            # underneath us before we click here. In that case just
+            # refresh the page.  See #2810
+            pass
         return HttpResponseClientRefresh()
 
     def post(self, request, task_pk: int):

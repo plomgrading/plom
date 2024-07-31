@@ -512,8 +512,11 @@ class MarkingTaskService:
             raise ValueError("Cannot find task or tag with given pk")
         self._add_tag(the_tag, the_task)
 
-    def get_tag_from_text(self, text: str) -> MarkingTaskTag | None:
-        """Get a tag object from its text contents. Assumes the input text has already been sanitized.
+    def _get_tag_from_text_for_update(self, text: str) -> MarkingTaskTag | None:
+        """Get a tag object from its text contents.
+
+        Assumes the input text has already been sanitized.
+        Selects it for update.
 
         Args:
             text: the text contents of a tag.
@@ -525,8 +528,11 @@ class MarkingTaskService:
         if not text_tags.exists():
             return None
         # Assuming the queryset will always have a length of one
-        return text_tags.first()
+        # grab its PK so we can get the tag with select_for_update
+        tag_pk = text_tags.first().pk
+        return MarkingTaskTag.objects.select_for_update().get(pk=tag_pk)
 
+    @transaction.atomic
     def add_tag_text_from_task_code(self, tag_text: str, code: str, user: str) -> None:
         """Add a tag to a task, creating the tag if it does not exist.
 
@@ -546,11 +552,12 @@ class MarkingTaskService:
             ValidationError: invalid tag text
         """
         the_task = self.get_task_from_code(code)
-        the_tag = self.get_tag_from_text(tag_text)
+        the_tag = self._get_tag_from_text_for_update(tag_text)
         if not the_tag:
             the_tag = self.create_tag(user, tag_text)
         self._add_tag(the_tag, the_task)
 
+    @transaction.atomic
     def remove_tag_text_from_task_code(self, tag_text: str, code: str) -> None:
         """Remove a tag from a marking task.
 
@@ -564,10 +571,15 @@ class MarkingTaskService:
                 have this tag.
             RuntimeError: task not found.
         """
-        the_tag = self.get_tag_from_text(tag_text)
+        # note - is select_for_update
+        the_tag = self._get_tag_from_text_for_update(tag_text)
+        # does not raise exception - rather it returns a None if can't find the tag
         if not the_tag:
             raise ValueError(f'No such tag "{tag_text}"')
         the_task = self.get_task_from_code(code)
+        # raises ValueError if the code is invalid
+        # RuntimeError if the code is okay but the task does not exist
+
         self._remove_tag_from_task(the_tag, the_task)
 
     def _remove_tag_from_task(self, tag, task):
@@ -575,13 +587,15 @@ class MarkingTaskService:
 
         Args:
             tag: reference to a MarkingTaskTag instance
+                - should be selected for update since we
+                  are going to modify it.
             task: reference to a MarkingTask instance
         """
-        # TODO: is tag opened with select_for_update?
-        try:
+        # check if the tag and task are linked - see #2810
+        if tag.task.filter(pk=task.pk).exists():
             tag.task.remove(task)
-            tag.save()
-        except MarkingTask.DoesNotExist:
+            tag.save()  # tag is select for update
+        else:
             raise ValueError(f'Task {task.code} does not have tag "{tag.text}"')
 
     @transaction.atomic
@@ -669,7 +683,7 @@ class MarkingTaskService:
         """
         # clean up the text and see if such a tag already exists
         cleaned_tag_text = self.sanitize_tag_text(tag_text)
-        tag_obj = self.get_tag_from_text(cleaned_tag_text)
+        tag_obj = self._get_tag_from_text_for_update(cleaned_tag_text)
         if tag_obj is None:  # no such tag exists, so create one
             # note - will raise validationerror if tag_text not legal
             tag_obj = self.create_tag(user, cleaned_tag_text)
