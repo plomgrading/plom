@@ -353,11 +353,11 @@ def short_lines(
     Returns: List of the shortest N lines from points in b_pts to a_pt.
     """
     if check_only_north:
-        b_pts = [b for b in b_pts if b.y() < a_pt.y()]
+        b_pts = [b for b in b_pts if b.y() <= a_pt.y()]
     if check_only_west:
-        b_pts = [b for b in b_pts if b.x() < a_pt.x()]
+        b_pts = [b for b in b_pts if b.x() <= a_pt.x()]
     if check_only_east:
-        b_pts = [b for b in b_pts if b.x() > a_pt.x()]
+        b_pts = [b for b in b_pts if b.x() >= a_pt.x()]
 
     distances_and_lines = sorted(
         [(sqrDistance(a_pt - b), QLineF(b, a_pt)) for b in b_pts],
@@ -380,7 +380,7 @@ def shortestToSideLine(g_rect, b_rect):
     # and the midpoints and corners of the box-boundary
     bvert = shape_to_sample_points_on_boundary(b_rect, corners=True)
     # determine if center of ghost is north of the box
-    ghost_is_south = g_rect.center().y() > b_rect.top()
+    ghost_is_south = g_rect.center().y() >= b_rect.top()
     # we first try to connect the west side of the g_rect to the box.
     # however, if the centre of the ghost is south of the top-edge of the box,
     # then we try to connect west/north
