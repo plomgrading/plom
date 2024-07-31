@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2024 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2024 Bryan Tanady
 
 """Elastic band options for connecting rubrics to labels."""
 
@@ -371,6 +372,9 @@ def shortestToSideLine(g_rect, b_rect):
     Returns the line and a bool. The bool indicates whether or not the
     line connects to the east or west side of the ghost-rect.
     """
+    # based heavily on work/ideas by BryanT in !2720.
+    # though I suggest we merge this instead of that
+
     # get the midpoints of the ghost-rect boundary,
     g_midpoints = get_midpoints(g_rect)
     # and the midpoints and corners of the box-boundary
