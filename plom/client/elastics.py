@@ -400,7 +400,7 @@ def shortestToSideLine(g_rect, b_rect):
     )
     for line in lines_to_east:
         return line, True
-    # if that doesnt work try to connect to middle of north side
+    # if that doesn't work try to connect to middle of north side
     line_to_north = short_lines(bvert, g_midpoints["north"], N=1)[0]
     # but only if line runs in correct direction
     if line_to_north.p1().y() <= line_to_north.p2().y():
