@@ -179,6 +179,7 @@ class ScannerUploadView(ScannerRequiredView):
                 pdf_hash,
                 number_of_pages,
                 force_render=data["force_render"],
+                read_after=data["read_after"],
             )
             brief_hash = pdf_hash[:8] + "..." + pdf_hash[:-8]
             context.update(

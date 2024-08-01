@@ -28,6 +28,7 @@ class BundleUploadForm(forms.Form):
         widget=forms.FileInput(attrs={"accept": "application/pdf"}),
     )
     force_render = forms.BooleanField(required=False)
+    read_after = forms.BooleanField(required=False)
 
     def clean(self):
         data = self.cleaned_data

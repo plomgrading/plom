@@ -32,9 +32,14 @@
                         <i class="bi bi-check-square text-success"></i>
                         Pushed bundle
                     {% else %}
-                        Bundle
+                    {% if not finished_reading_qr %}
+                        <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                        Unread bundle
+                    {% else %}
+                        Staged bundle
                     {% endif %}
-                    <q>{{ slug }}</q> summary
+                    {% endif %}
+                    &ensp; <q>{{ slug }}</q> &ensp; summary
                     <button class="btn btn-light" x-on:click="show_summary =! show_summary">
                         <i class="bi bi-chevron-down" x-show="!show_summary"></i>
                         <i class="bi bi-chevron-up" x-show="show_summary"></i>

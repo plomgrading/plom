@@ -20,7 +20,7 @@ from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q  # for queries involving "or", "and"
-from django_huey import db_task
+from django_huey import db_task, enqueue
 
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap, try_to_extract_image
@@ -71,6 +71,7 @@ class ScanService:
         number_of_pages: int,
         *,
         force_render: bool = False,
+        read_after: bool = False,
         debug_jpeg: bool = False,
     ) -> None:
         """Upload a bundle PDF and store it in the filesystem + database.
@@ -91,6 +92,8 @@ class ScanService:
         Keyword Args:
             force_render: Don't try to extract large bitmaps; always
                 render the page.
+            read_after: Automatically read the qr codes from the bundle after
+                upload+splitting is finished.
             debug_jpeg: off by default.  If True then we make some
                 rotations by non-multiples of 90, and save some
                 low-quality jpegs.
@@ -115,7 +118,9 @@ class ScanService:
                 bundle_obj.pdf_hash = pdf_hash
                 bundle_obj.number_of_pages = number_of_pages
                 bundle_obj.save()
-        self.split_and_save_bundle_images(bundle_obj.pk, debug_jpeg=debug_jpeg)
+        self.split_and_save_bundle_images(
+            bundle_obj.pk, read_after=read_after, debug_jpeg=debug_jpeg
+        )
 
     def upload_bundle_cmd(
         self,
@@ -171,7 +176,12 @@ class ScanService:
         )
 
     def split_and_save_bundle_images(
-        self, bundle_pk: int, *, number_of_chunks: int = 16, debug_jpeg: bool = False
+        self,
+        bundle_pk: int,
+        *,
+        number_of_chunks: int = 16,
+        read_after: bool = False,
+        debug_jpeg: bool = False,
     ) -> None:
         """Read a PDF document and save page images to filesystem/database.
 
@@ -182,6 +192,8 @@ class ScanService:
             number_of_chunks: the number of page-splitting jobs to run;
                 each huey-page-split-task will process approximately
                 number_of_pages_in_bundle / number_of_chunks pages.
+            read_after: Automatically read the qr codes from the bundle after
+                upload+splitting is finished.
             debug_jpeg: off by default.  If True then we make some rotations
                 by non-multiples of 90, and save some low-quality jpegs.
 
@@ -196,12 +208,12 @@ class ScanService:
                 status=PagesToImagesHueyTask.STARTING,
             )
             tracker_pk = x.pk
-
         res = huey_parent_split_bundle_task(
             bundle_pk,
             number_of_chunks,
             debug_jpeg=debug_jpeg,
             tracker_pk=tracker_pk,
+            read_after=read_after,
         )
         # print(f"Just enqueued Huey parent_split_and_save task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
@@ -1390,6 +1402,7 @@ def huey_parent_split_bundle_task(
     *,
     debug_jpeg: bool = False,
     tracker_pk: int,
+    read_after: bool = False,
     # TODO - CBM - what type should task have?
     task=None,
 ) -> bool:
@@ -1409,6 +1422,7 @@ def huey_parent_split_bundle_task(
             non-multiplies of 90, and save some low-quality jpegs.
         tracker_pk: a key into the database for anyone interested in
             our progress.
+        read_after: automatically trigger a qr-code read after splitting finished.
         task: includes our ID in the Huey process queue.
 
     Returns:
@@ -1498,6 +1512,9 @@ def huey_parent_split_bundle_task(
             _write_bundle.save()
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
+    # if requested automatically queue qr-code reading
+    if read_after:
+        ScanService().read_qr_codes(bundle_pk)
     return True
 
 
