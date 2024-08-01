@@ -1,0 +1,86 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2024 Aden Chan
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Incomplete pushed papers
+{% endblock title %}
+{% block page_heading %}
+    Incomplete pushed papers
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="flex">
+        <a class="btn btn-primary" href="{% url 'scan_overview' %}">Bundle and paper overview</a>
+        <a class="btn btn-primary disabled">Upload bundle</a>
+    </div>
+    <div>
+      <p>FUTURE WORK = forgive missing page
+      </p>
+      </div>
+    <div class="card my-2">
+        <div class="card-body">
+            <div class="row">
+                <div class="row">
+                    <h5>Incomplete papers: {{ number_of_incomplete_papers }}</h5>
+                    <div class="col">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="overflow-auto" style="max-height:66vh;">
+                                    <table class="table table-striped table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Paper</th>
+                                                <th>Pages</th>
+                                            </tr>
+                                        </thead>
+                                        {% for pn,pages in incomplete_papers_list %}
+                                            <tr>
+                                                <td>{{ pn }}</td>
+                                                <td>
+                                                    {% for fp in pages.fixed|dictsort:"page_number" %}
+                                                        {% if fp.img_pk %}
+                                                            <button hx-get="{% url 'progress_pushed_img_wrap' fp.img_pk %}"
+                                                                    hx-target="#incompleteImageHere"
+                                                                    hx-replace="innerHTML"
+                                                                    class="btn btn-outline-success">
+                                                                {{ fp.page_number }}
+                                                            </button>
+                                                        {% else %}
+                                                            <span class="badge m-1 p-3 fs-6 bg-danger"
+                                                                  data-bs-toggle="tooltip"
+                                                                  data-bs-placement="top"
+                                                                  data-bs-title="missing {{ pn }}.{{ fp.page_number }}">{{ fp.page_number }} </span>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                    {% for mp in pages.mobile|dictsort:"question_number" %}
+                                                        <button hx-get="{% url 'progress_pushed_img_wrap' mp.img_pk %}"
+                                                                hx-target="#incompleteImageHere"
+                                                                hx-replace="incompletInnerHTML"
+                                                                class="btn btn-outline-info">
+                                                            qi.{{ mp.question_number }}
+                                                        </button>
+                                                    {% endfor %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col p-2 border" id="pushedImageFragment">
+                        <h6>Page image</h6>
+                        <div class="p-2"
+                             style="justify-content: center;
+                                    display:flex;
+                                    align-items:center"
+                             id="incompleteImageHere"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}

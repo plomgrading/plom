@@ -5,6 +5,10 @@
 # Copyright (C) 2024 Colin B. Macdonald
 
 from .scanner_home import (
+    ScannerOverview,
+    ScannerStagedView,
+    ScannerPushedView,
+    ##
     ScannerHomeView,
     GetBundleView,
     GetStagedBundleFragmentView,
@@ -28,6 +32,9 @@ from .push_images import (
 
 
 from .scanner_summary import (
+    ScannerCompletePaperView,
+    ScannerIncompletePaperView,
+    ##
     ScannerSummaryView,
     ScannerPushedImageView,
     ScannerPushedImageWrapView,

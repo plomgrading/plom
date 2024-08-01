@@ -10,24 +10,33 @@
 {% endblock title %}
 {% block page_heading %}
     Bundle thumbnails
-    <a class="btn btn-success" href="{% url 'scan_home' %}">Bundle upload</a>
-    {% if user_is_manager %}
         {% if is_pushed %}
-            <a class="btn btn-success" href="{% url 'progress_scan_bundles' %}">Pushed bundle overview</a>
-        {% else %}
-            <a class="btn btn-success" href="{% url 'progress_scan_overview' %}">Bundle overview</a>
+        &mdash; read-only
         {% endif %}
-    {% endif %}
 {% endblock page_heading %}
 {% block main_content %}
-    <div class="card">
+    <div class="flex">
+        <a class="btn btn-primary" href="{% url 'scan_overview' %}">Bundle and paper overview</a>
+        {% if is_pushed %}
+            <a class="btn btn-primary" href="{% url 'scan_list_pushed' %}">Pushed bundle overview</a>
+        {% else %}
+            <a class="btn btn-primary" href="{% url 'scan_list_staged' %}">Staged bundle overview</a>
+        {% endif %}
+    </div>
+    <div class="card mt-2">
         <!-- pb-0 b/c something is making this top box tall by the standard margin?-->
         <div class="card-body pb-0"
              x-data="{show_summary: false}"
              x-init="$watch('show_summary', val => localStorage.setItem('show_summary', val))">
             <div class="d-flex justify-content-start">
                 <h5>
-                    Bundle <q>{{ slug }}</q> summary
+                    {% if is_pushed %}
+                        <i class="bi bi-check-square text-success"></i>
+                        Pushed bundle
+                    {% else %}
+                    Bundle 
+                    {% endif %}
+                    <q>{{ slug }}</q> summary
                     <button class="btn btn-light" x-on:click="show_summary =! show_summary">
                         <i class="bi bi-chevron-down" x-show="!show_summary"></i>
                         <i class="bi bi-chevron-up" x-show="show_summary"></i>

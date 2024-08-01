@@ -7,6 +7,12 @@
 from django.urls import path
 
 from .views import (
+    ScannerOverview,
+    ScannerStagedView,
+    ScannerPushedView,
+    ScannerCompletePaperView,
+    ScannerIncompletePaperView,
+    ###
     ScannerHomeView,
     BundleThumbnailsView,
     GetBundleView,
@@ -35,6 +41,14 @@ from .views import (
 
 
 urlpatterns = [
+    path("overview", ScannerOverview.as_view(), name="scan_overview"),
+    path("staged", ScannerStagedView.as_view(), name="scan_list_staged"),
+    path("pushed", ScannerPushedView.as_view(), name="scan_list_pushed"),
+    path("complete", ScannerCompletePaperView.as_view(), name="scan_list_complete"),
+    path(
+        "incomplete", ScannerIncompletePaperView.as_view(), name="scan_list_incomplete"
+    ),
+    ##
     path("", ScannerHomeView.as_view(), name="scan_home"),
     path(
         "bundlepage/<str:the_filter>/<int:bundle_id>/<int:index>/",

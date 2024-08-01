@@ -28,7 +28,99 @@ from Progress.services import ManageScanService
 from ..services import ScanService
 from ..forms import BundleUploadForm
 
+from plom.misc_utils import format_int_list_with_runs
 from plom.plom_exceptions import PlomBundleLockedException
+
+
+class ScannerOverview(ScannerRequiredView):
+    def get(self, request: HttpRequest) -> HttpResponse:
+        context = self.build_context()
+        mss = ManageScanService()
+
+        total_papers = mss.get_total_test_papers()
+        completed_papers = mss.get_number_completed_test_papers()
+        incomplete_papers = mss.get_number_incomplete_test_papers()
+        pushed_bundles = mss.get_number_pushed_bundles()
+        unpushed_bundles = mss.get_number_unpushed_bundles()
+
+        context.update(
+            {
+                "total_papers": total_papers,
+                "completed_papers": completed_papers,
+                "incomplete_papers": incomplete_papers,
+                "pushed_bundles": pushed_bundles,
+                "unpushed_bundles": unpushed_bundles,
+            }
+        )
+        return render(request, "Scan/overview.html", context)
+
+
+class ScannerStagedView(ScannerRequiredView):
+    def get(self, request: HttpRequest) -> HttpResponse:
+        context = self.build_context()
+        scanner = ScanService()
+        staged_bundles = []
+        for bundle in scanner.get_all_staging_bundles():
+            # only keep staged not pushed bundles
+            if bundle.pushed:
+                continue
+            date_time = timezone.make_aware(datetime.fromtimestamp(bundle.timestamp))
+            if bundle.has_page_images:
+                cover_img_rotation = scanner.get_first_image(bundle).rotation
+            else:
+                cover_img_rotation = 0
+            pages = scanner.get_n_images(bundle)
+            staged_bundles.append(
+                {
+                    "id": bundle.pk,
+                    "slug": bundle.slug,
+                    "timestamp": bundle.timestamp,
+                    "time_uploaded": arrow.get(date_time).humanize(),
+                    "username": bundle.user.username,
+                    "pages": pages,
+                    "cover_angle": cover_img_rotation,
+                    "is_push_locked": bundle.is_push_locked,
+                }
+            )
+            # flag if any bundle is push-locked
+            if bundle.is_push_locked:
+                context["is_any_bundle_push_locked"] = True
+        context["staged_bundles"] = staged_bundles
+        return render(request, "Scan/show_staged_bundles.html", context)
+
+
+class ScannerPushedView(ScannerRequiredView):
+    def get(self, request: HttpRequest) -> HttpResponse:
+        context = self.build_context()
+        scanner = ScanService()
+        pushed_bundles = []
+        for bundle in scanner.get_all_staging_bundles():
+            # only keep pushed bundles
+            if not bundle.pushed:
+                continue
+            date_time = timezone.make_aware(datetime.fromtimestamp(bundle.timestamp))
+            if bundle.has_page_images:
+                cover_img_rotation = scanner.get_first_image(bundle).rotation
+            else:
+                cover_img_rotation = 0
+            n_pages = scanner.get_n_images(bundle)
+            paper_list = format_int_list_with_runs(
+                scanner.get_bundle_paper_numbers(bundle)
+            )
+            pushed_bundles.append(
+                {
+                    "id": bundle.pk,
+                    "slug": bundle.slug,
+                    "timestamp": bundle.timestamp,
+                    "time_uploaded": arrow.get(date_time).humanize(),
+                    "username": bundle.user.username,
+                    "n_pages": n_pages,
+                    "paper_list": paper_list,
+                    "cover_angle": cover_img_rotation,
+                }
+            )
+        context["pushed_bundles"] = pushed_bundles
+        return render(request, "Scan/show_pushed_bundles.html", context)
 
 
 class ScannerHomeView(ScannerRequiredView):
@@ -168,6 +260,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         scanner = ScanService()
 
         bundle = scanner.get_bundle_from_pk(bundle_id)
+        paper_list = format_int_list_with_runs(scanner.get_bundle_paper_numbers(bundle))
         n_known = scanner.get_n_known_images(bundle)
         n_unknown = scanner.get_n_unknown_images(bundle)
         n_extra = scanner.get_n_extra_images(bundle)
@@ -192,6 +285,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             "is_mid_qr_read": scanner.is_bundle_mid_qr_read(bundle.pk),
             "is_push_locked": bundle.is_push_locked,
             "is_perfect": scanner.is_bundle_perfect(bundle.pk),
+            "paper_list": paper_list,
             "n_known": n_known,
             "n_unknown": n_unknown,
             "n_extra": n_extra,

@@ -1,0 +1,73 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022-2023 Edith Coates
+    Copyright (C) 2022 Brennen Chiu
+    Copyright (C) 2023-2024 Andrew Rechnitzer
+    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023 Natalie Balashov
+    Copyright (C) 2024 Aidan Murphy
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Pushed bundles
+{% endblock title %}
+{% block page_heading %}
+    Pushed bundles
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="flex">
+        <a class="btn btn-primary" href="{% url 'scan_overview' %}">Bundle and paper overview</a>
+        <a class="btn btn-primary disabled">Upload bundle</a>
+    </div>
+    <div class="card my-2">
+        <div class="card-body">
+            <h5 class="card-title">{{ pushed_bundles|length }} pushed bundles:</h5>
+            <p>
+                <ul>
+                    <li>These bundles have been pushed to the main server.</li>
+                    <li>These are available to markers.</li>
+                </ul>
+            </p>
+            {% if pushed_bundles %}
+                <table class="table table-sm table-bordered text-center sortable">
+                    <thead>
+                        <!-- make sure thumbnail not too wide -->
+                        <th style="width: 8vw;">Thumbnail</th>
+                        <th>Bundle name</th>
+                        <th>Uploaded by</th>
+                        <th>Pages/Papers</th>
+                        <th>Actions</th>
+                    </thead>
+                    <tbody>
+                        {% for bundle in pushed_bundles %}
+                            <tr>
+                                <td>
+                                    <div class="bundle-thumb">
+                                        <img src="{% url 'scan_get_thumbnail' bundle.id 1 %}" />
+                                    </div>
+                                </td>
+                                <td>{{ bundle.slug }}.pdf</td>
+                                <td>{{ bundle.username }}</td>
+                                <td class="text-start">
+                                    <ul>
+                                        <li>{{ bundle.n_pages }} pages</li>
+                                        <li>Papers: {{ bundle.paper_list }}</li>
+                                    </ul>
+                                </td>
+                                <td>
+                                    <a class="btn btn-success"
+                                       href="{% url 'scan_bundle_thumbnails' 'all' bundle.id %}">View</a>
+                                    <a class="btn btn-secondary"
+                                       target="_"
+                                       href="{% url 'scan_get_bundle' bundle.id %}">Download</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <h6>No pushed bundles</h6>
+            {% endif %}
+        </div>
+    </div>
+{% endblock main_content %}

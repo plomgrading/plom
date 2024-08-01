@@ -1,0 +1,59 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2022-2023 Edith Coates
+    Copyright (C) 2022 Brennen Chiu
+    Copyright (C) 2023-2024 Andrew Rechnitzer
+    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023 Natalie Balashov
+    Copyright (C) 2024 Aidan Murphy
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Staged bundles
+{% endblock title %}
+{% block page_heading %}
+    Staged bundles
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="flex">
+        <a class="btn btn-primary" href="{% url 'scan_overview' %}">Bundle and paper overview</a>
+        <a class="btn btn-primary disabled">Upload bundle</a>
+    </div>
+    <div class="card my-2">
+        <div class="card-body">
+            <h5 class="card-title">{{ staged_bundles|length }} staged bundles:</h5>
+            <p>
+                <ul>
+                    <li>These bundles have been uploaded to a staging area.</li>
+                    <li>In this staging area you can view and fix any problems - such as assigning extra pages.</li>
+                    <li>These are not yet available to markers.</li>
+                </ul>
+            </p>
+            {% if staged_bundles %}
+                <table class="table table-sm table-bordered text-center sortable">
+                    <thead>
+                        <!-- make sure thumbnail not too wide -->
+                        <th style="width: 8vw;">Thumbnail</th>
+                        <th>Bundle name</th>
+                        <th>Uploaded by</th>
+                        <th>Upload time</th>
+                        <th>Pages/Papers</th>
+                        <th>Actions</th>
+                    </thead>
+                    <!-- put this alpine variable here, so that all push buttons in these fragments can be disabled when any bundle pushed -->
+                    <!-- annoyingly there is a case difference between js and python true/false, hence the string hacks -->
+                    <tbody x-data="{midPush: '{{ is_any_bundle_push_locked }}'=='True' }">
+                        {% for bundle in staged_bundles %}
+                            <tr hx-get="{% url 'scan_get_staged_bundle_fragment' bundle.id %}"
+                                hw-swap="innerHTML"
+                                hx-trigger="load"
+                                id="bundle{{ bundle.slug }}"></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <h6>No staged bundles</h6>
+            {% endif %}
+        </div>
+    </div>
+{% endblock main_content %}
