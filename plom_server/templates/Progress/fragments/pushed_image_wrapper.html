@@ -5,7 +5,7 @@
 -->
 <div style="justify-content: center; display:flex; align-items:center">
     <img class="m-1 p-1 border"
-         src="{% url 'progress_pushed_img_rot' image_pk %}"
+         src="{% url 'pushed_img_rot' image_pk %}"
          style="height: 55vh" />
 </div>
 <div class="m-2">
@@ -19,7 +19,7 @@
         {% if user_is_manager %}
             <button class="btn btn-danger"
                     hx-confirm="This will invalidate any existing marking of this question. Are you sure you wish to proceed?"
-                    hx-delete="{% url 'progress_pushed_img' image_pk %}">discard this fixed page image</button>
+                    hx-delete="{% url 'pushed_img' image_pk %}">discard this fixed page image</button>
         {% endif %}
     {% elif page_info.page_type == 'mobile' %}
         <ul>
@@ -31,7 +31,7 @@
         {% if user_is_manager %}
             <button class="btn btn-danger"
                     hx-confirm="This will invalidate any existing marking of this question. Are you sure you wish to proceed?"
-                    hx-delete="{% url 'progress_pushed_img' image_pk %}">discard this mobile page image</button>
+                    hx-delete="{% url 'pushed_img' image_pk %}">discard this mobile page image</button>
         {% endif %}
     {% else %}
         <ul>
@@ -41,7 +41,7 @@
             <li>Bundle-order: {{ page_info.bundle_order }}</li>
         </ul>
         {% if user_is_manager %}
-            <a href="{% url 'progress_reassign_discard' image_pk %}">
+            <a href="{% url 'reassign_discard' image_pk %}">
                 <button class="btn btn-warning">reassign this discarded image</button>
             </a>
         {% endif %}

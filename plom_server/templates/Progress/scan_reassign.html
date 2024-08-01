@@ -10,7 +10,7 @@
         <div class="col">
             <div style="justify-content: center; display:flex; align-items:center">
                 <img class="shadow-sm"
-                     src="{% url 'progress_pushed_img_rot' image_pk %}"
+                     src="{% url 'pushed_img_rot' image_pk %}"
                      style="height: 55vh" />
             </div>
         </div>
@@ -18,7 +18,7 @@
             <h5>Reassign the image</h5>
             <div class="py-4" id="invalidmessage"></div>
             <div>
-                <form hx-post="{% url 'progress_reassign_discard' image_pk %}"
+                <form hx-post="{% url 'reassign_discard' image_pk %}"
                       hx-target="#invalidmessage"
                       hx-swap="innerHTML">
                     <div x-data="{assignment_type: 'fixed'}">
@@ -85,7 +85,7 @@
                     </div>
                     <button class="btn btn-primary m-2" type="submit">Set data</button>
                 </form>
-                <a href="{% url 'progress_scan_discard' %}">
+                <a href="{% url 'scan_discard' %}">
                     <button class="btn btn-warning m-2">Go back</button>
                 </a>
             </div>

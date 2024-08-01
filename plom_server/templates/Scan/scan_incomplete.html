@@ -14,7 +14,8 @@
 {% block main_content %}
     <div class="flex">
         <a class="btn btn-primary" href="{% url 'scan_overview' %}">Bundle and paper overview</a>
-        <a class="btn btn-primary disabled">Upload bundle</a>
+        <a class="btn btn-primary" href="{% url 'scan_list_complete' %}">Complete papers</a>
+        <a class="btn btn-primary" href="{% url 'scan_list_discard' %}">Discarded page images</a>
     </div>
     <div>
         <p>FUTURE WORK = forgive missing page</p>
@@ -41,7 +42,7 @@
                                                 <td>
                                                     {% for fp in pages.fixed|dictsort:"page_number" %}
                                                         {% if fp.img_pk %}
-                                                            <button hx-get="{% url 'progress_pushed_img_wrap' fp.img_pk %}"
+                                                            <button hx-get="{% url 'pushed_img_wrap' fp.img_pk %}"
                                                                     hx-target="#incompleteImageHere"
                                                                     hx-replace="innerHTML"
                                                                     class="btn btn-outline-success">
@@ -55,7 +56,7 @@
                                                         {% endif %}
                                                     {% endfor %}
                                                     {% for mp in pages.mobile|dictsort:"question_number" %}
-                                                        <button hx-get="{% url 'progress_pushed_img_wrap' mp.img_pk %}"
+                                                        <button hx-get="{% url 'pushed_img_wrap' mp.img_pk %}"
                                                                 hx-target="#incompleteImageHere"
                                                                 hx-replace="incompletInnerHTML"
                                                                 class="btn btn-outline-info">

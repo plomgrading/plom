@@ -14,7 +14,13 @@ from .views import (
     ScannerCompletePaperView,
     ScannerIncompletePaperView,
     ###
-    ScannerHomeView,
+    ScannerDiscardView,
+    ScannerReassignView,
+    ###
+    PushedImageView,
+    PushedImageRotatedView,
+    PushedImageWrapView,
+    ###
     BundleThumbnailsView,
     GetBundleView,
     GetBundlePageFragmentView,
@@ -51,7 +57,33 @@ urlpatterns = [
         "incomplete", ScannerIncompletePaperView.as_view(), name="scan_list_incomplete"
     ),
     ##
-    path("", ScannerHomeView.as_view(), name="scan_home"),
+    path(
+        "discard/",
+        ScannerDiscardView.as_view(),
+        name="scan_list_discard",
+    ),
+    path(
+        "reassign/<int:img_pk>",
+        ScannerReassignView.as_view(),
+        name="reassign_discard",
+    ),
+    ##
+    path(
+        "pushed_img/<int:img_pk>",
+        PushedImageView.as_view(),
+        name="pushed_img",
+    ),
+    path(
+        "pushed_img_rot/<int:img_pk>",
+        PushedImageRotatedView.as_view(),
+        name="pushed_img_rot",
+    ),
+    path(
+        "pushed_img_wrap/<int:img_pk>",
+        PushedImageWrapView.as_view(),
+        name="pushed_img_wrap",
+    ),
+    ##
     path(
         "bundlepage/<str:the_filter>/<int:bundle_id>/<int:index>/",
         GetBundlePageFragmentView.as_view(),

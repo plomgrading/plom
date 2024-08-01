@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 
 from django.http import HttpRequest, HttpResponse, Http404
@@ -8,12 +8,12 @@ from django_htmx.http import HttpResponseClientRedirect
 from django.urls import reverse
 
 
-from Base.base_group_views import ManagerRequiredView
+from Base.base_group_views import ManagerRequiredView, ScannerRequiredView
 from Papers.services import SpecificationService
 from Progress.services import ManageScanService, ManageDiscardService
 
 
-class ScanDiscardView(ManagerRequiredView):
+class ScannerDiscardView(ScannerRequiredView):
     """View the table of discarded images."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
@@ -27,10 +27,10 @@ class ScanDiscardView(ManagerRequiredView):
                 "discards": discards,
             }
         )
-        return render(request, "Progress/scan_discard.html", context)
+        return render(request, "Scan/scan_discard.html", context)
 
 
-class ScanReassignView(ManagerRequiredView):
+class ScannerReassignView(ManagerRequiredView):
     def get(self, request: HttpRequest, *, img_pk: int) -> HttpResponse:
         mss = ManageScanService()
         tmp = mss.get_pushed_image(img_pk)
