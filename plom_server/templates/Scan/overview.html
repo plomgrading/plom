@@ -16,17 +16,11 @@
                 <li>{{ total_papers }} papers produced</li>
                 <li>
                     {{ completed_papers }} complete papers pushed
-                    <ul>
-                        {% if incomplete_papers %}
-                            <li>
-                                {{ incomplete_papers }} incomplete papers pushed  <i class="bi bi-exclamation-diamond-fill text-danger"></i>
-                            </li>
-                        {% else %}
-                            <li>
-                                all pushed papers are complete <i class="bi bi-check-circle text-success"></i>
-                            </li>
-                        {% endif %}
-                    </ul>
+                    {% if incomplete_papers %}
+                        &mdash; {{ incomplete_papers }} incomplete papers pushed  <i class="bi bi-exclamation-diamond-fill text-danger"></i>
+                    {% else %}
+                        &mdash; all pushed papers are complete <i class="bi bi-check-circle text-success"></i>
+                    {% endif %}
                 </li>
                 <li>{{ pushed_bundles }} bundle(s) pushed</li>
                 {% if unpushed_bundles %}
@@ -41,44 +35,45 @@
             </ul>
         </div>
         <div class="list-group m-2">
-            <a class="list-group-item list-group-item-action border mb-1">
-                <p class="fs-4">Upload PDF bundle</p>
-                <p class="fs-7">&emsp;&ensp;Upload PDF to staging area.</p>
-                <p class="fs-7">
-                    &emsp;&ensp;The staging-area allows any extra-pages to be assigned, and any scanning-problems to be sorted out.
-                </p>
+            <a class="list-group-item list-group-item-action border mb-1"
+               href="{% url 'scan_upload' %}">
+                <p class="fs-4">Upload PDF bundles to staging area</p>
+                <p class="fs-7">Text here about best practices - or dropdown with more information.</p>
             </a>
             <a class="list-group-item list-group-item-action border mb-1"
                href="{% url 'scan_list_staged' %}">
                 <p class="fs-4">Staged bundles</p>
-                <p class="fs-7">&emsp;&ensp;View and work on staged bundles before they are pushed.</p>
+                <p class="fs-7">&emsp;&ensp;Assign extra-pages and deal with any unknown pages before they are pushed.</p>
             </a>
             <a class="list-group-item list-group-item-action border mb-1"
                href="{% url 'scan_list_pushed' %}">
-                <p class="fs-4">Pushed bundles</p>
-                <p class="fs-7">&emsp;&ensp;View bundles that have been pushed to the main server.</p>
+                <p class="fs-4">View pushed bundles</p>
             </a>
             <a class="list-group-item list-group-item-action border mb-1"
                href="{% url 'scan_list_complete' %}">
-                <p class="fs-4">Complete pushed papers</p>
-                <p class="fs-7">&emsp;&ensp;View complete papers in the main server.</p>
+                <p class="fs-4">View complete pushed papers</p>
             </a>
             <a class="list-group-item list-group-item-action border mb-1"
                href="{% url 'scan_list_incomplete' %}">
                 <p class="fs-4">
-                    Incomplete pushed papers
+                    View incomplete pushed papers
                     {% if incomplete_papers %}<i class="bi bi-exclamation-diamond-fill text-warning"></i>{% endif %}
                 </p>
-                <p class="fs-7">&emsp;&ensp;View (and repair - if manager) incomplete papers in the main server.</p>
                 {% if incomplete_papers %}
-                    <p class="fs-7">&emsp;&ensp;There are currently {{ incomplete_papers }} such papers.</p>
+                    <p class="fs-7">
+                        &emsp;&ensp;There are currently {{ incomplete_papers }} incomplete papers
+                        {% if user_is_manager %}&mdash; a manager can repair them.{% endif %}
+                    </p>
                 {% else %}
-                    <p class="fs-7">&emsp;&ensp;Generally there should be no such paper(s).</p>
+                    <p class="fs-7">&emsp;&ensp;There are no such papers currently.</p>
                 {% endif %}
             </a>
             <a class="list-group-item list-group-item-action border mb-1">
-                <p class="fs-4">Discarded images</p>
-                <p class="fs-7">&emsp;&ensp;View images discarded from bundles when pushed to the main server.</p>
+                <p class="fs-4">View discarded images from pushed bundles</p>
+                <p class="fs-7">
+                    &emsp;&ensp;View images discarded from bundles when pushed to the main server
+                    {% if user_is_manager %}&mdash; a manager can reassign them if needed.{% endif %}
+                </p>
             </a>
         </div>
     </div>

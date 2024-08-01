@@ -123,6 +123,78 @@ class ScannerPushedView(ScannerRequiredView):
         return render(request, "Scan/show_pushed_bundles.html", context)
 
 
+class ScannerUploadView(ScannerRequiredView):
+    def build_context(self) -> dict[str, Any]:
+        context = super().build_context()
+        scanner = ScanService()
+        context.update(
+            {
+                "form": BundleUploadForm(),
+                "is_any_bundle_push_locked": False,
+                "papers_have_been_printed": PapersPrinted.have_papers_been_printed(),
+                "bundle_size_limit": settings.MAX_BUNDLE_SIZE / 1024 / 1024,
+                "bundle_page_limit": settings.MAX_BUNDLE_PAGES,
+            }
+        )
+        uploaded_bundles = []
+        for bundle in scanner.get_all_staging_bundles():
+            date_time = timezone.make_aware(datetime.fromtimestamp(bundle.timestamp))
+            n_pages = scanner.get_n_images(bundle)
+            uploaded_bundles.append(
+                {
+                    "id": bundle.pk,
+                    "slug": bundle.slug,
+                    "time_uploaded": arrow.get(date_time).humanize(),
+                    "username": bundle.user.username,
+                    "n_pages": n_pages,
+                    "is_pushed": bundle.pushed,
+                    "hash": bundle.pdf_hash,
+                }
+            )
+        context.update({"uploaded_bundles": uploaded_bundles})
+        return context
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        context = self.build_context()
+        return render(request, "Scan/bundle_upload.html", context)
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        context = self.build_context()
+        form = BundleUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            data = form.cleaned_data  # this checks the file really is a valid PDF
+
+            user = request.user
+            slug = data["slug"]
+            bundle_file = data["pdf"]
+            pdf_hash = data["sha256"]
+            number_of_pages = data["number_of_pages"]
+            timestamp = datetime.timestamp(data["time_uploaded"])
+
+            ScanService().upload_bundle(
+                bundle_file,
+                slug,
+                user,
+                timestamp,
+                pdf_hash,
+                number_of_pages,
+                force_render=data["force_render"],
+            )
+            brief_hash = pdf_hash[:8] + "..." + pdf_hash[:-8]
+            context.update(
+                {
+                    "success_msg": f"Uploaded {slug} with {number_of_pages} and hash {brief_hash}. The bundle is being processed in the background."
+                }
+            )
+        else:
+            # we can get the errors from the form and pass them into the context
+            # unfortunately form.errors is a dict of lists, so lets flatten it a bit.
+            # see = https://docs.djangoproject.com/en/5.0/ref/forms/api/#django.forms.Form.errors
+            error_list: list[str] = sum(form.errors.values(), [])
+            context.update({"upload_errors": error_list})
+        return render(request, "Scan/bundle_upload.html", context)
+
+
 class ScannerHomeView(ScannerRequiredView):
     """Display an upload form for bundle PDFs, and a dashboard of previously uploaded/staged bundles."""
 

@@ -342,8 +342,8 @@ class ScanService:
 
     @transaction.atomic
     def get_all_staging_bundles(self) -> list[StagingBundle]:
-        """Return all of the staging bundles."""
-        return list(StagingBundle.objects.all())
+        """Return all of the staging bundles in reverse chronological order."""
+        return list(StagingBundle.objects.all().order_by("-timestamp"))
 
     def staging_bundles_exist(self) -> bool:
         """Check if any staging bundles exist."""

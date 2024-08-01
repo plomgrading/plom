@@ -8,6 +8,7 @@ from .scanner_home import (
     ScannerOverview,
     ScannerStagedView,
     ScannerPushedView,
+    ScannerUploadView,
     ##
     ScannerHomeView,
     GetBundleView,

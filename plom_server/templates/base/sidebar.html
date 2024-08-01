@@ -92,10 +92,7 @@
         </li>
     {% elif user_is_scanner %}
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'scan_home' %}">Scan</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="{% url 'scan_summary' %}">Summary</a>
+            <a class="nav-link" href="{% url 'scan_overview' %}">Scanning</a>
         </li>
     {% elif user_is_marker %}
         {% if user_is_lead_marker %}

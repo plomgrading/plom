@@ -10,6 +10,7 @@ from .views import (
     ScannerOverview,
     ScannerStagedView,
     ScannerPushedView,
+    ScannerUploadView,
     ScannerCompletePaperView,
     ScannerIncompletePaperView,
     ###
@@ -42,6 +43,7 @@ from .views import (
 
 urlpatterns = [
     path("overview", ScannerOverview.as_view(), name="scan_overview"),
+    path("upload", ScannerUploadView.as_view(), name="scan_upload"),
     path("staged", ScannerStagedView.as_view(), name="scan_list_staged"),
     path("pushed", ScannerPushedView.as_view(), name="scan_list_pushed"),
     path("complete", ScannerCompletePaperView.as_view(), name="scan_list_complete"),
