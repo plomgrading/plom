@@ -157,7 +157,7 @@ if __name__ == "__main__":
     for i in range(args.copies):
         QRmessage = QRbase + f"{i:04d}"
         for p in range(len(unstamped)):
-            _ = outdoc.insert_pdf(unstamped, from_page=p, to_page=p)
+            outdoc.insert_pdf(unstamped, from_page=p, to_page=p)
             ndx = len(outdoc) - 1
             stamp_page(
                 outdoc[ndx],
