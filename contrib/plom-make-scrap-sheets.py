@@ -21,7 +21,6 @@ the output filename, etc. For details, read the code; for a quick summary, say
 """
 
 import argparse
-import datetime
 import pymupdf as fitz
 import segno
 import io
@@ -33,7 +32,7 @@ def stamp_page(PDFpage, NW=None, NE=None, SE=None, SW=None, title=None):
 
     # Introduce perimeter of h=20px, hoping this gets us into the "ImageableArea"
     # of whatever printer eventually puts this onto paper:
-    h = 20                  # Perhaps a smaller value could work. Trial and error?
+    h = 20  # Perhaps a smaller value could work. Trial and error?
     xmin += h
     xmax -= h
     ymin += h
@@ -138,8 +137,6 @@ if __name__ == "__main__":
     if args.debug:
         print(f"Starting {__file__} with these arguments:")
         print(args)
-
-
 
     # Build a base document to decorate.
     # This must have a positive, even number of pages
