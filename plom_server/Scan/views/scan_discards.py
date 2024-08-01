@@ -54,7 +54,7 @@ class ScannerReassignView(ManagerRequiredView):
             }
         )
 
-        return render(request, "Progress/scan_reassign.html", context)
+        return render(request, "Scan/reassign_discard.html", context)
 
     def post(self, request: HttpRequest, *, img_pk: int) -> HttpResponse:
         reassignment_data = request.POST
@@ -105,4 +105,4 @@ class ScannerReassignView(ManagerRequiredView):
                     f"""<span class="alert alert-danger">Some sort of error: {e}</span>"""
                 )
 
-        return HttpResponseClientRedirect(reverse("progress_scan_discard"))
+        return HttpResponseClientRedirect(reverse("scan_list_discard"))
