@@ -3,21 +3,20 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Philip D Loewen
 
-"""Generate a PDF with Do Not Mark text and QR codes.
+"""Generate a PDF with title text and QR codes both indicating scrap.
 
 Simple mode: To make 12 sheets of scrap paper, say
-    python3 plom-make-DNM-sheets.py -n 12
+    python3 plom-make-scrap-sheets.py -n 12
 You will get a 24-page PDF document to print double-sided.
 
 Fancy mode: To decorate 30 copies of your 3-page formula sheet, say
-    python3 plom-make-DNM-sheets.py -n 30 -pdf myformulas.pdf
+    python3 plom-make-scrap-sheets.py -n 30 -pdf myformulas.pdf
 You will get a 120-page PDF document to print double-sided.
 That's 30 copies of the 4-page (2-sheet) PDF produced by padding
 your input so that each recipient gets 2 physical sheets of paper.
 
 Options: Command-line arguments can influence the text centred on each page,
-the codes embedded in the QR corners, the output filename, etc. For details,
-read the code; for a quick summary, say
+the output filename, etc. For details, read the code; for a quick summary, say
     python3 plom-make-DNM-sheets.py --help
 """
 
@@ -28,56 +27,57 @@ import segno
 import io
 
 
-def stamp_page(PDFpage=None, TL=None, TR=None, BR=None, BL=None, title=None):
-    if PDFpage is not None:
-        mypage = PDFpage
-    else:
-        newdoc = fitz.Document()
-        _ = newdoc.insert_page(0, width=612, height=792)
-        mypage = newdoc[0]
-
-    xmin, ymin, xmax, ymax = mypage.rect
+def stamp_page(PDFpage, NW=None, NE=None, SE=None, SW=None, title=None):
+    xmin, ymin, xmax, ymax = PDFpage.rect
     # print(f"(xmin,ymin,xmax,ymax) = ({xmin},{ymin},{xmax},{ymax})")
 
-    # Set the QR image size (side length w). Default PNG image is 21x21 pixels.
-    stretch = 3
+    # Introduce perimeter of h=20px, hoping this gets us into the "ImageableArea"
+    # of whatever printer eventually puts this onto paper:
+    h = 20                  # Perhaps a smaller value could work. Trial and error?
+    xmin += h
+    xmax -= h
+    ymin += h
+    ymax -= h
+
+    # Set the QR image size in PDF points (side length w).
+    # Default micro PNG image is 21x21 pixels.
+    stretch = 1.5
     w = 21 * stretch
 
-    if TL is not None:
-        QRTL = segno.make(TL, micro=False)
-        TLstream = io.BytesIO()
-        QRTL.save(TLstream, kind="png")
+    if NW is not None:
+        QRNW = segno.make(NW, micro=True)
+        NWstream = io.BytesIO()
+        QRNW.save(NWstream, kind="png")
 
-        mypage.insert_image(fitz.Rect(xmin, ymin, xmin + w, ymin + w), stream=TLstream)
+        PDFpage.insert_image(fitz.Rect(xmin, ymin, xmin + w, ymin + w), stream=NWstream)
 
-    if TR is not None:
-        QRTR = segno.make(TR, micro=False)
-        TRstream = io.BytesIO()
-        QRTR.save(TRstream, kind="png")
+    if NE is not None:
+        QRNE = segno.make(NE, micro=True)
+        NEstream = io.BytesIO()
+        QRNE.save(NEstream, kind="png")
 
-        mypage.insert_image(fitz.Rect(xmax - w, ymin, xmax, ymin + w), stream=TRstream)
+        PDFpage.insert_image(fitz.Rect(xmax - w, ymin, xmax, ymin + w), stream=NEstream)
 
-    if BR is not None:
-        QRBR = segno.make(BR, micro=False)
-        BRstream = io.BytesIO()
-        QRBR.save(BRstream, kind="png")
+    if SE is not None:
+        QRSE = segno.make(SE, micro=True)
+        SEstream = io.BytesIO()
+        QRSE.save(SEstream, kind="png")
 
-        mypage.insert_image(fitz.Rect(xmax - w, ymax - w, xmax, ymax), stream=BRstream)
+        PDFpage.insert_image(fitz.Rect(xmax - w, ymax - w, xmax, ymax), stream=SEstream)
 
-    if BL is not None:
-        QRBL = segno.make(BL, micro=False)
-        BLstream = io.BytesIO()
-        QRBL.save(BLstream, kind="png")
+    if SW is not None:
+        QRSW = segno.make(SW, micro=True)
+        SWstream = io.BytesIO()
+        QRSW.save(SWstream, kind="png")
 
-        mypage.insert_image(fitz.Rect(xmin, ymax - w, xmin + w, ymax), stream=BLstream)
+        PDFpage.insert_image(fitz.Rect(xmin, ymax - w, xmin + w, ymax), stream=SWstream)
 
     if title is not None:
         # Centre title between QR boxes
         tlen = fitz.get_text_length(title)
-        mypage.insert_text([(xmin + xmax) / 2 - tlen / 2, ymin + w / 2], title)
-        # print(f"Sorry, adding title {title} is not implemented yet.")
+        PDFpage.insert_text([(xmin + xmax) / 2 - tlen / 2, ymin + w / 2], title)
 
-    return mypage
+    return PDFpage
 
 
 parser = argparse.ArgumentParser(
@@ -109,16 +109,10 @@ parser.add_argument(
     help="Text to stamp at the top centre of each page (optional; default provided)",
 )
 parser.add_argument(
-    "--course",
-    type=str,
-    default="PLOM",
-    help="Alphanumeric course code to embed in QR codes (optional; default PLOM)",
-)
-parser.add_argument(
     "-O",
     "--outfile",
     type=str,
-    default="PLOM-DNW.pdf",
+    default="PLOM-scrap.pdf",
     help="filename for output (optional, default DNM.pdf)",
 )
 parser.add_argument(
@@ -130,6 +124,14 @@ parser.add_argument(
     help="enable debug printing",
 )
 
+# Here are the corner orientation codes,
+# as documented in the source file tpv_utils.py:
+NE = 1
+NW = 2
+SW = 3
+SE = 4
+
+
 if __name__ == "__main__":
     args = parser.parse_args()
 
@@ -137,8 +139,7 @@ if __name__ == "__main__":
         print(f"Starting {__file__} with these arguments:")
         print(args)
 
-    timenow = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    QRbase = args.course + ":"
+
 
     # Build a base document to decorate.
     # This must have a positive, even number of pages
@@ -155,17 +156,17 @@ if __name__ == "__main__":
 
     outdoc = fitz.Document()
     for i in range(args.copies):
-        QRmessage = QRbase + f"{i:04d}"
+        QRmessage = f"PLOM{i:04d}"
         for p in range(len(unstamped)):
             outdoc.insert_pdf(unstamped, from_page=p, to_page=p)
             ndx = len(outdoc) - 1
             stamp_page(
                 outdoc[ndx],
                 title=args.title,
-                TL=f"DNM-TL\n{QRmessage}",
-                TR=f"DNM-TR\n{QRmessage}",
-                BL=f"DNM-BL\n{QRmessage}",
-                BR=f"DNM-BR\n{QRmessage}",
+                NW=f"plomS{NW:1d}",
+                NE=f"plomS{NE:1d}",
+                SW=f"plomS{SW:1d}",
+                SE=f"plomS{SE:1d}",
             )
 
     if args.debug:
