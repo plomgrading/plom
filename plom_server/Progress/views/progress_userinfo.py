@@ -71,6 +71,8 @@ class ProgressUserInfoHome(ManagerRequiredView):
             prob.user.username: prob.limit for prob in probation_users_with_limits
         }
 
+        default_probation_limit = ProbationPeriod.default_limit
+
         # Fetch user objects for users in probation
         probation_user_objects = User.objects.filter(username__in=probation_users)
 
@@ -83,6 +85,7 @@ class ProgressUserInfoHome(ManagerRequiredView):
                 "annotation_filter_form": filter_form,
                 "latest_updated_annotation_human_time": latest_annotation_human_time,
                 "probation_users": probation_users,
+                "default_probation_limit": default_probation_limit,
                 "probation_limits": probation_limits,
                 "probation_user_objects": probation_user_objects,  # Pass user objects
             }

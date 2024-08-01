@@ -5,6 +5,8 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Elisa Pan
+# Copyright (C) 2024 Bryan Tanady
+
 
 from django.shortcuts import redirect, render
 from django.http import HttpRequest, HttpResponse, Http404
@@ -105,10 +107,10 @@ class SetProbationView(ManagerRequiredView):
         """Handle the POST request to set the probation period for the specified user."""
         user = get_object_or_404(User, username=username)
         probation_period, created = ProbationPeriod.objects.get_or_create(
-            user=user, defaults={"limit": 5}
+            user=user, limit=ProbationPeriod.default_limit
         )
         if not created:
-            probation_period.limit = 20
+            probation_period.limit = ProbationPeriod.default_limit
             probation_period.save()
 
         next_page = request.POST.get(
@@ -167,9 +169,38 @@ class ModifyProbationView(ManagerRequiredView):
 
         for user_id in user_ids:
             user = get_object_or_404(User, pk=user_id)
-            probation_period, created = ProbationPeriod.objects.get_or_create(user=user)
+            probation_period, created = ProbationPeriod.objects.get_or_create(
+                user=user, limit=ProbationPeriod.default_limit
+            )
             probation_period.limit = new_limit
             probation_period.save()
 
         messages.success(request, "Probation limits updated successfully.")
         return redirect(reverse("progress_user_info_home"))
+
+
+class ModifyDefaultLimitView(ManagerRequiredView):
+    """View to handle modifying the default probation limit."""
+
+    def post(self, request):
+        """Handle the POST request to change the default probation limit."""
+        new_limit = int(request.POST.get("limit"))
+
+        if new_limit > 0:
+            ProbationPeriod.set_default_limit(new_limit)
+            messages.add_message(
+                request,
+                messages.SUCCESS,
+                "Probation limit updated successfully.",
+                extra_tags="modify_default_limit",
+            )
+        else:
+            messages.add_message(
+                request,
+                messages.WARNING,
+                "Limit is invalid!",
+                extra_tags="modify_default_limit",
+            )
+
+        previous_url = request.META.get("HTTP_REFERER", reverse("users"))
+        return redirect(previous_url)

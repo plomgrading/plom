@@ -13,6 +13,31 @@
     User progress
 {% endblock page_heading %}
 {% block main_content %}
+<div class="card my-2">
+    <div class="card-body">
+        <h6>Default probation limit: {{ default_probation_limit }}</h6>
+        <button class="btn btn-success m-2"
+                        type="button"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modifyDefaultLimit">Change default limit</button>
+                        {% if messages %}
+                        <div>
+                            {% for message in messages %}
+                                {% if 'modify_default_limit' in message.tags %}
+                                    {% if 'success' in message.tags %}
+                                        <div class="alert alert-success">{{ message }}</div>
+                                    {% elif 'warning' in message.tags %}
+                                        <div class="alert alert-warning">{{ message }}</div>
+                                    {% elif 'error' in message.tags %}
+                                        <div class="alert alert-danger">{{ message }}</div>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    
+        {% endif %}
+    </div>
+</div>
     <div>
         <div class="card w-100">
             <div class="card-body">
@@ -26,7 +51,13 @@
                 </div>
                 {% if messages %}
                     <div>
-                        {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
+                        {% for message in messages %}
+                        {% if 'modify_default_limit' not in message.tags %}
+                        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                        {% endif %}
+
+                        {% endfor %}
+
                     </div>
                 {% endif %}
                 <table class="table text-center align-middle">
