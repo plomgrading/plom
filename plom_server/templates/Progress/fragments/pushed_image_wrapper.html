@@ -17,9 +17,9 @@
             <li>Bundle-order: {{ page_info.bundle_order }}</li>
         </ul>
         {% if user_is_manager %}
-        <button class="btn btn-danger"
-                hx-confirm="This will invalidate any existing marking of this question. Are you sure you wish to proceed?"
-                hx-delete="{% url 'progress_pushed_img' image_pk %}">discard this fixed page image</button>
+            <button class="btn btn-danger"
+                    hx-confirm="This will invalidate any existing marking of this question. Are you sure you wish to proceed?"
+                    hx-delete="{% url 'progress_pushed_img' image_pk %}">discard this fixed page image</button>
         {% endif %}
     {% elif page_info.page_type == 'mobile' %}
         <ul>
@@ -29,9 +29,9 @@
             <li>Bundle-order: {{ page_info.bundle_order }}</li>
         </ul>
         {% if user_is_manager %}
-        <button class="btn btn-danger"
-                hx-confirm="This will invalidate any existing marking of this question. Are you sure you wish to proceed?"
-                hx-delete="{% url 'progress_pushed_img' image_pk %}">discard this mobile page image</button>
+            <button class="btn btn-danger"
+                    hx-confirm="This will invalidate any existing marking of this question. Are you sure you wish to proceed?"
+                    hx-delete="{% url 'progress_pushed_img' image_pk %}">discard this mobile page image</button>
         {% endif %}
     {% else %}
         <ul>
@@ -41,9 +41,9 @@
             <li>Bundle-order: {{ page_info.bundle_order }}</li>
         </ul>
         {% if user_is_manager %}
-        <a href="{% url 'progress_reassign_discard' image_pk %}">
-            <button class="btn btn-warning">reassign this discarded image</button>
-        </a>
+            <a href="{% url 'progress_reassign_discard' image_pk %}">
+                <button class="btn btn-warning">reassign this discarded image</button>
+            </a>
         {% endif %}
     {% endif %}
 </div>
