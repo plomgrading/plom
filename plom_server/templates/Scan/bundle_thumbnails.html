@@ -10,9 +10,7 @@
 {% endblock title %}
 {% block page_heading %}
     Bundle thumbnails
-        {% if is_pushed %}
-        &mdash; read-only
-        {% endif %}
+    {% if is_pushed %}&mdash; read-only{% endif %}
 {% endblock page_heading %}
 {% block main_content %}
     <div class="flex">
@@ -34,7 +32,7 @@
                         <i class="bi bi-check-square text-success"></i>
                         Pushed bundle
                     {% else %}
-                    Bundle 
+                        Bundle
                     {% endif %}
                     <q>{{ slug }}</q> summary
                     <button class="btn btn-light" x-on:click="show_summary =! show_summary">

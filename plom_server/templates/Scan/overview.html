@@ -65,16 +65,15 @@
             </a>
             <a class="list-group-item list-group-item-action border mb-1"
                href="{% url 'scan_list_incomplete' %}">
-                <p class="fs-4">Incomplete pushed papers
-                        {% if incomplete_papers %}
-                        <i class="bi bi-exclamation-diamond-fill text-warning"></i>
-                        {% endif %}
+                <p class="fs-4">
+                    Incomplete pushed papers
+                    {% if incomplete_papers %}<i class="bi bi-exclamation-diamond-fill text-warning"></i>{% endif %}
                 </p>
                 <p class="fs-7">&emsp;&ensp;View (and repair - if manager) incomplete papers in the main server.</p>
                 {% if incomplete_papers %}
-                <p class="fs-7">&emsp;&ensp;There are currently {{ incomplete_papers }} such papers.</p>
+                    <p class="fs-7">&emsp;&ensp;There are currently {{ incomplete_papers }} such papers.</p>
                 {% else %}
-                <p class="fs-7">&emsp;&ensp;Generally there should be no such paper(s).</p>
+                    <p class="fs-7">&emsp;&ensp;Generally there should be no such paper(s).</p>
                 {% endif %}
             </a>
             <a class="list-group-item list-group-item-action border mb-1">
