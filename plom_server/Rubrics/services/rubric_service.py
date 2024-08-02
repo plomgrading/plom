@@ -304,7 +304,7 @@ class RubricService:
             if out_of is None:
                 raise ValueError("out_of is required for absolute rubrics.")
             else:
-                if value.is_integer():
+                if type(value) == int or value.is_integer():
                     return f"{value:g} of {out_of:g}"
                 else:
                     return f"{value} of {out_of}"
