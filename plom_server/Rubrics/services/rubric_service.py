@@ -285,7 +285,7 @@ class RubricService:
         return _Rubric_to_dict(rubric_obj)
 
     def _generate_display_delta(
-        self, value: float, kind: str, out_of: float | None = None
+        self, value: int | float, kind: str, out_of: int | float | None = None
     ) -> str:
         """Generate the display delta for a rubric.
 
@@ -304,7 +304,7 @@ class RubricService:
             if out_of is None:
                 raise ValueError("out_of is required for absolute rubrics.")
             else:
-                if type(value) == int or value.is_integer():
+                if isinstance(value, int) or value.is_integer():
                     return f"{value:g} of {out_of:g}"
                 else:
                     return f"{value} of {out_of}"
