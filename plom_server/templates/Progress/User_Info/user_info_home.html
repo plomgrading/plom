@@ -37,6 +37,7 @@
                             <th>Question Claimed</th>
                             <th>Probation</th>
                             <th>Probation Limit</th>
+                            <th>Probation Tasks</th>
                             <th>Limit Modifier</th>
                         </tr>
                         {% for user, annotation_and_claimedTask_count in annotation_count_dict.items %}
@@ -70,6 +71,12 @@
                                     {% else %}
                                         N/A
                                     {% endif %}
+                                </td>
+                                <td>
+                                    <a class="btn btn-info"
+                                       href="{% url 'progress_marking_task_filter' %}?username={{ user.username }}&the_tag=Probation">
+                                        view
+                                    </a>
                                 </td>
                                 <td>
                                     {% if user.username in probation_users %}
