@@ -362,6 +362,9 @@ class RubricService:
         qs = self.get_all_rubrics()
         return qs.annotate(times_used=Count("annotations"))
 
+    # TODO: create method to get all rubrics with counts of how many times
+    #       it has been used in the latest edition of a paper
+
     def get_rubric_count(self) -> int:
         """How many rubrics in total (excluding revisions)."""
         return Rubric.objects.filter(latest=True).count()
