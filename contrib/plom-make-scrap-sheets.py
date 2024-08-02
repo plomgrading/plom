@@ -2,6 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Philip D Loewen
+# Copyright (C) 2024 Andrew Rechnitzer
 
 """Generate a PDF with title text and QR codes both indicating scrap.
 
@@ -20,13 +21,31 @@ the output filename, etc. For details, read the code; for a quick summary, say
     python3 plom-make-DNM-sheets.py --help
 """
 
+from __future__ import annotations
+
 import argparse
-import pymupdf as fitz
+
+# import pymupdf as fitz
+import fitz
 import segno
 import io
 
+# Here are the corner orientation codes,
+# as documented in the source file tpv_utils.py:
+cnrNE = 1
+cnrNW = 2
+cnrSW = 3
+cnrSE = 4
 
-def stamp_page(PDFpage, NW=None, NE=None, SE=None, SW=None, title=None):
+
+def stamp_page(
+    PDFpage: fitz.Page,
+    NW: str | None = None,
+    NE: str | None = None,
+    SE: str | None = None,
+    SW: str | None = None,
+    title: str | None = None,
+) -> None:
     xmin, ymin, xmax, ymax = PDFpage.rect
     # print(f"(xmin,ymin,xmax,ymax) = ({xmin},{ymin},{xmax},{ymax})")
 
@@ -79,59 +98,55 @@ def stamp_page(PDFpage, NW=None, NE=None, SE=None, SW=None, title=None):
     return PDFpage
 
 
-parser = argparse.ArgumentParser(
-    description=__doc__.split("\n")[0],
-    epilog="\n".join(__doc__.split("\n")[1:]),
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-)
-parser.add_argument(
-    "-n",
-    "--copies",
-    type=int,
-    default=1,
-    action="store",
-    help="number of copies for given PDF, else number of physical sheets (optional)",
-)
-parser.add_argument(
-    "-pdf",
-    "--pdf",
-    type=str,
-    default=None,
-    action="store",
-    help="filename of PDF to stamp with DNM notations (optional)",
-)
-parser.add_argument(
-    "-t",
-    "--title",
-    type=str,
-    default="This page will not be graded!",
-    help="Text to stamp at the top centre of each page (optional; default provided)",
-)
-parser.add_argument(
-    "-O",
-    "--outfile",
-    type=str,
-    default="PLOM-scrap.pdf",
-    help="filename for output (optional, default DNM.pdf)",
-)
-parser.add_argument(
-    "-d",
-    "--debug",
-    # nargs=0,
-    action="store_true",
-    default=False,
-    help="enable debug printing",
-)
-
-# Here are the corner orientation codes,
-# as documented in the source file tpv_utils.py:
-NE = 1
-NW = 2
-SW = 3
-SE = 4
+def configure_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=__doc__.split("\n")[0],
+        epilog="\n".join(__doc__.split("\n")[1:]),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "-n",
+        "--copies",
+        type=int,
+        default=1,
+        action="store",
+        help="number of copies for given PDF, else number of physical sheets (optional)",
+    )
+    parser.add_argument(
+        "-pdf",
+        "--pdf",
+        type=str,
+        default=None,
+        action="store",
+        help="filename of PDF to stamp with DNM notations (optional)",
+    )
+    parser.add_argument(
+        "-t",
+        "--title",
+        type=str,
+        default="This page will not be graded!",
+        help="Text to stamp at the top centre of each page (optional; default provided)",
+    )
+    parser.add_argument(
+        "-O",
+        "--outfile",
+        type=str,
+        default="PLOM-scrap.pdf",
+        help="filename for output (optional, default DNM.pdf)",
+    )
+    parser.add_argument(
+        "-d",
+        "--debug",
+        # nargs=0,
+        action="store_true",
+        default=False,
+        help="enable debug printing",
+    )
+    return parser
 
 
 if __name__ == "__main__":
+    parser = configure_parser()
     args = parser.parse_args()
 
     if args.debug:
@@ -160,10 +175,10 @@ if __name__ == "__main__":
             stamp_page(
                 outdoc[ndx],
                 title=args.title,
-                NW=f"plomS{NW:1d}",
-                NE=f"plomS{NE:1d}",
-                SW=f"plomS{SW:1d}",
-                SE=f"plomS{SE:1d}",
+                NW=f"plomS{cnrNW:1d}",
+                NE=f"plomS{cnrNE:1d}",
+                SW=f"plomS{cnrSW:1d}",
+                SE=f"plomS{cnrSE:1d}",
             )
 
     if args.debug:
