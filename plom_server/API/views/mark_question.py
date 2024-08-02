@@ -9,10 +9,11 @@ from __future__ import annotations
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import status
-from rest_framework.viewsets import ViewSet
+from rest_framework.exceptions import ValidationError
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.request import Request
+from rest_framework.viewsets import ViewSet
 
 from plom.plom_exceptions import (
     PlomConflict,
@@ -156,7 +157,7 @@ class QuestionMarkingViewSet(ViewSet):
             this question/version.
             400: malformed input of some sort.
             404: no such task.
-            406: TODO: integrity fail: client submitted to out-of-date task.
+            406: integrity fail: client submitted to out-of-date task.
             409: task has changed.
             410: task is gone.
         """
@@ -173,7 +174,9 @@ class QuestionMarkingViewSet(ViewSet):
             )
         except ObjectDoesNotExist as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
-        # TODO: is something automatically catching ValidationErrors?
+        except ValidationError as e:
+            # happens automatically but this way we keep the error msg
+            return _error_response(e, status.HTTP_400_BAD_REQUEST)
 
         annotation_image = files["annotation_image"]
         img_md5sum = data["md5sum"]

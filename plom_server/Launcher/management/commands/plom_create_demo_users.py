@@ -72,6 +72,20 @@ class Command(BaseCommand):
             ("manager", "1234"),
         ):
             email = f"{username}@example.com"
+            # check if manager-user already exists, new demo launch
+            # workflow may create one already. If it does exist
+            # then change the password.
+            try:
+                user_obj = User.objects.get(username=username)
+                self.stdout.write(
+                    f"{username} already exists - updating with demo password."
+                )
+                user_obj.set_password(password)
+                user_obj.email = email
+                user_obj.save()
+                continue
+            except User.DoesNotExist:
+                pass
             try:
                 User.objects.create_user(
                     username=username, email=email, password=password

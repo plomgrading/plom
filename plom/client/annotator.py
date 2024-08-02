@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2024 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
@@ -54,6 +54,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtWidgets import QGraphicsRectItem
 
+from plom.misc_utils import pprint_score
 import plom.client.cursors
 import plom.client.icons
 from .rubric_list import RubricWidget
@@ -85,10 +86,10 @@ tipText = {
         "Pen: L = freehand pen, M/Ctrl = pen with arrows, "
         + "R/Shift = freehand highlighter."
     ),
-    "redo": "Redo: Redo last action",
+    "redo": "Redo last action",
     "text": "Text: Enter = newline, Shift-Enter/ESC = finish.",
     "tick": "Tick: L = checkmark, M/Ctrl = ?-mark, R/Shift = cross.",
-    "undo": "Undo: Undo last action",
+    "undo": "Undo last action",
     "zoom": "Zoom: L = Zoom in, R = zoom out.",
 }
 
@@ -133,7 +134,7 @@ class Annotator(QWidget):
         self.ui = self
 
         # ordered list of minor mode tools, must match the UI order
-        self._list_of_minor_modes = ["box", "tick", "cross", "text", "line", "pen"]
+        self._list_of_minor_modes = ["tick", "cross", "text", "line", "box", "pen"]
         # current or last used tool, tracked so we can switch back
         self._which_tool = self._list_of_minor_modes[0]
 
@@ -580,12 +581,16 @@ class Annotator(QWidget):
         """
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
         self.ui.narrowMarkLabel.setStyleSheet("color: #ff0000; font: bold;")
+        # TODO: some duplication of code b/w here and pagescene.ScoreBox
+        s = ""
+        if self.question_label:
+            s += self.question_label + ": "
         if score is None:
-            self.ui.markLabel.setText("Unmarked")
-            self.ui.narrowMarkLabel.setText("Unmarked")
+            s += "Unmarked"
         else:
-            self.ui.markLabel.setText("{} out of {}".format(score, self.maxMark))
-            self.ui.narrowMarkLabel.setText("{} out of {}".format(score, self.maxMark))
+            s += f"{pprint_score(score)} out of {self.maxMark}"
+        self.ui.markLabel.setText(s)
+        self.ui.narrowMarkLabel.setText(s)
 
     def loadCursors(self):
         """Load custom cursors and set their hotspots.
@@ -615,7 +620,7 @@ class Annotator(QWidget):
         cursor["arrow"] = QCursor(_pixmap_from("arrow.png"), 4, 4)
         cursor["DoubleArrow"] = QCursor(_pixmap_from("double_arrow.png"), 4, 4)
         cursor["text"] = Qt.CursorShape.IBeamCursor
-        cursor["rubric"] = Qt.CursorShape.IBeamCursor
+        cursor["rubric"] = Qt.CursorShape.ArrowCursor
         cursor["image"] = Qt.CursorShape.CrossCursor
         cursor["zoom"] = Qt.CursorShape.SizeFDiagCursor
         # note ClosedHandCursor and OpenHandCursor also hardcoded in pagescene
@@ -867,11 +872,11 @@ class Annotator(QWidget):
     def experimental_cycle(self):
         self.scene.whichLineToDraw_next()
 
-    def keyPopUp(self, *, tab_idx=None):
+    def keyPopUp(self, *, tab_idx: int | None = None) -> None:
         """View help and keyboard shortcuts, eventually edit them.
 
         Keyword Arg:
-            tab_idx (int/None): which tab to open in the help.  If None
+            tab_idx: which tab to open in the help.  If None
                 then we try to re-open on the same tab from last run.
         """
         if tab_idx is None:

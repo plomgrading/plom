@@ -34,7 +34,7 @@ from PyQt6.QtWidgets import (
 )
 
 from plom.misc_utils import next_in_longest_subsequence
-from .useful_classes import SimpleQuestion, ErrorMsg, InfoMsg
+from .useful_classes import SimpleQuestion, ErrorMsg, InfoMsg, WarnMsg
 from .useful_classes import BigMessageDialog
 from .rubric_wrangler import RubricWrangler
 from .rubrics import compute_score, diff_rubric, render_rubric_as_html
@@ -47,6 +47,7 @@ from plom.plom_exceptions import (
     PlomInconsistentRubric,
     PlomNoPermission,
     PlomNoRubric,
+    PlomNoServerSupportException,
 )
 
 
@@ -207,12 +208,14 @@ class RubricTable(QTableWidget):
         self._parent.update_tab_names()
 
     def is_user_tab(self) -> bool:
+        """Is this a user-created tab."""
         return self.tabType is None
 
     def is_group_tab(self) -> bool:
         return self.tabType == "group"
 
     def is_delta_tab(self) -> bool:
+        """Is this a one of the delta tabs."""
         return self.tabType == "delta"
 
     def is_hidden_tab(self) -> bool:
@@ -1639,7 +1642,11 @@ class RubricWidget(QWidget):
         Args:
             key: the identifier of the rubric.
         """
-        paper_numbers = self._parent.getOtherRubricUsagesFromServer(key)
+        try:
+            paper_numbers = self._parent.getOtherRubricUsagesFromServer(key)
+        except PlomNoServerSupportException as e:
+            WarnMsg(self, str(e)).exec()
+            return
         # dialog's parent is set to Annotator.
         RubricOtherUsageDialog(self._parent, paper_numbers).exec()
 

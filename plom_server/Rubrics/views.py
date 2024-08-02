@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Aden Chan
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ from django.contrib import messages
 from django.views.generic.edit import UpdateView
 
 from plom.feedback_rules import feedback_rules as static_feedback_rules
+from plom.misc_utils import pprint_score
 
 from Base.base_group_views import ManagerRequiredView
 from Base.models import SettingsModel
@@ -239,6 +241,10 @@ class RubricLandingPageView(ManagerRequiredView):
 
         rubrics = RubricTable(rubrics, order_by=request.GET.get("sort"))
         rubrics.paginate(page=request.GET.get("page", 1), per_page=15)
+        for index, r in enumerate(rubrics):
+            r.value_str = f"{r.value:.3g}"
+            r.out_of_str = f"{r.out_of:.3g}"
+
         context.update(
             {
                 "rubrics": rubrics,
@@ -268,6 +274,10 @@ class RubricItemView(UpdateView, ManagerRequiredView):
         revisions = rs.get_past_revisions_by_key(rubric_key)
         marking_tasks = rs.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
         form = RubricItemForm(instance=rubric)
+        for index, task in enumerate(marking_tasks):
+            task.latest_annotation.score_str = pprint_score(
+                task.latest_annotation.score
+            )
 
         rubric_as_html = rs.get_rubric_as_html(rubric)
         context.update(

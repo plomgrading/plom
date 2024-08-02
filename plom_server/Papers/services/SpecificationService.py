@@ -9,7 +9,7 @@ from __future__ import annotations
 from copy import deepcopy
 import html
 import logging
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.text import slugify
@@ -267,6 +267,23 @@ def get_dnm_pages() -> List[int]:
     """
     spec = Specification.objects.get()
     return spec.doNotMarkPages
+
+
+@transaction.atomic
+def get_question_pages() -> Dict[int, List[int]]:
+    """Get the pages of each question, indexed from one.
+
+    Returns:
+        A dictionary of question indices giving a list of the corresponding pages {question_index: question_pages}.
+    Exceptions:
+        ObjectDoesNotExist: no exam specification yet.
+    """
+    # check if there is a spec, else raise an exception
+    _ = Specification.objects.get()
+    question_pages = {
+        q_obj.question_index: q_obj.pages for q_obj in SpecQuestion.objects.all()
+    }
+    return question_pages
 
 
 @transaction.atomic

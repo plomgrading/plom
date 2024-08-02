@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Colin B. Macdonald
-
-import unittest
+# Copyright (C) 2024 Andrew Rechnitzer
 
 from django.test import TestCase
 from django.contrib.auth.models import User
@@ -151,9 +150,9 @@ class MarkingTaskServiceRemovingTaggingTests(TestCase):
         with self.assertRaisesMessage(ValueError, "No such tag"):
             s.remove_tag_text_from_task_code("no_such_tag_411d1b1443e5", task.code)
 
-    # Issue #2810
-    @unittest.expectedFailure
     def test_tag_remove_no_such_local_tag(self) -> None:
+        # this tests issue #2810 - which was fixed in !2792
+        # now an appropriate exception is raised.
         s = MarkingTaskService()
         user: User = baker.make(User)
         s.create_tag(user, "hello")

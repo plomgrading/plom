@@ -39,6 +39,11 @@ class Command(BaseCommand):
             help="Show status of all PDF paper build chores",
         )
         grp.add_argument(
+            "--count-done",
+            action="store_true",
+            help="Count number of completed PDF build chores",
+        )
+        grp.add_argument(
             "--list",
             action="store_true",
             help="List each paper PDF build chore and its status",
@@ -88,6 +93,15 @@ class Command(BaseCommand):
             raise CommandError(e) from e
         self.stdout.write(f"Started building paper number {paper_number}.")
 
+    def show_done_count(self) -> None:
+        bp_service = BuildPapersService()
+        if bp_service.are_all_papers_built():
+            self.stdout.write("All complete")
+        else:
+            n = bp_service.get_n_complete_tasks()
+            N = bp_service.get_n_tasks()
+            self.stdout.write(f"Completed {n} / {N}")
+
     def show_task_status(self) -> None:
         bp_service = BuildPapersService()
         if bp_service.are_all_papers_built():
@@ -115,8 +129,10 @@ class Command(BaseCommand):
         self.stdout.write(tabulate(tab, headers="keys", tablefmt="simple_outline"))
 
     def delete_all_tasks(self) -> None:
+        self.stdout.write("Deleting all PDF building chores and associated PDFs...")
         bp_service = BuildPapersService()
         bp_service.reset_all_tasks()
+        self.stdout.write("Deletion complete")
 
     def cancel_all_tasks(self) -> None:
         bp_service = BuildPapersService()
@@ -162,6 +178,8 @@ class Command(BaseCommand):
             self.delete_all_tasks()
         elif options["cancel_all"]:
             self.cancel_all_tasks()
+        elif options["count_done"]:
+            self.show_done_count()
         elif options["status"]:
             self.show_task_status()
         elif options["list"]:

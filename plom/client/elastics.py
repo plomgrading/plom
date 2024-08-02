@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2022 Andrew Rechnitzer
+# Copyright (C) 2018-2024 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2024 Bryan Tanady
 
 """Elastic band options for connecting rubrics to labels."""
 
@@ -27,26 +28,37 @@ log = logging.getLogger("pagescene")
 minimum_box_side_length = 24
 
 
-def shape_to_sample_points_on_boundary(shape, N=2, corners=False):
+def shape_to_sample_points_on_boundary(shape, corners=False, all_sides=True):
     """Return some points on the perimeter of a shape.
 
     If the input is a point, just return that point.
 
-    If the input is a rectangle, dy default, list of vertices in the
+    If the input is a rectangle, by default, list of vertices in the
     middle of each side, but this can be adjusted.
     """
     if isinstance(shape, QRectF):
         x, y, w, h = shape.getRect()
-        if corners:
-            trange = range(0, N + 1)
+        # start with midpoints of the rectangle sides
+        if all_sides:
+            pts = [
+                QPointF(x + w / 2, y),
+                QPointF(x + w / 2, y + h),
+                QPointF(x, y + h / 2),
+                QPointF(x + w, y + h / 2),
+            ]
         else:
-            trange = range(1, N)
-        return [
-            *(QPointF(x + w * n / N, y) for n in trange),
-            *(QPointF(x + w * n / N, y + h) for n in trange),
-            *(QPointF(x, y + h * n / N) for n in range(1, N)),
-            *(QPointF(x + w, y + h * n / N) for n in range(1, N)),
-        ]
+            pts = [
+                QPointF(x, y + h / 2),
+                QPointF(x + w, y + h / 2),
+            ]
+        if corners:
+            pts += [
+                QPointF(x, y),
+                QPointF(x + w, y),
+                QPointF(x, y + h),
+                QPointF(x + w, y + h),
+            ]
+        return pts
     elif isinstance(shape, QPointF):
         return [shape]
     else:
@@ -63,8 +75,11 @@ def shortestLine(g_rect, b_rect):
 
     More precisely, given two rectangles, return shortest line between the midpoints of their sides. A single-vertex is treated as a rectangle of height/width=0 for this purpose.
     """
-    gvert = shape_to_sample_points_on_boundary(g_rect, 2, corners=False)
-    bvert = shape_to_sample_points_on_boundary(b_rect, 2, corners=True)
+    gvert = shape_to_sample_points_on_boundary(g_rect, corners=False)
+    bvert = shape_to_sample_points_on_boundary(
+        b_rect,
+        corners=True,
+    )
     gp = gvert[0]
     bp = bvert[0]
     dd = sqrDistance(gp - bp)
@@ -294,6 +309,111 @@ def which_sticky_corners(g, r):
     return path
 
 
+def get_midpoints(shape):
+    """Get a dict of the midpoints of each side of the given shape."""
+    if isinstance(shape, QRectF):
+        x, y, w, h = shape.getRect()
+        return {
+            "west": QPointF(x, y + h / 2),
+            "east": QPointF(x + w, y + h / 2),
+            "north": QPointF(x + w / 2, y),
+            "south": QPointF(x + w / 2, y + h),
+        }
+    elif isinstance(shape, QPointF):
+        return {
+            "west": shape,
+            "east": shape,
+            "north": shape,
+            "south": shape,
+        }
+    else:
+        raise ValueError(f"Don't know how find points on perimeter of {shape}")
+
+
+def short_lines(
+    b_pts,
+    a_pt,
+    *,
+    N=2,
+    check_only_north=False,
+    check_only_west=False,
+    check_only_east=False,
+):
+    """Get lines from b_pts to a_pt sorted shortest to longest.
+
+    KWargs:
+        N: how many short lines to return.
+        check_only_north: when True, only check b_pts that lie
+            to the north of a_pt.
+        check_only_west: when True, only check b_pts that lie
+            to the west of a_pt.
+        check_only_east: when True, only check b_pts that lie
+            to the east of a_pt.
+
+    Returns: List of the shortest N lines from points in b_pts to a_pt.
+    """
+    if check_only_north:
+        b_pts = [b for b in b_pts if b.y() <= a_pt.y()]
+    if check_only_west:
+        b_pts = [b for b in b_pts if b.x() <= a_pt.x()]
+    if check_only_east:
+        b_pts = [b for b in b_pts if b.x() >= a_pt.x()]
+
+    distances_and_lines = sorted(
+        [(sqrDistance(a_pt - b), QLineF(b, a_pt)) for b in b_pts],
+        key=lambda X: X[0],
+    )
+    return [X[1] for X in distances_and_lines[:N]]
+
+
+def shortestToSideLine(g_rect, b_rect):
+    """Find a 'nice' line connecting the ghost-rect to the box.
+
+    Returns the line and a bool. The bool indicates whether or not the
+    line connects to the east or west side of the ghost-rect.
+    """
+    # based heavily on work/ideas by BryanT in !2720.
+    # though I suggest we merge this instead of that
+
+    # get the midpoints of the ghost-rect boundary,
+    g_midpoints = get_midpoints(g_rect)
+    # and the midpoints and corners of the box-boundary
+    bvert = shape_to_sample_points_on_boundary(b_rect, corners=True)
+    # determine if center of ghost is north of the box
+    ghost_is_south = g_rect.center().y() >= b_rect.top()
+    # we first try to connect the west side of the g_rect to the box.
+    # however, if the centre of the ghost is south of the top-edge of the box,
+    # then we try to connect west/north
+    # first try to connect left-mid-side of g_rect to box, and make sure
+    # the connecting line goes to the west.
+    lines_to_west = short_lines(
+        bvert,
+        g_midpoints["west"],
+        check_only_north=ghost_is_south,
+        check_only_west=True,
+    )
+    for line in lines_to_west:
+        return line, True
+
+    # if no suitable line try to connect to the east with similar reasoning.
+    lines_to_east = short_lines(
+        bvert,
+        g_midpoints["east"],
+        check_only_north=ghost_is_south,
+        check_only_east=True,
+    )
+    for line in lines_to_east:
+        return line, True
+    # if that doesn't work try to connect to middle of north side
+    line_to_north = short_lines(bvert, g_midpoints["north"], N=1)[0]
+    # but only if line runs in correct direction
+    if line_to_north.p1().y() <= line_to_north.p2().y():
+        return line_to_north, False
+    # all else fails - connect to the middle of south side
+    line_to_south = short_lines(bvert, g_midpoints["south"], N=1)[0]
+    return line_to_south, False
+
+
 def which_horizontal_step(g_rect, b_rect):
     """WIP on a beautiful horizontally stepped labelling system.
 
@@ -305,7 +425,7 @@ def which_horizontal_step(g_rect, b_rect):
         QPainterPath
     """
     # direct line from the box-rect to the ghost-rect
-    directLine = shortestLine(g_rect, b_rect)
+    directLine, connects_east_west = shortestToSideLine(g_rect, b_rect)
     thePath = QPainterPath(directLine.p1())
 
     # iteration 1
@@ -333,7 +453,9 @@ def which_horizontal_step(g_rect, b_rect):
     # as #2 but steeper diagonal
     slope = 3
     sg = directLine.dy() * directLine.dx()  # get sign of gradient
-    if abs(directLine.dy()) < slope * abs(directLine.dx()):  # end in horizontal
+    if connects_east_west and (
+        abs(directLine.dy()) < slope * abs(directLine.dx())
+    ):  # end in horizontal
         sx = directLine.dy() / slope
         if sg < 0:  # flip sign if gradient negative
             sx = -sx

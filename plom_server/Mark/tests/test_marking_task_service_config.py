@@ -9,8 +9,8 @@ from django.contrib.auth.models import User
 from model_bakery import baker
 
 from Base.tests import config_test
-from Preparation.models import StagingPQVMapping
 from Papers.models import Paper
+from Papers.services import PaperInfoService
 
 from ..services import MarkingTaskService, QuestionMarkingService
 from ..models import MarkingTask
@@ -32,12 +32,12 @@ class MarkingTaskTestsWithConfig(TestCase):
         task1 = mts.create_task(paper1, 1)
         task2 = mts.create_task(paper2, 1)
 
-        question_version1 = StagingPQVMapping.objects.get(
-            paper_number=1, question=1
-        ).version
-        question_version2 = StagingPQVMapping.objects.get(
-            paper_number=2, question=1
-        ).version
+        question_version1 = PaperInfoService().get_version_from_paper_question(
+            paper_number=1, question_idx=1
+        )
+        question_version2 = PaperInfoService().get_version_from_paper_question(
+            paper_number=2, question_idx=1
+        )
 
         self.assertEqual(task1.question_version, question_version1)
         self.assertAlmostEqual(task1.code, "q0001g1")

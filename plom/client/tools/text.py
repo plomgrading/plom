@@ -2,9 +2,14 @@
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2024 Bryan Tanady
+
+from __future__ import annotations
+
+from typing import Any
 
 from PyQt6.QtCore import Qt, QPointF, QTimer
-from PyQt6.QtGui import QColor, QFont, QImage, QUndoCommand
+from PyQt6.QtGui import QColor, QFont, QUndoCommand, QPixmap
 from PyQt6.QtWidgets import QGraphicsItem, QGraphicsTextItem
 
 from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
@@ -78,13 +83,7 @@ class UndoStackMoveTextMixin:
 class CommandText(CommandTool):
     def __init__(self, scene, pt, text):
         super().__init__(scene)
-        self.blurb = TextItem(
-            pt,
-            text,
-            fontsize=scene.fontSize,
-            color=scene.style["annot_color"],
-            _texmaker=scene,
-        )
+        self.blurb = TextItem(pt, text, style=scene.style, _texmaker=scene)
         # TODO: why do CommandText have a .blurb instead of a .obj?  Issue #3419.
         # HACK by just making another reference to it: else we need custom undo/redo
         self.obj = self.blurb
@@ -127,14 +126,22 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
     TODO: try to remove this with some future refactor?
     """
 
-    def __init__(self, pt, text, fontsize=10, color=QColor("red"), _texmaker=None):
+    def __init__(
+        self,
+        pt,
+        text: str,
+        *,
+        style: dict[str, Any],
+        _texmaker=None,
+    ):
         super().__init__()
         self.saveable = True
         self._texmaker = _texmaker
-        self.setDefaultTextColor(color)
+        self.setDefaultTextColor(style["annot_color"])
         self.setPlainText(text)
         font = QFont("Helvetica")
-        font.setPixelSize(round(fontsize))
+        self.annot_scale = style["scale"]
+        font.setPixelSize(round(style["fontsize"]))
         self.setFont(font)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
@@ -154,6 +161,27 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         shp = self.shape()
         shp.translate(self.pos())
         return shp
+
+    def set_image(self, image_path: str) -> None:
+        """Replace the current content with an image.
+
+        Args:
+            image_path: image path.
+            fontsize: scene's fontsize which will be used to scale the image.
+        """
+        pixmap = QPixmap(image_path)
+        original_width = pixmap.width()
+        original_height = pixmap.height()
+
+        scaled_width = int(original_width * self.annot_scale)
+        scaled_height = int(original_height * self.annot_scale)
+
+        html_content = f"""
+        <div style="text-align: center;">
+            <img src="{image_path}" width="{scaled_width}" height="{scaled_height}" style="vertical-align: middle;" />
+        </div>
+        """
+        self.setHtml(html_content)
 
     def enable_interactive(self):
         """Set it as editable with the text-editor."""
@@ -249,9 +277,7 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         if fragfilename:
             self._tex_src_cache = src
             self.setPlainText("")
-            tc = self.textCursor()
-            qi = QImage(fragfilename)
-            tc.insertImage(qi)
+            self.set_image(fragfilename)
 
     def pngToText(self):
         """If displaying rendered latex, switch back to source."""
@@ -299,7 +325,7 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
 class GhostText(QGraphicsTextItem):
     """Blue "ghost" of text indicating what text will be placed in scene."""
 
-    def __init__(self, txt, fontsize, *, legal=True):
+    def __init__(self, txt: str, annot_scale: float, fontsize: int, *, legal=True):
         super().__init__()
         if legal:
             self.setDefaultTextColor(QColor("blue"))
@@ -309,14 +335,49 @@ class GhostText(QGraphicsTextItem):
         font = QFont("Helvetica")
         font.setPixelSize(round(fontsize))
         self.setFont(font)
+        self.setOpacity(0.7)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         # If displaying png-rendered-latex, store the original text here
         self._tex_src_cache = None
 
+    def update_annot_scale(self, annot_scale: float) -> None:
+        """Update the annotation scale being used.
+
+        Args:
+            annot_scale: scene's global annotation scale.
+        """
+        self.annot_scale = annot_scale
+
+    def set_image(self, image_path: str) -> None:
+        """Replace the current content with an image.
+
+        Args:
+            image_path: image path.
+        """
+        pixmap = QPixmap(image_path)
+        original_width = pixmap.width()
+        original_height = pixmap.height()
+
+        scaled_width = int(original_width * self.annot_scale)
+        scaled_height = int(original_height * self.annot_scale)
+
+        html_content = f"""
+        <div style="text-align: center;">
+            <img src="{image_path}" width="{scaled_width}" height="{scaled_height}" style="vertical-align: middle;" />
+        </div>
+        """
+        self.setHtml(html_content)
+
     def is_rendered(self):
         """Is this TextItem displaying a PNG, e.g., of LaTeX?"""
         return self._tex_src_cache is not None
+
+    def toPlainText(self):
+        """The text itself or underlying source if displaying latex."""
+        if self.is_rendered():
+            return self._tex_src_cache
+        return super().toPlainText()
 
     def changeText(self, txt, legal):
         self._tex_src_cache = None
@@ -335,9 +396,7 @@ class GhostText(QGraphicsTextItem):
             if fragfilename:
                 self._tex_src_cache = txt
                 self.setPlainText("")
-                tc = self.textCursor()
-                qi = QImage(fragfilename)
-                tc.insertImage(qi)
+                self.set_image(fragfilename)
         if legal:
             self.setDefaultTextColor(QColor("blue"))
         else:

@@ -174,7 +174,7 @@
                                                 {% endif %}
                                                 <td>{{ task_data.last_update }}</td>
                                                 <td>{{ task_data.username }}</td>
-                                                <td>{{ task_data.score }}</td>
+                                                <td>{{ task_data.score_str }}</td>
                                                 <td class="vstack gap-1">
                                                     {% for tg in task_data.attn_tags %}<div class="badge text-bg-warning">{{ tg }}</div>{% endfor %}
                                                     {% for tg in task_data.tags %}<div class="badge bg-primary">{{ tg }}</div>{% endfor %}
