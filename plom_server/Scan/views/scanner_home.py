@@ -196,112 +196,6 @@ class ScannerUploadView(ScannerRequiredView):
         return render(request, "Scan/bundle_upload.html", context)
 
 
-class ScannerHomeView(ScannerRequiredView):
-    """Display an upload form for bundle PDFs, and a dashboard of previously uploaded/staged bundles."""
-
-    def build_context(self) -> dict[str, Any]:
-        context = super().build_context()
-        scanner = ScanService()
-        mss = ManageScanService()
-
-        total_papers = mss.get_total_test_papers()
-        complete_papers = mss.get_number_completed_test_papers()
-        incomplete_papers = mss.get_number_incomplete_test_papers()
-        unused_papers = mss.get_number_unused_test_papers()
-
-        context.update(
-            {
-                "complete_test_papers": complete_papers,
-                "incomplete_test_papers": incomplete_papers,
-                "unused_test_papers": unused_papers,
-                "total_papers": total_papers,
-                "form": BundleUploadForm(),
-                "is_any_bundle_push_locked": False,
-                "papers_have_been_printed": PapersPrinted.have_papers_been_printed(),
-                "bundle_size_limit": settings.MAX_BUNDLE_SIZE / 1024 / 1024,
-                "bundle_page_limit": settings.MAX_BUNDLE_PAGES,
-            }
-        )
-        staged_bundles = []
-        pushed_bundles = []
-        for bundle in scanner.get_all_staging_bundles():
-            date_time = timezone.make_aware(datetime.fromtimestamp(bundle.timestamp))
-            if bundle.has_page_images:
-                cover_img_rotation = scanner.get_first_image(bundle).rotation
-            else:
-                cover_img_rotation = 0
-            pages = scanner.get_n_images(bundle)
-            if bundle.pushed:
-                pushed_bundles.append(
-                    {
-                        "id": bundle.pk,
-                        "slug": bundle.slug,
-                        "timestamp": bundle.timestamp,
-                        "time_uploaded": arrow.get(date_time).humanize(),
-                        "username": bundle.user.username,
-                        "pages": pages,
-                        "cover_angle": cover_img_rotation,
-                    }
-                )
-            else:
-                staged_bundles.append(
-                    {
-                        "id": bundle.pk,
-                        "slug": bundle.slug,
-                        "timestamp": bundle.timestamp,
-                        "time_uploaded": arrow.get(date_time).humanize(),
-                        "username": bundle.user.username,
-                        "pages": pages,
-                        "cover_angle": cover_img_rotation,
-                        "is_push_locked": bundle.is_push_locked,
-                    }
-                )
-                # flag if any bundle is push-locked
-                if bundle.is_push_locked:
-                    context["is_any_bundle_push_locked"] = True
-
-        context.update(
-            {"pushed_bundles": pushed_bundles, "staged_bundles": staged_bundles}
-        )
-        return context
-
-    def get(self, request: HttpRequest) -> HttpResponse:
-        context = self.build_context()
-        return render(request, "Scan/home.html", context)
-
-    def post(self, request: HttpRequest) -> HttpResponse:
-        context = self.build_context()
-        form = BundleUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            data = form.cleaned_data  # this checks the file really is a valid PDF
-
-            user = request.user
-            slug = data["slug"]
-            bundle_file = data["pdf"]
-            pdf_hash = data["sha256"]
-            number_of_pages = data["number_of_pages"]
-            timestamp = datetime.timestamp(data["time_uploaded"])
-
-            ScanService().upload_bundle(
-                bundle_file,
-                slug,
-                user,
-                timestamp,
-                pdf_hash,
-                number_of_pages,
-                force_render=data["force_render"],
-            )
-
-            return HttpResponseRedirect(reverse("scan_home"))
-        else:
-            # we can get the errors from the form and pass them into the context
-            # unfortunately form.errors is a dict of lists, so lets flatten it a bit.
-            # see = https://docs.djangoproject.com/en/5.0/ref/forms/api/#django.forms.Form.errors
-            error_list: list[str] = sum(form.errors.values(), [])
-            context.update({"upload_errors": error_list})
-            return render(request, "Scan/home.html", context)
-
-
 class GetBundleView(ScannerRequiredView):
     """Return a user-uploaded bundle PDF."""
 
@@ -390,11 +284,13 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
     def post(
         self, request: HttpRequest, *, bundle_id: int
     ) -> HttpResponseClientRefresh:
+        """Triggers a qr-code read"""
         scanner = ScanService()
         scanner.read_qr_codes(bundle_id)
         return HttpResponseClientRefresh()
 
     def delete(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
+        """Triggers deletion of the bundle"""
         scanner = ScanService()
         try:
             scanner._remove_bundle_by_pk(bundle_id)

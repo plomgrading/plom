@@ -24,10 +24,8 @@ from .views import (
     BundleThumbnailsView,
     GetBundleView,
     GetBundlePageFragmentView,
-    GetBundleImageView,
     GetBundleThumbnailView,
     GetStagedBundleFragmentView,
-    ReadQRcodesView,
     PushAllPageImages,
     ScannerSummaryView,
     ScannerPushedImageView,
@@ -108,21 +106,12 @@ urlpatterns = [
         "bundle_staged/<int:bundle_id>/",
         GetStagedBundleFragmentView.as_view(),
         name="scan_get_staged_bundle_fragment",
-    ),
-    path(
-        "bundle/<int:bundle_id>/<int:index>/",
-        GetBundleImageView.as_view(),
-        name="scan_get_image",
+        # note post triggers qr-read, and delete triggers bundle delete.
     ),
     path(
         "bundle_rot/<int:bundle_id>/<int:index>/",
         GetRotatedBundleImageView.as_view(),
         name="scan_get_rotated_image",
-    ),
-    path(
-        "read/<int:bundle_id>",
-        ReadQRcodesView.as_view(),
-        name="scan_read_qr",
     ),
     path(
         "push/<int:bundle_id>/all/", PushAllPageImages.as_view(), name="scan_push_all"

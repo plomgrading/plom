@@ -23,14 +23,9 @@ from .pushed_images import (
 
 from .manage_bundle import (
     GetBundlePageFragmentView,
-    GetBundleImageView,
     BundleThumbnailsView,
     GetBundleThumbnailView,
     BundleLockView,
-)
-
-from .qr_codes import (
-    ReadQRcodesView,
 )
 
 from .push_images import (
