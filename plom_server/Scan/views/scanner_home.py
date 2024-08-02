@@ -15,7 +15,7 @@ from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse
-from django.http import HttpResponseRedirect, Http404, FileResponse
+from django.http import Http404, FileResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
@@ -284,13 +284,13 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
     def post(
         self, request: HttpRequest, *, bundle_id: int
     ) -> HttpResponseClientRefresh:
-        """Triggers a qr-code read"""
+        """Triggers a qr-code read."""
         scanner = ScanService()
         scanner.read_qr_codes(bundle_id)
         return HttpResponseClientRefresh()
 
     def delete(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
-        """Triggers deletion of the bundle"""
+        """Triggers deletion of the bundle."""
         scanner = ScanService()
         try:
             scanner._remove_bundle_by_pk(bundle_id)
