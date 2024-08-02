@@ -82,7 +82,6 @@ def huey_build_single_paper(
         block or detect whether a task has finished".
     """
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
-
     with TemporaryDirectory() as tempdir:
         save_path = make_PDF(
             spec=spec,
@@ -260,6 +259,8 @@ class BuildPapersService:
                 chore.set_as_obsolete()
             # now make a list of new chores as they are created
             chore_list = []
+            # Quick fix but maybe it should be an error for the_papers to be empty?
+            paper = None
             for paper in the_papers:
                 if paper.paper_number in prenamed:
                     student_id, student_name = prenamed[paper.paper_number]

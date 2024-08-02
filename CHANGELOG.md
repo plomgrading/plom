@@ -9,19 +9,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+* Server can now be launched via script in `plom_server/Launcher/launch_scripts/launch_plom_server.py`
+* Demo is now launched via script in `plom_server/Launcher/launch_scripts/launch_plom_demo_server.py`
+
+### Fixed
+
+
+
+
+## [0.15.6] - 2024-07-30
+
+### Added
 * Client: in experimental mode, add an on-page menu for manipulations such as rotating, reordered and removing.
 * Client can spell check rubrics.
 * Client can query for a list of other papers that used a particular rubric and display those annotations to the user.
 * Tasks can be reassigned between users on the server.
+* Questions can be tagged with, for example, learning objectives.
+* The revision history of rubrics is stored and viewable.
 
 ### Changed
+* Assessments with an odd number of pages now generate errors, which seems like a major change but has always been our best-practice.
 * Client: improvements to the undo stack.
+* Its easier to wipe the new server back to its initial empty state, at least before scanning begins.
+* Minor tools in annotator are reordered to put tick first and box later.
 
 ### Fixed
-* Misc fixes and improvements.
+* Client: line widths scale with annotation scale.
+* Better classlist validation when prenaming.
 * Continued implementation of the new server.
+* Misc fixes and improvements.
 * legacy-server: minor fixes to legacy workflow.
-
 
 
 ## [0.15.5] - 2024-06-12
@@ -36,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * For now, you must manually create system rubrics before marking begins; to enforce this the client will crash if the server has no rubrics.
 * Misc fixes and documentation improvements.
+* Spec verifier now checks that numberOfPages is even.
 
 
 ## [0.15.4] - 2024-05-21
@@ -1203,7 +1223,8 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.15.5...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.15.6...main
+[0.15.5]: https://gitlab.com/plom/plom/-/compare/v0.15.5...v0.15.6
 [0.15.5]: https://gitlab.com/plom/plom/-/compare/v0.15.4...v0.15.5
 [0.15.4]: https://gitlab.com/plom/plom/-/compare/v0.15.3...v0.15.4
 [0.15.3]: https://gitlab.com/plom/plom/-/compare/v0.15.2...v0.15.3

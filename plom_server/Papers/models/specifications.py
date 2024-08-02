@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Aden Chan
 
 from django.db import models
@@ -10,7 +11,20 @@ from Base.models import SingletonABCModel
 
 
 class SpecQuestion(models.Model):
-    """A question in the test specification."""
+    """A question in the test specification.
+
+    Fields:
+        pages: a list of pages where student work for this question should be found.
+        marks: the maximum marks available for this question
+        select: used to control how the question is chosen when there are multiple
+            versions.  ``"fix"`` means always choose version 1.  ``"shuffle"`` means
+            choose randomly from all versions.  In practice, the question-version
+            map can be custom-set in non-random ways.  Its not clearly defined what
+            happens if the version-map in practice contradicts this setting.
+            See also Issue #2261 which proposes a more general mechanism.
+        label: a human identifiable label for this question, e.g. Q1, Ex1, etc.
+        question_index: a 0 based index used internally.
+    """
 
     pages = models.JSONField()
     mark = models.PositiveIntegerField(null=False)
@@ -119,3 +133,18 @@ class SolnSpecification(SingletonABCModel):
                 does not exist.
         """
         return cls.objects.get(pk=1)
+
+
+class NumberOfPapersToProduceSetting(SingletonABCModel):
+    number_of_papers = models.PositiveIntegerField(default=0, null=False)
+
+    @classmethod
+    def load(cls):
+        """Return the singleton instance of the NumberOfPapersToProduceSetting model."""
+        obj, created = cls.objects.get_or_create(
+            pk=1,
+            defaults={
+                "number_of_papers": 0,
+            },
+        )
+        return obj

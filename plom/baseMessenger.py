@@ -1067,7 +1067,7 @@ class BaseMessenger:
             list if no papers are using the rubric.
         """
         if self.is_legacy_server():
-            raise RuntimeError("This routine does not work on legacy servers")
+            raise PlomNoServerSupportException("Operation not supported in Legacy.")
         with self.SRmutex:
             url = f"/MK/rubric_usage/{key}"
             try:

@@ -1,151 +1,230 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Tuple
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction, IntegrityError
+from django.db import transaction
 from django_huey import db_task
 
-from Base.models import HueyTaskTracker
-from ..models import (
-    Specification,
-    Paper,
-    Image,
-    FixedPage,
-    IDPage,
-    DNMPage,
-    QuestionPage,
-)
+from plom.plom_exceptions import PlomDatabaseCreationError
+from Papers.services import SpecificationService
 from Preparation.services.preparation_dependency_service import (
     assert_can_modify_qv_mapping_database,
 )
-from plom.plom_exceptions import PlomDependencyConflict
+
+from ..models import (
+    Paper,
+    IDPage,
+    DNMPage,
+    QuestionPage,
+    PopulateEvacuateDBChore,
+    NumberOfPapersToProduceSetting,
+)
 
 log = logging.getLogger("PaperCreatorService")
 
 
-# The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks", context=True)
-def huey_create_paper_with_qvmapping(
-    paper_number: int,
-    qv_mapping: Dict[int, int],
-    *,
-    tracker_pk: int,
-    task=None,
+def huey_populate_whole_db(
+    qv_map: dict[int, dict[int, int]], *, tracker_pk: int, task=None
 ) -> bool:
-    """Creates a paper with the given paper number and the given question-version mapping.
+    PopulateEvacuateDBChore.transition_to_running(tracker_pk, task.id)
+    N = len(qv_map)
 
-    Also initializes prename ID predictions in DB, if applicable.
+    id_page_number = SpecificationService.get_id_page_number()
+    dnm_page_numbers = SpecificationService.get_dnm_pages()
+    question_page_numbers = SpecificationService.get_question_pages()
 
-    Args:
-        paper_number: The number of the paper being created
-        qv_mapping: Mapping from each question index to
-            version for this particular paper. Of the form ``{q: v}``.
+    # TODO - move much of this loop back into paper-creator.
+    for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
+        PaperCreatorService._create_single_paper_from_qvmapping_and_pages(
+            paper_number,
+            qv_row,
+            id_page_number=id_page_number,
+            dnm_page_numbers=dnm_page_numbers,
+            question_page_numbers=question_page_numbers,
+        )
 
-    Keyword Args:
-        tracker_pk: a key into the database for anyone interested in
-            our progress.
-        task: includes our ID in the Huey process queue.
+        if idx % 16 == 0:
+            PopulateEvacuateDBChore.set_message_to_user(
+                tracker_pk, f"Populated {idx} of {N} papers in database"
+            )
+            print(f"Populated {idx} of {N} papers in database")
 
-    Returns:
-        True, no meaning, just as per the Huey docs: "if you need to
-        block or detect whether a task has finished".
-    """
-    HueyTaskTracker.transition_to_running(tracker_pk, task.id)
+    PopulateEvacuateDBChore.set_message_to_user(
+        tracker_pk, f"Populated all {N} papers in database"
+    )
+    print(f"Populated all {N} papers in database")
+    PopulateEvacuateDBChore.transition_to_complete(tracker_pk)
+    # when chore is done it should be set to "obsolete"
+    PopulateEvacuateDBChore.objects.filter(pk=tracker_pk).update(obsolete=True)
+    return True
 
-    PaperCreatorService()._create_paper_with_qvmapping(paper_number, qv_mapping)
 
-    HueyTaskTracker.transition_to_complete(tracker_pk)
+@db_task(queue="tasks", context=True)
+def huey_evacuate_whole_db(*, tracker_pk: int, task=None) -> bool:
+    PopulateEvacuateDBChore.transition_to_running(tracker_pk, task.id)
+    all_papers = Paper.objects.all().prefetch_related("fixedpage_set")
+    N = all_papers.count()
+    for idx, paper_obj in enumerate(all_papers):
+        for fp in paper_obj.fixedpage_set.all():
+            fp.delete()
+        paper_obj.delete()
+        if idx % 16 == 0:
+            PopulateEvacuateDBChore.set_message_to_user(
+                tracker_pk, f"Deleted {idx} of {N} papers from database"
+            )
+            print(f"Deleted {idx} of {N} papers from database")
+    # TODO - decide if we should delete by table rather than by paper.
+    # Table delete code follows below
+    # with transaction.atomic():
+    #     DNMPage.objects.all().delete()
+    #     IDPage.objects.all().delete()
+    #     QuestionPage.objects.all().delete()
+    # with transaction.atomic():
+    #     Paper.objects.all().delete()
+
+    PopulateEvacuateDBChore.set_message_to_user(
+        tracker_pk, f"Deleted all {N} papers from database"
+    )
+    print(f"Deleted all {N} papers from database")
+    PopulateEvacuateDBChore.transition_to_complete(tracker_pk)
+    # when chore is done it should be set to "obsolete"
+    PopulateEvacuateDBChore.objects.filter(pk=tracker_pk).update(obsolete=True)
     return True
 
 
 class PaperCreatorService:
     """Class to encapsulate functions to build the test-papers and groups in the DB.
 
-    DB must have a validated test spec before we can use this.
+    No need to instantiate: all methods can be called from the class.
     """
 
-    def __init__(self):
-        try:
-            _ = Specification.load()
-        except Specification.DoesNotExist as e:
-            raise ObjectDoesNotExist(
-                "The database does not contain a test specification."
-            ) from e
+    @staticmethod
+    def _set_number_to_produce(numberToProduce: int):
+        nop = NumberOfPapersToProduceSetting.load()
+        nop.number_of_papers = numberToProduce
+        nop.save()
 
-    def _create_paper_with_qvmapping(
-        self,
+    @classmethod
+    def _reset_number_to_produce(cls):
+        cls._set_number_to_produce(0)
+
+    @staticmethod
+    @transaction.atomic()
+    def _create_single_paper_from_qvmapping_and_pages(
         paper_number: int,
-        qv_mapping: Dict[int, int],
+        qv_row: dict[int, int],
+        *,
+        id_page_number: int | None = None,
+        dnm_page_numbers: list[int] | None = None,
+        question_page_numbers: dict[int, list[int]] | None = None,
     ) -> None:
-        """Creates tables for the given paper number and the given question-version mapping.
+        """Creates tables for the given paper number from supplied information.
 
-        Also initializes prename ID predictions in DB, if applicable.
+        Note that this (optionally) takes several kwargs so that the spec does
+        not have to be polled for each paper.
 
         Args:
             paper_number: The number of the paper being created
-            qv_mapping: Mapping from each question index to
+            qv_row: Mapping from each question index to
                 version for this particular paper. Of the form ``{q: v}``.
+
+        Keyword Args:
+            id_page_number: (optionally) the id-page page-number
+            dnm_page_numbers: (optionally) a list of the dnm pages
+            question_page_numbers: (optionally) the pages of each question
 
         Returns:
             None
+
+        Raises:
+            ObjectDoesNotExist: no spec.
+            IntegrityError: that paper number already exists.
         """
-        spec_obj = Specification.load()
-        paper_obj = Paper(paper_number=paper_number)
-        try:
-            paper_obj.save()
-        except IntegrityError as err:
-            log.warn(f"Cannot create Paper {paper_number}: {err}")
-            raise IntegrityError(
-                f"An entry paper {paper_number} already exists in the database"
-            )
-        # TODO - idpage and dnmpage versions might be not one in future.
-        # For time being assume that IDpage and DNMPage are always version 1.
-        id_page = IDPage(
-            paper=paper_obj, image=None, page_number=int(spec_obj.idPage), version=1
+        if id_page_number is None:
+            id_page_number = SpecificationService.get_id_page_number()
+        if dnm_page_numbers is None:
+            dnm_page_numbers = SpecificationService.get_dnm_pages()
+        if question_page_numbers is None:
+            question_page_numbers = SpecificationService.get_question_pages()
+
+        paper_obj = Paper.objects.create(paper_number=paper_number)
+        # TODO - change how DNM and ID pages taken from versions
+        # currently ID page and DNM page both taken from version 1
+        IDPage.objects.create(
+            paper=paper_obj, image=None, page_number=id_page_number, version=1
         )
-        id_page.save()
-
-        for dnm_idx in spec_obj.doNotMarkPages:
-            dnm_page = DNMPage(
-                paper=paper_obj, image=None, page_number=int(dnm_idx), version=1
+        for pg in dnm_page_numbers:
+            DNMPage.objects.create(
+                paper=paper_obj, image=None, page_number=pg, version=1
             )
-            dnm_page.save()
-
-        for index, question in spec_obj.question.items():
-            index = int(index)
-            version = qv_mapping[index]
-            for q_page in question.pages:
-                question_page = QuestionPage(
+        for index, q_pages in question_page_numbers.items():
+            q_idx = int(index)
+            version = int(qv_row[q_idx])
+            for pg in q_pages:
+                QuestionPage.objects.create(
                     paper=paper_obj,
                     image=None,
-                    page_number=int(q_page),
-                    question_index=index,
-                    version=version,  # I don't like having to double-up here, but....
+                    page_number=int(pg),
+                    question_index=q_idx,
+                    version=version,
                 )
-                question_page.save()
 
-    def create_paper_with_qvmapping_huey_wrapper(
-        self, paper_number: int, qv_mapping: Dict[int, int]
-    ) -> None:
-        with transaction.atomic(durable=True):
-            tr = HueyTaskTracker.objects.create(status=HueyTaskTracker.STARTING)
-            tracker_pk = tr.pk
+    @staticmethod
+    def assert_no_existing_chore():
+        """Check that there is no existing (non-obsolate) populate / evacuate database chore.
 
-        res = huey_create_paper_with_qvmapping(
-            paper_number, qv_mapping, tracker_pk=tracker_pk
-        )
-        print(f"Just enqueued Huey create paper task id={res.id}")
-        HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
+        Raises:
+            PlomDatabaseCreationError: when there is a chore already underway.
+        """
+        try:
+            chore = PopulateEvacuateDBChore.objects.get(obsolete=False)
+            if chore.action == PopulateEvacuateDBChore.POPULATE:
+                raise PlomDatabaseCreationError("Papers are being populated.")
+            else:
+                raise PlomDatabaseCreationError("Papers are being deleted.")
+        except ObjectDoesNotExist:
+            pass
+            # not currently being populated/evacuated.
 
+    @staticmethod
+    def is_chore_in_progress():
+        return PopulateEvacuateDBChore.objects.filter(obsolete=False).exists()
+
+    @staticmethod
+    def is_populate_in_progress():
+        return PopulateEvacuateDBChore.objects.filter(
+            obsolete=False, action=PopulateEvacuateDBChore.POPULATE
+        ).exists()
+
+    @staticmethod
+    def is_evacuate_in_progress():
+        return PopulateEvacuateDBChore.objects.filter(
+            obsolete=False, action=PopulateEvacuateDBChore.EVACUATE
+        ).exists()
+
+    @staticmethod
+    def get_chore_message():
+        try:
+            return PopulateEvacuateDBChore.objects.get(obsolete=False).message
+        except ObjectDoesNotExist:
+            return None
+
+    @classmethod
     def add_all_papers_in_qv_map(
-        self, qv_map: Dict[int, Dict[int, int]], *, background: bool = True
-    ) -> Tuple[bool, List[Tuple[int, Any]]]:
+        cls,
+        qv_map: dict[int, dict[int, int]],
+        *,
+        background: bool = True,
+        _testing: bool = False,
+    ):
         """Build all the Paper and associated tables from the qv-map, but not the PDF files.
 
         Args:
@@ -153,64 +232,106 @@ class PaperCreatorService:
                 Of the form `{paper_number: {q: v}}`
 
         Keyword Args:
-            background (optional, bool): Run in the background. If false,
-                run with `call_local`.  This is currently never passed as True
-                as of November 2023.  Presumably its here in case we later have
-                a bottle-neck in Paper table creation...
+            background: populate the database in the background, or, if false,
+                as a blocking huey process
+            _testing: when set true, blocking is ignored, and the db-build is done as
+                a foreground process without huey involved.
 
         Raises:
-            PlomDependencyConflict: if there are papers already in the database.
-
-        Returns:
-            A pair such that if all papers added to DB without errors then
-            return `(True, [])` else return `(False, list_of_errors)` where
-            the list of errors is a list of pairs `(paper_number, error)`.
+            PlomDependencyConflict: if preparation dependencies are not met.
+            PlomDatabaseCreationError: if there are papers already in the database.
         """
         assert_can_modify_qv_mapping_database()
         if Paper.objects.filter().exists():
-            raise PlomDependencyConflict("Already papers in the database.")
+            raise PlomDatabaseCreationError("Already papers in the database.")
+        # check if there is an existing non-obsolete task
+        cls.assert_no_existing_chore()
+        cls._set_number_to_produce(len(qv_map))
 
-        errors = []
-        for paper_number, qv_mapping in qv_map.items():
-            try:
-                if background:
-                    self.create_paper_with_qvmapping_huey_wrapper(
-                        paper_number, qv_mapping
-                    )
-                else:
-                    self._create_paper_with_qvmapping(paper_number, qv_mapping)
-            except ValueError as err:
-                errors.append((paper_number, err))
-        if errors:
-            return False, errors
+        if not _testing:
+            cls._populate_whole_db_huey_wrapper(qv_map, background=background)
         else:
-            return True, []
+            # log(f"Adding {len(qv_map)} papers via foreground process for testing")
+            id_page_number = SpecificationService.get_id_page_number()
+            dnm_page_numbers = SpecificationService.get_dnm_pages()
+            question_page_numbers = SpecificationService.get_question_pages()
+            for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
+                cls._create_single_paper_from_qvmapping_and_pages(
+                    paper_number,
+                    qv_row,
+                    id_page_number=id_page_number,
+                    dnm_page_numbers=dnm_page_numbers,
+                    question_page_numbers=question_page_numbers,
+                )
 
-    @transaction.atomic()
-    def remove_all_papers_from_db(self) -> None:
-        assert_can_modify_qv_mapping_database()
-        # hopefully we don't actually need to call this outside of testing.
-        # Have to delete each sub-type of FixedPage separately due to a bug/quirk in django_polymorphic
-        # see https://github.com/django-polymorphic/django-polymorphic/issues/34
-        DNMPage.objects.all().delete()
-        IDPage.objects.all().delete()
-        QuestionPage.objects.all().delete()
-        # now delete all papers
-        Paper.objects.all().delete()
-
-    def update_page_image(
-        self, paper_number: int, page_index: int, image: Image
+    @staticmethod
+    def _populate_whole_db_huey_wrapper(
+        qv_map: dict[int, dict[int, int]], *, background: bool = True
     ) -> None:
-        """Add a reference to an Image instance.
+        # TODO - add seatbelt logic here
+        with transaction.atomic(durable=True):
+            tr = PopulateEvacuateDBChore.objects.create(
+                status=PopulateEvacuateDBChore.STARTING,
+                action=PopulateEvacuateDBChore.POPULATE,
+            )
+            tracker_pk = tr.pk
 
-        Args:
-            paper_number: a Paper instance id.
-                TODO: which is it?  not sure paper number will always be
-                the same as the pk of the paper!
-            page_index: the page number
-            image: the page-image
+        res = huey_populate_whole_db(qv_map, tracker_pk=tracker_pk)
+        print(f"Just enqueued Huey populate-database task id={res.id}")
+        if background is False:
+            print("Running the task in foreground - will block until completed.")
+            res.get(blocking=True)
+            print("Completed.")
+        else:
+            PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)
+
+    @classmethod
+    def remove_all_papers_from_db(
+        cls, *, background: bool = True, _testing: bool = False
+    ) -> None:
+        """Remove all the papers and associated objects from the database.
+
+        Keyword Args:
+            background: de-populate the database in the background, or, if false,
+                as a blocking huey process
+            _testing: when set true, blocking is ignored, and the db depopulation is done as
+                a foreground process without huey involved.
+
+        Raises:
+            PlomDependencyConflict: if preparation dependencies are not met.
+            PlomDatabaseCreationError: if a database populate/evacuate chore already underway.
         """
-        paper = Paper.objects.get(paper_number=paper_number)
-        page = FixedPage.objects.get(paper=paper, page_number=page_index)
-        page.image = image
-        page.save()
+        assert_can_modify_qv_mapping_database()
+        # check if there is an existing non-obsolete task
+        cls.assert_no_existing_chore()
+        cls._reset_number_to_produce()
+
+        if not _testing:
+            cls._evacuate_whole_db_huey_wrapper(background=background)
+        else:
+            # for testing purposes we delete in foreground
+            with transaction.atomic():
+                DNMPage.objects.all().delete()
+                IDPage.objects.all().delete()
+                QuestionPage.objects.all().delete()
+            with transaction.atomic():
+                Paper.objects.all().delete()
+
+    @staticmethod
+    def _evacuate_whole_db_huey_wrapper(*, background: bool = True) -> None:
+        # TODO - add seatbelt logic here
+        with transaction.atomic(durable=True):
+            tr = PopulateEvacuateDBChore.objects.create(
+                status=PopulateEvacuateDBChore.STARTING,
+                action=PopulateEvacuateDBChore.EVACUATE,
+            )
+            tracker_pk = tr.pk
+
+        res = huey_evacuate_whole_db(tracker_pk=tracker_pk)
+        print(f"Just enqueued Huey evacuate-database task id={res.id}")
+        if background is False:
+            print("Running the task in foreground - will block until completed.")
+            res.get(blocking=True)
+            print("Completed.")
+        else:
+            PopulateEvacuateDBChore.transition_to_queued_or_running(tracker_pk, res.id)

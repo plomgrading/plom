@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Aidan Murphy
 
 from __future__ import annotations
 
@@ -22,8 +23,7 @@ from django.db import transaction
 
 from plom import is_valid_tag_text
 
-from Preparation.services import PQVMappingService
-from Papers.services import ImageBundleService
+from Papers.services import ImageBundleService, PaperInfoService
 from Papers.models import Paper
 from Rubrics.models import Rubric
 
@@ -61,12 +61,13 @@ class MarkingTaskService:
         Returns:
             The newly created marking task object.
         """
-        pqvs = PQVMappingService()
-        if not pqvs.is_there_a_pqv_map():
-            raise RuntimeError("Server does not have a question-version map.")
-
-        pqv_map = pqvs.get_pqv_map_dict()
-        question_version = pqv_map[paper.paper_number][question_index]
+        # get the version of the given paper/question
+        try:
+            question_version = PaperInfoService().get_version_from_paper_question(
+                paper.paper_number, question_index
+            )
+        except ValueError as err:
+            raise RuntimeError(f"Server does not have a question-version map - {err}")
 
         task_code = f"q{paper.paper_number:04}g{question_index}"
 
@@ -184,10 +185,10 @@ class MarkingTaskService:
             version: int, the version number. If version == 0, then all versions are returned.
 
         Returns:
-            A PolymorphicQuerySet of tasks
+            A QuerySet of tasks.
 
         Raises:
-            None expected
+            None expected.
         """
         marking_tasks = MarkingTask.objects.filter(
             question_index=question_idx, status=MarkingTask.COMPLETE
@@ -294,24 +295,35 @@ class MarkingTaskService:
         cleaned_data: dict[str, Any] = {}
 
         try:
-            for val in ("pg", "ver", "score"):
-                elem = data[val]
-                cleaned_data[val] = int(elem)
+            cleaned_data["pg"] = int(data["pg"])
         except IndexError:
-            raise ValidationError(f"Multiple values for '{val}', expected 1.")
+            raise ValidationError('Multiple values for "pg", expected 1.')
         except (ValueError, TypeError):
-            raise ValidationError(f"Could not cast {val} as int: {elem}")
+            raise ValidationError(f'Could not cast "pg" as int: {data["pg"]}')
+
+        try:
+            cleaned_data["ver"] = int(data["ver"])
+        except IndexError:
+            raise ValidationError('Multiple values for "ver", expected 1.')
+        except (ValueError, TypeError):
+            raise ValidationError(f'Could not cast "ver" as int: {data["ver"]}')
+
+        try:
+            cleaned_data["score"] = float(data["score"])
+        except IndexError:
+            raise ValidationError('Multiple values for "score", expected 1.')
+        except (ValueError, TypeError):
+            raise ValidationError(f'Could not cast "score" as float: {data["score"]}')
 
         try:
             cleaned_data["marking_time"] = float(data["marking_time"])
         except (ValueError, TypeError) as e:
             raise ValidationError(f"Could not cast 'marking_time' as float: {e}")
 
-        # TODO: waiting on client-side edits?
-        # try:
-        #     cleaned_data["integrity_check"] = int(data["integrity_check"])
-        # except (ValueError, TypeError) as e:
-        #     raise ValidationError(f"Could not get 'integrity_check' as a int: {e}")
+        try:
+            cleaned_data["integrity_check"] = int(data["integrity_check"])
+        except (ValueError, TypeError) as e:
+            raise ValidationError(f"Could not get 'integrity_check' as a int: {e}")
 
         # unpack the rubrics, potentially record which ones were used
         annotations = annot_data["sceneItems"]
@@ -500,8 +512,11 @@ class MarkingTaskService:
             raise ValueError("Cannot find task or tag with given pk")
         self._add_tag(the_tag, the_task)
 
-    def get_tag_from_text(self, text: str) -> MarkingTaskTag | None:
-        """Get a tag object from its text contents. Assumes the input text has already been sanitized.
+    def _get_tag_from_text_for_update(self, text: str) -> MarkingTaskTag | None:
+        """Get a tag object from its text contents.
+
+        Assumes the input text has already been sanitized.
+        Selects it for update.
 
         Args:
             text: the text contents of a tag.
@@ -513,8 +528,11 @@ class MarkingTaskService:
         if not text_tags.exists():
             return None
         # Assuming the queryset will always have a length of one
-        return text_tags.first()
+        # grab its PK so we can get the tag with select_for_update
+        tag_pk = text_tags.first().pk
+        return MarkingTaskTag.objects.select_for_update().get(pk=tag_pk)
 
+    @transaction.atomic
     def add_tag_text_from_task_code(self, tag_text: str, code: str, user: str) -> None:
         """Add a tag to a task, creating the tag if it does not exist.
 
@@ -534,11 +552,12 @@ class MarkingTaskService:
             ValidationError: invalid tag text
         """
         the_task = self.get_task_from_code(code)
-        the_tag = self.get_tag_from_text(tag_text)
+        the_tag = self._get_tag_from_text_for_update(tag_text)
         if not the_tag:
             the_tag = self.create_tag(user, tag_text)
         self._add_tag(the_tag, the_task)
 
+    @transaction.atomic
     def remove_tag_text_from_task_code(self, tag_text: str, code: str) -> None:
         """Remove a tag from a marking task.
 
@@ -552,10 +571,15 @@ class MarkingTaskService:
                 have this tag.
             RuntimeError: task not found.
         """
-        the_tag = self.get_tag_from_text(tag_text)
+        # note - is select_for_update
+        the_tag = self._get_tag_from_text_for_update(tag_text)
+        # does not raise exception - rather it returns a None if can't find the tag
         if not the_tag:
             raise ValueError(f'No such tag "{tag_text}"')
         the_task = self.get_task_from_code(code)
+        # raises ValueError if the code is invalid
+        # RuntimeError if the code is okay but the task does not exist
+
         self._remove_tag_from_task(the_tag, the_task)
 
     def _remove_tag_from_task(self, tag, task):
@@ -563,13 +587,15 @@ class MarkingTaskService:
 
         Args:
             tag: reference to a MarkingTaskTag instance
+                - should be selected for update since we
+                  are going to modify it.
             task: reference to a MarkingTask instance
         """
-        # TODO: is tag opened with select_for_update?
-        try:
+        # check if the tag and task are linked - see #2810
+        if tag.task.filter(pk=task.pk).exists():
             tag.task.remove(task)
-            tag.save()
-        except MarkingTask.DoesNotExist:
+            tag.save()  # tag is select for update
+        else:
             raise ValueError(f'Task {task.code} does not have tag "{tag.text}"')
 
     @transaction.atomic
@@ -657,7 +683,7 @@ class MarkingTaskService:
         """
         # clean up the text and see if such a tag already exists
         cleaned_tag_text = self.sanitize_tag_text(tag_text)
-        tag_obj = self.get_tag_from_text(cleaned_tag_text)
+        tag_obj = self._get_tag_from_text_for_update(cleaned_tag_text)
         if tag_obj is None:  # no such tag exists, so create one
             # note - will raise validationerror if tag_text not legal
             tag_obj = self.create_tag(user, cleaned_tag_text)

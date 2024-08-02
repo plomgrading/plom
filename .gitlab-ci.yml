@@ -6,7 +6,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -335,8 +335,8 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
-    - python3 -m pip install astroid~=3.2.3  # codespell:ignore astroid
-    - python3 -m pip install pylint~=3.2.5
+    - python3 -m pip install astroid~=3.2.4  # codespell:ignore astroid
+    - python3 -m pip install pylint~=3.2.6
   script:
     - pylint plom
     - pylint plom_server
@@ -367,7 +367,7 @@ pyright:
   needs: ["docker-image"]
   image: $IM
   before_script:
-    - python3 -m pip install pyright~=1.1.371
+    - python3 -m pip install pyright~=1.1.372
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -391,7 +391,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.5.1
+    - python3 -m pip install ruff~=0.5.4
   script:
     - ruff check .
     # ruff format .
@@ -402,7 +402,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.5.1
+    - python3 -m pip install ruff~=0.5.4
   script:
     # run once just for log out but don't fail
     - EXCEPTIONS="D101,D102,D103,D104,D106"
@@ -412,7 +412,7 @@ count-no-docstring:
     - ruff check --select $EXCEPTIONS --statistics --exit-zero
     - echo "Total $HOWMANY things without docstrings, please don't increase it"
     # Dear hackers: please try to decrease this number
-    - bash -c "[[ $HOWMANY -le 1635 ]]"
+    - bash -c "[[ $HOWMANY -le 1605 ]]"
   allow_failure: true
 
 
@@ -471,7 +471,7 @@ webplom_demo:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - python3 manage.py plom_demo --no-waiting --randomarker --quick --solutions
+    - ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after reports
     - popd
 
 
@@ -841,7 +841,7 @@ fedora_webplom:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - python3 manage.py plom_demo --no-waiting --randomarker
+    - ./Launcher/launch_scripts/launch_plom_demo_server.py --stop-after reports
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
     - popd
@@ -949,7 +949,7 @@ newOS_newdeps_webplom:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - python3 manage.py plom_demo --no-waiting --randomarker --quick
+    - ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
     - popd
@@ -1070,7 +1070,7 @@ minpy_mindeps_webplom:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - python3 manage.py plom_demo --no-waiting --randomarker --quick
+    - ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
     - popd
@@ -1559,7 +1559,7 @@ macos_server_webplom:
   - echo $PYTHONPATH
   - pushd plom_server
   # no postgres yet
-  # python manage.py plom_demo --no-waiting --randomarker
+  # ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
   - export PLOM_DATABASE_BACKEND=sqlite
   - python manage.py test
   - popd

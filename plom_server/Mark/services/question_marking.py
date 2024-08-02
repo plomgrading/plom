@@ -194,11 +194,8 @@ class QuestionMarkingService:
                 " perhaps task has been reassigned"
             )
 
-        # old_pk = int(marking_data["integrity_check"])
-        # # todo: failure when not str-to-int
-        # if old_pk != task.pk:
-        if False:
-            old_pk = 42
+        old_pk = marking_data["integrity_check"]
+        if old_pk != task.pk:
             raise PlomConflict(
                 f'Integrity failed: trying to modify "{old_pk}"'
                 f' but current server task is "{task.pk}"'

@@ -111,6 +111,7 @@ INSTALLED_APPS = [
     # Tables
     "django_tables2",
     # Custom apps
+    "Launcher",
     "Base",
     "Authentication",
     "UserManagement",

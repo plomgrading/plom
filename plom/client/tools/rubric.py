@@ -3,8 +3,10 @@
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Bryan Tanady
 
 from copy import deepcopy
+from typing import Union
 
 from PyQt6.QtCore import Qt, QPointF
 from PyQt6.QtGui import QColor, QFont, QPen
@@ -37,9 +39,7 @@ class CommandRubric(CommandTool):
                 automatically update this object,
         """
         super().__init__(scene)
-        self.gdt = RubricItem(
-            pt, rubric, _scene=scene, style=scene.style, fontsize=scene.fontSize
-        )
+        self.gdt = RubricItem(pt, rubric, _scene=scene, style=scene.style)
         self.setText("Rubric")
 
     @classmethod
@@ -86,7 +86,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
     someone about building LaTeX... can we refactor that somehow?
     """
 
-    def __init__(self, pt, rubric, *, _scene, style, fontsize):
+    def __init__(self, pt, rubric, *, _scene, style):
         """Constructor for this class.
 
         Args:
@@ -101,7 +101,6 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         Keyword Args:
             _scene (PageScene): Plom's annotation scene.
             style (dict): various things effecting color, linewidths etc.
-            fontsize (float): size to render the rubric.
 
         Returns:
             None
@@ -114,17 +113,9 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.rubricID = rubric["id"]
         self.kind = rubric["kind"]
         # centre under click
-        self.di = DeltaItem(
-            pt, rubric["value"], rubric["display_delta"], style=style, fontsize=fontsize
-        )
-        self.blurb = TextItem(
-            pt,
-            rubric["text"],
-            fontsize=fontsize,
-            color=style["annot_color"],
-            _texmaker=_scene,
-        )
-        # set style
+        self.di = DeltaItem(pt, rubric["value"], rubric["display_delta"], style=style)
+        self.blurb = TextItem(pt, rubric["text"], style=style, _texmaker=_scene)
+        # TODO: probably we "restyle" the child objects twice as each init did this too
         self.restyle(style)
         # Set the underlying delta and text to not pickle - since the GDTI will handle that
         self.saveable = True
@@ -239,11 +230,12 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
 
 
 class GhostComment(QGraphicsItemGroup):
-    def __init__(self, display_delta, txt, fontsize):
+    def __init__(self, annot_scale: float, display_delta: str, txt: str, fontsize: int):
         super().__init__()
         self.legal = False
+        self.annot_scale = annot_scale
         self.di = GhostDelta(display_delta, fontsize, legal=self.legal)
-        self.blurb = GhostText(txt, fontsize, legal=self.legal)
+        self.blurb = GhostText(txt, annot_scale, fontsize, legal=self.legal)
         self.changeComment(display_delta, txt)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
 
@@ -253,8 +245,11 @@ class GhostComment(QGraphicsItemGroup):
         Note: does not fix up the size of the boxes, see changeComment which does.
         """
         pt = self.pos()
-        self.blurb.setPos(pt)
-        self.di.setPos(pt)
+        # Offset is physical unit which will cause the gap gets bigger when zoomed in.
+        offset = 0
+        shifted_pt = QPointF(pt.x() + offset, pt.y())
+        self.blurb.setPos(shifted_pt)
+        self.di.setPos(shifted_pt)
 
         # if no delta, then move things accordingly
         if display_delta == ".":
@@ -275,6 +270,7 @@ class GhostComment(QGraphicsItemGroup):
         # change things
         self.legal = legal
         self.di.changeDelta(display_delta, legal)
+        self.blurb.update_annot_scale(self.annot_scale)
         self.blurb.changeText(txt, legal)
         # move to correct positions
         self._tweakPositions(display_delta, txt)
@@ -290,13 +286,25 @@ class GhostComment(QGraphicsItemGroup):
             self.blurb.setVisible(True)
             self.addToGroup(self.blurb)
 
-    def change_font_size(self, fontsize):
+    def change_rubric_size(
+        self, fontsize: Union[int, None], annot_scale: float
+    ) -> None:
+        """Change comment size.
+
+        Args:
+            fontsize: the fontsize that will be applied in the comment.
+            annot_scale: the scene's global scale.
+        """
+        if not fontsize:
+            fontsize = 10
+
         font = QFont("Helvetica")
         font.setPixelSize(round(fontsize))
         self.blurb.setFont(font)
         font = QFont("Helvetica")
         font.setPixelSize(round(1.25 * fontsize))
         self.di.setFont(font)
+        self.annot_scale = annot_scale
         self.changeComment(
             self.di.display_delta, self.blurb.toPlainText(), legal=self.legal
         )
