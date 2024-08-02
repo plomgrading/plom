@@ -18,7 +18,7 @@ your input so that each recipient gets 2 physical sheets of paper.
 
 Options: Command-line arguments can influence the text centred on each page,
 the output filename, etc. For details, read the code; for a quick summary, say
-    python3 plom-make-DNM-sheets.py --help
+    python3 plom-make-scrap-sheets.py --help
 """
 
 from __future__ import annotations
@@ -174,7 +174,7 @@ if __name__ == "__main__":
             ndx = len(outdoc) - 1
             stamp_page(
                 outdoc[ndx],
-                title=args.title,
+                title=args.title.format(i),
                 NW=f"plomS{cnrNW:1d}",
                 NE=f"plomS{cnrNE:1d}",
                 SW=f"plomS{cnrSW:1d}",
