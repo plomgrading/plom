@@ -8,7 +8,6 @@ from django.db import models
 from django.conf import settings
 
 from Base.models import SingletonABCModel
-from Base.models import HueyTaskTracker
 
 
 class PaperSourcePDF(models.Model):
@@ -94,57 +93,3 @@ class StagingPQVMapping(models.Model):
     paper_number = models.PositiveIntegerField(null=False)
     question = models.PositiveIntegerField(null=False)
     version = models.PositiveIntegerField(null=False)
-
-
-# ---------------------------------
-# Make a table for the extra page pdf and the associated huey task
-
-
-class ExtraPagePDFHueyTask(HueyTaskTracker):
-    """Table to store the exta page pdf huey task.
-
-    Note that this inherits fields from the base class table.  We add
-    extra function to this to ensure there can only be one such task.
-
-    There was an attempt to make a common SingletonHueyTaskTracker but
-    for now we're just duplicating that here (Issue #3130).
-    """
-
-    extra_page_pdf = models.FileField(upload_to="sourceVersions/")
-
-    def save(self, *args, **kwargs):
-        ExtraPagePDFHueyTask.objects.exclude(id=self.id).delete()
-        super().save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        pass
-
-    @classmethod
-    def load(cls):
-        obj, created = ExtraPagePDFHueyTask.objects.get_or_create()
-        return obj
-
-
-class ScrapPaperPDFHueyTask(HueyTaskTracker):
-    """Table to store the scrap paper pdf huey task.
-
-    Note that this inherits fields from the base class table.  We add
-    extra function to this to ensure there can only be one such task.
-
-    There was an attempt to make a common SingletonHueyTaskTracker but
-    for now we're just duplicating that here (Issue #3130).
-    """
-
-    scrap_paper_pdf = models.FileField(upload_to="sourceVersions/")
-
-    def save(self, *args, **kwargs):
-        ScrapPaperPDFHueyTask.objects.exclude(id=self.id).delete()
-        super().save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        pass
-
-    @classmethod
-    def load(cls):
-        obj, created = ScrapPaperPDFHueyTask.objects.get_or_create()
-        return obj
