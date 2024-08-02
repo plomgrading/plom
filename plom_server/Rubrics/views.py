@@ -239,11 +239,12 @@ class RubricLandingPageView(ManagerRequiredView):
                 elif system_filter == "User":
                     rubrics = rubrics.filter(system_rubric=False, latest=True)
 
-        rubrics = RubricTable(rubrics, order_by=request.GET.get("sort"))
-        rubrics.paginate(page=request.GET.get("page", 1), per_page=15)
         for index, r in enumerate(rubrics):
             r.value_str = f"{r.value:.3g}"
             r.out_of_str = f"{r.out_of:.3g}"
+
+        rubrics = RubricTable(rubrics, order_by=request.GET.get("sort"))
+        rubrics.paginate(page=request.GET.get("page", 1), per_page=15)
 
         context.update(
             {
