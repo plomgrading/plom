@@ -13,12 +13,14 @@
     {% if is_pushed %}&mdash; read-only{% endif %}
 {% endblock page_heading %}
 {% block main_content %}
-    <div class="flex">
+    <div class="my-2">
         <a class="btn btn-primary" href="{% url 'scan_overview' %}">Bundle and paper overview</a>
         {% if is_pushed %}
             <a class="btn btn-primary" href="{% url 'scan_list_pushed' %}">Pushed bundle overview</a>
         {% endif %}
         <a class="btn btn-primary" href="{% url 'scan_list_staged' %}">Staged bundle overview</a>
+    </div>
+    <div class="my-2">
         <a class="btn btn-secondary"
            href="{% url 'scan_recent_bundle_thumbnails' %}">Most recent staged bundle</a>
     </div>
@@ -61,6 +63,7 @@
                             not recommended
                         {% endif %}
                     {% endif %}
+                    {% if not is_perfect %}&ensp; has pages that require your attention{% endif %}
                 </h5>
                 {% if error_pages %}
                     <div class="alert alert-danger">
@@ -72,6 +75,9 @@
                                 instead we recommend that you look at the error pages, fix any problems with the corresponding physical pages, then discard this PDF and rescan the papers.
                             </li>
                         </ul>
+                        <a class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}"
+                           hx-delete="{% url 'scan_get_staged_bundle_fragment' bundle_id %}"
+                           hx-confirm="Are you sure?">Remove bundle</a>
                     </div>
                 {% endif %}
                 <p>

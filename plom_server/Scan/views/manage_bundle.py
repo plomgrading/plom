@@ -46,13 +46,18 @@ class BundleThumbnailsView(ScannerRequiredView):
             return page_list
 
     def build_context(
-        self, *, bundle_id: int | None = None, the_filter: str | None = None
+        self,
+        *,
+        bundle_id: int | None = None,
+        the_filter: str | None = None,
+        pop: int | None,
     ) -> dict[str, Any]:
         """Build a context for a particular page of a bundle.
 
         Keyword Args:
             bundle_id: which bundle.
             the_filter: related to the current filter.
+            pop: the index of the page to focus on
         """
         # TODO: not clear if superclass forbids this?
         assert bundle_id is not None, "bundle_id must be specified (?)"
@@ -117,6 +122,13 @@ class BundleThumbnailsView(ScannerRequiredView):
                 "filter_options": filter_options,
             }
         )
+        if pop in [pg["order"] for pg in bundle_page_info_list]:
+            context.update({"pop": pop})
+        else:
+            # pop the first image in the list
+            if pop and bundle_page_info_list:
+                context.update({"pop": bundle_page_info_list[0]["order"]})
+            # otherwise don't pop anything.
         return context
 
     def get(
@@ -134,14 +146,20 @@ class BundleThumbnailsView(ScannerRequiredView):
         Returns:
             The response returns a template-rendered page.
             If there was no such bundle, return a 404 error page.
+            Note if the url has a pop-query then check if that
+            page passes the filter, and if not then pop the first
+            page that does pass the filter.
         """
+        # to pop up the same image we were just at
+        # provided that the image satisfies the current filter.
+        pop = request.GET.get("pop", None)
         try:
-            context = self.build_context(bundle_id=bundle_id, the_filter=the_filter)
+            context = self.build_context(
+                bundle_id=bundle_id, the_filter=the_filter, pop=pop
+            )
         except ObjectDoesNotExist as e:
             raise Http404(e)
 
-        # to pop up the same image we were just at
-        context.update({"pop": request.GET.get("pop", None)})
         return render(request, "Scan/bundle_thumbnails.html", context)
 
 
