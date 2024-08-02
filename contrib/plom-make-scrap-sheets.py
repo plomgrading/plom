@@ -33,7 +33,7 @@ The page titles can be enhanced to include a unique integer in the
 title of each packet of scrap pages. Embed the literal string {}
 in the title parameter to show where the counter should appear.
 You can even insert a Python integer-formatting code in those braces.
-Example:
+E.g., you can say
     python3 plom-make-scrap-sheets.py -t "Scrap paper (seq {:04d})" -n 5
 """
 
