@@ -6,19 +6,35 @@
 
 """Generate a PDF with title text and QR codes both indicating scrap.
 
-Simple mode: To make 12 sheets of scrap paper, say
+All parameters are optional and have sensible defaults. Saying simply
+    python3 plom-make-scrap-sheets.py
+will create (or overwrite!) a 2-page file named PLOM-scrap.pdf suitable
+for double-sided printing and mass duplication.
+
+Simple mode:
+To make 12 sheets of scrap paper, say
     python3 plom-make-scrap-sheets.py -n 12
 You will get a 24-page PDF document to print double-sided.
 
-Fancy mode: To decorate 30 copies of your 3-page formula sheet, say
+Fancy mode:
+To mark 30 copies of your 3-page formula sheet as scrap, say
     python3 plom-make-scrap-sheets.py -n 30 -pdf myformulas.pdf
 You will get a 120-page PDF document to print double-sided.
-That's 30 copies of the 4-page (2-sheet) PDF produced by padding
-your input so that each recipient gets 2 physical sheets of paper.
+That's because your 3-page input gets padded to 4 pages to make
+2 physical sheets for each recipient, and 4 times 30 makes 120.
 
-Options: Command-line arguments can influence the text centred on each page,
-the output filename, etc. For details, read the code; for a quick summary, say
+Options:
+Command-line arguments can influence the text centred on each page,
+the output filename, etc. For a quick summary, say
     python3 plom-make-scrap-sheets.py --help
+
+Power Users:
+The page titles can be enhanced to include a unique integer in the
+title of each packet of scrap pages. Embed the literal string {} 
+in the title parameter to show where the counter should appear.
+You can even insert a Python integer-formatting code in those braces.
+Example:
+    python3 plom-make-scrap-sheets.py -t "Scrap paper (seq {:04d})" -n 5
 """
 
 from __future__ import annotations
@@ -125,7 +141,7 @@ def configure_parser() -> argparse.ArgumentParser:
         "--title",
         type=str,
         default="This page will not be graded!",
-        help="Text to stamp at the top centre of each page (optional; default provided)",
+        help="Text to stamp at the top centre of each page (optional; default provided).\nThe special string {} can be used at most once to indicate where a unique sequence number should be included.\nEnhancing that string with a Python format code for integer variables is supported.",
     )
     parser.add_argument(
         "-O",
@@ -172,6 +188,8 @@ if __name__ == "__main__":
         for p in range(len(unstamped)):
             outdoc.insert_pdf(unstamped, from_page=p, to_page=p)
             ndx = len(outdoc) - 1
+            # Notice the .format(i) suffix that embeds the counter in the title string,
+            # if the title string includes a substring like {} to catch the value.
             stamp_page(
                 outdoc[ndx],
                 title=args.title.format(i),
