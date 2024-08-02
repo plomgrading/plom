@@ -5,7 +5,7 @@
 # Copyright (C) 2024 Colin B. Macdonald
 
 from __future__ import annotations
-from typing import Any
+from typing import Any, Dict, List
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, Http404, FileResponse, HttpRequest
@@ -18,7 +18,9 @@ from ..services import ScanService
 
 
 class BundleThumbnailsView(ScannerRequiredView):
-    def filter_bundle_pages(self, page_list, filter_kind):
+    def filter_bundle_pages(
+        self, page_list: List[Dict[str, Any]], filter_kind: str | None
+    ) -> List[Dict[str, Any]]:
         def is_extra_without_info(page):
             if page["status"] == "extra":
                 # is an extra page with both page number and question list
@@ -29,7 +31,9 @@ class BundleThumbnailsView(ScannerRequiredView):
             else:  # is not an extra page
                 return False
 
-        if filter_kind in ["known", "unknown", "error", "extra", "discard", "unread"]:
+        if filter_kind is None:
+            return page_list
+        elif filter_kind in ["known", "unknown", "error", "extra", "discard", "unread"]:
             return [pg for pg in page_list if pg["status"] == filter_kind]
         elif filter_kind == "lowqr":
             return [pg for pg in page_list if pg["n_qr_read"] <= 2]
@@ -50,7 +54,7 @@ class BundleThumbnailsView(ScannerRequiredView):
         *,
         bundle_id: int | None = None,
         the_filter: str | None = None,
-        pop: int | None,
+        pop: int | None = None,
     ) -> dict[str, Any]:
         """Build a context for a particular page of a bundle.
 
