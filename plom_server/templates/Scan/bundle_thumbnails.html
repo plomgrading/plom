@@ -19,7 +19,8 @@
             <a class="btn btn-primary" href="{% url 'scan_list_pushed' %}">Pushed bundle overview</a>
         {% endif %}
         <a class="btn btn-primary" href="{% url 'scan_list_staged' %}">Staged bundle overview</a>
-        <a class="btn btn-secondary" href="{% url 'scan_recent_bundle_thumbnails' %}">Most recent staged bundle</a>
+        <a class="btn btn-secondary"
+           href="{% url 'scan_recent_bundle_thumbnails' %}">Most recent staged bundle</a>
     </div>
     <div class="card mt-2">
         <!-- pb-0 b/c something is making this top box tall by the standard margin?-->
@@ -39,38 +40,42 @@
                             Staged bundle
                         {% endif %}
                     {% endif %}
-                    &ensp; <q>{{ slug }}</q> 
-
-                        {% if is_perfect and not is_pushed %}
-                            {% if n_incomplete == 0 %}
-                                <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
-                                <!-- note that the midPush variable is defined in the parent html file which includes this html file -->
-                                 &ensp; is problem free - <button class="btn btn-warning"
-                                        hx-confirm="Are you sure?"
-                                        hx-post="{% url 'scan_push_all' bundle_id %}"
-                                        x-bind:disabled="midPush"
-                                        @htmx:before-send="midPush=true;">Push</button>
-                                           {% else %}
-                 &ensp; no problems, but has incomplete papers  <button class="btn btn-danger"
-                                        hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). We do not recommend pushing until you have resolved this. Are you sure you wish to push?"
-                                        hx-post="{% url 'scan_push_all' bundle_id %}"
-                                        x-bind:disabled="midPush"
-                                        @htmx:before-send="midPush=true;">Push</button> not recommended
-                            {% endif %}
-                {% endif %}
+                    &ensp; <q>{{ slug }}</q>
+                    {% if is_perfect and not is_pushed %}
+                        {% if n_incomplete == 0 %}
+                            <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
+                            <!-- note that the midPush variable is defined in the parent html file which includes this html file -->
+                            &ensp; is problem free -
+                            <button class="btn btn-warning"
+                                    hx-confirm="Are you sure?"
+                                    hx-post="{% url 'scan_push_all' bundle_id %}"
+                                    x-bind:disabled="midPush"
+                                    @htmx:before-send="midPush=true;">Push</button>
+                        {% else %}
+                            &ensp; no problems, but has incomplete papers
+                            <button class="btn btn-danger"
+                                    hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). We do not recommend pushing until you have resolved this. Are you sure you wish to push?"
+                                    hx-post="{% url 'scan_push_all' bundle_id %}"
+                                    x-bind:disabled="midPush"
+                                    @htmx:before-send="midPush=true;">Push</button>
+                            not recommended
+                        {% endif %}
+                    {% endif %}
                 </h5>
                 {% if error_pages %}
-                <div class="alert alert-danger">
-                  This bundle has {{ error_pages }} error pages:
-                  <ul>
-                      <li>this typically indicates serious scanning problems</li>
-                      <li>while these can be repaired here, we recommend that you do not</li>
-                      <li>instead we recommend that you look at the error pages, fix any problems with the corresponding physical pages, then discard this PDF and rescan the papers.</li>
-                  </ul>
-                </div>
+                    <div class="alert alert-danger">
+                        This bundle has {{ error_pages }} error pages:
+                        <ul>
+                            <li>this typically indicates serious scanning problems</li>
+                            <li>while these can be repaired here, we recommend that you do not</li>
+                            <li>
+                                instead we recommend that you look at the error pages, fix any problems with the corresponding physical pages, then discard this PDF and rescan the papers.
+                            </li>
+                        </ul>
+                    </div>
                 {% endif %}
                 <p>
-                Summary 
+                    Summary
                     <button class="btn btn-light" x-on:click="show_summary =! show_summary">
                         <i class="bi bi-chevron-down" x-show="!show_summary"></i>
                         <i class="bi bi-chevron-up" x-show="show_summary"></i>

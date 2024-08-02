@@ -231,7 +231,6 @@ class BundleLockView(ScannerRequiredView):
 
 class RecentStagedBundleRedirectView(ScannerRequiredView):
     def get(self, request: HttpResponse) -> HttpResponse:
-        context = self.build_context()
         bundle = ScanService().get_most_recent_unpushed_bundle()
         if bundle is None:
             return redirect(reverse("scan_list_staged"))
