@@ -30,7 +30,7 @@ the output filename, etc. For a quick summary, say
 
 Power Users:
 The page titles can be enhanced to include a unique integer in the
-title of each packet of scrap pages. Embed the literal string {} 
+title of each packet of scrap pages. Embed the literal string {}
 in the title parameter to show where the counter should appear.
 You can even insert a Python integer-formatting code in those braces.
 Example:
@@ -126,7 +126,7 @@ def configure_parser() -> argparse.ArgumentParser:
         type=int,
         default=1,
         action="store",
-        help="number of copies for given PDF, else number of physical sheets (optional)",
+        help="number of copies for given PDF, else number of physical sheets (default 1)",
     )
     parser.add_argument(
         "-pdf",
@@ -148,7 +148,7 @@ def configure_parser() -> argparse.ArgumentParser:
         "--outfile",
         type=str,
         default="PLOM-scrap.pdf",
-        help="filename for output (optional, default DNM.pdf)",
+        help="filename for output (optional, default PLOM-scrap.pdf)",
     )
     parser.add_argument(
         "-d",
@@ -156,7 +156,7 @@ def configure_parser() -> argparse.ArgumentParser:
         # nargs=0,
         action="store_true",
         default=False,
-        help="enable debug printing",
+        help="enable debug printing (default False)",
     )
     return parser
 
