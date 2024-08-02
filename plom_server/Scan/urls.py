@@ -42,6 +42,7 @@ from .views import (
     GetRotatedBundleImageView,
     GetRotatedPushedImageView,
     BundleLockView,
+    RecentStagedBundleRedirectView,
 )
 
 
@@ -53,6 +54,11 @@ urlpatterns = [
     path("complete", ScannerCompletePaperView.as_view(), name="scan_list_complete"),
     path(
         "incomplete", ScannerIncompletePaperView.as_view(), name="scan_list_incomplete"
+    ),
+    path(
+        "recent_staged_bundle",
+        RecentStagedBundleRedirectView.as_view(),
+        name="scan_recent_bundle_thumbnails",
     ),
     ##
     path(

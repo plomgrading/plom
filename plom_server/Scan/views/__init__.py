@@ -26,6 +26,7 @@ from .manage_bundle import (
     BundleThumbnailsView,
     GetBundleThumbnailView,
     BundleLockView,
+    RecentStagedBundleRedirectView,
 )
 
 from .push_images import (

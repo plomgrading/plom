@@ -8,8 +8,9 @@ from __future__ import annotations
 from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.shortcuts import render
 from django.http import HttpResponse, Http404, FileResponse, HttpRequest
+from django.shortcuts import render, redirect
+from django.urls import reverse
 
 from Base.base_group_views import ScannerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
@@ -97,12 +98,14 @@ class BundleThumbnailsView(ScannerRequiredView):
         context.update(
             {
                 "is_pushed": bundle.pushed,
+                "is_perfect": scanner.is_bundle_perfect(bundle.pk),
                 "slug": bundle.slug,
                 "bundle_id": bundle.pk,
                 "timestamp": bundle.timestamp,
                 "pages": bundle_page_info_list,
                 "papers_pages_list": bundle_papers_pages_list,
                 "incomplete_papers_list": bundle_incomplete_papers_list,
+                "n_incomplete": len(bundle_incomplete_papers_list),
                 "total_pages": n_pages,
                 "known_pages": known_pages,
                 "unknown_pages": unknown_pages,
@@ -224,3 +227,13 @@ class BundleLockView(ScannerRequiredView):
         bundle = ScanService().get_bundle_from_pk(bundle_id)
         context.update({"slug": bundle.slug})
         return render(request, "Scan/bundle_is_locked.html", context)
+
+
+class RecentStagedBundleRedirectView(ScannerRequiredView):
+    def get(self, request: HttpResponse) -> HttpResponse:
+        context = self.build_context()
+        bundle = ScanService().get_most_recent_unpushed_bundle()
+        if bundle is None:
+            return redirect(reverse("scan_list_staged"))
+        else:
+            return redirect(reverse("scan_bundle_thumbnails", args=["all", bundle.pk]))
