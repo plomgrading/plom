@@ -72,6 +72,7 @@ def drop_database(*, verbose: bool = True) -> None:
 def _drop_postgres_database(*, verbose: bool = True) -> None:
     """Delete the existing database."""
     import psycopg2
+    from psycopg2.errors import InvalidCatalogName
 
     # use local "socket" thing
     # conn = psycopg2.connect(user="postgres", password="postgres")
@@ -88,7 +89,7 @@ def _drop_postgres_database(*, verbose: bool = True) -> None:
     try:
         with conn.cursor() as curs:
             curs.execute(f"DROP DATABASE {db_name};")
-    except psycopg2.errors.InvalidCatalogName:
+    except InvalidCatalogName:
         if verbose:
             print(f'There was no database "{db_name}"')
     conn.close()
@@ -111,6 +112,7 @@ def create_database() -> None:
 
 def _create_postgres_database(*, verbose: bool = True) -> None:
     import psycopg2
+    from psycopg2.errors import DuplicateDatabase
 
     host = settings.DATABASES["postgres"]["HOST"]
     user = settings.DATABASES["postgres"]["USER"]
@@ -124,7 +126,7 @@ def _create_postgres_database(*, verbose: bool = True) -> None:
     try:
         with conn.cursor() as curs:
             curs.execute(f"CREATE DATABASE {db_name};")
-    except psycopg2.errors.DuplicateDatabase as e:
+    except DuplicateDatabase as e:
         raise ValueError(f'Failed to create database "{db_name}": {e}') from e
     finally:
         conn.close()
