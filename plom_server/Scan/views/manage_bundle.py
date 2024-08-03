@@ -16,16 +16,6 @@ from Papers.services import SpecificationService, PaperInfoService
 from ..services import ScanService
 
 
-class GetBundleImageView(ScannerRequiredView):
-    """Return an image from a user-uploaded bundle."""
-
-    def get(self, request: HttpResponse, *, bundle_id: int, index: int) -> HttpResponse:
-        scanner = ScanService()
-        image = scanner.get_image(bundle_id, index)
-
-        return FileResponse(image.image_file)
-
-
 class BundleThumbnailsView(ScannerRequiredView):
     def filter_bundle_pages(self, page_list, filter_kind):
         def is_extra_without_info(page):
