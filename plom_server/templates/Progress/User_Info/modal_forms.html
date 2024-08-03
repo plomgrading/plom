@@ -130,6 +130,7 @@
                             {% for user in probation_user_objects %}<option value="{{ user.pk }}">{{ user.username }}</option>{% endfor %}
                         </select>
                     </div>
+                    <button type="button" class="btn btn-warning" id="selectAllBtn">Select All Users</button>
                     <div class="form-group mt-3">
                         <label for="newLimit">New Limit</label>
                         <input type="number"
@@ -153,6 +154,21 @@
             document.getElementById('confirmUsername').value = username;
             const formAction = "{% url 'set_probation' 'username_placeholder' %}".replace('username_placeholder', username);
             document.getElementById('confirmSetProbationForm').action = formAction;
+        });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var selectElement = document.getElementById('probationUsers');
+        $(selectElement).select2();
+
+        // Add event listener for the Select All button
+        document.getElementById('selectAllBtn').addEventListener('click', function() {
+            for (var i = 0; i < selectElement.options.length; i++) {
+                selectElement.options[i].selected = true;
+            }
+            // Trigger the change event on the select2 element
+            $(selectElement).trigger('change');
         });
     });
 </script>
