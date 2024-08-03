@@ -211,7 +211,7 @@ class RubricAccessPageView(ManagerRequiredView):
 class RubricLandingPageView(ManagerRequiredView):
     """A landing page for displaying and analyzing rubrics."""
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/rubrics_landing.html"
         rubric_filter_form = RubricFilterForm
         rubric_create_form = RubricItemForm
@@ -243,12 +243,12 @@ class RubricLandingPageView(ManagerRequiredView):
             r.value_str = f"{r.value:.3g}"
             r.out_of_str = f"{r.out_of:.3g}"
 
-        rubrics = RubricTable(rubrics, order_by=request.GET.get("sort"))
-        rubrics.paginate(page=request.GET.get("page", 1), per_page=15)
+        rubrics_table = RubricTable(rubrics, order_by=request.GET.get("sort"))
+        rubrics_table.paginate(page=int(request.GET.get("page", 1)), per_page=15)
 
         context.update(
             {
-                "rubrics": rubrics,
+                "rubrics": rubrics_table,
                 "rubric_filter_form": filter_form,
                 "rubric_create_form": rubric_create_form,
                 "questions": json.dumps(questions),
@@ -259,9 +259,12 @@ class RubricLandingPageView(ManagerRequiredView):
 
 
 class RubricItemView(UpdateView, ManagerRequiredView):
-    """A page for displaying a single rubric and its annotations."""
+    """A page for displaying a single rubric and its annotations.
 
-    def get(self, request, rubric_key):
+    UpdateView is used to automatically populate the form with rubric data.
+    """
+
+    def get(self, request: HttpRequest, rubric_key) -> HttpResponse:
         template_name = "Rubrics/rubric_item.html"
         rs = RubricService()
         questions = SpecificationService.get_the_spec()["question"]
@@ -275,7 +278,7 @@ class RubricItemView(UpdateView, ManagerRequiredView):
         revisions = rs.get_past_revisions_by_key(rubric_key)
         marking_tasks = rs.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
         form = RubricItemForm(instance=rubric)
-        for index, task in enumerate(marking_tasks):
+        for _, task in enumerate(marking_tasks):
             task.latest_annotation.score_str = pprint_score(
                 task.latest_annotation.score
             )
@@ -432,7 +435,7 @@ class UploadRubricView(ManagerRequiredView):
 
 
 class RubricCreateView(ManagerRequiredView):
-    def post(self, request: HttpRequest):
+    def post(self, request: HttpRequest) -> HttpResponse:
         form = RubricItemForm(request.POST)
         if form.is_valid():
             rs = RubricService()
@@ -452,7 +455,7 @@ class RubricCreateView(ManagerRequiredView):
 
 
 class RubricEditView(ManagerRequiredView):
-    def post(self, request: HttpRequest, rubric_key):
+    def post(self, request: HttpRequest, rubric_key) -> HttpResponse:
         rubric_key = str(rubric_key).zfill(12)
         form = RubricItemForm(request.POST)
         if form.is_valid():
