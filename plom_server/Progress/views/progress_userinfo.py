@@ -74,7 +74,8 @@ class ProgressUserInfoHome(ManagerRequiredView):
         default_probation_limit = ProbationPeriod.default_limit
 
         # Fetch user objects for users in probation
-        probation_user_objects = User.objects.filter(username__in=probation_users)
+        probation_user_objects = User.objects.filter(username__in=probation_users).order_by("id")
+
 
         context.update(
             {

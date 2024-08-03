@@ -15,7 +15,7 @@
 {% block main_content %}
     <div class="card my-2">
         <div class="card-body">
-            <h6>Default probation limit: {{ default_probation_limit }}</h6>
+            <h5>Default probation limit: {{ default_probation_limit }}</h5>
             <button class="btn btn-success m-2"
                     type="button"
                     data-bs-toggle="modal"
@@ -24,7 +24,7 @@
                 <div>
                     {% for message in messages %}
                         {% if 'modify_default_limit' in message.tags %}
-                            {% include './alert_message.html' with message=message %}
+                            {% include "./alert_message.html" with message=message %}
                         {% endif %}
                     {% endfor %}
                 </div>
@@ -46,7 +46,7 @@
                     <div>
                         {% for message in messages %}
                             {% if 'modify_probation' in message.tags %}
-                                {% include './alert_message.html' with message=message %}
+                                {% include "./alert_message.html" with message=message %}
                             {% endif %}
                         {% endfor %}
                     </div>
