@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from Progress.services import UserInfoServices
 from UserManagement.models import ProbationPeriod
 
+
 class ProbationService:
     """Service for probationary period handling."""
 
