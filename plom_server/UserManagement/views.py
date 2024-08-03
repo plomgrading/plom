@@ -244,7 +244,7 @@ class ModifyDefaultLimitView(ManagerRequiredView):
             ProbationPeriod.set_default_limit(new_limit)
             messages.success(
                 request,
-                "Probation limits updated successfully.",
+                "Default limit updated successfully.",
                 extra_tags="modify_default_limit",
             )
         else:

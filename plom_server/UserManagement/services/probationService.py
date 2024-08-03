@@ -4,8 +4,6 @@ from django.db import transaction
 from django.contrib.auth.models import User
 from Progress.services import UserInfoServices
 from UserManagement.models import ProbationPeriod
-from Progress.services.userinfo_service import UserInfoServices
-
 
 class ProbationService:
     """Service for probationary period handling."""
