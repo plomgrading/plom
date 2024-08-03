@@ -7,8 +7,6 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from Preparation.services import (
     PapersPrinted,
-    ScrapPaperService,
-    ExtraPageService,
     StagingStudentService,
     PrenameSettingService,
     SourceService,
@@ -22,10 +20,6 @@ def reset_assessment_preparation_database():
     # Essentially the "Prepare assessment" page in reverse
     # Unset printed status
     PapersPrinted.set_papers_printed(False)
-
-    # Remove Extra and Scrap Pages
-    ScrapPaperService().delete_scrap_paper_pdf()
-    ExtraPageService().delete_extra_page_pdf()
 
     # Remove all test PDFs
     BuildPapersService().reset_all_tasks()

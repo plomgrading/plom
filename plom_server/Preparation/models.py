@@ -8,7 +8,6 @@ from django.db import models
 from django.conf import settings
 
 from Base.models import SingletonABCModel
-from Base.models import HueyTaskTracker
 
 
 class PaperSourcePDF(models.Model):
@@ -65,8 +64,11 @@ class StagingStudent(models.Model):
 
     student_id (str): The students id-number or id-string. Must be unique.
     student_name (str): The name of the student (as a single text field).
-    paper_number (int): Optional paper_number assigned to this student. For
-        prenaming - not linked to the actual DB for papers.
+    paper_number (int/None): Optional paper number assigned to (predicted) for
+        this student.  This is used for prenaming - not linked to the
+        actual DB for papers.  Certain "sentinel" values are accepted to
+        mean "None", these include ``None``, ``-1``, and ``""``, although
+        this is enforced in code that creates rows rather than a serializer.
     """
 
     # To understand why a single name-field, see
@@ -77,6 +79,7 @@ class StagingStudent(models.Model):
     # must have unique id.
     student_name = models.TextField(null=False)
     # optional paper-number for prenaming
+    # Note: PositiveIntegerField means NonNegative
     paper_number = models.PositiveIntegerField(null=True)
 
 
@@ -90,57 +93,3 @@ class StagingPQVMapping(models.Model):
     paper_number = models.PositiveIntegerField(null=False)
     question = models.PositiveIntegerField(null=False)
     version = models.PositiveIntegerField(null=False)
-
-
-# ---------------------------------
-# Make a table for the extra page pdf and the associated huey task
-
-
-class ExtraPagePDFHueyTask(HueyTaskTracker):
-    """Table to store the exta page pdf huey task.
-
-    Note that this inherits fields from the base class table.  We add
-    extra function to this to ensure there can only be one such task.
-
-    There was an attempt to make a common SingletonHueyTaskTracker but
-    for now we're just duplicating that here (Issue #3130).
-    """
-
-    extra_page_pdf = models.FileField(upload_to="sourceVersions/")
-
-    def save(self, *args, **kwargs):
-        ExtraPagePDFHueyTask.objects.exclude(id=self.id).delete()
-        super().save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        pass
-
-    @classmethod
-    def load(cls):
-        obj, created = ExtraPagePDFHueyTask.objects.get_or_create()
-        return obj
-
-
-class ScrapPaperPDFHueyTask(HueyTaskTracker):
-    """Table to store the scrap paper pdf huey task.
-
-    Note that this inherits fields from the base class table.  We add
-    extra function to this to ensure there can only be one such task.
-
-    There was an attempt to make a common SingletonHueyTaskTracker but
-    for now we're just duplicating that here (Issue #3130).
-    """
-
-    scrap_paper_pdf = models.FileField(upload_to="sourceVersions/")
-
-    def save(self, *args, **kwargs):
-        ScrapPaperPDFHueyTask.objects.exclude(id=self.id).delete()
-        super().save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        pass
-
-    @classmethod
-    def load(cls):
-        obj, created = ScrapPaperPDFHueyTask.objects.get_or_create()
-        return obj

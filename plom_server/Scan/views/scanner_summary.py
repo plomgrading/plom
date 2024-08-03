@@ -13,6 +13,50 @@ from Progress.services import ManageScanService
 from plom.misc_utils import format_int_list_with_runs
 
 
+class ScannerCompletePaperView(ScannerRequiredView):
+    def get(self, request: HttpRequest) -> HttpResponse:
+        mss = ManageScanService()
+
+        # this is a dict - key is paper_number, value = list of pages
+        completed_papers_dict = mss.get_all_completed_test_papers()
+        # turn into list of tuples (key, value) ordered by key
+        completed_papers_list = [
+            (pn, pgs) for pn, pgs in sorted(completed_papers_dict.items())
+        ]
+
+        context = self.build_context()
+        context.update(
+            {
+                "current_page": "complete",
+                "number_of_completed_papers": len(completed_papers_dict),
+                "completed_papers_list": completed_papers_list,
+            }
+        )
+        return render(request, "Scan/scan_complete.html", context)
+
+
+class ScannerIncompletePaperView(ScannerRequiredView):
+    def get(self, request: HttpRequest) -> HttpResponse:
+        mss = ManageScanService()
+
+        # this is a dict - key is paper_number, value = list of pages
+        incomplete_papers_dict = mss.get_all_incomplete_test_papers()
+        # turn into list of tuples (key, value) ordered by key
+        incomplete_papers_list = [
+            (pn, pgs) for pn, pgs in sorted(incomplete_papers_dict.items())
+        ]
+
+        context = self.build_context()
+        context.update(
+            {
+                "current_page": "incomplete",
+                "number_of_incomplete_papers": len(incomplete_papers_dict),
+                "incomplete_papers_list": incomplete_papers_list,
+            }
+        )
+        return render(request, "Scan/scan_incomplete.html", context)
+
+
 class ScannerSummaryView(ScannerRequiredView):
     """Display the summary of the whole test."""
 

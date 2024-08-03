@@ -41,7 +41,9 @@ class UserPage(ManagerRequiredView):
 
     def get(self, request):
         managers = User.objects.filter(groups__name="manager")
-        scanners = User.objects.filter(groups__name="scanner")
+        scanners = User.objects.filter(groups__name="scanner").exclude(
+            groups__name="manager"
+        )
         lead_markers = User.objects.filter(groups__name="lead_marker")
         markers = User.objects.filter(groups__name="marker").prefetch_related(
             "auth_token"

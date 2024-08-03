@@ -366,6 +366,7 @@ class ManageScanService:
         ):
             bundle_list.append(
                 {
+                    "id": bundle.pk,
                     "name": bundle.staging_bundle.slug,
                     "pages": Image.objects.filter(bundle=bundle).count(),
                     "when_pushed": arrow.get(bundle.time_of_last_update).humanize(),

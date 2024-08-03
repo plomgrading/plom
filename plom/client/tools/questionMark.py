@@ -32,17 +32,26 @@ class QMarkItem(UndoStackMoveMixin, QGraphicsPathItem):
         super().__init__()
         self.saveable = True
         self.pt = pt
-        self.path = QPainterPath()
+        path = QPainterPath()
+
+        def s(num: float) -> float:
+            return style["scale"] * num
+
         # Draw a ?-mark with barycentre under mouseclick
-        self.path.moveTo(pt.x() - 6, pt.y() - 10)
-        self.path.quadTo(pt.x() - 6, pt.y() - 15, pt.x(), pt.y() - 15)
-        self.path.quadTo(pt.x() + 6, pt.y() - 15, pt.x() + 6, pt.y() - 10)
-        self.path.cubicTo(
-            pt.x() + 6, pt.y() - 1, pt.x(), pt.y() - 7, pt.x(), pt.y() + 2
+        path.moveTo(pt.x() - s(6), pt.y() - s(10))
+        path.quadTo(pt.x() - s(6), pt.y() - s(15), pt.x(), pt.y() - s(15))
+        path.quadTo(pt.x() + s(6), pt.y() - s(15), pt.x() + s(6), pt.y() - s(10))
+        path.cubicTo(
+            pt.x() + s(6),
+            pt.y() - s(1),
+            pt.x(),
+            pt.y() - s(7),
+            pt.x(),
+            pt.y() + s(2),
         )
-        self.path.moveTo(pt.x(), pt.y() + 12)
-        self.path.lineTo(pt.x(), pt.y() + 10)
-        self.setPath(self.path)
+        path.moveTo(pt.x(), pt.y() + s(12))
+        path.lineTo(pt.x(), pt.y() + s(10))
+        self.setPath(path)
         self.restyle(style)
 
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
