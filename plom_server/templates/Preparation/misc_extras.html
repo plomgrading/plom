@@ -1,9 +1,10 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2023 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
+{% load static %}
 {% block page_heading %}
     Miscellanea
 {% endblock page_heading %}
@@ -15,66 +16,32 @@
         <div class="card">
             <div class="card-body">
                 <div class="card-title">
-                    <h4>Extra-page PDF</h4>
-                    <p>A page for students to use as extra-paper when writing assessment.</p>
-                </div>
-                <div class="card-text">
-                    {% if extra_page_task_status == 'Complete' %}
-                        <a class="btn btn-secondary" href="{% url 'extra_page' %}" target="_">View</a>
+                    <h4>
+                        Extra-page PDF
                         <a class="btn btn-success"
-                           href="{% url 'extra_page' %}"
+                           href="{% static 'extra_page.pdf' %}"
                            download="extra_page.pdf">Download</a>
-                        <button class="btn btn-danger"
-                                hx-delete="extra_page"
-                                hx-confirm="Are you sure you want to delete the extra-page pdf?"
-                                hx-target="body"
-                                hx-swap="outerHTML">Delete</button>
-                    {% elif extra_page_task_status == 'To Do' %}
-                        <button class="btn btn-primary"
-                                hx-put="extra_page"
-                                hx-target="body"
-                                hx-swap="outerHTML">Build</button>
-                    {% else %}
-                        <div hx-get="{% url 'misc_extras' %}"
-                             hx-trigger="every 2s"
-                             hx-target="body">
-                            <button class="btn btn-warning" disabled>PDF build in progress</button>
-                            - page will refresh every 2s until task complete.
-                        </div>
-                    {% endif %}
+                    </h4>
+                    <p>A page for students to use as extra-paper when writing assessment.</p>
+                    <p>The page has clearly marked spaces for student to write their name, ID, paper and question.</p>
+                    <p>
+                        This page has qr-codes that are read by plom so that the page is automatically flagged as an extra-page that needs to be assigned to a student.
+                    </p>
                 </div>
             </div>
         </div>
         <div class="card">
             <div class="card-body">
                 <div class="card-title">
-                    <h4>Scrap-paper PDF</h4>
-                    <p>A page for students to use as scrap-paper when writing assessment. Not for marking.</p>
-                </div>
-                <div class="card-text">
-                    {% if scrap_paper_task_status == 'Complete' %}
-                        <a class="btn btn-secondary" href="{% url 'scrap_paper' %}" target="_">View</a>
+                    <h4>
+                        Scrap-paper PDF
                         <a class="btn btn-success"
-                           href="{% url 'scrap_paper' %}"
+                           href="{% static 'scrap_paper.pdf' %}"
                            download="scrap_paper.pdf">Download</a>
-                        <button class="btn btn-danger"
-                                hx-delete="scrap_paper"
-                                hx-confirm="Are you sure you want to delete the scrap-paper pdf?"
-                                hx-target="body"
-                                hx-swap="outerHTML">Delete</button>
-                    {% elif scrap_paper_task_status == 'To Do' %}
-                        <button class="btn btn-primary"
-                                hx-put="scrap_paper"
-                                hx-target="body"
-                                hx-swap="outerHTML">Build</button>
-                    {% else %}
-                        <div hx-get="{% url 'misc_extras' %}"
-                             hx-trigger="every 2s"
-                             hx-target="body">
-                            <button class="btn btn-warning" disabled>PDF build in progress</button>
-                            - page will refresh every 2s until task complete.
-                        </div>
-                    {% endif %}
+                    </h4>
+                    <p>A page for students to use as scrap-paper when writing assessment.</p>
+                    <p>It is intended that nothing on this page will be marked.</p>
+                    <p>This page has qr-codes that are read by plom so that the page is automatically flagged for discard.</p>
                 </div>
             </div>
         </div>

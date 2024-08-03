@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from tqdm import tqdm
 
@@ -10,7 +10,7 @@ from Progress.services import ManageScanService
 
 
 class Command(BaseCommand):
-    """Build solutios for all scanned papers."""
+    """Build solutions for all scanned papers."""
 
     def handle(self, *args, **options):
         # get a list of all complete papers

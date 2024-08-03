@@ -1,0 +1,69 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023-2024 Andrew Rechnitzer
+    Copyright (C) 2024 Colin B. Macdonald
+    Copyright (C) 2024 Aden Chan
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Complete pushed papers
+{% endblock title %}
+{% block page_heading %}
+    Complete pushed papers
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="flex">
+        <a class="btn btn-primary" href="{% url 'scan_overview' %}">Bundle and paper overview</a>
+        <a class="btn btn-primary" href="{% url 'scan_list_incomplete' %}">Incomplete papers</a>
+    </div>
+    <div class="card my-2">
+        <div class="card-body">
+            <div class="row">
+                <h5>Complete papers: {{ number_of_completed_papers }}</h5>
+                <div class="col">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="overflow-auto" style="max-height:66vh;">
+                                <table class="table table-striped table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Paper</th>
+                                            <th>Pages</th>
+                                        </tr>
+                                    </thead>
+                                    {% for pn,pages in completed_papers_list %}
+                                        <tr>
+                                            <td>{{ pn }}</td>
+                                            <td>
+                                                {% for fp in pages.fixed|dictsort:"page_number" %}
+                                                    <button hx-get="{% url 'pushed_img_wrap' fp.img_pk %}"
+                                                            hx-target="#imageHere"
+                                                            hx-replace="innerHTML"
+                                                            class="btn btn-outline-success">
+                                                        {{ fp.page_number }}
+                                                    </button>
+                                                {% endfor %}
+                                                {% for mp in pages.mobile|dictsort:"question_number" %}
+                                                    <button hx-get="{% url 'pushed_img_wrap' mp.img_pk %}"
+                                                            hx-target="#imageHere"
+                                                            hx-replace="innerHTML"
+                                                            class="btn btn-outline-info">
+                                                        qi.{{ mp.question_number }}
+                                                    </button>
+                                                {% endfor %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col p-2 border" id="pushedImageFragment">
+                    <h6>Page image</h6>
+                    <div class="p-2" id="imageHere"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}

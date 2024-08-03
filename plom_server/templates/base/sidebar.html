@@ -36,13 +36,13 @@
         <li class="nav-item">
             <a class="nav-link" href="{% url 'prep_landing' %}">Prepare Assessment</a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'scan_overview' %}">Scanning, bundles and papers</a>
+        </li>
         <li class="nav-item accordion accordion-flush">
-            <a class="nav-link" href="#progress">Progress</a>
+            <a class="nav-link" href="#progress">Mark / ID Progress</a>
             <div id="progress">
                 <ul style="list-style-type: none">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'progress_scan_overview' %}">Scan</a>
-                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'overview_landing' %}">Marking and IDing overview</a>
                     </li>
@@ -82,10 +82,7 @@
         </li>
     {% elif user_is_scanner %}
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'scan_home' %}">Scan</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="{% url 'scan_summary' %}">Summary</a>
+            <a class="nav-link" href="{% url 'scan_overview' %}">Scanning</a>
         </li>
     {% elif user_is_marker %}
         {% if user_is_lead_marker %}

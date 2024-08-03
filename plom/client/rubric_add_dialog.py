@@ -6,6 +6,7 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024 Aidan Murphy
 
 from __future__ import annotations
 
@@ -65,6 +66,7 @@ from plom.misc_utils import next_in_longest_subsequence
 from .useful_classes import InfoMsg, WarnMsg, SimpleQuestion
 
 
+# TODO this object only allows int inputs, replace to allow float scores
 class SignedSB(QSpinBox):
     # add an explicit sign to spinbox and no 0
     # range is from -N,..,-1,1,...N
@@ -451,7 +453,7 @@ class AddRubricBox(QDialog):
         self.splitter.addWidget(self.correction_widget)
 
         self.hiliter = SubstitutionsHighlighter(self.TE)
-        self.relative_value_SB = SignedSB(maxMark)
+        self.relative_value_SB = SignedSB(maxMark)  # QSpinBox allows only int
         self.TEtag = QLineEdit()
         self.TEmeta = WideTextEdit()
         # cannot edit these
@@ -720,11 +722,11 @@ class AddRubricBox(QDialog):
                 if com["kind"] == "neutral":
                     self.typeRB_neutral.setChecked(True)
                 elif com["kind"] == "relative":
-                    self.relative_value_SB.setValue(int(com["value"]))
+                    self.relative_value_SB.setValue(int(com["value"]))  # int rubrics
                     self.typeRB_relative.setChecked(True)
                 elif com["kind"] == "absolute":
-                    self.abs_value_SB.setValue(int(com["value"]))
-                    self.abs_out_of_SB.setValue(int(com["out_of"]))
+                    self.abs_value_SB.setValue(int(com["value"]))  # int rubrics
+                    self.abs_out_of_SB.setValue(int(com["out_of"]))  # int rubrics
                     self.typeRB_absolute.setChecked(True)
                 else:
                     raise RuntimeError(f"unexpected kind in {com}")
