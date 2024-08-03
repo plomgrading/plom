@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from django.contrib.auth.models import User, Group
 from django.db import transaction
@@ -34,6 +34,9 @@ def toggle_user_active(username: str):
 def set_all_users_in_group_active(group_name: str, active: bool):
     """Set the 'is_active' field of all users in the given group to the given boolean."""
     for user in Group.objects.get(name=group_name).user_set.all():
+        # explicitly exclude managers here
+        if user.groups.filter(name="manager"):
+            continue
         user.is_active = active
         user.save()
 

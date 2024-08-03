@@ -22,8 +22,6 @@ from ..services import (
     SourceService,
     PrenameSettingService,
     StagingStudentService,
-    ExtraPageService,
-    ScrapPaperService,
     PapersPrinted,
 )
 
@@ -44,8 +42,6 @@ class PreparationLandingView(ManagerRequiredView):
             "is_db_fully_populated": pinfo.is_paper_database_fully_populated(),
             "all_papers_built": bps.are_all_papers_built(),
             "any_papers_built": bps.are_any_papers_built(),
-            "extra_page_status": ExtraPageService().get_extra_page_task_status(),
-            "scrap_paper_status": ScrapPaperService().get_scrap_paper_task_status(),
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
         }
 
