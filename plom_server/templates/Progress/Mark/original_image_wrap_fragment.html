@@ -1,4 +1,4 @@
-<!-- Copyright (C) 2023 Andrew Rechnitzer -->
+<!-- Copyright (C) 2023-2024 Andrew Rechnitzer -->
 <div>
     <div class="d-flex justify-content-between p-2">
         <span class="fs-6">Paper {{ paper }} question {{ question }}</span>
@@ -7,7 +7,7 @@
 <div class="overflow-x-scroll overflow-y-scroll">
     {% for img in img_list %}
         <img class="m-1 p-1 border"
-             src="{% url 'progress_pushed_img_rot' img.id %}"
+             src="{% url 'pushed_img_rot' img.id %}"
              style="height: 55vh" />
     {% endfor %}
 </div>

@@ -4,6 +4,10 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2024 Bryan Tanady
 
+from __future__ import annotations
+
+from typing import Any
+
 from PyQt6.QtCore import Qt, QPointF, QTimer
 from PyQt6.QtGui import QColor, QFont, QUndoCommand, QPixmap
 from PyQt6.QtWidgets import QGraphicsItem, QGraphicsTextItem
@@ -79,14 +83,7 @@ class UndoStackMoveTextMixin:
 class CommandText(CommandTool):
     def __init__(self, scene, pt, text):
         super().__init__(scene)
-        self.blurb = TextItem(
-            pt,
-            text,
-            annot_scale=scene._scale,
-            fontsize=scene.fontSize,
-            color=scene.style["annot_color"],
-            _texmaker=scene,
-        )
+        self.blurb = TextItem(pt, text, style=scene.style, _texmaker=scene)
         # TODO: why do CommandText have a .blurb instead of a .obj?  Issue #3419.
         # HACK by just making another reference to it: else we need custom undo/redo
         self.obj = self.blurb
@@ -133,20 +130,18 @@ class TextItem(UndoStackMoveTextMixin, QGraphicsTextItem):
         self,
         pt,
         text: str,
-        annot_scale: float,
-        fontsize: int = 10,
-        color=QColor("red"),
+        *,
+        style: dict[str, Any],
         _texmaker=None,
     ):
         super().__init__()
         self.saveable = True
         self._texmaker = _texmaker
-        self.setDefaultTextColor(color)
+        self.setDefaultTextColor(style["annot_color"])
         self.setPlainText(text)
         font = QFont("Helvetica")
-        self.annot_scale = annot_scale
-        self.fontsize = fontsize
-        font.setPixelSize(round(fontsize))
+        self.annot_scale = style["scale"]
+        font.setPixelSize(round(style["fontsize"]))
         self.setFont(font)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)

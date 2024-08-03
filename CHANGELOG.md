@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+* Server can now be launched via script in `plom_server/Launcher/launch_scripts/launch_plom_server.py`
+* Demo is now launched via script in `plom_server/Launcher/launch_scripts/launch_plom_demo_server.py`
+
+### Fixed
+
+
+
+
+## [0.15.6] - 2024-07-30
+
+### Added
 * Client: in experimental mode, add an on-page menu for manipulations such as rotating, reordered and removing.
 * Client can spell check rubrics.
 * Client can query for a list of other papers that used a particular rubric and display those annotations to the user.
@@ -23,10 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Minor tools in annotator are reordered to put tick first and box later.
 
 ### Fixed
-* Misc fixes and improvements.
+* Client: line widths scale with annotation scale.
+* Better classlist validation when prenaming.
 * Continued implementation of the new server.
+* Misc fixes and improvements.
 * legacy-server: minor fixes to legacy workflow.
-
 
 
 ## [0.15.5] - 2024-06-12
@@ -1209,7 +1223,8 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.15.5...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.15.6...main
+[0.15.5]: https://gitlab.com/plom/plom/-/compare/v0.15.5...v0.15.6
 [0.15.5]: https://gitlab.com/plom/plom/-/compare/v0.15.4...v0.15.5
 [0.15.4]: https://gitlab.com/plom/plom/-/compare/v0.15.3...v0.15.4
 [0.15.3]: https://gitlab.com/plom/plom/-/compare/v0.15.2...v0.15.3

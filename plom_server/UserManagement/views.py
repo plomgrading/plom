@@ -41,7 +41,9 @@ class UserPage(ManagerRequiredView):
 
     def get(self, request):
         managers = User.objects.filter(groups__name="manager")
-        scanners = User.objects.filter(groups__name="scanner")
+        scanners = User.objects.filter(groups__name="scanner").exclude(
+            groups__name="manager"
+        )
         lead_markers = User.objects.filter(groups__name="lead_marker")
         markers = User.objects.filter(groups__name="marker").prefetch_related(
             "auth_token"
@@ -190,7 +192,7 @@ class EditProbationLimitView(ManagerRequiredView):
                 extra_tags="modify_probation",
             )
         else:
-            messages.warning(request, "Invalid Limit!", extra_tags="modify_probation")
+            messages.error(request, "Invalid Limit!", extra_tags="modify_probation")
 
         previous_url = request.META.get("HTTP_REFERER", reverse("users"))
         return redirect(previous_url)
@@ -203,7 +205,8 @@ class ModifyProbationView(ManagerRequiredView):
         """Handle the POST request to update the probation limits for the specified users."""
         user_ids = request.POST.getlist("users")
         new_limit = int(request.POST.get("limit"))
-        all_success = True
+        valid_markers = []
+        invalid_markers = []
 
         if not user_ids:
             messages.error(request, "No users selected.")
@@ -213,19 +216,27 @@ class ModifyProbationView(ManagerRequiredView):
             user = get_object_or_404(User, pk=user_id)
             probation_period = ProbationPeriod.objects.get(user=user)
             if not ProbationService().new_limit_is_valid(limit=new_limit, user=user):
-                messages.warning(
-                    request,
-                    f"Invalid limit for {user.username}",
-                    extra_tags="modify_probation",
-                )
-                all_success = False
+                invalid_markers.append(user.username)
             else:
+                valid_markers.append(user.username)
                 probation_period.limit = new_limit
                 probation_period.save()
-        if all_success:
+
+        if len(invalid_markers) > 0:
             messages.success(
                 request,
-                "Probation limits updated successfully.",
+                f"Probation limit has been successfully updated for: {', '.join(valid_markers)}",
+                extra_tags="modify_probation",
+            )
+            messages.error(
+                request,
+                f"Invalid limit for: {', '.join(invalid_markers)}",
+                extra_tags="modify_probation",
+            )
+        else:
+            messages.success(
+                request,
+                "All probation limits are updated successfully.",
                 extra_tags="modify_probation",
             )
         return redirect(reverse("progress_user_info_home"))
@@ -242,11 +253,11 @@ class ModifyDefaultLimitView(ManagerRequiredView):
             ProbationPeriod.set_default_limit(new_limit)
             messages.success(
                 request,
-                "Probation limits updated successfully.",
+                "Default limit updated successfully.",
                 extra_tags="modify_default_limit",
             )
         else:
-            messages.warning(
+            messages.error(
                 request, "Limit is invalid!", extra_tags="modify_default_limit"
             )
 

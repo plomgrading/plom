@@ -7,14 +7,25 @@
 from django.urls import path
 
 from .views import (
-    ScannerHomeView,
+    ScannerOverview,
+    ScannerStagedView,
+    ScannerPushedView,
+    ScannerUploadView,
+    ScannerCompletePaperView,
+    ScannerIncompletePaperView,
+    ###
+    ScannerDiscardView,
+    ScannerReassignView,
+    ###
+    PushedImageView,
+    PushedImageRotatedView,
+    PushedImageWrapView,
+    ###
     BundleThumbnailsView,
     GetBundleView,
     GetBundlePageFragmentView,
-    GetBundleImageView,
     GetBundleThumbnailView,
     GetStagedBundleFragmentView,
-    ReadQRcodesView,
     PushAllPageImages,
     ScannerSummaryView,
     ScannerPushedImageView,
@@ -35,7 +46,42 @@ from .views import (
 
 
 urlpatterns = [
-    path("", ScannerHomeView.as_view(), name="scan_home"),
+    path("overview", ScannerOverview.as_view(), name="scan_overview"),
+    path("upload", ScannerUploadView.as_view(), name="scan_upload"),
+    path("staged", ScannerStagedView.as_view(), name="scan_list_staged"),
+    path("pushed", ScannerPushedView.as_view(), name="scan_list_pushed"),
+    path("complete", ScannerCompletePaperView.as_view(), name="scan_list_complete"),
+    path(
+        "incomplete", ScannerIncompletePaperView.as_view(), name="scan_list_incomplete"
+    ),
+    ##
+    path(
+        "discard/",
+        ScannerDiscardView.as_view(),
+        name="scan_list_discard",
+    ),
+    path(
+        "reassign/<int:img_pk>",
+        ScannerReassignView.as_view(),
+        name="reassign_discard",
+    ),
+    ##
+    path(
+        "pushed_img/<int:img_pk>",
+        PushedImageView.as_view(),
+        name="pushed_img",
+    ),
+    path(
+        "pushed_img_rot/<int:img_pk>",
+        PushedImageRotatedView.as_view(),
+        name="pushed_img_rot",
+    ),
+    path(
+        "pushed_img_wrap/<int:img_pk>",
+        PushedImageWrapView.as_view(),
+        name="pushed_img_wrap",
+    ),
+    ##
     path(
         "bundlepage/<str:the_filter>/<int:bundle_id>/<int:index>/",
         GetBundlePageFragmentView.as_view(),
@@ -60,21 +106,12 @@ urlpatterns = [
         "bundle_staged/<int:bundle_id>/",
         GetStagedBundleFragmentView.as_view(),
         name="scan_get_staged_bundle_fragment",
-    ),
-    path(
-        "bundle/<int:bundle_id>/<int:index>/",
-        GetBundleImageView.as_view(),
-        name="scan_get_image",
+        # note post triggers qr-read, and delete triggers bundle delete.
     ),
     path(
         "bundle_rot/<int:bundle_id>/<int:index>/",
         GetRotatedBundleImageView.as_view(),
         name="scan_get_rotated_image",
-    ),
-    path(
-        "read/<int:bundle_id>",
-        ReadQRcodesView.as_view(),
-        name="scan_read_qr",
     ),
     path(
         "push/<int:bundle_id>/all/", PushAllPageImages.as_view(), name="scan_push_all"

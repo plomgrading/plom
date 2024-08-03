@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023 Aidan Murphy
 
 from django.test import TestCase
 from django.core.exceptions import MultipleObjectsReturned
@@ -81,10 +82,12 @@ class MiscIncomingAnnotationsTests(TestCase):
         )
         MarkingTaskService.assign_task_to_user(task.pk, user0)
         img1 = baker.make(AnnotationImage)
-        a1 = _create_new_annotation_in_database(task, 3, 17, img1, {"sceneItems": []})
+        a1 = _create_new_annotation_in_database(
+            task, 1 / 3, 17, img1, {"sceneItems": []}
+        )
         task.latest_annotation == a1
         img2 = baker.make(AnnotationImage)
-        a2 = _create_new_annotation_in_database(task, 2, 21, img2, {"sceneItems": []})
+        a2 = _create_new_annotation_in_database(task, 3.0, 21, img2, {"sceneItems": []})
         task.latest_annotation != a1
         task.latest_annotation == a2
 

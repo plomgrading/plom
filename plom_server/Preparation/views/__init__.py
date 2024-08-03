@@ -21,4 +21,4 @@ from .pqv_mapping import (
     PQVMappingUploadView,
 )
 from .mocker import MockExamView
-from .misc_extras import MiscExtrasView, ExtraPageView, ScrapPaperView
+from .misc_extras import MiscExtrasView

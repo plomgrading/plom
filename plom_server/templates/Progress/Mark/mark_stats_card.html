@@ -1,4 +1,8 @@
-<!-- Copyright (C) 2023 Andrew Rechnitzer -->
+<!--
+     SPDX-License-Identifier: AGPL-3.0-or-later
+     Copyright (C) 2023 Andrew Rechnitzer
+     Copyright (C) 2024 Aidan Murphy
+-->
 <div class="card m-2" id="stats_{{ question }}_{{ version }}">
     {% if stats.all_task_count == 0 %}
         <div class="card-header">Question {{ question }} Version {{ version }}: no tasks</div>
@@ -39,10 +43,10 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td>{{ stats.mark_mean }}</td>
-                                <td>{{ stats.mark_median }}</td>
-                                <td>{{ stats.mark_mode }}</td>
-                                <td>{{ stats.mark_stdev }}</td>
+                                <td>{{ stats.mark_mean_str }}</td>
+                                <td>{{ stats.mark_median_str }}</td>
+                                <td>{{ stats.mark_mode_str }}</td>
+                                <td>{{ stats.mark_stdev_str }}</td>
                             </tr>
                         </tbody>
                     </table>
