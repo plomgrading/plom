@@ -206,4 +206,48 @@
             </div>
         </div>
     </div>
+    <!-- Hidden element to pass message data and username -->
+    <div id="messages"
+         data-message-type="{% if messages %}{% for message in messages %}{{ message.tags }}{% endfor %}{% endif %}"
+         data-message-text="{% if messages %}{% for message in messages %}{{ message.message }}{% endfor %}{% endif %}"
+         data-username="{{ username }}"></div>
+    {% include "../Progress/User_Info/modal_forms.html" %}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+          rel="stylesheet" />
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Function to show the modal and set the form action URL
+      function showModalWithUsername(username) {
+        var form = document.getElementById('confirmSetProbationForm');
+        var actionUrl = "{% url 'set_probation' 'username_placeholder' %}".replace('username_placeholder', username);
+        console.log(actionUrl)
+        form.action = actionUrl;
+        $('#confirmSetProbation').modal('show');
+      }
+    
+      // Check for messages and handle the modal
+      var messages = document.getElementById('messages');
+      if (messages) {
+
+        var messageType = messages.getAttribute('data-message-type');
+        var messageText = messages.getAttribute('data-message-text');
+        
+        var details = JSON.parse(messageText);
+        var username = details.username;
+        console.log(username)
+        var modalMessage = details.message;
+        console.log(messageType)
+
+        if (messageType.includes('set_probation_confirmation')) {
+            showModalWithUsername(username);
+        }
+        else{
+            console.log("bye")
+        }
+      }
+    });
+
+    </script>
 {% endblock main_content %}
