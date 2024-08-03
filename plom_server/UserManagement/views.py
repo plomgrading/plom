@@ -203,7 +203,7 @@ class ModifyProbationView(ManagerRequiredView):
         """Handle the POST request to update the probation limits for the specified users."""
         user_ids = request.POST.getlist("users")
         new_limit = int(request.POST.get("limit"))
-        all_success = True
+        invalid_markers = []
 
         if not user_ids:
             messages.error(request, "No users selected.")
@@ -213,19 +213,21 @@ class ModifyProbationView(ManagerRequiredView):
             user = get_object_or_404(User, pk=user_id)
             probation_period = ProbationPeriod.objects.get(user=user)
             if not ProbationService().new_limit_is_valid(limit=new_limit, user=user):
-                messages.warning(
-                    request,
-                    f"Invalid limit for {user.username}",
-                    extra_tags="modify_probation",
-                )
-                all_success = False
+                invalid_markers.append(user.username)
             else:
                 probation_period.limit = new_limit
                 probation_period.save()
-        if all_success:
+
+        if len(invalid_markers) > 0:
+            messages.warning(
+                request,
+                f"Invalid limit for: {', '.join(invalid_markers)}",
+                extra_tags="modify_probation",
+            )
+        else:
             messages.success(
                 request,
-                "Probation limits updated successfully.",
+                "All probation limits are updated successfully.",
                 extra_tags="modify_probation",
             )
         return redirect(reverse("progress_user_info_home"))
