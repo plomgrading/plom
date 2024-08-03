@@ -39,6 +39,18 @@
                         data-bs-toggle="modal"
                         data-bs-target="#modifyProbationModal">Modify probation limit</button>
                 <a class="btn btn-primary" href="{% url 'users' %}">User List</a>
+                <form action="{% url 'bulk_set_probation' %}"
+                      method="post"
+                      style="display:inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning">Set Probation for All Markers</button>
+                </form>
+                <form action="{% url 'bulk_unset_probation' %}"
+                      method="post"
+                      style="display:inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning">Unset Probation for All Markers</button>
+                </form>
                 <div>
                     <i class="bi bi-exclamation-diamond-fill text-info"></i> {{ probation_users|length }} Markers are in probation
                 </div>
