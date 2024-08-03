@@ -39,4 +39,14 @@ urlpatterns = [
         views.UnsetProbationView.as_view(),
         name="unset_probation",
     ),
+    path(
+        "bulk_set_probation/",
+        views.BulkSetProbationView.as_view(),
+        name="bulk_set_probation",
+    ),
+    path(
+        "bulk_unset_probation/",
+        views.BulkUnsetProbationView.as_view(),
+        name="bulk_unset_probation",
+    ),
 ]

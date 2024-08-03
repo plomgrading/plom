@@ -15,7 +15,7 @@
 {% block main_content %}
     <div class="card my-2">
         <div class="card-body">
-            <h6>Default probation limit: {{ default_probation_limit }}</h6>
+            <h5>Default probation limit: {{ default_probation_limit }}</h5>
             <button class="btn btn-success m-2"
                     type="button"
                     data-bs-toggle="modal"
@@ -24,13 +24,7 @@
                 <div>
                     {% for message in messages %}
                         {% if 'modify_default_limit' in message.tags %}
-                            {% if 'success' in message.tags %}
-                                <div class="alert alert-success">{{ message }}</div>
-                            {% elif 'warning' in message.tags %}
-                                <div class="alert alert-warning">{{ message }}</div>
-                            {% elif 'error' in message.tags %}
-                                <div class="alert alert-danger">{{ message }}</div>
-                            {% endif %}
+                            {% include "./alert_message.html" with message=message %}
                         {% endif %}
                     {% endfor %}
                 </div>
@@ -45,14 +39,26 @@
                         data-bs-toggle="modal"
                         data-bs-target="#modifyProbationModal">Modify probation limit</button>
                 <a class="btn btn-primary" href="{% url 'users' %}">User List</a>
+                <form action="{% url 'bulk_set_probation' %}"
+                      method="post"
+                      style="display:inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning">Set Probation for All Markers</button>
+                </form>
+                <form action="{% url 'bulk_unset_probation' %}"
+                      method="post"
+                      style="display:inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-info">Unset Probation for All Markers</button>
+                </form>
                 <div>
                     <i class="bi bi-exclamation-diamond-fill text-info"></i> {{ probation_users|length }} Markers are in probation
                 </div>
                 {% if messages %}
                     <div>
                         {% for message in messages %}
-                            {% if 'modify_default_limit' not in message.tags %}
-                                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                            {% if 'modify_probation' in message.tags %}
+                                {% include "./alert_message.html" with message=message %}
                             {% endif %}
                         {% endfor %}
                     </div>
@@ -61,8 +67,8 @@
                     <table class="table text-center align-middle">
                         <tr>
                             <th>Username</th>
-                            <th>Question Marked</th>
-                            <th>Question Claimed</th>
+                            <th>Task Marked</th>
+                            <th>Task Claimed</th>
                             <th>Probation</th>
                             <th>Probation Limit</th>
                             <th>Probation Tasks</th>
@@ -252,6 +258,11 @@
             <p>No annotations</p>
         {% endif %}
     </div>
+    <!-- Hidden element to pass message data and username -->
+    <div id="messages"
+         data-message-type="{% if messages %}{% for message in messages %}{{ message.tags }}{% endfor %}{% endif %}"
+         data-message-text="{% if messages %}{% for message in messages %}{{ message.message }}{% endfor %}{% endif %}"
+         data-username="{{ username }}"></div>
     {% include "./modal_forms.html" %}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -273,6 +284,39 @@
         $(document).ready(function() {
             $('.select2').select2();
         });
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Function to show the modal and set the form action URL
+      function showModalWithUsername(username) {
+        var form = document.getElementById('confirmSetProbationForm');
+        var actionUrl = "{% url 'set_probation' 'username_placeholder' %}".replace('username_placeholder', username);
+        console.log(actionUrl)
+        form.action = actionUrl;
+        $('#confirmSetProbation').modal('show');
+      }
+    
+      // Check for messages and handle the modal
+      var messages = document.getElementById('messages');
+      if (messages) {
+
+        var messageType = messages.getAttribute('data-message-type');
+        var messageText = messages.getAttribute('data-message-text');
+        
+        var details = JSON.parse(messageText);
+        var username = details.username;
+        var modalMessage = details.message;
+        console.log(messageType)
+
+        if (messageType.includes('set_probation_confirmation')) {
+            showModalWithUsername(username);
+        }
+        else{
+            console.log("bye")
+        }
+      }
+    });
+
     </script>
     <style>
         .select2-container {

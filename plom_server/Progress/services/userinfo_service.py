@@ -75,7 +75,7 @@ class UserInfoServices:
         claimed tasks are those tasks associated with the user with status OUT and Complete.
 
         Returns:
-            A dictionary mapping the marker to a tuple of the count of the complete and claimed tasks.
+            A dictionary mapping the marker to a tuple of the count of the complete and claimed tasks respectively.
 
         Raises:
             Not expected to raise any exceptions.
@@ -105,21 +105,21 @@ class UserInfoServices:
 
         return result
 
-    @transaction.atomic
-    def get_total_claimed_task_for_each_user(self) -> Dict[str, int]:
-        """Retrieve the number of tasks claimed by the user."""
-        annotations = (
-            MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
-        )
-        total_complete_annot_dict = self.get_annotations_based_on_user(annotations)
-        claimed_task_count_dict = dict()
+    # @transaction.atomic
+    # def get_total_claimed_task_for_each_user(self) -> Dict[str, int]:
+    #     """Retrieve the number of tasks claimed by the user."""
+    #     annotations = (
+    #         MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
+    #     )
+    #     total_complete_annot_dict = self.get_annotations_based_on_user(annotations)
+    #     claimed_task_count_dict = dict()
 
-        for usr in total_complete_annot_dict.key():
-            claimed_task_count_dict[usr] = total_complete_annot_dict[
-                usr
-            ] + self.get_total_claimed_but_unmarked_task_by_a_user(usr)
+    #     for usr in total_complete_annot_dict.keys():
+    #         claimed_task_count_dict[usr] = total_complete_annot_dict[
+    #             usr
+    #         ] + self.get_total_claimed_but_unmarked_task_by_a_user(usr)
 
-        return claimed_task_count_dict
+    #     return claimed_task_count_dict
 
     @transaction.atomic
     def get_total_claimed_but_unmarked_task_by_a_user(self, username: str) -> int:

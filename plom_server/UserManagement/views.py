@@ -7,6 +7,7 @@
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Bryan Tanady
 
+import json
 
 from django.shortcuts import redirect, render
 from django.http import HttpRequest, HttpResponse, Http404
@@ -26,9 +27,18 @@ from django.urls import reverse
 from .models import ProbationPeriod
 from django.contrib import messages
 from .services.probationService import ProbationService
+from Progress.services.userinfo_service import UserInfoServices
 
 
 class UserPage(ManagerRequiredView):
+    """Class that handles the views in UserInfo Page.
+
+    This page utilizes extra tags embeddes in messages to display messages in different parts/cards in the page.
+    modify_probation: is the tag used when one interacts with "Set Probation" button and "Modify Probation Limit".
+    modify_default_limit: when one interacts with "Change Default Limit" button".
+    set_probation_confirmation: the tag for the probation confirmation dialog interaction.
+    """
+
     def get(self, request):
         managers = User.objects.filter(groups__name="manager")
         scanners = User.objects.filter(groups__name="scanner").exclude(
@@ -103,21 +113,48 @@ class HTMXExplodeView(ManagerRequiredView):
 
 
 class SetProbationView(ManagerRequiredView):
-    """View to handle setting a probation period for a user."""
+    """View to handle setting a probation period for a user.
+
+    Note: enforce_set_probation is a special flag that enforce a marker to be set to probation
+    even though they do not fulfill the probation's limit restriction. The limit will be set
+    to their current number of question claimed.
+    """
 
     def post(self, request, username):
         """Handle the POST request to set the probation period for the specified user."""
         user = get_object_or_404(User, username=username)
-        probation_period, created = ProbationPeriod.objects.get_or_create(
-            user=user, limit=ProbationPeriod.default_limit
-        )
-        if not created:
-            probation_period.limit = ProbationPeriod.default_limit
-            probation_period.save()
-
         next_page = request.POST.get(
             "next", request.META.get("HTTP_REFERER", reverse("users"))
         )
+
+        # Special flag received when user confirms to enforce setting probatiog, ignoring probation limit restriction.
+        if "enforce_set_probation" in request.POST:
+            complete_and_claimed_tasks = (
+                UserInfoServices().get_total_annotated_and_claimed_count_based_on_user()
+            )
+            complete, claimed = complete_and_claimed_tasks[username]
+            probation_period, created = ProbationPeriod.objects.get_or_create(
+                user=user, limit=claimed
+            )
+
+        # No special flag received, proceed to check whether the marker fulfills the restriction.
+        elif ProbationService().can_set_probation(user):
+            probation_period, created = ProbationPeriod.objects.get_or_create(
+                user=user, limit=ProbationPeriod.default_limit
+            )
+            if not created:
+                probation_period.limit = ProbationPeriod.default_limit
+                probation_period.save()
+
+        # Message is specially crafted for confirmation dialog.
+        else:
+            details = {
+                "username": username,
+            }
+            messages.info(
+                request, json.dumps(details), extra_tags="set_probation_confirmation"
+            )
+
         return redirect(next_page)
 
 
@@ -149,9 +186,13 @@ class EditProbationLimitView(ManagerRequiredView):
             probation_period = ProbationPeriod.objects.filter(user=user).first()
             probation_period.limit = new_limit
             probation_period.save()
-            messages.success(request, "Probation limit updated successfully.")
+            messages.success(
+                request,
+                "Probation limit updated successfully.",
+                extra_tags="modify_probation",
+            )
         else:
-            messages.warning(request, "Limit is invalid!")
+            messages.error(request, "Invalid Limit!", extra_tags="modify_probation")
 
         previous_url = request.META.get("HTTP_REFERER", reverse("users"))
         return redirect(previous_url)
@@ -163,7 +204,9 @@ class ModifyProbationView(ManagerRequiredView):
     def post(self, request):
         """Handle the POST request to update the probation limits for the specified users."""
         user_ids = request.POST.getlist("users")
-        new_limit = request.POST.get("limit")
+        new_limit = int(request.POST.get("limit"))
+        valid_markers = []
+        invalid_markers = []
 
         if not user_ids:
             messages.error(request, "No users selected.")
@@ -171,13 +214,31 @@ class ModifyProbationView(ManagerRequiredView):
 
         for user_id in user_ids:
             user = get_object_or_404(User, pk=user_id)
-            probation_period, created = ProbationPeriod.objects.get_or_create(
-                user=user, limit=ProbationPeriod.default_limit
-            )
-            probation_period.limit = new_limit
-            probation_period.save()
+            probation_period = ProbationPeriod.objects.get(user=user)
+            if not ProbationService().new_limit_is_valid(limit=new_limit, user=user):
+                invalid_markers.append(user.username)
+            else:
+                valid_markers.append(user.username)
+                probation_period.limit = new_limit
+                probation_period.save()
 
-        messages.success(request, "Probation limits updated successfully.")
+        if len(invalid_markers) > 0:
+            messages.success(
+                request,
+                f"Probation limit has been successfully updated for: {', '.join(valid_markers)}",
+                extra_tags="modify_probation",
+            )
+            messages.error(
+                request,
+                f"Invalid limit for: {', '.join(invalid_markers)}",
+                extra_tags="modify_probation",
+            )
+        else:
+            messages.success(
+                request,
+                "All probation limits are updated successfully.",
+                extra_tags="modify_probation",
+            )
         return redirect(reverse("progress_user_info_home"))
 
 
@@ -190,19 +251,39 @@ class ModifyDefaultLimitView(ManagerRequiredView):
 
         if new_limit > 0:
             ProbationPeriod.set_default_limit(new_limit)
-            messages.add_message(
+            messages.success(
                 request,
-                messages.SUCCESS,
-                "Probation limit updated successfully.",
+                "Default limit updated successfully.",
                 extra_tags="modify_default_limit",
             )
         else:
-            messages.add_message(
-                request,
-                messages.WARNING,
-                "Limit is invalid!",
-                extra_tags="modify_default_limit",
+            messages.error(
+                request, "Limit is invalid!", extra_tags="modify_default_limit"
             )
 
         previous_url = request.META.get("HTTP_REFERER", reverse("users"))
         return redirect(previous_url)
+
+
+class BulkSetProbationView(ManagerRequiredView):
+    """View to handle bulk setting probation for all markers."""
+
+    def post(self, request):
+        markers = User.objects.filter(groups__name="marker")
+        for marker in markers:
+            if not ProbationPeriod.objects.filter(user=marker).exists():
+                ProbationPeriod.objects.create(
+                    user=marker, limit=ProbationPeriod.default_limit
+                )
+        messages.success(request, "All markers have been set to probation.")
+        return redirect(reverse("progress_user_info_home"))
+
+
+class BulkUnsetProbationView(ManagerRequiredView):
+    """View to handle bulk unsetting probation for all markers."""
+
+    def post(self, request):
+        markers = User.objects.filter(groups__name="marker")
+        ProbationPeriod.objects.filter(user__in=markers).delete()
+        messages.success(request, "Probation unset for all markers.")
+        return redirect(reverse("progress_user_info_home"))
