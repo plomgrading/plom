@@ -215,7 +215,7 @@ class RubricLandingPageView(ManagerRequiredView):
         template_name = "Rubrics/rubrics_landing.html"
         rubric_filter_form = RubricFilterForm
         rubric_create_form = RubricItemForm
-        questions = SpecificationService.get_the_spec()["question"]
+        questions = SpecificationService.get_questions_max_marks()
 
         context = self.build_context()
 
@@ -267,7 +267,7 @@ class RubricItemView(UpdateView, ManagerRequiredView):
     def get(self, request: HttpRequest, rubric_key) -> HttpResponse:
         template_name = "Rubrics/rubric_item.html"
         rs = RubricService()
-        questions = SpecificationService.get_the_spec()["question"]
+        questions = SpecificationService.get_questions_max_marks()
 
         context = self.build_context()
 

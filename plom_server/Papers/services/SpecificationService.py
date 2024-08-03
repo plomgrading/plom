@@ -374,6 +374,16 @@ get_question_mark = get_question_max_mark
 
 
 @transaction.atomic
+def get_questions_max_marks() -> dict[int, int]:
+    """Get the maximum marks of all questions.
+
+    Returns:
+        A dictionary of question indices giving the corresponding maximum marks.
+    """
+    return {q.question_index: q.mark for q in SpecQuestion.objects.all()}
+
+
+@transaction.atomic
 def get_max_all_question_mark() -> int:
     """Get the maximum mark of all questions, or None if no questions."""
     # the aggregate function returns dict {"mark__max": n}
