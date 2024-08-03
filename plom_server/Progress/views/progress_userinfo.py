@@ -12,6 +12,7 @@ from ..services import UserInfoServices
 
 from django.contrib.auth.models import User
 from UserManagement.models import ProbationPeriod
+from UserManagement.services import ProbationService
 
 
 class ProgressUserInfoHome(ManagerRequiredView):
@@ -34,7 +35,6 @@ class ProgressUserInfoHome(ManagerRequiredView):
             filtered_annotations = uis.filter_annotations_by_time_delta_seconds(
                 time_delta_seconds=int(time_filter_seconds)
             )
-        # not one of the available choices then
         else:
             if request_time_filter_seconds.isnumeric():
                 filtered_annotations = uis.filter_annotations_by_time_delta_seconds(
@@ -78,6 +78,13 @@ class ProgressUserInfoHome(ManagerRequiredView):
             username__in=probation_users
         ).order_by("id")
 
+        # Identify users who exceed the probation limit
+        probation_service = ProbationService()
+        markers_with_warnings = []
+        for user in annotated_and_claimed_count_dict.keys():
+            if not probation_service.can_set_probation(user):
+                markers_with_warnings.append(user.username)
+
         context.update(
             {
                 "annotations_exist": annotations_exist,
@@ -90,6 +97,7 @@ class ProgressUserInfoHome(ManagerRequiredView):
                 "default_probation_limit": default_probation_limit,
                 "probation_limits": probation_limits,
                 "probation_user_objects": probation_user_objects,  # Pass user objects
+                "markers_with_warnings": markers_with_warnings,  # Pass markers with warnings
             }
         )
         return render(request, "Progress/User_Info/user_info_home.html", context)
