@@ -13,31 +13,24 @@
     User progress
 {% endblock page_heading %}
 {% block main_content %}
-<div class="card my-2">
-    <div class="card-body">
-        <h6>Default probation limit: {{ default_probation_limit }}</h6>
-        <button class="btn btn-success m-2"
-                        type="button"
-                        data-bs-toggle="modal"
-                        data-bs-target="#modifyDefaultLimit">Change default limit</button>
-                        {% if messages %}
-                        <div>
-                            {% for message in messages %}
-                                {% if 'modify_default_limit' in message.tags %}
-                                    {% if 'success' in message.tags %}
-                                        <div class="alert alert-success">{{ message }}</div>
-                                    {% elif 'warning' in message.tags %}
-                                        <div class="alert alert-warning">{{ message }}</div>
-                                    {% elif 'error' in message.tags %}
-                                        <div class="alert alert-danger">{{ message }}</div>
-                                    {% endif %}
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                    
-        {% endif %}
+    <div class="card my-2">
+        <div class="card-body">
+            <h6>Default probation limit: {{ default_probation_limit }}</h6>
+            <button class="btn btn-success m-2"
+                    type="button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modifyDefaultLimit">Change default limit</button>
+            {% if messages %}
+                <div>
+                    {% for message in messages %}
+                        {% if 'modify_default_limit' in message.tags %}
+                            {% include './alert_message.html' with message=message %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
     </div>
-</div>
     <div>
         <div class="card w-100">
             <div class="card-body">
@@ -52,12 +45,10 @@
                 {% if messages %}
                     <div>
                         {% for message in messages %}
-                        {% if 'modify_default_limit' not in message.tags %}
-                        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-                        {% endif %}
-
+                            {% if 'modify_probation' in message.tags %}
+                                {% include './alert_message.html' with message=message %}
+                            {% endif %}
                         {% endfor %}
-
                     </div>
                 {% endif %}
                 <table class="table text-center align-middle">
@@ -242,6 +233,11 @@
             </div>
         </div>
     </div>
+    <!-- Hidden element to pass message data and username -->
+    <div id="messages"
+         data-message-type="{% if messages %}{% for message in messages %}{{ message.tags }}{% endfor %}{% endif %}"
+         data-message-text="{% if messages %}{% for message in messages %}{{ message.message }}{% endfor %}{% endif %}"
+         data-username="{{ username }}"></div>
     {% include "./modal_forms.html" %}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -263,6 +259,39 @@
         $(document).ready(function() {
             $('.select2').select2();
         });
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Function to show the modal and set the form action URL
+      function showModalWithUsername(username) {
+        var form = document.getElementById('confirmSetProbationForm');
+        var actionUrl = "{% url 'set_probation' 'username_placeholder' %}".replace('username_placeholder', username);
+        console.log(actionUrl)
+        form.action = actionUrl;
+        $('#confirmSetProbation').modal('show');
+      }
+    
+      // Check for messages and handle the modal
+      var messages = document.getElementById('messages');
+      if (messages) {
+
+        var messageType = messages.getAttribute('data-message-type');
+        var messageText = messages.getAttribute('data-message-text');
+        
+        var details = JSON.parse(messageText);
+        var username = details.username;
+        var modalMessage = details.message;
+        console.log(messageType)
+
+        if (messageType.includes('set_probation_confirmation')) {
+            showModalWithUsername(username);
+        }
+        else{
+            console.log("bye")
+        }
+      }
+    });
+
     </script>
     <style>
         .select2-container {

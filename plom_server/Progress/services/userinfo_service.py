@@ -75,7 +75,7 @@ class UserInfoServices:
         claimed tasks are those tasks associated with the user with status OUT and Complete.
 
         Returns:
-            A dictionary mapping the marker to a tuple of the count of the complete and claimed tasks.
+            A dictionary mapping the marker to a tuple of the count of the complete and claimed tasks respectively.
 
         Raises:
             Not expected to raise any exceptions.
