@@ -269,12 +269,18 @@ class BulkSetProbationView(ManagerRequiredView):
     """View to handle bulk setting probation for all markers."""
 
     def post(self, request):
+        probation_service = ProbationService()
         markers = User.objects.filter(groups__name="marker")
+        probation_set_count = 0
+
         for marker in markers:
-            if not ProbationPeriod.objects.filter(user=marker).exists():
-                ProbationPeriod.objects.create(
-                    user=marker, limit=ProbationPeriod.default_limit
+            if probation_service.can_set_probation(marker):
+                probation_period, created = ProbationPeriod.objects.get_or_create(
+                    user=marker,
+                    defaults={"limit": ProbationPeriod.default_limit},
                 )
+                probation_set_count += 1
+
         messages.success(request, "All markers have been set to probation.")
         return redirect(reverse("progress_user_info_home"))
 

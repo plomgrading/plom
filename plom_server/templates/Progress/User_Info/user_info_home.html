@@ -54,6 +54,9 @@
                 <div>
                     <i class="bi bi-exclamation-diamond-fill text-info"></i> {{ probation_users|length }} Markers are in probation
                 </div>
+                <div>
+                    <i class="bi bi-exclamation-triangle-fill text-warning"></i> {{ markers_with_warnings|length }} Markers have claimed more tasks than the default probation limit. (Click the warning sign to resolve)
+                </div>
                 {% if messages %}
                     <div>
                         {% for message in messages %}
@@ -78,6 +81,12 @@
                             <tr>
                                 <td>
                                     {{ user.username }}
+                                    {% if user.username in markers_with_warnings %}
+                                        <i class="bi bi-exclamation-triangle-fill text-warning"
+                                           data-bs-toggle="modal"
+                                           data-bs-target="#confirmSetProbation"
+                                           data-username="{{ user.username }}"></i>
+                                    {% endif %}
                                     {% if user.username in probation_users %}
                                         <i class="bi bi-exclamation-diamond-fill text-info"
                                            data-bs-toggle="tooltip"
