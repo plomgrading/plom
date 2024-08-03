@@ -4,6 +4,7 @@ from django.db import transaction
 from django.contrib.auth.models import User
 from Progress.services import UserInfoServices
 from UserManagement.models import ProbationPeriod
+from Progress.services.userinfo_service import UserInfoServices
 
 
 class ProbationService:
@@ -13,7 +14,9 @@ class ProbationService:
     def new_limit_is_valid(self, limit: int, user: User) -> bool:
         """Check if the new limit is valid for the user.
 
-        Current restriction: New limit must be non-negative.
+        Current restriction:
+        1. New limit must be non-negative.
+        2. New limit must be greater or equal to the task claimed by the user.
 
         Args:
             limit: the new probation limit to be applied.
@@ -22,7 +25,12 @@ class ProbationService:
         Returns:
             True if the new limit can be applied to the user.
         """
-        if limit >= 0:
+        complete_and_claimed_tasks_dict = (
+            UserInfoServices().get_total_annotated_and_claimed_count_based_on_user()
+        )
+        complete, claimed = complete_and_claimed_tasks_dict[user.username]
+
+        if (limit >= 0) & (limit >= claimed):
             return True
         else:
             return False

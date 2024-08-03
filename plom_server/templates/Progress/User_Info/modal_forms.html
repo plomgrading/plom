@@ -12,7 +12,7 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-body">
-                <h6>The marker has claimed more tasks than the default probation limit. Do you insist setting them into probation?</h6>
+                <h5>The marker has claimed more tasks than the default probation limit. Do you insist setting them into probation?</h5>
                 <form id="confirmSetProbationForm" method="post">
                     {% csrf_token %}
                     <!-- Special flag to signal enforce set_probation -->
@@ -20,9 +20,9 @@
                     <div>
                         <button type="submit" class="btn btn-success" style="margin-top: 10px">Yes</button>
                         <button type="button"
-                                class="btn btn-warning"
+                                class="btn btn-danger"
                                 style="margin-top: 10px"
-                                data-bs-dismiss="modal">Return</button>
+                                data-bs-dismiss="modal">No</button>
                     </div>
                 </form>
             </div>

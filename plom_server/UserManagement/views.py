@@ -31,6 +31,14 @@ from Progress.services.userinfo_service import UserInfoServices
 
 
 class UserPage(ManagerRequiredView):
+    """Class that handles the views in UserInfo Page.
+
+    This page utilizes extra tags embeddes in messages to display messages in different parts/cards in the page.
+    modify_probation: is the tag used when one interacts with "Set Probation" button and "Modify Probation Limit".
+    modify_default_limit: when one interacts with "Change Default Limit" button".
+    set_probation_confirmation: the tag for the probation confirmation dialog interaction.
+    """
+
     def get(self, request):
         managers = User.objects.filter(groups__name="manager")
         scanners = User.objects.filter(groups__name="scanner")
@@ -182,9 +190,7 @@ class EditProbationLimitView(ManagerRequiredView):
                 extra_tags="modify_probation",
             )
         else:
-            messages.warning(
-                request, "Limit is invalid!", extra_tags="modify_probation"
-            )
+            messages.warning(request, "Invalid Limit!", extra_tags="modify_probation")
 
         previous_url = request.META.get("HTTP_REFERER", reverse("users"))
         return redirect(previous_url)
@@ -196,7 +202,8 @@ class ModifyProbationView(ManagerRequiredView):
     def post(self, request):
         """Handle the POST request to update the probation limits for the specified users."""
         user_ids = request.POST.getlist("users")
-        new_limit = request.POST.get("limit")
+        new_limit = int(request.POST.get("limit"))
+        all_success = True
 
         if not user_ids:
             messages.error(request, "No users selected.")
@@ -205,15 +212,22 @@ class ModifyProbationView(ManagerRequiredView):
         for user_id in user_ids:
             user = get_object_or_404(User, pk=user_id)
             probation_period = ProbationPeriod.objects.get(user=user)
-
-            probation_period.limit = new_limit
-            probation_period.save()
-
-        messages.success(
-            request,
-            "Probation limits updated successfully.",
-            extra_tags="modify_probation",
-        )
+            if not ProbationService().new_limit_is_valid(limit=new_limit, user=user):
+                messages.warning(
+                    request,
+                    f"Invalid limit for {user.username}",
+                    extra_tags="modify_probation",
+                )
+                all_success = False
+            else:
+                probation_period.limit = new_limit
+                probation_period.save()
+        if all_success:
+            messages.success(
+                request,
+                "Probation limits updated successfully.",
+                extra_tags="modify_probation",
+            )
         return redirect(reverse("progress_user_info_home"))
 
 
