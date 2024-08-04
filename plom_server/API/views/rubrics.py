@@ -150,6 +150,10 @@ class MgetRubricMarkingTasks(APIView):
             On success, responds with the JSON representations of
             the tasks associated with the rubric.
             Returns 404 if the rubric is not found.
+
+        Notes: the format of the output is still stabilizing, for example,
+        the `latest_annotation` field contains a unusable URL (Issue #3521).
+        TODO: Similarly, `paper` field is broken (Issue #3522).
         """
         rs = RubricService()
 
