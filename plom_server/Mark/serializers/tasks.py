@@ -15,7 +15,7 @@ class MarkingTaskSerializer(ModelSerializer):
     status = SerializerMethodField()
     paper = StringRelatedField()
     tags = SerializerMethodField()
-    # TODO: I don't see how this can know the external port number
+    # TODO: Issue #3521: potentially broken URLs, anyone using this?
     latest_annotation = HyperlinkedRelatedField("annotations-detail", read_only=True)
 
     def get_tags(self, obj):
