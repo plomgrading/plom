@@ -13,7 +13,8 @@ from rest_framework.serializers import (
 class MarkingTaskSerializer(ModelSerializer):
     assigned_user = StringRelatedField()
     status = SerializerMethodField()
-    paper = StringRelatedField()
+    # some nonsense to avoid pretty printing using Paper.str
+    # paper = serializers.SlugRelatedField(slug_field="paper_number", queryset=TODO.sth.sth)
     tags = SerializerMethodField()
     # TODO: Issue #3521: potentially broken URLs, anyone using this?
     latest_annotation = HyperlinkedRelatedField("annotations-detail", read_only=True)
