@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
+
 from django.core.management.base import BaseCommand, CommandError
-from QuestionTags.models import PedagogyTag
+from django.contrib.auth import get_user_model
+from QuestionTags.services import QuestionTagService
 
 
 class Command(BaseCommand):
@@ -19,25 +21,37 @@ class Command(BaseCommand):
             help="The confidential_info of the tag",
             default="",
         )
+        parser.add_argument(
+            "username", type=str, help="The username of the user creating the tag"
+        )
 
     def handle(self, *args, **kwargs):
         """Handle the command execution."""
         tag_name = kwargs["tag_name"]
         description = kwargs["description"]
         confidential_info = kwargs.get("confidential_info", "")
+        username = kwargs["username"]
 
+        # Fetch the user object based on the username
+        User = get_user_model()
         try:
-            tag, created = PedagogyTag.objects.get_or_create(
-                tag_name=tag_name,
-                defaults={"text": description, "confidential_info": confidential_info},
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise CommandError(f"User '{username}' does not exist")
+
+        # Use the create_tag method from QuestionTagService to create the tag
+        error_message = QuestionTagService.create_tag(
+            tag_name=tag_name,
+            text=description,
+            user=user,
+            confidential_info=confidential_info,
+        )
+
+        if error_message:
+            raise CommandError(f"Error creating tag: {error_message}")
+        else:
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f'Successfully created tag "{tag_name}" by {username}'
+                )
             )
-            if created:
-                self.stdout.write(
-                    self.style.SUCCESS(f'Successfully created tag "{tag_name}"')
-                )
-            else:
-                self.stdout.write(
-                    self.style.WARNING(f'Tag "{tag_name}" already exists')
-                )
-        except Exception as e:
-            raise CommandError(f"Error creating tag: {e}")
