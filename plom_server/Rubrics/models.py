@@ -160,7 +160,7 @@ class Rubric(models.Model):
         return f"[{self.display_delta}] {self.text}"
 
     def get_absolute_url(self):
-        """Return the URL to the rubric detail view."""
+        """Return the URL to the detail view for this rubric."""
         return reverse("rubric_item", kwargs={"rubric_key": self.key})
 
     class Meta:
@@ -180,7 +180,12 @@ class RubricPane(models.Model):
 
 
 class RubricTable(tables.Table):
-    """Table for displaying rubrics."""
+    """Table class for displaying rubrics.
+
+    More information on django-tables2 can be found at:
+    https://django-tables2.readthedocs.io/en/latest
+
+    """
 
     key = tables.Column("Key", linkify=True)
 

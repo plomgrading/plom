@@ -109,31 +109,27 @@ class RubricService:
 
     # implementation detail of the above, independently testable
     def _create_rubric(
-        self, rubric_data: dict[str, Any], *, creating_user: User | None = None
+        self, incoming_data: dict[str, Any], *, creating_user: User | None = None
     ) -> Rubric:
-        rubric_data = rubric_data.copy()
+        incoming_data = incoming_data.copy()
 
-        if "user" not in rubric_data.keys():
-            username = rubric_data.pop("username")
+        # Sanity checks on the dict
+        if "user" not in incoming_data.keys():
+            username = incoming_data.pop("username")
             try:
                 user = User.objects.get(username=username)
-                rubric_data["user"] = user.pk
-                rubric_data["modified_by_user"] = user.pk
+                incoming_data["user"] = user.pk
+                incoming_data["modified_by_user"] = user.pk
             except ObjectDoesNotExist as e:
                 raise ValueError(f"User {username} does not exist.") from e
 
-        if "kind" not in rubric_data.keys():
+        if "kind" not in incoming_data.keys():
             raise ValidationError({"kind": "Kind is required."})
 
-        if rubric_data["kind"] not in ["absolute", "relative", "neutral"]:
+        if incoming_data["kind"] not in ["absolute", "relative", "neutral"]:
             raise ValidationError({"kind": "Invalid kind."})
 
-        rubric_data["display_delta"] = self._generate_display_delta(
-            rubric_data.get("value", 0),
-            rubric_data["kind"],
-            rubric_data.get("out_of", None),
-        )
-
+        # Check permissions
         s = SettingsModel.load()
         if creating_user is None:
             pass
@@ -155,8 +151,17 @@ class RubricService:
                 )
             pass
 
-        rubric_data["latest"] = True
-        serializer = RubricSerializer(data=rubric_data)
+        # Now do actual stuff
+        incoming_data["display_delta"] = self._generate_display_delta(
+            # if value is missing, can only be neutral
+            # missing value will be prohibited in a future MR
+            incoming_data.get("value", 0),
+            incoming_data["kind"],
+            incoming_data.get("out_of", None),
+        )
+
+        incoming_data["latest"] = True
+        serializer = RubricSerializer(data=incoming_data)
         if serializer.is_valid():
             new_rubric = serializer.save()
 
@@ -266,6 +271,7 @@ class RubricService:
         if modifying_user is not None:
             new_rubric_data["modified_by_user"] = modifying_user.pk
 
+        # To be changed by future MR
         new_rubric_data["user"] = rubric.user.pk
         new_rubric_data["revision"] += 1
         new_rubric_data["latest"] = True
@@ -295,7 +301,7 @@ class RubricService:
         return _Rubric_to_dict(rubric_obj)
 
     def _generate_display_delta(
-        self, value: float, kind: str, out_of: float | None = None
+        self, value: int | float, kind: str, out_of: int | float | None = None
     ) -> str:
         """Generate the display delta for a rubric.
 
@@ -314,7 +320,7 @@ class RubricService:
             if out_of is None:
                 raise ValueError("out_of is required for absolute rubrics.")
             else:
-                if value.is_integer():
+                if isinstance(value, int) or value.is_integer():
                     return f"{value:g} of {out_of:g}"
                 else:
                     return f"{value} of {out_of}"
@@ -322,6 +328,7 @@ class RubricService:
             if value > 0:
                 return f"+{value:g}"
             else:
+                # Negative sign gets applied automatically
                 return f"{value:g}"
         elif kind == "neutral":
             return "."
@@ -365,11 +372,17 @@ class RubricService:
     def get_all_rubrics_with_counts(self) -> QuerySet[Rubric]:
         """Get all latest rubrics but also annotate with how many times it has been used.
 
+            Times used included all annotations, not just latest ones.
+            @arechnitzer promises to fix this behavior in a future MR.
+
         Returns:
             Lazy queryset of all rubrics with counts.
         """
         qs = self.get_all_rubrics()
         return qs.annotate(times_used=Count("annotations"))
+
+    # TODO: create method to get all rubrics with counts of how many times
+    #       it has been used in the latest edition of a paper
 
     def get_rubric_count(self) -> int:
         """How many rubrics in total (excluding revisions)."""
