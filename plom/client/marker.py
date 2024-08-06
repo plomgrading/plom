@@ -413,7 +413,7 @@ class MarkerClient(QWidget):
         version: int,
         lastTime: dict[str, Any],
     ) -> None:
-        """Performs setup procedure for markerClient.
+        """Performs setup procedure for MarkerClient.
 
         TODO: move all this into init?
 

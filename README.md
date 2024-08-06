@@ -32,7 +32,7 @@ If you'd like to help translate Plom into another language,
 please help at https://gitlab.com/plom/plom/-/issues/1725
 
 The metainfo files (used for example on
-[Flathub](https://flathub.org/apps/details/org.plomgrading.PlomClient))
+[Flathub](https://flathub.org/apps/org.plomgrading.PlomClient))
 can be translated by editing
 [here](https://gitlab.com/plom/plom/-/blob/main/org.plomgrading.PlomClient.metainfo.xml)
 and
