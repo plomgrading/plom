@@ -74,7 +74,6 @@ from plom.plom_exceptions import (
     PlomNoPaper,
     PlomNoServerSupportException,
     PlomNoSolutionException,
-    PlomProbationaryLimitExceededException,
 )
 from plom.messenger import Messenger
 from plom.feedback_rules import feedback_rules as static_feedback_rules_data
@@ -999,9 +998,6 @@ class MarkerClient(QWidget):
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
-            except PlomProbationaryLimitExceededException as err:
-                WarnMsg(self, str(err)).exec()
-                return
         if update_select:
             self.moveSelectionToTask(task)
 
@@ -1418,7 +1414,6 @@ class MarkerClient(QWidget):
             PlomTakenException,
             PlomRangeException,
             PlomVersionMismatchException,
-            PlomProbationaryLimitExceededException,
         ) as err:
             WarnMsg(self, f"Cannot get task {task}.", info=err).exec()
             return
@@ -1479,7 +1474,7 @@ class MarkerClient(QWidget):
     def annotateTest(self):
         """Grab current test from table, do checks, start annotator."""
         task = self.get_current_task_id_or_none()
-        if not task:
+        if not task: 
             return
         if not self.examModel.is_our_task(task, self.msgr.username):
             InfoMsg(self, f"Cannot annotate {task}: it is not assigned to you").exec()
@@ -1493,14 +1488,41 @@ class MarkerClient(QWidget):
                 " perhaps due to poor or missing internet connection.",
             ).exec()
             return
+        
+        
+        progress = self.get_marking_progress()
+        # Check against task_status to allow probation markers to reannotate stuffs.
+        if progress["in_probation"]:
+            task_status = self.examModel.getStatusByTask(task)
+            if task_status != "Complete" and (progress["task_marked"] >= progress["probation_limit"]):
+                WarnMsg(
+                self,
+                f"You have reached your task limit. Please contact your instructor to mark more tasks. "
+                ).exec()
+                return
+
+
+
+
 
         if self.allowBackgroundOps:
             # If just one in the queue (which we are grading) then ask for more
             if self.examModel.countReadyToMark() <= 1:
                 self.requestNextInBackgroundStart()
-
+        
         self.startTheAnnotator(inidata)
         # we started the annotator, we'll get a signal back when its done
+    
+    def get_marking_progress(self) -> dict:
+        """Get a dict of keys ["task_claimed", "task_marked", "in_probation", "probation_limit"] of current marker.
+        
+        Args:
+            Task: task id of the task
+        Returns:
+            A dict representing the progress and probation status of current marker.
+        """
+        return self.msgr.MmarkingProgress()
+
 
     def getDataForAnnotator(self, task: str) -> tuple | None:
         """Start annotator on a particular task.

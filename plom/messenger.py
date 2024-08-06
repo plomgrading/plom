@@ -34,7 +34,6 @@ from plom.plom_exceptions import (
     PlomTaskChangedError,
     PlomTaskDeletedError,
     PlomTimeoutError,
-    PlomProbationaryLimitExceededException,
 )
 
 
@@ -298,6 +297,24 @@ class Messenger(BaseMessenger):
                 if response.status_code == 416:
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
+    
+    def MmarkingProgress(self) -> dict:
+        """Get a dict of keys ["task_claimed", "task_marked", "in_probation", "probation_limit"] of current marker.
+        
+        Args:
+            Task: task id of the task
+        Returns:
+            A dict representing the progress and probation status of current marker.
+        """
+        with self.SRmutex:
+            
+            response = self.get(
+                "/MK/marker_progress",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+            return response.json()
+
 
     def MaskNextTask(
         self,
@@ -421,10 +438,6 @@ class Messenger(BaseMessenger):
                     raise PlomRangeException(response.reason) from None
                 if response.status_code == 410:
                     raise PlomRangeException(response.reason) from None
-                if response.status_code == 423:
-                    raise PlomProbationaryLimitExceededException(
-                        response.reason
-                    ) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MlatexFragment(self, latex: str) -> tuple[bool, bytes | str]:
