@@ -117,7 +117,7 @@ class SetProbationView(ManagerRequiredView):
 
     Note: enforce_set_probation is a special flag that enforce a marker to be set to probation
     even though they do not fulfill the probation's limit restriction. The limit will be set
-    to their current number of question claimed.
+    to their current number of question marked.
     """
 
     def post(self, request, username):
@@ -134,7 +134,7 @@ class SetProbationView(ManagerRequiredView):
             )
             complete, claimed = complete_and_claimed_tasks[username]
             probation_period, created = ProbationPeriod.objects.get_or_create(
-                user=user, limit=claimed
+                user=user, limit=complete
             )
 
         # No special flag received, proceed to check whether the marker fulfills the restriction.

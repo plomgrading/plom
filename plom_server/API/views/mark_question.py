@@ -21,7 +21,6 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomTaskDeletedError,
     PlomTaskChangedError,
-    PlomProbationaryLimitExceededException,
 )
 
 from Mark.services import QuestionMarkingService, MarkingTaskService
@@ -146,8 +145,6 @@ class QuestionMarkingViewSet(ViewSet):
                 MarkingTaskService.assign_task_to_user(task.pk, request.user)
             except RuntimeError as e:
                 return _error_response(e, status.HTTP_409_CONFLICT)
-            except PlomProbationaryLimitExceededException as e:
-                return _error_response(e, status.HTTP_423_LOCKED)
 
             question_data = page_data.get_question_pages_list(papernum, question_idx)
             tags = MarkingTaskService().get_tags_for_task_pk(task.pk)

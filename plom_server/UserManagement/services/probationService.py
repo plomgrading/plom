@@ -29,7 +29,7 @@ class ProbationService:
         )
         complete, claimed = complete_and_claimed_tasks_dict[user.username]
 
-        if (limit >= 0) & (limit >= claimed):
+        if (limit >= 0) & (limit >= complete):
             return True
         else:
             return False
@@ -38,7 +38,7 @@ class ProbationService:
     def can_set_probation(self, user: User) -> bool:
         """Check if a user (not in probation) can be set to probation.
 
-        A user can't be set to probation, if they have claimed more questions than
+        A user can't be set to probation, if they have marked more questions than
         the default probation limit.
 
         Args:
@@ -52,7 +52,7 @@ class ProbationService:
         )
         complete, claimed = complete_and_claim_dict[user.username]
 
-        if claimed > ProbationPeriod.default_limit:
+        if complete > ProbationPeriod.default_limit:
             return False
         else:
             return True
