@@ -333,13 +333,17 @@ class ReassembleService:
         # we used the keys of paper number to build it but now keep only the rows
         return list(status.values())
 
-    def queue_single_paper_reassembly(self, paper_num: int) -> None:
+    def queue_single_paper_reassembly(
+        self, paper_num: int, *, build_student_report: bool = True
+    ) -> None:
         """Create and queue a huey task to reassemble the given paper.
 
         If the PDF was already reassembled, it will be first made obsolete.
 
         Args:
             paper_num: The paper number to re-assemble.
+        KWargs:
+            build_student_report: Whether or not build the student report along with reassembling the paper.
         """
         try:
             paper = Paper.objects.get(paper_number=paper_num)
@@ -369,7 +373,10 @@ class ReassembleService:
             tracker_pk = chore.pk
 
         res = huey_reassemble_paper(
-            paper_num, tracker_pk=tracker_pk, _debug_be_flaky=False
+            paper_num,
+            tracker_pk=tracker_pk,
+            _debug_be_flaky=False,
+            build_student_report=build_student_report,
         )
         print(f"Just enqueued Huey reassembly task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
@@ -395,6 +402,28 @@ class ReassembleService:
             status=ReassemblePaperChore.COMPLETE,
         )
         return chore.pdf_file
+
+    @transaction.atomic
+    def get_single_student_report(self, paper_number: int) -> File:
+        """Get the django-file of the student report pdf of the given paper.
+
+        Args:
+            paper_number (int): The paper number.
+
+        Returns:
+            File: the django-File of the report pdf.
+
+        Raises:
+            ObjectDoesNotExist: no such paper or reassembly chore, or if
+                the reassembly is still in-progress.  TODO: maybe we'd
+                like a different exception for the in-progress case.
+        """
+        chore = ReassemblePaperChore.objects.get(
+            paper__paper_number=paper_number,
+            obsolete=False,
+            status=ReassemblePaperChore.COMPLETE,
+        )
+        return chore.report_pdf_file
 
     def try_to_cancel_single_queued_chore(self, paper_num: int) -> None:
         """Mark a reassembly chore as obsolete and try to cancel it if queued in Huey.
@@ -571,8 +600,12 @@ class ReassembleService:
                 )
                 print(f"The running task {task.huey_id} has finished, and returned {r}")
 
-    def queue_all_paper_reassembly(self) -> None:
-        """Queue the reassembly of all papers that are ready (id'd and marked)."""
+    def queue_all_paper_reassembly(self, *, build_student_report: bool = True) -> None:
+        """Queue the reassembly of all papers that are ready (id'd and marked).
+
+        KWargs:
+            build_student_report: whether or not to build the student reports at same time.
+        """
         # first work out which papers are ready
         for data in self.get_all_paper_status_for_reassembly():
             # check if both id'd and marked
@@ -586,7 +619,9 @@ class ReassembleService:
             if data["reassembled_status"] == "Complete" and not data["outdated"]:
                 # is complete and not outdated
                 continue
-            self.queue_single_paper_reassembly(data["paper_num"])
+            self.queue_single_paper_reassembly(
+                data["paper_num"], build_student_report=build_student_report
+            )
 
     @transaction.atomic
     def get_completed_pdf_files_and_names(self) -> list[Tuple[File, str]]:
@@ -603,6 +638,20 @@ class ReassembleService:
         ]
 
     @transaction.atomic
+    def get_completed_report_files_and_names(self) -> list[Tuple[File, str]]:
+        """Get list of Files and recommended names of pdf-files of student reports that are not obsolete.
+
+        Returns:
+            A list of pairs [django-File, display filename] of the reports
+        """
+        return [
+            (task.report_pdf_file, task.report_display_filename)
+            for task in ReassemblePaperChore.objects.filter(
+                obsolete=False, status=HueyTaskTracker.COMPLETE
+            )
+        ]
+
+    @transaction.atomic
     def get_zipfly_generator(self, short_name: str, *, chunksize: int = 1024 * 1024):
         paths = [
             {
@@ -611,8 +660,15 @@ class ReassembleService:
             }
             for pdf_file, display_filename in self.get_completed_pdf_files_and_names()
         ]
+        report_paths = [
+            {
+                "fs": report_pdf_file.path,
+                "n": f"student_reports/{report_display_filename}",
+            }
+            for report_pdf_file, report_display_filename in self.get_completed_report_files_and_names()
+        ]
 
-        zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)
+        zfly = zipfly.ZipFly(paths=paths + report_paths, chunksize=chunksize)
         return zfly.generator()
 
 
@@ -621,7 +677,12 @@ class ReassembleService:
 # TODO: investigate "preserve=True" here if we want to wait on them?
 @db_task(queue="tasks", context=True)
 def huey_reassemble_paper(
-    paper_number: int, *, tracker_pk: int, task=None, _debug_be_flaky: bool = False
+    paper_number: int,
+    *,
+    tracker_pk: int,
+    task=None,
+    _debug_be_flaky: bool = False,
+    build_student_report: bool = True,
 ) -> bool:
     """Reassemble a single paper, updating the database with progress and resulting PDF.
 
@@ -634,6 +695,7 @@ def huey_reassemble_paper(
         task: includes our ID in the Huey process queue.
         _debug_be_flaky: for debugging, all take a while and some
             percentage will fail.
+        build_student_report: whether or not to build the student report at the same time.
 
     Returns:
         True, no meaning, just as per the Huey docs: "if you need to
@@ -646,9 +708,17 @@ def huey_reassemble_paper(
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
-    reas = ReassembleService()
+    from .build_student_report_service import BuildStudentReportService
+
     with tempfile.TemporaryDirectory() as tempdir:
-        save_path = reas.reassemble_paper(paper_obj, outdir=Path(tempdir))
+        save_path = ReassembleService().reassemble_paper(
+            paper_obj, outdir=Path(tempdir)
+        )
+        report_data = BuildStudentReportService().build_one_report(paper_number)
+        # save the report data to file in tempdir - TODO can we do this all in memory?
+        report_path = Path(tempdir) / report_data["filename"]
+        with report_path.open("wb") as fh:
+            fh.write(report_data["bytes"])
 
         if _debug_be_flaky:
             for i in range(5):
@@ -666,6 +736,10 @@ def huey_reassemble_paper(
                 with save_path.open("rb") as f:
                     chore.pdf_file = File(f, name=save_path.name)
                     chore.display_filename = save_path.name
+                    chore.save()
+                with report_path.open("rb") as f2:
+                    chore.report_pdf_file = File(f2, name=report_path.name)
+                    chore.report_display_filename = report_path.name
                     chore.save()
 
     HueyTaskTracker.transition_to_complete(tracker_pk)

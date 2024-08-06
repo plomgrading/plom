@@ -62,11 +62,11 @@
                 {% endif %}
             </ul>
             {% if n_outdated %}
-                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-danger">Download zip of reassembled papers</a> some papers outdated
+                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-danger">Download zip of reassembled papers + student reports</a> some papers outdated
             {% elif n_complete == n_papers %}
-                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-success">Download zip of reassembled papers</a>
+                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-success">Download zip of reassembled papers + student reports</a>
             {% elif n_complete %}
-                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-warning">Download zip of reassembled papers</a>
+                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-warning">Download zip of reassembled papers + student reports</a>
                 warning - not all papers reassembled
             {% endif %}
         </div>
@@ -139,6 +139,9 @@
                                         <a href="{% url 'reassemble_one_paper' row.paper_num %}"
                                            target="_blank"
                                            class="btn btn-warning"><i class="bi bi-exclamation-diamond-fill">view</i></a>
+                                        <a href="{% url 'get_student_report' row.paper_num %}"
+                                           target="_blank"
+                                           class="btn btn-warning"><i class="bi bi-exclamation-diamond-fill">view report</i></a>
                                         <button hx-put="{% url 'reassemble_one_paper' row.paper_num %}"
                                                 class="btn btn-warning">
                                             <i class="bi bi-exclamation-diamond-fill">
@@ -151,6 +154,9 @@
                                         <a href="{% url 'reassemble_one_paper' row.paper_num %}"
                                            target="_blank"
                                            class="btn btn-success">view</a>
+                                        <a href="{% url 'get_student_report' row.paper_num %}"
+                                           target="_blank"
+                                           class="btn btn-info">view report</a>
                                         <button hx-delete="{% url 'reassemble_one_paper' row.paper_num %}"
                                                 class="btn btn-warning">delete</button>
                                     {% endif %}
