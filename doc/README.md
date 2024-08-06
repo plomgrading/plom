@@ -1,26 +1,28 @@
 Building Plom's Documentation
 =============================
 
-In the root of the git project:
+In the doc/ directory:
 ```
-sphinx-apidoc -f -o doc/source plom
-```
-Then
-```
-cd doc
+make autodocs
+# all of the following produce different outputs, `make help` for more info
 make html
+make singlehtml
+make latexpdf
+make linkcheck
+```
+then display the webpages in your browser
+```
 firefox build/html/index.html
 ```
 
-
 ## Notes:
 
-  * I'm still unclear on the `sphinx-apidoc` call versus `automodule`
-    thing in side `index.rst`.
-
-  * Should build all this on CI runs.
-
-  * TODO: Slowly move legacy things from `docs/` to this new `doc/`.
-
   * TODO: what should be the relationship between this autogen stuff
-    and the official website?
+    and the official website? PrairieLearn strikes a good balance (I think),
+    although it's target users are somewhat adept programmers.
+
+  * Many projects don't use sphinx-apidoc at all; they manually populate .rst files with
+    automodule / autodoc / auto... for each thing they want presented:
+    [python docs](https://github.com/python/cpython/tree/main/Doc)
+    using `sphinx-build` to generate html files.
+    TODO: We should follow suit?
