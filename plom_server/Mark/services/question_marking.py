@@ -216,7 +216,8 @@ class QuestionMarkingService:
         if probation_state_and_progress["in_probation"]:
             if (
                 probation_state_and_progress["task_marked"]
-                < probation_state_and_progress["probation_limit"]
+                < probation_state_and_progress["probation_limit"] or
+                (task.status == MarkingTask.COMPLETE)
             ):
                 MarkingTaskService().create_tag_and_attach_to_task(
                     user=user,

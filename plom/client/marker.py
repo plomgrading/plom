@@ -327,6 +327,7 @@ def upload(
         PlomConflict,
         PlomProbationLimitExceededException,
     ) as ex:
+        print("TEST")
         knownFailCallback(task, str(ex))
         # probably previous call does not return: it forces a crash
         return False
