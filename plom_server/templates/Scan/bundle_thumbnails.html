@@ -55,8 +55,9 @@
                                     @htmx:before-send="midPush=true;">Push</button>
                         {% else %}
                             &ensp; no problems, but has incomplete papers
+                            <!-- Issue #3411: provide link to additional info -->
                             <button class="btn btn-danger"
-                                    hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). We do not recommend pushing until you have resolved this. Are you sure you wish to push?"
+                                    hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). Pushing may create incomplete and unmarkable papers on your server so this isn't best practice. Are you sure you wish to push?"
                                     hx-post="{% url 'scan_push_all' bundle_id %}"
                                     x-bind:disabled="midPush"
                                     @htmx:before-send="midPush=true;">Push</button>
