@@ -596,6 +596,41 @@ class RubricService:
                         r["id"],
                     )
 
+    def _build_demo_rubrics(self, username: str) -> None:
+        log.info("Building special demo rubrics")
+        log.info("In the current build these are half-mark rubrics")
+        # create standard manager delta-rubrics - but no 0, nor +/- max-mark
+        for q in SpecificationService.get_question_indices():
+            rubric = {
+                "display_delta": "\N{Vulgar Fraction One Half}",
+                "value": 0.5,
+                "out_of": 0,
+                "text": ".",
+                "kind": "relative",
+                "question": q,
+                "meta": "",
+                "tags": "",
+                "username": username,
+                "system_rubric": True,
+            }
+            r = self.create_rubric(rubric)
+            log.info("Built delta-rubric -%d for Q%s: %s", 0.5, q, r["id"])
+
+            rubric = {
+                "display_delta": "-\N{Vulgar Fraction One Half}",
+                "value": -0.5,
+                "out_of": 0,
+                "text": ".",
+                "kind": "relative",
+                "question": q,
+                "meta": "",
+                "tags": "",
+                "username": username,
+                "system_rubric": True,
+            }
+            r = self.create_rubric(rubric)
+            log.info("Built delta-rubric -%d for Q%s: %s", -0.5, q, r["id"])
+
     def erase_all_rubrics(self) -> int:
         """Remove all rubrics, permanently deleting them.  BE CAREFUL.
 
