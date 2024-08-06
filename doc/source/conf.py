@@ -18,6 +18,8 @@ import os
 import sys
 from django import setup as django_setup
 
+# we need access to the `plom` module:
+sys.path.insert(0, os.path.abspath("../../"))
 # setup django env
 sys.path.insert(0, os.path.abspath("../../plom_server"))
 os.environ["DJANGO_SETTINGS_MODULE"] = "Web_Plom.settings"
