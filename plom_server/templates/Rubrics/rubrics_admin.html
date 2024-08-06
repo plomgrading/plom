@@ -36,7 +36,7 @@
                 {% endif %}
             </p>
             <!--<p>(TODO: should this happen automatically when clients connect?)</p>-->
-            <form method="post" name="demo_rubrics" action="">
+            <form method="post" action="{% url 'rubric_demo' %}">
                 {% csrf_token %}
                 <div class="form-group mr-2">{{ rubric_demo_form }}</div>
                 <button type="submit"

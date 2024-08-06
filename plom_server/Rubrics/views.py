@@ -82,6 +82,18 @@ class RubricAdminPageView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
 
+class RubricDemoView(ManagerRequiredView):
+    """Create demo rubrics."""
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        any_manager = User.objects.filter(groups__name="manager").first()
+        if not RubricService().init_demo_rubrics(any_manager.username):
+            messages.error(request, "Demo rubrics could not be initialized.")
+        else:
+            messages.success(request, "Demo rubrics initialized")
+        return redirect("rubrics_admin")
+
+
 class RubricWipePageView(ManagerRequiredView):
     """Confirm before wiping rubrics."""
 

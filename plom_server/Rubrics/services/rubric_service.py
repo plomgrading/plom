@@ -596,6 +596,31 @@ class RubricService:
                         r["id"],
                     )
 
+    def init_demo_rubrics(self, username: str) -> bool:
+        """Create demo rubrics, these are commonly used rubrics that are optional.
+
+        Args:
+            username: which user to associate with the demo rubrics.
+
+        Returns:
+            True if initialized or False if already initialized.
+
+        Exceptions:
+            ValueError: username does not exist or is not part of the manager group.
+        """
+        try:
+            _ = User.objects.get(username__iexact=username, groups__name="manager")
+        except ObjectDoesNotExist as e:
+            raise ValueError(
+                f"User '{username}' does not exist or has wrong permissions!"
+            ) from e
+        # TODO: check if the demo rubrics exist in the db
+        # existing_rubrics = Rubric.objects.all()
+        # if existing_rubrics:
+        #    return False
+        self._build_demo_rubrics(username)
+        return True
+
     def _build_demo_rubrics(self, username: str) -> None:
         log.info("Building special demo rubrics")
         log.info("In the current build these are half-mark rubrics")
