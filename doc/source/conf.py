@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2024 Aidan Murphy
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -15,22 +16,15 @@
 #
 import os
 import sys
+from django import setup as django_setup
 
-# from django import setup as django_setup
-
-sys.path.insert(0, os.path.abspath("../../django/"))
-sys.path.insert(0, os.path.abspath("../.."))
+# we need access to the `plom` module:
+sys.path.insert(0, os.path.abspath("../../"))
+# setup django env
+sys.path.insert(0, os.path.abspath("../../plom_server"))
 os.environ["DJANGO_SETTINGS_MODULE"] = "Web_Plom.settings"
-# django_setup()
+django_setup()
 
-# # https://daniel.feldroy.com/posts/2023-01-configuring-sphinx-auto-doc-with-django
-# sys.path.insert(0, os.path.abspath("."))
-# os.environ["DJANGO_SETTINGS_MODULE"] = "django_settings"
-# django.setup()
-
-# # something else
-# from django.conf import settings
-# settings.configure()
 
 # -- Project information -----------------------------------------------------
 
@@ -63,10 +57,17 @@ templates_path = ["_templates"]
 autoclass_content = "both"
 
 # List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
+# directories to include and ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
+# By default include everything in source directory.
+include_patterns = ["**"]
 exclude_patterns = []
 
+# TODO: remove suppressions after issue[s] have been resolved:
+suppress_warnings = [
+    # https://github.com/sphinx-doc/sphinx/issues/4961
+    "ref.python",
+]
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -80,5 +81,11 @@ html_theme = "sphinx_rtd_theme"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
+# -- Options for LaTeX output ------------------------------------------------
 
+with open("_latex/preamble.tex", "r+") as f:
+    PREAMBLE = f.read()
+
+latex_elements = {"preamble": PREAMBLE}
+latex_additional_files = ["_latex/common-unicode.sty"]
 # -- Extension configuration -------------------------------------------------

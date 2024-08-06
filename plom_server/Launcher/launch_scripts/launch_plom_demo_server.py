@@ -137,11 +137,13 @@ def set_argparse_and_get_args() -> argparse.Namespace:
 def run_django_manage_command(cmd) -> None:
     """Run the given command with 'python3 manage.py' and wait for return.
 
+    Command must finish successfully (zero return code).
+
     Args:
         cmd: the command to run.
     """
     full_cmd = "python3 manage.py " + cmd
-    subprocess.run(split(full_cmd))
+    subprocess.run(split(full_cmd), check=True)
 
 
 def popen_django_manage_command(cmd) -> subprocess.Popen:

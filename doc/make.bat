@@ -1,3 +1,6 @@
+REM SPDX-License-Identifier: AGPL-3.0-or-later
+REM Copyright (C) 2024 Aidan Murphy
+
 @ECHO OFF
 
 pushd %~dp0
@@ -7,10 +10,19 @@ REM Command file for Sphinx documentation
 if "%SPHINXBUILD%" == "" (
 	set SPHINXBUILD=sphinx-build
 )
+if "%SPHINXOPTS%" == "" (
+	set SPHINXOPTS=-j auto -v -W
+)
+
+set MODULES=plom_server plom
+set SPHINXAPI=sphinx-apidoc
+set SPHINXAPIOPTS=-d 1 -e -f
+
 set SOURCEDIR=source
 set BUILDDIR=build
 
 if "%1" == "" goto help
+if "%1" == "autodocs" goto autodocs
 
 %SPHINXBUILD% >NUL 2>NUL
 if errorlevel 9009 (
@@ -26,6 +38,12 @@ if errorlevel 9009 (
 )
 
 %SPHINXBUILD% -M %1 %SOURCEDIR% %BUILDDIR% %SPHINXOPTS% %O%
+goto end
+
+:autodocs
+(for %%m in (%MODULES%) do (
+   %SPHINXAPI% -o "%SPHINXAPI%/%%m" "../%%m" %SPHINXAPIOPTS% %O%
+))
 goto end
 
 :help

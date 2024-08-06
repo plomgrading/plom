@@ -14,7 +14,7 @@ def salted_int_hash_from_str(s, salt=None, digits=9):
 
     Combine the string with a salt string, compute the md5sum, grab
     the first few digits as an integer between 100000000 and 999999999.
-    Reference: https://en.wikipedia.org/wiki/Salt_(cryptography)
+    Reference: <https://en.wikipedia.org/wiki/Salt_(cryptography)>
 
     Args:
         s (str): string to hash.
