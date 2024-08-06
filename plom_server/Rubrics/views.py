@@ -46,9 +46,12 @@ class RubricAdminPageView(ManagerRequiredView):
         upload_form = RubricUploadForm()
         context = self.build_context()
         rubrics = RubricService.get_all_rubrics()
+        demo_rubrics = rubrics.filter(value__exact=0.5).filter(text__exact=".")
+        print(demo_rubrics)
         context.update(
             {
                 "rubrics": rubrics,
+                "demo_rubrics": demo_rubrics,
                 "rubric_admin_form": form,
                 "rubric_demo_admin_form": rubric_demo_form,
                 "rubric_download_form": download_form,

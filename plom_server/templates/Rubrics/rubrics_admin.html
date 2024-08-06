@@ -42,12 +42,13 @@
                 <button type="submit"
                         class="btn btn-danger"
                         name="init_system_rubrics"
-                        {% if not rubrics %}disabled{% endif %}>Create half delta rubrics</button>
+                        {% if not rubrics %}disabled{% endif %}
+                        {% if demo_rubrics %}disabled{% endif %}>Create half delta rubrics</button>
             </form>
             <p>
-                Introduce &#177;&#189; rubrics to all questions
-                {% if not rubrics %}, System rubrics must be created before this button is enabled{% endif %}
-                .
+                Introduce &#177;&#189; rubrics to all questions.
+                {% if not rubrics %}The system rubrics must be created before this button is enabled.{% endif %}
+                {% if demo_rubrics %}These rubrics have already been created.{% endif %}
             </p>
             <form method="get" action={% url 'rubric_download' %} class="form-inline">
                 {% csrf_token %}
