@@ -5,7 +5,8 @@
 # Copyright (C) 2024 Colin B. Macdonald
 
 from __future__ import annotations
-from typing import Any, Dict, List
+
+from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, Http404, FileResponse, HttpRequest
@@ -19,8 +20,8 @@ from ..services import ScanService
 
 class BundleThumbnailsView(ScannerRequiredView):
     def filter_bundle_pages(
-        self, page_list: List[Dict[str, Any]], filter_kind: str | None
-    ) -> List[Dict[str, Any]]:
+        self, page_list: list[dict[str, Any]], filter_kind: str | None
+    ) -> list[dict[str, Any]]:
         def is_extra_without_info(page):
             if page["status"] == "extra":
                 # is an extra page with both page number and question list
