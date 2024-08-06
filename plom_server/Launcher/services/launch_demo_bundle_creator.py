@@ -103,7 +103,7 @@ class DemoBundleCreationService:
         """Download the extra-page pdf to the working directory."""
         # Assumes that the extra page has been generated
         # and is sitting in the static directory
-        shutil.copy(
+        shutil.copy2(
             Path(settings.STATICFILES_DIRS[0]) / "extra_page.pdf",
             settings.MEDIA_ROOT / "papersToPrint/extra_page.pdf",
         )
@@ -113,7 +113,7 @@ class DemoBundleCreationService:
         """Download the scrap-paper pdf to the working directory."""
         # Assumes that the scrap paper has been generated
         # and is sitting in the static directory
-        shutil.copy(
+        shutil.copy2(
             Path(settings.STATICFILES_DIRS[0]) / "scrap_paper.pdf",
             settings.MEDIA_ROOT / "papersToPrint/scrap_paper.pdf",
         )
