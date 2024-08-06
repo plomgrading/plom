@@ -34,7 +34,7 @@ from .mark import (
     TagsFromCodeView,
     GetAllTags,
     GetSolutionImage,
-    MarkerMarkingProgress
+    MarkerMarkingProgress,
 )
 
 from .report import (

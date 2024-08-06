@@ -2,6 +2,8 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Bryan Tanady
+
 
 from __future__ import annotations
 
@@ -73,21 +75,22 @@ class MarkingProgressCount(APIView):
         mts = MarkingTaskService()
         progress = mts.get_marking_progress(question, version)
         return Response(progress, status=status.HTTP_200_OK)
-    
-    
+
+
 class MarkerMarkingProgress(APIView):
     """Responds with a dict representing the marking progress of a specific marker.
 
     Returns:
-        (200): returns a dict of keys: ["task_claimed", "task_marked", "in_probation", "probation_limit"]. 
+        (200): returns a dict of keys: ["task_claimed", "task_marked", "in_probation", "probation_limit"].
     """
+
     def get(self, request):
         data = request.data
         username = data["user"]
         uis = UserInfoServices()
         progress = uis.get_user_progress(username=username)
-        print("BT[SERVER]: ", progress)
         return Response(progress, status=status.HTTP_200_OK)
+
 
 # GET: /MK/tasks/all
 class GetTasks(APIView):

@@ -1064,6 +1064,23 @@ class Annotator(QWidget):
             InfoMsg(self, "No more to grade?").exec()
             # Not really safe to give it back? (at least we did the view...)
             return
+        progress = self.parentMarkerUI.get_marking_progress()
+        if progress["in_probation"]:
+            task = f"q{tmp_tgv}"
+            status = self.parentMarkerUI.examModel.getStatusByTask(task)
+
+            # Add one to consider current task if it's not completed yet
+            total_marked = self.parentMarkerUI.get_completed_tasks_count()
+            if status != "Complete":
+                total_marked += 1
+            if total_marked >= progress["probation_limit"]:
+                WarnMsg(
+                    self,
+                    f"You have reached your task limit. Please contact your instructor to mark more tasks. ",
+                ).exec()
+                self.close()
+                return
+
         log.debug("saveAndGetNext: new stuff is {}".format(stuff))
         self.load_new_question(*stuff)
 

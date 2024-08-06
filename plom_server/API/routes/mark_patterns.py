@@ -19,7 +19,6 @@ from API.views import (
     MmodifyRubric,
     MlatexFragment,
     GetSolutionImage,
-    
 )
 
 
@@ -54,7 +53,7 @@ class MarkURLPatterns:
                 name="api_marker_marking_progress",
             )
         ]
-        
+
         mark_patterns += marker_progress
 
         # Task management
