@@ -258,7 +258,7 @@ DJANGO_HUEY = {
     "queues": {
         "tasks": {
             "huey_class": "huey.SqliteHuey",
-            "filename": "huey/huey_db.sqlite3",
+            "filename": BASE_DIR / "huey/huey_db.sqlite3",
             "results": True,
             "store_none": False,
             "immediate": False,
