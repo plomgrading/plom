@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Elisa Pan
+# Copyright (C) 2024 Andrew Rechnitzer
 
 from __future__ import annotations
 
@@ -20,6 +21,7 @@ from . import DataExtractionService
 from Papers.services import SpecificationService
 
 RANGE_BIN_OFFSET = 2
+HIGHLIGHT_COLOR = "orange"
 
 
 class MatplotlibService:
@@ -103,7 +105,6 @@ class MatplotlibService:
             df = self.des.get_student_data()
             student = df[df["StudentID"] == highlighted_sid]
             student_score = student["Total"].values[0]
-            highlight_color = "#3061FF"
 
             ax = plt.gca()
             for bar in ax.patches:
@@ -111,7 +112,7 @@ class MatplotlibService:
                 bar_left = bar.get_x()
                 bar_right = bar_left + bar.get_width()
                 if bar_left <= student_score <= bar_right:
-                    bar.set_color(highlight_color)
+                    bar.set_color(HIGHLIGHT_COLOR)
                     bar.set_edgecolor("black")
                     bar.set_linewidth(1.5)
         ax.set_title("Histogram of total marks")
@@ -189,7 +190,6 @@ class MatplotlibService:
         if highlighted_sid:
             # Overlay the student's score by highlighting the bar
             df = self.des.get_student_data()
-            highlight_color = "#3061FF"
             student_score = df[df["StudentID"] == highlighted_sid][mark_column].values[
                 0
             ]
@@ -199,7 +199,7 @@ class MatplotlibService:
                 bar_left = bar.get_x()
                 bar_right = bar_left + bar.get_width()
                 if bar_left <= student_score <= bar_right:
-                    bar.set_color(highlight_color)
+                    bar.set_color(HIGHLIGHT_COLOR)
                     bar.set_edgecolor("black")
                     bar.set_linewidth(1.5)
         if versions:
