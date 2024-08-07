@@ -42,6 +42,8 @@ Welcome to Plom's documentation!
 
    install.rst
 
+   development
+
    faq.md
 
    changelog.md
