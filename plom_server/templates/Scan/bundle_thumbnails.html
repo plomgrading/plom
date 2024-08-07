@@ -10,25 +10,103 @@
 {% endblock title %}
 {% block page_heading %}
     Bundle thumbnails
-    <a class="btn btn-success" href="{% url 'scan_home' %}">
-        <i class="bi bi-chevron-left"></i>
-        Return to upload
-    </a>
+    {% if is_pushed %}&mdash; read-only{% endif %}
 {% endblock page_heading %}
 {% block main_content %}
-    <div class="card">
+    <div class="my-2">
+        <a class="btn btn-primary" href="{% url 'scan_overview' %}">Bundle and paper overview</a>
+        {% if is_pushed %}
+            <a class="btn btn-primary" href="{% url 'scan_list_pushed' %}">Pushed bundle overview</a>
+        {% endif %}
+        <a class="btn btn-primary" href="{% url 'scan_list_staged' %}">Staged bundle overview</a>
+    </div>
+    <div class="my-2">
+        <a class="btn btn-secondary"
+           href="{% url 'scan_recent_bundle_thumbnails' %}">Most recent staged bundle</a>
+    </div>
+    <div class="card mt-2">
         <!-- pb-0 b/c something is making this top box tall by the standard margin?-->
         <div class="card-body pb-0"
              x-data="{show_summary: false}"
              x-init="$watch('show_summary', val => localStorage.setItem('show_summary', val))">
-            <div class="d-flex justify-content-start">
+            <div>
                 <h5>
-                    Bundle <q>{{ slug }}</q> summary
+                    {% if is_pushed %}
+                        <i class="bi bi-check-square text-success"></i>
+                        Pushed bundle
+                    {% else %}
+                        {% if not finished_reading_qr %}
+                            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                            Unread bundle
+                        {% else %}
+                            Staged bundle
+                        {% endif %}
+                    {% endif %}
+                    &ensp; <q>{{ slug }}</q>
+                    {% if is_perfect and not is_pushed %}
+                        {% if n_incomplete == 0 %}
+                            <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
+                            <!-- note that the midPush variable is defined in the parent html file which includes this html file -->
+                            &ensp; is problem free -
+                            <button class="btn btn-success"
+                                    hx-confirm="Please confirm that you want to push this bundle."
+                                    hx-post="{% url 'scan_push_all' bundle_id %}"
+                                    x-bind:disabled="midPush"
+                                    @htmx:before-send="midPush=true;">Push</button>
+                        {% else %}
+                            &ensp; has no problems, but contains incomplete papers. You can
+                            <!-- Issue #3411: provide link to additional info -->
+                            <button class="btn btn-danger"
+                                    hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). Pushing may create incomplete and unmarkable papers on your server so this isn't best practice. Are you sure you wish to push?"
+                                    hx-post="{% url 'scan_push_all' bundle_id %}"
+                                    x-bind:disabled="midPush"
+                                    @htmx:before-send="midPush=true;">Push</button>
+                            but it is not recommended
+                        {% endif %}
+                    {% endif %}
+                    {% if not is_perfect %}&ensp; has pages that require your attention{% endif %}
+                </h5>
+                {% if n_incomplete %}
+                    <div class="alert alert-warning">
+                        <details>
+                            <summary>This bundle contains {{ n_incomplete }} incomplete paper(s)</summary>
+                            <ul>
+                                <li>Incomplete papers contain some, but not all their pages.</li>
+                                <li>
+                                    If you push the incomplete papers you can start marking them, but you cannot complete them until all their pages are pushed.
+                                </li>
+                                <li>
+                                    Incomplete papers often indicates some sort of problem with scanning &mdash; like some pages stuck together. It can also occur if a paper is split across two bundles.
+                                </li>
+                                <li>It may be better to delete this bundle and rescan the physical papers.</li>
+                            </ul>
+                        </details>
+                    </div>
+                {% endif %}
+                {% if error_pages %}
+                    <div class="alert alert-danger">
+                        <details>
+                            <summary>This bundle has {{ error_pages }} error pages</summary>
+                            <ul>
+                                <li>this typically indicates serious scanning problems</li>
+                                <li>while these can be repaired here, we recommend that you do not</li>
+                                <li>
+                                    instead we recommend that you look at the error pages, fix any problems with the corresponding physical pages, then discard this PDF and rescan the papers.
+                                </li>
+                            </ul>
+                            <a class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}"
+                               hx-delete="{% url 'scan_get_staged_bundle_fragment' bundle_id %}"
+                               hx-confirm="Are you sure?">Remove bundle</a>
+                        </details>
+                    </div>
+                {% endif %}
+                <p>
+                    Summary of bundle contents
                     <button class="btn btn-light" x-on:click="show_summary =! show_summary">
                         <i class="bi bi-chevron-down" x-show="!show_summary"></i>
                         <i class="bi bi-chevron-up" x-show="show_summary"></i>
                     </button>
-                </h5>
+                </p>
             </div>
             <div class="card-text" x-show="show_summary" x-transition>
                 <div class="row">

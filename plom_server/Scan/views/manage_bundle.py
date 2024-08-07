@@ -5,29 +5,23 @@
 # Copyright (C) 2024 Colin B. Macdonald
 
 from __future__ import annotations
+
 from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.shortcuts import render
 from django.http import HttpResponse, Http404, FileResponse, HttpRequest
+from django.shortcuts import render, redirect
+from django.urls import reverse
 
 from Base.base_group_views import ScannerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
 from ..services import ScanService
 
 
-class GetBundleImageView(ScannerRequiredView):
-    """Return an image from a user-uploaded bundle."""
-
-    def get(self, request: HttpResponse, *, bundle_id: int, index: int) -> HttpResponse:
-        scanner = ScanService()
-        image = scanner.get_image(bundle_id, index)
-
-        return FileResponse(image.image_file)
-
-
 class BundleThumbnailsView(ScannerRequiredView):
-    def filter_bundle_pages(self, page_list, filter_kind):
+    def filter_bundle_pages(
+        self, page_list: list[dict[str, Any]], filter_kind: str | None
+    ) -> list[dict[str, Any]]:
         def is_extra_without_info(page):
             if page["status"] == "extra":
                 # is an extra page with both page number and question list
@@ -38,7 +32,9 @@ class BundleThumbnailsView(ScannerRequiredView):
             else:  # is not an extra page
                 return False
 
-        if filter_kind in ["known", "unknown", "error", "extra", "discard", "unread"]:
+        if filter_kind is None:
+            return page_list
+        elif filter_kind in ["known", "unknown", "error", "extra", "discard", "unread"]:
             return [pg for pg in page_list if pg["status"] == filter_kind]
         elif filter_kind == "lowqr":
             return [pg for pg in page_list if pg["n_qr_read"] <= 2]
@@ -55,13 +51,18 @@ class BundleThumbnailsView(ScannerRequiredView):
             return page_list
 
     def build_context(
-        self, *, bundle_id: int | None = None, the_filter: str | None = None
+        self,
+        *,
+        bundle_id: int | None = None,
+        the_filter: str | None = None,
+        pop: int | None = None,
     ) -> dict[str, Any]:
         """Build a context for a particular page of a bundle.
 
         Keyword Args:
             bundle_id: which bundle.
             the_filter: related to the current filter.
+            pop: the index of the page to focus on
         """
         # TODO: not clear if superclass forbids this?
         assert bundle_id is not None, "bundle_id must be specified (?)"
@@ -107,12 +108,14 @@ class BundleThumbnailsView(ScannerRequiredView):
         context.update(
             {
                 "is_pushed": bundle.pushed,
+                "is_perfect": scanner.is_bundle_perfect(bundle.pk),
                 "slug": bundle.slug,
                 "bundle_id": bundle.pk,
                 "timestamp": bundle.timestamp,
                 "pages": bundle_page_info_list,
                 "papers_pages_list": bundle_papers_pages_list,
                 "incomplete_papers_list": bundle_incomplete_papers_list,
+                "n_incomplete": len(bundle_incomplete_papers_list),
                 "total_pages": n_pages,
                 "known_pages": known_pages,
                 "unknown_pages": unknown_pages,
@@ -124,6 +127,13 @@ class BundleThumbnailsView(ScannerRequiredView):
                 "filter_options": filter_options,
             }
         )
+        if pop in [pg["order"] for pg in bundle_page_info_list]:
+            context.update({"pop": pop})
+        else:
+            # pop the first image in the list
+            if pop and bundle_page_info_list:
+                context.update({"pop": bundle_page_info_list[0]["order"]})
+            # otherwise don't pop anything.
         return context
 
     def get(
@@ -141,14 +151,20 @@ class BundleThumbnailsView(ScannerRequiredView):
         Returns:
             The response returns a template-rendered page.
             If there was no such bundle, return a 404 error page.
+            Note if the url has a pop-query then check if that
+            page passes the filter, and if not then pop the first
+            page that does pass the filter.
         """
+        # to pop up the same image we were just at
+        # provided that the image satisfies the current filter.
+        pop = request.GET.get("pop", None)
         try:
-            context = self.build_context(bundle_id=bundle_id, the_filter=the_filter)
+            context = self.build_context(
+                bundle_id=bundle_id, the_filter=the_filter, pop=pop
+            )
         except ObjectDoesNotExist as e:
             raise Http404(e)
 
-        # to pop up the same image we were just at
-        context.update({"pop": request.GET.get("pop", None)})
         return render(request, "Scan/bundle_thumbnails.html", context)
 
 
@@ -234,3 +250,12 @@ class BundleLockView(ScannerRequiredView):
         bundle = ScanService().get_bundle_from_pk(bundle_id)
         context.update({"slug": bundle.slug})
         return render(request, "Scan/bundle_is_locked.html", context)
+
+
+class RecentStagedBundleRedirectView(ScannerRequiredView):
+    def get(self, request: HttpResponse) -> HttpResponse:
+        bundle = ScanService().get_most_recent_unpushed_bundle()
+        if bundle is None:
+            return redirect(reverse("scan_list_staged"))
+        else:
+            return redirect(reverse("scan_bundle_thumbnails", args=["all", bundle.pk]))

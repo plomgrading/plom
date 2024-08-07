@@ -126,3 +126,5 @@ class MarkingTaskServiceTests(TestCase):
         task2.refresh_from_db()
         self.assertEqual(task1.status, MarkingTask.TO_DO)
         self.assertEqual(task2.status, MarkingTask.TO_DO)
+
+    # TODO: test MarkingTaskService._validate_and_clean_marking_data(...)

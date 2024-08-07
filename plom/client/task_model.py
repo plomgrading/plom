@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2024 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Lior Silberman
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024 Aidan Murphy
 
 """Client-side model for tasks, implementation details for MVC stuff."""
 
@@ -18,6 +19,7 @@ from typing import Any
 from PyQt6.QtCore import QModelIndex, QSortFilterProxyModel
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
 
+from plom.misc_utils import pprint_score
 
 log = logging.getLogger("marker")
 
@@ -100,7 +102,7 @@ class MarkerExamModel(QStandardItemModel):
         *,
         src_img_data: list[dict[str, Any]] = [],
         status: str = "untouched",
-        mark: int = -1,
+        mark: int | float | None = -1,
         marking_time: float = 0.0,
         tags: list[str] = [],
         integrity_check: str = "",
@@ -114,7 +116,7 @@ class MarkerExamModel(QStandardItemModel):
 
         Keyword Args:
             status: test status string.
-            mark: the mark of the question.
+            mark: the mark awarded to the question, can be None.
             marking_time (float/int): marking time spent on that page in seconds.
             tags: Tags corresponding to the exam.  We will flatten to a
                 space-separated string.  TODO: maybe we should do that for display
@@ -133,20 +135,19 @@ class MarkerExamModel(QStandardItemModel):
             KeyError: already have a task matching that task_id_str.
         """
         try:
-            r = self._findTask(task_id_str)
+            # raise a KeyError if we already have this task.
+            _ = self._findTask(task_id_str)
+            raise KeyError(f"We already have task {task_id_str} in the table at r={_}.")
         except ValueError as e:
             assert "not found" in str(e), f"Oh my, unexpected stuff: {e}"
             pass
-        else:
-            raise KeyError(f"We already have task {task_id_str} in the table at r={r}.")
 
-        # hide -1 which something might be using for "not yet marked"
-        try:
-            markstr = str(mark) if int(mark) >= 0 else ""
-        except ValueError:
+        # some processes might use -1 for unmarked papers
+        if mark is not None and mark < 0:
             markstr = ""
+        else:
+            markstr = pprint_score(mark)
 
-        r = self.rowCount()
         # these *must* be strings but I don't understand why
         self.appendRow(
             [
@@ -163,7 +164,7 @@ class MarkerExamModel(QStandardItemModel):
                 QStandardItem(integrity_check),
             ]
         )
-        return r
+        return self.rowCount() - 1
 
     def modify_task(
         self,
@@ -503,7 +504,7 @@ class MarkerExamModel(QStandardItemModel):
         t = self._get_marking_time(r)
         self._set_marking_time(r, marking_time + t)
         self._setStatus(r, "uploading...")
-        self.setData(self.index(r, _idx_mark), str(mark))
+        self.setData(self.index(r, _idx_mark), pprint_score(mark))
         self._setAnnotatedFile(r, aname, pname)
         self._setPaperDir(r, tdir)
 

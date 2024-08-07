@@ -151,25 +151,75 @@ class PlomClasslistValidator:
         else:
             return (True, [])
 
+    @staticmethod
+    def is_paper_number_sentinel(x: int | float | str | None) -> bool:
+        """True if the input is None, blank, -1 or '-1'.
+
+        Note: zero is not sentinel.
+        """
+        return x in ("", None, "-1", -1)
+
     def check_papernumber_column(self, papernum_key, classList) -> tuple[bool, list]:
-        """Check the papernumber column of the classlist."""
+        """Check the papernumber column of the classlist.
+
+        Entries must either be blank, or integers >= -1.
+        Note that:
+            * no integer >=0 can be used twice, and
+            * blank or -1 are sentinel values used to indicate 'do not prename'
+        """
+
+        def is_an_int(x: int | float | str) -> bool:
+            """True if input can be converted to an int."""
+            try:
+                int(x)
+            except ValueError:
+                return False
+            return True
+
+        def is_nearly_a_non_negative_int(x: int | float | str) -> bool:
+            """True input can be converted to a non-negative float which has integer value.
+
+            eg - returns true for "1.0", but false for "0.9", "-2", "-2.1", "13.2" and so on.
+            """
+            try:
+                v = float(x)
+            except ValueError:
+                return False
+            return (int(v) == v) and (v >= 0)
+
         err = []
         numbers_used = defaultdict(list)
         for x in classList:
-            if x[papernum_key] == "":
-                continue
-            try:
-                int(x[papernum_key])
-            except ValueError:
-                err.append(
-                    [
-                        x["_src_line"],
-                        f"Paper-number {x[papernum_key]} is not an integer",
-                    ]
-                )
+            pn = x[papernum_key]
             # see #3099 - we can reuse papernum = -1 since it is a sentinel value, so ignore any -1's
-            if int(x[papernum_key]) == -1:
-                continue
+            if self.is_paper_number_sentinel(pn):
+                continue  # notice that this handles pn being None.
+            if is_an_int(pn):
+                if int(pn) < 0:
+                    err.append(
+                        [
+                            x["_src_line"],
+                            f"Paper-number {x[papernum_key]} must be a non-negative integer, or blank or '-1' to indicate 'do not prename'",
+                        ]
+                    )
+            else:
+                if is_nearly_a_non_negative_int(x[papernum_key]):
+                    err.append(
+                        [
+                            x["_src_line"],
+                            f"Paper-number {x[papernum_key]} is nearly, but not quite, a non-negative integer",
+                        ]
+                    )
+                    continue
+                else:
+                    err.append(
+                        [
+                            x["_src_line"],
+                            f"Paper-number {x[papernum_key]} is not a non-negative integer",
+                        ]
+                    )
+                    continue
+
             # otherwise store the used papernumber.
             numbers_used[x[papernum_key]].append(x["_src_line"])
         for x, v in numbers_used.items():
@@ -233,7 +283,7 @@ class PlomClasslistValidator:
             ``(valid, warnings_and_errors)`` where "valid" is either
             True or False and "warnings_and_errors" is a list of
             dicts.  Each dict encodes a single warning or an error: see
-            doc for precise format.  It is possible for "valid" to be True
+            code for precise format.  It is possible for "valid" to be True
             and still have non-empty "warnings_and_errors" for example
             when there are only warnings.
         """

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Aidan Murphy
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -38,7 +39,7 @@ class Annotation(models.Model):
     """
 
     edition = models.IntegerField(null=True)
-    score = models.IntegerField(null=True)
+    score = models.FloatField(null=True)
     image = models.OneToOneField(AnnotationImage, on_delete=models.CASCADE)
     annotation_data = models.JSONField(null=True)
     marking_time = models.FloatField(null=True)

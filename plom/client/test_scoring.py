@@ -1,10 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2024 Aidan Murphy
 
 from __future__ import annotations
 
 from pytest import raises
 from typing import Any
+import math
+from math import isclose
 
 from plom.plom_exceptions import PlomInconsistentRubric, PlomInvalidRubric
 from plom.client.rubrics import compute_score_naive as naive
@@ -104,7 +107,7 @@ def test_score_out_range() -> None:
         s([{"kind": "absolute", "value": 6, "out_of": 5}], 5)
 
 
-def test_score_multiple_absolute_rubric() -> None:
+def test_int_score_multiple_absolute_rubric() -> None:
     def mk_rubrics(a, b, c, d):
         return [
             {"kind": "absolute", "value": a, "out_of": b},
@@ -127,7 +130,46 @@ def test_score_multiple_absolute_rubric() -> None:
         s(mk_rubrics(1, 4, 1, 4), 5)
 
 
-def test_score_mix_absolute_rubric_with_relative() -> None:
+def test_float_score_multiple_absolute_rubric() -> None:
+    def mk_rubrics(a, b, c, d):
+        return [
+            {"kind": "absolute", "value": a, "out_of": b},
+            {"kind": "absolute", "value": c, "out_of": d},
+        ]
+
+    assert s(mk_rubrics(0.5, 2.0, 0.5, 3.0), 5) == 1.0
+    assert s(mk_rubrics(0.0, 2.0, 0.0, 3.0), 5) == 0.0
+    assert s(mk_rubrics(2.0, 2.0, 3.0, 3.0), 5) == 5.0
+
+    # hard numbers get a tolerance of 1e-9
+    X = s(mk_rubrics(2.0, 2.0, 0.1, 3.0), 5)
+    Y = 2.1
+    assert X is not None
+    assert isclose(X, Y)
+    X = s(mk_rubrics(1 / 3, 2.0, 2 / 5, 3.0), 5)
+    Y = 11 / 15
+    assert X is not None
+    assert isclose(X, Y)
+    X = s(mk_rubrics(1 / 3, 2.0, 0.5, 3.0), 5)
+    Y = 5 / 6
+    assert X is not None
+    assert isclose(X, Y)
+
+    # check non-representable `out_of`s don't raise warnings
+    s([{"kind": "absolute", "value": 0.0, "out_of": 1 / 3} for i in range(3)], 1)
+    s([{"kind": "absolute", "value": 0.0, "out_of": 5 / 6} for i in range(6)], 5)
+
+    with raises(ValueError, match="outside"):
+        s(mk_rubrics(1.0, 2.0, -1.0, 3.0), 5)
+    with raises(ValueError, match="outside"):
+        s(mk_rubrics(1.0, 2.0, 4.0, 3.0), 5)
+    with raises(ValueError, match="outside"):
+        s(mk_rubrics(7 / 3, 2.0, 2.0, 2.0), 5)
+    with raises(ValueError, match="outside"):
+        s(mk_rubrics(1.0, 2.0, 1.0, 0.0), 5)
+
+
+def test_int_score_mix_absolute_rubric_with_relative() -> None:
     def mk_rubrics(a, b, c):
         return [
             {"kind": "absolute", "value": a, "out_of": b},
@@ -173,6 +215,80 @@ def test_score_mix_absolute_rubric_with_relative() -> None:
         s(mk_rubrics(2, 3, -4), 5)
     with raises(ValueError, match="out of range"):
         s(mk_rubrics(2, 3, -5), 5)
+
+
+def test_float_score_mix_absolute_rubric_with_relative() -> None:
+    def mk_rubrics(a, b, c):
+        return [
+            {"kind": "absolute", "value": a, "out_of": b},
+            {"kind": "relative", "value": c},
+        ]
+
+    assert s(mk_rubrics(0.0, 2.0, 0.5), 5) == 0.5
+    assert s(mk_rubrics(0.0, 2.0, 3.0), 5) == 3.0
+    with raises(ValueError, match="above.*absolute"):
+        s(mk_rubrics(0.0, 2.0, 4.0), 5)
+
+    assert s(mk_rubrics(1.0, 2.0, 0.5), 5) == 1.5
+    assert s(mk_rubrics(1.0, 2.0, 3.0), 5) == 4.0
+    with raises(ValueError, match="above.*absolute"):
+        s(mk_rubrics(1.0, 2, 3.1), 5)
+
+    assert s(mk_rubrics(2.0, 2.0, 0.5), 5) == 2.5
+    assert s(mk_rubrics(2.0, 2.0, 3.0), 5) == 5.0
+    with raises(ValueError, match="out of range"):
+        s(mk_rubrics(2.0, 2.0, 3.5), 5)
+
+    assert s(mk_rubrics(0.0, 2.0, -0.5), 5) == 2.5
+    assert s(mk_rubrics(0.0, 2.0, -3.0), 5) == 0.0
+    with raises(ValueError, match="out of range"):
+        s(mk_rubrics(0.0, 2.0, -4.0), 5)
+
+    assert s(mk_rubrics(2.0, 2.0, -2.0), 5) == 3.0
+    assert s(mk_rubrics(2.0, 2.0, -3.0), 5) == 2.0
+    with raises(ValueError, match="below.*absolute"):
+        s(mk_rubrics(2.0, 2.0, -3.5), 5)
+    with raises(ValueError, match="out of range"):
+        s(mk_rubrics(2.0, 3.0, -5.0), 5)
+
+    # recurring+irrational numbers
+    assert s(mk_rubrics(0.0, 2.0, 1 / 3), 5) == 1 / 3
+    assert s(mk_rubrics(2.0, 2.0, 1 / 3), 5) == 7 / 3
+    assert s(mk_rubrics(1 / 3, 2.0, math.exp(1)), 5) == 1 / 3 + math.exp(1)
+
+
+def test_score_return_type() -> None:
+    def mk_rubrics(kind1, value1, out_of1, kind2, value2, out_of2):
+        return [
+            {"kind": kind1, "value": value1, "out_of": out_of1},
+            {"kind": kind2, "value": value2, "out_of": out_of2},
+        ]
+
+    score = s(mk_rubrics("absolute", 2.0, 3.0, "absolute", 2.0, 2.0), 5)
+    assert type(score) is float
+    score = s(mk_rubrics("absolute", 2.0, 3.0, "relative", 2.0, 0.0), 5)
+    assert type(score) is float
+    score = s(mk_rubrics("absolute", 2.0, 3.0, "relative", -2.0, 0.0), 5)
+    assert type(score) is float
+    score = s(mk_rubrics("relative", 2.0, 3.0, "relative", 2.0, 2.0), 5)
+    assert type(score) is float
+    score = s(mk_rubrics("absolute", 2.0, 3.0, "neutral", 2.0, 0.0), 5)
+    assert type(score) is float
+    score = s(mk_rubrics("relative", 2.0, 3.0, "neutral", 2.0, 2.0), 5)
+    assert type(score) is float
+
+    score = s(mk_rubrics("absolute", 2, 3, "absolute", 2, 2), 5)
+    assert type(score) is int
+    score = s(mk_rubrics("absolute", 2, 3, "relative", 2, 0), 5)
+    assert type(score) is int
+    score = s(mk_rubrics("absolute", 2, 3, "relative", -2, 0), 5)
+    assert type(score) is int
+    score = s(mk_rubrics("relative", 2, 3, "relative", 2, 2), 5)
+    assert type(score) is int
+    score = s(mk_rubrics("absolute", 2, 3, "neutral", 2, 0), 5)
+    assert type(score) is int
+    score = s(mk_rubrics("relative", 2, 3, "neutral", 2, 2), 5)
+    assert type(score) is int
 
 
 def test_score_none() -> None:

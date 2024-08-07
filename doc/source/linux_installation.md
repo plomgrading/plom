@@ -78,7 +78,7 @@ Some stuff from the package manager:
 ```
 The `pango` stuff is needed for `weasyprint` to produce pdf reports.
 
-`libxcb-cursor0` is needed to prevent the Plom client from crashing when [loading plugins for PyQt6](https://stackoverflow.com/questions/68036484/qt6-qt-qpa-plugin-could-not-load-the-qt-platform-plugin-xcb-in-even-thou/75941575#75941575).
+`libxcb-cursor0` is needed to prevent the Plom client from crashing when [loading plugins for PyQt6](https://stackoverflow.com/questions/68036484/qt-qpa-plugin-could-not-load-the-qt-platform-plugin-xcb-in-even-though-it).
 
 Now upgrade pip (your local copy, not the system one)
 ```

@@ -33,8 +33,9 @@ class ArrowItem(UndoStackMoveMixin, QGraphicsPathItem):
         self.saveable = True
         self.ptf = ptf
         self.pti = pti
-        self.path = self._make_path(pti, ptf)
-        self.setPath(self.path)
+        path = self._make_path(pti, ptf)
+        self._original_path = path
+        self.setPath(path)
         self.restyle(style)
 
         # The line is moveable and should signal any changes

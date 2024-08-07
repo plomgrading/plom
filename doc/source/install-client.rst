@@ -13,7 +13,7 @@ This can be obtained in several ways:
 * Compiled binaries are available from our `releases page`_.
 * Install from source or using `pip`.
 
-.. _from Flathub: https://flathub.org/apps/details/org.plomgrading.PlomClient
+.. _from Flathub: https://flathub.org/apps/org.plomgrading.PlomClient
 .. _releases page: https://gitlab.com/plom/plom/-/releases/
 
 
@@ -54,7 +54,7 @@ For GNU/Linux
 
 Users of various distributions can install `from Flathub`_.
 
-.. _from Flathub: https://flathub.org/apps/details/org.plomgrading.PlomClient
+.. _from Flathub: https://flathub.org/apps/org.plomgrading.PlomClient
 
 Another option is to download the "AppImage" from our `releases page`_.
 
