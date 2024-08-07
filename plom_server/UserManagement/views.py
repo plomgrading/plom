@@ -271,8 +271,8 @@ class BulkSetProbationView(ManagerRequiredView):
     def post(self, request):
         probation_service = ProbationService()
         markers = User.objects.filter(groups__name="marker")
-        probation_set_count = 0
         markers_with_warnings = []
+        successful_markers = []
 
         for marker in markers:
             if probation_service.can_set_probation(marker):
@@ -280,16 +280,31 @@ class BulkSetProbationView(ManagerRequiredView):
                     user=marker,
                     defaults={"limit": ProbationPeriod.default_limit},
                 )
-                probation_set_count += 1
+                successful_markers.append(marker.username)
             else:
                 markers_with_warnings.append(marker.username)
 
-        messages.success(request, "All markers have been set to probation.")
-
         if markers_with_warnings:
-            messages.warning(
+            messages.success(
                 request,
-                f"{len(markers_with_warnings)} Markers failed to set to probation",
+                f"Probation has been successfully set for: {', '.join(successful_markers)}",
+                extra_tags="modify_probation",
+            )
+
+            messages.error(
+                request,
+                f"Probation cannot be set on: {', '.join(markers_with_warnings)}",
+                extra_tags="modify_probation",
+            )
+
+            messages.warning(
+                request, f"{markers_with_warnings}", extra_tags="probation_warning"
+            )
+
+        else:
+            messages.success(
+                request,
+                "All markers have been set to probation.",
                 extra_tags="modify_probation",
             )
 
