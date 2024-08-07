@@ -232,7 +232,6 @@ class MarkingTaskService:
             RuntimeError: task is already assigned.
             MarkingTask.DoesNotExist: if there is no such task.
         """
-
         task = MarkingTask.objects.select_for_update().get(pk=task_pk)
         if task.status != MarkingTask.TO_DO:
             raise RuntimeError(
