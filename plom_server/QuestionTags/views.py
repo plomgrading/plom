@@ -5,7 +5,6 @@
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
-from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
 from Base.base_group_views import ManagerRequiredView
