@@ -1,20 +1,22 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
 
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
+from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+
+from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
 from QuestionTags.services import QuestionTagService
 from .models import TmpAbstractQuestion, PedagogyTag
 from .forms import AddTagForm, RemoveTagForm
-from django.http import JsonResponse, HttpResponse
 from plom.tagging import plom_valid_tag_text_description
 import csv
-from django.views import View
 
 
-class QTagsLandingView(ListView):
+class QTagsLandingView(ListView, ManagerRequiredView):
     """View for displaying and managing question tags."""
 
     model = TmpAbstractQuestion
@@ -63,7 +65,7 @@ class QTagsLandingView(ListView):
         return redirect(reverse("qtags_landing"))
 
 
-class AddQuestionTagLinkView(CreateView):
+class AddQuestionTagLinkView(CreateView, ManagerRequiredView):
     """View for adding a question tag link."""
 
     template_name = "Questiontags/qtags_landing.html"
@@ -84,7 +86,7 @@ class AddQuestionTagLinkView(CreateView):
         return JsonResponse({"success": True})
 
 
-class CreateTagView(CreateView):
+class CreateTagView(CreateView, ManagerRequiredView):
     """View for creating a new tag."""
 
     template_name = "Questiontags/qtags_landing.html"
@@ -106,7 +108,7 @@ class CreateTagView(CreateView):
         return JsonResponse({"success": True})
 
 
-class DeleteTagView(DeleteView):
+class DeleteTagView(DeleteView, ManagerRequiredView):
     """View for deleting a tag."""
 
     model = PedagogyTag
@@ -122,7 +124,7 @@ class DeleteTagView(DeleteView):
         return redirect(reverse("qtags_landing"))
 
 
-class EditTagView(UpdateView):
+class EditTagView(UpdateView, ManagerRequiredView):
     """View for editing a tag."""
 
     template_name = "Questiontags/qtags_landing.html"
@@ -145,7 +147,7 @@ class EditTagView(UpdateView):
         return JsonResponse({"success": True})
 
 
-class DownloadQuestionTagsView(View):
+class DownloadQuestionTagsView(View, ManagerRequiredView):
     """View to download question tags as CSV or JSON file."""
 
     def get(self, request, *args, **kwargs):
@@ -196,7 +198,7 @@ class DownloadQuestionTagsView(View):
         return response
 
 
-class ImportTagsView(View):
+class ImportTagsView(View, ManagerRequiredView):
     """View to handle importing tags from a CSV file."""
 
     def post(self, request, *args, **kwargs):
