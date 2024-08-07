@@ -55,16 +55,20 @@ class QTagsLandingView(ListView, ManagerRequiredView):
                 question_index = form.cleaned_data["question_index"]
                 tag_id = form.cleaned_data["tag_id"].id
                 tag = get_object_or_404(PedagogyTag, id=tag_id)
-                # TODO - error handling
-                QuestionTagService.add_question_tag_link(
-                    question_index, [tag.tag_name], request.user
-                )
+                try:
+                    QuestionTagService.add_question_tag_link(
+                        question_index, [tag.tag_name], request.user
+                    )
+                except (IntegrityError, ValueError) as err:
+                    return JsonResponse({"error": f"{err}"})
         elif "remove_tag" in request.POST:
             form = RemoveTagForm(request.POST)
             if form.is_valid():
                 question_tag_id = form.cleaned_data["question_tag_id"]
-                # TODO - error handling
-                QuestionTagService.delete_question_tag_link(question_tag_id)
+                try:
+                    QuestionTagService.delete_question_tag_link(question_tag_id)
+                except ValueError as err:
+                    return JsonResponse({"error": f"{err}"})
         return redirect(reverse("qtags_landing"))
 
 
@@ -125,8 +129,10 @@ class DeleteTagView(DeleteView, ManagerRequiredView):
             An HTTP response object.
         """
         tag_id = request.POST.get("tag_id")
-        # TODO - error handling
-        QuestionTagService.delete_tag(tag_id)
+        try:
+            QuestionTagService.delete_tag(tag_id)
+        except ValueError as err:
+            return JsonResponse({"error": f"{err}"})
         return redirect(reverse("qtags_landing"))
 
 
@@ -209,7 +215,11 @@ class ImportTagsView(ManagerRequiredView):
     """View to handle importing tags from a CSV file."""
 
     def post(self, request, *args, **kwargs):
-        """Handle POST requests to import tags from a CSV file."""
+        """Handle POST requests to import tags from a CSV file.
+
+        Returns:
+            A JSON response object.
+        """
         csv_file = request.FILES.get("csv_file")
         if not csv_file or not csv_file.name.endswith(".csv"):
             return JsonResponse({"error": "File is not CSV type"})
@@ -231,9 +241,12 @@ class ImportTagsView(ManagerRequiredView):
             else:
                 continue
 
-            PedagogyTag.objects.get_or_create(
-                tag_name=tag_name,
-                defaults={"text": text, "confidential_info": confidential_info},
-            )
+            try:
+                PedagogyTag.objects.get_or_create(
+                    tag_name=tag_name,
+                    defaults={"text": text, "confidential_info": confidential_info},
+                )
+            except IntegrityError as err:
+                return JsonResponse({"error": f"{err}"})
 
         return JsonResponse({"success": True})
