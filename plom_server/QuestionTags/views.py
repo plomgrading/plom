@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
+# Copyright (C) 2024 Andrew Rechnitzer
 
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import redirect, get_object_or_404
@@ -147,7 +148,7 @@ class EditTagView(UpdateView, ManagerRequiredView):
         return JsonResponse({"success": True})
 
 
-class DownloadQuestionTagsView(View, ManagerRequiredView):
+class DownloadQuestionTagsView(ManagerRequiredView):
     """View to download question tags as CSV or JSON file."""
 
     def get(self, request, *args, **kwargs):
@@ -198,7 +199,7 @@ class DownloadQuestionTagsView(View, ManagerRequiredView):
         return response
 
 
-class ImportTagsView(View, ManagerRequiredView):
+class ImportTagsView(ManagerRequiredView):
     """View to handle importing tags from a CSV file."""
 
     def post(self, request, *args, **kwargs):
