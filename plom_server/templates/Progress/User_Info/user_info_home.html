@@ -54,17 +54,14 @@
                 <div>
                     <i class="bi bi-exclamation-diamond-fill text-info"></i> {{ probation_users|length }} Markers are in probation
                 </div>
-                <div>
-                    <i class="bi bi-exclamation-triangle-fill text-warning"></i> {{ markers_with_warnings|length }} Markers have claimed more tasks than the default probation limit. (Click the warning sign to resolve)
-                </div>
                 {% if messages %}
-                    <div>
-                        {% for message in messages %}
-                            {% if 'modify_probation' in message.tags %}
-                                {% include "./alert_message.html" with message=message %}
-                            {% endif %}
-                        {% endfor %}
-                    </div>
+                    {% for message in messages %}
+                        {% if 'modify_probation' in message.tags %}
+                            <div>
+                                <i class="bi bi-exclamation-triangle-fill text-warning"></i> {{ message|safe }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
                 {% endif %}
                 {% if annotations_exist %}
                     <table class="table text-center align-middle">
@@ -81,11 +78,15 @@
                             <tr>
                                 <td>
                                     {{ user.username }}
-                                    {% if user.username in markers_with_warnings %}
-                                        <i class="bi bi-exclamation-triangle-fill text-warning"
-                                           data-bs-toggle="modal"
-                                           data-bs-target="#confirmSetProbation"
-                                           data-username="{{ user.username }}"></i>
+                                    {% if messages %}
+                                        {% for message in messages %}
+                                            {% if 'modify_probation' in message.tags and user.username in markers_with_warnings %}
+                                                <i class="bi bi-exclamation-triangle-fill text-warning"
+                                                   data-bs-toggle="modal"
+                                                   data-bs-target="#confirmSetProbation"
+                                                   data-username="{{ user.username }}"></i>
+                                            {% endif %}
+                                        {% endfor %}
                                     {% endif %}
                                     {% if user.username in probation_users %}
                                         <i class="bi bi-exclamation-diamond-fill text-info"
@@ -300,7 +301,6 @@
       function showModalWithUsername(username) {
         var form = document.getElementById('confirmSetProbationForm');
         var actionUrl = "{% url 'set_probation' 'username_placeholder' %}".replace('username_placeholder', username);
-        console.log(actionUrl)
         form.action = actionUrl;
         $('#confirmSetProbation').modal('show');
       }
@@ -308,24 +308,16 @@
       // Check for messages and handle the modal
       var messages = document.getElementById('messages');
       if (messages) {
-
         var messageType = messages.getAttribute('data-message-type');
         var messageText = messages.getAttribute('data-message-text');
-        
         var details = JSON.parse(messageText);
         var username = details.username;
-        var modalMessage = details.message;
-        console.log(messageType)
 
         if (messageType.includes('set_probation_confirmation')) {
             showModalWithUsername(username);
         }
-        else{
-            console.log("bye")
-        }
       }
     });
-
     </script>
     <style>
         .select2-container {
