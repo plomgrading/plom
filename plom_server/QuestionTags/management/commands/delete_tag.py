@@ -26,10 +26,10 @@ class Command(BaseCommand):
             raise CommandError(f'Tag "{tag_name}" does not exist')
 
         # Use the delete_tag method from QuestionTagService to delete the tag
-        error_message = QuestionTagService.delete_tag(tag.id)
-
-        if error_message:
-            raise CommandError(f"Error deleting tag: {error_message}")
+        try:
+            QuestionTagService.delete_tag(tag.pk)
+        except ValueError as err:
+            raise CommandError(f"Error deleting tag: {err}")
         else:
             self.stdout.write(
                 self.style.SUCCESS(f'Successfully deleted tag "{tag_name}"')

@@ -3,6 +3,8 @@
 
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth import get_user_model
+from django.db.utils import IntegrityError
+
 from QuestionTags.services import QuestionTagService
 
 
@@ -35,20 +37,20 @@ class Command(BaseCommand):
         # Fetch the user object based on the username
         User = get_user_model()
         try:
-            user = User.objects.get(username=username)
+            user_obj = User.objects.get(username=username)
         except User.DoesNotExist:
             raise CommandError(f"User '{username}' does not exist")
 
         # Use the create_tag method from QuestionTagService to create the tag
-        error_message = QuestionTagService.create_tag(
-            tag_name=tag_name,
-            text=description,
-            user=user,
-            confidential_info=confidential_info,
-        )
-
-        if error_message:
-            raise CommandError(f"Error creating tag: {error_message}")
+        try:
+            QuestionTagService.create_tag(
+                tag_name=tag_name,
+                text=description,
+                user=user_obj,
+                confidential_info=confidential_info,
+            )
+        except (ValueError, IntegrityError) as err:
+            raise CommandError(f"Error creating tag: {err}")
         else:
             self.stdout.write(
                 self.style.SUCCESS(

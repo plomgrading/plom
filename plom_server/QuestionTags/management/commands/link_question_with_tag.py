@@ -3,6 +3,8 @@
 
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth import get_user_model
+from django.db.utils import IntegrityError
+
 from Papers.services import SpecificationService
 from Papers.models.specifications import SpecQuestion
 from QuestionTags.services import QuestionTagService
@@ -52,12 +54,12 @@ class Command(BaseCommand):
             raise CommandError(f"Tag '{tag_name}' does not exist. Cannot create link.")
 
         # Use the add_question_tag_link method from QuestionTagService
-        error_message = QuestionTagService.add_question_tag_link(
-            question_index=question_index, tag_names=[tag_name], user=user
-        )
-
-        if error_message:
-            raise CommandError(f"Error adding tag: {error_message}")
+        try:
+            QuestionTagService.add_question_tag_link(
+                question_index=question_index, tag_names=[tag_name], user=user
+            )
+        except (IntegrityError, ValueError) as err:
+            raise CommandError(f"Error adding tag: {err}")
         else:
             self.stdout.write(
                 self.style.SUCCESS(

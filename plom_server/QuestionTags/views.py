@@ -6,6 +6,7 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.db.utils import IntegrityError
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
@@ -54,6 +55,7 @@ class QTagsLandingView(ListView, ManagerRequiredView):
                 question_index = form.cleaned_data["question_index"]
                 tag_id = form.cleaned_data["tag_id"].id
                 tag = get_object_or_404(PedagogyTag, id=tag_id)
+                # TODO - error handling
                 QuestionTagService.add_question_tag_link(
                     question_index, [tag.tag_name], request.user
                 )
@@ -61,6 +63,7 @@ class QTagsLandingView(ListView, ManagerRequiredView):
             form = RemoveTagForm(request.POST)
             if form.is_valid():
                 question_tag_id = form.cleaned_data["question_tag_id"]
+                # TODO - error handling
                 QuestionTagService.delete_question_tag_link(question_tag_id)
         return redirect(reverse("qtags_landing"))
 
@@ -78,11 +81,12 @@ class AddQuestionTagLinkView(CreateView, ManagerRequiredView):
         """
         question_index = request.POST.get("questionIndex")
         tag_names = request.POST.getlist("tagName")
-        error_message = QuestionTagService.add_question_tag_link(
-            question_index, tag_names, request.user
-        )
-        if error_message:
-            return JsonResponse({"error": error_message})
+        try:
+            QuestionTagService.add_question_tag_link(
+                question_index, tag_names, request.user
+            )
+        except (IntegrityError, ValueError) as err:
+            return JsonResponse({"error": f"{err}"})
         return JsonResponse({"success": True})
 
 
@@ -100,11 +104,12 @@ class CreateTagView(CreateView, ManagerRequiredView):
         tag_name = request.POST.get("tagName")
         text = request.POST.get("text")
         confidential_info = request.POST.get("confidential_info")
-        error_message = QuestionTagService.create_tag(
-            tag_name, text, user=request.user, confidential_info=confidential_info
-        )
-        if error_message:
-            return JsonResponse({"error": error_message})
+        try:
+            QuestionTagService.create_tag(
+                tag_name, text, user=request.user, confidential_info=confidential_info
+            )
+        except (IntegrityError, ValueError) as err:
+            return JsonResponse({"error": f"{err}"})
         return JsonResponse({"success": True})
 
 
@@ -120,6 +125,7 @@ class DeleteTagView(DeleteView, ManagerRequiredView):
             An HTTP response object.
         """
         tag_id = request.POST.get("tag_id")
+        # TODO - error handling
         QuestionTagService.delete_tag(tag_id)
         return redirect(reverse("qtags_landing"))
 
@@ -139,11 +145,12 @@ class EditTagView(UpdateView, ManagerRequiredView):
         tag_name = request.POST.get("tagName")
         text = request.POST.get("text")
         confidential_info = request.POST.get("confidential_info")
-        error_message = QuestionTagService.edit_tag(
-            tag_id, tag_name, text, confidential_info=confidential_info
-        )
-        if error_message:
-            return JsonResponse({"error": error_message})
+        try:
+            QuestionTagService.edit_tag(
+                tag_id, tag_name, text, confidential_info=confidential_info
+            )
+        except (ValueError, IntegrityError) as err:
+            return JsonResponse({"error": f"{err}"})
         return JsonResponse({"success": True})
 
 
