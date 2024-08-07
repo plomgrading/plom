@@ -628,7 +628,7 @@ class RubricService:
         # create standard manager delta-rubrics - but no 0, nor +/- max-mark
         for q in SpecificationService.get_question_indices():
             rubric = {
-                "display_delta": "\N{Vulgar Fraction One Half}",
+                "display_delta": "+\N{Vulgar Fraction One Half}",
                 "value": 0.5,
                 "out_of": 0,
                 "text": ".",

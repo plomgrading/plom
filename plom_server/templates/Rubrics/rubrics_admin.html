@@ -43,10 +43,10 @@
                         class="btn btn-danger"
                         name="init_system_rubrics"
                         {% if not rubrics %}disabled{% endif %}
-                        {% if demo_rubrics %}disabled{% endif %}>Create half delta rubrics</button>
+                        {% if demo_rubrics %}disabled{% endif %}>Create half mark rubrics (OPTIONAL)</button>
             </form>
             <p>
-                Introduce &#177;&#189; rubrics to all questions.
+                Introduce two additional rubrics to each question: +&#189; and -&#189;.
                 {% if not rubrics %}The system rubrics must be created before this button is enabled.{% endif %}
                 {% if demo_rubrics %}These rubrics have already been created.{% endif %}
             </p>

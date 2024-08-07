@@ -1383,8 +1383,6 @@ class RubricWidget(QWidget):
         self.tabDeltaP.setDeltaRubrics(self.rubrics, positive=True)
         self.tabDeltaN.setDeltaRubrics(self.rubrics, positive=False)
         self.tabHide.setRubricsByKeys(self.rubrics, wranglerState["hidden"])
-        # the half deltas are showing up here, therefore tabDeltaN. ... is ignoring them
-        print(self.rubrics)
         try:
             self.reorder_tabs(wranglerState["tab_order"])
         except AssertionError as e:

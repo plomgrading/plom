@@ -26,8 +26,11 @@ from Base.base_group_views import ManagerRequiredView
 from Base.models import SettingsModel
 from Papers.services import SpecificationService
 from .services import RubricService
-from .forms import RubricAdminForm, RubricDemoAdminForm, RubricDiffForm, RubricWipeForm
 from .forms import (
+    RubricAdminForm,
+    RubricDemoAdminForm,
+    RubricDiffForm,
+    RubricWipeForm,
     RubricUploadForm,
     RubricFilterForm,
     RubricEditForm,
@@ -47,7 +50,6 @@ class RubricAdminPageView(ManagerRequiredView):
         context = self.build_context()
         rubrics = RubricService.get_all_rubrics()
         demo_rubrics = rubrics.filter(value__exact=0.5).filter(text__exact=".")
-        print(demo_rubrics)
         context.update(
             {
                 "rubrics": rubrics,
@@ -91,9 +93,10 @@ class RubricDemoView(ManagerRequiredView):
     def post(self, request: HttpRequest) -> HttpResponse:
         any_manager = User.objects.filter(groups__name="manager").first()
         if not RubricService().init_demo_rubrics(any_manager.username):
-            messages.error(request, "Demo rubrics could not be initialized.")
-        else:
-            messages.success(request, "Demo rubrics initialized")
+            messages.error(
+                request,
+                "\N{Vulgar Fraction One Half} mark rubrics could not be created.",
+            )
         return redirect("rubrics_admin")
 
 
