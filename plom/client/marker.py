@@ -1517,7 +1517,7 @@ class MarkerClient(QWidget):
         if self.marker_has_reached_task_limit(task):
             WarnMsg(
                 self,
-                f"You have reached your task limit. Please contact your instructor to mark more tasks. ",
+                "You have reached your task limit. Please contact your instructor to mark more tasks. ",
             ).exec()
             return
 
@@ -1533,7 +1533,7 @@ class MarkerClient(QWidget):
         """Check whether a marker has reached their task limit from probation period.
 
         Args:
-            task: the taks id of the task.
+            task: the task id of the task.
 
         Returns:
             True if marker is not in probation, if they are in probation, returns True if

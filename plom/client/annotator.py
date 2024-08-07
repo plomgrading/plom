@@ -1076,7 +1076,7 @@ class Annotator(QWidget):
             if total_marked >= progress["probation_limit"]:
                 WarnMsg(
                     self,
-                    f"You have reached your task limit. Please contact your instructor to mark more tasks. ",
+                    "You have reached your task limit. Please contact your instructor to mark more tasks. ",
                 ).exec()
                 self.close()
                 return
