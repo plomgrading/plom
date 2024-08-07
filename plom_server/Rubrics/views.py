@@ -92,7 +92,7 @@ class RubricDemoView(ManagerRequiredView):
 
     def post(self, request: HttpRequest) -> HttpResponse:
         any_manager = User.objects.filter(groups__name="manager").first()
-        if not RubricService().init_demo_rubrics(any_manager.username):
+        if not RubricService().build_half_mark_delta_rubrics(any_manager.username):
             messages.error(
                 request,
                 "\N{Vulgar Fraction One Half} mark rubrics could not be created.",

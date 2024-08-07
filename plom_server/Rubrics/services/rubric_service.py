@@ -596,8 +596,8 @@ class RubricService:
                         r["id"],
                     )
 
-    def init_demo_rubrics(self, username: str) -> bool:
-        """Create demo rubrics, these are commonly used rubrics that are optional.
+    def build_half_mark_delta_rubrics(self, username: str) -> bool:
+        """Create the plus and minus one-half delta rubrics that are optional.
 
         Args:
             username: which user to associate with the demo rubrics.
@@ -619,13 +619,11 @@ class RubricService:
         )
         if existing_demo_rubrics:
             return False
-        self._build_demo_rubrics(username)
+        self._build_half_mark_delta_rubrics(username)
         return True
 
-    def _build_demo_rubrics(self, username: str) -> None:
-        log.info("Building special demo rubrics")
-        log.info("In the current build these are half-mark rubrics")
-        # create standard manager delta-rubrics - but no 0, nor +/- max-mark
+    def _build_half_mark_delta_rubrics(self, username: str) -> None:
+        log.info("Building half-mark delta rubrics")
         for q in SpecificationService.get_question_indices():
             rubric = {
                 "display_delta": "+\N{Vulgar Fraction One Half}",
@@ -640,7 +638,7 @@ class RubricService:
                 "system_rubric": True,
             }
             r = self.create_rubric(rubric)
-            log.info("Built delta-rubric -%d for Q%s: %s", 0.5, q, r["id"])
+            log.info("Built delta-rubric -%d for Qidx %s: %s", 0.5, q, r["id"])
 
             rubric = {
                 "display_delta": "-\N{Vulgar Fraction One Half}",
@@ -655,7 +653,7 @@ class RubricService:
                 "system_rubric": True,
             }
             r = self.create_rubric(rubric)
-            log.info("Built delta-rubric -%d for Q%s: %s", -0.5, q, r["id"])
+            log.info("Built delta-rubric -%d for Qidx %s: %s", -0.5, q, r["id"])
 
     def erase_all_rubrics(self) -> int:
         """Remove all rubrics, permanently deleting them.  BE CAREFUL.
