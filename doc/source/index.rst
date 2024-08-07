@@ -32,7 +32,6 @@ Welcome to Plom's documentation!
 
    solutions.rst
 
-
    returning.rst
 
    cmdline.rst

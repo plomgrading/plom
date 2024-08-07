@@ -8,7 +8,7 @@ __license__ = "AGPL-3.0-or-later"
 
 # Running the demo
 
-As of 31 July 2024, run the demo from the `plom_server` directory, by running
+Currently we must run the demo from the `plom_server` directory, by running
 ```
 python3 Launcher/launch_scripts/launch_plom_demo_server.py
 ```
@@ -19,7 +19,9 @@ You should probably run it with a `--wait-after` option:
   * 'papers_built' - wait after paper pdfs are built
   * 'rubrics' - wait after bundles are uploaded and system+demo rubrics set up - useful for playing with the client
   * 'randomarker' - wait after papers are marked and ID'd by the rando-marker
+
 To stop the demo type "quit" and press enter.
+
 
 ## Problems
 
@@ -34,9 +36,13 @@ which is (basically) all running django related stuff.... not just
 those associated with the demo. **Use with care.**
 
 
-## notes on DB installs
+## Databases
 
-Colin did all these with Podman on a Fedora 37 laptop.
+The new Plom server needs a database, which must be setup before
+launching the server or the demo.
+
+Commands below have been tested with Podman on a Fedora 40 laptop.
+
 
 ### SQLite
 
@@ -55,24 +61,21 @@ to the database.  For testing, I can connect with `psql -h 127.0.0.1 -U postgres
 To make Django use TCP/IP, I put the "127.0.0.1" as the host in
 `settings.py`.
 
-I also had to convince ``psycopg2`` by using the ``host`` kwarg: likely that is
-changing Real Soon Now to respect the `settings.py`
-
-To stop the container::
+To stop the container:
 
     docker stop postgre_cntnr
-    docker rm postgre_cntnr.
+    docker rm postgre_cntnr
 
 
 ### MariaDB / MySQL
+
+TODO: connect this to Plom.
 
 Start a local container:
 
     docker pull mariadb
     docker run --name mariadb_cntnr -e MYSQL_ROOT_PASSWORD=mypass -p 3306:3306 -d mariadb
 
-Check that we can connect to the server::
+Check that we can connect to the server:
 
     mysql -h localhost -P 3306 --protocol=TCP -u root -p
-
-TODO: connect this to Plom
