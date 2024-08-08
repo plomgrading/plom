@@ -57,88 +57,28 @@
                     <i class="bi bi-exclamation-diamond-fill text-info"></i> {{ probation_users|length }} Markers are in probation
                 </div>
                 {% if messages %}
-                    <div>
-                        {% for message in messages %}
-                            {% if 'modify_probation' in message.tags %}
-                                {% include "./alert_message.html" with message=message %}
-                            {% endif %}
-                        {% endfor %}
-                    </div>
+                    {% for message in messages %}
+                        {% if 'modify_probation' in message.tags %}
+                            <div>
+                                <i class="bi bi-exclamation-triangle-fill text-warning"></i> {{ message|safe }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
                 {% endif %}
             </div>
         </div>
     </div>
-    <div class="table-responsive">
-        <table class="table text-center align-middle">
-            <tr>
-                <th>Username</th>
-                <th>Task Marked</th>
-                <th>Task Claimed</th>
-                <th>Probation</th>
-                <th>Probation Limit</th>
-                <th>Probation Tasks</th>
-                <th>Limit Modifier</th>
-            </tr>
-            {% for user, annotation_and_claimedTask_count in annotation_count_dict.items %}
+    {% if annotations_exist %}
+        <div class="table-responsive">
+            <table class="table text-center align-middle">
                 <tr>
-                    <td>
-                        {{ user.username }}
-                        {% if messages %}
-                            {% for message in messages %}
-                                {% if 'probation_warning' in message.tags and user.username in markers_with_warnings %}
-                                    <i class="bi bi-exclamation-triangle-fill text-warning"
-                                       data-bs-toggle="modal"
-                                       data-bs-target="#confirmSetProbation"
-                                       data-username="{{ user.username }}"></i>
-                                {% endif %}
-                            {% endfor %}
-                        {% endif %}
-                        {% if user.username in probation_users %}
-                            <i class="bi bi-exclamation-diamond-fill text-info"
-                               data-bs-toggle="tooltip"
-                               title="In Probation"></i>
-                        {% endif %}
-                    </td>
-                    <td>{{ annotation_and_claimedTask_count.0 }}</td>
-                    <td>{{ annotation_and_claimedTask_count.1 }}</td>
-                    <td>
-                        {% if user.username in probation_users %}
-                            <form action="{% url 'unset_probation' user.username %}" method="post">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-info">Unset Probation</button>
-                            </form>
-                        {% else %}
-                            <form action="{% url 'set_probation' user.username %}" method="post">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-warning">Set Probation</button>
-                            </form>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if user.username in probation_users %}
-                            {{ probation_limits|get_item:user.username }}
-                        {% else %}
-                            N/A
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a class="btn btn-info"
-                           href="{% url 'progress_marking_task_filter' %}?username={{ user.username }}&the_tag=Probation">
-                            view
-                        </a>
-                    </td>
-                    <td>
-                        {% if user.username in probation_users %}
-                            <button class="btn btn-primary m-2"
-                                    type="button"
-                                    data-bs-toggle="modal"
-                                    data-username="{{ user.username }}"
-                                    data-limit="{{ probation_limits|get_item:user.username }}"
-                                    data-bs-target="#editLimit">Edit Limit</button>
-                        {% else %}
-                            <button type="button" disabled>Edit Limit</button>
-                        {% endif %}
-                    </td>
+                    <th>Username</th>
+                    <th>Task Marked</th>
+                    <th>Task Claimed</th>
+                    <th>Probation</th>
+                    <th>Probation Limit</th>
+                    <th>Probation Tasks</th>
+                    <th>Limit Modifier</th>
                 </tr>
                 {% for user, annotation_and_claimedTask_count in annotation_count_dict.items %}
                     <tr>
@@ -327,7 +267,9 @@
                 </div>
             </div>
         </div>
-    </div>
+    {% else %}
+        <p>No annotations</p>
+    {% endif %}
     <!-- Hidden element to pass message data and username -->
     <div id="messages"
          data-message-type="{% if messages %}{% for message in messages %}{{ message.tags }}{% endfor %}{% endif %}"
