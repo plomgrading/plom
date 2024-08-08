@@ -2,6 +2,7 @@
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aden Chan
+# testing
 
 """Command Line Tool to simulate PDF errors while scanning"""
 
