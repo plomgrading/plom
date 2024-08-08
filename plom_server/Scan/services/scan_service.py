@@ -357,6 +357,14 @@ class ScanService:
         """Return all of the staging bundles in reverse chronological order."""
         return list(StagingBundle.objects.all().order_by("-timestamp"))
 
+    def get_most_recent_unpushed_bundle(self) -> StagingBundle | None:
+        """Return all of the staging bundles in reverse chronological order."""
+        return (
+            StagingBundle.objects.filter(pushed=False, is_push_locked=False)
+            .order_by("-timestamp")
+            .first()
+        )
+
     def staging_bundles_exist(self) -> bool:
         """Check if any staging bundles exist."""
         return StagingBundle.objects.all().exists()

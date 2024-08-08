@@ -301,4 +301,4 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         except ObjectDoesNotExist as e:
             raise Http404(e)
 
-        return HttpResponseClientRefresh()
+        return HttpResponseClientRedirect(reverse("scan_list_staged"))
