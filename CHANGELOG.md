@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Demo is now launched via script in `plom_server/Launcher/launch_scripts/launch_plom_demo_server.py`
 
 ### Fixed
-
+* Fixed crash on Windows pre-compiled binary.
 
 
 
