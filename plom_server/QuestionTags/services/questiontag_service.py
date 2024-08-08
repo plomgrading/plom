@@ -1,8 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
+# Copyright (C) 2024 Andrew Rechnitzer
+
+
+from __future__ import annotations
+from typing import List
+
+from django.contrib.auth.models import User
+from django.db.utils import IntegrityError
+from django.db import transaction
 
 from QuestionTags.models import TmpAbstractQuestion, PedagogyTag, QuestionTagLink
-from django.db.utils import IntegrityError
 from plom.tagging import is_valid_tag_text
 
 
@@ -14,16 +22,19 @@ class QuestionTagService:
     """
 
     @staticmethod
-    def add_question_tag_link(question_index, tag_names, user):
+    def add_question_tag_link(
+        question_index: int, tag_names: List[str], user_obj: User
+    ) -> None:
         """Add a question tag to the database.
 
         Args:
             question_index: The index of the question to be tagged.
             tag_names: A list of tag names to associate with the question.
-            user: The user adding the tags.
+            user_obj: The user adding the tags.
 
-        Returns:
-            None on success or a string describing the error encountered.
+        Raises:
+            ValueError: when tag_name contains invalid characters.
+            IntegrityError: when question is already tagged with that tag.
         """
         question, created = TmpAbstractQuestion.objects.get_or_create(
             question_index=question_index
@@ -31,111 +42,123 @@ class QuestionTagService:
 
         for tag_name in tag_names:
             if not is_valid_tag_text(tag_name):
-                return f"Tag name '{tag_name}' contains invalid characters."
+                raise ValueError(f"Tag name '{tag_name}' contains invalid characters.")
 
             try:
                 tag, tag_created = PedagogyTag.objects.get_or_create(
-                    tag_name=tag_name, defaults={"user": user}
+                    tag_name=tag_name, defaults={"user": user_obj}
                 )
             except IntegrityError:
                 tag = PedagogyTag.objects.get(tag_name=tag_name)
 
             try:
                 QuestionTagLink.objects.get_or_create(
-                    question=question, tag=tag, user=user
+                    question=question, tag=tag, user=user_obj
                 )
             except IntegrityError:
-                return f"Question {question_index} already tagged with '{tag_name}' by user {user.username}"
+                raise IntegrityError(
+                    f"Question {question_index} already tagged with '{tag_name}' by user {user_obj.username}"
+                )
 
         question.save()
 
     @staticmethod
-    def create_tag(tag_name, text, user):
+    def create_tag(
+        tag_name: str, text: str, *, user: User, confidential_info: str | None = None
+    ) -> None:
         """Create a new tag.
 
         Args:
             tag_name: The short name of the tag we wish to create.
             text: The description of the tag.
-            user: The user creating the tag.
 
-        Returns:
-            None on success or a string of an error message explaining that the tag already exists.
+        Keyword Args:
+            user: The user creating the tag.
+            confidential_info: Text shown only to markers, not the students.
+
+        Raises:
+            ValueError: when the tag name contains invalid character.
+            IntegrityError: when a tag with that name already exists.
         """
         if not is_valid_tag_text(tag_name):
-            return f"Tag name '{tag_name}' contains invalid characters."
+            raise ValueError(f"Tag name '{tag_name}' contains invalid characters.")
 
         try:
-            PedagogyTag.objects.create(tag_name=tag_name, text=text, user=user)
-            return None
+            PedagogyTag.objects.create(
+                tag_name=tag_name,
+                text=text,
+                user=user,
+                confidential_info=confidential_info,
+            )
         except IntegrityError:
-            return f"A tag with the name '{tag_name}' already exists."
+            raise IntegrityError(f"A tag with the name '{tag_name}' already exists.")
 
     @staticmethod
-    def delete_tag(tag_id):
-        """Delete a tag.
+    def delete_tag(tag_pk: int) -> None:
+        """Delete a questin-tag.
 
         Args:
-            tag_id: The ID of the tag to delete.
+            tag_pk: The PK of the tag to delete.
 
-        Returns:
-            None on success or a string describing the error encountered.
+        Raises:
+            ValueError: if question-tag with that pk does not exist.
         """
-        tag = PedagogyTag.objects.filter(id=tag_id).first()
-        if not tag:
-            return "Tag not found."
-
         try:
-            tag.delete()
-            return None
-        except Exception as e:
-            return str(e)
+            tag = PedagogyTag.objects.get(pk=tag_pk)
+        except PedagogyTag.DoesNotExist:
+            raise ValueError(f"Cannot find tag with pk = {tag_pk}")
+
+        tag.delete()
 
     @staticmethod
-    def edit_tag(tag_id, tag_name, text):
+    def edit_tag(tag_pk, tag_name, text, *, confidential_info=None):
         """Edit an existing tag.
 
         Args:
-            tag_id: The ID of the tag to edit.
+            tag_pk: The pk of the tag to edit.
             tag_name: The new name of the tag.
             text: The new description of the tag.
 
-        Returns:
-            None on success or a string describing the error encountered.
+        Keyword Args:
+            confidential_info: text shown only to markers, not the students.
+
+        Raises:
+            ValueError: if the tag name contains invalid characters,
+                or no tag with given pk exists.
+            IntegrityError: if a tag with the new name already exists.
+
+
         """
         if not is_valid_tag_text(tag_name):
-            return f"Tag name '{tag_name}' contains invalid characters."
+            raise ValueError(f"Tag name '{tag_name}' contains invalid characters.")
 
-        tag = PedagogyTag.objects.filter(id=tag_id).first()
-        if not tag:
-            return "Tag not found."
+        if PedagogyTag.objects.filter(tag_name=tag_name).exclude(pk=tag_pk).exists():
+            raise IntegrityError(f"A tag with the name '{tag_name}' already exists.")
 
-        if PedagogyTag.objects.filter(tag_name=tag_name).exclude(id=tag_id).exists():
-            return f"A tag with the name '{tag_name}' already exists."
+        with transaction.atomic():
+            try:
+                tag = PedagogyTag.objects.select_for_update().get(pk=tag_pk)
+            except PedagogyTag.DoesNotExist:
+                raise ValueError(f"Tag with pk '{tag_pk}' does not exist.")
 
-        try:
             tag.tag_name = tag_name
             tag.text = text
+            tag.confidential_info = confidential_info
             tag.save()
-            return None
-        except Exception as e:
-            return str(e)
 
     @staticmethod
-    def delete_question_tag_link(question_tag_id):
+    def delete_question_tag_link(question_tag_pk):
         """Delete a question-tag link.
 
         Args:
-            question_tag_id: The ID of the question-tag link to delete.
+            question_tag_pk: The pk of the question-tag link to delete.
 
-        Returns:
-            None on success or a string describing the error encountered.
+        Raises:
+            ValueError: if no question-tag-link with that pk exists.
         """
-        question_tag = QuestionTagLink.objects.filter(id=question_tag_id).first()
-        if not question_tag:
-            return "Question tag link not found."
-
         try:
-            question_tag.delete()
-            return None
-        except Exception as e:
-            return str(e)
+            question_tag = QuestionTagLink.objects.get(pk=question_tag_pk)
+        except QuestionTagLink.DoesNotExist:
+            raise ValueError("Question tag link not found.")
+
+        question_tag.delete()
