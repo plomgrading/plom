@@ -141,11 +141,11 @@
 
             $('#tag_id_edit').change(function() {
                 var selectedTag = $(this).val();
-                var selectedTagText = $(this).find('option:selected').text();
+                var selectedTagText = $(this).find('option:selected').text().trim();
                 $('#tagName_edit').val(selectedTagText);
-                var selectedTagDescription = $(this).find('option:selected').data('description');
+                var selectedTagDescription = $(this).find('option:selected').data('description').trim();
                 $('#text_edit').val(selectedTagDescription);
-                var selectedTagconfidential_info = $(this).find('option:selected').data('confidential_info');
+                var selectedTagconfidential_info = $(this).find('option:selected').data('confidential_info').trim();
                 $('#confidential_info_edit').val(selectedTagconfidential_info);
             });
 

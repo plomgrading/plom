@@ -105,9 +105,10 @@ class CreateTagView(CreateView, ManagerRequiredView):
         Returns:
             A JSON response object.
         """
-        tag_name = request.POST.get("tagName")
-        text = request.POST.get("text")
-        confidential_info = request.POST.get("confidential_info")
+        # make sure we strip leading/trailing whitespace
+        tag_name = request.POST.get("tagName").strip()
+        text = request.POST.get("text").strip()
+        confidential_info = request.POST.get("confidential_info").strip()
         try:
             QuestionTagService.create_tag(
                 tag_name, text, user=request.user, confidential_info=confidential_info
@@ -148,9 +149,10 @@ class EditTagView(UpdateView, ManagerRequiredView):
             A JSON response object.
         """
         tag_id = request.POST.get("tag_id")
-        tag_name = request.POST.get("tagName")
-        text = request.POST.get("text")
-        confidential_info = request.POST.get("confidential_info")
+        # strip out leading/trailing whitespace from name,text,confidential_info
+        tag_name = request.POST.get("tagName").strip()
+        text = request.POST.get("text").strip()
+        confidential_info = request.POST.get("confidential_info").strip()
         try:
             QuestionTagService.edit_tag(
                 tag_id, tag_name, text, confidential_info=confidential_info

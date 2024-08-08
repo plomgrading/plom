@@ -98,11 +98,13 @@
                         <label for="tag_id_edit">Select Tag to Edit</label>
                         <select class="form-control" id="tag_id_edit" name="tag_id">
                             <option value="" disabled selected>Select a tag</option>
-                            {# djlint:off #}
-                            <!--Do not let linter add spaces to this option text, else it appears in the text-edit window -->
-                            {% for tag in tags %}<option value="{{ tag.id }}" data-description="{{ tag.text }}" data-confidential_info="{{ tag.confidential_info }}">{{ tag.tag_name }}</option>
+                            {% for tag in tags %}
+                                <option value="{{ tag.id }}"
+                                        data-description="{{ tag.text }}"
+                                        data-confidential_info="{{ tag.confidential_info }}">
+                                    {{ tag.tag_name }}
+                                </option>
                             {% endfor %}
-                            {# djlint:on #}
                         </select>
                     </div>
                     <div class="form-group">
