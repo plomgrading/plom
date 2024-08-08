@@ -11,7 +11,7 @@ from ...services import (
     PrenameSettingService,
     PapersPrinted,
 )
-from Preparation.services.preparation_dependency_service import (
+from ...services.preparation_dependency_service import (
     can_set_papers_printed,
     can_unset_papers_printed,
 )

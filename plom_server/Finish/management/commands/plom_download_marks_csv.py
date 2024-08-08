@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2025 Aden Chan
-# Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from django.core.management.base import BaseCommand
 
-from Finish.services import StudentMarkService
+from ...services import StudentMarkService
 
 
 class Command(BaseCommand):
