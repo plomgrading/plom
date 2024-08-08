@@ -20,6 +20,8 @@ from django.conf import settings
 from plom import SpecVerifier
 from plom.create.mergeAndCodePages import create_QR_codes
 from plom.create.scribble_utils import scribble_name_and_id, scribble_pages
+import random
+import subprocess
 
 
 class DemoBundleCreationService:
@@ -478,6 +480,26 @@ class DemoBundleCreationService:
         for paper in duplicates:
             duplicates_dict[paper] = -1
         return duplicates_dict
+    
+    def muck_paper(self, filepath: str, ) -> None:
+        """Muck a paper that randomly choses mucker from pdfmucker.py.
+        
+        Args:
+            filepath: path to the file to be mucked.
+        """
+        operation = ["tear", "fold", "rotate", "compress", "lighten", "darken", "jam", "stretch", "hide", "corrupt"]
+        random_operation = random.choice(operation)
+
+        total_pages = fitz.open(filepath).page_count
+        random_page = random.randint(1, total_pages - 1)
+
+        corner = ["top_left", "top_right", "bottom_left", "bottom_right"]
+        random_corner = random.choice(corner)
+
+        severity = random.random()
+        cmd = f"python3 -m plom.scan.pdfmucker {filepath} {random_page} {random_operation} {random_corner} --severity={severity}"
+        subprocess.check_call(cmd.split())
+        print("MUCKED: ", cmd)
 
     def scribble_to_create_bundle(
         self,
@@ -514,6 +536,8 @@ class DemoBundleCreationService:
                     paper_number = int(paper["paper_number"])
 
                     if paper_number in obscure_qr_papers:
+                        # self.muck_paper(paper["path"])
+                        # pdf_document = fitz.open(paper["path"])
                         self.obscure_qr_codes_in_paper(pdf_document)
 
                     if paper_number in wrong_version:
