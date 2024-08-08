@@ -22,14 +22,13 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import transaction
 from django_huey import db_task
 
-from ..models import PaperIDTask, IDPrediction, IDReadingHueyTaskTracker
-from ..services import IdentifyTaskService, ClasslistService
+from plom.idreader.model_utils import load_model, download_model, is_model_present
 from Base.models import HueyTaskTracker
 from Papers.models import Paper
 from Papers.services import SpecificationService, PaperInfoService
 from Rectangles.services import RectangleExtractor
-
-from plom.idreader.model_utils import load_model, download_model, is_model_present
+from ..models import PaperIDTask, IDPrediction, IDReadingHueyTaskTracker
+from ..services import IdentifyTaskService, ClasslistService
 
 
 class IDReaderService:
