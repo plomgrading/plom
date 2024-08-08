@@ -26,12 +26,6 @@ class PlomSeriousException(PlomException):
     pass
 
 
-class PlomProbationaryLimitExceededException(PlomException):
-    """Attempt to claim/mark task will exceed user's probationary limit."""
-
-    pass
-
-
 class PlomBenignException(PlomException):
     """A not-unexpected situation, often signaling an error condition."""
 
@@ -47,6 +41,10 @@ class PlomSSLError(PlomBenignException):
 
 
 class PlomConnectionError(PlomBenignException):
+    pass
+
+
+class PlomProbationLimitExceededException(PlomBenignException):
     pass
 
 

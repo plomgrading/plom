@@ -74,7 +74,7 @@ from plom.plom_exceptions import (
     PlomNoPaper,
     PlomNoServerSupportException,
     PlomNoSolutionException,
-    PlomProbationaryLimitExceededException,
+    PlomProbationLimitExceededException,
 )
 from plom.messenger import Messenger
 from plom.feedback_rules import feedback_rules as static_feedback_rules_data
@@ -321,7 +321,13 @@ def upload(
             rubrics,
             integrity_check,
         )
-    except (PlomTaskChangedError, PlomTaskDeletedError, PlomConflict) as ex:
+    except (
+        PlomTaskChangedError,
+        PlomTaskDeletedError,
+        PlomConflict,
+        PlomProbationLimitExceededException,
+    ) as ex:
+        print("TEST")
         knownFailCallback(task, str(ex))
         # probably previous call does not return: it forces a crash
         return False
@@ -527,6 +533,24 @@ class MarkerClient(QWidget):
         else:
             log.info("Experimental/advanced mode disabled")
             self.annotatorSettings["experimental"] = False
+
+    def get_completed_tasks_count(self):
+        """Get the count in the task model table with complete status.
+
+        Returns:
+            Total completed task recorded in the marker client.
+        """
+        count = 0
+        row_count = self.examModel.rowCount()
+
+        status_column = 1
+
+        for row in range(row_count):
+            item = self.examModel.item(row, status_column)
+            if item is not None and item.text() == "Complete":
+                count += 1
+
+        return count
 
     def UIInitialization(self) -> None:
         """Startup procedure for the user interface.
@@ -999,9 +1023,6 @@ class MarkerClient(QWidget):
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
-            except PlomProbationaryLimitExceededException as err:
-                WarnMsg(self, str(err)).exec()
-                return
         if update_select:
             self.moveSelectionToTask(task)
 
@@ -1418,7 +1439,6 @@ class MarkerClient(QWidget):
             PlomTakenException,
             PlomRangeException,
             PlomVersionMismatchException,
-            PlomProbationaryLimitExceededException,
         ) as err:
             WarnMsg(self, f"Cannot get task {task}.", info=err).exec()
             return
@@ -1494,6 +1514,13 @@ class MarkerClient(QWidget):
             ).exec()
             return
 
+        if self.marker_has_reached_task_limit(task):
+            WarnMsg(
+                self,
+                "You have reached your task limit. Please contact your instructor to mark more tasks. ",
+            ).exec()
+            return
+
         if self.allowBackgroundOps:
             # If just one in the queue (which we are grading) then ask for more
             if self.examModel.countReadyToMark() <= 1:
@@ -1501,6 +1528,37 @@ class MarkerClient(QWidget):
 
         self.startTheAnnotator(inidata)
         # we started the annotator, we'll get a signal back when its done
+
+    def marker_has_reached_task_limit(self, task) -> bool:
+        """Check whether a marker has reached their task limit from probation period.
+
+        Args:
+            task: the task id of the task.
+
+        Returns:
+            True if marker is not in probation, if they are in probation, returns True if
+            they have not reached their probation limit yet.
+        """
+        progress = self.get_marking_progress()
+        if progress["in_probation"]:
+            limit = progress["probation_limit"]
+            task_status = self.examModel.getStatusByTask(task)
+            total_marked = self.get_completed_tasks_count()
+            # Check against task_status to allow probation markers to reannotate stuffs.
+            if task_status != "Complete" and (total_marked >= limit):
+                return True
+
+        return False
+
+    def get_marking_progress(self) -> dict:
+        """Get a dict of keys ["task_claimed", "task_marked", "in_probation", "probation_limit"] of current marker.
+
+        Args:
+            Task: task id of the task
+        Returns:
+            A dict representing the progress and probation status of current marker.
+        """
+        return self.msgr.MmarkingProgress()
 
     def getDataForAnnotator(self, task: str) -> tuple | None:
         """Start annotator on a particular task.

@@ -117,7 +117,7 @@ class SetProbationView(ManagerRequiredView):
 
     Note: enforce_set_probation is a special flag that enforce a marker to be set to probation
     even though they do not fulfill the probation's limit restriction. The limit will be set
-    to their current number of question claimed.
+    to their current number of question marked.
     """
 
     def post(self, request, username):
@@ -134,7 +134,7 @@ class SetProbationView(ManagerRequiredView):
             )
             complete, claimed = complete_and_claimed_tasks[username]
             probation_period, created = ProbationPeriod.objects.get_or_create(
-                user=user, limit=claimed
+                user=user, limit=complete
             )
 
         # No special flag received, proceed to check whether the marker fulfills the restriction.
@@ -271,8 +271,8 @@ class BulkSetProbationView(ManagerRequiredView):
     def post(self, request):
         probation_service = ProbationService()
         markers = User.objects.filter(groups__name="marker")
-        probation_set_count = 0
         markers_with_warnings = []
+        successful_markers = []
 
         for marker in markers:
             if probation_service.can_set_probation(marker):
@@ -280,16 +280,31 @@ class BulkSetProbationView(ManagerRequiredView):
                     user=marker,
                     defaults={"limit": ProbationPeriod.default_limit},
                 )
-                probation_set_count += 1
+                successful_markers.append(marker.username)
             else:
                 markers_with_warnings.append(marker.username)
 
-        messages.success(request, "All markers have been set to probation.")
-
         if markers_with_warnings:
-            messages.warning(
+            messages.success(
                 request,
-                f"{len(markers_with_warnings)} Markers failed to set to probation",
+                f"Probation has been successfully set for: {', '.join(successful_markers)}",
+                extra_tags="modify_probation",
+            )
+
+            messages.error(
+                request,
+                f"Probation cannot be set on: {', '.join(markers_with_warnings)}",
+                extra_tags="modify_probation",
+            )
+
+            messages.warning(
+                request, f"{markers_with_warnings}", extra_tags="probation_warning"
+            )
+
+        else:
+            messages.success(
+                request,
+                "All markers have been set to probation.",
                 extra_tags="modify_probation",
             )
 

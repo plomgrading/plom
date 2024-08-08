@@ -21,7 +21,7 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomTaskDeletedError,
     PlomTaskChangedError,
-    PlomProbationaryLimitExceededException,
+    PlomProbationLimitExceededException,
 )
 
 from Mark.services import QuestionMarkingService, MarkingTaskService
@@ -146,8 +146,6 @@ class QuestionMarkingViewSet(ViewSet):
                 MarkingTaskService.assign_task_to_user(task.pk, request.user)
             except RuntimeError as e:
                 return _error_response(e, status.HTTP_409_CONFLICT)
-            except PlomProbationaryLimitExceededException as e:
-                return _error_response(e, status.HTTP_423_LOCKED)
 
             question_data = page_data.get_question_pages_list(papernum, question_idx)
             tags = MarkingTaskService().get_tags_for_task_pk(task.pk)
@@ -203,6 +201,8 @@ class QuestionMarkingViewSet(ViewSet):
             return _error_response(e, status.HTTP_410_GONE)
         except PlomConflict as e:
             return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
+        except PlomProbationLimitExceededException as e:
+            return _error_response(e, status.HTTP_423_LOCKED)
 
         def int_or_None(x):
             return None if x is None else int(x)
