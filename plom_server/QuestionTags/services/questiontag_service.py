@@ -141,10 +141,10 @@ class QuestionTagService:
             except PedagogyTag.DoesNotExist:
                 raise ValueError(f"Tag with pk '{tag_pk}' does not exist.")
 
-                tag.tag_name = tag_name
-                tag.text = text
-                tag.confidential_info = confidential_info
-                tag.save()
+            tag.tag_name = tag_name
+            tag.text = text
+            tag.confidential_info = confidential_info
+            tag.save()
 
     @staticmethod
     def delete_question_tag_link(question_tag_pk):

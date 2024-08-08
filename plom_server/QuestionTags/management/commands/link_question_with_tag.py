@@ -56,7 +56,9 @@ class Command(BaseCommand):
         # Use the add_question_tag_link method from QuestionTagService
         try:
             QuestionTagService.add_question_tag_link(
-                question_index=question_index, tag_names=[tag_name], user=user
+                question_index=question_index,
+                tag_names=[tag_name],
+                user_obj=user,  # Changed 'user' to 'user_obj'
             )
         except (IntegrityError, ValueError) as err:
             raise CommandError(f"Error adding tag: {err}")
