@@ -32,7 +32,9 @@ def compile_tex_str_to_filepath(tex_as_str: str, pdf_filepath: Path) -> None:
     tmp_tex_path = Path(tmp_tex_file.name)
     compile_tex(tmp_tex_path)
     # move the resulting .pdf into place
-    shutil.move(tmp_tex_path.with_suffix(".pdf"), pdf_filepath)
+    # note that shutil move and pathlib typing error - https://bugs.python.org/issue39140
+    # fixed in python 3.9 - so our mypy will throw an error on the following line
+    shutil.move(tmp_tex_path.with_suffix(".pdf"), pdf_filepath)  # type: ignore
     # now clean up the temp file
     tmp_tex_path.unlink(missing_ok=True)
 

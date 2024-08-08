@@ -204,7 +204,7 @@ class DownloadQuestionTagsView(ManagerRequiredView):
         response["Content-Disposition"] = 'attachment; filename="tags.csv"'
 
         writer = csv.writer(response)
-        writer.writerow(["Tag Name", "Tag Description", "confidential_info"])
+        writer.writerow(["Name", "Description", "Confidential_Info"])
 
         tags = PedagogyTag.objects.all()
         for tag in tags:
@@ -229,26 +229,25 @@ class ImportTagsView(ManagerRequiredView):
         if csv_file.multiple_chunks():
             return JsonResponse({"error": "Uploaded file is too big"})
 
-        file_data = csv_file.read().decode("utf-8").splitlines()
-        csv_reader = csv.reader(file_data)
-
-        next(csv_reader, None)
-
-        for row in csv_reader:
-            if len(row) == 3:
-                tag_name, text, confidential_info = row
-            elif len(row) == 2:
-                tag_name, text = row
-                confidential_info = ""
-            else:
-                continue
-
-            try:
-                PedagogyTag.objects.get_or_create(
-                    tag_name=tag_name,
-                    defaults={"text": text, "confidential_info": confidential_info},
+        required_cols = ["Name", "Description", "Confidential_Info"]
+        with csv_file.open("r") as fh:
+            red = csv.DictReader(fh)
+            cols_present = red.fieldnames
+            if any(req not in cols_present for req in required_cols):
+                return JsonResponse(
+                    {"error": "CSV file does not have required column headings"}
                 )
-            except IntegrityError as err:
-                return JsonResponse({"error": f"{err}"})
+
+            for row in red:
+                try:
+                    PedagogyTag.objects.get_or_create(
+                        tag_name=row["Name"],
+                        defaults={
+                            "text": row["Description"],
+                            "confidential_info": row["Confidential_Info"],
+                        },
+                    )
+                except IntegrityError as err:
+                    return JsonResponse({"error": f"{err}"})
 
         return JsonResponse({"success": True})

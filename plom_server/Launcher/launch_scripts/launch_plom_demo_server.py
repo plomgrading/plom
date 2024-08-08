@@ -52,6 +52,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
     * bundles-uploaded = those PDF bundles are uploaded and their qr-codes read (but not processed further).
     * bundles-pushed = those bundles are "pushed" so that they can be graded.
     * rubrics = system and demo rubrics are created for marking.
+    * qtags = demo question-tags are created.
     * randomarking = several rando-markers are run in parallel to leave comments and annotations on student work. Random ID-ing of papers is also done.
     * tagging = (future/not-yet-implemented) = pedagogy tags will be applied to questions to label them with learning goals.
     * spreadsheet = a marking spreadsheet is downloaded.
@@ -100,6 +101,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         "bundles-uploaded",
         "bundles-pushed",
         "rubrics",
+        "qtags",
         "randomarking",
         "tagging",
         "spreadsheet",
@@ -514,6 +516,22 @@ def run_the_randomarker(*, port):
         subprocess.check_call(split(cmd))
 
 
+def create_and_link_question_tags():
+    qtags_csv = demo_file_directory / "demo_assessment_qtags.csv"
+    # upload question-tags as user "manager"
+    run_django_manage_command(f"upload_qtags_csv {qtags_csv} manager")
+    # link questions to tags as user "manager"
+    # WARNING - HARDCODED LIST
+    for tag, question in [
+        ("limits", 1),
+        ("derivatives", 2),
+        ("derivatives", 3),
+        ("applications", 3),
+        ("applications", 4),
+    ]:
+        run_django_manage_command(f"link_question_with_tag {question} {tag} manager")
+
+
 def run_marking_commands(*, port: int, stop_after=None) -> bool:
     """Run commands to step through the marking process in the demo.
 
@@ -533,11 +551,14 @@ def run_marking_commands(*, port: int, stop_after=None) -> bool:
     if stop_after == "rubrics":
         return False
 
+    create_and_link_question_tags()
+    if stop_after == "qtags":
+        return False
+
     run_the_randomarker(port=args.port)
     if stop_after == "randomarker":
         return False
 
-    print(">> Future plom dev will include pedagogy tagging here.")
     return True
 
 
