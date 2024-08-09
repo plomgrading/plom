@@ -118,8 +118,8 @@ def add_operation_description(page: fitz.Page, operation: str, corner: Optional[
     # Default position at the top of the page
     position = (100, 20)
 
-    # If operation affects the bottom of the page, move text to the bottom
-    if corner in ["bottom_left", "bottom_right"]:
+    # If operation affects the top of the page, move text to the bottom, to avoid covering the text
+    if corner in ["top_left", "top_right"]:
         position = (100, page.rect.height - 20)
 
     page.insert_text(
@@ -498,7 +498,7 @@ def compress(doc: fitz.Document, page_num, severity: float):
 
     # Convert the page to PIL Image
     temp_pix = page.get_pixmap()
-    image = Image.frombytes("RGB", [temp_pix.width, temp_pix.height], temp_pix.samples)
+    image = Image.frombytes("RGB", (temp_pix.width, temp_pix.height), temp_pix.samples)
 
     # Intermediate saving step to change the jpg quality (saved to buffer)
     buffer = io.BytesIO()
