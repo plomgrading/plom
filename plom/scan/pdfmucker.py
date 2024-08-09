@@ -276,6 +276,8 @@ def generate_fold_points(corner: str, severity: float, r: fitz.Rect):
         item at index 3 is the innermost vertex of an inward fold.
     """
     side = severity * 0.5 * r.width
+    vertex1, vertex2, vertex3, vertex4 = None, None, None, None  # Initialize variables
+
     if corner == "top_left":
         vertex1 = r.tl
         vertex2 = fitz.Point(r.tl.x + side, r.tl.y)
@@ -333,6 +335,8 @@ def get_bounding_box(corner: str, severity: float, r: fitz.Rect) -> fitz.Rect:
         fitz.Rect: Bounding box of the fold.
     """
     side = severity * 0.5 * r.width
+    clip = None
+
     if corner == "top_left":
         clip = fitz.Rect(r.tl, fitz.Point(r.tl.x + side, r.tl.y + side))
     elif corner == "top_right":
@@ -630,6 +634,7 @@ def detect_qr_code_area(corner: str, page: fitz.Page) -> fitz.Rect:
     """
     page_width = page.rect.width
     page_height = page.rect.height
+    qr_area = None
 
     if corner == "top_left":
         qr_area = fitz.Rect(15, 15, 100, 100)
