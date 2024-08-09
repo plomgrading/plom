@@ -19,6 +19,7 @@ import os
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Web_Plom.settings")
 
+
 def get_parser() -> argparse.ArgumentParser:
     """Returns the argument parser used to parse command line input
 
@@ -44,6 +45,7 @@ def get_parser() -> argparse.ArgumentParser:
             "stretch",
             "lighten",
             "darken",
+            "obscure",
         ],
         help="Type of operation to perform",
     )
@@ -113,19 +115,19 @@ def add_operation_description(page: fitz.Page, operation: str, corner: str = Non
         "corrupt": "Simulated page damage: QR code corrupted",
     }
     text = operation_description.get(operation, "Simulated page damage")
-    
+
     # Default position at the top of the page
     position = (100, 20)
-    
+
     # If operation affects the bottom of the page, move text to the bottom
     if corner in ["bottom_left", "bottom_right"]:
         position = (100, page.rect.height - 20)
-    
+
     page.insert_text(
         position,  # Position determined by operation and corner
         text,
         fontsize=14,
-        color=(0, 0, 0.8)
+        color=(0, 0, 0.8),
     )
 
 
@@ -381,25 +383,82 @@ def fold_page(pages: List[fitz.Page], corner: str, severity: float):
         pages[1].draw_polyline(mirrored[:-1], color=edge_out, width=1, fill=out_clr)
 
 
-# def rotate_page(doc: fitz.Document, page_number: int, severity: float):
-#     """Rotate a page by a severity-based angle with full granularity.
+def obscure_qr_codes_in_paper(pdf_doc: fitz.Document) -> None:
+    """Hide qr-codes for demo purposes.
 
-#     Args:
-#         doc (fitz.Document): The document containing the page.
-#         page_number (int): The index of the page to rotate (0-based).
-#         severity (float): The severity of the rotation, ranging from 0 (no rotation) to 1 (full 360 degrees rotation).
-#     """
-#     # Map severity to an angle between 0 and 360 degrees
-#     angle = severity * 360
+    On last page paint squares at bottom of page to hide 2
+    qr-codes, and on second-last page, paint squares at the
+    top of the page to hide 1 qr-code.
 
-#     page = doc.load_page(page_number)
+    Args:
+        pdf_doc (fitz.Document): a pdf document of a test-paper.
 
-#     mat = fitz.Matrix(1, 1).prerotate(angle)
+    Returns:
+        None, but modifies ``pdf_doc``  as a side effect.
+    """
+    # magic numbers for obscuring the qr-codes
+    left = 15
+    right = 90
+    page = pdf_doc[-1]
+    # grab the bounding box of the page to get its height/width
+    bnd = page.bound()
+    page.draw_rect(
+        fitz.Rect(left, bnd.height - right, right, bnd.height - left),
+        color=(0, 0, 0),
+        fill=(0.2, 0.2, 0.75),
+        radius=0.05,
+    )
+    page.draw_rect(
+        fitz.Rect(
+            bnd.width - right,
+            bnd.height - right,
+            bnd.width - left,
+            bnd.height - left,
+        ),
+        color=(0, 0, 0),
+        fill=(0.2, 0.2, 0.75),
+        radius=0.05,
+    )
+    tw = fitz.TextWriter(bnd)
+    tw.append(
+        fitz.Point(100, bnd.height - 20),
+        "Simulated page damage: unreadable bottom QR codes",
+        fontsize=14,
+    )
+    tw.write_text(page, color=(0, 0, 0.8))
 
-#     rect = page.rect
-#     pix = page.get_pixmap(matrix=mat, clip=rect)
-#     page.clean_contents()
-#     page.insert_image(rect, pixmap=pix)
+    page = pdf_doc[-2]
+    bnd = page.bound()
+    page.draw_rect(
+        fitz.Rect(
+            bnd.width - right,
+            left,
+            bnd.width - left,
+            right,
+        ),
+        color=(0, 0, 0),
+        fill=(0.2, 0.2, 0.75),
+        radius=0.05,
+    )
+    page.draw_rect(
+        fitz.Rect(
+            left,
+            left,
+            right,
+            right,
+        ),
+        color=(0, 0, 0),
+        fill=(0.2, 0.2, 0.75),
+        radius=0.05,
+    )
+    tw = fitz.TextWriter(bnd)
+    tw.append(
+        fitz.Point(100, 15),
+        "Simulated page damage: unreadable top QR code",
+        fontsize=14,
+    )
+    tw.write_text(page, color=(0, 0, 0.8))
+
 
 def rotate_page(doc: fitz.Document, page_number: int, severity: float):
     """Rotate a page counter clockwise
@@ -421,7 +480,8 @@ def rotate_page(doc: fitz.Document, page_number: int, severity: float):
     page: fitz.Page = doc.new_page(pno=page_number)
     add_operation_description(page, "rotate")
     page.show_pdf_page(page.rect, src, pno=page_number, rotate=rotate_degree)
-    
+
+
 def compress(doc: fitz.Document, page_num, severity: float):
     """Compress an image, such that the quality of a page in the pdf is worsen
 
@@ -557,13 +617,14 @@ def stretch(doc: fitz.Document, page_number: int, severity: float):
 
     # Save the PIL image to a bytes buffer
     img_byte_arr = io.BytesIO()
-    pil_image_output.save(img_byte_arr, format='PNG')
+    pil_image_output.save(img_byte_arr, format="PNG")
     img_byte_arr.seek(0)
 
     # Insert the image into the original page (overwriting the original content)
     img_data = img_byte_arr.read()  # Read image data from the buffer
     img_byte_arr.close()  # Close the buffer
     page.insert_image(fitz.Rect(0, 0, width, height), stream=img_data)
+
 
 def detect_qr_code_area(corner: str, page: fitz.Page) -> fitz.Rect:
     """Detects a single QR code area based on the specified corner
@@ -672,14 +733,17 @@ def main():
         qr_area = detect_qr_code_area(args.corner, pages[0])
         qr_corrupt(pages[0], qr_area)
         add_operation_description(pages[0], "corrupt")
+    elif args.operation == "obscure":
+        obscure_qr_codes_in_paper(file)
     else:
         raise RuntimeError("Invalid operation specified")
-    
+
     # Save file (stretch operation is saved as png and is saved
     # in the function call)
     # if args.operation != "stretch":
-        # file.save(args.filename, incremental=True)
+    # file.save(args.filename, incremental=True)
     file.saveIncr()
+
 
 if __name__ == "__main__":
     main()
