@@ -98,6 +98,37 @@ def get_page(file: fitz.Document, page_number: int) -> fitz.Page:
     return file.load_page(page_number - 1)
 
 
+def add_operation_description(page: fitz.Page, operation: str, corner: str = None):
+    """Adds a text description of the operation to the page."""
+    operation_description = {
+        "tear": "Simulated page damage: torn corner",
+        "fold": "Simulated page damage: folded corner",
+        "rotate": "Simulated page damage: rotated page",
+        "compress": "Simulated page damage: compressed image quality",
+        "lighten": "Simulated page damage: lightened image",
+        "darken": "Simulated page damage: darkened image",
+        "jam": "Simulated page damage: page jammed in scanner",
+        "stretch": "Simulated page damage: stretched page",
+        "hide": "Simulated page damage: QR code hidden",
+        "corrupt": "Simulated page damage: QR code corrupted",
+    }
+    text = operation_description.get(operation, "Simulated page damage")
+    
+    # Default position at the top of the page
+    position = (100, 20)
+    
+    # If operation affects the bottom of the page, move text to the bottom
+    if corner in ["bottom_left", "bottom_right"]:
+        position = (100, page.rect.height - 20)
+    
+    page.insert_text(
+        position,  # Position determined by operation and corner
+        text,
+        fontsize=14,
+        color=(0, 0, 0.8)
+    )
+
+
 def generate_tear_points(
     corner: str, severity: float, x_max: float, y_max: float, jaggedness: int
 ) -> List[fitz.Point]:
@@ -575,34 +606,42 @@ def main():
     if other_page <= file.page_count and other_page > 0:
         pages.append(get_page(file, other_page))
 
-    # Perform the selected operation
+    # Perform the selected operation and add descriptive text
     if args.operation == "tear":
         tear_double_sided(pages, args.corner, args.severity, args.jaggedness)
+        add_operation_description(pages[0], "tear")
     elif args.operation == "fold":
-        if len(pages) < 2:
-            raise ValueError("Invalid page specified for fold operation")
         fold_page(pages, args.corner, args.severity)
+        add_operation_description(pages[0], "fold")
     elif args.operation == "rotate":
         rotate_page(file, page_number - 1, args.severity)
+        add_operation_description(pages[0], "rotate")
     elif args.operation == "compress":
         compress(file, page_number - 1, args.severity)
+        add_operation_description(pages[0], "compress")
     elif args.operation == "lighten":
         lighten(file, page_number - 1, args.severity)
+        add_operation_description(pages[0], "lighten")
     elif args.operation == "darken":
         darken(file, page_number - 1, args.severity)
+        add_operation_description(pages[0], "darken")
     elif args.operation == "jam":
         jam(file, page_number - 1, args.severity)
+        add_operation_description(pages[0], "jam")
     elif args.operation == "stretch":
         stretch(pages[0], args.severity)
+        add_operation_description(pages[0], "stretch")
     elif args.operation == "hide":
         qr_area = detect_qr_code_area(args.corner, pages[0])
         qr_hide(pages[0], qr_area)
+        add_operation_description(pages[0], "hide")
     elif args.operation == "corrupt":
         qr_area = detect_qr_code_area(args.corner, pages[0])
         qr_corrupt(pages[0], qr_area)
+        add_operation_description(pages[0], "corrupt")
     else:
         raise RuntimeError("Invalid operation specified")
-
+    
     # Save file (stretch operation is saved as png and is saved
     # in the function call)
     # if args.operation != "stretch":
