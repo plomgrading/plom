@@ -730,7 +730,6 @@ def main():
     else:
         raise RuntimeError("Invalid operation specified")
 
-    # Save file (stretch operation is saved as png and is saved in the function call)
     file.saveIncr()
 
 
