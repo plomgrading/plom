@@ -595,8 +595,15 @@ def stretch(doc: fitz.Document, page_number: int, severity: float):
     amplitude = 200 * severity
     pix = page.get_pixmap()
     pil_image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-    img = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
-    height, width, _ = img.shape
+    img: np.ndarray = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+    # Handle different cases based on the shape of the image (to satisfy mypy)
+    if len(img.shape) == 3:
+        height, width, channels = img.shape  # Typical case for color images
+    elif len(img.shape) == 2:
+        height, width = img.shape  # Grayscale image
+        channels = 1  # Grayscale typically has 1 channel
+    else:
+        raise ValueError(f"Unexpected shape for img: {img.shape}")
 
     img_output: np.ndarray = np.zeros(img.shape, dtype=np.uint8)
     for x in range(width):
