@@ -56,7 +56,6 @@ class ScanServiceTests(TestCase):
 
     def test_upload_bundle(self) -> None:
         """Test ScanService.upload_bundle and assert uploaded PDF file saved to right place."""
-        print("BT: TEST UPLOAD BUNDLE")
         scanner = ScanService()
         timestamp = timezone.now().timestamp()
         # open the pdf-file to create a file-object to pass to the upload command.
