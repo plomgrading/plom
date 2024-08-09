@@ -289,11 +289,11 @@ def build_all_papers_and_wait():
     """Trigger build all the printable paper pdfs and wait for completion."""
     from time import sleep
 
-    run_django_manage_command("plom_build_paper_PDFs --start-all")
+    run_django_manage_command("plom_build_paper_pdfs --start-all")
     # since this is a background huey job, we need to
     # wait until all those pdfs are actually built -
-    # we can get that by looking at output from plom_build_paper_PDFs --status
-    pdf_status_cmd = "python3 manage.py plom_build_paper_PDFs --count-done"
+    # we can get that by looking at output from plom_build_paper_pdfs --status
+    pdf_status_cmd = "python3 manage.py plom_build_paper_pdfs --count-done"
     while True:
         out_papers = subprocess.check_output(split(pdf_status_cmd)).decode("utf-8")
         if "all" in out_papers.casefold():
@@ -305,8 +305,8 @@ def build_all_papers_and_wait():
 
 
 def download_zip() -> None:
-    """Use 'plom_build_paper_PDFs' to download a zip of all paper-pdfs."""
-    run_django_manage_command("plom_build_paper_PDFs --download-all")
+    """Use 'plom_build_paper_pdfs' to download a zip of all paper-pdfs."""
+    run_django_manage_command("plom_build_paper_pdfs --download-all")
     print("Downloaded a zip of all the papers")
 
 
