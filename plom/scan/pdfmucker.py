@@ -596,7 +596,7 @@ def stretch(doc: fitz.Document, page_number: int, severity: float):
     pix = page.get_pixmap()
     pil_image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
     img = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
-    height, width = img.shape
+    height, width, _ = img.shape
 
     img_output: np.ndarray = np.zeros(img.shape, dtype=np.uint8)
     for x in range(width):
