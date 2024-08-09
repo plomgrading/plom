@@ -79,6 +79,7 @@ def pdf_builder(
     if verbose:
         print("Histogram of total marks.")
     histogram_of_grades = mpls.histogram_of_total_marks(highlighted_sid=sid)
+    # TODO - don't generate the lollypop graph is there are no pedagogy tags
     if sid is not None:
         qtags_lollypop_graph = mpls.lollypop_of_pedagogy_tags(paper_number, sid)
 
