@@ -415,8 +415,18 @@ class DemoBundleCreationService:
         Args:
             filepath: path to the file to be mucked.
         """
-        # operation = ["tear", "fold", "rotate", "compress", "lighten", "darken", "jam", "stretch", "hide", "corrupt"]
-        operation = ["obscure"]
+        operation = [
+            "tear",
+            "fold",
+            "rotate",
+            "compress",
+            "lighten",
+            "darken",
+            "jam",
+            "stretch",
+            "hide",
+            "corrupt",
+        ]
         random_operation = random.choice(operation)
 
         total_pages = fitz.open(filepath).page_count

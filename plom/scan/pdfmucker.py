@@ -381,6 +381,26 @@ def fold_page(pages: List[fitz.Page], corner: str, severity: float):
         pages[1].draw_polyline(mirrored[:-1], color=edge_out, width=1, fill=out_clr)
 
 
+# def rotate_page(doc: fitz.Document, page_number: int, severity: float):
+#     """Rotate a page by a severity-based angle with full granularity.
+
+#     Args:
+#         doc (fitz.Document): The document containing the page.
+#         page_number (int): The index of the page to rotate (0-based).
+#         severity (float): The severity of the rotation, ranging from 0 (no rotation) to 1 (full 360 degrees rotation).
+#     """
+#     # Map severity to an angle between 0 and 360 degrees
+#     angle = severity * 360
+
+#     page = doc.load_page(page_number)
+
+#     mat = fitz.Matrix(1, 1).prerotate(angle)
+
+#     rect = page.rect
+#     pix = page.get_pixmap(matrix=mat, clip=rect)
+#     page.clean_contents()
+#     page.insert_image(rect, pixmap=pix)
+
 def rotate_page(doc: fitz.Document, page_number: int, severity: float):
     """Rotate a page counter clockwise
 
@@ -398,10 +418,10 @@ def rotate_page(doc: fitz.Document, page_number: int, severity: float):
     src.insert_pdf(doc)
 
     doc.delete_page(page_number)
-    page = doc.new_page(pno=page_number)
+    page: fitz.Page = doc.new_page(pno=page_number)
+    add_operation_description(page, "rotate")
     page.show_pdf_page(page.rect, src, pno=page_number, rotate=rotate_degree)
-
-
+    
 def compress(doc: fitz.Document, page_num, severity: float):
     """Compress an image, such that the quality of a page in the pdf is worsen
 
@@ -621,11 +641,13 @@ def main():
     if args.operation == "tear":
         tear_double_sided(pages, args.corner, args.severity, args.jaggedness)
         add_operation_description(pages[0], "tear")
+        add_operation_description(pages[1], "tear")
     elif args.operation == "fold":
         fold_page(pages, args.corner, args.severity)
         add_operation_description(pages[0], "fold")
+        add_operation_description(pages[1], "fold")
     elif args.operation == "rotate":
-        rotate_page(file, page_number - 1, args.severity)
+        rotate_page(file, page_number, args.severity)
         add_operation_description(pages[0], "rotate")
     elif args.operation == "compress":
         compress(file, page_number - 1, args.severity)
