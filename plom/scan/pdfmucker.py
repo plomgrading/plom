@@ -478,8 +478,8 @@ def rotate_page(doc: fitz.Document, page_number: int, severity: float):
 
     doc.delete_page(page_number)
     page: fitz.Page = doc.new_page(pno=page_number)
-    add_operation_description(page, "rotate")
     page.show_pdf_page(page.rect, src, pno=page_number, rotate=rotate_degree)
+    add_operation_description(page, "rotate")
 
 
 def compress(doc: fitz.Document, page_num, severity: float):
