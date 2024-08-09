@@ -185,4 +185,4 @@ class Command(BaseCommand):
         elif options["list"]:
             self.list_tasks()
         else:
-            self.print_help("manage.py", "plom_build_papers")
+            self.print_help("manage.py", "plom_build_paper_PDFs")
