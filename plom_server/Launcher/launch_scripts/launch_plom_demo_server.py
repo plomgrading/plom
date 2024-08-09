@@ -518,9 +518,9 @@ def run_the_randomarker(*, port):
 
 def push_demo_rubrics():
     # push demo rubrics from toml
-    # TODO - make rubrics for questions 3,4
+    # TODO - make rubrics for question 4
     # note - hard coded question range here.
-    for question_idx in [1, 2]:
+    for question_idx in [1, 2, 3]:
         rubric_toml = (
             demo_file_directory / f"demo_assessment_rubrics_q{question_idx}.toml"
         )
