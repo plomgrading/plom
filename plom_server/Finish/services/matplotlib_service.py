@@ -5,7 +5,6 @@
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Andrew Rechnitzer
 
-
 from __future__ import annotations
 
 import base64
@@ -23,6 +22,7 @@ from Papers.services import SpecificationService
 from QuestionTags.services import QuestionTagService
 
 RANGE_BIN_OFFSET = 2
+HIGHLIGHT_COLOR = "orange"
 
 
 class MatplotlibService:
@@ -106,7 +106,6 @@ class MatplotlibService:
             df = self.des.get_student_data()
             student = df[df["StudentID"] == highlighted_sid]
             student_score = student["Total"].values[0]
-            highlight_color = "#3061FF"
 
             ax = plt.gca()
             for bar in ax.patches:
@@ -114,7 +113,7 @@ class MatplotlibService:
                 bar_left = bar.get_x()
                 bar_right = bar_left + bar.get_width()
                 if bar_left <= student_score <= bar_right:
-                    bar.set_color(highlight_color)
+                    bar.set_color(HIGHLIGHT_COLOR)
                     bar.set_edgecolor("black")
                     bar.set_linewidth(1.5)
         ax.set_title("Histogram of total marks")
@@ -192,7 +191,6 @@ class MatplotlibService:
         if highlighted_sid:
             # Overlay the student's score by highlighting the bar
             df = self.des.get_student_data()
-            highlight_color = "#3061FF"
             student_score = df[df["StudentID"] == highlighted_sid][mark_column].values[
                 0
             ]
@@ -202,7 +200,7 @@ class MatplotlibService:
                 bar_left = bar.get_x()
                 bar_right = bar_left + bar.get_width()
                 if bar_left <= student_score <= bar_right:
-                    bar.set_color(highlight_color)
+                    bar.set_color(HIGHLIGHT_COLOR)
                     bar.set_edgecolor("black")
                     bar.set_linewidth(1.5)
         if versions:
@@ -673,7 +671,7 @@ class MatplotlibService:
     ) -> BytesIO | str:
         assert format in self.formats
         self.ensure_all_figures_closed()
-        # vvvvvvvvvvvvvvvvvvvvvvvv#
+
         student_scores = StudentMarkService().get_marks_from_paper(paper_number)[
             paper_number
         ]
@@ -681,9 +679,9 @@ class MatplotlibService:
         n_tags = len(tag_to_question)
         tag_names = sorted(list(tag_to_question.keys()))
         pedagogy_values = []
+        # for each tag, compute % student got on each question
+        # combine those to get a 'pedagogy value'
         for name in tag_names:
-            # for each tag, compute % student got on each question
-            # combine those to get a 'pedagogy value'
             values = [
                 student_scores[qi]["student_mark"] / student_scores[qi]["out_of"]
                 for qi in tag_to_question[name]
@@ -700,7 +698,7 @@ class MatplotlibService:
         plt.plot(ordered_df["values"], my_range, "o", markersize=16)
         plt.yticks(my_range, ordered_df["tag"])
         plt.xlim(0, 1)
-        # ^^^^^^^^^^^^^^^^^^^^^^^^#
+
         graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
         self.ensure_all_figures_closed()
 

@@ -17,11 +17,15 @@ class ReassemblePaperChore(HueyTaskTracker):
     paper (ForeignKey): a link to the associated paper being reassembled
     pdf_file (FileField): stores the reassembled pdf when it is built. Should not be directly exposed to users. Note that the name attribute associated with this field should not be exposed to users since it is simply the stub of the file which django has saved to disc and may contain superfluous characters for avoiding collisions.
     display_filename (TextField): stores the filename of the reassembled pdf to be returned to users.
+    report_pdf_file (FileField): stores the student_report pdf when it is built. Should not be directly exposed to users.
+    report_display_filename (TextField): stores the filename of the report pdf to be returned to users.
     """
 
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     pdf_file = models.FileField(upload_to="reassembled/", null=True)
     display_filename = models.TextField(null=True)
+    report_pdf_file = models.FileField(upload_to="student_report/", null=True)
+    report_display_filename = models.TextField(null=True)
 
     def __str__(self):
         """Stringify task using its related test-paper's number."""
