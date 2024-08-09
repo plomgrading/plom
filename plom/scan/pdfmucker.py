@@ -382,24 +382,27 @@ def fold_page(pages: List[fitz.Page], corner: str, severity: float):
 
 
 def rotate_page(doc: fitz.Document, page_number: int, severity: float):
-    """Rotate a page counter clockwise
+    """Rotate a page by a severity-based angle with full granularity.
 
     Args:
-        doc(fitz.Document): the document whose page will be rotated
-        page_number(int): the page_number of the document
-        to be rotated (0 indexed)
-        severity(float): the severity represents the
-        linear mapping of counter clockwise rotation,
-        where [0,1] mapped to [0, 180] degrees of counter clockwise rotation
+        doc (fitz.Document): The document containing the page.
+        page_number (int): The index of the page to rotate (0-based).
+        severity (float): The severity of the rotation, ranging from 0 (no rotation) to 1 (full 360 degrees rotation).
     """
-    rotate_degree = severity * 180
+    # Map severity to an angle between 0 and 360 degrees
+    angle = severity * 360
 
-    src = fitz.open()
-    src.insert_pdf(doc)
+    page = doc.load_page(page_number)
 
-    doc.delete_page(page_number)
-    page = doc.new_page(pno=page_number)
-    page.show_pdf_page(page.rect, src, pno=page_number, rotate=rotate_degree)
+    mat = fitz.Matrix(1, 1).prerotate(angle)
+
+    rect = page.rect
+    pix = page.get_pixmap(matrix=mat, clip=rect)
+    page.clean_contents()
+    page.insert_image(rect, pixmap=pix)
+
+    # Save the changes to the document
+    doc.saveIncr()
 
 
 def compress(doc: fitz.Document, page_num, severity: float):
