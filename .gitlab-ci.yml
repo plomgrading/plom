@@ -353,7 +353,7 @@ mypy-type-checking:
   needs: ["docker-image"]
   image: $IM
   before_script:
-    - python3 -m pip install mypy~=1.11.0
+    - python3 -m pip install mypy~=1.11.1
   script:
     - mypy plom --python-ver 3.8 --install-types --non-interactive || true
     - mypy plom --python-ver 3.8
