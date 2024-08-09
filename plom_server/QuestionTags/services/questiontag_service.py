@@ -164,6 +164,11 @@ class QuestionTagService:
         question_tag.delete()
 
     @staticmethod
+    def are_there_question_tag_links() -> bool:
+        """True if any pedagogy-tags have been linked to questions."""
+        return QuestionTagLink.objects.exists()
+
+    @staticmethod
     def get_tag_to_question_links() -> Dict[str, List[int]]:
         """Get a dictionary of pedagogy-tags and their linked questions.
 

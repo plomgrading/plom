@@ -14,6 +14,7 @@ from weasyprint import HTML, CSS
 from Mark.services import MarkingTaskService
 from Papers.services import SpecificationService
 from . import DataExtractionService, MatplotlibService
+from QuestionTags.services import QuestionTagService
 
 
 def pdf_builder(
@@ -140,7 +141,7 @@ def pdf_builder(
     <h3>Histogram of total marks</h3>
     <img src="data:image/png;base64,{histogram_of_grades}" />
     """
-    if sid is not None:
+    if sid is not None and QuestionTagService.are_there_question_tag_links():
         html += _html_add_title("Lollypop of qtags")
         html += f"""
         <img src="data:image/png;base64,{qtags_lollypop_graph}" />
