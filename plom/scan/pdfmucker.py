@@ -601,7 +601,6 @@ def stretch(doc: fitz.Document, page_number: int, severity: float):
         height, width, channels = img.shape  # Typical case for color images
     elif len(img.shape) == 2:
         height, width = img.shape  # Grayscale image
-        channels = 1  # Grayscale typically has 1 channel
     else:
         raise ValueError(f"Unexpected shape for img: {img.shape}")
 
