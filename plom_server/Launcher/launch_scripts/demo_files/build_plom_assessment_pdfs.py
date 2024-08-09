@@ -12,13 +12,31 @@ import shutil
 import subprocess
 from tempfile import NamedTemporaryFile
 
+# need these imports to get idBox template from plom
+import plom
+import sys
+
+if sys.version_info >= (3, 9):
+    from importlib import resources
+else:
+    import importlib_resources as resources
+
 
 def compile_tex(filepath: Path) -> None:
+    # make sure the idbox file is in place
+    idbox_filepath = filepath.parent / "idBox4.pdf"
+    if not idbox_filepath.exists():
+        idbox_bytes = (resources.files(plom) / "idBox4.pdf").read_bytes()
+        with idbox_filepath.open("wb") as fh:
+            fh.write(idbox_bytes)
+    # now get on with building the .tex
     filestem = filepath.stem
     # use latexmk to build, continue past errors, and then
     # clean up all files except the .tex and .pdf
     subprocess.run(["latexmk", "-interaction=nonstopmode", f"{filestem}"], check=True)
     subprocess.run(["latexmk", "-c", f"{filestem}"], check=True)
+    # finally, remove the idbox
+    idbox_filepath.unlink(missing_ok=True)
 
 
 def compile_tex_str_to_filepath(tex_as_str: str, pdf_filepath: Path) -> None:

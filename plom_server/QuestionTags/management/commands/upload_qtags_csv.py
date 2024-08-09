@@ -14,7 +14,7 @@ from QuestionTags.services import QuestionTagService
 class Command(BaseCommand):
     """Management command to upload tags from a csv."""
 
-    help = "Create a new tag"
+    help = "Upload question-tags from a csv file."
 
     def add_arguments(self, parser):
         """Define arguments for the management command."""
@@ -40,7 +40,7 @@ class Command(BaseCommand):
         filepath = Path(filename)
         if not filepath.exists():
             raise CommandError(f"Cannot open file {filepath}")
-        if filepath.suffix != ".csv":
+        if filepath.suffix.casefold() != ".csv":
             raise CommandError(f"Cannot open file {filepath} --- must be a csv file")
 
         required_cols = ["Name", "Description", "Confidential_Info"]

@@ -522,14 +522,16 @@ def create_and_link_question_tags():
     run_django_manage_command(f"upload_qtags_csv {qtags_csv} manager")
     # link questions to tags as user "manager"
     # WARNING - HARDCODED LIST
-    for tag, question in [
+    for tag, question_idx in [
         ("limits", 1),
         ("derivatives", 2),
         ("derivatives", 3),
         ("applications", 3),
         ("applications", 4),
     ]:
-        run_django_manage_command(f"link_question_with_tag {question} {tag} manager")
+        run_django_manage_command(
+            f"link_question_with_tag {question_idx} {tag} manager"
+        )
 
 
 def run_marking_commands(*, port: int, stop_after=None) -> bool:
