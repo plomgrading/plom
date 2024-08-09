@@ -26,8 +26,16 @@ from Base.base_group_views import ManagerRequiredView
 from Base.models import SettingsModel
 from Papers.services import SpecificationService
 from .services import RubricService
-from .forms import RubricAdminForm, RubricDiffForm, RubricWipeForm, RubricUploadForm
-from .forms import RubricFilterForm, RubricEditForm, RubricDownloadForm
+from .forms import (
+    RubricAdminForm,
+    RubricDemoAdminForm,
+    RubricDiffForm,
+    RubricWipeForm,
+    RubricUploadForm,
+    RubricFilterForm,
+    RubricEditForm,
+    RubricDownloadForm,
+)
 
 
 class RubricAdminPageView(ManagerRequiredView):
@@ -36,14 +44,18 @@ class RubricAdminPageView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/rubrics_admin.html"
         form = RubricAdminForm(request.GET)
+        rubric_demo_form = RubricDemoAdminForm(request.GET)
         download_form = RubricDownloadForm(request.GET)
         upload_form = RubricUploadForm()
         context = self.build_context()
         rubrics = RubricService.get_all_rubrics()
+        demo_rubrics = rubrics.filter(value__exact=0.5).filter(text__exact=".")
         context.update(
             {
                 "rubrics": rubrics,
+                "demo_rubrics": demo_rubrics,
                 "rubric_admin_form": form,
+                "rubric_demo_admin_form": rubric_demo_form,
                 "rubric_download_form": download_form,
                 "rubric_upload_form": upload_form,
             }
@@ -53,6 +65,7 @@ class RubricAdminPageView(ManagerRequiredView):
     def post(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/rubrics_admin.html"
         form = RubricAdminForm(request.POST)
+        rubric_demo_form = RubricDemoAdminForm(request.GET)
         download_form = RubricDownloadForm(request.GET)
         upload_form = RubricUploadForm()
         context = self.build_context()
@@ -66,11 +79,25 @@ class RubricAdminPageView(ManagerRequiredView):
             {
                 "rubrics": rubrics,
                 "rubric_admin_form": form,
+                "rubric_demo_admin_form": rubric_demo_form,
                 "rubric_download_form": download_form,
                 "rubric_upload_form": upload_form,
             }
         )
         return render(request, template_name, context=context)
+
+
+class RubricDemoView(ManagerRequiredView):
+    """Create demo rubrics."""
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        any_manager = User.objects.filter(groups__name="manager").first()
+        if not RubricService().build_half_mark_delta_rubrics(any_manager.username):
+            messages.error(
+                request,
+                "\N{Vulgar Fraction One Half} mark rubrics could not be created.",
+            )
+        return redirect("rubrics_admin")
 
 
 class RubricWipePageView(ManagerRequiredView):

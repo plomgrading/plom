@@ -596,6 +596,65 @@ class RubricService:
                         r["id"],
                     )
 
+    def build_half_mark_delta_rubrics(self, username: str) -> bool:
+        """Create the plus and minus one-half delta rubrics that are optional.
+
+        Args:
+            username: which user to associate with the demo rubrics.
+
+        Returns:
+            True if initialized or False if already initialized.
+
+        Exceptions:
+            ValueError: username does not exist or is not part of the manager group.
+        """
+        try:
+            _ = User.objects.get(username__iexact=username, groups__name="manager")
+        except ObjectDoesNotExist as e:
+            raise ValueError(
+                f"User '{username}' does not exist or has wrong permissions!"
+            ) from e
+        existing_demo_rubrics = (
+            Rubric.objects.all().filter(value__exact=0.5).filter(text__exact=".")
+        )
+        if existing_demo_rubrics:
+            return False
+        self._build_half_mark_delta_rubrics(username)
+        return True
+
+    def _build_half_mark_delta_rubrics(self, username: str) -> None:
+        log.info("Building half-mark delta rubrics")
+        for q in SpecificationService.get_question_indices():
+            rubric = {
+                "display_delta": "+\N{Vulgar Fraction One Half}",
+                "value": 0.5,
+                "out_of": 0,
+                "text": ".",
+                "kind": "relative",
+                "question": q,
+                "meta": "",
+                "tags": "",
+                "username": username,
+                "system_rubric": True,
+            }
+            r = self.create_rubric(rubric)
+            log.info("Built delta-rubric -%d for Qidx %s: %s", 0.5, q, r["id"])
+
+            rubric = {
+                "display_delta": "-\N{Vulgar Fraction One Half}",
+                "value": -0.5,
+                "out_of": 0,
+                "text": ".",
+                "kind": "relative",
+                "question": q,
+                "meta": "",
+                "tags": "",
+                "username": username,
+                "system_rubric": True,
+            }
+            r = self.create_rubric(rubric)
+            log.info("Built delta-rubric -%d for Qidx %s: %s", -0.5, q, r["id"])
+
     def erase_all_rubrics(self) -> int:
         """Remove all rubrics, permanently deleting them.  BE CAREFUL.
 
