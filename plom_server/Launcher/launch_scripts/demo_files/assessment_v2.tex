@@ -94,11 +94,13 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Use tikz to put a big "Solutions" watermark on the first page 
 % if compiled with solutions
-\newcommand{\watermarkPageIfSolutions}{
+\newcommand{\watermarkPageIfSolutions}[1][\empty]{
 \ifprintanswers%
-\begin{tikzpicture}[remember picture, overlay]
-  \node [text=red, rotate=55, scale=10, opacity=.25] at (current page.center) {\textsf{SOLUTIONS}};
-\end{tikzpicture}
+\begin{tikzpicture}[remember picture, overlay]%
+\node [text=red, rotate=55, scale=10, opacity=.25] at (current page.center){%
+\ifx\empty{\textsf{SOLUTIONS}}\else{\begin{tabular}{c} \textsf{SOLUTIONS}\\ \textsf{VERSION~#1} \end{tabular}}\fi
+};%
+\end{tikzpicture}%
 \fi%
 }
 % for demo purposes, we put a small watermark on each page using tikz 
@@ -126,7 +128,7 @@
 
 \begin{document}
 
-\watermarkPageIfSolutions%
+\watermarkPageIfSolutions[2]%
 
 \section*{Mathematics 418 --- Midterm --- 45 minutes}
 \subsection*{3rd September 1752}
