@@ -22,7 +22,6 @@ from django.conf import settings
 from plom import SpecVerifier
 from plom.create.mergeAndCodePages import create_QR_codes
 from plom.create.scribble_utils import scribble_name_and_id, scribble_pages
-import random
 import subprocess
 
 
@@ -417,7 +416,7 @@ class DemoBundleCreationService:
         second_to_last_page = fitz.open(filepath).page_count - 1
         corner = "bottom_left"
 
-        severity = max(random.random(), 0.9)
+        severity = 0.5
         cmd = f"python3 -m plom.scan.pdfmucker {filepath} {second_to_last_page} {operation} {corner} --severity={severity}"
         subprocess.check_call(cmd.split())
         print("Mucking Operation: ", operation)
