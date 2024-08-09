@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from Papers.models import Paper
 from ..services import StudentMarkService
@@ -16,7 +16,7 @@ from .StudentReportPDFService import pdf_builder
 class BuildStudentReportService:
     """Class that contains helper functions for building student report pdf."""
 
-    def build_one_report(self, paper_number: int) -> Dict[str, Any]:
+    def build_one_report(self, paper_number: int) -> dict[str, Any]:
         """Build student report for the given paper number.
 
         Args:

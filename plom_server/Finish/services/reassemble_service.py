@@ -342,7 +342,8 @@ class ReassembleService:
 
         Args:
             paper_num: The paper number to re-assemble.
-        KWargs:
+
+        Keyword Args:
             build_student_report: Whether or not build the student report along with reassembling the paper.
         """
         try:
@@ -603,7 +604,7 @@ class ReassembleService:
     def queue_all_paper_reassembly(self, *, build_student_report: bool = True) -> None:
         """Queue the reassembly of all papers that are ready (id'd and marked).
 
-        KWargs:
+        Keyword Args:
             build_student_report: whether or not to build the student reports at same time.
         """
         # first work out which papers are ready
