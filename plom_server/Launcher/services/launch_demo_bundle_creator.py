@@ -488,6 +488,7 @@ class DemoBundleCreationService:
             filepath: path to the file to be mucked.
         """
         operation = ["tear", "fold", "rotate", "compress", "lighten", "darken", "jam", "stretch", "hide", "corrupt"]
+        # operation = ["stretch", "tear", "fold"]
         random_operation = random.choice(operation)
 
         total_pages = fitz.open(filepath).page_count
@@ -496,7 +497,7 @@ class DemoBundleCreationService:
         corner = ["top_left", "top_right", "bottom_left", "bottom_right"]
         random_corner = random.choice(corner)
 
-        severity = random.random()
+        severity = max(random.random(), 0.9)
         cmd = f"python3 -m plom.scan.pdfmucker {filepath} {random_page} {random_operation} {random_corner} --severity={severity}"
         subprocess.check_call(cmd.split())
         print("MUCKED: ", cmd)
@@ -531,14 +532,11 @@ class DemoBundleCreationService:
             for paper in assigned_papers_ids:
                 with fitz.open(paper["path"]) as pdf_document:
                     # first put an ID on paper if it is not prenamed.
-                    if not paper["prenamed"]:
-                        scribble_name_and_id(pdf_document, paper["id"], paper["name"])
                     paper_number = int(paper["paper_number"])
 
-                    if paper_number in obscure_qr_papers:
-                        # self.muck_paper(paper["path"])
-                        # pdf_document = fitz.open(paper["path"])
-                        self.obscure_qr_codes_in_paper(pdf_document)
+                    if not paper["prenamed"]:
+                        scribble_name_and_id(pdf_document, paper["id"], paper["name"])
+                    
 
                     if paper_number in wrong_version:
                         self.make_last_page_with_wrong_version(
@@ -578,6 +576,14 @@ class DemoBundleCreationService:
                         self.append_page_from_another_assessment(pdf_document)
                     if paper_number in out_of_range_papers:
                         self.append_out_of_range_paper_and_page(pdf_document)
+
+                    with tempfile.NamedTemporaryFile(delete=True, suffix=".pdf") as temp_pdf:
+                        pdf_document.save(temp_pdf.name)
+                        temp_pdf_path = temp_pdf.name
+                        if paper_number in obscure_qr_papers:
+                            self.muck_paper(temp_pdf_path)
+                            pdf_document = fitz.open(temp_pdf_path)
+                            # self.obscure_qr_codes_in_paper(pdf_document)
 
                     # finally, append this to the bundle
                     all_pdf_documents.insert_pdf(pdf_document)
