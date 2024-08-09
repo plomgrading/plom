@@ -540,7 +540,7 @@ def darken(doc: fitz.Document, page_num, severity: float):
     # Preserve quality of page
     matrix = fitz.Matrix(2, 2)
     pix = page.get_pixmap(matrix=matrix)
-    img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+    img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
     enhancer = ImageEnhance.Brightness(img)
     img = enhancer.enhance(1 - severity)
 
@@ -561,7 +561,7 @@ def jam(doc: fitz.Document, page_num, severity: float):
 
     # Convert the page to PIL Image
     temp_pix = page.get_pixmap()
-    image = Image.frombytes("RGB", [temp_pix.width, temp_pix.height], temp_pix.samples)
+    image = Image.frombytes("RGB", (temp_pix.width, temp_pix.height), temp_pix.samples)
 
     start_row = image.height - int(image.height * severity)
     cropbox = (0, start_row, image.width, start_row + 1)
@@ -594,7 +594,7 @@ def stretch(doc: fitz.Document, page_number: int, severity: float):
     page = get_page(doc, page_number)
     amplitude = 200 * severity
     pix = page.get_pixmap()
-    pil_image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+    pil_image = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
     img: np.ndarray = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
     # Handle different cases based on the shape of the image (to satisfy mypy)
     if len(img.shape) == 3:
