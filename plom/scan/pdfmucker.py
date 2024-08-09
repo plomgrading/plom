@@ -610,9 +610,11 @@ def main():
     if args.operation == "tear":
         tear_double_sided(pages, args.corner, args.severity, args.jaggedness)
         add_operation_description(pages[0], "tear")
+        add_operation_description(pages[1], "tear")
     elif args.operation == "fold":
         fold_page(pages, args.corner, args.severity)
         add_operation_description(pages[0], "fold")
+        add_operation_description(pages[1], "fold")
     elif args.operation == "rotate":
         rotate_page(file, page_number - 1, args.severity)
         add_operation_description(pages[0], "rotate")

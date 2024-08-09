@@ -481,14 +481,28 @@ class DemoBundleCreationService:
         for paper in duplicates:
             duplicates_dict[paper] = -1
         return duplicates_dict
-    
-    def muck_paper(self, filepath: str, ) -> None:
+
+    def muck_paper(
+        self,
+        filepath: str,
+    ) -> None:
         """Muck a paper that randomly choses mucker from pdfmucker.py.
-        
+
         Args:
             filepath: path to the file to be mucked.
         """
-        operation = ["tear", "fold", "rotate", "compress", "lighten", "darken", "jam", "stretch", "hide", "corrupt"]
+        operation = [
+            "tear",
+            "fold",
+            "rotate",
+            "compress",
+            "lighten",
+            "darken",
+            "jam",
+            "stretch",
+            "hide",
+            "corrupt",
+        ]
         random_operation = random.choice(operation)
 
         total_pages = fitz.open(filepath).page_count
