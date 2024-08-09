@@ -648,7 +648,7 @@ def main():
         add_operation_description(pages[1], "fold")
     elif args.operation == "rotate":
         rotate_page(file, page_number, args.severity)
-        add_operation_description(pages[0], "rotate")
+        # add_operation_description(pages[0], "rotate")
     elif args.operation == "compress":
         compress(file, page_number - 1, args.severity)
         add_operation_description(pages[0], "compress")
