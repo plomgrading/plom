@@ -516,6 +516,17 @@ def run_the_randomarker(*, port):
         subprocess.check_call(split(cmd))
 
 
+def push_demo_rubrics():
+    # push demo rubrics from toml
+    # TODO - make rubrics for questions 3,4
+    # note - hard coded question range here.
+    for question_idx in [1, 2]:
+        rubric_toml = (
+            demo_file_directory / f"demo_assessment_rubrics_q{question_idx}.toml"
+        )
+        run_django_manage_command(f"plom_rubrics push manager {rubric_toml}")
+
+
 def create_and_link_question_tags():
     qtags_csv = demo_file_directory / "demo_assessment_qtags.csv"
     # upload question-tags as user "manager"
@@ -547,9 +558,10 @@ def run_marking_commands(*, port: int, stop_after=None) -> bool:
 
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
-    # add rubrics and tags, and then run the randomaker.
+    # add rubrics, question-tags and then run the randomaker.
+    # add system rubrics first, then push the demo ones from toml
     run_django_manage_command("plom_rubrics init manager")
-    run_django_manage_command("plom_rubrics push --demo manager")
+    push_demo_rubrics()
     if stop_after == "rubrics":
         return False
 
