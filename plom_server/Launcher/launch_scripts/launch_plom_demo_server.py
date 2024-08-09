@@ -10,9 +10,6 @@ import argparse
 from pathlib import Path
 from shlex import split
 import subprocess
-
-
-# sigh.... python dependent import - sorry.
 import sys
 
 if sys.version_info < (3, 11):
