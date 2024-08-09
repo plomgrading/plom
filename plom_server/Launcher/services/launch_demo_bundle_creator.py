@@ -412,8 +412,8 @@ class DemoBundleCreationService:
 
         Args:
             filepath: path to the file to be mucked.
+            operation: the type of muck operation to do.
         """
-
         total_pages = fitz.open(filepath).page_count
         random_page = random.randint(1, total_pages - 1)
 

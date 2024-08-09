@@ -19,7 +19,6 @@ import os
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Web_Plom.settings")
 
 
-
 def get_parser() -> argparse.ArgumentParser:
     """Returns the argument parser used to parse command line input.
 
