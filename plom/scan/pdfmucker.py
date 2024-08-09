@@ -5,7 +5,7 @@
 
 """Command Line Tool to simulate PDF errors while scanning."""
 
-from typing import List
+from typing import List, Optional
 import argparse
 import fitz  # PyMuPDF
 import random
@@ -99,7 +99,7 @@ def get_page(file: fitz.Document, page_number: int) -> fitz.Page:
     return file.load_page(page_number - 1)
 
 
-def add_operation_description(page: fitz.Page, operation: str, corner: str = None):
+def add_operation_description(page: fitz.Page, operation: str, corner: Optional[str]):
     """Adds a text description of the operation to the page."""
     operation_description = {
         "tear": "Simulated page damage: torn corner.",
@@ -478,7 +478,7 @@ def rotate_page(doc: fitz.Document, page_number: int, severity: float):
     doc.delete_page(page_number)
     page: fitz.Page = doc.new_page(pno=page_number)
     page.show_pdf_page(page.rect, src, pno=page_number, rotate=rotate_degree)
-    add_operation_description(page, "rotate")
+    add_operation_description(page, "rotate", corner=None)
 
 
 def compress(doc: fitz.Document, page_num, severity: float):
@@ -592,9 +592,9 @@ def stretch(doc: fitz.Document, page_number: int, severity: float):
     pix = page.get_pixmap()
     pil_image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
     img = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
-    height, width, _ = img.shape
+    height, width = img.shape
 
-    img_output = np.zeros(img.shape, dtype=np.uint8)
+    img_output: np.ndarray = np.zeros(img.shape, dtype=np.uint8)
     for x in range(width):
         for y in range(height):
             # *Period is set to 2* height, such that delta_y's sign is constant
