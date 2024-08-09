@@ -274,13 +274,13 @@ def upload_demo_classlist(length="normal", prename=True):
 
 
 def populate_the_database(length="normal"):
-    """Use 'plom_papers' to build a qv-map for the demo and populate the database."""
+    """Use 'plom_qvmap' to build a qv-map for the demo and populate the database."""
     production = {"quick": 35, "normal": 70, "long": 600, "plaid": 1200}
     print(
         f"Building a question-version map and populating the database with {production[length]} papers"
     )
     run_django_manage_command(
-        f"plom_papers build_db -n {production[length]} --first-paper 1"
+        f"plom_qvmap build_db -n {production[length]} --first-paper 1"
     )
     print("Paper database is now populated")
 

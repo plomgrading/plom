@@ -156,4 +156,4 @@ class Command(BaseCommand):
         elif options["command"] == "clear":
             self.clear_papers()
         else:
-            self.print_help("manage.py", "plom_papers")
+            self.print_help("manage.py", "plom_qvmap")
