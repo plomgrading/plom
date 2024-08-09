@@ -160,82 +160,6 @@ class DemoBundleCreationService:
 
         return assignment
 
-    def obscure_qr_codes_in_paper(self, pdf_doc: fitz.Document) -> None:
-        """Hide qr-codes for demo purposes.
-
-        On last page paint squares at bottom of page to hide 2
-        qr-codes, and on second-last page, paint squares at the
-        top of the page to hide 1 qr-code.
-
-        Args:
-            pdf_doc (fitz.Document): a pdf document of a test-paper.
-
-        Returns:
-            None, but modifies ``pdf_doc``  as a side effect.
-        """
-        # magic numbers for obscuring the qr-codes
-        left = 15
-        right = 90
-        page = pdf_doc[-1]
-        # grab the bounding box of the page to get its height/width
-        bnd = page.bound()
-        page.draw_rect(
-            fitz.Rect(left, bnd.height - right, right, bnd.height - left),
-            color=(0, 0, 0),
-            fill=(0.2, 0.2, 0.75),
-            radius=0.05,
-        )
-        page.draw_rect(
-            fitz.Rect(
-                bnd.width - right,
-                bnd.height - right,
-                bnd.width - left,
-                bnd.height - left,
-            ),
-            color=(0, 0, 0),
-            fill=(0.2, 0.2, 0.75),
-            radius=0.05,
-        )
-        tw = fitz.TextWriter(bnd)
-        tw.append(
-            fitz.Point(100, bnd.height - 20),
-            "Simulated page damage: unreadable bottom QR codes",
-            fontsize=14,
-        )
-        tw.write_text(page, color=(0, 0, 0.8))
-
-        page = pdf_doc[-2]
-        bnd = page.bound()
-        page.draw_rect(
-            fitz.Rect(
-                bnd.width - right,
-                left,
-                bnd.width - left,
-                right,
-            ),
-            color=(0, 0, 0),
-            fill=(0.2, 0.2, 0.75),
-            radius=0.05,
-        )
-        page.draw_rect(
-            fitz.Rect(
-                left,
-                left,
-                right,
-                right,
-            ),
-            color=(0, 0, 0),
-            fill=(0.2, 0.2, 0.75),
-            radius=0.05,
-        )
-        tw = fitz.TextWriter(bnd)
-        tw.append(
-            fitz.Point(100, 15),
-            "Simulated page damage: unreadable top QR code",
-            fontsize=14,
-        )
-        tw.write_text(page, color=(0, 0, 0.8))
-
     def make_last_page_with_wrong_version(
         self, pdf_doc: fitz.Document, paper_number: int
     ) -> None:
@@ -481,15 +405,18 @@ class DemoBundleCreationService:
         for paper in duplicates:
             duplicates_dict[paper] = -1
         return duplicates_dict
-    
-    def muck_paper(self, filepath: str, ) -> None:
+
+    def muck_paper(
+        self,
+        filepath: str,
+    ) -> None:
         """Muck a paper that randomly choses mucker from pdfmucker.py.
-        
+
         Args:
             filepath: path to the file to be mucked.
         """
-        operation = ["tear", "fold", "rotate", "compress", "lighten", "darken", "jam", "stretch", "hide", "corrupt"]
-        # operation = ["stretch", "tear", "fold"]
+        # operation = ["tear", "fold", "rotate", "compress", "lighten", "darken", "jam", "stretch", "hide", "corrupt"]
+        operation = ["obscure"]
         random_operation = random.choice(operation)
 
         total_pages = fitz.open(filepath).page_count
@@ -537,7 +464,6 @@ class DemoBundleCreationService:
 
                     if not paper["prenamed"]:
                         scribble_name_and_id(pdf_document, paper["id"], paper["name"])
-                    
 
                     if paper_number in wrong_version:
                         self.make_last_page_with_wrong_version(
@@ -578,7 +504,9 @@ class DemoBundleCreationService:
                     if paper_number in out_of_range_papers:
                         self.append_out_of_range_paper_and_page(pdf_document)
 
-                    with tempfile.NamedTemporaryFile(delete=True, suffix=".pdf") as temp_pdf:
+                    with tempfile.NamedTemporaryFile(
+                        delete=True, suffix=".pdf"
+                    ) as temp_pdf:
                         pdf_document.save(temp_pdf.name)
                         temp_pdf_path = temp_pdf.name
                         if paper_number in obscure_qr_papers:
