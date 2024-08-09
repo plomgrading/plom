@@ -2,9 +2,8 @@
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aden Chan
-# testing
 
-"""Command Line Tool to simulate PDF errors while scanning"""
+"""Command Line Tool to simulate PDF errors while scanning."""
 
 from typing import List
 import argparse
@@ -19,18 +18,19 @@ import os
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Web_Plom.settings")
 
+
 def get_parser() -> argparse.ArgumentParser:
-    """Returns the argument parser used to parse command line input
+    """Returns the argument parser used to parse command line input.
 
     Returns:
-        argparse.ArgumentParser: ArgumentParser used to parse input
+        argparse.ArgumentParser: ArgumentParser used to parse input.
     """
     parser = argparse.ArgumentParser(
-        prog="pdf-mucker", description="Simulate PDF Scanning Errors"
+        prog="pdf-mucker", description="Simulate PDF Scanning Errors."
     )
 
-    parser.add_argument("filename", type=str, help='File to be "mucked"')
-    parser.add_argument("page", type=int, help="Page number to muck")
+    parser.add_argument("filename", type=str, help='File to be "mucked".')
+    parser.add_argument("page", type=int, help="Page number to muck.")
     parser.add_argument(
         "operation",
         choices=[
@@ -45,39 +45,39 @@ def get_parser() -> argparse.ArgumentParser:
             "lighten",
             "darken",
         ],
-        help="Type of operation to perform",
+        help="Type of operation to perform.",
     )
     parser.add_argument(
         "corner",
         nargs="?",
         choices=["top_left", "top_right", "bottom_left", "bottom_right"],
-        help="Corner to target for tear, fold, hide, or cover",
+        help="Corner to target for tear, fold, hide, or cover.",
     )
     parser.add_argument(
         "--severity",
         type=float,
         default=0.5,
-        help="Severity of the operation (0.0 to 1.0, default 0.5)",
+        help="Severity of the operation (0.0 to 1.0, default 0.5).",
     )
     parser.add_argument(
-        "--jaggedness", type=int, default=2, help="Jaggedness of the tear"
+        "--jaggedness", type=int, default=2, help="Jaggedness of the tear."
     )
 
     return parser
 
 
 def validate_args(args):
-    """Ensure that corner is provided for operation in [tear, fold, hide, cover]
+    """Ensure that corner is provided for operation in [tear, fold, hide, cover].
 
     Raises:
-        ValueError: if the operation is set, but corner is not provided
+        ValueError: if the operation is set, but corner is not provided.
     """
     if args.operation in ["tear", "fold", "hide", "cover"] and args.corner is None:
-        raise ValueError(f"The corner argument is required for {args.operation}")
+        raise ValueError(f"The corner argument is required for {args.operation}.")
 
 
 def get_page(file: fitz.Document, page_number: int) -> fitz.Page:
-    """Get a page from the document
+    """Get a page from the document.
 
     Args:
         file (fitz.Document): The PDF document
@@ -101,49 +101,50 @@ def get_page(file: fitz.Document, page_number: int) -> fitz.Page:
 def add_operation_description(page: fitz.Page, operation: str, corner: str = None):
     """Adds a text description of the operation to the page."""
     operation_description = {
-        "tear": "Simulated page damage: torn corner",
-        "fold": "Simulated page damage: folded corner",
-        "rotate": "Simulated page damage: rotated page",
-        "compress": "Simulated page damage: compressed image quality",
-        "lighten": "Simulated page damage: lightened image",
-        "darken": "Simulated page damage: darkened image",
-        "jam": "Simulated page damage: page jammed in scanner",
-        "stretch": "Simulated page damage: stretched page",
-        "hide": "Simulated page damage: QR code hidden",
-        "corrupt": "Simulated page damage: QR code corrupted",
+        "tear": "Simulated page damage: torn corner.",
+        "fold": "Simulated page damage: folded corner.",
+        "rotate": "Simulated page damage: rotated page.",
+        "compress": "Simulated page damage: compressed image quality.",
+        "lighten": "Simulated page damage: lightened image.",
+        "darken": "Simulated page damage: darkened image.",
+        "jam": "Simulated page damage: page jammed in scanner.",
+        "stretch": "Simulated page damage: stretched page.",
+        "hide": "Simulated page damage: QR code hidden.",
+        "corrupt": "Simulated page damage: QR code corrupted.",
     }
-    text = operation_description.get(operation, "Simulated page damage")
-    
+    text = operation_description.get(operation, "Simulated page damage.")
+
     # Default position at the top of the page
     position = (100, 20)
-    
+
     # If operation affects the bottom of the page, move text to the bottom
     if corner in ["bottom_left", "bottom_right"]:
         position = (100, page.rect.height - 20)
-    
+
     page.insert_text(
         position,  # Position determined by operation and corner
         text,
         fontsize=14,
-        color=(0, 0, 0.8)
+        color=(0, 0, 0.8),
     )
 
 
 def generate_tear_points(
     corner: str, severity: float, x_max: float, y_max: float, jaggedness: int
 ) -> List[fitz.Point]:
-    """Generates points for a tear with jagged edges
+    """Generates points for a tear with jagged edges.
 
     Args:
-        corner (str): Specify which corner to tear. Valid options are:
+        corner: Specify which corner to tear. Valid options are:
             'top_left', 'top_right', 'bottom_left', 'bottom_right'
-        severity (float): How severe the tear should be, as a percentage.
+        severity: How severe the tear should be, as a percentage.
         Must be between (0, 1.0)
-        x_max (float): Maximum x value for the page
-        y_max (float): Maximum y value for the page
+        x_max: Maximum x value for the page
+        y_max (): Maximum y value for the page
+        jaggedness: Controls how jagged the tear should be
 
     Returns:
-        List[fitz.Point]: List of points used for the tear
+        List[fitz.Point]: List of points used for the tear.
     """
     if severity < 0.1:
         severity = 0.1
@@ -219,7 +220,7 @@ def generate_tear_points(
 
 
 def mirror_points(points: List[fitz.Point], x_max: float) -> List[fitz.Point]:
-    """Mirrors points horizontally across the middle of the page
+    """Mirrors points horizontally across the middle of the page.
 
     Args:
         points (List[fitz.Point]): List of points to mirror
@@ -234,14 +235,15 @@ def mirror_points(points: List[fitz.Point], x_max: float) -> List[fitz.Point]:
 def tear_double_sided(
     pages: List[fitz.Page], corner: str, severity: float, jaggedness: int
 ):
-    """Tears both sides of a single PDF page
+    """Tears both sides of a single PDF page.
 
     Args:
-        pages (List[fitz.Page]): PDF pages to alter
+        pages (List[fitz.Page]): PDF pages to alter.
         corner (str): Specify which corner to tear. Valid options are:
-            'top_left', 'top_right', 'bottom_left', 'bottom_right'
+            'top_left', 'top_right', 'bottom_left', 'bottom_right'.
         severity (float): How severe the tear should be, as a percentage.
-        Must be between (0, 1.0)
+        Must be between (0, 1.0).
+        jaggedness (int): Controls how jagged the tear should be.
     """
     x_max = pages[0].rect.width
     y_max = pages[0].rect.height
@@ -258,19 +260,19 @@ def tear_double_sided(
 
 
 def generate_fold_points(corner: str, severity: float, r: fitz.Rect):
-    """Generates points for a fold
+    """Generates points for a fold.
+
     Args:
-    corner (str): Specify which corner to fold. Valid options are:
-    'top_left', 'top_right', 'bottom_left', 'bottom_right'
-    severity (float): How severe the fold should be, as a percentage.
-    Must be between (0, 1.0)
-    rect(Rectangle)
-    r (fitz.Rect): the rectangle representation of the page's dimension
+        corner (str): Specify which corner to fold. Valid options are:
+            'top_left', 'top_right', 'bottom_left', 'bottom_right'.
+        severity (float): How severe the fold should be, as a percentage.
+            Must be between (0, 1.0).
+        r (fitz.Rect): The rectangle representation of the page's dimension.
 
     Returns:
-    List[fitz.Point]: List of points used for the fold.
-    Invariant: item at index 0 is the corner, and
-    item at index 3 is the innermost vertex of an inward fold
+        List[fitz.Point]: List of points used for the fold.
+        Invariant: item at index 0 is the corner, and
+        item at index 3 is the innermost vertex of an inward fold.
     """
     side = severity * 0.5 * r.width
     if corner == "top_left":
@@ -303,31 +305,31 @@ def generate_fold_points(corner: str, severity: float, r: fitz.Rect):
 def get_corner_pixmap(
     page: fitz.Page, corner: str, severity: float, r: fitz.Rect
 ) -> fitz.Pixmap:
-    """Gets the pixmap of a corner
+    """Gets the pixmap of a corner.
 
     Args:
-        page (fitz.Page): Page to get pixmap from
-        corner (str): Corner to get pixmap from
-        severity (float): Severity of the fold
-        r (fitz.Rect): The rectangle representation of `page`'s dimension
+        page (fitz.Page): Page to get pixmap from.
+        corner (str): Corner to get pixmap from.
+        severity (float): Severity of the fold.
+        r (fitz.Rect): The rectangle representation of `page`'s dimension.
 
     Returns:
-        fitz.Pixmap: Pixmap of the folded area
+        fitz.Pixmap: Pixmap of the folded area.
     """
     mat = fitz.Matrix(2, 2)
     return page.get_pixmap(matrix=mat, clip=get_bounding_box(corner, severity, r))
 
 
 def get_bounding_box(corner: str, severity: float, r: fitz.Rect) -> fitz.Rect:
-    """Get the bounding box of a fold
+    """Get the bounding box of a fold.
 
     Args:
-        corner (str): Corner of the fold
-        severity (float): Severity of the bold
-        r (fitz.Rect): Rectangle representation of the page being folded
+        corner (str): Corner of the fold.
+        severity (float): Severity of the bold.
+        r (fitz.Rect): Rectangle representation of the page being folded.
 
     Returns:
-        fitz.Rect: Bounding box of the fold
+        fitz.Rect: Bounding box of the fold.
     """
     side = severity * 0.5 * r.width
     if corner == "top_left":
@@ -347,19 +349,19 @@ def get_bounding_box(corner: str, severity: float, r: fitz.Rect) -> fitz.Rect:
 
 
 def fold_page(pages: List[fitz.Page], corner: str, severity: float):
-    """Fold both sides of a single PDF page
+    """Fold both sides of a single PDF page.
+
     Assumption:
-    1. the page number given in the argument
-    is assumed to be the page that is folded inward
-    2. The fold is an isosceles triangle
+        1. The page number given in the argument is assumed to be the page that is folded inward.
+        2. The fold is an isosceles triangle.
 
     Args:
-        pages (List[fitz.Page]): PDF pages to alter
+        pages (List[fitz.Page]): PDF pages to alter.
         corner (str): Specify which corner to fold. Valid options are:
-             'top_left', 'top_right', 'bottom_left', 'bottom_right'
+             'top_left', 'top_right', 'bottom_left', 'bottom_right'.
         severity (float): How severe fold tear should be, as a percentage.
-             Must be between (0, 1.0)
-        A quarter page folded is considered as most severe fold
+             Must be between (0, 1.0).
+        A quarter page folded is considered as most severe fold.
     """
     r = pages[0].rect
     points = generate_fold_points(corner, severity, r)
@@ -381,36 +383,14 @@ def fold_page(pages: List[fitz.Page], corner: str, severity: float):
         pages[1].draw_polyline(mirrored[:-1], color=edge_out, width=1, fill=out_clr)
 
 
-# def rotate_page(doc: fitz.Document, page_number: int, severity: float):
-#     """Rotate a page by a severity-based angle with full granularity.
-
-#     Args:
-#         doc (fitz.Document): The document containing the page.
-#         page_number (int): The index of the page to rotate (0-based).
-#         severity (float): The severity of the rotation, ranging from 0 (no rotation) to 1 (full 360 degrees rotation).
-#     """
-#     # Map severity to an angle between 0 and 360 degrees
-#     angle = severity * 360
-
-#     page = doc.load_page(page_number)
-
-#     mat = fitz.Matrix(1, 1).prerotate(angle)
-
-#     rect = page.rect
-#     pix = page.get_pixmap(matrix=mat, clip=rect)
-#     page.clean_contents()
-#     page.insert_image(rect, pixmap=pix)
-
 def rotate_page(doc: fitz.Document, page_number: int, severity: float):
-    """Rotate a page counter clockwise
+    """Rotate a page counterclockwise.
 
     Args:
-        doc(fitz.Document): the document whose page will be rotated
-        page_number(int): the page_number of the document
-        to be rotated (0 indexed)
-        severity(float): the severity represents the
-        linear mapping of counter clockwise rotation,
-        where [0,1] mapped to [0, 180] degrees of counter clockwise rotation
+        doc (fitz.Document): The document whose page will be rotated.
+        page_number(int): The page number of the document to be rotated (0 indexed).
+        severity(float): The severity represents the linear mapping of counterclockwise rotation,
+                         where [0,1] is mapped to [0, 180] degrees of counterclockwise rotation.
     """
     rotate_degree = severity * 180
 
@@ -421,20 +401,20 @@ def rotate_page(doc: fitz.Document, page_number: int, severity: float):
     page: fitz.Page = doc.new_page(pno=page_number)
     add_operation_description(page, "rotate")
     page.show_pdf_page(page.rect, src, pno=page_number, rotate=rotate_degree)
-    
+
+
 def compress(doc: fitz.Document, page_num, severity: float):
-    """Compress an image, such that the quality of a page in the pdf is worsen
+    """Compress an image, such that the quality of a page in the pdf is worsened.
 
     Args:
-    doc(fitz.Document): the document whose page will be compressed
-    page_num(int): the page number of the document to be compressed (0 indexed)
-    severity(float): The severity is linearly mapped, where [0,1] of severity
-    is mapped to [100, 0] jpg_quality
+        doc (fitz.Document): The document whose page will be compressed.
+        page_num(int): The page number of the document to be compressed (0 indexed).
+        severity(float): The severity is linearly mapped, where [0,1] of severity is mapped to [100, 0] jpg_quality.
     """
     jpg_quality = 100 - int(severity * 100)
     page = doc[page_num]
 
-    # convert the page to PIL Image
+    # Convert the page to PIL Image
     temp_pix = page.get_pixmap()
     image = Image.frombytes("RGB", [temp_pix.width, temp_pix.height], temp_pix.samples)
 
@@ -449,12 +429,12 @@ def compress(doc: fitz.Document, page_num, severity: float):
 
 
 def lighten(doc: fitz.Document, page_num, severity: float):
-    """Lighten an image, increasing it's average brightness
+    """Lighten an image, increasing its average brightness.
 
     Args:
-    doc(fitz.Document): the target document
-    page_num(int): the target page number (0 indexed)
-    severity(float): how much lighter the image gets
+        doc(fitz.Document): The target document.
+        page_num(int): The target page number (0 indexed).
+        severity(float): How much lighter the image gets.
     """
     page = doc[page_num]
 
@@ -466,12 +446,12 @@ def lighten(doc: fitz.Document, page_num, severity: float):
 
 
 def darken(doc: fitz.Document, page_num, severity: float):
-    """Darken an image, decreasing it's average brightness
+    """Darken an image, decreasing its average brightness.
 
     Args:
-    doc(fitz.Document): the target document
-    page_num(int): the target page number (0 indexed)
-    severity(float): how much lighter the image gets
+        doc(fitz.Document): The target document.
+        page_num(int): The target page number (0 indexed).
+        severity(float): How much darker the image gets.
     """
     page = doc[page_num]
 
@@ -491,14 +471,13 @@ def jam(doc: fitz.Document, page_num, severity: float):
     """Simulates a page feed error, where a row is smeared downwards.
 
     Args:
-    doc(fitz.Document): the target document
-    page_num(int): the target page number
-    severity(float): The severity of the smear, which is how far up the
-        page it starts
+        doc(fitz.Document): The target document.
+        page_num(int): The target page number.
+        severity(float): The severity of the smear, which is how far up the page it starts.
     """
     page = doc[page_num]
 
-    # convert the page to PIL Image
+    # Convert the page to PIL Image
     temp_pix = page.get_pixmap()
     image = Image.frombytes("RGB", [temp_pix.width, temp_pix.height], temp_pix.samples)
 
@@ -516,24 +495,19 @@ def jam(doc: fitz.Document, page_num, severity: float):
 def stretch(doc: fitz.Document, page_number: int, severity: float):
     """Stretch a page, expanding near the top and compressing near the bottom.
 
-    The stretch works through non-linear shifting for the pixel in the
-    y-direction (particularly shifting each pixel downward).
+    The stretch works through non-linear shifting for the pixel in the y-direction (particularly shifting each pixel downward).
 
-    This implementation uses the sine function
-    (with period of 2 * height), so that the shift's sign is constant throughout
-    the operation (negative in this case). Additionally, using half sine wave
-    as the shifter causes an increasing shifting magnitude from 0 to h/2 and a
-    decreasing shifting magnitude from h/2 onward. The effect is caused by the
-    increasing - decreasing magnitude of the y-shifts. Basically everything tends
-    to be stretched down (a pixel will be replaced by its upper peers, because of
-    negative shift), so when the shifting magnitude is increasing and around its peak,
-    the majority of the page will have been stretched down, leaving a small portion on
-    the bottom (where the shifting magnitude is decreasing and is already small), and
-    effectively creates a compression effect.
+    This implementation uses the sine function (with a period of 2 * height), so that delta_y's sign is constant throughout
+    the operation (negative in this case). Additionally, using a half sine wave as the shifter causes an increasing shifting magnitude
+    from 0 to h/2 and a decreasing shifting magnitude from h/2 onward. The effect is caused by the increasing - decreasing magnitude of the y-shifts.
+    Basically, everything tends to be stretched down (a pixel will be replaced by its upper peers, because of negative shift), so when the shifting magnitude is increasing
+    and around its peak, the majority of the page will have been stretched down, leaving a small portion on the bottom (where the shifting magnitude is decreasing and is already small),
+    and effectively creates a compression effect.
 
     Args:
-        page: the page to be stretched.
-        severity: the severity of the stretch.
+        doc (fitz.Document): The document containing the page.
+        page_number (int): The page number to be stretched (0 indexed).
+        severity (float): The severity of the stretch.
     """
     page = get_page(doc, page_number)
     amplitude = 200 * severity
@@ -557,7 +531,7 @@ def stretch(doc: fitz.Document, page_number: int, severity: float):
 
     # Save the PIL image to a bytes buffer
     img_byte_arr = io.BytesIO()
-    pil_image_output.save(img_byte_arr, format='PNG')
+    pil_image_output.save(img_byte_arr, format="PNG")
     img_byte_arr.seek(0)
 
     # Insert the image into the original page (overwriting the original content)
@@ -565,15 +539,16 @@ def stretch(doc: fitz.Document, page_number: int, severity: float):
     img_byte_arr.close()  # Close the buffer
     page.insert_image(fitz.Rect(0, 0, width, height), stream=img_data)
 
+
 def detect_qr_code_area(corner: str, page: fitz.Page) -> fitz.Rect:
-    """Detects a single QR code area based on the specified corner
+    """Detects a single QR code area based on the specified corner.
 
     Args:
-        corner (str): The corner to target
-        page (fitz.Page): The PDF page to analyze
+        corner (str): The corner to target.
+        page (fitz.Page): The PDF page to analyze.
 
     Returns:
-        fitz.Rect: The detected QR code area
+        fitz.Rect: The detected QR code area.
     """
     page_width = page.rect.width
     page_height = page.rect.height
@@ -593,21 +568,21 @@ def detect_qr_code_area(corner: str, page: fitz.Page) -> fitz.Rect:
 
 
 def qr_hide(page: fitz.Page, qr_area: fitz.Rect):
-    """Covers an area of the page where a QR code might be located
+    """Covers an area of the page where a QR code might be located.
 
     Args:
-        page (fitz.Page): The PDF page to alter
-        qr_area (fitz.Rect): Rectangle area to cover
+        page (fitz.Page): The PDF page to alter.
+        qr_area (fitz.Rect): Rectangle area to cover.
     """
     page.draw_rect(qr_area, color=(0, 0, 0), fill=(0, 0, 0))
 
 
 def qr_corrupt(page: fitz.Page, qr_area: fitz.Rect):
-    """Corrupts an area of the page where a QR code might be located
+    """Corrupts an area of the page where a QR code might be located.
 
     Args:
-        page (fitz.Page): The PDF page to alter
-        qr_area (fitz.Rect): Rectangle area to corrupt
+        page (fitz.Page): The PDF page to alter.
+        qr_area (fitz.Rect): Rectangle area to corrupt.
     """
     num_lines = 10
     for _ in range(num_lines):
@@ -648,7 +623,6 @@ def main():
         add_operation_description(pages[1], "fold")
     elif args.operation == "rotate":
         rotate_page(file, page_number, args.severity)
-        # add_operation_description(pages[0], "rotate")
     elif args.operation == "compress":
         compress(file, page_number - 1, args.severity)
         add_operation_description(pages[0], "compress")
@@ -674,12 +648,10 @@ def main():
         add_operation_description(pages[0], "corrupt")
     else:
         raise RuntimeError("Invalid operation specified")
-    
-    # Save file (stretch operation is saved as png and is saved
-    # in the function call)
-    # if args.operation != "stretch":
-        # file.save(args.filename, incremental=True)
+
+    # Save file (stretch operation is saved as png and is saved in the function call)
     file.saveIncr()
+
 
 if __name__ == "__main__":
     main()
