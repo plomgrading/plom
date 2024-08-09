@@ -1,0 +1,71 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2024 Colin B. Macdonald
+
+[[rubric]]
+kind = "absolute"
+display_delta = "1 of 3"
+value = 1
+out_of = 3
+text = "Newton's law of cooling mentioned but no diff eqn or general solution"
+meta = ""
+username = "manager"
+question = 4
+versions = [1]
+parameters = []
+
+[[rubric]]
+kind = "absolute"
+display_delta = "1 of 3"
+value = 1
+out_of = 3
+text = "Incorrect differential equation stated"
+meta = ""
+username = "manager"
+question = 4
+parameters = []
+
+
+[[rubric]]
+kind = "absolute"
+display_delta = "2 of 3"
+value = 2
+out_of = 3
+text = "Differential equation formed but error in solution"
+meta = ""
+username = "manager"
+question = 4
+parameters = []
+
+[[rubric]]
+kind = "absolute"
+display_delta = "3 of 3"
+value = 3
+out_of = 3
+text = "Differential equation formed and general solution stated"
+meta = ""
+username = "manager"
+question = 4
+parameters = []
+
+[[rubric]]
+kind = "absolute"
+display_delta = "3 of 3"
+value = 3
+out_of = 3
+text = "Differential equation formed and solved to find general solution"
+meta = ""
+username = "manager"
+question = 4
+parameters = []
+
+[[rubric]]
+kind = "relative"
+display_delta = "-1"
+value = -1
+out_of = 0
+text = "Answer should include units\n(such as \"{param1}\")"
+meta = "Note this rubric differs between versions of the question."
+username = "manager"
+question = 4
+versions = []
+parameters = [["{param1}", ["s", "year"]]]
