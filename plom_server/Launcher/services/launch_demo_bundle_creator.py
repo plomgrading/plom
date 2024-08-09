@@ -414,16 +414,13 @@ class DemoBundleCreationService:
             filepath: path to the file to be mucked.
             operation: the type of muck operation to do.
         """
-        total_pages = fitz.open(filepath).page_count
-        random_page = random.randint(1, total_pages - 1)
-
-        corner = ["top_left", "top_right", "bottom_left", "bottom_right"]
-        random_corner = random.choice(corner)
+        second_to_last_page = fitz.open(filepath).page_count - 1
+        corner = "top_right"
 
         severity = max(random.random(), 0.9)
-        cmd = f"python3 -m plom.scan.pdfmucker {filepath} {random_page} {operation} {random_corner} --severity={severity}"
+        cmd = f"python3 -m plom.scan.pdfmucker {filepath} {second_to_last_page} {operation} {corner} --severity={severity}"
         subprocess.check_call(cmd.split())
-        print("MUCKED: ", cmd)
+        print("Mucking Operation: ", operation)
 
     def scribble_to_create_bundle(
         self,
@@ -441,6 +438,7 @@ class DemoBundleCreationService:
         wrong_assessment=[],
         out_of_range_papers=[],
         obscure_qr_papers=[],
+        mucking_operation=[],
     ):
         """Scribble on some of the papers to create a bundle, along with various others inclusions."""
         # extra_page_papers = list of paper_numbers to which we append a couple of extra_pages
@@ -451,19 +449,7 @@ class DemoBundleCreationService:
         # wrong_assessment = list of paper_numbers to which we append a page from a different assessment.
 
         # A complete collection of the pdfs created
-        muncking_operation = [
-            "tear",
-            "fold",
-            "rotate",
-            "compress",
-            "lighten",
-            "darken",
-            "jam",
-            "stretch",
-            "hide",
-            "corrupt",
-            "obscure",
-        ]
+
         with fitz.open() as all_pdf_documents:
             for paper in assigned_papers_ids:
                 with fitz.open(paper["path"]) as pdf_document:
@@ -518,11 +504,10 @@ class DemoBundleCreationService:
                         pdf_document.save(temp_pdf.name)
                         temp_pdf_path = temp_pdf.name
                         if paper_number in obscure_qr_papers:
-                            operation = random.choice(muncking_operation)
-                            muncking_operation.remove(operation)
+                            operation = mucking_operation[0]
+                            mucking_operation.pop(0)
                             self.muck_paper(temp_pdf_path, operation)
                             pdf_document = fitz.open(temp_pdf_path)
-                            # self.obscure_qr_codes_in_paper(pdf_document)
 
                     # finally, append this to the bundle
                     all_pdf_documents.insert_pdf(pdf_document)
@@ -592,5 +577,6 @@ class DemoBundleCreationService:
                 wrong_assessment=bundle["wrong_assessment_papers"],
                 out_of_range_papers=bundle["out_of_range_papers"],
                 obscure_qr_papers=bundle["obscure_qr_papers"],
+                mucking_operation=bundle["operations"],
             )
         print("^" * 40)
