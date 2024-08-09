@@ -696,7 +696,9 @@ class MatplotlibService:
         my_range = range(1, len(df.index) + 1)
         plt.hlines(y=my_range, xmin=0, xmax=df["values"], linewidth=8)
         plt.plot(ordered_df["values"], my_range, "o", markersize=16)
-        plt.yticks(my_range, ordered_df["tag"])
+        # note mypy gets grumpy with many matplotlib functions, so
+        # convert the pandas series to a list to keep it happy
+        plt.yticks(my_range, ordered_df["tag"].to_list())
         plt.xlim(0, 1)
 
         graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
