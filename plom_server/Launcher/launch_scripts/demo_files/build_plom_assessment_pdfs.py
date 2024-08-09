@@ -33,7 +33,9 @@ def compile_tex(filepath: Path) -> None:
     filestem = filepath.stem
     # use latexmk to build, continue past errors, and then
     # clean up all files except the .tex and .pdf
-    subprocess.run(["latexmk", "-interaction=nonstopmode", f"{filestem}"], check=True)
+    subprocess.run(
+        ["latexmk", "-pdf", "-interaction=nonstopmode", f"{filestem}"], check=True
+    )
     subprocess.run(["latexmk", "-c", f"{filestem}"], check=True)
     # finally, remove the idbox
     idbox_filepath.unlink(missing_ok=True)
