@@ -9,13 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Instructors can enable 1/2 mark rubrics in the Rubrics screen.
 
 ### Changed
 * Server can now be launched via script in `plom_server/Launcher/launch_scripts/launch_plom_server.py`
 * Demo is now launched via script in `plom_server/Launcher/launch_scripts/launch_plom_demo_server.py`
+* Managers can perform scanning actions directly, without a separate scanner account.
 
 ### Fixed
 * Fixed crash on Windows pre-compiled binary.
+* Misc fixes and documentation updates.
 
 
 
