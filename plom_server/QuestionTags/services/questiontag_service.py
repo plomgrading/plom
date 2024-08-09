@@ -4,7 +4,7 @@
 
 
 from __future__ import annotations
-from typing import List
+from typing import Dict, List
 
 from django.contrib.auth.models import User
 from django.db.utils import IntegrityError
@@ -162,3 +162,17 @@ class QuestionTagService:
             raise ValueError("Question tag link not found.")
 
         question_tag.delete()
+
+    @staticmethod
+    def get_tag_to_question_links() -> Dict[str, List[int]]:
+        """Get a dictionary of pedagogy-tags and their linked questions.
+
+        Returns:
+            A dict of {tag_name: [list of question-indices]}
+        """
+        tag_to_question_list: Dict[str, List[int]] = {}
+        for qtl in QuestionTagLink.objects.all().prefetch_related("question", "tag"):
+            # want a dict of (key, list[])
+            tag_to_question_list.setdefault(qtl.tag.tag_name, [])
+            tag_to_question_list[qtl.tag.tag_name].append(qtl.question.question_index)
+        return tag_to_question_list

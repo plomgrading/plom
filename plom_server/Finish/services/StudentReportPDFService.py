@@ -73,11 +73,14 @@ def pdf_builder(
     student_dict = df_filtered.iloc[0].to_dict()
     name = student_dict["StudentName"]
     grade = int(student_dict["Total"])
+    paper_number = int(student_dict["PaperNumber"])
 
     # histogram of grades
     if verbose:
         print("Histogram of total marks.")
     histogram_of_grades = mpls.histogram_of_total_marks(highlighted_sid=sid)
+    if sid is not None:
+        qtags_lollypop_graph = mpls.lollypop_of_pedagogy_tags(paper_number, sid)
 
     # histogram of grades for each question
     histogram_of_grades_q = []
@@ -136,6 +139,11 @@ def pdf_builder(
     <h3>Histogram of total marks</h3>
     <img src="data:image/png;base64,{histogram_of_grades}" />
     """
+    if sid is not None:
+        html += _html_add_title("Lollypop of qtags")
+        html += f"""
+        <img src="data:image/png;base64,{qtags_lollypop_graph}" />
+        """
 
     html += _html_add_title("Histogram of marks by question")
     html += _html_for_big_graphs(histogram_of_grades_q)

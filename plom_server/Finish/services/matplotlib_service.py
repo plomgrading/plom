@@ -3,6 +3,8 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Elisa Pan
+# Copyright (C) 2024 Andrew Rechnitzer
+
 
 from __future__ import annotations
 
@@ -16,8 +18,9 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from . import DataExtractionService
+from . import DataExtractionService, StudentMarkService
 from Papers.services import SpecificationService
+from QuestionTags.services import QuestionTagService
 
 RANGE_BIN_OFFSET = 2
 
@@ -657,6 +660,47 @@ class MatplotlibService:
             labels=SpecificationService.get_question_labels(),
         )
 
+        graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
+        self.ensure_all_figures_closed()
+
+        if format == "bytes":
+            return graph_bytes
+        else:
+            return self.get_graph_as_base64(graph_bytes)
+
+    def lollypop_of_pedagogy_tags(
+        self, paper_number: int, student_id: str, *, format: str = "base64"
+    ) -> BytesIO | str:
+        assert format in self.formats
+        self.ensure_all_figures_closed()
+        # vvvvvvvvvvvvvvvvvvvvvvvv#
+        student_scores = StudentMarkService().get_marks_from_paper(paper_number)[
+            paper_number
+        ]
+        tag_to_question = QuestionTagService.get_tag_to_question_links()
+        n_tags = len(tag_to_question)
+        tag_names = sorted(list(tag_to_question.keys()))
+        pedagogy_values = []
+        for name in tag_names:
+            # for each tag, compute % student got on each question
+            # combine those to get a 'pedagogy value'
+            values = [
+                student_scores[qi]["student_mark"] / student_scores[qi]["out_of"]
+                for qi in tag_to_question[name]
+            ]
+            pedagogy_values.append(sum(values) / len(values))
+
+        plt.figure(figsize=(6.8, n_tags * 0.3 + 0.6), tight_layout=True)
+        plt.margins(y=0.3)
+
+        df = pd.DataFrame({"tag": tag_names, "values": pedagogy_values})
+        ordered_df = df.sort_values(by="tag")
+        my_range = range(1, len(df.index) + 1)
+        plt.hlines(y=my_range, xmin=0, xmax=df["values"], linewidth=8)
+        plt.plot(ordered_df["values"], my_range, "o", markersize=16)
+        plt.yticks(my_range, ordered_df["tag"])
+        plt.xlim(0, 1)
+        # ^^^^^^^^^^^^^^^^^^^^^^^^#
         graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
         self.ensure_all_figures_closed()
 
