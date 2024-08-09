@@ -461,7 +461,7 @@ def jam(doc: fitz.Document, page_num, severity: float):
     page.insert_image(page.rect, stream=bytestream)
 
 
-def stretch(page: fitz.Page, severity: float):
+def stretch(doc: fitz.Document, page_number: int, severity: float):
     """Stretch a page, expanding near the top and compressing near the bottom.
 
     The stretch works through non-linear shifting for the pixel in the
@@ -483,13 +483,14 @@ def stretch(page: fitz.Page, severity: float):
         page: the page to be stretched.
         severity: the severity of the stretch.
     """
+    page = get_page(doc, page_number)
     amplitude = 200 * severity
     pix = page.get_pixmap()
     pil_image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
     img = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
     height, width, _ = img.shape
 
-    img_output = np.zeros(img.shape)
+    img_output = np.zeros(img.shape, dtype=np.uint8)
     for x in range(width):
         for y in range(height):
             # *Period is set to 2* height, such that delta_y's sign is constant
@@ -499,8 +500,18 @@ def stretch(page: fitz.Page, severity: float):
             if (y + delta_y) < height and (y + delta_y) >= 0:
                 img_output[y, x] = img[(y + delta_y), x]
 
-    cv2.imwrite("output.png", img_output)
+    # Convert the numpy array back to a PIL Image
+    pil_image_output = Image.fromarray(img_output)
 
+    # Save the PIL image to a bytes buffer
+    img_byte_arr = io.BytesIO()
+    pil_image_output.save(img_byte_arr, format='PNG')
+    img_byte_arr.seek(0)
+
+    # Insert the image into the original page (overwriting the original content)
+    img_data = img_byte_arr.read()  # Read image data from the buffer
+    img_byte_arr.close()  # Close the buffer
+    page.insert_image(fitz.Rect(0, 0, width, height), stream=img_data)
 
 def detect_qr_code_area(corner: str, page: fitz.Page) -> fitz.Rect:
     """Detects a single QR code area based on the specified corner
@@ -592,7 +603,7 @@ def main():
     elif args.operation == "jam":
         jam(file, page_number - 1, args.severity)
     elif args.operation == "stretch":
-        stretch(pages[0], args.severity)
+        stretch(file, page_number, args.severity)
     elif args.operation == "hide":
         qr_area = detect_qr_code_area(args.corner, pages[0])
         qr_hide(pages[0], qr_area)
