@@ -22,4 +22,4 @@ from .soln_home import SolnHomeView
 from .soln_spec import SolnSpecView, TemplateSolnSpecView
 from .soln_sources import SolnSourcesView
 
-from .student_report import BuildStudentReportView
+from .student_report import StudentReportView
