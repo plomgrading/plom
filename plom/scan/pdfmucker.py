@@ -698,37 +698,37 @@ def main():
     # Perform the selected operation and add descriptive text
     if args.operation == "tear":
         tear_double_sided(pages, args.corner, args.severity, args.jaggedness)
-        add_operation_description(pages[0], "tear")
-        add_operation_description(pages[1], "tear")
+        add_operation_description(pages[0], "tear", corner=args.corner)
+        add_operation_description(pages[1], "tear", corner=args.corner)
     elif args.operation == "fold":
         fold_page(pages, args.corner, args.severity)
-        add_operation_description(pages[0], "fold")
-        add_operation_description(pages[1], "fold")
+        add_operation_description(pages[0], "fold", corner=args.corner)
+        add_operation_description(pages[1], "fold", corner=args.corner)
     elif args.operation == "rotate":
         rotate_page(file, page_number, args.severity)
     elif args.operation == "compress":
         compress(file, page_number - 1, args.severity)
-        add_operation_description(pages[0], "compress")
+        add_operation_description(pages[0], "compress", corner=None)
     elif args.operation == "lighten":
         lighten(file, page_number - 1, args.severity)
-        add_operation_description(pages[0], "lighten")
+        add_operation_description(pages[0], "lighten", corner=None)
     elif args.operation == "darken":
         darken(file, page_number - 1, args.severity)
-        add_operation_description(pages[0], "darken")
+        add_operation_description(pages[0], "darken", corner=None)
     elif args.operation == "jam":
         jam(file, page_number - 1, args.severity)
-        add_operation_description(pages[0], "jam")
+        add_operation_description(pages[0], "jam", corner=None)
     elif args.operation == "stretch":
         stretch(file, page_number, args.severity)
-        add_operation_description(pages[0], "stretch")
+        add_operation_description(pages[0], "stretch", corner=None)
     elif args.operation == "hide":
         qr_area = detect_qr_code_area(args.corner, pages[0])
         qr_hide(pages[0], qr_area)
-        add_operation_description(pages[0], "hide")
+        add_operation_description(pages[0], "hide", corner=args.corner)
     elif args.operation == "corrupt":
         qr_area = detect_qr_code_area(args.corner, pages[0])
         qr_corrupt(pages[0], qr_area)
-        add_operation_description(pages[0], "corrupt")
+        add_operation_description(pages[0], "corrupt", corner=None)
     elif args.operation == "obscure":
         obscure_qr_codes_in_paper(file)
     else:
