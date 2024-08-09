@@ -415,7 +415,7 @@ class DemoBundleCreationService:
             operation: the type of muck operation to do.
         """
         second_to_last_page = fitz.open(filepath).page_count - 1
-        corner = "top_right"
+        corner = "bottom_left"
 
         severity = max(random.random(), 0.9)
         cmd = f"python3 -m plom.scan.pdfmucker {filepath} {second_to_last_page} {operation} {corner} --severity={severity}"
