@@ -23,7 +23,6 @@ from plom import SpecVerifier
 from plom.create.mergeAndCodePages import create_QR_codes
 from plom.create.scribble_utils import scribble_name_and_id, scribble_pages
 from plom.scan.pdfmucker import PDFMuckerService
-import subprocess
 
 
 class DemoBundleCreationService:
