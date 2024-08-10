@@ -659,14 +659,15 @@ class PDFMuckerService:
         jaggedness: int = 2,
     ):
         """Muck a paper in the given path.
-        
+
         Args:
             filepath: the path to the pdf.
             page_number: the page number to be mucked.
             operation: mucking operation.
             corner: which corner to be mucked.
             severity: float from (0, 1) representing how severe is the mucking.
-            jaggedness: measure of jaggedness for tear operation."""
+            jaggedness: measure of jaggedness for tear operation.
+        """
         # Open file
         file = fitz.open(filepath)
 
