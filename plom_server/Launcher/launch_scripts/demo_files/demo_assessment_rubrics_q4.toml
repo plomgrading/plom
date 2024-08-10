@@ -69,3 +69,46 @@ username = "manager"
 question = 4
 versions = []
 parameters = [["{param1}", ["s", "year"]]]
+
+
+[[rubric]]
+kind = "relative"
+display_delta = "+1"
+value = 1
+out_of = 0
+text = "some initial progress"
+meta = "The student has made some minimal progress."
+username = "manager"
+question = 4
+
+[[rubric]]
+kind = "relative"
+display_delta = "+2
+value = 2
+out_of = 0
+text = "Correct set-up"
+meta = "The student has set up the problem correctly."
+username = "manager"
+question = 4
+
+[[rubric]]
+kind = "relative"
+display_delta = "-1"
+value = 1
+out_of = 0
+text = "small algebra error"
+meta = "The student has made minor algebra error"
+username = "manager"
+question = 4
+
+[[rubric]]
+kind = "relative"
+display_delta = "-1"
+value = 1
+out_of = 0
+text = "small arithmetic error"
+meta = "The student has made minor arithmetic error"
+username = "manager"
+question = 4
+
+
