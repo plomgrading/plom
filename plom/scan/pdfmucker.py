@@ -20,68 +20,6 @@ import os
 
 class PDFMuckerService:
 
-    def get_parser(self) -> argparse.ArgumentParser:
-        """Returns the argument parser used to parse command line input.
-
-        Returns:
-            argparse.ArgumentParser: ArgumentParser used to parse input.
-        """
-        parser = argparse.ArgumentParser(
-            prog="pdf-mucker", description="Simulate PDF Scanning Errors."
-        )
-
-        parser.add_argument(
-            "filename",
-            nargs="?",
-            type=str,
-            help='File to be "mucked" or name of output file if mucker is used to generate file.',
-        )
-        parser.add_argument("page", type=int, nargs="?", help="Page number to muck.")
-        parser.add_argument(
-            "operation",
-            choices=[
-                "tear",
-                "fold",
-                "rotate",
-                "compress",
-                "jam",
-                "hide",
-                "corrupt",
-                "stretch",
-                "lighten",
-                "darken",
-                "obscure",
-                "generate_dummy_pdf",
-            ],
-            help="Type of operation to perform.",
-        )
-        parser.add_argument(
-            "corner",
-            nargs="?",
-            choices=["top_left", "top_right", "bottom_left", "bottom_right"],
-            help="Corner to target for tear, fold, hide, or cover.",
-        )
-        parser.add_argument(
-            "--severity",
-            type=float,
-            default=0.5,
-            help="Severity of the operation (0.0 to 1.0, default 0.5).",
-        )
-        parser.add_argument(
-            "--jaggedness", type=int, default=2, help="Jaggedness of the tear."
-        )
-
-        return parser
-
-    def validate_args(self, args):
-        """Ensure that corner is provided for operation in [tear, fold, hide, cover].
-
-        Raises:
-            ValueError: if the operation is set, but corner is not provided.
-        """
-        if operation in ["tear", "fold", "hide", "cover"] and corner is None:
-            raise ValueError(f"The corner argument is required for {operation}.")
-
     def get_page(self, file: fitz.Document, page_number: int) -> fitz.Page:
         """Get a page from the document.
 
