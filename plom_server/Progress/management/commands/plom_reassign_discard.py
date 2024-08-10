@@ -6,9 +6,9 @@ from __future__ import annotations
 
 from django.core.management.base import BaseCommand, CommandError
 
-from Progress.services import ManageDiscardService
-from Papers.services import SpecificationService
 from plom.scan.question_list_utils import check_question_list
+from Papers.services import SpecificationService
+from ..services import ManageDiscardService
 
 
 class Command(BaseCommand):
