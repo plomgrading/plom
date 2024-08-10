@@ -22,6 +22,7 @@ from django.conf import settings
 from plom import SpecVerifier
 from plom.create.mergeAndCodePages import create_QR_codes
 from plom.create.scribble_utils import scribble_name_and_id, scribble_pages
+from plom.scan.pdfmucker import PDFMuckerService
 import subprocess
 
 
@@ -407,7 +408,7 @@ class DemoBundleCreationService:
         return duplicates_dict
 
     def muck_paper(self, filepath: str, operation: str) -> None:
-        """Muck a paper that randomly choses mucker from pdfmucker.py.
+        """Muck a paper from the given filepath with the given operation.
 
         Args:
             filepath: path to the file to be mucked.
@@ -417,8 +418,17 @@ class DemoBundleCreationService:
         corner = "bottom_left"
 
         severity = 0.8
-        cmd = f"python3 -m plom.scan.pdfmucker {filepath} {second_to_last_page} {operation} {corner} --severity={severity}"
-        subprocess.check_call(cmd.split())
+        jaggedness = 2
+        # cmd = f"python3 -m plom.scan.pdfmucker {filepath} {second_to_last_page} {operation} {corner} --severity={severity}"
+        # subprocess.check_call(cmd.split())
+        PDFMuckerService().muck_paper(
+            filepath=filepath,
+            page_number=second_to_last_page,
+            operation=operation,
+            corner=corner,
+            severity=severity,
+            jaggedness=jaggedness,
+        )
         print("Mucking Operation: ", operation)
 
     def scribble_to_create_bundle(
