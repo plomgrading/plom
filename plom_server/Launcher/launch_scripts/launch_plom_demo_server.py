@@ -494,7 +494,7 @@ def run_the_randomarker(*, port):
 
     randomarker_processes = []
     for X in users[1:]:
-        cmd = f"python3 -m plom.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial {X[2]}"
+        cmd = f"python3 -m plom.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial {X[2]} --download-rubrics"
         print(f"RandoMarking!  calling: {cmd}")
         randomarker_processes.append(subprocess.Popen(split(cmd)))
         sleep(0.5)
