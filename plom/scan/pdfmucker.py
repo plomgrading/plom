@@ -666,7 +666,8 @@ class PDFMuckerService:
             operation: mucking operation.
             corner: which corner to be mucked.
             severity: float from (0, 1) representing how severe is the mucking.
-            jaggedness: measure of jaggedness for tear operation."""
+            jaggedness: measure of jaggedness for tear operation.
+        """
         # Open file
         file = fitz.open(filepath)
 
