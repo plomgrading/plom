@@ -17,7 +17,7 @@ from django_htmx.http import HttpResponseClientRedirect
 from Papers.services import SpecificationService
 from Base.base_group_views import ManagerRequiredView
 from Rectangles.services import get_reference_rectangle, RectangleExtractor
-from ..services import IDReaderService, IDProgressService
+from .services import IDReaderService, IDProgressService
 
 
 class IDPredictionView(ManagerRequiredView):

@@ -8,7 +8,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from plom.scan.question_list_utils import check_question_list
 from Papers.services import SpecificationService
-from ..services import ManageDiscardService
+from ...services import ManageDiscardService
 
 
 class Command(BaseCommand):

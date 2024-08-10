@@ -6,7 +6,7 @@ from tabulate import tabulate
 
 from django.core.management.base import BaseCommand, CommandError
 
-from ..services import ManageScanService
+from ...services import ManageScanService
 
 
 class Command(BaseCommand):

@@ -6,7 +6,7 @@ from typing import Union
 
 from django.core.management.base import BaseCommand, CommandError
 
-from ..services import ManageDiscardService
+from ...services import ManageDiscardService
 
 
 class Command(BaseCommand):

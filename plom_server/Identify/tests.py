@@ -20,8 +20,8 @@ from django.db import IntegrityError
 from model_bakery import baker
 
 from Papers.models import Paper, Image, IDPage
-from ..services import IdentifyTaskService, IDProgressService, IDDirectService
-from ..models import PaperIDTask, PaperIDAction
+from .services import IdentifyTaskService, IDProgressService, IDDirectService
+from .models import PaperIDTask, PaperIDAction
 
 
 class IdentifyTaskTests(TestCase):
