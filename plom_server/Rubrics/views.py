@@ -28,17 +28,17 @@ from Base.base_group_views import ManagerRequiredView
 from Base.models import SettingsModel
 from Papers.services import SpecificationService
 from .services import RubricService
-from .forms import RubricAdminForm, RubricDiffForm, RubricWipeForm, RubricUploadForm
-from .forms import RubricFilterForm, RubricEditForm, RubricDownloadForm
 from .forms import (
     RubricAdminForm,
     RubricDemoAdminForm,
     RubricDiffForm,
     RubricWipeForm,
     RubricFilterForm,
+    RubricUploadForm,
     RubricDownloadForm,
     RubricItemForm,
 )
+from .models import RubricTable
 
 
 class RubricAdminPageView(ManagerRequiredView):
