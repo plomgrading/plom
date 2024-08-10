@@ -659,7 +659,7 @@ class PDFMuckerService:
         jaggedness: int = 2,
     ):
         """Muck a paper in the given path.
-        
+
         Args:
             filepath: the path to the pdf.
             page_number: the page number to be mucked.
