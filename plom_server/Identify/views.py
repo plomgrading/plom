@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
 from __future__ import annotations
 
@@ -14,12 +15,11 @@ from django.http import (
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect
+
 from Papers.services import SpecificationService
-
 from Base.base_group_views import ManagerRequiredView
-
-from Identify.services import IDReaderService, IDProgressService
 from Rectangles.services import get_reference_rectangle, RectangleExtractor
+from ..services import IDReaderService, IDProgressService
 
 
 class IDPredictionView(ManagerRequiredView):
