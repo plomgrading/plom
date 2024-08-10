@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth import get_user_model
+
 from Papers.services import SpecificationService
 from Papers.models.specifications import SpecQuestion
-from QuestionTags.services import QuestionTagService
-from QuestionTags.models import PedagogyTag, QuestionTagLink
+from ...services import QuestionTagService
+from ...models import PedagogyTag, QuestionTagLink
 
 
 class Command(BaseCommand):

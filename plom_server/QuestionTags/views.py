@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
+
+import csv
 
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import redirect, get_object_or_404
@@ -10,11 +13,10 @@ from django.db.utils import IntegrityError
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
-from QuestionTags.services import QuestionTagService
+from .services import QuestionTagService
 from .models import TmpAbstractQuestion, PedagogyTag
 from .forms import AddTagForm, RemoveTagForm
 from plom.tagging import plom_valid_tag_text_description
-import csv
 
 
 class QTagsLandingView(ListView, ManagerRequiredView):
