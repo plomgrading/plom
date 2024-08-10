@@ -6,7 +6,7 @@
 
 from django.urls import path
 
-from API.views import (
+from ..views import (
     IDprogressCount,
     IDgetDoneTasks,
     IDgetNextTask,
