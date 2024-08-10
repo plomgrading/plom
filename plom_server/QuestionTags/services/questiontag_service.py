@@ -5,8 +5,6 @@
 
 from __future__ import annotations
 
-from typing import List
-
 from django.contrib.auth.models import User
 from django.db.utils import IntegrityError
 from django.db import transaction
@@ -24,7 +22,7 @@ class QuestionTagService:
 
     @staticmethod
     def add_question_tag_link(
-        question_index: int, tag_names: List[str], user_obj: User
+        question_index: int, tag_names: list[str], user_obj: User
     ) -> None:
         """Add a question tag to the database.
 
