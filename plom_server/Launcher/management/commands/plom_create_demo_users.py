@@ -36,7 +36,6 @@ class Command(BaseCommand):
         manager_group = Group.objects.get(name="manager")
         marker_group = Group.objects.get(name="marker")
         scanner_group = Group.objects.get(name="scanner")
-        demo_group = Group.objects.get(name="demo")
         user_info: dict[str, list[str]] = {"Username": [], "Password": [], "Group": []}
 
         # Here is to create a single demo admin user
@@ -52,7 +51,7 @@ class Command(BaseCommand):
                 password=password,
                 is_staff=True,
                 is_superuser=True,
-            ).groups.add(admin_group, demo_group)
+            ).groups.add(admin_group)
             self.stdout.write(
                 f"User {username} created and added to {admin_group} group"
             )
@@ -89,13 +88,14 @@ class Command(BaseCommand):
             try:
                 User.objects.create_user(
                     username=username, email=email, password=password
-                ).groups.add(manager_group, demo_group)
+                ).groups.add(manager_group, scanner_group)
                 self.stdout.write(
                     f"User {username} created and added to {manager_group} group"
                 )
                 user_info["Username"].append(username)
                 user_info["Password"].append(password)
                 user_info["Group"].append(manager_group)
+                user_info["Group"].append(scanner_group)
             except IntegrityError as err:
                 self.stderr.write(f"{username} already exists!")
                 raise CommandError(err)
@@ -111,7 +111,7 @@ class Command(BaseCommand):
                 user = User.objects.create_user(
                     username=username, email=email, password=password
                 )
-                user.groups.add(scanner_group, demo_group)
+                user.groups.add(scanner_group)
                 user.is_active = True
                 user.save()
 
@@ -133,7 +133,7 @@ class Command(BaseCommand):
                 user = User.objects.create_user(
                     username=username, email=email, password=password
                 )
-                user.groups.add(marker_group, demo_group)
+                user.groups.add(marker_group)
                 user.is_active = True
                 user.save()
 

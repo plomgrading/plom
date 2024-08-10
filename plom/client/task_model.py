@@ -135,17 +135,12 @@ class MarkerExamModel(QStandardItemModel):
             KeyError: already have a task matching that task_id_str.
         """
         try:
-            r = self._findTask(task_id_str)
+            # raise a KeyError if we already have this task.
+            _ = self._findTask(task_id_str)
+            raise KeyError(f"We already have task {task_id_str} in the table at r={_}.")
         except ValueError as e:
             assert "not found" in str(e), f"Oh my, unexpected stuff: {e}"
             pass
-        else:
-            raise KeyError(f"We already have task {task_id_str} in the table at r={r}.")
-
-        # if you can't find the task then append the new
-        # one at the end of the table, so set r appropriately.
-        print("Ask Colin about this when he comes back from canoeing.")
-        r = self.rowCount()
 
         # some processes might use -1 for unmarked papers
         if mark is not None and mark < 0:
@@ -169,7 +164,7 @@ class MarkerExamModel(QStandardItemModel):
                 QStandardItem(integrity_check),
             ]
         )
-        return r
+        return self.rowCount() - 1
 
     def modify_task(
         self,
