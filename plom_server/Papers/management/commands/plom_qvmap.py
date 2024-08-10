@@ -70,7 +70,7 @@ class Command(BaseCommand):
         else:
             self.stdout.write("Database is not yet ready")
 
-    def build_papers(
+    def build_db_of_papers(
         self, *, number_to_produce: int | None = None, first: int | None = 1
     ) -> None:
         """Create a version map and use it to populate the database with papers."""
@@ -145,7 +145,7 @@ class Command(BaseCommand):
         if options["command"] == "status":
             self.papers_status()
         elif options["command"] == "build_db":
-            self.build_papers(
+            self.build_db_of_papers(
                 number_to_produce=options["number_to_produce"],
                 first=options["first_paper"],
             )
@@ -156,4 +156,4 @@ class Command(BaseCommand):
         elif options["command"] == "clear":
             self.clear_papers()
         else:
-            self.print_help("manage.py", "plom_papers")
+            self.print_help("manage.py", "plom_qvmap")

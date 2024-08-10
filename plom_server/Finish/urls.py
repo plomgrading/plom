@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024 Andrew Rechnitzer
 
 from django.urls import path
 
@@ -9,6 +10,7 @@ from .views import (
     MarkingInformationView,
     MarkingInformationPaperView,
     ReassemblePapersView,
+    StudentReportView,
     StartOneReassembly,
     StartAllReassembly,
     CancelQueuedReassembly,
@@ -20,7 +22,6 @@ from .views import (
     StartAllBuildSoln,
     StartOneBuildSoln,
     CancelQueuedBuildSoln,
-    BuildStudentReportView,
 )
 
 
@@ -53,6 +54,11 @@ urlpatterns = [
         CancelQueuedReassembly.as_view(),
         name="reassemble_cancel_queued",
     ),
+    path(
+        "student_report/<int:paper_number>",
+        StudentReportView.as_view(),
+        name="get_student_report",
+    ),
     path("solutions/home", SolnHomeView.as_view(), name="soln_home"),
     path("solutions/spec", SolnSpecView.as_view(), name="soln_spec"),
     path(
@@ -77,15 +83,5 @@ urlpatterns = [
         "build_soln/queued",
         CancelQueuedBuildSoln.as_view(),
         name="build_soln_cancel_queued",
-    ),
-    path(
-        "build_student_report/",
-        BuildStudentReportView.as_view(),
-        name="build_student_report",
-    ),
-    path(
-        "build_student_report/build_all_reports/",
-        BuildStudentReportView.build_all,
-        name="build_all_reports",
     ),
 ]
