@@ -6,7 +6,6 @@
 """Command Line Tool to simulate PDF errors while scanning."""
 
 from typing import List, Optional
-import argparse
 import fitz  # PyMuPDF
 import random
 from PIL import Image, ImageEnhance
@@ -15,7 +14,6 @@ import cv2
 import math
 import numpy as np
 import tempfile
-import os
 
 
 class PDFMuckerService:
