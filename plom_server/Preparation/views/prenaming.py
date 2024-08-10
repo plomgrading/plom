@@ -8,10 +8,9 @@ from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect
 from django.contrib import messages
 
-from Base.base_group_views import ManagerRequiredView
-
-from Preparation.services import PrenameSettingService
 from plom.plom_exceptions import PlomDependencyConflict
+from Base.base_group_views import ManagerRequiredView
+from ..services import PrenameSettingService
 
 
 class PrenamingView(ManagerRequiredView):
