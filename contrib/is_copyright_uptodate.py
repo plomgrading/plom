@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 
@@ -15,12 +15,12 @@ in some cases, maybe they have to be like that!
 import re
 from pathlib import Path
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
-year = datetime.utcnow().year
+year = datetime.now(timezone.utc).year
 p = re.compile(f".*Copyright.*{year}.*")
 p2 = re.compile(".*Copyright.*")
-re_alt = re.compile(".*creativecommons.org/licenses/.*")
+re_alt = re.compile(".*creativecommons.org/(licenses|publicdomain)/.*")
 
 # Some files don't have copyright info: can consider whether this is ok,
 # but for now we can avoid hearing about them by listing globs:

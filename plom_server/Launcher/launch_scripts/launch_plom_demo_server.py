@@ -137,11 +137,13 @@ def set_argparse_and_get_args() -> argparse.Namespace:
 def run_django_manage_command(cmd) -> None:
     """Run the given command with 'python3 manage.py' and wait for return.
 
+    Command must finish successfully (zero return code).
+
     Args:
         cmd: the command to run.
     """
     full_cmd = "python3 manage.py " + cmd
-    subprocess.run(split(full_cmd))
+    subprocess.run(split(full_cmd), check=True)
 
 
 def popen_django_manage_command(cmd) -> subprocess.Popen:
@@ -272,13 +274,13 @@ def upload_demo_classlist(length="normal", prename=True):
 
 
 def populate_the_database(length="normal"):
-    """Use 'plom_papers' to build a qv-map for the demo and populate the database."""
+    """Use 'plom_qvmap' to build a qv-map for the demo and populate the database."""
     production = {"quick": 35, "normal": 70, "long": 600, "plaid": 1200}
     print(
         f"Building a question-version map and populating the database with {production[length]} papers"
     )
     run_django_manage_command(
-        f"plom_papers build_db -n {production[length]} --first-paper 1"
+        f"plom_qvmap build_db -n {production[length]} --first-paper 1"
     )
     print("Paper database is now populated")
 
@@ -287,11 +289,11 @@ def build_all_papers_and_wait():
     """Trigger build all the printable paper pdfs and wait for completion."""
     from time import sleep
 
-    run_django_manage_command("plom_build_papers --start-all")
+    run_django_manage_command("plom_build_paper_pdfs --start-all")
     # since this is a background huey job, we need to
     # wait until all those pdfs are actually built -
-    # we can get that by looking at output from plom_build_papers --status
-    pdf_status_cmd = "python3 manage.py plom_build_papers --count-done"
+    # we can get that by looking at output from plom_build_paper_pdfs --status
+    pdf_status_cmd = "python3 manage.py plom_build_paper_pdfs --count-done"
     while True:
         out_papers = subprocess.check_output(split(pdf_status_cmd)).decode("utf-8")
         if "all" in out_papers.casefold():
@@ -303,8 +305,8 @@ def build_all_papers_and_wait():
 
 
 def download_zip() -> None:
-    """Use 'plom_build_papers' to download a zip of all paper-pdfs."""
-    run_django_manage_command("plom_build_papers --download-all")
+    """Use 'plom_build_paper_pdfs' to download a zip of all paper-pdfs."""
+    run_django_manage_command("plom_build_paper_pdfs --download-all")
     print("Downloaded a zip of all the papers")
 
 

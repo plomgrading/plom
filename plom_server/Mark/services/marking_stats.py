@@ -53,7 +53,7 @@ def score_histogram(score_list, max_score, min_score=0, bin_width=1):
     # remove placeholder right bin edge
     bins.pop()
 
-    return dict(zip(bins, bin_values))
+    return dict(zip(bins, list(map(int, bin_values))))
 
 
 class MarkingStatsService:

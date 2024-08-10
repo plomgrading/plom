@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
+# Copyright (C) 2024 Colin B. Macdonald
 
-from django.db import models
-from Base.models import Tag
 from django.contrib.auth.models import User
+from django.db import models
 from django.utils import timezone
+
+from Base.models import Tag
 
 """
 Abstract model for associating multiple tags with a question index.
@@ -18,6 +20,9 @@ class PedagogyTag(Tag):
     """Represents a tag with its description."""
 
     tag_name = models.TextField(unique=True)
+    confidential_info = models.TextField(
+        null=True, blank=True, default=""
+    )  # can be long
 
     def __str__(self):
         """Return the tag name."""

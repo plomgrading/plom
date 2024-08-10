@@ -14,13 +14,9 @@ from django.core.exceptions import (
 )
 from django.db import transaction, IntegrityError
 
-from Identify.models import (
-    PaperIDTask,
-    PaperIDAction,
-    IDPrediction,
-)
 from Papers.models import IDPage, Paper, Image
 from Papers.services import ImageBundleService
+from ..models import PaperIDTask, PaperIDAction, IDPrediction
 
 
 class IdentifyTaskService:

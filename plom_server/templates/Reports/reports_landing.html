@@ -85,18 +85,9 @@
     </div>
     <div class="card m-2">
         <div class="card-body">
-            <h5 class="card-title">Student Report</h5>
-            <p>Navigate to student report download page.</p>
-            {% csrf_token %}
-            <div class="row">
-                <div class="col-auto">
-                    {% if all_marked %}
-                        <a href="{% url 'build_student_report' %}" class="btn btn-primary">Build Report</a>
-                    {% else %}
-                        <a href="{% url 'build_student_report' %}" class="btn btn-warning">Build Report</a>
-                    {% endif %}
-                </div>
-            </div>
+            <h5 class="card-title">Student Reports</h5>
+            <p>Student reports are produced when papers are reassembled.</p>
+            <a class="btn btn-primary" href="{% url 'reassemble_pdfs' %}">go to reassembly page</a>
         </div>
     </div>
     <div class="card m-2">
