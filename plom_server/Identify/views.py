@@ -4,8 +4,6 @@
 
 from __future__ import annotations
 
-from typing import Dict
-
 from django.core.exceptions import MultipleObjectsReturned
 from django.http import (
     HttpRequest,
@@ -69,7 +67,7 @@ class IDPredictionHXDeleteView(ManagerRequiredView):
 
 
 class GetIDBoxRectangleView(ManagerRequiredView):
-    def get_id_box_context(self, region: None | Dict[str, float]) -> Dict:
+    def get_id_box_context(self, region: None | dict[str, float]) -> dict:
         context = self.build_context()
         id_page_number = SpecificationService.get_id_page_number()
         context.update({"page_number": id_page_number})
