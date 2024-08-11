@@ -50,6 +50,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
     * bundles-pushed = those bundles are "pushed" so that they can be graded.
     * rubrics = system and demo rubrics are created for marking.
     * qtags = demo question-tags are created.
+    * auto-id = run the auto-id-reader
     * randomarking = several rando-markers are run in parallel to leave comments and annotations on student work. Random ID-ing of papers is also done.
     * tagging = (future/not-yet-implemented) = pedagogy tags will be applied to questions to label them with learning goals.
     * spreadsheet = a marking spreadsheet is downloaded.
@@ -99,7 +100,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         "bundles-pushed",
         "rubrics",
         "qtags",
-        "randomarking",
+        "auto-id" "randomarking",
         "tagging",
         "spreadsheet",
         "reassembly",
@@ -469,6 +470,11 @@ def run_demo_bundle_scan_commands(
     return True
 
 
+def run_the_auto_id_reader():
+    run_django_manage_command("plom_run_id_reader --run")
+    run_django_manage_command("plom_run_id_reader --wait")
+
+
 def run_the_randomarker(*, port):
     """Run the rando-IDer and rando-Marker.
 
@@ -546,6 +552,8 @@ def run_marking_commands(*, port: int, stop_after=None) -> bool:
 
     In order it runs:
         * (rubrics): Make system and demo rubrics.
+        * (qtags): Make and apply question/pedagogy-tags
+        * (auto-id): Run the auto id-reader and wait for its results
         * (randomarker): make random marking-annotations on papers and assign random student-ids.
 
     KWargs:
@@ -563,6 +571,10 @@ def run_marking_commands(*, port: int, stop_after=None) -> bool:
 
     create_and_link_question_tags()
     if stop_after == "qtags":
+        return False
+
+    run_the_auto_id_reader()
+    if stop_after == "auto-id":
         return False
 
     run_the_randomarker(port=args.port)
