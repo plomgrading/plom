@@ -2,6 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
 from __future__ import annotations
 
@@ -18,7 +19,7 @@ def run_django_manage_command(cmd: str) -> None:
         cmd: the command to run.
     """
     full_cmd = "python3 manage.py " + cmd
-    subprocess.run(split(full_cmd))
+    subprocess.run(split(full_cmd), check=True)
 
 
 def popen_django_manage_command(cmd: str) -> subprocess.Popen:
