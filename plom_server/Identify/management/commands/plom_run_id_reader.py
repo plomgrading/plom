@@ -21,7 +21,7 @@ class Command(BaseCommand):
         # note that this rectangle is stated [0,1] coords relative to qr-code positions
         region = None  # we are not specifying a region to search.
         initial_rectangle = rex.get_largest_rectangle_contour(region)
-        self.stdout.write("Found id box rectangle at = ", initial_rectangle)
+        self.stdout.write(f"Found id box rectangle at = {initial_rectangle}")
         return initial_rectangle
 
     def run_the_reader(self, user_obj, rectangle):
