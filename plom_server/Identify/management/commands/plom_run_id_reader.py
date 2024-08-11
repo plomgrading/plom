@@ -2,11 +2,11 @@
 # Copyright (C) 2024 Andrew Rechnitzer
 
 from django.contrib.auth import get_user_model
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.core.exceptions import MultipleObjectsReturned
 
 from Identify.services import IDReaderService
-from Rectangles.services import get_reference_rectangle, RectangleExtractor
+from Rectangles.services import RectangleExtractor
 from Papers.services import SpecificationService
 
 from time import sleep
