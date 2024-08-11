@@ -14,7 +14,7 @@ import time
 
 
 # how to run django commands
-django_cmd_prefix = "python manage.py"
+django_cmd_prefix = "python3 manage.py"
 # django_cmd_prefix = "django-admin"
 
 
