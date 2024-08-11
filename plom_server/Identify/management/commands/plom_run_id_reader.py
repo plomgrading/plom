@@ -41,7 +41,7 @@ class Command(BaseCommand):
             raise CommandError("The ID reader is already running.")
 
     def delete_ID_predictions(self):
-        self.stdout.write("Deleteing all MLLAP and MLGreedy ID predictions.")
+        self.stdout.write("Deleting all MLLAP and MLGreedy ID predictions.")
         IDReaderService().delete_ID_predictions("MLLAP")
         IDReaderService().delete_ID_predictions("MLGreedy")
 
