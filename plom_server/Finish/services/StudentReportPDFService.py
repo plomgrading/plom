@@ -80,9 +80,11 @@ def pdf_builder(
     if verbose:
         print("Histogram of total marks.")
     histogram_of_grades = mpls.histogram_of_total_marks(highlighted_sid=sid)
-    # TODO - don't generate the lollypop graph is there are no pedagogy tags
+    qtags_lollypop_graph = None
     if sid is not None:
-        qtags_lollypop_graph = mpls.lollypop_of_pedagogy_tags(paper_number, sid)
+        if QuestionTagService.are_there_question_tag_links():
+            # don't generate the lollypop graph is there are no pedagogy tags
+            qtags_lollypop_graph = mpls.lollypop_of_pedagogy_tags(paper_number, sid)
 
     # histogram of grades for each question
     histogram_of_grades_q = []
@@ -141,7 +143,7 @@ def pdf_builder(
     <h3>Histogram of total marks</h3>
     <img src="data:image/png;base64,{histogram_of_grades}" />
     """
-    if sid is not None and QuestionTagService.are_there_question_tag_links():
+    if qtags_lollypop_graph:
         html += _html_add_title("Lollypop of qtags")
         html += f"""
         <img src="data:image/png;base64,{qtags_lollypop_graph}" />
