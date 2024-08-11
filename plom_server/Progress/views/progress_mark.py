@@ -12,7 +12,7 @@ from Base.base_group_views import (
 
 from Papers.services import SpecificationService
 from Mark.services import MarkingStatsService
-from Progress.services import ProgressOverviewService
+from ..services import ProgressOverviewService
 
 
 class ProgressMarkHome(MarkerLeadMarkerOrManagerView):

@@ -8,8 +8,7 @@ from django.test import TestCase
 from model_bakery import baker
 
 from Papers.models import Image, FixedPage, MobilePage, Bundle, Paper
-
-from Progress.services import ManageScanService
+from ..services import ManageScanService
 
 
 class ManageScanServiceTests(TestCase):

@@ -13,11 +13,10 @@ from django.db import transaction
 from django_huey import db_task
 
 from plom.plom_exceptions import PlomDatabaseCreationError
-from Papers.services import SpecificationService
 from Preparation.services.preparation_dependency_service import (
     assert_can_modify_qv_mapping_database,
 )
-
+from ..services import SpecificationService
 from ..models import (
     Paper,
     IDPage,

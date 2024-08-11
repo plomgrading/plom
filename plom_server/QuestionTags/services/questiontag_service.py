@@ -1,17 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Andrew Rechnitzer
-
+# Copyright (C) 2024 Colin B. Macdonald
 
 from __future__ import annotations
-from typing import List
 
 from django.contrib.auth.models import User
 from django.db.utils import IntegrityError
 from django.db import transaction
 
-from QuestionTags.models import TmpAbstractQuestion, PedagogyTag, QuestionTagLink
 from plom.tagging import is_valid_tag_text
+from ..models import TmpAbstractQuestion, PedagogyTag, QuestionTagLink
 
 
 class QuestionTagService:
@@ -23,7 +22,7 @@ class QuestionTagService:
 
     @staticmethod
     def add_question_tag_link(
-        question_index: int, tag_names: List[str], user_obj: User
+        question_index: int, tag_names: list[str], user_obj: User
     ) -> None:
         """Add a question tag to the database.
 

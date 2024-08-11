@@ -9,8 +9,11 @@ from model_bakery import baker
 
 from django.contrib.auth.models import User
 
-from Papers.services import ImageBundleService, SpecificationService
-from Papers.models import (
+from Scan.models import StagingImage, StagingBundle, KnownStagingImage
+from Preparation.services import PapersPrinted
+from Preparation.models import StagingPQVMapping
+from ..services import ImageBundleService, SpecificationService
+from ..models import (
     Bundle,
     Image,
     Paper,
@@ -19,9 +22,6 @@ from Papers.models import (
     QuestionPage,
     MobilePage,
 )
-from Scan.models import StagingImage, StagingBundle, KnownStagingImage
-from Preparation.services import PapersPrinted
-from Preparation.models import StagingPQVMapping
 
 
 class ImageBundleTests(TestCase):
