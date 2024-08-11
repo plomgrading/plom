@@ -26,15 +26,26 @@ All these eventually require verification by a human.
 Running the auto-identifier
 ---------------------------
 
-This will only work if your test uses our ``idBox`` template because
+This will only work if your assessment uses our ``idBox`` template because
 the code first looks for the outer bold rectangle and then tries to locate
 the 8 digits of the student number, based on known locations inside that
 larger box.
 
-Currently, the django-server requires command line access to run
-the autoidentifier.  TODO: xref here once those tools are in the docs
-Tracking issue for running this via the web
-UI: `Issue #2990 <https://gitlab.com/plom/plom/-/issues/2990>`_.
+To run the auto-identifier, locate it under "ID Progress" in the Plom
+web interface.
+
+..
+    TODO: xref to the `plom_server.Identify` app later, assuming those
+    top-level apps show up in the docs in a meaningful way.
+    I don't really want these docs to describe exactly what to click on
+    the webpage b/c I'd prefer the webpage be self-documenting.
+
+Note that by default a human will still need to confirm the
+machine-read predictions.
+
+.. tip::
+   You can re-run the ID predictor at anytime, such as after confirming
+   some of the IDs manually.
 
 
 Running the auto-identifier (legacy server)

@@ -22,7 +22,7 @@ from django.db.models import QuerySet
 from Scan.models import StagingImage, StagingBundle
 
 from Preparation.services import PapersPrinted
-from Papers.models import (
+from ..models import (
     Bundle,
     Image,
     DiscardPage,
