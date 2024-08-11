@@ -22,8 +22,11 @@ else:
 # we specify this directory relative to the plom_server
 # root directory, rather than getting Django things up and
 # running, just to get at these useful files.
-
 demo_file_directory = Path("./Launcher/launch_scripts/demo_files/")
+
+# how to run django commands
+django_cmd_prefix = "python manage.py"
+# django_cmd_prefix = "django-admin"
 
 
 def wait_for_user_to_type_quit() -> None:
@@ -133,19 +136,19 @@ def set_argparse_and_get_args() -> argparse.Namespace:
 
 
 def run_django_manage_command(cmd) -> None:
-    """Run the given command with 'python3 manage.py' and wait for return.
+    """Run the given Django command and wait for return.
 
     Command must finish successfully (zero return code).
 
     Args:
         cmd: the command to run.
     """
-    full_cmd = "python3 manage.py " + cmd
+    full_cmd = django_cmd_prefix + " " + cmd
     subprocess.run(split(full_cmd), check=True)
 
 
 def popen_django_manage_command(cmd) -> subprocess.Popen:
-    """Run the given command with 'python3 manage.py' using process Popen and return a handle to the process.
+    """Run the given Django command using a process Popen and return a handle to the process.
 
     Args:
         cmd: the command to run.
@@ -162,7 +165,7 @@ def popen_django_manage_command(cmd) -> subprocess.Popen:
             the process is still running at any later time; such is
             the nature of inter-process communication.
     """
-    full_cmd = "python3 manage.py " + cmd
+    full_cmd = django_cmd_prefix + " " + cmd
     return subprocess.Popen(split(full_cmd))
 
 
@@ -301,7 +304,7 @@ def build_all_papers_and_wait():
     # since this is a background huey job, we need to
     # wait until all those pdfs are actually built -
     # we can get that by looking at output from plom_build_paper_pdfs --status
-    pdf_status_cmd = "python3 manage.py plom_build_paper_pdfs --count-done"
+    pdf_status_cmd = django_cmd_prefix + " plom_build_paper_pdfs --count-done"
     while True:
         out_papers = subprocess.check_output(split(pdf_status_cmd)).decode("utf-8")
         if "all" in out_papers.casefold():

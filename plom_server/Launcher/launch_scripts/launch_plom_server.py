@@ -13,18 +13,23 @@ import subprocess
 import time
 
 
+# how to run django commands
+django_cmd_prefix = "python manage.py"
+# django_cmd_prefix = "django-admin"
+
+
 def run_django_manage_command(cmd: str) -> None:
-    """Run the given command with 'python3 manage.py' and waits for return.
+    """Run the given Django command and wait for return.
 
     Args:
         cmd: the command to run.
     """
-    full_cmd = "python3 manage.py " + cmd
+    full_cmd = django_cmd_prefix + " " + cmd
     subprocess.run(split(full_cmd), check=True)
 
 
 def popen_django_manage_command(cmd: str) -> subprocess.Popen:
-    """Run the given command with 'python3 manage.py' using process Popen and return a handle to the process.
+    """Run the given Django command using a process Popen and return a handle to the process.
 
     Args:
         cmd: the command to run.
@@ -41,7 +46,7 @@ def popen_django_manage_command(cmd: str) -> subprocess.Popen:
             the process is still running at any later time; such is
             the nature of inter-process communication.
     """
-    full_cmd = "python3 manage.py " + cmd
+    full_cmd = django_cmd_prefix + " " + cmd
     return subprocess.Popen(split(full_cmd))
 
 
