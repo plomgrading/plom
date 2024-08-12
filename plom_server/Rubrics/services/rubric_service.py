@@ -291,7 +291,10 @@ class RubricService:
         return _Rubric_to_dict(rubric_obj)
 
     def _generate_display_delta(
-        self, value: int | float, kind: str, out_of: int | float | None = None
+        self,
+        value: int | float | str,
+        kind: str,
+        out_of: int | float | str | None = None,
     ) -> str:
         """Generate the display delta for a rubric.
 
