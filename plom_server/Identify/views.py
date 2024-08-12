@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
 from __future__ import annotations
-
-from typing import Dict
 
 from django.core.exceptions import MultipleObjectsReturned
 from django.http import (
@@ -14,12 +13,11 @@ from django.http import (
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect
+
 from Papers.services import SpecificationService
-
 from Base.base_group_views import ManagerRequiredView
-
-from Identify.services import IDReaderService, IDProgressService
 from Rectangles.services import get_reference_rectangle, RectangleExtractor
+from .services import IDReaderService, IDProgressService
 
 
 class IDPredictionView(ManagerRequiredView):
@@ -69,7 +67,7 @@ class IDPredictionHXDeleteView(ManagerRequiredView):
 
 
 class GetIDBoxRectangleView(ManagerRequiredView):
-    def get_id_box_context(self, region: None | Dict[str, float]) -> Dict:
+    def get_id_box_context(self, region: None | dict[str, float]) -> dict:
         context = self.build_context()
         id_page_number = SpecificationService.get_id_page_number()
         context.update({"page_number": id_page_number})

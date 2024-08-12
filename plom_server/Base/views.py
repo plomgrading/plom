@@ -9,7 +9,8 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib import messages
 from django.views.generic import View
-from Base.base_group_views import ManagerRequiredView
+
+from .base_group_views import ManagerRequiredView
 from .forms import CompleteWipeForm
 from .services import big_red_button
 

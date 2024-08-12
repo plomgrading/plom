@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth import get_user_model
 from django.db.utils import IntegrityError
 
-from QuestionTags.services import QuestionTagService
+from ...services import QuestionTagService
 
 
 class Command(BaseCommand):

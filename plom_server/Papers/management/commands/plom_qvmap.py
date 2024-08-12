@@ -10,11 +10,10 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 
-from Papers.services import PaperCreatorService, PaperInfoService
-from Preparation.services import PQVMappingService
-
 from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 from plom.version_maps import version_map_from_file
+from Preparation.services import PQVMappingService
+from ...services import PaperCreatorService, PaperInfoService
 
 
 class Command(BaseCommand):

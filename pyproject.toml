@@ -192,6 +192,7 @@ plom-legacy-manager = "plom.manager.__main__:main"
 plom-finish = "plom.finish.__main__:main"
 plom-hwscan = "plom.scripts.hwscan:main"
 plom-solutions = "plom.solutions.__main__:main"
+# TODO: move to plom_server.Launcher... waiting on Issue #3377.
 plom-new-server = "plom.scripts.newserver:main"
 
 

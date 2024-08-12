@@ -7,9 +7,8 @@ from django.http import FileResponse, HttpRequest, HttpResponse, Http404
 from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ScannerLeadMarkerOrManagerView
-
 from Progress.services import ManageScanService, ManageDiscardService
-from Scan.services import hard_rotate_image_from_file_by_exif_and_angle
+from ..services import hard_rotate_image_from_file_by_exif_and_angle
 
 
 class PushedImageView(ScannerLeadMarkerOrManagerView):
