@@ -24,10 +24,11 @@ class PageCache:
         self._image_paths: dict[int, Path] = {}
         # self._image_md5 = {}
         self.basedir = Path(basedir)
+        log.info("Starting a new pagecache: %s", self.basedir)
 
     def wipe_cache(self) -> None:
         img_ids = list(self._image_paths.keys())
-        log.info("Erasing the pagecache of %d images", len(img_ids))
+        log.info("Erasing the pagecache of %d images: %s", len(img_ids), self.basedir)
         # carefully erase dict without iterating over it
         for img_id in img_ids:
             p = self._image_paths.pop(img_id)
