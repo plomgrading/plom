@@ -1196,8 +1196,9 @@ class BaseMessenger:
         """
         with self.SRmutex:
             try:
+                int_key = int(key)
                 response = self.patch(
-                    f"/MK/rubric/{key}",
+                    f"/MK/rubric/{int_key}",
                     json={
                         "user": self.user,
                         "token": self.token,
