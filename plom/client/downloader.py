@@ -222,17 +222,22 @@ class Downloader(QObject):
 
         Returns:
             bool: True if all threads finished or False if timeout reached.
+            In the False case, some cleanup tasks, such as removing files,
+            probably did not occur.  Feel free to try again.
         """
         self._stopping = True
         # first we clear the ones that haven't started
         self.clear_queue()
-        # TODO: maybe we should do this *after* waiting for the threadpool?
+        # then wait for timeout for the in-progress ones
+        if not self.threadpool.waitForDone(timeout):
+            return False
+        # all downloads cancelling/finished, we can start cleaning up
         self.pagecache.wipe_cache()
         if self._placeholder_image:
             self._placeholder_image.unlink()
             self._placeholder_image = None
-        # then wait for timeout for the in-progress ones
-        return self.threadpool.waitForDone(timeout)
+        self.detach_messenger()
+        return True
 
     def download_in_background_thread(
         self, row: dict[str, Any], priority: bool = False, _is_retry: bool = False
