@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2021 Andrew Rechnitzer
+# Copyright (C) 2020-2024 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2021 Elizabeth Xiao
@@ -90,6 +90,13 @@ def get_parser():
             Which version to mark.  If omitted, mark all of them.
         """,
     )
+    # whether to make own rubrics, or use ones in the system.
+    parser.add_argument(
+        "--download-rubrics",
+        action="store_true",
+        default=False,
+        help="Download rubrics from the server rather than creating own.",
+    )
     return parser
 
 
@@ -116,5 +123,6 @@ if __name__ == "__main__":
             partial=args.partial,
             question=args.question,
             version=args.version,
+            download_rubrics=args.download_rubrics,
         )
     )
