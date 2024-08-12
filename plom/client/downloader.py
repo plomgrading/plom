@@ -5,6 +5,8 @@
 
 """The background downloader downloads images using threads."""
 
+from __future__ import annotations
+
 import logging
 import random
 import sys
@@ -82,14 +84,15 @@ class Downloader(QObject):
     # emitted when queue lengths change (i.e., things enqueued)
     download_queue_changed = pyqtSignal(dict)
 
-    def __init__(self, basedir, *, msgr=None):
+    def __init__(self, basedir: str | Path, *, msgr: Messenger | None = None) -> None:
         """Initialize a new Downloader.
 
         Args:
-            basedir (pathlib.Path/str): a directory for the image cache.
+            basedir: a directory for the image cache.
 
         Keyword Args:
-            msgr (Messenger): used for communication with a Plom server.
+            msgr: used for communication with a Plom server, or None and
+                you can later call :method:`attach_messenger`.
                 Note Messenger is not multithreaded and blocks using
                 mutexes.  Here we make our own private clone so caller
                 can keep using their's.
@@ -111,9 +114,9 @@ class Downloader(QObject):
         self.threadpool = QThreadPool()
         # TODO: will this stop Marker from getting one?  It doesn't seem to...
         self.threadpool.setMaxThreadCount(2)
-        self._tries = {}
-        self._total_tries = {}
-        self._in_progress = {}
+        self._tries: dict[int, int] = {}
+        self._total_tries: dict[int, int] = {}
+        self._in_progress: dict[int, bool] = {}
         # it still counts as a fail if it eventually retried successfully
         self.number_of_fails = 0
         self.number_of_retries = 0
@@ -127,7 +130,7 @@ class Downloader(QObject):
         self._simulate_failure_rate = 33.0
         self._simulate_slow_net = (0.5, 3)
 
-    def attach_messenger(self, msgr):
+    def attach_messenger(self, msgr: Messenger) -> None:
         """Add/replace the current messenger."""
         self.msgr = Messenger.clone(msgr)
 
