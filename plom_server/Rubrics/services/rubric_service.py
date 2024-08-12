@@ -338,6 +338,7 @@ class RubricService:
         else:
             raise ValueError(f"Invalid kind: {kind}.")
 
+    @classmethod
     def get_rubrics_as_dicts(
         cls, *, question: int | None = None
     ) -> list[dict[str, Any]]:
