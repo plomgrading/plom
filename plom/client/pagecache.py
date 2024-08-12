@@ -25,6 +25,12 @@ class PageCache:
         # self._image_md5 = {}
         self.basedir = Path(basedir)
 
+    def wipe_cache(self) -> None:
+        log.info("Erasing the pagecache")
+        for img_id, path in self._image_paths:
+            log.debug("Erasing image id %d: %s", img_id, path)
+            path.unlink()
+
     def has_page_image(self, img_id: int) -> bool:
         r = self._image_paths.get(img_id, None)
         return r is not None
