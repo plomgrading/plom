@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Fixed crash on Windows pre-compiled binary.
+* Fixed prename box positioning.
 * Improved box-drag annotation rendering.
 * Misc fixes and documentation updates.
 
