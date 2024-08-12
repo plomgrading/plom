@@ -113,7 +113,7 @@ class RubricItemForm(forms.ModelForm):
 
     # Explicit IntegerField for value for now
     # TODO: Change this to a DecimalField when ready
-    value = forms.IntegerField(required=False)
+    value = forms.IntegerField(required=True)
 
     kind = forms.ChoiceField(
         choices=Rubric.RubricKind.choices,
