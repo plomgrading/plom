@@ -1,10 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
 
 """Tools for managing the local page cache."""
 
+from __future__ import annotations
+
 import logging
 from pathlib import Path
+from typing import Any
 
 
 log = logging.getLogger("PageCache")
@@ -16,27 +19,30 @@ class PageCache:
     TODO: record the time of caching
     """
 
-    def __init__(self, basedir):
+    def __init__(self, basedir: str | Path):
         super().__init__()
-        self._image_paths = {}
+        self._image_paths: dict[int, Path] = {}
         # self._image_md5 = {}
         self.basedir = Path(basedir)
 
-    def has_page_image(self, img_id):
+    def has_page_image(self, img_id: int) -> bool:
         r = self._image_paths.get(img_id, None)
         return r is not None
 
-    def how_many_cached(self):
+    def how_many_cached(self) -> int:
         return len(self._image_paths)
 
-    def page_image_path(self, img_id):
+    def page_image_path(self, img_id: int) -> Path:
         # TODO: document what happens if it doesn't exist?  Exception or None?
         return self._image_paths[img_id]
 
-    def set_page_image_path(self, img_id, f):
-        self._image_paths[img_id] = f
+    def set_page_image_path(self, img_id: int, f: str | Path) -> None:
+        # TODO: require Path only?
+        self._image_paths[img_id] = Path(f)
 
-    def update_from_someone_elses_downloads(self, pagedata):
+    def update_from_someone_elses_downloads(
+        self, pagedata: list[dict[str, Any]]
+    ) -> None:
         # hopefully temporary!
         # TODO: maybe check the md5sums since we didn't get it ourselves
         for r in pagedata:
