@@ -45,7 +45,7 @@ def _actually_compile_tex(filepath: Path) -> None:
 def compile_tex_str_to_filepath(tex_as_str: str, pdf_filepath: Path) -> None:
     # open and write to a temp-file
     tmp_tex_file = NamedTemporaryFile(
-        mode="w", suffix=".tex", dir=source_path.parent, delete=False
+        mode="w", suffix=".tex", dir=pdf_filepath.parent, delete=False
     )
     tmp_tex_file.write(tex_as_str)
     tmp_tex_file.close()
