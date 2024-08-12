@@ -7,15 +7,11 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 from shlex import split
 import subprocess
 import time
-
-
-# how to run django commands
-django_cmd_prefix = "python3 manage.py"
-# django_cmd_prefix = "django-admin"
 
 
 def run_django_manage_command(cmd: str) -> None:
@@ -24,7 +20,7 @@ def run_django_manage_command(cmd: str) -> None:
     Args:
         cmd: the command to run.
     """
-    full_cmd = django_cmd_prefix + " " + cmd
+    full_cmd = get_django_cmd_prefix() + " " + cmd
     subprocess.run(split(full_cmd), check=True)
 
 
@@ -46,16 +42,25 @@ def popen_django_manage_command(cmd: str) -> subprocess.Popen:
             the process is still running at any later time; such is
             the nature of inter-process communication.
     """
-    full_cmd = django_cmd_prefix + " " + cmd
+    full_cmd = get_django_cmd_prefix() + " " + cmd
     return subprocess.Popen(split(full_cmd))
 
 
 def confirm_run_from_correct_directory() -> None:
-    """Confirm the script is being run from the directory containing django's manage.py command."""
+    """Confirm appropriate env vars are set or the current directory contains Django's manage.py."""
+    if os.environ.get("DJANGO_SETTINGS_MODULE"):
+        return None
     if not Path("./manage.py").exists():
         raise RuntimeError(
             "This script needs to be run from the same directory as django's manage.py script."
         )
+
+
+def get_django_cmd_prefix() -> str:
+    """Return the basic command to be used to run Django commands."""
+    if os.environ.get("DJANGO_SETTINGS_MODULE"):
+        return "django-admin"
+    return "python3 manage.py"
 
 
 def pre_launch() -> None:
