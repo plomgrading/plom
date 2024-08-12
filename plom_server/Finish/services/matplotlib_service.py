@@ -100,6 +100,7 @@ class MatplotlibService:
             alpha=0.5,
             width=0.8,
             align="mid",
+            density=True,
         )
         # Overlay the student's score by highlighting the bar
         if highlighted_sid:
@@ -118,7 +119,7 @@ class MatplotlibService:
                     bar.set_linewidth(1.5)
         ax.set_title("Histogram of total marks")
         ax.set_xlabel("Total mark")
-        ax.set_ylabel("# of students")
+        ax.set_ylabel("Proportion of students")
         plt.grid(True, alpha=0.5)
 
         graph_bytes = self.get_graph_as_BytesIO(fig)
@@ -184,10 +185,10 @@ class MatplotlibService:
         maxmark = SpecificationService.get_question_mark(question_idx)
         bins = np.arange(maxmark + RANGE_BIN_OFFSET) - 0.5
 
-        ax.hist(plot_series, bins=bins, ec="black", alpha=0.5)
+        ax.hist(plot_series, bins=bins, ec="black", alpha=0.5, density=True)
         ax.set_title(f"Histogram of {qlabel} marks")
         ax.set_xlabel(f"{qlabel} mark")
-        ax.set_ylabel("# of students")
+        ax.set_ylabel("Proportion of students")
         if highlighted_sid:
             # Overlay the student's score by highlighting the bar
             df = self.des.get_student_data()

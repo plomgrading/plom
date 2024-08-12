@@ -12,7 +12,7 @@ This is a very very cut-down version of Annotator, and a command-line
 tool used to automate some random marking of papers.
 """
 
-__copyright__ = "Copyright (C) 2020-2023 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2020-2024 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
