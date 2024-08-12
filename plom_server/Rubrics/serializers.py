@@ -10,8 +10,6 @@ from Rubrics.models import Rubric
 from QuestionTags.serializers import PedagogyTagSerializer
 from django.contrib.auth.models import User
 
-from .models import Rubric
-
 
 class RubricSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
