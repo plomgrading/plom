@@ -1,6 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
 
+
+from tabulate import tabulate
+from time import sleep
+
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.core.exceptions import MultipleObjectsReturned
@@ -8,9 +12,6 @@ from django.core.exceptions import MultipleObjectsReturned
 from Identify.services import IDReaderService
 from Rectangles.services import RectangleExtractor
 from Papers.services import SpecificationService
-
-from time import sleep
-
 
 class Command(BaseCommand):
     """Commandline tool for running and managing the results of the ID-reader."""
@@ -56,6 +57,20 @@ class Command(BaseCommand):
             else:
                 break
 
+    def list_predictions(self):
+        all_predictions = IDReaderService().get_ID_predictions()
+        if not all_predictions:
+            self.stderr.write("No ID predictions")
+            return
+        rows = []
+        for pn, dat in all_predictions.items():
+            rows.append({'paper_number': pn})
+            rows[-1].update( {
+                X["predictor"]: (X["student_id"], X["certainty"]) for X in dat
+            })
+        self.stdout.write(tabulate(rows, headers="keys", tablefmt="simple_outline"))
+
+
     def add_arguments(self, parser):
         parser.add_argument(
             "--rectangle", action="store_true", help="Just get the ID-box rectangle"
@@ -66,6 +81,9 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--wait", action="store_true", help="Wait for any running ID-reader process"
+        )
+        parser.add_argument(
+            "--list", action="store_true", help="List any existing predictions"
         )
 
     def handle(self, *args, **kwargs):
@@ -82,6 +100,8 @@ class Command(BaseCommand):
         elif kwargs["run"]:
             the_id_box_rectangle = self.get_the_rectangle()
             self.run_the_reader(user_obj, the_id_box_rectangle)
+        elif kwargs["list"]:
+            self.list_predictions()
         elif kwargs["wait"]:
             self.wait_for_reader()
         elif kwargs["delete"]:
