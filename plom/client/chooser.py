@@ -316,8 +316,7 @@ class Chooser(QDialog):
         self.saveDetails()
         dl = getattr(self.Qapp, "downloader", None)
         if dl:
-            # TODO: do we just wait forever?
-            # TODO: Marker already tried to stop it: maybe never get here?
+            # TODO: do we really just wait forever?
             dl.stop(-1)
             dl.basedir.rmdir()
         self.logout()
