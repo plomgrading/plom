@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Aidan Murphy
 
 from __future__ import annotations
 
@@ -163,7 +164,7 @@ class AuthenticationServices:
 
         .. note::
 
-            The generated link follows the format: 'http://<domain>/reset/<uid>/<token>'.
+            The generated link follows the format: `http://<domain>/reset/<uid>/<token>`.
             Because you may have proxies between your server and the client, the
             URL can be influenced with the environment variables:
 

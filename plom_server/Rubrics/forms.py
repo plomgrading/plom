@@ -19,6 +19,10 @@ class RubricAdminForm(forms.Form):
     # )
 
 
+class RubricDemoAdminForm(forms.Form):
+    pass
+
+
 class RubricWipeForm(forms.Form):
     I_am_sure = forms.BooleanField()
     confirm_by_typing_the_short_name = forms.CharField()
@@ -106,6 +110,11 @@ class RubricItemForm(forms.ModelForm):
         widget=forms.Select(attrs={"onchange": "updateQuestion()"}),
         empty_value="",
     )
+
+    # Explicit IntegerField for value for now
+    # TODO: Change this to a DecimalField when ready
+    value = forms.IntegerField(required=False)
+
     kind = forms.ChoiceField(
         choices=Rubric.RubricKind.choices,
         initial=Rubric.RubricKind.ABSOLUTE,

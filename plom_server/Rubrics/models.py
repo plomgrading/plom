@@ -9,7 +9,7 @@
 
 import random
 from django.urls import reverse
-import django_tables2 as tables
+import django_tables2
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -179,15 +179,15 @@ class RubricPane(models.Model):
     data = models.JSONField(null=False, default=dict)
 
 
-class RubricTable(tables.Table):
+class RubricTable(django_tables2.Table):
     """Table class for displaying rubrics.
 
     More information on django-tables2 can be found at:
     https://django-tables2.readthedocs.io/en/latest
-
     """
 
-    key = tables.Column("Key", linkify=True)
+    key = django_tables2.Column("Key", linkify=True)
+    times_used = django_tables2.Column(verbose_name="# Used")
 
     class Meta:
         model = Rubric

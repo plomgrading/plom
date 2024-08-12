@@ -2,12 +2,15 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Colin B. Macdonald
 
 from rest_framework import serializers
 
 from Rubrics.models import Rubric
 from QuestionTags.serializers import PedagogyTagSerializer
 from django.contrib.auth.models import User
+
+from .models import Rubric
 
 
 class RubricSerializer(serializers.ModelSerializer):

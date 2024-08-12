@@ -53,6 +53,12 @@ class Command(BaseCommand):
                 raise CommandError(
                     "Cannot create a manager-user since the manager-group has not been created."
                 )
+            try:
+                scanner_group = Group.objects.get(name="scanner")
+            except ObjectDoesNotExist:
+                raise CommandError(
+                    "Cannot create a manager-user since the scanner-group has not been created."
+                )
 
             if User.objects.filter(groups__name="manager").exists():
                 raise CommandError(
@@ -60,7 +66,7 @@ class Command(BaseCommand):
                 )
 
             manager = User.objects.create_user(username=username, password=password)
-            manager.groups.add(manager_group)
+            manager.groups.add(manager_group, scanner_group)
             manager.save()
 
     def handle(self, *args, **options):

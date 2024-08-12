@@ -1,0 +1,68 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023-2024 Andrew Rechnitzer
+    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2024 Aden Chan
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Images discarded from bundles on push
+{% endblock title %}
+{% block page_heading %}
+    Images discarded from bundles on push
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="flex">
+        <a class="btn btn-primary" href="{% url 'scan_overview' %}">Bundle and paper overview</a>
+        <a class="btn btn-primary" href="{% url 'scan_list_complete' %}">Complete papers</a>
+        <a class="btn btn-primary" href="{% url 'scan_list_incomplete' %}">Incomplete papers</a>
+    </div>
+    <div class="card my-2">
+        <div class="card-body">
+            <div class="row">
+                <h5>Discarded images: {{ number_of_discards }}</h5>
+                <div class="col">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="overflow-auto" style="max-height:66vh;">
+                                <table class="table table-striped table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Bundle</th>
+                                            <th>Order</th>
+                                            <th>Reason</th>
+                                            <th>Discarded Image</th>
+                                            <th>Discard Key</th>
+                                        </tr>
+                                    </thead>
+                                    {% for disc in discards %}
+                                        <tr>
+                                            <td>{{ disc.bundle_name }}</td>
+                                            <td>{{ disc.order }}</td>
+                                            <td>{{ disc.reason }}</td>
+                                            <td>
+                                                <button hx-get="{% url 'pushed_img_wrap' disc.image %}"
+                                                        hx-target="#discardImageHere"
+                                                        hx-replace="innerHTML"
+                                                        class="btn btn-outline-primary">view</button>
+                                            </td>
+                                            <td>{{ disc.discard_pk }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col p-2 border" id="pushedDiscardFragment">
+                    <h6>Discarded image</h6>
+                    <div class="p-2"
+                         style="justify-content: center;
+                                display:flex;
+                                align-items:center"
+                         id="discardImageHere"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}

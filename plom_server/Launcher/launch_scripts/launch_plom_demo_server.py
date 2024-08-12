@@ -10,10 +10,8 @@ import argparse
 from pathlib import Path
 from shlex import split
 import subprocess
-
-
-# sigh.... python dependent import - sorry.
 import sys
+import time
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -137,11 +135,13 @@ def set_argparse_and_get_args() -> argparse.Namespace:
 def run_django_manage_command(cmd) -> None:
     """Run the given command with 'python3 manage.py' and wait for return.
 
+    Command must finish successfully (zero return code).
+
     Args:
         cmd: the command to run.
     """
     full_cmd = "python3 manage.py " + cmd
-    subprocess.run(split(full_cmd))
+    subprocess.run(split(full_cmd), check=True)
 
 
 def popen_django_manage_command(cmd) -> subprocess.Popen:
@@ -150,7 +150,17 @@ def popen_django_manage_command(cmd) -> subprocess.Popen:
     Args:
         cmd: the command to run.
 
-    Returns a subprocess.Popen class that can be used to terminate the background command.
+    Returns:
+        A subprocess.Popen class that can be used to terminate the
+        background command.  You'll probably want to do some checking
+        that the process is up, as it could fail almost instantly
+        following this command.  Or at any time really.
+
+    Raises:
+        OSError: such as FileNotFoundError if the command cannot be
+            found.  But note lack of failure here is no guarantee
+            the process is still running at any later time; such is
+            the nature of inter-process communication.
     """
     full_cmd = "python3 manage.py " + cmd
     return subprocess.Popen(split(full_cmd))
@@ -272,13 +282,13 @@ def upload_demo_classlist(length="normal", prename=True):
 
 
 def populate_the_database(length="normal"):
-    """Use 'plom_papers' to build a qv-map for the demo and populate the database."""
+    """Use 'plom_qvmap' to build a qv-map for the demo and populate the database."""
     production = {"quick": 35, "normal": 70, "long": 600, "plaid": 1200}
     print(
         f"Building a question-version map and populating the database with {production[length]} papers"
     )
     run_django_manage_command(
-        f"plom_papers build_db -n {production[length]} --first-paper 1"
+        f"plom_qvmap build_db -n {production[length]} --first-paper 1"
     )
     print("Paper database is now populated")
 
@@ -287,11 +297,11 @@ def build_all_papers_and_wait():
     """Trigger build all the printable paper pdfs and wait for completion."""
     from time import sleep
 
-    run_django_manage_command("plom_build_papers --start-all")
+    run_django_manage_command("plom_build_paper_pdfs --start-all")
     # since this is a background huey job, we need to
     # wait until all those pdfs are actually built -
-    # we can get that by looking at output from plom_build_papers --status
-    pdf_status_cmd = "python3 manage.py plom_build_papers --count-done"
+    # we can get that by looking at output from plom_build_paper_pdfs --status
+    pdf_status_cmd = "python3 manage.py plom_build_paper_pdfs --count-done"
     while True:
         out_papers = subprocess.check_output(split(pdf_status_cmd)).decode("utf-8")
         if "all" in out_papers.casefold():
@@ -303,8 +313,8 @@ def build_all_papers_and_wait():
 
 
 def download_zip() -> None:
-    """Use 'plom_build_papers' to download a zip of all paper-pdfs."""
-    run_django_manage_command("plom_build_papers --download-all")
+    """Use 'plom_build_paper_pdfs' to download a zip of all paper-pdfs."""
+    run_django_manage_command("plom_build_paper_pdfs --download-all")
     print("Downloaded a zip of all the papers")
 
 
@@ -575,9 +585,15 @@ if __name__ == "__main__":
         print("v" * 50)
         huey_process = launch_huey_process()
         server_process = launch_django_dev_server_process(port=args.port)
+        # both processes still running after small delay? probably working
+        time.sleep(0.25)
+        r = huey_process.poll()
+        if r is not None:
+            raise RuntimeError(f"Problem with huey process: exit code {r}")
+        r = server_process.poll()
+        if r is not None:
+            raise RuntimeError(f"Problem with server process: exit code {r}")
         print("^" * 50)
-        if huey_process.poll():
-            print("Problem with the huey-process. eek!")
 
         print("*" * 50)
         print("> Running demo specific commands")

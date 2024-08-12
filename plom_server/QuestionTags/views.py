@@ -1,18 +1,25 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
+# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
+import csv
+
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.db.utils import IntegrityError
+
+from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService
-from QuestionTags.services import QuestionTagService
+from .services import QuestionTagService
 from .models import TmpAbstractQuestion, PedagogyTag
 from .forms import AddTagForm, RemoveTagForm
-from django.http import JsonResponse
 from plom.tagging import plom_valid_tag_text_description
 
 
-class QTagsLandingView(ListView):
+class QTagsLandingView(ListView, ManagerRequiredView):
     """View for displaying and managing question tags."""
 
     model = TmpAbstractQuestion
@@ -50,18 +57,24 @@ class QTagsLandingView(ListView):
                 question_index = form.cleaned_data["question_index"]
                 tag_id = form.cleaned_data["tag_id"].id
                 tag = get_object_or_404(PedagogyTag, id=tag_id)
-                QuestionTagService.add_question_tag_link(
-                    question_index, [tag.tag_name], request.user
-                )
+                try:
+                    QuestionTagService.add_question_tag_link(
+                        question_index, [tag.tag_name], request.user
+                    )
+                except (IntegrityError, ValueError) as err:
+                    return JsonResponse({"error": f"{err}"})
         elif "remove_tag" in request.POST:
             form = RemoveTagForm(request.POST)
             if form.is_valid():
                 question_tag_id = form.cleaned_data["question_tag_id"]
-                QuestionTagService.delete_question_tag_link(question_tag_id)
+                try:
+                    QuestionTagService.delete_question_tag_link(question_tag_id)
+                except ValueError as err:
+                    return JsonResponse({"error": f"{err}"})
         return redirect(reverse("qtags_landing"))
 
 
-class AddQuestionTagLinkView(CreateView):
+class AddQuestionTagLinkView(CreateView, ManagerRequiredView):
     """View for adding a question tag link."""
 
     template_name = "Questiontags/qtags_landing.html"
@@ -74,15 +87,16 @@ class AddQuestionTagLinkView(CreateView):
         """
         question_index = request.POST.get("questionIndex")
         tag_names = request.POST.getlist("tagName")
-        error_message = QuestionTagService.add_question_tag_link(
-            question_index, tag_names, request.user
-        )
-        if error_message:
-            return JsonResponse({"error": error_message})
+        try:
+            QuestionTagService.add_question_tag_link(
+                question_index, tag_names, request.user
+            )
+        except (IntegrityError, ValueError) as err:
+            return JsonResponse({"error": f"{err}"})
         return JsonResponse({"success": True})
 
 
-class CreateTagView(CreateView):
+class CreateTagView(CreateView, ManagerRequiredView):
     """View for creating a new tag."""
 
     template_name = "Questiontags/qtags_landing.html"
@@ -93,15 +107,20 @@ class CreateTagView(CreateView):
         Returns:
             A JSON response object.
         """
-        tag_name = request.POST.get("tagName")
-        text = request.POST.get("text")
-        error_message = QuestionTagService.create_tag(tag_name, text, request.user)
-        if error_message:
-            return JsonResponse({"error": error_message})
+        # make sure we strip leading/trailing whitespace
+        tag_name = request.POST.get("tagName").strip()
+        text = request.POST.get("text").strip()
+        confidential_info = request.POST.get("confidential_info").strip()
+        try:
+            QuestionTagService.create_tag(
+                tag_name, text, user=request.user, confidential_info=confidential_info
+            )
+        except (IntegrityError, ValueError) as err:
+            return JsonResponse({"error": f"{err}"})
         return JsonResponse({"success": True})
 
 
-class DeleteTagView(DeleteView):
+class DeleteTagView(DeleteView, ManagerRequiredView):
     """View for deleting a tag."""
 
     model = PedagogyTag
@@ -113,11 +132,14 @@ class DeleteTagView(DeleteView):
             An HTTP response object.
         """
         tag_id = request.POST.get("tag_id")
-        QuestionTagService.delete_tag(tag_id)
+        try:
+            QuestionTagService.delete_tag(tag_id)
+        except ValueError as err:
+            return JsonResponse({"error": f"{err}"})
         return redirect(reverse("qtags_landing"))
 
 
-class EditTagView(UpdateView):
+class EditTagView(UpdateView, ManagerRequiredView):
     """View for editing a tag."""
 
     template_name = "Questiontags/qtags_landing.html"
@@ -129,9 +151,106 @@ class EditTagView(UpdateView):
             A JSON response object.
         """
         tag_id = request.POST.get("tag_id")
-        tag_name = request.POST.get("tagName")
-        text = request.POST.get("text")
-        error_message = QuestionTagService.edit_tag(tag_id, tag_name, text)
-        if error_message:
-            return JsonResponse({"error": error_message})
+        # strip out leading/trailing whitespace from name,text,confidential_info
+        tag_name = request.POST.get("tagName").strip()
+        text = request.POST.get("text").strip()
+        confidential_info = request.POST.get("confidential_info").strip()
+        try:
+            QuestionTagService.edit_tag(
+                tag_id, tag_name, text, confidential_info=confidential_info
+            )
+        except (ValueError, IntegrityError) as err:
+            return JsonResponse({"error": f"{err}"})
+        return JsonResponse({"success": True})
+
+
+class DownloadQuestionTagsView(ManagerRequiredView):
+    """View to download question tags as CSV or JSON file."""
+
+    def get(self, request, *args, **kwargs):
+        """Handle GET requests to download question tags as CSV or JSON."""
+        format = request.GET.get("format", "json")
+        csv_type = request.GET.get("csv_type", "questions")
+
+        if format == "csv":
+            if csv_type == "tags":
+                return self.download_tags_csv()
+            else:
+                return self.download_questions_csv()
+        else:
+            return self.download_json()
+
+    def download_questions_csv(self):
+        """Generate and return a CSV response for questions."""
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="question_tags.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(["Question Index", "Question Label", "Tags"])
+
+        questions = TmpAbstractQuestion.objects.all()
+        for question in questions:
+            question_label = SpecificationService.get_question_label(
+                question.question_index
+            )
+            tags = ", ".join(
+                [qt.tag.tag_name for qt in question.questiontaglink_set.all()]
+            )
+            writer.writerow([question.question_index, question_label, tags])
+
+        return response
+
+    def download_tags_csv(self):
+        """Generate and return a CSV response for tags."""
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="tags.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(["Tag Name", "Tag Description", "confidential_info"])
+
+        tags = PedagogyTag.objects.all()
+        for tag in tags:
+            writer.writerow([tag.tag_name, tag.text, tag.confidential_info or ""])
+
+        return response
+
+
+class ImportTagsView(ManagerRequiredView):
+    """View to handle importing tags from a CSV file."""
+
+    def post(self, request, *args, **kwargs):
+        """Handle POST requests to import tags from a CSV file.
+
+        Returns:
+            A JSON response object.
+        """
+        csv_file = request.FILES.get("csv_file")
+        if not csv_file or not csv_file.name.endswith(".csv"):
+            return JsonResponse({"error": "File is not CSV type"})
+
+        if csv_file.multiple_chunks():
+            return JsonResponse({"error": "Uploaded file is too big"})
+
+        file_data = csv_file.read().decode("utf-8").splitlines()
+        csv_reader = csv.reader(file_data)
+
+        next(csv_reader, None)
+
+        for row in csv_reader:
+            if len(row) == 3:
+                tag_name, text, confidential_info = row
+            elif len(row) == 2:
+                tag_name, text = row
+                confidential_info = ""
+            else:
+                continue
+
+            try:
+                PedagogyTag.objects.get_or_create(
+                    tag_name=tag_name,
+                    defaults={"text": text, "confidential_info": confidential_info},
+                )
+            except IntegrityError as err:
+                return JsonResponse({"error": f"{err}"})
+
         return JsonResponse({"success": True})

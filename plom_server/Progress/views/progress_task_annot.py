@@ -21,9 +21,9 @@ from Mark.services import (
     mark_task,
 )
 from Papers.services import SpecificationService
-from Progress.services import ProgressOverviewService
 from Rubrics.services import RubricService
 from Mark.models import MarkingTask
+from ..services import ProgressOverviewService
 
 
 class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):

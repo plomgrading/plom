@@ -4,7 +4,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from shutil import copy
+from shutil import copy2
 from time import sleep
 from typing import Optional, List, Dict, Any
 
@@ -113,8 +113,8 @@ class Command(BaseCommand):
         # so we make a copy of them from static to there.
         src_dir = Path(settings.STATICFILES_DIRS[0])
         dest_dir = Path(settings.MEDIA_ROOT) / "papersToPrint"
-        copy(src_dir / "extra_page.pdf", dest_dir)
-        copy(src_dir / "scrap_paper.pdf", dest_dir)
+        copy2(src_dir / "extra_page.pdf", dest_dir)
+        copy2(src_dir / "scrap_paper.pdf", dest_dir)
         # TODO - get bundle-creator to take from static.
 
         if demo_config.bundles:

@@ -18,8 +18,6 @@ from .views import (
     PQVMappingUploadView,
     MockExamView,
     MiscExtrasView,
-    ExtraPageView,
-    ScrapPaperView,
     ReferenceImageView,
 )
 
@@ -53,8 +51,6 @@ urlpatterns = [
         "qvmapping/upload", PQVMappingUploadView.as_view(), name="prep_qvmapping_upload"
     ),
     path("misc/", MiscExtrasView.as_view(), name="misc_extras"),
-    path("misc/extra_page", ExtraPageView.as_view(), name="extra_page"),
-    path("misc/scrap_paper", ScrapPaperView.as_view(), name="scrap_paper"),
     path(
         "prep_finished/",
         PreparationFinishedView.as_view(),

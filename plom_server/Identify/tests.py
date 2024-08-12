@@ -20,12 +20,8 @@ from django.db import IntegrityError
 from model_bakery import baker
 
 from Papers.models import Paper, Image, IDPage
-
-from Identify.services import IdentifyTaskService, IDProgressService, IDDirectService
-from Identify.models import (
-    PaperIDTask,
-    PaperIDAction,
-)
+from .services import IdentifyTaskService, IDProgressService, IDDirectService
+from .models import PaperIDTask, PaperIDAction
 
 
 class IdentifyTaskTests(TestCase):
@@ -187,7 +183,7 @@ class IdentifyTaskTests(TestCase):
             ids.clear_id_from_paper(2)
 
         new_task = PaperIDTask.objects.get(paper=paper, status=PaperIDTask.TO_DO)
-        self.assertQuerysetEqual(PaperIDAction.objects.filter(task=new_task), [])
+        self.assertQuerySetEqual(PaperIDAction.objects.filter(task=new_task), [])
 
     def test_clear_id_from_all_identified_papers(self) -> None:
         """Test ``IDProgressService().set_all_id_task_todo_and_clear_all_id_cmd()``."""

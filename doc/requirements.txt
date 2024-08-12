@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: FSFAP
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -7,7 +7,7 @@
 # without any warranty.
 
 tomli~=2.0.1
-myst-parser~=1.0.0
-sphinx~=6.2.1
-sphinx_rtd_theme~=1.2.0
+myst-parser~=2.0.0
+sphinx~=7.2.6
+sphinx_rtd_theme~=2.0.0
 sphinx-argparse~=0.4.0

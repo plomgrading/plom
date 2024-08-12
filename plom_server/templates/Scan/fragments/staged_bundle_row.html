@@ -35,6 +35,7 @@
         </li>
         {% if has_been_processed %}
             {% if has_qr_codes %}
+                <li>Papers: {{ paper_list }}</li>
                 {% if n_known == number_of_pages %}
                     <li>
                         Known pages: <i class="bi bi-check-circle text-success"> all</i>

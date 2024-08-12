@@ -7,6 +7,7 @@
 from collections import defaultdict
 import csv
 from pathlib import Path
+import shutil
 import tempfile
 from typing import List, Dict, Any
 from dataclasses import asdict
@@ -101,20 +102,22 @@ class DemoBundleCreationService:
     def get_extra_page(self) -> None:
         """Download the extra-page pdf to the working directory."""
         # Assumes that the extra page has been generated
-        call_command(
-            "plom_preparation_extrapage",
-            "download",
+        # and is sitting in the static directory
+        shutil.copy2(
+            Path(settings.STATICFILES_DIRS[0]) / "extra_page.pdf",
             settings.MEDIA_ROOT / "papersToPrint/extra_page.pdf",
         )
+        # note staticfiles_dirs is a list of static file directories, and we only use the zeroth.
 
     def get_scrap_paper(self) -> None:
         """Download the scrap-paper pdf to the working directory."""
         # Assumes that the scrap paper has been generated
-        call_command(
-            "plom_preparation_scrap_paper",
-            "download",
+        # and is sitting in the static directory
+        shutil.copy2(
+            Path(settings.STATICFILES_DIRS[0]) / "scrap_paper.pdf",
             settings.MEDIA_ROOT / "papersToPrint/scrap_paper.pdf",
         )
+        # note staticfiles_dirs is a list of static file directories, and we only use the zeroth.
 
     def assign_students_to_papers(self, paper_list, classlist) -> List[Dict]:
         """Map papers to names and IDs from the classlist, skipping any prenamed ones."""

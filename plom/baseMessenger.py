@@ -1162,6 +1162,8 @@ class BaseMessenger:
                 raise PlomSeriousException(f"Error getting rubric list: {e}") from None
             # monkey-patch new "system_rubric" field into legacy results
             for r in rubrics:
+                # force int from str, just in case legacy sends a str
+                r["value"] = int(r["value"])
                 if r["username"] in ("HAL", "manager"):
                     r["system_rubric"] = True
                 else:
