@@ -15,18 +15,14 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from Mark.models.annotations import Annotation
 from django.utils.translation import gettext_lazy as _
+from django.db.models import Max
 
 
 def generate_key():
-    return "".join([str(random.randint(0, 9)) for i in range(12)])
-
-
-def generate_unique_key():
-    key = generate_key()
-    existing_keys = Rubric.objects.all().values_list("key", flat=True)
-    while key in existing_keys:
-        key = generate_key()
-    return key
+    if Rubric.objects.count() == 0:
+        return 1
+    else:
+        return Rubric.objects.aggregate(Max("key"))["key__max"] + 1
 
 
 class Rubric(models.Model):
@@ -101,7 +97,7 @@ class Rubric(models.Model):
         NEUTRAL = "neutral", _("Neutral")
         RELATIVE = "relative", _("Relative")
 
-    key = models.TextField(null=False, default=generate_unique_key)
+    key = models.IntegerField(null=False, default=generate_key)
     kind = models.TextField(null=False, choices=RubricKind.choices)
     display_delta = models.TextField(null=False, blank=True, default="")  # is short
     value = models.FloatField(null=False, blank=True, default=0)
