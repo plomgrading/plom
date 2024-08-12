@@ -26,10 +26,13 @@ class PageCache:
         self.basedir = Path(basedir)
 
     def wipe_cache(self) -> None:
-        log.info("Erasing the pagecache")
-        for img_id, path in self._image_paths:
-            log.debug("Erasing image id %d: %s", img_id, path)
-            path.unlink()
+        img_ids = list(self._image_paths.keys())
+        log.info("Erasing the pagecache of %d images", len(img_ids))
+        # carefully erase dict without iterating over it
+        for img_id in img_ids:
+            p = self._image_paths.pop(img_id)
+            log.debug("Erasing image id %d: %s", img_id, p)
+            p.unlink()
 
     def has_page_image(self, img_id: int) -> bool:
         r = self._image_paths.get(img_id, None)

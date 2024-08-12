@@ -208,7 +208,7 @@ class Downloader(QObject):
             self._in_progress[k] = False
         self.download_queue_changed.emit(self.get_stats())
 
-    def stop(self, timeout=-1):
+    def stop(self, timeout: int = -1) -> bool:
         """Try to stop the downloader, after waiting for threads to clear.
 
         Args:
@@ -221,6 +221,8 @@ class Downloader(QObject):
         self._stopping = True
         # first we clear the ones that haven't started
         self.clear_queue()
+        # TODO: maybe we should do this *after* waiting for the threadpool?
+        self.pagecache.wipe_cache()
         # then wait for timeout for the in-progress ones
         return self.threadpool.waitForDone(timeout)
 
