@@ -30,7 +30,10 @@ class Rubric(models.Model):
         key: a unique key/id for accessing or uniquely identifying
             a rubric.  It is not generally (and currently isn't) the
             same as the ``pk``, which is an internal field, and
-            implementation-specific.
+            implementation-specific. `generate_key` is only run when
+            creating a new rubric, and is not run when updating an
+            existing rubric via the rubric service, ensuring that
+            the same key is preserved across revisions
         kind: one of "relative"; "abs"; or "neutral". This field indicates how the
             ``value`` and ``out_of`` fields are to be interpreted.
             "relative" rubrics have a ``value`` indicating a change in score,
