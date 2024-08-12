@@ -8,12 +8,13 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 import random
 import sys
 import tempfile
 import threading
 from time import sleep, time
-from pathlib import Path
+from typing import Any
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -122,6 +123,7 @@ class Downloader(QObject):
         self.number_of_retries = 0
         # we're trying to stop, so don't retry for example
         self._stopping = False
+        self._placeholder_image: Path | None = None
         self.make_placeholder()
         self.simulate_failures = False
         # percentage of download attempts that will fail and an overall
@@ -154,7 +156,7 @@ class Downloader(QObject):
         log.info("fail mode disabled")
         self.simulate_failures = False
 
-    def make_placeholder(self):
+    def make_placeholder(self) -> None:
         # Not imported earlier b/c of some circular import stuff (?)
         import plom.client.icons
 
@@ -226,6 +228,9 @@ class Downloader(QObject):
         self.clear_queue()
         # TODO: maybe we should do this *after* waiting for the threadpool?
         self.pagecache.wipe_cache()
+        if self._placeholder_image:
+            self._placeholder_image.unlink()
+            self._placeholder_image = None
         # then wait for timeout for the in-progress ones
         return self.threadpool.waitForDone(timeout)
 
