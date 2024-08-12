@@ -319,6 +319,7 @@ class Chooser(QDialog):
             # TODO: do we just wait forever?
             # TODO: Marker already tried to stop it: maybe never get here?
             dl.stop(-1)
+            dl.basedir.rmdir()
         self.logout()
 
     def setFontSize(self, n: int) -> None:
