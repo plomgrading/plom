@@ -7,8 +7,6 @@
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Aden Chan
 
-import random
-
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth.models import User
