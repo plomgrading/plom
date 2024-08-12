@@ -51,7 +51,8 @@ def set_argparse_and_get_args() -> argparse.Namespace:
     * rubrics = system and demo rubrics are created for marking.
     * qtags = demo question-tags are created.
     * auto-id = run the auto-id-reader
-    * randomarking = several rando-markers are run in parallel to leave comments and annotations on student work. Random ID-ing of papers is also done.
+    * randoiding = run rando-id'er to identify papers, will use best predictions to ID papers and else random.
+    * randomarking = several rando-markers are run in parallel to leave comments and annotations on student work.
     * tagging = (future/not-yet-implemented) = pedagogy tags will be applied to questions to label them with learning goals.
     * spreadsheet = a marking spreadsheet is downloaded.
     * reassembly = marked papers are reassembled (along, optionally, with solutions).
@@ -101,6 +102,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         "rubrics",
         "qtags",
         "auto-id",
+        "randoiding",
         "randomarking",
         "tagging",
         "spreadsheet",
@@ -476,10 +478,27 @@ def run_the_auto_id_reader():
     run_django_manage_command("plom_run_id_reader --wait")
 
 
-def run_the_randomarker(*, port):
-    """Run the rando-IDer and rando-Marker.
+def run_the_randoider(*, port):
+    """Run the rando-IDer.
 
-    All papers will be ID'd and marked after this call.
+    All papers will be ID'd after this call.
+    """
+    # TODO: hardcoded http://
+    srv = f"http://localhost:{port}"
+    # list of markers and their passwords
+    users = [
+        ("demoMarker1", "demoMarker1"),
+    ]
+
+    cmd = f"python3 -m plom.client.randoIDer -s {srv} -u {users[0][0]} -w {users[0][1]} --use-predictions"
+    print(f"RandoIDing!  calling: {cmd}")
+    subprocess.check_call(split(cmd))
+
+
+def run_the_randomarker(*, port):
+    """Run the rando-Marker.
+
+    All papers will be marked after this call.
     """
     from time import sleep
 
@@ -493,11 +512,6 @@ def run_the_randomarker(*, port):
         ("demoMarker4", "demoMarker4", 50),
         ("demoMarker5", "demoMarker5", 50),
     ]
-
-    # rando-id and then rando-mark
-    cmd = f"python3 -m plom.client.randoIDer -s {srv} -u {users[0][0]} -w {users[0][1]}"
-    print(f"RandoIDing!  calling: {cmd}")
-    subprocess.check_call(split(cmd))
 
     randomarker_processes = []
     for X in users[1:]:
@@ -555,7 +569,8 @@ def run_marking_commands(*, port: int, stop_after=None) -> bool:
         * (rubrics): Make system and demo rubrics.
         * (qtags): Make and apply question/pedagogy-tags
         * (auto-id): Run the auto id-reader and wait for its results
-        * (randomarker): make random marking-annotations on papers and assign random student-ids.
+        * (randoder): make random id-er on papers (this will use the best predictions to id.)
+        * (randomarker): make random marking-annotations on papers.
 
     KWargs:
         stop_after = after which step should the demo be stopped, see list above.
@@ -578,8 +593,12 @@ def run_marking_commands(*, port: int, stop_after=None) -> bool:
     if stop_after == "auto-id":
         return False
 
+    run_the_randoider(port=args.port)
+    if stop_after == "randoiding":
+        return False
+
     run_the_randomarker(port=args.port)
-    if stop_after == "randomarker":
+    if stop_after == "randomarking":
         return False
 
     return True

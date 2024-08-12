@@ -49,6 +49,13 @@ def get_parser():
             Also checks the environment variable PLOM_SERVER if omitted.
         """,
     )
+    # whether to use predictions from server or be completely random.
+    parser.add_argument(
+        "--use-predictions",
+        action="store_true",
+        default=False,
+        help="Download and use ID predictions from the server rather than being purely random.",
+    )
     return parser
 
 
@@ -67,4 +74,8 @@ if __name__ == "__main__":
     if not args.password:
         args.password = getpass(f"Please enter the '{args.user}' password: ")
 
-    sys.exit(do_rando_identifying(args.server, args.user, args.password))
+    sys.exit(
+        do_rando_identifying(
+            args.server, args.user, args.password, use_predictions=args.use_predictions
+        )
+    )

@@ -13,6 +13,7 @@ from Identify.services import IDReaderService
 from Rectangles.services import RectangleExtractor
 from Papers.services import SpecificationService
 
+
 class Command(BaseCommand):
     """Commandline tool for running and managing the results of the ID-reader."""
 
@@ -64,12 +65,11 @@ class Command(BaseCommand):
             return
         rows = []
         for pn, dat in all_predictions.items():
-            rows.append({'paper_number': pn})
-            rows[-1].update( {
-                X["predictor"]: (X["student_id"], X["certainty"]) for X in dat
-            })
+            rows.append({"paper_number": pn})
+            rows[-1].update(
+                {X["predictor"]: (X["student_id"], X["certainty"]) for X in dat}
+            )
         self.stdout.write(tabulate(rows, headers="keys", tablefmt="simple_outline"))
-
 
     def add_arguments(self, parser):
         parser.add_argument(
