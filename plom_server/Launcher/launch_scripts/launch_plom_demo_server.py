@@ -521,7 +521,14 @@ def run_the_randomarker(*, port):
         sleep(0.5)
     # now wait for those markers
     while True:
-        if any(X.poll() is None for X in randomarker_processes):
+        poll_values = [X.poll() for X in randomarker_processes]
+        # check for errors = non-zero non-None return values
+        for pv in poll_values:
+            if pv not in [0, None]:
+                raise subprocess.SubprocessError(
+                    "One of the rando-marker processes finished with a non-zero exit status."
+                )
+        if any(X is None for X in poll_values):
             # we are still waiting on a rando-marker.
             sleep(2)
         else:  # all rando-markers are done

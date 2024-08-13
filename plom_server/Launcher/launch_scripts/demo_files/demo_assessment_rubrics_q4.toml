@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Andrew Rechnitzer
 
 [[rubric]]
 kind = "absolute"
@@ -111,4 +112,35 @@ meta = "The student has made minor arithmetic error"
 username = "manager"
 question = 4
 
+[[rubric]]
+kind = "neutral"
+display_delta = "."
+value = 0.0
+out_of = 0.0
+text = "be careful"
+tags = "demo"
+meta = "Student made an inconsequential error."
+question = 4
+username = "manager"
 
+[[rubric]]
+kind = "neutral"
+display_delta = "."
+value = 0.0
+out_of = 0.0
+text = "hard to read"
+tags = "demo"
+meta = "Student handwriting is making marking hard"
+question = 4
+username = "manager"
+
+[[rubric]]
+kind = "neutral"
+display_delta = "."
+value = 0.0
+out_of = 0.0
+text = "layout work more carefully"
+tags = "demo"
+meta = "Student needs to learn how to set out their work so someone else can follow."
+question = 4
+username = "manager"
