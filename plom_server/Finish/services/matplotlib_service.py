@@ -223,6 +223,32 @@ class MatplotlibService:
         else:
             return self.get_graph_as_base64(graph_bytes)
 
+    def kde_plot_of_total_marks(
+        self,
+        *,
+        highlighted_sid: str | None = None,
+        format: str = "base64",
+    ) -> BytesIO | str:
+        assert format in self.formats
+        self.ensure_all_figures_closed()
+        sns.set_theme()
+        sns.kdeplot(data=self.des.get_totals(), fill=True)
+        # Overlay the student's score by highlighting the bar
+        if highlighted_sid:
+            df = self.des.get_student_data()
+            student = df[df["StudentID"] == highlighted_sid]
+            student_score = student["Total"].values[0]
+            # this gives x-coord of bar, we get the y-coord from the ylim of the plot
+            plt.bar(student_score, plt.ylim()[1], color=HIGHLIGHT_COLOR, alpha=0.5)
+
+        plt.ylabel("Proportion of students")
+        graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
+        self.ensure_all_figures_closed()
+        if format == "bytes":
+            return graph_bytes
+        else:
+            return self.get_graph_as_base64(graph_bytes)
+
     def boxplot_of_grades_on_question_version(
         self,
         question_idx: int,
@@ -260,28 +286,37 @@ class MatplotlibService:
         mark_column = "q" + str(question_idx) + "_mark"
         plot_series = [student_df[mark_column]]
         fig, ax = plt.subplots(figsize=(6.8, 2.0), tight_layout=True)
+        sns.set_theme()
 
         maxmark = SpecificationService.get_question_mark(question_idx)
 
+        sns.boxplot(
+            plot_series,
+            orient="h",
+            medianprops={"linewidth": 4, "color": "blue"},
+            boxprops={"alpha": 0.5},
+            capprops={"linewidth": 4},
+            widths=[0.25],
+        )
         if highlighted_sid:
             # Overlay the student's score by highlighting the bar
             df = self.des.get_student_data()
             student_score = df[df["StudentID"] == highlighted_sid][mark_column].values[
                 0
             ]
-            ax.plot(student_score, 1, marker="o", markersize=16, color=HIGHLIGHT_COLOR)
+            ax.plot(student_score, 0, marker="o", markersize=16, color=HIGHLIGHT_COLOR)
 
-        ax.boxplot(
-            plot_series,
-            widths=0.60,
-            capwidths=0.60,
-            vert=False,
-            showmeans=True,
-            meanline=True,
-            medianprops={"linewidth": 4, "color": "blue"},
-            meanprops={"linewidth": 4, "linestyle": ":", "color": "teal"},
-            capprops={"linewidth": 2, "color": "red"},
-        )
+        # ax.boxplot(
+        #     plot_series,
+        #     widths=0.60,
+        #     capwidths=0.60,
+        #     vert=False,
+        #     showmeans=True,
+        #     meanline=True,
+        #     medianprops={"linewidth": 4, "color": "blue"},
+        #     meanprops={"linewidth": 4, "linestyle": ":", "color": "teal"},
+        #     capprops={"linewidth": 2, "color": "red"},
+        # )
         # ax.set_title(f"boxplot of {qlabel} marks")
         ax.set_xlabel(f"{qlabel} mark")
         ax.set_yticks([])
@@ -765,6 +800,7 @@ class MatplotlibService:
 
         plt.figure(figsize=(6.8, n_tags * 0.3 + 0.6), tight_layout=True)
         plt.margins(y=0.3)
+        sns.set_theme()
 
         df = pd.DataFrame({"tag": tag_names, "values": pedagogy_values})
         ordered_df = df.sort_values(by="tag")

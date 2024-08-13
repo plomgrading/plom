@@ -67,7 +67,7 @@ def pdf_builder(
     paper_number = int(student_dict["PaperNumber"])
     total_stats = des.get_descriptive_statistics_of_total()
 
-    histogram_of_marks = mpls.histogram_of_total_marks(highlighted_sid=sid)
+    kde_of_total_marks = mpls.kde_plot_of_total_marks(highlighted_sid=sid)
     pedagogy_tags_graph = None
     if sid is not None:
         if QuestionTagService.are_there_question_tag_links():
@@ -98,9 +98,9 @@ def pdf_builder(
         "grade": grade,
         "totalMarks": totalMarks,
         "total_stats": total_stats,
-        "histogram_of_marks": histogram_of_marks,
         "pedagogy_tags_graph": pedagogy_tags_graph,
         "boxplots": boxplot_of_question_marks,
+        "kde_graph": kde_of_total_marks,
     }
 
     rendered_html = report_template.render(context)
