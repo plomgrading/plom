@@ -11,6 +11,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
+from django.db.models.query_utils import Q
 from Mark.models.annotations import Annotation
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Max
@@ -126,17 +127,6 @@ class Rubric(models.Model):
     revision = models.IntegerField(null=False, blank=True, default=0)
     latest = models.BooleanField(null=False, blank=True, default=True)
 
-    def clean(self):
-        if self.latest:
-            existing = (
-                Rubric.objects.filter(key=self.key, latest=True)
-                .exclude(pk=self.pk)
-                .exists()
-            )
-            if existing:
-                raise ValidationError("Only one Rubric can be latest for a given key.")
-        super().clean()
-
     def save(self, *args, **kwargs):
         self.full_clean()
         return super(Rubric, self).save(*args, **kwargs)
@@ -156,7 +146,10 @@ class Rubric(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["key", "revision"], name="unique_revision_per_key"
-            )
+            ),
+            models.UniqueConstraint(
+                fields=["key"], condition=Q(latest=True), name="unique_latest_per_key"
+            ),
         ]
 
 
