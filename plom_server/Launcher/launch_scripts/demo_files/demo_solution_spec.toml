@@ -3,7 +3,7 @@
 
 # Solution spec for 'Midterm Demo using Plom'
 
-numberOfPages = 5
+numberOfPages = 7
     
 # for question 1
 [[solution]]
@@ -11,9 +11,13 @@ pages = [3]
         
 # for question 2
 [[solution]]
-pages = [4]
+pages = [4,5]
         
 # for question 3
 [[solution]]
-pages = [5]
-        
+pages = [6]
+
+# for question 4
+[[solution]]
+pages = [7]
+       

@@ -624,6 +624,20 @@ class ReassembleService:
                 data["paper_num"], build_student_report=build_student_report
             )
 
+    def how_many_papers_are_mid_reassembly(self) -> int:
+        # any chores that are not complete
+        return (
+            ReassemblePaperChore.objects.exclude(obsolete=True)
+            .filter(
+                status__in=[
+                    ReassemblePaperChore.RUNNING,
+                    ReassemblePaperChore.QUEUED,
+                    ReassemblePaperChore.STARTING,
+                ]
+            )
+            .count()
+        )
+
     @transaction.atomic
     def get_completed_pdf_files_and_names(self) -> list[Tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of reassembled papers that are not obsolete.

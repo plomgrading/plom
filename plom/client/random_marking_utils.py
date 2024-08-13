@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2021 Andrew Rechnitzer
+# Copyright (C) 2020-2024 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2023 Julian Lapenna
@@ -60,8 +60,17 @@ positiveComments = [
     ("+2", "Good"),
     ("+2", "Clever approach"),
 ]
+neutralComments = [
+    "Be careful",
+    "A good start",
+    "Cannot read this",
+    "There are easier ways",
+    "hmmm",
+]
+
 negativeRubrics: Dict[int, List] = {}
 positiveRubrics: Dict[int, List] = {}
+neutralRubrics: Dict[int, List] = {}
 
 tag_list = ["creative", "suspicious", "needs_review", "hall_of_fame", "needs_iic"]
 
@@ -152,10 +161,13 @@ class SceneParent(QWidget):
 
     def do_rubric_any(self) -> None:
         """Place some rubric or maybe just some text, randomly."""
-        if random.choice([-1, 1]) == 1:
+        pnz = random.choice([-1, 0, 1])
+        if pnz == 1:
             rubric = random.choice(positiveRubrics[self.question])
-        else:
+        elif pnz == -1:
             rubric = random.choice(negativeRubrics[self.question])
+        else:
+            rubric = random.choice(neutralRubrics[self.question])
 
         self.scene.setCurrentRubric(rubric)
         self.scene.setToolMode("rubric")
@@ -163,10 +175,11 @@ class SceneParent(QWidget):
         # only do rubric if it is legal
         if self.scene.isLegalRubric(rubric):
             self.scene.undoStack.push(CommandRubric(self.scene, self.rpt(), rubric))
-        else:  # not legal - push text
-            self.scene.undoStack.push(
-                CommandText(self.scene, self.rpt(), rubric["text"])
-            )
+        else:  # not legal - we used to push text, but now just pass
+            pass
+            # self.scene.undoStack.push(
+            #     CommandText(self.scene, self.rpt(), rubric["text"])
+            # )
 
     def do_rubric_change_score(self) -> None:
         """Keep trying to place score-changing rubric until we succeed."""
@@ -303,6 +316,36 @@ def do_random_marking_backend(
         remarking_counter += 1
 
 
+def build_rubrics_from_server_info(question_idx: int, *, username, messenger) -> None:
+    """Get the rubrics from the server and set up local lists to use them.
+
+    Args:
+        question_idx: which question.
+
+    Keyword Args:
+        messenger: a messenger object already connected to the server.
+        username (str): which username to create the rubrics.
+
+    Returns:
+        None
+    """
+    rubric_dat = messenger.MgetRubrics(question_idx)
+    for rubric in rubric_dat:
+        # avoid using rubrics with no feedback
+        if rubric["text"] == ".":
+            continue
+        elif rubric["kind"] == "relative":
+            if rubric["value"] > 0:
+                positiveRubrics.setdefault(question_idx, [])
+                positiveRubrics[question_idx].append(rubric)
+            elif rubric["value"] < 0:
+                negativeRubrics.setdefault(question_idx, [])
+                negativeRubrics[question_idx].append(rubric)
+        elif rubric["kind"] == "neutral":
+            neutralRubrics.setdefault(question_idx, [])
+            neutralRubrics[question_idx].append(rubric)
+
+
 def build_random_rubrics(question_idx: int, *, username, messenger) -> None:
     """Push random rubrics into a server: only for testing/demo purposes.
 
@@ -352,6 +395,23 @@ def build_random_rubrics(question_idx: int, *, username, messenger) -> None:
             negativeRubrics[question_idx].append(com)
         else:
             negativeRubrics[question_idx] = [com]
+    for t in neutralComments:
+        com = {
+            "value": 0,
+            "display_delta": ".",
+            "out_of": 0,
+            "text": t,
+            "tags": "Random",
+            "meta": "Randomness",
+            "kind": "neutral",
+            "question": question_idx,
+            "username": username,
+        }
+        com = messenger.McreateRubric(com)
+        if question_idx in neutralRubrics:
+            neutralRubrics[question_idx].append(com)
+        else:
+            neutralRubrics[question_idx] = [com]
 
 
 def do_rando_marking(
@@ -362,6 +422,7 @@ def do_rando_marking(
     partial: float = 100.0,
     question: Union[None, int] = None,
     version: Union[None, int] = None,
+    download_rubrics: bool = False,
 ) -> int:
     """Randomly annotate the papers assigning RANDOM grades: only for testing please.
 
@@ -379,6 +440,7 @@ def do_rando_marking(
         partial: what percentage of papers to grade?
         question: what question to mark or if omitted, mark all of them.
         version: what version to mark or if omitted, mark all of them.
+        download_rubrics: get and use rubrics from the server.
 
     Returns:
         0 on success, non-zero on error/unexpected.
@@ -418,7 +480,10 @@ def do_rando_marking(
             versions = [version]
 
         for q in questions:
-            build_random_rubrics(q, username=user, messenger=messenger)
+            if download_rubrics:
+                build_rubrics_from_server_info(q, username=user, messenger=messenger)
+            else:
+                build_random_rubrics(q, username=user, messenger=messenger)
             for v in versions:
                 print(f"Annotating question {q} version {v}")
                 do_random_marking_backend(
