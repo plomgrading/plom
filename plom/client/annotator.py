@@ -1791,7 +1791,7 @@ class Annotator(QWidget):
             raise TypeError
 
         with open(plomfile, "w") as fh:
-            json.dump(plomData, fh, indent="  ", default=path_to_str)
+            json.dump(plomData, fh, indent="  ", default=_path_to_str)
             fh.write("\n")
         return aname, plomfile
 
