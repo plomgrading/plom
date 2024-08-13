@@ -17,10 +17,8 @@ from django.db.models import Max
 
 
 def generate_key():
-    if Rubric.objects.count() == 0:
-        return 1
-    else:
-        return Rubric.objects.aggregate(Max("key"))["key__max"] + 1
+    count = Rubric.objects.aggregate(Max("key"))["key__max"]
+    return 1 if count is None else count + 1
 
 
 class Rubric(models.Model):
