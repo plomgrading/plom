@@ -254,7 +254,7 @@ class RubricTable(QTableWidget):
         if row < 0:
             # no row under click but maybe one is highlighted
             row = self.getCurrentRubricRow()
-        key = None if row is None else self.getKeyFromRow(row)
+        key = None if row is None else self._get_key_from_row(row)
 
         # These are workaround for Issue #1441, lambdas in a loop
         def add_func_factory(t, k):
@@ -314,7 +314,7 @@ class RubricTable(QTableWidget):
         if row < 0:
             # no row under click but maybe one is highlighted
             row = self.getCurrentRubricRow()
-        key = None if row is None else self.getKeyFromRow(row)
+        key = None if row is None else self._get_key_from_row(row)
 
         # workaround for Issue #1441, lambdas in a loop
         def add_func_factory(t, k):
@@ -382,7 +382,7 @@ class RubricTable(QTableWidget):
         self.handleClick()
 
     def removeRubricByKey(self, key) -> None:
-        row = self.getRowFromKey(key)
+        row = self._get_row_from_key(key)
         if row is None:
             return
         self.removeRow(row)
@@ -393,11 +393,7 @@ class RubricTable(QTableWidget):
         row = self.getCurrentRubricRow()
         if row is None:
             return
-        # TODO: mypy is concerned self.item() could return None
-        # I don't think it can from the above logic, but...
-        item = self.item(row, 0)
-        assert item
-        key = item.text()
+        key = self._get_key_from_row(row)
         self._parent.hideRubricByKey(key)
         self.selectFirstVisibleRubric()
         self.handleClick()
@@ -406,11 +402,7 @@ class RubricTable(QTableWidget):
         row = self.getCurrentRubricRow()
         if row is None:
             return
-        # TODO: mypy is concerned self.item() could return None
-        # I don't think it can from the above logic, but...
-        item = self.item(row, 0)
-        assert item
-        key = item.text()
+        key = self._get_key_from_row(row)
         self._parent.unhideRubricByKey(key)
         self.selectFirstVisibleRubric()
         self.handleClick()
@@ -582,21 +574,18 @@ class RubricTable(QTableWidget):
             self.selectFirstVisibleRubric()
         self.resizeColumnsToContents()
 
-    def getKeyFromRow(self, row: int) -> str:
-        item = self.item(row, 0)
-        assert item
-        return item.text()
+    def getKeyList(self) -> list[int]:
+        return [self._get_key_from_row(r) for r in range(self.rowCount())]
 
-    def getKeyList(self):
-        return [self.item(r, 0).text() for r in range(self.rowCount())]
+    def _get_key_from_row(self, r: int) -> int:
+        item = self.item(r, 0)
+        # TODO: is an assertion error what we want here?
+        assert item, r"Could not find row {r}"
+        return int(item.text())
 
-    def getRowFromKey(self, key: str) -> int | None:
+    def _get_row_from_key(self, key: int) -> int | None:
         for r in range(self.rowCount()):
-            # TODO: mypy is concerned self.item() could return None
-            # perhaps there is a better way to iterate over items?
-            item = self.item(r, 0)
-            assert item
-            if int(item.text()) == int(key):
+            if self._get_key_from_row(r) == key:
                 return r
         else:
             return None
@@ -606,13 +595,11 @@ class RubricTable(QTableWidget):
             return None
         return self.selectedIndexes()[0].row()
 
-    def getCurrentRubricKey(self) -> str | None:
+    def getCurrentRubricKey(self) -> int | None:
         """Get the currently selected rubric's key/id or None if nothing is selected."""
         if not self.selectedIndexes():
             return None
-        item = self.item(self.selectedIndexes()[0].row(), 0)
-        assert item
-        return item.text()
+        return self._get_key_from_row(self.selectedIndexes()[0].row())
 
     def reselectCurrentRubric(self) -> None:
         """Reselect the current rubric row, triggering redraws (for example).
@@ -665,11 +652,7 @@ class RubricTable(QTableWidget):
         if key is None:
             return False
         for r in range(self.rowCount()):
-            # TODO: mypy is concerned self.item() could return None
-            # perhaps there is a better way to iterate over items?
-            item = self.item(r, 0)
-            assert item
-            if int(item.text()) == int(key):
+            if self._get_key_from_row(r) == int(key):
                 self.selectRow(r)
                 return True
         return False
