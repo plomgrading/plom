@@ -1164,6 +1164,8 @@ class BaseMessenger:
             for r in rubrics:
                 # force int from str, just in case legacy sends a str
                 r["value"] = int(r["value"])
+                # legacy sends str of int in [1000_0000_0000, 9999_9999_9999]
+                r["id"] = int(r["id"])
                 if r["username"] in ("HAL", "manager"):
                     r["system_rubric"] = True
                 else:
