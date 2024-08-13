@@ -33,7 +33,8 @@ class Rubric(models.Model):
             implementation-specific. `generate_key` is only run when
             creating a new rubric, and is not run when updating an
             existing rubric via the rubric service, ensuring that
-            the same key is preserved across revisions
+            the same key is preserved across revisions, even if
+            we use new rows (new ``pk``) for each revision.
         kind: one of "relative"; "abs"; or "neutral". This field indicates how the
             ``value`` and ``out_of`` fields are to be interpreted.
             "relative" rubrics have a ``value`` indicating a change in score,
