@@ -464,14 +464,14 @@ class RubricTable(QTableWidget):
             # perhaps there is a better way to iterate over items?
             item = self.item(r, 0)
             assert item
-            if rubric["id"] == item.text():
+            if str(rubric["id"]) == item.text():
                 return  # rubric already present
         # is a new rubric, so append it
         # Careful about sorting during setItem calls: Issue #2065
         _sorting_enabled = self.isSortingEnabled()
         self.setSortingEnabled(False)
         self.insertRow(rc)
-        self.setItem(rc, 0, QTableWidgetItem(rubric["id"]))
+        self.setItem(rc, 0, QTableWidgetItem(str(rubric["id"])))
         self.setItem(rc, 1, QTableWidgetItem(rubric["username"]))
         self.setItem(rc, 2, QTableWidgetItem(rubric["display_delta"]))
 
@@ -725,7 +725,7 @@ class RubricTable(QTableWidget):
         """Get the rth row of the rubric table."""
         item = self.item(r, 0)
         assert item
-        rid = item.text()
+        rid = int(item.text())
         for rubric in self._parent.rubrics:
             if rubric["id"] == rid:
                 return rubric
@@ -778,7 +778,7 @@ class RubricTable(QTableWidget):
 
     def editRow(self, tableIndex):
         r = tableIndex.row()
-        rubricKey = self.item(r, 0).text()
+        rubricKey = int(self.item(r, 0).text())
         self._parent.edit_rubric(rubricKey)
 
 

@@ -1892,7 +1892,7 @@ class Annotator(QWidget):
         """Request a latest rubric list for current question."""
         return self.parentMarkerUI.getRubricsFromServer(self.question_num)
 
-    def getOneRubricFromServer(self, key):
+    def getOneRubricFromServer(self, key: int) -> dict[str, Any]:
         """Request a latest rubric list for current question."""
         return self.parentMarkerUI.getOneRubricFromServer(key)
 
