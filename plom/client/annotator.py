@@ -1783,8 +1783,15 @@ class Annotator(QWidget):
             "sceneItems": lst,
         }
         plomfile = self.saveName.with_suffix(".plom")
+
+        # little helper to jsonify pathlib.Path to str
+        def _path_to_str(x):
+            if isinstance(x, Path):
+                return str(x)
+            raise TypeError
+
         with open(plomfile, "w") as fh:
-            json.dump(plomData, fh, indent="  ")
+            json.dump(plomData, fh, indent="  ", default=path_to_str)
             fh.write("\n")
         return aname, plomfile
 
