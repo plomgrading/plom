@@ -155,7 +155,7 @@ def pdf_builder(
         question_idx = _q + 1  # 1-indexing
         histogram_of_grades_by_q.append(  # add to the list
             # each base64-encoded image
-            mpls.histogram_of_grades_on_question_version(
+            mpls.boxplot_of_grades_on_question_version(
                 question_idx, highlighted_sid=sid
             )
         )
@@ -165,7 +165,7 @@ def pdf_builder(
     if verbose:
         print("\nGenerating HTML.")
 
-    template= Template(report_html)
+    template = Template(report_html)
     context = Context(
         {
             "longname": longname,

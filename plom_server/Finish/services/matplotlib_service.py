@@ -223,6 +223,80 @@ class MatplotlibService:
         else:
             return self.get_graph_as_base64(graph_bytes)
 
+    def boxplot_of_grades_on_question_version(
+        self,
+        question_idx: int,
+        *,
+        student_df: pd.DataFrame | None = None,
+        highlighted_sid: str | None = None,
+        format: str = "base64",
+    ) -> BytesIO | str:
+        """Generate a boxplot of the grades on a specific question.
+
+        Args:
+            question_idx: The question index number, one-based.
+
+        Keyword Args:
+            student_df: Optional dataframe containing the student data. Should be
+                a copy or filtered version of self.student_df. If omitted, defaults
+                to None and self.student_df is used.
+            highlighted_sid: Optional student ID, to show the student's standing
+                on the chart.
+            format: The format to return the graph in. Should be either "base64"
+                or "bytes". If omitted, defaults to "base64".
+
+        Returns:
+            Base64 encoded string or bytes containing the histogram.
+        """
+        if student_df is None:
+            student_df = self.student_df
+
+        assert isinstance(student_df, pd.DataFrame)
+        assert format in self.formats
+        self.ensure_all_figures_closed()
+
+        maxmark = SpecificationService.get_question_mark(question_idx)
+        qlabel = SpecificationService.get_question_label(question_idx)
+        mark_column = "q" + str(question_idx) + "_mark"
+        plot_series = [student_df[mark_column]]
+        fig, ax = plt.subplots(figsize=(6.8, 2.0), tight_layout=True)
+
+        maxmark = SpecificationService.get_question_mark(question_idx)
+
+        if highlighted_sid:
+            # Overlay the student's score by highlighting the bar
+            df = self.des.get_student_data()
+            student_score = df[df["StudentID"] == highlighted_sid][mark_column].values[
+                0
+            ]
+            ax.plot(student_score, 1, marker="o", markersize=16, color=HIGHLIGHT_COLOR)
+
+        ax.boxplot(
+            plot_series,
+            widths=0.60,
+            capwidths=0.60,
+            vert=False,
+            showmeans=True,
+            meanline=True,
+            medianprops={"linewidth": 4, "color": "blue"},
+            meanprops={"linewidth": 4, "linestyle": ":", "color": "teal"},
+            capprops={"linewidth": 2, "color": "red"},
+        )
+        # ax.set_title(f"boxplot of {qlabel} marks")
+        ax.set_xlabel(f"{qlabel} mark")
+        ax.set_yticks([])
+        ax.set_xlim(left=-0.5, right=maxmark + 0.5)
+        for side in ["top", "right", "left"]:
+            ax.spines[side].set_visible(False)
+
+        graph_bytes = self.get_graph_as_BytesIO(fig)
+        self.ensure_all_figures_closed()
+
+        if format == "bytes":
+            return graph_bytes
+        else:
+            return self.get_graph_as_base64(graph_bytes)
+
     def correlation_heatmap_of_questions(
         self, *, corr_df: pd.DataFrame | None = None, format: str = "base64"
     ) -> BytesIO | str:
