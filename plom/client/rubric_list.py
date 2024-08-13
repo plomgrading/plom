@@ -257,19 +257,19 @@ class RubricTable(QTableWidget):
         key = None if row is None else self._get_key_from_row(row)
 
         # These are workaround for Issue #1441, lambdas in a loop
-        def add_func_factory(t, k):
+        def add_func_factory(t, k: int):
             def add_func():
                 t.appendByKey(k)
 
             return add_func
 
-        def del_func_factory(t, k):
+        def del_func_factory(t, k: int):
             def del_func():
                 t.removeRubricByKey(k)
 
             return del_func
 
-        def edit_func_factory(t, k):
+        def edit_func_factory(t, k: int):
             def edit_func():
                 t._parent.edit_rubric(k)
 
@@ -317,19 +317,19 @@ class RubricTable(QTableWidget):
         key = None if row is None else self._get_key_from_row(row)
 
         # workaround for Issue #1441, lambdas in a loop
-        def add_func_factory(t, k):
+        def add_func_factory(t, k: int):
             def add_func():
                 t.appendByKey(k)
 
             return add_func
 
-        def edit_func_factory(t, k):
+        def edit_func_factory(t, k: int):
             def edit_func():
                 t._parent.edit_rubric(k)
 
             return edit_func
 
-        def other_usage_factory(t, k):
+        def other_usage_factory(t, k: int):
             def other_usage():
                 t._parent.other_usage(k)
 
@@ -432,7 +432,7 @@ class RubricTable(QTableWidget):
             self.setSortingEnabled(_sorting_enabled)
             event.accept()
 
-    def appendByKey(self, key: str) -> None:
+    def appendByKey(self, key: int) -> None:
         """Append the rubric associated with a key to the end of the list.
 
         If its a dupe, don't add.
@@ -647,12 +647,12 @@ class RubricTable(QTableWidget):
         """
         self.selectRubricByVisibleRow(0)
 
-    def selectRubricByKey(self, key: int | str | None) -> bool:
+    def selectRubricByKey(self, key: int | None) -> bool:
         """Select row with given key, returning True if works, else False."""
         if key is None:
             return False
         for r in range(self.rowCount()):
-            if self._get_key_from_row(r) == int(key):
+            if self._get_key_from_row(r) == key:
                 self.selectRow(r)
                 return True
         return False
@@ -1455,7 +1455,7 @@ class RubricWidget(QWidget):
             self.RTW.currentIndex(),
         ]
 
-    def setCurrentRubricKeyAndTab(self, key: int | str | None, tab: int) -> bool:
+    def setCurrentRubricKeyAndTab(self, key: int | None, tab: int) -> bool:
         """Set the current rubric key and the current tab, as if it was clicked on.
 
         Args:
@@ -1593,17 +1593,17 @@ class RubricWidget(QWidget):
                     groups.append(g)
         return sorted(list(set(groups)))
 
-    def unhideRubricByKey(self, key: str) -> None:
+    def unhideRubricByKey(self, key: int) -> None:
         wranglerState = self.get_tab_rubric_lists()
         try:
             wranglerState["hidden"].remove(key)
         except ValueError:
-            # TODO is this sufficient if we unexpected did not find it?
+            # TODO is this sufficient if we unexpectedly did not find it?
             log.warn(f"Tried to unhide {key} but was already gone?  Or type mixup?")
             pass
         self.setRubricTabsFromState(wranglerState)
 
-    def hideRubricByKey(self, key: str) -> None:
+    def hideRubricByKey(self, key: int) -> None:
         wranglerState = self.get_tab_rubric_lists()
         wranglerState["hidden"].append(key)
         self.setRubricTabsFromState(wranglerState)
@@ -1616,7 +1616,7 @@ class RubricWidget(QWidget):
         else:
             self._new_or_edit_rubric(None)
 
-    def other_usage(self, key: str) -> None:
+    def other_usage(self, key: int) -> None:
         """Open a dialog showing a list of paper numbers using the given rubric.
 
         Args:
@@ -1638,7 +1638,7 @@ class RubricWidget(QWidget):
         """
         self._parent.view_other_paper(paper_number)
 
-    def edit_rubric(self, key: str) -> None:
+    def edit_rubric(self, key: int) -> None:
         """Open a dialog to edit a rubric - from the id-key of that rubric."""
         # first grab the rubric from that key
         try:
