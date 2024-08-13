@@ -452,17 +452,14 @@ class RubricTable(QTableWidget):
         rc = self.rowCount()
         # do sanity check for duplications
         for r in range(rc):
-            # TODO: mypy is concerned self.item() could return None
-            # perhaps there is a better way to iterate over items?
-            item = self.item(r, 0)
-            assert item
-            if str(rubric["id"]) == item.text():
+            if self._get_key_from_row(r) == rubric["id"]:
                 return  # rubric already present
         # is a new rubric, so append it
         # Careful about sorting during setItem calls: Issue #2065
         _sorting_enabled = self.isSortingEnabled()
         self.setSortingEnabled(False)
         self.insertRow(rc)
+        # rubric key as string to avoid overflow on legacy servers with large keys
         self.setItem(rc, 0, QTableWidgetItem(str(rubric["id"])))
         self.setItem(rc, 1, QTableWidgetItem(rubric["username"]))
         self.setItem(rc, 2, QTableWidgetItem(rubric["display_delta"]))
@@ -760,9 +757,8 @@ class RubricTable(QTableWidget):
             self.colourLegalRubric(r)
 
     def editRow(self, tableIndex):
-        r = tableIndex.row()
-        rubricKey = int(self.item(r, 0).text())
-        self._parent.edit_rubric(rubricKey)
+        key = self._get_key_from_row(tableIndex.row())
+        self._parent.edit_rubric(key)
 
 
 class TabBarWithAddRenameRemoveContext(QTabBar):
