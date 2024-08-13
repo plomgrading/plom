@@ -9,13 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Instructors can enable 1/2 mark rubrics in the Rubrics screen.
 
 ### Changed
 * Server can now be launched via script in `plom_server/Launcher/launch_scripts/launch_plom_server.py`
 * Demo is now launched via script in `plom_server/Launcher/launch_scripts/launch_plom_demo_server.py`
+* Managers can perform scanning actions directly, without a separate scanner account.
 
 ### Fixed
 * Fixed crash on Windows pre-compiled binary.
+* Fixed prename box positioning.
+* Improved box-drag annotation rendering.
+* Misc fixes and documentation updates.
 
 
 
@@ -1223,7 +1228,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.15.6...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.15.6...0.15
 [0.15.5]: https://gitlab.com/plom/plom/-/compare/v0.15.5...v0.15.6
 [0.15.5]: https://gitlab.com/plom/plom/-/compare/v0.15.4...v0.15.5
 [0.15.4]: https://gitlab.com/plom/plom/-/compare/v0.15.3...v0.15.4

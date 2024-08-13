@@ -57,6 +57,13 @@ additional context.
 Learning Management System, it should contain a minimal set of features to
 comfortably facilitate digital marking, and leave the rest to the user.
 
+**Pragmatic:** A common refrain of Plom development is "use as little
+of ____ as possible but no less than that".  Examples include "use as
+little Javascript as possible but no less than that", and "avoid HTML
+in-line styling is, unless its helpful."  This is a re-stating of
+"practicality beats purity" from
+`The Zen of Python <https://peps.python.org/pep-0020/>`_.
+
 Automatic updating of dependencies is beyond the scope of this project.
 Plom is not a package manager.
 

@@ -19,6 +19,10 @@ class RubricAdminForm(forms.Form):
     # )
 
 
+class RubricDemoAdminForm(forms.Form):
+    pass
+
+
 class RubricWipeForm(forms.Form):
     I_am_sure = forms.BooleanField()
     confirm_by_typing_the_short_name = forms.CharField()

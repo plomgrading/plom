@@ -11,7 +11,7 @@ from .edit_profile_form import EditProfileForm
 from Authentication.services import AuthenticationServices
 
 
-class Profile(LoginRequiredMixin, View):
+class ProfileView(LoginRequiredMixin, View):
     """Class-based view of Profile page."""
 
     login_url = "login"

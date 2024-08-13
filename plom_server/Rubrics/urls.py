@@ -13,6 +13,7 @@ from . import views
 urlpatterns = [
     path("", views.RubricLandingPageView.as_view(), name="rubrics_landing"),
     path("admin/", views.RubricAdminPageView.as_view(), name="rubrics_admin"),
+    path("admin/demo/", views.RubricDemoView.as_view(), name="rubric_demo"),
     path("admin/wipe/", views.RubricWipePageView.as_view(), name="rubrics_wipe"),
     path("admin/access/", views.RubricAccessPageView.as_view(), name="rubrics_access"),
     path(

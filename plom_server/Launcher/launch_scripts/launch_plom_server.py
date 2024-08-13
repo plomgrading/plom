@@ -2,6 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
 from __future__ import annotations
 
@@ -9,6 +10,7 @@ import argparse
 from pathlib import Path
 from shlex import split
 import subprocess
+import time
 
 
 def run_django_manage_command(cmd: str) -> None:
@@ -18,7 +20,7 @@ def run_django_manage_command(cmd: str) -> None:
         cmd: the command to run.
     """
     full_cmd = "python3 manage.py " + cmd
-    subprocess.run(split(full_cmd))
+    subprocess.run(split(full_cmd), check=True)
 
 
 def popen_django_manage_command(cmd: str) -> subprocess.Popen:
@@ -27,7 +29,17 @@ def popen_django_manage_command(cmd: str) -> subprocess.Popen:
     Args:
         cmd: the command to run.
 
-    Returns a subprocess.Popen class that can be used to terminate the background command.
+    Returns:
+        A subprocess.Popen class that can be used to terminate the
+        background command.  You'll probably want to do some checking
+        that the process is up, as it could fail almost instantly
+        following this command.  Or at any time really.
+
+    Raises:
+        OSError: such as FileNotFoundError if the command cannot be
+            found.  But note lack of failure here is no guarantee
+            the process is still running at any later time; such is
+            the nature of inter-process communication.
     """
     full_cmd = "python3 manage.py " + cmd
     return subprocess.Popen(split(full_cmd))
@@ -147,7 +159,16 @@ if __name__ == "__main__":
             server_process = launch_gunicorn_production_server_process(port=args.port)
         else:
             server_process = launch_django_dev_server_process(port=args.port)
+        # both processes still running after small delay? probably working
+        time.sleep(0.25)
+        r = huey_process.poll()
+        if r is not None:
+            raise RuntimeError(f"Problem with huey process: exit code {r}")
+        r = server_process.poll()
+        if r is not None:
+            raise RuntimeError(f"Problem with server process: exit code {r}")
         print("^" * 50)
+
         if args.development:
             wait_for_user_to_type_quit()
         else:
