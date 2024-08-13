@@ -64,6 +64,43 @@ class DataExtractionService:
         """
         return self.student_df.copy()
 
+    def get_descriptive_statistics_of_total(self) -> Dict[str, float]:
+        """Return descriptive statistics about the totals for the assessment.
+
+        Gives dict of count, max, min, median, mean, mode, stddev, percentile25, percentile75.
+        """
+        return {
+            "count": self.student_df["Total"].count(),
+            "max": self.student_df["Total"].max(),
+            "percentile75": self.student_df["Total"].quantile(0.75),
+            "median": self.student_df["Total"].median(),
+            "percentile25": self.student_df["Total"].quantile(0.25),
+            "min": self.student_df["Total"].min(),
+            "mean": self.student_df["Total"].mean(),
+            "mode": self.student_df["Total"].mode(),
+            "stddev": self.student_df["Total"].std(),
+        }
+
+    def get_descriptive_statistics_of_question(
+        self, question_index: int
+    ) -> Dict[str, float]:
+        """Return descriptive statistics about the totals for the assessment.
+
+        Gives dict of count, max, min, median, mean, mode, stddev, percentile25, percentile75.
+        """
+        qs = f"q{question_index}_mark"
+        return {
+            "count": self.student_df[qs].count(),
+            "max": self.student_df[qs].max(),
+            "percentile75": self.student_df[qs].quantile(0.75),
+            "median": self.student_df[qs].median(),
+            "percentile25": self.student_df[qs].quantile(0.25),
+            "min": self.student_df[qs].min(),
+            "mean": self.student_df[qs].mean(),
+            "mode": self.student_df[qs].mode(),
+            "stddev": self.student_df[qs].std(),
+        }
+
     def get_totals_average(self) -> float:
         """Return the average of the total mark over all students as a float."""
         return self.student_df["Total"].mean()

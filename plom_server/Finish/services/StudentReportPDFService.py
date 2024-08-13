@@ -7,76 +7,16 @@
 from __future__ import annotations
 
 from datetime import datetime
-from textwrap import dedent
 from typing import Any
 
 from weasyprint import HTML, CSS
 
-from django.template import Template, Context
+from django.template.loader import get_template
 
 from Mark.services import MarkingTaskService
 from Papers.services import SpecificationService
 from . import DataExtractionService, MatplotlibService
 from QuestionTags.services import QuestionTagService
-
-report_html = """
-    <body>
-    <h2>Student report: {{longname}}</h2>
-    {% if not all_marked %}
-    <p style="color:red;">WARNING: Not all papers have been marked.</p>
-    {% endif %}
-
-    <p>Date: {{timestamp_str}}</p>
-    <br>
-    <h3>Overview</h3>
-    <p>Name: {{name}}</p>
-    <p>Student Number: {{sid}}</p>
-    <p>Grade: {{grade}}/{{totalMarks}}</p>
-
-    <br>
-    <h3>Histogram of total marks</h3>
-    <img src="data:image/png;base64,{{histogram_of_grades}}" />
-
-    {% if pedagogy_tags_graph %}
-    <br>
-    <p style="break-before: page;"></p>
-    <h3>Student achievement by topic or learning objective</h3>
-    <img src="data:image/png;base64,{{pedagogy_tags_graph}}" />
-    
-    <p>
-    Each question on this assessment was tagged by the instructor 
-    with a topic or learning objective. Below is a lollypop graph 
-    which indicates your mastery of the identified topic. The 
-    score for each label is calculated as a weighted average of 
-    the score on the associated questions.  
-    </p>
-
-    <p>
-    For example, if Question 1 and Question 2 have the tag of 
-    <q>Learning Objective 1</q>, with scores of 4/10 and 8/10 
-    respectively, then the score for Learning Objective 1 is 
-    calculated as the weighted average of the scores on 
-    Questions 1 and 2: 1/2 (4/10+8/10) = 0.6.
-    </p>
-    <p>
-    The labelling of questions is meant to help identify topics/areas 
-    of strength and topics/areas for review.  If the score on a 
-    topic is low, it is strongly recommended to review the associated 
-    lecture notes, the associated section in the textbook, and/or 
-    contact your instructor for an office hour.
-    </p>
-    {% endif %}
-
-    <br>
-    <p style="break-before: page;"></p>
-    <h3>Histograms of marks by question</h3>
-    {% for graph in histogram_of_grades_by_q %}
-    <div class="col" style="margin-left:0mm;">
-    <img src="data:image/png;base64,{{graph}}" width="100%" height="100%" />
-    </div>
-    {% endfor %}
-   
-"""
 
 
 def pdf_builder(
@@ -103,18 +43,6 @@ def pdf_builder(
             is incomplete, because the pandas library uses NaN for
             missing data.
     """
-    if verbose:
-        print("Building report.")
-        print(
-            dedent(
-                """
-                Graphs to generate:
-                    1. Histogram of total marks (show student's standing)
-                    2. Histogram of each question (show student's standing)
-                    Generating."""
-            )
-        )
-
     des = DataExtractionService()
     mts = MarkingTaskService()
     mpls = MatplotlibService()
@@ -137,23 +65,21 @@ def pdf_builder(
     name = student_dict["StudentName"]
     grade = int(student_dict["Total"])
     paper_number = int(student_dict["PaperNumber"])
+    total_stats = des.get_descriptive_statistics_of_total()
 
-    # histogram of grades
-    if verbose:
-        print("Histogram of total marks.")
-    histogram_of_grades = mpls.histogram_of_total_marks(highlighted_sid=sid)
+    histogram_of_marks = mpls.histogram_of_total_marks(highlighted_sid=sid)
     pedagogy_tags_graph = None
     if sid is not None:
         if QuestionTagService.are_there_question_tag_links():
             # don't generate the lollypop graph is there are no pedagogy tags
             pedagogy_tags_graph = mpls.lollypop_of_pedagogy_tags(paper_number, sid)
 
-    # histogram of grades for each question
-    histogram_of_grades_by_q = []
+    # boxplot of marks for each question
+    boxplot_of_question_marks = []
     marks_for_questions = des._get_marks_for_all_questions()
     for _q, _ in enumerate(marks_for_questions):
         question_idx = _q + 1  # 1-indexing
-        histogram_of_grades_by_q.append(  # add to the list
+        boxplot_of_question_marks.append(  # add to the list
             # each base64-encoded image
             mpls.boxplot_of_grades_on_question_version(
                 question_idx, highlighted_sid=sid
@@ -162,25 +88,22 @@ def pdf_builder(
 
     del marks_for_questions, question_idx, _  # clean up
 
-    if verbose:
-        print("\nGenerating HTML.")
+    report_template = get_template("Finish/Reports/report_for_students.html")
+    context = {
+        "longname": longname,
+        "timestamp_str": timestamp_str,
+        "all_marked": all_marked,
+        "name": name,
+        "sid": sid,
+        "grade": grade,
+        "totalMarks": totalMarks,
+        "total_stats": total_stats,
+        "histogram_of_marks": histogram_of_marks,
+        "pedagogy_tags_graph": pedagogy_tags_graph,
+        "boxplots": boxplot_of_question_marks,
+    }
 
-    template = Template(report_html)
-    context = Context(
-        {
-            "longname": longname,
-            "timestamp_str": timestamp_str,
-            "all_marked": all_marked,
-            "name": name,
-            "sid": sid,
-            "grade": grade,
-            "totalMarks": totalMarks,
-            "histogram_of_grades": histogram_of_grades,
-            "histogram_of_grades_by_q": histogram_of_grades_by_q,
-            "pedagogy_tags_graph": pedagogy_tags_graph,
-        }
-    )
-    rendered_html = template.render(context)
+    rendered_html = report_template.render(context)
     pdf_data = HTML(string=rendered_html, base_url="").write_pdf(
         stylesheets=[CSS("./static/css/generate_report.css")]
     )
