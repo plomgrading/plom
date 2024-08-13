@@ -275,7 +275,7 @@ class Chooser(QDialog):
                 return
             self.setEnabled(False)
             self.hide()
-            idwin = IDClient(self.Qapp)
+            idwin = IDClient(self.Qapp, tmpdir=self._workdir)
             idwin.my_shutdown_signal.connect(self.on_identify_window_close)
             idwin.show()
             idwin.setup(self.messenger)
