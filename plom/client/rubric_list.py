@@ -577,7 +577,7 @@ class RubricTable(QTableWidget):
     def _get_key_from_row(self, r: int) -> int:
         item = self.item(r, 0)
         # TODO: is an assertion error what we want here?
-        assert item, r"Could not find row {r}"
+        assert item, f"Could not find row {r}"
         return int(item.text())
 
     def _get_row_from_key(self, key: int) -> int | None:
