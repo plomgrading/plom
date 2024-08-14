@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Managers can perform scanning actions directly, without a separate scanner account.
 
 ### Fixed
+* Client: erase the page cache on shutdown.
 * Fixed crash on Windows pre-compiled binary.
 * Fixed prename box positioning.
 * Improved box-drag annotation rendering.

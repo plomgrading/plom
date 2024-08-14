@@ -201,7 +201,7 @@ class Chooser(QDialog):
         self.lastTime["LogToFile"] = opt["LogToFile"]
         logging.getLogger().setLevel(self.lastTime["LogLevel"].upper())
 
-    def launch_task(self, which_subapp: str) -> None:
+    def _launch_subapp(self, which_subapp: str) -> None:
         if not self.is_logged_in():
             self.login()
             if not self.is_logged_in():
@@ -279,13 +279,13 @@ class Chooser(QDialog):
             raise RuntimeError("Invalid subapplication value")
 
     def run_marker(self) -> None:
-        self.launch_task("Marker")
+        self._launch_subapp("Marker")
 
     def run_identifier(self) -> None:
-        self.launch_task("Identifier")
+        self._launch_subapp("Identifier")
 
     def run_manager(self) -> None:
-        self.launch_task("Manager")
+        self._launch_subapp("Manager")
 
     def saveDetails(self) -> None:
         """Write the options to the config file."""
@@ -315,10 +315,10 @@ class Chooser(QDialog):
     def closeEvent(self, event: None | QtGui.QCloseEvent) -> None:
         self.saveDetails()
         dl = getattr(self.Qapp, "downloader", None)
-        if dl and dl.has_messenger():
-            # TODO: do we just wait forever?
-            # TODO: Marker already tried to stop it: maybe never get here?
+        if dl:
+            # TODO: do we really just wait forever?
             dl.stop(-1)
+            dl.basedir.rmdir()
         self.logout()
 
     def setFontSize(self, n: int) -> None:
