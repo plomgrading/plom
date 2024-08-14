@@ -28,6 +28,8 @@ class Command(BaseCommand):
             ForgiveMissingService.forgive_missing_fixed_page_cmd(
                 opt["username"], opt["paper_number"], opt["page_number"]
             )
-            self.stdout.write("Replaced missing page {page_number} from paper {paper_number} with a subsitute image.")
+            self.stdout.write(
+                "Replaced missing page {page_number} from paper {paper_number} with a substitute image."
+            )
         except ValueError as err:
             raise CommandError(err)

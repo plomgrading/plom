@@ -10,8 +10,6 @@ from __future__ import annotations
 
 from typing import Any
 
-import arrow
-
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Prefetch
 
@@ -356,7 +354,6 @@ class ManageScanService:
     def get_number_unpushed_bundles(self) -> int:
         """Return the number of uploaded, but not yet pushed, bundles."""
         return StagingBundle.objects.filter(pushed=False).count()
-
 
     def get_pushed_image(self, img_pk: int) -> Image | None:
         try:
