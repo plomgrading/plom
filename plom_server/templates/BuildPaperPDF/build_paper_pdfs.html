@@ -18,6 +18,25 @@
         <div>
             <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
+        <!-- start prename config -->
+        <div class="card w-50">
+            <div class="card-body">
+                <h5 class="card-title">Prenaming configuration</h5>
+                <div class="col">
+                    <p class="card-text">Adjust x,y position of prenaming card.</p>
+                </div>
+                <div class="col">
+                    <!-- TODO: include x, y fields to pass to prename mocker-->
+                    <form action="{% url 'prename_mock' %}" target="_blank" method="get">
+                        <input type="number" name="xPos" style="width:60px;">
+                        <input type="number" name="yPos" style="width:60px;">
+                        {% csrf_token %}
+                        <input class="btn btn-primary" type="submit" value="Download preview">
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- end prename config -->
         <div id="pdf_table">{{ pdf_table |safe }}</div>
     </div>
     <div class="modal fade"

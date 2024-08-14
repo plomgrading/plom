@@ -29,3 +29,26 @@ class MockExamView(ManagerRequiredView):
         )
         mock_exam_file = File(BytesIO(mock_exam_pdf_bytes), name=f"mock_v{version}.pdf")
         return FileResponse(mock_exam_file, content_type="application/pdf")
+
+
+class MockPrenameView(ManagerRequiredView):
+    """Create a mock exam id page with the prename card."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        x_pos = float(request.GET.get("xPos"))
+        y_pos = float(request.GET.get("yPos"))
+        version = 1
+        mocker = ExamMockerService()
+        source_path = Path(SourceService._get_source_file(version).path)
+
+        n_pages = SpecificationService.get_n_pages()
+        mock_exam_pdf_bytes = mocker.mock_ID_page(
+            version,
+            source_path,
+            n_pages,
+            SpecificationService.get_short_name_slug(),
+            xcoord=x_pos,
+            ycoord=y_pos,
+        )
+        mock_exam_file = File(BytesIO(mock_exam_pdf_bytes), name=f"mock_v{version}.pdf")
+        return FileResponse(mock_exam_file, content_type="application/pdf")

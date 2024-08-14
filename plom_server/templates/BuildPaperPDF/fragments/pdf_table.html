@@ -7,12 +7,13 @@
     Copyright (C) 2024 Bryan Tanady
 -->
 <div class="d-grid gap-2">
+    {{ prenaming_mock|safe }}
     {% if not db_initialised %}
         <div class="card w-50">
             <div class="card-body">
                 <h5 class="card-title">
                     <i class="bi bi-exclamation-triangle-fill text-warning fs-1"></i>
-                    Database not initialised
+                    Database not initialised...
                 </h5>
                 <p class="card-text">You must initialize the database before building PDFs.</p>
             </div>

@@ -20,5 +20,5 @@ from .pqv_mapping import (
     PQVMappingDeleteView,
     PQVMappingUploadView,
 )
-from .mocker import MockExamView
+from .mocker import MockExamView, MockPrenameView
 from .misc_extras import MiscExtrasView
