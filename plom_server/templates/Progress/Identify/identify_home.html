@@ -24,9 +24,9 @@
         {% endwith %}
     </div>
     <div class="row">
-        <div class="col">
+        <div class="col overflow-y-scroll" style="max-height:75vh;">
             <table class="table sortable">
-                <thead>
+                <thead class="sticky-top">
                     <th>Paper</th>
                     <th>ID Page</th>
                     <th>Status</th>
@@ -35,57 +35,59 @@
                     <th>Action</th>
                     <th>Remark</th>
                 </thead>
-                {% for pn, data in id_task_info.items %}
-                    <tr>
-                        <td>{{ pn }}</td>
-                        <td>
-                            {% if data.idpageimage_pk %}
-                                <button hx-get="{% url 'ID_img_wrap' data.idpageimage_pk %}"
-                                        hx-target="#imageHere"
-                                        hx-replace="innerHTML"
-                                        class="btn btn-outline-success">view</button>
+                <tbody>
+                    {% for pn, data in id_task_info.items %}
+                        <tr>
+                            <td>{{ pn }}</td>
+                            <td>
+                                {% if data.idpageimage_pk %}
+                                    <button hx-get="{% url 'ID_img_wrap' data.idpageimage_pk %}"
+                                            hx-target="#imageHere"
+                                            hx-replace="innerHTML"
+                                            class="btn btn-outline-success">view</button>
+                                {% else %}
+                                    No ID page
+                                {% endif %}
+                            </td>
+                            <td>{{ data.status }}</td>
+                            {% if data.status == "Complete" %}
+                                <td>
+                                    {{ data.student_id }}
+                                    {% if not data.student_id %}<i class="bi bi-exclamation-diamond-fill text-warning"></i>{% endif %}
+                                </td>
+                                <td>{{ data.student_name }}</td>
+                                <td>
+                                    <button class="btn btn-outline-danger"
+                                            hx-delete="{% url 'clear_ID' pn %}"
+                                            hx-confirm="Are you sure you wish to clear the ID for paper number {{ pn }}?">
+                                        clear
+                                    </button>
+                                </td>
+                                <td>
+                                    {% if not data.in_classlist %}
+                                        <i class="bi bi-exclamation-diamond-fill text-warning"></i> Not from uploaded classlist
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
                             {% else %}
-                                No ID page
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td>
+                                    {% if data.prediction %}
+                                        predicted ID: {{ data.prediction|join:', ' }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
                             {% endif %}
-                        </td>
-                        <td>{{ data.status }}</td>
-                        {% if data.status == "Complete" %}
-                            <td>
-                                {{ data.student_id }}
-                                {% if not data.student_id %}<i class="bi bi-exclamation-diamond-fill text-warning"></i>{% endif %}
-                            </td>
-                            <td>{{ data.student_name }}</td>
-                            <td>
-                                <button class="btn btn-outline-danger"
-                                        hx-delete="{% url 'clear_ID' pn %}"
-                                        hx-confirm="Are you sure you wish to clear the ID for paper number {{ pn }}?">
-                                    clear
-                                </button>
-                            </td>
-                            <td>
-                                {% if not data.in_classlist %}
-                                    <i class="bi bi-exclamation-diamond-fill text-warning"></i> Not from uploaded classlist
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                        {% else %}
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td>
-                                {% if data.prediction %}
-                                    predicted ID: {{ data.prediction|join:', ' }}
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                        {% endif %}
-                    </tr>
-                {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
             </table>
         </div>
-        <div class="col">
+        <div class="col sticky-top">
             <div class="p-2"
                  style="justify-content: center;
                         display:flex;

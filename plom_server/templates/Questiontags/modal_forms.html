@@ -30,7 +30,14 @@
                         <label for="text">Description</label>
                         <textarea class="form-control" id="text" name="text" rows="4" required></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Create</button>
+                    <div class="form-group">
+                        <label for="confidential_info">confidential_info (not shown to students):</label>
+                        <textarea class="form-control"
+                                  id="confidential_info"
+                                  name="confidential_info"
+                                  rows="4"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-2">Create</button>
                 </form>
             </div>
         </div>
@@ -57,12 +64,12 @@
                     {% csrf_token %}
                     <div class="form-group">
                         <label for="tag_id">Select Tag to Delete</label>
-                        <select class="form-control" id="tag_id" name="tag_id">
+                        <select class="form-control mt-2" id="tag_id" name="tag_id" required>
                             <option value="" disabled selected>Select a tag</option>
                             {% for tag in tags %}<option value="{{ tag.id }}">{{ tag.tag_name }}</option>{% endfor %}
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-danger">Delete</button>
+                    <button type="submit" class="btn btn-danger mt-2">Delete</button>
                 </form>
             </div>
         </div>
@@ -92,7 +99,11 @@
                         <select class="form-control" id="tag_id_edit" name="tag_id">
                             <option value="" disabled selected>Select a tag</option>
                             {% for tag in tags %}
-                                <option value="{{ tag.id }}" data-description="{{ tag.text }}">{{ tag.tag_name }}</option>
+                                <option value="{{ tag.id }}"
+                                        data-description="{{ tag.text }}"
+                                        data-confidential_info="{{ tag.confidential_info }}">
+                                    {{ tag.tag_name }}
+                                </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -109,7 +120,14 @@
                         <label for="text_edit">Description</label>
                         <textarea class="form-control" id="text_edit" name="text" rows="4" required></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <div class="form-group">
+                        <label for="confidential_info_edit">confidential_info (not shown to students):</label>
+                        <textarea class="form-control"
+                                  id="confidential_info_edit"
+                                  name="confidential_info"
+                                  rows="4"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-2">Save Changes</button>
                 </form>
             </div>
         </div>
@@ -142,29 +160,60 @@
         </div>
     </div>
 </div>
+<!-- Modal for Importing Tags -->
+<div class="modal fade"
+     id="importTagModal"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="importTagModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importTagModalLabel">Import Tags from CSV</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="importTagForm"
+                      method="post"
+                      action="{% url 'import_tags' %}"
+                      enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="csv_file">Upload CSV file</label>
+                        <input type="file"
+                               class="form-control"
+                               id="csv_file"
+                               name="csv_file"
+                               required>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-2">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const editTagForm = document.getElementById('editTagForm');
-        const createTagForm = document.getElementById('createTagForm');
-        const errorMessageElementEdit = document.createElement('div');
-        const errorMessageElementCreate = document.createElement('div');
-        errorMessageElementEdit.classList.add('alert', 'alert-danger', 'mt-2');
-        errorMessageElementCreate.classList.add('alert', 'alert-danger', 'mt-2');
-        editTagForm.appendChild(errorMessageElementEdit);
-        createTagForm.appendChild(errorMessageElementCreate);
-        errorMessageElementEdit.style.display = 'none';
-        errorMessageElementCreate.style.display = 'none';
+        const forms = ['editTagForm', 'createTagForm', 'importTagForm'];
+        const errorMessageClass = 'alert alert-danger mt-2';
 
-        const handleFormSubmission = (form, errorMessageElement) => {
+        forms.forEach(formId => {
+            const form = document.getElementById(formId);
+            const errorMessageElement = document.createElement('div');
+            errorMessageElement.className = errorMessageClass;
+            errorMessageElement.style.display = 'none';
+            form.appendChild(errorMessageElement);
+
             form.addEventListener('submit', function(event) {
                 event.preventDefault();
                 const formData = new FormData(form);
                 fetch(form.action, {
                     method: 'POST',
                     body: formData,
-                    headers: {
-                        'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
-                    },
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -173,11 +222,7 @@
                         errorMessageElement.style.display = 'block';
                     } else {
                         errorMessageElement.style.display = 'none';
-                        if (form.id === 'editTagForm') {
-                            $('#editTagModal').modal('hide');
-                        } else {
-                            $('#createTagModal').modal('hide');
-                        }
+                        $(`#${formId.replace('Form', 'Modal')}`).modal('hide');
                         location.reload();
                     }
                 })
@@ -185,9 +230,6 @@
                     console.error('Error:', error);
                 });
             });
-        };
-
-        handleFormSubmission(editTagForm, errorMessageElementEdit);
-        handleFormSubmission(createTagForm, errorMessageElementCreate);
+        });
     });
 </script>

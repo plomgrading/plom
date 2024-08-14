@@ -144,9 +144,46 @@ The file can also contain comments starting with ``# ...``
    explicitly putting ``allowSharedPages = true`` in your specification.
 
 
+Building the database of papers
+-------------------------------
+
+After creating and uploading your assessment specification, you can
+use the management web interface to upload "source PDFs" of your
+assessment, optionally upload a classlist, build a database of papers
+and create the actual QR-coded PDF files to print for you assessment.
+
+
+The question-version mapping
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. tip::
+   The first time you use Plom, we recommend using just a single
+   version of your assessment (and skipping this section!)
+
+When creating a multi-versioned assessment, a critically-important
+step is the creation of the "QV map" or the "question-version
+mapping", which tells Plom what versions to expect for each question
+and for each paper.
+
+You can have Plom create this mapping automatically, or specify your
+own via a spreadsheet if you have additional requirements.
+
+.. caution::
+   Its a good idea to download and backup a copy of your QV-map.  If
+   something goes catastrophically wrong, it (and the specification)
+   are crucial components to recreate your assessment elsewhere.
+
+
 
 Technical docs
 --------------
+
+* For scripting, the command-line tools `django-admin plom_preparation_test_spec`,
+  `django-admin plom_qvmap`, `django-admin plom_build_paper_pdfs`, and others
+  can used.
+
+  ..
+     TODO: ideally we'd get these argparse'd into the docs like the legacy tools.
 
 * On legacy servers, the command-line tool :doc:`plom-create` is used for
   most tasks related starting a new assessment.

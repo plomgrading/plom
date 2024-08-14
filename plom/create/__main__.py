@@ -720,11 +720,11 @@ def main():
         except PlomExistingDatabase:
             print("Since we already have a database, move on to making papers")
         build_papers(
-            fakepdf=args.no_pdf,
-            no_qr=args.without_qr,
             indexToMake=args.number,
             xcoord=args.namebox_xpos,
             ycoord=args.namebox_ypos,
+            fakepdf=args.no_pdf,
+            no_qr=args.without_qr,
             msgr=(args.server, args.password),
         )
     elif args.command == "extra-pages":

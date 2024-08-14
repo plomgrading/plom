@@ -11,27 +11,29 @@
 {% block main_content %}
     <p>
         Tagging questions is a beta feature intended to support more
-        detailed analysis during or after an assessment.  For example
-        one might tag questions according their learning objective,
+        detailed analysis during or after an assessment. For example,
+        one might tag questions according to their learning objective,
         format, or topic.
     </p>
     {% if error_message %}<div class="alert alert-danger">{{ error_message }}</div>{% endif %}
     <h3>Questions</h3>
+    <a href="{% url 'download_question_tags' %}?format=csv&csv_type=questions"
+       class="btn btn-primary">Download qtags-link CSV</a>
     <table class="table table-striped">
         <thead>
             <tr>
-                <th class="fixed-width-index">Question Index</th>
-                <th class="fixed-width-label">Question Label</th>
+                <th style=" width: 25%;">Question Index</th>
+                <th style=" width: 15%;">Question Label</th>
                 <th>Tags</th>
             </tr>
         </thead>
         <tbody>
             {% for index, label_str, label_html in question_label_triple %}
                 <tr>
-                    <td class="fixed-width-index">{{ index }}</td>
-                    <td class="fixed-width-label">{{ label_html|safe }}</td>
+                    <td>{{ index }}</td>
+                    <td>{{ label_html|safe }}</td>
                     <td id="question-tags-{{ index }}">
-                        <div class="tag-container">
+                        <div>
                             <span class="dropdown add-tag-button">
                                 <button class="btn btn-success dropdown-toggle"
                                         type="button"
@@ -83,6 +85,8 @@
             {% endfor %}
         </tbody>
     </table>
+    <a href="{% url 'download_question_tags' %}?format=csv&csv_type=tags"
+       class="btn btn-primary">Download tags CSV</a>
     <br />
     <h3>Manage Tags</h3>
     <button type="button"
@@ -97,18 +101,24 @@
             class="btn btn-primary"
             data-bs-toggle="modal"
             data-bs-target="#deleteTagModal">Delete Tag</button>
+    <button type="button"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#importTagModal">Import Tag</button>
     <table class="table table-striped">
         <thead>
             <tr>
-                <th class="fixed-width-name">Tag Name</th>
-                <th class="fixed-width-description">Tag Description</th>
+                <th style=" width: 25%;">Tag Name</th>
+                <th>Tag Description</th>
+                <th>Confidential information (not shown to students)</th>
             </tr>
         </thead>
         <tbody>
             {% for tag in tags %}
                 <tr>
-                    <td class="fixed-width-name">{{ tag.tag_name }}</td>
-                    <td class="fixed-width-description">{{ tag.text }}</td>
+                    <td>{{ tag.tag_name }}</td>
+                    <td>{{ tag.text }}</td>
+                    <td>{{ tag.confidential_info }}</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -130,15 +140,17 @@
                 $('#modalTagName').text(tagName);
                 $('#modalTagDescription').text(tagDescription);
             });
-    
+
             $('#tag_id_edit').change(function() {
                 var selectedTag = $(this).val();
-                var selectedTagText = $(this).find('option:selected').text();
+                var selectedTagText = $(this).find('option:selected').text().trim();
                 $('#tagName_edit').val(selectedTagText);
-                var selectedTagDescription = $(this).find('option:selected').data('description');
+                var selectedTagDescription = $(this).find('option:selected').data('description').trim();
                 $('#text_edit').val(selectedTagDescription);
+                var selectedTagconfidential_info = $(this).find('option:selected').data('confidential_info').trim();
+                $('#confidential_info_edit').val(selectedTagconfidential_info);
             });
-    
+
             $('#tagModal').on('show.bs.modal', function(event) {
                 var button = $(event.relatedTarget); // Button that triggered the modal
                 var tagName = button.data('tag-name'); // Extract info from data-* attributes
@@ -150,81 +162,8 @@
         });
     </script>
     <style>
-        .fixed-width-index {
-            width: 300px;
-            text-align: left;
-        }
-        .fixed-width-label {
-            width: 300px;
-            text-align: center;
-        }
-        .tag-container {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            flex-wrap: wrap;
-        }
-        .tag-link {
-            display: inline-block;
-            margin-right: 5px;
-            padding: 2px 5px;
-            border-radius: 3px;
-            text-decoration: none;
-            color: white;
-        }
-        .tag-link.blue-tag {
-            background-color: #007bff;
-        }
-        .tag-link.green-tag {
-            background-color: #28a745;
-        }
-        .tag-link:hover {
-            opacity: 0.8;
-        }
         .select2-container {
             z-index: 9999;
-        }
-        .tag {
-            margin-right: 5px;
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 3px;
-            background-color: #007bff;
-            color: white;
-            font-size: 0.875rem;
-        }
-        .tag .btn {
-            padding: 0;
-            margin-left: 5px;
-            background: none;
-            border: none;
-            color: white;
-        }
-        .tag .btn:hover {
-            color: red;
-        }
-        .add-tag-button {
-            flex-shrink: 0;
-            margin-right: 10px;
-        }
-        .btn-success {
-            width: 100px;
-        }
-        .fixed-width-name {
-            width: 250px;
-            text-align: left;
-            white-space: normal;
-            word-wrap: break-word;
-        }
-        .fixed-width-description {
-            width: 500px;
-            text-align: left;
-            white-space: normal;
-            word-wrap: break-word;
-        }
-        .form-error {
-            color: red;
-            font-weight: bold;
         }
     </style>
 {% endblock main_content %}

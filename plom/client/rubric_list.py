@@ -567,13 +567,11 @@ class RubricTable(QTableWidget):
         delta_rubrics = []
         for rb in rubrics:
             if rubric_is_naked_delta(rb):
-                if (positive and int(rb["value"]) > 0) or (
-                    not positive and int(rb["value"]) < 0
-                ):
+                if (positive and rb["value"] > 0) or (not positive and rb["value"] < 0):
                     delta_rubrics.append(rb)
 
         # now sort in numerical order away from 0 and add
-        for rb in sorted(delta_rubrics, key=lambda r: abs(int(r["value"]))):
+        for rb in sorted(delta_rubrics, key=lambda r: abs(r["value"])):
             self.appendNewRubric(rb)
         # finally append the manager-created absolute rubrics
         # TODO: bit fragile, but roughly we want the "0 of 10" etc
@@ -1385,7 +1383,6 @@ class RubricWidget(QWidget):
         self.tabDeltaP.setDeltaRubrics(self.rubrics, positive=True)
         self.tabDeltaN.setDeltaRubrics(self.rubrics, positive=False)
         self.tabHide.setRubricsByKeys(self.rubrics, wranglerState["hidden"])
-
         try:
             self.reorder_tabs(wranglerState["tab_order"])
         except AssertionError as e:

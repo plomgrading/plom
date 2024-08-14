@@ -3,10 +3,11 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Elisa Pan
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django.urls import path
 
-from Progress.views import (
+from .views import (
     ProgressIdentifyHome,
     ProgressMarkHome,
     ProgressMarkStatsView,

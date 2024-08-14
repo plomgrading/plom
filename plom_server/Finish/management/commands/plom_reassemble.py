@@ -1,16 +1,18 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from pathlib import Path
 
 from tabulate import tabulate
-from tqdm import trange
+from time import sleep
 
 from django.core.management.base import BaseCommand, CommandError
+from django.utils.text import slugify
 
 from Finish.services import ReassembleService
-from Papers.services import PaperInfoService
+from Papers.services import PaperInfoService, SpecificationService
 from Papers.models import Paper
 
 
@@ -20,6 +22,11 @@ class Command(BaseCommand):
     help = "Create PDFs to return to students"
 
     def add_arguments(self, parser):
+        parser.add_argument(
+            "--wait",
+            action="store_true",
+            help="Wait for queued reassembly to finish",
+        )
         parser.add_argument(
             "--status",
             action="store_true",
@@ -80,19 +87,12 @@ class Command(BaseCommand):
         paper_service = PaperInfoService()
         if not paper_service.is_paper_database_populated():
             raise CommandError("Paper database is not populated - stopping.")
-
-        papers = Paper.objects.all()
-        reassembler = ReassembleService()
-        for i in trange(1, len(papers) + 1, desc="Reassembly progress"):
-            try:
-                paper = papers.get(paper_number=i)
-                out_path = reassembler.reassemble_paper(paper, outdir=save_path)
-            except ValueError as e:
-                self.stderr.write(f"Warning: {e}")
-        self.stdout.write(f"Papers written to {out_path.parent.absolute()}")
+        ReassembleService().queue_all_paper_reassembly()
+        self.stdout.write("Queued reassembly of all papers and reports")
 
     def download_zip(self, zip_path):
-        zipper = ReassembleService().get_zipfly_generator("reassembled")
+        short_name = slugify(SpecificationService.get_shortname())
+        zipper = ReassembleService().get_zipfly_generator(short_name)
         if zip_path.exists():
             raise CommandError(f"File '{zip_path}' already exists.")
         with zip_path.open("wb") as fh:
@@ -107,6 +107,19 @@ class Command(BaseCommand):
             row.pop("last_update")
             row.pop("reassembled_time")
         self.stdout.write(tabulate(tab, headers="keys", tablefmt="simple_outline"))
+
+    def wait_for_chores(self):
+        reas = ReassembleService()
+        while True:
+            mid_reassembly = reas.how_many_papers_are_mid_reassembly()
+            if mid_reassembly > 0:
+                self.stdout.write(
+                    f"Still {mid_reassembly} papers being reassembled - waiting."
+                )
+                sleep(2)
+            else:
+                break
+        self.stdout.write("No active reassembly tasks.")
 
     def delete_all_chores(self):
         service = ReassembleService()
@@ -123,6 +136,8 @@ class Command(BaseCommand):
         zip_path = options["zip"]
         if options["status"]:
             self.show_status()
+        if options["wait"]:
+            self.wait_for_chores()
         elif options["delete_all"]:
             self.delete_all_chores()
         elif options["cancel_all"]:

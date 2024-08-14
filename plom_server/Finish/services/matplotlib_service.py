@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Elisa Pan
+# Copyright (C) 2024 Andrew Rechnitzer
 
 from __future__ import annotations
 
@@ -16,10 +17,12 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from . import DataExtractionService
+from . import DataExtractionService, StudentMarkService
 from Papers.services import SpecificationService
+from QuestionTags.services import QuestionTagService
 
 RANGE_BIN_OFFSET = 2
+HIGHLIGHT_COLOR = "orange"
 
 
 class MatplotlibService:
@@ -103,7 +106,6 @@ class MatplotlibService:
             df = self.des.get_student_data()
             student = df[df["StudentID"] == highlighted_sid]
             student_score = student["Total"].values[0]
-            highlight_color = "#3061FF"
 
             ax = plt.gca()
             for bar in ax.patches:
@@ -111,7 +113,7 @@ class MatplotlibService:
                 bar_left = bar.get_x()
                 bar_right = bar_left + bar.get_width()
                 if bar_left <= student_score <= bar_right:
-                    bar.set_color(highlight_color)
+                    bar.set_color(HIGHLIGHT_COLOR)
                     bar.set_edgecolor("black")
                     bar.set_linewidth(1.5)
         ax.set_title("Histogram of total marks")
@@ -189,7 +191,6 @@ class MatplotlibService:
         if highlighted_sid:
             # Overlay the student's score by highlighting the bar
             df = self.des.get_student_data()
-            highlight_color = "#3061FF"
             student_score = df[df["StudentID"] == highlighted_sid][mark_column].values[
                 0
             ]
@@ -199,7 +200,7 @@ class MatplotlibService:
                 bar_left = bar.get_x()
                 bar_right = bar_left + bar.get_width()
                 if bar_left <= student_score <= bar_right:
-                    bar.set_color(highlight_color)
+                    bar.set_color(HIGHLIGHT_COLOR)
                     bar.set_edgecolor("black")
                     bar.set_linewidth(1.5)
         if versions:
@@ -656,6 +657,49 @@ class MatplotlibService:
             question_indices,
             labels=SpecificationService.get_question_labels(),
         )
+
+        graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
+        self.ensure_all_figures_closed()
+
+        if format == "bytes":
+            return graph_bytes
+        else:
+            return self.get_graph_as_base64(graph_bytes)
+
+    def lollypop_of_pedagogy_tags(
+        self, paper_number: int, student_id: str, *, format: str = "base64"
+    ) -> BytesIO | str:
+        assert format in self.formats
+        self.ensure_all_figures_closed()
+
+        student_scores = StudentMarkService().get_marks_from_paper(paper_number)[
+            paper_number
+        ]
+        tag_to_question = QuestionTagService.get_tag_to_question_links()
+        n_tags = len(tag_to_question)
+        tag_names = sorted(list(tag_to_question.keys()))
+        pedagogy_values = []
+        # for each tag, compute % student got on each question
+        # combine those to get a 'pedagogy value'
+        for name in tag_names:
+            values = [
+                student_scores[qi]["student_mark"] / student_scores[qi]["out_of"]
+                for qi in tag_to_question[name]
+            ]
+            pedagogy_values.append(sum(values) / len(values))
+
+        plt.figure(figsize=(6.8, n_tags * 0.3 + 0.6), tight_layout=True)
+        plt.margins(y=0.3)
+
+        df = pd.DataFrame({"tag": tag_names, "values": pedagogy_values})
+        ordered_df = df.sort_values(by="tag")
+        my_range = range(1, len(df.index) + 1)
+        plt.hlines(y=my_range, xmin=0, xmax=df["values"], linewidth=8)
+        plt.plot(ordered_df["values"], my_range, "o", markersize=16)
+        # note mypy gets grumpy with many matplotlib functions, so
+        # convert the pandas series to a list to keep it happy
+        plt.yticks(my_range, ordered_df["tag"].to_list())
+        plt.xlim(0, 1)
 
         graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
         self.ensure_all_figures_closed()

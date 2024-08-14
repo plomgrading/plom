@@ -76,11 +76,11 @@ def build_papers_backend(
     global_question_version_map: dict[int, dict[int, int]],
     *,
     classlist_by_papernum: dict[int, dict[str, str]] = {},
-    fakepdf: bool = False,
-    no_qr: bool = False,
     indexToMake: int | None = None,
     xcoord: float | None = None,
     ycoord: float | None = None,
+    fakepdf: bool = False,
+    no_qr: bool = False,
 ) -> None:
     """Builds the papers using _make_PDF, optionally prenamed.
 
@@ -95,10 +95,6 @@ def build_papers_backend(
             paper numbers corresponding to keys in `classlists_by_papernum`
             will be have names and IDs stamped on the front.  Can be an empty
             dict or omitted to not use this feature.
-        fakepdf (bool): when true, the build empty pdfs (actually empty files)
-            for use when students upload homework or similar (and only 1 version).
-        no_qr (bool): when True, don't stamp with QR codes.  Default: False
-            (which means *do* stamp with QR codes).
         indexToMake (int/None): specified paper number to be built.  If
             None then build all papers.  If this parameter is specified,
             only this paper will be built and the others will be ignored.
@@ -106,6 +102,10 @@ def build_papers_backend(
             ID/Signature box.
         ycoord (float): percentage from top to bottom of page to place
             ID/Signature box.
+        fakepdf (bool): when true, the build empty pdfs (actually empty files)
+            for use when students upload homework or similar (and only 1 version).
+        no_qr (bool): when True, don't stamp with QR codes.  Default: False
+            (which means *do* stamp with QR codes).
 
     Returns:
         None

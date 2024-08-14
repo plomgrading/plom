@@ -289,6 +289,7 @@ def pdf_page_add_name_id_box(
     sid: str,
     x: float | None = None,
     y: float | None = None,
+    *,
     signherebox: bool = True,
 ) -> None:
     """Creates the extra info (usually student name and id) boxes and places them in the first page.
@@ -298,7 +299,7 @@ def pdf_page_add_name_id_box(
             effect.
         name (str): student name.
         sid (str): student id.
-        x (float): specifies the x-coordinate where the id and name
+        x: specifies the x-coordinate where the id and name
             will be placed, as a float from 0 to 100, where 0 has the centre
             of the box at left of the page and 100 has the centre at the right
             of the page.  If None, defaults to 50.  Note that unlike the
@@ -306,13 +307,13 @@ def pdf_page_add_name_id_box(
             page: this is intentional as centring the centre of this
             box on the centre of the template works best if a name is
             unexpectedly long.
-        y (float): specifies the y-coordinate where the id and name
+        y: specifies the y-coordinate where the id and name
             will be placed, as a float from 0 to 100, where 0 is the top
             and 100 is the bottom of the page.  If None, defaults to 42
             for historical reasons (to match the position in our demo).
 
     Keyword Arguments:
-        signherebox (bool): add a "sign here" box, default True.
+        signherebox: add a "sign here" box, default True.
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable.
@@ -397,10 +398,10 @@ def make_PDF(
     papernum: int,
     question_versions: dict[int, int],
     extra: dict[str, Any] | None = None,
-    no_qr: bool = False,
-    fakepdf: bool = False,
     xcoord: float | None = None,
     ycoord: float | None = None,
+    no_qr: bool = False,
+    fakepdf: bool = False,
     *,
     where=None,
     source_versions_path=None,
