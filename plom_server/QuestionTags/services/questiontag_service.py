@@ -184,5 +184,5 @@ class QuestionTagService:
 
     @staticmethod
     def get_pedagogy_tag_descriptions() -> Dict[str, str]:
-        """Return a dict of {tag_name: tag_description}"""
+        """Return a dict of {tag_name: tag_description}."""
         return {ptag.tag_name: ptag.text for ptag in PedagogyTag.objects.all()}
