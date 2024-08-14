@@ -1,6 +1,6 @@
 % SPDX-License-Identifier: AGPL-3.0-or-later
-% Copyright (C) 2019-2022 Andrew Rechnitzer
-% Copyright (C) 2022-2023 Colin B. Macdonald
+% Copyright (C) 2019-2024 Andrew Rechnitzer
+% Copyright (C) 2022-2024 Colin B. Macdonald
 
 \documentclass[12pt]{exam}
 
@@ -16,79 +16,65 @@
 %% for the instructor to include solutions in their .tex
 %% We recommend that you use this.
 
-
-\boxedpoints
-\marksnotpoints
-\addpoints
-\extrawidth{-20mm}
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% If we want to print out the answers/solns then we should
-% also NOT print those extra spaces and blankpages.
-% To help us do this we define a boolean flag
-% By default we have it set to true, telling latex to put
-% in the extra spacing etc.
-\newboolean{space} \setboolean{space}{true}
-
-%% Now, to print answers/soln and remove the extra spacing
+%% To print answers/soln and remove the extra spacing
 %% just comment out the line below
-%% vvvvvvv
 %% vvvvv
 %% vvv
 %% v
 
-% \printanswers  \setboolean{space}{false}
+% \printanswers%
 
 %% ^
 %% ^^^
 %% ^^^^^
-%% ^^^^^^^
 %% Try running this with and without the line above
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Add "draft" to show mock-up QR codes
+%\usepackage{mockplom}
+%\usepackage[draft]{mockplom}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\boxedpoints        % puts boxes around the score for each question
+\marksnotpoints     % call scores 'marks' not 'points'
+\addpoints          % total up the marks for each question 
+\extrawidth{-20mm}  % control margins for plom-qr-code positioning.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % A simple warning for your Do-Not-Mark pages
-\newcommand{\dnm}{\noindent \emph{Please do not write on this page --- it will not be marked.}}
+\newcommand{\dnm}{\noindent%
+\emph{Please do not write on this page --- it will not be marked.}%
+}
 
 % Here are some handy commands for adding spacing / blank pages / answerboxes
 % when printing with or without solns.
 
-% Use this to put a vfill between things when printing
+% Use the command below to put a vfill between things when printing
 % without answers/solutions. No space when printing with answers/solns
-\newcommand{\blank}{
-  \ifthenelse{\boolean{space}}{\vfill}{}
-}
+\newcommand{\blank}{ \ifprintanswers{}\else{\vfill}\fi }
 
-% Use this to put a blankpage when printing without answers/solutions.
+% Use the command below to put a blankpage when printing without answers/solutions.
 % No page when printing with answers/solns
 % This takes an optional argument of a question-number: \blankpage[X]
 % and prints a message telling the student that this blank space is for
 % question X. If no arg given then it prints the same message but for
-% the current question.
-\newcommand{\blankpage}[1][\thequestion]{
-\ifthenelse{\boolean{space}}{
-\par\vfill\newpage
-\noindent \emph{This blank page is for your solution to \textbf{Question~{#1}} if you need more space.}
-\par\vfill\newpage
-}{} }
-% Thanks to PDL for improving the blankpage.
+% the current question. Thanks to PDL for improving this.
+\newcommand{\blankpage}[1][\thequestion]{%
+\ifprintanswers{}\else{\par\vfill\newpage%
+\noindent \emph{This blank page is for your solution to \textbf{Question~{#1}} if you need more space.}%
+\par\vfill\newpage}\fi%
+}
 
 % Use this to make a nice answerbox which will display the correct answer
 % when solutions are printed and is otherwise blank for the students
 % to write their stuff.
-\newcommand{\answerbox}[1]{
-\begin{flushright}
-\fbox{\parbox[l]{60mm}{Answer:
-\ifthenelse{\boolean{space}}{\vspace{10mm}}{#1}{}} }
-\end{flushright}
+\newcommand{\answerbox}[1]{%
+\begin{flushright}\fbox{\parbox[l]{60mm}{Answer: \ifprintanswers{#1}\else{\vspace{10mm}}\fi}}\end{flushright}%
 }
 % A slightly larger answerbox
-\newcommand{\Answerbox}[1]{
-\begin{flushright}
-\fbox{\parbox[l]{80mm}{Answer:
-\ifbool{space}{\vspace{10mm}}{#1}{}} }
-\end{flushright}
+\newcommand{\Answerbox}[1]{%
+\begin{flushright}\fbox{\parbox[l]{80mm}{Answer: \ifprintanswers{#1}\else{\vspace{10mm}}\fi}}\end{flushright}%
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -96,18 +82,26 @@
 \usepackage{amsmath,amsthm,amsfonts,amssymb}
 \usepackage{enumerate}
 \usepackage{graphicx}
+\usepackage{tikz}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Add "draft" to show mock-up QR codes
-%\usepackage{mockplom}
-%\usepackage[draft]{mockplom}
-
+% Use tikz to put a big "Solutions" watermark on the first page 
+% if compiled with solutions
+% the command takes an optional argument to print a version-number
+\newcommand{\watermarkPageIfSolutions}[1][\empty]{
+\ifprintanswers%
+\begin{tikzpicture}[remember picture, overlay]%
+\node [text=red, rotate=55, scale=10, opacity=.25] at (current page.center){%
+\ifx\empty{\textsf{SOLUTIONS}}\else{\begin{tabular}{c} \textsf{SOLUTIONS}\\ \textsf{VERSION~#1} \end{tabular}}\fi
+};%
+\end{tikzpicture}%
+\fi%
+}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Make the header blank, but put page info in the footer.
 \chead{}
 \cfoot{Page \thepage\ of \numpages}
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Your macros should go here
@@ -119,6 +113,7 @@
 %% Time to start the actual test
 
 \begin{document}
+\watermarkPageIfSolutions[2]
 
 \section*{Mathematics ABC --- Midterm --- 45 minutes}
 \subsection*{October 43th 2318}
