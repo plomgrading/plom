@@ -11,6 +11,7 @@ from pathlib import Path
 from shlex import split
 import subprocess
 import sys
+import time
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -155,7 +156,17 @@ def popen_django_manage_command(cmd) -> subprocess.Popen:
     Args:
         cmd: the command to run.
 
-    Returns a subprocess.Popen class that can be used to terminate the background command.
+    Returns:
+        A subprocess.Popen class that can be used to terminate the
+        background command.  You'll probably want to do some checking
+        that the process is up, as it could fail almost instantly
+        following this command.  Or at any time really.
+
+    Raises:
+        OSError: such as FileNotFoundError if the command cannot be
+            found.  But note lack of failure here is no guarantee
+            the process is still running at any later time; such is
+            the nature of inter-process communication.
     """
     full_cmd = "python3 manage.py " + cmd
     return subprocess.Popen(split(full_cmd))
@@ -659,9 +670,15 @@ if __name__ == "__main__":
         print("v" * 50)
         huey_process = launch_huey_process()
         server_process = launch_django_dev_server_process(port=args.port)
+        # both processes still running after small delay? probably working
+        time.sleep(0.25)
+        r = huey_process.poll()
+        if r is not None:
+            raise RuntimeError(f"Problem with huey process: exit code {r}")
+        r = server_process.poll()
+        if r is not None:
+            raise RuntimeError(f"Problem with server process: exit code {r}")
         print("^" * 50)
-        if huey_process.poll():
-            print("Problem with the huey-process. eek!")
 
         print("*" * 50)
         print("> Running demo specific commands")
