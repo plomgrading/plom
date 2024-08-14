@@ -357,27 +357,6 @@ class ManageScanService:
         """Return the number of uploaded, but not yet pushed, bundles."""
         return StagingBundle.objects.filter(pushed=False).count()
 
-    @transaction.atomic
-    def get_pushed_bundles_list(self) -> list[dict[str, Any]]:
-        """Return a list of all pushed bundles."""
-        bundle_list = []
-        for bundle in Bundle.objects.all().prefetch_related(
-            "staging_bundle", "user", "staging_bundle__user"
-        ):
-            bundle_list.append(
-                {
-                    "id": bundle.pk,
-                    "name": bundle.staging_bundle.slug,
-                    "pages": Image.objects.filter(bundle=bundle).count(),
-                    "when_pushed": arrow.get(bundle.time_of_last_update).humanize(),
-                    "when_uploaded": arrow.get(
-                        bundle.staging_bundle.time_of_last_update
-                    ).humanize(),
-                    "who_pushed": bundle.user.username,
-                    "who_uploaded": bundle.staging_bundle.user.username,
-                }
-            )
-        return bundle_list
 
     def get_pushed_image(self, img_pk: int) -> Image | None:
         try:
