@@ -10,10 +10,8 @@ import argparse
 from pathlib import Path
 from shlex import split
 import subprocess
-
-
-# sigh.... python dependent import - sorry.
 import sys
+import time
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -52,7 +50,10 @@ def set_argparse_and_get_args() -> argparse.Namespace:
     * bundles-uploaded = those PDF bundles are uploaded and their qr-codes read (but not processed further).
     * bundles-pushed = those bundles are "pushed" so that they can be graded.
     * rubrics = system and demo rubrics are created for marking.
-    * randomarking = several rando-markers are run in parallel to leave comments and annotations on student work. Random ID-ing of papers is also done.
+    * qtags = demo question-tags are created.
+    * auto-id = run the auto-id-reader
+    * randoiding = run rando-id'er to identify papers, will use best predictions to ID papers and else random.
+    * randomarking = several rando-markers are run in parallel to leave comments and annotations on student work.
     * tagging = (future/not-yet-implemented) = pedagogy tags will be applied to questions to label them with learning goals.
     * spreadsheet = a marking spreadsheet is downloaded.
     * reassembly = marked papers are reassembled (along, optionally, with solutions).
@@ -100,6 +101,9 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         "bundles-uploaded",
         "bundles-pushed",
         "rubrics",
+        "qtags",
+        "auto-id",
+        "randoiding",
         "randomarking",
         "tagging",
         "spreadsheet",
@@ -152,7 +156,17 @@ def popen_django_manage_command(cmd) -> subprocess.Popen:
     Args:
         cmd: the command to run.
 
-    Returns a subprocess.Popen class that can be used to terminate the background command.
+    Returns:
+        A subprocess.Popen class that can be used to terminate the
+        background command.  You'll probably want to do some checking
+        that the process is up, as it could fail almost instantly
+        following this command.  Or at any time really.
+
+    Raises:
+        OSError: such as FileNotFoundError if the command cannot be
+            found.  But note lack of failure here is no guarantee
+            the process is still running at any later time; such is
+            the nature of inter-process communication.
     """
     full_cmd = "python3 manage.py " + cmd
     return subprocess.Popen(split(full_cmd))
@@ -235,11 +249,21 @@ def upload_demo_assessment_spec_file():
     run_django_manage_command(f"plom_preparation_test_spec upload {spec_file}")
 
 
+def build_demo_test_source_pdfs() -> None:
+    print("Building assessment / solution source pdfs from tex")
+    # assumes that everything needed is in the demo_file_directory
+    subprocess.run(
+        ["python3", "build_plom_assessment_pdfs.py"],
+        cwd=demo_file_directory,
+        check=True,
+    )
+
+
 def upload_demo_test_source_files():
     """Use 'plom_preparation_source' to upload a demo assessment source pdfs."""
     print("Uploading demo assessment source pdfs")
     for v in [1, 2]:
-        source_pdf = demo_file_directory / f"source_version{v}.pdf"
+        source_pdf = demo_file_directory / f"assessment_v{v}.pdf"
         run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
 
 
@@ -250,7 +274,7 @@ def upload_demo_solution_files():
     print("Uploading demo solution pdfs")
     run_django_manage_command(f"plom_soln_spec upload {soln_spec_path}")
     for v in [1, 2]:
-        soln_pdf_path = demo_file_directory / f"solutions{v}.pdf"
+        soln_pdf_path = demo_file_directory / f"assessment_v{v}_solutions.pdf"
         run_django_manage_command(f"plom_soln_sources upload -v {v} {soln_pdf_path}")
 
 
@@ -341,11 +365,12 @@ def run_demo_preparation_commands(
         print("Stopping after users created.")
         return False
 
-    run_django_manage_command("plom_demo_spec")
+    upload_demo_assessment_spec_file()
     if stop_after == "spec":
         print("Stopping after assessment specification uploaded.")
         return False
 
+    build_demo_test_source_pdfs()
     upload_demo_test_source_files()
     if solutions:
         upload_demo_solution_files()
@@ -459,10 +484,32 @@ def run_demo_bundle_scan_commands(
     return True
 
 
-def run_the_randomarker(*, port):
-    """Run the rando-IDer and rando-Marker.
+def run_the_auto_id_reader():
+    run_django_manage_command("plom_run_id_reader --run")
+    run_django_manage_command("plom_run_id_reader --wait")
 
-    All papers will be ID'd and marked after this call.
+
+def run_the_randoider(*, port):
+    """Run the rando-IDer.
+
+    All papers will be ID'd after this call.
+    """
+    # TODO: hardcoded http://
+    srv = f"http://localhost:{port}"
+    # list of markers and their passwords
+    users = [
+        ("demoMarker1", "demoMarker1"),
+    ]
+
+    cmd = f"python3 -m plom.client.randoIDer -s {srv} -u {users[0][0]} -w {users[0][1]} --use-predictions"
+    print(f"RandoIDing!  calling: {cmd}")
+    subprocess.check_call(split(cmd))
+
+
+def run_the_randomarker(*, port):
+    """Run the rando-Marker.
+
+    All papers will be marked after this call.
     """
     from time import sleep
 
@@ -477,20 +524,22 @@ def run_the_randomarker(*, port):
         ("demoMarker5", "demoMarker5", 50),
     ]
 
-    # rando-id and then rando-mark
-    cmd = f"python3 -m plom.client.randoIDer -s {srv} -u {users[0][0]} -w {users[0][1]}"
-    print(f"RandoIDing!  calling: {cmd}")
-    subprocess.check_call(split(cmd))
-
     randomarker_processes = []
     for X in users[1:]:
-        cmd = f"python3 -m plom.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial {X[2]}"
+        cmd = f"python3 -m plom.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial {X[2]} --download-rubrics"
         print(f"RandoMarking!  calling: {cmd}")
         randomarker_processes.append(subprocess.Popen(split(cmd)))
         sleep(0.5)
     # now wait for those markers
     while True:
-        if any(X.poll() is None for X in randomarker_processes):
+        poll_values = [X.poll() for X in randomarker_processes]
+        # check for errors = non-zero non-None return values
+        for pv in poll_values:
+            if pv not in [0, None]:
+                raise subprocess.SubprocessError(
+                    "One of the rando-marker processes finished with a non-zero exit status."
+                )
+        if any(X is None for X in poll_values):
             # we are still waiting on a rando-marker.
             sleep(2)
         else:  # all rando-markers are done
@@ -503,12 +552,43 @@ def run_the_randomarker(*, port):
         subprocess.check_call(split(cmd))
 
 
+def push_demo_rubrics():
+    # push demo rubrics from toml
+    # note - hard coded question range here.
+    for question_idx in (1, 2, 3, 4):
+        rubric_toml = (
+            demo_file_directory / f"demo_assessment_rubrics_q{question_idx}.toml"
+        )
+        run_django_manage_command(f"plom_rubrics push manager {rubric_toml}")
+
+
+def create_and_link_question_tags():
+    qtags_csv = demo_file_directory / "demo_assessment_qtags.csv"
+    # upload question-tags as user "manager"
+    run_django_manage_command(f"upload_qtags_csv {qtags_csv} manager")
+    # link questions to tags as user "manager"
+    # WARNING - HARDCODED LIST
+    for tag, question_idx in [
+        ("limits", 1),
+        ("derivatives", 2),
+        ("derivatives", 3),
+        ("applications", 3),
+        ("applications", 4),
+    ]:
+        run_django_manage_command(
+            f"link_question_with_tag {question_idx} {tag} manager"
+        )
+
+
 def run_marking_commands(*, port: int, stop_after=None) -> bool:
     """Run commands to step through the marking process in the demo.
 
     In order it runs:
         * (rubrics): Make system and demo rubrics.
-        * (randomarker): make random marking-annotations on papers and assign random student-ids.
+        * (qtags): Make and apply question/pedagogy-tags
+        * (auto-id): Run the auto id-reader and wait for its results
+        * (randoder): make random id-er on papers (this will use the best predictions to id.)
+        * (randomarker): make random marking-annotations on papers.
 
     KWargs:
         stop_after = after which step should the demo be stopped, see list above.
@@ -516,23 +596,36 @@ def run_marking_commands(*, port: int, stop_after=None) -> bool:
 
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
-    # add rubrics and tags, and then run the randomaker.
+    # add rubrics, question-tags and then run the randomaker.
+    # add system rubrics first, then push the demo ones from toml
     run_django_manage_command("plom_rubrics init manager")
-    run_django_manage_command("plom_rubrics push --demo manager")
+    push_demo_rubrics()
     if stop_after == "rubrics":
         return False
 
-    run_the_randomarker(port=args.port)
-    if stop_after == "randomarker":
+    create_and_link_question_tags()
+    if stop_after == "qtags":
         return False
 
-    print(">> Future plom dev will include pedagogy tagging here.")
+    run_the_auto_id_reader()
+    if stop_after == "auto-id":
+        return False
+
+    run_the_randoider(port=args.port)
+    if stop_after == "randoiding":
+        return False
+
+    run_the_randomarker(port=args.port)
+    if stop_after == "randomarking":
+        return False
+
     return True
 
 
 def run_finishing_commands(*, stop_after=None, solutions=True) -> bool:
     print("Reassembling all marked papers.")
     run_django_manage_command("plom_reassemble")
+    run_django_manage_command("plom_reassemble --wait")
     if solutions:
         print("Constructing individual solution pdfs for students.")
         run_django_manage_command("plom_build_all_soln")
@@ -577,9 +670,15 @@ if __name__ == "__main__":
         print("v" * 50)
         huey_process = launch_huey_process()
         server_process = launch_django_dev_server_process(port=args.port)
+        # both processes still running after small delay? probably working
+        time.sleep(0.25)
+        r = huey_process.poll()
+        if r is not None:
+            raise RuntimeError(f"Problem with huey process: exit code {r}")
+        r = server_process.poll()
+        if r is not None:
+            raise RuntimeError(f"Problem with server process: exit code {r}")
         print("^" * 50)
-        if huey_process.poll():
-            print("Problem with the huey-process. eek!")
 
         print("*" * 50)
         print("> Running demo specific commands")

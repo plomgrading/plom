@@ -1,9 +1,10 @@
 # SPDX-Licence-Identifier: AGPL-3.0-or-later
 # Copyright (c) 2023 Divy Patel
+# Copyright (c) 2024 Colin B. Macdonald
 
 from django.urls import path
 
-from Visualization.views import HistogramView, HeatMapView
+from .views import HistogramView, HeatMapView
 
 
 urlpatterns = [

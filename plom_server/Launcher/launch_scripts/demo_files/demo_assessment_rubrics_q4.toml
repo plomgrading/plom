@@ -1,0 +1,146 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Andrew Rechnitzer
+
+[[rubric]]
+kind = "absolute"
+display_delta = "1 of 3"
+value = 1
+out_of = 3
+text = "Newton's law of cooling mentioned but no diff eqn or general solution"
+meta = ""
+username = "manager"
+question = 4
+versions = [1]
+parameters = []
+
+[[rubric]]
+kind = "absolute"
+display_delta = "1 of 3"
+value = 1
+out_of = 3
+text = "Incorrect differential equation stated"
+meta = ""
+username = "manager"
+question = 4
+parameters = []
+
+
+[[rubric]]
+kind = "absolute"
+display_delta = "2 of 3"
+value = 2
+out_of = 3
+text = "Differential equation formed but error in solution"
+meta = ""
+username = "manager"
+question = 4
+parameters = []
+
+[[rubric]]
+kind = "absolute"
+display_delta = "3 of 3"
+value = 3
+out_of = 3
+text = "Differential equation formed and general solution stated"
+meta = ""
+username = "manager"
+question = 4
+parameters = []
+
+[[rubric]]
+kind = "absolute"
+display_delta = "3 of 3"
+value = 3
+out_of = 3
+text = "Differential equation formed and solved to find general solution"
+meta = ""
+username = "manager"
+question = 4
+parameters = []
+
+[[rubric]]
+kind = "relative"
+display_delta = "-1"
+value = -1
+out_of = 0
+text = "Answer should include units\n(such as \"{param1}\")"
+meta = "Note this rubric differs between versions of the question."
+username = "manager"
+question = 4
+versions = []
+parameters = [["{param1}", ["s", "year"]]]
+
+
+[[rubric]]
+kind = "relative"
+display_delta = "+1"
+value = 1
+out_of = 0
+text = "some initial progress"
+meta = "The student has made some minimal progress."
+username = "manager"
+question = 4
+
+[[rubric]]
+kind = "relative"
+display_delta = "+2"
+value = 2
+out_of = 0
+text = "Correct set-up"
+meta = "The student has set up the problem correctly."
+username = "manager"
+question = 4
+
+[[rubric]]
+kind = "relative"
+display_delta = "-1"
+value = 1
+out_of = 0
+text = "small algebra error"
+meta = "The student has made minor algebra error"
+username = "manager"
+question = 4
+
+[[rubric]]
+kind = "relative"
+display_delta = "-1"
+value = 1
+out_of = 0
+text = "small arithmetic error"
+meta = "The student has made minor arithmetic error"
+username = "manager"
+question = 4
+
+[[rubric]]
+kind = "neutral"
+display_delta = "."
+value = 0.0
+out_of = 0.0
+text = "be careful"
+tags = "demo"
+meta = "Student made an inconsequential error."
+question = 4
+username = "manager"
+
+[[rubric]]
+kind = "neutral"
+display_delta = "."
+value = 0.0
+out_of = 0.0
+text = "hard to read"
+tags = "demo"
+meta = "Student handwriting is making marking hard"
+question = 4
+username = "manager"
+
+[[rubric]]
+kind = "neutral"
+display_delta = "."
+value = 0.0
+out_of = 0.0
+text = "layout work more carefully"
+tags = "demo"
+meta = "Student needs to learn how to set out their work so someone else can follow."
+question = 4
+username = "manager"

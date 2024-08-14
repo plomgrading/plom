@@ -10,7 +10,7 @@ from typing import Dict, Union
 from django.db import transaction
 
 from Papers.models import IDPage, Image, Paper
-from Identify.services import IdentifyTaskService, ClasslistService
+from ..services import IdentifyTaskService, ClasslistService
 from ..models import PaperIDTask
 
 

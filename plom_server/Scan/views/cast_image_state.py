@@ -13,7 +13,7 @@ from django_htmx.http import HttpResponseClientRedirect
 from Base.base_group_views import ScannerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
 
-from Scan.services import (
+from ..services import (
     ScanCastService,
     ScanService,
     check_bundle_object_is_neither_locked_nor_pushed,

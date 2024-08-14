@@ -68,7 +68,7 @@ def main() -> None:
     print(f"Changing the working directory to {args.src}")
     os.chdir(args.src)
 
-    subprocess.check_call("./docker_run.sh")
+    subprocess.check_call("./Launcher/launch_scripts/launch_plom_server.py")
 
 
 if __name__ == "__main__":

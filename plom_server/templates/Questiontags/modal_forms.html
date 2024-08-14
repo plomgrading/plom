@@ -37,7 +37,7 @@
                                   name="confidential_info"
                                   rows="4"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Create</button>
+                    <button type="submit" class="btn btn-primary mt-2">Create</button>
                 </form>
             </div>
         </div>
@@ -64,12 +64,12 @@
                     {% csrf_token %}
                     <div class="form-group">
                         <label for="tag_id">Select Tag to Delete</label>
-                        <select class="form-control" id="tag_id" name="tag_id">
+                        <select class="form-control mt-2" id="tag_id" name="tag_id" required>
                             <option value="" disabled selected>Select a tag</option>
                             {% for tag in tags %}<option value="{{ tag.id }}">{{ tag.tag_name }}</option>{% endfor %}
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-danger">Delete</button>
+                    <button type="submit" class="btn btn-danger mt-2">Delete</button>
                 </form>
             </div>
         </div>
@@ -127,7 +127,7 @@
                                   name="confidential_info"
                                   rows="4"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="submit" class="btn btn-primary mt-2">Save Changes</button>
                 </form>
             </div>
         </div>
@@ -190,7 +190,7 @@
                                name="csv_file"
                                required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Submit</button>
+                    <button type="submit" class="btn btn-primary mt-2">Submit</button>
                 </form>
             </div>
         </div>
