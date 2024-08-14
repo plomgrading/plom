@@ -48,6 +48,12 @@
             lecture notes, the associated section in the textbook, and/or
             contact your instructor for an office hour.
         </p>
+        <h4>Brief description of each topic / learning objective</h4>
+        {% for ptag, describe in pedagogy_tags_descriptions.items %}
+            <p>
+                <q>{{ ptag }}</q>: {{ describe }}
+            </p>
+        {% endfor %}
     {% endif %}
     <br>
     <p style="break-before: page;"></p>

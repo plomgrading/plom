@@ -69,6 +69,7 @@ def pdf_builder(
 
     kde_of_total_marks = mpls.kde_plot_of_total_marks(highlighted_sid=sid)
     pedagogy_tags_graph = None
+    pedagogy_tags_descriptions = QuestionTagService.get_pedagogy_tag_descriptions()
     if sid is not None:
         if QuestionTagService.are_there_question_tag_links():
             # don't generate the lollypop graph is there are no pedagogy tags
@@ -99,6 +100,7 @@ def pdf_builder(
         "totalMarks": totalMarks,
         "total_stats": total_stats,
         "pedagogy_tags_graph": pedagogy_tags_graph,
+        "pedagogy_tags_descriptions": pedagogy_tags_descriptions,
         "boxplots": boxplot_of_question_marks,
         "kde_graph": kde_of_total_marks,
     }
