@@ -16,8 +16,10 @@ __copyright__ = "Copyright (C) 2018-2024 Andrew Rechnitzer, Colin B. Macdonald, 
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
+from pathlib import Path
 import logging
 import re
+import shutil
 import sys
 import tempfile
 import time
@@ -128,6 +130,9 @@ class Chooser(QDialog):
         )
         log.info(s)
 
+        self._workdir = Path(tempfile.mkdtemp(prefix="plom_"))
+        log.info("Using newly created temp directory %s", self._workdir)
+
         # TODO: with uic, we don't have a .ui: can go through and remove
         self.ui = self
 
@@ -219,8 +224,9 @@ class Chooser(QDialog):
 
         self.saveDetails()
 
-        tmpdir = tempfile.mkdtemp(prefix="plom_local_img_")
-        self.Qapp.downloader = Downloader(tmpdir, msgr=self.messenger)
+        img_cache_dir = self._workdir / "page_img_cache"
+        img_cache_dir.mkdir(exist_ok=True)
+        self.Qapp.downloader = Downloader(img_cache_dir, msgr=self.messenger)
         try:
             role = self.messenger.get_user_role()
         except PlomNoServerSupportException:
@@ -257,7 +263,7 @@ class Chooser(QDialog):
             assert v is not None
             self.setEnabled(False)
             self.hide()
-            markerwin = MarkerClient(self.Qapp)
+            markerwin = MarkerClient(self.Qapp, tmpdir=self._workdir)
             markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
             markerwin.setup(self.messenger, question, v, self.lastTime)
@@ -269,7 +275,7 @@ class Chooser(QDialog):
                 return
             self.setEnabled(False)
             self.hide()
-            idwin = IDClient(self.Qapp)
+            idwin = IDClient(self.Qapp, tmpdir=self._workdir)
             idwin.my_shutdown_signal.connect(self.on_identify_window_close)
             idwin.show()
             idwin.setup(self.messenger)
@@ -319,6 +325,8 @@ class Chooser(QDialog):
             # TODO: do we really just wait forever?
             dl.stop(-1)
             dl.basedir.rmdir()
+        log.info("Wiping temp directory %s", self._workdir)
+        shutil.rmtree(self._workdir)
         self.logout()
 
     def setFontSize(self, n: int) -> None:
