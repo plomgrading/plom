@@ -48,8 +48,9 @@ def popen_django_manage_command(cmd: str) -> subprocess.Popen:
 
 def confirm_run_from_correct_directory() -> None:
     """Confirm appropriate env vars are set or the current directory contains Django's manage.py."""
-    if os.environ.get("DJANGO_SETTINGS_MODULE"):
-        return None
+    # Perhaps later, things will work from other locations
+    # if os.environ.get("DJANGO_SETTINGS_MODULE"):
+    #     return None
     if not Path("./manage.py").exists():
         raise RuntimeError(
             "This script needs to be run from the same directory as django's manage.py script."
