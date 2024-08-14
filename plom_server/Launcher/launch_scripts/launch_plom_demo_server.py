@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 from shlex import split
 import subprocess
@@ -22,7 +23,6 @@ else:
 # we specify this directory relative to the plom_server
 # root directory, rather than getting Django things up and
 # running, just to get at these useful files.
-
 demo_file_directory = Path("./Launcher/launch_scripts/demo_files/")
 
 
@@ -139,19 +139,19 @@ def set_argparse_and_get_args() -> argparse.Namespace:
 
 
 def run_django_manage_command(cmd) -> None:
-    """Run the given command with 'python3 manage.py' and wait for return.
+    """Run the given Django command and wait for return.
 
     Command must finish successfully (zero return code).
 
     Args:
         cmd: the command to run.
     """
-    full_cmd = "python3 manage.py " + cmd
+    full_cmd = get_django_cmd_prefix() + " " + cmd
     subprocess.run(split(full_cmd), check=True)
 
 
 def popen_django_manage_command(cmd) -> subprocess.Popen:
-    """Run the given command with 'python3 manage.py' using process Popen and return a handle to the process.
+    """Run the given Django command using a process Popen and return a handle to the process.
 
     Args:
         cmd: the command to run.
@@ -168,16 +168,26 @@ def popen_django_manage_command(cmd) -> subprocess.Popen:
             the process is still running at any later time; such is
             the nature of inter-process communication.
     """
-    full_cmd = "python3 manage.py " + cmd
+    full_cmd = get_django_cmd_prefix() + " " + cmd
     return subprocess.Popen(split(full_cmd))
 
 
 def confirm_run_from_correct_directory() -> None:
-    """Confirm that the script is being run from the directory containing django's manage.py command."""
+    """Confirm appropriate env vars are set or the current directory contains Django's manage.py."""
+    # Perhaps later, things will work from other locations
+    # if os.environ.get("DJANGO_SETTINGS_MODULE"):
+    #     return None
     if not Path("./manage.py").exists():
         raise RuntimeError(
             "This script needs to be run from the same directory as django's manage.py script."
         )
+
+
+def get_django_cmd_prefix() -> str:
+    """Return the basic command to be used to run Django commands."""
+    if os.environ.get("DJANGO_SETTINGS_MODULE"):
+        return "django-admin"
+    return "python3 manage.py"
 
 
 def pre_launch():
@@ -317,7 +327,7 @@ def build_all_papers_and_wait():
     # since this is a background huey job, we need to
     # wait until all those pdfs are actually built -
     # we can get that by looking at output from plom_build_paper_pdfs --status
-    pdf_status_cmd = "python3 manage.py plom_build_paper_pdfs --count-done"
+    pdf_status_cmd = get_django_cmd_prefix() + " plom_build_paper_pdfs --count-done"
     while True:
         out_papers = subprocess.check_output(split(pdf_status_cmd)).decode("utf-8")
         if "all" in out_papers.casefold():
