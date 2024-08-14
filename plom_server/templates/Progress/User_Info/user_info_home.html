@@ -78,7 +78,7 @@
                 <th>Limit Modifier</th>
             </tr>
             {% for user, annotation_and_claimedTask_count in annotation_count_dict.items %}
-                <tr>
+                <tr class="{% if probation_limits|get_item:user.username == annotation_and_claimedTask_count.0 %} table-success {% endif %}">
                     <td>
                         {{ user.username }}
                         {% if messages %}
