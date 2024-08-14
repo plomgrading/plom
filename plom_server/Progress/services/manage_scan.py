@@ -439,12 +439,19 @@ class ManageScanService:
             .prefetch_related("discardpage", "bundle", "bundle__staging_bundle")
             .order_by("bundle", "bundle_order")
         ):
+            # if this page came from a system-bundle of substitute pages
+            # then it won't have a staging_bundle and a corresponding slug
+            if img.bundle.staging_bundle:
+                staging_bundle_slug = img.bundle.staging_bundle.slug
+            else:
+                staging_bundle_slug = "*system generated bundle*"
+
             discards.append(
                 {
                     "image": img.pk,
                     "reason": img.discardpage.discard_reason,
                     "bundle_pk": img.bundle.pk,
-                    "bundle_name": img.bundle.staging_bundle.slug,
+                    "bundle_name": staging_bundle_slug,
                     "order": img.bundle_order,
                     "discard_pk": img.discardpage.pk,
                 }
