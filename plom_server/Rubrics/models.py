@@ -143,9 +143,11 @@ class Rubric(models.Model):
 
     class Meta:
         constraints = [
+            # This constraint checks that each key-revision pair is unique
             models.UniqueConstraint(
                 fields=["key", "revision"], name="unique_revision_per_key"
             ),
+            # This constraint checks that each key has only one rubric where latest=True
             models.UniqueConstraint(
                 fields=["key"], condition=Q(latest=True), name="unique_latest_per_key"
             ),
