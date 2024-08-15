@@ -144,12 +144,11 @@ class RubricService:
 
         rubric_data["latest"] = True
         serializer = RubricSerializer(data=rubric_data)
-        if serializer.is_valid():
-            serializer.save()
-            rubric_obj = serializer.instance
-            return rubric_obj
-        else:
+        if not serializer.is_valid():
             raise ValidationError(serializer.errors)
+        serializer.save()
+        rubric_obj = serializer.instance
+        return rubric_obj
 
     @transaction.atomic
     def modify_rubric(
