@@ -194,7 +194,7 @@ class RubricService:
             raise ValueError(f"User {username} does not exist.") from e
 
         try:
-            rubric = (
+            old_rubric = (
                 Rubric.objects.filter(key=key, latest=True).select_for_update().get()
             )
         except Rubric.DoesNotExist as e:
@@ -205,18 +205,18 @@ class RubricService:
 
         # incoming revision is not incremented to check if what the
         # revision was based on is outdated
-        if not new_rubric_data["revision"] == rubric.revision:
+        if not new_rubric_data["revision"] == old_rubric.revision:
             # TODO: record who last modified and when
             raise PlomConflict(
                 f'The rubric your revision was based upon {new_rubric_data["revision"]} '
-                f"does not match database content (revision {rubric.revision}): "
+                f"does not match database content (revision {old_rubric.revision}): "
                 f"most likely your edits have collided with those of someone else."
             )
 
         # Generally, omitting modifying_user bypasses checks
         if modifying_user is None:
             pass
-        elif rubric.system_rubric:
+        elif old_rubric.system_rubric:
             raise PermissionDenied(
                 f'User "{modifying_user}" is not allowed to modify system rubrics'
             )
@@ -251,19 +251,16 @@ class RubricService:
 
         new_rubric_data["revision"] += 1
         new_rubric_data["latest"] = True
-        print("here")
-        new_rubric_data["key"] = rubric.key
+        new_rubric_data["key"] = old_rubric.key
         # client might be using id instead of key in places, see Issue #1492
         new_rubric_data.pop("id", None)
-        for x, y in new_rubric_data.items():
-            print(f"  {x}: {y}")
         serializer = RubricSerializer(data=new_rubric_data)
 
         if not serializer.is_valid():
             raise ValidationError(serializer.errors)
 
-        rubric.latest = False
-        rubric.save()
+        old_rubric.latest = False
+        old_rubric.save()
 
         serializer.save()
         rubric_obj = serializer.instance
