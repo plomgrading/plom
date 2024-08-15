@@ -154,7 +154,7 @@ class RubricService:
     @transaction.atomic
     def modify_rubric(
         self,
-        key: str,
+        key: int,
         new_rubric_data: dict[str, Any],
         *,
         modifying_user: User | None = None,
@@ -162,7 +162,7 @@ class RubricService:
         """Modify a rubric.
 
         Args:
-            key: a string that uniquely identify a specific rubric.
+            key: uniquely identify a rubric, but not a particular revision.
                 Generally not the same as the "private key" used
                 internally, although this could change in the future.
             new_rubric_data: data for a rubric submitted by a web request.
@@ -251,7 +251,12 @@ class RubricService:
 
         new_rubric_data["revision"] += 1
         new_rubric_data["latest"] = True
+        print("here")
         new_rubric_data["key"] = rubric.key
+        # client might be using id instead of key in places, see Issue #1492
+        new_rubric_data.pop("id", None)
+        for x, y in new_rubric_data.items():
+            print(f"  {x}: {y}")
         serializer = RubricSerializer(data=new_rubric_data)
 
         if not serializer.is_valid():
