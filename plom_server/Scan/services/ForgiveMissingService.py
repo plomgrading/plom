@@ -11,7 +11,14 @@ from django.core.files import File
 from django.db import transaction
 from django.contrib.auth.models import User
 
-from Papers.models import Bundle, Image, FixedPage, DiscardPage
+from Papers.models import (
+    Bundle,
+    Image,
+    FixedPage,
+    DiscardPage,
+    IDPage,
+    DNMPage,
+)
 from Papers.services import SpecificationService
 from Preparation.services import SourceService
 from Progress.services import ManageDiscardService
@@ -183,6 +190,11 @@ def get_substitute_image(page_number: int, version: int) -> Image:
 
 
 @transaction.atomic()
+def get_substitute_image_from_pk(image_pk: int) -> Image:
+    return Image.objects.get(pk=image_pk)
+
+
+@transaction.atomic()
 def _delete_substitute_images():
     bundle_obj = _get_or_create_missing_pages_bundle()
     for X in bundle_obj.image_set.all():
@@ -222,3 +234,31 @@ def forgive_missing_fixed_page_cmd(username: str, paper_number: int, page_number
         ) from e
 
     forgive_missing_fixed_page(user_obj, paper_number, page_number)
+
+
+def get_substitute_page_info(paper_number, page_number):
+    try:
+        fpage_obj = FixedPage.objects.get(
+            paper__paper_number=paper_number, page_number=page_number
+        )
+    except ObjectDoesNotExist:
+        raise ValueError(
+            f"Cannot find the fixed page of paper {paper_number} page {page_number}"
+        )
+    version = fpage_obj.version
+    substitute_image_pk = get_substitute_image(page_number, version).pk
+
+    if isinstance(fpage_obj, DNMPage):
+        kind = "DNMPage"
+    elif isinstance(fpage_obj, IDPage):
+        kind = "IDPage"
+    else:  # must be a question page
+        kind = "QuestionPage"
+
+    return {
+        "paper_number": paper_number,
+        "page_number": page_number,
+        "version": version,
+        "substitute_image_pk": substitute_image_pk,
+        "kind": kind,
+    }

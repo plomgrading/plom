@@ -8,7 +8,10 @@ from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ScannerLeadMarkerOrManagerView
 from Progress.services import ManageScanService, ManageDiscardService
-from ..services import hard_rotate_image_from_file_by_exif_and_angle
+from ..services import (
+    hard_rotate_image_from_file_by_exif_and_angle,
+    ForgiveMissingService,
+)
 
 
 class PushedImageView(ScannerLeadMarkerOrManagerView):
@@ -60,3 +63,29 @@ class PushedImageWrapView(ScannerLeadMarkerOrManagerView):
         }
 
         return render(request, "Progress/fragments/pushed_image_wrapper.html", context)
+
+
+class SubstituteImageWrapView(ScannerLeadMarkerOrManagerView):
+    """Return the simple html wrapper around the substitute forgive image."""
+
+    def get(self, request: HttpRequest, *, paper: int, page: int) -> HttpResponse:
+        pg_info = ForgiveMissingService.get_substitute_page_info(paper, page)
+        context = {
+            "paper_number": pg_info["paper_number"],
+            "page_number": pg_info["page_number"],
+            "version": pg_info["version"],
+            "kind": pg_info["kind"],
+            "substitute_image_pk": pg_info["substitute_image_pk"],
+        }
+
+        return render(request, "Scan/fragments/substitute_image_wrapper.html", context)
+
+
+class SubstituteImageView(ScannerLeadMarkerOrManagerView):
+    """Return a substitute image given by its pk."""
+
+    def get(self, request: HttpRequest, *, img_pk: int) -> HttpResponse:
+        img_obj = ForgiveMissingService.get_substitute_image_from_pk(img_pk)
+        if img_obj is None:
+            raise Http404(f"Cannot find pushed image with pk {img_pk}.")
+        return FileResponse(img_obj.image_file)

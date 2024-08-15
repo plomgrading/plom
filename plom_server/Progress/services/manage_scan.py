@@ -19,6 +19,8 @@ from Papers.models import (
     Paper,
     Image,
     Bundle,
+    IDPage,
+    DNMPage,
 )
 from Papers.services import SpecificationService
 from Scan.models import StagingBundle
@@ -250,12 +252,20 @@ class ManageScanService:
                         }
                     )
                 else:
+                    if isinstance(fp, DNMPage):
+                        kind = "DNMPage"
+                    elif isinstance(fp, IDPage):
+                        kind = "IDPage"
+                    else:  # must be a question-page
+                        kind = "QuestionPage"
                     incomplete[paper.paper_number]["fixed"].append(
                         {
                             "status": "missing",
                             "page_number": fp.page_number,
+                            "kind": kind,
                         }
                     )
+                    del kind
             for mp in paper.mobilepage_set.all():
                 incomplete[paper.paper_number]["mobile"].append(
                     {

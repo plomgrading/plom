@@ -17,9 +17,6 @@
         <a class="btn btn-primary" href="{% url 'scan_list_complete' %}">Complete papers</a>
         <a class="btn btn-primary" href="{% url 'scan_list_discard' %}">Discarded page images</a>
     </div>
-    <div>
-        <p>FUTURE WORK = forgive missing page</p>
-    </div>
     <div class="card my-2">
         <div class="card-body">
             <div class="row">
@@ -49,10 +46,15 @@
                                                                 {{ fp.page_number }}
                                                             </button>
                                                         {% else %}
-                                                            <span class="badge m-1 p-3 fs-6 bg-danger"
-                                                                  data-bs-toggle="tooltip"
-                                                                  data-bs-placement="top"
-                                                                  data-bs-title="missing {{ pn }}.{{ fp.page_number }}">{{ fp.page_number }} </span>
+                                                            <button hx-get="{% url 'substitute_img_wrap' pn fp.page_number %}"
+                                                                    hx-target="#incompleteImageHere"
+                                                                    hx-replace="innerHTML"
+                                                                    class="btn btn-danger p-3"
+                                                                    data-bs-toggle="tooltip"
+                                                                    data-bs-placement="top"
+                                                                    data-bs-title="missing {{ pn }}.{{ fp.page_number }}">
+                                                                {{ fp.page_number }}
+                                                            </button>
                                                         {% endif %}
                                                     {% endfor %}
                                                     {% for mp in pages.mobile|dictsort:"question_number" %}

@@ -19,6 +19,8 @@ from .pushed_images import (
     PushedImageView,
     PushedImageRotatedView,
     PushedImageWrapView,
+    SubstituteImageView,
+    SubstituteImageWrapView,
 )
 
 from .manage_bundle import (
