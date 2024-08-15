@@ -43,6 +43,11 @@ class Command(BaseCommand):
             raise CommandError(err)
 
         filename_stem = pathlib.Path(source_pdf).stem
+        if filename_stem[0] == "_":
+            raise CommandError(
+                "Bundle filenames cannot start with an underscore - we reserve those for internal use."
+            )
+
         slug = slugify(filename_stem)
         timestamp = datetime.timestamp(timezone.now())
         hashed = hashlib.sha256(file_bytes).hexdigest()
