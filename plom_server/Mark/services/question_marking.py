@@ -163,8 +163,6 @@ class QuestionMarkingService:
     ) -> None:
         """Accept a marker's annotation and grade for a task, store them in the database.
 
-        Not implemented yet: 406: integrity fail.
-
         Raises:
             ValueError: anything related to a poorly formed bad request,
                 such as invalid code, or wrong image format.
@@ -173,7 +171,6 @@ class QuestionMarkingService:
                 for garbage or something has changed on the server.
             PlomConflict: fails "integrity check": client is trying
                 to submit to an out-of-date task.
-                TODO: not implemented yet.
         """
         try:
             papernum, question_idx = mark_task.unpack_code(code)
