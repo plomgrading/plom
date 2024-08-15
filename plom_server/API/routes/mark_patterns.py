@@ -3,6 +3,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024 Aden Chan
 
 from django.urls import path, re_path
 
@@ -79,12 +80,12 @@ class MarkURLPatterns:
             ),
             path("rubric", McreateRubric.as_view(), name="api_MK_create_rubric"),
             path(
-                "rubric_usage/<str:key>",
+                "rubric_usage/<int:key>",
                 MgetRubricUsages.as_view(),
                 name="api_MK_get_rubric_usages",
             ),
-            re_path(
-                r"rubric/(?P<key>[0-9]{12})$",
+            path(
+                "rubric/<int:key>",
                 MmodifyRubric.as_view(),
                 name="api_MK_modify_rubric",
             ),

@@ -254,22 +254,22 @@ class RubricTable(QTableWidget):
         if row < 0:
             # no row under click but maybe one is highlighted
             row = self.getCurrentRubricRow()
-        key = None if row is None else self.getKeyFromRow(row)
+        key = None if row is None else self._get_key_from_row(row)
 
         # These are workaround for Issue #1441, lambdas in a loop
-        def add_func_factory(t, k):
+        def add_func_factory(t, k: int):
             def add_func():
                 t.appendByKey(k)
 
             return add_func
 
-        def del_func_factory(t, k):
+        def del_func_factory(t, k: int):
             def del_func():
                 t.removeRubricByKey(k)
 
             return del_func
 
-        def edit_func_factory(t, k):
+        def edit_func_factory(t, k: int):
             def edit_func():
                 t._parent.edit_rubric(k)
 
@@ -314,22 +314,22 @@ class RubricTable(QTableWidget):
         if row < 0:
             # no row under click but maybe one is highlighted
             row = self.getCurrentRubricRow()
-        key = None if row is None else self.getKeyFromRow(row)
+        key = None if row is None else self._get_key_from_row(row)
 
         # workaround for Issue #1441, lambdas in a loop
-        def add_func_factory(t, k):
+        def add_func_factory(t, k: int):
             def add_func():
                 t.appendByKey(k)
 
             return add_func
 
-        def edit_func_factory(t, k):
+        def edit_func_factory(t, k: int):
             def edit_func():
                 t._parent.edit_rubric(k)
 
             return edit_func
 
-        def other_usage_factory(t, k):
+        def other_usage_factory(t, k: int):
             def other_usage():
                 t._parent.other_usage(k)
 
@@ -382,7 +382,7 @@ class RubricTable(QTableWidget):
         self.handleClick()
 
     def removeRubricByKey(self, key) -> None:
-        row = self.getRowFromKey(key)
+        row = self._get_row_from_key(key)
         if row is None:
             return
         self.removeRow(row)
@@ -393,11 +393,7 @@ class RubricTable(QTableWidget):
         row = self.getCurrentRubricRow()
         if row is None:
             return
-        # TODO: mypy is concerned self.item() could return None
-        # I don't think it can from the above logic, but...
-        item = self.item(row, 0)
-        assert item
-        key = item.text()
+        key = self._get_key_from_row(row)
         self._parent.hideRubricByKey(key)
         self.selectFirstVisibleRubric()
         self.handleClick()
@@ -406,11 +402,7 @@ class RubricTable(QTableWidget):
         row = self.getCurrentRubricRow()
         if row is None:
             return
-        # TODO: mypy is concerned self.item() could return None
-        # I don't think it can from the above logic, but...
-        item = self.item(row, 0)
-        assert item
-        key = item.text()
+        key = self._get_key_from_row(row)
         self._parent.unhideRubricByKey(key)
         self.selectFirstVisibleRubric()
         self.handleClick()
@@ -440,7 +432,7 @@ class RubricTable(QTableWidget):
             self.setSortingEnabled(_sorting_enabled)
             event.accept()
 
-    def appendByKey(self, key: str) -> None:
+    def appendByKey(self, key: int) -> None:
         """Append the rubric associated with a key to the end of the list.
 
         If its a dupe, don't add.
@@ -460,18 +452,15 @@ class RubricTable(QTableWidget):
         rc = self.rowCount()
         # do sanity check for duplications
         for r in range(rc):
-            # TODO: mypy is concerned self.item() could return None
-            # perhaps there is a better way to iterate over items?
-            item = self.item(r, 0)
-            assert item
-            if rubric["id"] == item.text():
+            if self._get_key_from_row(r) == rubric["id"]:
                 return  # rubric already present
         # is a new rubric, so append it
         # Careful about sorting during setItem calls: Issue #2065
         _sorting_enabled = self.isSortingEnabled()
         self.setSortingEnabled(False)
         self.insertRow(rc)
-        self.setItem(rc, 0, QTableWidgetItem(rubric["id"]))
+        # rubric key as string to avoid overflow on legacy servers with large keys
+        self.setItem(rc, 0, QTableWidgetItem(str(rubric["id"])))
         self.setItem(rc, 1, QTableWidgetItem(rubric["username"]))
         self.setItem(rc, 2, QTableWidgetItem(rubric["display_delta"]))
 
@@ -582,21 +571,18 @@ class RubricTable(QTableWidget):
             self.selectFirstVisibleRubric()
         self.resizeColumnsToContents()
 
-    def getKeyFromRow(self, row: int) -> str:
-        item = self.item(row, 0)
-        assert item
-        return item.text()
+    def getKeyList(self) -> list[int]:
+        return [self._get_key_from_row(r) for r in range(self.rowCount())]
 
-    def getKeyList(self):
-        return [self.item(r, 0).text() for r in range(self.rowCount())]
+    def _get_key_from_row(self, r: int) -> int:
+        item = self.item(r, 0)
+        # TODO: is an assertion error what we want here?
+        assert item, f"Could not find row {r}"
+        return int(item.text())
 
-    def getRowFromKey(self, key: str) -> int | None:
+    def _get_row_from_key(self, key: int) -> int | None:
         for r in range(self.rowCount()):
-            # TODO: mypy is concerned self.item() could return None
-            # perhaps there is a better way to iterate over items?
-            item = self.item(r, 0)
-            assert item
-            if int(item.text()) == int(key):
+            if self._get_key_from_row(r) == key:
                 return r
         else:
             return None
@@ -606,13 +592,11 @@ class RubricTable(QTableWidget):
             return None
         return self.selectedIndexes()[0].row()
 
-    def getCurrentRubricKey(self) -> str | None:
+    def getCurrentRubricKey(self) -> int | None:
         """Get the currently selected rubric's key/id or None if nothing is selected."""
         if not self.selectedIndexes():
             return None
-        item = self.item(self.selectedIndexes()[0].row(), 0)
-        assert item
-        return item.text()
+        return self._get_key_from_row(self.selectedIndexes()[0].row())
 
     def reselectCurrentRubric(self) -> None:
         """Reselect the current rubric row, triggering redraws (for example).
@@ -660,16 +644,12 @@ class RubricTable(QTableWidget):
         """
         self.selectRubricByVisibleRow(0)
 
-    def selectRubricByKey(self, key: int | str | None) -> bool:
+    def selectRubricByKey(self, key: int | None) -> bool:
         """Select row with given key, returning True if works, else False."""
         if key is None:
             return False
         for r in range(self.rowCount()):
-            # TODO: mypy is concerned self.item() could return None
-            # perhaps there is a better way to iterate over items?
-            item = self.item(r, 0)
-            assert item
-            if int(item.text()) == int(key):
+            if self._get_key_from_row(r) == key:
                 self.selectRow(r)
                 return True
         return False
@@ -725,7 +705,7 @@ class RubricTable(QTableWidget):
         """Get the rth row of the rubric table."""
         item = self.item(r, 0)
         assert item
-        rid = item.text()
+        rid = int(item.text())
         for rubric in self._parent.rubrics:
             if rubric["id"] == rid:
                 return rubric
@@ -777,9 +757,8 @@ class RubricTable(QTableWidget):
             self.colourLegalRubric(r)
 
     def editRow(self, tableIndex):
-        r = tableIndex.row()
-        rubricKey = self.item(r, 0).text()
-        self._parent.edit_rubric(rubricKey)
+        key = self._get_key_from_row(tableIndex.row())
+        self._parent.edit_rubric(key)
 
 
 class TabBarWithAddRenameRemoveContext(QTabBar):
@@ -1472,7 +1451,7 @@ class RubricWidget(QWidget):
             self.RTW.currentIndex(),
         ]
 
-    def setCurrentRubricKeyAndTab(self, key: int | str | None, tab: int) -> bool:
+    def setCurrentRubricKeyAndTab(self, key: int | None, tab: int) -> bool:
         """Set the current rubric key and the current tab, as if it was clicked on.
 
         Args:
@@ -1610,17 +1589,17 @@ class RubricWidget(QWidget):
                     groups.append(g)
         return sorted(list(set(groups)))
 
-    def unhideRubricByKey(self, key: str) -> None:
+    def unhideRubricByKey(self, key: int) -> None:
         wranglerState = self.get_tab_rubric_lists()
         try:
             wranglerState["hidden"].remove(key)
         except ValueError:
-            # TODO is this sufficient if we unexpected did not find it?
+            # TODO is this sufficient if we unexpectedly did not find it?
             log.warn(f"Tried to unhide {key} but was already gone?  Or type mixup?")
             pass
         self.setRubricTabsFromState(wranglerState)
 
-    def hideRubricByKey(self, key: str) -> None:
+    def hideRubricByKey(self, key: int) -> None:
         wranglerState = self.get_tab_rubric_lists()
         wranglerState["hidden"].append(key)
         self.setRubricTabsFromState(wranglerState)
@@ -1633,7 +1612,7 @@ class RubricWidget(QWidget):
         else:
             self._new_or_edit_rubric(None)
 
-    def other_usage(self, key: str) -> None:
+    def other_usage(self, key: int) -> None:
         """Open a dialog showing a list of paper numbers using the given rubric.
 
         Args:
@@ -1655,7 +1634,7 @@ class RubricWidget(QWidget):
         """
         self._parent.view_other_paper(paper_number)
 
-    def edit_rubric(self, key: str) -> None:
+    def edit_rubric(self, key: int) -> None:
         """Open a dialog to edit a rubric - from the id-key of that rubric."""
         # first grab the rubric from that key
         try:

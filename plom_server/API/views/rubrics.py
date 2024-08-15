@@ -59,6 +59,7 @@ class MgetRubricUsages(APIView):
         return Response(paper_numbers, status=status.HTTP_200_OK)
 
 
+# PUT: /MK/rubric
 class McreateRubric(APIView):
     def put(self, request: Request) -> Response:
         """Create a new rubric on the server.
@@ -89,8 +90,9 @@ class McreateRubric(APIView):
             return _error_response(e, status.HTTP_403_FORBIDDEN)
 
 
+# PATCH: /MK/rubric/{key}
 class MmodifyRubric(APIView):
-    def patch(self, request: Request, *, key: str) -> Response:
+    def patch(self, request: Request, *, key: int) -> Response:
         """Change a rubric on the server.
 
         Args:
