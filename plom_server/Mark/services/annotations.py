@@ -70,8 +70,10 @@ def _create_new_annotation_in_database(
 ) -> Annotation:
     if task.latest_annotation:
         last_annotation_edition = task.latest_annotation.edition
+        old_time = task.latest_annotation.marking_time
     else:  # there was no previous annotation
         last_annotation_edition = 0
+        old_time = 0
 
     new_annotation = Annotation(
         edition=last_annotation_edition + 1,
@@ -79,6 +81,7 @@ def _create_new_annotation_in_database(
         image=annotation_image,
         annotation_data=data,
         marking_time=time,
+        marking_delta_time=time - old_time,
         task=task,
         user=task.assigned_user,
     )
