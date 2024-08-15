@@ -7,20 +7,34 @@
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Aden Chan
 
+import random
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
-from django.db.models import Max
 
+# from django.db.models import Max
 # from django.db.models.query_utils import Q
 
 from Mark.models.annotations import Annotation
 
 
 def generate_key():
-    count = Rubric.objects.aggregate(Max("key"))["key__max"]
-    return 1 if count is None else count + 1
+    # TODO: tricky to avoid a race with this here:
+    # count = Rubric.objects.aggregate(Max("key"))["key__max"]
+    # return 1 if count is None else count + 1
+
+    def _genkey():
+        # unsigned intmax or something like that
+        return random.randint(1, 2_100_000_000)
+
+    # this still has a race condition, just incredibly unlikely to hit it
+    key = _genkey()
+    existing_keys = Rubric.objects.all().values_list("key", flat=True)
+    while key in existing_keys:
+        key = _genkey()
+    return key
 
 
 class Rubric(models.Model):
