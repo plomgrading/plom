@@ -10,10 +10,12 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
-from django.db.models.query_utils import Q
-from Mark.models.annotations import Annotation
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Max
+
+# from django.db.models.query_utils import Q
+
+from Mark.models.annotations import Annotation
 
 
 def generate_key():
