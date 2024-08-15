@@ -149,7 +149,7 @@ class Rubric(models.Model):
             ),
             # This constraint checks that each key has only one rubric where latest=True
             # TODO: unclear where "at most one" or "exactly one"
-            # TODO: seems to conflicts with RubricService.modify_rubric or maybe the serializer
+            # TODO: seems to conflict with RubricService.modify_rubric or maybe the serializer
             # models.UniqueConstraint(
             #     fields=["key"], condition=Q(latest=True), name="unique_latest_per_key"
             # ),
