@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 
+from __future__ import annotations
 
 from datetime import timedelta
 from typing import Dict, Tuple, Union, Any
@@ -25,7 +26,7 @@ class UserInfoServices:
     """Functions for User Info HTML page."""
 
     @transaction.atomic
-    def get_user_progress(self, username: str) -> Dict[str, Any]:
+    def get_user_progress(self, username: str) -> dict[str, Any]:
         """Get marking progress of a user.
 
         Args:
