@@ -84,7 +84,7 @@ class MarkURLPatterns:
                 MgetRubricUsages.as_view(),
                 name="api_MK_get_rubric_usages",
             ),
-            re_path(
+            path(
                 "rubric/<int:key>",
                 MmodifyRubric.as_view(),
                 name="api_MK_modify_rubric",
