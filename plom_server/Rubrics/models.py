@@ -148,8 +148,8 @@ class Rubric(models.Model):
                 fields=["key", "revision"], name="unique_revision_per_key"
             ),
             # This constraint checks that each key has only one rubric where latest=True
-            # TODO: Colin cannot modify rubrics from Client while this is set...
-            # TODO: see code in rubric_server.py and which calls serializer.py
+            # TODO: unclear where "at most one" or "exactly one"
+            # TODO: seems to conflicts with RubricService.modify_rubric or maybe the serializer
             # models.UniqueConstraint(
             #     fields=["key"], condition=Q(latest=True), name="unique_latest_per_key"
             # ),
