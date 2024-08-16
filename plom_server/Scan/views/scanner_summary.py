@@ -4,13 +4,11 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 
-from django.http import HttpRequest, HttpResponse, FileResponse, Http404
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
 from Base.base_group_views import ScannerRequiredView
-from Progress.services import ManageScanService
-
-from plom.misc_utils import format_int_list_with_runs
+from ..services import ManageScanService
 
 
 class ScannerCompletePaperView(ScannerRequiredView):
@@ -55,30 +53,3 @@ class ScannerIncompletePaperView(ScannerRequiredView):
             }
         )
         return render(request, "Scan/scan_incomplete.html", context)
-
-
-class ScannerPushedImageView(ScannerRequiredView):
-    """Return a pushed image given by its pk."""
-
-    def get(self, request: HttpRequest, *, img_pk: int) -> FileResponse:
-        img = ManageScanService().get_pushed_image(img_pk)
-        if img is None:
-            raise Http404(f"Cannot find pushed image with pk {img_pk}.")
-        return FileResponse(img.image_file)
-
-
-class ScannerPushedImageWrapView(ScannerRequiredView):
-    """Return the simple html wrapper around the pushed image with correct rotation."""
-
-    def get(self, request: HttpRequest, *, img_pk: int) -> HttpResponse:
-        pushed_img = ManageScanService().get_pushed_image(img_pk)
-        if pushed_img is None:
-            raise Http404(f"Cannot find pushed image with pk {img_pk}.")
-        pushed_img_page_info = ManageScanService().get_pushed_image_page_info(img_pk)
-        # pass negative of angle for css rotation since it uses positive=clockwise (sigh)
-        context = {
-            "image_pk": img_pk,
-            "angle": -pushed_img.rotation,
-            "page_info": pushed_img_page_info,
-        }
-        return render(request, "Scan/fragments/pushed_image_wrapper.html", context)
