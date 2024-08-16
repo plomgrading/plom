@@ -62,4 +62,4 @@ class PushedImageWrapView(ScannerLeadMarkerOrManagerView):
             "page_info": pushed_img_page_info,
         }
 
-        return render(request, "Progress/fragments/pushed_image_wrapper.html", context)
+        return render(request, "Scan/fragments/pushed_image_wrapper.html", context)
