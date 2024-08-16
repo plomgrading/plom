@@ -26,7 +26,8 @@ class UserInfoServices:
     """Functions for User Info HTML page."""
 
     @transaction.atomic
-    def get_user_progress(self, username: str) -> dict[str, Any]:
+    @classmethod
+    def get_user_progress(cls, username: str) -> dict[str, Any]:
         """Get marking progress of a user.
 
         Args:
@@ -35,9 +36,7 @@ class UserInfoServices:
         Returns:
             A dict whose keys are ["task_claimed", "task_marked", "in_probation", "probation_limit"].
         """
-        complete_claimed_task_dict = (
-            self.get_total_annotated_and_claimed_count_based_on_user()
-        )
+        complete_claimed_task_dict = cls.get_total_annotated_and_claimed_count_by_user()
         try:
             task_marked, task_claimed = complete_claimed_task_dict[username]
         except KeyError:
@@ -59,7 +58,8 @@ class UserInfoServices:
         return data
 
     @transaction.atomic
-    def annotation_exists(self) -> bool:
+    @staticmethod
+    def annotation_exists() -> bool:
         """Return True if there are any annotations in the database.
 
         Returns:
@@ -68,10 +68,11 @@ class UserInfoServices:
         return Annotation.objects.exists()
 
     @transaction.atomic
-    def get_total_annotated_and_claimed_count_based_on_user(
-        self,
-    ) -> Dict[str, Tuple[int, int]]:
-        """Retrieve count of complete and total claimed tas based on user.
+    @classmethod
+    def get_total_annotated_and_claimed_count_by_user(
+        cls,
+    ) -> dict[str, tuple[int, int]]:
+        """Retrieve count of complete and total claimed by users.
 
         claimed tasks are those tasks associated with the user with status OUT and Complete.
 
@@ -100,7 +101,7 @@ class UserInfoServices:
         for usr in annotation_count_dict:
             complete_task = annotation_count_dict[usr]
             claimed_task = (
-                complete_task + self.get_total_claimed_but_unmarked_task_by_a_user(usr)
+                complete_task + cls.get_total_claimed_but_unmarked_task_by_a_user(usr)
             )
             result[usr] = (complete_task, claimed_task)
 
@@ -123,7 +124,8 @@ class UserInfoServices:
     #     return claimed_task_count_dict
 
     @transaction.atomic
-    def get_total_claimed_but_unmarked_task_by_a_user(self, username: str) -> int:
+    @staticmethod
+    def get_total_claimed_but_unmarked_task_by_a_user(username: str) -> int:
         """Retrieve the number of tasks claimed but unmarked by a user.
 
         These retrieve the tasks claimed by the users that have MarkingTask status of OUT.

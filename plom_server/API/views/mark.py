@@ -87,8 +87,7 @@ class MarkerMarkingProgress(APIView):
     def get(self, request):
         data = request.data
         username = data["user"]
-        uis = UserInfoServices()
-        progress = uis.get_user_progress(username=username)
+        progress = UserInfoServices.get_user_progress(username=username)
         return Response(progress, status=status.HTTP_200_OK)
 
 

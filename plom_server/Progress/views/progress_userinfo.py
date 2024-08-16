@@ -18,13 +18,13 @@ from UserManagement.services import ProbationService
 class ProgressUserInfoHome(ManagerRequiredView):
     def get(self, request):
         context = super().build_context()
-        uis = UserInfoServices()
         filter_form = AnnotationFilterForm(request.GET)
 
-        annotations_exist = uis.annotation_exists()
+        annotations_exist = UserInfoServices.annotation_exists()
         annotated_and_claimed_count_dict = (
-            uis.get_total_annotated_and_claimed_count_based_on_user()
+            UserInfoServices.get_total_annotated_and_claimed_count_by_user()
         )
+        uis = UserInfoServices()
         latest_annotation_human_time = uis.get_time_of_latest_updated_annotation()
         request_time_filter_seconds = request.GET.get("time_filter_seconds")
 
