@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2024 Aden Chan
 
 from __future__ import annotations
 
