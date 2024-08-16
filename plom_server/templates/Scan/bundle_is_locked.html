@@ -1,6 +1,6 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023-2024 Andrew Rechnitzer
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -8,9 +8,9 @@
 {% endblock title %}
 {% block page_heading %}
     Bundle is locked
-    <a class="btn btn-success" href="{% url 'scan_home' %}">
+    <a class="btn btn-success" href="{% url 'scan_overview' %}">
         <i class="bi bi-chevron-left"></i>
-        Return to upload
+        Return to overview
     </a>
 {% endblock page_heading %}
 {% block main_content %}
@@ -30,7 +30,7 @@
                             </li>
                         </ul>
                     </p>
-                    <p>Please return to the main bundle upload page.</p>
+                    <p>Please return to the main scanning overview page.</p>
                 </div>
             </div>
         </div>

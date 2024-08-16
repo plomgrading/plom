@@ -271,9 +271,6 @@ class RubricItemView(ManagerRequiredView):
 
         context = self.build_context()
 
-        # we need to pad the number with zeros on the left since if the keystarts
-        # with a zero, it will be interpreted as a 11 digit key, which result in an error
-        rubric_key = str(rubric_key).zfill(12)
         rubric = rs.get_rubric_by_key(rubric_key)
         revisions = rs.get_past_revisions_by_key(rubric_key)
         marking_tasks = rs.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
@@ -300,10 +297,6 @@ class RubricItemView(ManagerRequiredView):
     def post(request, rubric_key):
         form = RubricEditForm(request.POST)
 
-        # we need to pad the number with zeros on the left since if the keystarts
-        # with a zero, it will be interpreted as a 11 digit key, which result in an error
-        rubric_key = str(rubric_key).zfill(12)
-
         if form.is_valid():
             rs = RubricService()
             rubric = rs.get_rubric_by_key(rubric_key)
@@ -316,7 +309,7 @@ class RubricItemView(ManagerRequiredView):
 def compare_rubrics(request, rubric_key):
     """View for displaying a diff between two rubrics."""
     if request.method == "POST" and request.htmx:
-        form = RubricDiffForm(request.POST, key=str(rubric_key).zfill(12))
+        form = RubricDiffForm(request.POST, key=rubric_key)
         if form.is_valid():
             left = [
                 f'{form.cleaned_data["left_compare"].display_delta} | {form.cleaned_data["left_compare"].text}'

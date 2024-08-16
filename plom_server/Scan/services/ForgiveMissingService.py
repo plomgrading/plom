@@ -21,7 +21,7 @@ from Papers.models import (
 )
 from Papers.services import SpecificationService
 from Preparation.services import SourceService
-from Progress.services import ManageDiscardService
+from ..services import ManageDiscardService
 
 # The name of the bundle to use for these missing pages
 # We need this since all images belong to bundles

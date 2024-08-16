@@ -1783,8 +1783,15 @@ class Annotator(QWidget):
             "sceneItems": lst,
         }
         plomfile = self.saveName.with_suffix(".plom")
+
+        # little helper to jsonify pathlib.Path to str
+        def _path_to_str(x):
+            if isinstance(x, Path):
+                return str(x)
+            raise TypeError
+
         with open(plomfile, "w") as fh:
-            json.dump(plomData, fh, indent="  ")
+            json.dump(plomData, fh, indent="  ", default=_path_to_str)
             fh.write("\n")
         return aname, plomfile
 
@@ -1892,7 +1899,7 @@ class Annotator(QWidget):
         """Request a latest rubric list for current question."""
         return self.parentMarkerUI.getRubricsFromServer(self.question_num)
 
-    def getOneRubricFromServer(self, key):
+    def getOneRubricFromServer(self, key: int) -> dict[str, Any]:
         """Request a latest rubric list for current question."""
         return self.parentMarkerUI.getOneRubricFromServer(key)
 

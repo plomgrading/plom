@@ -8,10 +8,11 @@ from django.http import FileResponse, HttpRequest, HttpResponse, Http404
 from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ScannerLeadMarkerOrManagerView
-from Progress.services import ManageScanService, ManageDiscardService
 from ..services import (
     hard_rotate_image_from_file_by_exif_and_angle,
     ForgiveMissingService,
+    ManageScanService,
+    ManageDiscardService,
 )
 
 
@@ -63,7 +64,7 @@ class PushedImageWrapView(ScannerLeadMarkerOrManagerView):
             "page_info": pushed_img_page_info,
         }
 
-        return render(request, "Progress/fragments/pushed_image_wrapper.html", context)
+        return render(request, "Scan/fragments/pushed_image_wrapper.html", context)
 
 
 class SubstituteImageWrapView(ScannerLeadMarkerOrManagerView):

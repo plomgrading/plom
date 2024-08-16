@@ -13,8 +13,8 @@ from ..services import (
     ImageRotateService,
     ScanService,
     hard_rotate_image_from_file_by_exif_and_angle,
+    ManageScanService,
 )
-from Progress.services import ManageScanService
 
 from plom.plom_exceptions import PlomBundleLockedException
 
