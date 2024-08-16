@@ -27,7 +27,6 @@ from .views import (
     GetBundleThumbnailView,
     GetStagedBundleFragmentView,
     PushAllPageImages,
-    ScannerSummaryView,
     ScannerPushedImageView,
     ScannerPushedImageWrapView,
     DiscardImageView,
@@ -121,11 +120,6 @@ urlpatterns = [
     ),
     path(
         "push/<int:bundle_id>/all/", PushAllPageImages.as_view(), name="scan_push_all"
-    ),
-    path(
-        "summary/",
-        ScannerSummaryView.as_view(),
-        name="scan_summary",
     ),
     path(
         "summary/pushed_img/<int:img_pk>",

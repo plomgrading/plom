@@ -38,7 +38,6 @@ from .scanner_summary import (
     ScannerCompletePaperView,
     ScannerIncompletePaperView,
     ##
-    ScannerSummaryView,
     ScannerPushedImageView,
     ScannerPushedImageWrapView,
 )
