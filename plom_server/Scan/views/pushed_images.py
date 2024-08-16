@@ -82,7 +82,7 @@ class SubstituteImageWrapView(ScannerLeadMarkerOrManagerView):
         return render(request, "Scan/fragments/substitute_image_wrapper.html", context)
 
     def post(self, request: HttpRequest, *, paper: int, page: int) -> HttpResponse:
-        """replace the missing page from the given paper"""
+        """Replace the missing page from the given paper."""
         try:
             ForgiveMissingService.forgive_missing_fixed_page(request.user, paper, page)
         except ObjectDoesNotExist:
