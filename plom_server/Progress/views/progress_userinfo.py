@@ -3,16 +3,14 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Elisa Pan
 
+from django.contrib.auth.models import User
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
-
-from ..forms import AnnotationFilterForm
-from ..services import UserInfoServices
-
-from django.contrib.auth.models import User
 from UserManagement.models import ProbationPeriod
 from UserManagement.services import ProbationService
+from ..forms import AnnotationFilterForm
+from ..services import UserInfoServices
 
 
 class ProgressUserInfoHome(ManagerRequiredView):
