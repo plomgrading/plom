@@ -28,7 +28,7 @@ from ..services import ManageDiscardService
 # when student's paper is missing pages
 # We need this since all images belong to bundles
 #
-system_substitute_images_bundle_name = "__system_subsitute_pages_bundle__"
+system_substitute_images_bundle_name = "__system_substitute_pages_bundle__"
 font_size_for_forgiven_blurb = 36
 page_not_submitted_text = "Page Not Submitted"
 
@@ -192,7 +192,7 @@ def create_bundle_of_substitute_pages() -> None:
 
 
 def have_substitute_images_been_created() -> bool:
-    """Test if there are any images in the system subsitute image bundle."""
+    """Test if there are any images in the system substitute image bundle."""
     bundle_obj = _get_or_create_substitute_pages_bundle()
     return bundle_obj.image_set.count() > 0
 
