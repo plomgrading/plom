@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render
 from django.http import FileResponse, HttpRequest, HttpResponse, Http404
 from django_htmx.http import HttpResponseClientRefresh
@@ -79,6 +80,19 @@ class SubstituteImageWrapView(ScannerLeadMarkerOrManagerView):
         }
 
         return render(request, "Scan/fragments/substitute_image_wrapper.html", context)
+
+    def post(self, request: HttpRequest, *, paper: int, page: int) -> HttpResponse:
+        """replace the missing page from the given paper"""
+        try:
+            ForgiveMissingService.forgive_missing_fixed_page(request.user, paper, page)
+        except ObjectDoesNotExist:
+            # TODO - return the error message to user somehow
+            pass
+        except ValueError:
+            # TODO - return the error message to user somehow
+            pass
+        # if everything succeeds then refresh the page.
+        return HttpResponseClientRefresh()
 
 
 class SubstituteImageView(ScannerLeadMarkerOrManagerView):
