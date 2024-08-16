@@ -318,7 +318,7 @@ class RubricItemView(UpdateView, ManagerRequiredView):
 
     @staticmethod
     def post(request, rubric_key):
-        form = RubricEditForm(request.POST)
+        form = RubricItemForm(request.POST)
 
         if form.is_valid():
             rs = RubricService()
