@@ -163,7 +163,12 @@ class RubricService:
         incoming_data["latest"] = True
         serializer = RubricSerializer(data=incoming_data)
         if serializer.is_valid():
-            serializer.save()
+            new_rubric = serializer.save()
+
+            new_rubric.pedagogy_tags.clear()
+            for tag in incoming_data.get("pedagogy_tags", []):
+                new_rubric.pedagogy_tags.add(tag)
+
             rubric_obj = serializer.instance
             return rubric_obj
         else:
@@ -288,7 +293,12 @@ class RubricService:
         old_rubric.latest = False
         old_rubric.save()
 
-        serializer.save()
+        new_rubric = serializer.save()
+
+        new_rubric.pedagogy_tags.clear()
+        for tag in new_rubric_data.get("pedagogy_tags", []):
+            new_rubric.pedagogy_tags.add(tag)
+
         rubric_obj = serializer.instance
         return _Rubric_to_dict(rubric_obj)
 
@@ -304,7 +314,7 @@ class RubricService:
             value: the value of the rubric.
             kind: the kind of the rubric.
             out_of: the maximum value of the rubric, required for
-            absolute rubrics.
+                absolute rubrics, none for other rubrics
 
         Raises:
             ValueError: if the kind is not valid.

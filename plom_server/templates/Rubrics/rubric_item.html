@@ -112,6 +112,14 @@
                                     <th scope="row">Meta</th>
                                     <td>{{ latest_rubric.meta }}</td>
                                 </tr>
+                                <tr>
+                                    <th scope="row">Tags</th>
+                                    <td>
+                                        {% for tag in latest_rubric.pedagogy_tags.all %}
+                                            <span class="badge bg-primary" title="{{ tag.text }}">{{ tag }}</span>
+                                        {% endfor %}
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -299,6 +307,13 @@
                                                 {{ form.parameters.errors }}
                                                 <label for="{{ form.parameters.id_for_label }}">Parameters:</label>
                                                 {{ form.parameters }}
+                                            </div>
+                                        </div>
+                                        <div class="row form-group">
+                                            <div class="col">
+                                                {{ form.pedagogy_tags.errors }}
+                                                <label for="{{ form.pedagogy_tags.id_for_label }}">Tags:</label>
+                                                {{ form.pedagogy_tags }}
                                             </div>
                                         </div>
                                     </div>

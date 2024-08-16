@@ -143,6 +143,7 @@ class Rubric(models.Model):
     )
     revision = models.IntegerField(null=False, blank=True, default=0)
     latest = models.BooleanField(null=False, blank=True, default=True)
+    pedagogy_tags = models.ManyToManyField("QuestionTags.PedagogyTag", blank=True)
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -205,7 +206,6 @@ class RubricTable(django_tables2.Table):
             "last_modified",
             "kind",
             "system_rubric",
-            "times_used",
             "question",
             "text",
         )
@@ -215,7 +215,6 @@ class RubricTable(django_tables2.Table):
             "last_modified",
             "kind",
             "system_rubric",
-            "times_used",
             "question",
             "text",
         )

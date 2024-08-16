@@ -125,7 +125,16 @@ class RubricItemForm(forms.ModelForm):
 
     class Meta:
         model = Rubric
-        fields = ["text", "kind", "value", "out_of", "meta", "versions", "parameters"]
+        fields = [
+            "text",
+            "kind",
+            "value",
+            "out_of",
+            "meta",
+            "versions",
+            "parameters",
+            "pedagogy_tags",
+        ]
         widgets = {
             "text": forms.Textarea(attrs={"rows": 3}),
             "meta": forms.Textarea(attrs={"rows": 3}),

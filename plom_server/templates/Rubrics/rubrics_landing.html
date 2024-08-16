@@ -65,7 +65,7 @@
     <hr />
     {% comment %} Filter {% endcomment %}
     <div class="row">
-        <div class="col">
+        <div class="col-10">
             <form method="get" action="" class="form-inline">
                 <div class="form-group mr-2">
                     {{ rubric_filter_form }}
@@ -75,7 +75,7 @@
                 </div>
             </form>
         </div>
-        <div class="col">
+        <div class="col-2">
             <button type="submit"
                     class="btn btn-primary float-end"
                     data-bs-toggle="modal"
@@ -170,6 +170,13 @@
                                                 {{ rubric_create_form.parameters.errors }}
                                                 <label for="{{ rubric_create_form.parameters.id_for_label }}">Parameters:</label>
                                                 {{ rubric_create_form.parameters }}
+                                            </div>
+                                        </div>
+                                        <div class="row form-group">
+                                            <div class="col">
+                                                {{ rubric_create_form.pedagogy_tags.errors }}
+                                                <label for="{{ rubric_create_form.pedagogy_tags.id_for_label }}">Tags:</label>
+                                                {{ rubric_create_form.pedagogy_tags }}
                                             </div>
                                         </div>
                                     </div>
