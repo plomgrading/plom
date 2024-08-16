@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 
 from django.test import TestCase
@@ -145,7 +145,11 @@ class ManageScanServiceTests(TestCase):
                     "img_pk" in f_pg_data[pg - 1]
                 )  # not testing the actual value of image_pk
             for pg in range(3, 7):
-                assert f_pg_data[pg - 1] == {"status": "missing", "page_number": pg}
+                assert f_pg_data[pg - 1] == {
+                    "status": "missing",
+                    "page_number": pg,
+                    "kind": "QuestionPage",
+                }
         for pn in [10, 11]:
             assert pn in mss_incomplete
             # it is missing pages 3,4,5,6, but has fixed pages 1,2 and mobile for q1,2- the img_pk of those we can ignore.
@@ -160,7 +164,11 @@ class ManageScanServiceTests(TestCase):
                     "img_pk" in f_pg_data[pg - 1]
                 )  # not testing the actual value of image_pk
             for pg in range(3, 7):
-                assert f_pg_data[pg - 1] == {"status": "missing", "page_number": pg}
+                assert f_pg_data[pg - 1] == {
+                    "status": "missing",
+                    "page_number": pg,
+                    "kind": "QuestionPage",
+                }
             for pg in range(1, 3):
                 assert (
                     m_pg_data[pg - 1]["question_number"] == pg
