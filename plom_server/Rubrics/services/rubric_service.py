@@ -160,8 +160,8 @@ class RubricService:
             incoming_data.get("out_of", None),
         )
 
-        rubric_data["latest"] = True
-        serializer = RubricSerializer(data=rubric_data)
+        incoming_data["latest"] = True
+        serializer = RubricSerializer(data=incoming_data)
         if serializer.is_valid():
             serializer.save()
             rubric_obj = serializer.instance
