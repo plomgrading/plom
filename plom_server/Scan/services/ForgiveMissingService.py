@@ -150,14 +150,13 @@ def create_bundle_of_substitute_pages():
     n_pages = SpecificationService.get_n_pages()
     bundle_obj = _get_or_create_missing_pages_bundle()
     if bundle_obj.image_set.count() > 0:
-        print("Already images here")
+        # we already have the images.
         return
     else:
         image_list = _create_missing_page_images_for_forgiveness_bundle()
     with transaction.atomic():
         for n, img_dat in enumerate(image_list):
             bundle_order = img_dat["version"] * n_pages + img_dat["page_number"]
-            print(f"Creating image at {bundle_order}")
             image_name = img_dat["name"]
             image_bytes = img_dat["bytes"]
             image_hash = hashlib.sha256(image_bytes).hexdigest()
@@ -203,18 +202,18 @@ def _delete_substitute_images():
 
 def forgive_missing_fixed_page(user_obj: User, paper_number: int, page_number: int):
     try:
-        fpage_obj = FixedPage.objects.get(
+        fixedpage_obj = FixedPage.objects.get(
             paper__paper_number=paper_number, page_number=page_number
         )
     except ObjectDoesNotExist:
         raise ValueError(
             f"Cannot find the fixed page of paper {paper_number} page {page_number}"
         )
-    if fpage_obj.image:
+    if fixedpage_obj.image:
         raise ValueError(
             f"Paper {paper_number} page {page_number} already has an image - there is nothing to forgive!"
         )
-    image_obj = get_substitute_image(page_number, fpage_obj.version)
+    image_obj = get_substitute_image(page_number, fixedpage_obj.version)
     # create a discard page and then move it into place via assign_discard_image_to_fixed_page.
     DiscardPage.objects.create(
         image=image_obj,
@@ -238,19 +237,19 @@ def forgive_missing_fixed_page_cmd(username: str, paper_number: int, page_number
 
 def get_substitute_page_info(paper_number, page_number):
     try:
-        fpage_obj = FixedPage.objects.get(
+        fixedpage_obj = FixedPage.objects.get(
             paper__paper_number=paper_number, page_number=page_number
         )
     except ObjectDoesNotExist:
         raise ValueError(
             f"Cannot find the fixed page of paper {paper_number} page {page_number}"
         )
-    version = fpage_obj.version
+    version = fixedpage_obj.version
     substitute_image_pk = get_substitute_image(page_number, version).pk
 
-    if isinstance(fpage_obj, DNMPage):
+    if isinstance(fixedpage_obj, DNMPage):
         kind = "DNMPage"
-    elif isinstance(fpage_obj, IDPage):
+    elif isinstance(fixedpage_obj, IDPage):
         kind = "IDPage"
     else:  # must be a question page
         kind = "QuestionPage"

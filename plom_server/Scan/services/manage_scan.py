@@ -430,7 +430,7 @@ class ManageScanService:
             if img.bundle.staging_bundle:
                 staging_bundle_slug = img.bundle.staging_bundle.slug
             else:
-                staging_bundle_slug = "*system generated bundle*"
+                staging_bundle_slug = "__system_subsitute_pages_bundle__"
 
             discards.append(
                 {

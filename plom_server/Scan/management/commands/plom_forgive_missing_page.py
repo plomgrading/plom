@@ -29,7 +29,7 @@ class Command(BaseCommand):
                 opt["username"], opt["paper_number"], opt["page_number"]
             )
             self.stdout.write(
-                "Replaced missing page {page_number} from paper {paper_number} with a substitute image."
+                f"Replaced missing page {opt['page_number']} from paper {opt['paper_number']} with a substitute image."
             )
         except ValueError as err:
             raise CommandError(err)
