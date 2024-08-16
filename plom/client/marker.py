@@ -1651,11 +1651,11 @@ class MarkerClient(QWidget):
 
         return data
 
-    def backgroundUploadFinished(self, task, numDone, numtotal) -> None:
+    def backgroundUploadFinished(self, task: str, numDone, numtotal) -> None:
         """An upload has finished, do appropriate UI updates.
 
         Args:
-            task (str): the task ID of the current test.
+            task: the task ID of the upload.
             numDone (int): number of exams marked
             numtotal (int): total number of exams to mark.
 
