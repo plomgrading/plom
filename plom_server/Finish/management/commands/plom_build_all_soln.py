@@ -6,7 +6,7 @@ from tqdm import tqdm
 from django.core.management.base import BaseCommand
 from django.core.management import call_command
 
-from Progress.services import ManageScanService
+from Scan.services import ManageScanService
 
 
 class Command(BaseCommand):
