@@ -110,6 +110,7 @@
             <tr>
                 <th style=" width: 25%;">Tag Name</th>
                 <th>Tag Description</th>
+                <th>Confidential information (not shown to students)</th>
             </tr>
         </thead>
         <tbody>
@@ -117,6 +118,7 @@
                 <tr>
                     <td>{{ tag.tag_name }}</td>
                     <td>{{ tag.text }}</td>
+                    <td>{{ tag.confidential_info }}</td>
                 </tr>
             {% endfor %}
         </tbody>
