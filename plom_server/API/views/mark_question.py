@@ -3,6 +3,8 @@
 # Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2024 Bryan Tanady
+
 
 from __future__ import annotations
 
@@ -19,6 +21,7 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomTaskDeletedError,
     PlomTaskChangedError,
+    PlomProbationLimitExceededException,
 )
 
 from Mark.services import QuestionMarkingService, MarkingTaskService
@@ -58,7 +61,7 @@ class QuestionMarkingViewSet(ViewSet):
             min_paper_num = int_or_None(data.get("min_paper_num"))
             max_paper_num = int_or_None(data.get("max_paper_num"))
         except ValueError as e:
-            return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
+            return _error_response(e, status.HTTP_423_LOCKED)
 
         _tag: str | None = data.get("tags")
         if _tag:
@@ -198,6 +201,8 @@ class QuestionMarkingViewSet(ViewSet):
             return _error_response(e, status.HTTP_410_GONE)
         except PlomConflict as e:
             return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
+        except PlomProbationLimitExceededException as e:
+            return _error_response(e, status.HTTP_423_LOCKED)
 
         def int_or_None(x):
             return None if x is None else int(x)

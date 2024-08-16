@@ -1,0 +1,174 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Bryan Tanady
+    Copyright (C) 2024 Elisa Pan
+-->
+<!-- Modal for confirmation -->
+<div class="modal fade"
+     id="confirmSetProbation"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="confirmSetProbationLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <h5>
+                    The marker has marked more tasks than the default probation limit. Do you insist on setting them into probation?
+                </h5>
+                <form id="confirmSetProbationForm" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="enforce_set_probation" id="enforce_set_probation">
+                    <input type="hidden" name="username" id="confirmUsername">
+                    <div>
+                        <button type="submit" class="btn btn-success" style="margin-top: 10px">Yes</button>
+                        <button type="button"
+                                class="btn btn-danger"
+                                style="margin-top: 10px"
+                                data-bs-dismiss="modal">No</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal for Editing Default Probation Limit-->
+<div class="modal fade"
+     id="modifyDefaultLimit"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="modifyDefaultLimitLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modifyDefaultLimitLabel">Modify Default Probation Limit</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="modifyDefaultLimitForm"
+                      method="post"
+                      action="{% url 'modify_default_limit' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="limit">New Limit</label>
+                        <input type="number" class="form-control" id="limit" name="limit" required>
+                    </div>
+                    <div>
+                        <button type="submit" class="btn btn-primary" style="margin-top: 10px">Set</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal for Editing Probation Limit (for each user) -->
+<div class="modal fade"
+     id="editLimit"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="editLimitLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editLimitLabel">Edit Probation Limit</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editLimitForm"
+                      method="post"
+                      action="{% url 'edit_probation_limit' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <input type="hidden" id="username" name="username">
+                        <label for="limit">New Limit</label>
+                        <input type="number" class="form-control" id="limit" name="limit" required>
+                    </div>
+                    <div>
+                        <button type="submit" class="btn btn-primary" style="margin-top: 10px">Set</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal for Modifying Probationary State/Limit -->
+<div class="modal fade"
+     id="modifyProbationModal"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="modifyProbationModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modifyProbationModalLabel">Modify Probation Limit</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="modifyProbationForm"
+                      method="post"
+                      action="{% url 'modify_probation' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="probationUsers">Select Users</label>
+                        <select id="probationUsers"
+                                name="users"
+                                class="form-control select2"
+                                multiple="multiple"
+                                style="width: 100%">
+                            {% for user in probation_user_objects %}<option value="{{ user.pk }}">{{ user.username }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-warning" id="selectAllBtn">Select All Users</button>
+                    <div class="form-group mt-3">
+                        <label for="newLimit">New Limit</label>
+                        <input type="number"
+                               class="form-control"
+                               id="newLimit"
+                               name="limit"
+                               required>
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">Update Limits</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.querySelectorAll('[data-bs-target="#confirmSetProbation"]').forEach(item => {
+        item.addEventListener('click', function(event) {
+            const username = event.target.getAttribute('data-username');
+            document.getElementById('confirmUsername').value = username;
+            const formAction = "{% url 'set_probation' 'username_placeholder' %}".replace('username_placeholder', username);
+            document.getElementById('confirmSetProbationForm').action = formAction;
+        });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var selectElement = document.getElementById('probationUsers');
+        $(selectElement).select2();
+
+        // Add event listener for the Select All button
+        document.getElementById('selectAllBtn').addEventListener('click', function() {
+            for (var i = 0; i < selectElement.options.length; i++) {
+                selectElement.options[i].selected = true;
+            }
+            // Trigger the change event on the select2 element
+            $(selectElement).trigger('change');
+        });
+    });
+</script>

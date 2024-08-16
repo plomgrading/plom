@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
@@ -17,11 +18,13 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomTaskDeletedError,
     PlomTaskChangedError,
+    PlomProbationLimitExceededException,
 )
 
 from ..models import MarkingTask
 from . import mark_task
 from . import create_new_annotation_in_database
+from Mark.services import MarkingTaskService
 
 
 class QuestionMarkingService:
@@ -203,6 +206,28 @@ class QuestionMarkingService:
 
         # regrab it, selected-for-update, b/c we're going to write to it
         task = MarkingTask.objects.select_for_update().get(pk=task.pk)
+        marked_by_probationary_marker_tag = "Probation"
+
+        # Check if the user is in probation
+        from Progress.services import UserInfoServices
+
+        uis = UserInfoServices()
+        probation_state_and_progress = uis.get_user_progress(username=user.username)
+        if probation_state_and_progress["in_probation"]:
+            if probation_state_and_progress[
+                "task_marked"
+            ] < probation_state_and_progress["probation_limit"] or (
+                task.status == MarkingTask.COMPLETE
+            ):
+                MarkingTaskService().create_tag_and_attach_to_task(
+                    user=user,
+                    task_pk=task.pk,
+                    tag_text=marked_by_probationary_marker_tag,
+                )
+            else:
+                raise PlomProbationLimitExceededException(
+                    "You have reached your task limit. Contact your instructor to mark more tasks."
+                )
 
         # Various work in creating the new Annotation object: linking it to the
         # associated Rubrics and managing the task's latest annotation link.

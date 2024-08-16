@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Colin B. Macdonald
 
 from django.urls import path
@@ -27,6 +28,13 @@ from .views import (
     IDImageView,
     ClearID,
     IDImageWrapView,
+)
+from UserManagement.views import (
+    SetProbationView,
+    UnsetProbationView,
+    EditProbationLimitView,
+    ModifyProbationView,
+    ModifyDefaultLimitView,
 )
 
 urlpatterns = [
@@ -134,5 +142,26 @@ urlpatterns = [
         "mark/reassign_task/<int:task_pk>",
         MarkingTaskReassignView.as_view(),
         name="reassign_marking_task",
+    ),
+    path(
+        "set_probation/<str:username>/",
+        SetProbationView.as_view(),
+        name="set_probation",
+    ),
+    path(
+        "unset_probation/<str:username>/",
+        UnsetProbationView.as_view(),
+        name="unset_probation",
+    ),
+    path(
+        "edit_probation_limit/",
+        EditProbationLimitView.as_view(),
+        name="edit_probation_limit",
+    ),
+    path("modify_probation/", ModifyProbationView.as_view(), name="modify_probation"),
+    path(
+        "modify_default_limit/",
+        ModifyDefaultLimitView.as_view(),
+        name="modify_default_limit",
     ),
 ]
