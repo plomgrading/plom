@@ -39,7 +39,7 @@ class BundleUploadForm(forms.Form):
             readable_file_size = settings.MAX_BUNDLE_SIZE / 1e9
             raise ValidationError(f"Bundle size limit is {readable_file_size} GB.")
 
-        if pdf.name.startsWith("_"):
+        if pdf.name.startswith("_"):
             raise ValidationError(
                 "Bundle filenames cannot start with an underscore - we reserve those for internal use."
             )

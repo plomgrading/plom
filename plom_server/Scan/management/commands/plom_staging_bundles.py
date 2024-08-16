@@ -43,7 +43,7 @@ class Command(BaseCommand):
             raise CommandError(err)
 
         filename_stem = pathlib.Path(source_pdf).stem
-        if filename_stem.startsWith("_"):
+        if filename_stem.startswith("_"):
             raise CommandError(
                 "Bundle filenames cannot start with an underscore - we reserve those for internal use."
             )
