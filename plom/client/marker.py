@@ -344,15 +344,20 @@ class MarkerClient(QWidget):
 
     my_shutdown_signal = pyqtSignal(int, list)
 
-    def __init__(self, Qapp, tmpdir=None):
+    def __init__(self, Qapp, *, tmpdir=None):
         """Initialize a new MarkerClient.
 
         Args:
             Qapp(QApplication): Main client application
-            tmpdir (pathlib.Path/str/None): a temporary directory for
+
+        Keyword Args:
+            tmpdir (pathlib.Path/None): a temporary directory for
                 storing image files and other data.  In principle can
                 be shared with Identifier although this may not be
                 implemented.  If `None`, we will make our own.
+                TODO: we don't clean up this directory at all, which
+                is reasonable enough if the caller *made* it, but a
+                bit strange in the `None` case...
         """
         super().__init__()
         self.Qapp = Qapp
@@ -363,8 +368,8 @@ class MarkerClient(QWidget):
         # Keep the original format around in case we need to change it
         self._cachedProgressFormatStr = self.ui.mProgressBar.format()
 
-        # Save the local temp directory for image files and the class list.
         if not tmpdir:
+            # TODO: in this case, *we* should be responsible for cleaning up
             tmpdir = tempfile.mkdtemp(prefix="plom_")
         self.workingDirectory = Path(tmpdir)
         log.debug("Working directory set to %s", self.workingDirectory)
@@ -1607,7 +1612,7 @@ class MarkerClient(QWidget):
         """
         return self.msgr.MgetRubrics(question)
 
-    def getOneRubricFromServer(self, key: str) -> dict[str, Any]:
+    def getOneRubricFromServer(self, key: int) -> dict[str, Any]:
         """Get one rubric from server.
 
         Args:

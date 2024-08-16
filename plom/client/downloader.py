@@ -5,13 +5,16 @@
 
 """The background downloader downloads images using threads."""
 
+from __future__ import annotations
+
 import logging
+from pathlib import Path
 import random
 import sys
 import tempfile
 import threading
 from time import sleep, time
-from pathlib import Path
+from typing import Any
 
 if sys.version_info >= (3, 9):
     from importlib import resources
@@ -82,14 +85,15 @@ class Downloader(QObject):
     # emitted when queue lengths change (i.e., things enqueued)
     download_queue_changed = pyqtSignal(dict)
 
-    def __init__(self, basedir, *, msgr=None):
+    def __init__(self, basedir: str | Path, *, msgr: Messenger | None = None) -> None:
         """Initialize a new Downloader.
 
         Args:
-            basedir (pathlib.Path/str): a directory for the image cache.
+            basedir: a directory for the image cache.
 
         Keyword Args:
-            msgr (Messenger): used for communication with a Plom server.
+            msgr: used for communication with a Plom server, or None and
+                you can later call :method:`attach_messenger`.
                 Note Messenger is not multithreaded and blocks using
                 mutexes.  Here we make our own private clone so caller
                 can keep using their's.
@@ -111,14 +115,15 @@ class Downloader(QObject):
         self.threadpool = QThreadPool()
         # TODO: will this stop Marker from getting one?  It doesn't seem to...
         self.threadpool.setMaxThreadCount(2)
-        self._tries = {}
-        self._total_tries = {}
-        self._in_progress = {}
+        self._tries: dict[int, int] = {}
+        self._total_tries: dict[int, int] = {}
+        self._in_progress: dict[int, bool] = {}
         # it still counts as a fail if it eventually retried successfully
         self.number_of_fails = 0
         self.number_of_retries = 0
         # we're trying to stop, so don't retry for example
         self._stopping = False
+        self._placeholder_image: Path | None = None
         self.make_placeholder()
         self.simulate_failures = False
         # percentage of download attempts that will fail and an overall
@@ -127,31 +132,31 @@ class Downloader(QObject):
         self._simulate_failure_rate = 33.0
         self._simulate_slow_net = (0.5, 3)
 
-    def attach_messenger(self, msgr):
+    def attach_messenger(self, msgr: Messenger) -> None:
         """Add/replace the current messenger."""
         self.msgr = Messenger.clone(msgr)
 
-    def detach_messenger(self):
+    def detach_messenger(self) -> None:
         """Stop our messenger and forget it (but do not logout)."""
         if self.msgr:
             self.msgr.stop()
         self.msgr = None
 
-    def has_messenger(self):
+    def has_messenger(self) -> bool:
         """Do we have a messenger?"""
         if self.msgr:
             return True
         return False
 
-    def enable_fail_mode(self):
+    def enable_fail_mode(self) -> None:
         log.info("fail mode ENABLED")
         self.simulate_failures = True
 
-    def disable_fail_mode(self):
+    def disable_fail_mode(self) -> None:
         log.info("fail mode disabled")
         self.simulate_failures = False
 
-    def make_placeholder(self):
+    def make_placeholder(self) -> None:
         # Not imported earlier b/c of some circular import stuff (?)
         import plom.client.icons
 
@@ -177,7 +182,7 @@ class Downloader(QObject):
         """
         return str(self._placeholder_image)
 
-    def get_stats(self):
+    def get_stats(self) -> dict[str, Any]:
         # TODO: would be nice to know the "gave up after 3 tries" failures...
         # TODO: track retries and fails (more positive!)
         in_progress_ids = [k for k, v in self._in_progress.items() if v is True]
@@ -189,12 +194,12 @@ class Downloader(QObject):
             "in_progress_ids": in_progress_ids,
         }
 
-    def print_queue(self):
+    def print_queue(self) -> None:
         print("enumerating all jobs to check for in progress...")
         for k, v in self._in_progress.items():
             print((k, v))
 
-    def clear_queue(self):
+    def clear_queue(self) -> None:
         """Cancel any enqueued (but not yet started) downloads.
 
         Any existing downloads will continue, including their (up-to)
@@ -208,7 +213,7 @@ class Downloader(QObject):
             self._in_progress[k] = False
         self.download_queue_changed.emit(self.get_stats())
 
-    def stop(self, timeout=-1):
+    def stop(self, timeout: int = -1) -> bool:
         """Try to stop the downloader, after waiting for threads to clear.
 
         Args:
@@ -217,14 +222,26 @@ class Downloader(QObject):
 
         Returns:
             bool: True if all threads finished or False if timeout reached.
+            In the False case, some cleanup tasks, such as removing files,
+            probably did not occur.  Feel free to try again.
         """
         self._stopping = True
         # first we clear the ones that haven't started
         self.clear_queue()
         # then wait for timeout for the in-progress ones
-        return self.threadpool.waitForDone(timeout)
+        if not self.threadpool.waitForDone(timeout):
+            return False
+        # all downloads cancelling/finished, we can start cleaning up
+        self.pagecache.wipe_cache()
+        if self._placeholder_image:
+            self._placeholder_image.unlink()
+            self._placeholder_image = None
+        self.detach_messenger()
+        return True
 
-    def download_in_background_thread(self, row, priority=False, _is_retry=False):
+    def download_in_background_thread(
+        self, row: dict[str, Any], priority: bool = False, _is_retry: bool = False
+    ):
         """Enqueue the downloading of particular row of the image database.
 
         Args:
@@ -355,7 +372,9 @@ class Downloader(QObject):
         self.download_finished.emit(img_id, md5, targetfile)
         self.download_queue_changed.emit(self.get_stats())
 
-    def _worker_failed(self, img_id, md5, targetfile, err_stuff_tuple):
+    def _worker_failed(
+        self, img_id: int, md5: str, targetfile, err_stuff_tuple
+    ) -> None:
         """A worker has failed and called us: retry 3 times."""
         log.warning("Worker failed: %d, %s", img_id, str(err_stuff_tuple))
         self.number_of_retries += 1
@@ -384,11 +403,11 @@ class Downloader(QObject):
         )
         self.download_queue_changed.emit(self.get_stats())
 
-    def sync_downloads(self, pagedata):
+    def sync_downloads(self, pagedata: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Given a block of "pagedata" download all images synchronously and return updated data.
 
         Args:
-            pagedata (list): a list of dicts, each dict described in
+            pagedata: a list of dicts, each dict described in
                 `sync_download`.  Warning: we don't make a copy: it
                 will be modified (and returned).
 
@@ -400,11 +419,11 @@ class Downloader(QObject):
             row = self.sync_download(row)
         return pagedata
 
-    def sync_download(self, row):
+    def sync_download(self, row: dict[str, Any]) -> dict[str, Any]:
         """Given a row of "pagedata", download synchronously and return edited row.
 
         Args:
-            row (dict): one row of the metadata for the set of all pages
+            row: one row of the metadata for the set of all pages
                 involved in a question.  A list of dicts where each dict must
                 have (at least) keys  ``id``, ``md5``, ``server_path``.
                 TODO: sometimes we seem to accept ``md5sum`` instead: should
