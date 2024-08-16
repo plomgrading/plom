@@ -16,6 +16,7 @@ from django.db.models import Exists, OuterRef, Prefetch
 from Papers.models import (
     FixedPage,
     MobilePage,
+    DiscardPage,
     Paper,
     Image,
     Bundle,
@@ -188,6 +189,7 @@ class ManageScanService:
                     {
                         "page_number": fp.page_number,
                         "img_pk": fp.image.pk,
+                        "page_pk": fp.pk,
                     }
                 )
             for mp in paper.mobilepage_set.all():
@@ -195,6 +197,7 @@ class ManageScanService:
                     {
                         "question_number": mp.question_index,
                         "img_pk": mp.image.pk,
+                        "page_pk": mp.pk,
                     }
                 )
         for paper in no_fixed_but_some_mobile:
@@ -205,6 +208,7 @@ class ManageScanService:
                     {
                         "question_number": mp.question_index,
                         "img_pk": mp.image.pk,
+                        "page_pk": mp.pk,
                     }
                 )
         return complete
@@ -248,6 +252,7 @@ class ManageScanService:
                         {
                             "status": "present",
                             "page_number": fp.page_number,
+                            "page_pk": fp.pk,
                             "img_pk": fp.image.pk,
                         }
                     )
@@ -262,6 +267,7 @@ class ManageScanService:
                         {
                             "status": "missing",
                             "page_number": fp.page_number,
+                            "page_pk": fp.pk,
                             "kind": kind,
                         }
                     )
@@ -271,6 +277,7 @@ class ManageScanService:
                     {
                         "question_number": mp.question_index,
                         "img_pk": mp.image.pk,
+                        "page_pk": mp.pk,
                     }
                 )
 
@@ -372,74 +379,64 @@ class ManageScanService:
             return None
 
     @transaction.atomic
-    def get_pushed_image_page_info(self, img_pk: int) -> dict[str, Any]:
-        try:
-            img = Image.objects.get(pk=img_pk)
-        except Image.DoesNotExist:
-            raise ValueError(f"Cannot find an image with pk {img_pk}.")
-
-        if img.fixedpage_set.exists():  # linked by foreign key
-            fp_obj = FixedPage.objects.get(image=img)
-            return {
-                "page_type": "fixed",
-                "paper_number": fp_obj.paper.paper_number,
-                "page_number": fp_obj.page_number,
-                "bundle_name": img.bundle.name,
-                "bundle_order": img.bundle_order,
-            }
-        elif img.mobilepage_set.exists():  # linked by foreign key
-            # check the first such mobile page to get the paper_number
-            paper_number = (
-                MobilePage.objects.filter(image=img).first().paper.paper_number
-            )
-            q_idx_list = [
-                mp_obj.question_index for mp_obj in MobilePage.objects.filter(image=img)
-            ]
-            _render = SpecificationService.render_html_flat_question_label_list
-            return {
-                "page_type": "mobile",
-                "paper_number": paper_number,
-                "question_index_list": q_idx_list,
-                "question_list_html": _render(q_idx_list),
-                "bundle_name": img.bundle.name,
-                "bundle_order": img.bundle_order,
-            }
-        elif img.discardpage:  # linked by one-to-one
-            return {
-                "page_type": "discard",
-                "reason": img.discardpage.discard_reason,
-                "bundle_name": img.bundle.name,
-                "bundle_order": img.bundle_order,
-            }
-        else:
-            raise ValueError(
-                f"Cannot determine what sort of page image {img_pk} is attached to."
-            )
+    def get_pushed_fixed_page_image_info(self, page_pk: int) -> dict[str, Any]:
+        fp_obj = FixedPage.objects.get(pk=page_pk)
+        return {
+            "page_type": "fixed",
+            "paper_number": fp_obj.paper.paper_number,
+            "page_number": fp_obj.page_number,
+            "image_pk": fp_obj.image.pk,
+            "bundle_name": fp_obj.image.bundle.name,
+            "bundle_order": fp_obj.image.bundle_order,
+        }
 
     @transaction.atomic
-    def get_discarded_images(self) -> list[dict[str, Any]]:
-        discards = []
+    def get_pushed_mobile_page_image_info(self, page_pk: int) -> dict[str, Any]:
+        mp_obj = MobilePage.objects.get(pk=page_pk)
+        img = mp_obj.image
+        # same image might be used for multiple questions - get all those
+        q_idx_list = [
+            mp_obj.question_index for mp_obj in MobilePage.objects.filter(image=img)
+        ]
+        _render = SpecificationService.render_html_flat_question_label_list
+        return {
+            "page_type": "mobile",
+            "paper_number": mp_obj.paper.paper_number,
+            "question_index_list": q_idx_list,
+            "question_list_html": _render(q_idx_list),
+            "image_pk": img.pk,
+            "bundle_name": img.bundle.name,
+            "bundle_order": img.bundle_order,
+        }
 
-        for img in (
-            Image.objects.filter(discardpage__isnull=False)
-            .prefetch_related("discardpage", "bundle", "bundle__staging_bundle")
-            .order_by("bundle", "bundle_order")
-        ):
-            # if this page came from a system-bundle of substitute pages
-            # then it won't have a staging_bundle and a corresponding slug
+    @transaction.atomic
+    def get_pushed_discard_page_image_info(self, page_pk: int) -> dict[str, Any]:
+        dp_obj = DiscardPage.objects.get(pk=page_pk)
+        return {
+            "page_type": "discard",
+            "image_pk": dp_obj.image.pk,
+            "reason": dp_obj.discard_reason,
+            "bundle_name": dp_obj.image.bundle.name,
+            "bundle_order": dp_obj.image.bundle_order,
+        }
+
+    @transaction.atomic
+    def get_discarded_page_info(self) -> list[dict[str, Any]]:
+        discards = []
+        for dp_obj in DiscardPage.objects.all():
+            img = dp_obj.image
             if img.bundle.staging_bundle:
                 staging_bundle_slug = img.bundle.staging_bundle.slug
             else:
                 staging_bundle_slug = "__system_substitute_pages_bundle__"
-
             discards.append(
                 {
-                    "image": img.pk,
-                    "reason": img.discardpage.discard_reason,
+                    "page_pk": dp_obj.pk,
+                    "reason": dp_obj.discard_reason,
                     "bundle_pk": img.bundle.pk,
                     "bundle_name": staging_bundle_slug,
                     "order": img.bundle_order,
-                    "discard_pk": img.discardpage.pk,
+                    "image_pk": img.pk,
                 }
             )
 

@@ -83,7 +83,7 @@ urlpatterns = [
         name="pushed_img_rot",
     ),
     path(
-        "pushed_img_wrap/<int:img_pk>",
+        "pushed_img_wrap/<str:page_kind>/<int:page_pk>",
         PushedImageWrapView.as_view(),
         name="pushed_img_wrap",
     ),

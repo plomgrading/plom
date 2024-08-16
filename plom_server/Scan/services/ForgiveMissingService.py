@@ -22,7 +22,7 @@ from Papers.models import (
 )
 from Papers.services import SpecificationService
 from Preparation.services import SourceService
-from ..services import ManageDiscardService
+from ..services import ManageDiscardService, ManageScanService
 
 # The name of the bundle of substitute pages to use
 # when student's paper is missing pages
@@ -313,3 +313,15 @@ def get_substitute_page_info(paper_number: int, page_number: int) -> dict[str, A
         "substitute_image_pk": substitute_image_pk,
         "kind": kind,
     }
+
+
+def get_list_of_all_missing_dnm_pages() -> List[dict[str, int]]:
+    incomplete_papers = ManageScanService().get_all_incomplete_test_papers()
+    missing_dnm = []
+    for paper_number, dat in incomplete_papers.items():
+        for fp in dat["fixed"]:
+            if fp["status"] == "missing" and fp["kind"] == "DNMPage":
+                missing_dnm.append(
+                    {"paper_number": paper_number, "page_number": fp["page_number"]}
+                )
+    return missing_dnm

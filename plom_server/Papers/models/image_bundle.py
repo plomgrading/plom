@@ -106,5 +106,5 @@ class Image(models.Model):
 
 
 class DiscardPage(models.Model):
-    image = models.OneToOneField(Image, null=True, on_delete=models.CASCADE)
+    image = models.ForeignKey(Image, null=True, on_delete=models.CASCADE)
     discard_reason = models.TextField()

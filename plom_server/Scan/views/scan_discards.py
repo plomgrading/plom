@@ -19,7 +19,7 @@ class ScannerDiscardView(ScannerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         mss = ManageScanService()
         context = self.build_context()
-        discards = mss.get_discarded_images()
+        discards = mss.get_discarded_page_info()
         context.update(
             {
                 "current_page": "discard",

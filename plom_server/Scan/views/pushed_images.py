@@ -50,18 +50,30 @@ class PushedImageRotatedView(ScannerLeadMarkerOrManagerView):
 class PushedImageWrapView(ScannerLeadMarkerOrManagerView):
     """Return the simple html wrapper around the pushed image with correct rotation."""
 
-    def get(self, request: HttpRequest, *, img_pk: int) -> HttpResponse:
+    def get(
+        self, request: HttpRequest, *, page_kind: str, page_pk: int
+    ) -> HttpResponse:
         mss = ManageScanService()
+        if page_kind == "fixed":
+            pushed_page_info = mss.get_pushed_fixed_page_image_info(page_pk)
+        elif page_kind == "mobile":
+            pushed_page_info = mss.get_pushed_mobile_page_image_info(page_pk)
+        elif page_kind == "discard":
+            pushed_page_info = mss.get_pushed_discard_page_image_info(page_pk)
+        else:
+            raise Http404(
+                f"Cannot find pushed image of kind {page_kind} and page_pk {page_pk}."
+            )
+        img_pk = pushed_page_info["image_pk"]
         pushed_img = mss.get_pushed_image(img_pk)
         if pushed_img is None:
             raise Http404(f"Cannot find pushed image with pk {img_pk}.")
-        pushed_img_page_info = mss.get_pushed_image_page_info(img_pk)
 
         # pass negative of angle for css rotation since it uses positive=clockwise (sigh)
         context = {
             "image_pk": img_pk,
             "angle": -pushed_img.rotation,
-            "page_info": pushed_img_page_info,
+            "page_info": pushed_page_info,
         }
 
         return render(request, "Scan/fragments/pushed_image_wrapper.html", context)
