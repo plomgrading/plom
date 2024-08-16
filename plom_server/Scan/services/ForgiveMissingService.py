@@ -5,6 +5,7 @@ from __future__ import annotations
 import fitz
 import hashlib
 from io import BytesIO
+from typing import Any, List
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
@@ -23,7 +24,8 @@ from Papers.services import SpecificationService
 from Preparation.services import SourceService
 from ..services import ManageDiscardService
 
-# The name of the bundle to use for these missing pages
+# The name of the bundle of substitute pages to use
+# when student's paper is missing pages
 # We need this since all images belong to bundles
 #
 system_substitute_images_bundle_name = "__system_subsitute_pages_bundle__"
@@ -32,18 +34,28 @@ page_not_submitted_text = "Page Not Submitted"
 
 
 @transaction.atomic
-def _get_or_create_missing_pages_bundle() -> Bundle:
+def _get_or_create_substitute_pages_bundle() -> Bundle:
+    """Create (if needed) and return the system substitute pages bundle database object."""
     try:
         bundle_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
     except ObjectDoesNotExist:
         bundle_obj = Bundle.objects.create(
             name=system_substitute_images_bundle_name,
-            hash="bundle_for_missing_pages",
+            hash="bundle_for_substitute_pages",
         )
     return bundle_obj
 
 
-def _create_missing_page_images_for_forgiveness_bundle():
+def _create_substitute_page_images_for_forgiveness_bundle() -> List[dict[str, Any]]:
+    """Create all the substitute page pixmaps for missing pages.
+
+    Returns:
+        List of dicts of form {'page':page,
+        'version': version,
+        'name': suggested image filename,
+        'bytes': the bytes of the image saved as png
+        } - one such dict for each page/version.
+    """
     version_list = SpecificationService.get_list_of_versions()
     page_list = SpecificationService.get_list_of_pages()  # 1-indexed
     image_list = []
@@ -146,14 +158,21 @@ def _create_missing_page_images_for_forgiveness_bundle():
     return image_list
 
 
-def create_bundle_of_substitute_pages():
+def create_bundle_of_substitute_pages() -> None:
+    """Create the substitute images bundle and populate it with images.
+
+    The system substitute image bundle is created and then it is populated
+    with a substitute image for each page/version of the assessment. If the
+    assessment has N pages, then the substitute image for page p of version v
+    is created at bundle-order N*v+p.
+    """
     n_pages = SpecificationService.get_n_pages()
-    bundle_obj = _get_or_create_missing_pages_bundle()
+    bundle_obj = _get_or_create_substitute_pages_bundle()
     if bundle_obj.image_set.count() > 0:
         # we already have the images.
         return
     else:
-        image_list = _create_missing_page_images_for_forgiveness_bundle()
+        image_list = _create_substitute_page_images_for_forgiveness_bundle()
     with transaction.atomic():
         for n, img_dat in enumerate(image_list):
             bundle_order = img_dat["version"] * n_pages + img_dat["page_number"]
@@ -173,13 +192,15 @@ def create_bundle_of_substitute_pages():
 
 
 def have_substitute_images_been_created() -> bool:
-    bundle_obj = _get_or_create_missing_pages_bundle()
+    """Test if there are any images in the system subsitute image bundle."""
+    bundle_obj = _get_or_create_substitute_pages_bundle()
     return bundle_obj.image_set.count() > 0
 
 
 @transaction.atomic()
 def get_substitute_image(page_number: int, version: int) -> Image:
-    bundle_obj = _get_or_create_missing_pages_bundle()
+    """Return the substitute Image-object for the given page/version."""
+    bundle_obj = _get_or_create_substitute_pages_bundle()
     if bundle_obj.image_set.count() == 0:
         create_bundle_of_substitute_pages()
     # bundle_order = version*number of pages + page_number
@@ -190,17 +211,33 @@ def get_substitute_image(page_number: int, version: int) -> Image:
 
 @transaction.atomic()
 def get_substitute_image_from_pk(image_pk: int) -> Image:
+    """Return the Image object with the given pk."""
     return Image.objects.get(pk=image_pk)
 
 
 @transaction.atomic()
 def _delete_substitute_images():
-    bundle_obj = _get_or_create_missing_pages_bundle()
+    """Delete all the images from the system substitute image bundle."""
+    bundle_obj = _get_or_create_substitute_pages_bundle()
     for X in bundle_obj.image_set.all():
         X.delete()
 
 
-def forgive_missing_fixed_page(user_obj: User, paper_number: int, page_number: int):
+def forgive_missing_fixed_page(
+    user_obj: User, paper_number: int, page_number: int
+) -> None:
+    """Replace the given fixed page with a substitute page image.
+
+    Args:
+        user_obj: the user-object who is doing the forgiving.
+        paper_number: the paper
+        page_number: the page from the paper that is missing.
+
+    Raises:
+        ObjectDoesNotExist: If the fixed-page of the given paper/page does not exist.
+        ValueError: If the paper/page has actually been scanned and the corresponding fixed-page object has an image.
+
+    """
     try:
         fixedpage_obj = FixedPage.objects.get(
             paper__paper_number=paper_number, page_number=page_number
@@ -224,7 +261,14 @@ def forgive_missing_fixed_page(user_obj: User, paper_number: int, page_number: i
     )
 
 
-def forgive_missing_fixed_page_cmd(username: str, paper_number: int, page_number: int):
+def forgive_missing_fixed_page_cmd(
+    username: str, paper_number: int, page_number: int
+) -> None:
+    """Simple wrapper around forgive_missing_fixed_page.
+
+    Raises:
+        ObjectDoesNotExist: when the given username does not exist or has wrong permissions.
+    """
     try:
         user_obj = User.objects.get(username__iexact=username, groups__name="manager")
     except ObjectDoesNotExist as e:
@@ -235,7 +279,15 @@ def forgive_missing_fixed_page_cmd(username: str, paper_number: int, page_number
     forgive_missing_fixed_page(user_obj, paper_number, page_number)
 
 
-def get_substitute_page_info(paper_number, page_number):
+def get_substitute_page_info(paper_number: int, page_number: int) -> dict[str, Any]:
+    """Get information about the fixed page of the given paper/page.
+
+    Returns a dict with keys "paper_number", "page_number", "version" and then
+        "substitute_image_pk" and "kind". "Kind" is one of "IDPage", "QuestionPage", or "DNMPage"
+
+    Raises:
+        ObjectDoesNotExist: When no fixed page at the given paper/page exists.
+    """
     try:
         fixedpage_obj = FixedPage.objects.get(
             paper__paper_number=paper_number, page_number=page_number
