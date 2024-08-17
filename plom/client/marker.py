@@ -145,8 +145,6 @@ class MarkerClient(QWidget):
         uic.loadUi(resources.files(plom.client.ui_files) / "marker.ui", self)
         # TODO: temporary workaround
         self.ui = self
-        # Keep the original format around in case we need to change it
-        self._cachedProgressFormatStr = self.ui.mProgressBar.format()
 
         if not tmpdir:
             # TODO: in this case, *we* should be responsible for cleaning up
@@ -677,26 +675,27 @@ class MarkerClient(QWidget):
         pr = prIndex[0].row()
         self._updateImage(pr)
 
-    def updateProgress(self, val=None, maxm=None) -> None:
+    def updateProgress(self, val: int | None = None, maxm: int | None = None) -> None:
         """Updates the progress bar.
 
         Args:
-            val (int): value for the progress bar
-            maxm (int): maximum for the progress bar.
+            val: value for the progress bar
+            maxm: maximum for the progress bar.
 
         Returns:
             None
         """
-        if not val and not maxm:
+        if val is None and maxm is None:
             # ask server for progress update
             try:
                 val, maxm = self.msgr.MprogressCount(self.question_idx, self.version)
             except PlomRangeException as e:
                 ErrorMsg(self, str(e)).exec()
                 return
+
         if maxm == 0:
-            val, maxm = (0, 1)  # avoid (0, 0) indeterminate animation
-            self.ui.mProgressBar.setFormat("No papers to mark")
+            self.ui.labelProgress.setText("Progress: no papers to mark")
+            self.ui.mProgressBar.setVisible(False)
             try:
                 qlabel = get_question_label(self.exam_spec, self.question_idx)
                 verbose_qlabel = verbose_question_label(
@@ -715,9 +714,32 @@ class MarkerClient(QWidget):
                 </ul>
             """
             InfoMsg(self, msg, info=info, info_pre=False).exec()
-        else:
-            # Neither is quite right, instead, we cache on init
-            self.ui.mProgressBar.setFormat(self._cachedProgressFormatStr)
+            return
+
+        if not self.ui.mProgressBar.isVisible():
+            self.ui.mProgressBar.setVisible(True)
+
+        d = self.msgr.MmarkingProgress()
+        if d["in_probation"]:
+            s = f'Marking limit: {d["probation_limit"]} papers'
+            s += ' <a href="https://plom.rtfd.io">(?)</a>'
+            self.ui.labelProgress.setText(s)
+            self._updateProgressBar(d["task_marked"], d["probation_limit"])
+            return
+
+        self.ui.labelProgress.setText("Progress:")
+        self._updateProgressBar(val, maxm)
+
+    def _updateProgressBar(self, val: int, maxm: int) -> None:
+        """Updates the progress bar.
+
+        Args:
+            val (int): value for the progress bar
+            maxm (int): maximum for the progress bar.
+
+        Returns:
+            None
+        """
         self.ui.mProgressBar.setMaximum(maxm)
         self.ui.mProgressBar.setValue(val)
 

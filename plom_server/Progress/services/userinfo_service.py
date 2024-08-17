@@ -25,9 +25,9 @@ from UserManagement.models import ProbationPeriod
 class UserInfoServices:
     """Functions for User Info HTML page."""
 
-    @transaction.atomic
     @classmethod
-    def get_user_progress(cls, username: str) -> dict[str, Any]:
+    @transaction.atomic
+    def get_user_progress(cls, *, username: str) -> dict[str, Any]:
         """Get marking progress of a user.
 
         Args:
@@ -57,8 +57,8 @@ class UserInfoServices:
         }
         return data
 
-    @transaction.atomic
     @staticmethod
+    @transaction.atomic
     def annotation_exists() -> bool:
         """Return True if there are any annotations in the database.
 
@@ -67,8 +67,8 @@ class UserInfoServices:
         """
         return Annotation.objects.exists()
 
-    @transaction.atomic
     @classmethod
+    @transaction.atomic
     def get_total_annotated_and_claimed_count_by_user(
         cls,
     ) -> dict[str, tuple[int, int]]:
@@ -123,8 +123,8 @@ class UserInfoServices:
 
     #     return claimed_task_count_dict
 
-    @transaction.atomic
     @staticmethod
+    @transaction.atomic
     def get_total_claimed_but_unmarked_task_by_a_user(username: str) -> int:
         """Retrieve the number of tasks claimed but unmarked by a user.
 
