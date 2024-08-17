@@ -53,7 +53,7 @@ class ExamMockerService:
         self,
         version: int,
         source_path: str | pathlib.Path | File,
-        n_pages: int,
+        id_page_number: int,
         short_name: str,
         extra={"name": "Ritchie, Lionel", "id": "00000001"},
         xcoord: float = 0,
@@ -64,16 +64,14 @@ class ExamMockerService:
         Returns: a bytes object containing the document.
         """
         with tempfile.TemporaryDirectory() as tmpdirname:
-            # TODO: get ID page number from spec
-            ID_page_index = 0
             with fitz.open(source_path) as pdf_doc:
-                pdf_doc.select([ID_page_index])
+                pdf_doc.select([id_page_number - 1])
                 ID_page = pdf_doc[0]
                 # TODO: run the single page thru mock_exam(), remove duplicate code
                 qr_codes = create_QR_codes(
                     1, 1, version, "00000", pathlib.Path(tmpdirname)
                 )  # dummy values
-                odd = True
+                odd = id_page_number % 2 != 0
                 pdf_page_add_labels_QRs(
                     ID_page,
                     short_name,

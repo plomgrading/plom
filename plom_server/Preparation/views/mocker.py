@@ -41,11 +41,11 @@ class MockPrenameView(ManagerRequiredView):
         mocker = ExamMockerService()
         source_path = Path(SourceService._get_source_file(version).path)
 
-        n_pages = SpecificationService.get_n_pages()
+        id_page_number = SpecificationService.get_id_page_number()
         mock_exam_pdf_bytes = mocker.mock_ID_page(
             version,
             source_path,
-            n_pages,
+            id_page_number,
             SpecificationService.get_short_name_slug(),
             xcoord=x_pos,
             ycoord=y_pos,
