@@ -55,9 +55,9 @@ class ExamMockerService:
         source_path: str | pathlib.Path | File,
         id_page_number: int,
         short_name: str,
+        xcoord: float,
+        ycoord: float,
         extra={"name": "Ritchie, Lionel", "id": "00000001"},
-        xcoord: float = 0,
-        ycoord: float = 0,
     ) -> bytes:
         """Create the ID page of an exam.
 

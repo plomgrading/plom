@@ -35,8 +35,12 @@ class MockPrenameView(ManagerRequiredView):
     """Create a mock exam id page with the prename card."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        x_pos = float(request.GET.get("xPos"))
-        y_pos = float(request.GET.get("yPos"))
+        # guard blank inputs, default vals are WET in html template
+        x_pos = request.GET.get("xPos")
+        x_pos = float(x_pos) if x_pos else 50.0
+        y_pos = request.GET.get("yPos")
+        y_pos = float(y_pos) if y_pos else 42.0
+
         version = 1
         mocker = ExamMockerService()
         source_path = Path(SourceService._get_source_file(version).path)

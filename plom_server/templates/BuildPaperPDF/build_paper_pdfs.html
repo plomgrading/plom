@@ -26,10 +26,9 @@
                     <p class="card-text">Adjust x,y position of prenaming card.</p>
                 </div>
                 <div class="col">
-                    <!-- TODO: include x, y fields to pass to prename mocker-->
                     <form action="{% url 'prename_mock' %}" target="_blank" method="get">
-                        <input type="number" name="xPos" style="width:60px;">
-                        <input type="number" name="yPos" style="width:60px;">
+                        <input type="number" name="xPos" placeholder="50" style="width:60px;">
+                        <input type="number" name="yPos" placeholder="42" style="width:60px;">
                         {% csrf_token %}
                         <input class="btn btn-primary" type="submit" value="Download preview">
                     </form>
