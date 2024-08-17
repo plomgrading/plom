@@ -347,27 +347,20 @@ class ManageDiscardService:
         for qi in assign_to_question_indices:
             MarkingTaskService().set_paper_marking_task_outdated(paper_number, qi)
 
-    def assign_discard_image_to_fixed_page(
-        self, user_obj: User, image_pk: int, paper_number: int, page_number: int
+    def assign_discard_page_to_fixed_page(
+        self, user_obj: User, page_pk: int, paper_number: int, page_number: int
     ) -> None:
         try:
-            image_obj = Image.objects.get(pk=image_pk)
+            _ = DiscardPage.objects.get(pk=page_pk)
         except ObjectDoesNotExist as e:
-            raise ValueError(f"Cannot find image with pk = {image_pk}") from e
-        try:
-            self._assign_discard_to_fixed_page(
-                user_obj, image_obj.discardpage.pk, paper_number, page_number
-            )
-        except DiscardPage.DoesNotExist as e:
-            raise ValueError(
-                f"Cannot discard image with pk {image_pk}."
-                " It is not attached to a discard page."
-            ) from e
+            raise ValueError(f"Cannot find discard page with pk = {page_pk}") from e
 
-    def assign_discard_image_to_mobile_page(
+        self._assign_discard_to_fixed_page(user_obj, page_pk, paper_number, page_number)
+
+    def assign_discard_page_to_mobile_page(
         self,
         user_obj: User,
-        image_pk: int,
+        page_pk: int,
         paper_number: int,
         assign_to_question_indices: list[int],
     ) -> None:
@@ -378,28 +371,22 @@ class ManageDiscardService:
 
         Args:
             user_obj: which user, as a database object.
-            image_pk: which image.
+            page_pk: which discard page.
             paper_number: which paper to assign it o.
             assign_to_question_indices: which questions, by a list of
                 one-based indices, should we assign this discarded page to.
         """
         try:
-            image_obj = Image.objects.get(pk=image_pk)
+            _ = DiscardPage.objects.get(pk=page_pk)
         except ObjectDoesNotExist as e:
-            raise ValueError(f"Cannot find image with pk = {image_pk}") from e
+            raise ValueError(f"Cannot find discard page with pk = {page_pk}") from e
 
-        try:
-            self._assign_discard_to_mobile_page(
-                user_obj,
-                image_obj.discardpage.pk,
-                paper_number,
-                assign_to_question_indices,
-            )
-        except DiscardPage.DoesNotExist as e:
-            raise ValueError(
-                f"Cannot reassign image with pk {image_pk}."
-                " It is not attached to a discard page."
-            ) from e
+        self._assign_discard_to_mobile_page(
+            user_obj,
+            page_pk,
+            paper_number,
+            assign_to_question_indices,
+        )
 
     def reassign_discard_page_to_fixed_page_cmd(
         self, username: str, discard_pk: int, paper_number: int, page_number: int

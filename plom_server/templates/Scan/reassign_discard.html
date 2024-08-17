@@ -31,7 +31,7 @@
                     <h5>Reassign the image</h5>
                     <div class="py-4" id="invalidmessage"></div>
                     <div>
-                        <form hx-post="{% url 'reassign_discard' image_pk %}"
+                        <form hx-post="{% url 'reassign_discard' page_pk %}"
                               hx-target="#invalidmessage"
                               hx-swap="innerHTML">
                             <div x-data="{assignment_type: 'fixed'}">

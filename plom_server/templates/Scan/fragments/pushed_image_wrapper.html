@@ -41,8 +41,8 @@
             <li>Bundle-order: {{ page_info.bundle_order }}</li>
         </ul>
         {% if user_is_manager %}
-            <a href="{% url 'reassign_discard' image_pk %}">
-                <button class="btn btn-warning">reassign this discarded image</button>
+            <a href="{% url 'reassign_discard' page_pk %}">
+                <button class="btn btn-warning">reassign this discarded page</button>
             </a>
         {% endif %}
     {% endif %}

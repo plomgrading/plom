@@ -67,7 +67,7 @@ urlpatterns = [
         name="scan_list_discard",
     ),
     path(
-        "reassign/<int:img_pk>",
+        "reassign/<int:page_pk>",
         ScannerReassignView.as_view(),
         name="reassign_discard",
     ),

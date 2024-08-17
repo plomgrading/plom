@@ -69,11 +69,12 @@ class PushedImageWrapView(ScannerLeadMarkerOrManagerView):
         if pushed_img is None:
             raise Http404(f"Cannot find pushed image with pk {img_pk}.")
 
-        # pass negative of angle for css rotation since it uses positive=clockwise (sigh)
         context = {
             "image_pk": img_pk,
+            # pass negative of angle for css rotation since it uses positive=clockwise (sigh)
             "angle": -pushed_img.rotation,
             "page_info": pushed_page_info,
+            "page_pk": page_pk,
         }
 
         return render(request, "Scan/fragments/pushed_image_wrapper.html", context)
