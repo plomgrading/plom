@@ -227,7 +227,7 @@ class MarkerClient(QWidget):
 
         self.UIInitialization()
         self.applyLastTimeOptions(lastTime)
-        self.connectGuiButtons()
+        self._connectGuiButtons()
 
         # self.maxMark = self.exam_spec["question"][str(question_idx)]["mark"]
         try:
@@ -367,7 +367,7 @@ class MarkerClient(QWidget):
         # self.force_update_technical_stats()
         self.update_technical_stats_upload(0, 0, 0, 0)
 
-    def connectGuiButtons(self) -> None:
+    def _connectGuiButtons(self) -> None:
         """Connect gui buttons to appropriate functions.
 
         Notes:
@@ -401,6 +401,7 @@ class MarkerClient(QWidget):
         self.ui.viewButton.clicked.connect(self.choose_and_view_other)
         self.ui.technicalButton.clicked.connect(self.show_hide_technical)
         self.ui.failmodeCB.stateChanged.connect(self.toggle_fail_mode)
+        self.ui.explainProbationButton.clicked.connect(self.explain_probation)
 
     def change_tag_range_options(self):
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
@@ -696,6 +697,7 @@ class MarkerClient(QWidget):
         if maxm == 0:
             self.ui.labelProgress.setText("Progress: no papers to mark")
             self.ui.mProgressBar.setVisible(False)
+            self.ui.explainProbationButton.setVisible(False)
             try:
                 qlabel = get_question_label(self.exam_spec, self.question_idx)
                 verbose_qlabel = verbose_question_label(
@@ -718,12 +720,13 @@ class MarkerClient(QWidget):
 
         if not self.ui.mProgressBar.isVisible():
             self.ui.mProgressBar.setVisible(True)
+        self.ui.explainProbationButton.setVisible(False)
 
         d = self.msgr.MmarkingProgress()
         if d["in_probation"]:
             s = f'Marking limit: {d["probation_limit"]} papers'
-            s += ' <a href="https://plom.rtfd.io">(?)</a>'
             self.ui.labelProgress.setText(s)
+            self.ui.explainProbationButton.setVisible(True)
             self._updateProgressBar(d["task_marked"], d["probation_limit"])
             return
 
@@ -2054,6 +2057,25 @@ class MarkerClient(QWidget):
         pr = prIndex[0].row()
         task_id_str = self.prxM.getPrefix(pr)
         return task_id_str
+
+    def explain_probation(self) -> None:
+        # TODO: more specific link once we have one!
+        InfoMsg(
+            self,
+            "<p>The number of tasks you can mark is currently limited by"
+            "your instructor or administrator.</p>",
+            info="""
+                <p>The reasons for this will vary but typically you will
+                need to meet or communicate with them after reaching the
+                limit, before you are able to continue marking additional
+                papers.</p>
+                <p>If your instructor has already changed the setting, try
+                refreshing your list of marking tasks.</p>
+                <p>You can also <a href="https://plom.rtfd.io">read about
+                Plom&rsquo;s &ldquo;probation settings&rdquo;</a>.</p>
+            """,
+            info_pre=False,
+        ).exec()
 
     def manage_tags(self):
         """Manage the tags of the current task."""

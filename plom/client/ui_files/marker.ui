@@ -291,16 +291,16 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QLabel" name="labelProbation">
+           <widget class="QLabel" name="labelProgress">
             <property name="text">
-             <string>Probation status</string>
+             <string>Progress:</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="labelProgress">
+           <widget class="QToolButton" name="explainProbationButton">
             <property name="text">
-             <string>Progress:</string>
+             <string>?</string>
             </property>
            </widget>
           </item>
