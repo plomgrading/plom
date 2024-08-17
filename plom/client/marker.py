@@ -677,7 +677,7 @@ class MarkerClient(QWidget):
         self._updateImage(pr)
 
     def updateProgress(self, val: int | None = None, maxm: int | None = None) -> None:
-        """Updates the progress bar.
+        """Updates the progress bar and related display of progress information.
 
         Args:
             val: value for the progress bar
@@ -685,6 +685,8 @@ class MarkerClient(QWidget):
 
         Returns:
             None
+
+        May open dialogs in some circumstances.
         """
         if val is None and maxm is None:
             # ask server for progress update
@@ -727,7 +729,9 @@ class MarkerClient(QWidget):
             s = f'Marking limit: {d["probation_limit"]} papers'
             self.ui.labelProgress.setText(s)
             self.ui.explainProbationButton.setVisible(True)
-            self._updateProgressBar(d["task_marked"], d["probation_limit"])
+            self.ui.mProgressBar.setMaximum(d["probation_limit"])
+            self.ui.mProgressBar.setValue(d["task_marked"])
+
             if d["task_marked"] >= d["probation_limit"]:
                 # TODO: maybe we can share some common dialog text with "explain"
                 WarnMsg(
@@ -738,18 +742,6 @@ class MarkerClient(QWidget):
             return
 
         self.ui.labelProgress.setText("Progress:")
-        self._updateProgressBar(val, maxm)
-
-    def _updateProgressBar(self, val: int, maxm: int) -> None:
-        """Updates the progress bar.
-
-        Args:
-            val (int): value for the progress bar
-            maxm (int): maximum for the progress bar.
-
-        Returns:
-            None
-        """
         self.ui.mProgressBar.setMaximum(maxm)
         self.ui.mProgressBar.setValue(val)
 
