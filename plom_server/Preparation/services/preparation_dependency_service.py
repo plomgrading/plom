@@ -72,7 +72,15 @@ def assert_can_modify_classlist():
 
 
 # 3b - does not depend on spec, but qvmap/database depends on it (since prenamed papers have 'predictions' stored with those names)
-def assert_can_modify_prenaming():
+def assert_can_enable_disable_prenaming():
+    """Raises an error if the server state doesn't permit enabling/disabling prenaming.
+
+    Returns:
+        None
+
+    Raises:
+        PlomDependencyConflict
+    """
     from . import PapersPrinted
     from Papers.services import PaperInfoService
 
@@ -89,6 +97,25 @@ def assert_can_modify_prenaming():
         raise PlomDependencyConflict(
             "Database is being updated currently, so cannot change the prenaming setting."
         )
+
+
+def assert_can_modify_prenaming_coords():
+    """Raises an error if the server state doesn't permit modifying prenaming coords.
+
+    Returns:
+        None
+
+    Raises:
+        PlomDependencyConflict
+    """
+    from . import PapersPrinted
+
+    # cannot modify prenaming if papers printed
+    if PapersPrinted.have_papers_been_printed():
+        raise PlomDependencyConflict("Papers have been printed.")
+
+    # TODO (?): check if PDFs have been built
+    # TODO: check if huey PDF building chores exist
 
 
 def assert_can_modify_qv_mapping_database():
@@ -167,10 +194,28 @@ def can_modify_classlist():
         return False
 
 
-# assert_can_modify_prenaming
-def can_modify_prenaming():
+# assert_can_enable_disable_prenaming
+def can_enable_disable_prenaming():
+    """Checks if server state permits enabling/disabling of prenaming.
+
+    Returns:
+        bool: True if permitted, False if not.
+    """
     try:
-        assert_can_modify_prenaming()
+        assert_can_enable_disable_prenaming()
+        return True
+    except PlomDependencyConflict:
+        return False
+
+
+def can_modify_prenaming_coords():
+    """Checks if server state permits modification of prenaming position coords.
+
+    Returns:
+        bool: True if permitted, False if not.
+    """
+    try:
+        assert_can_modify_prenaming_coords()
         return True
     except PlomDependencyConflict:
         return False

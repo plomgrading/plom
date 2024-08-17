@@ -21,7 +21,19 @@ class PaperSourcePDF(models.Model):
 
 
 class PrenamingSetting(SingletonABCModel):
+    """Server-wide settings for prenaming.
+
+    enabled (bool): Whether the server should prename *any* built PDFs.
+    xcoord (float): The horizontal position of the vertical centre line
+        of the prenaming box. See :func: `pdf_page_add_name_id_box`.
+    ycoord (float): Determines the vertical position of the prenaming box.
+        See :func: `pdf_page_add_name_id_box`.
+
+    """
+
     enabled = models.BooleanField(default=False, null=False)
+    xcoord = models.FloatField(null=True)
+    ycoord = models.FloatField(null=True)
 
     @classmethod
     def load(cls):
