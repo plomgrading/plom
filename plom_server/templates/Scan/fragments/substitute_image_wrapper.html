@@ -1,10 +1,11 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Andrew Rechnitzer
+    Copyright (C) 2024 Colin B. Macdonald
   -->
 {% load static %}
 <div class="col text-center">
-    <p>Paper {{ page_number }} page {{ page_number }} version {{ version }}</p>
+    <p>Paper {{ paper_number }} page {{ page_number }} version {{ version }}</p>
     <img class="image border"
          src="{% url 'substitute_img' substitute_image_pk %} "
          style="height: 55vh" />
