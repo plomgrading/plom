@@ -728,6 +728,13 @@ class MarkerClient(QWidget):
             self.ui.labelProgress.setText(s)
             self.ui.explainProbationButton.setVisible(True)
             self._updateProgressBar(d["task_marked"], d["probation_limit"])
+            if d["task_marked"] >= d["probation_limit"]:
+                # TODO: maybe we can share some common dialog text with "explain"
+                WarnMsg(
+                    self,
+                    f"You have reached your task limit of {d['probation_limit']}."
+                    " Please contact your instructor to mark more tasks.",
+                ).exec()
             return
 
         self.ui.labelProgress.setText("Progress:")
