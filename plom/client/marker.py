@@ -408,7 +408,6 @@ class MarkerClient(QWidget):
         self.msgr = None
         # history contains all the tgv in order of being marked except the current one.
         self.marking_history = []
-        self._cachedProgressFormatStr = None
 
     def setup(
         self,
