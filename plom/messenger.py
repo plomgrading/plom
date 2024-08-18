@@ -265,7 +265,7 @@ class Messenger(BaseMessenger):
                     raise PlomAuthenticationException() from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def MprogressCount(self, q, v) -> list[int]:
+    def MprogressCount_legacy(self, q, v) -> list[int]:
         """Return info about progress on a particular question-version pair.
 
         Args:
@@ -299,24 +299,34 @@ class Messenger(BaseMessenger):
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def MmarkingProgress(self) -> dict:
+    def get_marking_progress(self, qidx: int, ver: int) -> dict[str, Any]:
         """Get a dict representing the progress and probation status of current marker.
 
         Args:
-            Task: task id of the task
+            qidx: which question.
+            ver: which version.
 
         Returns:
-            Dict with keys "tasks_claimed", "tasks_marked", "in_probation", and
-            "probation_limit".
+            Dict with keys "total_tasks", "total_tasks_marked", "user_tasks_claimed",
+            "user_tasks_marked", "user_in_probation", and "user_probation_limit"
         """
-        with self.SRmutex:
+        if self.is_legacy_server():
+            # TODO could support order webplom too, as proof of concept
+            n, m = self.MprogressCount_legacy()
+            d = {"total_tasks": m, "total_tasks_marked": n, "user_in_probation": False}
+            return d
 
-            response = self.get(
-                "/MK/marker_progress",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            return response.json()
+        with self.SRmutex:
+            try:
+                response = self.get_auth(
+                    f"/MK/progress/{qidx}/{ver}?username={self.user}"
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MaskNextTask(
         self,

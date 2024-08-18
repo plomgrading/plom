@@ -51,10 +51,10 @@ class UserInfoServices:
             probation_limit = None
 
         data = {
-            "tasks_claimed": tasks_claimed,
-            "tasks_marked": tasks_marked,
-            "in_probation": in_probation,
-            "probation_limit": probation_limit,
+            "user_tasks_claimed": tasks_claimed,
+            "user_tasks_marked": tasks_marked,
+            "user_in_probation": in_probation,
+            "user_probation_limit": probation_limit,
         }
         return data
 

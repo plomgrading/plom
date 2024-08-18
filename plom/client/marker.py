@@ -691,13 +691,12 @@ class MarkerClient(QWidget):
         if info is None:
             # ask server for progress update
             try:
-                n, m = self.msgr.MprogressCount(self.question_idx, self.version)
+                info = self.msgr.get_marking_progress(self.question_idx, self.version)
             except PlomRangeException as e:
                 ErrorMsg(self, str(e)).exec()
                 return
-            info = {"number_marked": n, "total": m}
 
-        if info["total"] == 0:
+        if info["total_tasks"] == 0:
             self.ui.labelProgress.setText("Progress: no papers to mark")
             self.ui.mProgressBar.setVisible(False)
             self.ui.explainProbationButton.setVisible(False)
@@ -725,26 +724,25 @@ class MarkerClient(QWidget):
             self.ui.mProgressBar.setVisible(True)
         self.ui.explainProbationButton.setVisible(False)
 
-        d = self.msgr.MmarkingProgress()
-        if d["in_probation"]:
-            s = f'Marking limit: {d["probation_limit"]} papers'
+        if info["user_in_probation"]:
+            s = f'Marking limit: {info["user_probation_limit"]} papers'
             self.ui.labelProgress.setText(s)
             self.ui.explainProbationButton.setVisible(True)
-            self.ui.mProgressBar.setMaximum(d["probation_limit"])
-            self.ui.mProgressBar.setValue(d["tasks_marked"])
+            self.ui.mProgressBar.setMaximum(info["user_probation_limit"])
+            self.ui.mProgressBar.setValue(info["user_tasks_marked"])
 
-            if d["tasks_marked"] >= d["probation_limit"]:
+            if info["user_tasks_marked"] >= info["user_probation_limit"]:
                 # TODO: maybe we can share some common dialog text with "explain"
                 WarnMsg(
                     self,
-                    f"You have reached your task limit of {d['probation_limit']}."
+                    f"You have reached your task limit of {info['user_probation_limit']}."
                     " Please contact your instructor to mark more tasks.",
                 ).exec()
             return
 
         self.ui.labelProgress.setText("Progress:")
-        self.ui.mProgressBar.setMaximum(info["number_marked"])
-        self.ui.mProgressBar.setValue(info["total"])
+        self.ui.mProgressBar.setMaximum(info["total_tasks_marked"])
+        self.ui.mProgressBar.setValue(info["total_tasks"])
 
     def claim_task_interactive(self) -> None:
         """Ask user for paper number and then ask server for that paper.
@@ -1316,6 +1314,8 @@ class MarkerClient(QWidget):
             ).exec()
             return
 
+        # TODO: old implementation didn't take into account other questions
+        # TODO: use common text for these probation dialogs.
         if self.marker_has_reached_task_limit(task):
             WarnMsg(
                 self,
@@ -1341,9 +1341,9 @@ class MarkerClient(QWidget):
             True if marker is not in probation, if they are in probation, returns True if
             they have not reached their probation limit yet.
         """
-        progress = self.get_marking_progress()
-        if progress["in_probation"]:
-            limit = progress["probation_limit"]
+        progress = self.msgr.get_marking_progress(self.question_idx, self.version)
+        if progress["user_in_probation"]:
+            limit = progress["user_probation_limit"]
             task_status = self.examModel.getStatusByTask(task)
             total_marked = self.get_completed_tasks_count()
             # Check against task_status to allow probation markers to reannotate stuffs.
@@ -1351,16 +1351,6 @@ class MarkerClient(QWidget):
                 return True
 
         return False
-
-    def get_marking_progress(self) -> dict:
-        """Get a dict of keys ["tasks_claimed", "tasks_marked", "in_probation", "probation_limit"] of current marker.
-
-        Args:
-            Task: task id of the task
-        Returns:
-            A dict representing the progress and probation status of current marker.
-        """
-        return self.msgr.MmarkingProgress()
 
     def getDataForAnnotator(self, task: str) -> tuple | None:
         """Start annotator on a particular task.
@@ -1694,7 +1684,9 @@ class MarkerClient(QWidget):
                 self.examModel.setStatusByTask(task, "marked")
             else:
                 self.examModel.setStatusByTask(task, "Complete")
-        self.updateProgress(info={"number_marked": numDone, "total": numtotal})
+        self.updateProgress(
+            info={"total_tasks_marked": numDone, "total_tasks": numtotal}
+        )
 
     def backgroundUploadFailedServerChanged(self, task, error_message):
         """An upload has failed because server changed something, safest to quit.
