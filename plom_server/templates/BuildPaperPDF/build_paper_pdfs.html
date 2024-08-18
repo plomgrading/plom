@@ -26,7 +26,7 @@
                     <p class="card-text">Adjust x,y position of prenaming card.</p>
                 </div>
                 <div class="col">
-                    <form action="{% url 'prename_mock' %}" method="post">
+                    <form action="{% url 'prename_config' %}" method="post">
                         <input type="number" name="xPos" placeholder="50" style="width:60px;">
                         <input type="number" name="yPos" placeholder="42" style="width:60px;">
                         {% csrf_token %}

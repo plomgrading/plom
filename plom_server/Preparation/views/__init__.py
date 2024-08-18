@@ -9,7 +9,7 @@ from .home import (
     PreparationFinishedView,
 )
 from .source_manage import SourceManageView, ReferenceImageView
-from .prenaming import PrenamingView
+from .prenaming import PrenamingView, PrenamingConfigView
 from .classlist_manage import (
     ClasslistView,
     ClasslistDownloadView,
@@ -20,5 +20,5 @@ from .pqv_mapping import (
     PQVMappingDeleteView,
     PQVMappingUploadView,
 )
-from .mocker import MockExamView, MockPrenameView
+from .mocker import MockExamView
 from .misc_extras import MiscExtrasView
