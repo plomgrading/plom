@@ -676,27 +676,28 @@ class MarkerClient(QWidget):
         pr = prIndex[0].row()
         self._updateImage(pr)
 
-    def updateProgress(self, val: int | None = None, maxm: int | None = None) -> None:
+    def updateProgress(self, *, info: dict[str, Any] | None = None) -> None:
         """Updates the progress bar and related display of progress information.
 
-        Args:
-            val: value for the progress bar
-            maxm: maximum for the progress bar.
+        Keyword Args:
+            info: key-value pairs with information about progress.
+                TODO: and probation in the future?
 
         Returns:
-            None
+            None.
 
         May open dialogs in some circumstances.
         """
-        if val is None and maxm is None:
+        if info is None:
             # ask server for progress update
             try:
-                val, maxm = self.msgr.MprogressCount(self.question_idx, self.version)
+                n, m = self.msgr.MprogressCount(self.question_idx, self.version)
             except PlomRangeException as e:
                 ErrorMsg(self, str(e)).exec()
                 return
+            info = {"number_marked": n, "total": m}
 
-        if maxm == 0:
+        if info["total"] == 0:
             self.ui.labelProgress.setText("Progress: no papers to mark")
             self.ui.mProgressBar.setVisible(False)
             self.ui.explainProbationButton.setVisible(False)
@@ -742,8 +743,8 @@ class MarkerClient(QWidget):
             return
 
         self.ui.labelProgress.setText("Progress:")
-        self.ui.mProgressBar.setMaximum(maxm)
-        self.ui.mProgressBar.setValue(val)
+        self.ui.mProgressBar.setMaximum(info["number_marked"])
+        self.ui.mProgressBar.setValue(info["total"])
 
     def claim_task_interactive(self) -> None:
         """Ask user for paper number and then ask server for that paper.
@@ -1693,7 +1694,7 @@ class MarkerClient(QWidget):
                 self.examModel.setStatusByTask(task, "marked")
             else:
                 self.examModel.setStatusByTask(task, "Complete")
-        self.updateProgress(numDone, numtotal)
+        self.updateProgress(info={"number_marked": numDone, "total": numtotal})
 
     def backgroundUploadFailedServerChanged(self, task, error_message):
         """An upload has failed because server changed something, safest to quit.
