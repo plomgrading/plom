@@ -46,6 +46,12 @@ from plom.plom_exceptions import (
     PlomNoServerSupportException,
 )
 
+
+# In principle we can support earlier servers if we wanted to
+Minimum_Server_API_Version = int(Plom_API_Version)
+assert Minimum_Server_API_Version <= int(Plom_API_Version)
+
+
 log = logging.getLogger("messenger")
 # requests_log = logging.getLogger("urllib3")
 # requests_log.setLevel(logging.DEBUG)
@@ -72,6 +78,7 @@ class BaseMessenger:
         scheme: str | None = None,
         verify_ssl: bool = True,
         webplom: bool | None = None,
+        _server_API_version: int | None = None,
     ) -> None:
         """Initialize a new BaseMessenger.
 
@@ -92,6 +99,7 @@ class BaseMessenger:
                 Django-based server.  If ``False``, force connection to a
                 legacy server.  If ``True``, force connect to a new server.
                 The default (recommended!) is ``None``, to autodetect.
+            _server_API_version: internal use, for cloning a Messenger.
 
         Returns:
             None
@@ -100,6 +108,7 @@ class BaseMessenger:
             PlomConnectionError
         """
         self.webplom = webplom
+        self._server_API_version = _server_API_version
 
         if not server:
             server = "127.0.0.1"
@@ -166,6 +175,7 @@ class BaseMessenger:
             m.base,
             verify_ssl=m.verify_ssl,
             webplom=m.webplom,
+            _server_API_version=m._server_API_version,
         )
         x.start()
         log.debug("copying user/token into cloned messenger")
@@ -383,7 +393,7 @@ class BaseMessenger:
             raise PlomConnectionError(f"Invalid URL: {err}") from None
 
     def start(self) -> str:
-        """Start the messenger session, including detecting legacy servers.
+        """Start the messenger session, including compatibility checks and detecting legacy servers.
 
         Returns:
             The version string of the server.
@@ -400,6 +410,11 @@ class BaseMessenger:
             log.warning("Using legacy messenger to talk to legacy server")
         else:
             self.disable_legacy_server_support()
+        self._server_API_version = int(info["API_version"])
+        if self._server_API_version < Minimum_Server_API_Version:
+            pass
+            # raise PlomAPIException("Server )
+            # TODO: callers problem or ours?
         return s
 
     def stop(self) -> None:
