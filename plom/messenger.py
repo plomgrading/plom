@@ -300,12 +300,14 @@ class Messenger(BaseMessenger):
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MmarkingProgress(self) -> dict:
-        """Get a dict of keys ["task_claimed", "task_marked", "in_probation", "probation_limit"] of current marker.
+        """Get a dict representing the progress and probation status of current marker.
 
         Args:
             Task: task id of the task
+
         Returns:
-            A dict representing the progress and probation status of current marker.
+            Dict with keys "tasks_claimed", "tasks_marked", "in_probation", and
+            "probation_limit".
         """
         with self.SRmutex:
 

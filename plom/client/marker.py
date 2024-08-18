@@ -730,9 +730,9 @@ class MarkerClient(QWidget):
             self.ui.labelProgress.setText(s)
             self.ui.explainProbationButton.setVisible(True)
             self.ui.mProgressBar.setMaximum(d["probation_limit"])
-            self.ui.mProgressBar.setValue(d["task_marked"])
+            self.ui.mProgressBar.setValue(d["tasks_marked"])
 
-            if d["task_marked"] >= d["probation_limit"]:
+            if d["tasks_marked"] >= d["probation_limit"]:
                 # TODO: maybe we can share some common dialog text with "explain"
                 WarnMsg(
                     self,
@@ -1352,7 +1352,7 @@ class MarkerClient(QWidget):
         return False
 
     def get_marking_progress(self) -> dict:
-        """Get a dict of keys ["task_claimed", "task_marked", "in_probation", "probation_limit"] of current marker.
+        """Get a dict of keys ["tasks_claimed", "tasks_marked", "in_probation", "probation_limit"] of current marker.
 
         Args:
             Task: task id of the task

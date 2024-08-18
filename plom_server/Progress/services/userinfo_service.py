@@ -34,14 +34,15 @@ class UserInfoServices:
             username: the user's username.
 
         Returns:
-            A dict whose keys are ["task_claimed", "task_marked", "in_probation", "probation_limit"].
+            A dict whose keys are "tasks_claimed", "tasks_marked",
+            "in_probation", "probation_limit".
         """
         complete_claimed_task_dict = cls.get_total_annotated_and_claimed_count_by_user()
         try:
-            task_marked, task_claimed = complete_claimed_task_dict[username]
+            tasks_marked, tasks_claimed = complete_claimed_task_dict[username]
         except KeyError:
             # User hasn't marked nor claimed any paper yet:
-            task_marked, task_claimed = 0, 0
+            tasks_marked, tasks_claimed = 0, 0
         user = User.objects.get(username=username)
         in_probation = ProbationPeriod.objects.filter(user=user).exists()
         if in_probation:
@@ -50,8 +51,8 @@ class UserInfoServices:
             probation_limit = None
 
         data = {
-            "task_claimed": task_claimed,
-            "task_marked": task_marked,
+            "tasks_claimed": tasks_claimed,
+            "tasks_marked": tasks_marked,
             "in_probation": in_probation,
             "probation_limit": probation_limit,
         }

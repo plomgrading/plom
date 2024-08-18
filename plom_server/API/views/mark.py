@@ -81,7 +81,8 @@ class MarkerMarkingProgress(APIView):
     """Responds with a dict representing the marking progress of a specific marker.
 
     Returns:
-        (200): returns a dict of keys: ["task_claimed", "task_marked", "in_probation", "probation_limit"].
+        (200): returns a dict of keys: "tasks_claimed", "tasks_marked",
+        "in_probation", "probation_limit".
     """
 
     def get(self, request):
