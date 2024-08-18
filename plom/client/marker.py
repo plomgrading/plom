@@ -71,7 +71,6 @@ from plom.plom_exceptions import (
     PlomNoPaper,
     PlomNoServerSupportException,
     PlomNoSolutionException,
-    PlomProbationLimitExceededException,
 )
 from plom.messenger import Messenger
 from plom.feedback_rules import feedback_rules as static_feedback_rules_data
