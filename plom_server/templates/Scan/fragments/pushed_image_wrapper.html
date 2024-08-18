@@ -2,9 +2,10 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2023-2024 Colin B. Macdonald
-  -->
-<div>
-    <img src="{% url 'scan_rotated_pushed_img' image_pk %} "
+-->
+<div style="justify-content: center; display:flex; align-items:center">
+    <img class="m-1 p-1 border"
+         src="{% url 'pushed_img_rot' image_pk %}"
          style="height: 55vh" />
 </div>
 <div class="m-2">
@@ -15,6 +16,11 @@
             <li>Bundle: {{ page_info.bundle_name }}</li>
             <li>Bundle-order: {{ page_info.bundle_order }}</li>
         </ul>
+        {% if user_is_manager %}
+            <button class="btn btn-danger"
+                    hx-confirm="This will invalidate any existing marking of this question. Are you sure you wish to proceed?"
+                    hx-delete="{% url 'pushed_img' image_pk %}">discard this fixed page image</button>
+        {% endif %}
     {% elif page_info.page_type == 'mobile' %}
         <ul>
             <li>Paper: {{ page_info.paper_number }}</li>
@@ -22,6 +28,22 @@
             <li>Bundle: {{ page_info.bundle_name }}</li>
             <li>Bundle-order: {{ page_info.bundle_order }}</li>
         </ul>
+        {% if user_is_manager %}
+            <button class="btn btn-danger"
+                    hx-confirm="This will invalidate any existing marking of this question. Are you sure you wish to proceed?"
+                    hx-delete="{% url 'pushed_img' image_pk %}">discard this mobile page image</button>
+        {% endif %}
     {% else %}
+        <ul>
+            <li>Discard</li>
+            <li>{{ page_info.reason }}</li>
+            <li>Bundle: {{ page_info.bundle_name }}</li>
+            <li>Bundle-order: {{ page_info.bundle_order }}</li>
+        </ul>
+        {% if user_is_manager %}
+            <a href="{% url 'reassign_discard' image_pk %}">
+                <button class="btn btn-warning">reassign this discarded image</button>
+            </a>
+        {% endif %}
     {% endif %}
 </div>

@@ -10,7 +10,7 @@ from django.urls import reverse
 
 from Base.base_group_views import ManagerRequiredView, ScannerRequiredView
 from Papers.services import SpecificationService
-from Progress.services import ManageScanService, ManageDiscardService
+from ..services import ManageScanService, ManageDiscardService
 
 
 class ScannerDiscardView(ScannerRequiredView):
