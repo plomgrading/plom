@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from typing import Dict, Tuple, Union, Any
+from typing import Union, Any
 
 import arrow
 
@@ -91,7 +91,7 @@ class UserInfoServices:
         markers_and_managers = User.objects.filter(
             groups__name__in=["marker"]
         ).order_by("groups__name", "username")
-        annotation_count_dict: Dict[str, int] = {
+        annotation_count_dict: dict[str, int] = {
             user.username: 0 for user in markers_and_managers
         }
 
@@ -109,7 +109,7 @@ class UserInfoServices:
         return result
 
     # @transaction.atomic
-    # def get_total_claimed_task_for_each_user(self) -> Dict[str, int]:
+    # def get_total_claimed_task_for_each_user(self) -> dict[str, int]:
     #     """Retrieve the number of tasks claimed by the user."""
     #     annotations = (
     #         MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
@@ -146,7 +146,7 @@ class UserInfoServices:
     @transaction.atomic
     def get_annotations_based_on_user(
         self, annotations
-    ) -> Dict[str, Dict[Tuple[int, int], Dict[str, Union[int, str]]]]:
+    ) -> dict[str, dict[tuple[int, int], dict[str, int | str]]]:
         """Retrieve annotations based on the combination of user, question index, and version.
 
         Returns:
@@ -155,8 +155,8 @@ class UserInfoServices:
             marking time for each (question index, question version)
             combination.
         """
-        count_data: Dict[str, Dict[Tuple[int, int], int]] = dict()
-        total_marking_time_data: Dict[str, Dict[Tuple[int, int], int]] = dict()
+        count_data: dict[str, dict[tuple[int, int], int]] = dict()
+        total_marking_time_data: dict[str, dict[tuple[int, int], int]] = dict()
 
         for annotation in annotations:
             key = (annotation.task.question_index, annotation.task.question_version)
@@ -170,9 +170,7 @@ class UserInfoServices:
                 key
             ] += annotation.marking_time
 
-        grouped_by_user: Dict[
-            str, Dict[Tuple[int, int], Dict[str, Union[int, str]]]
-        ] = dict()
+        grouped_by_user: dict[str, dict[tuple[int, int], dict[str, int | str]]] = dict()
 
         for user in count_data:
             grouped_by_user[user] = dict()
@@ -210,10 +208,10 @@ class UserInfoServices:
 
     def get_annotations_based_on_question_and_version(
         self,
-        grouped_by_user_annotations: Dict[
-            str, Dict[Tuple[int, int], Dict[str, Union[int, str]]]
+        grouped_by_user_annotations: dict[
+            str, dict[tuple[int, int], dict[str, Union[int, str]]]
         ],
-    ) -> Dict[Tuple[int, int], Dict[str, list]]:
+    ) -> dict[tuple[int, int], dict[str, list]]:
         """Group annotations by question index and version.
 
         Args:
@@ -227,7 +225,7 @@ class UserInfoServices:
             question indices and versions, with marker information and
             other data.
         """
-        grouped_by_question: Dict[Tuple[int, int], Dict[str, list]] = dict()
+        grouped_by_question: dict[tuple[int, int], dict[str, list]] = dict()
 
         for marker, annotation_data in grouped_by_user_annotations.items():
             for question, question_data in annotation_data.items():
