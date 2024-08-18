@@ -680,8 +680,8 @@ class MarkerClient(QWidget):
         """Updates the progress bar and related display of progress information.
 
         Keyword Args:
-            info: key-value pairs with information about progress.
-                TODO: and probation in the future?
+            info: key-value pairs with information about progress overall,
+                and for this user, including information about probation.
 
         Returns:
             None.
@@ -1666,13 +1666,14 @@ class MarkerClient(QWidget):
 
         return data
 
-    def backgroundUploadFinished(self, task: str, numDone, numtotal) -> None:
+    def backgroundUploadFinished(
+        self, task: str, progress_info: dict[str, Any]
+    ) -> None:
         """An upload has finished, do appropriate UI updates.
 
         Args:
             task: the task ID of the upload.
-            numDone (int): number of exams marked
-            numtotal (int): total number of exams to mark.
+            progress_info: information about progress.
 
         Returns:
             None
@@ -1684,9 +1685,7 @@ class MarkerClient(QWidget):
                 self.examModel.setStatusByTask(task, "marked")
             else:
                 self.examModel.setStatusByTask(task, "Complete")
-        self.updateProgress(
-            info={"total_tasks_marked": numDone, "total_tasks": numtotal}
-        )
+        self.updateProgress(info=progress_info)
 
     def backgroundUploadFailedServerChanged(self, task, error_message):
         """An upload has failed because server changed something, safest to quit.

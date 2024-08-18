@@ -512,9 +512,9 @@ class Messenger(BaseMessenger):
                 back.
 
         Returns:
-            A list of two integers, indicating the number of questions
-            graded and the total number of questions to be graded of
-            this question-version pair.
+            A dict of progress information.  See :meth:`get_marking_progress`.
+            There is a a certain aomunt of code duplication to make this
+            happen; consider refactoring to avoid needing this to return anything.
 
         Raises:
             PlomAuthenticationException
@@ -526,7 +526,7 @@ class Messenger(BaseMessenger):
             PlomSeriousException
         """
         if self.is_legacy_server():
-            return self._MreturnMarkedTask_legacy(
+            n, m = self._MreturnMarkedTask_legacy(
                 code,
                 pg,
                 ver,
@@ -537,6 +537,8 @@ class Messenger(BaseMessenger):
                 rubrics,
                 integrity_check,
             )
+            d = {"total_tasks": m, "total_tasks_marked": n, "user_in_probation": False}
+            return d
         return self._MreturnMarkedTask_webplom(
             code, pg, ver, score, marking_time, annotated_img, plomfile, integrity_check
         )

@@ -214,7 +214,7 @@ class QuestionMarkingService:
         uis = UserInfoServices()
         progress = uis.get_user_progress(username=user.username)
         if progress["user_in_probation"]:
-            if progress["user_task_marked"] < progress["user_probation_limit"] or (
+            if progress["user_tasks_marked"] < progress["user_probation_limit"] or (
                 task.status == MarkingTask.COMPLETE
             ):
                 MarkingTaskService().create_tag_and_attach_to_task(
