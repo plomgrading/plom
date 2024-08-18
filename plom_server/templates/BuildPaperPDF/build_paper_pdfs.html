@@ -26,11 +26,19 @@
                     <p class="card-text">Adjust x,y position of prenaming card.</p>
                 </div>
                 <div class="col">
-                    <form action="{% url 'prename_mock' %}" target="_blank" method="get">
+                    <form action="{% url 'prename_mock' %}" method="post">
                         <input type="number" name="xPos" placeholder="50" style="width:60px;">
                         <input type="number" name="yPos" placeholder="42" style="width:60px;">
                         {% csrf_token %}
-                        <input class="btn btn-primary" type="submit" value="Download preview">
+                        <input class="btn btn-primary"
+                               type="submit"
+                               name="mock_id"
+                               value="Download preview"
+                               formtarget="_blank">
+                        <input class="btn btn-primary"
+                               type="submit"
+                               name="set_config"
+                               value="Save settings">
                     </form>
                 </div>
             </div>
