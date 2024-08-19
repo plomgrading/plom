@@ -182,6 +182,7 @@ class MarkerClient(QWidget):
         self.version = None
         self.exam_spec = None
         self.max_papernum = None
+        self._user_reached_probation_limit = False
 
         self.msgr = None
         # history contains all the tgv in order of being marked except the current one.
@@ -731,7 +732,9 @@ class MarkerClient(QWidget):
             self.ui.mProgressBar.setMaximum(info["user_probation_limit"])
             self.ui.mProgressBar.setValue(info["user_tasks_marked"])
 
+            self._user_reached_probation_limit = False
             if info["user_tasks_marked"] >= info["user_probation_limit"]:
+                self._user_reached_probation_limit = True
                 # TODO: maybe we can share some common dialog text with "explain"
                 WarnMsg(
                     self,
@@ -1314,9 +1317,9 @@ class MarkerClient(QWidget):
             ).exec()
             return
 
-        # TODO: old implementation didn't take into account other questions
-        # TODO: use common text for these probation dialogs.
-        if self.marker_has_reached_task_limit(task):
+        task_status = self.examModel.getStatusByTask(task)
+        if task_status == "untouched" and self.marker_has_reached_task_limit():
+            # TODO: use common text for these probation dialogs.
             WarnMsg(
                 self,
                 "You have reached your task limit. Please contact your instructor to mark more tasks. ",
@@ -1331,26 +1334,20 @@ class MarkerClient(QWidget):
         self.startTheAnnotator(inidata)
         # we started the annotator, we'll get a signal back when its done
 
-    def marker_has_reached_task_limit(self, task) -> bool:
+    def marker_has_reached_task_limit(self, *, use_cached: bool = True) -> bool:
         """Check whether a marker has reached their task limit from probation period.
 
-        Args:
-            task: the task id of the task.
+        Keyword Args:
+            use_cached: by default we use a cached value rather than connecting
+                to the server to check.
 
         Returns:
-            True if marker is not in probation, if they are in probation, returns True if
-            they have not reached their probation limit yet.
+            True if marker is in probation and they have reached their
+            limit, otherwise False.
         """
-        progress = self.msgr.get_marking_progress(self.question_idx, self.version)
-        if progress["user_in_probation"]:
-            limit = progress["user_probation_limit"]
-            task_status = self.examModel.getStatusByTask(task)
-            total_marked = self.get_completed_tasks_count()
-            # Check against task_status to allow probation markers to reannotate stuffs.
-            if task_status != "Complete" and (total_marked >= limit):
-                return True
-
-        return False
+        if not use_cached:
+            self.updateProgress()
+        return self._user_reached_probation_limit
 
     def getDataForAnnotator(self, task: str) -> tuple | None:
         """Start annotator on a particular task.
