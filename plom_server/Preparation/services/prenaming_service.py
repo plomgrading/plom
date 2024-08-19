@@ -8,7 +8,7 @@ from Preparation.models import PrenamingSetting
 
 from Preparation.services.preparation_dependency_service import (
     assert_can_enable_disable_prenaming,
-    assert_can_modify_prenaming_coords,
+    assert_can_modify_prenaming_config,
 )
 
 
@@ -46,7 +46,7 @@ class PrenameSettingService:
 
         Raises a plomDependencyConflict if the position cannot be modified.
         """
-        assert_can_modify_prenaming_coords()
+        assert_can_modify_prenaming_config()
 
         p_obj = PrenamingSetting.load()
         p_obj.xcoord = xcoord

@@ -19,6 +19,7 @@ from django.shortcuts import redirect
 from django.http import HttpRequest, HttpResponse, FileResponse
 from Papers.services import SpecificationService
 from django.core.files import File
+from ..services.preparation_dependency_service import can_modify_prenaming_config
 
 
 class PrenamingView(ManagerRequiredView):
@@ -41,36 +42,46 @@ class PrenamingView(ManagerRequiredView):
             return HttpResponseClientRedirect(reverse("prep_conflict"))
 
 
-# TODO: move view and service from mocker to prenaming,
-#   use django form instead of html template
-#   get server values and put them as form defaults
 class PrenamingConfigView(ManagerRequiredView):
     """Configure and mock prenaming settings."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        # guard blank inputs
+        # guard inputs
         x_pos = request.POST.get("xPos")
         x_pos = float(x_pos) if x_pos else None
         y_pos = request.POST.get("yPos")
         y_pos = float(y_pos) if y_pos else None
 
+        # TODO: read exam source version from input form
+        version = 1
+
         if "set_config" in request.POST:
             pss = PrenameSettingService()
             try:
                 pss.set_prenaming_coords(x_pos, y_pos)
-                return HttpResponse(status=204)
+                return HttpResponseClientRedirect(reverse("create_paperPDFs"))
             except PlomDependencyConflict as err:
                 messages.add_message(request, messages.ERROR, f"{err}")
-                return redirect("create_paperPDFs")
-            PrenameSettingService().set_prenaming_coords(x_pos, y_pos)
-            return HttpResponse(status=204)
+                return redirect(reverse("prep_conflict"))
         # TODO: render the mock on the same page rather than returning a file response
+        # TODO: move mock_id stuff into the mocker service
         elif "mock_id" in request.POST:
-            version = 1
             mocker = ExamMockerService()
-            source_path = Path(SourceService._get_source_file(version).path)
+            print("check0")
+            if not can_modify_prenaming_config():
+                print("check1")
+                messages.add_message(
+                    request,
+                    messages.ERROR,
+                    "You cannot mock the id page without exam source version 1.",
+                )
+                print("check3")
+                return redirect(reverse("prep_conflict"))
+            print("check2")
 
+            source_path = Path(SourceService._get_source_file(version).path)
             id_page_number = SpecificationService.get_id_page_number()
+
             mock_exam_pdf_bytes = mocker.mock_ID_page(
                 version,
                 source_path,

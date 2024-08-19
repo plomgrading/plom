@@ -99,8 +99,8 @@ def assert_can_enable_disable_prenaming():
         )
 
 
-def assert_can_modify_prenaming_coords():
-    """Raises an error if the server state doesn't permit modifying prenaming coords.
+def assert_can_modify_prenaming_config():
+    """Raises an error if the server state doesn't permit modifying prenaming config.
 
     Returns:
         None
@@ -108,14 +108,25 @@ def assert_can_modify_prenaming_coords():
     Raises:
         PlomDependencyConflict
     """
-    from . import PapersPrinted
+    from . import PapersPrinted, SourceService
+    from Papers.services import SpecificationService
+    from BuildPaperPDF.services import BuildPapersService
 
-    # cannot modify prenaming if papers printed
+    # cannot configure prenaming if papers printed
     if PapersPrinted.have_papers_been_printed():
         raise PlomDependencyConflict("Papers have been printed.")
 
-    # TODO (?): check if PDFs have been built
-    # TODO: check if huey PDF building chores exist
+    # cannot configure prenaming if papers built
+    if BuildPapersService().are_any_papers_built():
+        raise PlomDependencyConflict("Test PDFs have been built.")
+
+    # cannot configure prenaming without version 1 source PDF
+    if not SourceService.get_source(1)["uploaded"]:
+        raise PlomDependencyConflict("Exam version 1 source PDF hasn't been uploaded.")
+
+    # cannot configure prenaming if ID page is unknown
+    if not SpecificationService.is_there_a_spec():
+        raise PlomDependencyConflict("There is no test specification.")
 
 
 def assert_can_modify_qv_mapping_database():
@@ -208,14 +219,14 @@ def can_enable_disable_prenaming():
         return False
 
 
-def can_modify_prenaming_coords():
-    """Checks if server state permits modification of prenaming position coords.
+def can_modify_prenaming_config():
+    """Checks if server state permits modification of prenaming config.
 
     Returns:
         bool: True if permitted, False if not.
     """
     try:
-        assert_can_modify_prenaming_coords()
+        assert_can_modify_prenaming_config()
         return True
     except PlomDependencyConflict:
         return False
