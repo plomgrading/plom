@@ -27,8 +27,16 @@
                 </div>
                 <div class="col">
                     <form action="{% url 'prename_config' %}" method="post">
-                        <input type="number" name="xPos" placeholder="50" style="width:60px;">
-                        <input type="number" name="yPos" placeholder="42" style="width:60px;">
+                        <input type="number"
+                               name="xPos"
+                               value="{{ prename_coords.xcoord }}"
+                               placeholder="50"
+                               style="width:60px">
+                        <input type="number"
+                               name="yPos"
+                               value="{{ prename_coords.ycoord }}"
+                               placeholder="42"
+                               style="width:60px">
                         {% csrf_token %}
                         <input class="btn btn-primary"
                                type="submit"
