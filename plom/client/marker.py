@@ -710,14 +710,14 @@ class MarkerClient(QWidget):
                 verbose_qlabel = qlabel
             msg = f"<p>Currently there is nothing to mark for version {self.version}"
             msg += f" of {verbose_qlabel}.</p>"
-            info = f"""<p>There are several ways this can happen:</p>
+            infostr = f"""<p>There are several ways this can happen:</p>
                 <ul>
                 <li>Perhaps the relevant papers have not yet been scanned.</li>
                 <li>This assessment may not have instances of version
                     {self.version} of {qlabel}.</li>
                 </ul>
             """
-            InfoMsg(self, msg, info=info, info_pre=False).exec()
+            InfoMsg(self, msg, info=infostr, info_pre=False).exec()
             return
 
         if not self.ui.mProgressBar.isVisible():

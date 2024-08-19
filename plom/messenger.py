@@ -312,7 +312,7 @@ class Messenger(BaseMessenger):
         """
         if self.is_legacy_server():
             # TODO could support order webplom too, as proof of concept
-            n, m = self.MprogressCount_legacy()
+            n, m = self.MprogressCount_legacy(qidx, ver)
             d = {"total_tasks": m, "total_tasks_marked": n, "user_in_probation": False}
             return d
 
@@ -493,7 +493,7 @@ class Messenger(BaseMessenger):
         plomfile,
         rubrics,
         integrity_check,
-    ) -> list[int]:
+    ) -> dict[str, Any]:
         """Upload annotated image and associated data to the server.
 
         Args:
