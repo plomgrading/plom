@@ -19,30 +19,43 @@
             <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
         <!-- start prename config -->
-        <div class="card w-50">
-            <div class="card-body">
-                <h5 class="card-title">Prenaming configuration</h5>
-                <div class="col">
-                    <p class="card-text">Adjust x,y position of prenaming card.</p>
-                </div>
-                <div class="col">
-                    <form action="{% url 'prename_config' %}" method="post">
-                        <input type="number"
-                               name="xPos"
-                               value="{{ prename_coords.xcoord }}"
-                               placeholder="50"
-                               style="width:60px">
-                        <input type="number"
-                               name="yPos"
-                               value="{{ prename_coords.ycoord }}"
-                               placeholder="42"
-                               style="width:60px">
+        {% if prename_config.enabled %}
+            <div class="card w-50">
+                <div class="card-body">
+                    <h5 class="card-title">Prenaming configuration</h5>
+                    <div class="col">
+                        <p class="card-text">Adjust x,y coordinates of prenaming card.</p>
+                    </div>
+                    <div class="form-group">
+                        <form action="{% url 'configure_prename' %}" method="post">
+                            <div class="input-group ms-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text rounded-0">x</span>
+                                </div>
+                                <input class="form-input border"
+                                       type="number"
+                                       name="xPos"
+                                       value="{{ prename_config.xcoord }}"
+                                       placeholder="50"
+                                       style="width:60px">
+                                <div class="input-group-prepend ms-3">
+                                    <span class="input-group-text rounded-0">y</span>
+                                </div>
+                                <input class="form-input border"
+                                       type="number"
+                                       name="yPos"
+                                       value="{{ prename_config.ycoord }}"
+                                       placeholder="42"
+                                       style="width:60px">
+                            </div>
+                        </div>
                         {% csrf_token %}
-                        <input class="btn btn-primary"
+                        <input class="btn btn-link"
                                type="submit"
                                name="mock_id"
-                               value="Download preview"
+                               value="PDF preview"
                                formtarget="_blank">
+                        <br />
                         <input class="btn btn-primary"
                                type="submit"
                                name="set_config"
@@ -50,7 +63,7 @@
                     </form>
                 </div>
             </div>
-        </div>
+        {% endif %}
         <!-- end prename config -->
         <div id="pdf_table">{{ pdf_table |safe }}</div>
     </div>

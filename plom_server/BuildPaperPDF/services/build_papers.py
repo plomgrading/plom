@@ -251,7 +251,7 @@ class BuildPapersService:
         pqv_service = PQVMappingService()
         qvmap = pqv_service.get_pqv_map_dict()
         prenamed = StagingStudentService().get_prenamed_papers()
-        prename_config = PrenameSettingService().get_prenaming_coords()
+        prename_config = PrenameSettingService().get_prenaming_config()
 
         the_papers = Paper.objects.filter(paper_number__in=paper_number_list)
         # Check paper-numbers all legal and store the corresponding paper-objects

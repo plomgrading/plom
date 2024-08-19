@@ -88,7 +88,7 @@ class BuildPaperPDFs(ManagerRequiredView):
         context.update(
             {
                 "pdf_table": table_fragment,
-                "prename_coords": PrenameSettingService().get_prenaming_coords(),
+                "prename_config": PrenameSettingService().get_prenaming_config(),
             }
         )
         return render(request, self.template_name, context)

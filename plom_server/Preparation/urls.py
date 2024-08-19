@@ -33,7 +33,7 @@ urlpatterns = [
     ),
     path("source/mock/<int:version>", MockExamView.as_view(), name="prep_mock"),
     path("prename/", PrenamingView.as_view(), name="prep_prename"),
-    path("prename/config", PrenamingConfigView.as_view(), name="prename_config"),
+    path("prename/config", PrenamingConfigView.as_view(), name="configure_prename"),
     path("classlist/", ClasslistView.as_view(), name="prep_classlist"),
     path(
         "classlist/download",

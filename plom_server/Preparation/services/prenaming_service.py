@@ -32,9 +32,13 @@ class PrenameSettingService:
         p_obj.save()
 
     @transaction.atomic
-    def get_prenaming_coords(self):
+    def get_prenaming_config(self):
         p_obj = PrenamingSetting.load()
-        return {"xcoord": p_obj.xcoord, "ycoord": p_obj.ycoord}
+        return {
+            "enabled": p_obj.enabled,
+            "xcoord": p_obj.xcoord,
+            "ycoord": p_obj.ycoord,
+        }
 
     @transaction.atomic
     def set_prenaming_coords(self, xcoord, ycoord):
