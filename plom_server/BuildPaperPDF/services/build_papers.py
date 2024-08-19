@@ -76,7 +76,7 @@ def huey_build_single_paper(
         student_info: None for a regular blank paper or a dict with
             keys ``"id"`` and ``"name"`` for "prenaming" a paper.
         prename_config: A dict containing keys ``"xcoord"`` and
-            ``"ycoord"``, used to position the prename box on the ID page.
+            ``"ycoord"``, used to position the prenaming box if student_info isn't None.
         tracker_pk: a key into the database for anyone interested in
             our progress.
         task: includes our ID in the Huey process queue.
@@ -88,7 +88,6 @@ def huey_build_single_paper(
         block or detect whether a task has finished".
     """
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
-    # just pass xcoord and ycoord as kwargs, None is an acceptable input
     with TemporaryDirectory() as tempdir:
         save_path = make_PDF(
             spec=spec,

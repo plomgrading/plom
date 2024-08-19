@@ -14,12 +14,13 @@ from Preparation.services.preparation_dependency_service import (
 
 class PrenameSettingService:
     @transaction.atomic
-    def get_prenaming_setting(self):
+    def get_prenaming_setting(self) -> bool:
+        """Get prenaming setting."""
         p_obj = PrenamingSetting.load()
         return p_obj.enabled
 
     @transaction.atomic
-    def set_prenaming_setting(self, enable_disable):
+    def set_prenaming_setting(self, enable_disable) -> None:
         """Set prenaming to the given bool.
 
         Raises a PlomDependencyConflict if cannot modify.
@@ -32,7 +33,8 @@ class PrenameSettingService:
         p_obj.save()
 
     @transaction.atomic
-    def get_prenaming_config(self):
+    def get_prenaming_config(self) -> dict:
+        """Get prenaming configuration as a dict."""
         p_obj = PrenamingSetting.load()
         return {
             "enabled": p_obj.enabled,
@@ -41,7 +43,7 @@ class PrenameSettingService:
         }
 
     @transaction.atomic
-    def set_prenaming_coords(self, xcoord, ycoord):
+    def set_prenaming_coords(self, xcoord, ycoord) -> None:
         """Set prenaming box position to the given vars.
 
         Raises a plomDependencyConflict if the position cannot be modified.

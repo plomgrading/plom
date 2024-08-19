@@ -67,7 +67,7 @@ class ExamMockerService:
         # TODO: refactor to delocalize this import, SourceService and mocker are circular
         from .SourceService import _get_source_file
 
-        short_name = (SpecificationService.get_short_name_slug(),)
+        short_name = SpecificationService.get_short_name_slug()
         source_path = pathlib.Path(_get_source_file(version).path)
         id_page_number = SpecificationService.get_id_page_number()
 

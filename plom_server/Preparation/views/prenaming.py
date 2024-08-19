@@ -9,20 +9,17 @@ from io import BytesIO
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect
 from django.contrib import messages
+from django.http import HttpRequest, HttpResponse, FileResponse
+from django.core.files import File
+from django.shortcuts import redirect
 
 from plom.plom_exceptions import PlomDependencyConflict
 from Base.base_group_views import ManagerRequiredView
-from ..services import PrenameSettingService, ExamMockerService, SourceService
-
-from django.shortcuts import redirect
-from django.http import HttpRequest, HttpResponse, FileResponse
-from Papers.services import SpecificationService
-from django.core.files import File
-from ..services.preparation_dependency_service import can_modify_prenaming_config
+from ..services import PrenameSettingService, ExamMockerService
 
 
 class PrenamingView(ManagerRequiredView):
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         pss = PrenameSettingService()
         try:
             pss.set_prenaming_setting(True)
@@ -31,7 +28,7 @@ class PrenamingView(ManagerRequiredView):
             messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(reverse("prep_conflict"))
 
-    def delete(self, request):
+    def delete(self, request: HttpRequest) -> HttpResponse:
         pss = PrenameSettingService()
         try:
             pss.set_prenaming_setting(False)
@@ -66,9 +63,6 @@ class PrenamingConfigView(ManagerRequiredView):
         # TODO: move mock_id stuff into the mocker service
         elif "mock_id" in request.POST:
             ems = ExamMockerService()
-            print("check0")
-            print("check2")
-
             try:
                 mock_exam_pdf_bytes = ems.mock_ID_page(
                     version,
