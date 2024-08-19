@@ -2051,7 +2051,7 @@ class MarkerClient(QWidget):
         InfoMsg(
             self,
             "<p>The number of tasks you can mark is currently limited by"
-            "your instructor or administrator.</p>",
+            " your instructor or administrator.</p>",
             info="""
                 <p>The reasons for this will vary but typically you will
                 need to meet or communicate with them after reaching the
