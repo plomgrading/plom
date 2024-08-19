@@ -422,11 +422,8 @@ class Chooser(QDialog):
         # old servers (<0.14.0) don't have this API and will fail
         info = msgr.get_server_info()
         if "Legacy" in info["product_string"]:
-            msgr.enable_legacy_server_support()
             s = "\nUsing legacy messenger"
             self.ui.infoLabel.setText(self.ui.infoLabel.text() + s)
-        else:
-            msgr.disable_legacy_server_support()
 
         try:
             msgr._set_server_API_version(info["API_version"])
@@ -660,7 +657,7 @@ class Chooser(QDialog):
         self.ui.mportSB.setEnabled(False)
         self.ui.loginButton.setEnabled(False)
 
-        if not self.messenger.webplom and self.messenger.username == "manager":
+        if self.messenger.is_legacy_server() and self.messenger.username == "manager":
             self.ui.manageButton.setVisible(True)
 
     def _set_restrictions_from_spec(self, spec: dict[str, Any]) -> None:

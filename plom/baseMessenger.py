@@ -47,9 +47,12 @@ from plom.plom_exceptions import (
 )
 
 
-# In principle we can support earlier servers if we wanted to
-Minimum_Server_API_Version = int(Plom_API_Version)
-assert Minimum_Server_API_Version <= int(Plom_API_Version)
+# We can support earlier servers by special-case code, so
+# define an allow-list of versions we support.
+Supported_Server_API_Versions = [
+    int(Plom_Legacy_Server_API_Version),
+    int(Plom_API_Version),
+]
 
 
 log = logging.getLogger("messenger")
@@ -77,7 +80,6 @@ class BaseMessenger:
         port: int | None = None,
         scheme: str | None = None,
         verify_ssl: bool = True,
-        webplom: bool | None = None,
         _server_API_version: int | None = None,
     ) -> None:
         """Initialize a new BaseMessenger.
@@ -95,11 +97,9 @@ class BaseMessenger:
             verify_ssl (True/False): controls where SSL certs are
                 checked, see the `requests` library parameter
                 ``Session.verify`` which ultimately receives this.
-            webplom: whether to connect to a newer
-                Django-based server.  If ``False``, force connection to a
-                legacy server.  If ``True``, force connect to a new server.
-                The default (recommended!) is ``None``, to autodetect.
             _server_API_version: internal use, for cloning a Messenger.
+                We want to recall the API of the server we are talking
+                to without computing itagain.
 
         Returns:
             None
@@ -107,7 +107,6 @@ class BaseMessenger:
         Raises:
             PlomConnectionError
         """
-        self.webplom = webplom
         self._server_API_version = _server_API_version
 
         if not server:
@@ -174,7 +173,6 @@ class BaseMessenger:
         x = cls(
             m.base,
             verify_ssl=m.verify_ssl,
-            webplom=m.webplom,
             _server_API_version=m._server_API_version,
         )
         x.start()
@@ -200,20 +198,10 @@ class BaseMessenger:
     def username(self) -> str | None:
         return self.whoami()
 
-    def enable_legacy_server_support(self) -> None:
-        if self.token:
-            raise RuntimeError('cannot change "legacy" status after login')
-        self.webplom = False
-
-    def disable_legacy_server_support(self) -> None:
-        if self.token:
-            raise RuntimeError('cannot change "legacy" status after login')
-        self.webplom = True
-
     def is_legacy_server(self) -> bool | None:
-        if self.webplom is None:
+        if self.get_server_API_version() is None:
             return None
-        return not self.webplom
+        return self.get_server_API_version() == int(Plom_Legacy_Server_API_Version)
 
     @property
     def server(self) -> str:
@@ -226,7 +214,11 @@ class BaseMessenger:
         # Legacy servers expect "user" and "token" in the json.
         # Now with django we pass a token in the header.
         # TODO: rework this when/if we stop supporting legacy servers.
-        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+        if (
+            not self.is_legacy_server()
+            and "json" in kwargs
+            and "token" in kwargs["json"]
+        ):
             if not self.token:
                 raise PlomAuthenticationException("Trying auth'd operation w/o token")
             assert isinstance(self.token, dict)
@@ -268,7 +260,7 @@ class BaseMessenger:
         if not self.token:
             raise PlomAuthenticationException("Trying auth'd operation w/o token")
 
-        if self.webplom:
+        if not self.is_legacy_server():
             assert isinstance(self.token, dict)
             # Django-based servers pass token in the header
             token_str = self.token["token"]
@@ -288,7 +280,11 @@ class BaseMessenger:
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
-        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+        if (
+            not self.is_legacy_server()
+            and "json" in kwargs
+            and "token" in kwargs["json"]
+        ):
             if not self.token:
                 raise PlomAuthenticationException("Trying auth'd operation w/o token")
             assert isinstance(self.token, dict)
@@ -306,7 +302,11 @@ class BaseMessenger:
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
-        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+        if (
+            not self.is_legacy_server()
+            and "json" in kwargs
+            and "token" in kwargs["json"]
+        ):
             if not self.token:
                 raise PlomAuthenticationException("Trying auth'd operation w/o token")
             assert isinstance(self.token, dict)
@@ -324,7 +324,11 @@ class BaseMessenger:
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
 
-        if self.webplom and "json" in kwargs and "token" in kwargs["json"]:
+        if (
+            not self.is_legacy_server()
+            and "json" in kwargs
+            and "token" in kwargs["json"]
+        ):
             if not self.token:
                 raise PlomAuthenticationException("Trying auth'd operation w/o token")
             assert isinstance(self.token, dict)
@@ -414,24 +418,31 @@ class BaseMessenger:
             PlomAPIException: server is too old.
         """
         s = self._start()
-        if self.webplom is not None:
+        if self._server_API_version is not None:
+            # if the server API was already detected, no need to redo that
             return s
         info = self.get_server_info()
         if "Legacy" in info["product_string"]:
-            self.enable_legacy_server_support()
             log.warning("Using legacy messenger to talk to legacy server")
-        else:
-            self.disable_legacy_server_support()
         self._set_server_API_version(info["API_version"])
         return s
 
     def _set_server_API_version(self, ver: int | str) -> None:
         self._server_API_version = int(ver)
-        if self._server_API_version < Minimum_Server_API_Version:
+        if self._server_API_version not in Supported_Server_API_Versions:
             raise PlomAPIException(
-                f"Server API version {ver} is below our minimum supported"
-                f" API of {Minimum_Server_API_Version}"
+                f"Server API version {ver} is not supported because its "
+                f"not in {Supported_Server_API_Versions}"
             )
+
+    def get_server_API_version(self) -> int | None:
+        """What is the API version of the server.
+
+        Returns:
+            The API version of the server as an integer unless we
+            don't know yet, then `None`.
+        """
+        return self._server_API_version
 
     def stop(self) -> None:
         """Stop the messenger."""
@@ -529,10 +540,10 @@ class BaseMessenger:
             PlomSeriousException: something else unexpected such as a
                 network failure.
         """
-        if self.webplom:
-            self._requestAndSaveToken_webplom(user, pw)
-        else:
+        if self.is_legacy_server():
             self._requestAndSaveToken_legacy(user, pw)
+        else:
+            self._requestAndSaveToken_webplom(user, pw)
 
     def _requestAndSaveToken_legacy(self, user: str, pw: str) -> None:
         self.SRmutex.acquire()
@@ -567,7 +578,7 @@ class BaseMessenger:
             self.SRmutex.release()
 
     def _requestAndSaveToken_webplom(self, user: str, pw: str) -> None:
-        """Get an authorisation token from WebPlom."""
+        """Get an authorisation token from a new-style server."""
         with self.SRmutex:
             response = self.post_raw(
                 "/get_token/",
@@ -621,10 +632,10 @@ class BaseMessenger:
             PlomSeriousException: other problems such as trying to close
                 another user, other than yourself.
         """
-        if self.webplom:
-            path = "/close_user/"
-        else:
+        if self.is_legacy_server():
             path = f"/users/{self.user}"
+        else:
+            path = "/close_user/"
         with self.SRmutex:
             try:
                 response = self.delete(
