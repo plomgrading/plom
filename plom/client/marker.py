@@ -85,6 +85,7 @@ from .viewers import QuestionViewDialog, SelectPaperQuestion
 from .tagging import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
 from .tagging_range_dialog import TaggingAndRangeOptions
+from .quota_dialogs import ExplainQuotaDialog, ReachedQuotaLimitDialog
 from .task_model import MarkerExamModel, ProxyModel
 from .uploader import BackgroundUploader, synchronous_upload
 
@@ -735,12 +736,7 @@ class MarkerClient(QWidget):
             self._user_reached_probation_limit = False
             if info["user_tasks_marked"] >= info["user_probation_limit"]:
                 self._user_reached_probation_limit = True
-                # TODO: maybe we can share some common dialog text with "explain"
-                WarnMsg(
-                    self,
-                    f"You have reached your task limit of {info['user_probation_limit']}."
-                    " Please contact your instructor to mark more tasks.",
-                ).exec()
+                ReachedQuotaLimitDialog(self, limit=info["user_probation_limit"]).exec()
             return
 
         self.ui.labelProgress.setText("Progress:")
@@ -1319,11 +1315,7 @@ class MarkerClient(QWidget):
 
         task_status = self.examModel.getStatusByTask(task)
         if task_status == "untouched" and self.marker_has_reached_task_limit():
-            # TODO: use common text for these probation dialogs.
-            WarnMsg(
-                self,
-                "You have reached your task limit. Please contact your instructor to mark more tasks. ",
-            ).exec()
+            ReachedQuotaLimitDialog(self).exec()
             return
 
         if self.allowBackgroundOps:
@@ -2047,23 +2039,7 @@ class MarkerClient(QWidget):
         return task_id_str
 
     def explain_probation(self) -> None:
-        # TODO: more specific link once we have one!
-        InfoMsg(
-            self,
-            "<p>The number of tasks you can mark is currently limited by"
-            " your instructor or administrator.</p>",
-            info="""
-                <p>The reasons for this will vary but typically you will
-                need to meet or communicate with them after reaching the
-                limit, before you are able to continue marking additional
-                papers.</p>
-                <p>If your instructor has already changed the setting, try
-                refreshing your list of marking tasks.</p>
-                <p>You can also <a href="https://plom.rtfd.io">read about
-                Plom&rsquo;s &ldquo;probation settings&rdquo;</a>.</p>
-            """,
-            info_pre=False,
-        ).exec()
+        ExplainQuotaDialog(self).exec()
 
     def manage_tags(self):
         """Manage the tags of the current task."""
