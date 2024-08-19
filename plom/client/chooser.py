@@ -428,6 +428,17 @@ class Chooser(QDialog):
         else:
             msgr.disable_legacy_server_support()
 
+        try:
+            msgr._set_server_API_version(info["API_version"])
+        except PlomAPIException as e:
+            WarnMsg(
+                self,
+                f"Your client version {__version__} cannot connect to "
+                f"unsupported server {info['version']}.",
+                info=f"{e}",
+            ).exec()
+            return False
+
         if Version(__version__) < Version(info["version"]):
             s = "\nWARNING: old client!"
             self.ui.infoLabel.setText(self.ui.infoLabel.text() + s)

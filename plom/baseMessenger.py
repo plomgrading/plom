@@ -351,10 +351,19 @@ class BaseMessenger:
         return self.session.patch(self.base + url, *args, **kwargs)
 
     def _start(self) -> str:
-        """Start the messenger session, low-level.
+        """Start the messenger session, low-level without compatibility checks.
+
+        Caution: if you're using this, you'll need to check server versions yourself.
+        The server itself will check if your client is too old, but not if its too
+        new; you have to do that yourself, or see :meth:`start` instead.
 
         Returns:
             the version string of the server.
+
+        Raises:
+            PlomSSLError: cert is self-signed or invalid.
+            PlomConnectionError: something went wrong in the connection such
+                as invalid URL.
         """
         if self.session:
             log.debug("already have an requests-session")
@@ -399,7 +408,10 @@ class BaseMessenger:
             The version string of the server.
 
         Raises:
-            PlomAPIException: server is too old (or maybe just non-existent).
+            PlomSSLError: cert is self-signed or invalid.
+            PlomConnectionError: something went wrong in the connection such
+                as invalid URL.
+            PlomAPIException: server is too old.
         """
         s = self._start()
         if self.webplom is not None:
@@ -410,12 +422,16 @@ class BaseMessenger:
             log.warning("Using legacy messenger to talk to legacy server")
         else:
             self.disable_legacy_server_support()
-        self._server_API_version = int(info["API_version"])
-        if self._server_API_version < Minimum_Server_API_Version:
-            pass
-            # raise PlomAPIException("Server )
-            # TODO: callers problem or ours?
+        self._set_server_API_version(info["API_version"])
         return s
+
+    def _set_server_API_version(self, ver: int | str) -> None:
+        self._server_API_version = int(ver)
+        if self._server_API_version < Minimum_Server_API_Version:
+            raise PlomAPIException(
+                f"Server API version {ver} is below our minimum supported"
+                f" API of {Minimum_Server_API_Version}"
+            )
 
     def stop(self) -> None:
         """Stop the messenger."""
