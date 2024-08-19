@@ -25,7 +25,7 @@ from .identify import (
 
 from .mark import (
     QuestionMaxMark,
-    MarkingProgressCount,
+    MarkingProgress,
     MgetPageDataQuestionInContext,
     MgetOneImage,
     MgetAnnotations,
@@ -34,7 +34,6 @@ from .mark import (
     TagsFromCodeView,
     GetAllTags,
     GetSolutionImage,
-    MarkerMarkingProgress,
 )
 
 from .report import (

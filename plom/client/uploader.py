@@ -39,7 +39,7 @@ log = logging.getLogger("marker")
 class BackgroundUploader(QThread):
     """Uploads exams in Background."""
 
-    uploadSuccess = pyqtSignal(str, int, int)
+    uploadSuccess = pyqtSignal(str, dict)
     uploadKnownFail = pyqtSignal(str, str)
     uploadUnknownFail = pyqtSignal(str, str)
     queue_status_changed = pyqtSignal(int, int, int, int)
@@ -236,7 +236,7 @@ def synchronous_upload(
             )
         )
     try:
-        msg = _msgr.MreturnMarkedTask(
+        progress_info = _msgr.MreturnMarkedTask(
             task,
             question_idx,
             ver,
@@ -260,7 +260,8 @@ def synchronous_upload(
         unknownFailCallback(task, str(ex))
         return False
 
-    numDone = msg[0]
-    numTotal = msg[1]
-    successCallback(task, numDone, numTotal)
+    # TODO: easy enough to call _msgr.get_marking_progress here and thus
+    # avoid special returns above, but what if 1st succeeds and 2nd fails?
+
+    successCallback(task, progress_info)
     return True

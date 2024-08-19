@@ -50,45 +50,31 @@ class QuestionMaxMark(APIView):
             )
 
 
-class MarkingProgressCount(APIView):
-    """Responds with a list of completed/total tasks.
+# GET: /MK/progress/{question}/{version}
+class MarkingProgress(APIView):
+    """Responds with dict of information about progress and probation status.
 
     Returns:
-        (200): returns two integers, first the number of marked papers
-            for this question/version and the total number of papers for
-            this question/version.
-        (400): malformed such as non-integers for question/version.
+        (200): returns a dict of info about this question version and
+            user including "total_tasks_marked", "total_tasks".
+            Also includes information about the user's progress including
+            their probation status in "user_tasks_claimed",
+            "user_tasks_marked", "user_in_probation", "user_probation_limit".
         (416): question values out of range: NOT IMPLEMENTED YET.
             (In legacy, this was thrown by the backend).
+
+    If there are no tasks, returns zero in "total tasks".
     """
 
-    def get(self, request):
-        data = request.data
-        try:
-            question = int(data["q"])
-            version = int(data["v"])
-        except (ValueError, TypeError):
-            return _error_response(
-                "question and version must be integers",
-                status.HTTP_400_BAD_REQUEST,
-            )
+    def get(self, request: Request, *, question: int, version: int) -> Response:
+        # TODO: consider putting version/question to make them optional
+        username = request.query_params.get("username")
+        # TODO: or why not just use request.user.username?
+        progress = UserInfoServices.get_user_progress(username=username)
         mts = MarkingTaskService()
-        progress = mts.get_marking_progress(question, version)
-        return Response(progress, status=status.HTTP_200_OK)
-
-
-class MarkerMarkingProgress(APIView):
-    """Responds with a dict representing the marking progress of a specific marker.
-
-    Returns:
-        (200): returns a dict of keys: ["task_claimed", "task_marked", "in_probation", "probation_limit"].
-    """
-
-    def get(self, request):
-        data = request.data
-        username = data["user"]
-        uis = UserInfoServices()
-        progress = uis.get_user_progress(username=username)
+        n, m = mts.get_marking_progress(question, version)
+        progress["total_tasks_marked"] = n
+        progress["total_tasks"] = m
         return Response(progress, status=status.HTTP_200_OK)
 
 

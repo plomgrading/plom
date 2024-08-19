@@ -130,7 +130,7 @@ class SetProbationView(ManagerRequiredView):
         # Special flag received when user confirms to enforce setting probatiog, ignoring probation limit restriction.
         if "enforce_set_probation" in request.POST:
             complete_and_claimed_tasks = (
-                UserInfoServices().get_total_annotated_and_claimed_count_based_on_user()
+                UserInfoServices.get_total_annotated_and_claimed_count_by_user()
             )
             complete, claimed = complete_and_claimed_tasks[username]
             probation_period, created = ProbationPeriod.objects.get_or_create(

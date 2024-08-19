@@ -9,8 +9,7 @@ from django.urls import path, re_path
 
 from API.views import (
     GetTasks,
-    MarkerMarkingProgress,
-    MarkingProgressCount,
+    MarkingProgress,
     MgetOneImage,
     MgetAllRubrics,
     MgetRubricsByQuestion,
@@ -36,26 +35,16 @@ class MarkURLPatterns:
     def patterns(cls):
         mark_patterns = []
 
-        # Overall marking progress
+        # marking progress
         progress = [
             path(
-                "progress",
-                MarkingProgressCount.as_view(),
-                name="api_marking_progress_count",
-            ),
-        ]
-        mark_patterns += progress
-
-        # specific marker progress
-        marker_progress = [
-            path(
-                "marker_progress",
-                MarkerMarkingProgress.as_view(),
+                "progress/<int:question>/<int:version>",
+                MarkingProgress.as_view(),
                 name="api_marker_marking_progress",
             )
         ]
 
-        mark_patterns += marker_progress
+        mark_patterns += progress
 
         # Task management
         tasks = [

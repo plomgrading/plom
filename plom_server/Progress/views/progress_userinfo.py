@@ -3,28 +3,26 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Elisa Pan
 
+from django.contrib.auth.models import User
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
-
-from ..forms import AnnotationFilterForm
-from ..services import UserInfoServices
-
-from django.contrib.auth.models import User
 from UserManagement.models import ProbationPeriod
 from UserManagement.services import ProbationService
+from ..forms import AnnotationFilterForm
+from ..services import UserInfoServices
 
 
 class ProgressUserInfoHome(ManagerRequiredView):
     def get(self, request):
         context = super().build_context()
-        uis = UserInfoServices()
         filter_form = AnnotationFilterForm(request.GET)
 
-        annotations_exist = uis.annotation_exists()
+        annotations_exist = UserInfoServices.annotation_exists()
         annotated_and_claimed_count_dict = (
-            uis.get_total_annotated_and_claimed_count_based_on_user()
+            UserInfoServices.get_total_annotated_and_claimed_count_by_user()
         )
+        uis = UserInfoServices()
         latest_annotation_human_time = uis.get_time_of_latest_updated_annotation()
         request_time_filter_seconds = request.GET.get("time_filter_seconds")
 

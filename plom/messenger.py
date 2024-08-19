@@ -265,7 +265,7 @@ class Messenger(BaseMessenger):
                     raise PlomAuthenticationException() from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def MprogressCount(self, q, v) -> list[int]:
+    def MprogressCount_legacy(self, q, v) -> list[int]:
         """Return info about progress on a particular question-version pair.
 
         Args:
@@ -299,22 +299,34 @@ class Messenger(BaseMessenger):
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def MmarkingProgress(self) -> dict:
-        """Get a dict of keys ["task_claimed", "task_marked", "in_probation", "probation_limit"] of current marker.
+    def get_marking_progress(self, qidx: int, ver: int) -> dict[str, Any]:
+        """Get a dict representing the progress and probation status of current marker.
 
         Args:
-            Task: task id of the task
-        Returns:
-            A dict representing the progress and probation status of current marker.
-        """
-        with self.SRmutex:
+            qidx: which question.
+            ver: which version.
 
-            response = self.get(
-                "/MK/marker_progress",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            return response.json()
+        Returns:
+            Dict with keys "total_tasks", "total_tasks_marked", "user_tasks_claimed",
+            "user_tasks_marked", "user_in_probation", and "user_probation_limit"
+        """
+        if self.is_legacy_server():
+            # TODO could support order webplom too, as proof of concept
+            n, m = self.MprogressCount_legacy(qidx, ver)
+            d = {"total_tasks": m, "total_tasks_marked": n, "user_in_probation": False}
+            return d
+
+        with self.SRmutex:
+            try:
+                response = self.get_auth(
+                    f"/MK/progress/{qidx}/{ver}?username={self.user}"
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MaskNextTask(
         self,
@@ -481,7 +493,7 @@ class Messenger(BaseMessenger):
         plomfile,
         rubrics,
         integrity_check,
-    ) -> list[int]:
+    ) -> dict[str, Any]:
         """Upload annotated image and associated data to the server.
 
         Args:
@@ -500,9 +512,9 @@ class Messenger(BaseMessenger):
                 back.
 
         Returns:
-            A list of two integers, indicating the number of questions
-            graded and the total number of questions to be graded of
-            this question-version pair.
+            A dict of progress information.  See :meth:`get_marking_progress`.
+            There is a a certain aomunt of code duplication to make this
+            happen; consider refactoring to avoid needing this to return anything.
 
         Raises:
             PlomAuthenticationException
@@ -514,7 +526,7 @@ class Messenger(BaseMessenger):
             PlomSeriousException
         """
         if self.is_legacy_server():
-            return self._MreturnMarkedTask_legacy(
+            n, m = self._MreturnMarkedTask_legacy(
                 code,
                 pg,
                 ver,
@@ -525,6 +537,8 @@ class Messenger(BaseMessenger):
                 rubrics,
                 integrity_check,
             )
+            d = {"total_tasks": m, "total_tasks_marked": n, "user_in_probation": False}
+            return d
         return self._MreturnMarkedTask_webplom(
             code, pg, ver, score, marking_time, annotated_img, plomfile, integrity_check
         )

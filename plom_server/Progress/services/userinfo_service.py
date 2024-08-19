@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from typing import Dict, Tuple, Union, Any
+from typing import Union, Any
 
 import arrow
 
@@ -25,24 +25,24 @@ from UserManagement.models import ProbationPeriod
 class UserInfoServices:
     """Functions for User Info HTML page."""
 
+    @classmethod
     @transaction.atomic
-    def get_user_progress(self, username: str) -> dict[str, Any]:
+    def get_user_progress(cls, *, username: str) -> dict[str, Any]:
         """Get marking progress of a user.
 
         Args:
             username: the user's username.
 
         Returns:
-            A dict whose keys are ["task_claimed", "task_marked", "in_probation", "probation_limit"].
+            A dict whose keys are "tasks_claimed", "tasks_marked",
+            "in_probation", "probation_limit".
         """
-        complete_claimed_task_dict = (
-            self.get_total_annotated_and_claimed_count_based_on_user()
-        )
+        complete_claimed_task_dict = cls.get_total_annotated_and_claimed_count_by_user()
         try:
-            task_marked, task_claimed = complete_claimed_task_dict[username]
+            tasks_marked, tasks_claimed = complete_claimed_task_dict[username]
         except KeyError:
             # User hasn't marked nor claimed any paper yet:
-            task_marked, task_claimed = 0, 0
+            tasks_marked, tasks_claimed = 0, 0
         user = User.objects.get(username=username)
         in_probation = ProbationPeriod.objects.filter(user=user).exists()
         if in_probation:
@@ -51,15 +51,16 @@ class UserInfoServices:
             probation_limit = None
 
         data = {
-            "task_claimed": task_claimed,
-            "task_marked": task_marked,
-            "in_probation": in_probation,
-            "probation_limit": probation_limit,
+            "user_tasks_claimed": tasks_claimed,
+            "user_tasks_marked": tasks_marked,
+            "user_in_probation": in_probation,
+            "user_probation_limit": probation_limit,
         }
         return data
 
+    @staticmethod
     @transaction.atomic
-    def annotation_exists(self) -> bool:
+    def annotation_exists() -> bool:
         """Return True if there are any annotations in the database.
 
         Returns:
@@ -67,11 +68,12 @@ class UserInfoServices:
         """
         return Annotation.objects.exists()
 
+    @classmethod
     @transaction.atomic
-    def get_total_annotated_and_claimed_count_based_on_user(
-        self,
-    ) -> Dict[str, Tuple[int, int]]:
-        """Retrieve count of complete and total claimed tas based on user.
+    def get_total_annotated_and_claimed_count_by_user(
+        cls,
+    ) -> dict[str, tuple[int, int]]:
+        """Retrieve count of complete and total claimed by users.
 
         claimed tasks are those tasks associated with the user with status OUT and Complete.
 
@@ -89,7 +91,7 @@ class UserInfoServices:
         markers_and_managers = User.objects.filter(
             groups__name__in=["marker"]
         ).order_by("groups__name", "username")
-        annotation_count_dict: Dict[str, int] = {
+        annotation_count_dict: dict[str, int] = {
             user.username: 0 for user in markers_and_managers
         }
 
@@ -100,14 +102,14 @@ class UserInfoServices:
         for usr in annotation_count_dict:
             complete_task = annotation_count_dict[usr]
             claimed_task = (
-                complete_task + self.get_total_claimed_but_unmarked_task_by_a_user(usr)
+                complete_task + cls.get_total_claimed_but_unmarked_task_by_a_user(usr)
             )
             result[usr] = (complete_task, claimed_task)
 
         return result
 
     # @transaction.atomic
-    # def get_total_claimed_task_for_each_user(self) -> Dict[str, int]:
+    # def get_total_claimed_task_for_each_user(self) -> dict[str, int]:
     #     """Retrieve the number of tasks claimed by the user."""
     #     annotations = (
     #         MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
@@ -122,8 +124,9 @@ class UserInfoServices:
 
     #     return claimed_task_count_dict
 
+    @staticmethod
     @transaction.atomic
-    def get_total_claimed_but_unmarked_task_by_a_user(self, username: str) -> int:
+    def get_total_claimed_but_unmarked_task_by_a_user(username: str) -> int:
         """Retrieve the number of tasks claimed but unmarked by a user.
 
         These retrieve the tasks claimed by the users that have MarkingTask status of OUT.
@@ -143,7 +146,7 @@ class UserInfoServices:
     @transaction.atomic
     def get_annotations_based_on_user(
         self, annotations
-    ) -> Dict[str, Dict[Tuple[int, int], Dict[str, Union[int, str]]]]:
+    ) -> dict[str, dict[tuple[int, int], dict[str, int | str]]]:
         """Retrieve annotations based on the combination of user, question index, and version.
 
         Returns:
@@ -152,8 +155,8 @@ class UserInfoServices:
             marking time for each (question index, question version)
             combination.
         """
-        count_data: Dict[str, Dict[Tuple[int, int], int]] = dict()
-        total_marking_time_data: Dict[str, Dict[Tuple[int, int], int]] = dict()
+        count_data: dict[str, dict[tuple[int, int], int]] = dict()
+        total_marking_time_data: dict[str, dict[tuple[int, int], int]] = dict()
 
         for annotation in annotations:
             key = (annotation.task.question_index, annotation.task.question_version)
@@ -167,9 +170,7 @@ class UserInfoServices:
                 key
             ] += annotation.marking_time
 
-        grouped_by_user: Dict[
-            str, Dict[Tuple[int, int], Dict[str, Union[int, str]]]
-        ] = dict()
+        grouped_by_user: dict[str, dict[tuple[int, int], dict[str, int | str]]] = dict()
 
         for user in count_data:
             grouped_by_user[user] = dict()
@@ -207,10 +208,10 @@ class UserInfoServices:
 
     def get_annotations_based_on_question_and_version(
         self,
-        grouped_by_user_annotations: Dict[
-            str, Dict[Tuple[int, int], Dict[str, Union[int, str]]]
+        grouped_by_user_annotations: dict[
+            str, dict[tuple[int, int], dict[str, Union[int, str]]]
         ],
-    ) -> Dict[Tuple[int, int], Dict[str, list]]:
+    ) -> dict[tuple[int, int], dict[str, list]]:
         """Group annotations by question index and version.
 
         Args:
@@ -224,7 +225,7 @@ class UserInfoServices:
             question indices and versions, with marker information and
             other data.
         """
-        grouped_by_question: Dict[Tuple[int, int], Dict[str, list]] = dict()
+        grouped_by_question: dict[tuple[int, int], dict[str, list]] = dict()
 
         for marker, annotation_data in grouped_by_user_annotations.items():
             for question, question_data in annotation_data.items():

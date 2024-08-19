@@ -25,7 +25,7 @@ class ProbationService:
             True if the new limit can be applied to the user.
         """
         complete_and_claimed_tasks_dict = (
-            UserInfoServices().get_total_annotated_and_claimed_count_based_on_user()
+            UserInfoServices.get_total_annotated_and_claimed_count_by_user()
         )
         complete, claimed = complete_and_claimed_tasks_dict[user.username]
 
@@ -48,7 +48,7 @@ class ProbationService:
             True if the user can be set into probation, otherwise false.
         """
         complete_and_claim_dict = (
-            UserInfoServices().get_total_annotated_and_claimed_count_based_on_user()
+            UserInfoServices.get_total_annotated_and_claimed_count_by_user()
         )
         complete, claimed = complete_and_claim_dict[user.username]
 

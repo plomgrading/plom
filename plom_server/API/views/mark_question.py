@@ -26,6 +26,7 @@ from plom.plom_exceptions import (
 
 from Mark.services import QuestionMarkingService, MarkingTaskService
 from Mark.services import mark_task, page_data
+from Progress.services import UserInfoServices
 from .utils import _error_response
 
 
@@ -210,7 +211,9 @@ class QuestionMarkingViewSet(ViewSet):
         question = int_or_None(data.get("pg"))
         version = int_or_None(data.get("ver"))
 
-        return Response(
-            mts.get_marking_progress(question=question, version=version),
-            status=status.HTTP_200_OK,
-        )
+        username = request.user.username
+        progress = UserInfoServices.get_user_progress(username=username)
+        n, m = mts.get_marking_progress(question, version)
+        progress["total_tasks_marked"] = n
+        progress["total_tasks"] = m
+        return Response(progress, status=status.HTTP_200_OK)

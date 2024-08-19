@@ -145,8 +145,6 @@ class MarkerClient(QWidget):
         uic.loadUi(resources.files(plom.client.ui_files) / "marker.ui", self)
         # TODO: temporary workaround
         self.ui = self
-        # Keep the original format around in case we need to change it
-        self._cachedProgressFormatStr = self.ui.mProgressBar.format()
 
         if not tmpdir:
             # TODO: in this case, *we* should be responsible for cleaning up
@@ -229,7 +227,7 @@ class MarkerClient(QWidget):
 
         self.UIInitialization()
         self.applyLastTimeOptions(lastTime)
-        self.connectGuiButtons()
+        self._connectGuiButtons()
 
         # self.maxMark = self.exam_spec["question"][str(question_idx)]["mark"]
         try:
@@ -369,7 +367,7 @@ class MarkerClient(QWidget):
         # self.force_update_technical_stats()
         self.update_technical_stats_upload(0, 0, 0, 0)
 
-    def connectGuiButtons(self) -> None:
+    def _connectGuiButtons(self) -> None:
         """Connect gui buttons to appropriate functions.
 
         Notes:
@@ -403,6 +401,7 @@ class MarkerClient(QWidget):
         self.ui.viewButton.clicked.connect(self.choose_and_view_other)
         self.ui.technicalButton.clicked.connect(self.show_hide_technical)
         self.ui.failmodeCB.stateChanged.connect(self.toggle_fail_mode)
+        self.ui.explainProbationButton.clicked.connect(self.explain_probation)
 
     def change_tag_range_options(self):
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
@@ -677,26 +676,30 @@ class MarkerClient(QWidget):
         pr = prIndex[0].row()
         self._updateImage(pr)
 
-    def updateProgress(self, val=None, maxm=None) -> None:
-        """Updates the progress bar.
+    def updateProgress(self, *, info: dict[str, Any] | None = None) -> None:
+        """Updates the progress bar and related display of progress information.
 
-        Args:
-            val (int): value for the progress bar
-            maxm (int): maximum for the progress bar.
+        Keyword Args:
+            info: key-value pairs with information about progress overall,
+                and for this user, including information about probation.
 
         Returns:
-            None
+            None.
+
+        May open dialogs in some circumstances.
         """
-        if not val and not maxm:
+        if info is None:
             # ask server for progress update
             try:
-                val, maxm = self.msgr.MprogressCount(self.question_idx, self.version)
+                info = self.msgr.get_marking_progress(self.question_idx, self.version)
             except PlomRangeException as e:
                 ErrorMsg(self, str(e)).exec()
                 return
-        if maxm == 0:
-            val, maxm = (0, 1)  # avoid (0, 0) indeterminate animation
-            self.ui.mProgressBar.setFormat("No papers to mark")
+
+        if info["total_tasks"] == 0:
+            self.ui.labelProgress.setText("Progress: no papers to mark")
+            self.ui.mProgressBar.setVisible(False)
+            self.ui.explainProbationButton.setVisible(False)
             try:
                 qlabel = get_question_label(self.exam_spec, self.question_idx)
                 verbose_qlabel = verbose_question_label(
@@ -707,19 +710,39 @@ class MarkerClient(QWidget):
                 verbose_qlabel = qlabel
             msg = f"<p>Currently there is nothing to mark for version {self.version}"
             msg += f" of {verbose_qlabel}.</p>"
-            info = f"""<p>There are several ways this can happen:</p>
+            infostr = f"""<p>There are several ways this can happen:</p>
                 <ul>
                 <li>Perhaps the relevant papers have not yet been scanned.</li>
                 <li>This assessment may not have instances of version
                     {self.version} of {qlabel}.</li>
                 </ul>
             """
-            InfoMsg(self, msg, info=info, info_pre=False).exec()
-        else:
-            # Neither is quite right, instead, we cache on init
-            self.ui.mProgressBar.setFormat(self._cachedProgressFormatStr)
-        self.ui.mProgressBar.setMaximum(maxm)
-        self.ui.mProgressBar.setValue(val)
+            InfoMsg(self, msg, info=infostr, info_pre=False).exec()
+            return
+
+        if not self.ui.mProgressBar.isVisible():
+            self.ui.mProgressBar.setVisible(True)
+        self.ui.explainProbationButton.setVisible(False)
+
+        if info["user_in_probation"]:
+            s = f'Marking limit: {info["user_probation_limit"]} papers'
+            self.ui.labelProgress.setText(s)
+            self.ui.explainProbationButton.setVisible(True)
+            self.ui.mProgressBar.setMaximum(info["user_probation_limit"])
+            self.ui.mProgressBar.setValue(info["user_tasks_marked"])
+
+            if info["user_tasks_marked"] >= info["user_probation_limit"]:
+                # TODO: maybe we can share some common dialog text with "explain"
+                WarnMsg(
+                    self,
+                    f"You have reached your task limit of {info['user_probation_limit']}."
+                    " Please contact your instructor to mark more tasks.",
+                ).exec()
+            return
+
+        self.ui.labelProgress.setText("Progress:")
+        self.ui.mProgressBar.setMaximum(info["total_tasks_marked"])
+        self.ui.mProgressBar.setValue(info["total_tasks"])
 
     def claim_task_interactive(self) -> None:
         """Ask user for paper number and then ask server for that paper.
@@ -1291,6 +1314,8 @@ class MarkerClient(QWidget):
             ).exec()
             return
 
+        # TODO: old implementation didn't take into account other questions
+        # TODO: use common text for these probation dialogs.
         if self.marker_has_reached_task_limit(task):
             WarnMsg(
                 self,
@@ -1316,9 +1341,9 @@ class MarkerClient(QWidget):
             True if marker is not in probation, if they are in probation, returns True if
             they have not reached their probation limit yet.
         """
-        progress = self.get_marking_progress()
-        if progress["in_probation"]:
-            limit = progress["probation_limit"]
+        progress = self.msgr.get_marking_progress(self.question_idx, self.version)
+        if progress["user_in_probation"]:
+            limit = progress["user_probation_limit"]
             task_status = self.examModel.getStatusByTask(task)
             total_marked = self.get_completed_tasks_count()
             # Check against task_status to allow probation markers to reannotate stuffs.
@@ -1326,16 +1351,6 @@ class MarkerClient(QWidget):
                 return True
 
         return False
-
-    def get_marking_progress(self) -> dict:
-        """Get a dict of keys ["task_claimed", "task_marked", "in_probation", "probation_limit"] of current marker.
-
-        Args:
-            Task: task id of the task
-        Returns:
-            A dict representing the progress and probation status of current marker.
-        """
-        return self.msgr.MmarkingProgress()
 
     def getDataForAnnotator(self, task: str) -> tuple | None:
         """Start annotator on a particular task.
@@ -1651,13 +1666,14 @@ class MarkerClient(QWidget):
 
         return data
 
-    def backgroundUploadFinished(self, task, numDone, numtotal) -> None:
+    def backgroundUploadFinished(
+        self, task: str, progress_info: dict[str, Any]
+    ) -> None:
         """An upload has finished, do appropriate UI updates.
 
         Args:
-            task (str): the task ID of the current test.
-            numDone (int): number of exams marked
-            numtotal (int): total number of exams to mark.
+            task: the task ID of the upload.
+            progress_info: information about progress.
 
         Returns:
             None
@@ -1669,7 +1685,7 @@ class MarkerClient(QWidget):
                 self.examModel.setStatusByTask(task, "marked")
             else:
                 self.examModel.setStatusByTask(task, "Complete")
-        self.updateProgress(numDone, numtotal)
+        self.updateProgress(info=progress_info)
 
     def backgroundUploadFailedServerChanged(self, task, error_message):
         """An upload has failed because server changed something, safest to quit.
@@ -2032,6 +2048,25 @@ class MarkerClient(QWidget):
         pr = prIndex[0].row()
         task_id_str = self.prxM.getPrefix(pr)
         return task_id_str
+
+    def explain_probation(self) -> None:
+        # TODO: more specific link once we have one!
+        InfoMsg(
+            self,
+            "<p>The number of tasks you can mark is currently limited by"
+            "your instructor or administrator.</p>",
+            info="""
+                <p>The reasons for this will vary but typically you will
+                need to meet or communicate with them after reaching the
+                limit, before you are able to continue marking additional
+                papers.</p>
+                <p>If your instructor has already changed the setting, try
+                refreshing your list of marking tasks.</p>
+                <p>You can also <a href="https://plom.rtfd.io">read about
+                Plom&rsquo;s &ldquo;probation settings&rdquo;</a>.</p>
+            """,
+            info_pre=False,
+        ).exec()
 
     def manage_tags(self):
         """Manage the tags of the current task."""
