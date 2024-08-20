@@ -21,7 +21,7 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomTaskDeletedError,
     PlomTaskChangedError,
-    PlomProbationLimitExceededException,
+    PlomProbationLimitExceeded,
 )
 
 from Mark.services import QuestionMarkingService, MarkingTaskService
@@ -202,7 +202,7 @@ class QuestionMarkingViewSet(ViewSet):
             return _error_response(e, status.HTTP_410_GONE)
         except PlomConflict as e:
             return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
-        except PlomProbationLimitExceededException as e:
+        except PlomProbationLimitExceeded as e:
             return _error_response(e, status.HTTP_423_LOCKED)
 
         def int_or_None(x):

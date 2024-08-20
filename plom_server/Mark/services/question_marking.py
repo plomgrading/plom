@@ -18,7 +18,7 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomTaskDeletedError,
     PlomTaskChangedError,
-    PlomProbationLimitExceededException,
+    PlomProbationLimitExceeded,
 )
 
 from ..models import MarkingTask
@@ -223,7 +223,7 @@ class QuestionMarkingService:
                     tag_text=marked_by_probationary_marker_tag,
                 )
             else:
-                raise PlomProbationLimitExceededException(
+                raise PlomProbationLimitExceeded(
                     "You have reached your task limit. Contact your instructor to mark more tasks."
                 )
 
