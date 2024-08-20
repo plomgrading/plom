@@ -12,12 +12,8 @@ class ProbationPeriod(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     limit = models.IntegerField(default=default_limit)
 
-    def __str__(self):
-        """Return a string representation of the probation period.
-
-        Returns:
-            str: A string describing the probation period and limit for the user.
-        """
+    def __str__(self) -> str:
+        """Return a string representation of the probation period."""
         return f"Probation Period for {self.user.username} with limit {self.limit}"
 
     @classmethod

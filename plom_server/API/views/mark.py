@@ -61,7 +61,9 @@ class MarkingProgress(APIView):
             their probation status in "user_tasks_claimed",
             "user_tasks_marked", "user_in_probation", "user_probation_limit".
         (416): question values out of range: NOT IMPLEMENTED YET.
-            (In legacy, this was thrown by the backend).
+            (In legacy, this was thrown by the backend).  Here, currently
+            you just get zeros, which seems fine: maybe we don't need this
+            error handling?
 
     If there are no tasks, returns zero in "total tasks".
     """
