@@ -28,7 +28,7 @@ from plom.plom_exceptions import (
     PlomTaskDeletedError,
     PlomConflict,
     PlomException,
-    PlomProbationLimitExceededException,
+    PlomProbationLimitExceeded,
 )
 from plom.messenger import Messenger
 
@@ -251,7 +251,7 @@ def synchronous_upload(
         PlomTaskChangedError,
         PlomTaskDeletedError,
         PlomConflict,
-        PlomProbationLimitExceededException,
+        PlomProbationLimitExceeded,
     ) as ex:
         knownFailCallback(task, str(ex))
         # probably previous call does not return: it forces a crash
