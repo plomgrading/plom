@@ -69,9 +69,8 @@ class MarkingProgress(APIView):
     """
 
     def get(self, request: Request, *, question: int, version: int) -> Response:
-        # TODO: consider putting version/question to make them optional
-        username = request.query_params.get("username")
-        # TODO: or why not just use request.user.username?
+        # TODO: consider version/question into query params to make them optional
+        username = request.user.username
         progress = UserInfoServices.get_user_progress(username=username)
         mts = MarkingTaskService()
         n, m = mts.get_marking_progress(question, version)

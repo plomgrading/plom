@@ -317,9 +317,7 @@ class Messenger(BaseMessenger):
 
         with self.SRmutex:
             try:
-                response = self.get_auth(
-                    f"/MK/progress/{qidx}/{ver}?username={self.user}"
-                )
+                response = self.get_auth(f"/MK/progress/{qidx}/{ver}")
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
