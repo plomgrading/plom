@@ -267,12 +267,7 @@ class MarkerClient(QWidget):
         if self.allowBackgroundOps:
             self.backgroundUploader = BackgroundUploader(self.msgr)
             self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
-            self.backgroundUploader.uploadKnownFail.connect(
-                self.backgroundUploadFailedServerChanged
-            )
-            self.backgroundUploader.uploadUnknownFail.connect(
-                self.backgroundUploadFailed
-            )
+            self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
             self.backgroundUploader.queue_status_changed.connect(
                 self.update_technical_stats_upload
             )
@@ -897,7 +892,7 @@ class MarkerClient(QWidget):
         self._updateCurrentlySelectedRow()
 
     def background_download_failed(self, img_id):
-        """Callback when a nackground download has failed."""
+        """Callback when a background download has failed."""
         self.ui.labelTech2.setText(f"<p>last msg: failed download img id={img_id}</p>")
         log.info(f"failed download img id={img_id}")
         self.ui.labelTech2.setToolTip("")
@@ -1597,8 +1592,7 @@ class MarkerClient(QWidget):
             synchronous_upload(
                 self.msgr,
                 *_data,
-                knownFailCallback=self.backgroundUploadFailedServerChanged,
-                unknownFailCallback=self.backgroundUploadFailed,
+                failCallback=self.backgroundUploadFailed,
                 successCallback=self.backgroundUploadFinished,
             )
         # successfully marked and put on the upload list.
@@ -1660,66 +1654,42 @@ class MarkerClient(QWidget):
                 self.examModel.setStatusByTask(task, "Complete")
         self.updateProgress(info=progress_info)
 
-    def backgroundUploadFailedServerChanged(self, task, error_message):
-        """An upload has failed because server changed something, safest to quit.
+    def backgroundUploadFailed(
+        self, task: str, errmsg: str, server_changed: bool, unexpected: bool
+    ) -> None:
+        """An upload has failed, LOUDLY tell the user.
 
         Args:
-            task (str): the task ID of the current test.
-            error_message (str): a brief description of the error.
+            task: the task ID of the current test.
+            errmsg: the error message.
+            server_changed: True if this was something that changed server-side
+                outside of our control.
+            unexpected: True if this wasn't expected.
 
         Returns:
             None
         """
         self.examModel.setStatusByTask(task, "failed upload")
-        # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
-        ErrorMsg(
-            None,
-            '<p>Background upload of "{}" has failed because the server '
-            "changed something underneath us.</p>\n\n"
-            '<p>Specifically, the server says: "{}"</p>\n\n'
-            "<p>This is a rare situation; no data corruption has occurred but "
-            "your annotations have been discarded just in case.  You will be "
-            "asked to redo the task later.</p>\n\n"
-            "<p>For now you've been logged out and we'll now force a shutdown "
-            "of your client.  Sorry.</p>"
-            "<p>Please log back in and continue marking.</p>".format(
-                task, error_message
-            ),
-        ).exec()
-        # Log out the user and then raise an exception
-        try:
-            self.msgr.closeUser()
-        except PlomAuthenticationException:
-            log.warning("We tried to log out user but they were already logged out.")
-            pass
-        # exit with code that is not 0 or 1
-        self.Qapp.exit(57)
-        # raise PlomForceLogoutException(
-        # "Server changed under us: {}".format(error_message)
-        # ) from None
 
-    def backgroundUploadFailed(self, task: str, errmsg: str) -> None:
-        """An upload has failed, we don't know why, do something LOUDLY.
+        msg = f"The server did not accept our marking for task {task}."
 
-        Args:
-            task (str): the task ID of the current test.
-            errmsg (str): the error message.
+        if server_changed:
+            msg += "\nSomeone has changed something on the server."
+            # "This is a rare situation; no data corruption has occurred but "
+            # "your annotations have been discarded just in case."
 
-        Returns:
-            None
-        """
-        self.examModel.setStatusByTask(task, "failed upload")
-        # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
-        ErrorMsg(
-            None,
-            "Unfortunately, there was an unexpected error; the server did "
-            f"not accept our marked paper {task}.\n\n"
-            "Your internet connection may be unstable or something unexpected "
-            "has gone wrong. "
-            "Please consider logging out and restarting your client.",
-            info=errmsg,
-        ).exec()
-        return
+        if unexpected:
+            msg += (
+                "\nYour internet connection may be unstable or something"
+                " unexpected has gone wrong."
+                " Please consider logging out and restarting your client."
+            )
+
+        if not unexpected:
+            # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
+            WarnMsg(None, msg, info=errmsg).exec()
+        else:
+            ErrorMsg(None, msg, info=errmsg).exec()
 
     def updatePreviewImage(self, new, old):
         """Updates the displayed image when the selection changes.
