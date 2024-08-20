@@ -17,6 +17,9 @@ from plom.create.mergeAndCodePages import (
     pdf_page_add_name_id_box,
 )
 
+from Papers.services import SpecificationService
+from .preparation_dependency_service import assert_can_modify_prenaming_config
+
 
 class ExamMockerService:
     """Take an uploaded source file and stamp dummy QR codes/text."""
@@ -52,9 +55,6 @@ class ExamMockerService:
     def mock_ID_page(
         self,
         version: int,
-        source_path: str | pathlib.Path | File,
-        id_page_number: int,
-        short_name: str,
         xcoord: float,
         ycoord: float,
         extra={"name": "Ritchie, Lionel", "id": "00000001"},
@@ -63,6 +63,14 @@ class ExamMockerService:
 
         Returns: a bytes object containing the document.
         """
+        assert_can_modify_prenaming_config()
+        # TODO: refactor to delocalize this import, SourceService and mocker are circular
+        from .SourceService import _get_source_file
+
+        short_name = (SpecificationService.get_short_name_slug(),)
+        source_path = pathlib.Path(_get_source_file(version).path)
+        id_page_number = SpecificationService.get_id_page_number()
+
         with tempfile.TemporaryDirectory() as tmpdirname:
             with fitz.open(source_path) as pdf_doc:
                 pdf_doc.select([id_page_number - 1])
