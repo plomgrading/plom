@@ -24,7 +24,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Prenaming configuration</h5>
                     <div class="col">
-                        <p class="card-text">Adjust x,y coordinates of prenaming card.</p>
+                        <p class="card-text">Adjust x,y coordinates of prenaming box.</p>
                     </div>
                     <div class="form-group">
                         <form action="{% url 'configure_prename' %}" method="post">
@@ -59,7 +59,11 @@
                         <input class="btn btn-primary"
                                type="submit"
                                name="set_config"
-                               value="Save settings">
+                               value="Save configuration">
+                        <input class="btn btn-primary"
+                               type="submit"
+                               name="reset_config"
+                               value="set configuration to defaults">
                     </form>
                 </div>
             </div>

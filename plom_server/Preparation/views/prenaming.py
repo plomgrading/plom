@@ -59,8 +59,15 @@ class PrenamingConfigView(ManagerRequiredView):
             except PlomDependencyConflict as err:
                 messages.add_message(request, messages.ERROR, f"{err}")
                 return redirect(reverse("prep_conflict"))
+        elif "reset_config" in request.POST:
+            pss = PrenameSettingService()
+            try:
+                pss.set_prenaming_coords(None, None)
+                return redirect(reverse("create_paperPDFs"))
+            except PlomDependencyConflict as err:
+                messages.add_message(request, messages.ERROR, f"{err}")
+                return redirect(reverse("prep_conflict"))
         # TODO: render the mock on the same page rather than returning a file response
-        # TODO: move mock_id stuff into the mocker service
         elif "mock_id" in request.POST:
             ems = ExamMockerService()
             try:
