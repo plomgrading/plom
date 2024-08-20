@@ -385,7 +385,7 @@ class MarkerClient(QWidget):
         self.ui.viewButton.clicked.connect(self.choose_and_view_other)
         self.ui.technicalButton.clicked.connect(self.show_hide_technical)
         self.ui.failmodeCB.stateChanged.connect(self.toggle_fail_mode)
-        self.ui.explainProbationButton.clicked.connect(self.explain_probation)
+        self.ui.explainProbationButton.clicked.connect(ExplainQuotaDialog(self).exec)
 
     def change_tag_range_options(self):
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
@@ -2021,9 +2021,6 @@ class MarkerClient(QWidget):
         pr = prIndex[0].row()
         task_id_str = self.prxM.getPrefix(pr)
         return task_id_str
-
-    def explain_probation(self) -> None:
-        ExplainQuotaDialog(self).exec()
 
     def manage_tags(self):
         """Manage the tags of the current task."""
