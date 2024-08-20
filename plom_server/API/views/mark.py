@@ -39,7 +39,8 @@ class QuestionMaxMark(APIView):
         (416): question value out of range
     """
 
-    def get(self, request, *, question):
+    def get(self, request: Request, *, question: int) -> Response:
+        """Get the max mark for a given question."""
         try:
             max_mark = SpecificationService.get_question_mark(question)
             return Response(max_mark)
@@ -69,6 +70,7 @@ class MarkingProgress(APIView):
     """
 
     def get(self, request: Request, *, question: int, version: int) -> Response:
+        """Get dict of information about progress and probation status."""
         # TODO: consider version/question into query params to make them optional
         username = request.user.username
         progress = UserInfoServices.get_user_progress(username=username)
@@ -96,6 +98,7 @@ class GetTasks(APIView):
     """
 
     def get(self, request: Request) -> Response:
+        """Get data for tasks."""
         data = request.query_params
         question_idx = data.get("q")
         version = data.get("v")
@@ -115,7 +118,7 @@ class GetTasks(APIView):
 # GET: /pagedata/{papernum}
 # GET: /pagedata/{papernum}/context/{questionidx}
 class MgetPageDataQuestionInContext(APIView):
-    """Get page metadata for a particular test-paper optionally with a question highlighted.
+    """Get page metadata for a paper optionally with a question highlighted.
 
     APIs backed by this routine return a JSON response with a list of
     dicts, where each dict has keys: `pagename`, `md5`, `included`,
@@ -208,6 +211,7 @@ class MgetPageDataQuestionInContext(APIView):
     def get(
         self, request: Request, *, papernum: int, questionidx: int | None = None
     ) -> Response:
+        """Get page metadata for a paper optionally with a question highlighted."""
         service = PageDataService()
 
         try:
@@ -232,7 +236,8 @@ class MgetPageDataQuestionInContext(APIView):
 class MgetOneImage(APIView):
     """Get a page image from the server."""
 
-    def get(self, request, pk, hash):
+    def get(self, request: Request, *, pk: int, hash: str) -> Response:
+        """Get a page image."""
         pds = PageDataService()
         # TODO - replace this fileresponse(open(file)) with fileresponse(filefield)
         # so that we don't have explicit file-path handling.
@@ -261,6 +266,7 @@ class MgetAnnotations(APIView):
     """
 
     def get(self, request: Request, *, paper: int, question: int) -> Response:
+        """Get the latest annotations."""
         mts = MarkingTaskService()
         try:
             annotation = mts.get_latest_annotation(paper, question)
@@ -293,7 +299,7 @@ class MgetAnnotations(APIView):
 
 
 class MgetAnnotationImage(APIView):
-    """Get an annotation-image.
+    """Get an annotation image.
 
     Callers ask for paper number, question index (one-indexed) and
     optionally edition.  If edition is omitted, they get the latest.
@@ -334,6 +340,7 @@ class MgetAnnotationImage(APIView):
     def get(
         self, request: Request, *, paper: int, question: int, edition: int | None = None
     ) -> Response:
+        """Get an annotation image."""
         mts = MarkingTaskService()
         if edition is not None:
             try:
@@ -403,7 +410,7 @@ class TagsFromCodeView(APIView):
             request: an http request.
 
         Keyword Args:
-            code: str, question/paper code for a task.
+            code: question/paper code for a task.
 
         Returns:
             200: OK response
@@ -431,12 +438,15 @@ class TagsFromCodeView(APIView):
             return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
         return Response(status=status.HTTP_200_OK)
 
-    def delete(self, request, code):
+    def delete(self, request: Request, *, code: str) -> Response:
         """Remove a tag from a task.
 
         Args:
-            request (Request): with ``tag_text`` (`str`) as a data field
-            code: str, question/paper code for a task
+            request: a Request object with ``tag_text`` (`str`) as a
+                data field.
+
+        Keyword Args:
+            code: question/paper code for a task.
 
         Returns:
             200: OK response
@@ -462,7 +472,8 @@ class TagsFromCodeView(APIView):
 class GetAllTags(APIView):
     """Respond with all of the tags in the server."""
 
-    def get(self, request):
+    def get(self, request: Request) -> Response:
+        """Get all the tags."""
         mts = MarkingTaskService()
         return Response(mts.get_all_tags(), status=status.HTTP_200_OK)
 
@@ -470,7 +481,8 @@ class GetAllTags(APIView):
 class GetSolutionImage(APIView):
     """Get a solution image from the server."""
 
-    def get(self, request, question, version):
+    def get(self, request: Request, *, question: int, version: int) -> Response:
+        """Get a solution image."""
         try:
             return FileResponse(SolnImageService().get_soln_image(question, version))
         except ObjectDoesNotExist:
