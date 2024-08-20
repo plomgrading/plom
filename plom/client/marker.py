@@ -311,24 +311,6 @@ class MarkerClient(QWidget):
             log.info("Experimental/advanced mode disabled")
             self.annotatorSettings["experimental"] = False
 
-    def get_completed_tasks_count(self):
-        """Get the count in the task model table with complete status.
-
-        Returns:
-            Total completed task recorded in the marker client.
-        """
-        count = 0
-        row_count = self.examModel.rowCount()
-
-        status_column = 1
-
-        for row in range(row_count):
-            item = self.examModel.item(row, status_column)
-            if item is not None and item.text() == "Complete":
-                count += 1
-
-        return count
-
     def UIInitialization(self) -> None:
         """Startup procedure for the user interface.
 
