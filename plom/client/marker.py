@@ -666,9 +666,11 @@ class MarkerClient(QWidget):
         Keyword Args:
             info: key-value pairs with information about progress overall,
                 and for this user, including information about probation.
+                If omitted, we'll contact the server synchronously to get
+                this info.
 
         Returns:
-            None.
+            None
 
         May open dialogs in some circumstances.
         """
@@ -706,8 +708,8 @@ class MarkerClient(QWidget):
 
         if not self.ui.mProgressBar.isVisible():
             self.ui.mProgressBar.setVisible(True)
-        self.ui.explainProbationButton.setVisible(False)
 
+        self.ui.explainProbationButton.setVisible(False)
         if info["user_in_probation"]:
             s = f'Marking limit: {info["user_probation_limit"]} papers'
             self.ui.labelProgress.setText(s)
@@ -754,8 +756,6 @@ class MarkerClient(QWidget):
         Returns:
             None
         """
-        # Get the probationary status from current marker
-        # The status is a dict of (prob_state), total task_marked, and limit
         attempts = 0
         tag = self.annotatorSettings["nextTaskPreferTagged"]
         paper_range = (
@@ -1295,6 +1295,8 @@ class MarkerClient(QWidget):
             ).exec()
             return
 
+        # If we're at quota, don't start marking as server will reject them
+        # (but its ok to modify papers we've already marked).
         task_status = self.examModel.getStatusByTask(task)
         if task_status == "untouched" and self.marker_has_reached_task_limit():
             ReachedQuotaLimitDialog(self).exec()
@@ -1309,7 +1311,7 @@ class MarkerClient(QWidget):
         # we started the annotator, we'll get a signal back when its done
 
     def marker_has_reached_task_limit(self, *, use_cached: bool = True) -> bool:
-        """Check whether a marker has reached their task limit from probation period.
+        """Check whether a marker has reached their task limit if applicable.
 
         Keyword Args:
             use_cached: by default we use a cached value rather than connecting
