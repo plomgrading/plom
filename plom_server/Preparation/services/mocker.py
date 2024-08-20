@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import pathlib
 import tempfile
+import random as rd
 
 from django.core.files import File
 import fitz
@@ -57,11 +58,10 @@ class ExamMockerService:
         version: int,
         xcoord: float,
         ycoord: float,
-        extra={"name": "Ritchie, Lionel", "id": "00000001"},
     ) -> bytes:
-        """Create the ID page of an exam.
+        """Mock the ID page of a prenamed exam.
 
-        Returns: a bytes object containing the document.
+        Returns: a bytes object containing the PDF document.
         """
         assert_can_modify_prenaming_config()
         # TODO: refactor to delocalize this import, SourceService and mocker are circular
@@ -70,20 +70,56 @@ class ExamMockerService:
         short_name = SpecificationService.get_short_name_slug()
         source_path = pathlib.Path(_get_source_file(version).path)
         id_page_number = SpecificationService.get_id_page_number()
+        extra = {
+            "name": rd.choice(
+                [
+                    "Van Brunt, Abraham",
+                    "D'arc, Jean",
+                    "Montoya, Inigo",
+                    "Parr, Robert",
+                    "Square Pants, Sponge Bob",
+                    "., Galadriel",
+                ]
+            ),
+            "id": "00000001",
+        }
+        return self._make_prename_box_page(
+            version,
+            source_path,
+            id_page_number,
+            short_name,
+            xcoord,
+            ycoord,
+            extra=extra,
+        )
 
+    # TODO: unit tests
+    def _make_prename_box_page(
+        self,
+        version: int,
+        source_path: str | pathlib.Path | File,
+        page_num: int,
+        short_name: str,
+        xcoord: float,
+        ycoord: float,
+        extra={"name": "Richie, Lionel", "id": "00000001"},
+    ) -> bytes:
+        """Mock an prenamed ID page on the specified page.
+
+        Returns: a bytes object containing the PDF document.
+        """
         with tempfile.TemporaryDirectory() as tmpdirname:
             with fitz.open(source_path) as pdf_doc:
-                pdf_doc.select([id_page_number - 1])
+                pdf_doc.select([page_num - 1])
                 ID_page = pdf_doc[0]
-                # TODO: run the single page thru mock_exam(), remove duplicate code
                 qr_codes = create_QR_codes(
                     1, 1, version, "00000", pathlib.Path(tmpdirname)
                 )  # dummy values
-                odd = id_page_number % 2 != 0
+                odd = page_num % 2 != 0
                 pdf_page_add_labels_QRs(
                     ID_page,
                     short_name,
-                    f"Mock exam v {version} pg {'banana'}",
+                    f"Mock exam v {version} pg {page_num}",
                     qr_codes,
                     odd=odd,
                 )
