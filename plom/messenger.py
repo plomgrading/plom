@@ -311,7 +311,6 @@ class Messenger(BaseMessenger):
             "user_tasks_marked", "user_in_probation", and "user_probation_limit"
         """
         if self.is_legacy_server():
-            # TODO could support order webplom too, as proof of concept
             n, m = self.MprogressCount_legacy(qidx, ver)
             d = {"total_tasks": m, "total_tasks_marked": n, "user_in_probation": False}
             return d
