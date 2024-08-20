@@ -18,7 +18,6 @@ __license__ = "AGPL-3.0-or-later"
 
 from pathlib import Path
 import logging
-import re
 import shutil
 import sys
 import tempfile
