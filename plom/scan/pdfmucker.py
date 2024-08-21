@@ -2,10 +2,12 @@
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Colin B. Macdonald
 
 """Command Line Tool to simulate PDF errors while scanning."""
 
-from typing import List, Optional
+from __future__ import annotations
+
 import fitz  # PyMuPDF
 import random
 from PIL import Image, ImageEnhance
@@ -68,8 +70,12 @@ class PDFMuckerService:
             return temp_pdf.name
 
     def add_operation_description(
-        self, page: fitz.Page, operation: str, corner: Optional[str]
-    ):
+        self,
+        page: fitz.Page,
+        operation: str,
+        *,
+        corner: str | None = None,
+    ) -> None:
         """Adds a text description of the operation to the page."""
         operation_description = {
             "tear": "Simulated page damage: torn corner.",
@@ -101,7 +107,7 @@ class PDFMuckerService:
 
     def generate_tear_points(
         self, corner: str, severity: float, x_max: float, y_max: float, jaggedness: int
-    ) -> List[fitz.Point]:
+    ) -> list[fitz.Point]:
         """Generates points for a tear with jagged edges.
 
         Args:
@@ -114,7 +120,7 @@ class PDFMuckerService:
             jaggedness: Controls how jagged the tear should be
 
         Returns:
-            List[fitz.Point]: List of points used for the tear.
+            List of points used for the tear.
         """
         if severity < 0.1:
             severity = 0.1
@@ -188,30 +194,30 @@ class PDFMuckerService:
 
         return points
 
-    def mirror_points(self, points: List[fitz.Point], x_max: float) -> List[fitz.Point]:
+    def mirror_points(self, points: list[fitz.Point], x_max: float) -> list[fitz.Point]:
         """Mirrors points horizontally across the middle of the page.
 
         Args:
-            points (List[fitz.Point]): List of points to mirror
-            x_max (float): Maximum x value for the page
+            points: List of points to mirror
+            x_max: Maximum x value for the page
 
         Returns:
-            List[fitz.Point]: List of mirrored points
+            List of mirrored points
         """
         return [fitz.Point(x_max - point.x, point.y) for point in points]
 
     def tear_double_sided(
-        self, pages: List[fitz.Page], corner: str, severity: float, jaggedness: int
+        self, pages: list[fitz.Page], corner: str, severity: float, jaggedness: int
     ):
         """Tears both sides of a single PDF page.
 
         Args:
-            pages (List[fitz.Page]): PDF pages to alter.
-            corner (str): Specify which corner to tear. Valid options are:
+            pages: PDF pages to alter.
+            corner: Specify which corner to tear. Valid options are:
                 'top_left', 'top_right', 'bottom_left', 'bottom_right'.
-            severity (float): How severe the tear should be, as a percentage.
-            Must be between (0, 1.0).
-            jaggedness (int): Controls how jagged the tear should be.
+            severity: How severe the tear should be, as a percentage.
+                 Must be between (0, 1.0).
+            jaggedness: Controls how jagged the tear should be.
         """
         x_max = pages[0].rect.width
         y_max = pages[0].rect.height
@@ -237,7 +243,7 @@ class PDFMuckerService:
             r (fitz.Rect): The rectangle representation of the page's dimension.
 
         Returns:
-            List[fitz.Point]: List of points used for the fold.
+            List of points used for the fold.
             Invariant: item at index 0 is the corner, and
             item at index 3 is the innermost vertex of an inward fold.
         """
@@ -323,7 +329,7 @@ class PDFMuckerService:
 
         return clip
 
-    def fold_page(self, pages: List[fitz.Page], corner: str, severity: float):
+    def fold_page(self, pages: list[fitz.Page], corner: str, severity: float) -> None:
         """Fold both sides of a single PDF page.
 
         Assumption:
@@ -331,7 +337,7 @@ class PDFMuckerService:
             2. The fold is an isosceles triangle.
 
         Args:
-            pages (List[fitz.Page]): PDF pages to alter.
+            pages: PDF pages to alter.
             corner (str): Specify which corner to fold. Valid options are:
                 'top_left', 'top_right', 'bottom_left', 'bottom_right'.
             severity (float): How severe fold tear should be, as a percentage.
