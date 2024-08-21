@@ -269,7 +269,7 @@ class DemoBundleCreationService:
             tw.write_text(pdf_doc[-1])
             tw.write_text(pdf_doc[-2])
 
-    def append_duplicate_page(self, pdf_doc: fitz.Document, page_number: int) -> None:
+    def append_duplicate_page(self, pdf_doc: fitz.Document) -> None:
         """Makes a (deep) copy of the last page of the PDF and appends it.
 
         This is to simulate sloppy scanning procedures in which a given
@@ -441,7 +441,7 @@ class DemoBundleCreationService:
         extra_page_papers: list = [],
         scrap_page_papers: list = [],
         garbage_page_papers: list = [],
-        duplicate_pages: list = [],
+        duplicate_pages: list[int] = [],
         duplicate_qr: list = [],
         wrong_version: list = [],
         wrong_assessment: list = [],
@@ -508,7 +508,7 @@ class DemoBundleCreationService:
                             scrap_paper_path,
                         )
                     if paper_number in duplicate_pages:
-                        self.append_duplicate_page(pdf_document, duplicate_pages)
+                        self.append_duplicate_page(pdf_document)
 
                     # scribble on the pages
                     scribble_pages(pdf_document)
