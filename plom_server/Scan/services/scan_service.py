@@ -24,7 +24,6 @@ from django_huey import db_task
 
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap, try_to_extract_image
-from plom.scan.scansToImages import make_mucked_up_jpeg
 from plom.scan.question_list_utils import canonicalize_page_question_map
 from plom.tpv_utils import (
     parseTPV,
@@ -72,7 +71,6 @@ class ScanService:
         *,
         force_render: bool = False,
         read_after: bool = False,
-        debug_jpeg: bool = False,
     ) -> None:
         """Upload a bundle PDF and store it in the filesystem + database.
 
@@ -94,9 +92,6 @@ class ScanService:
                 render the page.
             read_after: Automatically read the qr codes from the bundle after
                 upload+splitting is finished.
-            debug_jpeg: off by default.  If True then we make some
-                rotations by non-multiples of 90, and save some
-                low-quality jpegs.
 
         Returns:
             None
@@ -118,9 +113,7 @@ class ScanService:
                 bundle_obj.pdf_hash = pdf_hash
                 bundle_obj.number_of_pages = number_of_pages
                 bundle_obj.save()
-        self.split_and_save_bundle_images(
-            bundle_obj.pk, read_after=read_after, debug_jpeg=debug_jpeg
-        )
+        self.split_and_save_bundle_images(bundle_obj.pk, read_after=read_after)
 
     def upload_bundle_cmd(
         self,
@@ -130,8 +123,6 @@ class ScanService:
         timestamp: float,
         pdf_hash: str,
         number_of_pages: int,
-        *,
-        debug_jpeg: bool = False,
     ) -> None:
         """Wrapper around upload_bundle for use by the commandline bundle upload command.
 
@@ -144,10 +135,6 @@ class ScanService:
             timestamp (float): the timestamp of the datetime at which the file was uploaded
             pdf_hash (str): the sha256 of the pdf.
             number_of_pages (int): the number of pages in the pdf
-
-        Keyword Args:
-            debug_jpeg: off by default.  If True then we make some rotations
-                by non-multiples of 90, and save some low-quality jpegs.
 
         Returns:
             None
@@ -172,7 +159,6 @@ class ScanService:
             timestamp,
             pdf_hash,
             number_of_pages,
-            debug_jpeg=debug_jpeg,
         )
 
     def split_and_save_bundle_images(
@@ -181,7 +167,6 @@ class ScanService:
         *,
         number_of_chunks: int = 16,
         read_after: bool = False,
-        debug_jpeg: bool = False,
     ) -> None:
         """Read a PDF document and save page images to filesystem/database.
 
@@ -194,8 +179,6 @@ class ScanService:
                 number_of_pages_in_bundle / number_of_chunks pages.
             read_after: Automatically read the qr codes from the bundle after
                 upload+splitting is finished.
-            debug_jpeg: off by default.  If True then we make some rotations
-                by non-multiples of 90, and save some low-quality jpegs.
 
         Returns:
             None
@@ -211,7 +194,6 @@ class ScanService:
         res = huey_parent_split_bundle_task(
             bundle_pk,
             number_of_chunks,
-            debug_jpeg=debug_jpeg,
             tracker_pk=tracker_pk,
             read_after=read_after,
         )
@@ -1408,7 +1390,6 @@ def huey_parent_split_bundle_task(
     bundle_pk: int,
     number_of_chunks: int,
     *,
-    debug_jpeg: bool = False,
     tracker_pk: int,
     read_after: bool = False,
     # TODO - CBM - what type should task have?
@@ -1426,8 +1407,6 @@ def huey_parent_split_bundle_task(
             pages in the bundle.
 
     Keyword Args:
-        debug_jpeg: off by default.  If True then we make some rotations by
-            non-multiplies of 90, and save some low-quality jpegs.
         tracker_pk: a key into the database for anyone interested in
             our progress.
         read_after: automatically trigger a qr-code read after splitting finished.
@@ -1466,7 +1445,6 @@ def huey_parent_split_bundle_task(
                 bundle_pk,
                 ord_chnk,  # note pg is 1-indexed
                 pathlib.Path(tmpdir),
-                debug_jpeg=debug_jpeg,
             )
             for ord_chnk in order_chunks
         ]
@@ -1611,8 +1589,6 @@ def huey_child_get_page_images(
     bundle_pk: int,
     order_list: list[int],
     basedir: pathlib.Path,
-    *,
-    debug_jpeg: bool = False,
 ) -> list[dict[str, Any]]:
     """Render page images and save to disk in the background.
 
@@ -1623,10 +1599,6 @@ def huey_child_get_page_images(
         bundle_pk: bundle DB object's primary key
         order_list: a list of bundle orders of pages to extract - 1-indexed
         basedir (pathlib.Path): were to put the image
-
-    Keyword Args:
-        debug_jpeg: off by default.  If True then we make some rotations by
-            non-multiplies of 90, and save some low-quality jpegs.
 
     Returns:
         Information about the page image, including its file name,
@@ -1667,13 +1639,6 @@ def huey_child_get_page_images(
                     add_metadata=True,
                 )
 
-            # For testing, randomly make jpegs, rotated a bit, of various qualities
-            if debug_jpeg and random.uniform(0, 1) <= 0.5:
-                _ = make_mucked_up_jpeg(
-                    save_path, basedir / ("muck-" + basename + ".jpg")
-                )
-                save_path.unlink()
-                save_path = _
             with open(save_path, "rb") as f:
                 image_hash = hashlib.sha256(f.read()).hexdigest()
 

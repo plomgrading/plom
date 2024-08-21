@@ -7,10 +7,10 @@
 from datetime import datetime
 import hashlib
 import pathlib
+from time import sleep
 
 import fitz
 from tabulate import tabulate
-from time import sleep
 
 from django.utils import timezone
 from django.utils.text import slugify
@@ -62,7 +62,6 @@ class Command(BaseCommand):
                 timestamp,
                 hashed,
                 number_of_pages,
-                debug_jpeg=debug_jpeg,
             )
             self.stdout.write(
                 f"Uploaded {source_pdf} as user {username} - processing it in the background now."
