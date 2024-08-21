@@ -8,14 +8,15 @@
 
 from __future__ import annotations
 
-import fitz  # PyMuPDF
-import random
-from PIL import Image, ImageEnhance
 import io
-import cv2
 import math
-import numpy as np
+import random
 import tempfile
+
+import cv2
+import fitz  # PyMuPDF
+import numpy as np
+from PIL import Image, ImageEnhance
 
 
 class PDFMuckerService:
