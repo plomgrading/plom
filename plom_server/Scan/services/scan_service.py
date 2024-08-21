@@ -11,7 +11,7 @@ import hashlib
 from math import ceil
 import pathlib
 import tempfile
-from typing import Any, Dict
+from typing import Any
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -221,7 +221,7 @@ class ScanService:
         else:  # no such qr-reading tasks have been done
             return False
 
-    def are_bundles_mid_splitting(self) -> Dict[str, bool]:
+    def are_bundles_mid_splitting(self) -> dict[str, bool]:
         """Returns a dict of each staging bundle (slug) and whether it is still mid-split."""
         return {
             bundle_obj.slug: self.is_bundle_mid_splitting(bundle_obj.pk)
@@ -597,7 +597,7 @@ class ScanService:
         else:  # no such qr-reading tasks have been done
             return False
 
-    def are_bundles_mid_qr_read(self) -> Dict[str, bool]:
+    def are_bundles_mid_qr_read(self) -> dict[str, bool]:
         """Returns a dict of each staging bundle (slug) and whether it is still mid-qr-read."""
         return {
             bundle_obj.slug: self.is_bundle_mid_qr_read(bundle_obj.pk)
@@ -816,14 +816,14 @@ class ScanService:
 
         return True
 
-    def are_bundles_perfect(self) -> Dict[str, bool]:
+    def are_bundles_perfect(self) -> dict[str, bool]:
         """Returns a dict of each staging bundle (slug) and whether it is perfect."""
         return {
             bundle_obj.slug: self.is_bundle_perfect(bundle_obj.pk)
             for bundle_obj in StagingBundle.objects.all()
         }
 
-    def are_bundles_pushed(self) -> Dict[str, bool]:
+    def are_bundles_pushed(self) -> dict[str, bool]:
         """Returns a dict of each staging bundle (slug) and whether it is pushed."""
         return {
             bundle_obj.slug: bundle_obj.pushed
