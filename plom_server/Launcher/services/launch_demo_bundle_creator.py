@@ -1,18 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
+from __future__ import annotations
 
 from collections import defaultdict
 import csv
+from dataclasses import asdict
 from pathlib import Path
 import shutil
 import tempfile
 from typing import List, Dict, Any
-from dataclasses import asdict
 
 import fitz
 
@@ -432,32 +433,52 @@ class DemoBundleCreationService:
 
     def scribble_to_create_bundle(
         self,
-        assigned_papers_ids,
-        extra_page_path,
-        scrap_paper_path,
-        out_file,
+        assigned_papers_ids: list[dict[str, Any]],
+        extra_page_path: Path,
+        scrap_paper_path: Path,
+        out_file: Path,
         *,
-        extra_page_papers=[],
-        scrap_page_papers=[],
-        garbage_page_papers=[],
-        duplicate_pages=[],
-        duplicate_qr=[],
-        wrong_version=[],
-        wrong_assessment=[],
-        out_of_range_papers=[],
-        obscure_qr_papers=[],
-        mucking_operation=[],
-    ):
-        """Scribble on some of the papers to create a bundle, along with various others inclusions."""
-        # extra_page_papers = list of paper_numbers to which we append a couple of extra_pages
-        # scrap_page_papers = list of paper_numbers to which we append a couple of scrap-paper pages
-        # garbage_page_papers = list of paper_numbers to which we append a garbage page
-        # duplicate_pages = a list of papers to have their final page duplicated.
-        # wrong_version = list of paper_numbers to which we replace last page with a blank but wrong version number.
-        # wrong_assessment = list of paper_numbers to which we append a page from a different assessment.
+        extra_page_papers: list = [],
+        scrap_page_papers: list = [],
+        garbage_page_papers: list = [],
+        duplicate_pages: list = [],
+        duplicate_qr: list = [],
+        wrong_version: list = [],
+        wrong_assessment: list = [],
+        out_of_range_papers: list = [],
+        obscure_qr_papers: list = [],
+        mucking_operation: list[str] = [],
+    ) -> None:
+        """Scribble on some of the papers to create a bundle, along with various others inclusions.
 
-        # A complete collection of the pdfs created
+        Args:
+            assigned_papers_ids: Which paper numbers to use for this bundle.
+            extra_page_path: where to find the template extra page.
+            scrap_paper_path: where to find the template scrap paper.
+            out_file: where to save the created PDF bundle.
 
+        Keyword Args:
+            extra_page_papers: list of paper_numbers to which we append
+                a couple of extra pages.
+            scrap_page_papers: list of paper_numbers to which we append
+                a couple of scrap-paper pages.
+            garbage_page_papers: list of paper_numbers to which we append
+                a garbage page.
+            duplicate_pages: list of papers to have their final page
+                duplicated.
+            duplicate_qr: TODO.
+            out_of_range_papers: TODO.
+            obscure_qr_papers: TODO.
+            mucking_operation: a list of mucking operations to apply,
+                simulating various sorts of damage to the pages.
+            wrong_version: list of paper numbers to which we replace last
+                page with a blank but wrong version number.
+            wrong_assessment: list of paper numbers to which we append a
+                page from a different assessment.
+
+        Returns:
+            None.
+        """
         with fitz.open() as all_pdf_documents:
             for paper in assigned_papers_ids:
                 with fitz.open(paper["path"]) as pdf_document:
