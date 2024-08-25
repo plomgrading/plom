@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Bryan Tanady
@@ -8,6 +9,7 @@
 
 from __future__ import annotations
 
+import argparse
 import io
 import math
 import random
@@ -19,20 +21,78 @@ import numpy as np
 from PIL import Image, ImageEnhance
 
 
+def get_parser() -> argparse.ArgumentParser:
+    """Returns the argument parser used to parse command line input.
+
+    Returns:
+        ArgumentParser used to parse input.
+    """
+    parser = argparse.ArgumentParser(
+        prog="pdf-mucker", description="Simulate PDF Scanning Errors"
+    )
+
+    parser.add_argument("filename", type=str, help='File to be "mucked"')
+    parser.add_argument("page", type=int, help="Page number to muck")
+    parser.add_argument(
+        "operation",
+        choices=[
+            "tear",
+            "fold",
+            "rotate",
+            "compress",
+            "jam",
+            "hide",
+            "corrupt",
+            "stretch",
+            "lighten",
+            "darken",
+        ],
+        help="Type of operation to perform",
+    )
+    parser.add_argument(
+        "corner",
+        nargs="?",
+        choices=["top_left", "top_right", "bottom_left", "bottom_right"],
+        help="Corner to target for tear, fold, hide, or cover",
+    )
+    parser.add_argument(
+        "--severity",
+        type=float,
+        default=0.5,
+        help="Severity of the operation (0.0 to 1.0, default 0.5)",
+    )
+    parser.add_argument(
+        "--jaggedness", type=int, default=2, help="Jaggedness of the tear"
+    )
+
+    return parser
+
+
+def validate_args(args):
+    """Ensure that corner is provided for operation in [tear, fold, hide, cover].
+
+    Raises:
+        ValueError: if the operation is set, but corner is not provided
+    """
+    if args.operation in ["tear", "fold", "hide", "cover"] and args.corner is None:
+        raise ValueError(f"The corner argument is required for {args.operation}")
+
+
 class PDFMuckerService:
 
     def get_page(self, file: fitz.Document, page_number: int) -> fitz.Page:
         """Get a page from the document.
 
         Args:
-            file (fitz.Document): The PDF document
-            page_number (int): The page number to get (1-based)
+            file: The PDF document
+            page_number: The page number to get (1-based, in contrast with
+                most of the lower-level code).
 
         Returns:
-            fitz.Page: The specified page
+            The specified page.
 
         Raises:
-            ValueError: If the page number is out of range
+            ValueError: If the page number is out of range.
         """
         if page_number < 1 or page_number > file.page_count:
             raise ValueError(
@@ -95,8 +155,8 @@ class PDFMuckerService:
         # Default position at the top of the page
         position = (100, 20)
 
-        # If operation affects the top of the page, move text to the bottom, to avoid covering the text
-        if corner in ["top_left", "top_right"]:
+        # If operation affects top of page, move text to the bottom
+        if corner in ("top_left", "top_right"):
             position = (100, page.rect.height - 20)
 
         page.insert_text(
@@ -115,10 +175,10 @@ class PDFMuckerService:
             corner: Specify which corner to tear. Valid options are:
                 'top_left', 'top_right', 'bottom_left', 'bottom_right'
             severity: How severe the tear should be, as a percentage.
-            Must be between (0, 1.0)
-            x_max: Maximum x value for the page
-            y_max (): Maximum y value for the page
-            jaggedness: Controls how jagged the tear should be
+                Must be between (0, 1.0).
+            x_max: Maximum x value for the page.
+            y_max: Maximum y value for the page.
+            jaggedness: Controls how jagged the tear should be.
 
         Returns:
             List of points used for the tear.
@@ -195,7 +255,9 @@ class PDFMuckerService:
 
         return points
 
-    def mirror_points(self, points: list[fitz.Point], x_max: float) -> list[fitz.Point]:
+    def _mirror_points(
+        self, points: list[fitz.Point], x_max: float
+    ) -> list[fitz.Point]:
         """Mirrors points horizontally across the middle of the page.
 
         Args:
@@ -210,14 +272,15 @@ class PDFMuckerService:
     def tear_double_sided(
         self, pages: list[fitz.Page], corner: str, severity: float, jaggedness: int
     ):
-        """Tears both sides of a single PDF page.
+        """Tear a corner of a (physical) page, also effecting the next PDF page.
 
         Args:
-            pages: PDF pages to alter.
+            pages: PDF pages to alter.  If at least two pages are passed,
+                we simulate a physical tear.
             corner: Specify which corner to tear. Valid options are:
                 'top_left', 'top_right', 'bottom_left', 'bottom_right'.
             severity: How severe the tear should be, as a percentage.
-                 Must be between (0, 1.0).
+                Must be between (0, 1.0).
             jaggedness: Controls how jagged the tear should be.
         """
         x_max = pages[0].rect.width
@@ -230,7 +293,7 @@ class PDFMuckerService:
 
         if len(pages) > 1:
             # Generate mirrored points for the back side
-            mirrored = self.mirror_points(points, x_max)
+            mirrored = self._mirror_points(points, x_max)
             pages[1].draw_polyline(mirrored, color=color, width=3, fill=color)
 
     def generate_fold_points(self, corner: str, severity: float, r: fitz.Rect):
@@ -282,35 +345,39 @@ class PDFMuckerService:
 
         return [vertex1, vertex2, vertex3, vertex4]
 
-    def get_corner_pixmap(
+    def _get_corner_pixmap(
         self, page: fitz.Page, corner: str, severity: float, r: fitz.Rect
     ) -> fitz.Pixmap:
         """Gets the pixmap of a corner.
 
         Args:
-            page (fitz.Page): Page to get pixmap from.
-            corner (str): Corner to get pixmap from.
-            severity (float): Severity of the fold.
-            r (fitz.Rect): The rectangle representation of `page`'s dimension.
+            page: Page to get pixmap from.
+            corner: Corner to get pixmap from.
+            severity: Severity of the fold.
+            r: The rectangle representation of the page's dimension.
+                TODO: if it is the entire page, why do we need to pass it in?
 
         Returns:
-            fitz.Pixmap: Pixmap of the folded area.
+            Pixmap of the folded area.
         """
         mat = fitz.Matrix(2, 2)
         return page.get_pixmap(
-            matrix=mat, clip=self.get_bounding_box(corner, severity, r)
+            matrix=mat, clip=self._get_bounding_box(corner, severity, r)
         )
 
-    def get_bounding_box(self, corner: str, severity: float, r: fitz.Rect) -> fitz.Rect:
+    def _get_bounding_box(
+        self, corner: str, severity: float, r: fitz.Rect
+    ) -> fitz.Rect:
         """Get the bounding box of a fold.
 
         Args:
-            corner (str): Corner of the fold.
-            severity (float): Severity of the bold.
-            r (fitz.Rect): Rectangle representation of the page being folded.
+            corner: Corner of the fold.
+            severity: Severity of the bold.
+            r: Rectangle representation of the page being folded.
+                TODO: if it is the entire page, why do we need to pass it in?
 
         Returns:
-            fitz.Rect: Bounding box of the fold.
+            Bounding box of the fold.
         """
         side = severity * 0.5 * r.width
         clip = None
@@ -331,20 +398,23 @@ class PDFMuckerService:
         return clip
 
     def fold_page(self, pages: list[fitz.Page], corner: str, severity: float) -> None:
-        """Fold both sides of a single PDF page.
+        """Fold over a corner of a physical page, which effects two PDF pages.
 
         Assumption:
-            1. The page number given in the argument is assumed to be the page that is folded inward.
+            1. The page number given in the argument is assumed to be
+                 the page to be folded inward.
             2. The fold is an isosceles triangle.
 
         Args:
-            pages: PDF pages to alter.
+            pages: PDF pages to alter, at least two pages.
             corner (str): Specify which corner to fold. Valid options are:
                 'top_left', 'top_right', 'bottom_left', 'bottom_right'.
             severity (float): How severe fold tear should be, as a percentage.
                 Must be between (0, 1.0).
             A quarter page folded is considered as most severe fold.
         """
+        assert len(pages) >= 2, "Need at least two pages to simulate a fold"
+
         r = pages[0].rect
         points = self.generate_fold_points(corner, severity, r)
         # color
@@ -352,17 +422,16 @@ class PDFMuckerService:
         edge_in = (0.7, 0.7, 0.7)
         out_clr = (0, 0, 0)
 
-        bounding_box = self.get_bounding_box(corner, severity, r)
-        pixmap = self.get_corner_pixmap(pages[1], corner, severity, r)
+        bounding_box = self._get_bounding_box(corner, severity, r)
+        pixmap = self._get_corner_pixmap(pages[1], corner, severity, r)
         pages[0].insert_image(bounding_box, pixmap=pixmap, rotate=180)
 
         pages[0].draw_quad(bounding_box.quad, color=edge_in, width=1)
         pages[0].draw_polyline(points[:-1], color=edge_out, width=1, fill=out_clr)
 
-        if len(pages) > 1:
-            # Generate mirrored points for the back side
-            mirrored = self.mirror_points(points, r.width)
-            pages[1].draw_polyline(mirrored[:-1], color=edge_out, width=1, fill=out_clr)
+        # Generate mirrored points for the back side
+        mirrored = self._mirror_points(points, r.width)
+        pages[1].draw_polyline(mirrored[:-1], color=edge_out, width=1, fill=out_clr)
 
     def obscure_qr_codes_in_paper(self, pdf_doc: fitz.Document) -> None:
         """Hide qr-codes for demo purposes.
@@ -440,32 +509,34 @@ class PDFMuckerService:
         )
         tw.write_text(page, color=(0, 0, 0.8))
 
-    def rotate_page(self, doc: fitz.Document, page_number: int, severity: float):
+    def rotate_page(self, doc: fitz.Document, page_num: int, severity: float) -> None:
         """Rotate a page counterclockwise.
 
         Args:
-            doc (fitz.Document): The document whose page will be rotated.
-            page_number(int): The page number of the document to be rotated (0 indexed).
-            severity(float): The severity represents the linear mapping of counterclockwise rotation,
-                            where [0,1] is mapped to [0, 180] degrees of counterclockwise rotation.
+            doc: The document whose page will be rotated.
+            page_num: Which page of the document is to be rotated (0 indexed).
+            severity: The severity represents the linear mapping of
+                counterclockwise rotation, where [0, 1] is mapped to
+                [0, 180] degrees of counterclockwise rotation.
         """
         rotate_degree = severity * 180
 
         src = fitz.open()
         src.insert_pdf(doc)
 
-        doc.delete_page(page_number)
-        page: fitz.Page = doc.new_page(pno=page_number)
-        page.show_pdf_page(page.rect, src, pno=page_number, rotate=rotate_degree)
+        doc.delete_page(page_num)
+        page: fitz.Page = doc.new_page(pno=page_num)
+        page.show_pdf_page(page.rect, src, pno=page_num, rotate=rotate_degree)
         self.add_operation_description(page, "rotate", corner=None)
 
     def compress(self, doc: fitz.Document, page_num, severity: float):
-        """Compress an image, such that the quality of a page in the pdf is worsened.
+        """Compress an image of a page to display JPEG artifacts.
 
         Args:
-            doc (fitz.Document): The document whose page will be compressed.
-            page_num(int): The page number of the document to be compressed (0 indexed).
-            severity(float): The severity is linearly mapped, where [0,1] of severity is mapped to [100, 0] jpg_quality.
+            doc: The document whose page will be compressed.
+            page_num: The page number of the document to be compressed (0 indexed).
+            severity: The severity is linearly mapped, where [0, 1] of
+                severity is mapped to [100, 0] "jpeg quality".
         """
         jpg_quality = 100 - int(severity * 100)
         page = doc[page_num]
@@ -522,13 +593,14 @@ class PDFMuckerService:
         img.save(bytestream, "JPEG")
         page.insert_image(page.rect, stream=bytestream)
 
-    def jam(self, doc: fitz.Document, page_num, severity: float):
+    def jam(self, doc: fitz.Document, page_num, severity: float) -> None:
         """Simulates a page feed error, where a row is smeared downwards.
 
         Args:
-            doc(fitz.Document): The target document.
-            page_num(int): The target page number.
-            severity(float): The severity of the smear, which is how far up the page it starts.
+            doc: The target document.
+            page_num: The target page number (0-indexed).
+            severity: The severity of the smear, which is how far up the
+                page the damage starts.
         """
         page = doc[page_num]
 
@@ -548,24 +620,33 @@ class PDFMuckerService:
         image.save(bytestream, "JPEG")
         page.insert_image(page.rect, stream=bytestream)
 
-    def stretch(self, doc: fitz.Document, page_number: int, severity: float):
+    def stretch(self, doc: fitz.Document, page_num: int, severity: float) -> None:
         """Stretch a page, expanding near the top and compressing near the bottom.
 
-        The stretch works through non-linear shifting for the pixel in the y-direction (particularly shifting each pixel downward).
+        The stretch works through non-linear shifting for the pixel in
+        the y-direction (in particular, shifting each pixel downward).
 
-        This implementation uses the sine function (with a period of 2 * height), so that delta_y's sign is constant throughout
-        the operation (negative in this case). Additionally, using a half sine wave as the shifter causes an increasing shifting magnitude
-        from 0 to h/2 and a decreasing shifting magnitude from h/2 onward. The effect is caused by the increasing - decreasing magnitude of the y-shifts.
-        Basically, everything tends to be stretched down (a pixel will be replaced by its upper peers, because of negative shift), so when the shifting magnitude is increasing
-        and around its peak, the majority of the page will have been stretched down, leaving a small portion on the bottom (where the shifting magnitude is decreasing and is already small),
-        and effectively creates a compression effect.
+        This implementation uses the sine function (with a period of
+        2 * height), so that delta_y's sign is constant throughout the
+        operation (negative in this case).  Additionally, using a half
+        sine wave as the shifter causes an increasing shifting
+        magnitude from 0 to h/2 and a decreasing shifting magnitude
+        from h/2 onward.  The effect is caused by the increasing -
+        decreasing magnitude of the y-shifts.  Basically, everything
+        tends to be stretched down (a pixel will be replaced by its
+        upper peers, because of negative shift), so when the shifting
+        magnitude is increasing and around its peak, the majority of
+        the page will have been stretched down, leaving a small
+        portion on the bottom (where the shifting magnitude is
+        decreasing and is already small), and effectively creates a
+        compression effect.
 
         Args:
-            doc (fitz.Document): The document containing the page.
-            page_number (int): The page number to be stretched (0 indexed).
-            severity (float): The severity of the stretch.
+            doc: The document containing the page.
+            page_num: The page number to be stretched (0 indexed).
+            severity: The severity of the stretch.
         """
-        page = self.get_page(doc, page_number)
+        page = self.get_page(doc, page_num)
         amplitude = 200 * severity
         pix = page.get_pixmap()
         pil_image = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
@@ -605,11 +686,11 @@ class PDFMuckerService:
         """Detects a single QR code area based on the specified corner.
 
         Args:
-            corner (str): The corner to target.
-            page (fitz.Page): The PDF page to analyze.
+            corner: The corner to target.
+            page: The PDF page to analyze.
 
         Returns:
-            fitz.Rect: The detected QR code area.
+            The detected QR code area as a ``fitz.Rect``.
         """
         page_width = page.rect.width
         page_height = page.rect.height
@@ -667,7 +748,7 @@ class PDFMuckerService:
 
         Args:
             filepath: the path to the pdf.
-            page_number: the page number to be mucked.
+            page_number: the page number to be mucked, indexed from 1.
             operation: mucking operation.
             corner: which corner to be mucked.
             severity: float from (0, 1) representing how severe is the mucking.
@@ -726,3 +807,23 @@ class PDFMuckerService:
             raise RuntimeError("Invalid operation specified")
 
         file.saveIncr()
+
+
+def main() -> int:
+    parser = get_parser()
+    args = parser.parse_args()
+    validate_args(args)
+
+    PDFMuckerService().muck_paper(
+        args.filename,
+        args.page,
+        args.operation,
+        args.corner,
+        args.severity,
+        args.jaggedness,
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    main()
