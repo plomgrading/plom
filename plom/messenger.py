@@ -300,7 +300,7 @@ class Messenger(BaseMessenger):
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def get_marking_progress(self, qidx: int, ver: int) -> dict[str, Any]:
-        """Get a dict representing the progress and probation status of current marker.
+        """Get a dict representing the progress and quota status of current marker.
 
         Args:
             qidx: which question.
