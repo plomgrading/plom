@@ -18,8 +18,9 @@ explain = """
     <p>If your instructor has already changed the setting, try
     refreshing your list of marking tasks.</p>
 
-    <p>You can also <a href="https://plom.rtfd.io">read about
-    Plom&rsquo;s &ldquo;probation settings&rdquo;</a>.</p>
+    <p>You can also
+    <a href="https://plom.readthedocs.io/en/latest/marking.html#quotas">read
+    about Plom&rsquo;s quota settings</a>.</p>
 """
 
 
