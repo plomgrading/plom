@@ -23,7 +23,7 @@ from django.conf import settings
 from plom import SpecVerifier
 from plom.create.mergeAndCodePages import create_QR_codes
 from plom.create.scribble_utils import scribble_name_and_id, scribble_pages
-from plom.scan.pdfmucker import PDFMuckerService
+from plom.scan import pdfmucker
 
 
 class DemoBundleCreationService:
@@ -421,7 +421,7 @@ class DemoBundleCreationService:
         jaggedness = 2
         # cmd = f"python3 -m plom.scan.pdfmucker {filepath} {second_to_last_page} {operation} {corner} --severity={severity}"
         # subprocess.check_call(cmd.split())
-        PDFMuckerService().muck_paper(
+        pdfmucker.muck_paper(
             filepath=filepath,
             page_number=second_to_last_page,
             operation=operation,
