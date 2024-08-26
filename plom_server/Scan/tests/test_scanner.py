@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
@@ -28,7 +29,7 @@ from django.conf import settings
 from django.core.files import File
 from model_bakery import baker
 
-from plom.scan import QRextract, rotate
+from plom.scan import QRextract, rotate, pdfmucker
 
 from ..services import ScanService, PageImageProcessor
 from ..models import StagingBundle, StagingImage
@@ -40,9 +41,7 @@ class ScanServiceTests(TestCase):
     def setUp(self) -> None:
         random_user_name = f"__tests_user{random.randint(0, 99999)}"
         self.user: User = baker.make(User, username=random_user_name)
-        self.pdf_path = resources.files(_Scan_tests) / "test_bundle.pdf"
-        with fitz.Document(self.pdf_path) as pdf:
-            assert len(pdf) == 28
+        self.pdf_path = pdfmucker.generate_dummy_pdf()
         media_folder = settings.MEDIA_ROOT
         media_folder.mkdir(exist_ok=True)
 
