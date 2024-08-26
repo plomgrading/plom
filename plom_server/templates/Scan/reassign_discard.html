@@ -15,6 +15,7 @@
         <a class="btn btn-primary" href="{% url 'scan_overview' %}">Bundle and paper overview</a>
         <a class="btn btn-primary" href="{% url 'scan_list_complete' %}">Complete papers</a>
         <a class="btn btn-primary" href="{% url 'scan_list_incomplete' %}">Incomplete papers</a>
+        <a class="btn btn-primary" href="{% url 'scan_list_discard' %}">Discarded page images</a>
     </div>
     <div class="card my-2">
         <div class="card-body">
@@ -50,18 +51,26 @@
                                                id="mobile"
                                                value="mobile"
                                                x-model="assignment_type" />
-                                        <label class="form-check-label" for="mobile">mobile page in an existing paper</label>
+                                        <label class="form-check-label" for="mobile">mobile page in any pushed paper</label>
                                     </p>
                                 </div>
                                 <div class="container shadow-sm p-2">
                                     <div x-show="assignment_type=='fixed'">
+                                      <p>
                                         Select a missing fixed page from an incomplete paper:
+                                        </p>
                                         <select name="missingPaperPage" class="form-select">
                                             <option selected>Missing paper/page</option>
                                             {% for pn, pg_list in papers_missing_fixed_pages %}
                                                 {% for pg in pg_list %}<option value="{{ pn }},{{ pg }}">paper {{ pn }} page {{ pg }}</option>{% endfor %}
                                             {% endfor %}
                                         </select>
+                                        {% if not papers_missing_fixed_pages %}
+                                        <div class="my-1"><p class="alert alert-info">
+                                          All pushed papers are complete
+                                        </p>
+                                        </div>
+                                        {% endif %}
                                     </div>
                                     <div x-show="assignment_type=='mobile'">
                                         Select a used paper:
