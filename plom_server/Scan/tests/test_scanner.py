@@ -29,8 +29,7 @@ from django.conf import settings
 from django.core.files import File
 from model_bakery import baker
 
-from plom.scan import QRextract, rotate
-from plom.scan.pdfmucker import PDFMuckerService
+from plom.scan import QRextract, rotate, pdfmucker
 
 from ..services import ScanService, PageImageProcessor
 from ..models import StagingBundle, StagingImage
@@ -42,7 +41,7 @@ class ScanServiceTests(TestCase):
     def setUp(self) -> None:
         random_user_name = f"__tests_user{random.randint(0, 99999)}"
         self.user: User = baker.make(User, username=random_user_name)
-        self.pdf_path = PDFMuckerService().generate_dummy_pdf()
+        self.pdf_path = pdfmucker.generate_dummy_pdf()
         media_folder = settings.MEDIA_ROOT
         media_folder.mkdir(exist_ok=True)
 
