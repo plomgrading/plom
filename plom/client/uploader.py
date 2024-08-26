@@ -28,7 +28,7 @@ from plom.plom_exceptions import (
     PlomTaskDeletedError,
     PlomConflict,
     PlomException,
-    PlomProbationLimitExceeded,
+    PlomQuotaLimitExceeded,
 )
 from plom.messenger import Messenger
 
@@ -244,7 +244,7 @@ def synchronous_upload(
     except (PlomTaskChangedError, PlomTaskDeletedError, PlomConflict) as ex:
         failCallback(task, str(ex), True, False)
         return False
-    except PlomProbationLimitExceeded as ex:
+    except PlomQuotaLimitExceeded as ex:
         failCallback(task, str(ex), False, False)
         return False
     except PlomException as ex:

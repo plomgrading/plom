@@ -34,7 +34,7 @@ from plom.plom_exceptions import (
     PlomTaskChangedError,
     PlomTaskDeletedError,
     PlomTimeoutError,
-    PlomProbationLimitExceeded,
+    PlomQuotaLimitExceeded,
 )
 
 
@@ -704,7 +704,7 @@ class Messenger(BaseMessenger):
                 if response.status_code == 400:
                     raise PlomSeriousException(response.reason) from None
                 if response.status_code == 423:
-                    raise PlomProbationLimitExceeded(response.reason) from None
+                    raise PlomQuotaLimitExceeded(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MgetUserRubricTabs(self, question):

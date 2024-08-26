@@ -44,7 +44,7 @@ class PlomConnectionError(PlomBenignException):
     pass
 
 
-class PlomProbationLimitExceeded(PlomBenignException):
+class PlomQuotaLimitExceeded(PlomBenignException):
     pass
 
 
