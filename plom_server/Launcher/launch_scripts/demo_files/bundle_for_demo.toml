@@ -20,7 +20,8 @@ duplicate_page_papers = [7, 8]
 scrap_page_papers = [7, 8]
 wrong_assessment_papers = [1, 2]
 out_of_range_papers = [5]
-obscure_qr_papers = [11, 12, 13]
+obscure_qr_papers = [11, 12, 13, 14, 15]
+operations = ["tear", "fold", "rotate", "compress", "lighten"]
 
 
 # bundle 3
@@ -30,7 +31,8 @@ last_paper = 30
 extra_page_papers = [19, 20]
 scrap_page_papers = [19, 20]
 discard_pages = [51, 54, 60, 64]
-obscure_qr_papers = [21, 22, 23]
+obscure_qr_papers = [21, 22, 23, 24, 25, 26]
+operations = ["darken", "jam", "stretch", "hide", "corrupt", "obscure"]
 
 
 # bundle 4

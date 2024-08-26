@@ -22,7 +22,6 @@ import logging
 from math import ceil
 from pathlib import Path
 import platform
-import queue
 import random
 import sys
 import tempfile
@@ -43,7 +42,6 @@ from PyQt6 import uic, QtGui
 from PyQt6.QtCore import (
     Qt,
     QTimer,
-    QThread,
     pyqtSlot,
     pyqtSignal,
 )
@@ -70,7 +68,6 @@ from plom.plom_exceptions import (
     PlomTaskChangedError,
     PlomTaskDeletedError,
     PlomConflict,
-    PlomException,
     PlomNoPaper,
     PlomNoServerSupportException,
     PlomNoSolutionException,
@@ -89,6 +86,7 @@ from .tagging import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
 from .tagging_range_dialog import TaggingAndRangeOptions
 from .task_model import MarkerExamModel, ProxyModel
+from .uploader import BackgroundUploader, synchronous_upload
 
 
 if platform.system() == "Darwin":
@@ -114,224 +112,6 @@ def task_id_str_to_paper_question_index(task: str) -> tuple[int, int]:
 def paper_question_index_to_task_id_str(papernum: int, question_idx: int) -> str:
     """Helper function to convert between paper/question and task string."""
     return f"q{papernum:04}g{question_idx}"
-
-
-class BackgroundUploader(QThread):
-    """Uploads exams in Background."""
-
-    uploadSuccess = pyqtSignal(str, int, int)
-    uploadKnownFail = pyqtSignal(str, str)
-    uploadUnknownFail = pyqtSignal(str, str)
-    queue_status_changed = pyqtSignal(int, int, int, int)
-
-    def __init__(self, msgr: Messenger) -> None:
-        """Initialize a new uploader.
-
-        Args:
-            msgr: a Messenger for communicating with a Plom server.
-                Note Messenger is not multithreaded and blocks using
-                mutexes.  Here we make our own private clone so caller
-                can keep using their's.
-        """
-        super().__init__()
-        self.q: queue.Queue = queue.Queue()
-        self.is_upload_in_progress = False
-        self._msgr = Messenger.clone(msgr)
-        self.num_uploaded = 0
-        self.num_failed = 0
-        self.simulate_failures = False
-        # percentage of download attempts that will fail and an overall
-        # delay in seconds in a range (both are i.i.d. per retry).
-        # These are ignored unless simulate_failures is True.
-        self._simulate_failure_rate = 20.0
-        self._simulate_slow_net = (3, 8)
-
-    def enable_fail_mode(self) -> None:
-        log.info("fail mode ENABLED")
-        self.simulate_failures = True
-
-    def disable_fail_mode(self) -> None:
-        log.info("fail mode disabled")
-        self.simulate_failures = False
-
-    def enqueueNewUpload(self, *args) -> None:
-        """Places something in the upload queue.
-
-        Note:
-            If you call this from the main thread, this code runs in the
-            main thread. That is ok because Queue is threadsafe, but it's
-            important to be aware, not all code in this object runs in the new
-            thread: it depends on where that code is called!
-
-        Args:
-            *args: all input arguments are cached and will eventually be
-                passed untouched to the `upload` function.  There is one
-                exception: `args[0]` is assumed to contain the task str
-                of the form `"q1234g9"` for printing debugging messages.
-
-        Returns:
-            None
-        """
-        log.debug("upQ enqueuing item from main thread " + str(threading.get_ident()))
-        self.q.put(args)
-        n = 1 if self.is_upload_in_progress else 0
-        self.queue_status_changed.emit(
-            self.q.qsize(), n, self.num_uploaded, self.num_failed
-        )
-
-    def queue_size(self) -> int:
-        """Return the number of papers waiting or currently uploading."""
-        if self.is_upload_in_progress:
-            return self.q.qsize() + 1
-        return self.q.qsize()
-
-    def isEmpty(self) -> bool:
-        """Checks if the upload queue is empty.
-
-        Returns:
-            True if the upload queue is empty, false otherwise.
-        """
-        # return self.q.empty()
-        return self.queue_size() == 0
-
-    def run(self) -> None:
-        """Runs the uploader in background.
-
-        Notes:
-            Overrides run method of Qthread.
-
-        Returns:
-            None
-        """
-
-        def tryToUpload():
-            # define this inside run so it will run in the new thread
-            # https://stackoverflow.com/questions/52036021/qtimer-on-a-qthread
-            from queue import Empty as EmptyQueueException
-
-            try:
-                data = self.q.get_nowait()
-            except EmptyQueueException:
-                return
-            self.is_upload_in_progress = True
-            # TODO: remove so that queue needs no knowledge of args
-            code = data[0]
-            log.info("upQ thread: popped code %s from queue, uploading", code)
-            self.queue_status_changed.emit(
-                self.q.qsize(), 1, self.num_uploaded, self.num_failed
-            )
-            simfail = False  # pylint worries it could be undefined
-            if self.simulate_failures:
-                simfail = random.random() <= self._simulate_failure_rate / 100
-                a, b = self._simulate_slow_net
-                # generate wait1 + wait2 \in (a, b)
-                wait = random.random() * (b - a) + a
-                time.sleep(wait)
-            if self.simulate_failures and simfail:
-                self.uploadUnknownFail.emit(code, "Simulated upload failure!")
-                self.num_failed += 1
-            else:
-                if upload(
-                    self._msgr,
-                    *data,
-                    knownFailCallback=self.uploadKnownFail.emit,
-                    unknownFailCallback=self.uploadUnknownFail.emit,
-                    successCallback=self.uploadSuccess.emit,
-                ):
-                    self.num_uploaded += 1
-                else:
-                    self.num_failed += 1
-            self.is_upload_in_progress = False
-            self.queue_status_changed.emit(
-                self.q.qsize(), 0, self.num_uploaded, self.num_failed
-            )
-
-        log.info("upQ thread: starting with new empty queue and starting timer")
-        # TODO: Probably don't need the timer: after each enqueue, signal the
-        # QThread (in the new thread's event loop) to call tryToUpload.
-        timer = QTimer()
-        timer.timeout.connect(tryToUpload)
-        timer.start(250)
-        self.exec()
-
-
-def upload(
-    _msgr,
-    task,
-    grade,
-    filenames,
-    marking_time,
-    question_idx,
-    ver,
-    rubrics,
-    integrity_check,
-    knownFailCallback=None,
-    unknownFailCallback=None,
-    successCallback=None,
-):
-    """Uploads a paper.
-
-    Args:
-        task (str): the Task ID for the page being uploaded. Takes the form
-            "q1234g9" = test 1234 question 9.
-        grade (int): grade given to question.
-        filenames (list[str]): a list containing the annotated file's name,
-            the .plom file's name and the comment file's name, in that order.
-        marking_time (float/int): the marking time (s) for this specific question.
-        question_idx (int or str): the question index number.
-        ver (int or str): the version number.
-        rubrics: list of rubrics used.
-        integrity_check (str): the integrity_check string of the task.
-        knownFailCallback: if we fail in a way that is reasonably expected,
-            call this function.
-        unknownFailCallback: if we fail but don't really know why or what
-            do to, call this function.
-        successCallback: a function to call when we succeed.
-
-    Returns:
-        bool: True for success, False for failure (either of the two).
-
-    Raises:
-        PlomSeriousException: elements in filenames do not correspond to
-            the same exam.
-    """
-    # do name sanity checks here
-    aname, pname = filenames
-
-    if not (
-        task.startswith("q")
-        and aname.stem == f"G{task[1:]}"
-        and pname.name == f"G{task[1:]}.plom"
-    ):
-        raise PlomSeriousException(
-            "Upload file names mismatch [{}, {}] - this should not happen".format(
-                aname, pname
-            )
-        )
-    try:
-        msg = _msgr.MreturnMarkedTask(
-            task,
-            question_idx,
-            ver,
-            grade,
-            marking_time,
-            aname,
-            pname,
-            rubrics,
-            integrity_check,
-        )
-    except (PlomTaskChangedError, PlomTaskDeletedError, PlomConflict) as ex:
-        knownFailCallback(task, str(ex))
-        # probably previous call does not return: it forces a crash
-        return False
-    except PlomException as ex:
-        unknownFailCallback(task, str(ex))
-        return False
-
-    numDone = msg[0]
-    numTotal = msg[1]
-    successCallback(task, numDone, numTotal)
-    return True
 
 
 class MarkerClient(QWidget):
@@ -408,7 +188,6 @@ class MarkerClient(QWidget):
         self.msgr = None
         # history contains all the tgv in order of being marked except the current one.
         self.marking_history = []
-        self._cachedProgressFormatStr = None
 
     def setup(
         self,
@@ -1757,10 +1536,8 @@ class MarkerClient(QWidget):
         _data = (
             task,
             grade,
-            (
-                aname,
-                plomFileName,
-            ),
+            aname,
+            plomFileName,
             totmtime,  # total marking time (seconds)
             self.question_idx,
             self.version,
@@ -1771,7 +1548,7 @@ class MarkerClient(QWidget):
             # the actual upload will happen in another thread
             self.backgroundUploader.enqueueNewUpload(*_data)
         else:
-            upload(
+            synchronous_upload(
                 self.msgr,
                 *_data,
                 knownFailCallback=self.backgroundUploadFailedServerChanged,
