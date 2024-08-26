@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Bryan Tanady
     Copyright (C) 2024 Elisa Pan
+    Copyright (C) 2024 Colin B. Macdonald
 -->
 <!-- Modal for confirmation -->
 <div class="modal fade"
@@ -14,7 +15,8 @@
         <div class="modal-content">
             <div class="modal-body">
                 <h5>
-                    The marker has marked more tasks than the default probation limit. Do you insist on setting them into probation?
+                    The marker has already marked more tasks than the default quota limit.
+                    Do you insist on setting a quota limit for them?
                 </h5>
                 <form id="confirmSetProbationForm" method="post">
                     {% csrf_token %}
@@ -32,7 +34,7 @@
         </div>
     </div>
 </div>
-<!-- Modal for Editing Default Probation Limit-->
+<!-- Modal for Editing Default Limit-->
 <div class="modal fade"
      id="modifyDefaultLimit"
      tabindex="-1"
@@ -42,7 +44,7 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modifyDefaultLimitLabel">Modify Default Probation Limit</h5>
+                <h5 class="modal-title" id="modifyDefaultLimitLabel">Modify Default Quota Limit</h5>
                 <button type="button"
                         class="btn-close"
                         data-bs-dismiss="modal"
@@ -65,7 +67,7 @@
         </div>
     </div>
 </div>
-<!-- Modal for Editing Probation Limit (for each user) -->
+<!-- Modal for Editing Limit (for each user) -->
 <div class="modal fade"
      id="editLimit"
      tabindex="-1"
@@ -75,7 +77,7 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editLimitLabel">Edit Probation Limit</h5>
+                <h5 class="modal-title" id="editLimitLabel">Edit Quota Limit</h5>
                 <button type="button"
                         class="btn-close"
                         data-bs-dismiss="modal"
@@ -99,7 +101,7 @@
         </div>
     </div>
 </div>
-<!-- Modal for Modifying Probationary State/Limit -->
+<!-- Modal for Modifying Quota State/Limit -->
 <div class="modal fade"
      id="modifyProbationModal"
      tabindex="-1"
@@ -109,7 +111,7 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modifyProbationModalLabel">Modify Probation Limit</h5>
+                <h5 class="modal-title" id="modifyProbationModalLabel">Modify Quota Limit</h5>
                 <button type="button"
                         class="btn-close"
                         data-bs-dismiss="modal"

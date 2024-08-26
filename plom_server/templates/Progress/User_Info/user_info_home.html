@@ -15,7 +15,7 @@
 {% block main_content %}
     <div class="card my-2">
         <div class="card-body">
-            <h5>Default probation limit: {{ default_probation_limit }}</h5>
+            <h5>Default quota limit: {{ default_probation_limit }}</h5>
             <button class="btn btn-success m-2"
                     type="button"
                     data-bs-toggle="modal"
@@ -42,13 +42,13 @@
                   method="post"
                   style="display:inline">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-warning">Set Probation for All Markers</button>
+                <button type="submit" class="btn btn-warning">Set Quota for All Markers</button>
             </form>
             <form action="{% url 'bulk_unset_probation' %}"
                   method="post"
                   style="display:inline">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-info">Unset Probation for All Markers</button>
+                <button type="submit" class="btn btn-info">Unset Quota for All Markers</button>
             </form>
         </div>
         <div class="card-body">
@@ -72,9 +72,9 @@
                 <th>Username</th>
                 <th>Task Marked</th>
                 <th>Task Claimed</th>
-                <th>Probation</th>
-                <th>Probation Limit</th>
-                <th>Probation Tasks</th>
+                <th>Quota</th>
+                <th>Quota Limit</th>
+                <th>Quota Tasks</th>
                 <th>Limit Modifier</th>
             </tr>
             {% for user, annotation_and_claimedTask_count in annotation_count_dict.items %}
@@ -94,7 +94,7 @@
                         {% if user.username in probation_users %}
                             <i class="bi bi-exclamation-diamond-fill text-info"
                                data-bs-toggle="tooltip"
-                               title="In Probation"></i>
+                               title="Quota limited"></i>
                         {% endif %}
                     </td>
                     <td>{{ annotation_and_claimedTask_count.0 }}</td>
@@ -103,12 +103,12 @@
                         {% if user.username in probation_users %}
                             <form action="{% url 'unset_probation' user.username %}" method="post">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-info">Unset Probation</button>
+                                <button type="submit" class="btn btn-info">Unset Quota</button>
                             </form>
                         {% else %}
                             <form action="{% url 'set_probation' user.username %}" method="post">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-warning">Set Probation</button>
+                                <button type="submit" class="btn btn-warning">Set Quota</button>
                             </form>
                         {% endif %}
                     </td>

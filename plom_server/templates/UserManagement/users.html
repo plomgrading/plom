@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Brennen Chiu
     Copyright (C) 2022 Edith Coates
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2024 Colin B. Macdonald
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2024 Bryan Tanady
     Copyright (C) 2024 Elisa Pan
@@ -41,7 +41,7 @@
                         <th>Lead Marker</th>
                         <th>Enable</th>
                         <th>Password</th>
-                        <th>Probation</th>
+                        <th>Quota</th>
                     </thead>
                     {% for user in markers %}
                         <tr>
@@ -92,16 +92,16 @@
                                 <a href="{% url 'reset_user_password' user.username %}"
                                    class="btn btn-danger">reset</a>
                             </td>
-                            <!-- Probationary period button -->
+                            <!-- Quota limited button -->
                             <td>
                                 <form action="{% url 'set_probation' user.username %}" method="post">
                                     {% csrf_token %}
                                     {% if user.pk in probation_users %}
                                         <button formaction="{% url 'unset_probation' user.username %}"
                                                 type="submit"
-                                                class="btn btn-info">Unset Probation</button>
+                                                class="btn btn-info">Unset Quota</button>
                                     {% else %}
-                                        <button type="submit" class="btn btn-warning">Set Probation</button>
+                                        <button type="submit" class="btn btn-warning">Set Quota</button>
                                     {% endif %}
                                 </form>
                             </td>
@@ -226,14 +226,14 @@
         form.action = actionUrl;
         $('#confirmSetProbation').modal('show');
       }
-    
+
       // Check for messages and handle the modal
       var messages = document.getElementById('messages');
       if (messages) {
 
         var messageType = messages.getAttribute('data-message-type');
         var messageText = messages.getAttribute('data-message-text');
-        
+
         var details = JSON.parse(messageText);
         var username = details.username;
         console.log(username)
