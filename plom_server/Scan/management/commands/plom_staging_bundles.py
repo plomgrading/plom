@@ -7,10 +7,10 @@
 from datetime import datetime
 import hashlib
 import pathlib
+from time import sleep
 
 import fitz
 from tabulate import tabulate
-from time import sleep
 
 from django.utils import timezone
 from django.utils.text import slugify
@@ -31,9 +31,8 @@ class Command(BaseCommand):
 
     help = "Upload bundle pdf files to staging area"
 
-    def upload_pdf(
-        self, username: str, source_pdf: str, *, debug_jpeg: bool = False
-    ) -> None:
+    def upload_pdf(self, username: str, source_pdf: str) -> None:
+        """Upload a pdf bundle to the staging area."""
         scanner = ScanService()
 
         try:
@@ -63,7 +62,6 @@ class Command(BaseCommand):
                 timestamp,
                 hashed,
                 number_of_pages,
-                debug_jpeg=debug_jpeg,
             )
             self.stdout.write(
                 f"Uploaded {source_pdf} as user {username} - processing it in the background now."
@@ -244,14 +242,6 @@ class Command(BaseCommand):
             "username", type=str, help="Which username to upload as."
         )
         sp_upload.add_argument("source_pdf", type=str, help="The test pdf to upload.")
-        sp_upload.add_argument(
-            "--demo",
-            action="store_true",
-            help="""
-                Make a mess of the input, using low-quality JPEGs, rotations, etc.
-                Not for production.
-            """,
-        )
 
         # Status
         sp_stat = sp.add_parser(
@@ -304,7 +294,6 @@ class Command(BaseCommand):
             self.upload_pdf(
                 username=options["username"],
                 source_pdf=options["source_pdf"],
-                debug_jpeg=options["demo"],
             )
         elif options["command"] == "status":
             self.staging_bundle_status(bundle_name=options["bundle_name"])

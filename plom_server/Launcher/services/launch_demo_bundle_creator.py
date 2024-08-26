@@ -1,16 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Bryan Tanady
+
+from __future__ import annotations
 
 from collections import defaultdict
 import csv
+from dataclasses import asdict
 from pathlib import Path
 import shutil
 import tempfile
 from typing import List, Dict, Any
-from dataclasses import asdict
 
 import fitz
 
@@ -20,6 +23,7 @@ from django.conf import settings
 from plom import SpecVerifier
 from plom.create.mergeAndCodePages import create_QR_codes
 from plom.create.scribble_utils import scribble_name_and_id, scribble_pages
+from plom.scan import pdfmucker
 
 
 class DemoBundleCreationService:
@@ -157,82 +161,6 @@ class DemoBundleCreationService:
 
         return assignment
 
-    def obscure_qr_codes_in_paper(self, pdf_doc: fitz.Document) -> None:
-        """Hide qr-codes for demo purposes.
-
-        On last page paint squares at bottom of page to hide 2
-        qr-codes, and on second-last page, paint squares at the
-        top of the page to hide 1 qr-code.
-
-        Args:
-            pdf_doc (fitz.Document): a pdf document of a test-paper.
-
-        Returns:
-            None, but modifies ``pdf_doc``  as a side effect.
-        """
-        # magic numbers for obscuring the qr-codes
-        left = 15
-        right = 90
-        page = pdf_doc[-1]
-        # grab the bounding box of the page to get its height/width
-        bnd = page.bound()
-        page.draw_rect(
-            fitz.Rect(left, bnd.height - right, right, bnd.height - left),
-            color=(0, 0, 0),
-            fill=(0.2, 0.2, 0.75),
-            radius=0.05,
-        )
-        page.draw_rect(
-            fitz.Rect(
-                bnd.width - right,
-                bnd.height - right,
-                bnd.width - left,
-                bnd.height - left,
-            ),
-            color=(0, 0, 0),
-            fill=(0.2, 0.2, 0.75),
-            radius=0.05,
-        )
-        tw = fitz.TextWriter(bnd)
-        tw.append(
-            fitz.Point(100, bnd.height - 20),
-            "Simulated page damage: unreadable bottom QR codes",
-            fontsize=14,
-        )
-        tw.write_text(page, color=(0, 0, 0.8))
-
-        page = pdf_doc[-2]
-        bnd = page.bound()
-        page.draw_rect(
-            fitz.Rect(
-                bnd.width - right,
-                left,
-                bnd.width - left,
-                right,
-            ),
-            color=(0, 0, 0),
-            fill=(0.2, 0.2, 0.75),
-            radius=0.05,
-        )
-        page.draw_rect(
-            fitz.Rect(
-                left,
-                left,
-                right,
-                right,
-            ),
-            color=(0, 0, 0),
-            fill=(0.2, 0.2, 0.75),
-            radius=0.05,
-        )
-        tw = fitz.TextWriter(bnd)
-        tw.append(
-            fitz.Point(100, 15),
-            "Simulated page damage: unreadable top QR code",
-            fontsize=14,
-        )
-        tw.write_text(page, color=(0, 0, 0.8))
-
     def make_last_page_with_wrong_version(
         self, pdf_doc: fitz.Document, paper_number: int
     ) -> None:
@@ -341,7 +269,7 @@ class DemoBundleCreationService:
             tw.write_text(pdf_doc[-1])
             tw.write_text(pdf_doc[-2])
 
-    def append_duplicate_page(self, pdf_doc: fitz.Document, page_number: int) -> None:
+    def append_duplicate_page(self, pdf_doc: fitz.Document) -> None:
         """Makes a (deep) copy of the last page of the PDF and appends it.
 
         This is to simulate sloppy scanning procedures in which a given
@@ -479,42 +407,86 @@ class DemoBundleCreationService:
             duplicates_dict[paper] = -1
         return duplicates_dict
 
+    def muck_paper(self, filepath: str, operation: str) -> None:
+        """Muck a paper from the given filepath with the given operation.
+
+        Args:
+            filepath: path to the file to be mucked.
+            operation: the type of muck operation to do.
+        """
+        second_to_last_page = fitz.open(filepath).page_count - 1
+        corner = "bottom_left"
+
+        severity = 0.8
+        jaggedness = 2
+        # cmd = f"python3 -m plom.scan.pdfmucker {filepath} {second_to_last_page} {operation} {corner} --severity={severity}"
+        # subprocess.check_call(cmd.split())
+        pdfmucker.muck_paper(
+            filepath=filepath,
+            page_number=second_to_last_page,
+            operation=operation,
+            corner=corner,
+            severity=severity,
+            jaggedness=jaggedness,
+        )
+        print("Mucking Operation: ", operation)
+
     def scribble_to_create_bundle(
         self,
-        assigned_papers_ids,
-        extra_page_path,
-        scrap_paper_path,
-        out_file,
+        assigned_papers_ids: list[dict[str, Any]],
+        extra_page_path: Path,
+        scrap_paper_path: Path,
+        out_file: Path,
         *,
-        extra_page_papers=[],
-        scrap_page_papers=[],
-        garbage_page_papers=[],
-        duplicate_pages=[],
-        duplicate_qr=[],
-        wrong_version=[],
-        wrong_assessment=[],
-        out_of_range_papers=[],
-        obscure_qr_papers=[],
-    ):
-        """Scribble on some of the papers to create a bundle, along with various others inclusions."""
-        # extra_page_papers = list of paper_numbers to which we append a couple of extra_pages
-        # scrap_page_papers = list of paper_numbers to which we append a couple of scrap-paper pages
-        # garbage_page_papers = list of paper_numbers to which we append a garbage page
-        # duplicate_pages = a list of papers to have their final page duplicated.
-        # wrong_version = list of paper_numbers to which we replace last page with a blank but wrong version number.
-        # wrong_assessment = list of paper_numbers to which we append a page from a different assessment.
+        extra_page_papers: list = [],
+        scrap_page_papers: list = [],
+        garbage_page_papers: list = [],
+        duplicate_pages: list[int] = [],
+        duplicate_qr: list = [],
+        wrong_version: list = [],
+        wrong_assessment: list = [],
+        out_of_range_papers: list = [],
+        obscure_qr_papers: list = [],
+        mucking_operation: list[str] = [],
+    ) -> None:
+        """Scribble on some of the papers to create a bundle, along with various others inclusions.
 
-        # A complete collection of the pdfs created
+        Args:
+            assigned_papers_ids: Which paper numbers to use for this bundle.
+            extra_page_path: where to find the template extra page.
+            scrap_paper_path: where to find the template scrap paper.
+            out_file: where to save the created PDF bundle.
+
+        Keyword Args:
+            extra_page_papers: list of paper_numbers to which we append
+                a couple of extra pages.
+            scrap_page_papers: list of paper_numbers to which we append
+                a couple of scrap-paper pages.
+            garbage_page_papers: list of paper_numbers to which we append
+                a garbage page.
+            duplicate_pages: list of papers to have their final page
+                duplicated.
+            duplicate_qr: TODO.
+            out_of_range_papers: TODO.
+            obscure_qr_papers: TODO.
+            mucking_operation: a list of mucking operations to apply,
+                simulating various sorts of damage to the pages.
+            wrong_version: list of paper numbers to which we replace last
+                page with a blank but wrong version number.
+            wrong_assessment: list of paper numbers to which we append a
+                page from a different assessment.
+
+        Returns:
+            None.
+        """
         with fitz.open() as all_pdf_documents:
             for paper in assigned_papers_ids:
                 with fitz.open(paper["path"]) as pdf_document:
                     # first put an ID on paper if it is not prenamed.
-                    if not paper["prenamed"]:
-                        scribble_name_and_id(pdf_document, paper["id"], paper["name"])
                     paper_number = int(paper["paper_number"])
 
-                    if paper_number in obscure_qr_papers:
-                        self.obscure_qr_codes_in_paper(pdf_document)
+                    if not paper["prenamed"]:
+                        scribble_name_and_id(pdf_document, paper["id"], paper["name"])
 
                     if paper_number in wrong_version:
                         self.make_last_page_with_wrong_version(
@@ -536,7 +508,7 @@ class DemoBundleCreationService:
                             scrap_paper_path,
                         )
                     if paper_number in duplicate_pages:
-                        self.append_duplicate_page(pdf_document, duplicate_pages)
+                        self.append_duplicate_page(pdf_document)
 
                     # scribble on the pages
                     scribble_pages(pdf_document)
@@ -554,6 +526,17 @@ class DemoBundleCreationService:
                         self.append_page_from_another_assessment(pdf_document)
                     if paper_number in out_of_range_papers:
                         self.append_out_of_range_paper_and_page(pdf_document)
+
+                    with tempfile.NamedTemporaryFile(
+                        delete=True, suffix=".pdf"
+                    ) as temp_pdf:
+                        pdf_document.save(temp_pdf.name)
+                        temp_pdf_path = temp_pdf.name
+                        if paper_number in obscure_qr_papers:
+                            operation = mucking_operation[0]
+                            mucking_operation.pop(0)
+                            self.muck_paper(temp_pdf_path, operation)
+                            pdf_document = fitz.open(temp_pdf_path)
 
                     # finally, append this to the bundle
                     all_pdf_documents.insert_pdf(pdf_document)
@@ -623,5 +606,6 @@ class DemoBundleCreationService:
                 wrong_assessment=bundle["wrong_assessment_papers"],
                 out_of_range_papers=bundle["out_of_range_papers"],
                 obscure_qr_papers=bundle["obscure_qr_papers"],
+                mucking_operation=bundle["operations"],
             )
         print("^" * 40)
