@@ -73,64 +73,63 @@
                 <th>Username</th>
                 <th>Task Marked</th>
                 <th>Task Claimed</th>
-                <th>Quota</th>
                 <th>Quota Limit</th>
                 <th>Quota Tasks</th>
             </tr>
-            {% for user, annotation_and_claimedTask_count in annotation_count_dict.items %}
-                <tr class="{% if quota_limits|get_item:user.username == annotation_and_claimedTask_count.0 %} table-success {% endif %}">
+            {% for username, progress in users_progress.items %}
+                <tr class="{% if progress.quota_limit == progress.tasks_marked %} table-success {% endif %}">
                     <td>
-                        {{ user.username }}
+                        {{ username }}
                         {% if messages %}
                             {% for message in messages %}
-                                {% if 'quota_warning' in message.tags and user.username in markers_with_warnings %}
+                                {% if 'quota_warning' in message.tags and progress.would_exceed_default_limit %}
                                     <i class="bi bi-exclamation-triangle-fill text-warning"
                                        data-bs-toggle="modal"
                                        data-bs-target="#confirmSetQuota"
-                                       data-username="{{ user.username }}"></i>
+                                       data-username="{{ username }}"></i>
                                 {% endif %}
                             {% endfor %}
                         {% endif %}
-                        {% if user.username in users_with_quota %}
+                        {% if progress.has_quota_limit %}
                             <i class="bi bi-exclamation-diamond-fill text-info"
                                data-bs-toggle="tooltip"
                                title="Quota limited"></i>
                         {% endif %}
                     </td>
-                    <td>{{ annotation_and_claimedTask_count.0 }}</td>
-                    <td>{{ annotation_and_claimedTask_count.1 }}</td>
+                    <td>{{ progress.tasks_marked }}</td>
+                    <td>{{ progress.tasks_claimed }}</td>
                     <td>
-                        {% if user.username in users_with_quota %}
-                            <form action="{% url 'unset_quota' user.username %}" method="post">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-info">Unset Quota</button>
-                            </form>
-                        {% else %}
-                            <form action="{% url 'set_quota' user.username %}" method="post">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-warning">Set Quota</button>
-                            </form>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if user.username in users_with_quota %}
-                            {{ quota_limits|get_item:user.username }}
-                        {% else %}
-                            n/a
-                        {% endif %}
-                        {% if user.username in users_with_quota %}
-                            <button class="btn btn-primary m-2"
+                        {% if progress.has_quota_limit %}
+                            {{ progress.quota_limit }}
+                            <button class="btn btn-outline-primary ms-1"
                                     type="button"
                                     data-bs-toggle="modal"
-                                    data-username="{{ user.username }}"
-                                    data-limit="{{ quota_limits|get_item:user.username }}"
-                                    data-bs-target="#editLimit">Edit</button>
+                                    data-username="{{ username }}"
+                                    data-limit="{{ progress.quota_limit }}"
+                                    data-bs-target="#editLimit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <form action="{% url 'unset_quota' username %}"
+                                  style="display:inline"
+                                  method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-secondary">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        {% else %}
+                            <form action="{% url 'set_quota' username %}"
+                                  style="display:inline"
+                                  method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-primary">Enable</button>
+                            </form>
                         {% endif %}
                     </td>
                     <td>
                         <!-- TODO: hardcoded tag here, must match question_marking.py -->
                         <a class="btn btn-info"
-                           href="{% url 'progress_marking_task_filter' %}?username={{ user.username }}&the_tag=during_quota">
+                           href="{% url 'progress_marking_task_filter' %}?username={{ username }}&the_tag=during_quota">
                             view
                         </a>
                     </td>

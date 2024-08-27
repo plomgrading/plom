@@ -58,6 +58,57 @@ class UserInfoServices:
         }
         return data
 
+    @classmethod
+    @transaction.atomic
+    def get_all_user_progress(cls) -> dict[str, dict[str, Any]]:
+        """Get marking progress for all users.
+
+        Returns:
+            A dict keyed by usernames, with values as in :method:`get_user_progress`.
+        """
+        # get everything from DB first, then we can do loops to assemble...
+
+        # this will be missing keys for users that haven't claimed or marked
+        complete_claimed_task_dict = cls.get_total_annotated_and_claimed_count_by_user()
+
+        # this one will be missing all those without quota
+        quota_limits_dict = {
+            q.user.username: q.limit for q in Quota.objects.select_related("user").all()
+        }
+
+        # user_objs = User.objects.all().order_by("id")
+        user_objs = User.objects.filter(groups__name__in=["marker"]).order_by("id")
+
+        default_limit = Quota.default_limit
+
+        # Now loop over filling in missing data
+        data = {}
+        for user in user_objs:
+            try:
+                tasks_marked, tasks_claimed = complete_claimed_task_dict[user.username]
+            except KeyError:
+                # User hasn't marked nor claimed any paper yet:
+                tasks_marked, tasks_claimed = 0, 0
+
+            try:
+                limit = quota_limits_dict[user.username]
+                has_limit = True
+                would_exceed_default_limit = None
+            except KeyError:
+                has_limit = False
+                limit = None
+                would_exceed_default_limit = tasks_marked > default_limit
+
+            data[user.username] = {
+                "tasks_claimed": tasks_claimed,
+                "tasks_marked": tasks_marked,
+                "has_quota_limit": has_limit,
+                "quota_limit": limit,
+                "would_exceed_default_limit": would_exceed_default_limit,
+            }
+
+        return data
+
     @staticmethod
     @transaction.atomic
     def annotation_exists() -> bool:
@@ -65,6 +116,8 @@ class UserInfoServices:
 
         Returns:
             True if there are annotations or False if there aren't any.
+
+        Note: currently unused (and untested).
         """
         return Annotation.objects.exists()
 
