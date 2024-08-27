@@ -19,9 +19,6 @@ class ProgressUserInfoHome(ManagerRequiredView):
         filter_form = AnnotationFilterForm(request.GET)
 
         annotations_exist = UserInfoServices.annotation_exists()
-        annotated_and_claimed_count_dict = (
-            UserInfoServices.get_total_annotated_and_claimed_count_by_user()
-        )
         uis = UserInfoServices()
         latest_annotation_human_time = uis.get_time_of_latest_updated_annotation()
         request_time_filter_seconds = request.GET.get("time_filter_seconds")
@@ -53,15 +50,17 @@ class ProgressUserInfoHome(ManagerRequiredView):
             )
         )
 
+        # DEPRECATED...
+        _annotated_and_claimed_count_dict = (
+            UserInfoServices.get_total_annotated_and_claimed_count_by_user()
+        )
         annotated_and_claimed_count_dict = {
             User.objects.get(username=username): count
-            for username, count in annotated_and_claimed_count_dict.items()
+            for username, count in _annotated_and_claimed_count_dict.items()
         }
 
         usernames_with_quota = QuotaService.get_list_of_usernames_with_quotas()
-        quota_limits_dict = {
-            q.user.username: q.limit for q in Quota.objects.select_related("user").all()
-        }
+
         # Fetch user objects
         users_with_quota_as_objects = User.objects.filter(
             username__in=usernames_with_quota
@@ -78,16 +77,15 @@ class ProgressUserInfoHome(ManagerRequiredView):
         context.update(
             {
                 "annotations_exist": annotations_exist,
-                "annotation_count_dict": annotated_and_claimed_count_dict,
                 "annotations_grouped_by_user": annotations_grouped_by_user,
                 "annotations_grouped_by_question_ver": annotations_grouped_by_question_ver,
                 "annotation_filter_form": filter_form,
                 "latest_updated_annotation_human_time": latest_annotation_human_time,
                 "users_with_quota": usernames_with_quota,
                 "default_quota_limit": default_quota_limit,
-                "quota_limits": quota_limits_dict,
                 "users_with_quota_as_objects": users_with_quota_as_objects,
                 "markers_with_warnings": markers_with_warnings,  # Pass markers with warnings
+                "users_progress": UserInfoServices.get_all_user_progress(),
             }
         )
         return render(request, "Progress/User_Info/user_info_home.html", context)
