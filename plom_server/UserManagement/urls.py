@@ -41,12 +41,12 @@ urlpatterns = [
     ),
     path(
         "bulk_set_quota/",
-        views.BulkSetProbationView.as_view(),
+        views.BulkSetQuotaView.as_view(),
         name="bulk_set_quota",
     ),
     path(
         "bulk_unset_quota/",
-        views.BulkUnsetProbationView.as_view(),
+        views.BulkUnsetQuotaView.as_view(),
         name="bulk_unset_quota",
     ),
 ]

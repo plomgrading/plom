@@ -267,8 +267,8 @@ class ModifyDefaultLimitView(ManagerRequiredView):
         return redirect(previous_url)
 
 
-class BulkSetProbationView(ManagerRequiredView):
-    """View to handle bulk setting probation for all markers."""
+class BulkSetQuotaView(ManagerRequiredView):
+    """View to handle bulk setting quota for all markers."""
 
     def post(self, request):
         probation_service = ProbationService()
@@ -289,13 +289,13 @@ class BulkSetProbationView(ManagerRequiredView):
         if markers_with_warnings:
             messages.success(
                 request,
-                f"Probation has been successfully set for: {', '.join(successful_markers)}",
+                f"A quota limit has been successfully set for: {', '.join(successful_markers)}",
                 extra_tags="modify_probation",
             )
 
             messages.error(
                 request,
-                f"Probation cannot be set on: {', '.join(markers_with_warnings)}",
+                f"Quota cannot be set on: {', '.join(markers_with_warnings)}",
                 extra_tags="modify_probation",
             )
 
@@ -306,18 +306,18 @@ class BulkSetProbationView(ManagerRequiredView):
         else:
             messages.success(
                 request,
-                "All markers have been set to probation.",
+                "All markers have had a quota applied.",
                 extra_tags="modify_probation",
             )
 
         return redirect(reverse("progress_user_info_home"))
 
 
-class BulkUnsetProbationView(ManagerRequiredView):
-    """View to handle bulk unsetting probation for all markers."""
+class BulkUnsetQuotaView(ManagerRequiredView):
+    """View to handle bulk unsetting of quota for all markers."""
 
     def post(self, request):
         markers = User.objects.filter(groups__name="marker")
         ProbationPeriod.objects.filter(user__in=markers).delete()
-        messages.success(request, "Probation unset for all markers.")
+        messages.success(request, "Quota removed from all markers.")
         return redirect(reverse("progress_user_info_home"))
