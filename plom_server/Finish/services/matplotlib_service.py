@@ -285,7 +285,7 @@ class MatplotlibService:
         qlabel = SpecificationService.get_question_label(question_idx)
         mark_column = "q" + str(question_idx) + "_mark"
         plot_series = [student_df[mark_column]]
-        fig, ax = plt.subplots(figsize=(6.8, 2.0), tight_layout=True)
+        fig, ax = plt.subplots(figsize=(6.8, 1.5), tight_layout=True)
         sns.set_theme()
 
         maxmark = SpecificationService.get_question_mark(question_idx)
@@ -295,8 +295,9 @@ class MatplotlibService:
             orient="h",
             medianprops={"linewidth": 4, "color": "blue"},
             boxprops={"alpha": 0.5},
-            capprops={"linewidth": 4},
+            capprops={"linewidth": 4, "color": "red"},
             widths=[0.25],
+            zorder=2.0,
         )
         if highlighted_sid:
             # Overlay the student's score by highlighting the bar
@@ -304,25 +305,22 @@ class MatplotlibService:
             student_score = df[df["StudentID"] == highlighted_sid][mark_column].values[
                 0
             ]
-            ax.plot(student_score, 0, marker="o", markersize=16, color=HIGHLIGHT_COLOR)
+            ax.plot(
+                student_score,
+                0,
+                marker="o",
+                markersize=16,
+                color=HIGHLIGHT_COLOR,
+                zorder=3.0,
+            )
 
-        # ax.boxplot(
-        #     plot_series,
-        #     widths=0.60,
-        #     capwidths=0.60,
-        #     vert=False,
-        #     showmeans=True,
-        #     meanline=True,
-        #     medianprops={"linewidth": 4, "color": "blue"},
-        #     meanprops={"linewidth": 4, "linestyle": ":", "color": "teal"},
-        #     capprops={"linewidth": 2, "color": "red"},
-        # )
-        # ax.set_title(f"boxplot of {qlabel} marks")
         ax.set_xlabel(f"{qlabel} mark")
         ax.set_yticks([])
-        ax.set_xlim(left=-0.5, right=maxmark + 0.5)
+        # pad the left-right extremes so that things look nice.
+        ax.set_xlim(left=-maxmark * 0.05, right=maxmark * 1.05)
         for side in ["top", "right", "left"]:
             ax.spines[side].set_visible(False)
+        ax.set_xticks(range(0, maxmark + 1))
 
         graph_bytes = self.get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
@@ -811,6 +809,7 @@ class MatplotlibService:
         # convert the pandas series to a list to keep it happy
         plt.yticks(my_range, ordered_df["tag"].to_list())
         plt.xlim(0, 1)
+        plt.xticks([0.1, 0.3, 0.5, 0.7, 0.9], ["low", None, None, None, "high"])
 
         graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
         self.ensure_all_figures_closed()

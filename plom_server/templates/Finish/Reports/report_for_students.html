@@ -27,33 +27,37 @@
         <p style="break-before: page;"></p>
         <h3>Student achievement by topic or learning objective</h3>
         <img src="data:image/png;base64,{{ pedagogy_tags_graph }}" />
+        {% for ptag, describe in pedagogy_tags_descriptions.items %}
+            <p>
+                <ul>
+                    <li>
+                        <q>{{ ptag }}</q>: {{ describe }}
+                    </li>
+                </ul>
+            </p>
+        {% endfor %}
+        <h4>Explanation of this graph</h4>
         <p>
             Each question on this assessment was tagged by the instructor
             with a topic or learning objective. Above is a graph
-            which indicates your mastery of the identified topic. The
+            which indicates your proficiency in the identified topic. The
             score for each label is calculated as a weighted average of
             the score on the associated questions.
         </p>
-        <p>
-            For example, if Question 1 and Question 2 have the tag of
-            <q>Learning Objective 1</q>, with scores of 4/10 and 8/10
-            respectively, then the score for Learning Objective 1 is
-            calculated as the weighted average of the scores on
-            Questions 1 and 2: 1/2 (4/10+8/10) = 0.6.
-        </p>
+        <!-- <p> -->
+        <!--     For example, if Question 1 and Question 2 have the tag of -->
+        <!--     <q>Learning Objective 1</q>, with scores of 4/10 and 8/10 -->
+        <!--     respectively, then the score for Learning Objective 1 is -->
+        <!--     calculated as the weighted average of the scores on -->
+        <!--     Questions 1 and 2: 1/2 (4/10+8/10) = 0.6. -->
+        <!-- </p> -->
         <p>
             The labelling of questions is meant to help identify topics/areas
             of strength and topics/areas for review.  If the score on a
             topic is low, it is strongly recommended to review the associated
             lecture notes, the associated section in the textbook, and/or
-            contact your instructor for an office hour.
+            discuss it with your instructor during an office hour.
         </p>
-        <h4>Brief description of each topic / learning objective</h4>
-        {% for ptag, describe in pedagogy_tags_descriptions.items %}
-            <p>
-                <q>{{ ptag }}</q>: {{ describe }}
-            </p>
-        {% endfor %}
     {% endif %}
     <br>
     <p style="break-before: page;"></p>
@@ -61,9 +65,11 @@
     <p>
         In the boxplots below the distribution of marks for each question is shown.
         <ul>
-            <li>The student mark is shown as yellow dot</li>
-            <li>The median is shown as a blue line</li>
-            <li>The box shows the 25-75 percentile range of marks and the red lines show the minimum and maximum marks.</li>
+            <li>The student mark is shown as a dot</li>
+            <li>The median is shown as a thick vertical line in the middle of the box</li>
+            <li>
+                The box shows the 25-75 percentile range of marks and the extreme left/right vertical lines show the minimum and maximum marks.
+            </li>
         </ul>
     </p>
     {% for graph in boxplots %}
