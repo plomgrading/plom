@@ -103,24 +103,22 @@
 </div>
 <!-- Modal for Modifying Quota State/Limit -->
 <div class="modal fade"
-     id="modifyProbationModal"
+     id="modifyQuotaModal"
      tabindex="-1"
      role="dialog"
-     aria-labelledby="modifyProbationModalLabel"
+     aria-labelledby="modifyQuotaModalLabel"
      aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modifyProbationModalLabel">Modify Quota Limit</h5>
+                <h5 class="modal-title" id="modifyQuotaModalLabel">Modify Quota Limit</h5>
                 <button type="button"
                         class="btn-close"
                         data-bs-dismiss="modal"
                         aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="modifyProbationForm"
-                      method="post"
-                      action="{% url 'modify_quota' %}">
+                <form id="modifyQuotaForm" method="post" action="{% url 'modify_quota' %}">
                     {% csrf_token %}
                     <div class="form-group">
                         <label for="probationUsers">Select Users</label>

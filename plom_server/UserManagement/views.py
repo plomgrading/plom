@@ -301,7 +301,7 @@ class BulkSetQuotaView(ManagerRequiredView):
             )
 
             messages.warning(
-                request, f"{markers_with_warnings}", extra_tags="probation_warning"
+                request, f"{markers_with_warnings}", extra_tags="quota_warning"
             )
 
         else:
