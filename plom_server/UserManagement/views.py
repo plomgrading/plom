@@ -9,25 +9,21 @@
 
 import json
 
-from django.shortcuts import redirect, render
-from django.http import HttpRequest, HttpResponse, Http404
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-
+from django.http import HttpRequest, HttpResponse, Http404
 from django_htmx.http import HttpResponseClientRefresh
-
-from Base.base_group_views import ManagerRequiredView
-
-from .services import PermissionChanger
+from django.shortcuts import get_object_or_404
+from django.shortcuts import redirect, render
+from django.urls import reverse
 
 from Authentication.services import AuthenticationServices
-
-from django.shortcuts import get_object_or_404
-from django.urls import reverse
-from .models import Quota
-from django.contrib import messages
-from .services.probationService import ProbationService
+from Base.base_group_views import ManagerRequiredView
 from Progress.services.userinfo_service import UserInfoServices
+from .services import PermissionChanger
+from .services import QuotaService
+from .models import Quota
 
 
 class UserPage(ManagerRequiredView):
@@ -139,7 +135,7 @@ class SetQuotaView(ManagerRequiredView):
             quota, created = Quota.objects.get_or_create(user=user, limit=complete)
 
         # No special flag received, proceed to check whether the marker fulfills the restriction.
-        elif ProbationService().can_set_quota(user):
+        elif QuotaService.can_set_quota(user):
             quota, created = Quota.objects.get_or_create(
                 user=user, limit=Quota.default_limit
             )
@@ -183,7 +179,7 @@ class EditQuotaLimitView(ManagerRequiredView):
         new_limit = int(request.POST.get("limit"))
         user = get_object_or_404(User, username=username)
 
-        if ProbationService().new_limit_is_valid(new_limit, user):
+        if QuotaService.new_limit_is_valid(new_limit, user):
             quota = Quota.objects.filter(user=user).first()
             quota.limit = new_limit
             quota.save()
@@ -216,7 +212,7 @@ class ModifyQuotaView(ManagerRequiredView):
         for user_id in user_ids:
             user = get_object_or_404(User, pk=user_id)
             quota = Quota.objects.get(user=user)
-            if not ProbationService().new_limit_is_valid(limit=new_limit, user=user):
+            if not QuotaService.new_limit_is_valid(limit=new_limit, user=user):
                 invalid_markers.append(user.username)
             else:
                 valid_markers.append(user.username)
@@ -270,13 +266,12 @@ class BulkSetQuotaView(ManagerRequiredView):
     """View to handle bulk setting quota for all markers."""
 
     def post(self, request):
-        probation_service = ProbationService()
         markers = User.objects.filter(groups__name="marker")
         markers_with_warnings = []
         successful_markers = []
 
         for marker in markers:
-            if probation_service.can_set_quota(marker):
+            if QuotaService.can_set_quota(marker):
                 quota, created = Quota.objects.get_or_create(
                     user=marker,
                     defaults={"limit": Quota.default_limit},

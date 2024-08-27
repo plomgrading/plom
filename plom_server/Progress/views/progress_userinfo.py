@@ -8,7 +8,7 @@ from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
 from UserManagement.models import Quota
-from UserManagement.services import ProbationService
+from UserManagement.services import QuotaService
 from ..forms import AnnotationFilterForm
 from ..services import UserInfoServices
 
@@ -73,10 +73,9 @@ class ProgressUserInfoHome(ManagerRequiredView):
         ).order_by("id")
 
         # Identify users who exceed the quota limit
-        probation_service = ProbationService()
         markers_with_warnings = []
         for user in annotated_and_claimed_count_dict.keys():
-            if not probation_service.can_set_quota(user):
+            if not QuotaService.can_set_quota(user):
                 markers_with_warnings.append(user.username)
 
         context.update(
