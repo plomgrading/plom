@@ -119,10 +119,9 @@ class ExamInfo(APIView):
     """Get the assessment information in an extensible format.
 
     Returns:
-        (200): a dict of information about the exam/assessment as
-            key-value pairs.  ``feedback_rules`` might be an empty
-            dict in which case clients are supposed to have their
-            own static copy.
+        (200): a dict of information about the assessment and
+        marking settings as key-value pairs.  Currently includes
+        ``current_largest_paper_num`` and ``feedback_rules``.
     """
 
     def get(self, request: Request) -> Response:
@@ -132,7 +131,7 @@ class ExamInfo(APIView):
         info: dict[str, Any] = {
             # TODO: hardcoded, Issue #2938
             "current_largest_paper_num": 9999,
-            "feedback_rules": SettingsModel.load().feedback_rules,
+            "feedback_rules": SettingsModel.get_feedback_rules(),
         }
         return Response(info)
 

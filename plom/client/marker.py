@@ -1057,9 +1057,6 @@ class MarkerClient(QWidget):
         self.annotatorSettings["feedback_rules"] = info.get(
             "feedback_rules", static_feedback_rules_data
         )
-        # server says local defaults should be used if it sends empty
-        if not self.annotatorSettings["feedback_rules"]:
-            self.annotatorSettings["feedback_rules"] = static_feedback_rules_data
         if not self.msgr.is_legacy_server():
             # TODO: in future, I think I prefer a rules-based framework
             # Not "you are lead marker" but "you can view all tasks".
