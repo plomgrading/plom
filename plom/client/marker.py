@@ -705,17 +705,17 @@ class MarkerClient(QWidget):
             self.ui.mProgressBar.setVisible(True)
 
         self.ui.explainQuotaButton.setVisible(False)
-        if info["user_in_probation"]:
-            s = f'Marking limit: {info["user_probation_limit"]} papers'
+        if info["user_quota_limit"] is not None:
+            s = f'Marking limit: {info["user_quota_limit"]} papers'
             self.ui.labelProgress.setText(s)
             self.ui.explainQuotaButton.setVisible(True)
-            self.ui.mProgressBar.setMaximum(info["user_probation_limit"])
+            self.ui.mProgressBar.setMaximum(info["user_quota_limit"])
             self.ui.mProgressBar.setValue(info["user_tasks_marked"])
 
             self._user_reached_quota_limit = False
-            if info["user_tasks_marked"] >= info["user_probation_limit"]:
+            if info["user_tasks_marked"] >= info["user_quota_limit"]:
                 self._user_reached_quota_limit = True
-                ReachedQuotaLimitDialog(self, limit=info["user_probation_limit"]).exec()
+                ReachedQuotaLimitDialog(self, limit=info["user_quota_limit"]).exec()
             return
 
         self.ui.labelProgress.setText("Progress:")

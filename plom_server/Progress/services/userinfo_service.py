@@ -35,7 +35,7 @@ class UserInfoServices:
 
         Returns:
             A dict whose keys are "tasks_claimed", "tasks_marked",
-            "in_probation", "probation_limit".
+            "user_has_quota_limit", "user_quota_limit".
         """
         complete_claimed_task_dict = cls.get_total_annotated_and_claimed_count_by_user()
         try:
@@ -44,17 +44,17 @@ class UserInfoServices:
             # User hasn't marked nor claimed any paper yet:
             tasks_marked, tasks_claimed = 0, 0
         user = User.objects.get(username=username)
-        in_probation = ProbationPeriod.objects.filter(user=user).exists()
-        if in_probation:
-            probation_limit = ProbationPeriod.objects.get(user=user).limit
+        has_limit = ProbationPeriod.objects.filter(user=user).exists()
+        if has_limit:
+            limit = ProbationPeriod.objects.get(user=user).limit
         else:
-            probation_limit = None
+            limit = None
 
         data = {
             "user_tasks_claimed": tasks_claimed,
             "user_tasks_marked": tasks_marked,
-            "user_in_probation": in_probation,
-            "user_probation_limit": probation_limit,
+            "user_has_quota_limit": has_limit,
+            "user_quota_limit": limit,
         }
         return data
 

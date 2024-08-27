@@ -60,7 +60,7 @@ class MarkingProgress(APIView):
             user including "total_tasks_marked", "total_tasks".
             Also includes information about the user's progress including
             their quota status in "user_tasks_claimed",
-            "user_tasks_marked", "user_in_probation", "user_probation_limit".
+            "user_tasks_marked", "user_has_quota_limit", "user_quota_limit".
         (416): question values out of range: NOT IMPLEMENTED YET.
             (In legacy, this was thrown by the backend).  Here, currently
             you just get zeros, which seems fine: maybe we don't need this

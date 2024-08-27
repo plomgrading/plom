@@ -308,11 +308,11 @@ class Messenger(BaseMessenger):
 
         Returns:
             Dict with keys "total_tasks", "total_tasks_marked", "user_tasks_claimed",
-            "user_tasks_marked", "user_in_probation", and "user_probation_limit"
+            "user_tasks_marked", and "user_quota_limit"
         """
         if self.is_legacy_server():
             n, m = self.MprogressCount_legacy(qidx, ver)
-            d = {"total_tasks": m, "total_tasks_marked": n, "user_in_probation": False}
+            d = {"total_tasks": m, "total_tasks_marked": n, "user_quota_limit": None}
             return d
 
         with self.SRmutex:
@@ -534,7 +534,7 @@ class Messenger(BaseMessenger):
                 rubrics,
                 integrity_check,
             )
-            d = {"total_tasks": m, "total_tasks_marked": n, "user_in_probation": False}
+            d = {"total_tasks": m, "total_tasks_marked": n, "user_quota_limit": None}
             return d
         return self._MreturnMarkedTask_webplom(
             code, pg, ver, score, marking_time, annotated_img, plomfile, integrity_check
