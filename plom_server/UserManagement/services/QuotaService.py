@@ -12,8 +12,8 @@ from ..models import Quota
 
 
 @transaction.atomic
-def new_limit_is_valid(limit: int, user: User) -> bool:
-    """Check if the new limit is valid for the user.
+def is_proposed_limit_valid(limit: int, user: User) -> bool:
+    """Check if the proposed limit would valid for the user.
 
     Current restriction:
     1. New limit must be non-negative.

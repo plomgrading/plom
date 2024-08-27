@@ -178,7 +178,7 @@ class EditQuotaLimitView(ManagerRequiredView):
         new_limit = int(request.POST.get("limit"))
         user = get_object_or_404(User, username=username)
 
-        if QuotaService.new_limit_is_valid(new_limit, user):
+        if QuotaService.is_proposed_limit_valid(new_limit, user):
             quota = Quota.objects.filter(user=user).first()
             quota.limit = new_limit
             quota.save()
@@ -211,7 +211,7 @@ class ModifyQuotaView(ManagerRequiredView):
         for user_id in user_ids:
             user = get_object_or_404(User, pk=user_id)
             quota = Quota.objects.get(user=user)
-            if not QuotaService.new_limit_is_valid(limit=new_limit, user=user):
+            if not QuotaService.is_proposed_limit_valid(limit=new_limit, user=user):
                 invalid_markers.append(user.username)
             else:
                 valid_markers.append(user.username)
