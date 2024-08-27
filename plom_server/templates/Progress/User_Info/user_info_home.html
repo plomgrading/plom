@@ -75,7 +75,6 @@
                 <th>Quota</th>
                 <th>Quota Limit</th>
                 <th>Quota Tasks</th>
-                <th>Limit Modifier</th>
             </tr>
             {% for user, annotation_and_claimedTask_count in annotation_count_dict.items %}
                 <tr class="{% if probation_limits|get_item:user.username == annotation_and_claimedTask_count.0 %} table-success {% endif %}">
@@ -118,24 +117,20 @@
                         {% else %}
                             N/A
                         {% endif %}
-                    </td>
-                    <td>
-                        <a class="btn btn-info"
-                           href="{% url 'progress_marking_task_filter' %}?username={{ user.username }}&the_tag=Probation">
-                            view
-                        </a>
-                    </td>
-                    <td>
                         {% if user.username in probation_users %}
                             <button class="btn btn-primary m-2"
                                     type="button"
                                     data-bs-toggle="modal"
                                     data-username="{{ user.username }}"
                                     data-limit="{{ probation_limits|get_item:user.username }}"
-                                    data-bs-target="#editLimit">Edit Limit</button>
-                        {% else %}
-                            <button type="button" disabled>Edit Limit</button>
+                                    data-bs-target="#editLimit">Edit</button>
                         {% endif %}
+                    </td>
+                    <td>
+                        <a class="btn btn-info"
+                           href="{% url 'progress_marking_task_filter' %}?username={{ user.username }}&the_tag=Probation">
+                            view
+                        </a>
                     </td>
                 </tr>
             {% endfor %}
