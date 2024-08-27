@@ -15,7 +15,7 @@
 {% block main_content %}
     <div class="card my-2">
         <div class="card-body">
-            <h5>Default quota limit: {{ default_probation_limit }}</h5>
+            <h5>Default quota limit: {{ default_quota_limit }}</h5>
             <button class="btn btn-success m-2"
                     type="button"
                     data-bs-toggle="modal"
@@ -54,7 +54,7 @@
         <div class="card-body">
             <div>
                 <i class="bi bi-exclamation-diamond-fill text-info"></i>
-                {{ probation_users|length }} markers have quotas.
+                {{ users_with_quota|length }} markers have quotas.
             </div>
             {% if messages %}
                 <div>
@@ -78,7 +78,7 @@
                 <th>Quota Tasks</th>
             </tr>
             {% for user, annotation_and_claimedTask_count in annotation_count_dict.items %}
-                <tr class="{% if probation_limits|get_item:user.username == annotation_and_claimedTask_count.0 %} table-success {% endif %}">
+                <tr class="{% if quota_limits|get_item:user.username == annotation_and_claimedTask_count.0 %} table-success {% endif %}">
                     <td>
                         {{ user.username }}
                         {% if messages %}
@@ -91,7 +91,7 @@
                                 {% endif %}
                             {% endfor %}
                         {% endif %}
-                        {% if user.username in probation_users %}
+                        {% if user.username in users_with_quota %}
                             <i class="bi bi-exclamation-diamond-fill text-info"
                                data-bs-toggle="tooltip"
                                title="Quota limited"></i>
@@ -100,7 +100,7 @@
                     <td>{{ annotation_and_claimedTask_count.0 }}</td>
                     <td>{{ annotation_and_claimedTask_count.1 }}</td>
                     <td>
-                        {% if user.username in probation_users %}
+                        {% if user.username in users_with_quota %}
                             <form action="{% url 'unset_quota' user.username %}" method="post">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-info">Unset Quota</button>
@@ -113,17 +113,17 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% if user.username in probation_users %}
-                            {{ probation_limits|get_item:user.username }}
+                        {% if user.username in users_with_quota %}
+                            {{ quota_limits|get_item:user.username }}
                         {% else %}
-                            N/A
+                            n/a
                         {% endif %}
-                        {% if user.username in probation_users %}
+                        {% if user.username in users_with_quota %}
                             <button class="btn btn-primary m-2"
                                     type="button"
                                     data-bs-toggle="modal"
                                     data-username="{{ user.username }}"
-                                    data-limit="{{ probation_limits|get_item:user.username }}"
+                                    data-limit="{{ quota_limits|get_item:user.username }}"
                                     data-bs-target="#editLimit">Edit</button>
                         {% endif %}
                     </td>

@@ -208,7 +208,7 @@ class QuestionMarkingService:
         task = MarkingTask.objects.select_for_update().get(pk=task.pk)
         marked_by_probationary_marker_tag = "Probation"
 
-        # Check if the user is in probation
+        # Check if the user has quota limits
         from Progress.services import UserInfoServices
 
         uis = UserInfoServices()

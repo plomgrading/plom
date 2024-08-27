@@ -121,13 +121,13 @@
                 <form id="modifyQuotaForm" method="post" action="{% url 'modify_quota' %}">
                     {% csrf_token %}
                     <div class="form-group">
-                        <label for="probationUsers">Select Users</label>
-                        <select id="probationUsers"
+                        <label for="usersWithQuota">Select Users</label>
+                        <select id="usersWithQuota"
                                 name="users"
                                 class="form-control select2"
                                 multiple="multiple"
                                 style="width: 100%">
-                            {% for user in probation_user_objects %}<option value="{{ user.pk }}">{{ user.username }}</option>{% endfor %}
+                            {% for user in users_with_quota_as_objects %}<option value="{{ user.pk }}">{{ user.username }}</option>{% endfor %}
                         </select>
                     </div>
                     <button type="button" class="btn btn-warning" id="selectAllBtn">Select All Users</button>
@@ -159,7 +159,7 @@
 </script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        var selectElement = document.getElementById('probationUsers');
+        var selectElement = document.getElementById('usersWithQuota');
         $(selectElement).select2();
 
         // Add event listener for the Select All button

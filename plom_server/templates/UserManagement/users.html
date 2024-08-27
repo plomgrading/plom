@@ -96,7 +96,7 @@
                             <td>
                                 <form action="{% url 'set_quota' user.username %}" method="post">
                                     {% csrf_token %}
-                                    {% if user.pk in probation_users %}
+                                    {% if user.pk in users_with_quota_by_pk %}
                                         <button formaction="{% url 'unset_quota' user.username %}"
                                                 type="submit"
                                                 class="btn btn-info">Unset Quota</button>

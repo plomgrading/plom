@@ -2,6 +2,8 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Colin B. Macdonald
 
+from __future__ import annotations
+
 from django.db import transaction
 from django.contrib.auth.models import User
 
@@ -57,3 +59,11 @@ def can_set_quota(user: User) -> bool:
         return False
     else:
         return True
+
+
+def get_list_of_usernames_with_quotas() -> list[str]:
+    return Quota.objects.values_list("user__username", flat=True)
+
+
+def get_list_of_user_pks_with_quotas() -> list[int]:
+    return Quota.objects.values_list("user_id", flat=True)

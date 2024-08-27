@@ -47,13 +47,12 @@ class UserPage(ManagerRequiredView):
         markers = User.objects.filter(groups__name="marker").prefetch_related(
             "auth_token"
         )
-        probation_users = Quota.objects.values_list("user_id", flat=True)
         context = {
             "scanners": scanners,
             "markers": markers,
             "lead_markers": lead_markers,
             "managers": managers,
-            "probation_users": probation_users,
+            "users_with_quota_by_pk": QuotaService.get_list_of_user_pks_with_quotas(),
         }
         return render(request, "UserManagement/users.html", context)
 
