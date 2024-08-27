@@ -373,6 +373,7 @@ class ManageScanService:
         return StagingBundle.objects.filter(pushed=False).count()
 
     def get_pushed_image(self, img_pk: int) -> Image | None:
+        """Return a database Image object with the given pk or None if it does not exist."""
         try:
             return Image.objects.get(pk=img_pk)
         except Image.DoesNotExist:
@@ -380,18 +381,57 @@ class ManageScanService:
 
     @transaction.atomic
     def get_pushed_fixed_page_image_info(self, page_pk: int) -> dict[str, Any]:
+        """Given the pk of the fixed-page return info about it and its image.
+
+        Args:
+            page_pk: the pk of the fixed-page.
+
+        Returns: A dict with keys
+            * page_type: always "fixed"
+            * paper_number: the paper containing that fixed page.
+            * page_number: the page_number of  the fixed page.
+            * image_pk: the pk of the image in the fixed page.
+            * bundle_name: the name of the bundle containing the image.
+            * bundle_order: the order of the image inside the bundle.
+        """
         fp_obj = FixedPage.objects.get(pk=page_pk)
-        return {
-            "page_type": "fixed",
-            "paper_number": fp_obj.paper.paper_number,
-            "page_number": fp_obj.page_number,
-            "image_pk": fp_obj.image.pk,
-            "bundle_name": fp_obj.image.bundle.name,
-            "bundle_order": fp_obj.image.bundle_order,
-        }
+        if fp_obj.image is None:
+            return {
+                "page_type": "fixed",
+                "paper_number": fp_obj.paper.paper_number,
+                "page_number": fp_obj.page_number,
+                "image_pk": None,
+                "bundle_name": None,
+                "bundle_order": None,
+            }
+        else:
+            return {
+                "page_type": "fixed",
+                "paper_number": fp_obj.paper.paper_number,
+                "page_number": fp_obj.page_number,
+                "image_pk": fp_obj.image.pk,
+                "bundle_name": fp_obj.image.bundle.name,
+                "bundle_order": fp_obj.image.bundle_order,
+            }
 
     @transaction.atomic
     def get_pushed_mobile_page_image_info(self, page_pk: int) -> dict[str, Any]:
+        """Given the pk of the mobile-page return info about it and its image.
+
+        Args:
+            page_pk: the pk of the mobile-page.
+
+        Returns: A dict with keys
+            * page_type: always "mobile"
+            * paper_number: the paper containing that fixed page.
+            * image_pk: the pk of the image in the fixed page.
+            * bundle_name: the name of the bundle containing the image.
+            * bundle_order: the order of the image inside the bundle.
+            * question_index_list: the list of question-indices which share the underlying image.
+                ie if a given image is used in two mobile pages with different question-indices,
+                both indices will be in this list.
+            * question_list_html: nice html rendering of the list of questions
+        """
         mp_obj = MobilePage.objects.get(pk=page_pk)
         img = mp_obj.image
         # same image might be used for multiple questions - get all those
@@ -411,6 +451,18 @@ class ManageScanService:
 
     @transaction.atomic
     def get_pushed_discard_page_image_info(self, page_pk: int) -> dict[str, Any]:
+        """Given the pk of the discard-page return info about it and its image.
+
+        Args:
+            page_pk: the pk of the discard-page.
+
+        Returns: A dict with keys
+            * page_type: always "discard"
+            * reason: a reason that the page was discarded.
+            * image_pk: the pk of the image in the fixed page.
+            * bundle_name: the name of the bundle containing the image.
+            * bundle_order: the order of the image inside the bundle.
+        """
         dp_obj = DiscardPage.objects.get(pk=page_pk)
         return {
             "page_type": "discard",
@@ -422,6 +474,18 @@ class ManageScanService:
 
     @transaction.atomic
     def get_discarded_page_info(self) -> list[dict[str, Any]]:
+        """Get information on all discarded pages.
+
+        Returns:
+            A list of dicts - one for each discard page. Each dict contains
+            * "page_pk": the pk of the discard page.
+            * "reason": the reason the page was discarded.
+            * "image_pk": the pk of the underlying image.
+            * "bundle_pk": the pk of the bundle containing the image.
+            * "bundle_name": the name of the bundle.
+            * "order": the order of the image within the bundle.
+
+        """
         discards = []
         for dp_obj in DiscardPage.objects.all():
             img = dp_obj.image

@@ -246,7 +246,7 @@ class ManageScanTests(TestCase):
 
     def test_some_reassign_exceptions(self) -> None:
         mds = ManageDiscardService()
-        # there are no discard pages, so can choose pk = 17 and it wont be there.
+        # there are no discard pages, so can choose pk = 17 and it won't be there.
         pk_not_there = 17
         # test non-existent discardpage
         self.assertRaises(

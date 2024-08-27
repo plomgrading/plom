@@ -237,6 +237,20 @@ class ManageDiscardService:
         mobilepage_pk: int | None = None,
         dry_run: bool = True,
     ) -> str:
+        """
+        Given the pk of either a fixed-page or a mobile-page discard it to a discard-page.
+
+        This is a simple wrapper around the discard_pushed_fixed_page
+        and discard_pushed_mobile_page functions.
+
+        Args:
+            username: the name of the user doing the discarding. Note - must be a manager.
+
+        Keyword Args:
+            fixedpage_pk: the pk of the fixed page to discard
+            mobilepage_pk: the pk of the mobile page to discard
+            dry_run: when true, simulate the discard without doing it, else actually do the discard.
+        """
         try:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name="manager"
@@ -350,6 +364,14 @@ class ManageDiscardService:
     def assign_discard_page_to_fixed_page(
         self, user_obj: User, page_pk: int, paper_number: int, page_number: int
     ) -> None:
+        """Reassign the given discard page to a fixed page at the given paper/page.
+
+        Args:
+            user_obj: A django User who is doing the reassignment of the discard page.
+            page_pk: the pk of the discard page.
+            paper_number: the number of the paper to which the discard is being reassigned.
+            page_number: the number of the page in the given paper to which the discard is reassigned.
+        """
         try:
             _ = DiscardPage.objects.get(pk=page_pk)
         except ObjectDoesNotExist as e:
@@ -391,6 +413,15 @@ class ManageDiscardService:
     def reassign_discard_page_to_fixed_page_cmd(
         self, username: str, discard_pk: int, paper_number: int, page_number: int
     ) -> None:
+        """A wrapper around the assign_discard_page_to_fixed_page command.
+
+        Args:
+            username: the name of the user who is doing the reassignment.
+                Must be a manager.
+            discard_pk: the pk of the discard page to be reassigned.
+            paper_number: the number of the paper containing the fixed page.
+            page_number: the page number of the fixed page.
+        """
         try:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name="manager"
@@ -411,6 +442,16 @@ class ManageDiscardService:
         paper_number: int,
         question_list: list[int],
     ) -> None:
+        """A wrapper around the assign_discard_page_to_mobile_page command.
+
+        Args:
+            username: the name of the user who is doing the reassignment.
+                Must be a manager.
+            discard_pk: the pk of the discard page to be reassigned.
+            paper_number: the number of the paper containing the fixed page.
+            question_list: a list of the questions on the discard page. A
+                mobile page is created for each question.
+        """
         try:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name="manager"

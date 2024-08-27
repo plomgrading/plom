@@ -56,9 +56,7 @@
                                 </div>
                                 <div class="container shadow-sm p-2">
                                     <div x-show="assignment_type=='fixed'">
-                                      <p>
-                                        Select a missing fixed page from an incomplete paper:
-                                        </p>
+                                        <p>Select a missing fixed page from an incomplete paper:</p>
                                         <select name="missingPaperPage" class="form-select">
                                             <option selected>Missing paper/page</option>
                                             {% for pn, pg_list in papers_missing_fixed_pages %}
@@ -66,10 +64,9 @@
                                             {% endfor %}
                                         </select>
                                         {% if not papers_missing_fixed_pages %}
-                                        <div class="my-1"><p class="alert alert-info">
-                                          All pushed papers are complete
-                                        </p>
-                                        </div>
+                                            <div class="my-1">
+                                                <p class="alert alert-info">All pushed papers are complete</p>
+                                            </div>
                                         {% endif %}
                                     </div>
                                     <div x-show="assignment_type=='mobile'">

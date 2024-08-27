@@ -316,6 +316,10 @@ def get_substitute_page_info(paper_number: int, page_number: int) -> dict[str, A
 
 
 def get_list_of_all_missing_dnm_pages() -> List[dict[str, int]]:
+    """Get list of missing do-not-mark pages from incomplete papers.
+
+    Returns: A list of dict of the form {'paper_number':foo, "page_number": bah}
+    """
     incomplete_papers = ManageScanService().get_all_incomplete_test_papers()
     missing_dnm = []
     for paper_number, dat in incomplete_papers.items():
