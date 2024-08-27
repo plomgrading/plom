@@ -128,8 +128,9 @@
                         {% endif %}
                     </td>
                     <td>
+                        <!-- TODO: hardcoded tag here, must match question_marking.py -->
                         <a class="btn btn-info"
-                           href="{% url 'progress_marking_task_filter' %}?username={{ user.username }}&the_tag=Probation">
+                           href="{% url 'progress_marking_task_filter' %}?username={{ user.username }}&the_tag=during_quota">
                             view
                         </a>
                     </td>

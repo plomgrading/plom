@@ -206,7 +206,7 @@ class QuestionMarkingService:
 
         # regrab it, selected-for-update, b/c we're going to write to it
         task = MarkingTask.objects.select_for_update().get(pk=task.pk)
-        marked_by_probationary_marker_tag = "Probation"
+        tag_marked_during_quota = "during_quota"
 
         # Check if the user has quota limits
         from Progress.services import UserInfoServices
@@ -220,7 +220,7 @@ class QuestionMarkingService:
                 MarkingTaskService().create_tag_and_attach_to_task(
                     user=user,
                     task_pk=task.pk,
-                    tag_text=marked_by_probationary_marker_tag,
+                    tag_text=tag_marked_during_quota,
                 )
             else:
                 raise PlomQuotaLimitExceeded(
