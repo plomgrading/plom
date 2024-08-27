@@ -73,7 +73,6 @@
                 <th>Username</th>
                 <th>Task Marked</th>
                 <th>Task Claimed</th>
-                <th>Quota</th>
                 <th>Quota Limit</th>
                 <th>Quota Tasks</th>
             </tr>
@@ -101,30 +100,30 @@
                     <td>{{ progress.tasks_claimed }}</td>
                     <td>
                         {% if progress.has_quota_limit %}
-                            <form action="{% url 'unset_quota' username %}" method="post">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-info">Unset Quota</button>
-                            </form>
-                        {% else %}
-                            <form action="{% url 'set_quota' username %}" method="post">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-warning">Set Quota</button>
-                            </form>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if progress.has_quota_limit %}
                             {{ progress.quota_limit }}
-                        {% else %}
-                            n/a
-                        {% endif %}
-                        {% if progress.has_quota_limit %}
-                            <button class="btn btn-primary m-2"
+                            <button class="btn btn-outline-primary ms-1"
                                     type="button"
                                     data-bs-toggle="modal"
                                     data-username="{{ username }}"
                                     data-limit="{{ progress.quota_limit }}"
-                                    data-bs-target="#editLimit">Edit</button>
+                                    data-bs-target="#editLimit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <form action="{% url 'unset_quota' username %}"
+                                  style="display:inline"
+                                  method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-secondary">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        {% else %}
+                            <form action="{% url 'set_quota' username %}"
+                                  style="display:inline"
+                                  method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-primary">Enable</button>
+                            </form>
                         {% endif %}
                     </td>
                     <td>
