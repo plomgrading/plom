@@ -237,8 +237,7 @@ class ManageDiscardService:
         mobilepage_pk: int | None = None,
         dry_run: bool = True,
     ) -> str:
-        """
-        Given the pk of either a fixed-page or a mobile-page discard it to a discard-page.
+        """Given the pk of either a fixed-page or a mobile-page discard it to a discard-page.
 
         This is a simple wrapper around the discard_pushed_fixed_page
         and discard_pushed_mobile_page functions.
