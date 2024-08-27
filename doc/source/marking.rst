@@ -83,7 +83,7 @@ Examples of this feature include:
    1. You are working with novice graders and want to review their
       marking and/or meet with them after they have graded (say) 20
       tasks.
-   2. You're working with team and want everyone to mark 10 tasks,
+   2. You're working with a team and want everyone to mark 10 tasks,
       then have a meeting to settle on a common set of rubrics.
-   3. You have 300 tasks that need grading and want to strictly ensure
-      that no one does more than their share.
+   3. You have 300 tasks that need grading and want to want to ensure
+      that everyone does their share.
