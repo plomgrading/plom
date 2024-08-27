@@ -24,7 +24,7 @@ pyspellchecker==0.8.1
 pytest-qt==4.4.0
 
 # Legacy-server only deps
-aiohttp==3.10.2
+aiohttp==3.10.5
 cryptography==42.0.8
 peewee==3.17.6
 
