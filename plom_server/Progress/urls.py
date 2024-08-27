@@ -30,10 +30,10 @@ from .views import (
     IDImageWrapView,
 )
 from UserManagement.views import (
-    SetProbationView,
-    UnsetProbationView,
-    EditProbationLimitView,
-    ModifyProbationView,
+    SetQuotaView,
+    UnsetQuotaView,
+    EditQuotaLimitView,
+    ModifyQuotaView,
     ModifyDefaultLimitView,
 )
 
@@ -145,20 +145,20 @@ urlpatterns = [
     ),
     path(
         "set_quota/<str:username>/",
-        SetProbationView.as_view(),
+        SetQuotaView.as_view(),
         name="set_quota",
     ),
     path(
         "unset_quota/<str:username>/",
-        UnsetProbationView.as_view(),
+        UnsetQuotaView.as_view(),
         name="unset_quota",
     ),
     path(
-        "edit_probation_limit/",
-        EditProbationLimitView.as_view(),
-        name="edit_probation_limit",
+        "edit_quota_limit/",
+        EditQuotaLimitView.as_view(),
+        name="edit_quota_limit",
     ),
-    path("modify_probation/", ModifyProbationView.as_view(), name="modify_probation"),
+    path("modify_quota/", ModifyQuotaView.as_view(), name="modify_quota"),
     path(
         "modify_default_limit/",
         ModifyDefaultLimitView.as_view(),

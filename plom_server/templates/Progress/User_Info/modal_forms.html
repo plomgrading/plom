@@ -86,7 +86,7 @@
             <div class="modal-body">
                 <form id="editLimitForm"
                       method="post"
-                      action="{% url 'edit_probation_limit' %}">
+                      action="{% url 'edit_quota_limit' %}">
                     {% csrf_token %}
                     <div class="form-group">
                         <input type="hidden" id="username" name="username">
@@ -120,7 +120,7 @@
             <div class="modal-body">
                 <form id="modifyProbationForm"
                       method="post"
-                      action="{% url 'modify_probation' %}">
+                      action="{% url 'modify_quota' %}">
                     {% csrf_token %}
                     <div class="form-group">
                         <label for="probationUsers">Select Users</label>

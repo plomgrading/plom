@@ -58,7 +58,7 @@
             {% if messages %}
                 <div>
                     {% for message in messages %}
-                        {% if 'modify_probation' in message.tags %}
+                        {% if 'modify_quota' in message.tags %}
                             {% include "./alert_message.html" with message=message %}
                         {% endif %}
                     {% endfor %}

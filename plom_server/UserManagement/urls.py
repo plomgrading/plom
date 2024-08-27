@@ -31,12 +31,12 @@ urlpatterns = [
     path("explosion", views.HTMXExplodeView.as_view(), name="htmx_explode"),
     path(
         "set_quota/<str:username>/",
-        views.SetProbationView.as_view(),
+        views.SetQuotaView.as_view(),
         name="set_quota",
     ),
     path(
         "unset_quota/<str:username>/",
-        views.UnsetProbationView.as_view(),
+        views.UnsetQuotaView.as_view(),
         name="unset_quota",
     ),
     path(

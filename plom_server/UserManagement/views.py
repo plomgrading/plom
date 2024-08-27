@@ -36,7 +36,8 @@ class UserPage(ManagerRequiredView):
     This page utilizes extra tags embedded in messages to display messages
     in different parts/cards in the page.
 
-    modify_probation: is the tag used when one interacts with "Set Probation" button and "Modify Probation Limit".
+    modify_quota: is the tag used when one interacts with set and modify
+        quota buttons.
     modify_default_limit: when one interacts with "Change Default Limit" button".
     set_quota_confirmation: the tag for the confirmation dialog interaction.
     """
@@ -114,8 +115,8 @@ class HTMXExplodeView(ManagerRequiredView):
         return HttpResponse("Button pushed", status=200)
 
 
-class SetProbationView(ManagerRequiredView):
-    """View to handle setting a probation period for a user.
+class SetQuotaView(ManagerRequiredView):
+    """View to handle setting a quota limit for a user.
 
     Note: force_set_quota is a special flag that causes a marker's quota to be set
     even though they do not fulfill the limit restriction.  The limit will be set
@@ -123,7 +124,7 @@ class SetProbationView(ManagerRequiredView):
     """
 
     def post(self, request, username):
-        """Handle the POST request to set the probation period for the specified user."""
+        """Handle the POST request to set the quota limit for the specified user."""
         user = get_object_or_404(User, username=username)
         next_page = request.POST.get(
             "next", request.META.get("HTTP_REFERER", reverse("users"))
@@ -160,11 +161,11 @@ class SetProbationView(ManagerRequiredView):
         return redirect(next_page)
 
 
-class UnsetProbationView(ManagerRequiredView):
-    """View to handle unsetting a probation period for a user."""
+class UnsetQuotaView(ManagerRequiredView):
+    """View to handle removing a quota limit from a user."""
 
     def post(self, request, username):
-        """Handle the POST request to unset the probation period for the specified user."""
+        """Handle the POST request to unset the quota limit for the specified user."""
         user = get_object_or_404(User, username=username)
         probation_period = ProbationPeriod.objects.filter(user=user)
         probation_period.delete()
@@ -175,11 +176,11 @@ class UnsetProbationView(ManagerRequiredView):
         return redirect(next_page)
 
 
-class EditProbationLimitView(ManagerRequiredView):
-    """View to handle editing the probation limit for a user."""
+class EditQuotaLimitView(ManagerRequiredView):
+    """View to handle editing the quota limit for a user."""
 
     def post(self, request):
-        """Handle the POST request to update the probation limit for the specified user."""
+        """Handle the POST request to update the quota limit for the specified user."""
         username = request.POST.get("username")
         new_limit = int(request.POST.get("limit"))
         user = get_object_or_404(User, username=username)
@@ -190,21 +191,21 @@ class EditProbationLimitView(ManagerRequiredView):
             probation_period.save()
             messages.success(
                 request,
-                "Probation limit updated successfully.",
-                extra_tags="modify_probation",
+                "Quota limit updated successfully.",
+                extra_tags="modify_quota",
             )
         else:
-            messages.error(request, "Invalid Limit!", extra_tags="modify_probation")
+            messages.error(request, "Invalid Limit!", extra_tags="modify_quota")
 
         previous_url = request.META.get("HTTP_REFERER", reverse("users"))
         return redirect(previous_url)
 
 
-class ModifyProbationView(ManagerRequiredView):
-    """View to handle modifying the probation state or limit for multiple users."""
+class ModifyQuotaView(ManagerRequiredView):
+    """View to handle modifying the quota state and/or limit for multiple users."""
 
     def post(self, request):
-        """Handle the POST request to update the probation limits for the specified users."""
+        """Handle the POST request to update the quota limits for the specified users."""
         user_ids = request.POST.getlist("users")
         new_limit = int(request.POST.get("limit"))
         valid_markers = []
@@ -227,28 +228,28 @@ class ModifyProbationView(ManagerRequiredView):
         if len(invalid_markers) > 0:
             messages.success(
                 request,
-                f"Probation limit has been successfully updated for: {', '.join(valid_markers)}",
-                extra_tags="modify_probation",
+                f"Quota limit has been successfully updated for: {', '.join(valid_markers)}",
+                extra_tags="modify_quota",
             )
             messages.error(
                 request,
                 f"Invalid limit for: {', '.join(invalid_markers)}",
-                extra_tags="modify_probation",
+                extra_tags="modify_quota",
             )
         else:
             messages.success(
                 request,
-                "All probation limits are updated successfully.",
-                extra_tags="modify_probation",
+                "All quota limits updated successfully.",
+                extra_tags="modify_quota",
             )
         return redirect(reverse("progress_user_info_home"))
 
 
 class ModifyDefaultLimitView(ManagerRequiredView):
-    """View to handle modifying the default probation limit."""
+    """View to handle modifying the default quota limit."""
 
     def post(self, request):
-        """Handle the POST request to change the default probation limit."""
+        """Handle the POST request to change the default limit."""
         new_limit = int(request.POST.get("limit"))
 
         if new_limit > 0:
@@ -290,13 +291,13 @@ class BulkSetQuotaView(ManagerRequiredView):
             messages.success(
                 request,
                 f"A quota limit has been successfully set for: {', '.join(successful_markers)}",
-                extra_tags="modify_probation",
+                extra_tags="modify_quota",
             )
 
             messages.error(
                 request,
                 f"Quota cannot be set on: {', '.join(markers_with_warnings)}",
-                extra_tags="modify_probation",
+                extra_tags="modify_quota",
             )
 
             messages.warning(
@@ -307,7 +308,7 @@ class BulkSetQuotaView(ManagerRequiredView):
             messages.success(
                 request,
                 "All markers have had a quota applied.",
-                extra_tags="modify_probation",
+                extra_tags="modify_quota",
             )
 
         return redirect(reverse("progress_user_info_home"))
