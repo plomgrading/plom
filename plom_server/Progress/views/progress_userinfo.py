@@ -18,7 +18,6 @@ class ProgressUserInfoHome(ManagerRequiredView):
         context = super().build_context()
         filter_form = AnnotationFilterForm(request.GET)
 
-        annotations_exist = UserInfoServices.annotation_exists()
         uis = UserInfoServices()
         latest_annotation_human_time = uis.get_time_of_latest_updated_annotation()
         request_time_filter_seconds = request.GET.get("time_filter_seconds")
@@ -76,7 +75,6 @@ class ProgressUserInfoHome(ManagerRequiredView):
 
         context.update(
             {
-                "annotations_exist": annotations_exist,
                 "annotations_grouped_by_user": annotations_grouped_by_user,
                 "annotations_grouped_by_question_ver": annotations_grouped_by_question_ver,
                 "annotation_filter_form": filter_form,

@@ -110,6 +110,8 @@ class UserInfoServices:
 
         Returns:
             True if there are annotations or False if there aren't any.
+
+        Note: currently unused (and untested).
         """
         return Annotation.objects.exists()
 
