@@ -29,7 +29,7 @@ question.
 Marking party!
 --------------
 
-Some people recommend that you and your term work at least initially
+Some people recommend that your term work at least initially
 in the same physical location.
 Of course, you can use Plom to do your marking just about anywhere,
 but it has been observed that marking goes much faster and is more
@@ -42,37 +42,48 @@ important.
 Tracking progress
 -----------------
 
-You can use manager accounts to keep an eye on progress on this whole process.
-
+You can use manager accounts to keep an eye on progress.
 If you are using the older legacy server, see :doc:`manage`.
 
 
-Assigning tasks to particular users
------------------------------------
+Tagging tasks
+-------------
 
-This is done by tagging the task for someone.  Find the task under
-"Progress" -> "Task overview" and "Flag to user".
+Each task can be tagged with essentially arbitrary short text tags,
+which are used to communicate within the grading team (they are not by
+default shown to students).
 
-
-Reverting annotations
----------------------
-
-Find the task described above, and click "reset".
+Tagging it to a particular user will mean that Plom is more likely to
+assign the task to that user.
 
 
-Reassigning tasks to other users
---------------------------------
+Reassigning and reverting tasks
+-------------------------------
 
-
-Occasionally you might need to check over the marking of one of your
-users.
-You can do this under the "Progress" part of the UI, where you can
-search based on user name, or other criteria.
-You can sort the results by score, marking time, when the marking was
-done, etc.
-
-To reassign a task, click on "Details" then "Flag to user", finally "reset".
+You can find tasks under the "Progress" section of your Plom admin site.
+There you can "reset" (revert all annotations made to a task) a task.
+You can also assign it to another user, keeping existing annotations intact.
 
 .. caution::
-    The new user will unfortunately not be able to see the previous
-    annotations.  Reassigning tasks is work-in-progress.
+    Reassigning tasks is still work-in-progress.
+
+
+Quotas
+------
+
+Sometimes you may wish to temporarily limit the numbers of questions a
+user can mark.
+You can do this by setting a per-user quota in the User Management
+part of the Plom admin site.
+After a marker reaches their quota, they will not be allowed to mark
+additional papers, until you remove or increase their quota limit.
+
+Examples of this feature include:
+
+   1. You are working with novice graders and want to review their
+      marking and/or meet with them after they have graded (say) 20
+      tasks.
+   2. You're working with a team and want everyone to mark 10 tasks,
+      then have a meeting to settle on a common set of rubrics.
+   3. You have 300 tasks that need grading and want to want to ensure
+      that everyone does their share.

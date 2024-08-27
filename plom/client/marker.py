@@ -183,7 +183,7 @@ class MarkerClient(QWidget):
         self.version = None
         self.exam_spec = None
         self.max_papernum = None
-        self._user_reached_probation_limit = False
+        self._user_reached_quota_limit = False
 
         self.msgr = None
         # history contains all the tgv in order of being marked except the current one.
@@ -380,7 +380,7 @@ class MarkerClient(QWidget):
         self.ui.viewButton.clicked.connect(self.choose_and_view_other)
         self.ui.technicalButton.clicked.connect(self.show_hide_technical)
         self.ui.failmodeCB.stateChanged.connect(self.toggle_fail_mode)
-        self.ui.explainProbationButton.clicked.connect(ExplainQuotaDialog(self).exec)
+        self.ui.explainQuotaButton.clicked.connect(ExplainQuotaDialog(self).exec)
 
     def change_tag_range_options(self):
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
@@ -660,7 +660,7 @@ class MarkerClient(QWidget):
 
         Keyword Args:
             info: key-value pairs with information about progress overall,
-                and for this user, including information about probation.
+                and for this user, including information about quota.
                 If omitted, we'll contact the server synchronously to get
                 this info.
 
@@ -680,7 +680,7 @@ class MarkerClient(QWidget):
         if info["total_tasks"] == 0:
             self.ui.labelProgress.setText("Progress: no papers to mark")
             self.ui.mProgressBar.setVisible(False)
-            self.ui.explainProbationButton.setVisible(False)
+            self.ui.explainQuotaButton.setVisible(False)
             try:
                 qlabel = get_question_label(self.exam_spec, self.question_idx)
                 verbose_qlabel = verbose_question_label(
@@ -704,18 +704,18 @@ class MarkerClient(QWidget):
         if not self.ui.mProgressBar.isVisible():
             self.ui.mProgressBar.setVisible(True)
 
-        self.ui.explainProbationButton.setVisible(False)
-        if info["user_in_probation"]:
-            s = f'Marking limit: {info["user_probation_limit"]} papers'
+        self.ui.explainQuotaButton.setVisible(False)
+        if info["user_quota_limit"] is not None:
+            s = f'Marking limit: {info["user_quota_limit"]} papers'
             self.ui.labelProgress.setText(s)
-            self.ui.explainProbationButton.setVisible(True)
-            self.ui.mProgressBar.setMaximum(info["user_probation_limit"])
+            self.ui.explainQuotaButton.setVisible(True)
+            self.ui.mProgressBar.setMaximum(info["user_quota_limit"])
             self.ui.mProgressBar.setValue(info["user_tasks_marked"])
 
-            self._user_reached_probation_limit = False
-            if info["user_tasks_marked"] >= info["user_probation_limit"]:
-                self._user_reached_probation_limit = True
-                ReachedQuotaLimitDialog(self, limit=info["user_probation_limit"]).exec()
+            self._user_reached_quota_limit = False
+            if info["user_tasks_marked"] >= info["user_quota_limit"]:
+                self._user_reached_quota_limit = True
+                ReachedQuotaLimitDialog(self, limit=info["user_quota_limit"]).exec()
             return
 
         self.ui.labelProgress.setText("Progress:")
@@ -1313,12 +1313,12 @@ class MarkerClient(QWidget):
                 to the server to check.
 
         Returns:
-            True if marker is in probation and they have reached their
+            True if marker is in quota and they have reached their
             limit, otherwise False.
         """
         if not use_cached:
             self.updateProgress()
-        return self._user_reached_probation_limit
+        return self._user_reached_quota_limit
 
     def getDataForAnnotator(self, task: str) -> tuple | None:
         """Start annotator on a particular task.

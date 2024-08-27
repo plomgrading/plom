@@ -34,7 +34,7 @@ from plom.plom_exceptions import (
     PlomTaskChangedError,
     PlomTaskDeletedError,
     PlomTimeoutError,
-    PlomProbationLimitExceeded,
+    PlomQuotaLimitExceeded,
 )
 
 
@@ -300,7 +300,7 @@ class Messenger(BaseMessenger):
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def get_marking_progress(self, qidx: int, ver: int) -> dict[str, Any]:
-        """Get a dict representing the progress and probation status of current marker.
+        """Get a dict representing the progress and quota status of current marker.
 
         Args:
             qidx: which question.
@@ -308,11 +308,11 @@ class Messenger(BaseMessenger):
 
         Returns:
             Dict with keys "total_tasks", "total_tasks_marked", "user_tasks_claimed",
-            "user_tasks_marked", "user_in_probation", and "user_probation_limit"
+            "user_tasks_marked", and "user_quota_limit"
         """
         if self.is_legacy_server():
             n, m = self.MprogressCount_legacy(qidx, ver)
-            d = {"total_tasks": m, "total_tasks_marked": n, "user_in_probation": False}
+            d = {"total_tasks": m, "total_tasks_marked": n, "user_quota_limit": None}
             return d
 
         with self.SRmutex:
@@ -534,7 +534,7 @@ class Messenger(BaseMessenger):
                 rubrics,
                 integrity_check,
             )
-            d = {"total_tasks": m, "total_tasks_marked": n, "user_in_probation": False}
+            d = {"total_tasks": m, "total_tasks_marked": n, "user_quota_limit": None}
             return d
         return self._MreturnMarkedTask_webplom(
             code, pg, ver, score, marking_time, annotated_img, plomfile, integrity_check
@@ -704,7 +704,7 @@ class Messenger(BaseMessenger):
                 if response.status_code == 400:
                     raise PlomSeriousException(response.reason) from None
                 if response.status_code == 423:
-                    raise PlomProbationLimitExceeded(response.reason) from None
+                    raise PlomQuotaLimitExceeded(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MgetUserRubricTabs(self, question):

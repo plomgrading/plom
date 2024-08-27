@@ -2,6 +2,6 @@
 # Copyright (C) 2024 Elisa Pan
 
 from django.contrib import admin
-from .models import ProbationPeriod
+from .models import Quota
 
-admin.site.register(ProbationPeriod)
+admin.site.register(Quota)

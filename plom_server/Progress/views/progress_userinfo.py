@@ -7,8 +7,8 @@ from django.contrib.auth.models import User
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
-from UserManagement.models import ProbationPeriod
-from UserManagement.services import ProbationService
+from UserManagement.models import Quota
+from UserManagement.services import QuotaService
 from ..forms import AnnotationFilterForm
 from ..services import UserInfoServices
 
@@ -58,29 +58,21 @@ class ProgressUserInfoHome(ManagerRequiredView):
             for username, count in annotated_and_claimed_count_dict.items()
         }
 
-        probation_users = ProbationPeriod.objects.values_list(
-            "user__username", flat=True
-        )
-        probation_users_with_limits = ProbationPeriod.objects.select_related(
-            "user"
-        ).all()
-
-        probation_limits = {
-            prob.user.username: prob.limit for prob in probation_users_with_limits
+        usernames_with_quota = QuotaService.get_list_of_usernames_with_quotas()
+        quota_limits_dict = {
+            q.user.username: q.limit for q in Quota.objects.select_related("user").all()
         }
-
-        default_probation_limit = ProbationPeriod.default_limit
-
-        # Fetch user objects for users in probation
-        probation_user_objects = User.objects.filter(
-            username__in=probation_users
+        # Fetch user objects
+        users_with_quota_as_objects = User.objects.filter(
+            username__in=usernames_with_quota
         ).order_by("id")
 
-        # Identify users who exceed the probation limit
-        probation_service = ProbationService()
+        default_quota_limit = Quota.default_limit
+
+        # Identify users who exceed the quota limit
         markers_with_warnings = []
         for user in annotated_and_claimed_count_dict.keys():
-            if not probation_service.can_set_probation(user):
+            if not QuotaService.can_set_quota(user):
                 markers_with_warnings.append(user.username)
 
         context.update(
@@ -91,10 +83,10 @@ class ProgressUserInfoHome(ManagerRequiredView):
                 "annotations_grouped_by_question_ver": annotations_grouped_by_question_ver,
                 "annotation_filter_form": filter_form,
                 "latest_updated_annotation_human_time": latest_annotation_human_time,
-                "probation_users": probation_users,
-                "default_probation_limit": default_probation_limit,
-                "probation_limits": probation_limits,
-                "probation_user_objects": probation_user_objects,  # Pass user objects
+                "users_with_quota": usernames_with_quota,
+                "default_quota_limit": default_quota_limit,
+                "quota_limits": quota_limits_dict,
+                "users_with_quota_as_objects": users_with_quota_as_objects,
                 "markers_with_warnings": markers_with_warnings,  # Pass markers with warnings
             }
         )

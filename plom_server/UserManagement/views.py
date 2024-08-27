@@ -9,34 +9,33 @@
 
 import json
 
-from django.shortcuts import redirect, render
-from django.http import HttpRequest, HttpResponse, Http404
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-
+from django.http import HttpRequest, HttpResponse, Http404
 from django_htmx.http import HttpResponseClientRefresh
-
-from Base.base_group_views import ManagerRequiredView
-
-from .services import PermissionChanger
+from django.shortcuts import get_object_or_404
+from django.shortcuts import redirect, render
+from django.urls import reverse
 
 from Authentication.services import AuthenticationServices
-
-from django.shortcuts import get_object_or_404
-from django.urls import reverse
-from .models import ProbationPeriod
-from django.contrib import messages
-from .services.probationService import ProbationService
+from Base.base_group_views import ManagerRequiredView
 from Progress.services.userinfo_service import UserInfoServices
+from .services import PermissionChanger
+from .services import QuotaService
+from .models import Quota
 
 
 class UserPage(ManagerRequiredView):
     """Class that handles the views in UserInfo Page.
 
-    This page utilizes extra tags embeddes in messages to display messages in different parts/cards in the page.
-    modify_probation: is the tag used when one interacts with "Set Probation" button and "Modify Probation Limit".
+    This page utilizes extra tags embedded in messages to display messages
+    in different parts/cards in the page.
+
+    modify_quota: is the tag used when one interacts with set and modify
+        quota buttons.
     modify_default_limit: when one interacts with "Change Default Limit" button".
-    set_probation_confirmation: the tag for the probation confirmation dialog interaction.
+    set_quota_confirmation: the tag for the confirmation dialog interaction.
     """
 
     def get(self, request):
@@ -48,13 +47,12 @@ class UserPage(ManagerRequiredView):
         markers = User.objects.filter(groups__name="marker").prefetch_related(
             "auth_token"
         )
-        probation_users = ProbationPeriod.objects.values_list("user_id", flat=True)
         context = {
             "scanners": scanners,
             "markers": markers,
             "lead_markers": lead_markers,
             "managers": managers,
-            "probation_users": probation_users,
+            "users_with_quota_by_pk": QuotaService.get_list_of_user_pks_with_quotas(),
         }
         return render(request, "UserManagement/users.html", context)
 
@@ -112,39 +110,37 @@ class HTMXExplodeView(ManagerRequiredView):
         return HttpResponse("Button pushed", status=200)
 
 
-class SetProbationView(ManagerRequiredView):
-    """View to handle setting a probation period for a user.
+class SetQuotaView(ManagerRequiredView):
+    """View to handle setting a quota limit for a user.
 
-    Note: enforce_set_probation is a special flag that enforce a marker to be set to probation
-    even though they do not fulfill the probation's limit restriction. The limit will be set
+    Note: force_set_quota is a special flag that causes a marker's quota to be set
+    even though they do not fulfill the limit restriction.  The limit will be set
     to their current number of question marked.
     """
 
     def post(self, request, username):
-        """Handle the POST request to set the probation period for the specified user."""
+        """Handle the POST request to set the quota limit for the specified user."""
         user = get_object_or_404(User, username=username)
         next_page = request.POST.get(
             "next", request.META.get("HTTP_REFERER", reverse("users"))
         )
 
-        # Special flag received when user confirms to enforce setting probatiog, ignoring probation limit restriction.
-        if "enforce_set_probation" in request.POST:
+        # Special flag received when user confirms to force setting, ignoring limit restriction.
+        if "force_set_quota" in request.POST:
             complete_and_claimed_tasks = (
                 UserInfoServices.get_total_annotated_and_claimed_count_by_user()
             )
             complete, claimed = complete_and_claimed_tasks[username]
-            probation_period, created = ProbationPeriod.objects.get_or_create(
-                user=user, limit=complete
-            )
+            quota, created = Quota.objects.get_or_create(user=user, limit=complete)
 
         # No special flag received, proceed to check whether the marker fulfills the restriction.
-        elif ProbationService().can_set_probation(user):
-            probation_period, created = ProbationPeriod.objects.get_or_create(
-                user=user, limit=ProbationPeriod.default_limit
+        elif QuotaService.can_set_quota(user):
+            quota, created = Quota.objects.get_or_create(
+                user=user, limit=Quota.default_limit
             )
             if not created:
-                probation_period.limit = ProbationPeriod.default_limit
-                probation_period.save()
+                quota.limit = Quota.default_limit
+                quota.save()
 
         # Message is specially crafted for confirmation dialog.
         else:
@@ -152,20 +148,20 @@ class SetProbationView(ManagerRequiredView):
                 "username": username,
             }
             messages.info(
-                request, json.dumps(details), extra_tags="set_probation_confirmation"
+                request, json.dumps(details), extra_tags="set_quota_confirmation"
             )
 
         return redirect(next_page)
 
 
-class UnsetProbationView(ManagerRequiredView):
-    """View to handle unsetting a probation period for a user."""
+class UnsetQuotaView(ManagerRequiredView):
+    """View to handle removing a quota limit from a user."""
 
     def post(self, request, username):
-        """Handle the POST request to unset the probation period for the specified user."""
+        """Handle the POST request to unset the quota limit for the specified user."""
         user = get_object_or_404(User, username=username)
-        probation_period = ProbationPeriod.objects.filter(user=user)
-        probation_period.delete()
+        quota = Quota.objects.filter(user=user)
+        quota.delete()
 
         next_page = request.POST.get(
             "next", request.META.get("HTTP_REFERER", reverse("users"))
@@ -173,36 +169,36 @@ class UnsetProbationView(ManagerRequiredView):
         return redirect(next_page)
 
 
-class EditProbationLimitView(ManagerRequiredView):
-    """View to handle editing the probation limit for a user."""
+class EditQuotaLimitView(ManagerRequiredView):
+    """View to handle editing the quota limit for a user."""
 
     def post(self, request):
-        """Handle the POST request to update the probation limit for the specified user."""
+        """Handle the POST request to update the quota limit for the specified user."""
         username = request.POST.get("username")
         new_limit = int(request.POST.get("limit"))
         user = get_object_or_404(User, username=username)
 
-        if ProbationService().new_limit_is_valid(new_limit, user):
-            probation_period = ProbationPeriod.objects.filter(user=user).first()
-            probation_period.limit = new_limit
-            probation_period.save()
+        if QuotaService.is_proposed_limit_valid(new_limit, user):
+            quota = Quota.objects.filter(user=user).first()
+            quota.limit = new_limit
+            quota.save()
             messages.success(
                 request,
-                "Probation limit updated successfully.",
-                extra_tags="modify_probation",
+                "Quota limit updated successfully.",
+                extra_tags="modify_quota",
             )
         else:
-            messages.error(request, "Invalid Limit!", extra_tags="modify_probation")
+            messages.error(request, "Invalid Limit!", extra_tags="modify_quota")
 
         previous_url = request.META.get("HTTP_REFERER", reverse("users"))
         return redirect(previous_url)
 
 
-class ModifyProbationView(ManagerRequiredView):
-    """View to handle modifying the probation state or limit for multiple users."""
+class ModifyQuotaView(ManagerRequiredView):
+    """View to handle modifying the quota state and/or limit for multiple users."""
 
     def post(self, request):
-        """Handle the POST request to update the probation limits for the specified users."""
+        """Handle the POST request to update the quota limits for the specified users."""
         user_ids = request.POST.getlist("users")
         new_limit = int(request.POST.get("limit"))
         valid_markers = []
@@ -214,43 +210,43 @@ class ModifyProbationView(ManagerRequiredView):
 
         for user_id in user_ids:
             user = get_object_or_404(User, pk=user_id)
-            probation_period = ProbationPeriod.objects.get(user=user)
-            if not ProbationService().new_limit_is_valid(limit=new_limit, user=user):
+            quota = Quota.objects.get(user=user)
+            if not QuotaService.is_proposed_limit_valid(limit=new_limit, user=user):
                 invalid_markers.append(user.username)
             else:
                 valid_markers.append(user.username)
-                probation_period.limit = new_limit
-                probation_period.save()
+                quota.limit = new_limit
+                quota.save()
 
         if len(invalid_markers) > 0:
             messages.success(
                 request,
-                f"Probation limit has been successfully updated for: {', '.join(valid_markers)}",
-                extra_tags="modify_probation",
+                f"Quota limit has been successfully updated for: {', '.join(valid_markers)}",
+                extra_tags="modify_quota",
             )
             messages.error(
                 request,
                 f"Invalid limit for: {', '.join(invalid_markers)}",
-                extra_tags="modify_probation",
+                extra_tags="modify_quota",
             )
         else:
             messages.success(
                 request,
-                "All probation limits are updated successfully.",
-                extra_tags="modify_probation",
+                "All quota limits updated successfully.",
+                extra_tags="modify_quota",
             )
         return redirect(reverse("progress_user_info_home"))
 
 
 class ModifyDefaultLimitView(ManagerRequiredView):
-    """View to handle modifying the default probation limit."""
+    """View to handle modifying the default quota limit."""
 
     def post(self, request):
-        """Handle the POST request to change the default probation limit."""
+        """Handle the POST request to change the default limit."""
         new_limit = int(request.POST.get("limit"))
 
         if new_limit > 0:
-            ProbationPeriod.set_default_limit(new_limit)
+            Quota.set_default_limit(new_limit)
             messages.success(
                 request,
                 "Default limit updated successfully.",
@@ -265,20 +261,19 @@ class ModifyDefaultLimitView(ManagerRequiredView):
         return redirect(previous_url)
 
 
-class BulkSetProbationView(ManagerRequiredView):
-    """View to handle bulk setting probation for all markers."""
+class BulkSetQuotaView(ManagerRequiredView):
+    """View to handle bulk setting quota for all markers."""
 
     def post(self, request):
-        probation_service = ProbationService()
         markers = User.objects.filter(groups__name="marker")
         markers_with_warnings = []
         successful_markers = []
 
         for marker in markers:
-            if probation_service.can_set_probation(marker):
-                probation_period, created = ProbationPeriod.objects.get_or_create(
+            if QuotaService.can_set_quota(marker):
+                quota, created = Quota.objects.get_or_create(
                     user=marker,
-                    defaults={"limit": ProbationPeriod.default_limit},
+                    defaults={"limit": Quota.default_limit},
                 )
                 successful_markers.append(marker.username)
             else:
@@ -287,35 +282,35 @@ class BulkSetProbationView(ManagerRequiredView):
         if markers_with_warnings:
             messages.success(
                 request,
-                f"Probation has been successfully set for: {', '.join(successful_markers)}",
-                extra_tags="modify_probation",
+                f"A quota limit has been successfully set for: {', '.join(successful_markers)}",
+                extra_tags="modify_quota",
             )
 
             messages.error(
                 request,
-                f"Probation cannot be set on: {', '.join(markers_with_warnings)}",
-                extra_tags="modify_probation",
+                f"Quota cannot be set on: {', '.join(markers_with_warnings)}",
+                extra_tags="modify_quota",
             )
 
             messages.warning(
-                request, f"{markers_with_warnings}", extra_tags="probation_warning"
+                request, f"{markers_with_warnings}", extra_tags="quota_warning"
             )
 
         else:
             messages.success(
                 request,
-                "All markers have been set to probation.",
-                extra_tags="modify_probation",
+                "All markers have had a quota applied.",
+                extra_tags="modify_quota",
             )
 
         return redirect(reverse("progress_user_info_home"))
 
 
-class BulkUnsetProbationView(ManagerRequiredView):
-    """View to handle bulk unsetting probation for all markers."""
+class BulkUnsetQuotaView(ManagerRequiredView):
+    """View to handle bulk unsetting of quota for all markers."""
 
     def post(self, request):
         markers = User.objects.filter(groups__name="marker")
-        ProbationPeriod.objects.filter(user__in=markers).delete()
-        messages.success(request, "Probation unset for all markers.")
+        Quota.objects.filter(user__in=markers).delete()
+        messages.success(request, "Quota removed from all markers.")
         return redirect(reverse("progress_user_info_home"))

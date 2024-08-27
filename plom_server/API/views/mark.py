@@ -53,14 +53,14 @@ class QuestionMaxMark(APIView):
 
 # GET: /MK/progress/{question}/{version}
 class MarkingProgress(APIView):
-    """Responds with dict of information about progress and probation status.
+    """Responds with dict of information about progress and quota status.
 
     Returns:
         (200): returns a dict of info about this question version and
             user including "total_tasks_marked", "total_tasks".
             Also includes information about the user's progress including
-            their probation status in "user_tasks_claimed",
-            "user_tasks_marked", "user_in_probation", "user_probation_limit".
+            their quota status in "user_tasks_claimed",
+            "user_tasks_marked", "user_has_quota_limit", "user_quota_limit".
         (416): question values out of range: NOT IMPLEMENTED YET.
             (In legacy, this was thrown by the backend).  Here, currently
             you just get zeros, which seems fine: maybe we don't need this
@@ -70,7 +70,7 @@ class MarkingProgress(APIView):
     """
 
     def get(self, request: Request, *, question: int, version: int) -> Response:
-        """Get dict of information about progress and probation status."""
+        """Get dict of information about progress and quota status."""
         # TODO: consider version/question into query params to make them optional
         username = request.user.username
         progress = UserInfoServices.get_user_progress(username=username)

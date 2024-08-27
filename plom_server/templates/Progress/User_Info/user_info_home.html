@@ -15,7 +15,7 @@
 {% block main_content %}
     <div class="card my-2">
         <div class="card-body">
-            <h5>Default probation limit: {{ default_probation_limit }}</h5>
+            <h5>Default quota limit: {{ default_quota_limit }}</h5>
             <button class="btn btn-success m-2"
                     type="button"
                     data-bs-toggle="modal"
@@ -36,29 +36,30 @@
             <button class="btn btn-success"
                     type="button"
                     data-bs-toggle="modal"
-                    data-bs-target="#modifyProbationModal">Modify probation limit</button>
+                    data-bs-target="#modifyQuotaModal">Modify quota limit</button>
             <a class="btn btn-primary" href="{% url 'users' %}">User List</a>
-            <form action="{% url 'bulk_set_probation' %}"
+            <form action="{% url 'bulk_set_quota' %}"
                   method="post"
                   style="display:inline">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-warning">Set Probation for All Markers</button>
+                <button type="submit" class="btn btn-warning">Set Quota for All Markers</button>
             </form>
-            <form action="{% url 'bulk_unset_probation' %}"
+            <form action="{% url 'bulk_unset_quota' %}"
                   method="post"
                   style="display:inline">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-info">Unset Probation for All Markers</button>
+                <button type="submit" class="btn btn-info">Unset Quota for All Markers</button>
             </form>
         </div>
         <div class="card-body">
             <div>
-                <i class="bi bi-exclamation-diamond-fill text-info"></i> {{ probation_users|length }} Markers are in probation
+                <i class="bi bi-exclamation-diamond-fill text-info"></i>
+                {{ users_with_quota|length }} markers have quotas.
             </div>
             {% if messages %}
                 <div>
                     {% for message in messages %}
-                        {% if 'modify_probation' in message.tags %}
+                        {% if 'modify_quota' in message.tags %}
                             {% include "./alert_message.html" with message=message %}
                         {% endif %}
                     {% endfor %}
@@ -72,70 +73,66 @@
                 <th>Username</th>
                 <th>Task Marked</th>
                 <th>Task Claimed</th>
-                <th>Probation</th>
-                <th>Probation Limit</th>
-                <th>Probation Tasks</th>
-                <th>Limit Modifier</th>
+                <th>Quota</th>
+                <th>Quota Limit</th>
+                <th>Quota Tasks</th>
             </tr>
             {% for user, annotation_and_claimedTask_count in annotation_count_dict.items %}
-                <tr class="{% if probation_limits|get_item:user.username == annotation_and_claimedTask_count.0 %} table-success {% endif %}">
+                <tr class="{% if quota_limits|get_item:user.username == annotation_and_claimedTask_count.0 %} table-success {% endif %}">
                     <td>
                         {{ user.username }}
                         {% if messages %}
                             {% for message in messages %}
-                                {% if 'probation_warning' in message.tags and user.username in markers_with_warnings %}
+                                {% if 'quota_warning' in message.tags and user.username in markers_with_warnings %}
                                     <i class="bi bi-exclamation-triangle-fill text-warning"
                                        data-bs-toggle="modal"
-                                       data-bs-target="#confirmSetProbation"
+                                       data-bs-target="#confirmSetQuota"
                                        data-username="{{ user.username }}"></i>
                                 {% endif %}
                             {% endfor %}
                         {% endif %}
-                        {% if user.username in probation_users %}
+                        {% if user.username in users_with_quota %}
                             <i class="bi bi-exclamation-diamond-fill text-info"
                                data-bs-toggle="tooltip"
-                               title="In Probation"></i>
+                               title="Quota limited"></i>
                         {% endif %}
                     </td>
                     <td>{{ annotation_and_claimedTask_count.0 }}</td>
                     <td>{{ annotation_and_claimedTask_count.1 }}</td>
                     <td>
-                        {% if user.username in probation_users %}
-                            <form action="{% url 'unset_probation' user.username %}" method="post">
+                        {% if user.username in users_with_quota %}
+                            <form action="{% url 'unset_quota' user.username %}" method="post">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-info">Unset Probation</button>
+                                <button type="submit" class="btn btn-info">Unset Quota</button>
                             </form>
                         {% else %}
-                            <form action="{% url 'set_probation' user.username %}" method="post">
+                            <form action="{% url 'set_quota' user.username %}" method="post">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-warning">Set Probation</button>
+                                <button type="submit" class="btn btn-warning">Set Quota</button>
                             </form>
                         {% endif %}
                     </td>
                     <td>
-                        {% if user.username in probation_users %}
-                            {{ probation_limits|get_item:user.username }}
+                        {% if user.username in users_with_quota %}
+                            {{ quota_limits|get_item:user.username }}
                         {% else %}
-                            N/A
+                            n/a
                         {% endif %}
-                    </td>
-                    <td>
-                        <a class="btn btn-info"
-                           href="{% url 'progress_marking_task_filter' %}?username={{ user.username }}&the_tag=Probation">
-                            view
-                        </a>
-                    </td>
-                    <td>
-                        {% if user.username in probation_users %}
+                        {% if user.username in users_with_quota %}
                             <button class="btn btn-primary m-2"
                                     type="button"
                                     data-bs-toggle="modal"
                                     data-username="{{ user.username }}"
-                                    data-limit="{{ probation_limits|get_item:user.username }}"
-                                    data-bs-target="#editLimit">Edit Limit</button>
-                        {% else %}
-                            <button type="button" disabled>Edit Limit</button>
+                                    data-limit="{{ quota_limits|get_item:user.username }}"
+                                    data-bs-target="#editLimit">Edit</button>
                         {% endif %}
+                    </td>
+                    <td>
+                        <!-- TODO: hardcoded tag here, must match question_marking.py -->
+                        <a class="btn btn-info"
+                           href="{% url 'progress_marking_task_filter' %}?username={{ user.username }}&the_tag=during_quota">
+                            view
+                        </a>
                     </td>
                 </tr>
             {% endfor %}
@@ -297,10 +294,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Function to show the modal and set the form action URL
             function showModalWithUsername(username) {
-                var form = document.getElementById('confirmSetProbationForm');
-                var actionUrl = "{% url 'set_probation' 'username_placeholder' %}".replace('username_placeholder', username);
+                var form = document.getElementById('confirmSetQuotaForm');
+                var actionUrl = "{% url 'set_quota' 'username_placeholder' %}".replace('username_placeholder', username);
                 form.action = actionUrl;
-                $('#confirmSetProbation').modal('show');
+                $('#confirmSetQuota').modal('show');
             }
 
             // Check for messages and handle the modal
@@ -311,7 +308,7 @@
                 var details = JSON.parse(messageText);
                 var username = details.username;
 
-                if (messageType.includes('set_probation_confirmation')) {
+                if (messageType.includes('set_quota_confirmation')) {
                     showModalWithUsername(username);
                 }
             }

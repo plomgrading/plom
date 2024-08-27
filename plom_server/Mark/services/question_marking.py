@@ -18,7 +18,7 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomTaskDeletedError,
     PlomTaskChangedError,
-    PlomProbationLimitExceeded,
+    PlomQuotaLimitExceeded,
 )
 
 from ..models import MarkingTask
@@ -206,25 +206,26 @@ class QuestionMarkingService:
 
         # regrab it, selected-for-update, b/c we're going to write to it
         task = MarkingTask.objects.select_for_update().get(pk=task.pk)
-        marked_by_probationary_marker_tag = "Probation"
+        tag_marked_during_quota = "during_quota"
 
-        # Check if the user is in probation
+        # Check if the user has quota limits
         from Progress.services import UserInfoServices
 
         uis = UserInfoServices()
         progress = uis.get_user_progress(username=user.username)
-        if progress["user_in_probation"]:
-            if progress["user_tasks_marked"] < progress["user_probation_limit"] or (
+        if progress["user_has_quota_limit"]:
+            if progress["user_tasks_marked"] < progress["user_quota_limit"] or (
                 task.status == MarkingTask.COMPLETE
             ):
                 MarkingTaskService().create_tag_and_attach_to_task(
                     user=user,
                     task_pk=task.pk,
-                    tag_text=marked_by_probationary_marker_tag,
+                    tag_text=tag_marked_during_quota,
                 )
             else:
-                raise PlomProbationLimitExceeded(
-                    "You have reached your task limit. Contact your instructor to mark more tasks."
+                raise PlomQuotaLimitExceeded(
+                    "You have reached your task limit."
+                    " Contact your instructor to mark more tasks."
                 )
 
         # Various work in creating the new Annotation object: linking it to the
