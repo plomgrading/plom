@@ -809,7 +809,7 @@ class MatplotlibService:
         # convert the pandas series to a list to keep it happy
         plt.yticks(my_range, ordered_df["tag"].to_list())
         plt.xlim(0, 1)
-        plt.xticks([0.1, 0.3, 0.5, 0.7, 0.9], ["low", None, None, None, "high"])
+        plt.xticks([0.1, 0.3, 0.5, 0.7, 0.9], ["low", "", "", "", "high"])
 
         graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
         self.ensure_all_figures_closed()
