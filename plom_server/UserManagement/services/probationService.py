@@ -35,17 +35,17 @@ class ProbationService:
             return False
 
     @transaction.atomic
-    def can_set_probation(self, user: User) -> bool:
-        """Check if a user (not in probation) can be set to probation.
+    def can_set_quota(self, user: User) -> bool:
+        """Check if a user (not currently with a quota) can be set to a quota.
 
-        A user can't be set to probation, if they have marked more questions than
-        the default probation limit.
+        A user can't be quota limited, if they have marked more questions than
+        the default quota limit.
 
         Args:
             user: the user in query.
 
         Returns:
-            True if the user can be set into probation, otherwise false.
+            True if the user can be set to quota limited, otherwise false.
         """
         complete_and_claim_dict = (
             UserInfoServices.get_total_annotated_and_claimed_count_by_user()

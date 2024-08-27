@@ -30,23 +30,23 @@ urlpatterns = [
     ),
     path("explosion", views.HTMXExplodeView.as_view(), name="htmx_explode"),
     path(
-        "set_probation/<str:username>/",
+        "set_quota/<str:username>/",
         views.SetProbationView.as_view(),
-        name="set_probation",
+        name="set_quota",
     ),
     path(
-        "unset_probation/<str:username>/",
+        "unset_quota/<str:username>/",
         views.UnsetProbationView.as_view(),
-        name="unset_probation",
+        name="unset_quota",
     ),
     path(
-        "bulk_set_probation/",
+        "bulk_set_quota/",
         views.BulkSetProbationView.as_view(),
-        name="bulk_set_probation",
+        name="bulk_set_quota",
     ),
     path(
-        "bulk_unset_probation/",
+        "bulk_unset_quota/",
         views.BulkUnsetProbationView.as_view(),
-        name="bulk_unset_probation",
+        name="bulk_unset_quota",
     ),
 ]

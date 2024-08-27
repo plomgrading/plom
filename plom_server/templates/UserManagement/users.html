@@ -94,10 +94,10 @@
                             </td>
                             <!-- Quota limited button -->
                             <td>
-                                <form action="{% url 'set_probation' user.username %}" method="post">
+                                <form action="{% url 'set_quota' user.username %}" method="post">
                                     {% csrf_token %}
                                     {% if user.pk in probation_users %}
-                                        <button formaction="{% url 'unset_probation' user.username %}"
+                                        <button formaction="{% url 'unset_quota' user.username %}"
                                                 type="submit"
                                                 class="btn btn-info">Unset Quota</button>
                                     {% else %}
@@ -221,7 +221,7 @@
       // Function to show the modal and set the form action URL
       function showModalWithUsername(username) {
         var form = document.getElementById('confirmSetProbationForm');
-        var actionUrl = "{% url 'set_probation' 'username_placeholder' %}".replace('username_placeholder', username);
+        var actionUrl = "{% url 'set_quota' 'username_placeholder' %}".replace('username_placeholder', username);
         console.log(actionUrl)
         form.action = actionUrl;
         $('#confirmSetProbation').modal('show');
@@ -240,7 +240,7 @@
         var modalMessage = details.message;
         console.log(messageType)
 
-        if (messageType.includes('set_probation_confirmation')) {
+        if (messageType.includes('set_quota_confirmation')) {
             showModalWithUsername(username);
         }
         else{

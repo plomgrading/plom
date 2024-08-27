@@ -38,13 +38,13 @@
                     data-bs-toggle="modal"
                     data-bs-target="#modifyProbationModal">Modify probation limit</button>
             <a class="btn btn-primary" href="{% url 'users' %}">User List</a>
-            <form action="{% url 'bulk_set_probation' %}"
+            <form action="{% url 'bulk_set_quota' %}"
                   method="post"
                   style="display:inline">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-warning">Set Quota for All Markers</button>
             </form>
-            <form action="{% url 'bulk_unset_probation' %}"
+            <form action="{% url 'bulk_unset_quota' %}"
                   method="post"
                   style="display:inline">
                 {% csrf_token %}
@@ -101,12 +101,12 @@
                     <td>{{ annotation_and_claimedTask_count.1 }}</td>
                     <td>
                         {% if user.username in probation_users %}
-                            <form action="{% url 'unset_probation' user.username %}" method="post">
+                            <form action="{% url 'unset_quota' user.username %}" method="post">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-info">Unset Quota</button>
                             </form>
                         {% else %}
-                            <form action="{% url 'set_probation' user.username %}" method="post">
+                            <form action="{% url 'set_quota' user.username %}" method="post">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-warning">Set Quota</button>
                             </form>
@@ -298,7 +298,7 @@
             // Function to show the modal and set the form action URL
             function showModalWithUsername(username) {
                 var form = document.getElementById('confirmSetProbationForm');
-                var actionUrl = "{% url 'set_probation' 'username_placeholder' %}".replace('username_placeholder', username);
+                var actionUrl = "{% url 'set_quota' 'username_placeholder' %}".replace('username_placeholder', username);
                 form.action = actionUrl;
                 $('#confirmSetProbation').modal('show');
             }
@@ -311,7 +311,7 @@
                 var details = JSON.parse(messageText);
                 var username = details.username;
 
-                if (messageType.includes('set_probation_confirmation')) {
+                if (messageType.includes('set_quota_confirmation')) {
                     showModalWithUsername(username);
                 }
             }

@@ -76,11 +76,11 @@ class ProgressUserInfoHome(ManagerRequiredView):
             username__in=probation_users
         ).order_by("id")
 
-        # Identify users who exceed the probation limit
+        # Identify users who exceed the quota limit
         probation_service = ProbationService()
         markers_with_warnings = []
         for user in annotated_and_claimed_count_dict.keys():
-            if not probation_service.can_set_probation(user):
+            if not probation_service.can_set_quota(user):
                 markers_with_warnings.append(user.username)
 
         context.update(

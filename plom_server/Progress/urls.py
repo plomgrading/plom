@@ -144,14 +144,14 @@ urlpatterns = [
         name="reassign_marking_task",
     ),
     path(
-        "set_probation/<str:username>/",
+        "set_quota/<str:username>/",
         SetProbationView.as_view(),
-        name="set_probation",
+        name="set_quota",
     ),
     path(
-        "unset_probation/<str:username>/",
+        "unset_quota/<str:username>/",
         UnsetProbationView.as_view(),
-        name="unset_probation",
+        name="unset_quota",
     ),
     path(
         "edit_probation_limit/",

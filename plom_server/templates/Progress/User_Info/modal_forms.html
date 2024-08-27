@@ -20,7 +20,7 @@
                 </h5>
                 <form id="confirmSetProbationForm" method="post">
                     {% csrf_token %}
-                    <input type="hidden" name="enforce_set_probation" id="enforce_set_probation">
+                    <input type="hidden" name="enforce_set_quota" id="enforce_set_quota">
                     <input type="hidden" name="username" id="confirmUsername">
                     <div>
                         <button type="submit" class="btn btn-success" style="margin-top: 10px">Yes</button>
@@ -154,7 +154,7 @@
         item.addEventListener('click', function(event) {
             const username = event.target.getAttribute('data-username');
             document.getElementById('confirmUsername').value = username;
-            const formAction = "{% url 'set_probation' 'username_placeholder' %}".replace('username_placeholder', username);
+            const formAction = "{% url 'set_quota' 'username_placeholder' %}".replace('username_placeholder', username);
             document.getElementById('confirmSetProbationForm').action = formAction;
         });
     });

@@ -36,7 +36,7 @@ class UserPage(ManagerRequiredView):
     This page utilizes extra tags embeddes in messages to display messages in different parts/cards in the page.
     modify_probation: is the tag used when one interacts with "Set Probation" button and "Modify Probation Limit".
     modify_default_limit: when one interacts with "Change Default Limit" button".
-    set_probation_confirmation: the tag for the probation confirmation dialog interaction.
+    set_quota_confirmation: the tag for the confirmation dialog interaction.
     """
 
     def get(self, request):
@@ -115,8 +115,8 @@ class HTMXExplodeView(ManagerRequiredView):
 class SetProbationView(ManagerRequiredView):
     """View to handle setting a probation period for a user.
 
-    Note: enforce_set_probation is a special flag that enforce a marker to be set to probation
-    even though they do not fulfill the probation's limit restriction. The limit will be set
+    Note: enforce_set_quota is a special flag that causes a marker's quota to be set
+    even though they do not fulfill the limit restriction.  The limit will be set
     to their current number of question marked.
     """
 
@@ -127,8 +127,8 @@ class SetProbationView(ManagerRequiredView):
             "next", request.META.get("HTTP_REFERER", reverse("users"))
         )
 
-        # Special flag received when user confirms to enforce setting probatiog, ignoring probation limit restriction.
-        if "enforce_set_probation" in request.POST:
+        # Special flag received when user confirms to force setting, ignoring limit restriction.
+        if "enforce_set_quota" in request.POST:
             complete_and_claimed_tasks = (
                 UserInfoServices.get_total_annotated_and_claimed_count_by_user()
             )
@@ -138,7 +138,7 @@ class SetProbationView(ManagerRequiredView):
             )
 
         # No special flag received, proceed to check whether the marker fulfills the restriction.
-        elif ProbationService().can_set_probation(user):
+        elif ProbationService().can_set_quota(user):
             probation_period, created = ProbationPeriod.objects.get_or_create(
                 user=user, limit=ProbationPeriod.default_limit
             )
@@ -152,7 +152,7 @@ class SetProbationView(ManagerRequiredView):
                 "username": username,
             }
             messages.info(
-                request, json.dumps(details), extra_tags="set_probation_confirmation"
+                request, json.dumps(details), extra_tags="set_quota_confirmation"
             )
 
         return redirect(next_page)
@@ -275,7 +275,7 @@ class BulkSetProbationView(ManagerRequiredView):
         successful_markers = []
 
         for marker in markers:
-            if probation_service.can_set_probation(marker):
+            if probation_service.can_set_quota(marker):
                 probation_period, created = ProbationPeriod.objects.get_or_create(
                     user=marker,
                     defaults={"limit": ProbationPeriod.default_limit},
