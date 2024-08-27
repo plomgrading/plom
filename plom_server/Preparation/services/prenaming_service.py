@@ -54,3 +54,10 @@ class PrenameSettingService:
         p_obj.xcoord = xcoord
         p_obj.ycoord = ycoord
         p_obj.save()
+
+    @transaction.atomic
+    def reset_prenaming_coords(self) -> None:
+        """Reset prenaming coords to their defaults."""
+        default_xcoord = PrenamingSetting._meta.get_field("xcoord").get_default()
+        default_ycoord = PrenamingSetting._meta.get_field("ycoord").get_default()
+        self.set_prenaming_coords(default_xcoord, default_ycoord)

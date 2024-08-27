@@ -16,6 +16,7 @@ from django.shortcuts import redirect
 from plom.plom_exceptions import PlomDependencyConflict
 from Base.base_group_views import ManagerRequiredView
 from ..services import PrenameSettingService, ExamMockerService
+from ..models import PrenamingSetting
 
 
 class PrenamingView(ManagerRequiredView):
@@ -42,11 +43,13 @@ class PrenamingConfigView(ManagerRequiredView):
     """Configure and mock prenaming settings."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        ps_meta = PrenamingSetting._meta
+
         # guard inputs
         x_pos = request.POST.get("xPos")
-        x_pos = float(x_pos) if x_pos else None
+        x_pos = float(x_pos) if x_pos else ps_meta.get_field("xcoord").get_default()
         y_pos = request.POST.get("yPos")
-        y_pos = float(y_pos) if y_pos else None
+        y_pos = float(y_pos) if y_pos else ps_meta.get_field("ycoord").get_default()
 
         # TODO: read exam source version from input form
         version = 1
@@ -62,12 +65,12 @@ class PrenamingConfigView(ManagerRequiredView):
         elif "reset_config" in request.POST:
             pss = PrenameSettingService()
             try:
-                pss.set_prenaming_coords(None, None)
+                pss.reset_prenaming_coords()
                 return redirect(reverse("create_paperPDFs"))
             except PlomDependencyConflict as err:
                 messages.add_message(request, messages.ERROR, f"{err}")
                 return redirect(reverse("prep_conflict"))
-        # TODO: render the mock on the same page rather than returning a file response
+        # TODO: render the mock on the same page rather than opening in a new tab
         elif "mock_id" in request.POST:
             ems = ExamMockerService()
             try:

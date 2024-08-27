@@ -32,8 +32,8 @@ class PrenamingSetting(SingletonABCModel):
     """
 
     enabled = models.BooleanField(default=False, null=False)
-    xcoord = models.FloatField(null=True)
-    ycoord = models.FloatField(null=True)
+    xcoord = models.FloatField(default=50, null=False)
+    ycoord = models.FloatField(default=42, null=False)
 
     @classmethod
     def load(cls):
