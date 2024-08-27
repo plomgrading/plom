@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
-from UserManagement.models import ProbationPeriod
+from UserManagement.models import Quota
 from UserManagement.services import ProbationService
 from ..forms import AnnotationFilterForm
 from ..services import UserInfoServices
@@ -58,18 +58,14 @@ class ProgressUserInfoHome(ManagerRequiredView):
             for username, count in annotated_and_claimed_count_dict.items()
         }
 
-        probation_users = ProbationPeriod.objects.values_list(
-            "user__username", flat=True
-        )
-        probation_users_with_limits = ProbationPeriod.objects.select_related(
-            "user"
-        ).all()
+        probation_users = Quota.objects.values_list("user__username", flat=True)
+        probation_users_with_limits = Quota.objects.select_related("user").all()
 
         probation_limits = {
             prob.user.username: prob.limit for prob in probation_users_with_limits
         }
 
-        default_probation_limit = ProbationPeriod.default_limit
+        default_probation_limit = Quota.default_limit
 
         # Fetch user objects for users in probation
         probation_user_objects = User.objects.filter(

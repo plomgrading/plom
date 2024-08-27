@@ -24,7 +24,7 @@ from Authentication.services import AuthenticationServices
 
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
-from .models import ProbationPeriod
+from .models import Quota
 from django.contrib import messages
 from .services.probationService import ProbationService
 from Progress.services.userinfo_service import UserInfoServices
@@ -51,7 +51,7 @@ class UserPage(ManagerRequiredView):
         markers = User.objects.filter(groups__name="marker").prefetch_related(
             "auth_token"
         )
-        probation_users = ProbationPeriod.objects.values_list("user_id", flat=True)
+        probation_users = Quota.objects.values_list("user_id", flat=True)
         context = {
             "scanners": scanners,
             "markers": markers,
@@ -136,18 +136,16 @@ class SetQuotaView(ManagerRequiredView):
                 UserInfoServices.get_total_annotated_and_claimed_count_by_user()
             )
             complete, claimed = complete_and_claimed_tasks[username]
-            probation_period, created = ProbationPeriod.objects.get_or_create(
-                user=user, limit=complete
-            )
+            quota, created = Quota.objects.get_or_create(user=user, limit=complete)
 
         # No special flag received, proceed to check whether the marker fulfills the restriction.
         elif ProbationService().can_set_quota(user):
-            probation_period, created = ProbationPeriod.objects.get_or_create(
-                user=user, limit=ProbationPeriod.default_limit
+            quota, created = Quota.objects.get_or_create(
+                user=user, limit=Quota.default_limit
             )
             if not created:
-                probation_period.limit = ProbationPeriod.default_limit
-                probation_period.save()
+                quota.limit = Quota.default_limit
+                quota.save()
 
         # Message is specially crafted for confirmation dialog.
         else:
@@ -167,8 +165,8 @@ class UnsetQuotaView(ManagerRequiredView):
     def post(self, request, username):
         """Handle the POST request to unset the quota limit for the specified user."""
         user = get_object_or_404(User, username=username)
-        probation_period = ProbationPeriod.objects.filter(user=user)
-        probation_period.delete()
+        quota = Quota.objects.filter(user=user)
+        quota.delete()
 
         next_page = request.POST.get(
             "next", request.META.get("HTTP_REFERER", reverse("users"))
@@ -186,9 +184,9 @@ class EditQuotaLimitView(ManagerRequiredView):
         user = get_object_or_404(User, username=username)
 
         if ProbationService().new_limit_is_valid(new_limit, user):
-            probation_period = ProbationPeriod.objects.filter(user=user).first()
-            probation_period.limit = new_limit
-            probation_period.save()
+            quota = Quota.objects.filter(user=user).first()
+            quota.limit = new_limit
+            quota.save()
             messages.success(
                 request,
                 "Quota limit updated successfully.",
@@ -217,13 +215,13 @@ class ModifyQuotaView(ManagerRequiredView):
 
         for user_id in user_ids:
             user = get_object_or_404(User, pk=user_id)
-            probation_period = ProbationPeriod.objects.get(user=user)
+            quota = Quota.objects.get(user=user)
             if not ProbationService().new_limit_is_valid(limit=new_limit, user=user):
                 invalid_markers.append(user.username)
             else:
                 valid_markers.append(user.username)
-                probation_period.limit = new_limit
-                probation_period.save()
+                quota.limit = new_limit
+                quota.save()
 
         if len(invalid_markers) > 0:
             messages.success(
@@ -253,7 +251,7 @@ class ModifyDefaultLimitView(ManagerRequiredView):
         new_limit = int(request.POST.get("limit"))
 
         if new_limit > 0:
-            ProbationPeriod.set_default_limit(new_limit)
+            Quota.set_default_limit(new_limit)
             messages.success(
                 request,
                 "Default limit updated successfully.",
@@ -279,9 +277,9 @@ class BulkSetQuotaView(ManagerRequiredView):
 
         for marker in markers:
             if probation_service.can_set_quota(marker):
-                probation_period, created = ProbationPeriod.objects.get_or_create(
+                quota, created = Quota.objects.get_or_create(
                     user=marker,
-                    defaults={"limit": ProbationPeriod.default_limit},
+                    defaults={"limit": Quota.default_limit},
                 )
                 successful_markers.append(marker.username)
             else:
@@ -319,6 +317,6 @@ class BulkUnsetQuotaView(ManagerRequiredView):
 
     def post(self, request):
         markers = User.objects.filter(groups__name="marker")
-        ProbationPeriod.objects.filter(user__in=markers).delete()
+        Quota.objects.filter(user__in=markers).delete()
         messages.success(request, "Quota removed from all markers.")
         return redirect(reverse("progress_user_info_home"))

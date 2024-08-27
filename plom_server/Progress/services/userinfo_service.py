@@ -19,7 +19,7 @@ from django.utils import timezone
 from Mark.models import Annotation, MarkingTask
 from Mark.services import MarkingTaskService, MarkingStatsService
 
-from UserManagement.models import ProbationPeriod
+from UserManagement.models import Quota
 
 
 class UserInfoServices:
@@ -44,9 +44,9 @@ class UserInfoServices:
             # User hasn't marked nor claimed any paper yet:
             tasks_marked, tasks_claimed = 0, 0
         user = User.objects.get(username=username)
-        has_limit = ProbationPeriod.objects.filter(user=user).exists()
+        has_limit = Quota.objects.filter(user=user).exists()
         if has_limit:
-            limit = ProbationPeriod.objects.get(user=user).limit
+            limit = Quota.objects.get(user=user).limit
         else:
             limit = None
 

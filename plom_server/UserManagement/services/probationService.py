@@ -3,7 +3,7 @@
 from django.db import transaction
 from django.contrib.auth.models import User
 from Progress.services import UserInfoServices
-from UserManagement.models import ProbationPeriod
+from UserManagement.models import Quota
 
 
 class ProbationService:
@@ -52,7 +52,7 @@ class ProbationService:
         )
         complete, claimed = complete_and_claim_dict[user.username]
 
-        if complete > ProbationPeriod.default_limit:
+        if complete > Quota.default_limit:
             return False
         else:
             return True
