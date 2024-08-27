@@ -220,11 +220,11 @@
     document.addEventListener('DOMContentLoaded', function() {
       // Function to show the modal and set the form action URL
       function showModalWithUsername(username) {
-        var form = document.getElementById('confirmSetProbationForm');
+        var form = document.getElementById('confirmSetQuotaForm');
         var actionUrl = "{% url 'set_quota' 'username_placeholder' %}".replace('username_placeholder', username);
         console.log(actionUrl)
         form.action = actionUrl;
-        $('#confirmSetProbation').modal('show');
+        $('#confirmSetQuota').modal('show');
       }
 
       // Check for messages and handle the modal

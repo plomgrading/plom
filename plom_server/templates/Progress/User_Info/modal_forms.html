@@ -6,10 +6,10 @@
 -->
 <!-- Modal for confirmation -->
 <div class="modal fade"
-     id="confirmSetProbation"
+     id="confirmSetQuota"
      tabindex="-1"
      role="dialog"
-     aria-labelledby="confirmSetProbationLabel"
+     aria-labelledby="confirmSetQuotaLabel"
      aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -18,7 +18,7 @@
                     The marker has already marked more tasks than the default quota limit.
                     Do you insist on setting a quota limit for them?
                 </h5>
-                <form id="confirmSetProbationForm" method="post">
+                <form id="confirmSetQuotaForm" method="post">
                     {% csrf_token %}
                     <input type="hidden" name="force_set_quota" id="force_set_quota">
                     <input type="hidden" name="username" id="confirmUsername">
@@ -150,12 +150,12 @@
     </div>
 </div>
 <script>
-    document.querySelectorAll('[data-bs-target="#confirmSetProbation"]').forEach(item => {
+    document.querySelectorAll('[data-bs-target="#confirmSetQuota"]').forEach(item => {
         item.addEventListener('click', function(event) {
             const username = event.target.getAttribute('data-username');
             document.getElementById('confirmUsername').value = username;
             const formAction = "{% url 'set_quota' 'username_placeholder' %}".replace('username_placeholder', username);
-            document.getElementById('confirmSetProbationForm').action = formAction;
+            document.getElementById('confirmSetQuotaForm').action = formAction;
         });
     });
 </script>
