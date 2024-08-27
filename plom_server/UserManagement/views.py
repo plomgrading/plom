@@ -33,7 +33,9 @@ from Progress.services.userinfo_service import UserInfoServices
 class UserPage(ManagerRequiredView):
     """Class that handles the views in UserInfo Page.
 
-    This page utilizes extra tags embeddes in messages to display messages in different parts/cards in the page.
+    This page utilizes extra tags embedded in messages to display messages
+    in different parts/cards in the page.
+
     modify_probation: is the tag used when one interacts with "Set Probation" button and "Modify Probation Limit".
     modify_default_limit: when one interacts with "Change Default Limit" button".
     set_quota_confirmation: the tag for the confirmation dialog interaction.
@@ -115,7 +117,7 @@ class HTMXExplodeView(ManagerRequiredView):
 class SetProbationView(ManagerRequiredView):
     """View to handle setting a probation period for a user.
 
-    Note: enforce_set_quota is a special flag that causes a marker's quota to be set
+    Note: force_set_quota is a special flag that causes a marker's quota to be set
     even though they do not fulfill the limit restriction.  The limit will be set
     to their current number of question marked.
     """
@@ -128,7 +130,7 @@ class SetProbationView(ManagerRequiredView):
         )
 
         # Special flag received when user confirms to force setting, ignoring limit restriction.
-        if "enforce_set_quota" in request.POST:
+        if "force_set_quota" in request.POST:
             complete_and_claimed_tasks = (
                 UserInfoServices.get_total_annotated_and_claimed_count_by_user()
             )
