@@ -28,6 +28,7 @@ from plom.plom_exceptions import (
     PlomTaskDeletedError,
     PlomConflict,
     PlomException,
+    PlomQuotaLimitExceeded,
 )
 from plom.messenger import Messenger
 
@@ -38,9 +39,8 @@ log = logging.getLogger("marker")
 class BackgroundUploader(QThread):
     """Uploads exams in Background."""
 
-    uploadSuccess = pyqtSignal(str, int, int)
-    uploadKnownFail = pyqtSignal(str, str)
-    uploadUnknownFail = pyqtSignal(str, str)
+    uploadSuccess = pyqtSignal(str, dict)
+    uploadFail = pyqtSignal(str, str, bool, bool)
     queue_status_changed = pyqtSignal(int, int, int, int)
 
     def __init__(self, msgr: Messenger) -> None:
@@ -154,14 +154,13 @@ class BackgroundUploader(QThread):
                 wait = random.random() * (b - a) + a
                 time.sleep(wait)
             if self.simulate_failures and simfail:
-                self.uploadUnknownFail.emit(code, "Simulated upload failure!")
+                self.uploadFail.emit(code, "Simulated upload failure!", False, True)
                 self.num_failed += 1
             else:
                 if synchronous_upload(
                     self._msgr,
                     *data,
-                    knownFailCallback=self.uploadKnownFail.emit,
-                    unknownFailCallback=self.uploadUnknownFail.emit,
+                    failCallback=self.uploadFail.emit,
                     successCallback=self.uploadSuccess.emit,
                 ):
                     self.num_uploaded += 1
@@ -192,8 +191,7 @@ def synchronous_upload(
     ver: int,
     rubrics: list,
     integrity_check: str,
-    knownFailCallback=None,
-    unknownFailCallback=None,
+    failCallback=None,
     successCallback=None,
 ) -> bool:
     """Uploads a paper.
@@ -210,10 +208,7 @@ def synchronous_upload(
         ver: the version number.
         rubrics: list of rubrics used.
         integrity_check: the integrity_check string of the task.
-        knownFailCallback: if we fail in a way that is reasonably expected,
-            call this function.
-        unknownFailCallback: if we fail but don't really know why or what
-            do to, call this function.
+        failCallback: call this function if we fail.
         successCallback: a function to call when we succeed.
 
     Returns:
@@ -235,7 +230,7 @@ def synchronous_upload(
             )
         )
     try:
-        msg = _msgr.MreturnMarkedTask(
+        progress_info = _msgr.MreturnMarkedTask(
             task,
             question_idx,
             ver,
@@ -247,14 +242,17 @@ def synchronous_upload(
             integrity_check,
         )
     except (PlomTaskChangedError, PlomTaskDeletedError, PlomConflict) as ex:
-        knownFailCallback(task, str(ex))
-        # probably previous call does not return: it forces a crash
+        failCallback(task, str(ex), True, False)
+        return False
+    except PlomQuotaLimitExceeded as ex:
+        failCallback(task, str(ex), False, False)
         return False
     except PlomException as ex:
-        unknownFailCallback(task, str(ex))
+        failCallback(task, str(ex), False, True)
         return False
 
-    numDone = msg[0]
-    numTotal = msg[1]
-    successCallback(task, numDone, numTotal)
+    # TODO: easy enough to call _msgr.get_marking_progress here and thus
+    # avoid special returns above, but what if 1st succeeds and 2nd fails?
+
+    successCallback(task, progress_info)
     return True

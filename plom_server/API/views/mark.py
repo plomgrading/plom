@@ -2,6 +2,8 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Bryan Tanady
+
 
 from __future__ import annotations
 
@@ -24,6 +26,8 @@ from Mark.services import (
 from Papers.services import SpecificationService
 from Papers.models import Image
 
+from Progress.services import UserInfoServices
+
 from .utils import _error_response
 
 
@@ -35,7 +39,8 @@ class QuestionMaxMark(APIView):
         (416): question value out of range
     """
 
-    def get(self, request, *, question):
+    def get(self, request: Request, *, question: int) -> Response:
+        """Get the max mark for a given question."""
         try:
             max_mark = SpecificationService.get_question_mark(question)
             return Response(max_mark)
@@ -46,30 +51,33 @@ class QuestionMaxMark(APIView):
             )
 
 
-class MarkingProgressCount(APIView):
-    """Responds with a list of completed/total tasks.
+# GET: /MK/progress/{question}/{version}
+class MarkingProgress(APIView):
+    """Responds with dict of information about progress and quota status.
 
     Returns:
-        (200): returns two integers, first the number of marked papers
-            for this question/version and the total number of papers for
-            this question/version.
-        (400): malformed such as non-integers for question/version.
+        (200): returns a dict of info about this question version and
+            user including "total_tasks_marked", "total_tasks".
+            Also includes information about the user's progress including
+            their quota status in "user_tasks_claimed",
+            "user_tasks_marked", "user_has_quota_limit", "user_quota_limit".
         (416): question values out of range: NOT IMPLEMENTED YET.
-            (In legacy, this was thrown by the backend).
+            (In legacy, this was thrown by the backend).  Here, currently
+            you just get zeros, which seems fine: maybe we don't need this
+            error handling?
+
+    If there are no tasks, returns zero in "total tasks".
     """
 
-    def get(self, request):
-        data = request.data
-        try:
-            question = int(data["q"])
-            version = int(data["v"])
-        except (ValueError, TypeError):
-            return _error_response(
-                "question and version must be integers",
-                status.HTTP_400_BAD_REQUEST,
-            )
+    def get(self, request: Request, *, question: int, version: int) -> Response:
+        """Get dict of information about progress and quota status."""
+        # TODO: consider version/question into query params to make them optional
+        username = request.user.username
+        progress = UserInfoServices.get_user_progress(username=username)
         mts = MarkingTaskService()
-        progress = mts.get_marking_progress(question, version)
+        n, m = mts.get_marking_progress(question, version)
+        progress["total_tasks_marked"] = n
+        progress["total_tasks"] = m
         return Response(progress, status=status.HTTP_200_OK)
 
 
@@ -90,6 +98,7 @@ class GetTasks(APIView):
     """
 
     def get(self, request: Request) -> Response:
+        """Get data for tasks."""
         data = request.query_params
         question_idx = data.get("q")
         version = data.get("v")
@@ -109,7 +118,7 @@ class GetTasks(APIView):
 # GET: /pagedata/{papernum}
 # GET: /pagedata/{papernum}/context/{questionidx}
 class MgetPageDataQuestionInContext(APIView):
-    """Get page metadata for a particular test-paper optionally with a question highlighted.
+    """Get page metadata for a paper optionally with a question highlighted.
 
     APIs backed by this routine return a JSON response with a list of
     dicts, where each dict has keys: `pagename`, `md5`, `included`,
@@ -202,6 +211,7 @@ class MgetPageDataQuestionInContext(APIView):
     def get(
         self, request: Request, *, papernum: int, questionidx: int | None = None
     ) -> Response:
+        """Get page metadata for a paper optionally with a question highlighted."""
         service = PageDataService()
 
         try:
@@ -226,7 +236,8 @@ class MgetPageDataQuestionInContext(APIView):
 class MgetOneImage(APIView):
     """Get a page image from the server."""
 
-    def get(self, request, pk, hash):
+    def get(self, request: Request, *, pk: int, hash: str) -> Response:
+        """Get a page image."""
         pds = PageDataService()
         # TODO - replace this fileresponse(open(file)) with fileresponse(filefield)
         # so that we don't have explicit file-path handling.
@@ -255,6 +266,7 @@ class MgetAnnotations(APIView):
     """
 
     def get(self, request: Request, *, paper: int, question: int) -> Response:
+        """Get the latest annotations."""
         mts = MarkingTaskService()
         try:
             annotation = mts.get_latest_annotation(paper, question)
@@ -287,7 +299,7 @@ class MgetAnnotations(APIView):
 
 
 class MgetAnnotationImage(APIView):
-    """Get an annotation-image.
+    """Get an annotation image.
 
     Callers ask for paper number, question index (one-indexed) and
     optionally edition.  If edition is omitted, they get the latest.
@@ -328,6 +340,7 @@ class MgetAnnotationImage(APIView):
     def get(
         self, request: Request, *, paper: int, question: int, edition: int | None = None
     ) -> Response:
+        """Get an annotation image."""
         mts = MarkingTaskService()
         if edition is not None:
             try:
@@ -397,7 +410,7 @@ class TagsFromCodeView(APIView):
             request: an http request.
 
         Keyword Args:
-            code: str, question/paper code for a task.
+            code: question/paper code for a task.
 
         Returns:
             200: OK response
@@ -425,12 +438,15 @@ class TagsFromCodeView(APIView):
             return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
         return Response(status=status.HTTP_200_OK)
 
-    def delete(self, request, code):
+    def delete(self, request: Request, *, code: str) -> Response:
         """Remove a tag from a task.
 
         Args:
-            request (Request): with ``tag_text`` (`str`) as a data field
-            code: str, question/paper code for a task
+            request: a Request object with ``tag_text`` (`str`) as a
+                data field.
+
+        Keyword Args:
+            code: question/paper code for a task.
 
         Returns:
             200: OK response
@@ -456,7 +472,8 @@ class TagsFromCodeView(APIView):
 class GetAllTags(APIView):
     """Respond with all of the tags in the server."""
 
-    def get(self, request):
+    def get(self, request: Request) -> Response:
+        """Get all the tags."""
         mts = MarkingTaskService()
         return Response(mts.get_all_tags(), status=status.HTTP_200_OK)
 
@@ -464,7 +481,8 @@ class GetAllTags(APIView):
 class GetSolutionImage(APIView):
     """Get a solution image from the server."""
 
-    def get(self, request, question, version):
+    def get(self, request: Request, *, question: int, version: int) -> Response:
+        """Get a solution image."""
         try:
             return FileResponse(SolnImageService().get_soln_image(question, version))
         except ObjectDoesNotExist:

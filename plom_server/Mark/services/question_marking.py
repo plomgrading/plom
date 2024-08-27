@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
 
@@ -17,11 +18,13 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomTaskDeletedError,
     PlomTaskChangedError,
+    PlomQuotaLimitExceeded,
 )
 
 from ..models import MarkingTask
 from . import mark_task
 from . import create_new_annotation_in_database
+from Mark.services import MarkingTaskService
 
 
 class QuestionMarkingService:
@@ -200,6 +203,27 @@ class QuestionMarkingService:
 
         # regrab it, selected-for-update, b/c we're going to write to it
         task = MarkingTask.objects.select_for_update().get(pk=task.pk)
+        tag_marked_during_quota = "during_quota"
+
+        # Check if the user has quota limits
+        from Progress.services import UserInfoServices
+
+        uis = UserInfoServices()
+        progress = uis.get_user_progress(username=user.username)
+        if progress["user_has_quota_limit"]:
+            if progress["user_tasks_marked"] < progress["user_quota_limit"] or (
+                task.status == MarkingTask.COMPLETE
+            ):
+                MarkingTaskService().create_tag_and_attach_to_task(
+                    user=user,
+                    task_pk=task.pk,
+                    tag_text=tag_marked_during_quota,
+                )
+            else:
+                raise PlomQuotaLimitExceeded(
+                    "You have reached your task limit."
+                    " Contact your instructor to mark more tasks."
+                )
 
         # Various work in creating the new Annotation object: linking it to the
         # associated Rubrics and managing the task's latest annotation link.

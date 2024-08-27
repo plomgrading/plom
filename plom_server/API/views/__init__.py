@@ -25,7 +25,7 @@ from .identify import (
 
 from .mark import (
     QuestionMaxMark,
-    MarkingProgressCount,
+    MarkingProgress,
     MgetPageDataQuestionInContext,
     MgetOneImage,
     MgetAnnotations,

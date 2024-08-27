@@ -6,6 +6,8 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024 Bryan Tanady
+
 
 from __future__ import annotations
 
@@ -22,7 +24,6 @@ from django.db.models import QuerySet
 from django.db import transaction
 
 from plom import is_valid_tag_text
-
 from Papers.services import ImageBundleService, PaperInfoService
 from Papers.models import Paper
 from Rubrics.models import Rubric

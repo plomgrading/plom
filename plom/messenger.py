@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2024 Bryan Tanady
 
 """Backend bits 'n bobs to talk to a Plom server."""
 
@@ -33,6 +34,7 @@ from plom.plom_exceptions import (
     PlomTaskChangedError,
     PlomTaskDeletedError,
     PlomTimeoutError,
+    PlomQuotaLimitExceeded,
 )
 
 
@@ -263,7 +265,7 @@ class Messenger(BaseMessenger):
                     raise PlomAuthenticationException() from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def MprogressCount(self, q, v) -> list[int]:
+    def MprogressCount_legacy(self, q, v) -> list[int]:
         """Return info about progress on a particular question-version pair.
 
         Args:
@@ -295,6 +297,32 @@ class Messenger(BaseMessenger):
                     raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 416:
                     raise PlomRangeException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def get_marking_progress(self, qidx: int, ver: int) -> dict[str, Any]:
+        """Get a dict representing the progress and quota status of current marker.
+
+        Args:
+            qidx: which question.
+            ver: which version.
+
+        Returns:
+            Dict with keys "total_tasks", "total_tasks_marked", "user_tasks_claimed",
+            "user_tasks_marked", and "user_quota_limit"
+        """
+        if self.is_legacy_server():
+            n, m = self.MprogressCount_legacy(qidx, ver)
+            d = {"total_tasks": m, "total_tasks_marked": n, "user_quota_limit": None}
+            return d
+
+        with self.SRmutex:
+            try:
+                response = self.get_auth(f"/MK/progress/{qidx}/{ver}")
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MaskNextTask(
@@ -462,7 +490,7 @@ class Messenger(BaseMessenger):
         plomfile,
         rubrics,
         integrity_check,
-    ) -> list[int]:
+    ) -> dict[str, Any]:
         """Upload annotated image and associated data to the server.
 
         Args:
@@ -481,9 +509,9 @@ class Messenger(BaseMessenger):
                 back.
 
         Returns:
-            A list of two integers, indicating the number of questions
-            graded and the total number of questions to be graded of
-            this question-version pair.
+            A dict of progress information.  See :meth:`get_marking_progress`.
+            There is a a certain aomunt of code duplication to make this
+            happen; consider refactoring to avoid needing this to return anything.
 
         Raises:
             PlomAuthenticationException
@@ -495,7 +523,7 @@ class Messenger(BaseMessenger):
             PlomSeriousException
         """
         if self.is_legacy_server():
-            return self._MreturnMarkedTask_legacy(
+            n, m = self._MreturnMarkedTask_legacy(
                 code,
                 pg,
                 ver,
@@ -506,6 +534,8 @@ class Messenger(BaseMessenger):
                 rubrics,
                 integrity_check,
             )
+            d = {"total_tasks": m, "total_tasks_marked": n, "user_quota_limit": None}
+            return d
         return self._MreturnMarkedTask_webplom(
             code, pg, ver, score, marking_time, annotated_img, plomfile, integrity_check
         )
@@ -673,6 +703,8 @@ class Messenger(BaseMessenger):
                     raise PlomTaskDeletedError(response.reason) from None
                 if response.status_code == 400:
                     raise PlomSeriousException(response.reason) from None
+                if response.status_code == 423:
+                    raise PlomQuotaLimitExceeded(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MgetUserRubricTabs(self, question):
