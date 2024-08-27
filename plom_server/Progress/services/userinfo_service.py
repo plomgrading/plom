@@ -75,7 +75,7 @@ class UserInfoServices:
     ) -> dict[str, tuple[int, int]]:
         """Retrieve count of complete and total claimed by users.
 
-        claimed tasks are those tasks associated with the user with status OUT and Complete.
+        claimed tasks are those tasks associated with the user with status OUT or Complete.
 
         Returns:
             A dictionary mapping the marker to a tuple of the count of the complete and claimed tasks respectively.
