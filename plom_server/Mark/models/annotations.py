@@ -32,7 +32,13 @@ class Annotation(models.Model):
         image: The image of the annotated question.
         annotation_data: A Json blob of annotation data containing image path info,
             rubric info, svg annotation info.
-        marking_time: The time spent by the TA marking the question in seconds.
+        marking_time: The total cumulative time in seconds spent by all
+            markers on this question of this paper.  As a question gets
+            remarked or revisited this number will increase.
+        marking_delta_time: the time in seconds spent making this
+            particular annotation (which could be a revision to a
+            previous annotation).  The total ``marking_time`` is thus
+            the sum of all the ``marking_delta_time`` over all revisions.
         task: The marking task.
         user: The user who made the annotation.
         time_of_last_update: The time of the last update.
@@ -43,6 +49,7 @@ class Annotation(models.Model):
     image = models.OneToOneField(AnnotationImage, on_delete=models.CASCADE)
     annotation_data = models.JSONField(null=True)
     marking_time = models.FloatField(null=True)
+    marking_delta_time = models.FloatField(null=True)
     task = models.ForeignKey(MarkingTask, null=True, on_delete=models.SET_NULL)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     time_of_last_update = models.DateTimeField(auto_now=True)
