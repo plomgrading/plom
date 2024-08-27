@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Aidan Murphy
 
 from django.db import models
 from django.conf import settings
@@ -24,10 +25,8 @@ class PrenamingSetting(SingletonABCModel):
     """Server-wide settings for prenaming.
 
     enabled (bool): Whether the server should prename *any* built PDFs.
-    xcoord (float): The horizontal position of the vertical centre line
-        of the prenaming box. See :func: `pdf_page_add_name_id_box`.
+    xcoord (float): Determines the horizontal position of theprenaming box.
     ycoord (float): Determines the vertical position of the prenaming box.
-        See :func: `pdf_page_add_name_id_box`.
 
     """
 

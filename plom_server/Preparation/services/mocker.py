@@ -2,12 +2,12 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Aidan Murphy
 
 from __future__ import annotations
 
 import pathlib
 import tempfile
-import random as rd
 
 from django.core.files import File
 import fitz
@@ -70,19 +70,6 @@ class ExamMockerService:
         short_name = SpecificationService.get_short_name_slug()
         source_path = pathlib.Path(_get_source_file(version).path)
         id_page_number = SpecificationService.get_id_page_number()
-        extra = {
-            "name": rd.choice(
-                [
-                    "Van Brunt, Abraham",
-                    "D'arc, Jean",
-                    "Montoya, Inigo",
-                    "Parr, Robert",
-                    "Square Pants, Sponge Bob",
-                    "., Galadriel",
-                ]
-            ),
-            "id": "00000001",
-        }
         return self._make_prename_box_page(
             version,
             source_path,
@@ -90,7 +77,7 @@ class ExamMockerService:
             short_name,
             xcoord,
             ycoord,
-            extra=extra,
+            extra={"name": "McMockFace, Mocky", "id": "00000001"},
         )
 
     # TODO: unit tests
@@ -102,7 +89,7 @@ class ExamMockerService:
         short_name: str,
         xcoord: float,
         ycoord: float,
-        extra={"name": "Richie, Lionel", "id": "00000001"},
+        extra={"name": "", "id": ""},
     ) -> bytes:
         """Mock an prenamed ID page on the specified page.
 
