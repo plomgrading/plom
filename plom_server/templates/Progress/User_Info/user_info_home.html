@@ -82,7 +82,7 @@
                         {{ username }}
                         {% if messages %}
                             {% for message in messages %}
-                                {% if 'quota_warning' in message.tags and username in markers_with_warnings %}
+                                {% if 'quota_warning' in message.tags and progress.would_exceed_default_limit %}
                                     <i class="bi bi-exclamation-triangle-fill text-warning"
                                        data-bs-toggle="modal"
                                        data-bs-target="#confirmSetQuota"
