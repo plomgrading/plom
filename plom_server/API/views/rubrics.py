@@ -53,7 +53,7 @@ class MgetRubricPanes(APIView):
 
 
 class MgetRubricUsages(APIView):
-    def get(self, request: Request, key: str) -> Response:
+    def get(self, request: Request, key: int) -> Response:
         rs = RubricService()
         paper_numbers = rs.get_all_paper_numbers_using_a_rubric(key)
         return Response(paper_numbers, status=status.HTTP_200_OK)

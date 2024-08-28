@@ -401,7 +401,7 @@ class RubricService:
         """How many rubrics in total (excluding revisions)."""
         return Rubric.objects.filter(latest=True).count()
 
-    def get_rubric_by_key(self, rubric_key: str) -> Rubric:
+    def get_rubric_by_key(self, rubric_key: int) -> Rubric:
         """Get the latest rurbic revision by its key/id.
 
         Args:
@@ -414,7 +414,7 @@ class RubricService:
         """
         return Rubric.objects.get(key=rubric_key, latest=True)
 
-    def get_past_revisions_by_key(self, rubric_key: str) -> list[Rubric]:
+    def get_past_revisions_by_key(self, rubric_key: int) -> list[Rubric]:
         """Get all earlier revisions of a rubric by the key, not including the latest one.
 
         Args:
@@ -429,7 +429,7 @@ class RubricService:
             .order_by("revision")
         )
 
-    def get_all_paper_numbers_using_a_rubric(self, rubric_key: str) -> list[int]:
+    def get_all_paper_numbers_using_a_rubric(self, rubric_key: int) -> list[int]:
         """Get a list of paper number using the given rubric.
 
         Args:
@@ -457,7 +457,7 @@ class RubricService:
 
         return paper_numbers
 
-    def get_rubric_by_key_as_dict(self, rubric_key: str) -> dict[str, Any]:
+    def get_rubric_by_key_as_dict(self, rubric_key: int) -> dict[str, Any]:
         """Get a rubric by its key/id and return as a dictionary.
 
         Args:
