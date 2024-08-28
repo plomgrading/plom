@@ -19,6 +19,7 @@ from .views import (
     PQVMappingDeleteView,
     PQVMappingUploadView,
     MockExamView,
+    MockPrenamedIDView,
     MiscExtrasView,
     ReferenceImageView,
 )
@@ -34,6 +35,7 @@ urlpatterns = [
     ),
     path("source/mock/<int:version>", MockExamView.as_view(), name="prep_mock"),
     path("prename/", PrenamingView.as_view(), name="prep_prename"),
+    path("prename/mock", MockPrenamedIDView.as_view(), name="prep_mock_prename"),
     path(
         "prename/configure", PrenamingConfigView.as_view(), name="configure_prenaming"
     ),

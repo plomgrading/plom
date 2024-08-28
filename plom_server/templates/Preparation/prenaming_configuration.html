@@ -29,6 +29,7 @@
                             <input class="form-input border"
                                    type="number"
                                    name="xPos"
+                                   id="xPos"
                                    value="{{ prename_config.xcoord }}"
                                    style="width:60px">
                             <div class="input-group-prepend ms-3">
@@ -37,6 +38,7 @@
                             <input class="form-input border"
                                    type="number"
                                    name="yPos"
+                                   id="yPos"
                                    value="{{ prename_config.ycoord }}"
                                    style="width:60px">
                         </div>
@@ -46,7 +48,7 @@
                            type="submit"
                            name="mock_id"
                            value="PDF preview"
-                           formtarget="_blank">
+                           id="load-mock-btn">
                     <br />
                     <input class="btn btn-primary"
                            type="submit"
@@ -60,5 +62,29 @@
             </div>
         </div>
         <!-- end prename config -->
+        <div class="card w-50">
+            <img id="mockPNG" src="placeholder" />
+        </div>
+        <script>
+			document.addEventListener("DOMContentLoaded", function() {
+				document.getElementById("load-mock-btn").addEventListener("click", function(event){
+
+			event.preventDefault();
+			mock_png()
+			});
+		});
+		function mock_png() {
+			var xPos = document.getElementById("xPos").value
+			var yPos = document.getElementById("yPos").value
+			fetch(`{% url 'prep_mock_prename' %}?xcoord=${yPos}&ycoord=${yPos}`)
+			    .then(response => {return response.blob()})
+			    .then(blob => {
+				const img_url = URL.createObjectURL(blob);
+				document.getElementById("mockPNG").src = img_url;
+			    })
+			    .catch(error => console.error("Error loading mock ID page image:", error));
+		}
+
+        </script>
     </div>
 {% endblock main_content %}

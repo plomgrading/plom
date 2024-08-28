@@ -83,13 +83,13 @@ class PrenamingConfigView(ManagerRequiredView):
         elif "mock_id" in request.POST:
             ems = ExamMockerService()
             try:
-                mock_exam_pdf_bytes = ems.mock_ID_page(
+                mock_exam_png_bytes = ems.mock_ID_page(
                     version,
                     xcoord=x_pos,
                     ycoord=y_pos,
                 )
-                mock_exam_file = File(BytesIO(mock_exam_pdf_bytes), name="mock_ID.pdf")
-                return FileResponse(mock_exam_file, content_type="application/pdf")
+                mock_exam_file = File(BytesIO(mock_exam_png_bytes), name="mock_ID.png")
+                return FileResponse(mock_exam_file, content_type="application/png")
             except PlomDependencyConflict as err:
                 messages.add_message(request, messages.ERROR, f"{err}")
                 return redirect(reverse("prep_conflict"))

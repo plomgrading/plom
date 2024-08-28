@@ -89,11 +89,12 @@ class ExamMockerService:
         short_name: str,
         xcoord: float,
         ycoord: float,
-        extra={"name": "", "id": ""},
+        extra: dict = {"name": "", "id": ""},
+        return_pdf: bool = False,
     ) -> bytes:
         """Mock an prenamed ID page on the specified page.
 
-        Returns: a bytes object containing the PDF document.
+        Returns: a bytes object containing the id page as a png or pdf, depending on `return_pdf`.
         """
         with tempfile.TemporaryDirectory() as tmpdirname:
             with fitz.open(source_path) as pdf_doc:
@@ -114,4 +115,7 @@ class ExamMockerService:
                 pdf_page_add_name_id_box(
                     ID_page, extra["name"], extra["id"], xcoord, ycoord
                 )
+                if not return_pdf:
+                    return ID_page.get_pixmap().tobytes()
+
                 return pdf_doc.tobytes()
