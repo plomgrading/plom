@@ -232,6 +232,7 @@ class RubricLandingPageView(ManagerRequiredView):
     """A landing page for displaying and analyzing rubrics."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """Get the page the landing page for displaying and analyzing rubrics."""
         template_name = "Rubrics/rubrics_landing.html"
         rubric_filter_form = RubricFilterForm
         rubric_create_form = RubricItemForm
@@ -284,7 +285,8 @@ class RubricItemView(UpdateView, ManagerRequiredView):
     UpdateView is used to automatically populate the form with rubric data.
     """
 
-    def get(self, request: HttpRequest, rubric_key) -> HttpResponse:
+    def get(self, request: HttpRequest, *, rubric_key: int) -> HttpResponse:
+        """Get a rubric item."""
         template_name = "Rubrics/rubric_item.html"
         rs = RubricService()
         questions = SpecificationService.get_questions_max_marks()
@@ -317,7 +319,8 @@ class RubricItemView(UpdateView, ManagerRequiredView):
         return render(request, template_name, context=context)
 
     @staticmethod
-    def post(request, rubric_key):
+    def post(request: HttpRequest, *, rubric_key: int) -> HttpResponse:
+        """Posting to a rubric item receives data from a form an updates a rubric."""
         form = RubricItemForm(request.POST)
 
         if form.is_valid():
