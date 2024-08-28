@@ -15,43 +15,6 @@
     Rubric Info
 {% endblock page_heading %}
 {% block main_content %}
-    <script>
-        function populateFields() {
-            updateQuestion();
-            updateKind();
-        }
-
-        function updateQuestion() {
-            var question_dict = JSON.parse('{{ questions|escapejs }}');
-            var question_idx = document.getElementById("id_question").value;
-            var out_of = question_dict[question_idx];
-            document.getElementById("id_out_of").value = out_of;
-            updateConstraints(out_of);
-        }
-
-        function updateKind() {
-            var kind = document.getElementById("id_kind").value;
-            if (kind === "absolute") {
-                document.getElementById("id_out_of_label").innerHTML = "out of";
-            } else {
-                document.getElementById("id_out_of_label").innerHTML = "Max:";
-            }
-            updateConstraints(document.getElementById("id_out_of").value);
-        }
-
-        function updateConstraints(out_of) {
-            var kind = document.getElementById("id_kind").value;
-            if (kind === "absolute") {
-                document.getElementById("id_value").min = 0;
-                document.getElementById("id_value").max = out_of;
-            } else if (kind === "relative") {
-                document.getElementById("id_value").min = -1 * out_of;
-                document.getElementById("id_value").max = out_of;
-            } else {
-                document.getElementById("id_value").value = 0;
-            }
-        }
-    </script>
     <div class="container m-0">
         <div class="row">
             <div class="col">
