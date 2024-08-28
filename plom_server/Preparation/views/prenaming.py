@@ -5,6 +5,8 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
+import base64
+
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect
 from django.contrib import messages
@@ -13,7 +15,7 @@ from django.shortcuts import redirect, render
 
 from plom.plom_exceptions import PlomDependencyConflict
 from Base.base_group_views import ManagerRequiredView
-from ..services import PrenameSettingService
+from ..services import PrenameSettingService, ExamMockerService
 from ..models import PrenamingSetting
 
 
@@ -42,12 +44,24 @@ class PrenamingConfigView(ManagerRequiredView):
 
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
-        context.update(
-            {
-                "prename_config": PrenameSettingService().get_prenaming_config(),
-            }
-        )
-        return render(request, "Preparation/prenaming_configuration.html", context)
+        version = 1
+        try:
+            prenaming_config = PrenameSettingService().get_prenaming_config()
+            png_bytes = ExamMockerService().mock_ID_page(
+                version, prenaming_config["xcoord"], prenaming_config["ycoord"]
+            )
+            png_as_string = base64.b64encode(png_bytes).decode("ascii")
+
+            context.update(
+                {
+                    "prename_config": PrenameSettingService().get_prenaming_config(),
+                    "mock_id_image": png_as_string,
+                }
+            )
+            return render(request, "Preparation/prenaming_configuration.html", context)
+        except PlomDependencyConflict as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
+            return redirect(reverse("prep_conflict"))
 
     def post(self, request: HttpRequest) -> HttpResponse:
         success_url = "configure_prenaming"

@@ -3,7 +3,6 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
-# Copyright (C) 2024 Aidan Murphy
 
 from io import BytesIO
 from pathlib import Path
@@ -30,23 +29,3 @@ class MockExamView(ManagerRequiredView):
         )
         mock_exam_file = File(BytesIO(mock_exam_pdf_bytes), name=f"mock_v{version}.pdf")
         return FileResponse(mock_exam_file, content_type="application/pdf")
-
-
-class MockPrenamedIDView(ManagerRequiredView):
-    """Create a mock png of a prenamed ID page."""
-
-    def get(self, request: HttpRequest) -> HttpResponse:
-        x_pos = request.GET.get("xcoord")
-        x_pos = float(x_pos) if x_pos else None
-        y_pos = request.GET.get("ycoord")
-        y_pos = float(y_pos) if y_pos else None
-        version = 1
-
-        ems = ExamMockerService()
-        mock_exam_png_bytes = ems.mock_ID_page(
-            version,
-            xcoord=x_pos,
-            ycoord=y_pos,
-        )
-        mock_exam_image = BytesIO(mock_exam_png_bytes)
-        return HttpResponse(mock_exam_image, content_type="image/png")

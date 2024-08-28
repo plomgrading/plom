@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Aidan Murphy
 
 from __future__ import annotations
 
@@ -62,6 +63,7 @@ def _task_context_and_status() -> tuple[dict[str, Any], int]:
         "zip_enabled": zip_enabled,
         "poll": poll,
         "db_initialised": db_initialised,
+        "papers_built": n_complete > 0,
     }
     return d, status
 

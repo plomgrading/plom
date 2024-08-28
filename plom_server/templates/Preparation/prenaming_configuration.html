@@ -62,37 +62,10 @@
                 </div>
                 <div class="col-auto">
                     <div class="card">
-                        <img id="mockPNG" src="" />
+                        <img id="mockPNG" src="data:image/png;base64,{{ mock_id_image }}" />
                     </div>
                 </div>
             </div>
         </div>
-        <script>
-			const debounce = (callback, waitTime) => {
-			    let timer;
-			    return (...args) => {
-				clearTimeout(timer);
-				timer = setTimeout(() => {
-				    callback(...args);
-				}, waitTime);
-			    };
-			}
-			const mock_png = () => {
-				var xPos = document.getElementById("xPos").value
-				var yPos = document.getElementById("yPos").value
-				fetch(`{% url 'prep_mock_prename' %}?xcoord=${xPos}&ycoord=${yPos}`)
-				    .then(response => {return response.blob()})
-				    .then(blob => {
-					const img_url = URL.createObjectURL(blob);
-					document.getElementById("mockPNG").src = img_url;
-				    })
-				    .catch(error => console.error("Error loading mock ID page image:", error));
-			}
-
-			document.addEventListener("DOMContentLoaded", function() {
-				document.getElementById("xPos").addEventListener("input", debounce(mock_png, 200));
-				document.getElementById("yPos").addEventListener("input", debounce(mock_png, 200));
-		});
-        </script>
     </div>
 {% endblock main_content %}
