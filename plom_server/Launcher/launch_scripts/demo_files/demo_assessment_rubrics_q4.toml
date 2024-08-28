@@ -4,64 +4,48 @@
 
 [[rubric]]
 kind = "absolute"
-display_delta = "1 of 3"
 value = 1
 out_of = 3
 text = "Newton's law of cooling mentioned but no diff eqn or general solution"
-meta = ""
 username = "manager"
 question = 4
 versions = [1]
-parameters = []
 
 [[rubric]]
 kind = "absolute"
-display_delta = "1 of 3"
 value = 1
 out_of = 3
 text = "Incorrect differential equation stated"
-meta = ""
 username = "manager"
 question = 4
-parameters = []
 
 
 [[rubric]]
 kind = "absolute"
-display_delta = "2 of 3"
 value = 2
 out_of = 3
 text = "Differential equation formed but error in solution"
-meta = ""
 username = "manager"
 question = 4
-parameters = []
 
 [[rubric]]
 kind = "absolute"
-display_delta = "3 of 3"
 value = 3
 out_of = 3
 text = "Differential equation formed and general solution stated"
-meta = ""
 username = "manager"
 question = 4
-parameters = []
 
 [[rubric]]
 kind = "absolute"
-display_delta = "3 of 3"
 value = 3
 out_of = 3
 text = "Differential equation formed and solved to find general solution"
-meta = ""
 username = "manager"
 question = 4
-parameters = []
 
 [[rubric]]
 kind = "relative"
-display_delta = "-1"
 value = -1
 out_of = 0
 text = "Answer should include units\n(such as \"{param1}\")"
@@ -74,7 +58,6 @@ parameters = [["{param1}", ["s", "year"]]]
 
 [[rubric]]
 kind = "relative"
-display_delta = "+1"
 value = 1
 out_of = 0
 text = "some initial progress"
@@ -84,7 +67,6 @@ question = 4
 
 [[rubric]]
 kind = "relative"
-display_delta = "+2"
 value = 2
 out_of = 0
 text = "Correct set-up"
@@ -94,7 +76,6 @@ question = 4
 
 [[rubric]]
 kind = "relative"
-display_delta = "-1"
 value = 1
 out_of = 0
 text = "small algebra error"
@@ -104,7 +85,6 @@ question = 4
 
 [[rubric]]
 kind = "relative"
-display_delta = "-1"
 value = 1
 out_of = 0
 text = "small arithmetic error"
@@ -114,9 +94,6 @@ question = 4
 
 [[rubric]]
 kind = "neutral"
-display_delta = "."
-value = 0.0
-out_of = 0.0
 text = "be careful"
 tags = "demo"
 meta = "Student made an inconsequential error."
@@ -125,9 +102,6 @@ username = "manager"
 
 [[rubric]]
 kind = "neutral"
-display_delta = "."
-value = 0.0
-out_of = 0.0
 text = "hard to read"
 tags = "demo"
 meta = "Student handwriting is making marking hard"
@@ -136,9 +110,6 @@ username = "manager"
 
 [[rubric]]
 kind = "neutral"
-display_delta = "."
-value = 0.0
-out_of = 0.0
 text = "layout work more carefully"
 tags = "demo"
 meta = "Student needs to learn how to set out their work so someone else can follow."

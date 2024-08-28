@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechntizer
+# Copyright (C) 2024 Colin B. Macdonald
 
 [[rubric]]
 kind = "relative"
@@ -126,9 +127,6 @@ username = "manager"
 
 [[rubric]]
 kind = "neutral"
-display_delta = "."
-value = 0.0
-out_of = 0.0
 text = "be careful"
 tags = "demo"
 meta = "Student made an inconsequential error."
@@ -137,13 +135,8 @@ username = "manager"
 
 [[rubric]]
 kind = "neutral"
-display_delta = "."
-value = 0.0
-out_of = 0.0
 text = "hard to read"
 tags = "demo"
 meta = "Student handwriting is making marking hard"
 question = 2
 username = "manager"
-
-
