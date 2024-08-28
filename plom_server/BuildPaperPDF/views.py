@@ -23,7 +23,6 @@ from django.contrib import messages
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
-from Preparation.services import PrenameSettingService
 from .services import BuildPapersService
 
 from plom.plom_exceptions import PlomDependencyConflict
@@ -89,7 +88,6 @@ class BuildPaperPDFs(ManagerRequiredView):
         context.update(
             {
                 "pdf_table": table_fragment,
-                "prename_config": PrenameSettingService().get_prenaming_config(),
             }
         )
         return render(request, self.template_name, context)

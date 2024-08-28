@@ -11,7 +11,7 @@ from django_htmx.http import HttpResponseClientRedirect
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponse, FileResponse
 from django.core.files import File
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 
 from plom.plom_exceptions import PlomDependencyConflict
 from Base.base_group_views import ManagerRequiredView
@@ -42,9 +42,18 @@ class PrenamingView(ManagerRequiredView):
 class PrenamingConfigView(ManagerRequiredView):
     """Configure and mock prenaming settings."""
 
-    def post(self, request: HttpRequest) -> HttpResponse:
-        ps_meta = PrenamingSetting._meta
+    def get(self, request: HttpRequest) -> HttpResponse:
+        context = self.build_context()
+        context.update(
+            {
+                "prename_config": PrenameSettingService().get_prenaming_config(),
+            }
+        )
+        return render(request, "Preparation/prenaming_configuration.html", context)
 
+    def post(self, request: HttpRequest) -> HttpResponse:
+        success_url = "configure_prenaming"
+        ps_meta = PrenamingSetting._meta
         # guard inputs
         x_pos = request.POST.get("xPos")
         x_pos = float(x_pos) if x_pos else ps_meta.get_field("xcoord").get_default()
@@ -58,7 +67,7 @@ class PrenamingConfigView(ManagerRequiredView):
             pss = PrenameSettingService()
             try:
                 pss.set_prenaming_coords(x_pos, y_pos)
-                return redirect(reverse("create_paperPDFs"))
+                return redirect(reverse(success_url))
             except PlomDependencyConflict as err:
                 messages.add_message(request, messages.ERROR, f"{err}")
                 return redirect(reverse("prep_conflict"))
@@ -66,7 +75,7 @@ class PrenamingConfigView(ManagerRequiredView):
             pss = PrenameSettingService()
             try:
                 pss.reset_prenaming_coords()
-                return redirect(reverse("create_paperPDFs"))
+                return redirect(reverse(success_url))
             except PlomDependencyConflict as err:
                 messages.add_message(request, messages.ERROR, f"{err}")
                 return redirect(reverse("prep_conflict"))

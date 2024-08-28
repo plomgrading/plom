@@ -54,7 +54,7 @@
                 </p>
                 <p class="fs-7">&emsp;&ensp; Manage the source PDFs for building your test-papers</p>
             </a>
-            <a class="list-group-item list-group-item-action borer mb-1"
+            <a class="list-group-item list-group-item-action border"
                href="{% url 'prep_classlist' %}">
                 <p class="fs-4">
                     {% if student_list_present %}
@@ -72,6 +72,20 @@
                     {% endif %}
                 </p>
                 <p class="fs-7">&emsp;&ensp; Optionally, upload a classlist and, also optionally, prenaming of papers</p>
+            </a>
+            <a class="list-group-item  list-group-item-action  border mb-1"
+               href="{% url 'configure_prenaming' %}"
+               style="{% if not prename_enabled %}pointer-events: none;
+                      color: #AAAFB4;
+                      {% endif %}">
+                <p class="fs-4">
+                    <i class="bi-gear"></i>
+                    Prenaming configuration
+                    {% if have_papers_been_printed %}
+                        : <i class="bi bi-exclamation-triangle text-warning"></i> read-only <i class="bi bi-exclamation-triangle text-warning"></i>
+                    {% endif %}
+                </p>
+                <p class="fs-7">&emsp;&ensp; Change the position of student details on prenamed papers</p>
             </a>
             <a href="{% url 'prep_qvmapping' %}"
                class="list-group-item list-group-item-action border mb-1">

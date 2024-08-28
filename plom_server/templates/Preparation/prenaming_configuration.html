@@ -1,0 +1,64 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Aidan Murphy
+-->
+{% extends "base/base.html" %}
+{% block page_heading %}
+    Manage prenaming
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="d-grid gap-2">
+        <div>
+            <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
+        </div>
+        <!-- start prename config -->
+        <div class="card w-50">
+            <div class="card-body">
+                <h5 class="card-title">Prenaming configuration</h5>
+                <div class="col">
+                    <p class="card-text">
+                        Adjust <code style="color:black">x, y</code> coordinates of prenaming box.
+                    </p>
+                </div>
+                <div class="form-group">
+                    <form action="{% url 'configure_prenaming' %}" method="post">
+                        <div class="input-group ms-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text rounded-0">x</span>
+                            </div>
+                            <input class="form-input border"
+                                   type="number"
+                                   name="xPos"
+                                   value="{{ prename_config.xcoord }}"
+                                   style="width:60px">
+                            <div class="input-group-prepend ms-3">
+                                <span class="input-group-text rounded-0">y</span>
+                            </div>
+                            <input class="form-input border"
+                                   type="number"
+                                   name="yPos"
+                                   value="{{ prename_config.ycoord }}"
+                                   style="width:60px">
+                        </div>
+                    </div>
+                    {% csrf_token %}
+                    <input class="btn btn-link"
+                           type="submit"
+                           name="mock_id"
+                           value="PDF preview"
+                           formtarget="_blank">
+                    <br />
+                    <input class="btn btn-primary"
+                           type="submit"
+                           name="set_config"
+                           value="Save configuration">
+                    <input class="btn btn-primary"
+                           type="submit"
+                           name="reset_config"
+                           value="reset configuration to defaults">
+                </form>
+            </div>
+        </div>
+        <!-- end prename config -->
+    </div>
+{% endblock main_content %}

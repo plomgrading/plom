@@ -19,57 +19,6 @@
         <div>
             <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
-        <!-- start prename config -->
-        {% if prename_config.enabled %}
-            <div class="card w-50">
-                <div class="card-body">
-                    <h5 class="card-title">Prenaming configuration</h5>
-                    <div class="col">
-                        <p class="card-text">
-                            Adjust <code style="color:black">x, y</code> coordinates of prenaming box.
-                        </p>
-                    </div>
-                    <div class="form-group">
-                        <form action="{% url 'configure_prename' %}" method="post">
-                            <div class="input-group ms-3">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text rounded-0">x</span>
-                                </div>
-                                <input class="form-input border"
-                                       type="number"
-                                       name="xPos"
-                                       value="{{ prename_config.xcoord }}"
-                                       style="width:60px">
-                                <div class="input-group-prepend ms-3">
-                                    <span class="input-group-text rounded-0">y</span>
-                                </div>
-                                <input class="form-input border"
-                                       type="number"
-                                       name="yPos"
-                                       value="{{ prename_config.ycoord }}"
-                                       style="width:60px">
-                            </div>
-                        </div>
-                        {% csrf_token %}
-                        <input class="btn btn-link"
-                               type="submit"
-                               name="mock_id"
-                               value="PDF preview"
-                               formtarget="_blank">
-                        <br />
-                        <input class="btn btn-primary"
-                               type="submit"
-                               name="set_config"
-                               value="Save configuration">
-                        <input class="btn btn-primary"
-                               type="submit"
-                               name="reset_config"
-                               value="reset configuration to defaults">
-                    </form>
-                </div>
-            </div>
-        {% endif %}
-        <!-- end prename config -->
         <div id="pdf_table">{{ pdf_table |safe }}</div>
     </div>
     <div class="modal fade"
