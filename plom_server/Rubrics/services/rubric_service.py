@@ -113,7 +113,7 @@ class RubricService:
     ) -> Rubric:
         incoming_data = incoming_data.copy()
 
-        # Sanity checks on the dict
+        # some mangling around user/username here
         if "user" not in incoming_data.keys():
             username = incoming_data.pop("username")
             try:
