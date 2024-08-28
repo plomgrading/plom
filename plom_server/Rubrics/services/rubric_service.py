@@ -685,12 +685,9 @@ class RubricService:
             rubric = {
                 "display_delta": "+\N{Vulgar Fraction One Half}",
                 "value": 0.5,
-                "out_of": 0,
                 "text": ".",
                 "kind": "relative",
                 "question": q,
-                "meta": "",
-                "tags": "",
                 "username": username,
                 "system_rubric": True,
             }
@@ -700,12 +697,9 @@ class RubricService:
             rubric = {
                 "display_delta": "-\N{Vulgar Fraction One Half}",
                 "value": -0.5,
-                "out_of": 0,
                 "text": ".",
                 "kind": "relative",
                 "question": q,
-                "meta": "",
-                "tags": "",
                 "username": username,
                 "system_rubric": True,
             }
