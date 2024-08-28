@@ -381,7 +381,7 @@ class RubricTable(QTableWidget):
         self.selectFirstVisibleRubric()
         self.handleClick()
 
-    def removeRubricByKey(self, key) -> None:
+    def removeRubricByKey(self, key: int) -> None:
         row = self._get_row_from_key(key)
         if row is None:
             return
@@ -464,7 +464,6 @@ class RubricTable(QTableWidget):
         self.setItem(rc, 1, QTableWidgetItem(rubric["username"]))
         self.setItem(rc, 2, QTableWidgetItem(rubric["display_delta"]))
 
-        # unfortunate parent access to get version
         render = render_params(
             rubric["text"], rubric["parameters"], self._parent.version
         )
@@ -493,25 +492,25 @@ class RubricTable(QTableWidget):
     def setRubricsByKeys(
         self,
         rubric_list: list[dict[str, Any]],
-        id_list: list[str],
+        id_list: list[int],
         *,
-        alt_order: list[str] | None = None,
+        alt_order: list[int] | None = None,
     ) -> None:
         """Clear table and re-populate rubrics, keep selection if possible.
 
         Args:
-            rubric_list (list): all the rubrics, which are dicts with
+            rubric_list: all the rubrics, which are dicts with
                 various keys, most notably for us, ``id``.
-            id_list (list): which ``id``s should insert into the table.
+            id_list: which ``id``s should insert into the table.
                 Any ids that missing in `rubric_list` will simply be
                 skipped.
 
         Keyword Args:
-            alt_order (None/list): use this order instead of `key_list`.
-                But ignore anything in `alt_order` that isn't in `key_list`.
-                Anything that isn't in `alt_order` but is in `key_list`
+            alt_order: use this order instead of `id_list`.
+                But ignore anything in `alt_order` that isn't in `id_list`.
+                Anything that isn't in `alt_order` but is in `id_list`
                 should appear at the end of the list.
-                Defaults to None, which means just use the `key_list`
+                Defaults to None, which means just use the `id_list`
                 order.
 
         Returns:
@@ -529,7 +528,9 @@ class RubricTable(QTableWidget):
             id_list = new_list
         self._setRubricsByKeys(rubric_list, id_list)
 
-    def _setRubricsByKeys(self, rubric_list, id_list) -> None:
+    def _setRubricsByKeys(
+        self, rubric_list: list[dict[str, Any]], id_list: list[int]
+    ) -> None:
         prev_selected_rubric_id = self.getCurrentRubricKey()
         # remove everything
         for r in range(self.rowCount()):
@@ -546,7 +547,7 @@ class RubricTable(QTableWidget):
             self.selectFirstVisibleRubric()
         self.resizeColumnsToContents()
 
-    def setDeltaRubrics(self, rubrics, positive=True):
+    def setDeltaRubrics(self, rubrics: list[dict[str, Any]], *, positive=True) -> None:
         """Clear table and repopulate with delta-rubrics, keep selection if possible."""
         prev_selected_rubric_id = self.getCurrentRubricKey()
         # remove everything
@@ -695,7 +696,6 @@ class RubricTable(QTableWidget):
             self.selectRubricByRow(r)
 
         rubric = self.get_row_as_rubric(r).copy()
-        # unfortunate parent access to get version
         rubric["text"] = render_params(
             rubric["text"], rubric["parameters"], self._parent.version
         )
@@ -723,7 +723,7 @@ class RubricTable(QTableWidget):
                 return r
         return None
 
-    def colourLegalRubric(self, r):
+    def colourLegalRubric(self, r: int) -> None:
         legal = isLegalRubric(
             self.get_row_as_rubric(r),
             scene=self._parent._parent.scene,
@@ -739,12 +739,14 @@ class RubricTable(QTableWidget):
         # colour_hide = self.palette().color(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text)
         if legal == 2:
             self.showRow(r)
-            self.item(r, 2).setForeground(colour_legal)
-            self.item(r, 3).setForeground(colour_legal)
+            for item in (self.item(r, 2), self.item(r, 3)):
+                assert item is not None
+                item.setForeground(colour_legal)
         elif legal == 1:
             self.showRow(r)
-            self.item(r, 2).setForeground(colour_illegal)
-            self.item(r, 3).setForeground(colour_illegal)
+            for item in (self.item(r, 2), self.item(r, 3)):
+                assert item is not None
+                item.setForeground(colour_illegal)
         else:
             self.hideRow(r)
             # self.showRow(r)
@@ -756,7 +758,7 @@ class RubricTable(QTableWidget):
         for r in range(self.rowCount()):
             self.colourLegalRubric(r)
 
-    def editRow(self, tableIndex):
+    def editRow(self, tableIndex) -> None:
         key = self._get_key_from_row(tableIndex.row())
         self._parent.edit_rubric(key)
 
@@ -775,7 +777,7 @@ class TabBarWithAddRenameRemoveContext(QTabBar):
     rename_tab_signal = pyqtSignal(int)
     remove_tab_signal = pyqtSignal(int)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def mousePressEvent(self, mouseEvent):
@@ -807,16 +809,23 @@ class RubricWidget(QWidget):
     # This is picked up by the annotator to tell the scene the current rubric
     rubricSignal = pyqtSignal(dict)
 
-    def __init__(self, parent):
+    def __init__(self, parent) -> None:
+        """Initialize the class.
+
+        Args:
+            parent: in theory, a QWidget, but in practice this must be an
+                Annotator which is a particular subclass, b/c we will call
+                methods from that class.
+        """
         super().__init__(parent)
         self.question_label = None
         self.question_number = None
-        self.version = None
-        self.max_version = None
+        self.version = 1
+        self.max_version = 1
+        self.maxMark = 1
         self._parent = parent
         self.username = parent.username
-        self.rubrics = []
-        self.maxMark = None
+        self.rubrics: list[dict[str, Any]] = []
 
         grid = QGridLayout()
         # assume our container will deal with margins
@@ -834,13 +843,13 @@ class RubricWidget(QWidget):
         tb.remove_tab_signal.connect(self.remove_tab)
         self.RTW.setTabBar(tb)
         self.RTW.setMovable(True)
-        self.RTW.tabBar().setChangeCurrentOnDrag(True)
+        tb.setChangeCurrentOnDrag(True)
         self.RTW.insertTab(0, self.tabS, self.tabS.shortname)
         self.RTW.insertTab(1, self.tabDeltaP, self.tabDeltaP.shortname)
         self.RTW.insertTab(2, self.tabDeltaN, self.tabDeltaN.shortname)
-        self.RTW.tabBar().setTabData(0, self.tabS.tabType)
-        self.RTW.tabBar().setTabData(1, self.tabDeltaP.tabType)
-        self.RTW.tabBar().setTabData(2, self.tabDeltaN.tabType)
+        tb.setTabData(0, self.tabS.tabType)
+        tb.setTabData(1, self.tabDeltaP.tabType)
+        tb.setTabData(2, self.tabDeltaN.tabType)
         b = QToolButton()
         b.setText("+")
         b.setAutoRaise(True)  # flat until hover, but not on macOS?
@@ -1468,7 +1477,10 @@ class RubricWidget(QWidget):
         if tab not in range(0, self.RTW.count()):
             return False
         self.RTW.setCurrentIndex(tab)
-        is_success = self.RTW.currentWidget().selectRubricByKey(key)
+        w = self.RTW.currentWidget()
+        assert w is not None
+        assert isinstance(w, RubricTable)
+        is_success = w.selectRubricByKey(key)
         self.handleClick()  # force blue ghost update
         return is_success
 
@@ -1485,12 +1497,12 @@ class RubricWidget(QWidget):
         self.question_number = num
         self.question_label = label
 
-    def setVersion(self, version, maxver):
+    def setVersion(self, version: int, maxver: int) -> None:
         """Set version being graded.
 
         Args:
-            version (int/None): which version.
-            maxver (int): the largest version in this assessment.
+            version: which version.
+            maxver: the largest version in this assessment.
 
         After calling this, you should call ``updateLegalityOfRubrics()`` to
         update which rubrics are highlighted/displayed.
