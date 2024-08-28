@@ -322,10 +322,11 @@ class RubricService:
         Raises:
             ValueError: if the kind is not valid.
             ValueError: if the kind is absolute and out_of is not provided.
-
         """
         value = float(value) if isinstance(value, str) else value
         out_of = float(out_of) if isinstance(out_of, str) else out_of
+
+        # TODO: we may want to special case vulgar fractions in the future
 
         if kind == "absolute":
             if out_of is None:
