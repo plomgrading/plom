@@ -6,6 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render
 from django.http import FileResponse, HttpRequest, HttpResponse, Http404
 from django_htmx.http import HttpResponseClientRefresh
+from django.contrib import messages
 
 from Base.base_group_views import ScannerLeadMarkerOrManagerView
 from ..services import (
@@ -101,12 +102,9 @@ class SubstituteImageWrapView(ScannerLeadMarkerOrManagerView):
         """Replace the missing page from the given paper."""
         try:
             ForgiveMissingService.forgive_missing_fixed_page(request.user, paper, page)
-        except ObjectDoesNotExist:
-            # TODO - return the error message to user somehow
-            pass
-        except ValueError:
-            # TODO - return the error message to user somehow
-            pass
+        except (ObjectDoesNotExist, ValueError) as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
+            return HttpResponseClientRefresh()
         # if everything succeeds then refresh the page.
         return HttpResponseClientRefresh()
 

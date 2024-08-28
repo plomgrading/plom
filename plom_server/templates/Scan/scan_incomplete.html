@@ -79,7 +79,17 @@
                              style="justify-content: center;
                                     display:flex;
                                     align-items:center"
-                             id="incompleteImageHere"></div>
+                             id="incompleteImageHere">
+                            {% if forgive_errors %}
+                                <div class="alert alert-warning">
+                                    <p>Something went wrong when attempting to forgive the missing page:</p>
+                                    <ul>
+                                        {% for msg in forgive_errors %}<li>{{ msg }}</li>{% endfor %}
+                                    </ul>
+                                    <p>Likely another user is simultaneously working on this paper. We recommend refreshing this page.</p>
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>

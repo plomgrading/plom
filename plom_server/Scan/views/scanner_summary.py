@@ -6,6 +6,7 @@
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.contrib import messages
 
 from Base.base_group_views import ScannerRequiredView
 from ..services import ManageScanService
@@ -52,4 +53,9 @@ class ScannerIncompletePaperView(ScannerRequiredView):
                 "incomplete_papers_list": incomplete_papers_list,
             }
         )
+        # display any errors for an attempted missing page forgive.
+        forgive_errors = []
+        for msg in messages.get_messages(request):
+            forgive_errors.append(f"{msg}")
+        context.update({"forgive_errors": forgive_errors})
         return render(request, "Scan/scan_incomplete.html", context)
