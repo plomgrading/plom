@@ -4,7 +4,6 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
-# Copyright (C) 2024 Aidan Murphy
 
 from __future__ import annotations
 

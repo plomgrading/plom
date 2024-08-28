@@ -122,6 +122,7 @@ def assert_can_modify_prenaming_config():
         raise PlomDependencyConflict("Test PDFs have been built.")
 
     # cannot configure prenaming without version 1 source PDF
+    # TODO: update if ID pages are versioned
     if not SourceService.get_source(1)["uploaded"]:
         raise PlomDependencyConflict("Exam version 1 source PDF hasn't been uploaded.")
 

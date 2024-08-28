@@ -3,19 +3,17 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Colin B. Macdonald
-
-from io import BytesIO
+# Copyright (C) 2024 Aidan Murphy
 
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect
 from django.contrib import messages
-from django.http import HttpRequest, HttpResponse, FileResponse
-from django.core.files import File
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 
 from plom.plom_exceptions import PlomDependencyConflict
 from Base.base_group_views import ManagerRequiredView
-from ..services import PrenameSettingService, ExamMockerService
+from ..services import PrenameSettingService
 from ..models import PrenamingSetting
 
 
@@ -54,17 +52,14 @@ class PrenamingConfigView(ManagerRequiredView):
     def post(self, request: HttpRequest) -> HttpResponse:
         success_url = "configure_prenaming"
         ps_meta = PrenamingSetting._meta
+        pss = PrenameSettingService()
         # guard inputs
         x_pos = request.POST.get("xPos")
         x_pos = float(x_pos) if x_pos else ps_meta.get_field("xcoord").get_default()
         y_pos = request.POST.get("yPos")
         y_pos = float(y_pos) if y_pos else ps_meta.get_field("ycoord").get_default()
 
-        # TODO: read exam source version from input form
-        version = 1
-
         if "set_config" in request.POST:
-            pss = PrenameSettingService()
             try:
                 pss.set_prenaming_coords(x_pos, y_pos)
                 return redirect(reverse(success_url))
@@ -72,24 +67,9 @@ class PrenamingConfigView(ManagerRequiredView):
                 messages.add_message(request, messages.ERROR, f"{err}")
                 return redirect(reverse("prep_conflict"))
         elif "reset_config" in request.POST:
-            pss = PrenameSettingService()
             try:
                 pss.reset_prenaming_coords()
                 return redirect(reverse(success_url))
-            except PlomDependencyConflict as err:
-                messages.add_message(request, messages.ERROR, f"{err}")
-                return redirect(reverse("prep_conflict"))
-        # TODO: render the mock on the same page rather than opening in a new tab
-        elif "mock_id" in request.POST:
-            ems = ExamMockerService()
-            try:
-                mock_exam_png_bytes = ems.mock_ID_page(
-                    version,
-                    xcoord=x_pos,
-                    ycoord=y_pos,
-                )
-                mock_exam_file = File(BytesIO(mock_exam_png_bytes), name="mock_ID.png")
-                return FileResponse(mock_exam_file, content_type="application/png")
             except PlomDependencyConflict as err:
                 messages.add_message(request, messages.ERROR, f"{err}")
                 return redirect(reverse("prep_conflict"))

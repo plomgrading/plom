@@ -5,6 +5,7 @@
     Copyright (C) 2022 Brennen Chiu
     Copyright (C) 2023-2024 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
+    Copyright (C) 2024 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -75,9 +76,9 @@
             </a>
             <a class="list-group-item  list-group-item-action  border mb-1"
                href="{% url 'configure_prenaming' %}"
-               style="{% if not prename_enabled %}pointer-events: none;
+               style="{% if not prename_enabled %} {% if not any_papers_built %} pointer-events: none;
                       color: #AAAFB4;
-                      {% endif %}">
+                      {% endif %} {% endif %}">
                 <p class="fs-4">
                     <i class="bi-gear"></i>
                     Prenaming configuration

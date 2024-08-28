@@ -11,80 +11,86 @@
         <div>
             <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
-        <!-- start prename config -->
-        <div class="card w-50">
-            <div class="card-body">
-                <h5 class="card-title">Prenaming configuration</h5>
-                <div class="col">
-                    <p class="card-text">
-                        Adjust <code style="color:black">x, y</code> coordinates of prenaming box.
-                    </p>
-                </div>
-                <div class="form-group">
-                    <form action="{% url 'configure_prenaming' %}" method="post">
-                        <div class="input-group ms-3">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text rounded-0">x</span>
+        <div class="container">
+            <div class="row">
+                <div class="card w-50">
+                    <div class="col-md-6">
+                        <div class="card-body">
+                            <h5 class="card-title">Prenaming configuration</h5>
+                            <div class="col">
+                                <p class="card-text">
+                                    Adjust <code style="color:black">x, y</code> coordinates of prenaming box.
+                                </p>
                             </div>
-                            <input class="form-input border"
-                                   type="number"
-                                   name="xPos"
-                                   id="xPos"
-                                   value="{{ prename_config.xcoord }}"
-                                   style="width:60px">
-                            <div class="input-group-prepend ms-3">
-                                <span class="input-group-text rounded-0">y</span>
-                            </div>
-                            <input class="form-input border"
-                                   type="number"
-                                   name="yPos"
-                                   id="yPos"
-                                   value="{{ prename_config.ycoord }}"
-                                   style="width:60px">
+                            <div class="form-group">
+                                <form action="{% url 'configure_prenaming' %}" method="post">
+                                    <div class="input-group ms-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text rounded-0">x</span>
+                                        </div>
+                                        <input class="form-input border"
+                                               type="number"
+                                               name="xPos"
+                                               id="xPos"
+                                               value="{{ prename_config.xcoord }}"
+                                               style="width:60px">
+                                        <div class="input-group-prepend ms-3">
+                                            <span class="input-group-text rounded-0">y</span>
+                                        </div>
+                                        <input class="form-input border"
+                                               type="number"
+                                               name="yPos"
+                                               id="yPos"
+                                               value="{{ prename_config.ycoord }}"
+                                               style="width:60px">
+                                    </div>
+                                </div>
+                                {% csrf_token %}
+                                <input class="btn btn-primary mt-2"
+                                       type="submit"
+                                       name="set_config"
+                                       value="Save configuration">
+                                <input class="btn btn-primary mt-2"
+                                       type="submit"
+                                       name="reset_config"
+                                       value="reset configuration to defaults">
+                            </form>
                         </div>
                     </div>
-                    {% csrf_token %}
-                    <input class="btn btn-link"
-                           type="submit"
-                           name="mock_id"
-                           value="PDF preview"
-                           id="load-mock-btn">
-                    <br />
-                    <input class="btn btn-primary"
-                           type="submit"
-                           name="set_config"
-                           value="Save configuration">
-                    <input class="btn btn-primary"
-                           type="submit"
-                           name="reset_config"
-                           value="reset configuration to defaults">
-                </form>
+                </div>
+                <div class="col-md-6">
+                    <div class="card w-75">
+                        <img id="mockPNG" src="" />
+                    </div>
+                </div>
             </div>
         </div>
-        <!-- end prename config -->
-        <div class="card w-50">
-            <img id="mockPNG" src="placeholder" />
-        </div>
         <script>
+			const debounce = (callback, waitTime) => {
+			    let timer;
+			    return (...args) => {
+				clearTimeout(timer);
+				timer = setTimeout(() => {
+				    callback(...args);
+				}, waitTime);
+			    };
+			}
+			const mock_png = () => {
+				var xPos = document.getElementById("xPos").value
+				var yPos = document.getElementById("yPos").value
+				fetch(`{% url 'prep_mock_prename' %}?xcoord=${xPos}&ycoord=${yPos}`)
+				    .then(response => {return response.blob()})
+				    .then(blob => {
+					const img_url = URL.createObjectURL(blob);
+					document.getElementById("mockPNG").src = img_url;
+				    })
+				    .catch(error => console.error("Error loading mock ID page image:", error));
+			}
+
 			document.addEventListener("DOMContentLoaded", function() {
-				document.getElementById("load-mock-btn").addEventListener("click", function(event){
-
-			event.preventDefault();
-			mock_png()
-			});
+				document.getElementById("xPos").addEventListener("input", debounce(mock_png, 200));
+				document.getElementById("yPos").addEventListener("input", debounce(mock_png, 200));
 		});
-		function mock_png() {
-			var xPos = document.getElementById("xPos").value
-			var yPos = document.getElementById("yPos").value
-			fetch(`{% url 'prep_mock_prename' %}?xcoord=${yPos}&ycoord=${yPos}`)
-			    .then(response => {return response.blob()})
-			    .then(blob => {
-				const img_url = URL.createObjectURL(blob);
-				document.getElementById("mockPNG").src = img_url;
-			    })
-			    .catch(error => console.error("Error loading mock ID page image:", error));
-		}
-
         </script>
     </div>
 {% endblock main_content %}
