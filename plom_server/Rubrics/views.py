@@ -265,7 +265,7 @@ class RubricLandingPageView(ManagerRequiredView):
             r.out_of_str = f"{r.out_of:.3g}"
 
         rubrics_table = RubricTable(rubrics, order_by=request.GET.get("sort"))
-        rubrics_table.paginate(page=int(request.GET.get("page", 1)), per_page=15)
+        rubrics_table.paginate(page=int(request.GET.get("page", 1)), per_page=20)
 
         context.update(
             {
