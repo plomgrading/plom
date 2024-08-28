@@ -8,13 +8,13 @@
 # Copyright (C) 2024 Aden Chan
 
 import random
-from django.urls import reverse
-import django_tables2
 
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+import django_tables2
 
 # from django.db.models import Max
 # from django.db.models.query_utils import Q

@@ -4,11 +4,11 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Colin B. Macdonald
 
+from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from Rubrics.models import Rubric
+from .models import Rubric
 from QuestionTags.serializers import PedagogyTagSerializer
-from django.contrib.auth.models import User
 
 
 class RubricSerializer(serializers.ModelSerializer):
