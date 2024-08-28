@@ -20,7 +20,7 @@ from Mark.services import MarkingTaskService
 from Mark.models import MarkingTask
 from Papers.models.paper_structure import Paper
 from Papers.services import SpecificationService, PaperInfoService
-from Progress.services import ManageScanService
+from Scan.services import ManageScanService
 
 
 class StudentMarkService:

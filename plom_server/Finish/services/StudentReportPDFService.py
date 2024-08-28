@@ -2,14 +2,16 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024 Andrew Rechnitzer
 
 from __future__ import annotations
 
 from datetime import datetime
-from textwrap import dedent
 from typing import Any
 
 from weasyprint import HTML, CSS
+
+from django.template.loader import get_template
 
 from Mark.services import MarkingTaskService
 from Papers.services import SpecificationService
@@ -41,18 +43,6 @@ def pdf_builder(
             is incomplete, because the pandas library uses NaN for
             missing data.
     """
-    if verbose:
-        print("Building report.")
-        print(
-            dedent(
-                """
-                Graphs to generate:
-                    1. Histogram of total marks (show student's standing)
-                    2. Histogram of each question (show student's standing)
-                    Generating."""
-            )
-        )
-
     des = DataExtractionService()
     mts = MarkingTaskService()
     mpls = MatplotlibService()
@@ -75,84 +65,48 @@ def pdf_builder(
     name = student_dict["StudentName"]
     grade = int(student_dict["Total"])
     paper_number = int(student_dict["PaperNumber"])
+    total_stats = des.get_descriptive_statistics_of_total()
 
-    # histogram of grades
-    if verbose:
-        print("Histogram of total marks.")
-    histogram_of_grades = mpls.histogram_of_total_marks(highlighted_sid=sid)
-    qtags_lollypop_graph = None
+    kde_of_total_marks = mpls.kde_plot_of_total_marks(highlighted_sid=sid)
+    pedagogy_tags_graph = None
+    pedagogy_tags_descriptions = QuestionTagService.get_pedagogy_tag_descriptions()
     if sid is not None:
         if QuestionTagService.are_there_question_tag_links():
             # don't generate the lollypop graph is there are no pedagogy tags
-            qtags_lollypop_graph = mpls.lollypop_of_pedagogy_tags(paper_number, sid)
+            pedagogy_tags_graph = mpls.lollypop_of_pedagogy_tags(paper_number, sid)
 
-    # histogram of grades for each question
-    histogram_of_grades_q = []
+    # boxplot of marks for each question
+    boxplot_of_question_marks = []
     marks_for_questions = des._get_marks_for_all_questions()
     for _q, _ in enumerate(marks_for_questions):
         question_idx = _q + 1  # 1-indexing
-        histogram_of_grades_q.append(  # add to the list
+        boxplot_of_question_marks.append(  # add to the list
             # each base64-encoded image
-            mpls.histogram_of_grades_on_question_version(
+            mpls.boxplot_of_grades_on_question_version(
                 question_idx, highlighted_sid=sid
             )
         )
 
     del marks_for_questions, question_idx, _  # clean up
 
-    if verbose:
-        print("\nGenerating HTML.")
+    report_template = get_template("Finish/Reports/report_for_students.html")
+    context = {
+        "longname": longname,
+        "timestamp_str": timestamp_str,
+        "all_marked": all_marked,
+        "name": name,
+        "sid": sid,
+        "grade": grade,
+        "totalMarks": totalMarks,
+        "total_stats": total_stats,
+        "pedagogy_tags_graph": pedagogy_tags_graph,
+        "pedagogy_tags_descriptions": pedagogy_tags_descriptions,
+        "boxplots": boxplot_of_question_marks,
+        "kde_graph": kde_of_total_marks,
+    }
 
-    def _html_add_title(title: str) -> str:
-        """Generate HTML for a title."""
-        out = f"""
-        <br>
-        <p style="break-before: page;"></p>
-        <h3>{title}</h3>
-        """
-        return out
-
-    def _html_for_big_graphs(list_of_graphs: list) -> str:
-        """Generate HTML for a list of large graphs."""
-        out = ""
-        for graph in list_of_graphs:
-            out += f"""
-            <div class="col" style="margin-left:0mm;">
-            <img src="data:image/png;base64,{graph}" width="100%" height="100%" />
-            </div>
-            """
-        return out
-
-    html = f"""
-    <body>
-    <h2>Student report: {longname}</h2>
-    """
-    if not all_marked:
-        html += """
-        <p style="color:red;">WARNING: Not all papers have been marked.</p>
-        """
-
-    html += f"""
-    <p>Date: {timestamp_str}</p>
-    <br>
-    <h3>Overview</h3>
-    <p>Name: {name}</p>
-    <p>Student Number: {sid}</p>
-    <p>Grade: {grade}/{totalMarks}</p>
-    <br>
-    <h3>Histogram of total marks</h3>
-    <img src="data:image/png;base64,{histogram_of_grades}" />
-    """
-    if qtags_lollypop_graph:
-        html += _html_add_title("Lollypop of qtags")
-        html += f"""
-        <img src="data:image/png;base64,{qtags_lollypop_graph}" />
-        """
-
-    html += _html_add_title("Histogram of marks by question")
-    html += _html_for_big_graphs(histogram_of_grades_q)
-
-    pdf_data = HTML(string=html, base_url="").write_pdf(
+    rendered_html = report_template.render(context)
+    pdf_data = HTML(string=rendered_html, base_url="").write_pdf(
         stylesheets=[CSS("./static/css/generate_report.css")]
     )
     filename = f"Student_Report-{shortname}--{name}--{sid}.pdf"

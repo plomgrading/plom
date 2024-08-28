@@ -1,11 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Elisa Pan
 
+from django.contrib.auth.models import User
 from django.shortcuts import render
 
 from Base.base_group_views import ManagerRequiredView
-
+from UserManagement.models import Quota
+from UserManagement.services import QuotaService
 from ..forms import AnnotationFilterForm
 from ..services import UserInfoServices
 
@@ -13,24 +16,19 @@ from ..services import UserInfoServices
 class ProgressUserInfoHome(ManagerRequiredView):
     def get(self, request):
         context = super().build_context()
-        uis = UserInfoServices()
         filter_form = AnnotationFilterForm(request.GET)
 
-        annotations_exist = uis.annotation_exists()
-        annotation_count_dict = uis.get_total_annotations_count_based_on_user()
+        uis = UserInfoServices()
         latest_annotation_human_time = uis.get_time_of_latest_updated_annotation()
         request_time_filter_seconds = request.GET.get("time_filter_seconds")
 
         if filter_form.is_valid():
             time_filter_seconds = filter_form.cleaned_data["time_filter_seconds"]
-
             if not time_filter_seconds:
                 time_filter_seconds = 0
-
             filtered_annotations = uis.filter_annotations_by_time_delta_seconds(
                 time_delta_seconds=int(time_filter_seconds)
             )
-        # not one of the available choices then
         else:
             if request_time_filter_seconds.isnumeric():
                 filtered_annotations = uis.filter_annotations_by_time_delta_seconds(
@@ -51,14 +49,24 @@ class ProgressUserInfoHome(ManagerRequiredView):
             )
         )
 
+        usernames_with_quota = QuotaService.get_list_of_usernames_with_quotas()
+
+        # Fetch user objects
+        users_with_quota_as_objects = User.objects.filter(
+            username__in=usernames_with_quota
+        ).order_by("id")
+
+        default_quota_limit = Quota.default_limit
+
         context.update(
             {
-                "annotations_exist": annotations_exist,
-                "annotation_count_dict": annotation_count_dict,
                 "annotations_grouped_by_user": annotations_grouped_by_user,
                 "annotations_grouped_by_question_ver": annotations_grouped_by_question_ver,
                 "annotation_filter_form": filter_form,
                 "latest_updated_annotation_human_time": latest_annotation_human_time,
+                "default_quota_limit": default_quota_limit,
+                "users_with_quota_as_objects": users_with_quota_as_objects,
+                "users_progress": UserInfoServices.get_all_user_progress(),
             }
         )
         return render(request, "Progress/User_Info/user_info_home.html", context)

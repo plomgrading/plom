@@ -24,7 +24,7 @@ from django.db.models import Q
 
 from .soln_source import SolnSourceService
 from .reassemble_service import ReassembleService
-from Progress.services import ManageScanService
+from Scan.services import ManageScanService
 
 from Base.models import HueyTaskTracker
 from Identify.models import PaperIDTask

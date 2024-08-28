@@ -24,8 +24,7 @@ from django.conf import settings
 
 from Base.base_group_views import ScannerRequiredView
 from Preparation.services import PapersPrinted
-from Progress.services import ManageScanService
-from ..services import ScanService
+from ..services import ScanService, ManageScanService
 from ..forms import BundleUploadForm
 
 from plom.misc_utils import format_int_list_with_runs

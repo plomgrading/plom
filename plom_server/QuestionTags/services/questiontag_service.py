@@ -181,3 +181,8 @@ class QuestionTagService:
             tag_to_question_list.setdefault(qtl.tag.tag_name, [])
             tag_to_question_list[qtl.tag.tag_name].append(qtl.question.question_index)
         return tag_to_question_list
+
+    @staticmethod
+    def get_pedagogy_tag_descriptions() -> Dict[str, str]:
+        """Return a dict of {tag_name: tag_description}."""
+        return {ptag.tag_name: ptag.text for ptag in PedagogyTag.objects.all()}

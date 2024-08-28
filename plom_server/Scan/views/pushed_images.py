@@ -7,20 +7,25 @@ from django.http import FileResponse, HttpRequest, HttpResponse, Http404
 from django_htmx.http import HttpResponseClientRefresh
 
 from Base.base_group_views import ScannerLeadMarkerOrManagerView
-from Progress.services import ManageScanService, ManageDiscardService
-from ..services import hard_rotate_image_from_file_by_exif_and_angle
+from ..services import (
+    hard_rotate_image_from_file_by_exif_and_angle,
+    ManageScanService,
+    ManageDiscardService,
+)
 
 
 class PushedImageView(ScannerLeadMarkerOrManagerView):
-    """Return a pushed image given by its pk."""
+    """Get or delete a pushed image by specifying its primary key."""
 
     def get(self, request: HttpRequest, *, img_pk: int) -> HttpResponse:
+        """Return a pushed image by its primary."""
         img_obj = ManageScanService().get_pushed_image(img_pk)
         if img_obj is None:
             raise Http404(f"Cannot find pushed image with pk {img_pk}.")
         return FileResponse(img_obj.image_file)
 
     def delete(self, request: HttpRequest, *, img_pk: int) -> HttpResponse:
+        """Discard a pushed image by its primary key."""
         mds = ManageDiscardService()
         mds.discard_pushed_image_from_pk(request.user, img_pk)
         return HttpResponseClientRefresh()
@@ -59,4 +64,4 @@ class PushedImageWrapView(ScannerLeadMarkerOrManagerView):
             "page_info": pushed_img_page_info,
         }
 
-        return render(request, "Progress/fragments/pushed_image_wrapper.html", context)
+        return render(request, "Scan/fragments/pushed_image_wrapper.html", context)

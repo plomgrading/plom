@@ -27,9 +27,6 @@ from .views import (
     GetBundleThumbnailView,
     GetStagedBundleFragmentView,
     PushAllPageImages,
-    ScannerSummaryView,
-    ScannerPushedImageView,
-    ScannerPushedImageWrapView,
     DiscardImageView,
     DiscardAllUnknownsHTMXView,
     ExtraliseImageView,
@@ -123,16 +120,6 @@ urlpatterns = [
         "push/<int:bundle_id>/all/", PushAllPageImages.as_view(), name="scan_push_all"
     ),
     path(
-        "summary/",
-        ScannerSummaryView.as_view(),
-        name="scan_summary",
-    ),
-    path(
-        "summary/pushed_img/<int:img_pk>",
-        ScannerPushedImageView.as_view(),
-        name="scan_pushed_img",
-    ),
-    path(
         "summary/rotated_pushed_img/<int:img_pk>",
         GetRotatedPushedImageView.as_view(),
         name="scan_rotated_pushed_img",
@@ -186,11 +173,5 @@ urlpatterns = [
         "bundle_lock/<int:bundle_id>/",
         BundleLockView.as_view(),
         name="scan_bundle_lock",
-    ),
-    # Code below IS NOT DEAD - is used in summary_of-pushed.
-    path(
-        "summary/pushed_img_wrap/<int:img_pk>",
-        ScannerPushedImageWrapView.as_view(),
-        name="scan_pushed_img_wrap",
     ),
 ]

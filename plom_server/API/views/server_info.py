@@ -119,10 +119,9 @@ class ExamInfo(APIView):
     """Get the assessment information in an extensible format.
 
     Returns:
-        (200): a dict of information about the exam/assessment as
-            key-value pairs.  ``feedback_rules`` might be an empty
-            dict in which case clients are supposed to have their
-            own static copy.
+        (200): a dict of information about the assessment and
+        marking settings as key-value pairs.  Currently includes
+        ``current_largest_paper_num`` and ``feedback_rules``.
     """
 
     def get(self, request: Request) -> Response:
@@ -132,7 +131,7 @@ class ExamInfo(APIView):
         info: dict[str, Any] = {
             # TODO: hardcoded, Issue #2938
             "current_largest_paper_num": 9999,
-            "feedback_rules": SettingsModel.load().feedback_rules,
+            "feedback_rules": SettingsModel.get_feedback_rules(),
         }
         return Response(info)
 
@@ -164,6 +163,7 @@ class CloseUser(APIView):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
+# POST: /get_token/
 class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
     """Overrides the DRF auth-token creator so that it updates the user last_login field, and does an API version check."""
 
@@ -194,17 +194,17 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
                 "Client did not report their version", status.HTTP_400_BAD_REQUEST
             )
 
-        # should the serializer should be doing this?
+        # should the serializer be doing this?
         if not client_api.isdigit():
             return _error_response(
                 f'Client sent non-integer API version: "{client_api}"',
                 status.HTTP_400_BAD_REQUEST,
             )
 
-        # TODO: use >= and check client side, Issue #3247
-        if not int(client_api) == int(Plom_API_Version):
+        # note if client is more recent then their responsibility to check compat
+        if int(client_api) < int(Plom_API_Version):
             return _error_response(
-                f"Client API version {client_api} is not supported by this server "
+                f"Client API version {client_api} is too old for this server "
                 f"(server API version {Plom_API_Version})",
                 status.HTTP_400_BAD_REQUEST,
             )

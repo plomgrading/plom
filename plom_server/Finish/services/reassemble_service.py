@@ -30,7 +30,7 @@ from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
 from Papers.models import Paper, IDPage, DNMPage
 from Papers.services import SpecificationService
-from Progress.services import ManageScanService
+from Scan.services import ManageScanService
 
 from ..models import ReassemblePaperChore
 from Base.models import HueyTaskTracker

@@ -3,6 +3,8 @@
 # Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2024 Bryan Tanady
+
 
 from __future__ import annotations
 
@@ -19,10 +21,12 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomTaskDeletedError,
     PlomTaskChangedError,
+    PlomQuotaLimitExceeded,
 )
 
 from Mark.services import QuestionMarkingService, MarkingTaskService
 from Mark.services import mark_task, page_data
+from Progress.services import UserInfoServices
 from .utils import _error_response
 
 
@@ -58,7 +62,7 @@ class QuestionMarkingViewSet(ViewSet):
             min_paper_num = int_or_None(data.get("min_paper_num"))
             max_paper_num = int_or_None(data.get("max_paper_num"))
         except ValueError as e:
-            return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
+            return _error_response(e, status.HTTP_423_LOCKED)
 
         _tag: str | None = data.get("tags")
         if _tag:
@@ -198,6 +202,8 @@ class QuestionMarkingViewSet(ViewSet):
             return _error_response(e, status.HTTP_410_GONE)
         except PlomConflict as e:
             return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
+        except PlomQuotaLimitExceeded as e:
+            return _error_response(e, status.HTTP_423_LOCKED)
 
         def int_or_None(x):
             return None if x is None else int(x)
@@ -205,7 +211,9 @@ class QuestionMarkingViewSet(ViewSet):
         question = int_or_None(data.get("pg"))
         version = int_or_None(data.get("ver"))
 
-        return Response(
-            mts.get_marking_progress(question=question, version=version),
-            status=status.HTTP_200_OK,
-        )
+        username = request.user.username
+        progress = UserInfoServices.get_user_progress(username=username)
+        n, m = mts.get_marking_progress(question, version)
+        progress["total_tasks_marked"] = n
+        progress["total_tasks"] = m
+        return Response(progress, status=status.HTTP_200_OK)

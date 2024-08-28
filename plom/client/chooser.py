@@ -18,7 +18,6 @@ __license__ = "AGPL-3.0-or-later"
 
 from pathlib import Path
 import logging
-import re
 import shutil
 import sys
 import tempfile
@@ -414,45 +413,39 @@ class Chooser(QDialog):
             ).exec()
             return False
 
-        try:
-            (srv_ver,) = re.findall(r"Plom server version (\S+)", server_ver_str)
-        except ValueError:
-            self.ui.infoLabel.setText(
-                "Unexpected response: " + server_ver_str.strip()[:15]
-            )
-            WarnMsg(
-                self,
-                "Unexpected server response on version query.",
-                details=server_ver_str.strip(),
-            ).exec()
-            msgr.stop()
-            return False
         self.ui.infoLabel.setText(server_ver_str)
-
         if _ssl_excused:
             s = "\nCaution: SSL exception granted."
             self.ui.infoLabel.setText(self.ui.infoLabel.text() + s)
 
-        # in theory we could support older servers by scrapping the API version from above
+        # old servers (<0.14.0) don't have this API and will fail
         info = msgr.get_server_info()
         if "Legacy" in info["product_string"]:
-            msgr.enable_legacy_server_support()
             s = "\nUsing legacy messenger"
             self.ui.infoLabel.setText(self.ui.infoLabel.text() + s)
-        else:
-            msgr.disable_legacy_server_support()
 
-        if Version(__version__) < Version(srv_ver):
+        try:
+            msgr._set_server_API_version(info["API_version"])
+        except PlomAPIException as e:
+            WarnMsg(
+                self,
+                f"Your client version {__version__} cannot connect to "
+                f"unsupported server {info['version']}.",
+                info=f"{e}",
+            ).exec()
+            return False
+
+        if Version(__version__) < Version(info["version"]):
             s = "\nWARNING: old client!"
             self.ui.infoLabel.setText(self.ui.infoLabel.text() + s)
             msg = WarnMsg(
                 self,
-                f"Your client version {__version__} is older than the server {srv_ver}:"
-                " you may want to consider upgrading.",
+                f"Your client version {__version__} is older than the "
+                f"server {info['version']}: you may want to consider upgrading.",
                 details=(
-                    f"You have Plom Client {__version__} with API {self.APIVersion}"
-                    f"\nServer version string: “{server_ver_str}”\n"
-                    f"Regex-extracted server version: {srv_ver}."
+                    f"You have Plom Client {__version__} with API {self.APIVersion}\n"
+                    f"Server: {info['product_string']}\n"
+                    f"Server version: {info['version']}"
                 ),
             )
             if not self._old_client_note_seen:
@@ -663,7 +656,7 @@ class Chooser(QDialog):
         self.ui.mportSB.setEnabled(False)
         self.ui.loginButton.setEnabled(False)
 
-        if not self.messenger.webplom and self.messenger.username == "manager":
+        if self.messenger.is_legacy_server() and self.messenger.username == "manager":
             self.ui.manageButton.setVisible(True)
 
     def _set_restrictions_from_spec(self, spec: dict[str, Any]) -> None:

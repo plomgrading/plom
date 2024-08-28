@@ -133,9 +133,10 @@ copyright_year:
     - echo "Considering the following commits to this branch (since main):"
     - git shortlog origin/main..${CI_COMMIT_BRANCH} --
     - echo "Those commits touch the following files:"
+    # git show --pretty="" --name-only origin/main..${CI_COMMIT_BRANCH} -- | uniq -u
     # TODO: tried ${CI_MERGE_REQUEST_TARGET_BRANCH_NAME} instead of main?
-    - git show --pretty="" --name-only origin/main..${CI_COMMIT_BRANCH} -- | uniq -u
-    - ./contrib/is_copyright_uptodate.py `git show --pretty="" --name-only origin/main..$CI_COMMIT_BRANCH --`
+    - git diff --name-only origin/main..${CI_COMMIT_BRANCH} --
+    - ./contrib/is_copyright_uptodate.py `git diff --name-only origin/main..$CI_COMMIT_BRANCH --`
     - echo "Note that there are some files that do not have/need copyright headers"
   allow_failure: true
 
@@ -413,7 +414,7 @@ count-no-docstring:
     - ruff check --select $EXCEPTIONS --statistics --exit-zero
     - echo "Total $HOWMANY things without docstrings, please don't increase it"
     # Dear hackers: please try to decrease this number
-    - bash -c "[[ $HOWMANY -le 1556 ]]"
+    - bash -c "[[ $HOWMANY -le 1543 ]]"
   allow_failure: true
 
 
@@ -427,7 +428,7 @@ no-question-numbers:
     # For now, just ensure the total does not increase
     - echo $HOW_MANY
     # Future hackers: consider trying to decrease this number
-    - bash -c "[[ $HOW_MANY -le 35 ]]"
+    - bash -c "[[ $HOW_MANY -le 31 ]]"
   allow_failure: true
 
 
