@@ -152,13 +152,16 @@ class RubricService:
             pass
 
         # Now do actual stuff
-        incoming_data["display_delta"] = self._generate_display_delta(
-            # if value is missing, can only be neutral
-            # missing value will be prohibited in a future MR
-            incoming_data.get("value", 0),
-            incoming_data["kind"],
-            incoming_data.get("out_of", None),
-        )
+
+        if incoming_data.get("display_delta", None) is None:
+            # if we don't have a display_delta, we'll generate a default one
+            incoming_data["display_delta"] = self._generate_display_delta(
+                # if value is missing, can only be neutral
+                # missing value will be prohibited in a future MR
+                incoming_data.get("value", 0),
+                incoming_data["kind"],
+                incoming_data.get("out_of", None),
+            )
 
         incoming_data["latest"] = True
         serializer = RubricSerializer(data=incoming_data)
