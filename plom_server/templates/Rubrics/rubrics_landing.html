@@ -79,7 +79,7 @@
             <button type="submit"
                     class="btn btn-primary float-end"
                     data-bs-toggle="modal"
-                    data-bs-target="#createModal"
+                    data-bs-target="#editModal"
                     onclick="populateFields()">
                 <i class="bi bi-plus-circle-fill"></i> Create Rubric
             </button>
@@ -87,5 +87,5 @@
     </div>
     {% comment %} Table {% endcomment %}
     <div class="mt-2">{% render_table rubrics %}</div>
-    {% include "./modal_forms2.html" %}
+    {% include "./modal_forms.html" %}
 {% endblock main_content %}

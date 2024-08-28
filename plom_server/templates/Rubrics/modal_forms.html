@@ -7,7 +7,7 @@
     Copyright (C) 2024 Aden Chan
     Copyright (C) 2024 Aidan Murphy
 -->
-<!-- Edit Modal-->
+<!-- Create/Edit Modal-->
 <div class="modal fade"
      id="editModal"
      tabindex="-1"
@@ -16,13 +16,21 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editModalLabel">Editing Rubric (caution: beta!)</h5>
+                <h5 class="modal-title" id="editModalLabel">
+                    {% if rubric_key %}
+                        Editing Rubric (caution: beta!)
+                    {% else %}
+                        Creating Rubric (caution: beta!)
+                    {% endif %}
+                </h5>
                 <button type="button"
                         class="btn-close"
                         data-bs-dismiss="modal"
                         aria-label="Close"></button>
             </div>
-            <form action="{% url 'rubric_edit' rubric_key %}" method="post">
+            <!-- the action of the form depends on whether we are editing or creating -->
+            <form action="{% if rubric_key %} {% url 'rubric_edit' rubric_key %} {% else %} {% url 'rubric_create' %} {% endif %}"
+                  method="post">
                 {% csrf_token %}
                 <div class="modal-body">
                     {{ edit_form.non_field_errors }}
@@ -106,7 +114,9 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <input type="submit" class="btn btn-primary" value="Save">
+                    <input type="submit"
+                           class="btn btn-primary"
+                           value="{% if rubric_key %} Save {% else %} Create {% endif %}">
                 </div>
             </form>
         </div>
