@@ -235,7 +235,7 @@ class RubricLandingPageView(ManagerRequiredView):
         """Get the page the landing page for displaying and analyzing rubrics."""
         template_name = "Rubrics/rubrics_landing.html"
         rubric_filter_form = RubricFilterForm
-        rubric_create_form = RubricItemForm
+        rubric_form = RubricItemForm
         questions = SpecificationService.get_questions_max_marks()
 
         context = self.build_context()
@@ -271,7 +271,7 @@ class RubricLandingPageView(ManagerRequiredView):
             {
                 "rubrics": rubrics_table,
                 "rubric_filter_form": filter_form,
-                "rubric_create_form": rubric_create_form,
+                "edit_form": rubric_form,
                 "questions": json.dumps(questions),
             }
         )
@@ -296,7 +296,7 @@ class RubricItemView(UpdateView, ManagerRequiredView):
         rubric = rs.get_rubric_by_key(rubric_key)
         revisions = rs.get_past_revisions_by_key(rubric_key)
         marking_tasks = rs.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
-        form = RubricItemForm(instance=rubric)
+        rubric_form = RubricItemForm(instance=rubric)
         for _, task in enumerate(marking_tasks):
             task.latest_annotation.score_str = pprint_score(
                 task.latest_annotation.score
@@ -311,7 +311,7 @@ class RubricItemView(UpdateView, ManagerRequiredView):
                 "marking_tasks": marking_tasks,
                 "latest_rubric_as_html": rubric_as_html,
                 "diff_form": RubricDiffForm(key=rubric_key),
-                "form": form,
+                "edit_form": rubric_form,
                 "questions": json.dumps(questions),
             }
         )

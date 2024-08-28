@@ -4,10 +4,11 @@
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023 Divy Patel
     Copyright (C) 2023-2024 Colin B. Macdonald
-    Copyright (C) 2023-2024 Aden Chan
+    Copyright (C) 2024 Aden Chan
     Copyright (C) 2024 Aidan Murphy
 -->
 <!-- Create Rubric Modal -->
+<!-- TODO: almost identical to the one in modal_forms.html: can we dedupe? -->
 <div class="modal fade"
      id="createModal"
      tabindex="-1"
@@ -25,43 +26,43 @@
             <form action="{% url 'rubric_create' %}" method="post">
                 {% csrf_token %}
                 <div class="modal-body">
-                    {{ rubric_create_form.non_field_errors }}
+                    {{ edit_form.non_field_errors }}
                     <div class="row form-group">
                         <div class="col">
-                            {{ rubric_create_form.question.errors }}
-                            <label for="{{ rubric_create_form.question.id_for_label }}">Question:</label>
-                            {{ rubric_create_form.question }}
+                            {{ edit_form.question.errors }}
+                            <label for="{{ edit_form.question.id_for_label }}">Question:</label>
+                            {{ edit_form.question }}
                         </div>
                     </div>
                     <div class="row form-group">
                         <div class="col">
-                            {{ rubric_create_form.text.errors }}
-                            <label for="{{ rubric_create_form.text.id_for_label }}">Rubric Text:</label>
-                            {{ rubric_create_form.text }}
+                            {{ edit_form.text.errors }}
+                            <label for="{{ edit_form.text.id_for_label }}">Rubric Text:</label>
+                            {{ edit_form.text }}
                         </div>
                     </div>
                     <div class="row form-group">
                         <div class="col">
-                            {{ rubric_create_form.kind.errors }}
-                            <label for="{{ rubric_create_form.kind.id_for_label }}">Rubric Kind:</label>
-                            {{ rubric_create_form.kind }}
+                            {{ edit_form.kind.errors }}
+                            <label for="{{ edit_form.kind.id_for_label }}">Rubric Kind:</label>
+                            {{ edit_form.kind }}
                         </div>
                     </div>
                     <div class="row mt-2">
-                        {{ rubric_create_form.value.errors }}
+                        {{ edit_form.value.errors }}
                         <label class="col-sm-2 col-form-label"
-                               for="{{ rubric_create_form.value.id_for_label }}">Value:</label>
-                        <div class="col">{{ rubric_create_form.value }}</div>
+                               for="{{ edit_form.value.id_for_label }}">Value:</label>
+                        <div class="col">{{ edit_form.value }}</div>
                         <label class="col-sm-2 col-form-label"
-                               for="{{ rubric_create_form.out_of.id_for_label }}"
+                               for="{{ edit_form.out_of.id_for_label }}"
                                id="id_out_of_label">out of</label>
-                        <div class="col">{{ rubric_create_form.out_of }}</div>
+                        <div class="col">{{ edit_form.out_of }}</div>
                     </div>
                     <div class="row form-group">
                         <div class="col">
-                            {{ rubric_create_form.meta.errors }}
-                            <label for="{{ rubric_create_form.meta.id_for_label }}">Rubric Meta (not shown to students):</label>
-                            {{ rubric_create_form.meta }}
+                            {{ edit_form.meta.errors }}
+                            <label for="{{ edit_form.meta.id_for_label }}">Rubric Meta (not shown to students):</label>
+                            {{ edit_form.meta }}
                         </div>
                     </div>
                     <div class="accordion mt-2" id="accordion">
@@ -80,23 +81,23 @@
                                 <div class="accordion-body">
                                     <div class="row form-group">
                                         <div class="col">
-                                            {{ rubric_create_form.versions.errors }}
-                                            <label for="{{ rubric_create_form.meta.id_for_label }}">Versions:</label>
-                                            {{ rubric_create_form.versions }}
+                                            {{ edit_form.versions.errors }}
+                                            <label for="{{ edit_form.meta.id_for_label }}">Versions:</label>
+                                            {{ edit_form.versions }}
                                         </div>
                                     </div>
                                     <div class="row form-group">
                                         <div class="col">
-                                            {{ rubric_create_form.parameters.errors }}
-                                            <label for="{{ rubric_create_form.parameters.id_for_label }}">Parameters:</label>
-                                            {{ rubric_create_form.parameters }}
+                                            {{ edit_form.parameters.errors }}
+                                            <label for="{{ edit_form.parameters.id_for_label }}">Parameters:</label>
+                                            {{ edit_form.parameters }}
                                         </div>
                                     </div>
                                     <div class="row form-group">
                                         <div class="col">
-                                            {{ rubric_create_form.pedagogy_tags.errors }}
-                                            <label for="{{ rubric_create_form.pedagogy_tags.id_for_label }}">Tags:</label>
-                                            {{ rubric_create_form.pedagogy_tags }}
+                                            {{ edit_form.pedagogy_tags.errors }}
+                                            <label for="{{ edit_form.pedagogy_tags.id_for_label }}">Tags:</label>
+                                            {{ edit_form.pedagogy_tags }}
                                         </div>
                                     </div>
                                 </div>
