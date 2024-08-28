@@ -195,6 +195,7 @@ class RubricPane(models.Model):
     data = models.JSONField(null=False, default=dict)
 
 
+# TODO: why does this live here in models?  It hopefully isn't a DB table
 class RubricTable(django_tables2.Table):
     """Table class for displaying rubrics.
 
