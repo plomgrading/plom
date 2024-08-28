@@ -1,0 +1,111 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Divy Patel
+    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2024 Aidan Murphy
+    Copyright (C) 2024 Aden Chan
+-->
+<!-- Edit Modal-->
+<div class="modal fade"
+     id="editModal"
+     tabindex="-1"
+     aria-labelledby="editModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">Editing Rubric (caution: beta!)</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <form action="{% url 'rubric_edit' rubric_key %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {{ form.non_field_errors }}
+                    <div class="row form-group">
+                        <div class="col">
+                            {{ form.question.errors }}
+                            <label for="{{ form.question.id_for_label }}">Question:</label>
+                            {{ form.question }}
+                        </div>
+                    </div>
+                    <div class="row form-group">
+                        <div class="col">
+                            {{ form.text.errors }}
+                            <label for="{{ form.text.id_for_label }}">Rubric Text:</label>
+                            {{ form.text }}
+                        </div>
+                    </div>
+                    <div class="row form-group">
+                        <div class="col">
+                            {{ form.kind.errors }}
+                            <label for="{{ form.kind.id_for_label }}">Rubric Kind:</label>
+                            {{ form.kind }}
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        {{ form.value.errors }}
+                        <label class="col-sm-2 col-form-label" for="{{ form.value.id_for_label }}">Value:</label>
+                        <div class="col">{{ form.value }}</div>
+                        <label class="col-sm-2 col-form-label"
+                               for="{{ form.out_of.id_for_label }}"
+                               id="id_out_of_label">out of</label>
+                        <div class="col">{{ form.out_of }}</div>
+                    </div>
+                    <div class="row form-group">
+                        <div class="col">
+                            {{ form.meta.errors }}
+                            <label for="{{ form.meta.id_for_label }}">Rubric Meta (not shown to students):</label>
+                            {{ form.meta }}
+                        </div>
+                    </div>
+                    <div class="accordion mt-2" id="accordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOne">
+                                <button class="accordion-button collapsed"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#collapseOne"
+                                        aria-controls="collapseOne">Advanced Settings</button>
+                            </h2>
+                            <div id="collapseOne"
+                                 class="accordion-collapse collapse"
+                                 aria-labelledby="headingOne"
+                                 data-bs-parent="#accordion">
+                                <div class="accordion-body">
+                                    <div class="row form-group">
+                                        <div class="col">
+                                            {{ form.versions.errors }}
+                                            <label for="{{ form.meta.id_for_label }}">Versions:</label>
+                                            {{ form.versions }}
+                                        </div>
+                                    </div>
+                                    <div class="row form-group">
+                                        <div class="col">
+                                            {{ form.parameters.errors }}
+                                            <label for="{{ form.parameters.id_for_label }}">Parameters:</label>
+                                            {{ form.parameters }}
+                                        </div>
+                                    </div>
+                                    <div class="row form-group">
+                                        <div class="col">
+                                            {{ form.pedagogy_tags.errors }}
+                                            <label for="{{ form.pedagogy_tags.id_for_label }}">Tags:</label>
+                                            {{ form.pedagogy_tags }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <input type="submit" class="btn btn-primary" value="Save">
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
