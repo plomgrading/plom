@@ -14,6 +14,8 @@ from django.utils import timezone
 
 import logging
 
+from plom.feedback_rules import feedback_rules as static_feedback_rules
+
 # TODO: what is this?  It is happening at import-time... scary
 # It comes from Django-Huey project and allows you to have multiple
 # task queues
@@ -279,6 +281,13 @@ class SettingsModel(SingletonABCModel):
             },
         )
         return obj
+
+    @classmethod
+    def get_feedback_rules(cls):
+        rules = cls.load().feedback_rules
+        if not rules:
+            return static_feedback_rules
+        return rules
 
 
 # ---------------------------------

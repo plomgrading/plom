@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Elisa Pan
 
 from django.urls import path
 
@@ -28,4 +29,24 @@ urlpatterns = [
         name="toggleLeadMarker",
     ),
     path("explosion", views.HTMXExplodeView.as_view(), name="htmx_explode"),
+    path(
+        "set_quota/<str:username>/",
+        views.SetQuotaView.as_view(),
+        name="set_quota",
+    ),
+    path(
+        "unset_quota/<str:username>/",
+        views.UnsetQuotaView.as_view(),
+        name="unset_quota",
+    ),
+    path(
+        "bulk_set_quota/",
+        views.BulkSetQuotaView.as_view(),
+        name="bulk_set_quota",
+    ),
+    path(
+        "bulk_unset_quota/",
+        views.BulkUnsetQuotaView.as_view(),
+        name="bulk_unset_quota",
+    ),
 ]

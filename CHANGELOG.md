@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Instructors can enable 1/2 mark rubrics in the Rubrics screen.
+* Instructors can set a quota, limiting the number of papers that can be marked by certain markers, for use in marker training, quality control, or team-creation of a consistent set of rubrics.
 
 ### Changed
 * Server can now be launched via script in `plom_server/Launcher/launch_scripts/launch_plom_server.py`

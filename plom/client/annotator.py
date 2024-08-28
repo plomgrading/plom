@@ -1064,6 +1064,7 @@ class Annotator(QWidget):
             InfoMsg(self, "No more to grade?").exec()
             # Not really safe to give it back? (at least we did the view...)
             return
+
         log.debug("saveAndGetNext: new stuff is {}".format(stuff))
         self.load_new_question(*stuff)
 

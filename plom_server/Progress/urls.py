@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Colin B. Macdonald
 
 from django.urls import path
@@ -27,6 +28,13 @@ from .views import (
     IDImageView,
     ClearID,
     IDImageWrapView,
+)
+from UserManagement.views import (
+    SetQuotaView,
+    UnsetQuotaView,
+    EditQuotaLimitView,
+    ModifyQuotaView,
+    ModifyDefaultLimitView,
 )
 
 urlpatterns = [
@@ -134,5 +142,26 @@ urlpatterns = [
         "mark/reassign_task/<int:task_pk>",
         MarkingTaskReassignView.as_view(),
         name="reassign_marking_task",
+    ),
+    path(
+        "set_quota/<str:username>/",
+        SetQuotaView.as_view(),
+        name="set_quota",
+    ),
+    path(
+        "unset_quota/<str:username>/",
+        UnsetQuotaView.as_view(),
+        name="unset_quota",
+    ),
+    path(
+        "edit_quota_limit/",
+        EditQuotaLimitView.as_view(),
+        name="edit_quota_limit",
+    ),
+    path("modify_quota/", ModifyQuotaView.as_view(), name="modify_quota"),
+    path(
+        "modify_default_limit/",
+        ModifyDefaultLimitView.as_view(),
+        name="modify_default_limit",
     ),
 ]

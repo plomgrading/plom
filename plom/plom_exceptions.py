@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2022 Michael Deakin
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Bryan Tanady
 
 
 """Exceptions for the Plom software.
@@ -40,6 +41,10 @@ class PlomSSLError(PlomBenignException):
 
 
 class PlomConnectionError(PlomBenignException):
+    pass
+
+
+class PlomQuotaLimitExceeded(PlomBenignException):
     pass
 
 

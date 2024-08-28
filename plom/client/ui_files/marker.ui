@@ -298,6 +298,13 @@
            </widget>
           </item>
           <item>
+           <widget class="QToolButton" name="explainQuotaButton">
+            <property name="text">
+             <string>?</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QProgressBar" name="mProgressBar">
             <property name="value">
              <number>1</number>

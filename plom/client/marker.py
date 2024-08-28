@@ -85,6 +85,7 @@ from .viewers import QuestionViewDialog, SelectPaperQuestion
 from .tagging import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
 from .tagging_range_dialog import TaggingAndRangeOptions
+from .quota_dialogs import ExplainQuotaDialog, ReachedQuotaLimitDialog
 from .task_model import MarkerExamModel, ProxyModel
 from .uploader import BackgroundUploader, synchronous_upload
 
@@ -145,8 +146,6 @@ class MarkerClient(QWidget):
         uic.loadUi(resources.files(plom.client.ui_files) / "marker.ui", self)
         # TODO: temporary workaround
         self.ui = self
-        # Keep the original format around in case we need to change it
-        self._cachedProgressFormatStr = self.ui.mProgressBar.format()
 
         if not tmpdir:
             # TODO: in this case, *we* should be responsible for cleaning up
@@ -184,6 +183,7 @@ class MarkerClient(QWidget):
         self.version = None
         self.exam_spec = None
         self.max_papernum = None
+        self._user_reached_quota_limit = False
 
         self.msgr = None
         # history contains all the tgv in order of being marked except the current one.
@@ -229,7 +229,7 @@ class MarkerClient(QWidget):
 
         self.UIInitialization()
         self.applyLastTimeOptions(lastTime)
-        self.connectGuiButtons()
+        self._connectGuiButtons()
 
         # self.maxMark = self.exam_spec["question"][str(question_idx)]["mark"]
         try:
@@ -267,12 +267,7 @@ class MarkerClient(QWidget):
         if self.allowBackgroundOps:
             self.backgroundUploader = BackgroundUploader(self.msgr)
             self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
-            self.backgroundUploader.uploadKnownFail.connect(
-                self.backgroundUploadFailedServerChanged
-            )
-            self.backgroundUploader.uploadUnknownFail.connect(
-                self.backgroundUploadFailed
-            )
+            self.backgroundUploader.uploadFail.connect(self.backgroundUploadFailed)
             self.backgroundUploader.queue_status_changed.connect(
                 self.update_technical_stats_upload
             )
@@ -351,7 +346,7 @@ class MarkerClient(QWidget):
         # self.force_update_technical_stats()
         self.update_technical_stats_upload(0, 0, 0, 0)
 
-    def connectGuiButtons(self) -> None:
+    def _connectGuiButtons(self) -> None:
         """Connect gui buttons to appropriate functions.
 
         Notes:
@@ -385,6 +380,7 @@ class MarkerClient(QWidget):
         self.ui.viewButton.clicked.connect(self.choose_and_view_other)
         self.ui.technicalButton.clicked.connect(self.show_hide_technical)
         self.ui.failmodeCB.stateChanged.connect(self.toggle_fail_mode)
+        self.ui.explainQuotaButton.clicked.connect(ExplainQuotaDialog(self).exec)
 
     def change_tag_range_options(self):
         all_tags = [tag for key, tag in self.msgr.get_all_tags()]
@@ -659,26 +655,32 @@ class MarkerClient(QWidget):
         pr = prIndex[0].row()
         self._updateImage(pr)
 
-    def updateProgress(self, val=None, maxm=None) -> None:
-        """Updates the progress bar.
+    def updateProgress(self, *, info: dict[str, Any] | None = None) -> None:
+        """Updates the progress bar and related display of progress information.
 
-        Args:
-            val (int): value for the progress bar
-            maxm (int): maximum for the progress bar.
+        Keyword Args:
+            info: key-value pairs with information about progress overall,
+                and for this user, including information about quota.
+                If omitted, we'll contact the server synchronously to get
+                this info.
 
         Returns:
             None
+
+        May open dialogs in some circumstances.
         """
-        if not val and not maxm:
+        if info is None:
             # ask server for progress update
             try:
-                val, maxm = self.msgr.MprogressCount(self.question_idx, self.version)
+                info = self.msgr.get_marking_progress(self.question_idx, self.version)
             except PlomRangeException as e:
                 ErrorMsg(self, str(e)).exec()
                 return
-        if maxm == 0:
-            val, maxm = (0, 1)  # avoid (0, 0) indeterminate animation
-            self.ui.mProgressBar.setFormat("No papers to mark")
+
+        if info["total_tasks"] == 0:
+            self.ui.labelProgress.setText("Progress: no papers to mark")
+            self.ui.mProgressBar.setVisible(False)
+            self.ui.explainQuotaButton.setVisible(False)
             try:
                 qlabel = get_question_label(self.exam_spec, self.question_idx)
                 verbose_qlabel = verbose_question_label(
@@ -689,19 +691,36 @@ class MarkerClient(QWidget):
                 verbose_qlabel = qlabel
             msg = f"<p>Currently there is nothing to mark for version {self.version}"
             msg += f" of {verbose_qlabel}.</p>"
-            info = f"""<p>There are several ways this can happen:</p>
+            infostr = f"""<p>There are several ways this can happen:</p>
                 <ul>
                 <li>Perhaps the relevant papers have not yet been scanned.</li>
                 <li>This assessment may not have instances of version
                     {self.version} of {qlabel}.</li>
                 </ul>
             """
-            InfoMsg(self, msg, info=info, info_pre=False).exec()
-        else:
-            # Neither is quite right, instead, we cache on init
-            self.ui.mProgressBar.setFormat(self._cachedProgressFormatStr)
-        self.ui.mProgressBar.setMaximum(maxm)
-        self.ui.mProgressBar.setValue(val)
+            InfoMsg(self, msg, info=infostr, info_pre=False).exec()
+            return
+
+        if not self.ui.mProgressBar.isVisible():
+            self.ui.mProgressBar.setVisible(True)
+
+        self.ui.explainQuotaButton.setVisible(False)
+        if info["user_quota_limit"] is not None:
+            s = f'Marking limit: {info["user_quota_limit"]} papers'
+            self.ui.labelProgress.setText(s)
+            self.ui.explainQuotaButton.setVisible(True)
+            self.ui.mProgressBar.setMaximum(info["user_quota_limit"])
+            self.ui.mProgressBar.setValue(info["user_tasks_marked"])
+
+            self._user_reached_quota_limit = False
+            if info["user_tasks_marked"] >= info["user_quota_limit"]:
+                self._user_reached_quota_limit = True
+                ReachedQuotaLimitDialog(self, limit=info["user_quota_limit"]).exec()
+            return
+
+        self.ui.labelProgress.setText("Progress:")
+        self.ui.mProgressBar.setMaximum(info["total_tasks_marked"])
+        self.ui.mProgressBar.setValue(info["total_tasks"])
 
     def claim_task_interactive(self) -> None:
         """Ask user for paper number and then ask server for that paper.
@@ -873,7 +892,7 @@ class MarkerClient(QWidget):
         self._updateCurrentlySelectedRow()
 
     def background_download_failed(self, img_id):
-        """Callback when a nackground download has failed."""
+        """Callback when a background download has failed."""
         self.ui.labelTech2.setText(f"<p>last msg: failed download img id={img_id}</p>")
         log.info(f"failed download img id={img_id}")
         self.ui.labelTech2.setToolTip("")
@@ -1038,9 +1057,6 @@ class MarkerClient(QWidget):
         self.annotatorSettings["feedback_rules"] = info.get(
             "feedback_rules", static_feedback_rules_data
         )
-        # server says local defaults should be used if it sends empty
-        if not self.annotatorSettings["feedback_rules"]:
-            self.annotatorSettings["feedback_rules"] = static_feedback_rules_data
         if not self.msgr.is_legacy_server():
             # TODO: in future, I think I prefer a rules-based framework
             # Not "you are lead marker" but "you can view all tasks".
@@ -1271,6 +1287,13 @@ class MarkerClient(QWidget):
             ).exec()
             return
 
+        # If we're at quota, don't start marking as server will reject them
+        # (but its ok to modify papers we've already marked).
+        task_status = self.examModel.getStatusByTask(task)
+        if task_status == "untouched" and self.marker_has_reached_task_limit():
+            ReachedQuotaLimitDialog(self).exec()
+            return
+
         if self.allowBackgroundOps:
             # If just one in the queue (which we are grading) then ask for more
             if self.examModel.countReadyToMark() <= 1:
@@ -1278,6 +1301,21 @@ class MarkerClient(QWidget):
 
         self.startTheAnnotator(inidata)
         # we started the annotator, we'll get a signal back when its done
+
+    def marker_has_reached_task_limit(self, *, use_cached: bool = True) -> bool:
+        """Check whether a marker has reached their task limit if applicable.
+
+        Keyword Args:
+            use_cached: by default we use a cached value rather than connecting
+                to the server to check.
+
+        Returns:
+            True if marker is in quota and they have reached their
+            limit, otherwise False.
+        """
+        if not use_cached:
+            self.updateProgress()
+        return self._user_reached_quota_limit
 
     def getDataForAnnotator(self, task: str) -> tuple | None:
         """Start annotator on a particular task.
@@ -1551,8 +1589,7 @@ class MarkerClient(QWidget):
             synchronous_upload(
                 self.msgr,
                 *_data,
-                knownFailCallback=self.backgroundUploadFailedServerChanged,
-                unknownFailCallback=self.backgroundUploadFailed,
+                failCallback=self.backgroundUploadFailed,
                 successCallback=self.backgroundUploadFinished,
             )
         # successfully marked and put on the upload list.
@@ -1593,13 +1630,14 @@ class MarkerClient(QWidget):
 
         return data
 
-    def backgroundUploadFinished(self, task, numDone, numtotal) -> None:
+    def backgroundUploadFinished(
+        self, task: str, progress_info: dict[str, Any]
+    ) -> None:
         """An upload has finished, do appropriate UI updates.
 
         Args:
-            task (str): the task ID of the current test.
-            numDone (int): number of exams marked
-            numtotal (int): total number of exams to mark.
+            task: the task ID of the upload.
+            progress_info: information about progress.
 
         Returns:
             None
@@ -1611,68 +1649,44 @@ class MarkerClient(QWidget):
                 self.examModel.setStatusByTask(task, "marked")
             else:
                 self.examModel.setStatusByTask(task, "Complete")
-        self.updateProgress(numDone, numtotal)
+        self.updateProgress(info=progress_info)
 
-    def backgroundUploadFailedServerChanged(self, task, error_message):
-        """An upload has failed because server changed something, safest to quit.
+    def backgroundUploadFailed(
+        self, task: str, errmsg: str, server_changed: bool, unexpected: bool
+    ) -> None:
+        """An upload has failed, LOUDLY tell the user.
 
         Args:
-            task (str): the task ID of the current test.
-            error_message (str): a brief description of the error.
+            task: the task ID of the current test.
+            errmsg: the error message.
+            server_changed: True if this was something that changed server-side
+                outside of our control.
+            unexpected: True if this wasn't expected.
 
         Returns:
             None
         """
         self.examModel.setStatusByTask(task, "failed upload")
-        # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
-        ErrorMsg(
-            None,
-            '<p>Background upload of "{}" has failed because the server '
-            "changed something underneath us.</p>\n\n"
-            '<p>Specifically, the server says: "{}"</p>\n\n'
-            "<p>This is a rare situation; no data corruption has occurred but "
-            "your annotations have been discarded just in case.  You will be "
-            "asked to redo the task later.</p>\n\n"
-            "<p>For now you've been logged out and we'll now force a shutdown "
-            "of your client.  Sorry.</p>"
-            "<p>Please log back in and continue marking.</p>".format(
-                task, error_message
-            ),
-        ).exec()
-        # Log out the user and then raise an exception
-        try:
-            self.msgr.closeUser()
-        except PlomAuthenticationException:
-            log.warning("We tried to log out user but they were already logged out.")
-            pass
-        # exit with code that is not 0 or 1
-        self.Qapp.exit(57)
-        # raise PlomForceLogoutException(
-        # "Server changed under us: {}".format(error_message)
-        # ) from None
 
-    def backgroundUploadFailed(self, task: str, errmsg: str) -> None:
-        """An upload has failed, we don't know why, do something LOUDLY.
+        msg = f"The server did not accept our marking for task {task}."
 
-        Args:
-            task (str): the task ID of the current test.
-            errmsg (str): the error message.
+        if server_changed:
+            msg += "\nSomeone has changed something on the server."
+            # "This is a rare situation; no data corruption has occurred but "
+            # "your annotations have been discarded just in case."
 
-        Returns:
-            None
-        """
-        self.examModel.setStatusByTask(task, "failed upload")
-        # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
-        ErrorMsg(
-            None,
-            "Unfortunately, there was an unexpected error; the server did "
-            f"not accept our marked paper {task}.\n\n"
-            "Your internet connection may be unstable or something unexpected "
-            "has gone wrong. "
-            "Please consider logging out and restarting your client.",
-            info=errmsg,
-        ).exec()
-        return
+        if unexpected:
+            msg += (
+                "\nYour internet connection may be unstable or something"
+                " unexpected has gone wrong."
+                " Please consider logging out and restarting your client."
+            )
+
+        if not unexpected:
+            # TODO: Issue #2146, parent=self will cause Marker to popup on top of Annotator
+            WarnMsg(None, msg, info=errmsg).exec()
+        else:
+            ErrorMsg(None, msg, info=errmsg).exec()
 
     def updatePreviewImage(self, new, old):
         """Updates the displayed image when the selection changes.
