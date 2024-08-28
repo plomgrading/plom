@@ -467,7 +467,10 @@ class UploadRubricView(ManagerRequiredView):
 
 
 class RubricCreateView(ManagerRequiredView):
+    """Handles the creation of new rubrices."""
+
     def post(self, request: HttpRequest) -> HttpResponse:
+        """Posting from a form to the rubric creator makes a new rubric."""
         form = RubricItemForm(request.POST)
         if form.is_valid():
             rs = RubricService()
@@ -488,7 +491,10 @@ class RubricCreateView(ManagerRequiredView):
 
 
 class RubricEditView(ManagerRequiredView):
+    """Handles the editing of existing rubrices."""
+
     def post(self, request: HttpRequest, rubric_key) -> HttpResponse:
+        """Posting from a form to to edit an existing rubric."""
         rubric_key = str(rubric_key).zfill(12)
         form = RubricItemForm(request.POST)
         if form.is_valid():
