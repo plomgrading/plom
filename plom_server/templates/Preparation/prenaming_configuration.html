@@ -1,6 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Aidan Murphy
+    Copyright (C) 2024 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block page_heading %}
@@ -13,36 +14,36 @@
         </div>
         <div class="container">
             <div class="row">
-                <div class="card w-50">
-                    <div class="col-md-6">
+                <div class="col-auto">
+                    <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Prenaming configuration</h5>
-                            <div class="col">
-                                <p class="card-text">
-                                    Adjust <code style="color:black">x, y</code> coordinates of prenaming box.
-                                </p>
-                            </div>
                             <div class="form-group">
                                 <form action="{% url 'configure_prenaming' %}" method="post">
-                                    <div class="input-group ms-3">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text rounded-0">x</span>
+                                    <p class="mb-1">You can adjust the position of the prenaming box.</p>
+                                    <div class="row">
+                                        <div class="col-auto">
+                                            <div class="input-group mt-1 ms-3">
+                                                <span class="input-group-text">x</span>
+                                                <input class="form-input border"
+                                                       type="number"
+                                                       name="xPos"
+                                                       id="xPos"
+                                                       value="{{ prename_config.xcoord }}"
+                                                       style="width:6rem">
+                                            </div>
                                         </div>
-                                        <input class="form-input border"
-                                               type="number"
-                                               name="xPos"
-                                               id="xPos"
-                                               value="{{ prename_config.xcoord }}"
-                                               style="width:60px">
-                                        <div class="input-group-prepend ms-3">
-                                            <span class="input-group-text rounded-0">y</span>
+                                        <div class="col-auto">
+                                            <div class="input-group mt-1 ms-3">
+                                                <span class="input-group-text">y</span>
+                                                <input class="form-input border"
+                                                       type="number"
+                                                       name="yPos"
+                                                       id="yPos"
+                                                       value="{{ prename_config.ycoord }}"
+                                                       style="width:6rem">
+                                            </div>
                                         </div>
-                                        <input class="form-input border"
-                                               type="number"
-                                               name="yPos"
-                                               id="yPos"
-                                               value="{{ prename_config.ycoord }}"
-                                               style="width:60px">
                                     </div>
                                 </div>
                                 {% csrf_token %}
@@ -58,8 +59,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="card w-75">
+                <div class="col-auto">
+                    <div class="card">
                         <img id="mockPNG" src="" />
                     </div>
                 </div>
