@@ -161,7 +161,15 @@ class Rubric(models.Model):
         return f"[{self.display_delta}] {self.text}"
 
     def get_absolute_url(self):
-        """Return the URL to the detail view for this rubric."""
+        """Return the URL to the detail view for this rubric.
+
+        This is some internal Django stuff.   Importantly, it doesn't seem to be the full
+        URL including proxied hostname or other things we cannot know but just returns
+        a nice simply string like "/rubrics/42/".  Why precisely we have this method or
+        what purposes it serves is left as an exercise to some future maintainer as the
+        current author does not know wtf is going on here, just that its not as scary as
+        the name implies.
+        """
         return reverse("rubric_item", kwargs={"rubric_key": self.key})
 
     class Meta:
