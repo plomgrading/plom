@@ -14,7 +14,7 @@ from typing import Any
 
 import fitz
 
-from plom.misc_utils import local_now_to_simple_string
+from plom.misc_utils import local_now_to_simple_string, pprint_score
 from .examReassembler import papersize_portrait
 
 
@@ -120,7 +120,7 @@ def makeCover(
         totals = [
             "total",
             "",
-            sum([row[2] for row in tab]),
+            pprint_score(sum([row[2] for row in tab])),
             sum([row[3] for row in tab]),
         ]
 
@@ -147,7 +147,12 @@ def makeCover(
 
         for txt, r in zip(row, make_boxes(vpos)):
             shape.draw_rect(r)
-            excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
+            excess = tw.fill_textbox(
+                r,
+                txt if isinstance(txt, str) else pprint_score(txt),
+                align=align,
+                fontsize=fontsize,
+            )
             assert not excess, f'Table entry "{txt}" too long for box'
         vpos += deltav
         page_row += 1
