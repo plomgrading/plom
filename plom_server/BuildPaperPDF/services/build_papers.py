@@ -368,6 +368,10 @@ class BuildPapersService:
         Raises:
             PlomDependencyConflict: if dependencies not met.
         """
+        # if there are no chores, then nothing to do here
+        if not BuildPaperPDFChore.objects.exists():
+            return
+
         assert_can_rebuild_test_pdfs()
         self.try_to_cancel_all_queued_tasks()
         with transaction.atomic():
