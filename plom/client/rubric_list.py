@@ -60,13 +60,14 @@ def rubric_is_naked_delta(r: dict[str, Any]) -> bool:
     return False
 
 
-def isLegalRubric(rubric: dict[str, Any], *, scene, version: int, maxMark: int) -> int:
+def isLegalRubric(rubric: dict[str, Any], *, scene, version: int, max_mark: int) -> int:
     """Checks the 'legality' of a particular rubric - returning one of several possible indicators.
 
     Those states are:
     0 = incompatible - the kind of rubric is not compatible with the current state
     1 = compatible but out of range - the kind of rubric is compatible with
-    the state but applying that rubric will take the score out of range [0, maxmark] (so cannot be used)
+        the state but applying that rubric will take the score out of range
+        [0, max_mark] (so cannot be used).
     2 = compatible and in range - is compatible and can be used.
     3 = version does not match - should be hidden by default.
     Note that the rubric lists use the result to decide which rubrics will
@@ -77,7 +78,7 @@ def isLegalRubric(rubric: dict[str, Any], *, scene, version: int, maxMark: int) 
 
     Keyword Args:
         scene (PageScene): we'll grab the in-use rubrics from it
-        maxMark: maximum possible score on this question.
+        max_mark: maximum possible score on this question.
         version: which version.
 
     Returns:
@@ -94,7 +95,7 @@ def isLegalRubric(rubric: dict[str, Any], *, scene, version: int, maxMark: int) 
     rubrics.append(rubric)
 
     try:
-        _ = compute_score(rubrics, maxMark)
+        _ = compute_score(rubrics, max_mark)
         return 2
     except ValueError:
         return 1
@@ -728,7 +729,7 @@ class RubricTable(QTableWidget):
             self.get_row_as_rubric(r),
             scene=self._parent._parent.scene,
             version=self._parent.version,
-            maxMark=self._parent.maxMark,
+            max_mark=self._parent.max_mark,
         )
         colour_legal = self.palette().color(
             QPalette.ColorGroup.Active, QPalette.ColorRole.Text
@@ -881,11 +882,11 @@ class RubricWidget(QWidget):
                 methods from that class.
         """
         super().__init__(parent)
-        self.question_label = None
-        self.question_number = None
+        self.question_label = ""
+        self.question_index = 1
         self.version = 1
         self.max_version = 1
-        self.maxMark = 1
+        self.max_mark = 1
         self._parent = parent
         self.username = parent.username
         self.rubrics: list[dict[str, Any]] = []
@@ -1533,18 +1534,20 @@ class RubricWidget(QWidget):
         self.handleClick()  # force blue ghost update
         return is_success
 
-    def setQuestion(self, num, label):
-        """Set relevant question number and label.
+    def setQuestion(self, qidx: int, label: str, max_mark: int) -> None:
+        """Set relevant question index, label and maximum mark.
 
         Args:
-            num (int/None): the question number.
-            label (str/None): the question label.
+            qidx: the 1-based question index.
+            label: the question label.
+            max_mark: the maximum mark associated with this question.
 
         After calling this, you should call ``updateLegalityOfRubrics()`` to
         update which rubrics are highlighted/displayed.
         """
-        self.question_number = num
+        self.question_index = qidx
         self.question_label = label
+        self.max_mark = max_mark
 
     def setVersion(self, version: int, maxver: int) -> None:
         """Set version being graded.
@@ -1558,17 +1561,6 @@ class RubricWidget(QWidget):
         """
         self.version = version
         self.max_version = maxver
-
-    def setMaxMark(self, maxMark):
-        """Update the max mark.
-
-        Args:
-            maxMark (int): the maximum mark.
-
-        After calling this, you should call ``updateLegalityOfRubrics()`` to
-        update which rubrics are highlighted/displayed.
-        """
-        self.maxMark = maxMark
 
     def updateLegalityOfRubrics(self):
         """Redo the colour highlight/deemphasis in each tab."""
@@ -1796,15 +1788,12 @@ class RubricWidget(QWidget):
         Returns:
             None, does its work through side effects on the comment list.
         """
-        if self.question_number is None:
-            log.error("Not allowed to create rubric while question number undefined.")
-            return
         reapable = self.get_nonrubric_text_from_page()
         arb = AddRubricBox(
             self,
             self.username,
-            self.maxMark,
-            self.question_number,
+            self.max_mark,
+            self.question_index,
             self.question_label,
             self.version,
             self.max_version,
