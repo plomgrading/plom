@@ -696,7 +696,12 @@ class RubricService:
                 "system_rubric": True,
             }
             r = self.create_rubric(rubric)
-            log.info("Built delta-rubric -%d for Qidx %s: %s", 0.5, q, r["id"])
+            log.info(
+                "Built delta-rubric %s for Qidx %d: %s",
+                r["display_delta"],
+                r["question"],
+                r["id"],
+            )
 
             rubric = {
                 "display_delta": "-\N{Vulgar Fraction One Half}",
@@ -708,7 +713,12 @@ class RubricService:
                 "system_rubric": True,
             }
             r = self.create_rubric(rubric)
-            log.info("Built delta-rubric -%d for Qidx %s: %s", -0.5, q, r["id"])
+            log.info(
+                "Built delta-rubric %s for Qidx %d: %s",
+                r["display_delta"],
+                r["question"],
+                r["id"],
+            )
 
     def erase_all_rubrics(self) -> int:
         """Remove all rubrics, permanently deleting them.  BE CAREFUL.
