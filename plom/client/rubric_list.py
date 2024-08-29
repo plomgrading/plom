@@ -1363,13 +1363,14 @@ class RubricWidget(QWidget):
             if name not in group_tab_data.keys():
                 log.info("Removing now-empty tab: group %s is now empty", name)
                 self.RTW.removeTab(self.RTW.indexOf(tab))
+
         for g in sorted(group_tab_data.keys()):
             idlist = group_tab_data[g]
-            tab = current_group_tabs.get(g)
-            if tab is None:
-                tab = self.add_new_group_tab(g)
+            gtab = current_group_tabs.get(g)
+            if gtab is None:
+                gtab = self.add_new_group_tab(g)
             prev_order = prev_group_tabs.get(g)
-            tab.setRubricsByKeys(self.rubrics, idlist, alt_order=prev_order)
+            gtab.setRubricsByKeys(self.rubrics, idlist, alt_order=prev_order)
 
         # TODO: if we later deleting rubrics, this will need to deal with rubrics that
         # have disappeared from self.rubrics but still appear in some tab
