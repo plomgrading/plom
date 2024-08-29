@@ -1501,17 +1501,18 @@ class RubricWidget(QWidget):
         ]
         assert check == target_order, "did not achieve target"
 
-    def getCurrentRubricKeyAndTab(self):
+    def getCurrentRubricKeyAndTab(self) -> tuple[int | None, int]:
         """The current rubric key and the current tab.
 
         Returns:
-            list: ``[a, b]`` where ``a`` is the rubric-key (int/None)
-            and ``b`` is the current tab index (int).
+            Two numbers ``(a, b)`` where ``a`` is the rubric-key
+            and ``b`` is the current tab index.  If nothing is selected,
+            the rubric key will be None.
         """
-        return [
+        return (
             self.RTW.currentWidget().getCurrentRubricKey(),
             self.RTW.currentIndex(),
-        ]
+        )
 
     def setCurrentRubricKeyAndTab(self, key: int | None, tab: int) -> bool:
         """Set the current rubric key and the current tab, as if it was clicked on.
@@ -1562,7 +1563,7 @@ class RubricWidget(QWidget):
         self.version = version
         self.max_version = maxver
 
-    def updateLegalityOfRubrics(self):
+    def updateLegalityOfRubrics(self) -> None:
         """Redo the colour highlight/deemphasis in each tab."""
         self.tabS.updateLegality()
         for tab in self.get_user_tabs():
@@ -1620,15 +1621,16 @@ class RubricWidget(QWidget):
             self.RTW.setCurrentIndex(pt)
             # tab-change signal handles update - do not need 'handleClick' - called automatically
 
-    def get_nonrubric_text_from_page(self):
+    def get_nonrubric_text_from_page(self) -> list[str]:
         """Find any text that isn't already part of a formal rubric.
 
         Returns:
-            list: strings for each text on page that is not inside a rubric
+            List of strings for each text on page that is not inside a rubric
         """
         return self._parent.get_nonrubric_text_from_page()
 
-    def get_group_names(self):
+    def get_group_names(self) -> list[str]:
+        """Return a list of strings consisting of the rubric group names."""
         groups = []
         for r in self.rubrics:
             tt = r["tags"]
@@ -1829,6 +1831,7 @@ class RubricWidget(QWidget):
                 return
 
             # update the rubric in the current internal rubric list
+            assert index is not None
             self.rubrics[index] = new_rubric
             # TODO: possibly a good time to do full refresh (?)
 
