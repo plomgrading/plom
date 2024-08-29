@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2024 Colin B. Macdonald
 
 from .base import ManagerReadOnlyViewSet
 
@@ -14,14 +15,14 @@ class RubricViewSet(ManagerReadOnlyViewSet):
         GET: list all rubrics (can be filtered)
         POST: create a new rubric (disabled)
 
-    'rubrics/key/':
-        GET: retrieve rubric with key
-        PUT: update rubric by key (disabled)
-        PATCH: modify rubric by key (disabled)
-        DELETE: delete rubric by key (disabled)
+    'rubrics/rid/':
+        GET: retrieve rubric with rid
+        PUT: update rubric by rid (disabled)
+        PATCH: modify rubric by rid(disabled)
+        DELETE: delete rubric by rid (disabled)
     """
 
     queryset = Rubric.objects.all()
     serializer_class = RubricSerializer
     filterset_fields = ("kind", "display_delta", "value", "out_of", "text")
-    lookup_field = "key"
+    lookup_field = "rid"

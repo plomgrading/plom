@@ -22,34 +22,34 @@ import django_tables2
 from Mark.models.annotations import Annotation
 
 
-def generate_key():
+def generate_rid():
     # TODO: tricky to avoid a race with this here:
-    # count = Rubric.objects.aggregate(Max("key"))["key__max"]
+    # count = Rubric.objects.aggregate(Max("rid"))["rid__max"]
     # return 1 if count is None else count + 1
 
-    def _genkey():
+    def _gen_rid():
         # unsigned intmax or something like that
         return random.randint(1, 2_100_000_000)
 
     # this still has a race condition, just incredibly unlikely to hit it
-    key = _genkey()
-    existing_keys = Rubric.objects.all().values_list("key", flat=True)
-    while key in existing_keys:
-        key = _genkey()
-    return key
+    rid = _gen_rid()
+    existing_rids = Rubric.objects.all().values_list("rid", flat=True)
+    while rid in existing_rids:
+        rid = _gen_rid()
+    return rid
 
 
 class Rubric(models.Model):
     """Represents a marker's comment and mark delta for a particular question.
 
     Fields:
-        key: a unique key/id for accessing or uniquely identifying
+        rid: a unique key/id for accessing or uniquely identifying
             a rubric.  It is not generally (and currently isn't) the
-            same as the ``pk``, which is an internal field, and
-            implementation-specific. `generate_key` is only run when
-            creating a new rubric, and is not run when updating an
+            same as the ``pk`` (the "primary key"), which is an internal
+            field, and implementation-specific. `generate_rid` is only
+            run when creating a new rubric, and is not run when updating an
             existing rubric via the rubric service, ensuring that
-            the same key is preserved across revisions, even if
+            the same rid is preserved across revisions, even if
             we use new rows (new ``pk``) for each revision.
         kind: one of "relative"; "abs"; or "neutral". This field indicates how the
             ``value`` and ``out_of`` fields are to be interpreted.
@@ -107,7 +107,7 @@ class Rubric(models.Model):
             If you are messing with this, presumably you are doing something
             creative/hacky.
         latest: True when this is the latest version of the rubric and
-            false otherwise. There will be only one latest rubric per key.
+            false otherwise. There will be only one latest rubric per rid.
     """
 
     class RubricKind(models.TextChoices):
@@ -115,7 +115,7 @@ class Rubric(models.Model):
         NEUTRAL = "neutral", _("Neutral")
         RELATIVE = "relative", _("Relative")
 
-    key = models.IntegerField(null=False, default=generate_key)
+    rid = models.IntegerField(null=False, default=generate_rid)
     kind = models.TextField(null=False, choices=RubricKind.choices)
     display_delta = models.TextField(null=False, blank=True, default="")  # is short
     value = models.FloatField(null=False, blank=True, default=0)
@@ -170,19 +170,19 @@ class Rubric(models.Model):
         current author does not know wtf is going on here, just that its not as scary as
         the name implies.
         """
-        return reverse("rubric_item", kwargs={"rubric_key": self.key})
+        return reverse("rubric_item", kwargs={"rid": self.rid})
 
     class Meta:
         constraints = [
-            # This constraint checks that each key-revision pair is unique
+            # This constraint checks that each rid-revision pair is unique
             models.UniqueConstraint(
-                fields=["key", "revision"], name="unique_revision_per_key"
+                fields=["rid", "revision"], name="unique_revision_per_rid"
             ),
-            # This constraint checks that each key has only one rubric where latest=True
+            # This constraint checks that each rid has only one rubric where latest=True
             # TODO: unclear where "at most one" or "exactly one"
             # TODO: seems to conflict with RubricService.modify_rubric or maybe the serializer
             # models.UniqueConstraint(
-            #     fields=["key"], condition=Q(latest=True), name="unique_latest_per_key"
+            #     fields=["rid"], condition=Q(latest=True), name="unique_latest_per_rid"
             # ),
         ]
 
@@ -203,14 +203,14 @@ class RubricTable(django_tables2.Table):
     https://django-tables2.readthedocs.io/en/latest
     """
 
-    key = django_tables2.Column("Key", linkify=True)
+    rid = django_tables2.Column("rid", linkify=True)
     times_used = django_tables2.Column(verbose_name="# Used")
 
     class Meta:
         model = Rubric
 
         fields = (
-            "key",
+            "rid",
             "display_delta",
             "last_modified",
             "kind",
@@ -219,7 +219,7 @@ class RubricTable(django_tables2.Table):
             "text",
         )
         sequence = (
-            "key",
+            "rid",
             "display_delta",
             "last_modified",
             "kind",

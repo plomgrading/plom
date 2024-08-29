@@ -54,7 +54,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="editModalLabel">
-                    {% if rubric_key %}
+                    {% if rid %}
                         Editing Rubric (caution: beta!)
                     {% else %}
                         Creating Rubric (caution: beta!)
@@ -67,7 +67,7 @@
                         aria-label="Close"></button>
             </div>
             <!-- the action of the form depends on whether we are editing or creating -->
-            <form action="{% if rubric_key %} {% url 'rubric_edit' rubric_key %} {% else %} {% url 'rubric_create' %} {% endif %}"
+            <form action="{% if rid %} {% url 'rubric_edit' rid %} {% else %} {% url 'rubric_create' %} {% endif %}"
                   method="post">
                 {% csrf_token %}
                 <div class="modal-body">
@@ -154,7 +154,7 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <input type="submit"
                            class="btn btn-primary"
-                           value="{% if rubric_key %} Save {% else %} Create {% endif %}">
+                           value="{% if rid %} Save {% else %} Create {% endif %}">
                 </div>
             </form>
         </div>

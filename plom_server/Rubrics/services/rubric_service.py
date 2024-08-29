@@ -55,7 +55,7 @@ log = logging.getLogger("RubricServer")
 
 def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
     return {
-        "rid": r.key,
+        "rid": r.rid,
         "kind": r.kind,
         "display_delta": r.display_delta,
         "value": r.value,
@@ -180,7 +180,7 @@ class RubricService:
     @transaction.atomic
     def modify_rubric(
         self,
-        key: int,
+        rid: int,
         new_rubric_data: dict[str, Any],
         *,
         modifying_user: User | None = None,
@@ -188,9 +188,9 @@ class RubricService:
         """Modify a rubric.
 
         Args:
-            key: uniquely identify a rubric, but not a particular revision.
-                Generally not the same as the "private key" used
-                internally, although this could change in the future.
+            rid: uniquely identify a rubric, but not a particular revision.
+                Generally not the same as the "primary key" used
+                internally.
             new_rubric_data: data for a rubric submitted by a web request.
                 This input will not be modified by this call.
 
@@ -220,10 +220,10 @@ class RubricService:
 
         try:
             old_rubric = (
-                Rubric.objects.filter(key=key, latest=True).select_for_update().get()
+                Rubric.objects.filter(rid=rid, latest=True).select_for_update().get()
             )
         except Rubric.DoesNotExist as e:
-            raise ValueError(f"Rubric {key} does not exist.") from e
+            raise ValueError(f"Rubric {rid} does not exist.") from e
 
         # default revision if missing from incoming data
         new_rubric_data.setdefault("revision", 0)
@@ -278,9 +278,7 @@ class RubricService:
         new_rubric_data["user"] = old_rubric.user.pk
         new_rubric_data["revision"] += 1
         new_rubric_data["latest"] = True
-        new_rubric_data["key"] = old_rubric.key
-        # client might be using id instead of key in places, see Issue #1492
-        new_rubric_data.pop("rid", None)
+        new_rubric_data["rid"] = old_rubric.rid
 
         new_rubric_data["display_delta"] = self._generate_display_delta(
             new_rubric_data.get("value", 0),
@@ -401,39 +399,37 @@ class RubricService:
         """How many rubrics in total (excluding revisions)."""
         return Rubric.objects.filter(latest=True).count()
 
-    def get_rubric_by_key(self, rubric_key: int) -> Rubric:
-        """Get the latest rurbic revision by its key/id.
+    def get_rubric_by_rid(self, rid: int) -> Rubric:
+        """Get the latest rurbic revision by its rubric id.
 
         Args:
-            rubric_key: which rubric.  Note currently the key/id is not
-                the same as the internal ``pk``.
+            rid: which rubric.  Note currently the rid is not
+                the same as the internal ``pk`` ("primary key").
 
         Returns:
             The rubric object.  It is not "selected for update" so should
             be read-only.
         """
-        return Rubric.objects.get(key=rubric_key, latest=True)
+        return Rubric.objects.get(rid=rid, latest=True)
 
-    def get_past_revisions_by_key(self, rubric_key: int) -> list[Rubric]:
-        """Get all earlier revisions of a rubric by the key, not including the latest one.
+    def get_past_revisions_by_rid(self, rid: int) -> list[Rubric]:
+        """Get all earlier revisions of a rubric by the rid, not including the latest one.
 
         Args:
-            rubric_key: the key of the rubric.
+            rid: which rubric series to we want the past revisions of.
 
         Returns:
-            A list of rubrics with the specified key
+            A list of rubrics with the specified rubric id.
         """
         return list(
-            Rubric.objects.filter(key=rubric_key, latest=False)
-            .all()
-            .order_by("revision")
+            Rubric.objects.filter(rid=rid, latest=False).all().order_by("revision")
         )
 
-    def get_all_paper_numbers_using_a_rubric(self, rubric_key: int) -> list[int]:
+    def get_all_paper_numbers_using_a_rubric(self, rid: int) -> list[int]:
         """Get a list of paper number using the given rubric.
 
         Args:
-            rubric_key: the identifier of the rubric.
+            rid: the identifier of the rubric.
 
         Returns:
             A list of paper number using that rubric.
@@ -442,9 +438,7 @@ class RubricService:
         paper_numbers = list()
         # Iterate from newest to oldest updates, ignore duplicate papers seen at later time
         # Append to paper_numbers if the *NEWEST* annotation on that paper uses the rubric.
-        annotions_using_the_rubric = Rubric.objects.get(
-            key=rubric_key
-        ).annotations.all()
+        annotions_using_the_rubric = Rubric.objects.get(rid=rid).annotations.all()
 
         annotations = Annotation.objects.all().order_by("-time_of_last_update")
         for annotation in annotations:
@@ -456,19 +450,6 @@ class RubricService:
             seen_paper.add(paper_number)
 
         return paper_numbers
-
-    def get_rubric_by_key_as_dict(self, rubric_key: int) -> dict[str, Any]:
-        """Get a rubric by its key/id and return as a dictionary.
-
-        Args:
-            rubric_key: which rubric.  Note currently the key/id is not
-                the same as the internal ``pk``.
-
-        Returns:
-            Key-value pairs representing the rubric.
-        """
-        r = Rubric.objects.get(key=rubric_key, latest=True)
-        return _Rubric_to_dict(r)
 
     def init_rubrics(self, username: str) -> bool:
         """Add special rubrics such as deltas and per-question specific.
