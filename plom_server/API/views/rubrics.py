@@ -121,8 +121,6 @@ class MmodifyRubric(APIView):
             # TODO: use a serializer to get automatic conversion from Rubric object?
             return Response(rubric_as_dict, status=status.HTTP_200_OK)
         except ObjectDoesNotExist as e:
-            # Django also intercepts invalid (too short) keys before we see them
-            # and uses 404 for those (see the regex in ``mark_patterns.py``).
             return _error_response(
                 f"Rubric with key {key} not found: {e}", status.HTTP_404_NOT_FOUND
             )
