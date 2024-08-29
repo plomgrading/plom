@@ -125,7 +125,7 @@ class RubricTable(QTableWidget):
     def __init__(
         self,
         parent: RubricWidget,
-        shortname: str | None = None,
+        shortname: str,
         *,
         sort: bool = False,
         tabType: str | None = None,
@@ -803,6 +803,69 @@ class TabBarWithAddRenameRemoveContext(QTabBar):
         super().mousePressEvent(mouseEvent)
 
 
+class RubricTabWidget(QTabWidget):
+    """A TabWidget that contains only RubricTables in the tabs."""
+
+    def __init__(self, add_new_tab_fcn, rename_tab_fcn, remove_tab_fcn) -> None:
+        super().__init__()
+        tb = TabBarWithAddRenameRemoveContext()
+        tb.setChangeCurrentOnDrag(True)
+        self.setTabBar(tb)
+        self.setMovable(True)
+        tb.add_tab_signal.connect(add_new_tab_fcn)
+        tb.rename_tab_signal.connect(rename_tab_fcn)
+        tb.remove_tab_signal.connect(remove_tab_fcn)
+
+    def insert_tab(self, index: int, tab: RubricTable) -> int:
+        # assert isinstance(widget, RubricTable)
+        r = super().insertTab(index, tab, tab.shortname)
+        tb = self.tabBar()
+        assert tb
+        tb.setTabData(index, tab.tabType)
+        return r
+
+    def currentWidget(self) -> RubricTable:
+        w = super().currentWidget()
+        assert isinstance(w, RubricTable)
+        return w
+
+    def widget(self, index: int) -> RubricTable | None:
+        """Override the widget method to promise to give a RubricTable (or None).
+
+        Note: because this can return None, and we often do an integer index loop,
+        tools like MyPy can be confused whether the typeis RubricTable or None.
+        In many places we use `assert` or even `ignore[union-attr]`.
+        """
+        w = super().widget(index)
+        if w is None:
+            return None
+        assert isinstance(w, RubricTable)
+        return w
+
+    def _update_tab_names(self) -> None:
+        """Loop over the tabs and update their displayed names."""
+        tb = self.tabBar()
+        assert tb
+        for n in range(self.count()):
+            tab = self.widget(n)
+            assert tab
+            self.setTabText(n, tab.shortname)
+            tb.setTabData(n, tab.tabType)
+            # colours that seem vaguely visible in both light/dark theme: "teal", "olive"
+            if tab.is_user_tab():
+                self.setTabToolTip(n, "custom tab")
+                # TODO: blend green with palette color?
+                tb.setTabTextColor(n, QColor("teal"))
+            elif tab.is_group_tab():
+                self.setTabToolTip(n, "shared group")
+                # maybe no need to highlight shared tabs?
+                # tb.setTabTextColor(n, QColor("olive"))
+            # elif tab.is_shared_tab():
+            #     self.setTabToolTip(n, "All rubrics")
+            # elif tab.is_delta_tab():
+            #     self.setTabToolTip(n, "delta")
+
+
 class RubricWidget(QWidget):
     """The RubricWidget is a multi-tab interface for displaying, choosing and managing rubrics."""
 
@@ -835,21 +898,10 @@ class RubricWidget(QWidget):
         self.tabS = RubricTable(self, shortname="All", tabType="show")
         self.tabDeltaP = RubricTable(self, shortname=deltaP_label, tabType="delta")
         self.tabDeltaN = RubricTable(self, shortname=deltaN_label, tabType="delta")
-        self.RTW = QTabWidget()
-        tb = TabBarWithAddRenameRemoveContext()
-        # TODO: is this normal or should one connect the signals in the ctor?
-        tb.add_tab_signal.connect(self.add_new_tab)
-        tb.rename_tab_signal.connect(self.rename_tab)
-        tb.remove_tab_signal.connect(self.remove_tab)
-        self.RTW.setTabBar(tb)
-        self.RTW.setMovable(True)
-        tb.setChangeCurrentOnDrag(True)
-        self.RTW.insertTab(0, self.tabS, self.tabS.shortname)
-        self.RTW.insertTab(1, self.tabDeltaP, self.tabDeltaP.shortname)
-        self.RTW.insertTab(2, self.tabDeltaN, self.tabDeltaN.shortname)
-        tb.setTabData(0, self.tabS.tabType)
-        tb.setTabData(1, self.tabDeltaP.tabType)
-        tb.setTabData(2, self.tabDeltaN.tabType)
+        self.RTW = RubricTabWidget(self.add_new_tab, self.rename_tab, self.remove_tab)
+        self.RTW.insert_tab(0, self.tabS)
+        self.RTW.insert_tab(1, self.tabDeltaP)
+        self.RTW.insert_tab(2, self.tabDeltaN)
         b = QToolButton()
         b.setText("+")
         b.setAutoRaise(True)  # flat until hover, but not on macOS?
@@ -867,7 +919,7 @@ class RubricWidget(QWidget):
         # connect the 'tab-change'-signal to 'handleClick' to fix #1497
         self.RTW.currentChanged.connect(self.handleClick)
 
-        self.tabHide = RubricTable(self, sort=True, tabType="hide")
+        self.tabHide = RubricTable(self, shortname="Hidden", sort=True, tabType="hide")
         self.groupHide = QTabWidget()
         self.groupHide.addTab(self.tabHide, "Hidden")
         self.showHideW = QStackedWidget()
@@ -894,7 +946,7 @@ class RubricWidget(QWidget):
         self.hideB.clicked.connect(self.toggleShowHide)
         self.update_tab_names()
 
-    def toggleShowHide(self):
+    def toggleShowHide(self) -> None:
         if self.showHideW.currentIndex() == 0:  # on main lists
             # move to hidden list
             self.showHideW.setCurrentIndex(1)
@@ -919,80 +971,69 @@ class RubricWidget(QWidget):
         """Dynamically construct the ordered list of user-defined tabs."""
         return self.get_user_tabs()
 
-    def get_user_tabs(self):
+    def get_user_tabs(self) -> list[RubricTable]:
         """Get an ordered list of user-defined tabs."""
         # this is all tabs: we want only the user ones
         # return [self.RTW.widget(n) for n in range(self.RTW.count())]
         L = []
         for n in range(self.RTW.count()):
             tab = self.RTW.widget(n)
+            assert tab
             if tab.is_user_tab():
                 L.append(tab)
         return L
 
-    def get_group_tabs(self):
+    def get_group_tabs(self) -> list[RubricTable]:
         """Get an ordered list of the group tabs."""
         L = []
         for n in range(self.RTW.count()):
             tab = self.RTW.widget(n)
+            assert tab
             if tab.is_group_tab():
                 L.append(tab)
         return L
 
-    def get_group_tabs_dict(self):
+    def get_group_tabs_dict(self) -> dict[str, RubricTable]:
         """Get a dict of the group tabs, keyed by name."""
         d = {}
         for n in range(self.RTW.count()):
             tab = self.RTW.widget(n)
+            assert tab
             if tab.is_group_tab():
                 d[tab.shortname] = tab
         return d
 
-    def update_tab_names(self):
+    def update_tab_names(self) -> None:
         """Loop over the tabs and update their displayed names."""
-        for n in range(self.RTW.count()):
-            tab = self.RTW.widget(n)
-            self.RTW.setTabText(n, tab.shortname)
-            # colours that seem vaguely visible in both light/dark theme: "teal", "olive"
-            if tab.is_user_tab():
-                self.RTW.setTabToolTip(n, "custom tab")
-                # TODO: blend green with palette color?
-                self.RTW.tabBar().setTabTextColor(n, QColor("teal"))
-            elif tab.is_group_tab():
-                self.RTW.setTabToolTip(n, "shared group")
-                # maybe no need to highlight shared tabs?
-                # self.RTW.tabBar().setTabTextColor(n, QColor("olive"))
-            # elif tab.is_shared_tab():
-            #     self.RTW.setTabToolTip(n, "All rubrics")
-            # elif tab.is_delta_tab():
-            #     self.RTW.setTabToolTip(n, "delta")
+        self.RTW._update_tab_names()
 
-    def add_new_group_tab(self, name):
+    def add_new_group_tab(self, name: str) -> RubricTable:
         """Add new group-defined tab.
 
         The new tab is inserted after the right-most "group" tab, or
         immediately after the "All" tab if there are no "group" tabs.
 
         Args:
-            name (str): name of the new tab.
+            name: name of the new tab.
 
         Returns:
-            RubricTable: the newly added table.
+            The newly-created RubricTable.
         """
         tab = RubricTable(self, shortname=name, tabType="group")
         idx = None
         for n in range(0, self.RTW.count()):
-            if self.RTW.widget(n).is_group_tab():
+            t = self.RTW.widget(n)
+            assert t
+            if t.is_group_tab():
                 idx = n
         if idx is None:
             idx = 0
         # insert tab after that
-        self.RTW.insertTab(idx + 1, tab, tab.shortname)
-        self.RTW.tabBar().setTabData(idx + 1, tab.tabType)
+        self.RTW.insert_tab(idx + 1, tab)
         self.update_tab_names()
         return tab
 
-    def add_new_tab(self, name=None):
+    def add_new_tab(self, name: str | None = None) -> None:
         """Add new user-defined tab either to end or near end.
 
         The new tab is inserted after the right-most non-delta tab.
@@ -1001,7 +1042,7 @@ class RubricWidget(QWidget):
         have rearranged the delta tabs left of their custom tabs.
 
         Args:
-            name (str/None): name of the new tab.  If omitted or None,
+            name: the name of the new tab.  If omitted or None,
                 generate one from a set of symbols with digits appended
                 if necessary.
         """
@@ -1048,18 +1089,17 @@ class RubricWidget(QWidget):
         tab = RubricTable(self, shortname=name)
         # find rightmost non-delta
         n = self.RTW.count() - 1
-        while self.RTW.widget(n).is_delta_tab() and n > 0:  # small sanity check
+        while self.RTW.widget(n).is_delta_tab() and n > 0:  # type: ignore[union-attr]
             n = n - 1
         # insert tab after it
-        self.RTW.insertTab(n + 1, tab, tab.shortname)
-        self.RTW.tabBar().setTabData(n + 1, tab.tabType)
+        self.RTW.insert_tab(n + 1, tab)
         self.update_tab_names()
 
-    def remove_current_tab(self):
+    def remove_current_tab(self) -> None:
         n = self.RTW.currentIndex()
         self.remove_tab(n)
 
-    def remove_tab(self, n):
+    def remove_tab(self, n: int) -> None:
         if n < 0:  # -1 means no current tab
             return
         tab = self.RTW.widget(n)
@@ -1081,11 +1121,11 @@ class RubricWidget(QWidget):
         tab.clear()
         tab.deleteLater()
 
-    def rename_current_tab(self):
+    def rename_current_tab(self) -> None:
         n = self.RTW.currentIndex()
         self.rename_tab(n)
 
-    def rename_tab(self, n):
+    def rename_tab(self, n: int) -> None:
         if n < 0:  # -1 means no current tab
             return
         tab = self.RTW.widget(n)
@@ -1104,7 +1144,7 @@ class RubricWidget(QWidget):
             if not ok or not s:
                 return
             for n in range(self.RTW.count()):
-                if s == self.RTW.widget(n).shortname:
+                if s == self.RTW.widget(n).shortname:  # type: ignore[union-attr]
                     ok = False
             if ok:
                 break
@@ -1117,7 +1157,7 @@ class RubricWidget(QWidget):
         log.debug('changing tab name from "%s" to "%s"', curname, s)
         tab.set_name(s)
 
-    def _sync_button_temporary_change_text(self, set=False):
+    def _sync_button_temporary_change_text(self, set: bool = False) -> None:
         tempstr = "Sync \N{CHECK MARK}"
         if set:
             self.syncB.setText(tempstr)
@@ -1126,7 +1166,7 @@ class RubricWidget(QWidget):
         if self.syncB.text() == tempstr:
             self.syncB.setText("Sync")
 
-    def refreshRubrics(self):
+    def refreshRubrics(self) -> None:
         """Get rubrics from server and if non-trivial then repopulate."""
         old_rubrics = self.rubrics
         self.rubrics = self._parent.getRubricsFromServer()
@@ -1190,7 +1230,7 @@ class RubricWidget(QWidget):
         # diff_rubric is not precise, won't hurt to update display even if no changes
         self.updateLegalityOfRubrics()
 
-    def wrangleRubricsInteractively(self):
+    def wrangleRubricsInteractively(self) -> None:
         wr = RubricWrangler(
             self,
             self.rubrics,
@@ -1203,7 +1243,7 @@ class RubricWidget(QWidget):
         else:
             self.setRubricTabsFromState(wr.wranglerState)
 
-    def setInitialRubrics(self, *, user_tab_state=None):
+    def setInitialRubrics(self, *, user_tab_state: dict | None = None) -> None:
         """Grab rubrics from server and set sensible initial values.
 
         Note: must be called after annotator knows its tgv etc, so
@@ -1225,7 +1265,7 @@ class RubricWidget(QWidget):
             self.add_new_tab()
         self.setRubricTabsFromState(user_tab_state)
 
-    def setRubricTabsFromState(self, wranglerState=None):
+    def setRubricTabsFromState(self, wranglerState: dict | None = None) -> None:
         """Set rubric tabs (but not rubrics themselves) from saved data.
 
         The various rubric tabs are updated based on data passed in.
@@ -1278,7 +1318,7 @@ class RubricWidget(QWidget):
                 log.info("Appending new rubric with id {}".format(rubric["id"]))
                 wranglerState["shown"].append(rubric["id"])
 
-        group_tab_data = {}
+        group_tab_data: dict[str, list[int]] = {}
         for rubric in self.rubrics:
             tags = rubric.get("tags", "").split()
             # TODO: share pack/unpack from tag w/ dialog & compute_score
@@ -1477,10 +1517,7 @@ class RubricWidget(QWidget):
         if tab not in range(0, self.RTW.count()):
             return False
         self.RTW.setCurrentIndex(tab)
-        w = self.RTW.currentWidget()
-        assert w is not None
-        assert isinstance(w, RubricTable)
-        is_success = w.selectRubricByKey(key)
+        is_success = self.RTW.currentWidget().selectRubricByKey(key)
         self.handleClick()  # force blue ghost update
         return is_success
 
@@ -1531,14 +1568,14 @@ class RubricWidget(QWidget):
         self.tabDeltaP.updateLegality()
         self.tabDeltaN.updateLegality()
 
-    def handleClick(self):
+    def handleClick(self) -> None:
         self.RTW.currentWidget().handleClick()
 
-    def reselectCurrentRubric(self):
+    def reselectCurrentRubric(self) -> None:
         self.RTW.currentWidget().reselectCurrentRubric()
         self.handleClick()
 
-    def selectRubricByRow(self, rowNumber):
+    def selectRubricByRow(self, rowNumber: int) -> None:
         self.RTW.currentWidget().selectRubricByRow(rowNumber)
         self.handleClick()
 
@@ -1546,24 +1583,24 @@ class RubricWidget(QWidget):
         self.RTW.currentWidget().selectRubricByVisibleRow(rowNumber)
         self.handleClick()
 
-    def getCurrentTabName(self):
+    def getCurrentTabName(self) -> str:
         return self.RTW.currentWidget().shortname
 
-    def nextRubric(self):
+    def nextRubric(self) -> None:
         # change rubrics in the correct tab
         if self.showHideW.currentIndex() == 0:
             self.RTW.currentWidget().nextRubric()
         else:
             self.tabHide.nextRubric()
 
-    def previousRubric(self):
+    def previousRubric(self) -> None:
         # change rubrics in the correct tab
         if self.showHideW.currentIndex() == 0:
             self.RTW.currentWidget().previousRubric()
         else:
             self.tabHide.previousRubric()
 
-    def next_tab(self):
+    def next_tab(self) -> None:
         """Move to next tab, only if tabs are shown."""
         if self.showHideW.currentIndex() == 0:
             numtabs = self.RTW.count()
@@ -1571,7 +1608,7 @@ class RubricWidget(QWidget):
             self.RTW.setCurrentIndex(nt)
             # tab-change signal handles update - do not need 'handleClick' - called automatically
 
-    def prev_tab(self):
+    def prev_tab(self) -> None:
         """Move to previous tab, only if tabs are shown."""
         if self.showHideW.currentIndex() == 0:
             numtabs = self.RTW.count()
@@ -1817,7 +1854,8 @@ class RubricWidget(QWidget):
             "shown": self.tabS.getKeyList(),
             "hidden": self.tabHide.getKeyList(),
             "tab_order": [
-                self.RTW.widget(n).shortname for n in range(0, self.RTW.count())
+                self.RTW.widget(n).shortname  # type: ignore[union-attr]
+                for n in range(0, self.RTW.count())
             ],
             "user_tabs": [
                 {"name": t.shortname, "ids": t.getKeyList()}
