@@ -55,7 +55,7 @@ log = logging.getLogger("RubricServer")
 
 def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
     return {
-        "id": r.key,
+        "rid": r.key,
         "kind": r.kind,
         "display_delta": r.display_delta,
         "value": r.value,
@@ -280,7 +280,7 @@ class RubricService:
         new_rubric_data["latest"] = True
         new_rubric_data["key"] = old_rubric.key
         # client might be using id instead of key in places, see Issue #1492
-        new_rubric_data.pop("id", None)
+        new_rubric_data.pop("rid", None)
 
         new_rubric_data["display_delta"] = self._generate_display_delta(
             new_rubric_data.get("value", 0),
@@ -572,7 +572,7 @@ class RubricService:
                     "system_rubric": True,
                 }
                 r = self.create_rubric(rubric)
-                log.info("Built delta-rubric +%d for Q%s: %s", m, q, r["id"])
+                log.info("Built delta-rubric +%d for Q%s: %s", m, q, r["rid"])
                 # make negative delta
                 rubric = {
                     "display_delta": "-{}".format(m),
@@ -587,7 +587,7 @@ class RubricService:
                     "system_rubric": True,
                 }
                 r = self.create_rubric(rubric)
-                log.info("Built delta-rubric -%d for Q%s: %s", m, q, r["id"])
+                log.info("Built delta-rubric -%d for Q%s: %s", m, q, r["rid"])
 
             # TODO: testing non-integer rubrics in demo: change to True
             if False:
@@ -654,7 +654,7 @@ class RubricService:
                         r["kind"],
                         r["display_delta"],
                         q,
-                        r["id"],
+                        r["rid"],
                     )
 
     def build_half_mark_delta_rubrics(self, username: str) -> bool:
@@ -700,7 +700,7 @@ class RubricService:
                 "Built delta-rubric %s for Qidx %d: %s",
                 r["display_delta"],
                 r["question"],
-                r["id"],
+                r["rid"],
             )
 
             rubric = {
@@ -717,7 +717,7 @@ class RubricService:
                 "Built delta-rubric %s for Qidx %d: %s",
                 r["display_delta"],
                 r["question"],
-                r["id"],
+                r["rid"],
             )
 
     def erase_all_rubrics(self) -> int:
