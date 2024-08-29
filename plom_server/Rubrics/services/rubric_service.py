@@ -916,7 +916,4 @@ class RubricService:
         else:
             raise ValueError(f"Unsupported file type: {filetype}")
 
-        service = RubricService()
-        for rubric in rubrics:
-            service.create_rubric(rubric)
-        return rubrics
+        return [self.create_rubric(r) for r in rubrics]
