@@ -139,12 +139,14 @@ class MmodifyRubric(APIView):
 
 
 class MgetRubricMarkingTasks(APIView):
-    def get(self, request: Request, key: str) -> Response:
+    def get(self, request: Request, *, key: int) -> Response:
         """Returns the marking tasks associated with a rubric.
 
         Args:
-            request: HTTP Request of the API call
-            key: key of the rubric to get marking tasks for.
+            request: HTTP Request of the API call.
+
+        Keyword Args:
+            key: for which rubric do we want marking tasks.
 
         Returns:
             On success, responds with the JSON representations of
