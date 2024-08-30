@@ -1,6 +1,6 @@
 <!--
      SPDX-License-Identifier: AGPL-3.0-or-later
-     Copyright (C) 2023 Andrew Rechnitzer
+     Copyright (C) 2023-2024 Andrew Rechnitzer
      Copyright (C) 2024 Aidan Murphy
 -->
 <div class="card m-2" id="stats_{{ question }}_{{ version }}">
@@ -63,12 +63,10 @@
                     hx-get="{% url 'progress_mark_stats' question version %}">refresh</button>
             {% if stats.all_task_count %}
                 <a href="{% url 'progress_mark_details' question version %}"
-                   class="btn btn-success">show details</a>
+                   class="btn btn-success">Details by marker</a>
             {% endif %}
-            {% if version == 1 %}
-                <a href="{% url 'progress_mark_version_compare' question %}"
-                   class="btn btn-success">compare all Q{{ question }} versions</a>
-            {% endif %}
+            <a href="{% url 'progress_mark_version_compare' question %}"
+               class="btn btn-success">Details of all versions</a>
         </div>
     {% endif %}
 </div>

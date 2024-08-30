@@ -24,31 +24,30 @@
     </div>
     <div class="card m-2">
         <div class="card-body pb-0">
-            <a class="btn btn-primary" href="{% url 'progress_identify_home' %}">Identifying progress</a>
+            <a class="btn btn-primary" href="{% url 'all_task_overview' %}">Table of all tasks</a>
             <ul>
-                <li>Shows current progress of identifying papers</li>
-                <li>User can view the ID page of any given paper</li>
-                <li>User can also clear ID from a given paper</li>
+                <li>Shows current state of every single identification and marking task</li>
+                <li>Useful for focusing in on particular papers</li>
             </ul>
         </div>
     </div>
     <div class="card m-2">
         <div class="card-body pb-0">
             <a class="btn btn-primary"
-               href="{% url 'progress_marking_task_filter' %}">Browse marking</a>
+               href="{% url 'progress_marking_task_filter' %}">Search, filter and browse marking tasks</a>
             <ul>
-                <li>Shows table of marking tasks</li>
+                <li>Tasks can be filtered by question, version, marker, tags, etc</li>
                 <li>Can view original page images and the annotations</li>
-                <li>Can be filtered by question, version and marker</li>
             </ul>
         </div>
     </div>
     <div class="card m-2">
         <div class="card-body pb-0">
-            <a class="btn btn-primary" href="{% url 'all_task_overview' %}">Table of all tasks</a>
+            <a class="btn btn-primary" href="{% url 'progress_identify_home' %}">Identifying progress</a>
             <ul>
-                <li>Shows current state of every single identification and marking task</li>
-                <li>Useful for focusing in on particular papers</li>
+                <li>Shows current progress of identifying papers</li>
+                <li>User can view the ID page of any given paper</li>
+                <li>User can also clear ID from a given paper</li>
             </ul>
         </div>
     </div>
