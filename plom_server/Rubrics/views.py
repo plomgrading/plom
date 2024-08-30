@@ -289,7 +289,7 @@ class RubricItemView(UpdateView, ManagerRequiredView):
         """Get a rubric item."""
         template_name = "Rubrics/rubric_item.html"
         rs = RubricService()
-        questions = SpecificationService.get_questions_max_marks()
+        question_max_marks_dict = SpecificationService.get_questions_max_marks()
 
         context = self.build_context()
 
@@ -303,6 +303,7 @@ class RubricItemView(UpdateView, ManagerRequiredView):
             )
 
         rubric_as_html = rs.get_rubric_as_html(rubric)
+        # TODO: consider getting rid of this dumps stuff...  maybe plain ol' list?
         context.update(
             {
                 "latest_rubric": rubric,
@@ -312,7 +313,7 @@ class RubricItemView(UpdateView, ManagerRequiredView):
                 "latest_rubric_as_html": rubric_as_html,
                 "diff_form": RubricDiffForm(rid=rid),
                 "edit_form": rubric_form,
-                "questions": json.dumps(questions),
+                "question_max_marks_dict": json.dumps(question_max_marks_dict),
             }
         )
 

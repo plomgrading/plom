@@ -14,7 +14,7 @@
     }
 
     function updateQuestion() {
-        var question_dict = JSON.parse('{{ questions|escapejs }}');
+        var question_dict = JSON.parse('{{ question_max_marks_dict|escapejs }}');
         var question_idx = document.getElementById("id_question").value;
         var out_of = question_dict[question_idx];
         document.getElementById("id_out_of").value = out_of;
