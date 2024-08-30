@@ -14,7 +14,6 @@ from API.views import (
     MgetAllRubrics,
     MgetRubricsByQuestion,
     MgetRubricPanes,
-    MgetRubricUsages,
     McreateRubric,
     MmodifyRubric,
     MlatexFragment,
@@ -80,11 +79,6 @@ class MarkURLPatterns:
                 name="api_MK_get_rubric_panes",
             ),
             path("rubric", McreateRubric.as_view(), name="api_MK_create_rubric"),
-            path(
-                "rubric_usage/<int:rid>",
-                MgetRubricUsages.as_view(),
-                name="api_MK_get_rubric_usages",
-            ),
             path(
                 "rubric/<int:rid>",
                 MmodifyRubric.as_view(),

@@ -30,7 +30,7 @@ from .views import (
     REPcoverPageInfo,
 )
 
-from .views.rubrics import MgetRubricMarkingTasks
+from .views import MgetRubricMarkingTasks
 
 """
 Handle URL patterns for the plom-client / server API.
