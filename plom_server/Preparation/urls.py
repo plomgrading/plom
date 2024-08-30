@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Aidan Murphy
 
 from django.urls import path
 from .views import (
@@ -9,6 +10,7 @@ from .views import (
     PreparationDependencyConflictView,
     PreparationFinishedView,
     SourceManageView,
+    PrenamingConfigView,
     PrenamingView,
     ClasslistView,
     ClasslistDownloadView,
@@ -32,6 +34,9 @@ urlpatterns = [
     ),
     path("source/mock/<int:version>", MockExamView.as_view(), name="prep_mock"),
     path("prename/", PrenamingView.as_view(), name="prep_prename"),
+    path(
+        "prename/configure", PrenamingConfigView.as_view(), name="configure_prenaming"
+    ),
     path("classlist/", ClasslistView.as_view(), name="prep_classlist"),
     path(
         "classlist/download",

@@ -1,0 +1,74 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Aidan Murphy
+    Copyright (C) 2024 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Adjust prenaming position
+{% endblock title %}
+{% block page_heading %}
+    Adjust prenaming position
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="d-grid gap-2">
+        <div>
+            <a class="btn btn-primary" href="{% url 'create_paperPDFs' %}">Return to Build Paper PDFs</a>
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="col-auto">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Prenaming configuration</h5>
+                            <div class="form-group">
+                                <form action="{% url 'configure_prenaming' %}" method="post">
+                                    <p class="mb-1">You can adjust the position of the prenaming box.</p>
+                                    <div class="row">
+                                        <div class="col-auto">
+                                            <!-- mt-1 stops the two boxes from colliding on narrow screens -->
+                                            <div class="input-group mt-1">
+                                                <span class="input-group-text">x</span>
+                                                <input class="form-input border"
+                                                       type="number"
+                                                       name="xPos"
+                                                       id="xPos"
+                                                       value="{{ prename_config.xcoord }}"
+                                                       style="width:6rem">
+                                            </div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <div class="input-group mt-1">
+                                                <span class="input-group-text">y</span>
+                                                <input class="form-input border"
+                                                       type="number"
+                                                       name="yPos"
+                                                       id="yPos"
+                                                       value="{{ prename_config.ycoord }}"
+                                                       style="width:6rem">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% csrf_token %}
+                                <input class="btn btn-primary mt-2"
+                                       type="submit"
+                                       name="set_config"
+                                       value="Save">
+                                <input class="btn btn-primary mt-2"
+                                       type="submit"
+                                       name="reset_config"
+                                       value="Reset to defaults">
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <div class="card">
+                        <img id="mockPNG" src="data:image/png;base64,{{ mock_id_image }}" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}

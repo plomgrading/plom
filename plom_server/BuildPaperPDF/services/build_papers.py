@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Aidan Murphy
 
 from __future__ import annotations
 
@@ -27,8 +28,11 @@ from django_huey import db_task
 from django_huey import get_queue
 
 # TODO: why "staging"? We should talk to the "real" student service
-from Preparation.services import StagingStudentService
-from Preparation.services import PQVMappingService
+from Preparation.services import (
+    StagingStudentService,
+    PQVMappingService,
+    PrenameSettingService,
+)
 from Papers.services import SpecificationService
 from Papers.models import Paper
 from Preparation.models import PaperSourcePDF
@@ -49,6 +53,7 @@ def huey_build_single_paper(
     question_versions: dict[int, int],
     *,
     student_info: dict[str, Any] | None = None,
+    prename_config: dict[str, Any] | None = None,
     tracker_pk: int,
     task=None,
     _debug_be_flaky: bool = False,
@@ -71,6 +76,8 @@ def huey_build_single_paper(
     Keyword Args:
         student_info: None for a regular blank paper or a dict with
             keys ``"id"`` and ``"name"`` for "prenaming" a paper.
+        prename_config: A dict containing keys ``"xcoord"`` and
+            ``"ycoord"``, used to position the prenaming box if student_info isn't None.
         tracker_pk: a key into the database for anyone interested in
             our progress.
         task: includes our ID in the Huey process queue.
@@ -88,6 +95,8 @@ def huey_build_single_paper(
             papernum=papernum,
             question_versions=question_versions,
             extra=student_info,
+            xcoord=prename_config["xcoord"],
+            ycoord=prename_config["ycoord"],
             where=pathlib.Path(tempdir),
             source_versions_path=PaperSourcePDF.upload_to(),
         )
@@ -242,6 +251,7 @@ class BuildPapersService:
         pqv_service = PQVMappingService()
         qvmap = pqv_service.get_pqv_map_dict()
         prenamed = StagingStudentService().get_prenamed_papers()
+        prename_config = PrenameSettingService().get_prenaming_config()
 
         the_papers = Paper.objects.filter(paper_number__in=paper_number_list)
         # Check paper-numbers all legal and store the corresponding paper-objects
@@ -289,6 +299,7 @@ class BuildPapersService:
                 spec,
                 qvmap[chore.paper.paper_number],
                 student_info=student_info,
+                prename_config=prename_config,
                 tracker_pk=chore.pk,
                 _debug_be_flaky=False,
             )
