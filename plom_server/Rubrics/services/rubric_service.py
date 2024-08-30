@@ -639,7 +639,12 @@ class RubricService:
                 "system_rubric": True,
             }
             r = self.create_rubric(rubric)
-            log.info("Built delta-rubric -%d for Qidx %s: %s", 0.5, q, r["id"])
+            log.info(
+                "Built delta-rubric %s for Qidx %d: %s",
+                r["display_delta"],
+                r["question"],
+                r["id"],
+            )
 
             rubric = {
                 "display_delta": "-\N{Vulgar Fraction One Half}",
@@ -654,7 +659,12 @@ class RubricService:
                 "system_rubric": True,
             }
             r = self.create_rubric(rubric)
-            log.info("Built delta-rubric -%d for Qidx %s: %s", -0.5, q, r["id"])
+            log.info(
+                "Built delta-rubric %s for Qidx %d: %s",
+                r["display_delta"],
+                r["question"],
+                r["id"],
+            )
 
     def erase_all_rubrics(self) -> int:
         """Remove all rubrics, permanently deleting them.  BE CAREFUL.
@@ -828,7 +838,7 @@ class RubricService:
 
         return data_string
 
-    def update_rubric_data(self, data: str, filetype: str):
+    def update_rubric_data(self, data: str, filetype: str) -> list[dict[str, Any]]:
         """Retrieves rubrics from a file.
 
         Args:
@@ -836,7 +846,7 @@ class RubricService:
             filetype: The type of the file (json, toml, csv).
 
         Returns:
-            A list of rubrics retrieved from the file.
+            A list of the rubrics created.
 
         Raises:
             ValueError: If the file type is not supported.
@@ -852,7 +862,4 @@ class RubricService:
         else:
             raise ValueError(f"Unsupported file type: {filetype}")
 
-        service = RubricService()
-        for rubric in rubrics:
-            service.create_rubric(rubric)
-        return rubrics
+        return [self.create_rubric(r) for r in rubrics]
