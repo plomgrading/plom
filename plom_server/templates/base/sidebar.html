@@ -39,18 +39,11 @@
         <li class="nav-item">
             <a class="nav-link" href="{% url 'scan_overview' %}">Scanning, bundles and papers</a>
         </li>
-        <li class="nav-item accordion accordion-flush">
-            <a class="nav-link" href="#progress">Mark / ID Progress</a>
-            <div id="progress">
-                <ul style="list-style-type: none">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'overview_landing' %}">Marking and IDing overview</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'progress_user_info_home' %}">User Info</a>
-                    </li>
-                </ul>
-            </div>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'overview_landing' %}">Marking and IDing overview</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'progress_user_info_home' %}">User progress</a>
         </li>
         <li class="nav-item">
             <a class="nav-link" href="{% url 'rubrics_landing' %}">Rubrics</a>

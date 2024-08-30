@@ -719,8 +719,8 @@ class MarkerClient(QWidget):
             return
 
         self.ui.labelProgress.setText("Progress:")
-        self.ui.mProgressBar.setMaximum(info["total_tasks_marked"])
-        self.ui.mProgressBar.setValue(info["total_tasks"])
+        self.ui.mProgressBar.setMaximum(info["total_tasks"])
+        self.ui.mProgressBar.setValue(info["total_tasks_marked"])
 
     def claim_task_interactive(self) -> None:
         """Ask user for paper number and then ask server for that paper.
