@@ -54,15 +54,10 @@ class MgetRubricPanes(APIView):
         return Response(status=status.HTTP_200_OK)
 
 
-class MgetRubricUsages(APIView):
-    def get(self, request: Request, *, key: int) -> Response:
-        rs = RubricService()
-        paper_numbers = rs.get_all_paper_numbers_using_a_rubric(key)
-        return Response(paper_numbers, status=status.HTTP_200_OK)
-
-
 # PUT: /MK/rubric
 class McreateRubric(APIView):
+    """Create a new rubric on the server."""
+
     def put(self, request: Request) -> Response:
         """Create a new rubric on the server.
 
@@ -94,6 +89,8 @@ class McreateRubric(APIView):
 
 # PATCH: /MK/rubric/{key}
 class MmodifyRubric(APIView):
+    """Change a rubric on the server."""
+
     def patch(self, request: Request, *, key: int) -> Response:
         """Change a rubric on the server.
 
@@ -138,6 +135,19 @@ class MmodifyRubric(APIView):
             return _error_response(e, status.HTTP_409_CONFLICT)
 
 
+class MgetRubricUsages(APIView):
+    """Get information about which papers used a rubric.
+
+    TODO: dedupe with :class:`MgetRubricMarkingTasks`; we don't need both.
+    """
+
+    def get(self, request: Request, *, key: int) -> Response:
+        """Get a list of paper numbers that use a particular rubric."""
+        rs = RubricService()
+        paper_numbers = rs.get_all_paper_numbers_using_a_rubric(key)
+        return Response(paper_numbers, status=status.HTTP_200_OK)
+
+
 class MgetRubricMarkingTasks(APIView):
     def get(self, request: Request, *, key: int) -> Response:
         """Returns the marking tasks associated with a rubric.
@@ -156,6 +166,9 @@ class MgetRubricMarkingTasks(APIView):
         Notes: the format of the output is still stabilizing, for example,
         the `latest_annotation` field contains a unusable URL (Issue #3521).
         TODO: Similarly, `paper` field is broken (Issue #3522).
+
+        TODO: dedupe with :class:`MgetRubricUsages`; we don't need both.
+        TODO: note no one calls this one yet.
         """
         rs = RubricService()
 
