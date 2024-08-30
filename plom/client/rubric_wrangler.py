@@ -101,7 +101,7 @@ class RubricModel(QStandardItemModel):
             if showRubricToUser(X):
                 self.appendRow(
                     [
-                        QStandardItem(str(X["id"])),
+                        QStandardItem(str(X["rid"])),
                         QStandardItem(X["username"]),
                         QStandardItem(str(X["display_delta"])),
                         QStandardItem(X["text"]),
@@ -177,7 +177,7 @@ class ShowTable(QTableWidget):
         # insert in key order
         for k in keys:
             # find the rubric with that key
-            rindices = [i for i, v in enumerate(rubrics) if int(v["id"]) == int(k)]
+            rindices = [i for i, v in enumerate(rubrics) if int(v["rid"]) == int(k)]
             if len(rindices) != 1:
                 log.error(
                     "We have a (minor) problem - trying to populate list with key not in our rubric list."
@@ -190,7 +190,7 @@ class ShowTable(QTableWidget):
                 _sorting_enabled = self.isSortingEnabled()
                 self.setSortingEnabled(False)
                 self.insertRow(rc)
-                self.setItem(rc, 0, QTableWidgetItem(rubrics[rind]["id"]))
+                self.setItem(rc, 0, QTableWidgetItem(rubrics[rind]["rid"]))
                 self.setItem(rc, 1, QTableWidgetItem(rubrics[rind]["username"]))
                 self.setItem(rc, 2, QTableWidgetItem(rubrics[rind]["display_delta"]))
                 self.setItem(rc, 3, QTableWidgetItem(rubrics[rind]["text"]))
@@ -405,7 +405,7 @@ class RubricWrangler(QDialog):
         # set sensible default state if rubricWidget sends state=none
         if wranglerState is None:
             wranglerState = {
-                "shown": [X["id"] for X in self.rubrics],  # all keys
+                "shown": [X["rid"] for X in self.rubrics],  # all keys
                 "hidden": [],
                 "tab_order": [],
                 "user_tabs": [],
@@ -451,7 +451,7 @@ class RubricWrangler(QDialog):
     def setFromWranglerState(self, state):
         # does not do any sanity checks
         # set the main list to obey the order in wrangerState, but then append any new rubrics
-        rkeys = [X["id"] for X in self.rubrics]  # keys in order
+        rkeys = [X["rid"] for X in self.rubrics]  # keys in order
         mainList = []
         # add rubrics in the order from state - which is list of keys
         for key in state["shown"]:
