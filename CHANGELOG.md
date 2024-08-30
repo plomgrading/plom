@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Improved box-drag annotation rendering.
 * Misc fixes and documentation updates.
 
+### Removed
+* Support for macOS 12.  This is because GitLab.com no longer provides runners for macOS 12.  Note the EOL for macOS 12 is Nov 2024.
+
 
 
 ## [0.15.7] - 2024-08-14
