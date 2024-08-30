@@ -86,11 +86,11 @@ class RubricDiffForm(forms.Form):
     right_compare = forms.ModelChoiceField(queryset=None)
 
     def __init__(self, *args, **kwargs):
-        key = kwargs.pop("key", None)
+        rid = kwargs.pop("rid", None)
         super().__init__(*args, **kwargs)
 
-        if key:
-            queryset = Rubric.objects.filter(key=key)
+        if rid:
+            queryset = Rubric.objects.filter(rid=rid)
             self.fields["left_compare"].queryset = queryset
             self.fields["left_compare"].label_from_instance = (
                 lambda obj: "Rev. %i" % obj.revision

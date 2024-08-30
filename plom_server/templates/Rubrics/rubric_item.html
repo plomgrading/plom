@@ -9,10 +9,10 @@
 {% load static %}
 {% load humanize %}
 {% block title %}
-    Rubric Info - {{ latest_rubric.key }}
+    Rubric Info - {{ latest_rubric.rid }}
 {% endblock title %}
 {% block page_heading %}
-    Rubric Info
+    Rubric Info - {{ latest_rubric.rid }}
 {% endblock page_heading %}
 {% block main_content %}
     <div class="container m-0">
@@ -20,7 +20,7 @@
             <div class="col">
                 <div class="card">
                     <h5 class="card-header d-flex justify-content-between align-items-center">
-                        Rubric {{ latest_rubric.key }}, revision {{ latest_rubric.revision }}
+                        Rubric {{ latest_rubric.rid }}, revision {{ latest_rubric.revision }}
                         <a class="btn btn-outline-primary float-end"
                            data-bs-toggle="modal"
                            data-bs-target="#editModal"
@@ -33,8 +33,8 @@
                         <table class="table">
                             <tbody>
                                 <tr>
-                                    <th scope="row">Key</th>
-                                    <td>{{ latest_rubric.key }}</td>
+                                    <th scope="row">Rubric-ID</th>
+                                    <td>{{ latest_rubric.rid }}</td>
                                 </tr>
                                 <tr>
                                     <th scope="row">Question</th>
@@ -95,7 +95,7 @@
                         <div class="card-body">
                             <form method="post"
                                   class="form-inline"
-                                  hx-post="{% url 'compare_rubrics' latest_rubric.key %}"
+                                  hx-post="{% url 'compare_rubrics' latest_rubric.rid %}"
                                   hx-target="#diff-result"
                                   hx-swap="innerHTML">
                                 {% csrf_token %}

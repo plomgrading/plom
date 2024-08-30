@@ -87,11 +87,11 @@ class McreateRubric(APIView):
             return _error_response(e, status.HTTP_403_FORBIDDEN)
 
 
-# PATCH: /MK/rubric/{key}
+# PATCH: /MK/rubric/{rid}
 class MmodifyRubric(APIView):
     """Change a rubric on the server."""
 
-    def patch(self, request: Request, *, key: int) -> Response:
+    def patch(self, request: Request, *, rid: int) -> Response:
         """Change a rubric on the server.
 
         Args:
@@ -99,9 +99,8 @@ class MmodifyRubric(APIView):
                 representing the changes you'd like to make.
 
         Keyword Args:
-            key: the "key" or "id" of the rubric to modify.  This is not
-                guaranteed to be the "private key" in the database.  In
-                fact currently it is not.
+            rid: the key/id of the rubric to modify.  This is not
+                the same thing as the "primary key" in the database.
 
         Returns:
             On success, responds with the JSON key-value representation
@@ -116,15 +115,13 @@ class MmodifyRubric(APIView):
         rs = RubricService()
         try:
             rubric_as_dict = rs.modify_rubric(
-                key, request.data["rubric"], modifying_user=request.user
+                rid, request.data["rubric"], modifying_user=request.user
             )
             # TODO: use a serializer to get automatic conversion from Rubric object?
             return Response(rubric_as_dict, status=status.HTTP_200_OK)
         except ObjectDoesNotExist as e:
-            # Django also intercepts invalid (too short) keys before we see them
-            # and uses 404 for those (see the regex in ``mark_patterns.py``).
             return _error_response(
-                f"Rubric with key {key} not found: {e}", status.HTTP_404_NOT_FOUND
+                f"Rubric rid={rid} not found: {e}", status.HTTP_404_NOT_FOUND
             )
         except PermissionDenied as e:
             # not catching this would work, but we don't get the full error message
@@ -141,22 +138,22 @@ class MgetRubricUsages(APIView):
     TODO: dedupe with :class:`MgetRubricMarkingTasks`; we don't need both.
     """
 
-    def get(self, request: Request, *, key: int) -> Response:
+    def get(self, request: Request, *, rid: int) -> Response:
         """Get a list of paper numbers that use a particular rubric."""
         rs = RubricService()
-        paper_numbers = rs.get_all_paper_numbers_using_a_rubric(key)
+        paper_numbers = rs.get_all_paper_numbers_using_a_rubric(rid)
         return Response(paper_numbers, status=status.HTTP_200_OK)
 
 
 class MgetRubricMarkingTasks(APIView):
-    def get(self, request: Request, *, key: int) -> Response:
+    def get(self, request: Request, *, rid: int) -> Response:
         """Returns the marking tasks associated with a rubric.
 
         Args:
             request: HTTP Request of the API call.
 
         Keyword Args:
-            key: for which rubric do we want marking tasks.
+            rid: for which rubric do we want marking tasks.
 
         Returns:
             On success, responds with the JSON representations of
@@ -173,10 +170,10 @@ class MgetRubricMarkingTasks(APIView):
         rs = RubricService()
 
         try:
-            rubric = rs.get_rubric_by_key(key)
+            rubric = rs.get_rubric_by_rid(rid)
         except ObjectDoesNotExist as e:
             return _error_response(
-                f"Rubric with key {key} not found: {e}", status.HTTP_404_NOT_FOUND
+                f"Rubric rid={rid} not found: {e}", status.HTTP_404_NOT_FOUND
             )
         tasks = rs.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
         serializer = MarkingTaskSerializer(

@@ -316,7 +316,7 @@ def diff_rubric(p: dict[str, Any], r: dict[str, Any]) -> tuple[bool, str]:
         when = mod
     else:
         when = arrow.get(mod).humanize()
-    prefix = f'id <tt>{r["id"]}</tt> by {r["username"]} {when}'
+    prefix = f'id <tt>{r["rid"]}</tt> by {r["username"]} {when}'
     out = ""
     br = "<br />"
     if p["display_delta"] != r["display_delta"]:

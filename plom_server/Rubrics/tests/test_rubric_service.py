@@ -283,10 +283,10 @@ class RubricServiceTests(TestCase):
     def test_modify_neutral_rubric(self) -> None:
         """Test RubricService.modify_rubric() to modify a neural rubric."""
         service = RubricService()
-        key = self.modified_neutral_rubric.key
+        rid = self.modified_neutral_rubric.rid
 
         simulated_client_data = {
-            "id": key,
+            "rid": rid,
             "kind": "neutral",
             "display_delta": ".",
             "value": 0.0,
@@ -299,19 +299,19 @@ class RubricServiceTests(TestCase):
             "versions": [],
             "parameters": [],
         }
-        r = service.modify_rubric(key, simulated_client_data)
+        r = service.modify_rubric(rid, simulated_client_data)
 
-        self.assertEqual(r["id"], self.modified_neutral_rubric.key)
+        self.assertEqual(r["rid"], self.modified_neutral_rubric.rid)
         self.assertEqual(r["kind"], self.modified_neutral_rubric.kind)
         self.assertEqual(r["display_delta"], self.modified_neutral_rubric.display_delta)
 
     def test_modify_relative_rubric(self):
         """Test RubricService.modify_rubric() to modify a relative rubric."""
         service = RubricService()
-        key = self.modified_relative_rubric.key
+        rid = self.modified_relative_rubric.rid
 
         simulated_client_data = {
-            "id": key,
+            "rid": rid,
             "kind": "relative",
             "display_delta": "+2.5",
             "value": 2.5,
@@ -324,9 +324,9 @@ class RubricServiceTests(TestCase):
             "versions": [],
             "parameters": [],
         }
-        r = service.modify_rubric(key, simulated_client_data)
+        r = service.modify_rubric(rid, simulated_client_data)
 
-        self.assertEqual(r["id"], self.modified_relative_rubric.key)
+        self.assertEqual(r["rid"], self.modified_relative_rubric.rid)
         self.assertEqual(r["kind"], self.modified_relative_rubric.kind)
         self.assertEqual(
             r["display_delta"], self.modified_relative_rubric.display_delta
@@ -337,10 +337,10 @@ class RubricServiceTests(TestCase):
     def test_modify_absolute_rubric(self) -> None:
         """Test RubricService.modify_rubric() to modify a relative rubric."""
         service = RubricService()
-        key = self.modified_absolute_rubric.key
+        rid = self.modified_absolute_rubric.rid
 
         simulated_client_data = {
-            "id": key,
+            "rid": rid,
             "kind": "absolute",
             "display_delta": "1.5 of 5.0",
             "value": 1.5,
@@ -353,9 +353,9 @@ class RubricServiceTests(TestCase):
             "versions": [],
             "parameters": [],
         }
-        r = service.modify_rubric(key, simulated_client_data)
+        r = service.modify_rubric(rid, simulated_client_data)
 
-        self.assertEqual(r["id"], self.modified_absolute_rubric.key)
+        self.assertEqual(r["rid"], self.modified_absolute_rubric.rid)
         self.assertEqual(r["kind"], self.modified_absolute_rubric.kind)
         self.assertEqual(
             r["display_delta"], self.modified_absolute_rubric.display_delta
@@ -368,22 +368,22 @@ class RubricServiceTests(TestCase):
         """Test RubricService.modify_rubric(), can change the "kind" of rubrics.
 
         For each of the three kinds of rubric, we ensure we can change them
-        into the other three kinds.  The key should not change.
+        into the other three kinds.  The rid should not change.
         """
         user: User = baker.make(User)
         username = user.username
 
         for kind in ("absolute", "relative", "neutral"):
             rubric = baker.make(Rubric, user=user, kind=kind, latest=True)
-            key = rubric.key
+            rid = rubric.rid
             d = _Rubric_to_dict(rubric)
 
             d["kind"] = "neutral"
             d["display_delta"] = "."
             d["username"] = username
 
-            r = RubricService().modify_rubric(key, d)
-            self.assertEqual(r["id"], rubric.key)
+            r = RubricService().modify_rubric(rid, d)
+            self.assertEqual(r["rid"], rubric.rid)
             self.assertEqual(r["kind"], d["kind"])
             self.assertEqual(r["display_delta"], d["display_delta"])
 
@@ -392,10 +392,10 @@ class RubricServiceTests(TestCase):
             d["value"] = 2.0
             d["username"] = username
             # update the revision
-            d["revision"] = RubricService().get_rubric_by_key(key).revision
+            d["revision"] = RubricService().get_rubric_by_rid(rid).revision
 
-            r = RubricService().modify_rubric(key, d)
-            self.assertEqual(r["id"], rubric.key)
+            r = RubricService().modify_rubric(rid, d)
+            self.assertEqual(r["rid"], rubric.rid)
             self.assertEqual(r["kind"], d["kind"])
             self.assertEqual(r["display_delta"], d["display_delta"])
             self.assertEqual(r["value"], d["value"])
@@ -406,10 +406,10 @@ class RubricServiceTests(TestCase):
             d["out_of"] = 3.0
             d["username"] = username
             # update the revision
-            d["revision"] = RubricService().get_rubric_by_key(key).revision
+            d["revision"] = RubricService().get_rubric_by_rid(rid).revision
 
-            r = RubricService().modify_rubric(key, d)
-            self.assertEqual(r["id"], rubric.key)
+            r = RubricService().modify_rubric(rid, d)
+            self.assertEqual(r["rid"], rubric.rid)
             self.assertEqual(r["kind"], d["kind"])
             self.assertEqual(r["display_delta"], d["display_delta"])
             self.assertEqual(r["value"], d["value"])
@@ -502,16 +502,16 @@ class RubricServiceTests(TestCase):
             "revision": 10,
         }
         r = RubricService().create_rubric(rub)
-        key = r["id"]
+        rid = r["rid"]
 
         # ok to change if revision matches
         rub.update({"text": "Changed"})
-        RubricService().modify_rubric(key, rub)
+        RubricService().modify_rubric(rid, rub)
 
         # but its an error if the revision does not match
         rub.update({"revision": 0})
         with self.assertRaises(PlomConflict):
-            RubricService().modify_rubric(key, rub)
+            RubricService().modify_rubric(rid, rub)
 
     def test_rubrics_get_as_dicts(self) -> None:
         rubrics = RubricService().get_rubrics_as_dicts()

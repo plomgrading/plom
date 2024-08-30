@@ -81,12 +81,12 @@ class MarkURLPatterns:
             ),
             path("rubric", McreateRubric.as_view(), name="api_MK_create_rubric"),
             path(
-                "rubric_usage/<int:key>",
+                "rubric_usage/<int:rid>",
                 MgetRubricUsages.as_view(),
                 name="api_MK_get_rubric_usages",
             ),
             path(
-                "rubric/<int:key>",
+                "rubric/<int:rid>",
                 MmodifyRubric.as_view(),
                 name="api_MK_modify_rubric",
             ),

@@ -446,14 +446,14 @@ class RubricTable(QTableWidget):
         """
         # ensure there is exactly one matching rubric in the list and grab it
         # TODO: should the local storage be a dict to make this easy?
-        (rubric,) = [x for x in self._parent.rubrics if x["id"] == key]
+        (rubric,) = [x for x in self._parent.rubrics if x["rid"] == key]
         self.appendNewRubric(rubric)
 
     def appendNewRubric(self, rubric: dict[str, Any]) -> None:
         rc = self.rowCount()
         # do sanity check for duplications
         for r in range(rc):
-            if self._get_key_from_row(r) == rubric["id"]:
+            if self._get_key_from_row(r) == rubric["rid"]:
                 return  # rubric already present
         # is a new rubric, so append it
         # Careful about sorting during setItem calls: Issue #2065
@@ -461,7 +461,7 @@ class RubricTable(QTableWidget):
         self.setSortingEnabled(False)
         self.insertRow(rc)
         # rubric key as string to avoid overflow on legacy servers with large keys
-        self.setItem(rc, 0, QTableWidgetItem(str(rubric["id"])))
+        self.setItem(rc, 0, QTableWidgetItem(str(rubric["rid"])))
         self.setItem(rc, 1, QTableWidgetItem(rubric["username"]))
         self.setItem(rc, 2, QTableWidgetItem(rubric["display_delta"]))
 
@@ -537,7 +537,7 @@ class RubricTable(QTableWidget):
         for r in range(self.rowCount()):
             self.removeRow(0)
         # since populating in order of id_list, build all keys from rubric_list
-        rkl = [X["id"] for X in rubric_list]
+        rkl = [X["rid"] for X in rubric_list]
         for i in id_list:
             try:  # guard against mysterious keys
                 rb = rubric_list[rkl.index(i)]
@@ -708,7 +708,7 @@ class RubricTable(QTableWidget):
         assert item
         rid = int(item.text())
         for rubric in self._parent.rubrics:
-            if rubric["id"] == rid:
+            if rubric["rid"] == rid:
                 return rubric
         raise RuntimeError(f"Cannot find rubric {rid}. Corrupted rubric lists?")
 
@@ -1173,8 +1173,8 @@ class RubricWidget(QWidget):
         self.rubrics = self._parent.getRubricsFromServer()
         self.setRubricTabsFromState(self.get_tab_rubric_lists())
         self._parent.saveTabStateToServer(self.get_tab_rubric_lists())
-        old = {r["id"]: r for r in old_rubrics}
-        new = {r["id"]: r for r in self.rubrics}
+        old = {r["rid"]: r for r in old_rubrics}
+        new = {r["rid"]: r for r in self.rubrics}
         added = []
         changed = []
         deleted = []
@@ -1313,11 +1313,11 @@ class RubricWidget(QWidget):
             if rubric_is_naked_delta(rubric):
                 continue
             if (
-                rubric["id"] not in wranglerState["hidden"]
-                and rubric["id"] not in wranglerState["shown"]
+                rubric["rid"] not in wranglerState["hidden"]
+                and rubric["rid"] not in wranglerState["shown"]
             ):
-                log.info("Appending new rubric with id {}".format(rubric["id"]))
-                wranglerState["shown"].append(rubric["id"])
+                log.info("Appending new rubric with id {}".format(rubric["rid"]))
+                wranglerState["shown"].append(rubric["rid"])
 
         group_tab_data: dict[str, list[int]] = {}
         for rubric in self.rubrics:
@@ -1334,11 +1334,11 @@ class RubricWidget(QWidget):
                     continue
                 if not group_tab_data.get(g):
                     group_tab_data[g] = []
-                group_tab_data[g].append(rubric["id"])
+                group_tab_data[g].append(rubric["rid"])
 
         # Filter any "hidden" rubrics out of "shown", group and user tabs
         for rubric in self.rubrics:
-            rid = rubric["id"]
+            rid = rubric["rid"]
             if rid not in wranglerState["hidden"]:
                 continue
             if rid in wranglerState["shown"]:
@@ -1693,7 +1693,7 @@ class RubricWidget(QWidget):
         """Open a dialog to edit a rubric - from the id-key of that rubric."""
         # first grab the rubric from that key
         try:
-            index = [x["id"] for x in self.rubrics].index(key)
+            index = [x["rid"] for x in self.rubrics].index(key)
         except ValueError:
             # no such rubric - this should not happen
             return
@@ -1754,11 +1754,11 @@ class RubricWidget(QWidget):
         newmeta = [com["meta"]] if com["meta"] else []
         newmeta.append(
             'Forked from Rubric ID {}, created by user "{}".'.format(
-                com["id"], com["username"]
+                com["rid"], com["username"]
             )
         )
         com["meta"] = "\n".join(newmeta)
-        com["id"] = None
+        com["rid"] = None
         com["username"] = self.username
         self._new_or_edit_rubric(com, edit=False)
 
@@ -1811,7 +1811,7 @@ class RubricWidget(QWidget):
 
         if edit:
             try:
-                new_rubric = self._parent.modifyRubric(new_rubric["id"], new_rubric)
+                new_rubric = self._parent.modifyRubric(new_rubric["rid"], new_rubric)
             except PlomNoPermission as e:
                 InfoMsg(self, f"No permission to modify that rubric: {e}").exec()
                 return
@@ -1822,9 +1822,11 @@ class RubricWidget(QWidget):
                 ErrorMsg(self, f"{e}").exec()
                 return
             except PlomConflict as e:
-                theirs = self._parent.getOneRubricFromServer(new_rubric["id"])
+                theirs = self._parent.getOneRubricFromServer(new_rubric["rid"])
                 # ensure there is exactly one matching rubric in each list and grab it
-                (old_rubric,) = [r for r in self.rubrics if r["id"] == new_rubric["id"]]
+                (old_rubric,) = [
+                    r for r in self.rubrics if r["rid"] == new_rubric["rid"]
+                ]
                 RubricConflictDialog(
                     self, str(e), theirs, new_rubric, old_rubric
                 ).exec()
@@ -1840,7 +1842,7 @@ class RubricWidget(QWidget):
             if False and random.random() < 0.33:
                 _tmp = new_rubric.copy()
                 _tmp["text"] = _tmp["text"] + " [simulated offline comment change]"
-                self._parent.modifyRubric(_tmp["id"], _tmp)
+                self._parent.modifyRubric(_tmp["rid"], _tmp)
 
         else:
             try:

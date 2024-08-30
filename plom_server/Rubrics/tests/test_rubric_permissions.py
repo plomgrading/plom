@@ -35,23 +35,23 @@ class RubricServiceTests_permissions(TestCase):
         s.who_can_modify_rubrics = "locked"
         s.save()
         rub = RubricService().create_rubric(_make_ex())
-        key = rub["id"]
+        rid = rub["rid"]
         rub.update({"text": "new text"})
         # succeeded b/c user is None
-        RubricService().modify_rubric(key, rub, modifying_user=None)
+        RubricService().modify_rubric(rid, rub, modifying_user=None)
 
     def test_rubrics_cannot_modify_when_locked(self) -> None:
         s = SettingsModel.load()
         s.who_can_modify_rubrics = "locked"
         s.save()
         rub = RubricService().create_rubric(_make_ex())
-        key = rub["id"]
+        rid = rub["rid"]
         rub.update({"text": "new text"})
         with self.assertRaises(PermissionDenied):
-            RubricService().modify_rubric(key, rub, modifying_user="yvonne")
+            RubricService().modify_rubric(rid, rub, modifying_user="yvonne")
         # even creator cannot modify
         with self.assertRaises(PermissionDenied):
-            RubricService().modify_rubric(key, rub, modifying_user="xenia")
+            RubricService().modify_rubric(rid, rub, modifying_user="xenia")
 
     def test_rubrics_permissive_cannot_modify_system_rubrics(self) -> None:
         s = SettingsModel.load()
@@ -60,10 +60,10 @@ class RubricServiceTests_permissions(TestCase):
         rub = _make_ex()
         rub.update({"system_rubric": True})
         rub = RubricService().create_rubric(rub)
-        key = rub["id"]
+        rid = rub["rid"]
         rub.update({"text": "trying to change a system rubric"})
         with self.assertRaises(PermissionDenied):
-            RubricService().modify_rubric(key, rub, modifying_user="xenia")
+            RubricService().modify_rubric(rid, rub, modifying_user="xenia")
 
     def test_rubrics_cannot_create_when_locked(self) -> None:
         s = SettingsModel.load()
