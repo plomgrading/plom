@@ -12,7 +12,9 @@ import random
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+import django_tables2
 
 # from django.db.models import Max
 # from django.db.models.query_utils import Q
@@ -141,6 +143,7 @@ class Rubric(models.Model):
     )
     revision = models.IntegerField(null=False, blank=True, default=0)
     latest = models.BooleanField(null=False, blank=True, default=True)
+    pedagogy_tags = models.ManyToManyField("QuestionTags.PedagogyTag", blank=True)
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -156,6 +159,18 @@ class Rubric(models.Model):
         if self.display_delta == ".":
             return f"{self.text}"
         return f"[{self.display_delta}] {self.text}"
+
+    def get_absolute_url(self):
+        """Return the URL to the detail view for this rubric.
+
+        This is some internal Django stuff.   Importantly, it doesn't seem to be the full
+        URL including proxied hostname or other things we cannot know but just returns
+        a nice simply string like "/rubrics/42/".  Why precisely we have this method or
+        what purposes it serves is left as an exercise to some future maintainer as the
+        current author does not know wtf is going on here, just that its not as scary as
+        the name implies.
+        """
+        return reverse("rubric_item", kwargs={"rubric_key": self.key})
 
     class Meta:
         constraints = [
@@ -178,3 +193,37 @@ class RubricPane(models.Model):
     user = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
     question = models.PositiveIntegerField(default=0)
     data = models.JSONField(null=False, default=dict)
+
+
+# TODO: why does this live here in models?  It hopefully isn't a DB table
+class RubricTable(django_tables2.Table):
+    """Table class for displaying rubrics.
+
+    More information on django-tables2 can be found at:
+    https://django-tables2.readthedocs.io/en/latest
+    """
+
+    key = django_tables2.Column("Key", linkify=True)
+    times_used = django_tables2.Column(verbose_name="# Used")
+
+    class Meta:
+        model = Rubric
+
+        fields = (
+            "key",
+            "display_delta",
+            "last_modified",
+            "kind",
+            "system_rubric",
+            "question",
+            "text",
+        )
+        sequence = (
+            "key",
+            "display_delta",
+            "last_modified",
+            "kind",
+            "system_rubric",
+            "question",
+            "text",
+        )

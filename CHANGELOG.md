@@ -602,7 +602,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Mild warnings when user gives 0 but there are some ticks on page. Similar mild warnings when user gives full but there are crosses.
 * Manager and plom-finish now has list of "dangling" pages - ones which are attached to not-completely-scanned groups. Manager can remove those pages.
 * GNU/Linux binaries now using AppImage which should be more portable.
-* More sanity checks especially around finishing and uploading.
+* More checks especially around finishing and uploading.
 
 ### Changed
 * Command line tool `plom-build` has been renamed to `plom-create` and/or `python3 -m plom.create`.
@@ -612,7 +612,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Server can now optionally start without a spec file.
 * Deprecated "LoosePages" have been removed.
 * Tests have exactly one ID page (before they could have more than one).
-* Spec files have more sanity checks and some keys are now optional.
+* Spec files have more checks and some keys are now optional.
    - Do not mark pages now specified directly as list "doNotMarkPages = [1,2,3]"
 * Misc plom-manager improvements.
 * API calls have a default 10s timeout (and 2 retries), so semi-inevitable failures fail faster.
@@ -791,7 +791,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.3] - 2021-05-28
 
 ### Fixed
-* Minor bug fix to stop user being able to create 0-point relative rubrics. Related server-side rubric sanity checking.
+* Minor bug fix to stop user being able to create 0-point relative rubrics. Related server-side rubric checking.
 * Fix Flatpak and source packaging to include icons and cursors.
 * Misc bug fixes.
 

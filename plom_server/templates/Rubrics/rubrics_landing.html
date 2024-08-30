@@ -4,9 +4,12 @@
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023 Divy Patel
     Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2024 Aden Chan
     Copyright (C) 2024 Aidan Murphy
 -->
 {% extends "base/base.html" %}
+{% load humanize %}
+{% load render_table from django_tables2 %}
 {% block title %}
     Rubrics
 {% endblock title %}
@@ -24,48 +27,28 @@
     </div>
     <hr />
     {% comment %} Filter {% endcomment %}
-    <div>
-        <form method="get" action="" class="form-inline">
-            <div class="form-group mr-2">{{ rubric_filter_form }}</div>
-            <button type="submit" class="btn btn-success">Filter</button>
-        </form>
+    <div class="row">
+        <div class="col-10">
+            <form method="get" action="" class="form-inline">
+                <div class="form-group mr-2">
+                    {{ rubric_filter_form }}
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-filter"></i> Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="col-2">
+            <button type="submit"
+                    class="btn btn-primary float-end"
+                    data-bs-toggle="modal"
+                    data-bs-target="#editModal"
+                    onclick="populateFields()">
+                <i class="bi bi-plus-circle-fill"></i> Create Rubric
+            </button>
+        </div>
     </div>
     {% comment %} Table {% endcomment %}
-    <div>
-        <table class="table table-striped table-bordered sortable">
-            <thead>
-                <tr>
-                    <th scope="col">ID</th>
-                    <th scope="col">Value</th>
-                    <th scope="col">Out of</th>
-                    <th scope="col">Display Delta</th>
-                    <th scope="col">Kind</th>
-                    <th scope="col">System</th>
-                    <!-- This column should use the question label html -->
-                    <th scope="col">Question index</th>
-                    <th scope="col"># used</th>
-                    <th scope="col">Text</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for rubric in rubrics %}
-                    <tr>
-                        <td>
-                            <a href="{% url 'rubric_item' rubric.key %}">{{ rubric.key }}</a>
-                        </td>
-                        <td>{{ rubric.value_str }}</td>
-                        <td>
-                            {% if rubric.out_of %}{{ rubric.out_of_str }}{% endif %}
-                        </td>
-                        <td>{{ rubric.display_delta }}</td>
-                        <td>{{ rubric.kind }}</td>
-                        <td>{{ rubric.system_rubric }}</td>
-                        <td>{{ rubric.question }}</td>
-                        <td></td>
-                        <td>{{ rubric.text }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    <div class="mt-2">{% render_table rubrics %}</div>
+    {% include "./modal_forms.html" %}
 {% endblock main_content %}

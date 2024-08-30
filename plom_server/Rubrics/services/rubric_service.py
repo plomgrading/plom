@@ -20,6 +20,7 @@ import html
 import json
 import logging
 import sys
+from django.db.models.aggregates import Count
 import tomlkit
 from typing import Any
 
@@ -108,19 +109,27 @@ class RubricService:
 
     # implementation detail of the above, independently testable
     def _create_rubric(
-        self, rubric_data: dict[str, Any], *, creating_user: User | None = None
+        self, incoming_data: dict[str, Any], *, creating_user: User | None = None
     ) -> Rubric:
-        rubric_data = rubric_data.copy()
+        incoming_data = incoming_data.copy()
 
-        if "user" not in rubric_data.keys():
-            username = rubric_data.pop("username")
+        # some mangling around user/username here
+        if "user" not in incoming_data.keys():
+            username = incoming_data.pop("username")
             try:
                 user = User.objects.get(username=username)
-                rubric_data["user"] = user.pk
-                rubric_data["modified_by_user"] = user.pk
+                incoming_data["user"] = user.pk
+                incoming_data["modified_by_user"] = user.pk
             except ObjectDoesNotExist as e:
                 raise ValueError(f"User {username} does not exist.") from e
 
+        if "kind" not in incoming_data.keys():
+            raise ValidationError({"kind": "Kind is required."})
+
+        if incoming_data["kind"] not in ["absolute", "relative", "neutral"]:
+            raise ValidationError({"kind": "Invalid kind."})
+
+        # Check permissions
         s = SettingsModel.load()
         if creating_user is None:
             pass
@@ -142,13 +151,31 @@ class RubricService:
                 )
             pass
 
-        rubric_data["latest"] = True
-        serializer = RubricSerializer(data=rubric_data)
-        if not serializer.is_valid():
+        # Now do actual stuff
+
+        if incoming_data.get("display_delta", None) is None:
+            # if we don't have a display_delta, we'll generate a default one
+            incoming_data["display_delta"] = self._generate_display_delta(
+                # if value is missing, can only be neutral
+                # missing value will be prohibited in a future MR
+                incoming_data.get("value", 0),
+                incoming_data["kind"],
+                incoming_data.get("out_of", None),
+            )
+
+        incoming_data["latest"] = True
+        serializer = RubricSerializer(data=incoming_data)
+        if serializer.is_valid():
+            new_rubric = serializer.save()
+
+            new_rubric.pedagogy_tags.clear()
+            for tag in incoming_data.get("pedagogy_tags", []):
+                new_rubric.pedagogy_tags.add(tag)
+
+            rubric_obj = serializer.instance
+            return rubric_obj
+        else:
             raise ValidationError(serializer.errors)
-        serializer.save()
-        rubric_obj = serializer.instance
-        return rubric_obj
 
     @transaction.atomic
     def modify_rubric(
@@ -188,7 +215,6 @@ class RubricService:
 
         try:
             user = User.objects.get(username=username)
-            new_rubric_data["user"] = user.pk
         except ObjectDoesNotExist as e:
             raise ValueError(f"User {username} does not exist.") from e
 
@@ -248,11 +274,20 @@ class RubricService:
         if modifying_user is not None:
             new_rubric_data["modified_by_user"] = modifying_user.pk
 
+        # To be changed by future MR
+        new_rubric_data["user"] = old_rubric.user.pk
         new_rubric_data["revision"] += 1
         new_rubric_data["latest"] = True
         new_rubric_data["key"] = old_rubric.key
         # client might be using id instead of key in places, see Issue #1492
         new_rubric_data.pop("id", None)
+
+        new_rubric_data["display_delta"] = self._generate_display_delta(
+            new_rubric_data.get("value", 0),
+            new_rubric_data["kind"],
+            new_rubric_data.get("out_of", None),
+        )
+
         serializer = RubricSerializer(data=new_rubric_data)
 
         if not serializer.is_valid():
@@ -261,9 +296,56 @@ class RubricService:
         old_rubric.latest = False
         old_rubric.save()
 
-        serializer.save()
+        new_rubric = serializer.save()
+
+        new_rubric.pedagogy_tags.clear()
+        for tag in new_rubric_data.get("pedagogy_tags", []):
+            new_rubric.pedagogy_tags.add(tag)
+
         rubric_obj = serializer.instance
         return _Rubric_to_dict(rubric_obj)
+
+    def _generate_display_delta(
+        self,
+        value: int | float | str,
+        kind: str,
+        out_of: int | float | str | None = None,
+    ) -> str:
+        """Generate the display delta for a rubric.
+
+        Keyword Args:
+            value: the value of the rubric.
+            kind: the kind of the rubric.
+            out_of: the maximum value of the rubric, required for
+                absolute rubrics, none for other rubrics
+
+        Raises:
+            ValueError: if the kind is not valid.
+            ValueError: if the kind is absolute and out_of is not provided.
+        """
+        value = float(value) if isinstance(value, str) else value
+        out_of = float(out_of) if isinstance(out_of, str) else out_of
+
+        # TODO: we may want to special case vulgar fractions in the future
+
+        if kind == "absolute":
+            if out_of is None:
+                raise ValueError("out_of is required for absolute rubrics.")
+            else:
+                if isinstance(value, int) or value.is_integer():
+                    return f"{value:g} of {out_of:g}"
+                else:
+                    return f"{value} of {out_of}"
+        elif kind == "relative":
+            if value > 0:
+                return f"+{value:g}"
+            else:
+                # Negative sign gets applied automatically
+                return f"{value:g}"
+        elif kind == "neutral":
+            return "."
+        else:
+            raise ValueError(f"Invalid kind: {kind}.")
 
     @classmethod
     def get_rubrics_as_dicts(
@@ -300,11 +382,26 @@ class RubricService:
         """
         return Rubric.objects.filter(latest=True)
 
+    def get_all_rubrics_with_counts(self) -> QuerySet[Rubric]:
+        """Get all latest rubrics but also annotate with how many times it has been used.
+
+            Times used included all annotations, not just latest ones.
+            @arechnitzer promises to fix this behavior in a future MR.
+
+        Returns:
+            Lazy queryset of all rubrics with counts.
+        """
+        qs = self.get_all_rubrics()
+        return qs.annotate(times_used=Count("annotations"))
+
+    # TODO: create method to get all rubrics with counts of how many times
+    #       it has been used in the latest edition of a paper
+
     def get_rubric_count(self) -> int:
         """How many rubrics in total (excluding revisions)."""
         return Rubric.objects.filter(latest=True).count()
 
-    def get_rubric_by_key(self, rubric_key: str) -> Rubric:
+    def get_rubric_by_key(self, rubric_key: int) -> Rubric:
         """Get the latest rurbic revision by its key/id.
 
         Args:
@@ -317,7 +414,7 @@ class RubricService:
         """
         return Rubric.objects.get(key=rubric_key, latest=True)
 
-    def get_past_revisions_by_key(self, rubric_key: str) -> list[Rubric]:
+    def get_past_revisions_by_key(self, rubric_key: int) -> list[Rubric]:
         """Get all earlier revisions of a rubric by the key, not including the latest one.
 
         Args:
@@ -326,9 +423,13 @@ class RubricService:
         Returns:
             A list of rubrics with the specified key
         """
-        return list(Rubric.objects.filter(key=rubric_key, latest=False).all())
+        return list(
+            Rubric.objects.filter(key=rubric_key, latest=False)
+            .all()
+            .order_by("revision")
+        )
 
-    def get_all_paper_numbers_using_a_rubric(self, rubric_key: str) -> list[int]:
+    def get_all_paper_numbers_using_a_rubric(self, rubric_key: int) -> list[int]:
         """Get a list of paper number using the given rubric.
 
         Args:
@@ -356,7 +457,7 @@ class RubricService:
 
         return paper_numbers
 
-    def get_rubric_by_key_as_dict(self, rubric_key: str) -> dict[str, Any]:
+    def get_rubric_by_key_as_dict(self, rubric_key: int) -> dict[str, Any]:
         """Get a rubric by its key/id and return as a dictionary.
 
         Args:
@@ -494,84 +595,45 @@ class RubricService:
                     {
                         "display_delta": "+1\N{Vulgar Fraction One Half}",
                         "value": 1.5,
-                        "out_of": 0,
                         "text": "testing non-integer rubric",
                         "kind": "relative",
                         "question": q,
-                        "meta": "",
-                        "tags": "",
                         "username": username,
                         "system_rubric": True,
                     },
                     {
                         "display_delta": "-\N{Vulgar Fraction One Half}",
                         "value": -0.5,
-                        "out_of": 0,
                         "text": "testing negative non-integer rubric",
                         "kind": "relative",
                         "question": q,
-                        "meta": "",
-                        "tags": "",
-                        "username": username,
-                        "system_rubric": True,
-                    },
-                    {
-                        "display_delta": "\N{Vulgar Fraction One Half}",
-                        "value": 0.5,
-                        "out_of": 0,
-                        "text": ".",
-                        "kind": "relative",
-                        "question": q,
-                        "meta": "",
-                        "tags": "",
-                        "username": username,
-                        "system_rubric": True,
-                    },
-                    {
-                        "display_delta": "-\N{Vulgar Fraction One Half}",
-                        "value": -0.5,
-                        "out_of": 0,
-                        "text": ".",
-                        "kind": "relative",
-                        "question": q,
-                        "meta": "",
-                        "tags": "",
                         "username": username,
                         "system_rubric": True,
                     },
                     {
                         "display_delta": "+a tenth",
                         "value": 1 / 10,
-                        "out_of": 0,
                         "text": "one tenth of one point",
                         "kind": "relative",
                         "question": q,
-                        "meta": "",
-                        "tags": "",
                         "username": username,
                         "system_rubric": True,
                     },
                     {
                         "display_delta": "+1/29",
                         "value": 1 / 29,
-                        "out_of": 0,
                         "text": "ADR will love co-prime pairs",
                         "kind": "relative",
                         "question": q,
-                        "meta": "",
-                        "tags": "",
                         "username": username,
                         "system_rubric": True,
                     },
                     {
                         "display_delta": "+1/31",
                         "value": 1 / 31,
-                        "out_of": 0,
                         "text": r"tex: Note that $31 \times 29 = 899$.",
                         "kind": "relative",
                         "question": q,
-                        "meta": "",
-                        "tags": "",
                         "username": username,
                         "system_rubric": True,
                     },
@@ -582,8 +644,6 @@ class RubricService:
                         "text": "testing absolute rubric",
                         "kind": "absolute",
                         "question": q,
-                        "meta": "",
-                        "tags": "",
                         "username": username,
                         "system_rubric": True,
                     },
@@ -629,12 +689,9 @@ class RubricService:
             rubric = {
                 "display_delta": "+\N{Vulgar Fraction One Half}",
                 "value": 0.5,
-                "out_of": 0,
                 "text": ".",
                 "kind": "relative",
                 "question": q,
-                "meta": "",
-                "tags": "",
                 "username": username,
                 "system_rubric": True,
             }
@@ -649,12 +706,9 @@ class RubricService:
             rubric = {
                 "display_delta": "-\N{Vulgar Fraction One Half}",
                 "value": -0.5,
-                "out_of": 0,
                 "text": ".",
                 "kind": "relative",
                 "question": q,
-                "meta": "",
-                "tags": "",
                 "username": username,
                 "system_rubric": True,
             }

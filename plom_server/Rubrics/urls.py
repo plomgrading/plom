@@ -22,8 +22,9 @@ urlpatterns = [
         name="feedback_rules",
     ),
     path("<int:rubric_key>/", views.RubricItemView.as_view(), name="rubric_item"),
-    path("<int:rubric_key>/edit/", views.RubricItemView.post, name="rubric_edit"),
     path("admin/download/", views.DownloadRubricView.as_view(), name="rubric_download"),
     path("admin/upload/", views.UploadRubricView.as_view(), name="rubric_upload"),
     path("<int:rubric_key>/compare", views.compare_rubrics, name="compare_rubrics"),
+    path("rubrics/create", views.RubricCreateView.as_view(), name="rubric_create"),
+    path("<int:rubric_key>/edit/", views.RubricEditView.as_view(), name="rubric_edit"),
 ]

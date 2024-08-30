@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechntizer
+# Copyright (C) 2024 Colin B. Macdonald
 
 [[rubric]]
 kind = "relative"
-display_delta = "+2"
-value = 2.0
-out_of = 0.0
+value = 2
 text = "correct derivative"
 tags = "demo"
 meta = "Student evaluated derivative correctly"
@@ -14,9 +13,7 @@ username = "manager"
 
 [[rubric]]
 kind = "relative"
-display_delta = "+1"
-value = 1.0
-out_of = 0.0
+value = 1
 text = "right idea, but be careful"
 tags = "demo"
 meta = "Student made small arithmetic mistake when computing derivative"
@@ -25,9 +22,7 @@ username = "manager"
 
 [[rubric]]
 kind = "relative"
-display_delta = "-2"
-value = -2.0
-out_of = 0.0
+value = -2
 text = "substantial error"
 tags = "demo"
 meta = "Student made substantial error when computing derivative"
@@ -36,9 +31,7 @@ username = "manager"
 
 [[rubric]]
 kind = "relative"
-display_delta = "-2"
-value = -2.0
-out_of = 0.0
+value = -2
 text = "not the chain rule"
 tags = "demo"
 meta = "Student got chain rule wrong"
@@ -47,9 +40,7 @@ username = "manager"
 
 [[rubric]]
 kind = "relative"
-display_delta = "-2"
-value = -2.0
-out_of = 0.0
+value = -2
 text = "not the product rule"
 tags = "demo"
 meta = "Student got product rule wrong"
@@ -58,9 +49,7 @@ username = "manager"
 
 [[rubric]]
 kind = "relative"
-display_delta = "-2"
-value = -2.0
-out_of = 0.0
+value = -2
 text = "not the quotient rule"
 tags = "demo"
 meta = "Student got quotient rule wrong"
@@ -70,9 +59,7 @@ username = "manager"
 
 [[rubric]]
 kind = "relative"
-display_delta = "-1"
-value = -1.0
-out_of = 0.0
+value = -1
 text = "minor error in derivative"
 tags = "demo"
 meta = "Student had right idea but made minor error differentiating component"
@@ -81,9 +68,7 @@ username = "manager"
 
 [[rubric]]
 kind = "relative"
-display_delta = "-1"
-value = -1.0
-out_of = 0.0
+value = -1
 text = "not derivative of log"
 tags = "demo"
 meta = "Student got derivative of log wrong"
@@ -92,9 +77,7 @@ username = "manager"
 
 [[rubric]]
 kind = "relative"
-display_delta = "-1"
-value = -1.0
-out_of = 0.0
+value = -1
 text = "incorrect trig derivative"
 tags = "demo"
 meta = "Student got derivative of trig function wrong"
@@ -104,9 +87,7 @@ username = "manager"
 
 [[rubric]]
 kind = "relative"
-display_delta = "-1"
-value = -1.0
-out_of = 0.0
+value = -1
 text = "careful - minor error"
 tags = "demo"
 meta = "Student made small arithmetic mistake when computing derivative"
@@ -115,9 +96,7 @@ username = "manager"
 
 [[rubric]]
 kind = "relative"
-display_delta = "-1"
-value = -1.0
-out_of = 0.0
+value = -1
 text = "this does not follow"
 tags = "demo"
 meta = "Student made logical error from one line to the next"
@@ -126,9 +105,6 @@ username = "manager"
 
 [[rubric]]
 kind = "neutral"
-display_delta = "."
-value = 0.0
-out_of = 0.0
 text = "be careful"
 tags = "demo"
 meta = "Student made an inconsequential error."
@@ -137,13 +113,8 @@ username = "manager"
 
 [[rubric]]
 kind = "neutral"
-display_delta = "."
-value = 0.0
-out_of = 0.0
 text = "hard to read"
 tags = "demo"
 meta = "Student handwriting is making marking hard"
 question = 2
 username = "manager"
-
-

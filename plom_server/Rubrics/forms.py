@@ -36,8 +36,15 @@ class RubricFilterForm(forms.Form):
         ("relative", "Relative"),
     ]
 
+    SYSTEM_CHOICES = [
+        ("", "All Types"),
+        ("System", "System"),
+        ("User", "User"),
+    ]
+
     question_filter = forms.TypedChoiceField(required=False)
     kind_filter = forms.TypedChoiceField(choices=KIND_CHOICES, required=False)
+    system_filter = forms.TypedChoiceField(choices=SYSTEM_CHOICES, required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -45,16 +52,8 @@ class RubricFilterForm(forms.Form):
             (str(q_idx), q_label)
             for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
         ]
+        question_choices.insert(0, ("", "All Questions"))
         self.fields["question_filter"].choices = question_choices
-
-
-class RubricEditForm(forms.ModelForm):
-    class Meta:
-        model = Rubric
-        fields = ["meta"]
-        widgets = {
-            "meta": forms.Textarea(attrs={"rows": 2, "cols": 50}),
-        }
 
 
 class RubricDownloadForm(forms.Form):
@@ -101,3 +100,61 @@ class RubricDiffForm(forms.Form):
             self.fields["right_compare"].label_from_instance = (
                 lambda obj: "Rev. %i" % obj.revision
             )
+
+
+class RubricItemForm(forms.ModelForm):
+    """Form for creating or updating a Rubric."""
+
+    question = forms.TypedChoiceField(
+        required=True,
+        widget=forms.Select(attrs={"onchange": "updateQuestion()"}),
+        empty_value="",
+    )
+
+    # Explicit IntegerField for value for now
+    # TODO: Change this to a DecimalField when ready
+    value = forms.IntegerField(required=True)
+
+    kind = forms.ChoiceField(
+        choices=Rubric.RubricKind.choices,
+        initial=Rubric.RubricKind.ABSOLUTE,
+        widget=forms.Select(attrs={"onchange": "updateKind()"}),
+    )
+    out_of = forms.IntegerField(required=False)
+    versions = forms.MultipleChoiceField(required=False)
+
+    class Meta:
+        model = Rubric
+        fields = [
+            "text",
+            "kind",
+            "value",
+            "out_of",
+            "meta",
+            "versions",
+            "parameters",
+            "pedagogy_tags",
+        ]
+        widgets = {
+            "text": forms.Textarea(attrs={"rows": 3}),
+            "meta": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        question_choices = [
+            (str(q_idx), q_label)
+            for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
+        ]
+
+        self.fields["question"].choices = question_choices
+        self.fields["out_of"].widget.attrs["readonly"] = True
+
+        version_choices = [
+            (str(v_idx), v_idx)
+            for v_idx in range(1, SpecificationService.get_n_versions() + 1)
+        ]
+        self.fields["versions"].choices = version_choices
+
+        for field in self.fields:
+            self.fields[field].widget.attrs["class"] = "form-control"

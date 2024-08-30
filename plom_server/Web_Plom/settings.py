@@ -6,6 +6,7 @@
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024 Aden Chan
 
 """Django settings for Plom project.
 
@@ -107,6 +108,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "django_filters",
+    # Tables
+    "django_tables2",
     # Custom apps
     "Launcher",
     "Base",
@@ -350,3 +353,13 @@ if hunting_n_plus_one:
     )
     NPLUSONE_LOGGER = logging.getLogger("nplusone")
     NPLUSONE_LOG_LEVEL = logging.WARN
+
+# django-tables2 configs
+DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap5.html"
+
+DJANGO_TABLES2_TABLE_ATTRS = {
+    "class": "table table-striped table-bordered",
+    "thead": {
+        "class": "table-light",
+    },
+}
