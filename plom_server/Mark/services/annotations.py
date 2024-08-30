@@ -98,8 +98,8 @@ def _create_new_annotation_in_database(
 def _add_annotation_to_rubrics(annotation: Annotation) -> None:
     """Add a relation to this annotation for every rubric that this annotation uses."""
     scene_items = annotation.annotation_data["sceneItems"]
-    rubric_keys = [item[3] for item in scene_items if item[0] == "Rubric"]
-    rubrics = Rubric.objects.filter(key__in=rubric_keys).select_for_update()
+    rids = [item[3] for item in scene_items if item[0] == "Rubric"]
+    rubrics = Rubric.objects.filter(rid__in=rids).select_for_update()
     for rubric in rubrics:
         rubric.annotations.add(annotation)
         rubric.save()

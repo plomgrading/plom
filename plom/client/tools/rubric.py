@@ -32,7 +32,7 @@ class CommandRubric(CommandTool):
             scene (PageScene): Plom's annotation scene.
             pt (QPointF): where to place the rubric.
             rubric (dict): must have at least these keys:
-                "id", "kind", "value", "out_of", "display_delta", "text".
+                "rid", "kind", "value", "out_of", "display_delta", "text".
                 Any other keys are probably ignored and will almost
                 certainly not survive being serialized.
                 We copy the data, so changes to the original will not
@@ -57,7 +57,7 @@ class CommandRubric(CommandTool):
             scene,
             QPointF(X[0], X[1]),
             {
-                "id": X[2],
+                "rid": X[2],
                 "kind": X[3],
                 "value": X[4],
                 "out_of": X[5],
@@ -92,7 +92,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         Args:
             pt (QPointF): where to place the rubric.
             rubric (dict): must have at least these keys:
-                "id", "kind", "value", "out_of", "display_delta", "text".
+                "rid", "kind", "value", "out_of", "display_delta", "text".
                 Any other keys are probably ignored and will almost
                 certainly not survive being serialized.
                 We copy the data, so changes to the original will not
@@ -110,7 +110,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.style = style
         self._rubric = deepcopy(rubric)
         # TODO: replace each with @property?
-        self.rubricID = rubric["id"]
+        self.rubricID = rubric["rid"]
         self.kind = rubric["kind"]
         # centre under click
         self.di = DeltaItem(pt, rubric["value"], rubric["display_delta"], style=style)
@@ -148,7 +148,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
     def as_rubric(self):
         """Return as a rubric dict."""
         return {
-            "id": self.rubricID,
+            "rid": self.rubricID,
             "kind": self.kind,
             "display_delta": self.di.display_delta,
             "value": self.di.value,

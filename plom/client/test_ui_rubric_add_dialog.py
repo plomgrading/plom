@@ -39,7 +39,7 @@ def test_AddRubricBox_add_new(qtbot) -> None:
 
 def test_AddRubricBox_modify(qtbot) -> None:
     rub = {
-        "id": 1234,
+        "rid": 1234,
         "kind": "relative",
         "display_delta": "+1",
         "value": 1,
@@ -80,7 +80,7 @@ def test_AddRubricBox_modify_invalid(qtbot) -> None:
     with raises(KeyError):
         AddRubricBox(None, "user", 10, 1, "Q1", 1, 3, rub0)
     rub: dict[str, Any] = {
-        "id": 1234,
+        "rid": 1234,
         "kind": "man_unkind",
         "display_delta": "+1",
         "value": 1,
@@ -93,7 +93,7 @@ def test_AddRubricBox_modify_invalid(qtbot) -> None:
 
 def test_AddRubricBox_absolute_rubrics(qtbot) -> None:
     rub = {
-        "id": 1234,
+        "rid": 1234,
         "kind": "absolute",
         "display_delta": "1 of 3",
         "value": 1,
@@ -118,7 +118,7 @@ def test_AddRubricBox_absolute_rubrics(qtbot) -> None:
 
 def test_AddRubricBox_harvest(qtbot) -> None:
     rub = {
-        "id": 1234,
+        "rid": 1234,
         "kind": "relative",
         "display_delta": "+1",
         "value": 1,
@@ -134,7 +134,7 @@ def test_AddRubricBox_harvest(qtbot) -> None:
 
 def test_AddRubricBox_optional_meta_field(qtbot) -> None:
     rub = {
-        "id": 1234,
+        "rid": 1234,
         "kind": "neutral",
         "text": "some text",
         "meta": "meta",
@@ -198,7 +198,7 @@ def test_AddRubricBox_parameterize(qtbot) -> None:
 
 def test_AddRubricBox_modify_parameterized(qtbot) -> None:
     rub: dict[str, Any] = {
-        "id": 1234,
+        "rid": 1234,
         "kind": "neutral",
         "text": "some text",
         "parameters": [("{param1}", ["x", "y"]), ("{param2}", ["a", "b"])],
@@ -215,7 +215,7 @@ def test_AddRubricBox_modify_parameterized(qtbot) -> None:
 
 def test_AddRubricBox_modify_parameterized_remove(qtbot) -> None:
     rub = {
-        "id": 1234,
+        "rid": 1234,
         "kind": "neutral",
         "text": "some text",
         "parameters": [
@@ -255,7 +255,7 @@ def test_AddRubricBox_specific_to_version(qtbot) -> None:
 
 def test_AddRubricBox_change_existing_versions(qtbot) -> None:
     rub = {
-        "id": 1234,
+        "rid": 1234,
         "kind": "neutral",
         "text": "some text",
         "versions": [1, 3],
@@ -309,7 +309,7 @@ def test_AddRubricBox_add_to_group_exclusive(qtbot) -> None:
 
 def test_AddRubricBox_group_without_group_list(qtbot) -> None:
     rub = {
-        "id": 1234,
+        "rid": 1234,
         "kind": "relative",
         "display_delta": "+1",
         "value": 1,
@@ -328,7 +328,7 @@ def test_AddRubricBox_group_without_group_list(qtbot) -> None:
 
 def test_AddRubricBox_change_group_make_exclusive(qtbot) -> None:
     rub = {
-        "id": 1234,
+        "rid": 1234,
         "kind": "relative",
         "display_delta": "+1",
         "value": 1,
@@ -349,7 +349,7 @@ def test_AddRubricBox_change_group_make_exclusive(qtbot) -> None:
 
 def test_AddRubricBox_change_group_remove_exclusive(qtbot) -> None:
     rub = {
-        "id": 1234,
+        "rid": 1234,
         "kind": "relative",
         "display_delta": "+1",
         "value": 1,
@@ -372,7 +372,7 @@ def test_AddRubricBox_change_group_remove_exclusive(qtbot) -> None:
 
 def test_AddRubricBox_group_too_complicated(qtbot) -> None:
     rub = {
-        "id": 1234,
+        "rid": 1234,
         "kind": "relative",
         "display_delta": "+1",
         "value": 1,
