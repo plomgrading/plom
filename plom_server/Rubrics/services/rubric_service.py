@@ -731,6 +731,10 @@ class RubricService:
     ) -> QuerySet[MarkingTask]:
         """Get the QuerySet of MarkingTasks that use this Rubric in their latest annotations.
 
+        Note: the search is only on the latest annotations but does not
+        take revision of the rubric into account: that is you can ask
+        with an older revision and you'll still find the match.
+
         Args:
             rubric: a Rubric object instance.
 
@@ -739,7 +743,7 @@ class RubricService:
         """
         return (
             MarkingTask.objects.filter(
-                status=MarkingTask.COMPLETE, latest_annotation__rubric__id=rubric.pk
+                status=MarkingTask.COMPLETE, latest_annotation__rubric__rid=rubric.rid
             )
             .order_by("paper__paper_number")
             .prefetch_related("paper", "assigned_user", "latest_annotation")

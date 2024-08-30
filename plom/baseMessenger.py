@@ -1099,7 +1099,7 @@ class BaseMessenger:
         """Retrieve list of paper numbers using the given rubric.
 
         Note: This only returns papers whose most recent annotation
-        use the rubric.
+        use the rubric.  Revisions are not taken into account.
 
         Args:
             rid: The identifier of the rubric.
