@@ -447,7 +447,7 @@ class RubricService:
                 annotation in annotions_using_the_rubric
             ):
                 paper_numbers.append(paper_number)
-            seen_paper.add(paper_number)
+                seen_paper.add(paper_number)
 
         return paper_numbers
 
