@@ -8,15 +8,21 @@ from rest_framework.serializers import (
     SerializerMethodField,
     HyperlinkedRelatedField,
 )
+from ..models import MarkingTask
 
 
 class MarkingTaskSerializer(ModelSerializer):
     assigned_user = StringRelatedField()
     status = SerializerMethodField()
-    paper = StringRelatedField()
+    # some nonsense to avoid pretty printing using Paper.str
+    # paper = serializers.SlugRelatedField(slug_field="paper_number", queryset=TODO.sth.sth)
     tags = SerializerMethodField()
-    # TODO: I don't see how this can know the external port number
+    # TODO: Issue #3521: potentially broken URLs, anyone using this?
     latest_annotation = HyperlinkedRelatedField("annotations-detail", read_only=True)
+
+    class Meta:
+        model = MarkingTask
+        fields = "__all__"
 
     def get_tags(self, obj):
         return [str(tag) for tag in obj.markingtasktag_set.all()]
