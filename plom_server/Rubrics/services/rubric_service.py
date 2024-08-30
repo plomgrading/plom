@@ -425,32 +425,6 @@ class RubricService:
             Rubric.objects.filter(rid=rid, latest=False).all().order_by("revision")
         )
 
-    def get_all_paper_numbers_using_a_rubric(self, rid: int) -> list[int]:
-        """Get a list of paper number using the given rubric.
-
-        Args:
-            rid: the identifier of the rubric.
-
-        Returns:
-            A list of paper number using that rubric.
-        """
-        seen_paper = set()
-        paper_numbers = list()
-        # Iterate from newest to oldest updates, ignore duplicate papers seen at later time
-        # Append to paper_numbers if the *NEWEST* annotation on that paper uses the rubric.
-        annotions_using_the_rubric = Rubric.objects.get(rid=rid).annotations.all()
-
-        annotations = Annotation.objects.all().order_by("-time_of_last_update")
-        for annotation in annotations:
-            paper_number = annotation.task.paper.paper_number
-            if (paper_number not in seen_paper) and (
-                annotation in annotions_using_the_rubric
-            ):
-                paper_numbers.append(paper_number)
-            seen_paper.add(paper_number)
-
-        return paper_numbers
-
     def init_rubrics(self, username: str) -> bool:
         """Add special rubrics such as deltas and per-question specific.
 
@@ -757,6 +731,10 @@ class RubricService:
     ) -> QuerySet[MarkingTask]:
         """Get the QuerySet of MarkingTasks that use this Rubric in their latest annotations.
 
+        Note: the search is only on the latest annotations but does not
+        take revision of the rubric into account: that is you can ask
+        with an older revision and you'll still find the match.
+
         Args:
             rubric: a Rubric object instance.
 
@@ -765,7 +743,7 @@ class RubricService:
         """
         return (
             MarkingTask.objects.filter(
-                status=MarkingTask.COMPLETE, latest_annotation__rubric__id=rubric.pk
+                status=MarkingTask.COMPLETE, latest_annotation__rubric__rid=rubric.rid
             )
             .order_by("paper__paper_number")
             .prefetch_related("paper", "assigned_user", "latest_annotation")
