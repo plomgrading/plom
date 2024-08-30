@@ -88,7 +88,7 @@ urlpatterns += [
     path("experimental/", include(experimental_router.urls)),
     path("MK/", include(marking_router.urls)),
     path(
-        "rubrics/<str:int/tasks",
+        "rubrics/<int:rid>/tasks",
         MgetRubricMarkingTasks.as_view(),
         name="api_rubrics_tasks",
     ),

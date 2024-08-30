@@ -1095,23 +1095,23 @@ class BaseMessenger:
             return self.get_one_rubric(int(new_rubric))
         return new_rubric
 
-    def MgetOtherRubricUsages(self, key: int) -> list[int]:
+    def MgetOtherRubricUsages(self, rid: int) -> list[dict[str, Any]]:
         """Retrieve list of paper numbers using the given rubric.
 
         Note: This only returns papers whose most recent annotation
         use the rubric.
 
         Args:
-            key: The identifier of the rubric.
+            rid: The identifier of the rubric.
 
         Returns:
-            The list of paper numbers using the rubric, or an empty
+            The list of tasks using the rubric, or an empty
             list if no papers are using the rubric.
         """
         if self.is_legacy_server():
             raise PlomNoServerSupportException("Operation not supported in Legacy.")
         with self.SRmutex:
-            url = f"/MK/rubric_usage/{key}"
+            url = f"/rubrics/{rid}/tasks"
             try:
                 response = self.get_auth(url)
                 response.raise_for_status()

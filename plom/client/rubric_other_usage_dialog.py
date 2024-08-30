@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+import re
+from typing import Any
+
 from PyQt6.QtWidgets import (
     QDialog,
     QListWidget,
@@ -14,9 +17,17 @@ from PyQt6.QtWidgets import (
     QDialogButtonBox,
 )
 
+from .rubrics import render_rubric_as_html
+
 
 class RubricOtherUsageDialog(QDialog):
-    def __init__(self, parent, paper_numbers: list[int]):
+    def __init__(
+        self,
+        parent,
+        tasks: list[dict[str, Any]],
+        *,
+        rubric: dict[str, Any] | None = None,
+    ) -> None:
         """Constructor of the dialog to view papers using a rubric.
 
         Note: the paper numbers in the dialog should have been sorted
@@ -24,7 +35,11 @@ class RubricOtherUsageDialog(QDialog):
 
         Args:
             parent: an Annotator instance.
-            paper_numbers: the list of paper numbers that commonly use a rubric.
+            tasks: a list of dicts with various fields, notably "code"
+               "version", etc.
+
+        Keyword Args:
+            rubric: the key-value description of the rubric we're discussing.
 
         Returns:
             None
@@ -33,29 +48,41 @@ class RubricOtherUsageDialog(QDialog):
         self._annotr = parent
         self.setModal(True)
 
-        self.setWindowTitle("Other rubric usages")
+        if rubric:
+            self.setWindowTitle(f'Other tasks that use Rubric-ID {rubric["rid"]}')
+        else:
+            self.setWindowTitle("Other tasks that use the rubric")
 
-        # Create a label for the list
-        self.label = QLabel("Paper Numbers:")
+        if rubric:
+            label1 = QLabel(render_rubric_as_html(rubric))
 
-        # Create the list widget
+        label2 = QLabel("Tasks that used this rubric:")
         self.list_widget = QListWidget()
         # Connect double click to view paper
         self.list_widget.itemDoubleClicked.connect(self._handle_double_click)
-        paper_numbers.sort()
-        for number in paper_numbers:
-            self.list_widget.addItem(str(number))
+
+        # future-proof a bit for when we don't need to strip the leading q
+        def noq(code):
+            if code.startswith("q"):
+                code = code[1:]
+            return code
+
+        # TODO: easy to put "by Jose, 10 minutes ago" here...?
+        # TODO: only note version if this is a multiversion test?
+        list_of_strings = [
+            f'{noq(t["code"])} by {t["assigned_user"]} (version {t["question_version"]})'
+            for t in tasks
+        ]
+        list_of_strings.sort()
+        self.list_widget.addItems(list_of_strings)
 
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
 
         ok_button = buttons.button(QDialogButtonBox.StandardButton.Ok)
-
-        # for mypy type-checking. Mypy worries ok_button can be None
-        if not ok_button:
-            raise RuntimeError("There should be ok button.")
-
+        # Mypy worries ok_button can be None
+        assert ok_button
         ok_button.setText("View")
 
         # Create the view button
@@ -64,7 +91,9 @@ class RubricOtherUsageDialog(QDialog):
 
         # Layouts
         v_layout = QVBoxLayout()
-        v_layout.addWidget(self.label)
+        if rubric:
+            v_layout.addWidget(label1)
+        v_layout.addWidget(label2)
         v_layout.addWidget(self.list_widget)
 
         h_layout = QHBoxLayout()
@@ -84,7 +113,10 @@ class RubricOtherUsageDialog(QDialog):
                 self, "No Selection", "Please select a paper number to view."
             )
             return
-        paper_number = int(selected_items[0].text())
+        s = selected_items[0].text()
+        # extract digits from beginning of string, roughly s[0:4]
+        (s,) = re.findall(r"^(\d+)\D", s)
+        paper_number = int(s)
         # TODO: by default, the new popup would parent to Annotator
         # self._annotr.view_other_paper(paper_number)
         self._annotr.view_other_paper(paper_number, _parent=self)

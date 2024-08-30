@@ -1667,19 +1667,20 @@ class RubricWidget(QWidget):
         else:
             self._new_or_edit_rubric(None)
 
-    def other_usage(self, key: int) -> None:
-        """Open a dialog showing a list of paper numbers using the given rubric.
+    def other_usage(self, rid: int) -> None:
+        """Open a dialog showing a list of tasks using the given rubric.
 
         Args:
-            key: the identifier of the rubric.
+            rid: the identifier of the rubric.
         """
         try:
-            paper_numbers = self._parent.getOtherRubricUsagesFromServer(key)
+            task_list = self._parent.getOtherRubricUsagesFromServer(rid)
         except PlomNoServerSupportException as e:
             WarnMsg(self, str(e)).exec()
             return
+        (rubric,) = [r for r in self.rubrics if r["rid"] == rid]
         # dialog's parent is set to Annotator.
-        RubricOtherUsageDialog(self._parent, paper_numbers).exec()
+        RubricOtherUsageDialog(self._parent, task_list, rubric=rubric).exec()
 
     def view_other_paper(self, paper_number: int) -> None:
         """Opens another dialog to view a paper.
