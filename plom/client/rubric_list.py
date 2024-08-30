@@ -817,7 +817,12 @@ class RubricTabWidget(QTabWidget):
         tb.rename_tab_signal.connect(rename_tab_fcn)
         tb.remove_tab_signal.connect(remove_tab_fcn)
 
-    def insert_tab(self, index: int, tab: RubricTable) -> int:
+    def insertTab(self, *args, **kwargs):
+        """Override and prevent the usual way of adding tabs."""
+        raise RuntimeError("You must use our `insert_rubric_tab` instead")
+
+    def insert_rubric_tab(self, index: int, tab: RubricTable) -> int:
+        """Add a new RubricTable to this tab widget, used instead of superclass's insertTab."""
         # assert isinstance(widget, RubricTable)
         r = super().insertTab(index, tab, tab.shortname)
         tb = self.tabBar()
@@ -826,6 +831,7 @@ class RubricTabWidget(QTabWidget):
         return r
 
     def currentWidget(self) -> RubricTable:
+        """Override the superclass method, mainly for typing to tell callers we return a RubricTable."""
         w = super().currentWidget()
         assert isinstance(w, RubricTable)
         return w
@@ -900,9 +906,9 @@ class RubricWidget(QWidget):
         self.tabDeltaP = RubricTable(self, shortname=deltaP_label, tabType="delta")
         self.tabDeltaN = RubricTable(self, shortname=deltaN_label, tabType="delta")
         self.RTW = RubricTabWidget(self.add_new_tab, self.rename_tab, self.remove_tab)
-        self.RTW.insert_tab(0, self.tabS)
-        self.RTW.insert_tab(1, self.tabDeltaP)
-        self.RTW.insert_tab(2, self.tabDeltaN)
+        self.RTW.insert_rubric_tab(0, self.tabS)
+        self.RTW.insert_rubric_tab(1, self.tabDeltaP)
+        self.RTW.insert_rubric_tab(2, self.tabDeltaN)
         b = QToolButton()
         b.setText("+")
         b.setAutoRaise(True)  # flat until hover, but not on macOS?
@@ -1030,7 +1036,7 @@ class RubricWidget(QWidget):
         if idx is None:
             idx = 0
         # insert tab after that
-        self.RTW.insert_tab(idx + 1, tab)
+        self.RTW.insert_rubric_tab(idx + 1, tab)
         self.update_tab_names()
         return tab
 
@@ -1093,7 +1099,7 @@ class RubricWidget(QWidget):
         while self.RTW.widget(n).is_delta_tab() and n > 0:  # type: ignore[union-attr]
             n = n - 1
         # insert tab after it
-        self.RTW.insert_tab(n + 1, tab)
+        self.RTW.insert_rubric_tab(n + 1, tab)
         self.update_tab_names()
 
     def remove_current_tab(self) -> None:
