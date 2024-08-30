@@ -1111,12 +1111,12 @@ binary_upload:
     - echo $VER
     - export LINKNAME0="Plom Client for GNU/Linux (AppImage)"
     - export LINKNAME1="Plom Client for Windows (Windows ≥ 10, x86-64)"
-    - export LINKNAME2="Plom Client for older Mac (x86_64, macOS ≥ 12)"
-    - export LINKNAME3="Plom Client for newer Mac (arm64, macOS ≥ 12)"
+    - export LINKNAME2="Plom Client for older Mac (x86_64, macOS ≥ 13)"
+    - export LINKNAME3="Plom Client for newer Mac (arm64, macOS ≥ 13)"
     - export FILENAME0="PlomClient-$VER-x86_64.AppImage"
     - export FILENAME1="PlomClient-$VER.exe"
-    - export FILENAME2="PlomClient-$VER-macos12-x86_64.zip"
-    - export FILENAME3="PlomClient-$VER-macos12-arm64.zip"
+    - export FILENAME2="PlomClient-$VER-macos13-x86_64.zip"
+    - export FILENAME3="PlomClient-$VER-macos13-arm64.zip"
     # list the md5sums in the release notes
     - md5sum $FILENAME0 | sed -e "s/^/    /" >> "release_desc.md"
     - md5sum $FILENAME1 | sed -e "s/^/    /" >> "release_desc.md"
@@ -1262,8 +1262,8 @@ linuxbin_ubuntu2204:
 #   Also "--enable-shared", but it seems to work without any of these things?
 # - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
-macos12_universal_client:
-  image: macos-12-xcode-14
+macos13_universal_client:
+  image: macos-13-xcode-14
   tags:
   - saas-macos-medium-m1
   rules:
@@ -1323,7 +1323,7 @@ macos12_universal_client:
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
   - echo "Extracted version string '$VER'"
-  - export ZIPNAME=PlomClient-$VER-macos12.zip
+  - export ZIPNAME=PlomClient-$VER-macos13.zip
   - pushd dist
   - ls
   - ls -sklR PlomClient-$VER-universal2.app
@@ -1340,8 +1340,8 @@ macos12_universal_client:
     expire_in: 16 days
 
 
-macos12_arm64_client:
-  image: macos-12-xcode-14
+macos13_arm64_client:
+  image: macos-13-xcode-14
   tags:
   - saas-macos-medium-m1
   rules:
@@ -1373,7 +1373,7 @@ macos12_arm64_client:
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
   - echo "Extracted version string '$VER'"
-  - export ZIPNAME=PlomClient-$VER-macos12-arm64.zip
+  - export ZIPNAME=PlomClient-$VER-macos13-arm64.zip
   - pushd dist
   - ls
   - ls -sklR PlomClient-$VER-arm64.app
@@ -1390,8 +1390,8 @@ macos12_arm64_client:
     expire_in: 16 days
 
 
-macos12_x86_64_client:
-  image: macos-12-xcode-14
+macos13_x86_64_client:
+  image: macos-13-xcode-14
   tags:
   - saas-macos-medium-m1
   rules:
@@ -1429,63 +1429,11 @@ macos12_x86_64_client:
   - ls dist/
   - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
   - echo "Extracted version string '$VER'"
-  - export ZIPNAME=PlomClient-$VER-macos12-x86_64.zip
+  - export ZIPNAME=PlomClient-$VER-macos13-x86_64.zip
   - pushd dist
   - ls
   - ls -sklR PlomClient-$VER-x86_64.app
   - zip -r $ZIPNAME PlomClient-$VER-x86_64.app
-  - popd
-  - mv dist/$ZIPNAME $ZIPNAME
-  - md5 $ZIPNAME > md5sum
-  - ls $ZIPNAME
-  - cat md5sum
-  artifacts:
-    paths:
-    - PlomClient*.zip
-    - md5sum
-    expire_in: 16 days
-
-
-macos11_client:
-  image: macos-11-xcode-12
-  tags:
-  - shared-macos-amd64
-  rules:
-  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    when: never
-  - if: $CI_PROJECT_PATH == "plom/plom"
-    when: manual
-  allow_failure: true
-  stage: packaging
-  script:
-  - sw_vers
-  - echo $SHELL
-  - which python
-  - python --version
-  - pip --version
-  - asdf current
-  - asdf info
-  - asdf which python
-  - asdf uninstall python 3.9.1
-  - asdf install python $MACBIN_PY_VER
-  - asdf which python
-  - asdf shell python $MACBIN_PY_VER
-  - python --version
-  - pip --version
-  - python -m pip install --upgrade pip
-  - pip --version
-  - pip install -r requirements.txt.client
-  - pip install pyinstaller
-  - pip install . --no-deps  # pyinstaller spec needs version
-  - /Users/gitlab/.asdf/installs/python/${MACBIN_PY_VER}/bin/pyinstaller client.macos.spec
-  - ls dist/
-  - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
-  - echo "Extracted version string '$VER'"
-  - export ZIPNAME=PlomClient-$VER-macos11.zip
-  - pushd dist
-  - ls
-  - ls -sklR PlomClient-$VER.app
-  - zip -r $ZIPNAME PlomClient-$VER.app
   - popd
   - mv dist/$ZIPNAME $ZIPNAME
   - md5 $ZIPNAME > md5sum
