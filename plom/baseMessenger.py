@@ -1432,7 +1432,9 @@ class BaseMessenger:
             PlomAuthenticationException
             PlomTaskChangedError: TODO: add this back again, with integrity_check??
             PlomTaskDeletedError
-            PlomNoPaper
+            PlomNoPaper: includes the case where the paper was never graded,
+                as well as the paper has no latest annotation (e.g., it was
+                reset).
             PlomSeriousException
         """
         if edition is None:
