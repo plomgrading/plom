@@ -49,7 +49,7 @@ from .rubrics import (
     MgetRubricPanes,
     McreateRubric,
     MmodifyRubric,
-    MgetRubricUsages,
+    MgetRubricMarkingTasks,
 )
 
 from .latex import (

@@ -17,19 +17,19 @@ def test_rubric_conflict_dialog_insufficient_args(qtbot) -> None:
 
 def test_rubric_conflict_dialog(qtbot) -> None:
     rub0 = {
-        "id": 1234,
+        "rid": 1234,
         "display_delta": "+1",
         "text": "some text",
         "username": "admin",
     }
     rub1 = {
-        "id": 1234,
+        "rid": 1234,
         "display_delta": "+1",
         "text": "some new text",
         "username": "admin",
     }
     rub2 = {
-        "id": 1234,
+        "rid": 1234,
         "display_delta": "+2",
         "text": "some text",
         "username": "admin",
@@ -42,20 +42,20 @@ def test_rubric_conflict_dialog(qtbot) -> None:
 
 def test_rubric_conflict_dialog_who_when(qtbot) -> None:
     rub0 = {
-        "id": 1234,
+        "rid": 1234,
         "display_delta": "+1",
         "text": "some text",
         "username": "admin",
     }
     rub1 = {
-        "id": 1234,
+        "rid": 1234,
         "display_delta": "+1",
         "text": "some new text",
         "username": "harry",
         "last_modified": arrow.now(),
     }
     rub2 = {
-        "id": 1234,
+        "rid": 1234,
         "display_delta": "+2",
         "text": "some text",
         "username": "sally",

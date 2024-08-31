@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2022 Brennen Chiu
+# Copyright (C) 2024 Aden Chan
 
 from __future__ import annotations
 
@@ -371,6 +372,16 @@ def get_question_max_mark(question_index: str | int) -> int:
 
 # Some code uses this older synonym but it confuses me without the word "max"
 get_question_mark = get_question_max_mark
+
+
+@transaction.atomic
+def get_questions_max_marks() -> dict[int, int]:
+    """Get the maximum marks of all questions.
+
+    Returns:
+        A dictionary of question indices giving the corresponding maximum marks.
+    """
+    return {q.question_index: q.mark for q in SpecQuestion.objects.all()}
 
 
 @transaction.atomic

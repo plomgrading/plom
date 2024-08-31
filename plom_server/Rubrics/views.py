@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 import difflib
+import json
 from typing import Any
 from io import TextIOWrapper, StringIO, BytesIO
 
@@ -18,6 +19,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.views.generic.edit import UpdateView
 
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 from plom.misc_utils import pprint_score
@@ -31,11 +33,12 @@ from .forms import (
     RubricDemoAdminForm,
     RubricDiffForm,
     RubricWipeForm,
-    RubricUploadForm,
     RubricFilterForm,
-    RubricEditForm,
+    RubricUploadForm,
     RubricDownloadForm,
+    RubricItemForm,
 )
+from .models import RubricTable
 
 
 class RubricAdminPageView(ManagerRequiredView):
@@ -228,9 +231,12 @@ class RubricAccessPageView(ManagerRequiredView):
 class RubricLandingPageView(ManagerRequiredView):
     """A landing page for displaying and analyzing rubrics."""
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
+        """Get the page the landing page for displaying and analyzing rubrics."""
         template_name = "Rubrics/rubrics_landing.html"
         rubric_filter_form = RubricFilterForm
+        rubric_form = RubricItemForm
+        questions = SpecificationService.get_questions_max_marks()
 
         context = self.build_context()
 
@@ -240,6 +246,7 @@ class RubricLandingPageView(ManagerRequiredView):
         if filter_form.is_valid():
             question_filter = filter_form.cleaned_data["question_filter"]
             kind_filter = filter_form.cleaned_data["kind_filter"]
+            system_filter = filter_form.cleaned_data["system_filter"]
 
             if question_filter:
                 rubrics = rubrics.filter(question=question_filter, latest=True)
@@ -247,69 +254,89 @@ class RubricLandingPageView(ManagerRequiredView):
             if kind_filter:
                 rubrics = rubrics.filter(kind=kind_filter, latest=True)
 
+            if system_filter:
+                if system_filter == "System":
+                    rubrics = rubrics.filter(system_rubric=True, latest=True)
+                elif system_filter == "User":
+                    rubrics = rubrics.filter(system_rubric=False, latest=True)
+
         for index, r in enumerate(rubrics):
             r.value_str = f"{r.value:.3g}"
             r.out_of_str = f"{r.out_of:.3g}"
 
+        rubrics_table = RubricTable(rubrics, order_by=request.GET.get("sort"))
+        rubrics_table.paginate(page=int(request.GET.get("page", 1)), per_page=20)
+
         context.update(
             {
-                "rubrics": rubrics,
+                "rubrics": rubrics_table,
                 "rubric_filter_form": filter_form,
+                "edit_form": rubric_form,
+                "questions": json.dumps(questions),
             }
         )
 
         return render(request, template_name, context=context)
 
 
-class RubricItemView(ManagerRequiredView):
-    """A page for displaying a single rubric and its annotations."""
+class RubricItemView(UpdateView, ManagerRequiredView):
+    """A page for displaying a single rubric and its annotations.
 
-    def get(self, request, rubric_key):
+    UpdateView is used to automatically populate the form with rubric data.
+    """
+
+    def get(self, request: HttpRequest, *, rid: int) -> HttpResponse:
+        """Get a rubric item."""
         template_name = "Rubrics/rubric_item.html"
         rs = RubricService()
-        form = RubricEditForm
+        question_max_marks_dict = SpecificationService.get_questions_max_marks()
 
         context = self.build_context()
 
-        rubric = rs.get_rubric_by_key(rubric_key)
-        revisions = rs.get_past_revisions_by_key(rubric_key)
+        rubric = rs.get_rubric_by_rid(rid)
+        revisions = rs.get_past_revisions_by_rid(rid)
         marking_tasks = rs.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
-        for index, task in enumerate(marking_tasks):
+        rubric_form = RubricItemForm(instance=rubric)
+        for _, task in enumerate(marking_tasks):
             task.latest_annotation.score_str = pprint_score(
                 task.latest_annotation.score
             )
 
         rubric_as_html = rs.get_rubric_as_html(rubric)
+        # TODO: consider getting rid of this dumps stuff...  maybe plain ol' list?
         context.update(
             {
                 "latest_rubric": rubric,
+                "rid": rid,
                 "revisions": revisions,
-                "form": form(instance=rubric),
                 "marking_tasks": marking_tasks,
                 "latest_rubric_as_html": rubric_as_html,
-                "diff_form": RubricDiffForm(key=rubric_key),
+                "diff_form": RubricDiffForm(rid=rid),
+                "edit_form": rubric_form,
+                "question_max_marks_dict": json.dumps(question_max_marks_dict),
             }
         )
 
         return render(request, template_name, context=context)
 
     @staticmethod
-    def post(request, rubric_key):
-        form = RubricEditForm(request.POST)
+    def post(request: HttpRequest, *, rid: int) -> HttpResponse:
+        """Posting to a rubric item receives data from a form an updates a rubric."""
+        form = RubricItemForm(request.POST)
 
         if form.is_valid():
             rs = RubricService()
-            rubric = rs.get_rubric_by_key(rubric_key)
+            rubric = rs.get_rubric_by_rid(rid)
             for key, value in form.cleaned_data.items():
                 rubric.__setattr__(key, value)
             rubric.save()
-        return redirect("rubric_item", rubric_key=rubric_key)
+        return redirect("rubric_item", rid=rid)
 
 
-def compare_rubrics(request, rubric_key):
+def compare_rubrics(request, rid):
     """View for displaying a diff between two rubrics."""
     if request.method == "POST" and request.htmx:
-        form = RubricDiffForm(request.POST, key=rubric_key)
+        form = RubricDiffForm(request.POST, rid=rid)
         if form.is_valid():
             left = [
                 f'{form.cleaned_data["left_compare"].display_delta} | {form.cleaned_data["left_compare"].text}'
@@ -438,3 +465,56 @@ class UploadRubricView(ManagerRequiredView):
         service.update_rubric_data(data_string, suffix)
         messages.success(request, "Rubric file uploaded successfully.")
         return redirect("rubrics_admin")
+
+
+class RubricCreateView(ManagerRequiredView):
+    """Handles the creation of new rubrices."""
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        """Posting from a form to the rubric creator makes a new rubric."""
+        form = RubricItemForm(request.POST)
+        if form.is_valid():
+            rs = RubricService()
+            rubric_data = {
+                "user": request.user.pk,
+                "modified_by_user": request.user.pk,
+                "text": form.cleaned_data["text"],
+                "kind": form.cleaned_data["kind"],
+                "value": form.cleaned_data["value"],
+                "out_of": form.cleaned_data["out_of"],
+                "meta": form.cleaned_data["meta"],
+                "question": form.cleaned_data["question"],
+                "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
+            }
+            rs.create_rubric(rubric_data)
+        messages.success(request, "Rubric created successfully.")
+        return redirect("rubrics_landing")
+
+
+class RubricEditView(ManagerRequiredView):
+    """Handles the editing of existing rubrices."""
+
+    def post(self, request: HttpRequest, *, rid: int) -> HttpResponse:
+        """Posting from a form to to edit an existing rubric."""
+        form = RubricItemForm(request.POST)
+        if form.is_valid():
+            rs = RubricService()
+            rubric = rs.get_rubric_by_rid(rid)
+            rubric_data = {
+                "username": request.user.username,
+                "text": form.cleaned_data["text"],
+                "kind": form.cleaned_data["kind"],
+                "value": form.cleaned_data["value"],
+                "out_of": form.cleaned_data["out_of"],
+                "meta": form.cleaned_data["meta"],
+                "question": form.cleaned_data["question"],
+                "revision": rubric.revision,
+                "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
+            }
+            rs.modify_rubric(
+                rid,
+                new_rubric_data=rubric_data,
+                modifying_user=User.objects.get(username=request.user.username),
+            )
+        messages.success(request, "Rubric created successfully.")
+        return redirect("rubric_item", rid)

@@ -9,23 +9,38 @@
 {% load static %}
 {% load humanize %}
 {% block title %}
-    Rubric Info - {{ latest_rubric.key }}
+    Rubric Info - {{ latest_rubric.rid }}
 {% endblock title %}
 {% block page_heading %}
-    Rubric Info
+    Rubric Info - {{ latest_rubric.rid }}
 {% endblock page_heading %}
 {% block main_content %}
     <div class="container m-0">
         <div class="row">
             <div class="col">
                 <div class="card">
-                    <h5 class="card-header">Rubric {{ latest_rubric.key }}, revision {{ latest_rubric.revision }}</h5>
+                    <h5 class="card-header d-flex justify-content-between align-items-center">
+                        Rubric {{ latest_rubric.rid }}, revision {{ latest_rubric.revision }}
+                        <!-- Button semi-function but disabled pending Issue #3556 -->
+                        <a class="btn btn-outline-primary float-end disabled"
+                           disabled
+                           data-bs-toggle="modal"
+                           data-bs-target="#editModal"
+                           onclick="populateFields()">
+                            <i class="bi bi-pencil-square"></i>
+                            Edit
+                        </a>
+                    </h5>
                     <div class="card-body">
                         <table class="table">
                             <tbody>
                                 <tr>
-                                    <th scope="row">ID</th>
-                                    <td>{{ latest_rubric.key }}</td>
+                                    <th scope="row">Rubric-ID</th>
+                                    <td>{{ latest_rubric.rid }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Question</th>
+                                    <td>{{ latest_rubric.question }}</td>
                                 </tr>
                                 <tr>
                                     <th scope="row">Kind</th>
@@ -58,6 +73,18 @@
                                     <th scope="row">Preview</th>
                                     <td>{{ latest_rubric_as_html|safe }}</td>
                                 </tr>
+                                <tr>
+                                    <th scope="row">Meta</th>
+                                    <td>{{ latest_rubric.meta }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Tags</th>
+                                    <td>
+                                        {% for tag in latest_rubric.pedagogy_tags.all %}
+                                            <span class="badge bg-primary" title="{{ tag.text }}">{{ tag }}</span>
+                                        {% endfor %}
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -70,7 +97,7 @@
                         <div class="card-body">
                             <form method="post"
                                   class="form-inline"
-                                  hx-post="{% url 'compare_rubrics' latest_rubric.key %}"
+                                  hx-post="{% url 'compare_rubrics' latest_rubric.rid %}"
                                   hx-target="#diff-result"
                                   hx-swap="innerHTML">
                                 {% csrf_token %}
@@ -97,7 +124,7 @@
                                                 data-bs-target="#collapse-{{ forloop.counter }}"
                                                 aria-expanded="false"
                                                 aria-controls="collapse-{{ forloop.counter }}">
-                                            Revision {{ revision.revision }} - by {{ revision.modified_by_user }} {{ revision.last_modified|naturaltime }}
+                                            Revision {{ revision.revision }} - by {{ revision.modified_by_user }}, {{ revision.last_modified|naturaltime }}
                                         </button>
                                     </h2>
                                     <div id="collapse-{{ forloop.counter }}"
@@ -132,11 +159,6 @@
         </div>
     </div>
     <br>
-    <form action="{% url 'rubric_edit' latest_rubric.key %}" method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <input type="submit" value="Submit">
-    </form>
     <h2 class="mt-5">Marking tasks</h2>
     <table class="table table-striped table-bordered sortable table-sm table-responsive w-50">
         <thead>
@@ -167,4 +189,6 @@
             {% endfor %}
         </tbody>
     </table>
+    <br />
+    {% include "./modal_forms.html" %}
 {% endblock main_content %}

@@ -503,9 +503,10 @@ class Annotator(QWidget):
         # update displayed score
         self.refreshDisplayedMark(self.getScore())
         # update rubrics
-        self.rubric_widget.setQuestion(self.question_num, self.question_label)
+        self.rubric_widget.setQuestion(
+            self.question_num, self.question_label, self.maxMark
+        )
         self.rubric_widget.setVersion(self.version, self.max_version)
-        self.rubric_widget.setMaxMark(self.maxMark)
         self.rubric_widget.setEnabled(True)
 
         log.debug("Restore mode info = {}".format(self.modeInformation))

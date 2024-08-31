@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter, SimpleRouter
@@ -29,6 +29,8 @@ from .views import (
     REPcompletionStatus,
     REPcoverPageInfo,
 )
+
+from .views import MgetRubricMarkingTasks
 
 """
 Handle URL patterns for the plom-client / server API.
@@ -85,4 +87,9 @@ marking_router.register("tasks", QuestionMarkingViewSet, basename="tasks")
 urlpatterns += [
     path("experimental/", include(experimental_router.urls)),
     path("MK/", include(marking_router.urls)),
+    path(
+        "rubrics/<int:rid>/tasks",
+        MgetRubricMarkingTasks.as_view(),
+        name="api_rubrics_tasks",
+    ),
 ]

@@ -10,7 +10,7 @@ from plom.client.rubrics import diff_rubric, render_rubric_as_html
 
 def _make_ex():
     return {
-        "id": "123456123456",
+        "rid": "123456123456",
         "username": "xenia",
         "kind": "absolute",
         "value": 2,

@@ -331,11 +331,11 @@ class MarkingTaskService:
         rubrics_used = []
         for ann in annotations:
             if ann[0] == "Rubric":
-                rubric_key = ann[3]
+                rid = ann[3]
                 try:
-                    rubric = Rubric.objects.get(key=rubric_key, latest=True)
+                    rubric = Rubric.objects.get(rid=rid, latest=True)
                 except ObjectDoesNotExist:
-                    raise ValidationError(f"Invalid rubric key: {rubric_key}")
+                    raise ValidationError(f"Invalid rubric rid: {rid}")
                 rubrics_used.append(rubric)
 
         src_img_data = annot_data["base_images"]

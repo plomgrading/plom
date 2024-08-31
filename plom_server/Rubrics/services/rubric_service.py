@@ -20,6 +20,7 @@ import html
 import json
 import logging
 import sys
+from django.db.models.aggregates import Count
 import tomlkit
 from typing import Any
 
@@ -54,7 +55,7 @@ log = logging.getLogger("RubricServer")
 
 def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
     return {
-        "id": r.key,
+        "rid": r.rid,
         "kind": r.kind,
         "display_delta": r.display_delta,
         "value": r.value,
@@ -108,19 +109,27 @@ class RubricService:
 
     # implementation detail of the above, independently testable
     def _create_rubric(
-        self, rubric_data: dict[str, Any], *, creating_user: User | None = None
+        self, incoming_data: dict[str, Any], *, creating_user: User | None = None
     ) -> Rubric:
-        rubric_data = rubric_data.copy()
+        incoming_data = incoming_data.copy()
 
-        if "user" not in rubric_data.keys():
-            username = rubric_data.pop("username")
+        # some mangling around user/username here
+        if "user" not in incoming_data.keys():
+            username = incoming_data.pop("username")
             try:
                 user = User.objects.get(username=username)
-                rubric_data["user"] = user.pk
-                rubric_data["modified_by_user"] = user.pk
+                incoming_data["user"] = user.pk
+                incoming_data["modified_by_user"] = user.pk
             except ObjectDoesNotExist as e:
                 raise ValueError(f"User {username} does not exist.") from e
 
+        if "kind" not in incoming_data.keys():
+            raise ValidationError({"kind": "Kind is required."})
+
+        if incoming_data["kind"] not in ["absolute", "relative", "neutral"]:
+            raise ValidationError({"kind": "Invalid kind."})
+
+        # Check permissions
         s = SettingsModel.load()
         if creating_user is None:
             pass
@@ -142,18 +151,36 @@ class RubricService:
                 )
             pass
 
-        rubric_data["latest"] = True
-        serializer = RubricSerializer(data=rubric_data)
-        if not serializer.is_valid():
+        # Now do actual stuff
+
+        if incoming_data.get("display_delta", None) is None:
+            # if we don't have a display_delta, we'll generate a default one
+            incoming_data["display_delta"] = self._generate_display_delta(
+                # if value is missing, can only be neutral
+                # missing value will be prohibited in a future MR
+                incoming_data.get("value", 0),
+                incoming_data["kind"],
+                incoming_data.get("out_of", None),
+            )
+
+        incoming_data["latest"] = True
+        serializer = RubricSerializer(data=incoming_data)
+        if serializer.is_valid():
+            new_rubric = serializer.save()
+
+            new_rubric.pedagogy_tags.clear()
+            for tag in incoming_data.get("pedagogy_tags", []):
+                new_rubric.pedagogy_tags.add(tag)
+
+            rubric_obj = serializer.instance
+            return rubric_obj
+        else:
             raise ValidationError(serializer.errors)
-        serializer.save()
-        rubric_obj = serializer.instance
-        return rubric_obj
 
     @transaction.atomic
     def modify_rubric(
         self,
-        key: int,
+        rid: int,
         new_rubric_data: dict[str, Any],
         *,
         modifying_user: User | None = None,
@@ -161,9 +188,9 @@ class RubricService:
         """Modify a rubric.
 
         Args:
-            key: uniquely identify a rubric, but not a particular revision.
-                Generally not the same as the "private key" used
-                internally, although this could change in the future.
+            rid: uniquely identify a rubric, but not a particular revision.
+                Generally not the same as the "primary key" used
+                internally.
             new_rubric_data: data for a rubric submitted by a web request.
                 This input will not be modified by this call.
 
@@ -188,16 +215,15 @@ class RubricService:
 
         try:
             user = User.objects.get(username=username)
-            new_rubric_data["user"] = user.pk
         except ObjectDoesNotExist as e:
             raise ValueError(f"User {username} does not exist.") from e
 
         try:
             old_rubric = (
-                Rubric.objects.filter(key=key, latest=True).select_for_update().get()
+                Rubric.objects.filter(rid=rid, latest=True).select_for_update().get()
             )
         except Rubric.DoesNotExist as e:
-            raise ValueError(f"Rubric {key} does not exist.") from e
+            raise ValueError(f"Rubric {rid} does not exist.") from e
 
         # default revision if missing from incoming data
         new_rubric_data.setdefault("revision", 0)
@@ -248,11 +274,18 @@ class RubricService:
         if modifying_user is not None:
             new_rubric_data["modified_by_user"] = modifying_user.pk
 
+        # To be changed by future MR
+        new_rubric_data["user"] = old_rubric.user.pk
         new_rubric_data["revision"] += 1
         new_rubric_data["latest"] = True
-        new_rubric_data["key"] = old_rubric.key
-        # client might be using id instead of key in places, see Issue #1492
-        new_rubric_data.pop("id", None)
+        new_rubric_data["rid"] = old_rubric.rid
+
+        new_rubric_data["display_delta"] = self._generate_display_delta(
+            new_rubric_data.get("value", 0),
+            new_rubric_data["kind"],
+            new_rubric_data.get("out_of", None),
+        )
+
         serializer = RubricSerializer(data=new_rubric_data)
 
         if not serializer.is_valid():
@@ -261,9 +294,56 @@ class RubricService:
         old_rubric.latest = False
         old_rubric.save()
 
-        serializer.save()
+        new_rubric = serializer.save()
+
+        new_rubric.pedagogy_tags.clear()
+        for tag in new_rubric_data.get("pedagogy_tags", []):
+            new_rubric.pedagogy_tags.add(tag)
+
         rubric_obj = serializer.instance
         return _Rubric_to_dict(rubric_obj)
+
+    def _generate_display_delta(
+        self,
+        value: int | float | str,
+        kind: str,
+        out_of: int | float | str | None = None,
+    ) -> str:
+        """Generate the display delta for a rubric.
+
+        Keyword Args:
+            value: the value of the rubric.
+            kind: the kind of the rubric.
+            out_of: the maximum value of the rubric, required for
+                absolute rubrics, none for other rubrics
+
+        Raises:
+            ValueError: if the kind is not valid.
+            ValueError: if the kind is absolute and out_of is not provided.
+        """
+        value = float(value) if isinstance(value, str) else value
+        out_of = float(out_of) if isinstance(out_of, str) else out_of
+
+        # TODO: we may want to special case vulgar fractions in the future
+
+        if kind == "absolute":
+            if out_of is None:
+                raise ValueError("out_of is required for absolute rubrics.")
+            else:
+                if isinstance(value, int) or value.is_integer():
+                    return f"{value:g} of {out_of:g}"
+                else:
+                    return f"{value} of {out_of}"
+        elif kind == "relative":
+            if value > 0:
+                return f"+{value:g}"
+            else:
+                # Negative sign gets applied automatically
+                return f"{value:g}"
+        elif kind == "neutral":
+            return "."
+        else:
+            raise ValueError(f"Invalid kind: {kind}.")
 
     @classmethod
     def get_rubrics_as_dicts(
@@ -300,74 +380,50 @@ class RubricService:
         """
         return Rubric.objects.filter(latest=True)
 
+    def get_all_rubrics_with_counts(self) -> QuerySet[Rubric]:
+        """Get all latest rubrics but also annotate with how many times it has been used.
+
+            Times used included all annotations, not just latest ones.
+            @arechnitzer promises to fix this behavior in a future MR.
+
+        Returns:
+            Lazy queryset of all rubrics with counts.
+        """
+        qs = self.get_all_rubrics()
+        return qs.annotate(times_used=Count("annotations"))
+
+    # TODO: create method to get all rubrics with counts of how many times
+    #       it has been used in the latest edition of a paper
+
     def get_rubric_count(self) -> int:
         """How many rubrics in total (excluding revisions)."""
         return Rubric.objects.filter(latest=True).count()
 
-    def get_rubric_by_key(self, rubric_key: str) -> Rubric:
-        """Get the latest rurbic revision by its key/id.
+    def get_rubric_by_rid(self, rid: int) -> Rubric:
+        """Get the latest rurbic revision by its rubric id.
 
         Args:
-            rubric_key: which rubric.  Note currently the key/id is not
-                the same as the internal ``pk``.
+            rid: which rubric.  Note currently the rid is not
+                the same as the internal ``pk`` ("primary key").
 
         Returns:
             The rubric object.  It is not "selected for update" so should
             be read-only.
         """
-        return Rubric.objects.get(key=rubric_key, latest=True)
+        return Rubric.objects.get(rid=rid, latest=True)
 
-    def get_past_revisions_by_key(self, rubric_key: str) -> list[Rubric]:
-        """Get all earlier revisions of a rubric by the key, not including the latest one.
-
-        Args:
-            rubric_key: the key of the rubric.
-
-        Returns:
-            A list of rubrics with the specified key
-        """
-        return list(Rubric.objects.filter(key=rubric_key, latest=False).all())
-
-    def get_all_paper_numbers_using_a_rubric(self, rubric_key: str) -> list[int]:
-        """Get a list of paper number using the given rubric.
+    def get_past_revisions_by_rid(self, rid: int) -> list[Rubric]:
+        """Get all earlier revisions of a rubric by the rid, not including the latest one.
 
         Args:
-            rubric_key: the identifier of the rubric.
+            rid: which rubric series to we want the past revisions of.
 
         Returns:
-            A list of paper number using that rubric.
+            A list of rubrics with the specified rubric id.
         """
-        seen_paper = set()
-        paper_numbers = list()
-        # Iterate from newest to oldest updates, ignore duplicate papers seen at later time
-        # Append to paper_numbers if the *NEWEST* annotation on that paper uses the rubric.
-        annotions_using_the_rubric = Rubric.objects.get(
-            key=rubric_key
-        ).annotations.all()
-
-        annotations = Annotation.objects.all().order_by("-time_of_last_update")
-        for annotation in annotations:
-            paper_number = annotation.task.paper.paper_number
-            if (paper_number not in seen_paper) and (
-                annotation in annotions_using_the_rubric
-            ):
-                paper_numbers.append(paper_number)
-            seen_paper.add(paper_number)
-
-        return paper_numbers
-
-    def get_rubric_by_key_as_dict(self, rubric_key: str) -> dict[str, Any]:
-        """Get a rubric by its key/id and return as a dictionary.
-
-        Args:
-            rubric_key: which rubric.  Note currently the key/id is not
-                the same as the internal ``pk``.
-
-        Returns:
-            Key-value pairs representing the rubric.
-        """
-        r = Rubric.objects.get(key=rubric_key, latest=True)
-        return _Rubric_to_dict(r)
+        return list(
+            Rubric.objects.filter(rid=rid, latest=False).all().order_by("revision")
+        )
 
     def init_rubrics(self, username: str) -> bool:
         """Add special rubrics such as deltas and per-question specific.
@@ -471,7 +527,7 @@ class RubricService:
                     "system_rubric": True,
                 }
                 r = self.create_rubric(rubric)
-                log.info("Built delta-rubric +%d for Q%s: %s", m, q, r["id"])
+                log.info("Built delta-rubric +%d for Q%s: %s", m, q, r["rid"])
                 # make negative delta
                 rubric = {
                     "display_delta": "-{}".format(m),
@@ -486,7 +542,7 @@ class RubricService:
                     "system_rubric": True,
                 }
                 r = self.create_rubric(rubric)
-                log.info("Built delta-rubric -%d for Q%s: %s", m, q, r["id"])
+                log.info("Built delta-rubric -%d for Q%s: %s", m, q, r["rid"])
 
             # TODO: testing non-integer rubrics in demo: change to True
             if False:
@@ -494,84 +550,45 @@ class RubricService:
                     {
                         "display_delta": "+1\N{Vulgar Fraction One Half}",
                         "value": 1.5,
-                        "out_of": 0,
                         "text": "testing non-integer rubric",
                         "kind": "relative",
                         "question": q,
-                        "meta": "",
-                        "tags": "",
                         "username": username,
                         "system_rubric": True,
                     },
                     {
                         "display_delta": "-\N{Vulgar Fraction One Half}",
                         "value": -0.5,
-                        "out_of": 0,
                         "text": "testing negative non-integer rubric",
                         "kind": "relative",
                         "question": q,
-                        "meta": "",
-                        "tags": "",
-                        "username": username,
-                        "system_rubric": True,
-                    },
-                    {
-                        "display_delta": "\N{Vulgar Fraction One Half}",
-                        "value": 0.5,
-                        "out_of": 0,
-                        "text": ".",
-                        "kind": "relative",
-                        "question": q,
-                        "meta": "",
-                        "tags": "",
-                        "username": username,
-                        "system_rubric": True,
-                    },
-                    {
-                        "display_delta": "-\N{Vulgar Fraction One Half}",
-                        "value": -0.5,
-                        "out_of": 0,
-                        "text": ".",
-                        "kind": "relative",
-                        "question": q,
-                        "meta": "",
-                        "tags": "",
                         "username": username,
                         "system_rubric": True,
                     },
                     {
                         "display_delta": "+a tenth",
                         "value": 1 / 10,
-                        "out_of": 0,
                         "text": "one tenth of one point",
                         "kind": "relative",
                         "question": q,
-                        "meta": "",
-                        "tags": "",
                         "username": username,
                         "system_rubric": True,
                     },
                     {
                         "display_delta": "+1/29",
                         "value": 1 / 29,
-                        "out_of": 0,
                         "text": "ADR will love co-prime pairs",
                         "kind": "relative",
                         "question": q,
-                        "meta": "",
-                        "tags": "",
                         "username": username,
                         "system_rubric": True,
                     },
                     {
                         "display_delta": "+1/31",
                         "value": 1 / 31,
-                        "out_of": 0,
                         "text": r"tex: Note that $31 \times 29 = 899$.",
                         "kind": "relative",
                         "question": q,
-                        "meta": "",
-                        "tags": "",
                         "username": username,
                         "system_rubric": True,
                     },
@@ -582,8 +599,6 @@ class RubricService:
                         "text": "testing absolute rubric",
                         "kind": "absolute",
                         "question": q,
-                        "meta": "",
-                        "tags": "",
                         "username": username,
                         "system_rubric": True,
                     },
@@ -594,7 +609,7 @@ class RubricService:
                         r["kind"],
                         r["display_delta"],
                         q,
-                        r["id"],
+                        r["rid"],
                     )
 
     def build_half_mark_delta_rubrics(self, username: str) -> bool:
@@ -629,12 +644,9 @@ class RubricService:
             rubric = {
                 "display_delta": "+\N{Vulgar Fraction One Half}",
                 "value": 0.5,
-                "out_of": 0,
                 "text": ".",
                 "kind": "relative",
                 "question": q,
-                "meta": "",
-                "tags": "",
                 "username": username,
                 "system_rubric": True,
             }
@@ -643,18 +655,15 @@ class RubricService:
                 "Built delta-rubric %s for Qidx %d: %s",
                 r["display_delta"],
                 r["question"],
-                r["id"],
+                r["rid"],
             )
 
             rubric = {
                 "display_delta": "-\N{Vulgar Fraction One Half}",
                 "value": -0.5,
-                "out_of": 0,
                 "text": ".",
                 "kind": "relative",
                 "question": q,
-                "meta": "",
-                "tags": "",
                 "username": username,
                 "system_rubric": True,
             }
@@ -663,7 +672,7 @@ class RubricService:
                 "Built delta-rubric %s for Qidx %d: %s",
                 r["display_delta"],
                 r["question"],
-                r["id"],
+                r["rid"],
             )
 
     def erase_all_rubrics(self) -> int:
@@ -722,6 +731,10 @@ class RubricService:
     ) -> QuerySet[MarkingTask]:
         """Get the QuerySet of MarkingTasks that use this Rubric in their latest annotations.
 
+        Note: the search is only on the latest annotations but does not
+        take revision of the rubric into account: that is you can ask
+        with an older revision and you'll still find the match.
+
         Args:
             rubric: a Rubric object instance.
 
@@ -730,7 +743,7 @@ class RubricService:
         """
         return (
             MarkingTask.objects.filter(
-                status=MarkingTask.COMPLETE, latest_annotation__rubric__id=rubric.pk
+                status=MarkingTask.COMPLETE, latest_annotation__rubric__rid=rubric.rid
             )
             .order_by("paper__paper_number")
             .prefetch_related("paper", "assigned_user", "latest_annotation")
