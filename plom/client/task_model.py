@@ -21,15 +21,10 @@ from PyQt6.QtCore import QModelIndex, QSortFilterProxyModel
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
 
 from plom.misc_utils import pprint_score
+from .useful_classes import _json_path_to_str
+
 
 log = logging.getLogger("marker")
-
-
-# little helper to jsonify pathlib.Path to str
-def _path_to_str(x) -> str:
-    if isinstance(x, Path):
-        return str(x)
-    raise TypeError
 
 
 def _marking_time_as_str(m):
@@ -168,7 +163,7 @@ class MarkerExamModel(QStandardItemModel):
                 QStandardItem(""),  # annotatedFile,
                 QStandardItem(""),  # plomFile
                 QStandardItem(""),  # paperdir
-                QStandardItem(json.dumps(src_img_data, default=_path_to_str)),
+                QStandardItem(json.dumps(src_img_data, default=_json_path_to_str)),
                 QStandardItem(integrity_check),
             ]
         )
@@ -442,7 +437,7 @@ class MarkerExamModel(QStandardItemModel):
         log.debug("Setting src img data to {}".format(src_img_data))
         column_idx = _idx_src_img_data
         self._setDataByTask(
-            task, column_idx, json.dumps(src_img_data, default=_path_to_str)
+            task, column_idx, json.dumps(src_img_data, default=_json_path_to_str)
         )
 
     def setAnnotatedFile(self, task: str, aname: Path | str, pname: Path | str) -> None:

@@ -68,6 +68,7 @@ from .pagescene import PageScene
 from .pageview import PageView
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg
 from .useful_classes import SimpleQuestion, SimpleQuestionCheckBox
+from .useful_classes import _json_path_to_str
 from .about_dialog import show_about_dialog
 
 
@@ -1786,14 +1787,8 @@ class Annotator(QWidget):
         }
         plomfile = self.saveName.with_suffix(".plom")
 
-        # little helper to jsonify pathlib.Path to str
-        def _path_to_str(x) -> str:
-            if isinstance(x, Path):
-                return str(x)
-            raise TypeError
-
         with open(plomfile, "w") as fh:
-            json.dump(plomData, fh, indent="  ", default=_path_to_str)
+            json.dump(plomData, fh, indent="  ", default=_json_path_to_str)
             fh.write("\n")
         return aname, plomfile
 
