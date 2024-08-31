@@ -489,7 +489,7 @@ def run_demo_bundle_scan_commands(
 
     push_the_bundles(length)
     if stop_after == "bundles-pushed":
-        return True
+        return False
 
     return True
 

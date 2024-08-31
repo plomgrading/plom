@@ -19,7 +19,7 @@ class ScannerDiscardView(ScannerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         mss = ManageScanService()
         context = self.build_context()
-        discards = mss.get_discarded_images()
+        discards = mss.get_discarded_page_info()
         context.update(
             {
                 "current_page": "discard",
@@ -31,15 +31,22 @@ class ScannerDiscardView(ScannerRequiredView):
 
 
 class ScannerReassignView(ManagerRequiredView):
-    def get(self, request: HttpRequest, *, img_pk: int) -> HttpResponse:
+    def get(self, request: HttpRequest, *, page_pk: int) -> HttpResponse:
         mss = ManageScanService()
+        discard_page_info = mss.get_pushed_discard_page_image_info(page_pk)
+        img_pk = discard_page_info["image_pk"]
         tmp = mss.get_pushed_image(img_pk)
         if tmp is None:
             return Http404(f"Unexpected could not find pushed image with pk {img_pk}")
         img_angle = -tmp.rotation
         context = self.build_context()
         context.update(
-            {"current_page": "reassign", "image_pk": img_pk, "angle": img_angle}
+            {
+                "page_pk": page_pk,
+                "current_page": "reassign",
+                "image_pk": img_pk,
+                "angle": img_angle,
+            }
         )
 
         papers_missing_fixed_pages = mss.get_papers_missing_fixed_pages()
@@ -56,7 +63,7 @@ class ScannerReassignView(ManagerRequiredView):
 
         return render(request, "Scan/reassign_discard.html", context)
 
-    def post(self, request: HttpRequest, *, img_pk: int) -> HttpResponse:
+    def post(self, request: HttpRequest, *, page_pk: int) -> HttpResponse:
         reassignment_data = request.POST
         mds = ManageDiscardService()
 
@@ -70,8 +77,8 @@ class ScannerReassignView(ManagerRequiredView):
                     """<div class="alert alert-danger">Choose paper/page</div>"""
                 )
             try:
-                mds.assign_discard_image_to_fixed_page(
-                    request.user, img_pk, paper_number, page_number
+                mds.assign_discard_page_to_fixed_page(
+                    request.user, page_pk, paper_number, page_number
                 )
             except ValueError as e:
                 return HttpResponse(
@@ -97,8 +104,8 @@ class ScannerReassignView(ManagerRequiredView):
                         """<span class="alert alert-danger">At least one question</span>"""
                     )
             try:
-                mds.assign_discard_image_to_mobile_page(
-                    request.user, img_pk, paper_number, to_questions
+                mds.assign_discard_page_to_mobile_page(
+                    request.user, page_pk, paper_number, to_questions
                 )
             except ValueError as e:
                 return HttpResponse(

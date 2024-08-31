@@ -41,7 +41,7 @@
                                             <td>{{ disc.order }}</td>
                                             <td>{{ disc.reason }}</td>
                                             <td>
-                                                <button hx-get="{% url 'pushed_img_wrap' disc.image %}"
+                                                <button hx-get="{% url 'pushed_img_wrap' 'discard' disc.page_pk %}"
                                                         hx-target="#discardImageHere"
                                                         hx-replace="innerHTML"
                                                         class="btn btn-outline-primary">view</button>

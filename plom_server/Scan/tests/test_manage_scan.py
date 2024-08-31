@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 
 from django.test import TestCase
@@ -126,11 +126,15 @@ class ManageScanServiceTests(TestCase):
         # papers 6,7,10,11 is incomplete - should return dict of the form
         #
         # 6: {'fixed': [{'status': 'present', 'page_number': 1,
-        # 'img_pk': 146}, {'status': 'present', 'page_number': 2,
-        # 'img_pk': 147}, {'status': 'missing', 'page_number': 3},
-        # {'status': 'missing', 'page_number': 4}, {'status':
-        # 'missing', 'page_number': 5}, {'status': 'missing',
-        # 'page_number': 6}], 'mobile': []}}
+        # 'page_pk': 211, 'img_pk': 142}, {'status': 'present',
+        # 'page_number': 2, 'page_pk': 212, 'img_pk': 143},
+        # {'status': 'missing', 'page_number': 3, 'page_pk': 213,
+        # 'kind': 'QuestionPage'}, {'status': 'missing',
+        # 'page_number': 4, 'page_pk': 214, 'kind': 'QuestionPage'},
+        # {'status': 'missing', 'page_number': 5, 'page_pk': 215,
+        # 'kind': 'QuestionPage'}, {'status': 'missing',
+        # 'page_number': 6, 'page_pk': 216, 'kind': 'QuestionPage'}],
+        # 'mobile': []},
 
         assert len(mss_incomplete) == 4
         for pn in [6, 7]:
@@ -145,7 +149,13 @@ class ManageScanServiceTests(TestCase):
                     "img_pk" in f_pg_data[pg - 1]
                 )  # not testing the actual value of image_pk
             for pg in range(3, 7):
-                assert f_pg_data[pg - 1] == {"status": "missing", "page_number": pg}
+                assert f_pg_data[pg - 1]["status"] == "missing"
+                assert f_pg_data[pg - 1]["page_number"] == pg
+                assert f_pg_data[pg - 1]["kind"] == "QuestionPage"
+                # not testing value of page_pk
+                assert "page_pk" in f_pg_data[pg - 1]
+                # the image should be missing
+                assert "img_pk" not in f_pg_data[pg - 1]
         for pn in [10, 11]:
             assert pn in mss_incomplete
             # it is missing pages 3,4,5,6, but has fixed pages 1,2 and mobile for q1,2- the img_pk of those we can ignore.
@@ -160,7 +170,13 @@ class ManageScanServiceTests(TestCase):
                     "img_pk" in f_pg_data[pg - 1]
                 )  # not testing the actual value of image_pk
             for pg in range(3, 7):
-                assert f_pg_data[pg - 1] == {"status": "missing", "page_number": pg}
+                assert f_pg_data[pg - 1]["status"] == "missing"
+                assert f_pg_data[pg - 1]["page_number"] == pg
+                assert f_pg_data[pg - 1]["kind"] == "QuestionPage"
+                # not testing value of page_pk
+                assert "page_pk" in f_pg_data[pg - 1]
+                # the image should be missing
+                assert "img_pk" not in f_pg_data[pg - 1]
             for pg in range(1, 3):
                 assert (
                     m_pg_data[pg - 1]["question_number"] == pg

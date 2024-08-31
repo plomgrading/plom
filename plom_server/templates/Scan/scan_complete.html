@@ -15,6 +15,7 @@
     <div class="flex">
         <a class="btn btn-primary" href="{% url 'scan_overview' %}">Bundle and paper overview</a>
         <a class="btn btn-primary" href="{% url 'scan_list_incomplete' %}">Incomplete papers</a>
+        <a class="btn btn-primary" href="{% url 'scan_list_discard' %}">Discarded page images</a>
     </div>
     <div class="card my-2">
         <div class="card-body">
@@ -36,7 +37,7 @@
                                             <td>{{ pn }}</td>
                                             <td>
                                                 {% for fp in pages.fixed|dictsort:"page_number" %}
-                                                    <button hx-get="{% url 'pushed_img_wrap' fp.img_pk %}"
+                                                    <button hx-get="{% url 'pushed_img_wrap' 'fixed' fp.page_pk %}"
                                                             hx-target="#imageHere"
                                                             hx-replace="innerHTML"
                                                             class="btn btn-outline-success">
@@ -44,7 +45,7 @@
                                                     </button>
                                                 {% endfor %}
                                                 {% for mp in pages.mobile|dictsort:"question_number" %}
-                                                    <button hx-get="{% url 'pushed_img_wrap' mp.img_pk %}"
+                                                    <button hx-get="{% url 'pushed_img_wrap' 'mobile' mp.page_pk %}"
                                                             hx-target="#imageHere"
                                                             hx-replace="innerHTML"
                                                             class="btn btn-outline-info">

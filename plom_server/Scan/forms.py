@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
@@ -38,6 +38,11 @@ class BundleUploadForm(forms.Form):
         if pdf.size > settings.MAX_BUNDLE_SIZE:
             readable_file_size = settings.MAX_BUNDLE_SIZE / 1e9
             raise ValidationError(f"Bundle size limit is {readable_file_size} GB.")
+
+        if pdf.name.startswith("_"):
+            raise ValidationError(
+                "Bundle filenames cannot start with an underscore - we reserve those for internal use."
+            )
 
         # correct format, readable by fitz, not a duplicate?
         try:

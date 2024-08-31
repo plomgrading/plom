@@ -1,0 +1,63 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Andrew Rechnitzer
+    Copyright (C) 2024 Colin B. Macdonald
+  -->
+{% load static %}
+<div class="col text-center">
+    <p class="my-1 alert alert-primary text-start">
+        Paper {{ paper_number }} page {{ page_number }} version {{ version }}
+        is <em>missing.</em>
+        Perhaps you just haven't scanned it yet.
+        No problem, keep uploading bundles and if it turns up, we'll
+        automatically insert it into the right place.
+        <!-- (although in general, its better to avoid splitting papers between bundles). -->
+    </p>
+    {% if not user_is_manager %}
+        <p>
+            If you want to substitute an placeholder image, you'll need to
+            login to a manager-level account.
+        </p>
+    {% else %}
+        <div class="my-1">
+            {% if kind == "IDPage" %}
+                <img class="img-thumbnail"
+                     style="width: 5%"
+                     src="{% static 'fingers_in_gears.svg' %}" />
+                <button class="btn btn-danger"
+                        hx-post="{% url 'substitute_img_wrap' paper_number page_number %}"
+                        hx-confirm="Replacing the ID page of a test should ONLY be done when you know the student's identity by other means - do you wish to proceed?">
+                    Replace ID Page with substitute
+                </button>
+                <img class="img-thumbnail"
+                     style="width: 5%"
+                     src="{% static 'fingers_in_gears.svg' %}" />
+                <p class="my-1 alert alert-danger text-start">
+                    Since this page contains the student ID and name, we strongly recommend that you do as much as you can to search for the original hard-copy of this page before replacing it. Even then, we recommend that you only replace this page when you know the student's identity by other means.
+                </p>
+            {% elif kind == "DNMPage" %}
+                <button class="btn btn-info"
+                        hx-post="{% url 'substitute_img_wrap' paper_number page_number %}"
+                        hx-confirm="Replacing a do-not-mark page is relatively safe - do you wish to proceed?">
+                    Replace do-not-mark page with substitute
+                </button>
+                <p class="my-1 alert alert-info text-start">
+                    Replacing any page is not something to be undertaken lightly, however, normally the contents of do-not-mark pages are not graded, so this should be relatively safe.
+                </p>
+            {% else %}
+                <button class="btn btn-warning"
+                        hx-post="{% url 'substitute_img_wrap' paper_number page_number %}"
+                        hx-confirm="Replacing a page that contains student work should only be done when you cannot find the original hard-copy - do you wish to proceed?">
+                    Replace question-page with substitute
+                </button>
+                <p class="my-1 alert alert-warning text-start">
+                    Since this is a page that normally contains student-work, we recommend that you search carefully for the original hard-copy of this page before replacing it.
+                </p>
+            {% endif %}
+        </div>
+    {% endif %}
+    <h4>Substitution Preview</h4>
+    <img class="image border"
+         src="{% url 'substitute_img' substitute_image_pk %} "
+         style="height: 40vh" />
+</div>

@@ -237,6 +237,19 @@ class ManageDiscardService:
         mobilepage_pk: int | None = None,
         dry_run: bool = True,
     ) -> str:
+        """Given the pk of either a fixed-page or a mobile-page discard it to a discard-page.
+
+        This is a simple wrapper around the discard_pushed_fixed_page
+        and discard_pushed_mobile_page functions.
+
+        Args:
+            username: the name of the user doing the discarding. Note - must be a manager.
+
+        Keyword Args:
+            fixedpage_pk: the pk of the fixed page to discard
+            mobilepage_pk: the pk of the mobile page to discard
+            dry_run: when true, simulate the discard without doing it, else actually do the discard.
+        """
         try:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name="manager"
@@ -347,27 +360,28 @@ class ManageDiscardService:
         for qi in assign_to_question_indices:
             MarkingTaskService().set_paper_marking_task_outdated(paper_number, qi)
 
-    def assign_discard_image_to_fixed_page(
-        self, user_obj: User, image_pk: int, paper_number: int, page_number: int
+    def assign_discard_page_to_fixed_page(
+        self, user_obj: User, page_pk: int, paper_number: int, page_number: int
     ) -> None:
-        try:
-            image_obj = Image.objects.get(pk=image_pk)
-        except ObjectDoesNotExist as e:
-            raise ValueError(f"Cannot find image with pk = {image_pk}") from e
-        try:
-            self._assign_discard_to_fixed_page(
-                user_obj, image_obj.discardpage.pk, paper_number, page_number
-            )
-        except DiscardPage.DoesNotExist as e:
-            raise ValueError(
-                f"Cannot discard image with pk {image_pk}."
-                " It is not attached to a discard page."
-            ) from e
+        """Reassign the given discard page to a fixed page at the given paper/page.
 
-    def assign_discard_image_to_mobile_page(
+        Args:
+            user_obj: A django User who is doing the reassignment of the discard page.
+            page_pk: the pk of the discard page.
+            paper_number: the number of the paper to which the discard is being reassigned.
+            page_number: the number of the page in the given paper to which the discard is reassigned.
+        """
+        try:
+            _ = DiscardPage.objects.get(pk=page_pk)
+        except ObjectDoesNotExist as e:
+            raise ValueError(f"Cannot find discard page with pk = {page_pk}") from e
+
+        self._assign_discard_to_fixed_page(user_obj, page_pk, paper_number, page_number)
+
+    def assign_discard_page_to_mobile_page(
         self,
         user_obj: User,
-        image_pk: int,
+        page_pk: int,
         paper_number: int,
         assign_to_question_indices: list[int],
     ) -> None:
@@ -378,32 +392,35 @@ class ManageDiscardService:
 
         Args:
             user_obj: which user, as a database object.
-            image_pk: which image.
+            page_pk: which discard page.
             paper_number: which paper to assign it o.
             assign_to_question_indices: which questions, by a list of
                 one-based indices, should we assign this discarded page to.
         """
         try:
-            image_obj = Image.objects.get(pk=image_pk)
+            _ = DiscardPage.objects.get(pk=page_pk)
         except ObjectDoesNotExist as e:
-            raise ValueError(f"Cannot find image with pk = {image_pk}") from e
+            raise ValueError(f"Cannot find discard page with pk = {page_pk}") from e
 
-        try:
-            self._assign_discard_to_mobile_page(
-                user_obj,
-                image_obj.discardpage.pk,
-                paper_number,
-                assign_to_question_indices,
-            )
-        except DiscardPage.DoesNotExist as e:
-            raise ValueError(
-                f"Cannot reassign image with pk {image_pk}."
-                " It is not attached to a discard page."
-            ) from e
+        self._assign_discard_to_mobile_page(
+            user_obj,
+            page_pk,
+            paper_number,
+            assign_to_question_indices,
+        )
 
     def reassign_discard_page_to_fixed_page_cmd(
         self, username: str, discard_pk: int, paper_number: int, page_number: int
     ) -> None:
+        """A wrapper around the assign_discard_page_to_fixed_page command.
+
+        Args:
+            username: the name of the user who is doing the reassignment.
+                Must be a manager.
+            discard_pk: the pk of the discard page to be reassigned.
+            paper_number: the number of the paper containing the fixed page.
+            page_number: the page number of the fixed page.
+        """
         try:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name="manager"
@@ -424,6 +441,16 @@ class ManageDiscardService:
         paper_number: int,
         question_list: list[int],
     ) -> None:
+        """A wrapper around the assign_discard_page_to_mobile_page command.
+
+        Args:
+            username: the name of the user who is doing the reassignment.
+                Must be a manager.
+            discard_pk: the pk of the discard page to be reassigned.
+            paper_number: the number of the paper containing the fixed page.
+            question_list: a list of the questions on the discard page. A
+                mobile page is created for each question.
+        """
         try:
             user_obj = User.objects.get(
                 username__iexact=username, groups__name="manager"

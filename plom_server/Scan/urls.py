@@ -21,6 +21,9 @@ from .views import (
     PushedImageRotatedView,
     PushedImageWrapView,
     ###
+    SubstituteImageView,
+    SubstituteImageWrapView,
+    ###
     BundleThumbnailsView,
     GetBundleView,
     GetBundlePageFragmentView,
@@ -64,7 +67,7 @@ urlpatterns = [
         name="scan_list_discard",
     ),
     path(
-        "reassign/<int:img_pk>",
+        "reassign/<int:page_pk>",
         ScannerReassignView.as_view(),
         name="reassign_discard",
     ),
@@ -80,9 +83,19 @@ urlpatterns = [
         name="pushed_img_rot",
     ),
     path(
-        "pushed_img_wrap/<int:img_pk>",
+        "pushed_img_wrap/<str:page_kind>/<int:page_pk>",
         PushedImageWrapView.as_view(),
         name="pushed_img_wrap",
+    ),
+    path(
+        "substitute_img/<int:img_pk>",
+        SubstituteImageView.as_view(),
+        name="substitute_img",
+    ),
+    path(
+        "substitute_img_wrap/<int:paper>/<int:page>",
+        SubstituteImageWrapView.as_view(),
+        name="substitute_img_wrap",
     ),
     ##
     path(
