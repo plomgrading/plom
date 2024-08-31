@@ -2,10 +2,12 @@
 # Copyright (C) 2024 Andrew Rechnitzer
 
 from __future__ import annotations
-import fitz
+
 import hashlib
 from io import BytesIO
-from typing import Any, List
+from typing import Any
+
+import fitz
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
@@ -46,7 +48,7 @@ def _get_or_create_substitute_pages_bundle() -> Bundle:
     return bundle_obj
 
 
-def _create_substitute_page_images_for_forgiveness_bundle() -> List[dict[str, Any]]:
+def _create_substitute_page_images_for_forgiveness_bundle() -> list[dict[str, Any]]:
     """Create all the substitute page pixmaps for missing pages.
 
     Returns:
@@ -315,7 +317,7 @@ def get_substitute_page_info(paper_number: int, page_number: int) -> dict[str, A
     }
 
 
-def get_list_of_all_missing_dnm_pages() -> List[dict[str, int]]:
+def get_list_of_all_missing_dnm_pages() -> list[dict[str, int]]:
     """Get list of missing do-not-mark pages from incomplete papers.
 
     Returns: A list of dict of the form {'paper_number':foo, "page_number": bah}
