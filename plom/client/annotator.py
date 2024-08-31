@@ -1787,7 +1787,7 @@ class Annotator(QWidget):
         plomfile = self.saveName.with_suffix(".plom")
 
         # little helper to jsonify pathlib.Path to str
-        def _path_to_str(x):
+        def _path_to_str(x) -> str:
             if isinstance(x, Path):
                 return str(x)
             raise TypeError

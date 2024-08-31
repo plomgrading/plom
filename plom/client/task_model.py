@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
 from typing import Any
@@ -22,6 +23,13 @@ from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from plom.misc_utils import pprint_score
 
 log = logging.getLogger("marker")
+
+
+# little helper to jsonify pathlib.Path to str
+def _path_to_str(x) -> str:
+    if isinstance(x, Path):
+        return str(x)
+    raise TypeError
 
 
 def _marking_time_as_str(m):
@@ -160,7 +168,7 @@ class MarkerExamModel(QStandardItemModel):
                 QStandardItem(""),  # annotatedFile,
                 QStandardItem(""),  # plomFile
                 QStandardItem(""),  # paperdir
-                QStandardItem(repr(src_img_data)),
+                QStandardItem(json.dumps(src_img_data, default=_path_to_str)),
                 QStandardItem(integrity_check),
             ]
         )
@@ -420,17 +428,22 @@ class MarkerExamModel(QStandardItemModel):
     def get_source_image_data(self, task):
         """Return the image data (as a list of dicts) for task."""
         column_idx = _idx_src_img_data
-        # dangerous repr/eval pair?  Is json safer/better?
-        r = eval(self._getDataByTask(task, column_idx))
+        r = json.loads(self._getDataByTask(task, column_idx))
         return r
 
     def set_source_image_data(
         self, task: str, src_img_data: list[dict[str, Any]]
     ) -> None:
-        """Set the original un-annotated image filenames and other metadata."""
+        """Set the original un-annotated image filenames and other metadata.
+
+        Note, the data is stored in JSON and Path objects will become plain
+        'ol strings.
+        """
         log.debug("Setting src img data to {}".format(src_img_data))
         column_idx = _idx_src_img_data
-        self._setDataByTask(task, column_idx, repr(src_img_data))
+        self._setDataByTask(
+            task, column_idx, json.dumps(src_img_data, default=_path_to_str)
+        )
 
     def setAnnotatedFile(self, task: str, aname: Path | str, pname: Path | str) -> None:
         """Set the annotated image and .plom file names as strings.
