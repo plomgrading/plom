@@ -66,9 +66,13 @@
                          alt="Plom logo"
                          style="max-width: 8rem" />
                 </a>
-                <p class="text-center fw-light mb-0">
-                    <small>v{{ plom_version }}</small>
-                </p>
+                <!-- <p class="text-center fw-light mt-0 mb-0"> -->
+                <!--   <small>v{{ plom_version }}</small> -->
+                <!-- </p> -->
+                <span class="navbar-text">
+                    <!--<p class="text-center fw-normal fs-4 mb-0">-->
+                    &ldquo;{{ assessment_shortname_if_defined }}&rdquo;
+                </span>
                 {% block sidebar_content %}
                     {% include "base/sidebar.html" %}
                 {% endblock sidebar_content %}
@@ -80,6 +84,7 @@
                         <img class="img-fluid"
                              src="{% static 'plomLogo.png' %}"
                              style="max-width: 8rem" />
+                        <span class="fw-normal fs-4">&ldquo;{{ assessment_shortname_if_defined }}&rdquo;</span>
                     </a>
                     <button class="btn ms-auto border border-black"
                             type="button"
