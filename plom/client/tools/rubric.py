@@ -6,7 +6,7 @@
 # Copyright (C) 2024 Bryan Tanady
 
 from copy import deepcopy
-from typing import Union
+from typing import Any, Dict, List, Union
 
 from PyQt6.QtCore import Qt, QPointF
 from PyQt6.QtGui import QColor, QFont, QPen
@@ -134,8 +134,9 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
 
-    def as_rubric(self):
+    def as_rubric(self) -> Dict[str, Any]:
         """Return as a rubric dict."""
+        # TODO: probably `return self._rubric`?  or is explicit is better than implicit?
         return {
             "rid": self.rubricID,
             "kind": self.kind,
@@ -143,10 +144,11 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
             "value": self.di.value,
             "out_of": self._rubric["out_of"],
             "text": self.blurb.toPlainText(),
+            "revision": self._rubric.get("revision"),
             "tags": self._rubric["tags"],
         }
 
-    def restyle(self, style):
+    def restyle(self, style) -> None:
         self.style = style
         self.thick = self.style["pen_width"] / 2
         # force a relatexing of the textitem in case it is a latex png
@@ -173,21 +175,12 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
             self.di.moveBy(0, -cr.height() / 2)
             self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
 
-    def pickle(self):
+    def pickle(self) -> List[Any]:
         return [
             "Rubric",
             self.pt.x() + self.x(),
             self.pt.y() + self.y(),
-            {
-                "rid": self.rubricID,
-                "kind": self.kind,
-                "value": self.di.value,
-                "out_of": self._rubric["out_of"],
-                "display_delta": self.di.display_delta,
-                "text": self.blurb.toPlainText(),
-                "revision": self._rubric.get("revision"),
-                "tags": self._rubric.get("tags"),
-            },
+            self.as_rubric(),
         ]
 
     def paint(self, painter, option, widget):
@@ -206,7 +199,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         # paint the normal item with the default 'paint' method
         super().paint(painter, option, widget)
 
-    def sign_of_delta(self):
+    def sign_of_delta(self) -> int:
         if int(self.di.value) == 0:
             return 0
         elif int(self.di.value) > 0:
@@ -214,10 +207,10 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         else:
             return -1
 
-    def is_delta_positive(self):
+    def is_delta_positive(self) -> bool:
         return int(self.di.value) > 0
 
-    def get_delta_value(self):
+    def get_delta_value(self) -> int:
         return int(self.di.value)
 
 
