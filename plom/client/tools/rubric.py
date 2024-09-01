@@ -73,12 +73,14 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
     someone about building LaTeX... can we refactor that somehow?
     """
 
-    def __init__(self, pt, rubric, *, _scene, style):
+    def __init__(
+        self, pt: QPointF, rubric: Dict[str, Any], *, _scene, style: Dict[str, Any]
+    ) -> None:
         """Constructor for this class.
 
         Args:
-            pt (QPointF): where to place the rubric.
-            rubric (dict): must have at least these keys:
+            pt: where to place the rubric.
+            rubric: must have at least these keys:
                 "rid", "kind", "value", "out_of", "display_delta", "text".
                 It can optionally have "revision" and "tags".
                 TODO: these two use get so will automatically become None.
@@ -89,7 +91,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
 
         Keyword Args:
             _scene (PageScene): Plom's annotation scene.
-            style (dict): various things effecting color, linewidths etc.
+            style: various things effecting color, linewidths etc.
 
         Returns:
             None
