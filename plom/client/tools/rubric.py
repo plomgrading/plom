@@ -49,23 +49,10 @@ class CommandRubric(CommandTool):
         TODO: could this comandFoo.__init__() take a FooItem?
         """
         assert X[0] == "Rubric"
-        X = X[1:]
-        if len(X) != 9:
+        if len(X) != 4:
             raise ValueError("wrong length of pickle data")
         # knows to latex it if needed.
-        return cls(
-            scene,
-            QPointF(X[0], X[1]),
-            {
-                "rid": X[2],
-                "kind": X[3],
-                "value": X[4],
-                "out_of": X[5],
-                "display_delta": X[6],
-                "text": X[7],
-                "tags": X[8],
-            },
-        )
+        return cls(scene, QPointF(X[1], X[2]), X[3])
 
     def get_undo_redo_animation_shape(self):
         return self.gdt.shape()
@@ -93,6 +80,8 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
             pt (QPointF): where to place the rubric.
             rubric (dict): must have at least these keys:
                 "rid", "kind", "value", "out_of", "display_delta", "text".
+                It can optionally have "revision" and "tags".
+                TODO: these two use get so will automatically become None.
                 Any other keys are probably ignored and will almost
                 certainly not survive being serialized.
                 We copy the data, so changes to the original will not
@@ -117,7 +106,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.blurb = TextItem(pt, rubric["text"], style=style, _texmaker=_scene)
         # TODO: probably we "restyle" the child objects twice as each init did this too
         self.restyle(style)
-        # Set the underlying delta and text to not pickle - since the GDTI will handle that
+        # Set the underlying delta and text to not pickle as we will handle that
         self.saveable = True
         self.di.saveable = False
         self.blurb.saveable = False
@@ -189,13 +178,16 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
             "Rubric",
             self.pt.x() + self.x(),
             self.pt.y() + self.y(),
-            self.rubricID,
-            self.kind,
-            self.di.value,
-            self._rubric["out_of"],
-            self.di.display_delta,
-            self.blurb.toPlainText(),
-            self._rubric["tags"],
+            {
+                "rid": self.rubricID,
+                "kind": self.kind,
+                "value": self.di.value,
+                "out_of": self._rubric["out_of"],
+                "display_delta": self.di.display_delta,
+                "text": self.blurb.toPlainText(),
+                "revision": self._rubric.get("revision"),
+                "tags": self._rubric.get("tags"),
+            },
         ]
 
     def paint(self, painter, option, widget):

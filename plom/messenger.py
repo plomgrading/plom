@@ -561,10 +561,17 @@ class Messenger(BaseMessenger):
         for x in pdict["sceneItems"]:
             if x[0] == "Rubric":
                 x[0] = "GroupDeltaText"
-                # TODO: may need to do more if we change the format of the other fields
-                log.debug(
-                    "Filtered Rubric %s into a GroupDeltaText for legacy server", x[3]
-                )
+                r = x[3]
+                log.debug("Rewriting Rubric %d as legacy GroupDeltaText", r["rid"])
+                x[3] = r["rid"]
+                x[4] = r["kind"]
+                x[5] = r["value"]
+                x[6] = r["out_of"]
+                x[7] = r["display_delta"]
+                x[8] = r["text"]
+                x[9] = r["tags"]
+                assert len(x) == 10
+
         orig_plomfile_name = plomfile.name
         with tempfile.TemporaryDirectory() as td:
             hack_pfile = pathlib.Path(td) / plomfile.name
