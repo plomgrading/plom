@@ -564,12 +564,16 @@ class Messenger(BaseMessenger):
                 r = x[3]
                 log.debug("Rewriting Rubric %d as legacy GroupDeltaText", r["rid"])
                 x[3] = r["rid"]
-                x[4] = r["kind"]
-                x[5] = r["value"]
-                x[6] = r["out_of"]
-                x[7] = r["display_delta"]
-                x[8] = r["text"]
-                x[9] = r["tags"]
+                x.extend(
+                    [
+                        r["kind"],
+                        r["value"],
+                        r["out_of"],
+                        r["display_delta"],
+                        r["text"],
+                        r["tags"],
+                    ]
+                )
                 assert len(x) == 10
 
         orig_plomfile_name = plomfile.name
