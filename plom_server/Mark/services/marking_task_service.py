@@ -327,11 +327,12 @@ class MarkingTaskService:
             raise ValidationError(f"Could not get 'integrity_check' as a int: {e}")
 
         # unpack the rubrics, potentially record which ones were used
+        # TODO: similar code to this in annotations.py:_add_annotation_to_rubrics
         annotations = annot_data["sceneItems"]
         rubrics_used = []
         for ann in annotations:
             if ann[0] == "Rubric":
-                rid = ann[3]
+                rid = ann[3]["rid"]
                 try:
                     rubric = Rubric.objects.get(rid=rid, latest=True)
                 except ObjectDoesNotExist:
