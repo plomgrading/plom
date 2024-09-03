@@ -68,6 +68,7 @@ def test_rotate_png_cw(tmp_path) -> None:
         # if there was a palette, have to look up the colour by index
         idx = im.getpixel(redpixel)
         assert idx is not None
+        assert isinstance(idx, int)
         colour = palette[(3 * idx) : (3 * idx) + 3]
         assert colour == [255, 0, 0]
 
@@ -90,6 +91,7 @@ def test_rotate_png_ccw(tmp_path) -> None:
         # if there was a palette, have to look up the colour by index
         idx = im.getpixel(redpixel)
         assert idx is not None
+        assert isinstance(idx, int)
         colour = palette[(3 * idx) : (3 * idx) + 3]
         assert colour == [255, 0, 0]
 
@@ -167,8 +169,8 @@ def test_rotate_jpeg_lossless_cw(tmp_path) -> None:
         im = pil_load_with_jpeg_exif_rot_applied(f)
         im2 = Image.open(orig)
         # minus sign b/c PIL does CCW
-        im2 = im2.rotate(-angle, expand=True)
-        diff = ImageChops.difference(im, im2)
+        im3 = im2.rotate(-angle, expand=True)
+        diff = ImageChops.difference(im, im3)
         diff.save(f"diff{angle}.png")
         assert not diff.getbbox()
 
@@ -190,8 +192,8 @@ def test_rotate_jpeg_lossless_ccw(tmp_path) -> None:
         # now load it back, rotate it back it it would make the original
         im = pil_load_with_jpeg_exif_rot_applied(f)
         im2 = Image.open(orig)
-        im2 = im2.rotate(angle, expand=True)
-        diff = ImageChops.difference(im, im2)
+        im3 = im2.rotate(angle, expand=True)
+        diff = ImageChops.difference(im, im3)
         diff.save(f"diff{angle}.png")
         assert not diff.getbbox()
 
