@@ -133,7 +133,7 @@ class Annotator(QWidget):
         self.testName = None
         self.paperDir = None
         self.saveName = None
-        self.maxMark = None
+        self.maxMark = 0
 
         # help mypy understand stuff coming from uic
         self.revealBox0: QFrame
