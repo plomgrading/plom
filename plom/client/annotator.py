@@ -1865,20 +1865,12 @@ class Annotator(QWidget):
         self.ui.zoomCB.addItem("33%")
         self.ui.zoomCB.currentIndexChanged.connect(self.zoomCBChanged)
 
-    def isZoomFitWidth(self) -> None:
-        """Sets the zoom ui text when user has selected "Fit Width".
-
-        Returns:
-            None but modifies self.ui
-        """
+    def isZoomFitWidth(self) -> bool:
+        """Has the user selected "Fit Width"?"""
         return self.ui.zoomCB.currentText() == "Fit width"
 
-    def isZoomFitHeight(self) -> None:
-        """Sets the zoom ui text when user has selected "Fit Height".
-
-        Returns:
-            None but modifies self.ui
-        """
+    def isZoomFitHeight(self) -> bool:
+        """Has the user selected "Fit Height"?"""
         return self.ui.zoomCB.currentText() == "Fit height"
 
     def changeCBZoom(self, CBIndex: int) -> None:
