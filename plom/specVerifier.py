@@ -63,7 +63,7 @@ spec_key_order_for_toml_output = [
 ]
 
 
-def get_question_label(spec, n: int | str) -> str:
+def get_question_label(spec: dict[str, Any] | SpecVerifier, n: int | str) -> str:
     """Print question label for the nth question from spec dict.
 
     Args:

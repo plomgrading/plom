@@ -30,7 +30,7 @@ class MockMarker:
         pass
 
 
-def test_annotr_open(qtbot):
+def test_annotr_open(qtbot) -> None:
     a = Annotator("some_user", MockMarker())
     a.show()
     qtbot.addWidget(a)
@@ -40,24 +40,24 @@ def test_annotr_open(qtbot):
 
     # mash some buttons
     for b in (
-        a.boxButton,
-        a.crossButton,
-        a.deleteButton,
-        a.lineButton,
-        a.moveButton,
-        a.panButton,
-        a.penButton,
-        a.textButton,
-        a.tickButton,
-        a.zoomButton,
+        a.ui.boxButton,
+        a.ui.crossButton,
+        a.ui.deleteButton,
+        a.ui.lineButton,
+        a.ui.moveButton,
+        a.ui.panButton,
+        a.ui.penButton,
+        a.ui.textButton,
+        a.ui.tickButton,
+        a.ui.zoomButton,
     ):
         qtbot.mouseClick(b, Qt.MouseButton.LeftButton)
-    qtbot.mouseClick(a.undoButton, Qt.MouseButton.LeftButton)
-    qtbot.mouseClick(a.redoButton, Qt.MouseButton.LeftButton)
+    qtbot.mouseClick(a.ui.undoButton, Qt.MouseButton.LeftButton)
+    qtbot.mouseClick(a.ui.redoButton, Qt.MouseButton.LeftButton)
 
     # narrow mode, then reopen with UI button
     qtbot.keyClick(a, Qt.Key.Key_Home)
-    qtbot.mouseClick(a.wideButton, Qt.MouseButton.LeftButton)
+    qtbot.mouseClick(a.ui.wideButton, Qt.MouseButton.LeftButton)
     qtbot.wait(10)
     # path = qtbot.screenshot(a)
     # assert False, path
@@ -71,8 +71,8 @@ class MockQApp:
     downloader = None
 
 
-def test_marker_open(qtbot):
+def test_marker_open(qtbot) -> None:
     w = MarkerClient(MockQApp())
     # path = qtbot.screenshot(w)
     # assert False, path
-    qtbot.mouseClick(w.closeButton, Qt.MouseButton.LeftButton)
+    qtbot.mouseClick(w.ui.closeButton, Qt.MouseButton.LeftButton)
