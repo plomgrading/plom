@@ -17,8 +17,6 @@ from typing import Any
 
 import zipfly
 
-from plom.create.mergeAndCodePages import make_PDF
-
 from django.conf import settings
 from django.db.models import Q
 from django.db import transaction
@@ -26,6 +24,8 @@ from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django_huey import db_task
 from django_huey import get_queue
+
+from plom.create.mergeAndCodePages import make_PDF
 
 # TODO: why "staging"? We should talk to the "real" student service
 from Preparation.services import (
@@ -53,7 +53,7 @@ def huey_build_single_paper(
     question_versions: dict[int, int],
     *,
     student_info: dict[str, Any] | None = None,
-    prename_config: dict[str, Any] | None = None,
+    prename_config: dict[str, Any],
     tracker_pk: int,
     task=None,
     _debug_be_flaky: bool = False,
@@ -100,6 +100,7 @@ def huey_build_single_paper(
             where=pathlib.Path(tempdir),
             source_versions_path=PaperSourcePDF.upload_to(),
         )
+        assert save_path is not None
 
         if _debug_be_flaky:
             for i in range(5):
