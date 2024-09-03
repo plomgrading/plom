@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021, 2023 Colin B. Macdonald
+# Copyright (C) 2021, 2023-2024 Colin B. Macdonald
 
 import json
 
@@ -10,7 +10,7 @@ from plom import undo_json_packing_of_version_map
 from plom import SpecVerifier
 
 
-def test_make_rand_ver_map():
+def test_make_rand_ver_map() -> None:
     spec = SpecVerifier.demo()
     spec.verify()
     vm = make_random_version_map(spec)
@@ -18,7 +18,7 @@ def test_make_rand_ver_map():
     check_version_map(vm, spec)
 
 
-def test_ver_map_legacy_fails_if_too_short():
+def test_ver_map_legacy_fails_if_too_short() -> None:
     # likely legacy specific: remove?
     spec = SpecVerifier.demo()
     spec.verify()
@@ -29,7 +29,7 @@ def test_ver_map_legacy_fails_if_too_short():
         check_version_map(vm, spec, legacy=True)
 
 
-def test_ver_map_legacy_fails_if_non_contiguous():
+def test_ver_map_legacy_fails_if_non_contiguous() -> None:
     spec = SpecVerifier.demo()
     spec.verify()
     vm = make_random_version_map(spec)
@@ -39,7 +39,7 @@ def test_ver_map_legacy_fails_if_non_contiguous():
         check_version_map(vm, legacy=True)
 
 
-def test_ver_map_legacy_fails_if_not_start_at_1():
+def test_ver_map_legacy_fails_if_not_start_at_1() -> None:
     spec = SpecVerifier.demo()
     spec.verify()
     vm = make_random_version_map(spec)
@@ -48,43 +48,43 @@ def test_ver_map_legacy_fails_if_not_start_at_1():
         check_version_map(vm, legacy=True)
 
 
-def test_ver_map_types():
+def test_ver_map_types() -> None:
     spec = SpecVerifier.demo()
     spec.verify()
     vm = make_random_version_map(spec)
-    vm["1"] = vm.pop(1)
+    vm["1"] = vm.pop(1)  # type: ignore
     with raises(ValueError, match="test number.*integer"):
         check_version_map(vm)
 
 
-def test_ver_map_types2():
+def test_ver_map_types2() -> None:
     spec = SpecVerifier.demo()
     spec.verify()
     vm = make_random_version_map(spec)
-    vm[1] = 42
+    vm[1] = 42  # type: ignore
     with raises(ValueError, match="row.*dict"):
         check_version_map(vm)
 
 
-def test_ver_map_types3():
+def test_ver_map_types3() -> None:
     spec = SpecVerifier.demo()
     spec.verify()
     vm = make_random_version_map(spec)
-    vm[1]["2"] = vm[1].pop(2)
+    vm[1]["2"] = vm[1].pop(2)  # type: ignore
     with raises(ValueError, match="question.*integer"):
         check_version_map(vm)
 
 
-def test_ver_map_types4():
+def test_ver_map_types4() -> None:
     spec = SpecVerifier.demo()
     spec.verify()
     vm = make_random_version_map(spec)
-    vm[1][2] = "str"
+    vm[1][2] = "str"  # type: ignore
     with raises(ValueError, match="version.*integer"):
         check_version_map(vm)
 
 
-def test_ver_map_verions_in_range():
+def test_ver_map_verions_in_range() -> None:
     spec = SpecVerifier.demo()
     spec.verify()
     vm = make_random_version_map(spec)
@@ -96,7 +96,7 @@ def test_ver_map_verions_in_range():
         check_version_map(vm, spec)
 
 
-def test_ver_map_fix_has_ver1_only():
+def test_ver_map_fix_has_ver1_only() -> None:
     # assumes version 2 is fixed in demo: test will need adjusting if that changes
     spec = SpecVerifier.demo()
     spec.verify()
@@ -106,7 +106,7 @@ def test_ver_map_fix_has_ver1_only():
         check_version_map(vm, spec)
 
 
-def test_ver_map_json_roundtrip():
+def test_ver_map_json_roundtrip() -> None:
     spec = SpecVerifier.demo()
     spec.verify()
     vm = make_random_version_map(spec)
@@ -117,7 +117,7 @@ def test_ver_map_json_roundtrip():
     assert vm == vm3
 
 
-def test_ver_map_check_spec_or_dict():
+def test_ver_map_check_spec_or_dict() -> None:
     spec = SpecVerifier.demo()
     spec.verify()
     vm = make_random_version_map(spec)
@@ -125,7 +125,7 @@ def test_ver_map_check_spec_or_dict():
     check_version_map(vm, spec.get_public_spec_dict())
 
 
-def test_ver_map_from_dict():
+def test_ver_map_from_dict() -> None:
     spec = SpecVerifier.demo()
     spec.verify()
     spec_dict = spec.get_public_spec_dict()
@@ -134,7 +134,7 @@ def test_ver_map_from_dict():
     check_version_map(vm, spec)
 
 
-def test_ver_map_reproducible():
+def test_ver_map_reproducible() -> None:
     spec = SpecVerifier.demo()
     spec.verify()
     spec_dict = spec.spec
