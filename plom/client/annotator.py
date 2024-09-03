@@ -43,12 +43,18 @@ from PyQt6.QtGui import (
     QShortcut,
 )
 from PyQt6.QtWidgets import (
+    QComboBox,
     QDialog,
+    QFrame,
+    QGridLayout,
     QWidget,
+    QLayout,
     QMenu,
     QMessageBox,
     QProgressDialog,
+    QPushButton,
     QToolButton,
+    QBoxLayout,
     QFileDialog,
     QColorDialog,
 )
@@ -104,7 +110,7 @@ class Annotator(QWidget):
     annotator_done_closing = pyqtSignal(str)
     annotator_done_reject = pyqtSignal(str)
 
-    def __init__(self, username, parentMarkerUI=None, initialData=None):
+    def __init__(self, username: str, parentMarkerUI=None, initialData=None):
         """Initializes a new annotator window.
 
         Args:
@@ -129,6 +135,26 @@ class Annotator(QWidget):
         self.saveName = None
         self.maxMark = None
 
+        # help mypy understand stuff coming from uic
+        self.revealBox0: QFrame
+        self.hideableBox: QFrame
+        self.wideButton: QPushButton
+        self.hamMenuButton: QToolButton
+        self.zoomCB: QComboBox
+        self.boxButton: QToolButton
+        self.tickButton: QToolButton
+        self.crossButton: QToolButton
+        self.deleteButton: QToolButton
+        self.lineButton: QToolButton
+        self.moveButton: QToolButton
+        self.panButton: QToolButton
+        self.penButton: QToolButton
+        self.textButton: QToolButton
+        self.zoomButton: QToolButton
+        self.undoButton: QToolButton
+        self.redoButton: QToolButton
+        self.pageFrameGrid: QGridLayout
+        self.container_rubricwidget: QBoxLayout
         uic.loadUi(resources.files(plom.client.ui_files) / "annotator.ui", self)
         # TODO: temporary workaround
         self.ui = self
