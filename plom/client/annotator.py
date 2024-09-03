@@ -48,7 +48,6 @@ from PyQt6.QtWidgets import (
     QFrame,
     QGridLayout,
     QWidget,
-    QLayout,
     QMenu,
     QMessageBox,
     QProgressDialog,
@@ -291,7 +290,7 @@ class Annotator(QWidget):
         if self.scene:
             self.scene.build_page_action_buttons()
 
-    def is_experimental(self):
+    def is_experimental(self) -> bool:
         return self.parentMarkerUI.is_experimental()
 
     def pause_to_process_events(self):
