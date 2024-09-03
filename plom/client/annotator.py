@@ -1749,7 +1749,7 @@ class Annotator(QWidget):
         if event:
             event.accept()
 
-    def is_dirty(self):
+    def is_dirty(self) -> bool:
         """Is the scene dirty?
 
         Has the scene been annotated or changed this session? Re-opening
@@ -1914,7 +1914,7 @@ class Annotator(QWidget):
             pass
         self.view.setFocus()
 
-    def getRubricsFromServer(self):
+    def getRubricsFromServer(self) -> list[dict[str, Any]]:
         """Request a latest rubric list for current question."""
         return self.parentMarkerUI.getRubricsFromServer(self.question_num)
 
@@ -1922,18 +1922,19 @@ class Annotator(QWidget):
         """Request a latest rubric list for current question."""
         return self.parentMarkerUI.getOneRubricFromServer(key)
 
-    def getOtherRubricUsagesFromServer(self, key: str) -> list[int]:
+    def getOtherRubricUsagesFromServer(self, rid: int) -> list[int]:
         """Request a list of paper numbers using the given rubric.
 
         Args:
-            key: the identifier of the rubric.
+            rid: the identifier of the rubric.
 
         Returns:
             List of paper numbers using the rubric, excluding the paper
             the annotator currently at.
         """
+        assert self.tgvID
         curr_paper_number = int(self.tgvID[:4])
-        result = self.parentMarkerUI.getOtherRubricUsagesFromServer(key)
+        result = self.parentMarkerUI.getOtherRubricUsagesFromServer(rid)
         if curr_paper_number in result:
             result.remove(curr_paper_number)
         return result
@@ -1974,9 +1975,9 @@ class Annotator(QWidget):
         """Ask server to create a new rubric with data supplied."""
         return self.parentMarkerUI.sendNewRubricToServer(new_rubric)
 
-    def modifyRubric(self, key, updated_rubric) -> dict[str, Any]:
+    def modifyRubric(self, rid: int, updated_rubric: dict[str, Any]) -> dict[str, Any]:
         """Ask server to modify an existing rubric with the new data supplied."""
-        return self.parentMarkerUI.modifyRubricOnServer(key, updated_rubric)
+        return self.parentMarkerUI.modifyRubricOnServer(rid, updated_rubric)
 
     def viewSolutions(self):
         solutionFile = self.parentMarkerUI.getSolutionImage()
