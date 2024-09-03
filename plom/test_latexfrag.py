@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2024 Colin B. Macdonald
 
 from io import BytesIO
 import subprocess
@@ -23,14 +23,14 @@ def relativeErr(x, y):
     return float(abs(x - y)) / float(abs(x))
 
 
-def test_frag_latex():
+def test_frag_latex() -> None:
     frag = r"\( \mathbb{Z} / \mathbb{Q} \) The cat sat on the mat and verified \LaTeX\ works for Plom."
     r, imgdata = processFragment(frag)
     assert r
     assert isinstance(imgdata, bytes)
 
 
-def test_frag_broken_tex():
+def test_frag_broken_tex() -> None:
     frag = r"``Not that dinner.  The Right Dinner'' \saidTheCat"
     r, err = processFragment(frag)
     assert not r
@@ -38,11 +38,12 @@ def test_frag_broken_tex():
     # TODO: still influx, probably a string or a dict but anyway not image
 
 
-def test_frag_image_size():
+def test_frag_image_size() -> None:
     imgt = Image.open(resources.files(plom.server) / "target_Q_latex_plom.png")
     frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
     r, imgdata = processFragment(frag)
     assert r
+    assert isinstance(imgdata, bytes)
     img = Image.open(BytesIO(imgdata))
     # no more than 10% error in width/height
     assert relativeErr(img.width, imgt.width) < 0.1
@@ -51,6 +52,7 @@ def test_frag_image_size():
     frag = r"$\mathbb{Q}$ \LaTeX\ Plom\\made\\taller\\not\\wider"
     r, imgdata = processFragment(frag)
     assert r
+    assert isinstance(imgdata, bytes)
     img = Image.open(BytesIO(imgdata))
     # same width
     assert relativeErr(img.width, imgt.width) < 0.1
@@ -60,11 +62,12 @@ def test_frag_image_size():
     frag = r"$z = \frac{x + 3}{y}$ and lots and lots more, so its much longer."
     r, imgdata = processFragment(frag)
     assert r
+    assert isinstance(imgdata, bytes)
     img = Image.open(BytesIO(imgdata))
     assert img.width > 2 * imgt.width
 
 
-def test_frag_image():
+def test_frag_image() -> None:
     with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as target:
         with open(target.name, "wb") as fh:
             fh.write(
@@ -73,6 +76,7 @@ def test_frag_image():
 
         valid, imgdata = processFragment(r"$\mathbb{Q}$ \LaTeX\ Plom")
         assert valid
+        assert isinstance(imgdata, bytes)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as img:
             with open(img.name, "wb") as f:
                 f.write(imgdata)

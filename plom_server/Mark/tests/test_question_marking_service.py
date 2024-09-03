@@ -12,7 +12,7 @@ from ..models import MarkingTask
 
 
 class QuestionMarkingServiceTests(TestCase):
-    def test_get_first_available_task(self):
+    def test_get_first_available_task(self) -> None:
         baker.make(
             MarkingTask,
             status=MarkingTask.COMPLETE,

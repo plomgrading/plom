@@ -305,7 +305,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r["kind"], self.modified_neutral_rubric.kind)
         self.assertEqual(r["display_delta"], self.modified_neutral_rubric.display_delta)
 
-    def test_modify_relative_rubric(self):
+    def test_modify_relative_rubric(self) -> None:
         """Test RubricService.modify_rubric() to modify a relative rubric."""
         service = RubricService()
         rid = self.modified_relative_rubric.rid

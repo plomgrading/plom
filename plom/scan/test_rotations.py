@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2021-2024 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 
 from math import sqrt
-from pathlib import Path
 import sys
 
 if sys.version_info >= (3, 9):
@@ -50,14 +49,13 @@ ccw_red_pixel_data = [
 ]
 
 
-def test_rotate_png_cw(tmpdir):
-    tmpdir = Path(tmpdir)
-    # tmpdir = Path(".")
+def test_rotate_png_cw(tmp_path) -> None:
+    # tmppath = Path(".")
     b = (resources.files(plom.scan) / "test_rgb.png").read_bytes()
     # angle, and place where we expect a red pixel
     for angle, redpixel in cw_red_pixel_data:
         # make a copy
-        f = tmpdir / f"img{angle}.png"
+        f = tmp_path / f"img{angle}.png"
         with open(f, "wb") as fh:
             fh.write(b)
         rotate_bitmap(f, angle, clockwise=True)
@@ -73,14 +71,12 @@ def test_rotate_png_cw(tmpdir):
         assert colour == [255, 0, 0]
 
 
-def test_rotate_png_ccw(tmpdir):
-    tmpdir = Path(tmpdir)
-    # tmpdir = Path(".")
+def test_rotate_png_ccw(tmp_path) -> None:
     b = (resources.files(plom.scan) / "test_rgb.png").read_bytes()
     # angle, and place where we expect a red pixel
     for angle, redpixel in ccw_red_pixel_data:
         # make a copy
-        f = tmpdir / f"img{angle}.png"
+        f = tmp_path / f"img{angle}.png"
         with open(f, "wb") as fh:
             fh.write(b)
         rotate_bitmap(f, angle, clockwise=False)
@@ -96,12 +92,9 @@ def test_rotate_png_ccw(tmpdir):
         assert colour == [255, 0, 0]
 
 
-def test_rotate_jpeg_cw(tmpdir):
-    tmpdir = Path(tmpdir)
-    # tmpdir = Path(".")
-
+def test_rotate_jpeg_cw(tmp_path) -> None:
     # make a lowish-quality jpeg and extract to bytes
-    f = tmpdir / "rgb.jpg"
+    f = tmp_path / "rgb.jpg"
     im = Image.open(resources.files(plom.scan) / "test_rgb.png")
     im.save(f, "JPEG", quality=2, optimize=True)
     with open(f, "rb") as fh:
@@ -110,7 +103,7 @@ def test_rotate_jpeg_cw(tmpdir):
     # angle, and place where we expect a red pixel
     for angle, redpixel in cw_red_pixel_data:
         # make a copy
-        f = tmpdir / f"img{angle}.jpg"
+        f = tmp_path / f"img{angle}.jpg"
         with open(f, "wb") as fh:
             fh.write(b)
         rotate_bitmap(f, angle, clockwise=True)
@@ -121,12 +114,9 @@ def test_rotate_jpeg_cw(tmpdir):
         assert relative_error_vec(colour, (255, 0, 0)) <= 0.1
 
 
-def test_rotate_jpeg_ccw(tmpdir):
-    tmpdir = Path(tmpdir)
-    # tmpdir = Path(".")
-
+def test_rotate_jpeg_ccw(tmp_path) -> None:
     # make a lowish-quality jpeg and extract to bytes
-    f = tmpdir / "rgb.jpg"
+    f = tmp_path / "rgb.jpg"
     im = Image.open(resources.files(plom.scan) / "test_rgb.png")
     im.save(f, "JPEG", quality=2, optimize=True)
     with open(f, "rb") as fh:
@@ -135,7 +125,7 @@ def test_rotate_jpeg_ccw(tmpdir):
     # angle, and place where we expect a red pixel
     for angle, redpixel in ccw_red_pixel_data:
         # make a copy
-        f = tmpdir / f"img{angle}.jpg"
+        f = tmp_path / f"img{angle}.jpg"
         with open(f, "wb") as fh:
             fh.write(b)
         rotate_bitmap(f, angle, clockwise=False)
@@ -146,19 +136,16 @@ def test_rotate_jpeg_ccw(tmpdir):
         assert relative_error_vec(colour, (255, 0, 0)) <= 0.1
 
 
-def test_rotate_jpeg_lossless_cw(tmpdir):
-    tmpdir = Path(tmpdir)
-    # tmpdir = Path(".")
-
+def test_rotate_jpeg_lossless_cw(tmp_path) -> None:
     # make a lowish-quality jpeg and extract to bytes
-    orig = tmpdir / "rgb.jpg"
+    orig = tmp_path / "rgb.jpg"
     im = Image.open(resources.files(plom.scan) / "test_rgb.png")
     im.save(orig, "JPEG", quality=2, optimize=True)
     with open(orig, "rb") as fh:
         b = fh.read()
 
     for angle in (0, 90, 180, 270, -90):
-        f = tmpdir / f"img{angle}.jpg"
+        f = tmp_path / f"img{angle}.jpg"
         with open(f, "wb") as fh:
             fh.write(b)
         rotate_bitmap(f, angle, clockwise=True)
@@ -184,19 +171,16 @@ def test_rotate_jpeg_lossless_cw(tmpdir):
         assert not diff.getbbox()
 
 
-def test_rotate_jpeg_lossless_ccw(tmpdir):
-    tmpdir = Path(tmpdir)
-    # tmpdir = Path(".")
-
+def test_rotate_jpeg_lossless_ccw(tmp_path) -> None:
     # make a lowish-quality jpeg and extract to bytes
-    orig = tmpdir / "rgb.jpg"
+    orig = tmp_path / "rgb.jpg"
     im = Image.open(resources.files(plom.scan) / "test_rgb.png")
     im.save(orig, "JPEG", quality=2, optimize=True)
     with open(orig, "rb") as fh:
         b = fh.read()
 
     for angle in (0, 90, 180, 270, -90):
-        f = tmpdir / f"img{angle}.jpg"
+        f = tmp_path / f"img{angle}.jpg"
         with open(f, "wb") as fh:
             fh.write(b)
         rotate_bitmap(f, angle, clockwise=False)
@@ -210,12 +194,9 @@ def test_rotate_jpeg_lossless_ccw(tmpdir):
         assert not diff.getbbox()
 
 
-def test_rotate_exif_read_back(tmpdir):
-    tmpdir = Path(tmpdir)
-    # tmpdir = Path(".")
-
+def test_rotate_exif_read_back(tmp_path) -> None:
     # make jpeg and extract to bytes
-    orig = tmpdir / "rgb.jpg"
+    orig = tmp_path / "rgb.jpg"
     im = Image.open(resources.files(plom.scan) / "test_rgb.png")
     im.save(orig, "JPEG", quality=90, optimize=True)
     with open(orig, "rb") as fh:
@@ -223,7 +204,7 @@ def test_rotate_exif_read_back(tmpdir):
     # png_bytes = (resources.files(plom.scan) / "test_rgb.png").read_bytes()
 
     for angle in (0, 90, 180, 270, -90):
-        f = tmpdir / f"img{angle}.jpg"
+        f = tmp_path / f"img{angle}.jpg"
         with open(f, "wb") as fh:
             fh.write(jpg_bytes)
         rotate_bitmap(f, angle, clockwise=False)
@@ -232,7 +213,7 @@ def test_rotate_exif_read_back(tmpdir):
         assert angle % 360 == r % 360
 
         # doesn't really work, maybe b/c PIL keeps making png into 2-channel?
-        # f2 = tmpdir / f"img{angle}.png"
+        # f2 = tmp_path / f"img{angle}.png"
         # with open(f2, "wb") as fh:
         #     fh.write(png_bytes)
         # rotate_bitmap(f2, angle, clockwise=False)
@@ -243,24 +224,21 @@ def test_rotate_exif_read_back(tmpdir):
         # diff.save(f"diff{angle}.png")
 
 
-def test_rotate_default_ccw(tmpdir):
-    tmpdir = Path(tmpdir)
-    # tmpdir = Path(".")
-
+def test_rotate_default_ccw(tmp_path) -> None:
     # make jpeg and extract to bytes
-    orig = tmpdir / "rgb.jpg"
+    orig = tmp_path / "rgb.jpg"
     im = Image.open(resources.files(plom.scan) / "test_rgb.png")
     im.save(orig, "JPEG", quality=90, optimize=True)
     with open(orig, "rb") as fh:
         jpg_bytes = fh.read()
 
     for angle in (0, 90, 180, 270, -90):
-        f1 = tmpdir / f"img{angle}_ccw.jpg"
+        f1 = tmp_path / f"img{angle}_ccw.jpg"
         with open(f1, "wb") as fh:
             fh.write(jpg_bytes)
         rotate_bitmap(f1, angle, clockwise=False)
 
-        f2 = tmpdir / f"img{angle}_default.jpg"
+        f2 = tmp_path / f"img{angle}_default.jpg"
         with open(f2, "wb") as fh:
             fh.write(jpg_bytes)
         rotate_bitmap(f2, angle)

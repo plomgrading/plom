@@ -126,7 +126,7 @@ def test_qr_reads_from_file_legacy(tmp_path) -> None:
     assert p["SW"]
 
 
-def test_qr_reads_write_dot_qr(tmp_path):
+def test_qr_reads_write_dot_qr(tmp_path) -> None:
     b = (resources.files(plom.scan) / "test_zbar_fails.png").read_bytes()
     f = tmp_path / "test_zbar.png"
     with open(f, "wb") as fh:
