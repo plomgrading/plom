@@ -277,7 +277,6 @@ module = [
     'plom.client.tools.tool',
     'plom.db.examDB',
     'plom.server.theServer',
-    'Tags.admin',  # Issue #2849
 ]
 ignore_errors = true
 
