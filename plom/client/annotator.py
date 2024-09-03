@@ -407,7 +407,7 @@ class Annotator(QWidget):
         m.addAction("About Plom", lambda: show_about_dialog(self))
         return m
 
-    def close_current_scene(self):
+    def close_current_scene(self) -> None:
         """Removes the current cene, saving some info in case we want to open a new one.
 
         Returns:
@@ -418,15 +418,19 @@ class Annotator(QWidget):
         # TODO: how to reset the scene?
         # This may be heavy handed, but for now we delete the old scene
 
+        if not self.scene:
+            # it was already closed
+            return
+
         # Attempt at keeping mode information.
         self.modeInformation = [self.scene.mode]
         if self.scene.mode == "rubric":
-            key, tab = self.rubric_widget.getCurrentRubricKeyAndTab()
-            if key is None:
+            rid, tab = self.rubric_widget.getCurrentRubricKeyAndTab()
+            if rid is None:
                 # Maybe row hidden (illegal) but scene knows it in the blue
                 # ghost.  Fixes #1599.  Still None if scene didn't know.
-                key = self.scene.get_current_rubric_id()
-            self.modeInformation.append((key, tab))
+                rid = self.scene.get_current_rubric_id()
+            self.modeInformation.append((rid, tab))
 
         # after grabbed mode information, reset rubric_widget
         self.rubric_widget.setEnabled(False)
@@ -1917,9 +1921,9 @@ class Annotator(QWidget):
         """Request a latest rubric list for current question."""
         return self.parentMarkerUI.getRubricsFromServer(self.question_num)
 
-    def getOneRubricFromServer(self, key: int) -> dict[str, Any]:
+    def getOneRubricFromServer(self, rid: int) -> dict[str, Any]:
         """Request a latest rubric list for current question."""
-        return self.parentMarkerUI.getOneRubricFromServer(key)
+        return self.parentMarkerUI.getOneRubricFromServer(rid)
 
     def getOtherRubricUsagesFromServer(self, rid: int) -> list[int]:
         """Request a list of paper numbers using the given rubric.
