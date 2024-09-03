@@ -67,6 +67,7 @@ def test_rotate_png_cw(tmp_path) -> None:
             continue
         # if there was a palette, have to look up the colour by index
         idx = im.getpixel(redpixel)
+        assert idx is not None
         colour = palette[(3 * idx) : (3 * idx) + 3]
         assert colour == [255, 0, 0]
 
@@ -88,6 +89,7 @@ def test_rotate_png_ccw(tmp_path) -> None:
             continue
         # if there was a palette, have to look up the colour by index
         idx = im.getpixel(redpixel)
+        assert idx is not None
         colour = palette[(3 * idx) : (3 * idx) + 3]
         assert colour == [255, 0, 0]
 
