@@ -425,7 +425,7 @@ class Annotator(QWidget):
         # Attempt at keeping mode information.
         self.modeInformation = [self.scene.mode]
         if self.scene.mode == "rubric":
-            rid, tab = self.rubric_widget.getCurrentRubricKeyAndTab()
+            rid, tab = self.rubric_widget.getCurrentRubricIdAndTab()
             if rid is None:
                 # Maybe row hidden (illegal) but scene knows it in the blue
                 # ghost.  Fixes #1599.  Still None if scene didn't know.
@@ -544,7 +544,7 @@ class Annotator(QWidget):
         if which_mode == "rubric":
             # the remaining part of list should be a tuple in this case
             (extra,) = cdr
-            if not self.rubric_widget.setCurrentRubricKeyAndTab(*extra):
+            if not self.rubric_widget.setCurrentRubricIdAndTab(*extra):
                 # if no such rubric or no such tab, select move instead
                 self.toMoveMode()
         else:
