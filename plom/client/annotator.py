@@ -110,7 +110,7 @@ class Annotator(QWidget):
     annotator_done_closing = pyqtSignal(str)
     annotator_done_reject = pyqtSignal(str)
 
-    def __init__(self, username: str, parentMarkerUI=None, initialData=None):
+    def __init__(self, username: str, parentMarkerUI=None, initialData=None) -> None:
         """Initializes a new annotator window.
 
         Args:
@@ -1618,6 +1618,7 @@ class Annotator(QWidget):
         Returns:
             False if user cancels, True otherwise.
         """
+        assert self.scene
         if self.getScore() != 0:
             return True
         code = None
@@ -1644,7 +1645,7 @@ class Annotator(QWidget):
         """
         if self.getScore() != self.maxMark:
             return True
-
+        assert self.scene
         code = None
         if self.scene.hasOnlyCrosses():
             code = "full-marks-but-has-only-crosses"
@@ -1670,6 +1671,7 @@ class Annotator(QWidget):
         Returns:
             False if user cancels, True otherwise.
         """
+        assert self.scene
         code = "each-page-should-be-annotated"
         # save computing cost if user won't be warned
         if not self._will_we_warn(code):
@@ -1759,11 +1761,11 @@ class Annotator(QWidget):
             return False
         return self.scene.is_dirty()
 
-    def get_nonrubric_text_from_page(self):
+    def get_nonrubric_text_from_page(self) -> list[str]:
         """Retrieves text (not in rubrics) from the scene.
 
         Returns:
-            list: strings for text annotations not in a rubric.
+            List of strings for text annotations not in a rubric.
         """
         if not self.scene:
             return []
@@ -1773,7 +1775,7 @@ class Annotator(QWidget):
         """Latex a fragment of text."""
         return self.parentMarkerUI.latexAFragment(*args, **kwargs)
 
-    def pickleIt(self):
+    def pickleIt(self) -> tuple[Path, Path]:
         """Capture the annotated pages as a bitmap and a .plom file.
 
         1. Renders the current scene as a static bitmap.
@@ -1788,6 +1790,7 @@ class Annotator(QWidget):
             tuple: two `pathlib.Path`, one for the rendered image and
             one for the ``.plom`` file.
         """
+        assert self.scene
         aname = self.scene.save(self.saveName)
         lst = self.scene.pickleSceneItems()  # newest items first
         lst.reverse()  # so newest items last
@@ -1818,17 +1821,18 @@ class Annotator(QWidget):
             fh.write("\n")
         return aname, plomfile
 
-    def unpickleIt(self, plomData) -> None:
+    def unpickleIt(self, plomData: dict[str, Any]) -> None:
         """Unpickles the page by calling scene.unpickleSceneItems and sets the page's mark.
 
         Args:
-            plomData (dict): a dictionary containing the data for the
+            plomData: a dictionary containing the data for the
                 pickled ``.plom`` file.
 
         Returns:
             None
         """
         self.view.setHidden(True)
+        assert self.scene
         if plomData.get("sceneScale", None):
             self.scene.set_scale_factor(plomData["sceneScale"])
         if plomData.get("annotationColor", None):
