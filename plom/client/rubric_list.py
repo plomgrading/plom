@@ -173,13 +173,14 @@ class RubricTable(QTableWidget):
         """
         )
         head = self.horizontalHeader()
-        if head:
+        if head is not None:
             # it seems during unit tests there isn't one?
+            # also it seems explicit `is not None` is required
             head.setVisible(False)
             head.setStretchLastSection(True)
-        # Issue #1498: use these for shortcut key indicators
+        # Issue #1498: use these for shortcut key indicators?
         head = self.verticalHeader()
-        if head:
+        if head is not None:
             # it seems during unit tests there isn't one?
             head.setVisible(False)
             # CSS cannot set relative fontsize
