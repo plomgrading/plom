@@ -757,12 +757,8 @@ class Annotator(QWidget):
         labels = [x["pagename"] for x in pagedata]
         WholeTestView(testnum, pagedata, labels, parent=self).exec()
 
-    def rearrangePages(self):
-        """Rearranges pages in UI.
-
-        Returns:
-            None
-        """
+    def rearrangePages(self) -> None:
+        """Rearranges pages in UI."""
         if not self.tgvID or not self.scene:
             return
         self.parentMarkerUI.Qapp.setOverrideCursor(Qt.CursorShape.WaitCursor)
@@ -1425,19 +1421,18 @@ class Annotator(QWidget):
     def saveAnnotations(self) -> bool:
         """Try to save the annotations and signal Marker to upload them.
 
-        Notes:
-            There are various sanity checks and user interaction to be
-            done.  Return `False` if user cancels.  Return `True` if we
-            should move on (for example, to close the Annotator).
+        There are various checks and user interaction to be done.
 
-            Be careful of a score of 0 - when mark total or mark up.
-            Be careful of max-score when marking down.
-            In either case - get user to confirm the score before closing.
-            Also confirm various "not enough feedback" cases.
+        Be careful of a score of 0 - when mark total or mark up.
+        Be careful of max-score when marking down.
+        In either case - get user to confirm the score before closing.
+        Also confirm various "not enough feedback" cases.
 
         Returns:
-            False if user cancels, True if annotator is closed successfully.
+            Return `False` if user cancels.  Return `True` if we
+            should move on (for example, to close the Annotator).
         """
+        assert self.scene
         # do some checks before accepting things
         if not self.scene.hasAnnotations():
             InfoMsg(
