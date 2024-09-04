@@ -17,6 +17,10 @@
     Rubrics
 {% endblock page_heading %}
 {% block main_content %}
+    {% if messages %}
+        {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
+    {% endif %}
+    <p>{{ question_max_marks_dict }}</p>
     <div>
         <a class="btn btn-primary dinline-block"
            href="{% url 'rubrics_admin' %}">Rubric management&hellip;</a>
@@ -50,5 +54,5 @@
     </div>
     {% comment %} Table {% endcomment %}
     <div class="mt-2">{% render_table rubrics %}</div>
-    {% include "./modal_forms.html" %}
+    {% include "./modal_forms.html" with question_max_marks_dict=questions %}
 {% endblock main_content %}
