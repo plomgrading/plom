@@ -43,12 +43,17 @@ from PyQt6.QtGui import (
     QShortcut,
 )
 from PyQt6.QtWidgets import (
+    QComboBox,
     QDialog,
+    QFrame,
+    QGridLayout,
     QWidget,
     QMenu,
     QMessageBox,
     QProgressDialog,
+    QPushButton,
     QToolButton,
+    QBoxLayout,
     QFileDialog,
     QColorDialog,
 )
@@ -104,7 +109,7 @@ class Annotator(QWidget):
     annotator_done_closing = pyqtSignal(str)
     annotator_done_reject = pyqtSignal(str)
 
-    def __init__(self, username, parentMarkerUI=None, initialData=None):
+    def __init__(self, username: str, parentMarkerUI=None, initialData=None) -> None:
         """Initializes a new annotator window.
 
         Args:
@@ -127,8 +132,28 @@ class Annotator(QWidget):
         self.testName = None
         self.paperDir = None
         self.saveName = None
-        self.maxMark = None
+        self.maxMark = 0
 
+        # help mypy understand stuff coming from uic
+        self.revealBox0: QFrame
+        self.hideableBox: QFrame
+        self.wideButton: QPushButton
+        self.hamMenuButton: QToolButton
+        self.zoomCB: QComboBox
+        self.boxButton: QToolButton
+        self.tickButton: QToolButton
+        self.crossButton: QToolButton
+        self.deleteButton: QToolButton
+        self.lineButton: QToolButton
+        self.moveButton: QToolButton
+        self.panButton: QToolButton
+        self.penButton: QToolButton
+        self.textButton: QToolButton
+        self.zoomButton: QToolButton
+        self.undoButton: QToolButton
+        self.redoButton: QToolButton
+        self.pageFrameGrid: QGridLayout
+        self.container_rubricwidget: QBoxLayout
         uic.loadUi(resources.files(plom.client.ui_files) / "annotator.ui", self)
         # TODO: temporary workaround
         self.ui = self
@@ -265,7 +290,7 @@ class Annotator(QWidget):
         if self.scene:
             self.scene.build_page_action_buttons()
 
-    def is_experimental(self):
+    def is_experimental(self) -> bool:
         return self.parentMarkerUI.is_experimental()
 
     def pause_to_process_events(self):
@@ -382,7 +407,7 @@ class Annotator(QWidget):
         m.addAction("About Plom", lambda: show_about_dialog(self))
         return m
 
-    def close_current_scene(self):
+    def close_current_scene(self) -> None:
         """Removes the current cene, saving some info in case we want to open a new one.
 
         Returns:
@@ -393,15 +418,19 @@ class Annotator(QWidget):
         # TODO: how to reset the scene?
         # This may be heavy handed, but for now we delete the old scene
 
+        if not self.scene:
+            # it was already closed
+            return
+
         # Attempt at keeping mode information.
         self.modeInformation = [self.scene.mode]
         if self.scene.mode == "rubric":
-            key, tab = self.rubric_widget.getCurrentRubricKeyAndTab()
-            if key is None:
+            rid, tab = self.rubric_widget.getCurrentRubricIdAndTab()
+            if rid is None:
                 # Maybe row hidden (illegal) but scene knows it in the blue
                 # ghost.  Fixes #1599.  Still None if scene didn't know.
-                key = self.scene.get_current_rubric_id()
-            self.modeInformation.append((key, tab))
+                rid = self.scene.get_current_rubric_id()
+            self.modeInformation.append((rid, tab))
 
         # after grabbed mode information, reset rubric_widget
         self.rubric_widget.setEnabled(False)
@@ -515,7 +544,7 @@ class Annotator(QWidget):
         if which_mode == "rubric":
             # the remaining part of list should be a tuple in this case
             (extra,) = cdr
-            if not self.rubric_widget.setCurrentRubricKeyAndTab(*extra):
+            if not self.rubric_widget.setCurrentRubricIdAndTab(*extra):
                 # if no such rubric or no such tab, select move instead
                 self.toMoveMode()
         else:
@@ -731,12 +760,8 @@ class Annotator(QWidget):
         labels = [x["pagename"] for x in pagedata]
         WholeTestView(testnum, pagedata, labels, parent=self).exec()
 
-    def rearrangePages(self):
-        """Rearranges pages in UI.
-
-        Returns:
-            None
-        """
+    def rearrangePages(self) -> None:
+        """Rearranges pages in UI."""
         if not self.tgvID or not self.scene:
             return
         self.parentMarkerUI.Qapp.setOverrideCursor(Qt.CursorShape.WaitCursor)
@@ -1399,19 +1424,18 @@ class Annotator(QWidget):
     def saveAnnotations(self) -> bool:
         """Try to save the annotations and signal Marker to upload them.
 
-        Notes:
-            There are various sanity checks and user interaction to be
-            done.  Return `False` if user cancels.  Return `True` if we
-            should move on (for example, to close the Annotator).
+        There are various checks and user interaction to be done.
 
-            Be careful of a score of 0 - when mark total or mark up.
-            Be careful of max-score when marking down.
-            In either case - get user to confirm the score before closing.
-            Also confirm various "not enough feedback" cases.
+        Be careful of a score of 0 - when mark total or mark up.
+        Be careful of max-score when marking down.
+        In either case - get user to confirm the score before closing.
+        Also confirm various "not enough feedback" cases.
 
         Returns:
-            False if user cancels, True if annotator is closed successfully.
+            Return `False` if user cancels.  Return `True` if we
+            should move on (for example, to close the Annotator).
         """
+        assert self.scene
         # do some checks before accepting things
         if not self.scene.hasAnnotations():
             InfoMsg(
@@ -1597,6 +1621,7 @@ class Annotator(QWidget):
         Returns:
             False if user cancels, True otherwise.
         """
+        assert self.scene
         if self.getScore() != 0:
             return True
         code = None
@@ -1623,7 +1648,7 @@ class Annotator(QWidget):
         """
         if self.getScore() != self.maxMark:
             return True
-
+        assert self.scene
         code = None
         if self.scene.hasOnlyCrosses():
             code = "full-marks-but-has-only-crosses"
@@ -1649,6 +1674,7 @@ class Annotator(QWidget):
         Returns:
             False if user cancels, True otherwise.
         """
+        assert self.scene
         code = "each-page-should-be-annotated"
         # save computing cost if user won't be warned
         if not self._will_we_warn(code):
@@ -1726,7 +1752,7 @@ class Annotator(QWidget):
         if event:
             event.accept()
 
-    def is_dirty(self):
+    def is_dirty(self) -> bool:
         """Is the scene dirty?
 
         Has the scene been annotated or changed this session? Re-opening
@@ -1738,11 +1764,11 @@ class Annotator(QWidget):
             return False
         return self.scene.is_dirty()
 
-    def get_nonrubric_text_from_page(self):
+    def get_nonrubric_text_from_page(self) -> list[str]:
         """Retrieves text (not in rubrics) from the scene.
 
         Returns:
-            list: strings for text annotations not in a rubric.
+            List of strings for text annotations not in a rubric.
         """
         if not self.scene:
             return []
@@ -1752,7 +1778,7 @@ class Annotator(QWidget):
         """Latex a fragment of text."""
         return self.parentMarkerUI.latexAFragment(*args, **kwargs)
 
-    def pickleIt(self):
+    def pickleIt(self) -> tuple[Path, Path]:
         """Capture the annotated pages as a bitmap and a .plom file.
 
         1. Renders the current scene as a static bitmap.
@@ -1767,6 +1793,7 @@ class Annotator(QWidget):
             tuple: two `pathlib.Path`, one for the rendered image and
             one for the ``.plom`` file.
         """
+        assert self.scene
         aname = self.scene.save(self.saveName)
         lst = self.scene.pickleSceneItems()  # newest items first
         lst.reverse()  # so newest items last
@@ -1797,17 +1824,18 @@ class Annotator(QWidget):
             fh.write("\n")
         return aname, plomfile
 
-    def unpickleIt(self, plomData) -> None:
+    def unpickleIt(self, plomData: dict[str, Any]) -> None:
         """Unpickles the page by calling scene.unpickleSceneItems and sets the page's mark.
 
         Args:
-            plomData (dict): a dictionary containing the data for the
+            plomData: a dictionary containing the data for the
                 pickled ``.plom`` file.
 
         Returns:
             None
         """
         self.view.setHidden(True)
+        assert self.scene
         if plomData.get("sceneScale", None):
             self.scene.set_scale_factor(plomData["sceneScale"])
         if plomData.get("annotationColor", None):
@@ -1840,20 +1868,12 @@ class Annotator(QWidget):
         self.ui.zoomCB.addItem("33%")
         self.ui.zoomCB.currentIndexChanged.connect(self.zoomCBChanged)
 
-    def isZoomFitWidth(self) -> None:
-        """Sets the zoom ui text when user has selected "Fit Width".
-
-        Returns:
-            None but modifies self.ui
-        """
+    def isZoomFitWidth(self) -> bool:
+        """Has the user selected "Fit Width"?"""
         return self.ui.zoomCB.currentText() == "Fit width"
 
-    def isZoomFitHeight(self) -> None:
-        """Sets the zoom ui text when user has selected "Fit Height".
-
-        Returns:
-            None but modifies self.ui
-        """
+    def isZoomFitHeight(self) -> bool:
+        """Has the user selected "Fit Height"?"""
         return self.ui.zoomCB.currentText() == "Fit height"
 
     def changeCBZoom(self, CBIndex: int) -> None:
@@ -1897,26 +1917,27 @@ class Annotator(QWidget):
             pass
         self.view.setFocus()
 
-    def getRubricsFromServer(self):
+    def getRubricsFromServer(self) -> list[dict[str, Any]]:
         """Request a latest rubric list for current question."""
         return self.parentMarkerUI.getRubricsFromServer(self.question_num)
 
-    def getOneRubricFromServer(self, key: int) -> dict[str, Any]:
+    def getOneRubricFromServer(self, rid: int) -> dict[str, Any]:
         """Request a latest rubric list for current question."""
-        return self.parentMarkerUI.getOneRubricFromServer(key)
+        return self.parentMarkerUI.getOneRubricFromServer(rid)
 
-    def getOtherRubricUsagesFromServer(self, key: str) -> list[int]:
+    def getOtherRubricUsagesFromServer(self, rid: int) -> list[int]:
         """Request a list of paper numbers using the given rubric.
 
         Args:
-            key: the identifier of the rubric.
+            rid: the identifier of the rubric.
 
         Returns:
             List of paper numbers using the rubric, excluding the paper
             the annotator currently at.
         """
+        assert self.tgvID
         curr_paper_number = int(self.tgvID[:4])
-        result = self.parentMarkerUI.getOtherRubricUsagesFromServer(key)
+        result = self.parentMarkerUI.getOtherRubricUsagesFromServer(rid)
         if curr_paper_number in result:
             result.remove(curr_paper_number)
         return result
@@ -1957,9 +1978,9 @@ class Annotator(QWidget):
         """Ask server to create a new rubric with data supplied."""
         return self.parentMarkerUI.sendNewRubricToServer(new_rubric)
 
-    def modifyRubric(self, key, updated_rubric) -> dict[str, Any]:
+    def modifyRubric(self, rid: int, updated_rubric: dict[str, Any]) -> dict[str, Any]:
         """Ask server to modify an existing rubric with the new data supplied."""
-        return self.parentMarkerUI.modifyRubricOnServer(key, updated_rubric)
+        return self.parentMarkerUI.modifyRubricOnServer(rid, updated_rubric)
 
     def viewSolutions(self):
         solutionFile = self.parentMarkerUI.getSolutionImage()

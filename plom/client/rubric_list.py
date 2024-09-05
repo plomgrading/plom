@@ -189,7 +189,7 @@ class RubricTable(QTableWidget):
             head.setFont(f)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
-        _col_headers = ("Key", "Username", "Delta", "Text")
+        _col_headers = ("RID", "Username", "Delta", "Text")
         self.setColumnCount(len(_col_headers))
         self.setHorizontalHeaderLabels(_col_headers)
         self.hideColumn(0)
@@ -256,18 +256,18 @@ class RubricTable(QTableWidget):
         if row < 0:
             # no row under click but maybe one is highlighted
             row = self.getCurrentRubricRow()
-        key = None if row is None else self._get_key_from_row(row)
+        rid = None if row is None else self._get_rid_from_row(row)
 
         # These are workaround for Issue #1441, lambdas in a loop
         def add_func_factory(t, k: int):
             def add_func():
-                t.appendByKey(k)
+                t.append_by_rid(k)
 
             return add_func
 
         def del_func_factory(t, k: int):
             def del_func():
-                t.removeRubricByKey(k)
+                t.remove_rubric_by_rid(k)
 
             return del_func
 
@@ -278,9 +278,9 @@ class RubricTable(QTableWidget):
             return edit_func
 
         menu = QMenu(self)
-        if key:
+        if rid:
             a = QAction("Edit rubric", self)
-            a.triggered.connect(edit_func_factory(self, key))
+            a.triggered.connect(edit_func_factory(self, rid))
             menu.addAction(a)
             menu.addSeparator()
 
@@ -288,13 +288,13 @@ class RubricTable(QTableWidget):
                 if tab == self:
                     continue
                 a = QAction(f"Move to tab {tab.shortname}", self)
-                a.triggered.connect(add_func_factory(tab, key))
-                a.triggered.connect(del_func_factory(self, key))
+                a.triggered.connect(add_func_factory(tab, rid))
+                a.triggered.connect(del_func_factory(self, rid))
                 menu.addAction(a)
             menu.addSeparator()
 
             remAction = QAction("Remove from this tab", self)
-            remAction.triggered.connect(del_func_factory(self, key))
+            remAction.triggered.connect(del_func_factory(self, rid))
             menu.addAction(remAction)
             menu.addSeparator()
 
@@ -316,12 +316,12 @@ class RubricTable(QTableWidget):
         if row < 0:
             # no row under click but maybe one is highlighted
             row = self.getCurrentRubricRow()
-        key = None if row is None else self._get_key_from_row(row)
+        rid = None if row is None else self._get_rid_from_row(row)
 
         # workaround for Issue #1441, lambdas in a loop
         def add_func_factory(t, k: int):
             def add_func():
-                t.appendByKey(k)
+                t.append_by_rid(k)
 
             return add_func
 
@@ -338,9 +338,9 @@ class RubricTable(QTableWidget):
             return other_usage
 
         menu = QMenu(self)
-        if key:
+        if rid:
             a = QAction("Edit rubric", self)
-            a.triggered.connect(edit_func_factory(self, key))
+            a.triggered.connect(edit_func_factory(self, rid))
             menu.addAction(a)
             menu.addSeparator()
 
@@ -348,12 +348,12 @@ class RubricTable(QTableWidget):
             # [self._parent.RTW.widget(n) for n in range(1, 5)]
             for tab in self._parent.user_tabs:
                 a = QAction(f"Add to tab {tab.shortname}", self)
-                a.triggered.connect(add_func_factory(tab, key))
+                a.triggered.connect(add_func_factory(tab, rid))
                 menu.addAction(a)
             menu.addSeparator()
 
             other_usage = QAction("See other usage...", self)
-            other_usage.triggered.connect(other_usage_factory(self, key))
+            other_usage.triggered.connect(other_usage_factory(self, rid))
             menu.addAction(other_usage)
             menu.addSeparator()
 
@@ -383,8 +383,8 @@ class RubricTable(QTableWidget):
         self.selectFirstVisibleRubric()
         self.handleClick()
 
-    def removeRubricByKey(self, key: int) -> None:
-        row = self._get_row_from_key(key)
+    def remove_rubric_by_rid(self, rid: int) -> None:
+        row = self._get_row_from_rid(rid)
         if row is None:
             return
         self.removeRow(row)
@@ -395,8 +395,8 @@ class RubricTable(QTableWidget):
         row = self.getCurrentRubricRow()
         if row is None:
             return
-        key = self._get_key_from_row(row)
-        self._parent.hideRubricByKey(key)
+        rid = self._get_rid_from_row(row)
+        self._parent.hide_rubric_by_rid(rid)
         self.selectFirstVisibleRubric()
         self.handleClick()
 
@@ -404,8 +404,8 @@ class RubricTable(QTableWidget):
         row = self.getCurrentRubricRow()
         if row is None:
             return
-        key = self._get_key_from_row(row)
-        self._parent.unhideRubricByKey(key)
+        rid = self._get_rid_from_row(row)
+        self._parent.unhide_rubric_by_rid(rid)
         self.selectFirstVisibleRubric()
         self.handleClick()
 
@@ -434,34 +434,34 @@ class RubricTable(QTableWidget):
             self.setSortingEnabled(_sorting_enabled)
             event.accept()
 
-    def appendByKey(self, key: int) -> None:
-        """Append the rubric associated with a key to the end of the list.
+    def append_by_rid(self, rid: int) -> None:
+        """Append a rubric to the end of the list.
 
         If its a dupe, don't add.
 
         Args:
-            key: the key associated with a rubric.
+            rid: the rubric-id, a key associated with a rubric.
 
         Raises:
-            what happens on invalid key?
+            what happens on invalid rid?
         """
         # ensure there is exactly one matching rubric in the list and grab it
         # TODO: should the local storage be a dict to make this easy?
-        (rubric,) = [x for x in self._parent.rubrics if x["rid"] == key]
+        (rubric,) = [x for x in self._parent.rubrics if x["rid"] == rid]
         self.appendNewRubric(rubric)
 
     def appendNewRubric(self, rubric: dict[str, Any]) -> None:
         rc = self.rowCount()
         # do sanity check for duplications
         for r in range(rc):
-            if self._get_key_from_row(r) == rubric["rid"]:
+            if self._get_rid_from_row(r) == rubric["rid"]:
                 return  # rubric already present
         # is a new rubric, so append it
         # Careful about sorting during setItem calls: Issue #2065
         _sorting_enabled = self.isSortingEnabled()
         self.setSortingEnabled(False)
         self.insertRow(rc)
-        # rubric key as string to avoid overflow on legacy servers with large keys
+        # rubric-ids as string to avoid overflow on legacy servers with long rids
         self.setItem(rc, 0, QTableWidgetItem(str(rubric["rid"])))
         self.setItem(rc, 1, QTableWidgetItem(rubric["username"]))
         self.setItem(rc, 2, QTableWidgetItem(rubric["display_delta"]))
@@ -491,10 +491,10 @@ class RubricTable(QTableWidget):
         item.setToolTip(hoverText.strip())
         self.setSortingEnabled(_sorting_enabled)
 
-    def setRubricsByKeys(
+    def set_rubrics_by_rids(
         self,
         rubric_list: list[dict[str, Any]],
-        id_list: list[int],
+        rid_list: list[int],
         *,
         alt_order: list[int] | None = None,
     ) -> None:
@@ -502,56 +502,56 @@ class RubricTable(QTableWidget):
 
         Args:
             rubric_list: all the rubrics, which are dicts with
-                various keys, most notably for us, ``id``.
-            id_list: which ``id``s should insert into the table.
+                various keys, most notably for us, ``rid``.
+            rid_list: which ``rid``s should insert into the table.
                 Any ids that missing in `rubric_list` will simply be
                 skipped.
 
         Keyword Args:
-            alt_order: use this order instead of `id_list`.
-                But ignore anything in `alt_order` that isn't in `id_list`.
-                Anything that isn't in `alt_order` but is in `id_list`
+            alt_order: use this order instead of `rid_list`.
+                But ignore anything in `alt_order` that isn't in `rid_list`.
+                Anything that isn't in `alt_order` but is in `rid_list`
                 should appear at the end of the list.
-                Defaults to None, which means just use the `id_list`
+                Defaults to None, which means just use the `rid_list`
                 order.
 
         Returns:
             None
         """
         if alt_order:
-            # construct a new list from alt_order and key_list
+            # construct a new list from alt_order and rid_list
             new_list = []
             for x in alt_order:
-                if x in id_list:
+                if x in rid_list:
                     new_list.append(x)
-            for x in id_list:
+            for x in rid_list:
                 if x not in new_list:
                     new_list.append(x)
-            id_list = new_list
-        self._setRubricsByKeys(rubric_list, id_list)
+            rid_list = new_list
+        self._set_rubrics_by_rids(rubric_list, rid_list)
 
-    def _setRubricsByKeys(
-        self, rubric_list: list[dict[str, Any]], id_list: list[int]
+    def _set_rubrics_by_rids(
+        self, rubric_list: list[dict[str, Any]], rid_list: list[int]
     ) -> None:
-        prev_selected_rubric_id = self.getCurrentRubricKey()
+        prev_selected_rid = self.getCurrentRubricId()
         # remove everything
         for r in range(self.rowCount()):
             self.removeRow(0)
-        # since populating in order of id_list, build all keys from rubric_list
+        # since populating in order of rid_list, build all rid from rubric_list
         rkl = [X["rid"] for X in rubric_list]
-        for i in id_list:
-            try:  # guard against mysterious keys
+        for i in rid_list:
+            try:  # guard against mysterious rid
                 rb = rubric_list[rkl.index(i)]
             except (ValueError, KeyError, IndexError):
                 continue
             self.appendNewRubric(rb)
-        if not self.selectRubricByKey(prev_selected_rubric_id):
+        if not self.selectRubricById(prev_selected_rid):
             self.selectFirstVisibleRubric()
         self.resizeColumnsToContents()
 
     def setDeltaRubrics(self, rubrics: list[dict[str, Any]], *, positive=True) -> None:
         """Clear table and repopulate with delta-rubrics, keep selection if possible."""
-        prev_selected_rubric_id = self.getCurrentRubricKey()
+        prev_selected_rubric_id = self.getCurrentRubricId()
         # remove everything
         for r in range(self.rowCount()):
             self.removeRow(0)
@@ -570,22 +570,23 @@ class RubricTable(QTableWidget):
         for rb in rubrics:
             if rb["system_rubric"] and rb["kind"] == "absolute":
                 self.appendNewRubric(rb)
-        if not self.selectRubricByKey(prev_selected_rubric_id):
+        if not self.selectRubricById(prev_selected_rubric_id):
             self.selectFirstVisibleRubric()
         self.resizeColumnsToContents()
 
-    def getKeyList(self) -> list[int]:
-        return [self._get_key_from_row(r) for r in range(self.rowCount())]
+    def get_rid_list(self) -> list[int]:
+        """Get the list of all rubric-id in this table."""
+        return [self._get_rid_from_row(r) for r in range(self.rowCount())]
 
-    def _get_key_from_row(self, r: int) -> int:
+    def _get_rid_from_row(self, r: int) -> int:
         item = self.item(r, 0)
         # TODO: is an assertion error what we want here?
         assert item, f"Could not find row {r}"
         return int(item.text())
 
-    def _get_row_from_key(self, key: int) -> int | None:
+    def _get_row_from_rid(self, rid: int) -> int | None:
         for r in range(self.rowCount()):
-            if self._get_key_from_row(r) == key:
+            if self._get_rid_from_row(r) == rid:
                 return r
         else:
             return None
@@ -595,11 +596,11 @@ class RubricTable(QTableWidget):
             return None
         return self.selectedIndexes()[0].row()
 
-    def getCurrentRubricKey(self) -> int | None:
+    def getCurrentRubricId(self) -> int | None:
         """Get the currently selected rubric's key/id or None if nothing is selected."""
         if not self.selectedIndexes():
             return None
-        return self._get_key_from_row(self.selectedIndexes()[0].row())
+        return self._get_rid_from_row(self.selectedIndexes()[0].row())
 
     def reselectCurrentRubric(self) -> None:
         """Reselect the current rubric row, triggering redraws (for example).
@@ -647,12 +648,12 @@ class RubricTable(QTableWidget):
         """
         self.selectRubricByVisibleRow(0)
 
-    def selectRubricByKey(self, key: int | None) -> bool:
-        """Select row with given key, returning True if works, else False."""
-        if key is None:
+    def selectRubricById(self, rid: int | None) -> bool:
+        """Select row with given rubric-id, returning True if works, else False."""
+        if rid is None:
             return False
         for r in range(self.rowCount()):
-            if self._get_key_from_row(r) == key:
+            if self._get_rid_from_row(r) == rid:
                 self.selectRow(r)
                 return True
         return False
@@ -761,8 +762,8 @@ class RubricTable(QTableWidget):
             self.colourLegalRubric(r)
 
     def editRow(self, tableIndex) -> None:
-        key = self._get_key_from_row(tableIndex.row())
-        self._parent.edit_rubric(key)
+        rid = self._get_rid_from_row(tableIndex.row())
+        self._parent.edit_rubric(rid)
 
 
 class TabBarWithAddRenameRemoveContext(QTabBar):
@@ -1378,7 +1379,7 @@ class RubricWidget(QWidget):
             if gtab is None:
                 gtab = self.add_new_group_tab(g)
             prev_order = prev_group_tabs.get(g)
-            gtab.setRubricsByKeys(self.rubrics, idlist, alt_order=prev_order)
+            gtab.set_rubrics_by_rids(self.rubrics, idlist, alt_order=prev_order)
 
         # TODO: if we later deleting rubrics, this will need to deal with rubrics that
         # have disappeared from self.rubrics but still appear in some tab
@@ -1414,12 +1415,12 @@ class RubricWidget(QWidget):
                 idlist = []
             else:
                 idlist = wranglerState["user_tabs"][n]["ids"]
-            tab.setRubricsByKeys(self.rubrics, idlist)
+            tab.set_rubrics_by_rids(self.rubrics, idlist)
         # all rubrics should appear here unless hidden: "shown" is just helping with ordering
-        self.tabS.setRubricsByKeys(self.rubrics, wranglerState["shown"])
+        self.tabS.set_rubrics_by_rids(self.rubrics, wranglerState["shown"])
         self.tabDeltaP.setDeltaRubrics(self.rubrics, positive=True)
         self.tabDeltaN.setDeltaRubrics(self.rubrics, positive=False)
-        self.tabHide.setRubricsByKeys(self.rubrics, wranglerState["hidden"])
+        self.tabHide.set_rubrics_by_rids(self.rubrics, wranglerState["hidden"])
         try:
             self.reorder_tabs(wranglerState["tab_order"])
         except AssertionError as e:
@@ -1508,24 +1509,24 @@ class RubricWidget(QWidget):
         ]
         assert check == target_order, "did not achieve target"
 
-    def getCurrentRubricKeyAndTab(self) -> tuple[int | None, int]:
-        """The current rubric key and the current tab.
+    def getCurrentRubricIdAndTab(self) -> tuple[int | None, int]:
+        """The current rubric rid and the current tab.
 
         Returns:
-            Two numbers ``(a, b)`` where ``a`` is the rubric-key
+            Two numbers ``(a, b)`` where ``a`` is the rubric-id
             and ``b`` is the current tab index.  If nothing is selected,
-            the rubric key will be None.
+            the rubric-id will be None.
         """
         return (
-            self.RTW.currentWidget().getCurrentRubricKey(),
+            self.RTW.currentWidget().getCurrentRubricId(),
             self.RTW.currentIndex(),
         )
 
-    def setCurrentRubricKeyAndTab(self, key: int | None, tab: int) -> bool:
-        """Set the current rubric key and the current tab, as if it was clicked on.
+    def setCurrentRubricIdAndTab(self, rid: int | None, tab: int) -> bool:
+        """Set the current rubric rid and the current tab, as if it was clicked on.
 
         Args:
-            key: which rubric to highlight.  If None, no action.
+            rid: which rubric to highlight.  If None, no action.
             tab: index of which tab to choose.
 
         Returns:
@@ -1533,12 +1534,12 @@ class RubricWidget(QWidget):
             appropriate row b/c for example key or tab are invalid or
             not found.
         """
-        if key is None:
+        if rid is None:
             return False
         if tab not in range(0, self.RTW.count()):
             return False
         self.RTW.setCurrentIndex(tab)
-        is_success = self.RTW.currentWidget().selectRubricByKey(key)
+        is_success = self.RTW.currentWidget().selectRubricById(rid)
         self.handleClick()  # force blue ghost update
         return is_success
 
@@ -1651,19 +1652,19 @@ class RubricWidget(QWidget):
                     groups.append(g)
         return sorted(list(set(groups)))
 
-    def unhideRubricByKey(self, key: int) -> None:
+    def unhide_rubric_by_rid(self, rid: int) -> None:
         wranglerState = self.get_tab_rubric_lists()
         try:
-            wranglerState["hidden"].remove(key)
+            wranglerState["hidden"].remove(rid)
         except ValueError:
             # TODO is this sufficient if we unexpectedly did not find it?
-            log.warn(f"Tried to unhide {key} but was already gone?  Or type mixup?")
+            log.warn(f"Tried to unhide {rid} but was already gone?  Or type mixup?")
             pass
         self.setRubricTabsFromState(wranglerState)
 
-    def hideRubricByKey(self, key: int) -> None:
+    def hide_rubric_by_rid(self, rid: int) -> None:
         wranglerState = self.get_tab_rubric_lists()
-        wranglerState["hidden"].append(key)
+        wranglerState["hidden"].append(rid)
         self.setRubricTabsFromState(wranglerState)
 
     def add_new_rubric(self) -> None:
@@ -1865,18 +1866,18 @@ class RubricWidget(QWidget):
     def get_tab_rubric_lists(self) -> dict[str, list[Any]]:
         """Returns a dict of lists of the current rubrics."""
         return {
-            "shown": self.tabS.getKeyList(),
-            "hidden": self.tabHide.getKeyList(),
+            "shown": self.tabS.get_rid_list(),
+            "hidden": self.tabHide.get_rid_list(),
             "tab_order": [
                 self.RTW.widget(n).shortname  # type: ignore[union-attr]
                 for n in range(0, self.RTW.count())
             ],
             "user_tabs": [
-                {"name": t.shortname, "ids": t.getKeyList()}
+                {"name": t.shortname, "ids": t.get_rid_list()}
                 for t in self.get_user_tabs()
             ],
             "group_tabs": [
-                {"name": t.shortname, "ids": t.getKeyList()}
+                {"name": t.shortname, "ids": t.get_rid_list()}
                 for t in self.get_group_tabs()
             ],
         }
