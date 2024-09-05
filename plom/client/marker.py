@@ -121,9 +121,17 @@ class MarkerClient(QWidget):
     Notes:
         TODO: should be a QMainWindow but at any rate not a Dialog
         TODO: should this be parented by the QApplication?
+
+    Signals:
+        my_shutdown_signal: called when TODO
+        tags_changed_signal: emitted when tags might have changed, such
+            as after an explicit server refresh or some other event. The
+            arguments are the task code (e.g., "0123g2") and a list,
+            possibly empty, of the current tags.
     """
 
     my_shutdown_signal = pyqtSignal(int, list)
+    tags_changed_signal = pyqtSignal(str, list)
 
     def __init__(self, Qapp, *, tmpdir=None):
         """Initialize a new MarkerClient.
@@ -1997,7 +2005,7 @@ class MarkerClient(QWidget):
             return
         self.manage_task_tags(task)
 
-    def manage_task_tags(self, task, parent=None):
+    def manage_task_tags(self, task: str, parent=None):
         """Manage the tags of a task.
 
         Args:
@@ -2056,6 +2064,10 @@ class MarkerClient(QWidget):
                 WarnMsg(parent, f"Could not get tags from {task}", info=str(e)).exec()
                 return
 
+            self.tags_changed_signal.emit(task, current_tags)
+
+            # TODO: replace with emitting a tag_changed signal and other slots should listen for it
+            # TODO: one can be just Marker itself, but also Annotator's NotificationBar
             try:
                 self.examModel.setTagsByTask(task, current_tags)
                 self.ui.tableView.resizeColumnsToContents()

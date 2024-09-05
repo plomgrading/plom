@@ -119,6 +119,8 @@ class Annotator(QWidget):
         """
         super().__init__()
 
+        parentMarkerUI.tags_changed_signal.connect(self.tags_changed)
+
         self.username = username
         self.parentMarkerUI = parentMarkerUI
         self.tgvID = None
@@ -259,6 +261,11 @@ class Annotator(QWidget):
 
     def dismiss_attn_bar(self) -> None:
         self.ui.attnFrame.setVisible(False)
+
+    def tags_changed(self, task: str, tags: list[str]) -> None:
+        print("- = == =  = = = - - -  " * 3)
+        print(task)
+        print(tags)
 
     def getScore(self):
         return self.scene.getScore()
