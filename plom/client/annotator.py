@@ -13,6 +13,7 @@ __copyright__ = "Copyright (C) 2018-2024 Andrew Rechnitzer, Colin B. Macdonald, 
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
+import html
 import json
 import logging
 from pathlib import Path
@@ -46,7 +47,6 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
     QFrame,
-    QGridLayout,
     QWidget,
     QMenu,
     QMessageBox,
@@ -152,7 +152,7 @@ class Annotator(QWidget):
         self.zoomButton: QToolButton
         self.undoButton: QToolButton
         self.redoButton: QToolButton
-        self.pageFrameGrid: QGridLayout
+        self.pageFrameLayout: QBoxLayout
         self.container_rubricwidget: QBoxLayout
         uic.loadUi(resources.files(plom.client.ui_files) / "annotator.ui", self)
         # TODO: temporary workaround
@@ -167,10 +167,12 @@ class Annotator(QWidget):
         self.ui.revealBox0.setHidden(True)
         self.wideLayout()
 
+        self.update_attn_box()
+
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
         self.view = PageView(self)
-        self.ui.pageFrameGrid.addWidget(self.view, 1, 1)
+        self.ui.pageFrameLayout.addWidget(self.view)
 
         # Create the rubric list widget and put into gui.
         self.rubric_widget = RubricWidget(self)
@@ -229,6 +231,20 @@ class Annotator(QWidget):
         self.ui.hamMenuButton.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.setToolShortCuts()
         self.setMinorShortCuts()
+
+    def update_attn_box(self, show: bool = False) -> None:
+        # TODO: share with Identifier?
+        warning_yellow_style = "background-color: #FFD700; color: #000"
+        self.ui.attnFrame.setStyleSheet(warning_yellow_style)
+        tag = "meh 3>"
+        self.ui.attnLeftLabel.setText(
+            f"<p>This task is tagged &ldquo;{html.escape(tag)}&rdquo;</p>"
+        )
+        self.ui.attnRightLabel.setText("")
+        if show:
+            self.ui.attnFrame.setVisible(True)
+        else:
+            self.ui.attnFrame.setVisible(False)
 
     def getScore(self):
         return self.scene.getScore()
