@@ -17,6 +17,9 @@
     Rubrics
 {% endblock page_heading %}
 {% block main_content %}
+    {% if messages %}
+        {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
+    {% endif %}
     <div>
         <a class="btn btn-primary dinline-block"
            href="{% url 'rubrics_admin' %}">Rubric management&hellip;</a>
