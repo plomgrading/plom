@@ -236,7 +236,7 @@ class RubricLandingPageView(ManagerRequiredView):
         template_name = "Rubrics/rubrics_landing.html"
         rubric_filter_form = RubricFilterForm
         rubric_form = RubricItemForm
-        questions = SpecificationService.get_questions_max_marks()
+        question_max_marks_dict = SpecificationService.get_questions_max_marks()
 
         context = self.build_context()
 
@@ -267,12 +267,13 @@ class RubricLandingPageView(ManagerRequiredView):
         rubrics_table = RubricTable(rubrics, order_by=request.GET.get("sort"))
         rubrics_table.paginate(page=int(request.GET.get("page", 1)), per_page=20)
 
+        # TODO: consider getting rid of this dumps stuff...  maybe plain ol' list?
         context.update(
             {
                 "rubrics": rubrics_table,
                 "rubric_filter_form": filter_form,
                 "edit_form": rubric_form,
-                "questions": json.dumps(questions),
+                "question_max_marks_dict": json.dumps(question_max_marks_dict),
             }
         )
 
