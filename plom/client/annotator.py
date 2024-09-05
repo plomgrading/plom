@@ -167,7 +167,7 @@ class Annotator(QWidget):
         self.ui.revealBox0.setHidden(True)
         self.wideLayout()
 
-        self.update_attn_box()
+        self.update_attn_bar()
 
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
@@ -232,19 +232,33 @@ class Annotator(QWidget):
         self.setToolShortCuts()
         self.setMinorShortCuts()
 
-    def update_attn_box(self, show: bool = False) -> None:
+    def update_attn_bar(self, *, tags: list[str] = [], show: bool = False) -> None:
+        """Update the attention bar to show notifications to the user.
+
+        Keyword Args:
+            show: force showing the notification (default: False).
+            tags: a list of tags: if non-empty we'll generate appropriate
+                text and show the notification bar.
+        """
         # TODO: share with Identifier?
         warning_yellow_style = "background-color: #FFD700; color: #000"
         self.ui.attnFrame.setStyleSheet(warning_yellow_style)
-        tag = "meh 3>"
-        self.ui.attnLeftLabel.setText(
-            f"<p>This task is tagged &ldquo;{html.escape(tag)}&rdquo;</p>"
-        )
-        self.ui.attnRightLabel.setText("")
-        if show:
+        notification_str = ""
+        secondary_explanation = ""
+        if tags:
+            tagstr = ", ".join(f"&ldquo;{html.escape(t)}&rdquo;" for t in tags)
+            notification_str = f"<p>This task is tagged {tagstr}</p>"
+        self.ui.attnLeftLabel.setText(notification_str)
+        self.ui.attnRightLabel.setText(secondary_explanation)
+        self.ui.attnClearButton.setVisible(False)  # not yet used
+        self.ui.attnDismissButton.clicked.connect(self.dismiss_attn_bar)
+        if show or notification_str:
             self.ui.attnFrame.setVisible(True)
         else:
             self.ui.attnFrame.setVisible(False)
+
+    def dismiss_attn_bar(self) -> None:
+        self.ui.attnFrame.setVisible(False)
 
     def getScore(self):
         return self.scene.getScore()
@@ -486,6 +500,7 @@ class Annotator(QWidget):
         plomDict,
         integrity_check,
         src_img_data,
+        tags: list[str],
     ):
         """Loads new data into the window for marking.
 
@@ -510,6 +525,11 @@ class Annotator(QWidget):
                 question.
             integrity_check (str): integrity check string
             src_img_data (list[dict]): image md5sums, filenames etc.
+            tags: currently has these tags.  TODO: generally annotator
+                doesn't "do" tags itself, relying on Marker to know such
+                things, but we need it to set attention for now.  Maybe
+                this could be refactored out to Marker later, after the
+                wedding.
 
         Returns:
             None: Modifies many instance vars.
@@ -536,6 +556,8 @@ class Annotator(QWidget):
 
         # reset the timer (its not needed to make a new one)
         self.timer.start()
+
+        self.update_attn_bar(tags=tags)
 
     def load_new_scene(self, src_img_data, *, plomDict=None):
         # Set up the graphicsview and graphicsscene of the group-image

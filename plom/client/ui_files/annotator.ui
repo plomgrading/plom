@@ -738,14 +738,14 @@
          <item>
           <widget class="QPushButton" name="attnClearButton">
            <property name="text">
-            <string>Clear tag</string>
+            <string>Clear</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="attnIgnoreButton">
+          <widget class="QPushButton" name="attnDismissButton">
            <property name="text">
-            <string>Ignore</string>
+            <string>Dismiss</string>
            </property>
           </widget>
          </item>

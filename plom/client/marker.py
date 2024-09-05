@@ -1415,6 +1415,7 @@ class MarkerClient(QWidget):
             pdict,
             integrity_check,
             src_img_data,
+            self.examModel.getTagsByTask(task),
         )
 
     def getRubricsFromServer(self, question: int | None = None) -> list[dict[str, Any]]:
@@ -1620,7 +1621,7 @@ class MarkerClient(QWidget):
             return None
 
         assert task_id_str[1:] == data[0]
-        pdict = data[-3]  # the plomdict is third-last object in data
+        pdict = data[8]  # eww, hardcoded numbers
         assert pdict is None, "Annotator should not pull a regrade"
 
         if self.allowBackgroundOps:
