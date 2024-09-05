@@ -3,7 +3,6 @@
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
-
 from __future__ import annotations
 
 import json
@@ -141,8 +140,7 @@ class Command(BaseCommand):
                 paper_nums.append(paper_num)
 
         kmeans = KMeans(n_clusters=10, random_state=0, n_init="auto")
-        images_np = np.array(images)
-        kmeans.fit(images_np)
+        kmeans.fit(np.array(images))
 
         clustered_papers = []
         for label in range(10):

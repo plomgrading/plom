@@ -24,7 +24,7 @@ class MarkingTaskPriorityTests(ConfigTestCase):
 
     config_file = resources.files(config_files) / "priority_tests.toml"
 
-    def test_taskorder_update(self):
+    def test_taskorder_update(self) -> None:
         """Assert that TaskOrderService.update_priority_ordering() updates MarkingTaskPriority."""
         strategy = MarkingTaskPriority.load().strategy
         self.assertEqual(strategy, MarkingTaskPriority.PAPER_NUMBER)
@@ -43,7 +43,7 @@ class MarkingTaskPriorityTests(ConfigTestCase):
         strategy = MarkingTaskPriority.load().strategy
         self.assertEqual(strategy, MarkingTaskPriority.PAPER_NUMBER)
 
-    def test_set_priority_papernum(self):
+    def test_set_priority_papernum(self) -> None:
         """Test that PAPER_NUMBER is the default strategy."""
         n_papers = Paper.objects.count()
         tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).prefetch_related(
@@ -61,7 +61,7 @@ class MarkingTaskPriorityTests(ConfigTestCase):
             MarkingTaskPriority.PAPER_NUMBER,
         )
 
-    def test_set_priority_shuffle(self):
+    def test_set_priority_shuffle(self) -> None:
         """Test setting priority to SHUFFLE."""
         marking_priority.set_marking_piority_shuffle()
         tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).prefetch_related(
@@ -76,7 +76,7 @@ class MarkingTaskPriorityTests(ConfigTestCase):
             marking_priority.get_mark_priority_strategy(), MarkingTaskPriority.SHUFFLE
         )
 
-    def test_set_priority_custom(self):
+    def test_set_priority_custom(self) -> None:
         """Test setting priority to CUSTOM."""
         custom_order = {(1, 1): 9, (2, 1): 356, (3, 2): 0}
         marking_priority.set_marking_priority_custom(custom_order)
@@ -98,7 +98,7 @@ class MarkingTaskPriorityTests(ConfigTestCase):
             marking_priority.get_mark_priority_strategy(), MarkingTaskPriority.CUSTOM
         )
 
-    def test_modify_priority(self):
+    def test_modify_priority(self) -> None:
         """Test modifying the priority of a single task."""
         n_papers = Paper.objects.count()
         tasks = MarkingTask.objects.filter(status=MarkingTask.TO_DO).prefetch_related(

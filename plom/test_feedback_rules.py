@@ -4,17 +4,17 @@
 from .feedback_rules import feedback_rules
 
 
-def test_codes_are_strings():
+def test_codes_are_strings() -> None:
     for code in feedback_rules.keys():
         assert isinstance(code, str)
 
 
-def test_homogeneous_keys():
+def test_homogeneous_keys() -> None:
     keys = set(("explanation", "allowed", "warn", "dama_allowed"))
     for code, data in feedback_rules.items():
         assert set(data.keys()) == keys
 
 
-def test_explanations_are_strings():
+def test_explanations_are_strings() -> None:
     for code, data in feedback_rules.items():
         assert isinstance(data["explanation"], str)

@@ -9,13 +9,13 @@ from .question_labels import get_question_label, verbose_question_label
 from .question_labels import check_for_shared_pages
 
 
-def test_verbose_question_label():
+def test_verbose_question_label() -> None:
     raw = SpecVerifier.demo().spec
     r = deepcopy(raw)
     r["question"]["1"]["label"] = ""
     r["question"]["2"]["label"] = "Q2a"
     r["question"]["3"]["label"] = "Q2bc"
-    s = SpecVerifier(r)
+    s = SpecVerifier(r).spec
     assert get_question_label(s, 1) == "Q1"
     assert get_question_label(s, 2) == "Q2a"
     assert get_question_label(s, 3) == "Q2bc"
@@ -24,7 +24,7 @@ def test_verbose_question_label():
     assert verbose_question_label(s, 3) == "Q2bc (question index 3)"
 
 
-def test_check_shared_pages():
+def test_check_shared_pages() -> None:
     partial_spec = {
         "numberOfQuestions": 7,
         "question": {

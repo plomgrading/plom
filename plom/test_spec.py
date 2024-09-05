@@ -19,29 +19,29 @@ from plom import SpecVerifier, get_question_label
 raw = SpecVerifier.demo().spec
 
 
-def test_spec_demo():
+def test_spec_demo() -> None:
     s = SpecVerifier.demo()
     assert s.number_to_produce
 
 
-def test_spec_verify():
+def test_spec_verify() -> None:
     s = SpecVerifier.demo()
     s.verifySpec(verbose=False)
 
 
-def test_spec_verify_quiet():
+def test_spec_verify_quiet() -> None:
     s = SpecVerifier.demo()
     s.verify()
 
 
-def test_removed_numberToName():
+def test_removed_numberToName() -> None:
     s = SpecVerifier.demo()
     s.spec["numberToName"] = 10
     with raises(ValueError):
         s.verify()
 
 
-def test_spec_wrong_number_questions():
+def test_spec_wrong_number_questions() -> None:
     r = raw.copy()
     r["numberOfQuestions"] = 2
     with raises(ValueError, match="not match"):
@@ -51,7 +51,7 @@ def test_spec_wrong_number_questions():
         SpecVerifier(r).verify()
 
 
-def test_spec_autocount_questions():
+def test_spec_autocount_questions() -> None:
     r = raw.copy()
     r.pop("numberOfQuestions")
     s = SpecVerifier(r)
@@ -59,14 +59,14 @@ def test_spec_autocount_questions():
     assert s["numberOfQuestions"] == 3
 
 
-def test_spec_question_pages_non_positive():
+def test_spec_question_pages_non_positive() -> None:
     r = deepcopy(raw)
     r["question"]["1"]["pages"] = [-1]
     with raises(ValueError, match="not a positive int"):
         SpecVerifier(r).verify()
 
 
-def test_spec_pages_not_even():
+def test_spec_pages_not_even() -> None:
     r = deepcopy(raw)
     r["numberOfPages"] = 7
     r["question"]["3"]["pages"] = [5, 6, 7]
@@ -74,7 +74,7 @@ def test_spec_pages_not_even():
         SpecVerifier(r).verify()
 
 
-def test_spec_question_pages_non_contiguous():
+def test_spec_question_pages_non_contiguous() -> None:
     r = deepcopy(raw)
     r["numberOfPages"] = 16
     r["question"]["1"]["pages"] = [3, 16]
@@ -82,21 +82,21 @@ def test_spec_question_pages_non_contiguous():
         SpecVerifier(r).verify()
 
 
-def test_spec_question_pages_out_of_range():
+def test_spec_question_pages_out_of_range() -> None:
     r = deepcopy(raw)
     r["question"]["1"]["pages"] = [14, 15, 16, 17]
     with raises(ValueError, match="range"):
         SpecVerifier(r).verify()
 
 
-def test_spec_wrong_total_marks():
+def test_spec_wrong_total_marks() -> None:
     r = raw.copy()
     r["totalMarks"] += 1
     with raises(ValueError):
         SpecVerifier(r).verify()
 
 
-def test_spec_autocount_missing_total_marks():
+def test_spec_autocount_missing_total_marks() -> None:
     r = raw.copy()
     y = r.pop("totalMarks")
     s = SpecVerifier(r)
@@ -104,30 +104,30 @@ def test_spec_autocount_missing_total_marks():
     assert s.spec["totalMarks"] == y
 
 
-def test_spec_negatives_still_pass():
+def test_spec_negatives_still_pass() -> None:
     r = raw.copy()
     r["numberToProduce"] = -1
     SpecVerifier(r).verify()
 
 
-def test_spec_setting_adds_spares():
+def test_spec_setting_adds_spares() -> None:
     r = raw.copy()
     r["numberToProduce"] = -1
     s = SpecVerifier(r)
     s.set_number_papers_add_spares(16)
     # creates some spares
-    assert s.numberToProduce > 16
+    assert s["numberToProduce"] > 16
     s.verify()
 
 
-def test_spec_question_extra_key():
+def test_spec_question_extra_key() -> None:
     r = deepcopy(raw)
     r["question"]["1"]["libel"] = "defamation"
     with raises(ValueError):
         SpecVerifier(r).verify()
 
 
-def test_spec_question_missing_key():
+def test_spec_question_missing_key() -> None:
     required_keys = ("pages", "mark")
     for k in required_keys:
         r = deepcopy(raw)
@@ -136,7 +136,7 @@ def test_spec_question_missing_key():
             SpecVerifier(r).verify()
 
 
-def test_spec_question_select_key_takes_default():
+def test_spec_question_select_key_takes_default() -> None:
     r = deepcopy(raw)
     # the demo spec does not have a select key for Q1.  but leave this
     # here in case we change the demo spec in the future
@@ -147,7 +147,7 @@ def test_spec_question_select_key_takes_default():
     assert s["question"]["1"]["select"] == "shuffle"
 
 
-def test_spec_valid_shortname():
+def test_spec_valid_shortname() -> None:
     r = raw.copy()
     r["name"] = "test42"
     SpecVerifier(r).verify()
@@ -161,7 +161,7 @@ def test_spec_valid_shortname():
     SpecVerifier(r).verify()
 
 
-def test_spec_invalid_shortname():
+def test_spec_invalid_shortname() -> None:
     r = raw.copy()
     r["name"] = "no spaces allowed"
     with raises(ValueError):
@@ -171,18 +171,18 @@ def test_spec_invalid_shortname():
         SpecVerifier(r).verify()
 
 
-def test_spec_longname_slash_issue1364():
+def test_spec_longname_slash_issue1364() -> None:
     r = raw.copy()
     r["longName"] = 'Math123 / Bio321 Midterm ∫∇·Fdv — "have fun!"😀'
     SpecVerifier(r).verify()
 
 
-def test_spec_invalid_select():
+def test_spec_invalid_select() -> None:
     r = deepcopy(raw)
     r["question"]["1"]["select"] = "consult the oracle"
 
 
-def test_spec_question_label_printer():
+def test_spec_question_label_printer() -> None:
     sd = SpecVerifier.demo()
     r = deepcopy(raw)
     r["question"]["1"]["label"] = "Track 1"
@@ -197,12 +197,12 @@ def test_spec_question_label_printer():
     assert s.get_question_label(3) == get_question_label(sd, 3)
 
 
-def test_spec_question_label_str_index():
+def test_spec_question_label_str_index() -> None:
     s = SpecVerifier.demo()
     assert s.get_question_label("1") == s.get_question_label(1)
 
 
-def test_spec_question_label_printer_errors():
+def test_spec_question_label_printer_errors() -> None:
     s = SpecVerifier.demo()
     N = s["numberOfQuestions"]
     with raises(ValueError):
@@ -213,14 +213,14 @@ def test_spec_question_label_printer_errors():
         get_question_label(s, 0)
 
 
-def test_spec_question_string():
+def test_spec_question_string() -> None:
     s = SpecVerifier.demo()
     with raises(ValueError):
         get_question_label(s, "c")
     assert get_question_label(s, "1") == get_question_label(s, 1)
 
 
-def test_spec_unique_labels():
+def test_spec_unique_labels() -> None:
     r = deepcopy(raw)
     r["question"]["1"]["label"] = "ExA"
     r["question"]["2"]["label"] = "ExA"
@@ -228,14 +228,14 @@ def test_spec_unique_labels():
         SpecVerifier(r).verify()
 
 
-def test_spec_label_too_long():
+def test_spec_label_too_long() -> None:
     r = deepcopy(raw)
     r["question"]["1"]["label"] = "Distrust That Particular Flavour"
     with raises(ValueError):
         SpecVerifier(r).verify()
 
 
-def test_spec_shared_page_not_allowed():
+def test_spec_shared_page_not_allowed() -> None:
     r = deepcopy(raw)
     r["question"]["2"]["pages"] = [3, 4]
     with raises(ValueError, match="overused"):
@@ -244,7 +244,7 @@ def test_spec_shared_page_not_allowed():
         SpecVerifier(r).verify(_legacy=False)
 
 
-def test_spec_shared_page_explicit_disallowed():
+def test_spec_shared_page_explicit_disallowed() -> None:
     r = deepcopy(raw)
     r["allowSharedPages"] = False
     r["question"]["2"]["pages"] = [3, 4]
@@ -254,14 +254,14 @@ def test_spec_shared_page_explicit_disallowed():
         SpecVerifier(r).verify(_legacy=False)
 
 
-def test_spec_shared_page_must_be_explicitly_allowed():
+def test_spec_shared_page_must_be_explicitly_allowed() -> None:
     r = deepcopy(raw)
     r["allowSharedPages"] = True
     r["question"]["2"]["pages"] = [3, 4]
     SpecVerifier(r).verify(_legacy=False)
 
 
-def test_spec_DNM_page_cannot_be_shared():
+def test_spec_DNM_page_cannot_be_shared() -> None:
     r = deepcopy(raw)
     r["allowSharedPages"] = True
     r["question"]["1"]["pages"] = [2, 3]
@@ -269,7 +269,7 @@ def test_spec_DNM_page_cannot_be_shared():
         SpecVerifier(r).verify(_legacy=False)
 
 
-def test_spec_legacy_overused_page():
+def test_spec_legacy_overused_page() -> None:
     r = deepcopy(raw)
     r["question"]["1"]["pages"] = [1, 2, 3]
     with raises(ValueError, match="overused"):
@@ -280,7 +280,7 @@ def test_spec_legacy_overused_page():
         SpecVerifier(r).verify()
 
 
-def test_spec_donotmark_default():
+def test_spec_donotmark_default() -> None:
     r = deepcopy(raw)
     r.pop("doNotMarkPages")
     r["question"]["1"]["pages"] = [2, 3]
@@ -289,7 +289,7 @@ def test_spec_donotmark_default():
     assert s["doNotMarkPages"] == []
 
 
-def test_spec_invalid_donotmark():
+def test_spec_invalid_donotmark() -> None:
     r = deepcopy(raw)
     r["doNotMarkPages"] = "Fragments of a Hologram Rose"
     with raises(ValueError) as e:
@@ -305,12 +305,12 @@ def test_spec_invalid_donotmark():
     assert "larger than" in e.value.args[0]
 
 
-def test_spec_str():
+def test_spec_str() -> None:
     st = str(SpecVerifier.demo())
     assert st.startswith("Plom exam specification")
 
 
-def test_spec_str_missing_numberOfQuestions():
+def test_spec_str_missing_numberOfQuestions() -> None:
     r = deepcopy(raw)
     r.pop("numberOfQuestions")
     s = SpecVerifier(r)
@@ -321,7 +321,7 @@ def test_spec_str_missing_numberOfQuestions():
     assert "TBD*" not in st
 
 
-def test_spec_str_missing_totalMarks():
+def test_spec_str_missing_totalMarks() -> None:
     r = deepcopy(raw)
     r.pop("totalMarks")
     s = SpecVerifier(r)
@@ -332,7 +332,7 @@ def test_spec_str_missing_totalMarks():
     assert "TBD*" not in st
 
 
-def test_spec_str_missing_select_in_q1():
+def test_spec_str_missing_select_in_q1() -> None:
     s = SpecVerifier.demo()
     assert s["question"]["1"].get("select", None) is None
     st = str(s)
@@ -342,14 +342,14 @@ def test_spec_str_missing_select_in_q1():
     assert "shuffle*" not in st
 
 
-def test_spec_zero_question_issue617():
+def test_spec_zero_question_issue617() -> None:
     s = SpecVerifier.demo()
     s["question"]["1"]["mark"] = 0
     with raises(ValueError):
         s.verify()
 
 
-def test_spec_page_to_group_label():
+def test_spec_page_to_group_label() -> None:
     s = SpecVerifier.demo()
     s.group_label_from_page(1) == "ID"
     s.group_label_from_page(2) == "DNM"
@@ -363,7 +363,7 @@ def test_spec_page_to_group_label():
         s.group_label_from_page("3")
 
 
-def test_spec_not_legacy_format():
+def test_spec_not_legacy_format() -> None:
     old = """
         name = "oldtemplate"
         longName = "An old pre-v10 template, deprecated but not yet an error"
@@ -388,7 +388,7 @@ def test_spec_not_legacy_format():
     sv.verify()
 
 
-def test_spec_legacy_dupe_question_fails_to_load(tmpdir):
+def test_spec_legacy_dupe_question_fails_to_load(tmpdir) -> None:
     tmpdir = Path(tmpdir)
     old = """
         name = "oldtemplate"

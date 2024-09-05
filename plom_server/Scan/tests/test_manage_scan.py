@@ -96,7 +96,7 @@ class ManageScanServiceTests(TestCase):
 
         return super().setUp()
 
-    def test_counts(self):
+    def test_counts(self) -> None:
         # make 15 papers
         # * 1 has all fixed-page images  (6 scanned pages) and 1 mobile page for Q1.
         # * 1,2,3,4 with fixed-page images  (6*4 scanned pages)
@@ -116,11 +116,11 @@ class ManageScanServiceTests(TestCase):
         assert mss.get_number_completed_test_papers() == 5 + 4
         assert mss.get_number_incomplete_test_papers() == 2 + 2
 
-    def test_get_all_unused_test_papers(self):
+    def test_get_all_unused_test_papers(self) -> None:
         mss = ManageScanService()
         assert mss.get_all_unused_test_papers() == [8, 9]
 
-    def test_get_all_incomplete_test_papers(self):
+    def test_get_all_incomplete_test_papers(self) -> None:
         mss = ManageScanService()
         mss_incomplete = mss.get_all_incomplete_test_papers()
         # papers 6,7,10,11 is incomplete - should return dict of the form
@@ -185,7 +185,7 @@ class ManageScanServiceTests(TestCase):
                     "img_pk" in m_pg_data[pg - 1]
                 )  # not testing the actual value of image_pk
 
-    def test_get_all_completed_test_papers(self):
+    def test_get_all_completed_test_papers(self) -> None:
         mss = ManageScanService()
         mss_complete = mss.get_all_completed_test_papers()
         # should return a dict of papers and their pages

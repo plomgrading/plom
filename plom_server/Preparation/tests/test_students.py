@@ -10,7 +10,7 @@ from ..models import StagingStudent
 
 
 class StagingStudentsTests(TestCase):
-    def test_get_minimum_number_to_produce(self):
+    def test_get_minimum_number_to_produce(self) -> None:
         """Test StagingStudentService.get_minimum_number_to_produce()."""
         sstu = StagingStudentService()
         min_to_produce = sstu.get_minimum_number_to_produce()
@@ -27,14 +27,14 @@ class StagingStudentsTests(TestCase):
         min_to_produce = sstu.get_minimum_number_to_produce()
         self.assertEqual(min_to_produce, 35)
 
-    def test_valid_paper_number_sentinels(self):
+    def test_valid_paper_number_sentinels(self) -> None:
         n = 10000000
         for p in (None, -1, "", "-1"):
             n += 1
             sid = str(n)
             StagingStudentService()._add_student(sid, "mdme X", paper_number=p)
 
-    def test_valid_paper_number_integers_in_strings(self):
+    def test_valid_paper_number_integers_in_strings(self) -> None:
         n = 10000000
         n += 1
         StagingStudentService()._add_student(str(n), "X", paper_number=17)

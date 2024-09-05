@@ -22,7 +22,10 @@ build-backend = 'setuptools.build_meta'
 [project]
 name = 'plom'
 description = 'Plom is Paperless Open Marking'
-authors = [{name = 'Andrew Rechnitzer'}]
+authors = [
+    {name = 'Andrew Rechnitzer'},
+    {name = 'Colin B. Macdonald'},
+]
 license = {text = 'AGPLv3+'}
 classifiers=[
     "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
@@ -110,17 +113,14 @@ dependencies = [
 #   - latex installation including (Fedora pkg names):
 #       tex-preview tex-dvipng texlive-scheme-basic tex-charter
 
+readme = {file = 'README.md', content-type = 'text/markdown'}
 
-[project.readme]
-file = 'README.md'
-content-type = 'text/markdown'
 [project.urls]
-Homepage = 'https://plomgrading.org/'
-'Source Code' = 'https://gitlab.com/plom/plom'
-'Bug Tracker' = 'https://gitlab.com/plom/plom/-/issues'
-# TODO
-# Documentation = ''
-# TODO: changelog
+Homepage = "https://plomgrading.org"
+Repository = "https://gitlab.com/plom/plom"
+'Bug Tracker' = "https://gitlab.com/plom/plom/-/issues"
+Documentation = "https://plom.readthedocs.org'"
+Changelog = "https://gitlab.com/plom/plom/-/blob/main/CHANGELOG.md"
 
 # [project.optional-dependencies]
 
@@ -277,8 +277,6 @@ module = [
     'plom.client.tools.tool',
     'plom.db.examDB',
     'plom.server.theServer',
-    'BuildPaperPDF.services.build_papers',  # Issue #2847
-    'Tags.admin',  # Issue #2849
 ]
 ignore_errors = true
 
