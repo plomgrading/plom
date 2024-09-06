@@ -6,6 +6,7 @@
 # Copyright (C) 2021 Liam Yih
 # Copyright (C) 2023 Tam Nguyen
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024 Aidan Murphy
 
 from __future__ import annotations
 
@@ -65,6 +66,26 @@ def makeCover(
             except (TypeError, ValueError):
                 raise AssertionError(f"Table data {x} should be numeric.")
 
+    # calculate additional table rows before casting marks to str
+    if solution:
+        headers = ["question", "version", "mark out of"]
+        totals = ["total", "", pprint_score(sum([row[2] for row in tab]))]
+    else:
+        headers = ["question", "version", "mark", "out of"]
+        totals = [
+            "total",
+            "",
+            pprint_score(sum([row[2] for row in tab])),
+            pprint_score(sum([row[3] for row in tab])),
+        ]
+    # writer likes strings, cast table contents as str
+    for row in tab:
+        row[1] = str(row[1])  # version
+        row[2] = pprint_score(row[2])  # mark OR mark out of
+        if not solution:
+            row[3] = pprint_score(row[3])  # out of
+
+    # paper formatting
     m = 50  # margin
     page_top = 75
     # leave some extra; we stretch to avoid single line on new page
@@ -84,6 +105,8 @@ def makeCover(
 
     vpos = page_top
     tw = fitz.TextWriter(page.rect)
+
+    # put things on the page
     if exam_name:
         tw.append((m, vpos), exam_name, fontsize=big_font)
         vpos += deltav
@@ -112,18 +135,6 @@ def makeCover(
         tw.append((m + 100, vpos), text, fontsize=big_font)
         vpos += deltav
 
-    if solution:
-        headers = ["question", "version", "mark out of"]
-        totals = ["total", "", sum([row[2] for row in tab])]
-    else:
-        headers = ["question", "version", "mark", "out of"]
-        totals = [
-            "total",
-            "",
-            pprint_score(sum([row[2] for row in tab])),
-            sum([row[3] for row in tab]),
-        ]
-
     shape = page.new_shape()
 
     # rectangles for header that we will shift downwards as we go
@@ -147,12 +158,7 @@ def makeCover(
 
         for txt, r in zip(row, make_boxes(vpos)):
             shape.draw_rect(r)
-            excess = tw.fill_textbox(
-                r,
-                txt if isinstance(txt, str) else pprint_score(txt),
-                align=align,
-                fontsize=fontsize,
-            )
+            excess = tw.fill_textbox(r, txt, align=align, fontsize=fontsize)
             assert not excess, f'Table entry "{txt}" too long for box'
         vpos += deltav
         page_row += 1
@@ -175,7 +181,7 @@ def makeCover(
     # Draw the final totals row
     for txt, r in zip(totals, make_boxes(vpos + extra_sep)):
         shape.draw_rect(r)
-        excess = tw.fill_textbox(r, str(txt), align=align, fontsize=fontsize)
+        excess = tw.fill_textbox(r, txt, align=align, fontsize=fontsize)
         assert not excess, f'Table entry "{txt}" too long for box'
     shape.finish(width=0.3, color=(0, 0, 0))
     shape.commit()
