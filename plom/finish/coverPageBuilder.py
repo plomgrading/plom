@@ -85,7 +85,7 @@ def makeCover(
             row[2] = pprint_score(row[2])  # mark
             row[3] = str(row[3])  # out of
         else:
-            row[2] = str(row[2])  # mark out of
+            row[2] = str(row[2])  # "mark out of"
 
     # paper formatting
     m = 50  # margin
