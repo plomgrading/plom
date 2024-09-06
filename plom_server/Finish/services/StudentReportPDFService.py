@@ -18,6 +18,8 @@ from Papers.services import SpecificationService
 from . import DataExtractionService, MatplotlibService
 from QuestionTags.services import QuestionTagService
 
+from plom.misc_utils import pprint_score
+
 
 def pdf_builder(
     versions: bool,
@@ -63,7 +65,7 @@ def pdf_builder(
 
     student_dict = df_filtered.iloc[0].to_dict()
     name = student_dict["StudentName"]
-    grade = int(student_dict["Total"])
+    grade = pprint_score(student_dict["Total"])
     paper_number = int(student_dict["PaperNumber"])
     total_stats = des.get_descriptive_statistics_of_total()
 
