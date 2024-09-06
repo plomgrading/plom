@@ -466,12 +466,12 @@ class MarkerClient(QWidget):
         people just want to look at the annotated image.
 
         Args:
-            task (str): the task for the image files to be loaded from.
+            task: the task for the image files to be loaded from.
                 Takes the form "q1234g9" = test 1234 question 9
 
         Returns:
-            bool: currently this returns True.  Unless it fails which will
-            induce a crash (after some popup dialogs).
+            True if the data exists, False if not.  User will have seen
+            an error message if False is returned.
 
         Raises:
             Uses error dialogs; not currently expected to throw exceptions
@@ -494,8 +494,7 @@ class MarkerClient(QWidget):
             )
         except PlomNoPaper as e:
             ErrorMsg(None, f"no annotations for task {task}: {e}").exec()
-            # TODO: need something more significant to happen
-            return True
+            return False
         except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
             # TODO: better action we can take here?
             # TODO: the real problem here is that the full_pagedata is potentially out of date!
@@ -586,7 +585,9 @@ class MarkerClient(QWidget):
         # next we try to download annotated image for certain hardcoded states
         if status.casefold() in ("complete", "marked"):
             # Note: "marked" is only on legacy servers
-            self.get_files_for_previously_annotated(task)
+            r = self.get_files_for_previously_annotated(task)
+            if not r:
+                return
             self._updateImage(pr)  # recurse
             return
 
@@ -2180,7 +2181,7 @@ class MarkerClient(QWidget):
         d.exec()
         d.deleteLater()  # disconnects slots and signals
 
-    def get_file_for_previous_viewer(self, task):
+    def get_file_for_previous_viewer(self, task: str) -> str | Path | None:
         """Get the annotation file for the given task.
 
         Check to see if the
@@ -2188,11 +2189,6 @@ class MarkerClient(QWidget):
         from the server. Then pass the annotation-image-file back to the
         caller.
         """
-        # this checks to see if (all) the files for that task have
-        # been downloaded locally already. If already present it
-        # returns true, and if not then it grabs them from the server
-        # and returns true. A 'false' is returned only when the
-        # get-from-server fails.
         if not self.get_files_for_previously_annotated(task):
             return None
         # now grab the actual annotated-image filename

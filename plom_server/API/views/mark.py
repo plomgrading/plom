@@ -248,10 +248,12 @@ class MgetOneImage(APIView):
             return _error_response("Image does not exist.", status.HTTP_400_BAD_REQUEST)
 
 
+# GET: /annotations/{paper}/{question}
 class MgetAnnotations(APIView):
     """Get the latest annotations for a question.
 
     TODO: implement "edition"?
+    # GET: /annotations/{paper}/{question}/{edition}
 
     TODO: The legacy server sends 410 for "task deleted", and the client
     messenger is documented as expecting 406/410/416.
@@ -270,11 +272,13 @@ class MgetAnnotations(APIView):
         mts = MarkingTaskService()
         try:
             annotation = mts.get_latest_annotation(paper, question)
-        except (ObjectDoesNotExist, ValueError) as e:
+        except ObjectDoesNotExist as e:
             return _error_response(
                 f"No annotations for paper {paper} question {question}: {e}",
                 status.HTTP_404_NOT_FOUND,
             )
+        except ValueError as e:
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
         annotation_task = annotation.task
         annotation_data = annotation.annotation_data
 
@@ -298,6 +302,8 @@ class MgetAnnotations(APIView):
         return Response(annotation_data, status=status.HTTP_200_OK)
 
 
+# GET: /annotations_image/{paper}/{question}
+# GET: /annotations_image/{paper}/{question}/{edition}
 class MgetAnnotationImage(APIView):
     """Get an annotation image.
 
@@ -332,7 +338,8 @@ class MgetAnnotationImage(APIView):
     Returns:
         200: the image as a file.
         404: no such task (i.e., no such paper) or no annotations for the
-            task if it exists.
+            task if it exists, or wrong edition, or there was no latest
+            annotation, e.g., b/c it was reset.
         406: the task has been modified, perhaps even during this call?
             TODO: some atomic operation would prevent this?
     """
@@ -355,11 +362,13 @@ class MgetAnnotationImage(APIView):
 
         try:
             annotation = mts.get_latest_annotation(paper, question)
-        except (ObjectDoesNotExist, ValueError) as e:
+        except ObjectDoesNotExist as e:
             return _error_response(
                 f"No annotations for paper {paper} question idx {question}: {e}",
                 status.HTTP_404_NOT_FOUND,
             )
+        except ValueError as e:
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
         annotation_task = annotation.task
         annotation_image = annotation.image
 

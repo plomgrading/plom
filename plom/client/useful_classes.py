@@ -3,6 +3,7 @@
 # Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 
+import pathlib
 import platform
 from typing import Any, Optional, Union
 
@@ -26,6 +27,13 @@ from PyQt6.QtWidgets import (
 )
 
 from plom import isValidStudentID
+
+
+# little helper to jsonify pathlib.Path to str
+def _json_path_to_str(x) -> str:
+    if isinstance(x, pathlib.Path):
+        return str(x)
+    raise TypeError
 
 
 class _ErrorMsg(QMessageBox):
