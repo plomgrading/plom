@@ -69,21 +69,23 @@ def makeCover(
     # calculate additional table rows before casting marks to str
     if solution:
         headers = ["question", "version", "mark out of"]
-        totals = ["total", "", pprint_score(sum([row[2] for row in tab]))]
+        totals = ["total", "", str(sum([row[2] for row in tab]))]
     else:
         headers = ["question", "version", "mark", "out of"]
         totals = [
             "total",
             "",
             pprint_score(sum([row[2] for row in tab])),
-            pprint_score(sum([row[3] for row in tab])),
+            str(sum([row[3] for row in tab])),
         ]
     # writer likes strings, cast table contents as str
     for row in tab:
         row[1] = str(row[1])  # version
-        row[2] = pprint_score(row[2])  # mark OR mark out of
         if not solution:
-            row[3] = pprint_score(row[3])  # out of
+            row[2] = pprint_score(row[2])  # mark
+            row[3] = str(row[3])  # out of
+        else:
+            row[2] = str(row[2])  # mark out of
 
     # paper formatting
     m = 50  # margin
