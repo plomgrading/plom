@@ -64,7 +64,6 @@ dependencies = [
     "djangorestframework>=3.14.0",
     "django-tables2>=2.7.0",
     "exif>=1.2.2",
-    "fonttools>=4.37.1",
     "gunicorn>=21.1.0",
     'importlib_resources>=5.0.7 ; python_version<"3.9"',  # until we drop 3.8
     "imutils>=0.5.4",
@@ -78,7 +77,7 @@ dependencies = [
     "peewee>=3.13.3",
     "Pillow>=7.0.0",  # Consider >=10.2 for Issue #3216
     "platformdirs>=3.0.0",
-    "pymupdf>=1.22.5",
+    "pymupdf>=1.24.6",
     "PyMySQL>=1.0.2",
     "pyspellchecker>=0.8.1",
     "pytest>=6.0.0",

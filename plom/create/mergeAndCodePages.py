@@ -500,17 +500,7 @@ def make_PDF(
     if font_subsetting is None:
         font_subsetting = do_subset
     if font_subsetting:
-        if Version(fitz.version[0]) >= Version("1.24.6"):
-            exam.subset_fonts()
-        else:
-            # TODO: remove after minimum PyMuPDF is bumped (see Plom Issue #3384)
-            # Fallback subsetting requires https://pypi.org/project/fonttools
-            try:
-                exam.subset_fonts(fallback=True)
-            except TypeError:
-                # PyMuPDF<=1.23 does not have fallback
-                # Subsetting requires https://pypi.org/project/fonttools
-                exam.subset_fonts()
+        exam.subset_fonts()
 
     # Add the deflate option to compress the embedded pngs
     # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save
