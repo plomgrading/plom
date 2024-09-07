@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 
 from PIL import Image
-import fitz
+import pymupdf as fitz
 
 from plom import __version__
 

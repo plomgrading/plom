@@ -12,7 +12,7 @@ import time
 from typing import Any, Optional, Tuple
 
 import arrow
-import fitz
+import pymupdf as fitz
 import zipfly
 
 from django_huey import db_task, get_queue

@@ -1603,7 +1603,7 @@ def huey_child_get_page_images(
         Information about the page image, including its file name,
         thumbnail, hash etc.
     """
-    import fitz
+    import pymupdf as fitz
     from plom.scan import rotate
     from PIL import Image
 

@@ -10,7 +10,7 @@ import pathlib
 from pathlib import Path
 import tempfile
 from typing import Any
-import fitz
+import pymupdf as fitz
 from django.core.files import File
 from django.db import transaction
 from Papers.services import SpecificationService

@@ -19,7 +19,7 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
-import fitz
+import pymupdf as fitz
 
 import plom.create
 import plom.create.fonts

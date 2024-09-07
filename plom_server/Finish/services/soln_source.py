@@ -7,7 +7,7 @@ from __future__ import annotations
 import hashlib
 import io
 
-import fitz
+import pymupdf as fitz
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File

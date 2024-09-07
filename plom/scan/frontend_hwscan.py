@@ -19,7 +19,7 @@ from __future__ import annotations
 from collections import defaultdict
 from pathlib import Path
 
-import fitz
+import pymupdf as fitz
 import tomlkit
 
 from plom.scan.sendPagesToServer import (

@@ -8,7 +8,7 @@
 import hashlib
 import pathlib
 
-import fitz
+import pymupdf as fitz
 
 from django.utils import timezone
 from django import forms

@@ -3,7 +3,7 @@
 
 from pytest import raises
 
-import fitz
+import pymupdf as fitz
 
 from plom.finish.coverPageBuilder import makeCover
 

@@ -2,7 +2,7 @@
 # Copyright (C) 2022, 2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
-import fitz
+import pymupdf as fitz
 
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.mergeAndCodePages import make_PDF

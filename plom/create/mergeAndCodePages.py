@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 # import pyqrcode
-import fitz
+import pymupdf as fitz
 from packaging.version import Version
 import segno
 

@@ -5,7 +5,7 @@
 from pathlib import Path
 
 from pytest import raises
-import fitz
+import pymupdf as fitz
 
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.mergeAndCodePages import pdf_page_add_labels_QRs, create_QR_codes

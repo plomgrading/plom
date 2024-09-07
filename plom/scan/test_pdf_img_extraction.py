@@ -4,7 +4,7 @@
 import shutil
 
 from pytest import raises
-import fitz
+import pymupdf as fitz
 from PIL import Image
 
 from plom.misc_utils import working_directory

@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 import exif
-import fitz
+import pymupdf as fitz
 from PIL import Image, ImageDraw
 
 from plom import __version__

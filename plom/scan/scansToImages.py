@@ -19,7 +19,7 @@ import uuid
 
 from tqdm import tqdm
 import exif
-import fitz
+import pymupdf as fitz
 import PIL
 import PIL.ExifTags
 import PIL.PngImagePlugin

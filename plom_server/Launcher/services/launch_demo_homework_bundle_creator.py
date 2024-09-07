@@ -3,7 +3,7 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
-import fitz
+import pymupdf as fitz
 from pathlib import Path
 from time import sleep
 

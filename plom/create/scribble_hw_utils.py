@@ -7,7 +7,7 @@
 from pathlib import Path
 import random
 
-import fitz
+import pymupdf as fitz
 
 from plom.create.scribble_utils import possible_answers
 

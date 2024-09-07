@@ -13,7 +13,7 @@ from __future__ import annotations
 import pathlib
 from typing import Any
 
-import fitz
+import pymupdf as fitz
 
 from plom.misc_utils import local_now_to_simple_string, pprint_score
 from .examReassembler import papersize_portrait

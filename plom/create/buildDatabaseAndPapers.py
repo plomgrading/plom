@@ -6,7 +6,7 @@
 
 from pathlib import Path
 
-import fitz
+import pymupdf as fitz
 
 from plom import check_version_map
 from plom.misc_utils import working_directory

@@ -8,7 +8,7 @@
 from pathlib import Path
 from textwrap import dedent
 
-import fitz
+import pymupdf as fitz
 
 from plom import specdir
 from plom.textools import buildLaTeX
