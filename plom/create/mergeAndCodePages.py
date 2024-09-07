@@ -17,7 +17,6 @@ from typing import Any
 
 # import pyqrcode
 import pymupdf as fitz
-from packaging.version import Version
 import segno
 
 from plom.create import paperdir
