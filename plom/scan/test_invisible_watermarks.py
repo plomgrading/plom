@@ -5,8 +5,8 @@ from pathlib import Path
 import pytest
 
 import exif
-import pymupdf
 from PIL import Image, ImageDraw
+import pymupdf
 
 from plom import __version__
 from plom.scan.scansToImages import (
