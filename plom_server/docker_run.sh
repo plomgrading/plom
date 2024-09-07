@@ -22,24 +22,24 @@ if ! python3 manage.py plom_database --check-for-database; then
 	echo "a database; it does not yet check anything about the filesystem."
 	echo "Use this hot start feature at your own peril."
 	if [ "x$PLOM_DEBUG" = "x0" ]; then
-		python3 Launcher/launch_scripts/launch_plom_server --production --port $PORT --hot-start
+		python3 Launcher/launch_scripts/launch_plom_server.py --production --port $PORT --hot-start
 	else
-		python3 Launcher/launch_scripts/launch_plom_server --development --port $PORT --hot-start
+		python3 Launcher/launch_scripts/launch_plom_server.py --development --port $PORT --hot-start
 	fi
 else
 	echo "No existing database; starting from scratch"
 	# start either a canned demo or an empty server
 	if [[ "$PLOM_DEMO" -eq 1 ]]; then
 		if [ "x$PLOM_DEBUG" = "x0" ]; then
-			python3 Launcher/launch_scripts/launch_plom_demo_server --production --port $PORT --stop-after bundles-pushed
+			python3 Launcher/launch_scripts/launch_plom_demo_server.py --production --port $PORT --stop-after bundles-pushed
 		else
-			python3 Launcher/launch_scripts/launch_plom_demo_server --development --port $PORT --stop-after bundles-pushed
+			python3 Launcher/launch_scripts/launch_plom_demo_server.py --development --port $PORT --stop-after bundles-pushed
 		fi
 	else
 		if [ "x$PLOM_DEBUG" = "x0" ]; then
-			python3 Launcher/launch_scripts/launch_plom_server --production --port $PORT
+			python3 Launcher/launch_scripts/launch_plom_server.py --production --port $PORT
 		else
-			python3 Launcher/launch_scripts/launch_plom_server --development --port $PORT
+			python3 Launcher/launch_scripts/launch_plom_server.py --development --port $PORT
 		fi
 	fi
 fi
