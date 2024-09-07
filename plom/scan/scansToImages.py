@@ -19,7 +19,7 @@ import uuid
 
 from tqdm import tqdm
 import exif
-import pymupdf as fitz
+import pymupdf
 import PIL
 import PIL.ExifTags
 import PIL.PngImagePlugin
@@ -184,7 +184,7 @@ def processFileToBitmaps(
     # issue #126 - replace spaces in names with underscores for output names.
     safeScan = Path(file_name).stem.replace(" ", "_")
 
-    with fitz.open(file_name) as doc:
+    with pymupdf.open(file_name) as doc:
         if not doc.is_pdf:
             raise TypeError("This does not appear to be a PDF file")
         if doc.is_repaired:
@@ -224,8 +224,8 @@ def processFileToBitmaps(
 
 
 def try_to_extract_image(
-    p: fitz.Page,
-    doc: fitz.Document,
+    p: pymupdf.Page,
+    doc: pymupdf.Document,
     dest: Path,
     basename: str,
     bundle_name: str | Path,
@@ -336,7 +336,7 @@ def try_to_extract_image(
 
 
 def render_page_to_bitmap(
-    p: fitz.Page,
+    p: pymupdf.Page,
     dest: Path,
     basename: str,
     bundle_name: str | Path,
@@ -409,7 +409,7 @@ def render_page_to_bitmap(
     # # For testing, choose widely varying random sizes
     # z = random.uniform(1, 5)
     log.info(f"{basename}: Fitz render z={z:4.2f}.")
-    pix = p.get_pixmap(matrix=fitz.Matrix(z, z), annots=True)
+    pix = p.get_pixmap(matrix=pymupdf.Matrix(z, z), annots=True)
     # TODO: sometimes width and height get mixed up: Issues #1148, #1935
     # but one of them should match the target, without worrying which is which
     if not (pix.width in (W, H) or pix.height in (W, H)):
