@@ -4,18 +4,22 @@
 
 services:
   nginx:
-    build: ./nginx
+    image: nginx:1.27
     ports:
       - 8443:443
       # or for non-SSL, and also change below
       # - 8080:80
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/plom-selfsigned.crt:/etc/ssl/private/plom.crt
+      - ./nginx/plom-selfsigned.key:/etc/ssl/private/plom.key
     depends_on:
-      - web
+      - plom
 
-  web:
+  plom:
     # Use the released version: TODO: should be set on release?  Issue #3208
-    image: "plomgrading/server"
-    # image: "registry.gitlab.com/plom/plom:main"
+    # image: "plomgrading/server"
+    image: "registry.gitlab.com/plom/plom:main"
     # Use in-tree code by replacing image: with build:
     # build:
     #   context: .
@@ -27,7 +31,9 @@ services:
     # expose:
     #   - 8000
 
-    command: plom-new-server
+    # this feels less than ideal; WIP
+    command: bash -c "cd /src/plom_server; ./docker_run.sh"
+    # command: plom-new-server
 
     volumes:
       - plom_media:/exam/
@@ -39,6 +45,7 @@ services:
     environment:
       - "PLOM_MEDIA_ROOT=/exam/media_root"
       - "PLOM_DATABASE_HOSTNAME=postgres"
+      # - "PLOM_DATABASE_NAME=plom_db"
       # If you want a hostname other than "localhost"
       # - "PLOM_HOSTNAME=x1c10.lan"
       # must match nginx's config above, not needed if running on 80/443?
@@ -51,7 +58,7 @@ services:
       # - PLOM_SECRET_KEY=bismarkomitleafagebuckbank
 
   postgres:
-    image: postgres:13
+    image: postgres:16
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
