@@ -64,8 +64,11 @@ def get_django_cmd_prefix() -> str:
     return "python3 manage.py"
 
 
-def pre_launch() -> None:
+def pre_launch(*, production: bool = False) -> None:
     """Run commands required before the plom-server can be launched.
+
+    Keyword Args:
+        production: True if this a production server.
 
     Note that this runs:
         * plom_clean_all_and_build_db: cleans out any old database and misc user-generated file, then rebuilds the blank db.
@@ -80,7 +83,9 @@ def pre_launch() -> None:
     run_django_manage_command("plom_make_groups_and_first_users")
     # build extra-page and scrap-paper PDFs
     run_django_manage_command("plom_build_scrap_extra_pdfs")
-    run_django_manage_command("collectstatic --clear --no-input")
+    if production:
+        # this puts files in a static dir and possible uses a different server for them
+        run_django_manage_command("collectstatic --clear --no-input")
 
 
 def launch_huey_process() -> subprocess.Popen:
@@ -162,7 +167,7 @@ if __name__ == "__main__":
     if args.hot_start:
         print("Attempting a hot-start of the server and Huey.")
     else:
-        pre_launch()
+        pre_launch(production=args.production)
     # now put main things inside a try/finally so that we
     # can clean up the huey/server processes on exit.
     huey_process, server_process = None, None
