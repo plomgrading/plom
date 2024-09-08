@@ -4,7 +4,7 @@
 
 services:
   nginx:
-    image: nginx:1.27.1-alpine
+    image: nginx:1.27
     ports:
       - 8443:443
       # or for non-SSL, and also change below
