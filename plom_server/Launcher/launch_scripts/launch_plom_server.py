@@ -136,7 +136,7 @@ def wait_for_user_to_type_quit() -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--hot-restart", help="Attempt a hot-restart of huey and the server."
+        "--hot-start", help="Attempt to start Huey and the server using existing data."
     )
     parser.add_argument("--port", help="Port number on which to launch server")
     prod_dev_group = parser.add_mutually_exclusive_group()
@@ -156,8 +156,8 @@ if __name__ == "__main__":
     # make sure we are in the correct directory to run things.
     confirm_run_from_correct_directory()
     # clean up and rebuild things before launching.
-    if args.hot_restart:
-        print("Attempting a hot-restart of the server and huey.")
+    if args.hot_start:
+        print("Attempting a hot-start of the server and Huey.")
     else:
         pre_launch()
     # now put main things inside a try/finally so that we
