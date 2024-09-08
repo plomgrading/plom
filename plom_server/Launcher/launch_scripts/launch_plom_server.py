@@ -186,11 +186,7 @@ if __name__ == "__main__":
             wait_for_user_to_type_quit()
         else:
             print("Running production server, will not quit on user-input.")
-            # TODO: maybe we just fork the other process instead of background
-            # launching in the production case...?  Issue #3567
-            while True:
-                time.sleep(10)
-                pass
+            server_process.wait()
 
     finally:
         print("v" * 50)
