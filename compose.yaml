@@ -43,6 +43,7 @@ services:
     environment:
       - "PLOM_MEDIA_ROOT=/exam/media_root"
       - "PLOM_DATABASE_HOSTNAME=postgres"
+      # - "PLOM_DATABASE_NAME=plom_db"
       # If you want a hostname other than "localhost"
       # - "PLOM_HOSTNAME=x1c10.lan"
       # must match nginx's config above, not needed if running on 80/443?
