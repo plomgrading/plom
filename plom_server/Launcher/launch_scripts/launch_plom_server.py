@@ -136,7 +136,9 @@ def wait_for_user_to_type_quit() -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--hot-start", help="Attempt to start Huey and the server using existing data."
+        "--hot-start",
+        action="store_true",
+        help="Attempt to start Huey and the server using existing data.",
     )
     parser.add_argument("--port", help="Port number on which to launch server")
     prod_dev_group = parser.add_mutually_exclusive_group()
