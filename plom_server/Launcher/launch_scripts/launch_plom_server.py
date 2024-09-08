@@ -174,7 +174,7 @@ if __name__ == "__main__":
         time.sleep(0.25)
         r = huey_process.poll()
         if r is not None:
-            raise RuntimeError(f"Problem with huey process: exit code {r}")
+            raise RuntimeError(f"Problem with Huey process: exit code {r}")
         r = server_process.poll()
         if r is not None:
             raise RuntimeError(f"Problem with server process: exit code {r}")
