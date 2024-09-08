@@ -80,6 +80,7 @@ def pre_launch() -> None:
     run_django_manage_command("plom_make_groups_and_first_users")
     # build extra-page and scrap-paper PDFs
     run_django_manage_command("plom_build_scrap_extra_pdfs")
+    run_django_manage_command("collectstatic --clear --no-input")
 
 
 def launch_huey_process() -> subprocess.Popen:

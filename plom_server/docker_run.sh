@@ -11,11 +11,6 @@ else
 	PORT=$PLOM_CONTAINER_PORT
 fi
 
-# in production mode, there are additional steps for static files
-if [ "x$PLOM_DEBUG" = "x0" ]; then
-	python3 manage.py collectstatic --clear --no-input
-fi
-
 if ! python3 manage.py plom_database --check-for-database; then
 	echo "DOING A HOT START (we already have a database)"
 	echo "Issue #3299: Please note this merely checks for the *existence* of"
