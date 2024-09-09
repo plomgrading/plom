@@ -64,8 +64,11 @@ def get_django_cmd_prefix() -> str:
     return "python3 manage.py"
 
 
-def pre_launch() -> None:
+def pre_launch(*, devel: bool = False) -> None:
     """Run commands required before the plom-server can be launched.
+
+    Keyword Args:
+        devel: True if this a development server.
 
     Note that this runs:
         * plom_clean_all_and_build_db: cleans out any old database and misc user-generated file, then rebuilds the blank db.
@@ -80,6 +83,9 @@ def pre_launch() -> None:
     run_django_manage_command("plom_make_groups_and_first_users")
     # build extra-page and scrap-paper PDFs
     run_django_manage_command("plom_build_scrap_extra_pdfs")
+    if not devel:
+        # this puts files in a static dir and possible uses a different server for them
+        run_django_manage_command("collectstatic --clear --no-input")
 
 
 def launch_huey_process() -> subprocess.Popen:
@@ -148,11 +154,14 @@ if __name__ == "__main__":
         help="Run the django development webserver - definitely do not use in production.",
     )
     prod_dev_group.add_argument(
-        "--production", action="store_true", help="Run a production gunicorn server."
+        "--production",
+        action="store_false",
+        dest="development",
+        help="Run a production gunicorn server (default).",
     )
     args = parser.parse_args()
 
-    if args.production and not args.port:
+    if not args.development and not args.port:
         print("You must supply a port for the production server.")
 
     # make sure we are in the correct directory to run things.
@@ -161,17 +170,17 @@ if __name__ == "__main__":
     if args.hot_start:
         print("Attempting a hot-start of the server and Huey.")
     else:
-        pre_launch()
+        pre_launch(devel=args.development)
     # now put main things inside a try/finally so that we
     # can clean up the huey/server processes on exit.
     huey_process, server_process = None, None
     try:
         print("v" * 50)
         huey_process = launch_huey_process()
-        if args.production:
-            server_process = launch_gunicorn_production_server_process(port=args.port)
-        else:
+        if args.development:
             server_process = launch_django_dev_server_process(port=args.port)
+        else:
+            server_process = launch_gunicorn_production_server_process(port=args.port)
         # both processes still running after small delay? probably working
         time.sleep(0.25)
         r = huey_process.poll()
