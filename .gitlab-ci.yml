@@ -474,7 +474,7 @@ webplom_demo:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
     - pushd plom_server
-    - ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after reports --development
+    - ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after reports
     - popd
 
 

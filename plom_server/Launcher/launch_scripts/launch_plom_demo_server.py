@@ -129,13 +129,18 @@ def set_argparse_and_get_args() -> argparse.Namespace:
     prod_dev_group.add_argument(
         "--development",
         action="store_true",
-        help="Run the django development webserver - definitely do not use in production.",
+        default=True,
+        help="""
+            Run the django development webserver
+            (this is the default for the demo
+            but do not use this in production)."
+        """,
     )
     prod_dev_group.add_argument(
         "--production",
         action="store_false",
         dest="development",
-        help="Run a production gunicorn server (default).",
+        help="Run a production gunicorn server..",
     )
 
     return parser.parse_args()
