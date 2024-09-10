@@ -2070,7 +2070,6 @@ class MarkerClient(QWidget):
             self.tags_changed_signal.emit(_task, current_tags)
 
             # TODO: replace with emitting a tag_changed signal and other slots should listen for it
-            # TODO: one can be just Marker itself, but also Annotator's NotificationBar
             try:
                 self.examModel.setTagsByTask(task, current_tags)
                 self.ui.tableView.resizeColumnsToContents()
