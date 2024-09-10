@@ -16,7 +16,7 @@ import random
 import tempfile
 
 import cv2
-import pymupdf as fitz
+import pymupdf
 import numpy as np
 from PIL import Image, ImageEnhance
 
@@ -78,7 +78,7 @@ def validate_args(args) -> None:
         raise ValueError(f"The corner argument is required for {args.operation}")
 
 
-def get_page(file: fitz.Document, page_number: int) -> fitz.Page:
+def get_page(file: pymupdf.Document, page_number: int) -> pymupdf.Page:
     """Get a page from the document.
 
     Args:
@@ -105,7 +105,7 @@ def generate_dummy_pdf() -> str:
     # Create a temporary file with a .pdf suffix
     with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_pdf:
         # Create a new PDF document
-        dummy_pdf = fitz.open()
+        dummy_pdf = pymupdf.open()
 
         # Add a page to the PDF with A4 dimensions
         dummy_page = dummy_pdf.new_page(width=595, height=842)
@@ -131,7 +131,7 @@ def generate_dummy_pdf() -> str:
 
 
 def add_operation_description(
-    page: fitz.Page,
+    page: pymupdf.Page,
     operation: str,
     *,
     corner: str | None = None,
@@ -168,7 +168,7 @@ def add_operation_description(
 
 def generate_tear_points(
     corner: str, severity: float, x_max: float, y_max: float, jaggedness: int
-) -> list[fitz.Point]:
+) -> list[pymupdf.Point]:
     """Generates points for a tear with jagged edges.
 
     Args:
@@ -189,65 +189,65 @@ def generate_tear_points(
     points = []
 
     if corner == "top_left":
-        points.append(fitz.Point(0, 0))
+        points.append(pymupdf.Point(0, 0))
         for i in range(1, 11):
             points.append(
-                fitz.Point(
+                pymupdf.Point(
                     random.uniform(0, severity) * x_max,
                     random.uniform(-jaggedness, jaggedness),
                 )
             )
         for i in range(1, 11):
             points.append(
-                fitz.Point(
+                pymupdf.Point(
                     random.uniform(-jaggedness, jaggedness),
                     random.uniform(0, severity) * y_max,
                 )
             )
     elif corner == "top_right":
-        points.append(fitz.Point(x_max, 0))
+        points.append(pymupdf.Point(x_max, 0))
         for i in range(1, 11):
             points.append(
-                fitz.Point(
+                pymupdf.Point(
                     x_max - random.uniform(0, severity) * x_max,
                     random.uniform(-jaggedness, jaggedness),
                 )
             )
         for i in range(1, 11):
             points.append(
-                fitz.Point(
+                pymupdf.Point(
                     x_max + random.uniform(-jaggedness, jaggedness),
                     random.uniform(0, severity) * y_max,
                 )
             )
     elif corner == "bottom_left":
-        points.append(fitz.Point(0, y_max))
+        points.append(pymupdf.Point(0, y_max))
         for i in range(1, 11):
             points.append(
-                fitz.Point(
+                pymupdf.Point(
                     random.uniform(0, severity) * x_max,
                     y_max + random.uniform(-jaggedness, jaggedness),
                 )
             )
         for i in range(1, 11):
             points.append(
-                fitz.Point(
+                pymupdf.Point(
                     random.uniform(-jaggedness, jaggedness),
                     y_max - random.uniform(0, severity) * y_max,
                 )
             )
     elif corner == "bottom_right":
-        points.append(fitz.Point(x_max, y_max))
+        points.append(pymupdf.Point(x_max, y_max))
         for i in range(1, 11):
             points.append(
-                fitz.Point(
+                pymupdf.Point(
                     x_max - random.uniform(0, severity) * x_max,
                     y_max + random.uniform(-jaggedness, jaggedness),
                 )
             )
         for i in range(1, 11):
             points.append(
-                fitz.Point(
+                pymupdf.Point(
                     x_max + random.uniform(-jaggedness, jaggedness),
                     y_max - random.uniform(0, severity) * y_max,
                 )
@@ -256,7 +256,7 @@ def generate_tear_points(
     return points
 
 
-def _mirror_points(points: list[fitz.Point], x_max: float) -> list[fitz.Point]:
+def _mirror_points(points: list[pymupdf.Point], x_max: float) -> list[pymupdf.Point]:
     """Mirrors points horizontally across the middle of the page.
 
     Args:
@@ -266,11 +266,11 @@ def _mirror_points(points: list[fitz.Point], x_max: float) -> list[fitz.Point]:
     Returns:
         List of mirrored points
     """
-    return [fitz.Point(x_max - point.x, point.y) for point in points]
+    return [pymupdf.Point(x_max - point.x, point.y) for point in points]
 
 
 def tear_double_sided(
-    pages: list[fitz.Page], corner: str, severity: float, jaggedness: int
+    pages: list[pymupdf.Page], corner: str, severity: float, jaggedness: int
 ) -> None:
     """Tear a corner of a (physical) page, also effecting the next PDF page.
 
@@ -298,8 +298,8 @@ def tear_double_sided(
 
 
 def generate_fold_points(
-    corner: str, severity: float, r: fitz.Rect
-) -> list[fitz.Point]:
+    corner: str, severity: float, r: pymupdf.Rect
+) -> list[pymupdf.Point]:
     """Generates points for a fold.
 
     Args:
@@ -307,7 +307,7 @@ def generate_fold_points(
             'top_left', 'top_right', 'bottom_left', 'bottom_right'.
         severity (float): How severe the fold should be, as a percentage.
             Must be between (0, 1.0).
-        r (fitz.Rect): The rectangle representation of the page's dimension.
+        r (pymupdf.Rect): The rectangle representation of the page's dimension.
 
     Returns:
         List of points used for the fold.
@@ -324,34 +324,34 @@ def generate_fold_points(
 
     if corner == "top_left":
         vertex1 = r.tl
-        vertex2 = fitz.Point(r.tl.x + side, r.tl.y)
-        vertex3 = fitz.Point(r.tl.x, r.tr.y + side)
-        vertex4 = fitz.Point(r.tl.x + side, r.tl.y + side)
+        vertex2 = pymupdf.Point(r.tl.x + side, r.tl.y)
+        vertex3 = pymupdf.Point(r.tl.x, r.tr.y + side)
+        vertex4 = pymupdf.Point(r.tl.x + side, r.tl.y + side)
 
     elif corner == "top_right":
         vertex1 = r.tr
-        vertex2 = fitz.Point(r.tr.x - side, r.tr.y)
-        vertex3 = fitz.Point(r.tr.x, r.tr.y + side)
-        vertex4 = fitz.Point(r.tr.x - side, r.tr.y + side)
+        vertex2 = pymupdf.Point(r.tr.x - side, r.tr.y)
+        vertex3 = pymupdf.Point(r.tr.x, r.tr.y + side)
+        vertex4 = pymupdf.Point(r.tr.x - side, r.tr.y + side)
 
     elif corner == "bottom_left":
         vertex1 = r.bl
-        vertex2 = fitz.Point(r.bl.x + side, r.bl.y)
-        vertex3 = fitz.Point(r.bl.x, r.bl.y - side)
-        vertex4 = fitz.Point(r.bl.x + side, r.bl.y - side)
+        vertex2 = pymupdf.Point(r.bl.x + side, r.bl.y)
+        vertex3 = pymupdf.Point(r.bl.x, r.bl.y - side)
+        vertex4 = pymupdf.Point(r.bl.x + side, r.bl.y - side)
 
     elif corner == "bottom_right":
         vertex1 = r.br
-        vertex2 = fitz.Point(r.br.x - side, r.br.y)
-        vertex3 = fitz.Point(r.br.x, r.br.y - side)
-        vertex4 = fitz.Point(r.br.x - side, r.br.y - side)
+        vertex2 = pymupdf.Point(r.br.x - side, r.br.y)
+        vertex3 = pymupdf.Point(r.br.x, r.br.y - side)
+        vertex4 = pymupdf.Point(r.br.x - side, r.br.y - side)
 
     return [vertex1, vertex2, vertex3, vertex4]
 
 
 def _get_corner_pixmap(
-    page: fitz.Page, corner: str, severity: float, r: fitz.Rect
-) -> fitz.Pixmap:
+    page: pymupdf.Page, corner: str, severity: float, r: pymupdf.Rect
+) -> pymupdf.Pixmap:
     """Gets the pixmap of a corner.
 
     Args:
@@ -364,11 +364,11 @@ def _get_corner_pixmap(
     Returns:
         Pixmap of the folded area.
     """
-    mat = fitz.Matrix(2, 2)
+    mat = pymupdf.Matrix(2, 2)
     return page.get_pixmap(matrix=mat, clip=_get_bounding_box(corner, severity, r))
 
 
-def _get_bounding_box(corner: str, severity: float, r: fitz.Rect) -> fitz.Rect:
+def _get_bounding_box(corner: str, severity: float, r: pymupdf.Rect) -> pymupdf.Rect:
     """Get the bounding box of a fold.
 
     Args:
@@ -384,22 +384,22 @@ def _get_bounding_box(corner: str, severity: float, r: fitz.Rect) -> fitz.Rect:
     clip = None
 
     if corner == "top_left":
-        clip = fitz.Rect(r.tl, fitz.Point(r.tl.x + side, r.tl.y + side))
+        clip = pymupdf.Rect(r.tl, pymupdf.Point(r.tl.x + side, r.tl.y + side))
     elif corner == "top_right":
-        clip = fitz.Rect(
-            fitz.Point(r.tr.x - side, r.tr.y), fitz.Point(r.tr.x, r.tr.y + side)
+        clip = pymupdf.Rect(
+            pymupdf.Point(r.tr.x - side, r.tr.y), pymupdf.Point(r.tr.x, r.tr.y + side)
         )
     elif corner == "bottom_left":
-        clip = fitz.Rect(
-            fitz.Point(r.bl.x, r.bl.y - side), fitz.Point(r.bl.x + side, r.bl.y)
+        clip = pymupdf.Rect(
+            pymupdf.Point(r.bl.x, r.bl.y - side), pymupdf.Point(r.bl.x + side, r.bl.y)
         )
     elif corner == "bottom_right":
-        clip = fitz.Rect(fitz.Point(r.br.x - side, r.bl.y - side), r.br)
+        clip = pymupdf.Rect(pymupdf.Point(r.br.x - side, r.bl.y - side), r.br)
 
     return clip
 
 
-def fold_page(pages: list[fitz.Page], corner: str, severity: float) -> None:
+def fold_page(pages: list[pymupdf.Page], corner: str, severity: float) -> None:
     """Fold over a corner of a physical page, which effects two PDF pages.
 
     Assumption:
@@ -436,7 +436,7 @@ def fold_page(pages: list[fitz.Page], corner: str, severity: float) -> None:
     pages[1].draw_polyline(mirrored[:-1], color=edge_out, width=1, fill=out_clr)
 
 
-def obscure_qr_codes_in_paper(pdf_doc: fitz.Document) -> None:
+def obscure_qr_codes_in_paper(pdf_doc: pymupdf.Document) -> None:
     """Hide qr-codes for demo purposes.
 
     On last page paint squares at bottom of page to hide 2
@@ -444,7 +444,7 @@ def obscure_qr_codes_in_paper(pdf_doc: fitz.Document) -> None:
     top of the page to hide 1 qr-code.
 
     Args:
-        pdf_doc (fitz.Document): a pdf document of a test-paper.
+        pdf_doc (pymupdf.Document): a pdf document of a test-paper.
 
     Returns:
         None, but modifies ``pdf_doc``  as a side effect.
@@ -456,13 +456,13 @@ def obscure_qr_codes_in_paper(pdf_doc: fitz.Document) -> None:
     # grab the bounding box of the page to get its height/width
     bnd = page.bound()
     page.draw_rect(
-        fitz.Rect(left, bnd.height - right, right, bnd.height - left),
+        pymupdf.Rect(left, bnd.height - right, right, bnd.height - left),
         color=(0, 0, 0),
         fill=(0.2, 0.2, 0.75),
         radius=0.05,
     )
     page.draw_rect(
-        fitz.Rect(
+        pymupdf.Rect(
             bnd.width - right,
             bnd.height - right,
             bnd.width - left,
@@ -472,9 +472,9 @@ def obscure_qr_codes_in_paper(pdf_doc: fitz.Document) -> None:
         fill=(0.2, 0.2, 0.75),
         radius=0.05,
     )
-    tw = fitz.TextWriter(bnd)
+    tw = pymupdf.TextWriter(bnd)
     tw.append(
-        fitz.Point(100, bnd.height - 20),
+        pymupdf.Point(100, bnd.height - 20),
         "Simulated page damage: unreadable bottom QR codes",
         fontsize=14,
     )
@@ -483,7 +483,7 @@ def obscure_qr_codes_in_paper(pdf_doc: fitz.Document) -> None:
     page = pdf_doc[-2]
     bnd = page.bound()
     page.draw_rect(
-        fitz.Rect(
+        pymupdf.Rect(
             bnd.width - right,
             left,
             bnd.width - left,
@@ -494,7 +494,7 @@ def obscure_qr_codes_in_paper(pdf_doc: fitz.Document) -> None:
         radius=0.05,
     )
     page.draw_rect(
-        fitz.Rect(
+        pymupdf.Rect(
             left,
             left,
             right,
@@ -504,16 +504,16 @@ def obscure_qr_codes_in_paper(pdf_doc: fitz.Document) -> None:
         fill=(0.2, 0.2, 0.75),
         radius=0.05,
     )
-    tw = fitz.TextWriter(bnd)
+    tw = pymupdf.TextWriter(bnd)
     tw.append(
-        fitz.Point(100, 15),
+        pymupdf.Point(100, 15),
         "Simulated page damage: unreadable top QR code",
         fontsize=14,
     )
     tw.write_text(page, color=(0, 0, 0.8))
 
 
-def rotate_page(doc: fitz.Document, page_num: int, severity: float) -> None:
+def rotate_page(doc: pymupdf.Document, page_num: int, severity: float) -> None:
     """Rotate a page counterclockwise.
 
     Args:
@@ -525,16 +525,16 @@ def rotate_page(doc: fitz.Document, page_num: int, severity: float) -> None:
     """
     rotate_degree = severity * 180
 
-    src = fitz.open()
+    src = pymupdf.open()
     src.insert_pdf(doc)
 
     doc.delete_page(page_num)
-    page: fitz.Page = doc.new_page(pno=page_num)
+    page: pymupdf.Page = doc.new_page(pno=page_num)
     page.show_pdf_page(page.rect, src, pno=page_num, rotate=rotate_degree)
     add_operation_description(page, "rotate", corner=None)
 
 
-def compress(doc: fitz.Document, page_num, severity: float) -> None:
+def compress(doc: pymupdf.Document, page_num, severity: float) -> None:
     """Compress an image of a page to display JPEG artifacts.
 
     Args:
@@ -556,39 +556,39 @@ def compress(doc: fitz.Document, page_num, severity: float) -> None:
 
     # Retrieve the buffer and insert that image to the original document
     image_data = buffer.getvalue()
-    pix = fitz.Pixmap(image_data)
+    pix = pymupdf.Pixmap(image_data)
     doc[page_num].insert_image(page.rect, pixmap=pix)
 
 
-def lighten(doc: fitz.Document, page_num, severity: float) -> None:
+def lighten(doc: pymupdf.Document, page_num, severity: float) -> None:
     """Lighten an image, increasing its average brightness.
 
     Args:
-        doc(fitz.Document): The target document.
+        doc(pymupdf.Document): The target document.
         page_num(int): The target page number (0 indexed).
         severity(float): How much lighter the image gets.
     """
     page = doc[page_num]
 
     # Preserve quality of page
-    matrix = fitz.Matrix(2, 2)
+    matrix = pymupdf.Matrix(2, 2)
     pix = page.get_pixmap(matrix=matrix)
     pix.gamma_with(0.5 - severity * 0.5)
     page.insert_image(page.rect, pixmap=pix)
 
 
-def darken(doc: fitz.Document, page_num, severity: float) -> None:
+def darken(doc: pymupdf.Document, page_num, severity: float) -> None:
     """Darken an image, decreasing its average brightness.
 
     Args:
-        doc(fitz.Document): The target document.
+        doc(pymupdf.Document): The target document.
         page_num(int): The target page number (0 indexed).
         severity(float): How much darker the image gets.
     """
     page = doc[page_num]
 
     # Preserve quality of page
-    matrix = fitz.Matrix(2, 2)
+    matrix = pymupdf.Matrix(2, 2)
     pix = page.get_pixmap(matrix=matrix)
     img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
     enhancer = ImageEnhance.Brightness(img)
@@ -599,7 +599,7 @@ def darken(doc: fitz.Document, page_num, severity: float) -> None:
     page.insert_image(page.rect, stream=bytestream)
 
 
-def jam(doc: fitz.Document, page_num, severity: float) -> None:
+def jam(doc: pymupdf.Document, page_num, severity: float) -> None:
     """Simulates a page feed error, where a row is smeared downwards.
 
     Args:
@@ -625,7 +625,7 @@ def jam(doc: fitz.Document, page_num, severity: float) -> None:
     page.insert_image(page.rect, stream=bytestream)
 
 
-def stretch(doc: fitz.Document, page_num: int, severity: float) -> None:
+def stretch(doc: pymupdf.Document, page_num: int, severity: float) -> None:
     """Stretch a page, expanding near the top and compressing near the bottom.
 
     The stretch works through non-linear shifting for the pixel in
@@ -685,10 +685,10 @@ def stretch(doc: fitz.Document, page_num: int, severity: float) -> None:
     # Insert the image into the original page (overwriting the original content)
     img_data = img_byte_arr.read()  # Read image data from the buffer
     img_byte_arr.close()  # Close the buffer
-    page.insert_image(fitz.Rect(0, 0, width, height), stream=img_data)
+    page.insert_image(pymupdf.Rect(0, 0, width, height), stream=img_data)
 
 
-def detect_qr_code_area(corner: str, page: fitz.Page) -> fitz.Rect:
+def detect_qr_code_area(corner: str, page: pymupdf.Page) -> pymupdf.Rect:
     """Detects a single QR code area based on the specified corner.
 
     Args:
@@ -696,42 +696,42 @@ def detect_qr_code_area(corner: str, page: fitz.Page) -> fitz.Rect:
         page: The PDF page to analyze.
 
     Returns:
-        The detected QR code area as a ``fitz.Rect``.
+        The detected QR code area as a ``pymupdf.Rect``.
     """
     page_width = page.rect.width
     page_height = page.rect.height
     qr_area = None
 
     if corner == "top_left":
-        qr_area = fitz.Rect(15, 15, 100, 100)
+        qr_area = pymupdf.Rect(15, 15, 100, 100)
     elif corner == "top_right":
-        qr_area = fitz.Rect(page_width - 100, 15, page_width - 15, 100)
+        qr_area = pymupdf.Rect(page_width - 100, 15, page_width - 15, 100)
     elif corner == "bottom_left":
-        qr_area = fitz.Rect(15, page_height - 100, 100, page_height - 15)
+        qr_area = pymupdf.Rect(15, page_height - 100, 100, page_height - 15)
     elif corner == "bottom_right":
-        qr_area = fitz.Rect(
+        qr_area = pymupdf.Rect(
             page_width - 100, page_height - 100, page_width - 15, page_height - 15
         )
 
     return qr_area
 
 
-def qr_hide(page: fitz.Page, qr_area: fitz.Rect) -> None:
+def qr_hide(page: pymupdf.Page, qr_area: pymupdf.Rect) -> None:
     """Covers an area of the page where a QR code might be located.
 
     Args:
-        page (fitz.Page): The PDF page to alter.
-        qr_area (fitz.Rect): Rectangle area to cover.
+        page (pymupdf.Page): The PDF page to alter.
+        qr_area (pymupdf.Rect): Rectangle area to cover.
     """
     page.draw_rect(qr_area, color=(0, 0, 0), fill=(0, 0, 0))
 
 
-def qr_corrupt(page: fitz.Page, qr_area: fitz.Rect) -> None:
+def qr_corrupt(page: pymupdf.Page, qr_area: pymupdf.Rect) -> None:
     """Corrupts an area of the page where a QR code might be located.
 
     Args:
-        page (fitz.Page): The PDF page to alter.
-        qr_area (fitz.Rect): Rectangle area to corrupt.
+        page (pymupdf.Page): The PDF page to alter.
+        qr_area (pymupdf.Rect): Rectangle area to corrupt.
     """
     num_lines = 10
     for _ in range(num_lines):
@@ -739,7 +739,9 @@ def qr_corrupt(page: fitz.Page, qr_area: fitz.Rect) -> None:
         y1 = random.uniform(qr_area.y0, qr_area.y1)
         x2 = random.uniform(qr_area.x0, qr_area.x1)
         y2 = random.uniform(qr_area.y0, qr_area.y1)
-        page.draw_line(fitz.Point(x1, y1), fitz.Point(x2, y2), color=(0, 0, 0), width=2)
+        page.draw_line(
+            pymupdf.Point(x1, y1), pymupdf.Point(x2, y2), color=(0, 0, 0), width=2
+        )
 
 
 def muck_paper(
@@ -764,7 +766,7 @@ def muck_paper(
         None, instead modifies the input file directly.
     """
     # Open file
-    file = fitz.open(filepath)
+    file = pymupdf.open(filepath)
 
     # Manipulate file
     pages = [get_page(file, page_number)]
