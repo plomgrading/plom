@@ -129,10 +129,18 @@ def set_argparse_and_get_args() -> argparse.Namespace:
     prod_dev_group.add_argument(
         "--development",
         action="store_true",
-        help="Run the django development webserver - definitely do not use in production.",
+        default=True,
+        help="""
+            Run the Django development webserver
+            (this is the default for the demo
+            but do not use this in production)."
+        """,
     )
     prod_dev_group.add_argument(
-        "--production", action="store_true", help="Run a production gunicorn server."
+        "--production",
+        action="store_false",
+        dest="development",
+        help="Run a production Gunicorn server.",
     )
 
     return parser.parse_args()
@@ -179,7 +187,7 @@ def confirm_run_from_correct_directory() -> None:
     #     return None
     if not Path("./manage.py").exists():
         raise RuntimeError(
-            "This script needs to be run from the same directory as django's manage.py script."
+            "This script needs to be run from the same directory as Django's manage.py script."
         )
 
 
@@ -190,13 +198,18 @@ def get_django_cmd_prefix() -> str:
     return "python3 manage.py"
 
 
-def pre_launch():
+def pre_launch(*, devel: bool = False) -> None:
     """Run commands required before the plom-server can be launched.
+
+    Keyword Args:
+        devel: True if this to be a development server.
 
     Note that this runs:
         * plom_clean_all_and_build_db: cleans out any old database and misc user-generated file, then rebuilds the blank db.
         * plom_make_groups_and_first_users: creates user-groups needed by plom, and an admin user and a manager-user.
         * plom_build_scrap_extra_pdfs: build the scrap-paper and extra-page pdfs.
+        * Django's collectstatic command to put files in a static dir and
+          possibly use a different server for them.
 
     Note that this can easily be extended in the future to run more commands as required.
     """
@@ -206,20 +219,22 @@ def pre_launch():
     run_django_manage_command("plom_make_groups_and_first_users")
     # build extra-page and scrap-paper PDFs
     run_django_manage_command("plom_build_scrap_extra_pdfs")
+    if not devel:
+        run_django_manage_command("collectstatic --clear --no-input")
 
 
 def launch_huey_process() -> subprocess.Popen:
-    """Launch the huey-consumer for processing background tasks.
+    """Launch the Huey-consumer for processing background tasks.
 
-    Note that this runs the django manage command 'djangohuey --quiet'.
+    Note that this runs the Django manage command 'djangohuey --quiet'.
     """
-    print("Launching huey.")
+    print("Launching Huey.")
     # this needs to be run in the background
     return popen_django_manage_command("djangohuey --quiet")
 
 
 def launch_django_dev_server_process(*, port: int | None = None) -> subprocess.Popen:
-    """Launch django's native development server.
+    """Launch Django's native development server.
 
     Note that this should never be used in production.
 
@@ -229,7 +244,7 @@ def launch_django_dev_server_process(*, port: int | None = None) -> subprocess.P
     """
     # TODO - put in an 'are we in production' check.
 
-    print("Launching django's development server.")
+    print("Launching Django development server.")
     # this needs to be run in the background
     if port:
         print(f"Dev server will run on port {port}")
@@ -239,14 +254,15 @@ def launch_django_dev_server_process(*, port: int | None = None) -> subprocess.P
 
 
 def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
-    """Launch the gunicorn web server.
+    """Launch the Gunicorn web server.
 
-    Note that this should always be used in production.
+    Note that for production, this should be used instead of Django's
+    built-in development server.
 
     Args:
         port: the port for the server.
     """
-    print("Launching gunicorn web-server.")
+    print("Launching Gunicorn web-server.")
     # TODO - put in an 'are we in production' check.
     cmd = f"gunicorn Web_Plom.wsgi --bind 0.0.0.0:{port}"
     return subprocess.Popen(split(cmd))
@@ -272,7 +288,7 @@ def build_demo_test_source_pdfs() -> None:
 def upload_demo_test_source_files():
     """Use 'plom_preparation_source' to upload a demo assessment source pdfs."""
     print("Uploading demo assessment source pdfs")
-    for v in [1, 2]:
+    for v in (1, 2):
         source_pdf = demo_file_directory / f"assessment_v{v}.pdf"
         run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
 
@@ -324,7 +340,7 @@ def build_all_papers_and_wait():
     from time import sleep
 
     run_django_manage_command("plom_build_paper_pdfs --start-all")
-    # since this is a background huey job, we need to
+    # since this is a background Huey job, we need to
     # wait until all those pdfs are actually built -
     # we can get that by looking at output from plom_build_paper_pdfs --status
     pdf_status_cmd = get_django_cmd_prefix() + " plom_build_paper_pdfs --count-done"
@@ -666,15 +682,15 @@ if __name__ == "__main__":
         else:
             stop_after = None
 
-    if args.production and not args.port:
+    if not args.development and not args.port:
         print("You must supply a port for the production server.")
 
     # make sure we are in the correct directory to run things.
     confirm_run_from_correct_directory()
     # clean up and rebuild things before launching.
-    pre_launch()
+    pre_launch(devel=args.development)
     # now put main things inside a try/finally so that we
-    # can clean up the huey/server processes on exit.
+    # can clean up the Huey/server processes on exit.
     huey_process, server_process = None, None
     try:
         print("v" * 50)
@@ -684,7 +700,7 @@ if __name__ == "__main__":
         time.sleep(0.25)
         r = huey_process.poll()
         if r is not None:
-            raise RuntimeError(f"Problem with huey process: exit code {r}")
+            raise RuntimeError(f"Problem with Huey process: exit code {r}")
         r = server_process.poll()
         if r is not None:
             raise RuntimeError(f"Problem with server process: exit code {r}")
@@ -718,17 +734,17 @@ if __name__ == "__main__":
             run_finishing_commands(stop_after=stop_after, solutions=args.solutions)
             break
 
-        if args.production:
-            print("Running production server, will not quit on user-input.")
-            while True:
-                pass
-        elif wait_at_end:
-            wait_for_user_to_type_quit()
+        if args.development:
+            if wait_at_end:
+                wait_for_user_to_type_quit()
+            else:
+                print("Demo process finished.")
         else:
-            print("Demo process finished.")
+            print("Running production server, will not quit on user-input.")
+            server_process.wait()
     finally:
         print("v" * 50)
-        print("Shutting down huey and django dev server")
+        print("Shutting down Huey and Django dev server")
         if huey_process:
             huey_process.terminate()
         if server_process:
