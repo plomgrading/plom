@@ -161,6 +161,8 @@ class MarkerClient(QWidget):
         self.workingDirectory = Path(tmpdir)
         log.debug("Working directory set to %s", self.workingDirectory)
 
+        self.tags_changed_signal.connect(self._update_tags_in_examModel)
+
         self.maxMark = -1  # temp value
         self.downloader = self.Qapp.downloader
         if self.downloader:
@@ -2069,14 +2071,17 @@ class MarkerClient(QWidget):
                 _task = task[1:]
             self.tags_changed_signal.emit(_task, current_tags)
 
-            # TODO: replace with emitting a tag_changed signal and other slots should listen for it
-            try:
-                self.examModel.setTagsByTask(task, current_tags)
-                self.ui.tableView.resizeColumnsToContents()
-                self.ui.tableView.resizeRowsToContents()
-            except ValueError:
-                # we might not own the task for which we've have been managing tags
-                pass
+    def _update_tags_in_examModel(self, task: str, tags: list[str]):
+        if not task.startswith("q"):
+            # long-term goal to get rid of the q in q1234g2
+            task = "q" + task
+        try:
+            self.examModel.setTagsByTask(task, tags)
+        except ValueError:
+            # we might not own the task for which we've have been managing tags
+            pass
+        self.ui.tableView.resizeColumnsToContents()
+        self.ui.tableView.resizeRowsToContents()
 
     def setFilter(self):
         """Sets a filter tag."""
