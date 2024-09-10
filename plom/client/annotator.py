@@ -154,7 +154,7 @@ class Annotator(QWidget):
         self.zoomButton: QToolButton
         self.undoButton: QToolButton
         self.redoButton: QToolButton
-        self.pageFrameLayout: QBoxLayout
+        self.pageFrame: QFrame
         self.container_rubricwidget: QBoxLayout
         uic.loadUi(resources.files(plom.client.ui_files) / "annotator.ui", self)
         # TODO: temporary workaround
@@ -174,7 +174,9 @@ class Annotator(QWidget):
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
         self.view = PageView(self)
-        self.ui.pageFrameLayout.addWidget(self.view)
+        l = self.ui.pageFrame.layout()
+        assert l is not None
+        l.addWidget(self.view)
 
         # Create the rubric list widget and put into gui.
         self.rubric_widget = RubricWidget(self)
