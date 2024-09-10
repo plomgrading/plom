@@ -263,9 +263,9 @@ class Annotator(QWidget):
         self.ui.attnFrame.setVisible(False)
 
     def tags_changed(self, task: str, tags: list[str]) -> None:
-        print("- = == =  = = = - - -  " * 3)
-        print(task)
-        print(tags)
+        """React to possible tag change signals."""
+        if task == self.tgvID:
+            self.update_attn_bar(tags=tags)
 
     def getScore(self):
         return self.scene.getScore()

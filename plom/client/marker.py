@@ -2064,7 +2064,10 @@ class MarkerClient(QWidget):
                 WarnMsg(parent, f"Could not get tags from {task}", info=str(e)).exec()
                 return
 
-            self.tags_changed_signal.emit(task, current_tags)
+            if task.casefold().startswith("q"):
+                # long-term goal to get rid of the q in q1234g2
+                _task = task[1:]
+            self.tags_changed_signal.emit(_task, current_tags)
 
             # TODO: replace with emitting a tag_changed signal and other slots should listen for it
             # TODO: one can be just Marker itself, but also Annotator's NotificationBar
