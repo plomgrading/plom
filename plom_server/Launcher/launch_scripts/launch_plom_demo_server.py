@@ -256,7 +256,8 @@ def launch_django_dev_server_process(*, port: int | None = None) -> subprocess.P
 def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
     """Launch the Gunicorn web server.
 
-    Note that this should always be used in production.
+    Note that for production, this should be used instead of Django's
+    built-in development server.
 
     Args:
         port: the port for the server.
