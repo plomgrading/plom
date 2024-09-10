@@ -68,12 +68,15 @@ def pre_launch(*, devel: bool = False) -> None:
     """Run commands required before the plom-server can be launched.
 
     Keyword Args:
-        devel: True if this a development server.
+        devel: True if this to be a development server.
 
     Note that this runs:
         * plom_clean_all_and_build_db: cleans out any old database and misc user-generated file, then rebuilds the blank db.
         * plom_make_groups_and_first_users: creates user-groups needed by plom, and an admin user and a manager-user.
         * plom_build_scrap_extra_pdfs: build the scrap-paper and extra-page pdfs.
+        * django's collectstatic command to put files in a static dir and
+          possibly use a different server for them.
+
 
     Note that this can easily be extended in the future to run more commands as required.
     """
@@ -84,7 +87,6 @@ def pre_launch(*, devel: bool = False) -> None:
     # build extra-page and scrap-paper PDFs
     run_django_manage_command("plom_build_scrap_extra_pdfs")
     if not devel:
-        # this puts files in a static dir and possible uses a different server for them
         run_django_manage_command("collectstatic --clear --no-input")
 
 
