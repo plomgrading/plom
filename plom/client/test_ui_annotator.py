@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import QWidget
+
 from plom.client.annotator import Annotator
 from plom.client.marker import MarkerClient
 
 
-class MockMarker:
+class MockMarker(QWidget):
     """Just enough Marker to open Annotator."""
 
     annotatorSettings = {
@@ -16,6 +18,8 @@ class MockMarker:
         "compact": None,
         "keybinding_custom_overlay": None,
     }
+
+    tags_changed_signal = pyqtSignal(str, list)
 
     def getRubricsFromServer(self, q):
         return []

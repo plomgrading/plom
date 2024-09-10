@@ -13,6 +13,7 @@ __copyright__ = "Copyright (C) 2018-2024 Andrew Rechnitzer, Colin B. Macdonald, 
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
+import html
 import json
 import logging
 from pathlib import Path
@@ -46,8 +47,7 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
     QFrame,
-    QGridLayout,
-    QWidget,
+    QLabel,
     QMenu,
     QMessageBox,
     QProgressDialog,
@@ -56,6 +56,7 @@ from PyQt6.QtWidgets import (
     QBoxLayout,
     QFileDialog,
     QColorDialog,
+    QWidget,
 )
 from PyQt6.QtWidgets import QGraphicsRectItem
 
@@ -120,6 +121,8 @@ class Annotator(QWidget):
         """
         super().__init__()
 
+        parentMarkerUI.tags_changed_signal.connect(self.tags_changed)
+
         self.username = username
         self.parentMarkerUI = parentMarkerUI
         self.tgvID = None
@@ -132,7 +135,7 @@ class Annotator(QWidget):
 
         self.testName = None
         self.paperDir = None
-        self.saveName = None
+        self.saveName: Path | None = None
         self.maxMark = 0
 
         # help mypy understand stuff coming from uic
@@ -153,11 +156,20 @@ class Annotator(QWidget):
         self.zoomButton: QToolButton
         self.undoButton: QToolButton
         self.redoButton: QToolButton
-        self.pageFrameGrid: QGridLayout
+        self.pageFrame: QFrame
         self.container_rubricwidget: QBoxLayout
+        self.attnFrame: QFrame
+        self.attnLeftLabel: QLabel
+        self.attnRightLabel: QLabel
+        self.attnClearButton: QPushButton
+        self.attnTagsButton: QPushButton
+        self.attnDismissButton: QPushButton
         uic.loadUi(resources.files(plom.client.ui_files) / "annotator.ui", self)
         # TODO: temporary workaround
         self.ui = self
+
+        self.ui.attnDismissButton.clicked.connect(self.dismiss_attn_bar)
+        self.ui.attnTagsButton.clicked.connect(self.tag_paper)
 
         # ordered list of minor mode tools, must match the UI order
         self._list_of_minor_modes = ["tick", "cross", "text", "line", "box", "pen"]
@@ -168,10 +180,14 @@ class Annotator(QWidget):
         self.ui.revealBox0.setHidden(True)
         self.wideLayout()
 
+        self.update_attn_bar()
+
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
         self.view = PageView(self)
-        self.ui.pageFrameGrid.addWidget(self.view, 1, 1)
+        l = self.ui.pageFrame.layout()
+        assert l is not None
+        l.addWidget(self.view)
 
         # Create the rubric list widget and put into gui.
         self.rubric_widget = RubricWidget(self)
@@ -230,6 +246,33 @@ class Annotator(QWidget):
         self.ui.hamMenuButton.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.setToolShortCuts()
         self.setMinorShortCuts()
+
+    def update_attn_bar(self, *, tags: list[str] = [], show: bool = False) -> None:
+        """Update the attention bar to show notifications to the user.
+
+        Keyword Args:
+            show: force showing the notification (default: False).
+            tags: a list of tags: if non-empty we'll generate appropriate
+                text and show the notification bar.
+        """
+        # TODO: share with Identifier?
+        warning_yellow_style = "background-color: #FFD700; color: #000"
+        self.ui.attnFrame.setStyleSheet(warning_yellow_style)
+        notification_str = ""
+        secondary_explanation = ""
+        if tags:
+            tagstr = ", ".join(f"&ldquo;{html.escape(t)}&rdquo;" for t in tags)
+            notification_str = f"<p>This task is tagged {tagstr}</p>"
+        self.ui.attnLeftLabel.setText(notification_str)
+        self.ui.attnRightLabel.setText(secondary_explanation)
+        self.ui.attnClearButton.setVisible(False)  # not yet used
+        if show or notification_str:
+            self.ui.attnFrame.setVisible(True)
+        else:
+            self.ui.attnFrame.setVisible(False)
+
+    def dismiss_attn_bar(self) -> None:
+        self.ui.attnFrame.setVisible(False)
 
     def getScore(self):
         return self.scene.getScore()
@@ -471,6 +514,7 @@ class Annotator(QWidget):
         plomDict,
         integrity_check,
         src_img_data,
+        tags: list[str],
     ):
         """Loads new data into the window for marking.
 
@@ -495,6 +539,11 @@ class Annotator(QWidget):
                 question.
             integrity_check (str): integrity check string
             src_img_data (list[dict]): image md5sums, filenames etc.
+            tags: currently has these tags.  TODO: generally annotator
+                doesn't "do" tags itself, relying on Marker to know such
+                things, but we need it to set attention for now.  Maybe
+                this could be refactored out to Marker later, after the
+                wedding.
 
         Returns:
             None: Modifies many instance vars.
@@ -521,6 +570,8 @@ class Annotator(QWidget):
 
         # reset the timer (its not needed to make a new one)
         self.timer.start()
+
+        self.update_attn_bar(tags=tags)
 
     def load_new_scene(self, src_img_data, *, plomDict=None):
         # Set up the graphicsview and graphicsscene of the group-image
@@ -1987,12 +2038,21 @@ class Annotator(QWidget):
             self.solutionView = SolutionViewer(self, solutionFile)
         self.solutionView.show()
 
-    def tag_paper(self, task=None, dialog_parent=None):
+    def tags_changed(self, task: str, tags: list[str]) -> None:
+        """React to possible tag change signals."""
+        if task == self.tgvID:
+            self.update_attn_bar(tags=tags)
+
+    def tag_paper(
+        self, task: str | None = None, dialog_parent: QWidget | None = None
+    ) -> None:
+        """Open the tagging dialog on this task."""
         if not self.scene:
             return
         if not task:
             if not self.tgvID:
                 return
+            # the ongoing battle against leading q's
             task = f"q{self.tgvID}"
         if not dialog_parent:
             dialog_parent = self

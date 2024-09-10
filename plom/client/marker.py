@@ -121,9 +121,17 @@ class MarkerClient(QWidget):
     Notes:
         TODO: should be a QMainWindow but at any rate not a Dialog
         TODO: should this be parented by the QApplication?
+
+    Signals:
+        my_shutdown_signal: called when TODO
+        tags_changed_signal: emitted when tags might have changed, such
+            as after an explicit server refresh or some other event. The
+            arguments are the task code (e.g., "0123g2") and a list,
+            possibly empty, of the current tags.
     """
 
     my_shutdown_signal = pyqtSignal(int, list)
+    tags_changed_signal = pyqtSignal(str, list)
 
     def __init__(self, Qapp, *, tmpdir=None):
         """Initialize a new MarkerClient.
@@ -152,6 +160,8 @@ class MarkerClient(QWidget):
             tmpdir = tempfile.mkdtemp(prefix="plom_")
         self.workingDirectory = Path(tmpdir)
         log.debug("Working directory set to %s", self.workingDirectory)
+
+        self.tags_changed_signal.connect(self._update_tags_in_examModel)
 
         self.maxMark = -1  # temp value
         self.downloader = self.Qapp.downloader
@@ -1416,6 +1426,7 @@ class MarkerClient(QWidget):
             pdict,
             integrity_check,
             src_img_data,
+            self.examModel.getTagsByTask(task),
         )
 
     def getRubricsFromServer(self, question: int | None = None) -> list[dict[str, Any]]:
@@ -1621,7 +1632,7 @@ class MarkerClient(QWidget):
             return None
 
         assert task_id_str[1:] == data[0]
-        pdict = data[-3]  # the plomdict is third-last object in data
+        pdict = data[8]  # eww, hardcoded numbers
         assert pdict is None, "Annotator should not pull a regrade"
 
         if self.allowBackgroundOps:
@@ -1997,14 +2008,14 @@ class MarkerClient(QWidget):
             return
         self.manage_task_tags(task)
 
-    def manage_task_tags(self, task, parent=None):
+    def manage_task_tags(self, task: str, parent: QWidget | None = None) -> None:
         """Manage the tags of a task.
 
         Args:
-            task (str): A string like "q0003g2" for paper 3 question 2.
+            task: A string like "q0003g2" for paper 3 question 2.
 
         Keyword Args:
-            parent (Window/None): Which window should be dialog's parent?
+            parent: Which window should be dialog's parent?
                 If None, then use `self` (which is Marker) but if other
                 windows (such as Annotator or PageRearranger) are calling
                 this and if so they should pass themselves: that way they
@@ -2046,7 +2057,7 @@ class MarkerClient(QWidget):
                         info=html.escape(str(e)),
                     ).exec()
             else:
-                # do nothing - but shouldn't arrive here.
+                log.error("do nothing - but we shouldn't arrive here.")
                 pass
 
             # refresh the tags
@@ -2056,13 +2067,22 @@ class MarkerClient(QWidget):
                 WarnMsg(parent, f"Could not get tags from {task}", info=str(e)).exec()
                 return
 
-            try:
-                self.examModel.setTagsByTask(task, current_tags)
-                self.ui.tableView.resizeColumnsToContents()
-                self.ui.tableView.resizeRowsToContents()
-            except ValueError:
-                # we might not own the task for which we've have been managing tags
-                pass
+            if task.casefold().startswith("q"):
+                # long-term goal to get rid of the q in q1234g2
+                task = task[1:]
+            self.tags_changed_signal.emit(task, current_tags)
+
+    def _update_tags_in_examModel(self, task: str, tags: list[str]):
+        if not task.startswith("q"):
+            # long-term goal to get rid of the q in q1234g2
+            task = "q" + task
+        try:
+            self.examModel.setTagsByTask(task, tags)
+        except ValueError:
+            # we might not own the task for which we've have been managing tags
+            pass
+        self.ui.tableView.resizeColumnsToContents()
+        self.ui.tableView.resizeRowsToContents()
 
     def setFilter(self):
         """Sets a filter tag."""
