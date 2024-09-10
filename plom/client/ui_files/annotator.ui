@@ -743,6 +743,13 @@
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="attnTagsButton">
+           <property name="text">
+            <string>Tags...</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QPushButton" name="attnDismissButton">
            <property name="text">
             <string>Dismiss</string>

@@ -47,7 +47,7 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
     QFrame,
-    QWidget,
+    QLabel,
     QMenu,
     QMessageBox,
     QProgressDialog,
@@ -56,6 +56,7 @@ from PyQt6.QtWidgets import (
     QBoxLayout,
     QFileDialog,
     QColorDialog,
+    QWidget,
 )
 from PyQt6.QtWidgets import QGraphicsRectItem
 
@@ -156,9 +157,18 @@ class Annotator(QWidget):
         self.redoButton: QToolButton
         self.pageFrame: QFrame
         self.container_rubricwidget: QBoxLayout
+        self.attnFrame: QFrame
+        self.attnLeftLabel: QLabel
+        self.attnRightLabel: QLabel
+        self.attnClearButton: QPushButton
+        self.attnTagsButton: QPushButton
+        self.attnDismissButton: QPushButton
         uic.loadUi(resources.files(plom.client.ui_files) / "annotator.ui", self)
         # TODO: temporary workaround
         self.ui = self
+
+        self.ui.attnDismissButton.clicked.connect(self.dismiss_attn_bar)
+        self.ui.attnTagsButton.clicked.connect(self.tag_paper)
 
         # ordered list of minor mode tools, must match the UI order
         self._list_of_minor_modes = ["tick", "cross", "text", "line", "box", "pen"]
@@ -255,7 +265,6 @@ class Annotator(QWidget):
         self.ui.attnLeftLabel.setText(notification_str)
         self.ui.attnRightLabel.setText(secondary_explanation)
         self.ui.attnClearButton.setVisible(False)  # not yet used
-        self.ui.attnDismissButton.clicked.connect(self.dismiss_attn_bar)
         if show or notification_str:
             self.ui.attnFrame.setVisible(True)
         else:
@@ -263,11 +272,6 @@ class Annotator(QWidget):
 
     def dismiss_attn_bar(self) -> None:
         self.ui.attnFrame.setVisible(False)
-
-    def tags_changed(self, task: str, tags: list[str]) -> None:
-        """React to possible tag change signals."""
-        if task == self.tgvID:
-            self.update_attn_bar(tags=tags)
 
     def getScore(self):
         return self.scene.getScore()
@@ -2039,12 +2043,21 @@ class Annotator(QWidget):
             self.solutionView = SolutionViewer(self, solutionFile)
         self.solutionView.show()
 
-    def tag_paper(self, task=None, dialog_parent=None):
+    def tags_changed(self, task: str, tags: list[str]) -> None:
+        """React to possible tag change signals."""
+        if task == self.tgvID:
+            self.update_attn_bar(tags=tags)
+
+    def tag_paper(
+        self, task: str | None = None, dialog_parent: QWidget | None = None
+    ) -> None:
+        """Open the tagging dialog on this task."""
         if not self.scene:
             return
         if not task:
             if not self.tgvID:
                 return
+            # the ongoing battle against leading q's
             task = f"q{self.tgvID}"
         if not dialog_parent:
             dialog_parent = self

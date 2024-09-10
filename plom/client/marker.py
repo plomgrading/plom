@@ -2005,14 +2005,14 @@ class MarkerClient(QWidget):
             return
         self.manage_task_tags(task)
 
-    def manage_task_tags(self, task: str, parent=None):
+    def manage_task_tags(self, task: str, parent: QWidget | None = None) -> None:
         """Manage the tags of a task.
 
         Args:
-            task (str): A string like "q0003g2" for paper 3 question 2.
+            task: A string like "q0003g2" for paper 3 question 2.
 
         Keyword Args:
-            parent (Window/None): Which window should be dialog's parent?
+            parent: Which window should be dialog's parent?
                 If None, then use `self` (which is Marker) but if other
                 windows (such as Annotator or PageRearranger) are calling
                 this and if so they should pass themselves: that way they
@@ -2054,7 +2054,7 @@ class MarkerClient(QWidget):
                         info=html.escape(str(e)),
                     ).exec()
             else:
-                # do nothing - but shouldn't arrive here.
+                log.error("do nothing - but we shouldn't arrive here.")
                 pass
 
             # refresh the tags
