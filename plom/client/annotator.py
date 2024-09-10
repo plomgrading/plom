@@ -134,7 +134,7 @@ class Annotator(QWidget):
 
         self.testName = None
         self.paperDir = None
-        self.saveName = None
+        self.saveName: Path | None = None
         self.maxMark = 0
 
         # help mypy understand stuff coming from uic
