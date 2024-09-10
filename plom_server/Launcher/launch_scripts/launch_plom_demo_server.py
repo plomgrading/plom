@@ -132,7 +132,10 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         help="Run the django development webserver - definitely do not use in production.",
     )
     prod_dev_group.add_argument(
-        "--production", action="store_true", help="Run a production gunicorn server."
+        "--production",
+        action="store_false",
+        dest="development",
+        help="Run a production gunicorn server (default).",
     )
 
     return parser.parse_args()
@@ -666,7 +669,7 @@ if __name__ == "__main__":
         else:
             stop_after = None
 
-    if args.production and not args.port:
+    if not args.development and not args.port:
         print("You must supply a port for the production server.")
 
     # make sure we are in the correct directory to run things.
@@ -718,14 +721,14 @@ if __name__ == "__main__":
             run_finishing_commands(stop_after=stop_after, solutions=args.solutions)
             break
 
-        if args.production:
-            print("Running production server, will not quit on user-input.")
-            while True:
-                pass
-        elif wait_at_end:
-            wait_for_user_to_type_quit()
+        if args.development:
+            if wait_at_end:
+                wait_for_user_to_type_quit()
+            else:
+                print("Demo process finished.")
         else:
-            print("Demo process finished.")
+            print("Running production server, will not quit on user-input.")
+            server_process.wait()
     finally:
         print("v" * 50)
         print("Shutting down huey and django dev server")
