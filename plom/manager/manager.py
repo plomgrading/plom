@@ -785,7 +785,7 @@ class Manager(QWidget):
             RuntimeError,
             ValueError,
         ) as e:
-            # fitz.FileNotFoundError is a subclass of RuntimeError
+            # pymupdf.FileNotFoundError is a subclass of RuntimeError
             self.Qapp.restoreOverrideCursor()
             WarnMsg(
                 self,

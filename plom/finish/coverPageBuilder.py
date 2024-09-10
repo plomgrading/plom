@@ -13,7 +13,7 @@ from __future__ import annotations
 import pathlib
 from typing import Any
 
-import pymupdf as fitz
+import pymupdf
 
 from plom.misc_utils import local_now_to_simple_string, pprint_score
 from .examReassembler import papersize_portrait
@@ -97,8 +97,8 @@ def makeCover(
     w_label = 120  # label box width
     deltav = 20  # how much vertical space for each row
 
-    cover = fitz.open()
-    align = fitz.TEXT_ALIGN_CENTER
+    cover = pymupdf.open()
+    align = pymupdf.TEXT_ALIGN_CENTER
     fontsize = 12
     big_font = 14
 
@@ -106,7 +106,7 @@ def makeCover(
     page = cover.new_page(width=paper_width, height=paper_height)
 
     vpos = page_top
-    tw = fitz.TextWriter(page.rect)
+    tw = pymupdf.TextWriter(page.rect)
 
     # put things on the page
     if exam_name:
@@ -142,8 +142,8 @@ def makeCover(
     # rectangles for header that we will shift downwards as we go
     def make_boxes(v1):
         v2 = v1 + deltav
-        return [fitz.Rect(m, v1, m + w_label, v2)] + [
-            fitz.Rect(m + w_label + w * j, v1, m + w_label + w * (j + 1), v2)
+        return [pymupdf.Rect(m, v1, m + w_label, v2)] + [
+            pymupdf.Rect(m + w_label + w * j, v1, m + w_label + w * (j + 1), v2)
             for j in range(len(headers) - 1)
         ]
 
@@ -171,11 +171,11 @@ def makeCover(
             shape.finish(width=0.3, color=(0, 0, 0))
             shape.commit()
             text = "Table continues on next page..."
-            p = fitz.Point(m, page.rect.height - m)
+            p = pymupdf.Point(m, page.rect.height - m)
             tw.append(p, text, fontsize=fontsize)
             tw.write_text(page)
             page = cover.new_page(width=paper_width, height=paper_height)
-            tw = fitz.TextWriter(page.rect)
+            tw = pymupdf.TextWriter(page.rect)
             shape = page.new_shape()
             vpos = page_top
             page_row = 0
@@ -191,7 +191,7 @@ def makeCover(
     if footer:
         # Last words
         text = "Cover page produced on {}".format(local_now_to_simple_string())
-        p = fitz.Point(m, page.rect.height - m)
+        p = pymupdf.Point(m, page.rect.height - m)
         tw.append(p, text, fontsize=fontsize)
 
     tw.write_text(page)

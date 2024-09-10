@@ -205,7 +205,7 @@ def processFileToBitmaps(
             if outname is not None:
                 files.append(outname)
                 continue
-            log.info(f"{basename}: Fitz render. No extract b/c: " + "; ".join(msgs))
+            log.info(f"{basename}: PyMuPDF render. No extract b/c: " + "; ".join(msgs))
             outname = render_page_to_bitmap(
                 p,
                 dest,
@@ -300,8 +300,10 @@ def try_to_extract_image(
 
     r, d = extractImageFromFitzPage(p, doc)
     if not r:
+        assert isinstance(d, str)
         msgs.append(d)
         return None, msgs
+    assert isinstance(d, dict)
     log.info(
         '%s: Extracted "%s" from single-image page %sx%s',
         basename,
@@ -310,8 +312,8 @@ def try_to_extract_image(
         d["height"],
     )
     if d["ext"].lower() not in PlomImageExts:
-        # Issue #2346: could try to convert to png, but for now just let fitz render
-        log.info(f"  {d['ext']} not in allowlist: leave for fitz render")
+        # Issue #2346: could try to convert to png, but for now just render
+        log.info(f"  {d['ext']} not in allowlist: leave for render")
         msgs.append(f'extracted image is not {", ".join(PlomImageExts)}')
         return None, msgs
     outname = dest / (basename + "." + d["ext"])
@@ -401,14 +403,14 @@ def render_page_to_bitmap(
                 if W < 100:
                     raise ValueError("Scanned a long strip of thin paper?")
 
-    # fitz uses ceil (not round) so decrease a little bit
+    # pymupdf uses ceil (not round) so decrease a little bit
     if W > H:
         z = (float(W) - 0.0001) / p.mediabox_size[0]
     else:
         z = (float(H) - 0.0001) / p.mediabox_size[1]
     # # For testing, choose widely varying random sizes
     # z = random.uniform(1, 5)
-    log.info(f"{basename}: Fitz render z={z:4.2f}.")
+    log.info(f"{basename}: PyMuPDF render z={z:4.2f}.")
     pix = p.get_pixmap(matrix=pymupdf.Matrix(z, z), annots=True)
     # TODO: sometimes width and height get mixed up: Issues #1148, #1935
     # but one of them should match the target, without worrying which is which
@@ -493,18 +495,21 @@ def make_mucked_up_jpeg(f: Path, outname: Path) -> Path:
     return outname
 
 
-def extractImageFromFitzPage(page, doc):
-    """Extract a single image from a fitz page or return False.
+def extractImageFromFitzPage(
+    page: pymupdf.Page, doc: pymupdf.Document
+) -> tuple[bool, str | dict]:
+    """Extract a single image from a page or return False.
 
     Args:
-        page: a page of a fitz document.
-        doc: fitz doc containing `page`.
+        page: a page of a document.
+        doc: that document containing `page`.
 
     Returns:
-        True/False: whether this page contains nothing but a single image
-        msg or dict: if False, a msg about what happened, if True a dict
-            The dict has at least the fields `width`, `height`, `image`
-            and `ext`.  `d["image"]` is the raw binary data.
+        A tuple consisting of True/False: whether this page contains nothing
+        but a single image and then a message string or dict.  If False, a
+        message about what happened.  If True a dict.  The dict has at least
+        the fields `width`, `height`, `image` and `ext`.
+        `d["image"]` is the raw binary data.
     """
     imlist = page.get_images()
     if len(imlist) > 1:
