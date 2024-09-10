@@ -53,7 +53,7 @@ def confirm_run_from_correct_directory() -> None:
     #     return None
     if not Path("./manage.py").exists():
         raise RuntimeError(
-            "This script needs to be run from the same directory as django's manage.py script."
+            "This script needs to be run from the same directory as Django's manage.py script."
         )
 
 
@@ -74,9 +74,8 @@ def pre_launch(*, devel: bool = False) -> None:
         * plom_clean_all_and_build_db: cleans out any old database and misc user-generated file, then rebuilds the blank db.
         * plom_make_groups_and_first_users: creates user-groups needed by plom, and an admin user and a manager-user.
         * plom_build_scrap_extra_pdfs: build the scrap-paper and extra-page pdfs.
-        * django's collectstatic command to put files in a static dir and
+        * Django's collectstatic command to put files in a static dir and
           possibly use a different server for them.
-
 
     Note that this can easily be extended in the future to run more commands as required.
     """
@@ -91,17 +90,17 @@ def pre_launch(*, devel: bool = False) -> None:
 
 
 def launch_huey_process() -> subprocess.Popen:
-    """Launch the huey-consumer for processing background tasks.
+    """Launch the Huey-consumer for processing background tasks.
 
-    Note that this runs the django manage command 'djangohuey --quiet'.
+    Note that this runs the Django manage command 'djangohuey --quiet'.
     """
-    print("Launching huey.")
+    print("Launching Huey.")
     # this needs to be run in the background
     return popen_django_manage_command("djangohuey --quiet")
 
 
 def launch_django_dev_server_process(*, port: int | None = None) -> subprocess.Popen:
-    """Launch django's native development server.
+    """Launch Django's native development server.
 
     Note that this should never be used in production.
 
@@ -111,7 +110,7 @@ def launch_django_dev_server_process(*, port: int | None = None) -> subprocess.P
     # TODO - put in an 'are we in production' check.
 
     # this needs to be run in the background
-    print("Launching django's development server.")
+    print("Launching Django development server.")
     if port:
         print(f"Dev server will run on port {port}")
         return popen_django_manage_command(f"runserver {port}")
@@ -120,14 +119,14 @@ def launch_django_dev_server_process(*, port: int | None = None) -> subprocess.P
 
 
 def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
-    """Launch the gunicorn web server.
+    """Launch the Gunicorn web server.
 
     Note that this should always be used in production.
 
     Args:
         port: the port for the server.
     """
-    print("Launching gunicorn web-server.")
+    print("Launching Gunicorn web-server.")
     # TODO - put in an 'are we in production' check.
     cmd = f"gunicorn Web_Plom.wsgi --bind 0.0.0.0:{port}"
     return subprocess.Popen(split(cmd))
@@ -153,13 +152,16 @@ if __name__ == "__main__":
     prod_dev_group.add_argument(
         "--development",
         action="store_true",
-        help="Run the django development webserver - definitely do not use in production.",
+        help="""
+            Run the Django development webserver.
+            Not intended for use in production.
+        """,
     )
     prod_dev_group.add_argument(
         "--production",
         action="store_false",
         dest="development",
-        help="Run a production gunicorn server (default).",
+        help="Run a production Gunicorn server (default).",
     )
     args = parser.parse_args()
 
@@ -174,7 +176,7 @@ if __name__ == "__main__":
     else:
         pre_launch(devel=args.development)
     # now put main things inside a try/finally so that we
-    # can clean up the huey/server processes on exit.
+    # can clean up the Huey/server processes on exit.
     huey_process, server_process = None, None
     try:
         print("v" * 50)
@@ -201,7 +203,7 @@ if __name__ == "__main__":
 
     finally:
         print("v" * 50)
-        print("Shutting down huey and django dev server")
+        print("Shutting down Huey and Django dev server")
         if huey_process:
             huey_process.terminate()
         if server_process:
