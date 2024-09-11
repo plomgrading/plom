@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [0.16.0] - 2024-09-12
 
 ### Added
 * Instructors can enable 1/2 mark rubrics in the Rubrics screen.
@@ -1239,6 +1239,8 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
+
+[0.16.0]: https://gitlab.com/plom/plom/-/compare/v0.15.7...v0.16.0
 [0.15.6]: https://gitlab.com/plom/plom/-/compare/v0.15.6...v0.15.7
 [0.15.5]: https://gitlab.com/plom/plom/-/compare/v0.15.5...v0.15.6
 [0.15.5]: https://gitlab.com/plom/plom/-/compare/v0.15.4...v0.15.5

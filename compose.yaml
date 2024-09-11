@@ -18,8 +18,8 @@ services:
 
   plom:
     # Use the released version: TODO: should be set on release?  Issue #3208
-    # image: "plomgrading/server"
-    image: "registry.gitlab.com/plom/plom:main"
+    image: "plomgrading/server"
+    # image: "registry.gitlab.com/plom/plom:main"
     # Use in-tree code by replacing image: with build:
     # build:
     #   context: .
