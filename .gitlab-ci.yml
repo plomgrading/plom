@@ -160,6 +160,7 @@ djlint-check:
 
 
 # If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
+# TODO: this job does not run on git tags: can we add `if CI_COMMIT_TAG` to only here?
 gitlab-container-registry-tag-latest:
   stage: packaging
   needs: ["container-image"]
