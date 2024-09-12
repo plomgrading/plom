@@ -160,7 +160,7 @@ djlint-check:
 
 
 # If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
-# TODO: this job does not run on git tags: can we add `if CI_COMMIT_TAG` to only here?
+# TODO: Issue #3573: did adding `tags` here make this run during the big release on tags pipeline?
 gitlab-container-registry-tag-latest:
   stage: packaging
   needs: ["container-image"]
@@ -172,6 +172,7 @@ gitlab-container-registry-tag-latest:
     - docker push $IM_LATEST
   only:
     - main
+    - tags
 
 
 # push to the image to the docker.io container registry, using credentials from GitLab's secrets
