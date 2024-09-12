@@ -217,7 +217,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             request: the request.
 
         Keyword Args:
-            bundle_id: which bundle?  Sometimes called the "pk" (private key)
+            bundle_id: which bundle?  Sometimes called the "pk" (primary key)
                 internally.
 
         Returns:

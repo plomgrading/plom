@@ -225,7 +225,7 @@ class MarkingTaskService:
         this current method is really about claiming "OUT" tasks for a user.
 
         Args:
-            task_pk: a private key of a task.
+            task_pk: the primary key of a task.
             user: reference to a User instance.
 
         Exceptions:
@@ -407,11 +407,12 @@ class MarkingTaskService:
         task = tasks.exclude(status=MarkingTask.OUT_OF_DATE).get()
         return Annotation.objects.get(task=task, edition=edition)
 
-    def get_all_tags(self):
+    def get_all_tags(self) -> list[tuple[int, str]]:
         """Get all of the saved tags.
 
         Returns:
-            list[(int, str)]: The primary key and text of all the tags that exist.
+            A list of pairs of primary keys and text, for each of the
+            tags that exist.
         """
         return [(tag.pk, tag.text) for tag in MarkingTaskTag.objects.all()]
 
@@ -709,7 +710,7 @@ class MarkingTaskService:
         user.
 
         Args:
-            task_pk: the private key of a task.
+            task_pk: the primary key of a task.
             username: a string of a username.
 
         Returns:
