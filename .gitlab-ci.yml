@@ -174,6 +174,7 @@ docker-tag-latest:
 
 
 # to ensure the pypi job works, make sure we can package
+# TODO: we make these again during pypi push: better to use these artifacts?
 make_package:
   image: python:3.12
   stage: build
@@ -182,15 +183,17 @@ make_package:
     - python3 -m build
     - ls dist
     - md5sum dist/*
+    - mv dist dist_TODO
   artifacts:
     paths:
-      - dist/plom-*.tar.gz
-      - dist/plom-*.whl
+      - dist_TODO/plom-*.tar.gz
+      - dist_TODO/plom-*.whl
     expire_in: 16 days
 
 
 # If we have a tag, then push to PyPI using TWINE_* env vars
 # Debug: `upload -r testpypi`, comment `only`, change and unprotect token
+# TODO: maybe we can bring the artifacts we built earlier in `make_package`?
 pypi:
   image: python:3.12
   stage: packaging
@@ -200,8 +203,17 @@ pypi:
   script:
     - pip install --upgrade twine wheel setuptools packaging build
     - python3 -m build
+    - ls dist
+    - pushd dist
+    - md5sum *
+    - sha265sum *
+    - popd
     - python3 -m twine check dist/*
     - python3 -m twine upload --verbose dist/*
+  artifacts:
+    paths:
+      - dist/plom-*.tar.gz
+    expire_in: 16 days
 
 
 release_job:
@@ -1102,9 +1114,7 @@ binary_upload:
       See [the Changelog](https://gitlab.com/plom/plom/-/blob/$CI_COMMIT_TAG/CHANGELOG.md).
 
 
-      #### md5sum of compiled clients and other artifacts
-
-      *TODO* paste in pypi tar.gz file
+      *TODO* double-check the pypi tar.gz file hashes during the 0.16.1 release then remove this notice
 
       EOF
     # strip the leading v in v0.x.y: don't see how to do this without dotenv
@@ -1118,11 +1128,18 @@ binary_upload:
     - export FILENAME1="PlomClient-$VER.exe"
     - export FILENAME2="PlomClient-$VER-macos13-x86_64.zip"
     - export FILENAME3="PlomClient-$VER-macos13-arm64.zip"
-    # list the md5sums in the release notes
+    - echo "#### artifact md5 hashes\n" >> "release_desc.md"
+    - md5sum dist/plom*.tar.gz | sed -e "s/^/    /" >> "release_desc.md"
     - md5sum $FILENAME0 | sed -e "s/^/    /" >> "release_desc.md"
     - md5sum $FILENAME1 | sed -e "s/^/    /" >> "release_desc.md"
     - md5sum $FILENAME2 | sed -e "s/^/    /" >> "release_desc.md"
     - md5sum $FILENAME3 | sed -e "s/^/    /" >> "release_desc.md"
+    - echo "\n\n#### artifact sha256 hashes\n" >> "release_desc.md"
+    - sha256sum dist/plom*.tar.gz | sed -e "s/^/    /" >> "release_desc.md"
+    - sha256sum $FILENAME0 | sed -e "s/^/    /" >> "release_desc.md"
+    - sha256sum $FILENAME1 | sed -e "s/^/    /" >> "release_desc.md"
+    - sha256sum $FILENAME2 | sed -e "s/^/    /" >> "release_desc.md"
+    - sha256sum $FILENAME3 | sed -e "s/^/    /" >> "release_desc.md"
     - export URL0="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME0"
     - export URL1="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-windows/$VER/$FILENAME1"
     - export URL2="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-macos/$VER/$FILENAME2"
