@@ -173,6 +173,28 @@ gitlab-container-registry-tag-latest:
     - main
 
 
+# push to the image to the docker.io container registry, using credentials from GitLab's secrets
+push-to-docker-io:
+  stage: prep
+  rules:
+   - if: $CI_COMMIT_TAG
+  before_script:
+    - docker login -u $REGISTRY_USER_DOCKER_IO -p $REGISTRY_PASSWORD_DOCKER_IO docker.io
+  script:
+    - echo $CI_COMMIT_TAG
+    - docker pull $IM
+    # strip the leading v in vx.y.z
+    - export VER=${CI_COMMIT_TAG:1}
+    # strip the .z in x.y.z
+    - export VER_MINOR=`echo $VER | sed -e "s/^\(\d*\.\d*\).\d*/\1/"`
+    - docker tag $IM plomgrading/server:$VER
+    - docker tag plomgrading/server:$VER plomgrading/server:$VER_MINOR
+    - docker tag plomgrading/server:$VER plomgrading/server:latest
+    - docker push plomgrading/server:$VER
+    - docker push plomgrading/server:$VER_MINOR
+    - docker push plomgrading/server:latest
+
+
 # to ensure the pypi job works, make sure we can package
 # TODO: we make these again during pypi push: better to use these artifacts?
 make_package:
