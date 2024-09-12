@@ -8,7 +8,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth import get_user_model
 from django.db.utils import IntegrityError
 
-from QuestionTags.services import QuestionTagService
+from ...services import QuestionTagService
 
 
 class Command(BaseCommand):
