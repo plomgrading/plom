@@ -55,7 +55,7 @@ class MobilePage(models.Model):
     likely to confuse end-users.
 
     Note there is no particular ordering to mobile pages.  Users of this table
-    might infer one from the ordering of the private key (``.pk``), so create
+    might infer one from the ordering of the primary key (``.pk``), so create
     them in a particular order if you have one in mind.
     """
 
