@@ -1,13 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
 from django.db import transaction
 
-from Preparation.models import PrenamingSetting
-
-from Preparation.services.preparation_dependency_service import (
+from ..models import PrenamingSetting
+from .preparation_dependency_service import (
     assert_can_enable_disable_prenaming,
     assert_can_modify_prenaming_config,
 )

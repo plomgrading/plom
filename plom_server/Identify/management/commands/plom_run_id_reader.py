@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
 
-
 from tabulate import tabulate
 from time import sleep
 
@@ -9,9 +8,9 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.core.exceptions import MultipleObjectsReturned
 
-from Identify.services import IDReaderService
 from Rectangles.services import RectangleExtractor
 from Papers.services import SpecificationService
+from ...services import IDReaderService
 
 
 class Command(BaseCommand):

@@ -24,7 +24,7 @@ from plom.plom_exceptions import (
 from ..models import MarkingTask
 from . import mark_task
 from . import create_new_annotation_in_database
-from Mark.services import MarkingTaskService
+from .marking_task_service import MarkingTaskService
 
 
 class QuestionMarkingService:
