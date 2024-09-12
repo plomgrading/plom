@@ -57,7 +57,7 @@ stages:
 # Attention maintainers: if you start to see errors in the CI runs like:
 #   E: Failed to fetch http://security.ubuntu.com... 404 Not Found [IP: 91...]
 # Run with DOCKER_USE_CACHE set to 0, under Pipeline -> Run pipeline
-docker-image:
+container-image:
   stage: build
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -75,7 +75,7 @@ docker-image:
     - docker push $IM
 
 
-# Get fast results by running tests in a copy-pasta of the docker-image job
+# Get fast results by running tests in a copy-pasta of the container-image job
 # TODO: why is this failing?  check if client-building works by commenting out
 # quick-pytests:
 #   stage: build
@@ -160,9 +160,9 @@ djlint-check:
 
 
 # If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
-docker-tag-latest:
+gitlab-container-registry-tag-latest:
   stage: packaging
-  needs: ["docker-image"]
+  needs: ["container-image"]
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
@@ -304,7 +304,7 @@ black:
 
 unittests:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   script:
     - pytest-3 -l --pyargs plom
@@ -314,7 +314,7 @@ unittests:
 # Issue #2291: fix coverage calculations for plom_server/
 coverage:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   script:
     - pip install pytest pytest-cov coverage[toml]~=7.6.0
@@ -332,7 +332,7 @@ coverage:
 # masked out some stuff that deps on tensorflow
 doctests:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   before_script:
     - pip3 install --upgrade pytest
@@ -345,7 +345,7 @@ doctests:
 # needs full dependencies, cannot easily run with other early static analysis
 pylint:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
@@ -364,7 +364,7 @@ pylint:
 #       Will make not allowed to fail in the future, once types are more widely adopted in the project.
 mypy-type-checking:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   before_script:
     - python3 -m pip install mypy~=1.11.1
@@ -379,7 +379,7 @@ mypy-type-checking:
 
 pyright:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   before_script:
     - python3 -m pip install pyright~=1.1.372
@@ -448,7 +448,7 @@ no-question-numbers:
 # TODO: why do we need to run makemigrations/migrate before tests?
 webplom_test:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   script:
     - export PYTHONPATH=$PWD
@@ -480,7 +480,7 @@ webplom_demo:
     POSTGRES_HOST_AUTH_METHOD: trust
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   script:
     - export PYTHONPATH=$PWD
@@ -493,7 +493,7 @@ webplom_demo:
 # a legacy-only job
 demoserver:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   before_script:
     - apt-get update
@@ -541,7 +541,7 @@ demoserver:
 # a legacy-only job
 hwdemoserver:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   before_script:
     - apt-get update
@@ -608,7 +608,7 @@ hwdemoserver:
 # a legacy-only job
 fullworkflow:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   before_script:
     - apt-get update
@@ -716,7 +716,7 @@ appstream-valid:
 # TODO: perhaps all deps should be in the docker image?
 docs_sphinx:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   before_script:
     - apt-get update
