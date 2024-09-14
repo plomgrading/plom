@@ -237,12 +237,6 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-STATIC_URL = "static/"
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
-# Note: "collectstatic" command line copies files to this dir
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
@@ -301,6 +295,15 @@ if _:
     MEDIA_ROOT = Path(_)
 else:
     MEDIA_ROOT = BASE_DIR / "media"
+
+# Static files (CSS, JavaScript, Images)
+STATIC_URL = "static/"
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
+# Note: "collectstatic" command line copies files to this dir
+# STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+# For now, put static inside MEDIA_ROOT for docker persistence (Issue #3575)
+# TODO: can revisit this if we later want a separate webserver for these for example
+STATIC_ROOT = os.path.join(MEDIA_ROOT, "staticfiles")
 
 # List of test fixture directories
 FIXTURE_DIRS = [BASE_DIR / "fixtures"]
