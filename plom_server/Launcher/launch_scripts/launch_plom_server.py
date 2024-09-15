@@ -148,6 +148,8 @@ if __name__ == "__main__":
     # clean up and rebuild things before launching.
     if args.hot_start:
         print("Attempting a hot-start of the server and Huey.")
+        # TODO: Issue #3577 remove later?
+        run_django_manage_command("plom_build_scrap_extra_pdfs")
     else:
         # clean out old db and misc files, then rebuild blank db
         run_django_manage_command("plom_clean_all_and_build_db")
