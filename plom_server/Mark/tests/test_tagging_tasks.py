@@ -29,7 +29,9 @@ class MarkingTaskServiceTaggingTests(TestCase):
         s = MarkingTaskService()
         user: User = baker.make(User)
         with self.assertRaisesMessage(ValidationError, "disallowed char"):
-            s.create_tag(user, "  spaces and symbols $&<b> ")
+            s.create_tag(user, "  spaces ")
+        with self.assertRaisesMessage(ValidationError, "disallowed char"):
+            s.create_tag(user, "symbols_$&<b>")
 
     def test_get_all_tags(self) -> None:
         s = MarkingTaskService()
