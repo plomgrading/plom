@@ -485,7 +485,7 @@ class MarkingTaskService:
         return new_tag
 
     def _add_tag(self, tag: MarkingTaskTag, task: MarkingTask) -> None:
-        """Add a tag to a marking task. Assumes the input text has already been sanitized.
+        """Add an existing tag to an existing marking task.
 
         Also assumes appropriate select_for_update's have been done although
         from glancing at the code I doubt that's true.
