@@ -452,17 +452,6 @@ class MarkingTaskService:
         task = MarkingTask.objects.get(pk=task_pk)
         return [(tag.pk, tag.text) for tag in task.markingtasktag_set.all()]
 
-    def sanitize_tag_text(self, tag_text):
-        """Return a sanitized text from client input. Currently only entails a call to tag_text.strip().
-
-        Args:
-            tag_text: str, text that has come from a client request.
-
-        Returns:
-            str: sanitized version of the text.
-        """
-        return tag_text.strip()
-
     def _create_tag(self, user: User, tag_text: str) -> MarkingTaskTag:
         """Create a new tag that can be associated with marking task.
 
@@ -480,7 +469,6 @@ class MarkingTaskService:
         Raises:
             ValidationError: tag contains invalid characters.
         """
-        # TODO: compare this to self.sanitize_tag_text in create_tag_and_attach_to_task
         if not is_valid_tag_text(tag_text):
             raise ValidationError(
                 f'Invalid tag text: "{tag_text}"; contains disallowed characters'
@@ -710,13 +698,7 @@ class MarkingTaskService:
         Raises:
             ValidationError: if the tag text is not legal.
         """
-        # clean up the text and see if such a tag already exists
-        cleaned_tag_text = self.sanitize_tag_text(tag_text)
-        tag_obj = self._get_tag_from_text_for_update(cleaned_tag_text)
-        if tag_obj is None:  # no such tag exists, so create one
-            # note - will raise validationerror if tag_text not legal
-            tag_obj = self._create_tag(user, cleaned_tag_text)
-        # finally - attach it.
+        tag_obj = self.get_or_create_tag(user, tag_text)
         self.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
 
     @transaction.atomic
