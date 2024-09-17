@@ -1138,8 +1138,6 @@ binary_upload:
       See [the Changelog](https://gitlab.com/plom/plom/-/blob/$CI_COMMIT_TAG/CHANGELOG.md).
 
 
-      *TODO* double-check the pypi tar.gz file hashes during the 0.16.1 release then remove this notice
-
       EOF
     # strip the leading v in v0.x.y: don't see how to do this without dotenv
     - export VER=${CI_COMMIT_TAG:1}
