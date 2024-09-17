@@ -17,9 +17,9 @@ class MarkingTaskServiceTaggingTests(TestCase):
     def test_tag_create_tag(self) -> None:
         s = MarkingTaskService()
         user: User = baker.make(User)
-        tag = s._create_tag(user, "tag")
+        tag = s.get_or_create_tag(user, "tag")
         assert tag.text == "tag"
-        tag2 = s._create_tag(user, "tag2")
+        tag2 = s.get_or_create_tag(user, "tag2")
         assert tag2.text != tag.text
         # probably exactly 2 but I don't quite understand when things are reset
         assert len(s.get_all_tags()) >= 2
@@ -29,9 +29,16 @@ class MarkingTaskServiceTaggingTests(TestCase):
         s = MarkingTaskService()
         user: User = baker.make(User)
         with self.assertRaisesMessage(ValidationError, "disallowed char"):
-            s._create_tag(user, "  spaces ")
+            s.get_or_create_tag(user, "  spaces ")
         with self.assertRaisesMessage(ValidationError, "disallowed char"):
-            s._create_tag(user, "symbols_$&<b>")
+            s.get_or_create_tag(user, "symbols_$&<b>")
+
+    def test_tag_create_duplicate_tag_issue3580(self) -> None:
+        s = MarkingTaskService()
+        user: User = baker.make(User)
+        tag1 = s.get_or_create_tag(user, "hello")
+        tag2 = s.get_or_create_tag(user, "hello")
+        assert tag1.pk == tag2.pk
 
     def test_get_all_tags(self) -> None:
         s = MarkingTaskService()
@@ -43,8 +50,8 @@ class MarkingTaskServiceTaggingTests(TestCase):
         s = MarkingTaskService()
         assert s.get_all_tags() == []
         user: User = baker.make(User)
-        s._create_tag(user, "mytag1")
-        s._create_tag(user, "mytag2")
+        s.get_or_create_tag(user, "mytag1")
+        s.get_or_create_tag(user, "mytag2")
         a, b = s.get_all_tags()
         n, t = a
         assert isinstance(n, int)
@@ -157,7 +164,7 @@ class MarkingTaskServiceRemovingTaggingTests(TestCase):
         # now an appropriate exception is raised.
         s = MarkingTaskService()
         user: User = baker.make(User)
-        s._create_tag(user, "hello")
+        s.get_or_create_tag(user, "hello")
         task = baker.make(
             MarkingTask, question_index=1, paper__paper_number=2, code="q0002g1"
         )
@@ -167,7 +174,7 @@ class MarkingTaskServiceRemovingTaggingTests(TestCase):
     def test_tag_remove_invalid_code(self) -> None:
         s = MarkingTaskService()
         user: User = baker.make(User)
-        s._create_tag(user, "hello")
+        s.get_or_create_tag(user, "hello")
 
         with self.assertRaisesMessage(ValueError, "not a valid task code"):
             s.remove_tag_text_from_task_code("hello", "paper_0111_invalid")
@@ -175,6 +182,6 @@ class MarkingTaskServiceRemovingTaggingTests(TestCase):
     def test_tag_remove_no_such_task(self) -> None:
         s = MarkingTaskService()
         user: User = baker.make(User)
-        s._create_tag(user, "hello")
+        s.get_or_create_tag(user, "hello")
         with self.assertRaisesRegex(RuntimeError, "Task .*does not exist"):
             s.remove_tag_text_from_task_code("hello", "q9999g9")
