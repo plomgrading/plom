@@ -502,8 +502,10 @@ class MarkingTaskService:
         Raises:
             ValidationError: if the tag text is not legal.
         """
-        tag_obj = self._get_tag_from_text_for_update(tag_text)
-        if tag_obj is None:  # no such tag exists, so create one
+        try:
+            tag_obj = MarkingTaskTag.objects.get(text=tag_text)
+        except MarkingTaskTag.DoesNotExist:
+            # no such tag exists, so create one
             # will raise validationerror if tag_text not legal
             tag_obj = self._create_tag(user, tag_text)
         return tag_obj
