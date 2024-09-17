@@ -486,6 +486,27 @@ class MarkingTaskService:
         new_tag = MarkingTaskTag.objects.create(user=user, text=tag_text)
         return new_tag
 
+    @transaction.atomic
+    def get_or_create_tag(self, user: User, tag_text: str) -> MarkingTaskTag:
+        """Get an existing tag, or create if necessary, based on the given text.
+
+        Args:
+            user: the user creating/attaching the tag.
+            tag_text: the text of the tag.
+
+        Returns:
+            MarkingTaskTag: reference to the tag
+
+        Raises:
+            ValidationError: if the tag text is not legal.
+        """
+        cleaned_tag_text = self.sanitize_tag_text(tag_text)
+        tag_obj = self._get_tag_from_text_for_update(cleaned_tag_text)
+        if tag_obj is None:  # no such tag exists, so create one
+            # will raise validationerror if tag_text not legal
+            tag_obj = self.create_tag(user, cleaned_tag_text)
+        return tag_obj
+
     def _add_tag(self, tag: MarkingTaskTag, task: MarkingTask) -> None:
         """Add an existing tag to an existing marking task.
 

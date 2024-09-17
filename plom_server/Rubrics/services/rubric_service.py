@@ -306,10 +306,9 @@ class RubricService:
             new_rubric.pedagogy_tags.add(tag)
 
         if tag_tasks:
-            print("TODO: what if it already exists? update docs of this method")
             # TODO: or do we need some "system tags" that definitely already exist?
             any_manager = User.objects.filter(groups__name="manager").first()
-            tag = MarkingTaskService().create_tag(any_manager, "rubric_changed")
+            tag = MarkingTaskService().get_or_create_tag(any_manager, "rubric_changed")
             # find all complete annotations using older revisions of this rubric
             tasks = MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE,
