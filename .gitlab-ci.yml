@@ -57,7 +57,7 @@ stages:
 # Attention maintainers: if you start to see errors in the CI runs like:
 #   E: Failed to fetch http://security.ubuntu.com... 404 Not Found [IP: 91...]
 # Run with DOCKER_USE_CACHE set to 0, under Pipeline -> Run pipeline
-docker-image:
+container-image:
   stage: build
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -75,7 +75,7 @@ docker-image:
     - docker push $IM
 
 
-# Get fast results by running tests in a copy-pasta of the docker-image job
+# Get fast results by running tests in a copy-pasta of the container-image job
 # TODO: why is this failing?  check if client-building works by commenting out
 # quick-pytests:
 #   stage: build
@@ -160,9 +160,10 @@ djlint-check:
 
 
 # If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
-docker-tag-latest:
+# TODO: Issue #3573: did adding `tags` here make this run during the big release on tags pipeline?
+gitlab-container-registry-tag-latest:
   stage: packaging
-  needs: ["docker-image"]
+  needs: ["container-image"]
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
@@ -171,9 +172,33 @@ docker-tag-latest:
     - docker push $IM_LATEST
   only:
     - main
+    - tags
+
+
+# push to the image to the docker.io container registry, using credentials from GitLab's secrets
+push-to-docker-io:
+  stage: prep
+  rules:
+   - if: $CI_COMMIT_TAG
+  before_script:
+    - docker login -u $REGISTRY_USER_DOCKER_IO -p $REGISTRY_PASSWORD_DOCKER_IO docker.io
+  script:
+    - echo $CI_COMMIT_TAG
+    - docker pull $IM
+    # strip the leading v in vx.y.z
+    - export VER=${CI_COMMIT_TAG:1}
+    # strip the .z in x.y.z
+    - export VER_MINOR=`echo $VER | sed -e "s/^\(\d*\.\d*\).\d*/\1/"`
+    - docker tag $IM plomgrading/server:$VER
+    - docker tag plomgrading/server:$VER plomgrading/server:$VER_MINOR
+    - docker tag plomgrading/server:$VER plomgrading/server:latest
+    - docker push plomgrading/server:$VER
+    - docker push plomgrading/server:$VER_MINOR
+    - docker push plomgrading/server:latest
 
 
 # to ensure the pypi job works, make sure we can package
+# TODO: we make these again during pypi push: better to use these artifacts?
 make_package:
   image: python:3.12
   stage: build
@@ -182,15 +207,17 @@ make_package:
     - python3 -m build
     - ls dist
     - md5sum dist/*
+    - mv dist dist_TODO
   artifacts:
     paths:
-      - dist/plom-*.tar.gz
-      - dist/plom-*.whl
+      - dist_TODO/plom-*.tar.gz
+      - dist_TODO/plom-*.whl
     expire_in: 16 days
 
 
 # If we have a tag, then push to PyPI using TWINE_* env vars
 # Debug: `upload -r testpypi`, comment `only`, change and unprotect token
+# TODO: maybe we can bring the artifacts we built earlier in `make_package`?
 pypi:
   image: python:3.12
   stage: packaging
@@ -200,8 +227,17 @@ pypi:
   script:
     - pip install --upgrade twine wheel setuptools packaging build
     - python3 -m build
+    - ls dist
+    - pushd dist
+    - md5sum *
+    - sha265sum *
+    - popd
     - python3 -m twine check dist/*
     - python3 -m twine upload --verbose dist/*
+  artifacts:
+    paths:
+      - dist/plom-*.tar.gz
+    expire_in: 16 days
 
 
 release_job:
@@ -292,7 +328,7 @@ black:
 
 unittests:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   script:
     - pytest-3 -l --pyargs plom
@@ -302,7 +338,7 @@ unittests:
 # Issue #2291: fix coverage calculations for plom_server/
 coverage:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   script:
     - pip install pytest pytest-cov coverage[toml]~=7.6.0
@@ -320,7 +356,7 @@ coverage:
 # masked out some stuff that deps on tensorflow
 doctests:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   before_script:
     - pip3 install --upgrade pytest
@@ -333,7 +369,7 @@ doctests:
 # needs full dependencies, cannot easily run with other early static analysis
 pylint:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
@@ -352,7 +388,7 @@ pylint:
 #       Will make not allowed to fail in the future, once types are more widely adopted in the project.
 mypy-type-checking:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   before_script:
     - python3 -m pip install mypy~=1.11.1
@@ -367,7 +403,7 @@ mypy-type-checking:
 
 pyright:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   before_script:
     - python3 -m pip install pyright~=1.1.372
@@ -436,7 +472,7 @@ no-question-numbers:
 # TODO: why do we need to run makemigrations/migrate before tests?
 webplom_test:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   script:
     - export PYTHONPATH=$PWD
@@ -468,7 +504,7 @@ webplom_demo:
     POSTGRES_HOST_AUTH_METHOD: trust
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   script:
     - export PYTHONPATH=$PWD
@@ -481,7 +517,7 @@ webplom_demo:
 # a legacy-only job
 demoserver:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   before_script:
     - apt-get update
@@ -529,7 +565,7 @@ demoserver:
 # a legacy-only job
 hwdemoserver:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   before_script:
     - apt-get update
@@ -596,7 +632,7 @@ hwdemoserver:
 # a legacy-only job
 fullworkflow:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   before_script:
     - apt-get update
@@ -704,7 +740,7 @@ appstream-valid:
 # TODO: perhaps all deps should be in the docker image?
 docs_sphinx:
   stage: test
-  needs: ["docker-image"]
+  needs: ["container-image"]
   image: $IM
   before_script:
     - apt-get update
@@ -1102,9 +1138,7 @@ binary_upload:
       See [the Changelog](https://gitlab.com/plom/plom/-/blob/$CI_COMMIT_TAG/CHANGELOG.md).
 
 
-      #### md5sum of compiled clients and other artifacts
-
-      *TODO* paste in pypi tar.gz file
+      *TODO* double-check the pypi tar.gz file hashes during the 0.16.1 release then remove this notice
 
       EOF
     # strip the leading v in v0.x.y: don't see how to do this without dotenv
@@ -1118,11 +1152,18 @@ binary_upload:
     - export FILENAME1="PlomClient-$VER.exe"
     - export FILENAME2="PlomClient-$VER-macos13-x86_64.zip"
     - export FILENAME3="PlomClient-$VER-macos13-arm64.zip"
-    # list the md5sums in the release notes
+    - echo "#### artifact md5 hashes\n" >> "release_desc.md"
+    - md5sum dist/plom*.tar.gz | sed -e "s/^/    /" >> "release_desc.md"
     - md5sum $FILENAME0 | sed -e "s/^/    /" >> "release_desc.md"
     - md5sum $FILENAME1 | sed -e "s/^/    /" >> "release_desc.md"
     - md5sum $FILENAME2 | sed -e "s/^/    /" >> "release_desc.md"
     - md5sum $FILENAME3 | sed -e "s/^/    /" >> "release_desc.md"
+    - echo "\n\n#### artifact sha256 hashes\n" >> "release_desc.md"
+    - sha256sum dist/plom*.tar.gz | sed -e "s/^/    /" >> "release_desc.md"
+    - sha256sum $FILENAME0 | sed -e "s/^/    /" >> "release_desc.md"
+    - sha256sum $FILENAME1 | sed -e "s/^/    /" >> "release_desc.md"
+    - sha256sum $FILENAME2 | sed -e "s/^/    /" >> "release_desc.md"
+    - sha256sum $FILENAME3 | sed -e "s/^/    /" >> "release_desc.md"
     - export URL0="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME0"
     - export URL1="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-windows/$VER/$FILENAME1"
     - export URL2="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-macos/$VER/$FILENAME2"
