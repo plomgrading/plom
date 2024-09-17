@@ -532,9 +532,8 @@ class MarkingTaskService:
         text_tags = MarkingTaskTag.objects.filter(text=text)
         if not text_tags.exists():
             return None
-        # Assuming the queryset will always have a length of one
         # grab its PK so we can get the tag with select_for_update
-        tag_pk = text_tags.first().pk
+        tag_pk = text_tags.get().pk
         return MarkingTaskTag.objects.select_for_update().get(pk=tag_pk)
 
     @transaction.atomic
