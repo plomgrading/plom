@@ -230,7 +230,7 @@ pypi:
     - ls dist
     - pushd dist
     - md5sum *
-    - sha265sum *
+    - sha256sum *
     - popd
     - python3 -m twine check dist/*
     - python3 -m twine upload --verbose dist/*
