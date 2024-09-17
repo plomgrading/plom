@@ -463,14 +463,16 @@ class MarkingTaskService:
         """
         return tag_text.strip()
 
-    def create_tag(self, user: User, tag_text: str) -> MarkingTaskTag:
+    def _create_tag(self, user: User, tag_text: str) -> MarkingTaskTag:
         """Create a new tag that can be associated with marking task.
 
         Args:
             user: reference to a User instance
             tag_text: the proposed text content of a tag.
                 Assumes this input text has already been checked.
-                TODO: discuss dupes?
+                Note: caller must check for dupes: this function
+                will happily create more than one tag with the same
+                text.
 
         Returns:
             MarkingTaskTag: reference to the newly created tag
@@ -504,7 +506,7 @@ class MarkingTaskService:
         tag_obj = self._get_tag_from_text_for_update(cleaned_tag_text)
         if tag_obj is None:  # no such tag exists, so create one
             # will raise validationerror if tag_text not legal
-            tag_obj = self.create_tag(user, cleaned_tag_text)
+            tag_obj = self._create_tag(user, cleaned_tag_text)
         return tag_obj
 
     def _add_tag(self, tag: MarkingTaskTag, task: MarkingTask) -> None:
@@ -579,7 +581,7 @@ class MarkingTaskService:
         the_task = self.get_task_from_code(code)
         the_tag = self._get_tag_from_text_for_update(tag_text)
         if not the_tag:
-            the_tag = self.create_tag(user, tag_text)
+            the_tag = self._create_tag(user, tag_text)
         self._add_tag(the_tag, the_task)
 
     @transaction.atomic
@@ -712,7 +714,7 @@ class MarkingTaskService:
         tag_obj = self._get_tag_from_text_for_update(cleaned_tag_text)
         if tag_obj is None:  # no such tag exists, so create one
             # note - will raise validationerror if tag_text not legal
-            tag_obj = self.create_tag(user, cleaned_tag_text)
+            tag_obj = self._create_tag(user, cleaned_tag_text)
         # finally - attach it.
         self.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
 
