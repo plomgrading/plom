@@ -452,30 +452,6 @@ class MarkingTaskService:
         task = MarkingTask.objects.get(pk=task_pk)
         return [(tag.pk, tag.text) for tag in task.markingtasktag_set.all()]
 
-    def _create_tag(self, user: User, tag_text: str) -> MarkingTaskTag:
-        """Create a new tag that can be associated with marking task.
-
-        Args:
-            user: reference to a User instance
-            tag_text: the proposed text content of a tag.
-                Assumes this input text has already been checked.
-                Note: caller must check for dupes: this function
-                will happily create more than one tag with the same
-                text.
-
-        Returns:
-            MarkingTaskTag: reference to the newly created tag
-
-        Raises:
-            ValidationError: tag contains invalid characters.
-        """
-        if not is_valid_tag_text(tag_text):
-            raise ValidationError(
-                f'Invalid tag text: "{tag_text}"; contains disallowed characters'
-            )
-        new_tag = MarkingTaskTag.objects.create(user=user, text=tag_text)
-        return new_tag
-
     @transaction.atomic
     def get_or_create_tag(self, user: User, tag_text: str) -> MarkingTaskTag:
         """Get an existing tag, or create if necessary, based on the given text.
@@ -490,12 +466,15 @@ class MarkingTaskService:
         Raises:
             ValidationError: if the tag text is not legal.
         """
+        if not is_valid_tag_text(tag_text):
+            raise ValidationError(
+                f'Invalid tag text: "{tag_text}"; contains disallowed characters'
+            )
         try:
             tag_obj = MarkingTaskTag.objects.get(text=tag_text)
         except MarkingTaskTag.DoesNotExist:
             # no such tag exists, so create one
-            # will raise validationerror if tag_text not legal
-            tag_obj = self._create_tag(user, tag_text)
+            tag_obj = MarkingTaskTag.objects.create(user=user, text=tag_text)
         return tag_obj
 
     def _add_tag(self, tag: MarkingTaskTag, task: MarkingTask) -> None:
@@ -568,9 +547,7 @@ class MarkingTaskService:
             ValidationError: invalid tag text
         """
         the_task = self.get_task_from_code(code)
-        the_tag = self._get_tag_from_text_for_update(tag_text)
-        if not the_tag:
-            the_tag = self._create_tag(user, tag_text)
+        the_tag = self.get_or_create_tag(user, tag_text)
         self._add_tag(the_tag, the_task)
 
     @transaction.atomic
