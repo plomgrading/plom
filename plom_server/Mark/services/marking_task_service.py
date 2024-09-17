@@ -478,6 +478,7 @@ class MarkingTaskService:
         Raises:
             ValidationError: tag contains invalid characters.
         """
+        # TODO: compare this to self.sanitize_tag_text in create_tag_and_attach_to_task
         if not is_valid_tag_text(tag_text):
             raise ValidationError(
                 f'Invalid tag text: "{tag_text}"; contains disallowed characters'
