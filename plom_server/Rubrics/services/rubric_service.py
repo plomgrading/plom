@@ -274,12 +274,13 @@ class RubricService:
         if modifying_user is not None:
             new_rubric_data["modified_by_user"] = modifying_user.pk
 
-        # To be changed by future MR
+        # To be changed by future MR  (TODO: what does this comment mean?)
         new_rubric_data["user"] = old_rubric.user.pk
         new_rubric_data["revision"] += 1
         new_rubric_data["latest"] = True
         new_rubric_data["rid"] = old_rubric.rid
 
+        # TODO: Issue #3582: don't autogenerate if input has custom display delta
         new_rubric_data["display_delta"] = self._generate_display_delta(
             new_rubric_data.get("value", 0),
             new_rubric_data["kind"],
