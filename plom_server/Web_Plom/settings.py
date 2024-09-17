@@ -237,10 +237,18 @@ USE_I18N = True
 USE_TZ = True
 
 
+# Static files (CSS, JavaScript, Images)
+STATIC_URL = "static/"
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
+# Note: "collectstatic" command line copies files to this dir
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+# Note: do not put inside the MEDIA_ROOT because the static files are versioned (Issue #3575)
+
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
 
 # If the user is logged in and there is no activity for 2 hours, the login status will expire
 SESSION_COOKIE_AGE = 60 * 60 * 2
@@ -295,13 +303,6 @@ if _:
     MEDIA_ROOT = Path(_)
 else:
     MEDIA_ROOT = BASE_DIR / "media"
-
-# Static files (CSS, JavaScript, Images)
-STATIC_URL = "static/"
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
-# Note: "collectstatic" command line copies files to this dir
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-# Note: do not put inside the MEDIA_ROOT because the static files are versioned (Issue #3575)
 
 # List of test fixture directories
 FIXTURE_DIRS = [BASE_DIR / "fixtures"]
