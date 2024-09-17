@@ -468,8 +468,9 @@ class MarkingTaskService:
 
         Args:
             user: reference to a User instance
-            tag_text: str, the proposed text content of a tag.
-                Assumes this input text has already been sanitized.
+            tag_text: the proposed text content of a tag.
+                Assumes this input text has already been checked.
+                TODO: discuss dupes?
 
         Returns:
             MarkingTaskTag: reference to the newly created tag
@@ -671,12 +672,13 @@ class MarkingTaskService:
     def create_tag_and_attach_to_task(
         self, user: User, task_pk: int, tag_text: str
     ) -> None:
-        """Create a tag with given text and attach to given task.
+        """Tag a task with the given text, creating the new tag if necessary.
 
         Args:
             user: the user creating/attaching the tag.
             task_pk: the pk of the markingtask.
             tag_text: the text of the tag being created/attached.
+                If a tag with this text already exists, we'll use it.
 
         Returns:
             None
