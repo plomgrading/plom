@@ -30,7 +30,7 @@ repos:
   - id: check-json
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.5.4
+  rev: v0.6.5
   hooks:
     - id: ruff
       args: [ --fix ]
@@ -38,12 +38,12 @@ repos:
     # - id: ruff-format
 
 - repo: https://github.com/psf/black-pre-commit-mirror
-  rev: 24.4.2
+  rev: 24.8.0
   hooks:
   - id: black
 
 - repo: https://github.com/Riverside-Healthcare/djLint
-  rev: v1.34.1
+  rev: v1.35.2
   hooks:
   - id: djlint-reformat-django
   - id: djlint-django
