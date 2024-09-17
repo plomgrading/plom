@@ -145,7 +145,7 @@ djlint:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.34.1
+    - pip install djlint~=1.35.2
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --profile django
 
@@ -154,7 +154,7 @@ djlint-check:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.34.1
+    - pip install djlint~=1.35.2
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --check
 
