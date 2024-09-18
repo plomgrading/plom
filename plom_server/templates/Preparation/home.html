@@ -52,7 +52,7 @@
                         : <i class="bi bi-exclamation-triangle text-warning"></i> read-only <i class="bi bi-exclamation-triangle text-warning"></i>
                     {% endif %}
                 </p>
-                <p class="fs-7">&emsp;&ensp; Manage the source PDFs for building your test-papers</p>
+                <p class="fs-7">&emsp;&ensp; Manage the source PDFs for building your assessment</p>
             </a>
             <a class="list-group-item list-group-item-action border mb-1"
                href="{% url 'prep_classlist' %}">
@@ -103,12 +103,12 @@
                     {% else %}
                         <i class="bi bi-square"></i>
                     {% endif %}
-                    Build test-paper PDFs
+                    Build printable paper PDFs
                     {% if have_papers_been_printed %}
                         : <i class="bi bi-exclamation-triangle text-warning"></i> read-only <i class="bi bi-exclamation-triangle text-warning"></i>
                     {% endif %}
                 </p>
-                <p class="fs-7">&emsp;&ensp; Build and download printable test-paper PDFs</p>
+                <p class="fs-7">&emsp;&ensp; Build and download printable paper PDFs</p>
             </a>
             <a href="{% url 'prep_finished' %}"
                class="list-group-item list-group-item-action border">
