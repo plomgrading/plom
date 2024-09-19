@@ -88,6 +88,43 @@ class AuthenticationServices:
 
         return user.username
 
+    @staticmethod
+    def create_manager_user(
+        username: str, *, password: str | None = None, email: str | None = None
+    ) -> None:
+        """Create a manager user.
+
+        Args:
+            username: the account username for this manager.
+
+        Keywords:
+            password: if omitted, the user will be inactive.
+            email: optionally, an email contact address.
+
+        Note: If a password is supplied, the user will be set active.
+        """
+        with transaction.atomic(durable=True):
+            try:
+                manager_group = Group.objects.get(name="manager")
+            except Group.DoesNotExist:
+                raise ValueError(
+                    "Cannot create manager-user: manager-group has not been created."
+                ) from None
+            try:
+                scanner_group = Group.objects.get(name="scanner")
+            except Group.DoesNotExist:
+                raise ValueError(
+                    "Cannot create manager-user: scanner-group has not been created."
+                ) from None
+
+            manager = User.objects.create_user(
+                username=username, email=email, password=password
+            )
+            if not password:
+                manager.is_active = False
+            manager.groups.add(manager_group, scanner_group)
+            manager.save()
+
     def generate_list_of_funky_usernames(
         self, group_name: str, num_users: int
     ) -> list[str]:

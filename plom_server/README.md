@@ -39,16 +39,6 @@ Take note of the address that it tells you the website is running at.
 2. Log in using your admin account generated above.
 
 
-## Make a manager instructions (command line)
-
-In order to create a manager, you can log in as asuper user (see below) but its also possible
-to use the command line:
-```
-from django.contrib.auth.models import User, Group
-manager_group = Group.objects.get(name='manager')
-User.objects.create_user(username='manager', password='1234').groups.add(manager_group)"
-```
-
 ## Make a manager instructions (web UI)
 
 Go to url: `http://localhost:8000/users`
