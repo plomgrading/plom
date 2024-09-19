@@ -78,10 +78,17 @@ class AuthenticationServices:
         Raises:
             ObjectDoesNotExist: no such group.
         """
-        group = Group.objects.get(name=group_name)
+        if group_name == "manager":
+            # special case, maybe should call create_manager_user instead
+            groups = [
+                Group.objects.get(name=group_name),
+                Group.objects.get(name="scanner"),
+            ]
+        else:
+            groups = [Group.objects.get(name=group_name)]
         User.objects.create_user(
             username=username, email=email, password=None
-        ).groups.add(group)
+        ).groups.add(*groups)
         user = User.objects.get(username=username)
         user.is_active = False
         user.save()

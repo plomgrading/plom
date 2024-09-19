@@ -34,3 +34,12 @@ class AuthenticationServices_user_creation(TestCase):
         AuthenticationServices.create_manager_user("man2", password="123")
         user = User.objects.get(username="man2")
         self.assertTrue(user.is_active)
+
+    def test_create_manager_via_other_code(self) -> None:
+        # call_command("plom_create_groups")
+        baker.make(Group, name="manager")
+        baker.make(Group, name="scanner")
+        AuthenticationServices().create_user_and_add_to_group("m", "manager")
+        user1 = User.objects.get(username="m", groups__name="scanner")
+        user2 = User.objects.get(username="m", groups__name="manager")
+        self.assertTrue(user1 == user2)
