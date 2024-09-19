@@ -48,8 +48,8 @@ class AuthenticationServices:
             username_number += 1
             try:
                 username = self.create_user_and_add_to_group(
-                    username=basename + str(username_number),
-                    group_name=group_name,
+                    basename + str(username_number),
+                    group_name,
                 )
                 user_list.append(username)
             except IntegrityError:
@@ -57,9 +57,10 @@ class AuthenticationServices:
 
         return user_list
 
+    @staticmethod
     @transaction.atomic
     def create_user_and_add_to_group(
-        self, username: str, group_name: str, *, email: str | None = None
+        username: str, group_name: str, *, email: str | None = None
     ) -> str:
         """Create a user and add them to a group.
 
@@ -170,9 +171,7 @@ class AuthenticationServices:
                 username=new_username, group_name=group_name
             )
         else:
-            user = self.create_user_and_add_to_group(
-                username=username, group_name=group_name
-            )
+            user = self.create_user_and_add_to_group(username, group_name)
             return user
 
     @transaction.atomic

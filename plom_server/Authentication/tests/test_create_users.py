@@ -39,7 +39,7 @@ class AuthenticationServices_user_creation(TestCase):
         # call_command("plom_create_groups")
         baker.make(Group, name="manager")
         baker.make(Group, name="scanner")
-        AuthenticationServices().create_user_and_add_to_group("m", "manager")
+        AuthenticationServices.create_user_and_add_to_group("m", "manager")
         user1 = User.objects.get(username="m", groups__name="scanner")
         user2 = User.objects.get(username="m", groups__name="manager")
         self.assertTrue(user1 == user2)
