@@ -516,6 +516,7 @@ class RubricEditView(ManagerRequiredView):
                 rid,
                 new_rubric_data=rubric_data,
                 modifying_user=User.objects.get(username=request.user.username),
+                tag_tasks=False,
             )
         messages.success(request, "Rubric edited successfully.")
         return redirect("rubric_item", rid)

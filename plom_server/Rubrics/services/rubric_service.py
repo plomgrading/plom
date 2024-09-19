@@ -185,7 +185,7 @@ class RubricService:
         new_rubric_data: dict[str, Any],
         *,
         modifying_user: User | None = None,
-        tag_tasks: bool = True,
+        tag_tasks: bool = False,
     ) -> dict[str, Any]:
         """Modify a rubric.
 
