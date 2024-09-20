@@ -26,7 +26,7 @@ import subprocess
 import tempfile
 from warnings import warn
 
-import fitz
+import pymupdf as fitz
 
 from plom import __version__
 from plom import Default_Port

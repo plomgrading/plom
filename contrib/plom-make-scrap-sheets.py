@@ -41,8 +41,7 @@ from __future__ import annotations
 
 import argparse
 
-# import pymupdf as fitz
-import fitz
+import pymupdf as fitz
 import segno
 import io
 

@@ -44,7 +44,7 @@ if sys.version_info < (3, 11):
 else:
     import tomllib
 
-import fitz
+import pymupdf as fitz
 import PIL.Image
 import requests
 from tqdm import tqdm

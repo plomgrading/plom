@@ -19,7 +19,7 @@ from __future__ import annotations
 from collections import defaultdict
 from pathlib import Path
 
-import fitz
+import pymupdf
 import tomlkit
 
 from plom.scan.sendPagesToServer import (
@@ -129,7 +129,7 @@ def processHWScans(
     )
 
     N = msgr.get_spec()["numberOfQuestions"]
-    with fitz.open(pdf_fname) as pdf:
+    with pymupdf.open(pdf_fname) as pdf:
         num_pages = len(pdf)
     questions = canonicalize_page_question_map(
         questions, pages=num_pages, numquestions=N

@@ -8,7 +8,7 @@
 import hashlib
 import pathlib
 
-import fitz
+import pymupdf
 
 from django.utils import timezone
 from django import forms
@@ -61,7 +61,7 @@ class BundleUploadForm(forms.Form):
             filename_stem = pathlib.Path(str(pdf)).stem
             slug = slugify(filename_stem)
 
-            with fitz.open(stream=file_bytes) as pdf_doc:
+            with pymupdf.open(stream=file_bytes) as pdf_doc:
                 if "PDF" not in pdf_doc.metadata["format"]:
                     raise ValidationError("File is not a valid PDF.")
                 if pdf_doc.page_count > settings.MAX_BUNDLE_PAGES:
@@ -77,5 +77,5 @@ class BundleUploadForm(forms.Form):
                     }
                 )
             return data
-        except (fitz.FileDataError, KeyError) as e:
+        except (pymupdf.FileDataError, KeyError) as e:
             raise ValidationError(f"Unable to open file: {e}")

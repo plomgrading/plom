@@ -39,7 +39,6 @@ django-session-timeout==0.1.0
 djangorestframework==3.14.0
 django-tables2==2.7.0
 exif==1.2.2
-fonttools==4.37.1
 importlib_resources==5.0.7
 imutils==0.5.4
 matplotlib==3.5.3
@@ -49,7 +48,7 @@ Pillow==7.0.0
 pandas==1.5.0
 peewee==3.13.3
 platformdirs==3.0.0
-pymupdf==1.22.5
+pymupdf==1.24.6
 PyMySQL==1.0.2
 pyOpenSSL==23.2.0
 pyspellchecker==0.8.1

@@ -10,7 +10,7 @@ import pathlib
 import tempfile
 
 from django.core.files import File
-import fitz
+import pymupdf as fitz
 
 from plom.create.mergeAndCodePages import (
     create_QR_codes,

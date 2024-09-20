@@ -6,8 +6,8 @@
 import tempfile
 from pathlib import Path
 
-import fitz
 import PIL.Image
+import pymupdf
 
 from plom import __version__
 from plom.scan.rotate import rot_angle_from_jpeg_exif_tag
@@ -39,15 +39,15 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
     outname = Path(outname)
 
     if coverfile:
-        exam = fitz.open(coverfile)
+        exam = pymupdf.open(coverfile)
     else:
-        exam = fitz.open()
+        exam = pymupdf.open()
 
     for img in id_images:
         w, h = papersize_portrait
         pg = exam.new_page(width=w, height=h)
-        rect = fitz.Rect(margin, margin, w - margin, h - margin)
-        # fitz insert_image does not respect exif
+        rect = pymupdf.Rect(margin, margin, w - margin, h - margin)
+        # pymupdf insert_image does not respect exif
         rot = rot_angle_from_jpeg_exif_tag(img["filename"])
         # now apply soft rotation
         rot += img["rotation"]
@@ -68,7 +68,7 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
             w, h = h, w
 
         pg = exam.new_page(width=w, height=h)
-        rec = fitz.Rect(margin, margin, w - margin, h - margin)
+        rec = pymupdf.Rect(margin, margin, w - margin, h - margin)
 
         pg.insert_image(rec, filename=img_name, rotate=angle)
 
@@ -95,15 +95,15 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
                 text = 'This page was flagged "Do No Mark" by the instructor.'
             text += "  In most cases nothing here was marked."
             r = pg.insert_textbox(
-                fitz.Rect(margin, margin, w - margin, header_bottom),
+                pymupdf.Rect(margin, margin, w - margin, header_bottom),
                 text,
                 fontsize=12,
                 color=(0, 0, 0),
                 align="left",
             )
             assert r > 0
-        rect = fitz.Rect(offset, header_bottom, offset + W, h - margin)
-        # fitz insert_image does not respect exif
+        rect = pymupdf.Rect(offset, header_bottom, offset + W, h - margin)
+        # pymupdf insert_image does not respect exif
         rot = rot_angle_from_jpeg_exif_tag(img["filename"])
         # now apply soft rotation
         rot += img["rotation"]

@@ -2,13 +2,13 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2021-2022, 2024 Colin B. Macdonald
 # Copyright (C) 2021 Forest Kobayashi
 
 from pathlib import Path
 from textwrap import dedent
 
-import fitz
+import pymupdf
 
 from plom import specdir
 from plom.textools import buildLaTeX
@@ -120,11 +120,13 @@ def build_test_page_substitute(
         for deleting it when you're done.
     """
     outdir = Path(outdir)
-    pdf = fitz.open(template)
+    pdf = pymupdf.open(template)
     text = f"Test {test_number:04} [sub] p. {page_number}"
     pdf_page_add_stamp(pdf[0], text)
 
-    image = pdf[0].get_pixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
+    image = pdf[0].get_pixmap(
+        alpha=False, matrix=pymupdf.Matrix(image_scale, image_scale)
+    )
     f = outdir / f"pns.{test_number}.{page_number}.{version_number}.png"
     image.save(f)
     pdf.close()
@@ -153,10 +155,12 @@ def build_dnm_page_substitute(
         for deleting it when you're done.
     """
     outdir = Path(outdir)
-    pdf = fitz.open(template)
+    pdf = pymupdf.open(template)
     text = f"Test {test_number:04} DNM[sub] p. {page_number}"
     pdf_page_add_stamp(pdf[0], text)
-    image = pdf[0].get_pixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
+    image = pdf[0].get_pixmap(
+        alpha=False, matrix=pymupdf.Matrix(image_scale, image_scale)
+    )
     f = outdir / f"dnm.{test_number}.{page_number}.png"
     image.save(f)
     pdf.close()
@@ -185,10 +189,12 @@ def build_homework_question_substitute(
         for deleting it when you're done.
     """
     outdir = Path(outdir)
-    pdf = fitz.open(template)
+    pdf = pymupdf.open(template)
     text = f"{student_id} Qidx{question_number}"
     pdf_page_add_stamp(pdf[0], text)
-    image = pdf[0].get_pixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
+    image = pdf[0].get_pixmap(
+        alpha=False, matrix=pymupdf.Matrix(image_scale, image_scale)
+    )
     f = outdir / f"qns.{student_id}.{question_number}.png"
     image.save(f)
     pdf.close()
@@ -217,9 +223,11 @@ def build_generated_id_page_for_student(
         for deleting it when you're done.
     """
     outdir = Path(outdir)
-    pdf = fitz.open(template)
+    pdf = pymupdf.open(template)
     pdf_page_add_name_id_box(pdf[0], student_name, student_id, signherebox=False)
-    image = pdf[0].get_pixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
+    image = pdf[0].get_pixmap(
+        alpha=False, matrix=pymupdf.Matrix(image_scale, image_scale)
+    )
     f = outdir / f"autogen.{student_id}.png"
     image.save(f)
     pdf.close()

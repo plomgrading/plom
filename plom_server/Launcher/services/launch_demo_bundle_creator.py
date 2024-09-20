@@ -15,7 +15,7 @@ import shutil
 import tempfile
 from typing import List, Dict, Any
 
-import fitz
+import pymupdf as fitz
 
 from django.core.management import call_command
 from django.conf import settings

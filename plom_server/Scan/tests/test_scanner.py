@@ -19,7 +19,7 @@ else:
     import importlib_resources as resources
 
 import exif
-import fitz
+import pymupdf as fitz
 from PIL import Image
 
 from django.utils import timezone

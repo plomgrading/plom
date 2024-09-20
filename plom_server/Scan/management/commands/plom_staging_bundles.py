@@ -9,7 +9,7 @@ import hashlib
 import pathlib
 from time import sleep
 
-import fitz
+import pymupdf as fitz
 from tabulate import tabulate
 
 from django.utils import timezone

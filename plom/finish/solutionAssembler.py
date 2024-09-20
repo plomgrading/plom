@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
 import tempfile
 from pathlib import Path
 
 from PIL import Image
-import fitz
+import pymupdf
 
 from plom import __version__
 
@@ -35,9 +35,9 @@ def assemble(outname, shortName, sid, coverfile, img_list, watermark=False):
     outname = Path(outname)
 
     if coverfile:
-        exam = fitz.open(coverfile)
+        exam = pymupdf.open(coverfile)
     else:
-        exam = fitz.open()
+        exam = pymupdf.open()
 
     for img_name in img_list:
         img_name = Path(img_name)
@@ -50,7 +50,7 @@ def assemble(outname, shortName, sid, coverfile, img_list, watermark=False):
         else:
             w, h = papersize_portrait
         pg = exam.new_page(width=w, height=h)
-        rec = fitz.Rect(margin, margin, w - margin, h - margin)
+        rec = pymupdf.Rect(margin, margin, w - margin, h - margin)
 
         # Make a jpeg in memory, and use that if its significantly smaller
         with tempfile.SpooledTemporaryFile(mode="w+b", suffix=".jpg") as jpeg_file:
@@ -66,7 +66,7 @@ def assemble(outname, shortName, sid, coverfile, img_list, watermark=False):
                 pg.insert_image(rec, filename=img_name)
             # add a watermark of the student-id in rect at bottom of page
         if watermark:
-            wm_rect = fitz.Rect(margin, h - margin - 32, margin + 200, h - margin)
+            wm_rect = pymupdf.Rect(margin, h - margin - 32, margin + 200, h - margin)
             text = f"produced for {sid}"
             excess = pg.insert_textbox(
                 wm_rect,

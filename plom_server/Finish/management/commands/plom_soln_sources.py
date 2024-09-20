@@ -3,7 +3,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
-import fitz
+import pymupdf as fitz
 from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError

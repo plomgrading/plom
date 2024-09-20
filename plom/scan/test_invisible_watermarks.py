@@ -5,8 +5,8 @@ from pathlib import Path
 import pytest
 
 import exif
-import fitz
 from PIL import Image, ImageDraw
+import pymupdf
 
 from plom import __version__
 from plom.scan.scansToImages import (
@@ -98,9 +98,9 @@ def test_pdf_can_extract_png_and_jpeg(tmp_path) -> None:
     png_file, png_img = make_png(tmp_path)
 
     f = tmp_path / "doc.pdf"
-    with fitz.open() as d:
+    with pymupdf.open() as d:
         p = d.new_page(width=500, height=842)
-        rect = fitz.Rect(20, 20, 480, 820)
+        rect = pymupdf.Rect(20, 20, 480, 820)
         p.insert_image(rect, filename=jpg_file)
         p = d.new_page(width=500, height=842)
         p.insert_image(rect, filename=png_file)
@@ -126,17 +126,17 @@ def test_pdf_no_extract_cases(tmp_path) -> None:
     jpg_file, jpg_img = make_jpeg(tmp_path)
 
     f = tmp_path / "doc.pdf"
-    with fitz.open() as d:
+    with pymupdf.open() as d:
         p = d.new_page(width=500, height=842)
-        p.insert_image(fitz.Rect(20, 20, 480, 820), filename=small_jpg_file)
+        p.insert_image(pymupdf.Rect(20, 20, 480, 820), filename=small_jpg_file)
 
         p = d.new_page(width=500, height=842)
-        p.insert_image(fitz.Rect(20, 50, 480, 820), filename=jpg_file)
-        p.insert_textbox(fitz.Rect(10, 10, 480, 100), "hello world")
+        p.insert_image(pymupdf.Rect(20, 50, 480, 820), filename=jpg_file)
+        p.insert_textbox(pymupdf.Rect(10, 10, 480, 100), "hello world")
 
         p = d.new_page(width=500, height=842)
-        p.insert_image(fitz.Rect(20, 50, 480, 820), filename=jpg_file)
-        p.insert_image(fitz.Rect(10, 10, 100, 100), filename=small_jpg_file)
+        p.insert_image(pymupdf.Rect(20, 50, 480, 820), filename=jpg_file)
+        p.insert_image(pymupdf.Rect(10, 10, 100, 100), filename=small_jpg_file)
 
         d.save(f)
     processFileToBitmaps(f, tmp_path, do_not_extract=False)
@@ -161,8 +161,8 @@ def test_pdf_no_extract_cases(tmp_path) -> None:
 
 def test_pdf_identical_pages_render_png_made_unique(tmp_path) -> None:
     pdf_file = tmp_path / "doc.pdf"
-    with fitz.open() as d:
-        rect = fitz.Rect(20, 20, 480, 820)
+    with pymupdf.open() as d:
+        rect = pymupdf.Rect(20, 20, 480, 820)
         p = d.new_page(width=500, height=842)
         p.insert_textbox(rect, "deja vu")
         d.copy_page(0)
@@ -197,9 +197,9 @@ def test_pdf_identical_pages_render_jpeg_made_unique(tmp_path) -> None:
     img.save(png_file2)
 
     pdf_file = tmp_path / "doc.pdf"
-    with fitz.open() as d:
-        rect = fitz.Rect(20, 20, 480, 820)
-        rect2 = fitz.Rect(10, 10, 200, 200)
+    with pymupdf.open() as d:
+        rect = pymupdf.Rect(20, 20, 480, 820)
+        rect2 = pymupdf.Rect(10, 10, 200, 200)
         p = d.new_page(width=500, height=842)
         p.insert_image(rect, filename=png_file2)
         p.insert_image(rect2, filename=png_file)
@@ -234,8 +234,8 @@ def test_pdf_can_extract_png_and_jpeg_uniquified(tmp_path) -> None:
     png_file, png_img = make_png(tmp_path)
 
     pdf_file = tmp_path / "doc.pdf"
-    with fitz.open() as d:
-        rect = fitz.Rect(20, 20, 480, 820)
+    with pymupdf.open() as d:
+        rect = pymupdf.Rect(20, 20, 480, 820)
         p = d.new_page(width=500, height=842)
         p.insert_image(rect, filename=jpg_file)
         d.copy_page(0)

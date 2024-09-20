@@ -21,7 +21,7 @@ from pathlib import Path
 import sys
 import tempfile
 
-import fitz
+import pymupdf as fitz
 from PIL import Image
 from zxingcpp import read_barcodes, BarcodeFormat
 

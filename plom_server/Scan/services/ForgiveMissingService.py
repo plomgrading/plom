@@ -7,7 +7,7 @@ import hashlib
 from io import BytesIO
 from typing import Any
 
-import fitz
+import pymupdf as fitz
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File

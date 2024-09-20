@@ -16,8 +16,7 @@ from pathlib import Path
 from typing import Any
 
 # import pyqrcode
-import fitz
-from packaging.version import Version
+import pymupdf
 import segno
 
 from plom.create import paperdir
@@ -81,7 +80,7 @@ def _create_exam_and_insert_QR(
     *,
     no_qr: bool = False,
     source_versions_path: str | pathlib.Path | None = None,
-) -> fitz.Document:
+) -> pymupdf.Document:
     """Creates the exam objects and insert the QR codes.
 
     Creates the exams objects from the pdfs stored at sourceVersions.
@@ -101,8 +100,8 @@ def _create_exam_and_insert_QR(
             Defaults to "./sourceVersions"
 
     Returns:
-        fitz.Document: PDF document, apparently open, which seems to me a scary
-        thing to be handling around.  Caller is responsible for closing it.
+        PDF document, apparently open, which seems to me a scary
+        thing to be handing around.  Caller is responsible for closing it.
 
     Raises:
         RuntimeError: one or more of your version<N>.pdf files not found.
@@ -116,12 +115,12 @@ def _create_exam_and_insert_QR(
         source = Path(source_versions_path)
     else:
         source = Path("sourceVersions")
-    # dict of version (int) -> source pdf (fitz.Document)
+    # dict of version (int) -> source pdf (pymupdf.Document)
     pdf_version = {}
     for ver in range(1, spec["numberOfVersions"] + 1):
-        pdf_version[ver] = fitz.open(source / f"version{ver}.pdf")
+        pdf_version[ver] = pymupdf.open(source / f"version{ver}.pdf")
 
-    exam = fitz.open()
+    exam = pymupdf.open()
     # Insert the relevant page-versions into this pdf.
     for page_index in range(1, spec["numberOfPages"] + 1):
         # Pymupdf starts pagecounts from 0 rather than 1. So offset things.
@@ -167,7 +166,7 @@ def _create_exam_and_insert_QR(
     return exam
 
 
-def pdf_page_add_stamp(page: fitz.Page, stamp: str) -> None:
+def pdf_page_add_stamp(page: pymupdf.Page, stamp: str) -> None:
     """Add top-middle stamp to a PDF page.
 
     Args:
@@ -182,11 +181,15 @@ def pdf_page_add_stamp(page: fitz.Page, stamp: str) -> None:
 
     pg_width = page.bound().width
 
-    tw = fitz.TextWriter(page.rect)
-    maxbox = fitz.Rect(mx + w + 10, my, pg_width - mx - w - 10, my + 30)
+    tw = pymupdf.TextWriter(page.rect)
+    maxbox = pymupdf.Rect(mx + w + 10, my, pg_width - mx - w - 10, my + 30)
     # page.draw_rect(maxbox, color=(1, 0, 0))
     excess = tw.fill_textbox(
-        maxbox, stamp, align=fitz.TEXT_ALIGN_CENTER, fontsize=14, font=fitz.Font("helv")
+        maxbox,
+        stamp,
+        align=pymupdf.TEXT_ALIGN_CENTER,
+        fontsize=14,
+        font=pymupdf.Font("helv"),
     )
     assert not excess, "Text didn't fit: is paper number label too long?"
     r = tw.text_rect
@@ -197,7 +200,7 @@ def pdf_page_add_stamp(page: fitz.Page, stamp: str) -> None:
 
 
 def pdf_page_add_labels_QRs(
-    page: fitz.Page,
+    page: pymupdf.Page,
     shortname: str,
     stamp: str,
     qr_code: list[pathlib.Path],
@@ -225,15 +228,17 @@ def pdf_page_add_labels_QRs(
     pg_height = page.bound().height
 
     # create two "do not write" (DNW) rectangles accordingly with TL (top left) and TR (top right)
-    rDNW_TL = fitz.Rect(mx, my, mx + w, my + w)
-    rDNW_TR = fitz.Rect(pg_width - mx - w, my, pg_width - mx, my + w)
+    rDNW_TL = pymupdf.Rect(mx, my, mx + w, my + w)
+    rDNW_TR = pymupdf.Rect(pg_width - mx - w, my, pg_width - mx, my + w)
 
     # page-corner boxes for the QR codes
     # TL: Top Left, TR: Top Right, BL: Bottom Left, BR: Bottom Right
-    TL = fitz.Rect(mx, my, mx + w, my + w)
-    TR = fitz.Rect(pg_width - w - mx, my, pg_width - mx, my + w)
-    BL = fitz.Rect(mx, pg_height - my - w, mx + w, pg_height - my)
-    BR = fitz.Rect(pg_width - mx - w, pg_height - my - w, pg_width - mx, pg_height - my)
+    TL = pymupdf.Rect(mx, my, mx + w, my + w)
+    TR = pymupdf.Rect(pg_width - w - mx, my, pg_width - mx, my + w)
+    BL = pymupdf.Rect(mx, pg_height - my - w, mx + w, pg_height - my)
+    BR = pymupdf.Rect(
+        pg_width - mx - w, pg_height - my - w, pg_width - mx, pg_height - my
+    )
 
     pdf_page_add_stamp(page, stamp)
 
@@ -254,12 +259,12 @@ def pdf_page_add_labels_QRs(
     shape.commit()
 
     pivot = (rDNW.tl + rDNW.br) / 2
-    r = fitz.Rect(rDNW.tl.x - 30, pivot.y - 12, rDNW.tr.x + 30, pivot.y + 12)
-    tw = fitz.TextWriter(page.rect)
-    excess = tw.fill_textbox(r, shortname, fontsize=8, align=fitz.TEXT_ALIGN_CENTER)
+    r = pymupdf.Rect(rDNW.tl.x - 30, pivot.y - 12, rDNW.tr.x + 30, pivot.y + 12)
+    tw = pymupdf.TextWriter(page.rect)
+    excess = tw.fill_textbox(r, shortname, fontsize=8, align=pymupdf.TEXT_ALIGN_CENTER)
     assert not excess, "Text didn't fit: is shortname too long?"
 
-    mat = fitz.Matrix(45 if odd else -45)
+    mat = pymupdf.Matrix(45 if odd else -45)
     tw.write_text(page, color=(0, 0, 0), morph=(pivot, mat))
     # page.draw_rect(r, color=(1, 0, 0))
 
@@ -272,19 +277,19 @@ def pdf_page_add_labels_QRs(
     # we always have a corner section for staples and such
     # Note: draw png first so it doesn't occlude the outline
     if odd:
-        page.insert_image(TR, pixmap=fitz.Pixmap(qr_code[0]), overlay=True)
+        page.insert_image(TR, pixmap=pymupdf.Pixmap(qr_code[0]), overlay=True)
         page.draw_rect(TR, color=[0, 0, 0], width=0.5)
     else:
-        page.insert_image(TL, pixmap=fitz.Pixmap(qr_code[1]), overlay=True)
+        page.insert_image(TL, pixmap=pymupdf.Pixmap(qr_code[1]), overlay=True)
         page.draw_rect(TL, color=[0, 0, 0], width=0.5)
-    page.insert_image(BL, pixmap=fitz.Pixmap(qr_code[2]), overlay=True)
-    page.insert_image(BR, pixmap=fitz.Pixmap(qr_code[3]), overlay=True)
+    page.insert_image(BL, pixmap=pymupdf.Pixmap(qr_code[2]), overlay=True)
+    page.insert_image(BR, pixmap=pymupdf.Pixmap(qr_code[3]), overlay=True)
     page.draw_rect(BL, color=[0, 0, 0], width=0.5)
     page.draw_rect(BR, color=[0, 0, 0], width=0.5)
 
 
 def pdf_page_add_name_id_box(
-    page: fitz.Page,
+    page: pymupdf.Page,
     name: str,
     sid: str,
     x: float | None = None,
@@ -295,10 +300,9 @@ def pdf_page_add_name_id_box(
     """Creates the extra info (usually student name and id) boxes and places them in the first page.
 
     Arguments:
-        page (fitz.Page): Page of a PDF document, will be modified as a side
-            effect.
-        name (str): student name.
-        sid (str): student id.
+        page: Page of a PDF document, will be modified as a side effect.
+        name: student name.
+        sid: student id.
         x: specifies the x-coordinate where the id and name
             will be placed, as a float from 0 to 100, where 0 has the centre
             of the box at left of the page and 100 has the centre at the right
@@ -335,13 +339,13 @@ def pdf_page_add_name_id_box(
     box1_height = 108  # two lines of 36 pt and 1.5 baseline
     box2_height = 90
 
-    name_id_rect = fitz.Rect(
+    name_id_rect = pymupdf.Rect(
         page_width * (x / 100.0) - box_width / 2,
         (page_height - box1_height - box2_height) * (y / 100.0),
         page_width * (x / 100.0) + box_width / 2,
         (page_height - box1_height - box2_height) * (y / 100.0) + box1_height,
     )
-    signature_rect = fitz.Rect(
+    signature_rect = pymupdf.Rect(
         name_id_rect.x0,
         name_id_rect.y1,
         name_id_rect.x1,
@@ -354,7 +358,7 @@ def pdf_page_add_name_id_box(
     # first place the name with adaptive fontsize
     fontsize = 37
     w = math.inf
-    font = fitz.Font("helv")
+    font = pymupdf.Font("helv")
     while w > name_id_rect.width:
         if fontsize < 6:
             raise RuntimeError(
@@ -362,9 +366,9 @@ def pdf_page_add_name_id_box(
             )
         fontsize -= 1
         w = font.text_length(name, fontsize=fontsize)
-    tw = fitz.TextWriter(page.rect)
+    tw = pymupdf.TextWriter(page.rect)
     tw.append(
-        fitz.Point(page_width * (x / 100.0) - w / 2, name_id_rect.y0 + 38),
+        pymupdf.Point(page_width * (x / 100.0) - w / 2, name_id_rect.y0 + 38),
         name,
         fontsize=fontsize,
     )
@@ -373,7 +377,7 @@ def pdf_page_add_name_id_box(
     fontsize = 36
     w = font.text_length(sid, fontsize=fontsize)
     tw.append(
-        fitz.Point(page_width * (x / 100.0) - w / 2, name_id_rect.y0 + 90),
+        pymupdf.Point(page_width * (x / 100.0) - w / 2, name_id_rect.y0 + 90),
         sid,
         fontsize=fontsize,
     )
@@ -384,9 +388,9 @@ def pdf_page_add_name_id_box(
         return
     fontsize = 48
     w = font.text_length(sign_here, fontsize=fontsize)
-    tw = fitz.TextWriter(page.rect, color=(0.9, 0.9, 0.9))
+    tw = pymupdf.TextWriter(page.rect, color=(0.9, 0.9, 0.9))
     tw.append(
-        fitz.Point(page_width * (x / 100.0) - w / 2, signature_rect.y0 + 52),
+        pymupdf.Point(page_width * (x / 100.0) - w / 2, signature_rect.y0 + 52),
         sign_here,
         fontsize=fontsize,
     )
@@ -500,17 +504,7 @@ def make_PDF(
     if font_subsetting is None:
         font_subsetting = do_subset
     if font_subsetting:
-        if Version(fitz.version[0]) >= Version("1.24.6"):
-            exam.subset_fonts()
-        else:
-            # TODO: remove after minimum PyMuPDF is bumped (see Plom Issue #3384)
-            # Fallback subsetting requires https://pypi.org/project/fonttools
-            try:
-                exam.subset_fonts(fallback=True)
-            except TypeError:
-                # PyMuPDF<=1.23 does not have fallback
-                # Subsetting requires https://pypi.org/project/fonttools
-                exam.subset_fonts()
+        exam.subset_fonts()
 
     # Add the deflate option to compress the embedded pngs
     # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save

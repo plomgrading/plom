@@ -6,7 +6,7 @@
 
 from pathlib import Path
 
-import fitz
+import pymupdf
 
 from plom import check_version_map
 from plom.misc_utils import working_directory
@@ -52,7 +52,7 @@ def build_papers(
             b/c build_database has not yet been called.
         ValueError: not enough papers for prenamed, indexToMake out of range,
             maybe other cases.
-        fitz.FileNotFoundError/RuntimeError: source PDF files not found.
+        pymupdf.FileNotFoundError/RuntimeError: source PDF files not found.
 
     We try to get a classlist from the server to prename any papers
     where the `paper_number` is specified.  If the server does not yet
@@ -159,7 +159,7 @@ def check_equal_page_count(path) -> bool:
     source = Path(path)
     source_version = set()
     for f in source.glob("version*.pdf"):
-        with fitz.open(f) as doc:
+        with pymupdf.open(f) as doc:
             num_pages = len(doc)
         source_version.add(num_pages)
     if len(source_version) > 1:
