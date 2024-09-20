@@ -18,6 +18,7 @@ from .progress_mark import (
     ProgressMarkStatsView,
     ProgressMarkDetailsView,
     ProgressMarkVersionCompareView,
+    ProgressMarkStartMarking,
 )
 
 from .progress_task_annot import (

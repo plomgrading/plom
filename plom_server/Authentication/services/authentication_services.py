@@ -187,3 +187,39 @@ class AuthenticationServices:
         link = f"{scheme}://{domain}{port}/{prefix}reset/{uid}/{token}"
 
         return link
+
+    @staticmethod
+    def get_base_link() -> str:
+        """Generate the base part of the URL to link to this server.
+
+        Returns:
+            A string of that looks something like "https://plom.example.com/"
+            or "http://my.example.com/prefix/stuff/".  It will always
+            end with a trailing slash.
+
+        .. note::
+
+            The generated link follows the format:
+            `<scheme>://<domain>:<port>/<prefix>/` or
+            `<scheme>://<domain>:<port>/`.
+            Because you may have proxies between your server and the client, the
+            URL can be influenced with the environment variables:
+
+               - PLOM_PUBLIC_FACING_SCHEME
+               - PLOM_PUBLIC_FACING_PORT
+               - PLOM_PUBLIC_FACING_PREFIX
+               - PLOM_HOSTNAME
+        """
+        scheme = os.environ.get("PLOM_PUBLIC_FACING_SCHEME", "http")
+        # TODO: do we need a public facing hostname var too?
+        domain = os.environ.get("PLOM_HOSTNAME", "")
+        # TODO:, get_current_site(request).domain)
+        if not domain:
+            domain = "localhost"
+        prefix = os.environ.get("PLOM_PUBLIC_FACING_PREFIX", "")
+        if prefix and not prefix.endswith("/"):
+            prefix += "/"
+        port = os.environ.get("PLOM_PUBLIC_FACING_PORT", "")
+        if port:
+            port = ":" + port
+        return f"{scheme}://{domain}{port}/{prefix}"

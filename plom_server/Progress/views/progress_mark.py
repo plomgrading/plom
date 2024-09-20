@@ -10,6 +10,7 @@ from Base.base_group_views import (
     LeadMarkerOrManagerView,
 )
 
+from Authentication.services import AuthenticationServices
 from Papers.services import SpecificationService
 from Mark.services import MarkingStatsService
 from ..services import ProgressOverviewService
@@ -25,6 +26,17 @@ class ProgressMarkHome(MarkerLeadMarkerOrManagerView):
             }
         )
         return render(request, "Progress/Mark/mark_home.html", context)
+
+
+class ProgressMarkStartMarking(MarkerLeadMarkerOrManagerView):
+    def get(self, request):
+        context = super().build_context()
+        context.update(
+            {
+                "server_link": AuthenticationServices.get_base_link(),
+            }
+        )
+        return render(request, "Progress/Mark/mark_papers.html", context)
 
 
 class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
