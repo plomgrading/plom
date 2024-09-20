@@ -1,6 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Brennen Chiu
+    Copyright (C) 2024 Andrew Rechnitzer 
 -->
 {% extends "Authentication/signup_base.html" %}
 {% load static %}
@@ -17,6 +18,7 @@
         <p>
             {{ form.email.label }}
             {{ form.email }}
+            (as yet unused &mdash; might use in the future)
         </p>
         <p>
             <input class="btn btn-primary" type="submit" value="Create User">

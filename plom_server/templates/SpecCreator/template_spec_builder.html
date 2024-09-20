@@ -17,7 +17,7 @@
         </div>
         <div class="card"
              x-data="{pages: {{ pages }}, questions: {{ questions }}, score: {{ score }}, shortName: '{{ shortName }}' }">
-            <h4 class="card-header">Enter information about your test</h4>
+            <h4 class="card-header">Enter information about your assessment</h4>
             <div class="card-body">
                 <form enctype="multipart/form-data"
                       id="form"
@@ -32,7 +32,7 @@
                                        id="longName"
                                        value="{{ longName }}"
                                        name="longName">
-                                <label for="longName">Test long name</label>
+                                <label for="longName">Assessment long name</label>
                             </div>
                         </div>
                         <div class="col-4">
@@ -42,7 +42,7 @@
                                        id="shortName"
                                        x-model="shortName"
                                        name="shortName">
-                                <label for="shortName">Test short name</label>
+                                <label for="shortName">Assessment short name</label>
                             </div>
                         </div>
                     </div>
@@ -139,7 +139,7 @@
                           hx-include="[name='spec']"
                           hx-target="#saving-status">
                         {% csrf_token %}
-                        <!--<label for="spec-toml-input" class="form-label">Test specification</label>-->
+                        <!--<label for="spec-toml-input" class="form-label">Assessment specification</label>-->
                         <textarea class="form-control"
                                   id="spec-toml-input"
                                   name="spec"
@@ -170,7 +170,7 @@
     </div>
     <script>
       function downloadtoml(stuff) {
-          let filename = 'template_test_specification.toml';
+          let filename = 'template_assessment_specification.toml';
           let element = document.createElement('a');
           element.setAttribute('href', 'data:text/toml;charset=utf-8,' + encodeURIComponent(stuff));
           element.setAttribute('download', filename);

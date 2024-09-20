@@ -71,10 +71,10 @@
                     <h5>Summary of pushed papers:</h5>
                     <div class="row">
                         <div class="col">
-                            <p class="text-success">{{ complete_test_papers }} / {{ total_papers }} complete test papers</p>
+                            <p class="text-success">{{ complete_test_papers }} / {{ total_papers }} complete papers</p>
                         </div>
                         <div class="col">
-                            <p class="text-secondary">{{ unused_test_papers }} / {{ total_papers }} unused test papers</p>
+                            <p class="text-secondary">{{ unused_test_papers }} / {{ total_papers }} unused papers</p>
                         </div>
                         <div class="col">
                             {% if incomplete_test_papers == 0 %}
@@ -82,7 +82,7 @@
                             {% else %}
                                 <p class="text-danger">
                                     <i class="bi bi-exclamation-diamond-fill text-danger"></i>
-                                    {{ incomplete_test_papers }} incomplete test paper(s)
+                                    {{ incomplete_test_papers }} incomplete paper(s)
                                     <i class="bi bi-exclamation-diamond-fill text-danger"></i>
                                 </p>
                             {% endif %}
