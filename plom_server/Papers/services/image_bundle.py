@@ -477,7 +477,7 @@ class ImageBundleService:
             True when the question of the given paper is ready for marking, false otherwise.
 
         Raises:
-            ValueErrorr when there does not exist any question pages for
+            ValueError: when there does not exist any question pages for
                 that paper (eg when the question index is out of range).
         """
         q_pages = QuestionPage.objects.filter(
