@@ -872,7 +872,6 @@ class ScanService:
             bundle_obj.is_push_locked = True
             bundle_obj.save()
 
-    @transaction.atomic
     def push_unlock_bundle_cmd(self, bundle_name: str) -> None:
         with transaction.atomic():
             try:
