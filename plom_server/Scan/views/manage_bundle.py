@@ -252,6 +252,22 @@ class BundleLockView(ScannerRequiredView):
         return render(request, "Scan/bundle_is_locked.html", context)
 
 
+class BundlePushCollisionView(ScannerRequiredView):
+    def get(self, request: HttpResponse, *, bundle_id: int) -> HttpResponse:
+        context = self.build_context()
+        bundle = ScanService().get_bundle_from_pk(bundle_id)
+        context.update({"slug": bundle.slug})
+        return render(request, "Scan/bundle_push_collision.html", context)
+
+
+class BundlePushBadErrorView(ScannerRequiredView):
+    def get(self, request: HttpResponse, *, bundle_id: int) -> HttpResponse:
+        context = self.build_context()
+        bundle = ScanService().get_bundle_from_pk(bundle_id)
+        context.update({"slug": bundle.slug})
+        return render(request, "Scan/bundle_push_collision.html", context)
+
+
 class RecentStagedBundleRedirectView(ScannerRequiredView):
     def get(self, request: HttpResponse) -> HttpResponse:
         bundle = ScanService().get_most_recent_unpushed_bundle()

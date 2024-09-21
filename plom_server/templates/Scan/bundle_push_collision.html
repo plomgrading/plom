@@ -1,0 +1,29 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023-2024 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Bundle Page Collision
+{% endblock title %}
+{% block page_heading %}
+    Bundle Page Collision
+    <a class="btn btn-success" href="{% url 'scan_overview' %}">
+        <i class="bi bi-chevron-left"></i>
+        Return to overview
+    </a>
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="card w-50">
+        <div class="card-body">
+            <div class="card-text">
+                <div class="alert alert-warning">
+                    <p>
+                        If you are here then it is because the bundle <q>{{ slug }}</q> contains images of pages that have already been pushed.
+                    </p>
+                    <p>Please return to the main scanning overview page.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}

@@ -53,7 +53,7 @@ from ..services.util import (
     check_any_bundle_push_locked,
     check_bundle_object_is_neither_locked_nor_pushed,
 )
-from plom.plom_exceptions import PlomBundleLockedException
+from plom.plom_exceptions import PlomBundleLockedException, PlomPushCollisionException
 
 
 class ScanService:
@@ -920,6 +920,7 @@ class ScanService:
             ValueError: When the qr codes have not all been read,
             ValueError: When the bundle is not prefect (eg still has errors or unknowns),
             RuntimeError: When something very strange happens!!
+            PlomPushCollisionException: When images in the bundle collide with existing pushed images
             PlomBundleLockedException: When any bundle is push-locked, or the current one is locked/push-locked.
         """
         # check is *any* bundle is push-locked
@@ -939,6 +940,10 @@ class ScanService:
             if bundle_obj.pushed:
                 raise ValueError("Bundle has already been pushed. Cannot push again.")
 
+            if not bundle_obj.has_page_images:
+                raise ValueError(
+                    "Bundle has no page-images yet. Please wait for the upload process to finish."
+                )
             if not bundle_obj.has_qr_codes:
                 raise ValueError("QR codes are not all read - cannot push bundle.")
 
@@ -952,26 +957,30 @@ class ScanService:
             # must make sure we unlock the bundle when we are done
 
         # the bundle is valid so we can push it.
-        with transaction.atomic():
-            bundle_obj = (
-                StagingBundle.objects.select_for_update().filter(pk=bundle_obj_pk).get()
-            )
-            try:
+        try:
+            with transaction.atomic(durable=True):
+                bundle_obj = (
+                    StagingBundle.objects.select_for_update()
+                    .filter(pk=bundle_obj_pk)
+                    .get()
+                )
                 # This call can be slow.
                 ImageBundleService().upload_valid_bundle(bundle_obj, user_obj)
                 # now update the bundle and its images to say "pushed"
-                bundle_obj.stagingimage_set.update(
-                    pushed=True
-                )  # this saves the updated objects
+                bundle_obj.stagingimage_set.update(pushed=True)
                 bundle_obj.pushed = True
-                bundle_obj.save()
-            except RuntimeError as err:
-                # todo - consider capturing this error in the future
-                # so that we can display it to the user.
-                raise err
-            finally:  # make sure we unlock the bundle when we are done.
+        except PlomPushCollisionException as err:
+            raise err
+        except RuntimeError as err:
+            # This should only be for **very bad** errors
+            # todo - consider capturing this error in the future
+            # so that we can display it to the user.
+            raise err
+        finally:  # make sure we unlock the bundle when we are done.
+            with transaction.atomic():
                 bundle_obj.is_push_locked = False
                 bundle_obj.save()
+                print("Save push-locked state here")
 
     @transaction.atomic
     def push_bundle_cmd(self, bundle_name: str, username: str) -> None:

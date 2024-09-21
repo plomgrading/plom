@@ -1,0 +1,30 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023-2024 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Bundle Push Unexpected Error
+{% endblock title %}
+{% block page_heading %}
+    Bundle Push Unexpected Error
+    <a class="btn btn-success" href="{% url 'scan_overview' %}">
+        <i class="bi bi-chevron-left"></i>
+        Return to overview
+    </a>
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="card w-50">
+        <div class="card-body">
+            <div class="card-text">
+                <div class="alert alert-warning">
+                    <p>
+                        If you are here then it is because there was an unexpected error when pushing bundle <q>{{ slug }}</q>.
+                    </p>
+                    <p>Please document what has happened and report it to the developers.</p>
+                    <p>Please return to the main scanning overview page.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}

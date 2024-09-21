@@ -35,6 +35,8 @@ from ..models import (
 )
 from .paper_info import PaperInfoService
 
+from plom.plom_exceptions import PlomPushCollisionException
+
 
 class ImageBundleService:
     """Class to encapsulate all functions around validated page images and bundles."""
@@ -103,6 +105,7 @@ class ImageBundleService:
 
         Raises:
             RuntimeError
+            PlomPushCollisionException
             ValueError
             ObjectDoesNotExist
         """
@@ -122,13 +125,15 @@ class ImageBundleService:
         # Staging has checked this - but we check again here to be very sure
         collide = self.find_internal_collisions(bundle_images)
         if len(collide) > 0:
-            raise RuntimeError(f"Some pages in the staged bundle collide - {collide}")
+            raise PlomPushCollisionException(
+                f"Some pages in the staged bundle collide with each-other.", collide
+            )
 
         # Staging has not checked this - we need to do it here
         collide = self.find_external_collisions(bundle_images)
         if len(collide) > 0:
-            raise RuntimeError(
-                f"Some pages in the staged bundle collide with uploaded pages - {collide}"
+            raise PlomPushCollisionException(
+                f"Some pages in the staged bundle collide with uploaded pages.", collide
             )
 
         uploaded_bundle = Bundle(
