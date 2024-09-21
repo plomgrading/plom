@@ -1389,8 +1389,13 @@ class ScanService:
         return self.get_bundle_discard_pages_info(bundle_obj)
 
     def get_bundle_colliding_images(self, bundle_obj: StagingBundle) -> list[int]:
+        # if it has been pushed then no collisions
+        if bundle_obj.pushed:
+            return []
+
+        # look at each known-image and see if it corresponds to a
+        # paper/page that already has an image
         colliding_images = []
-        # look at each known-image and see if it has already been pushed.
         for img in (
             bundle_obj.stagingimage_set.filter(image_type=StagingImage.KNOWN)
             .prefetch_related("knownstagingimage")
