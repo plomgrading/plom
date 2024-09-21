@@ -1387,6 +1387,7 @@ class ScanService:
         return self.get_bundle_discard_pages_info(bundle_obj)
 
     def get_bundle_colliding_images(self, bundle_obj: StagingBundle) -> list[int]:
+        """Return a list of orders ("pages") in this bundle that collide with something that has been pushed."""
         # if it has been pushed then no collisions
         if bundle_obj.pushed:
             return []
