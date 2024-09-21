@@ -136,8 +136,8 @@ class ImageBundleService:
         collide = self.find_external_collisions(bundle_images)
         if len(collide) > 0:
             # just make a list of bundle-orders of the colliding images
-            collide_error_list = sorted([X[0].bundle_order for X in collide])
-            nicer_list = format_int_list_with_runs(collide_error_list)
+            collide_error_list2 = sorted([X[0].bundle_order for X in collide])
+            nicer_list = format_int_list_with_runs(collide_error_list2)
             raise PlomPushCollisionException(
                 f"Some images in the staged bundle collide with uploaded pages: {nicer_list}"
             )
