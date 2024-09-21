@@ -958,26 +958,35 @@ class ScanService:
         # the bundle is valid so we can push it.
 
         raise_this_after: Any = None
-        with transaction.atomic(durable=True):
-            bundle_obj = (
-                StagingBundle.objects.select_for_update().filter(pk=bundle_obj_pk).get()
-            )
-            try:
+        try:
+            with transaction.atomic(durable=True):
+                bundle_obj = (
+                    StagingBundle.objects.select_for_update()
+                    .filter(pk=bundle_obj_pk)
+                    .get()
+                )
                 # This call can be slow.
                 ImageBundleService().upload_valid_bundle(bundle_obj, user_obj)
                 # now update the bundle and its images to say "pushed"
                 bundle_obj.stagingimage_set.update(pushed=True)
                 bundle_obj.pushed = True
-            except PlomPushCollisionException as err:
-                raise_this_after = err
-            except RuntimeError as err:
-                # This should only be for **very bad** errors
-                raise_this_after = err
-            finally:  # make sure we unlock the bundle when we are done.
+        except PlomPushCollisionException as err:
+            raise_this_after = err
+        except RuntimeError as err:
+            # This should only be for **very bad** errors
+            raise_this_after = err
+        finally:
+            # unlock the bundle when we are done
+            with transaction.atomic():
+                bundle_obj = (
+                    StagingBundle.objects.filter(pk=bundle_obj_pk)
+                    .select_for_update()
+                    .get()
+                )
                 bundle_obj.is_push_locked = False
                 bundle_obj.save()
-        # and now after the bundle-lock is done
-        # raise any exceptions
+
+        # and now after the bundle-lock is done, raise exception that occurred
         if raise_this_after:
             raise raise_this_after
 
