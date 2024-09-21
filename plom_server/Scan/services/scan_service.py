@@ -958,7 +958,7 @@ class ScanService:
 
         # the bundle is valid so we can push it.
 
-        raise_this_after = None
+        raise_this_after: Any = None
         with transaction.atomic(durable=True):
             bundle_obj = (
                 StagingBundle.objects.select_for_update().filter(pk=bundle_obj_pk).get()
