@@ -189,10 +189,12 @@ class PlomBundleLockedException(PlomBenignException):
 
     pass
 
+
 class PlomPushCollisionException(PlomBenignException):
     """For when a the bundle being pushed collides with existing pushed images."""
 
     pass
+
 
 class PlomNoServerSupportException(PlomBenignException):
     """For when an action is not supported by the server."""
