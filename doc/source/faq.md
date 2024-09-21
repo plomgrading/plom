@@ -212,7 +212,14 @@ that mechanism.
 
 ### I messed up by double-scanning some papers and uploading and now I have collisions!
 
-You can simply delete the collisions using the Manager tool.
+If there are only collisions in your bundle, you can remove the bundle
+without pushing it.
+
+If there are some non-colliding pages in the bundle that you want to
+keep, one approach might be to find those papers in the physical
+bundle and rescan them.  The other option is to discard all the
+colliding pages, so that you can push the remaining non-colliding
+pages.
 
 
 ### I messed up by *double-printing* some papers, now I have collisions!
@@ -227,13 +234,12 @@ example, they are in two separate bundles.  (If this is not so, have
 a cry and consider sorting and rescanning?)
 
 At this point you have paper 20 "A" scanned into the system.  Now
-upload paper 20 "B" (you'll need to force with ``--collisions``).
-Paper 20 "B" is sitting in Manager -> Collisions.  (We know they
-are not interleaved).
+upload paper 20 "B".  You will not be able to push it because of the
+collisions.
 
-Next: if you have only one version, you can simply use the Manager
-tool to assign the colliding pages to Test Pages of some **unused**
-test number (assuming you have spares; if not see below).  That's it!
+Next: if you have only one version, you can discard all the pages
+then convert to known pages of some **unused**
+paper number, say 107 (assuming you have spares; if not see below).
 
 
 ### I messed up by double-printing and I'm using *multiple versions*
@@ -243,18 +249,18 @@ This is similar to the above but we cannot simply push paper number
 paper number 107 will have different versions than 20.
 
 A [future version of Plom](https://gitlab.com/plom/plom/-/issues/1745)
-will allow you to instantiate arbitrary new rows of the database using
+might allow you to instantiate arbitrary new rows of the database using
 the versions of paper number 20.  Roughly: extract the relevant
-version numbers (use `plom-create get-ver-map`) for paper 20.  Use those
-to make the brand new row, using a complete new test number: say 1020.
+version numbers for paper 20.  Use those
+to make the brand new row, using a complete new paper number: say 1020.
 
-But for now, the workaround is:
+But for now, the workaround is complicated:
   1. Clone the server from the pre-scanning state (see question
-     elsewhere), change the port.
+     elsewhere).
   2. Update the duplicated papers into the 2nd server.
   3. Have your grading team grade on both (alternatively, have them
      do most of the grading on Server 1, then download the rubrics
-	 with `plom-create` and push those rubrics to Server 2.
+	 and push those rubrics to Server 2.
 
 
 
