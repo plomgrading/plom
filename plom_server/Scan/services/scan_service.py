@@ -922,8 +922,8 @@ class ScanService:
             PlomPushCollisionException: When images in the bundle collide with existing pushed images
             PlomBundleLockedException: When any bundle is push-locked, or the current one is locked/push-locked.
         """
-        # check is *any* bundle is push-locked
-        # only allow one bundle at a time to be pushed.
+        # raises exception if *any* bundle is push-locked
+        # (only allow one bundle at a time to be pushed.)
         check_any_bundle_push_locked()
 
         # now try to grab the bundle to set lock and check stuff
