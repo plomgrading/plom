@@ -1,5 +1,5 @@
 <!--
-__copyright__ = "Copyright (C) 2019-2023 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2019-2024 Colin B. Macdonald"
 __license__ = "AGPL-3.0-or-later"
  -->
 

@@ -22,6 +22,8 @@ from plom.misc_utils import format_int_list_with_runs
 
 
 class BundleThumbnailsView(ScannerRequiredView):
+    """Handles the creation and perhaps some of the interaction with a page of thumbnails of a bundle."""
+
     def filter_bundle_pages(
         self, page_list: list[dict[str, Any]], filter_kind: str | None
     ) -> list[dict[str, Any]]:
@@ -255,6 +257,8 @@ class GetBundlePageFragmentView(ScannerRequiredView):
 
 
 class BundleLockView(ScannerRequiredView):
+    """Display an error message that a bundle is locked."""
+
     def get(self, request: HttpResponse, *, bundle_id: int) -> HttpResponse:
         context = self.build_context()
         bundle = ScanService().get_bundle_from_pk(bundle_id)
@@ -263,6 +267,8 @@ class BundleLockView(ScannerRequiredView):
 
 
 class BundlePushCollisionView(ScannerRequiredView):
+    """Display an error message that a collision was detected during push."""
+
     def get(self, request: HttpResponse, *, bundle_id: int) -> HttpResponse:
         context = self.build_context()
         bundle = ScanService().get_bundle_from_pk(bundle_id)
@@ -273,6 +279,8 @@ class BundlePushCollisionView(ScannerRequiredView):
 
 
 class BundlePushBadErrorView(ScannerRequiredView):
+    """Display an error message that something unexpected happened during push."""
+
     def get(self, request: HttpResponse, *, bundle_id: int) -> HttpResponse:
         context = self.build_context()
         bundle = ScanService().get_bundle_from_pk(bundle_id)
@@ -282,6 +290,8 @@ class BundlePushBadErrorView(ScannerRequiredView):
 
 
 class RecentStagedBundleRedirectView(ScannerRequiredView):
+    """Handle a redirection, either to the newest unpushed bundle or the overall list."""
+
     def get(self, request: HttpResponse) -> HttpResponse:
         bundle = ScanService().get_most_recent_unpushed_bundle()
         if bundle is None:
