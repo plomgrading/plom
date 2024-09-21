@@ -162,35 +162,24 @@ class AuthenticationServices:
         Returns:
             The generated password reset link as a string.
 
-        .. note::
-
-            The generated link follows the format: `http://<domain>/reset/<uid>/<token>`.
-            Because you may have proxies between your server and the client, the
-            URL can be influenced with the environment variables:
-
-               - PLOM_PUBLIC_FACING_SCHEME
-               - PLOM_PUBLIC_FACING_PORT
-               - PLOM_PUBLIC_FACING_PREFIX
-               - PLOM_HOSTNAME
+        See :method:`get_base_link` for details about how to influence this link,
         """
-        scheme = os.environ.get("PLOM_PUBLIC_FACING_SCHEME", "http")
-        # TODO: do we need a public facing hostname var too?
-        domain = os.environ.get("PLOM_HOSTNAME", get_current_site(request).domain)
-        prefix = os.environ.get("PLOM_PUBLIC_FACING_PREFIX", "")
-        if prefix and not prefix.endswith("/"):
-            prefix += "/"
-        port = os.environ.get("PLOM_PUBLIC_FACING_PORT", "")
-        if port:
-            port = ":" + port
+        baselink = self.get_base_link(default_host=get_current_site(request).domain)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
-        link = f"{scheme}://{domain}{port}/{prefix}reset/{uid}/{token}"
+        link = baselink + f"reset/{uid}/{token}"
 
         return link
 
     @staticmethod
-    def get_base_link() -> str:
+    def get_base_link(*, default_host: str = "") -> str:
         """Generate the base part of the URL to link to this server.
+
+        Keyword Args:
+            default_host: if you have a guess at the host (e.g., from a
+                request), you can pass it here.  It will be overridden
+                by the ``PLOM_HOSTNAME`` environment variable, if that is
+                defined, and defaults to "localhost" if omitted.
 
         Returns:
             A string of that looks something like "https://plom.example.com/"
@@ -212,8 +201,7 @@ class AuthenticationServices:
         """
         scheme = os.environ.get("PLOM_PUBLIC_FACING_SCHEME", "http")
         # TODO: do we need a public facing hostname var too?
-        domain = os.environ.get("PLOM_HOSTNAME", "")
-        # TODO:, get_current_site(request).domain)
+        domain = os.environ.get("PLOM_HOSTNAME", default_host)
         if not domain:
             domain = "localhost"
         prefix = os.environ.get("PLOM_PUBLIC_FACING_PREFIX", "")
