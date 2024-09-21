@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.contrib.sites.shortcuts import get_current_site
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
 from Base.base_group_views import (
@@ -18,7 +19,7 @@ from ..services import ProgressOverviewService
 
 
 class ProgressMarkHome(MarkerLeadMarkerOrManagerView):
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         context = super().build_context()
         context.update(
             {
@@ -30,7 +31,9 @@ class ProgressMarkHome(MarkerLeadMarkerOrManagerView):
 
 
 class ProgressMarkStartMarking(MarkerLeadMarkerOrManagerView):
-    def get(self, request):
+    """Display a page telling users how to get the client and get starte."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
         context = super().build_context()
         server_link = AuthenticationServices.get_base_link(
             default_host=get_current_site(request).domain
@@ -40,7 +43,7 @@ class ProgressMarkStartMarking(MarkerLeadMarkerOrManagerView):
 
 
 class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
-    def get(self, request, question, version):
+    def get(self, request: HttpRequest, *, question, version) -> HttpResponse:
         context = super().build_context()
         mss = MarkingStatsService()
         context.update(
@@ -58,7 +61,7 @@ class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
 
 
 class ProgressMarkDetailsView(LeadMarkerOrManagerView):
-    def get(self, request, question, version):
+    def get(self, request: HttpRequest, *, question, version) -> HttpResponse:
         context = super().build_context()
         mss = MarkingStatsService()
         stats = mss.get_basic_marking_stats(question, version=version)
@@ -102,7 +105,7 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
 
 
 class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
-    def get(self, request, question):
+    def get(self, request: HttpRequest, *, question) -> HttpResponse:
         version = 1
         context = super().build_context()
         mss = MarkingStatsService()
