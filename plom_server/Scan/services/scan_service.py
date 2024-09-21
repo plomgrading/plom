@@ -33,8 +33,8 @@ from plom.tpv_utils import (
     isValidScrapPaperCode,
 )
 
-from Papers.services import ImageBundleService
-from Papers.services import SpecificationService
+from Papers.services import ImageBundleService, SpecificationService
+from Papers.models import Image
 from Base.models import HueyTaskTracker
 from ..models import (
     StagingBundle,
@@ -957,8 +957,10 @@ class ScanService:
             # must make sure we unlock the bundle when we are done
 
         # the bundle is valid so we can push it.
-        try:
-            with transaction.atomic(durable=True):
+
+        raise_this_after = None
+        with transaction.atomic(durable=True):
+            try:
                 bundle_obj = (
                     StagingBundle.objects.select_for_update()
                     .filter(pk=bundle_obj_pk)
@@ -969,18 +971,18 @@ class ScanService:
                 # now update the bundle and its images to say "pushed"
                 bundle_obj.stagingimage_set.update(pushed=True)
                 bundle_obj.pushed = True
-        except PlomPushCollisionException as err:
-            raise err
-        except RuntimeError as err:
-            # This should only be for **very bad** errors
-            # todo - consider capturing this error in the future
-            # so that we can display it to the user.
-            raise err
-        finally:  # make sure we unlock the bundle when we are done.
-            with transaction.atomic():
+            except PlomPushCollisionException as err:
+                raise_this_after = err
+            except RuntimeError as err:
+                # This should only be for **very bad** errors
+                raise_this_after = err
+            finally:  # make sure we unlock the bundle when we are done.
                 bundle_obj.is_push_locked = False
                 bundle_obj.save()
-                print("Save push-locked state here")
+        # and now after the bundle-lock is done
+        # raise any exceptions
+        if raise_this_after:
+            raise raise_this_after from None
 
     @transaction.atomic
     def push_bundle_cmd(self, bundle_name: str, username: str) -> None:
@@ -1385,6 +1387,22 @@ class ScanService:
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
         return self.get_bundle_discard_pages_info(bundle_obj)
+
+    def get_bundle_colliding_images(self, bundle_obj: StagingBundle) -> list[int]:
+        colliding_images = []
+        # look at each known-image and see if it has already been pushed.
+        for img in (
+            bundle_obj.stagingimage_set.filter(image_type=StagingImage.KNOWN)
+            .prefetch_related("knownstagingimage")
+            .order_by("bundle_order")
+        ):
+            known = img.knownstagingimage
+            if Image.objects.filter(
+                fixedpage__paper__paper_number=known.paper_number,
+                fixedpage__page_number=known.page_number,
+            ).exists():
+                colliding_images.append(img.bundle_order)
+        return sorted(colliding_images)
 
 
 # ----------------------------------------

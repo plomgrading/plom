@@ -8,6 +8,7 @@
 from django.http import HttpResponse
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 from django.urls import reverse
+from django.contrib import messages
 
 from Base.base_group_views import ScannerRequiredView
 
@@ -24,19 +25,23 @@ class PushAllPageImages(ScannerRequiredView):
     def post(self, request: HttpResponse, *, bundle_id: int) -> HttpResponse:
         try:
             ScanService().push_bundle_to_server(bundle_id, request.user)
-        except PlomBundleLockedException:
+        except ValueError as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
-        except PlomBundleLockedException:
+        except PlomBundleLockedException as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
-        except PlomPushCollisionException:
+        except PlomPushCollisionException as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_push_collision", args=[bundle_id])
             )
-        except RuntimeError:
+        except RuntimeError as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_push_error", args=[bundle_id])
             )

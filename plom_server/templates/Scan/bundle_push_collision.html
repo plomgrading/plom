@@ -8,10 +8,12 @@
 {% endblock title %}
 {% block page_heading %}
     Bundle Page Collision
-    <a class="btn btn-success" href="{% url 'scan_overview' %}">
+    <a class="btn btn-success" href="{% url 'scan_list_staged' %}">
         <i class="bi bi-chevron-left"></i>
-        Return to overview
+        Staged bundles
     </a>
+    <a class="btn btn-primary"
+       href="{% url 'scan_bundle_thumbnails' 'all' bundle_id %}">View bundle</a>
 {% endblock page_heading %}
 {% block main_content %}
     <div class="card w-50">
@@ -21,7 +23,14 @@
                     <p>
                         If you are here then it is because the bundle <q>{{ slug }}</q> contains images of pages that have already been pushed.
                     </p>
-                    <p>Please return to the main scanning overview page.</p>
+                    <p>
+                        Please return to the staged bundle overview page, or to the thumbnail view of this bundle to see the collision list
+                    </p>
+                </div>
+                <div class="card-text">
+                    <ul>
+                        {% for msg in reasons %}<li>{{ msg }}</li>{% endfor %}
+                    </ul>
                 </div>
             </div>
         </div>

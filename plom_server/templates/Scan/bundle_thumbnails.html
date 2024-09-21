@@ -35,7 +35,10 @@
                         <i class="bi bi-check-square text-success"></i>
                         Pushed bundle
                     {% else %}
-                        {% if not finished_reading_qr %}
+                        {% if not has_page_images %}
+                            <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                            Unprocessed bundle
+                        {% elif not finished_reading_qr %}
                             <i class="bi bi-exclamation-diamond-fill text-warning"></i>
                             Unread bundle
                         {% else %}
@@ -43,11 +46,13 @@
                         {% endif %}
                     {% endif %}
                     &ensp; <q>{{ slug }}</q>
-                    {% if is_perfect and not is_pushed %}
-                        {% if n_incomplete == 0 %}
+                    {% if has_page_images and finished_reading_qr and is_perfect and not is_pushed %}
+                        {% if n_collisions %}
+                            &ensp; contains {{ n_collisions }} colliding page images
+                        {% elif n_incomplete == 0 %}
                             <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
                             <!-- note that the midPush variable is defined in the parent html file which includes this html file -->
-                            &ensp; is problem free -
+                            &ensp; has no pages requiring attentions -
                             <button class="btn btn-success"
                                     hx-confirm="Please confirm that you want to push this bundle."
                                     hx-post="{% url 'scan_push_all' bundle_id %}"
@@ -98,6 +103,22 @@
                                hx-delete="{% url 'scan_get_staged_bundle_fragment' bundle_id %}"
                                hx-confirm="Are you sure?">Remove bundle</a>
                         </details>
+                    </div>
+                {% endif %}
+                {% if n_collisions %}
+                    <div class="alert alert-danger">
+                        <h5>This bundle contains scans of pages that have already been pushed</h5>
+                        <p>Images: {{ colliding_images_nice_format }}</p>
+                        <p>
+                            Generally this indicates either
+                            <ul>
+                                <li>
+                                    You are midway through replacing some poorly scanned papers. You should <q>discard</q> the existing pushed poorly scanned pages and then return here.
+                                </li>
+                                <li>You have accidentally scanned papers twice &mdash; this is not a problem, simply delete this bundle</li>
+                                <li>You have accidentally re-used papers &mdash; this is a substantial problem!</li>
+                            </ul>
+                        </p>
                     </div>
                 {% endif %}
                 <p>

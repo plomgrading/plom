@@ -192,10 +192,6 @@ class PlomBundleLockedException(PlomBenignException):
 class PlomPushCollisionException(PlomBenignException):
     """For when a the bundle being pushed collides with existing pushed images."""
 
-    def __init__(self,message,collision_list):
-        super().__init__(message)
-        self.collision_list = collision_list
-
     pass
 
 class PlomNoServerSupportException(PlomBenignException):

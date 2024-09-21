@@ -36,6 +36,7 @@ from ..models import (
 from .paper_info import PaperInfoService
 
 from plom.plom_exceptions import PlomPushCollisionException
+from plom.misc_utils import format_int_list_with_runs
 
 
 class ImageBundleService:
@@ -125,15 +126,20 @@ class ImageBundleService:
         # Staging has checked this - but we check again here to be very sure
         collide = self.find_internal_collisions(bundle_images)
         if len(collide) > 0:
+            # just make a list of bundle-orders of the colliding images
+            collide_error_list = [[Y.bundle_order for Y in X] for X in collide]
             raise PlomPushCollisionException(
-                f"Some pages in the staged bundle collide with each-other.", collide
+                f"Some images within the staged bundle collide with each-other: {collide_error_list}"
             )
 
         # Staging has not checked this - we need to do it here
         collide = self.find_external_collisions(bundle_images)
         if len(collide) > 0:
+            # just make a list of bundle-orders of the colliding images
+            collide_error_list = sorted([X[0].bundle_order for X in collide])
+            nicer_list = format_int_list_with_runs(collide_error_list)
             raise PlomPushCollisionException(
-                f"Some pages in the staged bundle collide with uploaded pages.", collide
+                f"Some images in the staged bundle collide with uploaded pages: {nicer_list}"
             )
 
         uploaded_bundle = Bundle(
@@ -345,7 +351,7 @@ class ImageBundleService:
             staged_imgs: QuerySet, a list of all staged images for a bundle
 
         Returns:
-            list [(StagingImage, Image)]: list of unordered collisions.
+            list [(StagingImage, Image, paper_number, page_number)]: list of unordered collisions.
         """
         collisions = []
         # note that only known images can cause collisions
@@ -471,7 +477,7 @@ class ImageBundleService:
             True when the question of the given paper is ready for marking, false otherwise.
 
         Raises:
-            ValueError: when there does not exist any question pages for
+            ValueErrorr when there does not exist any question pages for
                 that paper (eg when the question index is out of range).
         """
         q_pages = QuestionPage.objects.filter(

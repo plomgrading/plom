@@ -340,7 +340,7 @@ LOGGING: dict[str, Any] = {
 # When hunting down n-plus-1 query problems make use of the nplusone package
 # https://github.com/jmcarp/nplusone
 
-hunting_n_plus_one = False
+hunting_n_plus_one = True
 
 if hunting_n_plus_one:
     INSTALLED_APPS.append("nplusone.ext.django")
