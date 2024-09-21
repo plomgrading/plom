@@ -982,7 +982,7 @@ class ScanService:
         # and now after the bundle-lock is done
         # raise any exceptions
         if raise_this_after:
-            raise raise_this_after from None
+            raise raise_this_after
 
     @transaction.atomic
     def push_bundle_cmd(self, bundle_name: str, username: str) -> None:
