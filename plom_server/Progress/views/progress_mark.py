@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
+from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import render
 
 from Base.base_group_views import (
@@ -31,11 +32,10 @@ class ProgressMarkHome(MarkerLeadMarkerOrManagerView):
 class ProgressMarkStartMarking(MarkerLeadMarkerOrManagerView):
     def get(self, request):
         context = super().build_context()
-        context.update(
-            {
-                "server_link": AuthenticationServices.get_base_link(),
-            }
+        server_link = AuthenticationServices.get_base_link(
+            default_host=get_current_site(request).domain
         )
+        context.update({"server_link": server_link})
         return render(request, "Progress/Mark/mark_papers.html", context)
 
 
