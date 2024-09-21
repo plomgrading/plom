@@ -960,12 +960,10 @@ class ScanService:
 
         raise_this_after = None
         with transaction.atomic(durable=True):
+            bundle_obj = (
+                StagingBundle.objects.select_for_update().filter(pk=bundle_obj_pk).get()
+            )
             try:
-                bundle_obj = (
-                    StagingBundle.objects.select_for_update()
-                    .filter(pk=bundle_obj_pk)
-                    .get()
-                )
                 # This call can be slow.
                 ImageBundleService().upload_valid_bundle(bundle_obj, user_obj)
                 # now update the bundle and its images to say "pushed"
