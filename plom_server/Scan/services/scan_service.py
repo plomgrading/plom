@@ -982,7 +982,6 @@ class ScanService:
         if raise_this_after:
             raise raise_this_after
 
-    @transaction.atomic
     def push_bundle_cmd(self, bundle_name: str, username: str) -> None:
         """Wrapper around push_bundle_to_server().
 
