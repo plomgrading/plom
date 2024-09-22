@@ -162,9 +162,34 @@ class AuthenticationServices:
         Returns:
             The generated password reset link as a string.
 
+        See :method:`get_base_link` for details about how to influence this link,
+        """
+        baselink = self.get_base_link(default_host=get_current_site(request).domain)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        link = baselink + f"reset/{uid}/{token}"
+
+        return link
+
+    @staticmethod
+    def get_base_link(*, default_host: str = "") -> str:
+        """Generate the base part of the URL to link to this server.
+
+        Keyword Args:
+            default_host: if you have a guess at the host (e.g., from a
+                request), you can pass it here.  It will be overridden
+                by the ``PLOM_HOSTNAME`` environment variable, if that is
+                defined, and defaults to "localhost" if omitted.
+
+        Returns:
+            A string of with a http or https URL.  It will always
+            end with a trailing slash.
+
         .. note::
 
-            The generated link follows the format: `http://<domain>/reset/<uid>/<token>`.
+            The generated link follows the format:
+            `<scheme>://<domain>:<port>/<prefix>/` or
+            `<scheme>://<domain>:<port>/`.
             Because you may have proxies between your server and the client, the
             URL can be influenced with the environment variables:
 
@@ -175,15 +200,13 @@ class AuthenticationServices:
         """
         scheme = os.environ.get("PLOM_PUBLIC_FACING_SCHEME", "http")
         # TODO: do we need a public facing hostname var too?
-        domain = os.environ.get("PLOM_HOSTNAME", get_current_site(request).domain)
+        domain = os.environ.get("PLOM_HOSTNAME", default_host)
+        if not domain:
+            domain = "localhost"
         prefix = os.environ.get("PLOM_PUBLIC_FACING_PREFIX", "")
         if prefix and not prefix.endswith("/"):
             prefix += "/"
         port = os.environ.get("PLOM_PUBLIC_FACING_PORT", "")
         if port:
             port = ":" + port
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        token = default_token_generator.make_token(user)
-        link = f"{scheme}://{domain}{port}/{prefix}reset/{uid}/{token}"
-
-        return link
+        return f"{scheme}://{domain}{port}/{prefix}"

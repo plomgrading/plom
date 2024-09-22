@@ -16,6 +16,7 @@ from .views import (
     ProgressMarkingTaskFilterView,
     ProgressMarkingTaskDetailsView,
     ProgressNewestMarkingTaskDetailsView,
+    ProgressMarkStartMarking,
     AnnotationImageWrapView,
     AnnotationImageView,
     MarkingTaskTagView,
@@ -42,6 +43,11 @@ urlpatterns = [
         "mark/overview/",
         ProgressMarkHome.as_view(),
         name="progress_mark_home",
+    ),
+    path(
+        "mark/start/",
+        ProgressMarkStartMarking.as_view(),
+        name="mark_papers",
     ),
     path(
         "mark/stats/<int:question>/<int:version>",
