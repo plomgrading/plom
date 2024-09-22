@@ -627,6 +627,8 @@ def run_finishing_commands(*, stop_after=None, solutions=True) -> bool:
     print("Reassembling all marked papers.")
     run_django_manage_command("plom_reassemble")
     run_django_manage_command("plom_reassemble --wait")
+    # if errors, status has non-zero return code, raising an exception
+    run_django_manage_command("plom_reassemble --status")
     if solutions:
         print("Constructing individual solution pdfs for students.")
         run_django_manage_command("plom_build_all_soln")

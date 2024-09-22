@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from pathlib import Path
+import sys
 
 from tabulate import tabulate
 from time import sleep
@@ -30,7 +31,11 @@ class Command(BaseCommand):
         parser.add_argument(
             "--status",
             action="store_true",
-            help="Show status of all papers w.r.t. reassembly",
+            help="""
+                Show status of all papers w.r.t. reassembly.
+                If any errors have occurred, exit with non-zero
+                status.
+            """,
         )
         # TODO: document that this is some local build, different
         # from the online list.  E.g., Chores and Huey are not used.
@@ -99,16 +104,21 @@ class Command(BaseCommand):
             for chunk in zipper:
                 fh.write(chunk)
 
-    def show_status(self):
+    def show_status(self) -> bool:
+        any_errors = False
         reas = ReassembleService()
         tab = reas.get_all_paper_status_for_reassembly()
         for row in tab:
             # keep the humanized ones
             row.pop("last_update")
             row.pop("reassembled_time")
+            if row["reassembled_status"] == "Error":
+                any_errors = True
         self.stdout.write(tabulate(tab, headers="keys", tablefmt="simple_outline"))
+        self.stdout.write("One or more reassembly tasks has failed!")
+        return any_errors
 
-    def wait_for_chores(self):
+    def wait_for_chores(self) -> None:
         reas = ReassembleService()
         while True:
             mid_reassembly = reas.how_many_papers_are_mid_reassembly()
@@ -135,7 +145,11 @@ class Command(BaseCommand):
         test_num = options["testnum"]
         zip_path = options["zip"]
         if options["status"]:
-            self.show_status()
+            r = self.show_status()
+            if r:
+                # TODO: not sure if proper: only thing I found about return codes
+                # is this WONTFIX bug https://code.djangoproject.com/ticket/25419
+                sys.exit(1)
         if options["wait"]:
             self.wait_for_chores()
         elif options["delete_all"]:
