@@ -115,7 +115,8 @@ class Command(BaseCommand):
             if row["reassembled_status"] == "Error":
                 any_errors = True
         self.stdout.write(tabulate(tab, headers="keys", tablefmt="simple_outline"))
-        self.stdout.write("One or more reassembly tasks has failed!")
+        if any_errors:
+            self.stdout.write("One or more reassembly tasks has failed!")
         return any_errors
 
     def wait_for_chores(self) -> None:
