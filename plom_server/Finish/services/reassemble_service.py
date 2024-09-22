@@ -729,7 +729,6 @@ def huey_reassemble_paper(
         save_path = ReassembleService().reassemble_paper(
             paper_obj, outdir=Path(tempdir)
         )
-        raise NotImplementedError("OMG, is anyone watching for exceptions?")
         report_data = BuildStudentReportService().build_one_report(paper_number)
         # save the report data to file in tempdir - TODO can we do this all in memory?
         report_path = Path(tempdir) / report_data["filename"]
