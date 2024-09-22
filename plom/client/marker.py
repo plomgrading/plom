@@ -1133,6 +1133,7 @@ class MarkerClient(QWidget):
             # mismatch b/w server status and how we represent claimed tasks locally
             if status.casefold() == "out" and username == our_username:
                 status = "untouched"
+
             try:
                 self.examModel.add_task(
                     task_id_str,
@@ -1161,10 +1162,28 @@ class MarkerClient(QWidget):
                     )
                     continue
                 # If it is our task, be careful b/c we don't want to stomp local state
-                # such as downloaded images, in-progress uploads etc.
-                # Currently we just keep the local state but this may not be correct
-                # if server has changed something.  TODO: use the integrity_check
-                # print(f"keeping local copy for {task_id_str}:\n\t{t}")
+                # especially during in-progress uploads or things we might want to retry
+                local_status = self.examModel.getStatusByTask(task_id_str).casefold()
+                # TODO: what about "deferred"?
+                if local_status in ("uploading...", "failed upload"):
+                    log.info(
+                        'Refreshing but task %s has status "%s": not touching local data',
+                        task_id_str,
+                        local_status,
+                    )
+                    # TODO: even for those, we should probably update the tags
+                    continue
+                # TODO: for the others, we should try to avoid invalidating the local cache,
+                # can we use the integrity_check?
+                self.examModel.modify_task(
+                    task_id_str,
+                    src_img_data=[],
+                    mark=mark,
+                    marking_time=t.get("marking_time", 0.0),
+                    status=status,
+                    tags=t["tags"],
+                    username=username,
+                )
         return True
 
     def reassign_task(self):
