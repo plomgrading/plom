@@ -150,7 +150,7 @@ class Command(BaseCommand):
                 # TODO: not sure if proper: only thing I found about return codes
                 # is this WONTFIX bug https://code.djangoproject.com/ticket/25419
                 sys.exit(1)
-        if options["wait"]:
+        elif options["wait"]:
             self.wait_for_chores()
         elif options["delete_all"]:
             self.delete_all_chores()
