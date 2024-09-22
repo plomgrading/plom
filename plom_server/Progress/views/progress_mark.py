@@ -31,9 +31,10 @@ class ProgressMarkHome(MarkerLeadMarkerOrManagerView):
 
 
 class ProgressMarkStartMarking(MarkerLeadMarkerOrManagerView):
-    """Display a page telling users how to get the client and get starte."""
+    """Display a page telling users how to get the client and get started."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """Respond to Get method requests to the Mark Papers page."""
         context = super().build_context()
         server_link = AuthenticationServices.get_base_link(
             default_host=get_current_site(request).domain

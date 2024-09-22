@@ -182,8 +182,7 @@ class AuthenticationServices:
                 defined, and defaults to "localhost" if omitted.
 
         Returns:
-            A string of that looks something like "https://plom.example.com/"
-            or "http://my.example.com/prefix/stuff/".  It will always
+            A string of with a http or https URL.  It will always
             end with a trailing slash.
 
         .. note::
