@@ -27,6 +27,8 @@ class PushAllPageImages(ScannerRequiredView):
             ScanService().push_bundle_to_server(bundle_id, request.user)
         except ValueError as err:
             messages.add_message(request, messages.ERROR, f"{err}")
+            # TODO: in future, we might want to disambig ValueError from
+            # LockedException which are currently using the same error page
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
