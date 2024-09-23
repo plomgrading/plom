@@ -115,7 +115,10 @@ class MmodifyRubric(APIView):
         rs = RubricService()
         try:
             rubric_as_dict = rs.modify_rubric(
-                rid, request.data["rubric"], modifying_user=request.user
+                rid,
+                request.data["rubric"],
+                modifying_user=request.user,
+                tag_tasks=False,
             )
             # TODO: use a serializer to get automatic conversion from Rubric object?
             return Response(rubric_as_dict, status=status.HTTP_200_OK)

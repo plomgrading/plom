@@ -452,40 +452,33 @@ class MarkingTaskService:
         task = MarkingTask.objects.get(pk=task_pk)
         return [(tag.pk, tag.text) for tag in task.markingtasktag_set.all()]
 
-    def sanitize_tag_text(self, tag_text):
-        """Return a sanitized text from client input. Currently only entails a call to tag_text.strip().
+    @transaction.atomic
+    def get_or_create_tag(self, user: User, tag_text: str) -> MarkingTaskTag:
+        """Get an existing tag, or create if necessary, based on the given text.
 
         Args:
-            tag_text: str, text that has come from a client request.
+            user: the user creating/attaching the tag.
+            tag_text: the text of the tag.
 
         Returns:
-            str: sanitized version of the text.
-        """
-        return tag_text.strip()
-
-    def create_tag(self, user: User, tag_text: str) -> MarkingTaskTag:
-        """Create a new tag that can be associated with marking task.
-
-        Args:
-            user: reference to a User instance
-            tag_text: str, the proposed text content of a tag.
-                Assumes this input text has already been sanitized.
-
-        Returns:
-            MarkingTaskTag: reference to the newly created tag
+            MarkingTaskTag: reference to the tag
 
         Raises:
-            ValidationError: tag contains invalid characters.
+            ValidationError: if the tag text is not legal.
         """
         if not is_valid_tag_text(tag_text):
             raise ValidationError(
                 f'Invalid tag text: "{tag_text}"; contains disallowed characters'
             )
-        new_tag = MarkingTaskTag.objects.create(user=user, text=tag_text)
-        return new_tag
+        try:
+            tag_obj = MarkingTaskTag.objects.get(text=tag_text)
+        except MarkingTaskTag.DoesNotExist:
+            # no such tag exists, so create one
+            tag_obj = MarkingTaskTag.objects.create(user=user, text=tag_text)
+        return tag_obj
 
     def _add_tag(self, tag: MarkingTaskTag, task: MarkingTask) -> None:
-        """Add a tag to a marking task. Assumes the input text has already been sanitized.
+        """Add an existing tag to an existing marking task.
 
         Also assumes appropriate select_for_update's have been done although
         from glancing at the code I doubt that's true.
@@ -530,9 +523,8 @@ class MarkingTaskService:
         text_tags = MarkingTaskTag.objects.filter(text=text)
         if not text_tags.exists():
             return None
-        # Assuming the queryset will always have a length of one
         # grab its PK so we can get the tag with select_for_update
-        tag_pk = text_tags.first().pk
+        tag_pk = text_tags.get().pk
         return MarkingTaskTag.objects.select_for_update().get(pk=tag_pk)
 
     @transaction.atomic
@@ -555,9 +547,7 @@ class MarkingTaskService:
             ValidationError: invalid tag text
         """
         the_task = self.get_task_from_code(code)
-        the_tag = self._get_tag_from_text_for_update(tag_text)
-        if not the_tag:
-            the_tag = self.create_tag(user, tag_text)
+        the_tag = self.get_or_create_tag(user, tag_text)
         self._add_tag(the_tag, the_task)
 
     @transaction.atomic
@@ -671,12 +661,13 @@ class MarkingTaskService:
     def create_tag_and_attach_to_task(
         self, user: User, task_pk: int, tag_text: str
     ) -> None:
-        """Create a tag with given text and attach to given task.
+        """Tag a task with the given text, creating the new tag if necessary.
 
         Args:
             user: the user creating/attaching the tag.
             task_pk: the pk of the markingtask.
             tag_text: the text of the tag being created/attached.
+                If a tag with this text already exists, we'll use it.
 
         Returns:
             None
@@ -684,13 +675,7 @@ class MarkingTaskService:
         Raises:
             ValidationError: if the tag text is not legal.
         """
-        # clean up the text and see if such a tag already exists
-        cleaned_tag_text = self.sanitize_tag_text(tag_text)
-        tag_obj = self._get_tag_from_text_for_update(cleaned_tag_text)
-        if tag_obj is None:  # no such tag exists, so create one
-            # note - will raise validationerror if tag_text not legal
-            tag_obj = self.create_tag(user, cleaned_tag_text)
-        # finally - attach it.
+        tag_obj = self.get_or_create_tag(user, tag_text)
         self.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
 
     @transaction.atomic
