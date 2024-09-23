@@ -48,8 +48,8 @@ class AuthenticationServices:
             username_number += 1
             try:
                 username = self.create_user_and_add_to_group(
-                    username=basename + str(username_number),
-                    group_name=group_name,
+                    basename + str(username_number),
+                    group_name,
                 )
                 user_list.append(username)
             except IntegrityError:
@@ -57,9 +57,10 @@ class AuthenticationServices:
 
         return user_list
 
+    @staticmethod
     @transaction.atomic
     def create_user_and_add_to_group(
-        self, username: str, group_name: str, *, email: str | None = None
+        username: str, group_name: str, *, email: str | None = None
     ) -> str:
         """Create a user and add them to a group.
 
@@ -78,15 +79,59 @@ class AuthenticationServices:
         Raises:
             ObjectDoesNotExist: no such group.
         """
-        group = Group.objects.get(name=group_name)
+        if group_name == "manager":
+            # special case, maybe should call create_manager_user instead
+            groups = [
+                Group.objects.get(name=group_name),
+                Group.objects.get(name="scanner"),
+            ]
+        else:
+            groups = [Group.objects.get(name=group_name)]
         User.objects.create_user(
             username=username, email=email, password=None
-        ).groups.add(group)
+        ).groups.add(*groups)
         user = User.objects.get(username=username)
         user.is_active = False
         user.save()
 
         return user.username
+
+    @staticmethod
+    def create_manager_user(
+        username: str, *, password: str | None = None, email: str | None = None
+    ) -> None:
+        """Create a manager user.
+
+        Args:
+            username: the account username for this manager.
+
+        Keywords:
+            password: if omitted, the user will be inactive.
+            email: optionally, an email contact address.
+
+        Note: If a password is supplied, the user will be set active.
+        """
+        with transaction.atomic(durable=True):
+            try:
+                manager_group = Group.objects.get(name="manager")
+            except Group.DoesNotExist:
+                raise ValueError(
+                    "Cannot create manager-user: manager-group has not been created."
+                ) from None
+            try:
+                scanner_group = Group.objects.get(name="scanner")
+            except Group.DoesNotExist:
+                raise ValueError(
+                    "Cannot create manager-user: scanner-group has not been created."
+                ) from None
+
+            manager = User.objects.create_user(
+                username=username, email=email, password=password
+            )
+            if not password:
+                manager.is_active = False
+            manager.groups.add(manager_group, scanner_group)
+            manager.save()
 
     def generate_list_of_funky_usernames(
         self, group_name: str, num_users: int
@@ -126,9 +171,7 @@ class AuthenticationServices:
                 username=new_username, group_name=group_name
             )
         else:
-            user = self.create_user_and_add_to_group(
-                username=username, group_name=group_name
-            )
+            user = self.create_user_and_add_to_group(username, group_name)
             return user
 
     @transaction.atomic

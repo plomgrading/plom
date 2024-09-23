@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Brennen Chiu]
+# Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Colin B. Macdonald
 
 from django.shortcuts import render
 
@@ -24,8 +25,8 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
             user_email = form.cleaned_data.get("email")
             user_type = form.cleaned_data.get("user_types")
 
-            created_username = AuthenticationServices().create_user_and_add_to_group(
-                username=username, group_name=user_type, email=user_email
+            created_username = AuthenticationServices.create_user_and_add_to_group(
+                username, group_name=user_type, email=user_email
             )
             usernames_list = list(created_username.split(" "))
             password_reset_links = (
