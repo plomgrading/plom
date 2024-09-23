@@ -9,11 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* A new page tells markers what to do next when they login the web site.
 
 ### Changed
+* Collisions in a bundle with papers already pushed are reported in the thumbnail view.
 
 ### Fixed
-
+* Certain push failures could leave the bundle locked, preventing any other bundles from being pushed.
+* Fix error reporting when collisions occurring during push.
+* All manager accounts are now members of the scanner group.
+* Fix reassembly when using older versions of the Weasyprint library.
+* Misc fixes and documentations updates.
 
 
 ## [0.16.2] - 2024-09-17
