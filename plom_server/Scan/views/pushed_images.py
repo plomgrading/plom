@@ -104,7 +104,11 @@ class SubstituteImageWrapView(ScannerLeadMarkerOrManagerView):
             ForgiveMissingService.forgive_missing_fixed_page(request.user, paper, page)
         except (ObjectDoesNotExist, ValueError) as err:
             messages.add_message(request, messages.ERROR, f"{err}")
+            # TODO: Issue #3591: who is consuming these messages?  Seems not the GET above
+            # TODO: while addresses that, perhaps this post's docstring can say if this is
             return HttpResponseClientRefresh()
+        # TODO: can we improve the below comment with what "the page" is?  Does it refer to
+        # the "get" about 20 lines above here?
         # if everything succeeds then refresh the page.
         return HttpResponseClientRefresh()
 
