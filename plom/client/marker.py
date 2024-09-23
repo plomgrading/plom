@@ -1175,20 +1175,25 @@ class MarkerClient(QWidget):
                     # even for those, we should update the tags
                     self.tags_changed_signal.emit(task_id_str, t["tags"])
                     continue
+
                 # TODO: for the others, we should try to avoid invalidating the local cache,
                 # can we use the integrity_check?
-                self.examModel.modify_task(
-                    task_id_str,
-                    src_img_data=[],
-                    mark=mark,
-                    marking_time=t.get("marking_time", 0.0),
-                    status=status,
-                    tags=t["tags"],
-                    username=username,
-                    integrity_check=t["integrity"],
-                )
+                # self.examModel.modify_task(
+                #     task_id_str,
+                #     src_img_data=[],
+                #     mark=mark,
+                #     marking_time=t.get("marking_time", 0.0),
+                #     status=status,
+                #     tags=t["tags"],
+                #     username=username,
+                #     integrity_check=t["integrity"],
+                # )
                 # TODO: client doesn't refresh properly when untouched have [] src img data?
                 # TODO: it takes two clicks (Issue #3592)
+
+                # TODO: for now, let's assume nothing has changed but just update the tags
+                # which will fix #3579.
+                self.tags_changed_signal.emit(task_id_str, t["tags"])
         return True
 
     def reassign_task(self):
