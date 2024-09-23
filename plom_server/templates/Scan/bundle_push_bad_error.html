@@ -25,6 +25,11 @@
                     <p>Please return to the main scanning overview page.</p>
                 </div>
             </div>
+            <div class="card-text">
+                <ul>
+                    {% for msg in reasons %}<li>{{ msg }}</li>{% endfor %}
+                </ul>
+            </div>
         </div>
     </div>
 {% endblock main_content %}

@@ -14,7 +14,7 @@
     </a>
 {% endblock page_heading %}
 {% block main_content %}
-    <div class="card w-50">
+    <div class="card w-75">
         <div class="card-body">
             <div class="card-text">
                 <div class="alert alert-warning">
@@ -31,6 +31,11 @@
                         </ul>
                     </p>
                     <p>Please return to the main scanning overview page.</p>
+                </div>
+                <div class="card-text">
+                    <ul>
+                        {% for msg in reasons %}<li>{{ msg }}</li>{% endfor %}
+                    </ul>
                 </div>
             </div>
         </div>
