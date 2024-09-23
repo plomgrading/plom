@@ -1171,7 +1171,8 @@ class MarkerClient(QWidget):
                         task_id_str,
                         local_status,
                     )
-                    # TODO: even for those, we should probably update the tags
+                    # even for those, we should update the tags
+                    self.tags_changed_signal.emit(task_id_str, t["tags"])
                     continue
                 # TODO: for the others, we should try to avoid invalidating the local cache,
                 # can we use the integrity_check?
