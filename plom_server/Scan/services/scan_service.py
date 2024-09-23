@@ -33,8 +33,8 @@ from plom.tpv_utils import (
     isValidScrapPaperCode,
 )
 
-from Papers.services import ImageBundleService
-from Papers.services import SpecificationService
+from Papers.services import ImageBundleService, SpecificationService
+from Papers.models import Image
 from Base.models import HueyTaskTracker
 from ..models import (
     StagingBundle,
@@ -53,7 +53,7 @@ from ..services.util import (
     check_any_bundle_push_locked,
     check_bundle_object_is_neither_locked_nor_pushed,
 )
-from plom.plom_exceptions import PlomBundleLockedException
+from plom.plom_exceptions import PlomBundleLockedException, PlomPushCollisionException
 
 
 class ScanService:
@@ -867,12 +867,13 @@ class ScanService:
                 )
 
             if bundle_obj.is_push_locked:
-                raise ValueError(f"Bundle '{bundle_name}' is already push-locked.")
+                raise PlomBundleLockedException(
+                    f"Bundle '{bundle_name}' is already push-locked."
+                )
 
             bundle_obj.is_push_locked = True
             bundle_obj.save()
 
-    @transaction.atomic
     def push_unlock_bundle_cmd(self, bundle_name: str) -> None:
         with transaction.atomic():
             try:
@@ -920,10 +921,11 @@ class ScanService:
             ValueError: When the qr codes have not all been read,
             ValueError: When the bundle is not prefect (eg still has errors or unknowns),
             RuntimeError: When something very strange happens!!
+            PlomPushCollisionException: When images in the bundle collide with existing pushed images
             PlomBundleLockedException: When any bundle is push-locked, or the current one is locked/push-locked.
         """
-        # check is *any* bundle is push-locked
-        # only allow one bundle at a time to be pushed.
+        # raises exception if *any* bundle is push-locked
+        # (only allow one bundle at a time to be pushed.)
         check_any_bundle_push_locked()
 
         # now try to grab the bundle to set lock and check stuff
@@ -939,6 +941,10 @@ class ScanService:
             if bundle_obj.pushed:
                 raise ValueError("Bundle has already been pushed. Cannot push again.")
 
+            if not bundle_obj.has_page_images:
+                raise ValueError(
+                    "Bundle has no page-images yet. Please wait for the upload process to finish."
+                )
             if not bundle_obj.has_qr_codes:
                 raise ValueError("QR codes are not all read - cannot push bundle.")
 
@@ -952,28 +958,41 @@ class ScanService:
             # must make sure we unlock the bundle when we are done
 
         # the bundle is valid so we can push it.
-        with transaction.atomic():
-            bundle_obj = (
-                StagingBundle.objects.select_for_update().filter(pk=bundle_obj_pk).get()
-            )
-            try:
+
+        raise_this_after: Any = None
+        try:
+            with transaction.atomic(durable=True):
+                bundle_obj = (
+                    StagingBundle.objects.select_for_update()
+                    .filter(pk=bundle_obj_pk)
+                    .get()
+                )
                 # This call can be slow.
                 ImageBundleService().upload_valid_bundle(bundle_obj, user_obj)
                 # now update the bundle and its images to say "pushed"
-                bundle_obj.stagingimage_set.update(
-                    pushed=True
-                )  # this saves the updated objects
+                bundle_obj.stagingimage_set.update(pushed=True)
                 bundle_obj.pushed = True
                 bundle_obj.save()
-            except RuntimeError as err:
-                # todo - consider capturing this error in the future
-                # so that we can display it to the user.
-                raise err
-            finally:  # make sure we unlock the bundle when we are done.
+        except PlomPushCollisionException as err:
+            raise_this_after = err
+        except RuntimeError as err:
+            # This should only be for **very bad** errors
+            raise_this_after = err
+        finally:
+            # unlock the bundle when we are done
+            with transaction.atomic():
+                bundle_obj = (
+                    StagingBundle.objects.filter(pk=bundle_obj_pk)
+                    .select_for_update()
+                    .get()
+                )
                 bundle_obj.is_push_locked = False
                 bundle_obj.save()
 
-    @transaction.atomic
+        # and now after the bundle-lock is done, raise exception that occurred
+        if raise_this_after:
+            raise raise_this_after
+
     def push_bundle_cmd(self, bundle_name: str, username: str) -> None:
         """Wrapper around push_bundle_to_server().
 
@@ -1376,6 +1395,28 @@ class ScanService:
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
         return self.get_bundle_discard_pages_info(bundle_obj)
+
+    def get_bundle_colliding_images(self, bundle_obj: StagingBundle) -> list[int]:
+        """Return a list of orders ("pages") in this bundle that collide with something that has been pushed."""
+        # if it has been pushed then no collisions
+        if bundle_obj.pushed:
+            return []
+
+        # look at each known-image and see if it corresponds to a
+        # paper/page that already has an image
+        colliding_images = []
+        for img in (
+            bundle_obj.stagingimage_set.filter(image_type=StagingImage.KNOWN)
+            .prefetch_related("knownstagingimage")
+            .order_by("bundle_order")
+        ):
+            known = img.knownstagingimage
+            if Image.objects.filter(
+                fixedpage__paper__paper_number=known.paper_number,
+                fixedpage__page_number=known.page_number,
+            ).exists():
+                colliding_images.append(img.bundle_order)
+        return sorted(colliding_images)
 
 
 # ----------------------------------------

@@ -28,6 +28,8 @@ from .manage_bundle import (
     BundleThumbnailsView,
     GetBundleThumbnailView,
     BundleLockView,
+    BundlePushCollisionView,
+    BundlePushBadErrorView,
     RecentStagedBundleRedirectView,
 )
 

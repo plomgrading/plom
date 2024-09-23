@@ -12,13 +12,18 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, Http404, FileResponse, HttpRequest
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.contrib import messages
 
 from Base.base_group_views import ScannerRequiredView
 from Papers.services import SpecificationService, PaperInfoService
 from ..services import ScanService
 
+from plom.misc_utils import format_int_list_with_runs
+
 
 class BundleThumbnailsView(ScannerRequiredView):
+    """Handles the creation and perhaps some of the interaction with a page of thumbnails of a bundle."""
+
     def filter_bundle_pages(
         self, page_list: list[dict[str, Any]], filter_kind: str | None
     ) -> list[dict[str, Any]]:
@@ -88,6 +93,7 @@ class BundleThumbnailsView(ScannerRequiredView):
         bundle_incomplete_papers_list = [
             X[0] for X in scanner.get_bundle_missing_paper_page_numbers(bundle)
         ]
+        bundle_colliding_images = scanner.get_bundle_colliding_images(bundle)
 
         filter_options = [
             {"filter_code": X[0], "filter_name": X[1]}
@@ -116,12 +122,18 @@ class BundleThumbnailsView(ScannerRequiredView):
                 "papers_pages_list": bundle_papers_pages_list,
                 "incomplete_papers_list": bundle_incomplete_papers_list,
                 "n_incomplete": len(bundle_incomplete_papers_list),
+                "colliding_image_orders": bundle_colliding_images,
+                "colliding_images_nice_format": format_int_list_with_runs(
+                    bundle_colliding_images
+                ),
+                "n_collisions": len(bundle_colliding_images),
                 "total_pages": n_pages,
                 "known_pages": known_pages,
                 "unknown_pages": unknown_pages,
                 "extra_pages": extra_pages,
                 "discard_pages": discard_pages,
                 "error_pages": error_pages,
+                "has_page_images": bundle.has_page_images,
                 "finished_reading_qr": bundle.has_qr_codes,
                 "the_filter": the_filter,
                 "filter_options": filter_options,
@@ -245,14 +257,44 @@ class GetBundlePageFragmentView(ScannerRequiredView):
 
 
 class BundleLockView(ScannerRequiredView):
+    """Display an error message that a bundle is locked."""
+
     def get(self, request: HttpResponse, *, bundle_id: int) -> HttpResponse:
         context = self.build_context()
         bundle = ScanService().get_bundle_from_pk(bundle_id)
-        context.update({"slug": bundle.slug})
+        context.update({"slug": bundle.slug, "bundle_id": bundle_id})
+        reasons = [f"{msg}" for msg in messages.get_messages(request)]
+        context.update({"reasons": reasons})
         return render(request, "Scan/bundle_is_locked.html", context)
 
 
+class BundlePushCollisionView(ScannerRequiredView):
+    """Display an error message that a collision was detected during push."""
+
+    def get(self, request: HttpResponse, *, bundle_id: int) -> HttpResponse:
+        context = self.build_context()
+        bundle = ScanService().get_bundle_from_pk(bundle_id)
+        context.update({"slug": bundle.slug, "bundle_id": bundle_id})
+        reasons = [f"{msg}" for msg in messages.get_messages(request)]
+        context.update({"reasons": reasons})
+        return render(request, "Scan/bundle_push_collision.html", context)
+
+
+class BundlePushBadErrorView(ScannerRequiredView):
+    """Display an error message that something unexpected happened during push."""
+
+    def get(self, request: HttpResponse, *, bundle_id: int) -> HttpResponse:
+        context = self.build_context()
+        bundle = ScanService().get_bundle_from_pk(bundle_id)
+        context.update({"slug": bundle.slug, "bundle_id": bundle_id})
+        reasons = [f"{msg}" for msg in messages.get_messages(request)]
+        context.update({"reasons": reasons})
+        return render(request, "Scan/bundle_push_bad_error.html", context)
+
+
 class RecentStagedBundleRedirectView(ScannerRequiredView):
+    """Handle a redirection, either to the newest unpushed bundle or the overall list."""
+
     def get(self, request: HttpResponse) -> HttpResponse:
         bundle = ScanService().get_most_recent_unpushed_bundle()
         if bundle is None:

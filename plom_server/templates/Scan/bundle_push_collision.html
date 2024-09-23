@@ -1,0 +1,38 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023-2024 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Bundle Page Collision
+{% endblock title %}
+{% block page_heading %}
+    Bundle Page Collision
+    <a class="btn btn-success" href="{% url 'scan_list_staged' %}">
+        <i class="bi bi-chevron-left"></i>
+        Staged bundles
+    </a>
+    <a class="btn btn-primary"
+       href="{% url 'scan_bundle_thumbnails' 'all' bundle_id %}">View bundle</a>
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="card w-75">
+        <div class="card-body">
+            <div class="card-text">
+                <div class="alert alert-warning">
+                    <p>
+                        If you are here then it is because the bundle <q>{{ slug }}</q> contains images of pages that have already been pushed.
+                    </p>
+                    <p>
+                        Please return to the staged bundle overview page, or to the thumbnail view of this bundle to see the collision list
+                    </p>
+                </div>
+                <div class="card-text">
+                    <ul>
+                        {% for msg in reasons %}<li>{{ msg }}</li>{% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}

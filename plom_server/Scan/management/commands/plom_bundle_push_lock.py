@@ -1,11 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
 from tabulate import tabulate
 
 from django.core.management.base import BaseCommand, CommandError
 
 from ...services import ScanService
+
+from plom.plom_exceptions import PlomBundleLockedException
 
 
 class Command(BaseCommand):
@@ -28,6 +31,8 @@ class Command(BaseCommand):
         try:
             ScanService().push_lock_bundle_cmd(bundle_name)
         except ValueError as err:
+            raise CommandError(err)
+        except PlomBundleLockedException as err:
             raise CommandError(err)
 
         self.show_lock_status()
