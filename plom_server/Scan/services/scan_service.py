@@ -867,7 +867,9 @@ class ScanService:
                 )
 
             if bundle_obj.is_push_locked:
-                raise ValueError(f"Bundle '{bundle_name}' is already push-locked.")
+                raise PlomBundleLockedException(
+                    f"Bundle '{bundle_name}' is already push-locked."
+                )
 
             bundle_obj.is_push_locked = True
             bundle_obj.save()

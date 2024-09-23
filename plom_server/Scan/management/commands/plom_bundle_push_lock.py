@@ -7,6 +7,8 @@ from django.core.management.base import BaseCommand, CommandError
 
 from ...services import ScanService
 
+from plom.plom_exceptions import PlomBundleLockedException
+
 
 class Command(BaseCommand):
     """Management command that contains several subcommands.
@@ -28,6 +30,8 @@ class Command(BaseCommand):
         try:
             ScanService().push_lock_bundle_cmd(bundle_name)
         except ValueError as err:
+            raise CommandError(err)
+        except PlomBundleLockedException as err:
             raise CommandError(err)
 
         self.show_lock_status()
