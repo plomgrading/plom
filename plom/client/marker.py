@@ -1159,6 +1159,7 @@ class MarkerClient(QWidget):
                         status=status,
                         tags=t["tags"],
                         username=username,
+                        integrity_check=t["integrity"],
                     )
                     continue
                 # If it is our task, be careful b/c we don't want to stomp local state
@@ -1184,7 +1185,10 @@ class MarkerClient(QWidget):
                     status=status,
                     tags=t["tags"],
                     username=username,
+                    integrity_check=t["integrity"],
                 )
+                # TODO: client doesn't refresh properly when untouched have [] src img data?
+                # TODO: it takes two clicks (Issue #3592)
         return True
 
     def reassign_task(self):

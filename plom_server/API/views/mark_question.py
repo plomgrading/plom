@@ -152,7 +152,7 @@ class QuestionMarkingViewSet(ViewSet):
             tags = MarkingTaskService().get_tags_for_task_pk(task.pk)
             return Response([question_data, tags, task.pk])
 
-    def mark_task(self, request: Request, code: str) -> Response:
+    def mark_task(self, request: Request, *, code: str) -> Response:
         """Accept a marker's grade and annotation for a task.
 
         Returns:

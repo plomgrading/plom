@@ -197,6 +197,9 @@ class MarkerExamModel(QStandardItemModel):
             integrity_check: something from the server, especially legacy
                 servers, generally a concat of md5sums of underlying images.
                 The server expects us to be able to give it back to them.
+                On new servers its an integer (probably in a string) which
+                the server identifies with the specific task (like the task
+                primary key).
             src_img_data: a list of dicts of md5sums, filenames and other
                 metadata of the images for the test question.
             username: who owns this task.
