@@ -970,6 +970,7 @@ class ScanService:
                 # now update the bundle and its images to say "pushed"
                 bundle_obj.stagingimage_set.update(pushed=True)
                 bundle_obj.pushed = True
+                bundle_obj.save()
         except PlomPushCollisionException as err:
             raise_this_after = err
         except RuntimeError as err:
