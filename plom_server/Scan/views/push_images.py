@@ -32,22 +32,19 @@ class PushAllPageImages(ScannerRequiredView):
             )
         except PlomBundleLockedException as err:
             messages.add_message(request, messages.ERROR, f"{err}")
-            # make sure messages are consumed by the corresponding
-            # view = BundleLockView
+            # Note: reverse gives a view; that view should consume messages
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
         except PlomPushCollisionException as err:
             messages.add_message(request, messages.ERROR, f"{err}")
-            # make sure messages are consumed by the corresponding
-            # view = BundlePushCollisionView
+            # Note: reverse gives a view; that view should consume messages
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_push_collision", args=[bundle_id])
             )
         except RuntimeError as err:
             messages.add_message(request, messages.ERROR, f"{err}")
-            # make sure messages are consumed by the corresponding
-            # view = BundlePushBadErrorView
+            # Note: reverse gives a view; that view should consume messages
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_push_error", args=[bundle_id])
             )
