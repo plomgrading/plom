@@ -3,6 +3,8 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
+from django.contrib.sites.shortcuts import get_current_site
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
 from Base.base_group_views import (
@@ -10,13 +12,14 @@ from Base.base_group_views import (
     LeadMarkerOrManagerView,
 )
 
+from Authentication.services import AuthenticationServices
 from Papers.services import SpecificationService
 from Mark.services import MarkingStatsService
 from ..services import ProgressOverviewService
 
 
 class ProgressMarkHome(MarkerLeadMarkerOrManagerView):
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         context = super().build_context()
         context.update(
             {
@@ -27,8 +30,21 @@ class ProgressMarkHome(MarkerLeadMarkerOrManagerView):
         return render(request, "Progress/Mark/mark_home.html", context)
 
 
+class ProgressMarkStartMarking(MarkerLeadMarkerOrManagerView):
+    """Display a page telling users how to get the client and get started."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        """Respond to Get method requests to the Mark Papers page."""
+        context = super().build_context()
+        server_link = AuthenticationServices.get_base_link(
+            default_host=get_current_site(request).domain
+        )
+        context.update({"server_link": server_link})
+        return render(request, "Progress/Mark/mark_papers.html", context)
+
+
 class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
-    def get(self, request, question, version):
+    def get(self, request: HttpRequest, *, question, version) -> HttpResponse:
         context = super().build_context()
         mss = MarkingStatsService()
         context.update(
@@ -46,7 +62,7 @@ class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
 
 
 class ProgressMarkDetailsView(LeadMarkerOrManagerView):
-    def get(self, request, question, version):
+    def get(self, request: HttpRequest, *, question, version) -> HttpResponse:
         context = super().build_context()
         mss = MarkingStatsService()
         stats = mss.get_basic_marking_stats(question, version=version)
@@ -90,7 +106,7 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
 
 
 class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
-    def get(self, request, question):
+    def get(self, request: HttpRequest, *, question) -> HttpResponse:
         version = 1
         context = super().build_context()
         mss = MarkingStatsService()

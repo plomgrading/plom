@@ -434,7 +434,7 @@ class TagsFromCodeView(APIView):
         """
         mts = MarkingTaskService()
         tag_text = request.data["tag_text"]
-        tag_text = mts.sanitize_tag_text(tag_text)
+        tag_text = tag_text.strip()
         user = request.user
 
         try:
@@ -467,7 +467,7 @@ class TagsFromCodeView(APIView):
         """
         mts = MarkingTaskService()
         tag_text = request.data["tag_text"]
-        tag_text = mts.sanitize_tag_text(tag_text)
+        tag_text = tag_text.strip()
 
         try:
             mts.remove_tag_text_from_task_code(tag_text, code)

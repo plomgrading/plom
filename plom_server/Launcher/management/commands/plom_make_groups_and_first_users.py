@@ -4,12 +4,12 @@
 
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandParser, CommandError
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
 from django.contrib.auth.models import User, Group
 
 from plom.aliceBob import simple_password
+from Authentication.services import AuthenticationServices
 
 
 class Command(BaseCommand):
@@ -44,30 +44,16 @@ class Command(BaseCommand):
             admin.groups.add(admin_group)
             admin.save()
 
-    def create_manager(self, username: str, password: str) -> None:
+    def create_first_manager(self, username: str, *, password: str) -> None:
         """Create a manager user."""
-        with transaction.atomic(durable=True):
-            try:
-                manager_group = Group.objects.get(name="manager")
-            except ObjectDoesNotExist:
-                raise CommandError(
-                    "Cannot create a manager-user since the manager-group has not been created."
-                )
-            try:
-                scanner_group = Group.objects.get(name="scanner")
-            except ObjectDoesNotExist:
-                raise CommandError(
-                    "Cannot create a manager-user since the scanner-group has not been created."
-                )
-
-            if User.objects.filter(groups__name="manager").exists():
-                raise CommandError(
-                    "Cannot initialize server - manager user already exists."
-                )
-
-            manager = User.objects.create_user(username=username, password=password)
-            manager.groups.add(manager_group, scanner_group)
-            manager.save()
+        if User.objects.filter(groups__name="manager").exists():
+            raise CommandError(
+                "Cannot initialize server - manager user already exists."
+            )
+        try:
+            AuthenticationServices.create_manager_user(username, password=password)
+        except ValueError as e:
+            raise CommandError(e) from None
 
     def handle(self, *args, **options):
         """Make groups and users for the plom-server."""
@@ -103,4 +89,4 @@ class Command(BaseCommand):
             self.stdout.write("^" * 40)
         else:
             manager_username, manager_password = options["manager_login"]
-        self.create_manager(username=manager_username, password=manager_password)
+        self.create_first_manager(manager_username, password=manager_password)

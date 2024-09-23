@@ -78,6 +78,9 @@
             <a class="nav-link" href="{% url 'scan_overview' %}">Scanning</a>
         </li>
     {% elif user_is_marker %}
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'mark_papers' %}">Mark papers</a>
+        </li>
         {% if user_is_lead_marker %}
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'overview_landing' %}">Progress overview</a>

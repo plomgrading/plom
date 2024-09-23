@@ -12,6 +12,8 @@ from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User, Group
 from django.db import IntegrityError
 
+from Authentication.services import AuthenticationServices
+
 
 # -m to get number of scanners and markers
 class Command(BaseCommand):
@@ -86,9 +88,9 @@ class Command(BaseCommand):
             except User.DoesNotExist:
                 pass
             try:
-                User.objects.create_user(
-                    username=username, email=email, password=password
-                ).groups.add(manager_group, scanner_group)
+                AuthenticationServices.create_manager_user(
+                    username, email=email, password=password
+                )
                 self.stdout.write(
                     f"User {username} created and added to {manager_group} group"
                 )

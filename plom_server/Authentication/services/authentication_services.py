@@ -48,8 +48,8 @@ class AuthenticationServices:
             username_number += 1
             try:
                 username = self.create_user_and_add_to_group(
-                    username=basename + str(username_number),
-                    group_name=group_name,
+                    basename + str(username_number),
+                    group_name,
                 )
                 user_list.append(username)
             except IntegrityError:
@@ -57,9 +57,10 @@ class AuthenticationServices:
 
         return user_list
 
+    @staticmethod
     @transaction.atomic
     def create_user_and_add_to_group(
-        self, username: str, group_name: str, *, email: str | None = None
+        username: str, group_name: str, *, email: str | None = None
     ) -> str:
         """Create a user and add them to a group.
 
@@ -78,15 +79,59 @@ class AuthenticationServices:
         Raises:
             ObjectDoesNotExist: no such group.
         """
-        group = Group.objects.get(name=group_name)
+        if group_name == "manager":
+            # special case, maybe should call create_manager_user instead
+            groups = [
+                Group.objects.get(name=group_name),
+                Group.objects.get(name="scanner"),
+            ]
+        else:
+            groups = [Group.objects.get(name=group_name)]
         User.objects.create_user(
             username=username, email=email, password=None
-        ).groups.add(group)
+        ).groups.add(*groups)
         user = User.objects.get(username=username)
         user.is_active = False
         user.save()
 
         return user.username
+
+    @staticmethod
+    def create_manager_user(
+        username: str, *, password: str | None = None, email: str | None = None
+    ) -> None:
+        """Create a manager user.
+
+        Args:
+            username: the account username for this manager.
+
+        Keywords:
+            password: if omitted, the user will be inactive.
+            email: optionally, an email contact address.
+
+        Note: If a password is supplied, the user will be set active.
+        """
+        with transaction.atomic(durable=True):
+            try:
+                manager_group = Group.objects.get(name="manager")
+            except Group.DoesNotExist:
+                raise ValueError(
+                    "Cannot create manager-user: manager-group has not been created."
+                ) from None
+            try:
+                scanner_group = Group.objects.get(name="scanner")
+            except Group.DoesNotExist:
+                raise ValueError(
+                    "Cannot create manager-user: scanner-group has not been created."
+                ) from None
+
+            manager = User.objects.create_user(
+                username=username, email=email, password=password
+            )
+            if not password:
+                manager.is_active = False
+            manager.groups.add(manager_group, scanner_group)
+            manager.save()
 
     def generate_list_of_funky_usernames(
         self, group_name: str, num_users: int
@@ -126,9 +171,7 @@ class AuthenticationServices:
                 username=new_username, group_name=group_name
             )
         else:
-            user = self.create_user_and_add_to_group(
-                username=username, group_name=group_name
-            )
+            user = self.create_user_and_add_to_group(username, group_name)
             return user
 
     @transaction.atomic
@@ -162,9 +205,34 @@ class AuthenticationServices:
         Returns:
             The generated password reset link as a string.
 
+        See :method:`get_base_link` for details about how to influence this link,
+        """
+        baselink = self.get_base_link(default_host=get_current_site(request).domain)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        link = baselink + f"reset/{uid}/{token}"
+
+        return link
+
+    @staticmethod
+    def get_base_link(*, default_host: str = "") -> str:
+        """Generate the base part of the URL to link to this server.
+
+        Keyword Args:
+            default_host: if you have a guess at the host (e.g., from a
+                request), you can pass it here.  It will be overridden
+                by the ``PLOM_HOSTNAME`` environment variable, if that is
+                defined, and defaults to "localhost" if omitted.
+
+        Returns:
+            A string of with a http or https URL.  It will always
+            end with a trailing slash.
+
         .. note::
 
-            The generated link follows the format: `http://<domain>/reset/<uid>/<token>`.
+            The generated link follows the format:
+            `<scheme>://<domain>:<port>/<prefix>/` or
+            `<scheme>://<domain>:<port>/`.
             Because you may have proxies between your server and the client, the
             URL can be influenced with the environment variables:
 
@@ -175,15 +243,13 @@ class AuthenticationServices:
         """
         scheme = os.environ.get("PLOM_PUBLIC_FACING_SCHEME", "http")
         # TODO: do we need a public facing hostname var too?
-        domain = os.environ.get("PLOM_HOSTNAME", get_current_site(request).domain)
+        domain = os.environ.get("PLOM_HOSTNAME", default_host)
+        if not domain:
+            domain = "localhost"
         prefix = os.environ.get("PLOM_PUBLIC_FACING_PREFIX", "")
         if prefix and not prefix.endswith("/"):
             prefix += "/"
         port = os.environ.get("PLOM_PUBLIC_FACING_PORT", "")
         if port:
             port = ":" + port
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        token = default_token_generator.make_token(user)
-        link = f"{scheme}://{domain}{port}/{prefix}reset/{uid}/{token}"
-
-        return link
+        return f"{scheme}://{domain}{port}/{prefix}"

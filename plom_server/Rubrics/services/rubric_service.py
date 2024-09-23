@@ -43,6 +43,7 @@ from plom.plom_exceptions import PlomConflict
 from Base.models import SettingsModel
 from Mark.models import Annotation
 from Mark.models.tasks import MarkingTask
+from Mark.services import MarkingTaskService
 from Papers.models import Paper
 from Papers.services import SpecificationService
 from ..serializers import RubricSerializer
@@ -184,6 +185,7 @@ class RubricService:
         new_rubric_data: dict[str, Any],
         *,
         modifying_user: User | None = None,
+        tag_tasks: bool = False,
     ) -> dict[str, Any]:
         """Modify a rubric.
 
@@ -199,6 +201,8 @@ class RubricService:
                 differ from the "owner" of the rubric, i.e., the ``username``
                 field inside the ``rubric_data``.  If you pass None (default)
                 no checking will be done (probably for internal use).
+            tag_tasks: whether to tag all tasks whose latest annotation uses
+                this rubric with ``"rubric_changed"``.
 
         Returns:
             The modified rubric data, in dict key-value format.
@@ -300,6 +304,21 @@ class RubricService:
         new_rubric.pedagogy_tags.clear()
         for tag in new_rubric_data.get("pedagogy_tags", []):
             new_rubric.pedagogy_tags.add(tag)
+
+        if tag_tasks:
+            # TODO: or do we need some "system tags" that definitely already exist?
+            any_manager = User.objects.filter(groups__name="manager").first()
+            tag = MarkingTaskService().get_or_create_tag(any_manager, "rubric_changed")
+            # find all complete annotations using older revisions of this rubric
+            tasks = MarkingTask.objects.filter(
+                status=MarkingTask.COMPLETE,
+                latest_annotation__rubric__rid=new_rubric.rid,
+                latest_annotation__rubric__revision__lt=new_rubric.revision,
+            )
+            # A loop over what is hopefully not TOO many tasks...
+            # TODO: perhaps Andrew knows how to write an efficient bulk-tagger?
+            for task in tasks:
+                MarkingTaskService()._add_tag(tag, task)
 
         rubric_obj = serializer.instance
         return _Rubric_to_dict(rubric_obj)

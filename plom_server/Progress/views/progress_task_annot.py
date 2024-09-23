@@ -285,9 +285,11 @@ class MarkingTaskTagView(LeadMarkerOrManagerView):
         if "newTagText" not in request.POST:
             return HttpResponseClientRefresh()
         try:
-            # note - this will sanitise the tag_text
+            tagtext = request.POST.get("newTagText").strip()
+            # unnecessary? used to be done lower down so leaving here for now
+            tagtext = tagtext.strip()
             MarkingTaskService().create_tag_and_attach_to_task(
-                request.user, task_pk, request.POST.get("newTagText")
+                request.user, task_pk, tagtext
             )
         except ValidationError:
             # the form *should* catch validation errors.
