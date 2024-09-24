@@ -180,10 +180,17 @@ class ScannerUploadView(ScannerRequiredView):
                 force_render=data["force_render"],
                 read_after=data["read_after"],
             )
-            brief_hash = pdf_hash[:8] + "..." + pdf_hash[:-8]
+            if len(pdf_hash) >= (12 + 12 + 3):
+                brief_hash = pdf_hash[:12] + "..." + pdf_hash[-12:]
+            else:
+                brief_hash = pdf_hash
             context.update(
                 {
-                    "success_msg": f"Uploaded {slug} with {number_of_pages} and hash {brief_hash}. The bundle is being processed in the background."
+                    "success_msg": (
+                        f"Uploaded {slug} with {number_of_pages} pages "
+                        f"and hash {brief_hash}. "
+                        "Background processing started."
+                    )
                 }
             )
         else:
