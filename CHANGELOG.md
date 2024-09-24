@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fix reassembly when using older versions of the Weasyprint library.
 * Misc fixes and documentations updates.
 
+### Removed
+* Temporarily disabled the create rubrics button in the web UI, due to confusion around system rubrics.
+
 
 ## [0.16.2] - 2024-09-17
 
