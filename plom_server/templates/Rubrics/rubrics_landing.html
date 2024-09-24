@@ -29,8 +29,17 @@
            href="{% url 'feedback_rules' %}">Feedback rules&hellip;</a>
     </div>
     <hr />
+    <div class="card w-75">
+        <div class="card-body">
+            <div class="card-text">
+                <div class="alert alert-warning">
+                    <h5>Please remember to create system rubrics before you start marking &mdash; click rubric-management</h5>
+                </div>
+            </div>
+        </div>
+    </div>
     {% comment %} Filter {% endcomment %}
-    <div class="row">
+    <div class="row my-2">
         <div class="col-10">
             <form method="get" action="" class="form-inline">
                 <div class="form-group mr-2">
@@ -46,8 +55,10 @@
                     class="btn btn-primary float-end"
                     data-bs-toggle="modal"
                     data-bs-target="#editModal"
+                    disabled
                     onclick="populateFields()">
                 <i class="bi bi-plus-circle-fill"></i> Create Rubric
+                <p>FUTURE USE</p>
             </button>
         </div>
     </div>
