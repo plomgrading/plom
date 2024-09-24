@@ -13,14 +13,13 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
-from PyQt6.QtCore import Qt, QBuffer, QByteArray, QPointF
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import QBuffer, QByteArray, QPointF, Qt, pyqtSignal
 from PyQt6.QtGui import (
     QColor,
     QKeySequence,
+    QMovie,
     QPainter,
     QPainterPath,
-    QMovie,
     QPen,
     QPixmap,
 )
@@ -29,10 +28,10 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
     QFrame,
-    QHBoxLayout,
     QGraphicsPathItem,
     QGraphicsScene,
     QGraphicsView,
+    QHBoxLayout,
     QHeaderView,
     QLabel,
     QPushButton,
@@ -45,11 +44,15 @@ from PyQt6.QtWidgets import (
 
 import plom
 import plom.client.help_img
-from .useful_classes import InfoMsg
-from .key_wrangler import KeyEditDialog
-from .key_wrangler import get_keybinding_overlay, get_key_bindings
-from .key_wrangler import get_keybindings_list, actions_with_changeable_keys
 
+from .key_wrangler import (
+    KeyEditDialog,
+    actions_with_changeable_keys,
+    get_key_bindings,
+    get_keybinding_overlay,
+    get_keybindings_list,
+)
+from .useful_classes import InfoMsg
 
 log = logging.getLogger("keybindings")
 

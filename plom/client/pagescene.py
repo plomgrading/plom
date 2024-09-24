@@ -18,16 +18,15 @@ from time import sleep
 from typing import Any
 
 import PIL.Image
-
-from PyQt6.QtCore import Qt, QEvent, QRectF, QLineF, QPointF
+from PyQt6.QtCore import QEvent, QLineF, QPointF, QRectF, Qt
 from PyQt6.QtGui import (
     QBrush,
     QColor,
     QCursor,
-    QImage,
-    QImageReader,
     QFont,
     QGuiApplication,
+    QImage,
+    QImageReader,
     QPainter,
     QPainterPath,
     QPen,
@@ -36,8 +35,12 @@ from PyQt6.QtGui import (
     QUndoStack,
 )
 from PyQt6.QtWidgets import (
+    QGraphicsColorizeEffect,
     QGraphicsEllipseItem,
+    QGraphicsItem,
+    QGraphicsItemGroup,
     QGraphicsLineItem,
+    QGraphicsOpacityEffect,
     QGraphicsPathItem,
     QGraphicsPixmapItem,
     QGraphicsRectItem,
@@ -45,13 +48,9 @@ from PyQt6.QtWidgets import (
     QGraphicsSceneDragDropEvent,
     QGraphicsTextItem,
     QGraphicsView,
-    QGraphicsItem,
-    QGraphicsItemGroup,
-    QGraphicsColorizeEffect,
-    QGraphicsOpacityEffect,
+    QMenu,
     QMessageBox,
     QToolButton,
-    QMenu,
 )
 
 from plom import ScenePixelHeight

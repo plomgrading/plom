@@ -5,11 +5,18 @@
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QGuiApplication
-from PyQt6.QtGui import QBrush, QColor, QImageReader, QPainter, QPixmap, QTransform
+from PyQt6.QtGui import (
+    QBrush,
+    QColor,
+    QGuiApplication,
+    QImageReader,
+    QPainter,
+    QPixmap,
+    QTransform,
+)
 from PyQt6.QtWidgets import (
-    QGraphicsPixmapItem,
     QGraphicsItemGroup,
+    QGraphicsPixmapItem,
     QGraphicsScene,
     QGraphicsView,
     QHBoxLayout,

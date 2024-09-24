@@ -22,13 +22,11 @@ else:
     import importlib_resources as resources
 
 # from PyQt6.QtCore import QThread
-from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot
-from PyQt6.QtCore import QThreadPool, QRunnable
+from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal, pyqtSlot
 
 from plom.messenger import Messenger, BaseMessenger
 from plom.plom_exceptions import PlomException, PlomConnectionError
 from .pagecache import PageCache
-
 
 log = logging.getLogger("Downloader")
 

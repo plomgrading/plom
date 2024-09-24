@@ -27,8 +27,8 @@ from PyQt6.QtWidgets import (
 )
 
 import plom
-from .useful_classes import WarnMsg
 
+from .useful_classes import WarnMsg
 
 log = logging.getLogger("keybindings")
 
