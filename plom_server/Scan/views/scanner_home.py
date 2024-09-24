@@ -189,7 +189,7 @@ class ScannerUploadView(ScannerRequiredView):
                     "success_msg": (
                         f"Uploaded {slug} with {number_of_pages} pages "
                         f"and hash {brief_hash}. "
-                        "The bundle is being processed in the background."
+                        "Background processing started."
                     )
                 }
             )
