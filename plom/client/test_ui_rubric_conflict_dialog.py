@@ -3,9 +3,8 @@
 
 from __future__ import annotations
 
-from pytest import raises
-
 import arrow
+from pytest import raises
 
 from .rubric_conflict_dialog import RubricConflictDialog
 

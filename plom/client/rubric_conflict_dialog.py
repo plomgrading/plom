@@ -9,8 +9,8 @@ from typing import Any
 import arrow
 from PyQt6.QtWidgets import QWidget
 
-from .useful_classes import InfoMsg
 from .rubrics import diff_rubric, render_rubric_as_html
+from .useful_classes import InfoMsg
 
 
 class RubricConflictDialog(InfoMsg):

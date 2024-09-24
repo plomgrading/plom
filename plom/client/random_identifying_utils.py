@@ -7,12 +7,12 @@
 import random
 from typing import Union
 
+from plom.messenger import Messenger
 from plom.plom_exceptions import (
     PlomConflict,
     PlomExistingLoginException,
     PlomTakenException,
 )
-from plom.messenger import Messenger
 
 
 def do_rando_identifying_backend(

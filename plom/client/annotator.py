@@ -16,10 +16,10 @@ __license__ = "AGPL-3.0-or-later"
 import html
 import json
 import logging
-from pathlib import Path
 import os
 import re
 import sys
+from pathlib import Path
 from textwrap import dedent
 from typing import Any, Dict
 

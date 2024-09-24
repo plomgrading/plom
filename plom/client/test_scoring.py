@@ -4,15 +4,16 @@
 
 from __future__ import annotations
 
-from pytest import raises
-from typing import Any
 import math
 from math import isclose
+from typing import Any
 
-from plom.plom_exceptions import PlomInconsistentRubric, PlomInvalidRubric
-from plom.client.rubrics import compute_score_naive as naive
+from pytest import raises
+
 from plom.client.rubrics import compute_score_legacy2022 as lg
 from plom.client.rubrics import compute_score_locabs as s
+from plom.client.rubrics import compute_score_naive as naive
+from plom.plom_exceptions import PlomInconsistentRubric, PlomInvalidRubric
 
 
 def test_naive_score() -> None:

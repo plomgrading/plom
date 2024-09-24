@@ -54,6 +54,7 @@ from .key_wrangler import (
 )
 from .useful_classes import InfoMsg
 
+
 log = logging.getLogger("keybindings")
 
 

@@ -3,14 +3,14 @@
 
 from __future__ import annotations
 
-from pytest import raises
 from typing import Any
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMessageBox
+from pytest import raises
 
 from plom.client.rubric_list import AddRubricBox
-from plom.client.useful_classes import WarnMsg, SimpleQuestion
+from plom.client.useful_classes import SimpleQuestion, WarnMsg
 
 
 def test_AddRubricBox_add_new(qtbot) -> None:

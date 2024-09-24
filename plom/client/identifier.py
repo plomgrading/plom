@@ -65,6 +65,7 @@ from .useful_classes import (
 )
 from .viewers import WholeTestView
 
+
 log = logging.getLogger("identr")
 
 no_style = ""

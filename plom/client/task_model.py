@@ -21,8 +21,8 @@ from PyQt6.QtCore import QModelIndex, QSortFilterProxyModel
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
 
 from plom.misc_utils import pprint_score
-from .useful_classes import _json_path_to_str
 
+from .useful_classes import _json_path_to_str
 
 log = logging.getLogger("marker")
 

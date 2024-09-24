@@ -23,9 +23,10 @@ import sys
 from stdiomask import getpass
 
 from plom import Default_Port
+
 from .random_marking_utils import (
-    do_rando_marking,
     build_random_rubrics,
+    do_rando_marking,
 )
 
 __all__ = [
