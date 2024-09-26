@@ -30,7 +30,7 @@ class LaunchProcessesService:
 
     def _huey_cleanup(self):
         # TODO: cleanup from older huey run; for now removes a hardcoded database
-        for path in Path("huey").glob("huey_db.*"):
+        for path in Path("huey").glob("hueydb*.sqlite3"):
             path.unlink(missing_ok=True)
 
     def launch_server(self, *, port):
