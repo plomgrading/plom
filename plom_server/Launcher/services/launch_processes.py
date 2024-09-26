@@ -28,17 +28,6 @@ class LaunchProcessesService:
         call_command("makemigrations")
         call_command("migrate")
 
-    def launch_huey_workers(self):
-        """Launch the huey consumers/workers for the plom-server to use."""
-        # I don't understand why, but this seems to need to be run as a sub-proc
-        # and not via call_command... maybe because it launches a bunch of background
-        # stuff?
-
-        print("Launching huey workers for background tasks")
-        for cmd in ["djangohuey --quiet"]:  # quiet huey tasks.
-            py_man_cmd = f"python3 manage.py {cmd}"
-            return subprocess.Popen(split(py_man_cmd))
-
     def _huey_cleanup(self):
         # TODO: cleanup from older huey run; for now removes a hardcoded database
         for path in Path("huey").glob("huey_db.*"):
