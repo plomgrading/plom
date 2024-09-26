@@ -198,14 +198,17 @@ def get_django_cmd_prefix() -> str:
     return "python3 manage.py"
 
 
-def launch_huey_process() -> subprocess.Popen:
+def launch_huey_process() -> List[subprocess.Popen]:
     """Launch the Huey-consumer for processing background tasks.
 
     Note that this runs the Django manage command 'djangohuey --quiet'.
     """
     print("Launching Huey.")
     # this needs to be run in the background
-    return popen_django_manage_command("djangohuey --quiet")
+    return [
+        popen_django_manage_command("djangohuey --quiet --queue tasks"),
+        popen_django_manage_command("djangohuey --quiet --queue subtasks"),
+    ]
 
 
 def launch_django_dev_server_process(*, port: int | None = None) -> subprocess.Popen:
@@ -684,7 +687,10 @@ if __name__ == "__main__":
         server_process = launch_django_dev_server_process(port=args.port)
         # both processes still running after small delay? probably working
         time.sleep(0.25)
-        r = huey_process.poll()
+        r = huey_process[0].poll()
+        if r is not None:
+            raise RuntimeError(f"Problem with Huey process: exit code {r}")
+        r = huey_process[1].poll()
         if r is not None:
             raise RuntimeError(f"Problem with Huey process: exit code {r}")
         r = server_process.poll()
@@ -731,8 +737,8 @@ if __name__ == "__main__":
     finally:
         print("v" * 50)
         print("Shutting down Huey and Django dev server")
-        if huey_process:
-            huey_process.terminate()
+        for hp in huey_process:
+            hp.terminate()
         if server_process:
             server_process.terminate()
         print("^" * 50)
