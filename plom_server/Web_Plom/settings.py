@@ -269,7 +269,7 @@ DJANGO_HUEY = {
             "immediate": False,
             "utc": True,
             "consumer": {
-                "workers": 2,
+                "workers": 16,
                 "worker_type": "process",
                 "initial_delay": 0.1,
                 "backoff": 1.15,
@@ -280,15 +280,15 @@ DJANGO_HUEY = {
                 "health_check_interval": 300,
             },
         },
-        "subtasks": {
+        "parentchores": {
             "huey_class": "huey.SqliteHuey",
-            "filename": BASE_DIR / "huey/hueydb-sub.sqlite3",
+            "filename": BASE_DIR / "huey/hueydb-parentchores.sqlite3",
             "results": True,
             "store_none": False,
             "immediate": False,
             "utc": True,
             "consumer": {
-                "workers": 16,
+                "workers": 2,
                 "worker_type": "process",
                 "initial_delay": 0.1,
                 "backoff": 1.15,

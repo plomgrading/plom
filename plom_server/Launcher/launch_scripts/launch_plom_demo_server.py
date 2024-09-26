@@ -208,7 +208,7 @@ def launch_huey_process() -> list[subprocess.Popen]:
     print("Launching Huey queues as background jobs.")
     return [
         popen_django_manage_command("djangohuey --queue tasks"),
-        popen_django_manage_command("djangohuey --queue subtasks"),
+        popen_django_manage_command("djangohuey --queue parentchores"),
     ]
 
 
