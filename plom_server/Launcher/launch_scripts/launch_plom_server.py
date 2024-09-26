@@ -69,11 +69,13 @@ def get_django_cmd_prefix() -> str:
     return "python3 manage.py"
 
 
-def launch_huey_process() -> subprocess.Popen:
+def launch_huey_process() -> list[subprocess.Popen]:
     """Launch the Huey-consumer for processing background tasks."""
-    print("Launching Huey.")
-    # this needs to be run in the background
-    return popen_django_manage_command("djangohuey")
+    print("Launching Huey queues as background jobs.")
+    return [
+        popen_django_manage_command("djangohuey --queue tasks"),
+        popen_django_manage_command("djangohuey --queue subtasks"),
+    ]
 
 
 def launch_django_dev_server_process(*, port: int | None = None) -> subprocess.Popen:
@@ -168,16 +170,17 @@ if __name__ == "__main__":
     huey_process, server_process = None, None
     try:
         print("v" * 50)
-        huey_process = launch_huey_process()
+        huey_processes = launch_huey_process()
         if args.development:
             server_process = launch_django_dev_server_process(port=args.port)
         else:
             server_process = launch_gunicorn_production_server_process(port=args.port)
-        # both processes still running after small delay? probably working
+        # processes still running after small delay? probably working
         time.sleep(0.25)
-        r = huey_process.poll()
-        if r is not None:
-            raise RuntimeError(f"Problem with Huey process: exit code {r}")
+        for hp in huey_processes:
+            r = hp.poll()
+            if r is not None:
+                raise RuntimeError(f"Problem with Huey process {hp.pid}: exit code {r}")
         r = server_process.poll()
         if r is not None:
             raise RuntimeError(f"Problem with server process: exit code {r}")
@@ -192,8 +195,8 @@ if __name__ == "__main__":
     finally:
         print("v" * 50)
         print("Shutting down Huey and Django dev server")
-        if huey_process:
-            huey_process.terminate()
+        for hp in huey_processes:
+            hp.terminate()
         if server_process:
             server_process.terminate()
         print("^" * 50)
