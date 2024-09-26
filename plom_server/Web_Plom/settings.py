@@ -269,7 +269,7 @@ DJANGO_HUEY = {
             "immediate": False,
             "utc": True,
             "consumer": {
-                "workers": 16,
+                "workers": 4,
                 "worker_type": "process",
                 "initial_delay": 0.1,
                 "backoff": 1.15,
