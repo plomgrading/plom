@@ -161,6 +161,9 @@ def run_django_manage_command(cmd) -> None:
 def popen_django_manage_command(cmd) -> subprocess.Popen:
     """Run the given Django command using a process Popen and return a handle to the process.
 
+    The stdout and stderr of the process will be merged into the
+    usual stdout and stderr.
+
     Args:
         cmd: the command to run.
 
@@ -177,6 +180,8 @@ def popen_django_manage_command(cmd) -> subprocess.Popen:
             the nature of inter-process communication.
     """
     full_cmd = get_django_cmd_prefix() + " " + cmd
+    # perhaps unnecessary?
+    # return subprocess.Popen(split(full_cmd), stdout=sys.stdout, stderr=sys.stderr)
     return subprocess.Popen(split(full_cmd))
 
 
@@ -198,16 +203,13 @@ def get_django_cmd_prefix() -> str:
     return "python3 manage.py"
 
 
-def launch_huey_process() -> List[subprocess.Popen]:
-    """Launch the Huey-consumer for processing background tasks.
-
-    Note that this runs the Django manage command 'djangohuey --quiet'.
-    """
+def launch_huey_process() -> list[subprocess.Popen]:
+    """Launch the Huey-consumer for processing background tasks."""
     print("Launching Huey.")
     # this needs to be run in the background
     return [
-        popen_django_manage_command("djangohuey --quiet --queue tasks"),
-        popen_django_manage_command("djangohuey --quiet --queue subtasks"),
+        popen_django_manage_command("djangohuey --queue tasks"),
+        popen_django_manage_command("djangohuey --queue subtasks"),
     ]
 
 
