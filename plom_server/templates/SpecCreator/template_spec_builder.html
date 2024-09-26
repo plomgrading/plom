@@ -16,7 +16,7 @@
             <a class="btn btn-primary" href="{% url 'creator_launch' %}">Return to specification page</a>
         </div>
         <div class="card"
-             x-data="{pages: {{ pages }}, questions: {{ questions }}, score: {{ score }}, shortName: '{{ shortName }}' }">
+             x-data="{pages: {{ pages }}, questions: {{ questions }}, versions: {{ versions }}, score: {{ score }}, shortName: '{{ shortName }}'}">
             <h4 class="card-header">Enter information about your assessment</h4>
             <div class="card-body">
                 <form enctype="multipart/form-data"
@@ -80,7 +80,7 @@
                                        id="versions"
                                        required
                                        min="1"
-                                       value="1"
+                                       x-model.number="versions"
                                        name="versions">
                                 <label for="versions">Number of versions</label>
                             </div>
