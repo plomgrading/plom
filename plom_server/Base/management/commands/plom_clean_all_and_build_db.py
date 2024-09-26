@@ -37,7 +37,7 @@ class Command(BaseCommand):
 
     def huey_cleanup(self):
         """Remove any existing huey db - at present is hardcoded."""
-        for path in Path("huey").glob("hueydb*.sqlite3"):
+        for path in Path("huey").glob("hueydb*.sqlite*"):
             path.unlink(missing_ok=True)
 
     def handle(self, *args, **options):
