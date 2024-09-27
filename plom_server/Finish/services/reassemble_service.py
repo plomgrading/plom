@@ -44,7 +44,7 @@ class ReassembleService:
     reassemble_dir = settings.MEDIA_ROOT / "reassemble"
 
     def get_completion_status(self) -> dict[int, tuple[bool, bool, int, datetime]]:
-        """Return a dictionary of overall test completion progress."""
+        """Return a dictionary of overall marking completion progress."""
         spreadsheet_data = {}
         papers = Paper.objects.all()
         for paper in papers:
@@ -196,17 +196,17 @@ class ReassembleService:
         return marked_pages
 
     def reassemble_paper(self, paper: Paper, *, outdir: Path | None = None) -> Path:
-        """Reassemble a single test paper.
+        """Reassemble a particular paper.
 
         Args:
             paper: Paper instance to re-assemble.
 
         Keyword Args:
-            outdir: pathlib.Path, the directory to save the test PDF
+            outdir: pathlib.Path, the directory to save the PDF
                 or a default if omitted.
 
         Returns:
-            pathlib.Path: the full path of the reassembled test PDF.
+            pathlib.Path: the full path of the reassembled PDF.
         """
         if outdir is None:
             outdir = Path("reassembled")

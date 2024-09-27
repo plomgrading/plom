@@ -8,17 +8,17 @@ from plom.plom_exceptions import PlomDependencyConflict
 # to avoid circular-dependency hell
 
 # preparation steps are
-# 1 = test-spec
+# 1 = spec
 # 2 = source pdfs
 # 3 = classlist and prenaming
 # 4 = qv-mapping and db-populate
-# 5 = build tests paper pdfs
+# 5 = build paper pdfs
 # 6 = tell plom papers are printed.
 
 # give assert raising tests followed by true/false returning functions
 
 
-# 1 the test spec depends on nothing, but sources depend on the spec
+# 1 the spec depends on nothing, but sources depend on the spec
 def assert_can_modify_spec():
     from . import PapersPrinted, SourceService
 
@@ -43,11 +43,11 @@ def assert_can_modify_sources():
         raise PlomDependencyConflict("Papers have been printed.")
     # if there is no spec, then cannot modify sources
     if not SpecificationService.is_there_a_spec():
-        raise PlomDependencyConflict("There is no test specification")
+        raise PlomDependencyConflict("There is no specification")
     # cannot modify sources if any papers have been produced
     if BuildPapersService().are_any_papers_built():
         raise PlomDependencyConflict(
-            "Test PDFs have been built - these depend on the source pdfs."
+            "Paper PDFs have been built - these depend on the source PDFs."
         )
 
 
@@ -119,7 +119,7 @@ def assert_can_modify_prenaming_config():
 
     # cannot configure prenaming if papers built
     if BuildPapersService().are_any_papers_built():
-        raise PlomDependencyConflict("Test PDFs have been built.")
+        raise PlomDependencyConflict("Paper PDFs have been built.")
 
     # cannot configure prenaming without version 1 source PDF
     # TODO: update when ID pages are versioned, see #3390
@@ -128,7 +128,7 @@ def assert_can_modify_prenaming_config():
 
     # cannot configure prenaming if ID page is unknown
     if not SpecificationService.is_there_a_spec():
-        raise PlomDependencyConflict("There is no test specification.")
+        raise PlomDependencyConflict("There is no specification.")
 
 
 def assert_can_modify_qv_mapping_database():
@@ -141,7 +141,7 @@ def assert_can_modify_qv_mapping_database():
         raise PlomDependencyConflict("Papers have been printed.")
     # cannot modify the qv-mapping if there is no spec
     if not SpecificationService.is_there_a_spec():
-        raise PlomDependencyConflict("There is no test specification")
+        raise PlomDependencyConflict("There is no specification")
 
     # if prenaming set, then we must have a classlist before can modify qv-map.
     # else we can modify independent of the classlist.
@@ -155,17 +155,17 @@ def assert_can_modify_qv_mapping_database():
     else:  # prenaming not set, so can modify qv-map indep of classlist.
         pass
 
-    # cannot modify qv-mapping if test papers have been produced
+    # cannot modify qv-mapping if papers have been produced
     if BuildPapersService().are_any_papers_built():
-        raise PlomDependencyConflict("Test PDFs have been built.")
+        raise PlomDependencyConflict("Paper PDFs have been built.")
 
 
-# 5 - the test pdfs depend on the qv-map/db and source pdfs. Nothing depends on the test-pdfs
+# 5 - the paper pdfs depend on the qv-map/db and source pdfs. Nothing depends on the paper-pdfs
 def assert_can_rebuild_test_pdfs():
     from . import PapersPrinted, SourceService
     from Papers.services import PaperInfoService
 
-    # cannot rebuild test pdfs if papers printed
+    # cannot rebuild paper pdfs if papers printed
     if PapersPrinted.have_papers_been_printed():
         raise PlomDependencyConflict("Papers have been printed.")
     # and we need sources-pdfs and a populated db

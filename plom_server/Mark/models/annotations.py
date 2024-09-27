@@ -24,7 +24,7 @@ class AnnotationImage(models.Model):
 
 
 class Annotation(models.Model):
-    """Represents a marker's annotation of a particular test paper's question.
+    """Represents a marker's annotation of a particular paper's question.
 
     Attributes:
         edition: The edition of the annotation for the specified task.

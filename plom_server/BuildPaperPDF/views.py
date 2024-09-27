@@ -127,7 +127,7 @@ class GetPDFFile(ManagerRequiredView):
 
 
 class GetStreamingZipOfPDFs(ManagerRequiredView):
-    """Get the completed test paper PDFs in one zip file."""
+    """Get the generated papers as PDFs in one zip file."""
 
     # using zipfly python package.  see django example here
     # https://github.com/sandes/zipfly/blob/master/examples/streaming_django.py
