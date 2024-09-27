@@ -273,7 +273,7 @@ class BuildPapersService:
             # Quick fix but maybe it should be an error for the_papers to be empty?
             paper = None
             for paper in the_papers:
-                if paper.paper_number in prenamed:
+                if prename_config["enabled"] and paper.paper_number in prenamed:
                     student_id, student_name = prenamed[paper.paper_number]
                 else:
                     student_id, student_name = None, None
