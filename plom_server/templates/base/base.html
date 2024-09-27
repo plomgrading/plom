@@ -70,9 +70,6 @@
                          alt="Plom logo"
                          style="max-width: 8rem" />
                 </a>
-                <p class="text-center fw-light mt-0 mb-0">
-                    <small>v{{ plom_version }}</small>
-                </p>
                 {% if assessment_shortname_if_defined %}
                     <p class="text-center fs-5 fw-dark mt-0 mb-0">
                         <q>{{ assessment_shortname_if_defined }}</q>
@@ -81,6 +78,9 @@
                 {% block sidebar_content %}
                     {% include "base/sidebar.html" %}
                 {% endblock sidebar_content %}
+                <p class="fw-light mt-0 mb-0 ms-2">
+                    <small>Plom v{{ plom_version }}</small>
+                </p>
             </div>
             <!-- flex-fill here will go off the screen for very wide pages -->
             <div class="w-100">
