@@ -12,9 +12,9 @@ from django.db import transaction
 
 from Base.compat import load_toml_from_path, load_toml_from_string, TOMLDecodeError
 
-from Preparation.services import PapersPrinted
+from Preparation.services.preparation_dependency_service import assert_can_modify_spec
 
-from Papers.services import SpecificationService, PaperInfoService
+from Papers.services import SpecificationService
 
 
 class SpecExistsException(Exception):
@@ -102,7 +102,7 @@ class SpecificationUploadService:
         if not self.spec_dict:
             raise ValueError("Cannot find specification to upload.")
 
-        self.can_spec_be_modified(raise_exception=True)
+        assert_can_modify_spec()
 
         SpecificationService.load_spec_from_dict(
             self.spec_dict,
@@ -110,39 +110,15 @@ class SpecificationUploadService:
         )
 
     @transaction.atomic
-    def can_spec_be_modified(self, *, raise_exception: bool = False) -> bool:
-        """Return true if the spec can be modified, false otherwise.
-
-        Keyword Args:
-            raise_exception: if true, raise exceptions on assertion failure.
-        """
-        papers_printed = PapersPrinted.have_papers_been_printed()
-        pqvmap_created = PaperInfoService().is_paper_database_populated()
-
-        if papers_printed:
-            if raise_exception:
-                raise ValueError("Cannot modify spec once papers have been printed.")
-            return False
-
-        if pqvmap_created:
-            if raise_exception:
-                raise ValueError(
-                    "Cannot save a new spec while there is a existing "
-                    "paper-question-version map: try deleting that first?"
-                )
-            return False
-
-        return True
-
-    @transaction.atomic
-    def delete_spec(self):
+    def delete_spec(self) -> None:
         """Remove the specification from the database.
 
         Raises:
             ValueError: various reasons for not being able to change
-                the spec.
+                the spec.  Notably quietly returns None without an
+                exception when there is no spec.
         """
         if not SpecificationService.is_there_a_spec():
             return
-        self.can_spec_be_modified(raise_exception=True)
+        assert_can_modify_spec()
         SpecificationService.remove_spec()
