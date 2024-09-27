@@ -163,10 +163,9 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                # add our own context processor to get information about
-                # user's groups and also the plom_version being run.
+                # add our own context processors
                 "Web_Plom.context_processors.user_group_information",
-                "Web_Plom.context_processors.plom_version_information",
+                "Web_Plom.context_processors.plom_information",
             ],
         },
     },

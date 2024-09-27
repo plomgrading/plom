@@ -7,7 +7,7 @@ from Papers.services import SpecificationService
 
 
 def user_group_information(request):
-    """Add user group membership booleans to every iew context.
+    """Add user group membership booleans to every view context.
 
     Adds booleans "user_is_admin", "user_is_manager", "user_is_scanner",
     "user_is_marker", and "user_is_lead_marker".
@@ -40,11 +40,8 @@ def user_group_information(request):
     return context
 
 
-def plom_version_information(request):
-    """Adds plom version information to the view context.
-
-    Adds string "plom_version".
-    """
+def plom_information(request):
+    """Adds Plom version and assessment information to every view context."""
     if SpecificationService.is_there_a_spec():
         s = SpecificationService.get_shortname()
     else:
