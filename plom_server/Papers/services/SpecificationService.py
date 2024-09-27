@@ -200,7 +200,7 @@ def store_validated_spec(validated_spec: dict) -> None:
 
 @transaction.atomic
 def remove_spec() -> None:
-    """Removes the test specification from the db, if possible.
+    """Removes the specification from the db, if possible.
 
     This can only be done if no tests have been created.
 
@@ -209,7 +209,7 @@ def remove_spec() -> None:
         PlomDependencyConflict: cannot modify spec due to dependencies (eg sources uploaded, papers in database, etc)
     """
     if not is_there_a_spec():
-        raise ObjectDoesNotExist("The database does not contain a test specification.")
+        raise ObjectDoesNotExist("The database does not contain a specification.")
 
     assert_can_modify_spec()
     Specification.objects.all().delete()
