@@ -232,13 +232,15 @@ class RubricLandingPageView(ManagerRequiredView):
     """A landing page for displaying and analyzing rubrics."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        """Get the page the landing page for displaying and analyzing rubrics."""
+        """Get the landing page for displaying and analyzing rubrics."""
+        context = self.build_context()
+        if not SpecificationService.is_there_a_spec():
+            return render(request, "Finish/finish_no_spec.html", context=context)
+
         template_name = "Rubrics/rubrics_landing.html"
         rubric_filter_form = RubricFilterForm
         rubric_form = RubricItemForm
         question_max_marks_dict = SpecificationService.get_questions_max_marks()
-
-        context = self.build_context()
 
         filter_form = rubric_filter_form(request.GET)
         rubrics = RubricService.get_all_rubrics()
