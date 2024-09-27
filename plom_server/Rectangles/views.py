@@ -23,8 +23,10 @@ from .services import get_reference_rectangle, RectangleExtractor
 
 
 class RectangleHomeView(ManagerRequiredView):
-    def build_context(self):
-        context = super().build_context()
+    def get(self, request: HttpRequest) -> HttpResponse:
+        context = self.build_context()
+        if not SpecificationService.is_there_a_spec():
+            return render(request, "Finish/finish_no_spec.html", context=context)
         context.update(
             {
                 "num_versions": SpecificationService.get_n_versions(),
@@ -34,10 +36,6 @@ class RectangleHomeView(ManagerRequiredView):
                 "page_list": SpecificationService.get_list_of_pages,
             }
         )
-        return context
-
-    def get(self, request: HttpRequest) -> HttpResponse:
-        context = self.build_context()
         return render(request, "Rectangles/home.html", context)
 
 

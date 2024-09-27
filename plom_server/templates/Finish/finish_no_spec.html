@@ -1,0 +1,20 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    No specification
+{% endblock title %}
+{% block page_heading %}
+    No specification
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="alert alert-warning">
+        <p>There is no assessment specification; this page will be accessible after the system has a specification.</p>
+    </div>
+    <div>
+        <a class="btn btn-primary" href="{% url 'prep_landing' %}">Got to assessment preparation page</a>
+    </div>
+{% endblock main_content %}
