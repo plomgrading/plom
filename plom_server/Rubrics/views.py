@@ -232,7 +232,7 @@ class RubricLandingPageView(ManagerRequiredView):
     """A landing page for displaying and analyzing rubrics."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        """Get the page the landing page for displaying and analyzing rubrics."""
+        """Get the landing page for displaying and analyzing rubrics."""
         context = self.build_context()
         if not SpecificationService.is_there_a_spec():
             return render(request, "Finish/finish_no_spec.html", context=context)
