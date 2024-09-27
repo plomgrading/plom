@@ -1,12 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
+
 from plom import __version__ as plom_version
+from Papers.services import SpecificationService
 
 
 def user_group_information(request):
-    """Add user group membership booleans to the view context.
+    """Add user group membership booleans to every view context.
 
-    Adds booleans "user_is_admin", "user_is_manager", "user_is_scanner", "user_is_marker", and "user_is_lead_marker".
+    Adds booleans "user_is_admin", "user_is_manager", "user_is_scanner",
+    "user_is_marker", and "user_is_lead_marker".
 
     Also adds navbar_color information via bootstrap standard colors
       * admin = danger
@@ -36,9 +40,16 @@ def user_group_information(request):
     return context
 
 
-def plom_version_information(request):
-    """Adds plom version information to the view context.
-
-    Adds string "plom_version".
-    """
-    return {"plom_version": plom_version}
+def plom_information(request):
+    """Adds Plom version and assessment information to every view context."""
+    if SpecificationService.is_there_a_spec():
+        shortname = SpecificationService.get_shortname()
+        longname = SpecificationService.get_longname()
+    else:
+        shortname = ""
+        longname = ""
+    return {
+        "plom_version": plom_version,
+        "assessment_shortname_if_defined": shortname,
+        "assessment_longname_if_defined": longname,
+    }

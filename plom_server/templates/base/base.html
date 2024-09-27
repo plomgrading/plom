@@ -44,7 +44,11 @@
         <title>
             {% block full_title %}
                 {% block title_prefix %}
-                    Plom -
+                    {% if assessment_shortname_if_defined %}
+                        {{ assessment_shortname_if_defined }} -
+                    {% else %}
+                        Plom -
+                    {% endif %}
                 {% endblock title_prefix %}
                 {% block title %}
                 {% endblock title %}
@@ -66,21 +70,29 @@
                          alt="Plom logo"
                          style="max-width: 8rem" />
                 </a>
-                <p class="text-center fw-light mb-0">
-                    <small>v{{ plom_version }}</small>
-                </p>
+                {% if assessment_shortname_if_defined %}
+                    <p class="text-center fs-5 fw-dark mt-0 mb-0">
+                        <q>{{ assessment_shortname_if_defined }}</q>
+                    </p>
+                {% endif %}
                 {% block sidebar_content %}
                     {% include "base/sidebar.html" %}
                 {% endblock sidebar_content %}
+                <p class="fw-light mt-0 mb-0 ms-2">
+                    <small>Plom v{{ plom_version }}</small>
+                </p>
             </div>
             <!-- flex-fill here will go off the screen for very wide pages -->
             <div class="w-100">
-                <div class="p-2 d-md-none shadow bg-{{ navbar_color }}-subtle d-flex">
+                <div class="p-2 d-md-none shadow bg-{{ navbar_color }}-subtle navbar">
                     <a class="navbar-brand nav-link" href="{% url 'home' %}">
                         <img class="img-fluid"
                              src="{% static 'plomLogo.png' %}"
                              style="max-width: 8rem" />
                     </a>
+                    {% if assessment_shortname_if_defined %}
+                        <span class="nav-item fw-dark fs-4"> <q>{{ assessment_shortname_if_defined }}</q></span>
+                    {% endif %}
                     <button class="btn ms-auto border border-black"
                             type="button"
                             data-bs-toggle="offcanvas"
