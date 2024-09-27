@@ -43,7 +43,13 @@ def user_group_information(request):
 def plom_information(request):
     """Adds Plom version and assessment information to every view context."""
     if SpecificationService.is_there_a_spec():
-        s = SpecificationService.get_shortname()
+        shortname = SpecificationService.get_shortname()
+        longname = SpecificationService.get_longname()
     else:
-        s = ""
-    return {"plom_version": plom_version, "assessment_shortname_if_defined": s}
+        shortname = ""
+        longname = ""
+    return {
+        "plom_version": plom_version,
+        "assessment_shortname_if_defined": shortname,
+        "assessment_longname_if_defined": longname,
+    }
