@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2023 Andrew Rechnitzer
+# Copyright (C) 2019-2024 Andrew Rechnitzer
 # Copyright (C) 2021-2024 Colin B. Macdonald
 
 """Tools for manipulating version maps."""
@@ -326,5 +326,6 @@ def version_map_to_csv(
     with open(filename, "w") as csvfile:
         csv_writer = csv.writer(csvfile)
         csv_writer.writerow(header)
-        for k, v in qvmap.items():
+        # make sure the rows are ordered = #3597
+        for k, v in sorted(qvmap.items()):
             csv_writer.writerow([k, *[v[q] for q in range(1, N + 1)]])
