@@ -16,5 +16,11 @@
     {% if messages %}
         {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
     {% endif %}
+    {% if assessment_shortname_if_defined %}
+        <p class="lead">
+            This server is configured for the
+            assessment <q>{{ assessment_shortname_if_defined }}</q>.
+        </p>
+    {% endif %}
     <p>Choose a task from the menu.</p>
 {% endblock main_content %}
