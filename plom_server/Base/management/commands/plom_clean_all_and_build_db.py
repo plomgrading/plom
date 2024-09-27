@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
 from pathlib import Path
 import shutil
@@ -36,7 +37,7 @@ class Command(BaseCommand):
 
     def huey_cleanup(self):
         """Remove any existing huey db - at present is hardcoded."""
-        for path in Path("huey").glob("huey_db.*"):
+        for path in Path("huey").glob("hueydb*.sqlite*"):
             path.unlink(missing_ok=True)
 
     def handle(self, *args, **options):

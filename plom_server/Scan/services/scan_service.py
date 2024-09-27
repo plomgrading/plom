@@ -1425,7 +1425,7 @@ class ScanService:
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks", context=True)
+@db_task(queue="parentchores", context=True)
 def huey_parent_split_bundle_task(
     bundle_pk: int,
     number_of_chunks: int,
@@ -1545,7 +1545,7 @@ def huey_parent_split_bundle_task(
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks", context=True)
+@db_task(queue="parentchores", context=True)
 def huey_parent_read_qr_codes_task(
     bundle_pk: int,
     *,

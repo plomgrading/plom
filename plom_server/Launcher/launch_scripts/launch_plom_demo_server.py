@@ -161,6 +161,9 @@ def run_django_manage_command(cmd) -> None:
 def popen_django_manage_command(cmd) -> subprocess.Popen:
     """Run the given Django command using a process Popen and return a handle to the process.
 
+    The stdout and stderr of the process will be merged into the
+    usual stdout and stderr.
+
     Args:
         cmd: the command to run.
 
@@ -177,6 +180,8 @@ def popen_django_manage_command(cmd) -> subprocess.Popen:
             the nature of inter-process communication.
     """
     full_cmd = get_django_cmd_prefix() + " " + cmd
+    # perhaps unnecessary?
+    # return subprocess.Popen(split(full_cmd), stdout=sys.stdout, stderr=sys.stderr)
     return subprocess.Popen(split(full_cmd))
 
 
@@ -198,14 +203,13 @@ def get_django_cmd_prefix() -> str:
     return "python3 manage.py"
 
 
-def launch_huey_process() -> subprocess.Popen:
-    """Launch the Huey-consumer for processing background tasks.
-
-    Note that this runs the Django manage command 'djangohuey --quiet'.
-    """
-    print("Launching Huey.")
-    # this needs to be run in the background
-    return popen_django_manage_command("djangohuey --quiet")
+def launch_huey_process() -> list[subprocess.Popen]:
+    """Launch the Huey-consumer for processing background tasks."""
+    print("Launching Huey queues as background jobs.")
+    return [
+        popen_django_manage_command("djangohuey --queue tasks"),
+        popen_django_manage_command("djangohuey --queue parentchores"),
+    ]
 
 
 def launch_django_dev_server_process(*, port: int | None = None) -> subprocess.Popen:
@@ -680,13 +684,14 @@ if __name__ == "__main__":
     huey_process, server_process = None, None
     try:
         print("v" * 50)
-        huey_process = launch_huey_process()
+        huey_processes = launch_huey_process()
         server_process = launch_django_dev_server_process(port=args.port)
-        # both processes still running after small delay? probably working
+        # processes still running after small delay? probably working
         time.sleep(0.25)
-        r = huey_process.poll()
-        if r is not None:
-            raise RuntimeError(f"Problem with Huey process: exit code {r}")
+        for hp in huey_processes:
+            r = hp.poll()
+            if r is not None:
+                raise RuntimeError(f"Problem with Huey process {hp.pid}: exit code {r}")
         r = server_process.poll()
         if r is not None:
             raise RuntimeError(f"Problem with server process: exit code {r}")
@@ -731,8 +736,8 @@ if __name__ == "__main__":
     finally:
         print("v" * 50)
         print("Shutting down Huey and Django dev server")
-        if huey_process:
-            huey_process.terminate()
+        for hp in huey_processes:
+            hp.terminate()
         if server_process:
             server_process.terminate()
         print("^" * 50)

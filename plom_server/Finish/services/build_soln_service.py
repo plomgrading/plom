@@ -224,7 +224,7 @@ class BuildSolutionService:
                     str(chore.huey_id), blocking=True, timeout=wait, preserve=True
                 )
                 print(
-                    f"The running task {chore.huey_id} has finished, and returned {r}"
+                    f"The running chore {chore.huey_id} has finished, and returned {r}"
                 )
 
     def reset_all_soln_build(self) -> None:
