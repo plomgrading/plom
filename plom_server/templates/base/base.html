@@ -44,7 +44,11 @@
         <title>
             {% block full_title %}
                 {% block title_prefix %}
-                    Plom -
+                    {% if assessment_shortname_if_defined %}
+                        {{ assessment_shortname_if_defined }} -
+                    {% else %}
+                        Plom -
+                    {% endif %}
                 {% endblock title_prefix %}
                 {% block title %}
                 {% endblock title %}
