@@ -96,7 +96,7 @@
                         <div class="alert alert-primary">
                             <span>Question-version mapping present with {{ pqv_number_rows }} papers:</span>
                             <a href="{% url 'prep_qvmapping_download' %}"
-                               target="_blank"
+                               download="qv_map.csv"
                                class="btn btn-info">download</a>
                             <button class="btn btn-danger"
                                     hx-delete="{% url 'prep_qvmapping_delete' %}"

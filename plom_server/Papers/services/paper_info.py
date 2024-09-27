@@ -179,7 +179,11 @@ class PaperInfoService:
         """
         pqvmapping: dict[int, dict[int, int]] = {}
         # note that this gets all question pages, not just one for each question.
-        for qp_obj in QuestionPage.objects.all().prefetch_related("paper"):
+        for qp_obj in (
+            QuestionPage.objects.all()
+            .prefetch_related("paper")
+            .order_by("paper__paper_number")
+        ):
             pn = qp_obj.paper.paper_number
             if pn in pqvmapping:
                 if qp_obj.question_index in pqvmapping[pn]:
