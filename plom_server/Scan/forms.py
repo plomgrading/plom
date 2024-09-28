@@ -32,7 +32,9 @@ class BundleUploadForm(forms.Form):
 
     def clean(self):
         data = self.cleaned_data
-        pdf = data["pdf"]
+        pdf = data.get("pdf")
+        if not pdf:
+            raise ValidationError("Data must include a PDF file via the 'pdf' field")
 
         # TODO: set a request size limit in production
         if pdf.size > settings.MAX_BUNDLE_SIZE:
