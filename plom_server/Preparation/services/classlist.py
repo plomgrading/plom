@@ -220,7 +220,7 @@ class StagingStudentService:
         pss = PrenameSettingService()
         if pss.get_prenaming_setting():
             first_prename, last_prename = self.get_first_last_prenamed_paper()
-            N3 = last_prename + 10
+            N3 = (last_prename or 0) + 10
             return max(N1, N2, N3)
         else:
             return max(N1, N2)
