@@ -46,23 +46,22 @@ class BundleUploadForm(forms.Form):
                 "Bundle filenames cannot start with an underscore - we reserve those for internal use."
             )
 
-        # correct format, readable by fitz, not a duplicate?
+        file_bytes = pdf.read()
+
+        # TODO: Should we prevent uploading duplicate bundles or warn them?
+        hashed = hashlib.sha256(file_bytes).hexdigest()
+        scanner = ScanService()
+        if scanner.check_for_duplicate_hash(hashed):
+            original_bundle_name = scanner.get_bundle_name_from_hash(hashed)
+            raise ValidationError(
+                f"Bundle was already uploaded as '{original_bundle_name}' and hash {hashed}"
+            )
+
+        # get slug from filename
+        filename_stem = pathlib.Path(pdf.name).stem
+        slug = slugify(filename_stem)
+
         try:
-            file_bytes = pdf.read()
-
-            # TODO: Should we prevent uploading duplicate bundles or warn them?
-            hashed = hashlib.sha256(file_bytes).hexdigest()
-            scanner = ScanService()
-            if scanner.check_for_duplicate_hash(hashed):
-                original_bundle_name = scanner.get_bundle_name_from_hash(hashed)
-                raise ValidationError(
-                    f"Bundle was already uploaded as '{original_bundle_name}' and hash {hashed}"
-                )
-
-            # get slug
-            filename_stem = pathlib.Path(str(pdf)).stem
-            slug = slugify(filename_stem)
-
             with pymupdf.open(stream=file_bytes) as pdf_doc:
                 if "PDF" not in pdf_doc.metadata["format"]:
                     raise ValidationError("File is not a valid PDF.")
@@ -80,4 +79,9 @@ class BundleUploadForm(forms.Form):
                 )
             return data
         except (pymupdf.FileDataError, KeyError) as e:
-            raise ValidationError(f"Unable to open file: {e}")
+            raise ValidationError(f"Unable to open file: {e}") from e
+        except pymupdf.mupdf.FzErrorBase as e:
+            # https://github.com/pymupdf/PyMuPDF/issues/3905
+            raise ValidationError(
+                f"Perhaps not a pdf file?  Unexpected error: {e}"
+            ) from e
