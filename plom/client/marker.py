@@ -486,6 +486,7 @@ class MarkerClient(QWidget):
         Raises:
             Uses error dialogs; not currently expected to throw exceptions
         """
+        # TODO: Issue #3629 are we assuming source_image_data implies annotated images?
         if len(self.examModel.get_source_image_data(task)) > 0:
             return True
 
