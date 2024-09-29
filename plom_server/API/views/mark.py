@@ -91,7 +91,7 @@ class GetTasks(APIView):
         List of dicts of info for each task, as documented elsewhere.
         An empty list might be returned if no tasks.
         This is potentially a lot of data, perhaps a megabyte of json
-        for 4000 test papers.
+        for 4000 papers.
 
     Note that this might leak info to non-lead-markers, we may want non-lead-markers
     to only be able to query their own tasks.

@@ -22,15 +22,15 @@ class SpecExistsException(Exception):
 
 
 class SpecificationUploadService:
-    """Handle the workflow of uploading a test specification from disk.
+    """Handle the workflow of uploading a assessment specification.
 
-    The flow for uploading and saving a test spec:
-        1. Manager has an already-existing TOML representing a test spec
-        2. Manager requests to save the test spec from a path to a TOML
+    The flow for uploading and saving a spec:
+        1. Manager has an already-existing TOML representing a spec
+        2. Manager requests to save the spec from a path to a TOML
             file.
         3. Server checks that a spec can be uploaded
             - Preparation must not be set as complete
-            - There must be no existing QV map or test-papers
+            - There must be no existing QV map or papers
             - There must not be an existing spec
         4. If one of the first two is true, the server ends the workflow
             and tells the manager to remove the papers and/or QV map. If
@@ -113,25 +113,22 @@ class SpecificationUploadService:
     def can_spec_be_modified(self, *, raise_exception: bool = False) -> bool:
         """Return true if the spec can be modified, false otherwise.
 
-        To be able to modify (i.e. upload or replace) the test spec, these conditions must be met:
-            - Test preparation must be set as "in progress"
-            - There must be no existing test-papers
-
         Keyword Args:
             raise_exception: if true, raise exceptions on assertion failure.
         """
         papers_printed = PapersPrinted.have_papers_been_printed()
-        papers_created = PaperInfoService().is_paper_database_populated()
+        pqvmap_created = PaperInfoService().is_paper_database_populated()
 
         if papers_printed:
             if raise_exception:
                 raise ValueError("Cannot modify spec once papers have been printed.")
             return False
 
-        if papers_created:
+        if pqvmap_created:
             if raise_exception:
                 raise ValueError(
-                    "Cannot save a new spec with test papers saved to the database."
+                    "Cannot save a new spec while there is a existing "
+                    "paper-question-version map: try deleting that first?"
                 )
             return False
 

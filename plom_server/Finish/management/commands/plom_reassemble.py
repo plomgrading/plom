@@ -18,7 +18,7 @@ from Papers.models import Paper
 
 
 class Command(BaseCommand):
-    """Generate reassembled test-papers with TA annotations from the command line."""
+    """Generate reassembled papers with TA annotations from the command line."""
 
     help = "Create PDFs to return to students"
 
@@ -43,7 +43,7 @@ class Command(BaseCommand):
             "--testnum",
             type=int,
             nargs="?",
-            help="Which test paper to reassemble (optional)",
+            help="Which paper to reassemble (optional)",
         )
         parser.add_argument(
             "--save-path",

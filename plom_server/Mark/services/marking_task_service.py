@@ -52,7 +52,7 @@ class MarkingTaskService:
         """Create a marking task.
 
         Args:
-            paper: a Paper instance, the test paper of the task.
+            paper: a Paper instance, the paper of the task.
             question_index: the question of the task, by 1-based index.
 
         Keyword Args:
