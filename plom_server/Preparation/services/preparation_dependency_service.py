@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024 Colin B. Macdonald
 
 from plom.plom_exceptions import PlomDependencyConflict
 
@@ -18,17 +19,28 @@ from plom.plom_exceptions import PlomDependencyConflict
 # give assert raising tests followed by true/false returning functions
 
 
-# 1 the spec depends on nothing, but sources depend on the spec
+# 1 the spec depends on nothing, but sources and QVMap depend on the spec
 def assert_can_modify_spec():
+    from Papers.services import PaperInfoService
     from . import PapersPrinted, SourceService
 
     # cannot modify spec if papers printed
     if PapersPrinted.have_papers_been_printed():
-        raise PlomDependencyConflict("Papers have been printed.")
+        raise PlomDependencyConflict(
+            "Cannot modify spec because papers have been printed."
+        )
     # if any sources uploaded, then cannot modify spec.
     if SourceService.how_many_source_versions_uploaded() > 0:
         raise PlomDependencyConflict(
-            "Source PDFs for your assessment have been uploaded."
+            "Cannot modify spec because source PDFs "
+            "for your assessment have been uploaded."
+        )
+    # cannot modify spec if there is a QVmap (e.g., change number of questions)
+    # TODO: in theory, we could allow finer-grained edits, such as points.
+    if PaperInfoService().is_paper_database_populated():
+        raise PlomDependencyConflict(
+            "Cannot save a new spec while there is a existing "
+            "paper-question-version map: try deleting that first?"
         )
 
 
