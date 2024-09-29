@@ -283,7 +283,7 @@ class MarkerExamModel(QStandardItemModel):
                 self.set_source_image_data(task_id_str, [])
         else:
             if current_integrity == integrity:
-                log.debug(msg + " integrity up-to-date, but new data forced")
+                log.debug(msg + " up-to-date, but new data forced")
             else:
                 log.debug(msg + " out-of-date, and new src_img_data provided")
             self.set_source_image_data(task_id_str, src_img_data)
