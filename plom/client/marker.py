@@ -1146,27 +1146,10 @@ class MarkerClient(QWidget):
                     integrity_check=integrity,
                 )
             except KeyError:
-                if username != our_username:
-                    # If server says its not our task, then overwrite local state
-                    # b/c the task may have been reassigned.
-                    # TODO: but this stomps on local cached annotation data, so that's wasteful
-                    # TODO: use the integrity_check?
-                    self.examModel.modify_task(
-                        task_id_str,
-                        src_img_data=[],
-                        mark=mark,
-                        marking_time=t.get("marking_time", 0.0),
-                        status=status,
-                        tags=t["tags"],
-                        username=username,
-                        integrity_check=t["integrity"],
-                    )
-                    continue
-                # If it is our task, be careful b/c we don't want to stomp local state
-                # especially during in-progress uploads or things we might want to retry
-                local_status = self.examModel.getStatusByTask(task_id_str).casefold()
-                # TODO: what about "deferred"?
-                if local_status in ("uploading...", "failed upload"):
+                # Be careful b/c we don't want to stomp local state during
+                # in-progress uploads or situations we might want to retry
+                local_status = self.examModel.getStatusByTask(task_id_str)
+                if local_status.casefold() in ("uploading...", "failed upload"):
                     log.info(
                         'Refreshing but task %s has status "%s": not touching local data',
                         task_id_str,
@@ -1176,24 +1159,22 @@ class MarkerClient(QWidget):
                     self.tags_changed_signal.emit(task_id_str, t["tags"])
                     continue
 
-                # TODO: for the others, we should try to avoid invalidating the local cache,
-                # can we use the integrity_check?
-                # self.examModel.modify_task(
-                #     task_id_str,
-                #     src_img_data=[],
-                #     mark=mark,
-                #     marking_time=t.get("marking_time", 0.0),
-                #     status=status,
-                #     tags=t["tags"],
-                #     username=username,
-                #     integrity_check=t["integrity"],
-                # )
+                self.examModel.update_task(
+                    task_id_str,
+                    integrity=t.get("integrity"),
+                    mark=mark,
+                    marking_time=t.get("marking_time", 0.0),
+                    status=status,
+                    tags=t["tags"],
+                    username=username,
+                )
                 # TODO: client doesn't refresh properly when untouched have [] src img data?
                 # TODO: it takes two clicks (Issue #3592)
 
-                # TODO: for now, let's assume nothing has changed but just update the tags
-                # which will fix #3579.
-                self.tags_changed_signal.emit(task_id_str, t["tags"])
+                # TODO: what about existing annotation data?
+                #     1. I annotate, reassign, they annotate, can I see their edits?
+                # TODO: no I cannot: we need to check those on refresh :(
+
         return True
 
     def reassign_task(self):

@@ -164,7 +164,7 @@ class MarkerExamModel(QStandardItemModel):
                 QStandardItem(""),  # plomFile
                 QStandardItem(""),  # paperdir
                 QStandardItem(json.dumps(src_img_data, default=_json_path_to_str)),
-                QStandardItem(integrity_check),
+                QStandardItem(str(integrity_check)),
             ]
         )
         return self.rowCount() - 1
@@ -221,6 +221,77 @@ class MarkerExamModel(QStandardItemModel):
         self._set_marking_time(r, marking_time)
         self.setTagsByTask(task_id_str, tags)
         self.set_integrity_by_task(task_id_str, integrity_check)
+        self.set_username_by_task(task_id_str, username)
+        return r
+
+    def update_task(
+        self,
+        task_id_str: str,
+        *,
+        src_img_data: list[dict[str, Any]] | None = None,
+        integrity: str,
+        status: str = "untouched",
+        mark: int = -1,
+        marking_time: float = 0.0,
+        tags: list[str] = [],
+        username: str = "",
+    ) -> int:
+        """Modify an existing row, keeping any unspecified local data if it is deemed safe to do so.
+
+        Currently only ``src_img_data`` is carefully preserved: this
+        may change in the future.
+
+        Args:
+            task_id_str: the Task ID for the page being uploaded. Takes the form
+                "q1234g9" for paper 1234 question 9.
+
+        Keywords Args:
+            integrity: mandatory input, used to determine if we can keep things.
+            src_img_data: a list of dicts of md5sums, filenames and other
+                metadata of the images for the test question.  If this is omitted
+                (None) and the integrity matches, we'll keep the current data.
+            status: task status string.
+            mark: the mark of the question.
+            marking_time: marking time spent on that page in seconds.
+            tags: Tags corresponding to the exam.  We will flatten to a
+                space-separated string.  TODO: maybe we should do that for display
+                but store as repr/json.
+            username: who owns this task.
+
+        Returns:
+            The integer row identifier of the added/modified paper.
+
+        Raisees:
+            ValueError: cannot find task.
+        """
+        r = self._findTask(task_id_str)
+        log.debug(f"Found task {task_id_str} in the table at r={r}, updating...")
+
+        # its only typed as string, but Nones are getting in...
+        if integrity is None:
+            integrity = ""
+        integrity = str(integrity)
+
+        current_integrity = self.getIntegrityCheck(task_id_str)
+        if src_img_data is None:
+            msg = f"Task {task_id_str} integrity"
+            if current_integrity == integrity:
+                # TODO: this includes the blank integrity case
+                log.debug(msg + " up-to-date: keep local src_img_data")
+            else:
+                log.debug(msg + " out-of-date: dropping local src_img_data")
+                self.set_source_image_data(task_id_str, [])
+        else:
+            if current_integrity == integrity:
+                log.debug(msg + " integrity up-to-date, but new data forced")
+            else:
+                log.debug(msg + " out-of-date, and new src_img_data provided")
+            self.set_source_image_data(task_id_str, src_img_data)
+        self.set_integrity_by_task(task_id_str, integrity)
+        self._setStatus(r, status)
+        self._set_mark(r, mark)
+        self._set_marking_time(r, marking_time)
+        self.setTagsByTask(task_id_str, tags)
         self.set_username_by_task(task_id_str, username)
         return r
 
@@ -492,7 +563,8 @@ class MarkerExamModel(QStandardItemModel):
 
     def getIntegrityCheck(self, task: str) -> str:
         """Return the integrity check string for a task."""
-        return self._getDataByTask(task, _idx_integrity)
+        # not sure why we need str() here but it was returning int
+        return str(self._getDataByTask(task, _idx_integrity))
 
     def markPaperByTask(self, task, mark, aname, pname, marking_time, tdir) -> None:
         """Add marking data for the given task.
