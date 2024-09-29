@@ -273,8 +273,8 @@ class MarkerExamModel(QStandardItemModel):
         integrity = str(integrity)
 
         current_integrity = self.getIntegrityCheck(task_id_str)
+        msg = f"Task {task_id_str} integrity"
         if src_img_data is None:
-            msg = f"Task {task_id_str} integrity"
             if current_integrity == integrity:
                 # TODO: this includes the blank integrity case
                 log.debug(msg + " up-to-date: keep local src_img_data")
