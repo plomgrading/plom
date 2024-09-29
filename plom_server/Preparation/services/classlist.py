@@ -208,11 +208,9 @@ class StagingStudentService:
 
     @transaction.atomic()
     def get_minimum_number_to_produce(self) -> int:
-        """The server **must** produce at least this many papers.
+        """Gets a suggestion for the minimum number of papers a server should produce.
 
-        The return value depends on the number of students in
-        the uploaded classlist, and the highest ``"paper_number"``
-        allocated to a prenamed paper.
+        The return value depends on the current server state.
         """
         # how_many_students doesn't behave well if an empty classlist is uploaded
         if not self.are_there_students():
@@ -220,10 +218,17 @@ class StagingStudentService:
         else:
             num_students = self.how_many_students()
         _, last_prename = self.get_first_last_prenamed_paper()
-        return self._get_minimum_number_to_produce(num_students, last_prename)
+        prenaming_enabled = PrenameSettingService().get_prenaming_setting()
+
+        return self._get_minimum_number_to_produce(
+            num_students, last_prename, prenaming_enabled
+        )
 
     def _get_minimum_number_to_produce(
-        self, num_students: int, highest_prenamed_paper: int | None
+        self,
+        num_students: int,
+        highest_prenamed_paper: int | None,
+        prenaming_enabled: bool,
     ) -> int:
         """Selects and executes logic to determine the minimum number of papers.
 
@@ -232,12 +237,15 @@ class StagingStudentService:
             attempt the assessment.
             highest_prenamed_paper: the highest paper number allocated
         to a prenamed paper. Can be None, indicating no prenamed papers.
+            prenaming_enabled: whether prenaming is currently enabled on the server.
         """
         extra_20 = num_students + 20
         # simple fiddle to get ceiling of 1.1*N using python floor-div //
         extra_10percent = -((-num_students * 11) // 10)
         prenamed_extra_10 = (highest_prenamed_paper or 0) + 10
-        return max(extra_20, extra_10percent, prenamed_extra_10)
+        if prenaming_enabled:
+            return max(extra_20, extra_10percent, prenamed_extra_10)
+        return max(extra_20, extra_10percent)
 
     def get_prename_for_paper(self, paper_number) -> str | None:
         """Return student ID for prenamed paper or None if paper is not prenamed."""

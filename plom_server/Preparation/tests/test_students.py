@@ -27,33 +27,48 @@ class StagingStudentsTests(TestCase):
         min_to_produce = sstu.get_minimum_number_to_produce()
         self.assertEqual(min_to_produce, 35)
 
-    def test__get_minimum_number_to_produce(self) -> None:
-        """Test internal logic and type handling of _get_minimum_number_to_produce()."""
-        # arg 1 - num_students, arg 2 - highest prenamed paper number
+    def test__get_minimum_number_to_produce_typing(self) -> None:
+        """Test type handling of _get_minimum_number_to_produce()."""
+        # arg 1 - num_students, arg 2 - highest prenamed paper number, arg 3 - true/false is prenaming enabled
+        calc_minimum = StagingStudentService()._get_minimum_number_to_produce
+        # check that None doesn't throw errors
+        calc_minimum(-20, None, False)
+        calc_minimum(-20, None, True)
+
+        # check that return type is int
+        assert isinstance(calc_minimum(10, 5, False), int)
+        assert isinstance(calc_minimum(250, 5, False), int)
+        assert isinstance(calc_minimum(10, 25, True), int)
+
+    def test__get_minimum_number_to_produce_logic(self) -> None:
+        """Test internal logic of _get_minimum_number_to_produce()."""
+        # arg 1 - num_students, arg 2 - highest prenamed paper number, arg 3 - true/false is prenaming enabled
         calc_minimum = StagingStudentService()._get_minimum_number_to_produce
 
         # for small sittings, minimum should be 20 extra
-        self.assertEqual(calc_minimum(0, None), 20)
-        self.assertEqual(calc_minimum(0, 5), 20)
-        self.assertEqual(calc_minimum(10, None), 30)
-        self.assertEqual(calc_minimum(10, 5), 30)
-        self.assertEqual(calc_minimum(199, None), 219)
-        self.assertEqual(calc_minimum(199, 5), 219)
-
-        # boundary between a small and large sitting
-        self.assertEqual(calc_minimum(200, None), 220)
+        self.assertEqual(calc_minimum(0, 5, False), 20)
+        self.assertEqual(calc_minimum(0, 15, False), 20)
+        self.assertEqual(calc_minimum(199, 5, False), 219)
+        self.assertEqual(calc_minimum(199, 215, False), 219)
 
         # for large sittings, minimum 10% extra (rounded up)
-        self.assertEqual(calc_minimum(201, None), 222)  # confirm rounding up not down
-        self.assertEqual(calc_minimum(201, 201), 222)
-        self.assertEqual(calc_minimum(9e10, None), 9.9e10)
-        self.assertEqual(calc_minimum(9e10, 201), 9.9e10)
+        self.assertEqual(calc_minimum(201, 5, False), 222)  # rounding up
+        self.assertEqual(calc_minimum(201, 219, False), 222)
+        self.assertEqual(calc_minimum(9e5, 5, False), 9.9e5)
+        self.assertEqual(calc_minimum(9e5, 10e5, False), 9.9e5)
 
-        # for sittings with high indexed prenamed papers, max index + 10 extra
-        # this doesn't make sense unless you start indexing
-        # ``paper_number``'s at a high number
-        # e.g. class of 10 students, but start at paper_number 500 instead of 1.
-        self.assertEqual(calc_minimum(0, 500), 510)
+        # with prenaming enabled, prior rules or highest prenamed paper + 10
+        # for small sittings
+        self.assertEqual(calc_minimum(0, 5, True), 20)
+        self.assertEqual(calc_minimum(0, 15, True), 25)
+        self.assertEqual(calc_minimum(199, 5, True), 219)
+        self.assertEqual(calc_minimum(199, 215, True), 225)
+
+        # for large sittings
+        self.assertEqual(calc_minimum(201, 5, True), 222)  # rounding up
+        self.assertEqual(calc_minimum(201, 219, True), 229)
+        self.assertEqual(calc_minimum(9e5, 5, True), 9.9e5)
+        self.assertEqual(calc_minimum(9e5, 10e5, True), 10e5 + 10)
 
     def test_valid_paper_number_sentinels(self) -> None:
         n = 10000000
