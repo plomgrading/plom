@@ -476,13 +476,17 @@ class MarkerClient(QWidget):
         TODO: maybe it could not aggressively download the src images: sometimes
         people just want to look at the annotated image.
 
+        Note that the local source image data will be replaced by data
+        extracted from the Plom file.
+
         Args:
             task: the task for the image files to be loaded from.
                 Takes the form "q1234g9" = test 1234 question 9
 
         Returns:
-            True if the data exists, False if not.  User will have seen
-            an error message if False is returned.
+            True if the src_img_data, and the annotation files exist,
+            False if not.  User will have seen an error message if
+            False is returned.
 
         Raises:
             Uses error dialogs; not currently expected to throw exceptions
