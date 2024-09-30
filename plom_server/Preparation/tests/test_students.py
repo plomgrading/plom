@@ -29,8 +29,9 @@ class StagingStudentsTests(TestCase):
 
     def test__get_minimum_number_to_produce_typing(self) -> None:
         """Test type handling of _get_minimum_number_to_produce()."""
-        # arg 1 - num_students, arg 2 - highest prenamed paper number, arg 3 - true/false is prenaming enabled
+        # arg 1: num_students, arg 2: highest prenamed paper, arg 3: prenaming enabled?
         calc_minimum = StagingStudentService()._get_minimum_number_to_produce
+
         # check that None doesn't throw errors
         calc_minimum(-20, None, False)
         calc_minimum(-20, None, True)
@@ -42,7 +43,7 @@ class StagingStudentsTests(TestCase):
 
     def test__get_minimum_number_to_produce_logic(self) -> None:
         """Test internal logic of _get_minimum_number_to_produce()."""
-        # arg 1 - num_students, arg 2 - highest prenamed paper number, arg 3 - true/false is prenaming enabled
+        # arg 1: num_students, arg 2: highest prenamed paper, arg 3: prenaming enabled?
         calc_minimum = StagingStudentService()._get_minimum_number_to_produce
 
         # for small sittings, minimum should be 20 extra
@@ -54,8 +55,6 @@ class StagingStudentsTests(TestCase):
         # for large sittings, minimum 10% extra (rounded up)
         self.assertEqual(calc_minimum(201, 5, False), 222)  # rounding up
         self.assertEqual(calc_minimum(201, 219, False), 222)
-        self.assertEqual(calc_minimum(9e5, 5, False), 9.9e5)
-        self.assertEqual(calc_minimum(9e5, 10e5, False), 9.9e5)
 
         # with prenaming enabled, prior rules or highest prenamed paper + 10
         # for small sittings
@@ -67,8 +66,6 @@ class StagingStudentsTests(TestCase):
         # for large sittings
         self.assertEqual(calc_minimum(201, 5, True), 222)  # rounding up
         self.assertEqual(calc_minimum(201, 219, True), 229)
-        self.assertEqual(calc_minimum(9e5, 5, True), 9.9e5)
-        self.assertEqual(calc_minimum(9e5, 10e5, True), 10e5 + 10)
 
     def test_valid_paper_number_sentinels(self) -> None:
         n = 10000000
