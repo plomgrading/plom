@@ -84,6 +84,7 @@ from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectPaperQuestion
 from .tagging import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
+from .useful_classes import _json_path_to_str
 from .tagging_range_dialog import TaggingAndRangeOptions
 from .quota_dialogs import ExplainQuotaDialog, ReachedQuotaLimitDialog
 from .task_model import MarkerExamModel, ProxyModel
@@ -560,7 +561,7 @@ class MarkerClient(QWidget):
         with open(aname, "wb") as fh:
             fh.write(annot_img_bytes)
         with open(pname, "w") as f:
-            json.dump(plomdata, f, indent="  ")
+            json.dump(plomdata, f, indent="  ", default=_json_path_to_str)
             f.write("\n")
         self.examModel.setAnnotatedFile(task, aname, pname)
         return True
