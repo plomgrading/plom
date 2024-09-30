@@ -1181,8 +1181,10 @@ class MarkerClient(QWidget):
                 # TODO: client doesn't refresh properly when untouched have [] src img data?
                 # TODO: it takes two clicks (Issue #3592)
 
-                # TODO: in the future, the `t` data could have information about the latest
-                # annotation but for now we just clear, unless the task is ours
+                # TODO: in the future, the `t` data could have information about the
+                # latest annotation but for now we just clear, unless the task is ours.
+                # This will cause images to be downloaded again after refreshes.
+                # Issue #3630 proposes improvements.
                 if username != our_username:
                     self.examModel.setAnnotatedFile(task_id_str, "", "")
                     self.examModel.setPaperDirByTask(task_id_str, "")
