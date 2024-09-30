@@ -1188,6 +1188,7 @@ class MarkerClient(QWidget):
                 if username != our_username:
                     self.examModel.setAnnotatedFile(task_id_str, "", "")
                     self.examModel.setPaperDirByTask(task_id_str, "")
+                # TODO: Issue #3631: wrong annotation image in corner cases
 
         return True
 
