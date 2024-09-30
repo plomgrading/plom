@@ -1177,14 +1177,11 @@ class MarkerClient(QWidget):
                 # TODO: client doesn't refresh properly when untouched have [] src img data?
                 # TODO: it takes two clicks (Issue #3592)
 
-                # TODO: the `t` data could have information about the latest annotation
-                # but for now we just clear the annotation image, unless the task is ours
+                # TODO: in the future, the `t` data could have information about the latest
+                # annotation but for now we just clear, unless the task is ours
                 if username != our_username:
                     self.examModel.setAnnotatedFile(task_id_str, "", "")
                     self.examModel.setPaperDirByTask(task_id_str, "")
-                # TODO: what about existing annotation data?
-                #     1. I annotate, reassign, they annotate, can I see their edits?
-                # TODO: no I cannot: we need to check those on refresh :(
 
         return True
 
