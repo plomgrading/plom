@@ -491,6 +491,7 @@ class MarkerClient(QWidget):
         Raises:
             Uses error dialogs; not currently expected to throw exceptions
         """
+        # First, check if we have the three things: if so we're done.
         # TODO: special hack as empty "" comes back as Path which is "."
         if (
             self.examModel.get_source_image_data(task)
