@@ -39,6 +39,10 @@ class PlomClasslistValidator:
 
         Returns:
             List of dictionaries (keys are column titles).
+
+        Raises:
+            ValueError: the file does not contain a header line, or if the file
+                does not contain any of the header names we might expect.
         """
         classAsDict = []
         with open(filename) as csvfile:
@@ -60,7 +64,9 @@ class PlomClasslistValidator:
                 print(
                     "The header is either unreadable or has no fields that Plom recognises."
                 )
-                raise ValueError("No header")
+                raise ValueError(
+                    "The header is either unreadable or has no fields that Plom recognises"
+                )
             # now actually read the entries
             for row in reader:
                 row["_src_line"] = reader.line_num
