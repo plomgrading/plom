@@ -1191,6 +1191,7 @@ class MarkerClient(QWidget):
                     self.examModel.setPaperDirByTask(task_id_str, "")
                 # TODO: Issue #3631: wrong annotation image in corner cases
 
+        self._updateCurrentlySelectedRow()
         return True
 
     def reassign_task(self):
