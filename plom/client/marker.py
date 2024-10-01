@@ -813,7 +813,9 @@ class MarkerClient(QWidget):
         if update_select:
             self.moveSelectionToTask(task)
 
-    def get_downloads_for_src_img_data(self, src_img_data, trigger=True):
+    def get_downloads_for_src_img_data(
+        self, src_img_data: list[dict[str, Any]], trigger: bool = True
+    ) -> bool:
         """Make sure the images for some source image data are downloaded.
 
         If an image is not yet downloaded, trigger the download again.
