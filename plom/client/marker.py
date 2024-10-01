@@ -1179,8 +1179,6 @@ class MarkerClient(QWidget):
                     tags=t["tags"],
                     username=username,
                 )
-                # TODO: client doesn't refresh properly when untouched have [] src img data?
-                # TODO: it takes two clicks (Issue #3592)
 
                 # TODO: in the future, the `t` data could have information about the
                 # latest annotation but for now we just clear, unless the task is ours.
