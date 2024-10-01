@@ -623,6 +623,7 @@ class MarkerClient(QWidget):
         if src_img_data:
             self.get_downloads_for_src_img_data(src_img_data)
             self.testImg.updateImage(src_img_data)
+            return
 
         # All else fails, just wipe the display (e.g., pages removed from server)
         self.testImg.updateImage(None)
