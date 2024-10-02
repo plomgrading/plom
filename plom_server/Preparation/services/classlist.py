@@ -46,7 +46,7 @@ class StagingStudentService:
         )
 
     @transaction.atomic()
-    def get_first_last_prenamed_paper(self) -> tuple:
+    def get_first_last_prenamed_paper(self) -> tuple[int, int] | tuple[None, None]:
         """Return the lowest and highest paper_number allocated to a prenamed paper.
 
         This appropriately returns (None, None) if there are no prenamed papers.
@@ -230,14 +230,16 @@ class StagingStudentService:
         highest_prenamed_paper: int | None,
         prenaming_enabled: bool,
     ) -> int:
-        """Selects and executes logic to determine the minimum number of papers.
+        """Suggests a minimum number of papers to produce in various situations.
 
         Args:
             num_students: the maximum number of students expected to
-            attempt the assessment.
+                attempt the assessment.
             highest_prenamed_paper: the highest paper number allocated
-        to a prenamed paper. Can be None, indicating no prenamed papers.
-            prenaming_enabled: whether prenaming is currently enabled on the server.
+                to a prenamed paper. Can be None, indicating no prenamed
+                papers.
+            prenaming_enabled: whether prenaming is currently enabled on
+                the server.
         """
         extra_20 = num_students + 20
         # simple fiddle to get ceiling of 1.1*N using python floor-div //
