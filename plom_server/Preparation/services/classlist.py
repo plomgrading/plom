@@ -220,11 +220,11 @@ class StagingStudentService:
         _, last_prename = self.get_first_last_prenamed_paper()
         prenaming_enabled = PrenameSettingService().get_prenaming_setting()
 
-        return self._get_minimum_number_to_produce(
+        return self._minimum_number_to_produce(
             num_students, last_prename, prenaming_enabled
         )
 
-    def _get_minimum_number_to_produce(
+    def _minimum_number_to_produce(
         self,
         num_students: int,
         highest_prenamed_paper: int | None,

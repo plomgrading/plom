@@ -27,10 +27,10 @@ class StagingStudentsTests(TestCase):
         min_to_produce = sstu.get_minimum_number_to_produce()
         self.assertEqual(min_to_produce, 35)
 
-    def test__get_minimum_number_to_produce_typing(self) -> None:
-        """Test type handling of _get_minimum_number_to_produce()."""
+    def test__minimum_number_to_produce_typing(self) -> None:
+        """Test type handling of _minimum_number_to_produce()."""
         # arg 1: num_students, arg 2: highest prenamed paper, arg 3: prenaming enabled?
-        calc_minimum = StagingStudentService()._get_minimum_number_to_produce
+        calc_minimum = StagingStudentService()._minimum_number_to_produce
 
         # check that None doesn't throw errors
         calc_minimum(-20, None, False)
@@ -41,10 +41,10 @@ class StagingStudentsTests(TestCase):
         assert isinstance(calc_minimum(250, 5, False), int)
         assert isinstance(calc_minimum(10, 25, True), int)
 
-    def test__get_minimum_number_to_produce_logic(self) -> None:
-        """Test internal logic of _get_minimum_number_to_produce()."""
+    def test__minimum_number_to_produce_logic(self) -> None:
+        """Test internal logic of _minimum_number_to_produce()."""
         # arg 1: num_students, arg 2: highest prenamed paper, arg 3: prenaming enabled?
-        calc_minimum = StagingStudentService()._get_minimum_number_to_produce
+        calc_minimum = StagingStudentService()._minimum_number_to_produce
 
         # for small sittings, minimum should be 20 extra
         self.assertEqual(calc_minimum(0, 5, False), 20)
