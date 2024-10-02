@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2023 Andrew Rechnitzer
+# Copyright (C) 2018-2024 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024 Aden Chan
@@ -15,7 +15,7 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 # Also hardcoded in AppImageBuilder.yml
-__version__ = "0.16.4.dev0"
+__version__ = "0.16.4"
 
 import sys
 
