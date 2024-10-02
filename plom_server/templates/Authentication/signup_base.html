@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Brennen Chiu
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2024 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
 -->
 {% extends "base/base.html" %}
@@ -47,6 +47,12 @@
         <div class="card-body">
             {% block card_content %}
             {% endblock card_content %}
+            <p>
+                <strong>Please note:</strong> links will <em>expire</em>
+                by default in 7 days; don't create accounts too far in
+                advance of sending them to your team!
+                <!-- todo: paste in the live setting -->
+            </p>
         </div>
     </div>
     {% if created %}
