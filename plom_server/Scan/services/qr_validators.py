@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2024 Forest Kobayashi
 
 from __future__ import annotations
 
@@ -40,6 +41,7 @@ class QRErrorService:
         error_imgs = []
         extra_imgs = []  # extra-page
         scrap_imgs = []  # scrap-page
+        bsep_imgs = []  # bundle-separator-page
         # keep a dict of tpv to image_pk of known-images. is {tpv: [pk1, pk2, pk3,...]}
         # if a given tpv shows up in a single image, then this is a normal "known" page
         # if a given tpv corresponds to multiple images then that is
@@ -68,6 +70,8 @@ class QRErrorService:
                         extra_imgs.append(img.pk)
                     elif tpv == "plomS":  # is a scrap-paper page
                         scrap_imgs.append(img.pk)
+                    elif tpv == "plomB":  # is a bundle separator page
+                        bsep_imgs.append(img.pk)
                     else:  # a normal qr-coded page
                         # if not seen before then store as **list** [img.pk]
                         # if has been seen before then append to that list.
@@ -136,6 +140,14 @@ class QRErrorService:
                 DiscardStagingImage.objects.create(
                     staging_image=img, discard_reason="Scrap paper"
                 )
+            # save all the bundle-separator-paper pages.
+            for k in bsep_imgs:
+                img = StagingImage.objects.get(pk=k)
+                img.image_type = StagingImage.DISCARD
+                img.save()
+                DiscardStagingImage.objects.create(
+                    staging_image=img, discard_reason="Bundle separator paper"
+                )
             # save all the error-pages with the error string
             for k, err_str in error_imgs:
                 img = StagingImage.objects.get(pk=k)
@@ -171,7 +183,7 @@ class QRErrorService:
         if is_list_inconsistent(page_types):
             raise ValueError("Inconsistent qr-codes - check scan for folded pages")
         # if it is an extra page or scrap-paper, then no further consistency checks
-        if page_types[0] in ["plom_extra", "plom_scrap"]:
+        if page_types[0] in ["plom_extra", "plom_scrap", "plom_bundle_separator"]:
             return
         # must be a normal qr-coded plom-page - so make sure public-code is consistent
         # note - this does not check the code against that given by the spec.
@@ -222,7 +234,11 @@ class QRErrorService:
         if len(parsed_qr_dict) == 0:
             return True
         qr_info = next(iter(parsed_qr_dict.values()))
-        if qr_info["page_type"] in ["plom_extra", "plom_scrap"]:
+        if qr_info["page_type"] in [
+            "plom_extra",
+            "plom_scrap",
+            "plom_bundle_separator",
+        ]:
             return True
 
         # make sure the public code matches that given in the spec

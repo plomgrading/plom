@@ -23,7 +23,6 @@ else:
 def build_bundle_separator_paper_pdf(destination_dir=None) -> None:
     if destination_dir is None:
         destination_dir = Path.cwd()
-
     src_tex = (resources.files(plom.create) / "bundle_separator_src.tex").read_text()
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmp_path = Path(tmpdirname)
