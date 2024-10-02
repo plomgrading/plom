@@ -10,7 +10,7 @@ from django.contrib import messages
 
 from django_htmx.http import HttpResponseClientRedirect
 
-from ..services import StagingStudentService, PrenameSettingService
+from ..services import StagingStudentService, PrenameSettingService, PapersPrinted
 
 from Base.base_group_views import ManagerRequiredView
 from plom.plom_exceptions import PlomDependencyConflict
@@ -35,11 +35,13 @@ class ClasslistView(ManagerRequiredView):
                 "student_list_present": sss.are_there_students(),
                 "student_list": sss.get_students(),
                 "prenaming": pss.get_prenaming_setting(),
+                "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
             }
         )
         return render(request, "Preparation/classlist_manage.html", context)
 
     def post(self, request):
+        # NOTE - regular http post, not htmx
         context = self.build_context()
         ignore_warnings = request.POST.get("ignoreWarnings", False)
 
@@ -49,7 +51,7 @@ class ClasslistView(ManagerRequiredView):
         # check if there are already students in the list.
         sss = StagingStudentService()
         if sss.are_there_students():
-            return HttpResponseClientRedirect(".")
+            return redirect("prep_classlist")
 
         try:
             success, warn_err = sss.validate_and_use_classlist_csv(
@@ -64,9 +66,10 @@ class ClasslistView(ManagerRequiredView):
                 return redirect("prep_classlist")
         except PlomDependencyConflict as err:
             messages.add_message(request, messages.ERROR, f"{err}")
-            return HttpResponseClientRedirect(reverse("prep_conflict"))
+            return redirect("prep_conflict")
 
     def delete(self, request):
+        # is htmx-delete, not http.
         try:
             StagingStudentService().remove_all_students()
         except PlomDependencyConflict as err:
