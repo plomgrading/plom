@@ -182,7 +182,7 @@
                                                 <li>
                                                     You do not have to print all of the resulting
                                                     papers. Rather, this ensures that you will have plenty
-                                                    of spare papers <em>if you need them</em>
+                                                    of spare papers <em>if you need them</em>.
                                                 </li>
                                             </ul>
                                         </details>
@@ -199,7 +199,7 @@
                                                class="form-input"
                                                type="number"
                                                name="number_to_produce"
-                                               min="{{ min_number_to_produce }}"
+                                               min="1"
                                                value="{{ min_number_to_produce }}"
                                                max="9999"
                                                required />
@@ -309,7 +309,7 @@
     {% if populate_in_progress or evacuate_in_progress %}
         <script>
   // reload page after 2 sec
-setTimeout(function () { window.location.reload(1); }, 5000); 
+setTimeout(function () { window.location.reload(1); }, 5000);
         </script>
     {% endif %}
 {% endblock main_content %}

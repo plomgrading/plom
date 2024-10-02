@@ -79,14 +79,14 @@ class Command(BaseCommand):
 
         self.stdout.write("Creating test-papers...")
         min_production = PQVMappingService().get_minimum_number_to_produce()
-        # make sure number to produce is at least min recommended
         if number_to_produce is None:
             number_to_produce = min_production
-        elif number_to_produce < min_production:
+        # guard Command line input
+        elif number_to_produce < 0:
             number_to_produce = min_production
 
+        # need to assert for mypy
         assert number_to_produce is not None
-
         if first is None:
             qv_map = PQVMappingService().make_version_map(number_to_produce)
         else:
