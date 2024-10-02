@@ -12,7 +12,7 @@ import tempfile
 import segno
 
 import plom.create
-from plom.tpv_utils import encodeSeparatorPaperCode
+from plom.tpv_utils import encodeBundleSeparatorPaperCode
 
 if sys.version_info >= (3, 9):
     from importlib import resources
