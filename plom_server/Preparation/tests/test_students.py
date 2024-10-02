@@ -27,6 +27,46 @@ class StagingStudentsTests(TestCase):
         min_to_produce = sstu.get_minimum_number_to_produce()
         self.assertEqual(min_to_produce, 35)
 
+    def test__minimum_number_to_produce_typing(self) -> None:
+        """Test type handling of _minimum_number_to_produce()."""
+        # arg 1: num_students, arg 2: highest prenamed paper, arg 3: prenaming enabled?
+        calc_minimum = StagingStudentService()._minimum_number_to_produce
+
+        # check that None doesn't throw errors
+        calc_minimum(-20, None, False)
+        calc_minimum(-20, None, True)
+
+        # check that return type is int
+        assert isinstance(calc_minimum(10, 5, False), int)
+        assert isinstance(calc_minimum(250, 5, False), int)
+        assert isinstance(calc_minimum(10, 25, True), int)
+
+    def test__minimum_number_to_produce_logic(self) -> None:
+        """Test internal logic of _minimum_number_to_produce()."""
+        # arg 1: num_students, arg 2: highest prenamed paper, arg 3: prenaming enabled?
+        calc_minimum = StagingStudentService()._minimum_number_to_produce
+
+        # for small sittings, minimum should be 20 extra
+        self.assertEqual(calc_minimum(0, 5, False), 20)
+        self.assertEqual(calc_minimum(0, 15, False), 20)
+        self.assertEqual(calc_minimum(199, 5, False), 219)
+        self.assertEqual(calc_minimum(199, 215, False), 219)
+
+        # for large sittings, minimum 10% extra (rounded up)
+        self.assertEqual(calc_minimum(201, 5, False), 222)  # rounding up
+        self.assertEqual(calc_minimum(201, 219, False), 222)
+
+        # with prenaming enabled, prior rules or highest prenamed paper + 10
+        # for small sittings
+        self.assertEqual(calc_minimum(0, 5, True), 20)
+        self.assertEqual(calc_minimum(0, 15, True), 25)
+        self.assertEqual(calc_minimum(199, 5, True), 219)
+        self.assertEqual(calc_minimum(199, 215, True), 225)
+
+        # for large sittings
+        self.assertEqual(calc_minimum(201, 5, True), 222)  # rounding up
+        self.assertEqual(calc_minimum(201, 219, True), 229)
+
     def test_valid_paper_number_sentinels(self) -> None:
         n = 10000000
         for p in (None, -1, "", "-1"):
