@@ -303,7 +303,9 @@ class PaperCreatorService:
         dnm_page_numbers = SpecificationService.get_dnm_pages()
         question_page_numbers = SpecificationService.get_question_pages()
         for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
-            with transaction.atomic():
+            with transaction.atomic(durable=True):
+                # todo: is durable correct?  I want both to fail or both succeed
+                cls._increment_number_to_produce()
                 cls._create_single_paper_from_qvmapping_and_pages(
                     paper_number,
                     qv_row,
@@ -311,7 +313,6 @@ class PaperCreatorService:
                     dnm_page_numbers=dnm_page_numbers,
                     question_page_numbers=question_page_numbers,
                 )
-                cls._increment_number_to_produce()
 
     @staticmethod
     def _populate_whole_db_huey_wrapper(
