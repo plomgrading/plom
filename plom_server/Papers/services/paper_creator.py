@@ -299,9 +299,6 @@ class PaperCreatorService:
         # check if there is an existing non-obsolete task
         cls.assert_no_existing_chore()
 
-        id_page_number = SpecificationService.get_id_page_number()
-        dnm_page_numbers = SpecificationService.get_dnm_pages()
-        question_page_numbers = SpecificationService.get_question_pages()
         for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
             with transaction.atomic(durable=True):
                 # todo: is durable correct?  I want both to fail or both succeed
@@ -309,9 +306,6 @@ class PaperCreatorService:
                 cls._create_single_paper_from_qvmapping_and_pages(
                     paper_number,
                     qv_row,
-                    id_page_number=id_page_number,
-                    dnm_page_numbers=dnm_page_numbers,
-                    question_page_numbers=question_page_numbers,
                 )
 
     @staticmethod
