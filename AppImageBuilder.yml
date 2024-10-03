@@ -40,7 +40,7 @@ AppDir:
     name: PlomClient
     icon: org.plomgrading.PlomClient
     # Note version hardcoded here!
-    version: 0.16.4
+    version: 0.16.5.dev0
     exec: usr/bin/python3
     exec_args: -m plom.client $@
   files:
