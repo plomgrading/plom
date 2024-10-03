@@ -294,10 +294,11 @@ class PaperCreatorService:
             assert_can_modify_qv_mapping_database()
             if Paper.objects.filter().exists():
                 raise PlomDatabaseCreationError("Already papers in the database.")
-            # check if there is an existing non-obsolete task
-            cls.assert_no_existing_chore()
 
-        # log(f"Adding {len(qv_map)} papers via foreground process for testing")
+        # even with force you don't get to bully; other people are playing here!
+        # check if there is an existing non-obsolete task
+        cls.assert_no_existing_chore()
+
         id_page_number = SpecificationService.get_id_page_number()
         dnm_page_numbers = SpecificationService.get_dnm_pages()
         question_page_numbers = SpecificationService.get_question_pages()
