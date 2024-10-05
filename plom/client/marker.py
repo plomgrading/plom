@@ -1171,8 +1171,12 @@ class MarkerClient(QWidget):
                     self.tags_changed_signal.emit(task_id_str, t["tags"])
                     continue
 
+                # In future, could try to keep existing src_img_data by *not* including
+                # it here: examModel will preserve it if possible.  This could decrease
+                # metadata transfer from server (but note page images are already cached).
                 self.examModel.update_task(
                     task_id_str,
+                    src_img_data=t.get("src_img_data"),
                     integrity=t.get("integrity"),
                     mark=mark,
                     marking_time=t.get("marking_time", 0.0),
@@ -1188,7 +1192,11 @@ class MarkerClient(QWidget):
                 if username != our_username:
                     self.examModel.setAnnotatedFile(task_id_str, "", "")
                     self.examModel.setPaperDirByTask(task_id_str, "")
-                # TODO: Issue #3631: wrong annotation image in corner cases
+                else:
+                    # for now, also force redownloads of our own annotation images, else
+                    # we would need to fix Issue #3631: wrong annot image in corner cases
+                    self.examModel.setAnnotatedFile(task_id_str, "", "")
+                    self.examModel.setPaperDirByTask(task_id_str, "")
 
         self._updateCurrentlySelectedRow()
         return True
