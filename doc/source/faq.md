@@ -20,33 +20,6 @@ but mostly this has been fixed recently by improving the way we use modal dialog
 
 
 
-Identifying
------------
-
-### How does the auto-identifier work?
-
-Machine learning trained on the MNIST handwritten digit dataset.  A linear
-assignment problem solver then matches the results against the class list.
-For this reason the class list csv file should not contain large numbers
-of additional students that are not in your class.
-
-
-### Student wrote a different paper; I cannot ID their new paper.
-
-For example suppose Isla's name was printed on paper 0120 but they
-wrote blank paper 1280 instead.  Plom's "prenaming" is now a
-"prediction" because of exactly this situation.  Simply ID 1280 as
-normal.  (If 0120 was scanned and is blank, you can note that it is
-blank within the Identifier)
-
-
-### I made a mistake identifying: how can I revert an ID?
-
-The UnID operation is exposed in the beta Manager Tool -> ID Progress
-tab.
-
-
-
 Test Preparation
 ----------------
 
