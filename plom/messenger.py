@@ -85,11 +85,11 @@ class Messenger(BaseMessenger):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def IDaskNextTask(self):
-        """Return the TGV of a paper that needs IDing.
+    def IDaskNextTask(self) -> int | None:
+        """Return the paper number of a paper that needs IDing.
 
         Returns:
-            string or None if no papers need IDing.
+            Paper number or None if no papers need IDing.
 
         Raises:
             SeriousError: if something has unexpectedly gone wrong.
@@ -104,8 +104,7 @@ class Messenger(BaseMessenger):
             response.raise_for_status()
             if response.status_code == 204:
                 return None
-            tgv = response.json()
-            return tgv
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
