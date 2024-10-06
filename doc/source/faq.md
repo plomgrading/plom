@@ -58,6 +58,35 @@ that a small amount of progress has been made, but not enough to be
 worth a full point.
 
 
+### How can I review the work of a marker?
+
+There are several ways to do this, in various stages of development.
+Suppose we wish to check all the work of Yakov on Question 2 version 2.
+
+1. Reset the password for Yakov.  Use their account in the client to
+   look at and adjust marking as needed.
+
+2. Login to the web interface as a manager or lead marker.  Search by
+   question and username.  Look over each task.
+
+   * You can "reassign" any tasks that need regrading to another
+     marker, say, Sierra.
+   * Or you can "tag" tasks (e.g., with "regrade") and ask Yakov to
+     revisit them
+   * In either case, Sierra and/or Yakov can use Plom Client to do the
+     regrading.  They might find it useful to sort tasks in the Client
+     by tags.
+   * When working on the same tasks in the Client and the web
+     interface, it will be helpful to "refresh" the task list in the
+     Client.
+
+3. In the client---as a lead marker---toggle "show all tasks".  You
+   can look at *all* tasks for the current question and version.
+   In current development is the ability reassign any tasks to
+   yourself, which will allow you to further edit the annotations.
+
+
+
 Scanning
 --------
 
