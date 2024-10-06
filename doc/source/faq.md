@@ -61,7 +61,8 @@ worth a full point.
 ### How can I review the work of a marker?
 
 There are several ways to do this, in various stages of development.
-Suppose we wish to check all the work of Yakov on Question 2 version 2.
+Suppose we wish to check all the marking by Yakov on Question 2
+version 2.  We have at least three options:
 
 1. Reset the password for Yakov.  Use their account in the client to
    look at and adjust marking as needed.
@@ -72,7 +73,9 @@ Suppose we wish to check all the work of Yakov on Question 2 version 2.
    * You can "reassign" any tasks that need regrading to another
      marker, say, Sierra.
    * Or you can "tag" tasks (e.g., with "regrade") and ask Yakov to
-     revisit them
+     revisit them.
+   * Or you can "reset", removing all annotations and putting the task
+     back in the pool.
    * In either case, Sierra and/or Yakov can use Plom Client to do the
      regrading.  They might find it useful to sort tasks in the Client
      by tags.
