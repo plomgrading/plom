@@ -76,7 +76,7 @@ Just ignore that and *do not* pass `--collisions`.
 Server administration
 ---------------------
 
-### My server sometimes has random disk I/O errors
+### My legacy server sometimes has random disk I/O errors
 
 Like this `peewee.OperationalError: disk I/O error`?
 Plom uses an SQLite database; it
@@ -85,7 +85,7 @@ Apparently "people" know this but we were just as "thrilled" as you probably
 are to discover it on a production server.
 
 
-### How can I get past SSL certificate errors?
+### Legacy: How can I get past SSL certificate errors?
 
 E.g.,
 ```
@@ -116,9 +116,9 @@ We are not experts on this topic, but
 
 
 
-### How can I clone a server?
+### How can I clone a legacy server?
 
-For example, how can I make another copy of a running server?  One way
+For example, how can I make another copy of a running legacy server?  One way
 is to copy the filesystem of the running server, then modify
 ``serverDetails.toml`` to change the port.
 Its also possible to make a new server from scratch that accepts scans
