@@ -63,13 +63,16 @@ Scanning
 
 ### Do I need to carefully pick out just the right pages when rescanning a bundle?
 
-It depends.  Suppose we have scanned "BundleA1" but some pages misfed,
-and do not appear in the resulting PDF file.  In this case, its
-perfectly fine to rescan the whole bundle.  Use a new bundle name, say
-"BundleA1-rescan".  Now process as usual.  When uploading, `plom-scan
-upload BundleA1-rescan` will upload the new non-colliding pages and
-you'll get a message about collisions (lots and lots of collisions!)
-Just ignore that and *do not* pass `--collisions`.
+It depends.  Suppose we have scanned "BundleA1" but have some page
+misfeeds (e.g., pages stuck together) or pages that somehow do not
+appear correctly in the resulting PDF file.  If the bundle has been
+uploaded to the staging area but not pushed, we can simply rescan the
+whole bundle.  Use a new bundle name, say "BundleA1-rescan".  Now
+process as usual.
+
+On the other hand, If you're already pushed an incomplete bundle, it
+might be easier to rescan only the appropriate pages, to avoid needing
+to discard the colliding pages.
 
 
 
