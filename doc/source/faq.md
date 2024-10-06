@@ -36,19 +36,14 @@ a new page NOW"* at the start of each question.
 Marking
 -------
 
-### Why doesn't Plom have fractional marks?
+### Does Plom support fractional marks?
 
-Because the main developers of Plom don't use them. We feel that they
-tend to over-complicate marking schemes and that it is better to simply
-make your test out of a larger total rather than mess about with "1/2"s
-or "1/3"s. This also makes things more consistent when a large team is
-trying to mark using the same scheme / rubric. We admit that this is
-forcing our own ideas about marking onto others, however, after
-supervising the marking of many tests and exams, we feel that this is
-the right way to go (the absence of fractional marks, not the forcing
-people to do what we think)
+Plom now has preliminary support for "half-marks" and in principle
+finer divisions.  "+½" and "-½" delta rubrics can be added to your
+server under "Rubric management".  More complete support, for example
+including full clientside creating/editing of fractional rubrics could
+be added by future energetic co-developers.
 
-Of course, if an energetic co-developer would like to implement fractional marks, then we won't stop them.
 
 
 ### Why do you have "+0" and "-0" as possible delta-marks?
