@@ -275,7 +275,7 @@ class Chooser(QDialog):
                     "<p>Only lead marker should be identifying papers.</p>"
                     "<p>You may want to ask your instructor/manager to"
                     " promote your account.  (In the future this might be"
-                    " enforced; for now it probably works.)</p>",
+                    " enforced, but isn't as of Oct 2024.)</p>",
                 ).exec()
                 # TODO: maybe this should be enforced serverside?
                 # return
