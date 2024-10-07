@@ -89,6 +89,7 @@ Examples of this feature include:
       that everyone does their share.
 
 
+.. _lead-markers:
 
 Permissions and "Lead Markers"
 ------------------------------

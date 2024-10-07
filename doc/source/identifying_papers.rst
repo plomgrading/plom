@@ -84,7 +84,8 @@ Clicking ``Blank page...`` will ask you to confirm the situation.
 I made a mistake identifying: how can I revert an ID?
 -----------------------------------------------------
 
-Login to the web interface as either a manager or lead marker account.
+Login to the web interface as either a manager or
+:ref:`lead marker <lead-markers>` account.
 Go to "Identifying Progress" and click on ``clear`` by the paper you
 wish to reset.
 
