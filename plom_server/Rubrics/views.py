@@ -301,6 +301,7 @@ class RubricItemView(UpdateView, ManagerRequiredView):
         marking_tasks = rs.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
         rubric_form = RubricItemForm(instance=rubric)
         for _, task in enumerate(marking_tasks):
+            print((task.pk, task, task.latest_annotation))
             task.latest_annotation.score_str = pprint_score(
                 task.latest_annotation.score
             )
