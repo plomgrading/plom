@@ -142,8 +142,8 @@ connecting too.
 If you're only experimenting, you can bypass the checks by setting a
 special environment variable, e.g., in bash:
 ``export PLOM_NO_SSL_VERIFY=1``.
-The graphical client offers a mechanism to ignore SSL errors (at you
-and your users' own risks).
+The :ref:`desktop Plom Client <plom-client>` offers a mechanism to
+ignore SSL errors (at you and your users' own risks).
 
 *For production servers, you'll need to investigate how to setup SSL
 certificates.*

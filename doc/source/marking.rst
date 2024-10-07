@@ -16,7 +16,7 @@ your marking team to start working.
 Ready to mark
 -------------
 
-Your markers will all need to download the client: :doc:`getting_started`.
+Your markers will all need to download the :ref:`desktop Plom Client app <plom-client>`.
 
 They can then begin the process of annotating papers, leaving useful
 feedback and assigning marks (grades).
