@@ -20,33 +20,6 @@ but mostly this has been fixed recently by improving the way we use modal dialog
 
 
 
-Identifying
------------
-
-### How does the auto-identifier work?
-
-Machine learning trained on the MNIST handwritten digit dataset.  A linear
-assignment problem solver then matches the results against the class list.
-For this reason the class list csv file should not contain large numbers
-of additional students that are not in your class.
-
-
-### Student wrote a different paper; I cannot ID their new paper.
-
-For example suppose Isla's name was printed on paper 0120 but they
-wrote blank paper 1280 instead.  Plom's "prenaming" is now a
-"prediction" because of exactly this situation.  Simply ID 1280 as
-normal.  (If 0120 was scanned and is blank, you can note that it is
-blank within the Identifier)
-
-
-### I made a mistake identifying: how can I revert an ID?
-
-The UnID operation is exposed in the beta Manager Tool -> ID Progress
-tab.
-
-
-
 Test Preparation
 ----------------
 
@@ -63,19 +36,14 @@ a new page NOW"* at the start of each question.
 Marking
 -------
 
-### Why doesn't Plom have fractional marks?
+### Does Plom support fractional marks?
 
-Because the main developers of Plom don't use them. We feel that they
-tend to over-complicate marking schemes and that it is better to simply
-make your test out of a larger total rather than mess about with "1/2"s
-or "1/3"s. This also makes things more consistent when a large team is
-trying to mark using the same scheme / rubric. We admit that this is
-forcing our own ideas about marking onto others, however, after
-supervising the marking of many tests and exams, we feel that this is
-the right way to go (the absence of fractional marks, not the forcing
-people to do what we think)
+Plom now has preliminary support for "half-marks" and in principle
+finer divisions.  "+½" and "-½" delta rubrics can be added to your
+server under "Rubric management".  More complete support, for example
+including full clientside creating/editing of fractional rubrics could
+be added by future energetic co-developers.
 
-Of course, if an energetic co-developer would like to implement fractional marks, then we won't stop them.
 
 
 ### Why do you have "+0" and "-0" as possible delta-marks?
@@ -90,25 +58,60 @@ that a small amount of progress has been made, but not enough to be
 worth a full point.
 
 
+### How can I review the work of a marker?
+
+There are several ways to do this, in various stages of development.
+Suppose we wish to check all the marking by Yakov on Question 2
+version 2.  We have at least three options:
+
+1. Reset the password for Yakov.  Use their account in the client to
+   look at and adjust marking as needed.
+
+2. Login to the web interface as a manager or lead marker.  Search by
+   question and username.  Look over each task.
+
+   * You can "reassign" any tasks that need regrading to another
+     marker, say, Sierra.
+   * Or you can "tag" tasks (e.g., with "regrade") and ask Yakov to
+     revisit them.
+   * Or you can "reset", removing all annotations and putting the task
+     back in the pool.
+   * In either case, Sierra and/or Yakov can use Plom Client to do the
+     regrading.  They might find it useful to sort tasks in the Client
+     by tags.
+   * When working on the same tasks in the Client and the web
+     interface, it will be helpful to "refresh" the task list in the
+     Client.
+
+3. In the client---as a lead marker---toggle "show all tasks".  You
+   can look at *all* tasks for the current question and version.
+   In current development is the ability reassign any tasks to
+   yourself, which will allow you to further edit the annotations.
+
+
+
 Scanning
 --------
 
 ### Do I need to carefully pick out just the right pages when rescanning a bundle?
 
-It depends.  Suppose we have scanned "BundleA1" but some pages misfed,
-and do not appear in the resulting PDF file.  In this case, its
-perfectly fine to rescan the whole bundle.  Use a new bundle name, say
-"BundleA1-rescan".  Now process as usual.  When uploading, `plom-scan
-upload BundleA1-rescan` will upload the new non-colliding pages and
-you'll get a message about collisions (lots and lots of collisions!)
-Just ignore that and *do not* pass `--collisions`.
+It depends.  Suppose we have scanned "BundleA1" but have some page
+misfeeds (e.g., pages stuck together) or pages that somehow do not
+appear correctly in the resulting PDF file.  If the bundle has been
+uploaded to the staging area but not pushed, we can simply rescan the
+whole bundle.  Use a new bundle name, say "BundleA1-rescan".  Now
+process as usual.
+
+On the other hand, If you're already pushed an incomplete bundle, it
+might be easier to rescan only the appropriate pages, to avoid needing
+to discard the colliding pages.
 
 
 
 Server administration
 ---------------------
 
-### My server sometimes has random disk I/O errors
+### My legacy server sometimes has random disk I/O errors
 
 Like this `peewee.OperationalError: disk I/O error`?
 Plom uses an SQLite database; it
@@ -117,7 +120,7 @@ Apparently "people" know this but we were just as "thrilled" as you probably
 are to discover it on a production server.
 
 
-### How can I get past SSL certificate errors?
+### Legacy: How can I get past SSL certificate errors?
 
 E.g.,
 ```
@@ -148,9 +151,9 @@ We are not experts on this topic, but
 
 
 
-### How can I clone a server?
+### How can I clone a legacy server?
 
-For example, how can I make another copy of a running server?  One way
+For example, how can I make another copy of a running legacy server?  One way
 is to copy the filesystem of the running server, then modify
 ``serverDetails.toml`` to change the port.
 Its also possible to make a new server from scratch that accepts scans
