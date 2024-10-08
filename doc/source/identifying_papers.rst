@@ -60,8 +60,7 @@ machine-read predictions.
 Confirming and/or manually identifying
 --------------------------------------
 
-This is currently done using the desktop client:
-see :doc:`getting_started`.
+This is currently done using :ref:`the desktop client <plom-client>`.
 
 Identifying is typically quick compared to marking and you will not need
 to assign much person-time.

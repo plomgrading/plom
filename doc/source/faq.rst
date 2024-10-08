@@ -1,7 +1,6 @@
-<!--
-__copyright__ = "Copyright (C) 2019-2024 Colin B. Macdonald"
-__license__ = "AGPL-3.0-or-later"
- -->
+.. Plom documentation
+   Copyright (C) 2019-2024 Colin B. Macdonald
+   SPDX-License-Identifier: AGPL-3.0-or-later
 
 Frequently Asked Questions
 ==========================
@@ -13,7 +12,8 @@ documentation.
 Plom Client software
 --------------------
 
-### Some windows/dialogs are awkward to resize on Gnome Desktop
+Some windows/dialogs are awkward to resize on Gnome Desktop
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You could try disabling "Attach Modal Dialogs" in the "Gnome Tweaks" app,
 but mostly this has been fixed recently by improving the way we use modal dialogs.
@@ -23,7 +23,8 @@ but mostly this has been fixed recently by improving the way we use modal dialog
 Test Preparation
 ----------------
 
-### For self-submitted work, should I start each question on a new page?
+For self-submitted work, should I start each question on a new page?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Yes.  This is important because it makes it easier for markers to find the
 answers, especially if they need to use the rearrange pages dialog.
@@ -36,7 +37,8 @@ a new page NOW"* at the start of each question.
 Marking
 -------
 
-### Does Plom support fractional marks?
+Does Plom support fractional marks?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Plom now has preliminary support for "half-marks" and in principle
 finer divisions.  "+½" and "-½" delta rubrics can be added to your
@@ -46,7 +48,8 @@ be added by future energetic co-developers.
 
 
 
-### Why do you have "+0" and "-0" as possible delta-marks?
+Why do you have "+0" and "-0" as possible delta-marks?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 (Current versions of Plom do not expose this feature.)
 
@@ -58,7 +61,8 @@ that a small amount of progress has been made, but not enough to be
 worth a full point.
 
 
-### How can I review the work of a marker?
+How can I review the work of a marker?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 There are several ways to do this, in various stages of development.
 Suppose we wish to check all the marking by Yakov on Question 2
@@ -93,7 +97,8 @@ version 2.  We have at least three options:
 Scanning
 --------
 
-### Do I need to carefully pick out just the right pages when rescanning a bundle?
+Do I need to carefully pick out just the right pages when rescanning a bundle?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It depends.  Suppose we have scanned "BundleA1" but have some page
 misfeeds (e.g., pages stuck together) or pages that somehow do not
@@ -111,47 +116,47 @@ to discard the colliding pages.
 Server administration
 ---------------------
 
-### My legacy server sometimes has random disk I/O errors
+My legacy server sometimes has random disk I/O errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Like this `peewee.OperationalError: disk I/O error`?
-Plom uses an SQLite database; it
-[should not be run on NFS storage](https://gitlab.com/plom/plom/-/issues/811).
+Like this ``peewee.OperationalError: disk I/O error``
+The Plom legacy server uses an SQLite database; it
+`should not be run on NFS storage <https://gitlab.com/plom/plom/-/issues/811>`_.
 Apparently "people" know this but we were just as "thrilled" as you probably
 are to discover it on a production server.
 
 
-### Legacy: How can I get past SSL certificate errors?
+Legacy: How can I get past SSL certificate errors?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-E.g.,
-```
-SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:997)'))
-```
-Or `plom-create status` might be showing you:
-```
-[!] insecure connection (self-signed or invalid SSL cert)
-```
+E.g.,::
+
+    SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:997)'))
+
+Or ``plom-create status`` might be showing you::
+
+    [!] insecure connection (self-signed or invalid SSL cert)
+
 SSL is used to securely verify the identity of the server you are
 connecting too.
 If you're only experimenting, you can bypass the checks by setting a
 special environment variable, e.g., in bash:
-```
-export PLOM_NO_SSL_VERIFY=1
-```
-The graphical client offers a mechanism to ignore SSL errors (at you
-and your users' own risks).
+``export PLOM_NO_SSL_VERIFY=1``.
+The :ref:`desktop Plom Client <plom-client>` offers a mechanism to
+ignore SSL errors (at you and your users' own risks).
 
-**For production servers, you'll need to investigate how to setup SSL
-certificates.**
+*For production servers, you'll need to investigate how to setup SSL
+certificates.*
 
 
-### Ok, how do I setup SSL certificates?
+Ok, how do I setup SSL certificates?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-We are not experts on this topic, but
-[LetsEncrypt](https://letsencrypt.org) is a good place to start.
+`LetsEncrypt <https://letsencrypt.org>`_ is probably a good place to start.
 
 
-
-### How can I clone a legacy server?
+How can I clone a legacy server?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For example, how can I make another copy of a running legacy server?  One way
 is to copy the filesystem of the running server, then modify
@@ -160,7 +165,8 @@ Its also possible to make a new server from scratch that accepts scans
 intended for the old server.  This is discussed next.
 
 
-### How do I change the public code and/or private seed of my server?
+How do I change the public code and/or private seed of my server?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This can be done provided you have not yet made PDF files (whose
 QR-codes would contain that public Code).
@@ -175,7 +181,8 @@ papers to the wrong server.  This question shows you how to defeat
 that mechanism.
 
 
-### How do I reset my legacy server to the pre-scanned state?
+How do I reset my legacy server to the pre-scanned state?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You need two things: the ``question_version_map.csv`` file which you
 can get with the command line tools: ``plom-create get-ver-map``.
@@ -188,11 +195,11 @@ it can be extracted from the file system of your old server by copying
 ``specAndDatabase/verifiedSpec.toml``.
 
 There are two fields in ``verifiedSpec.toml`` that are probably not
-in your original spec file:
-```
-privateSeed = "0052084227513987"
-publicCode = "302386"
-```
+in your original spec file::
+
+    privateSeed = "0052084227513987"
+    publicCode = "302386"
+
 Calling ``plom-create uploadspec verifiedSpec.toml`` to push this spec
 into the new server will (currently) populate those fields as-is,
 thus ensuring the server will be able to read in physical papers
@@ -205,15 +212,15 @@ the printed pages.  See the source code ``plom/tpv_utils.py`` for
 hints on how to do this.  The `privateSeed` should not be necessary
 for this procedure.
 
-<!-- todo: switch to ReST and use alert box here, and fix links -->
+.. caution::
+    One should be very carefully doing this sort of thing: the
+    `publicCode` exists to make it difficult to accidentally upload the
+    papers to the wrong server.  This question shows you how to defeat
+    that mechanism.
 
-One should be very carefully doing this sort of thing: the
-`publicCode` exists to make it difficult to accidentally upload the
-papers to the wrong server.  This question shows you how to defeat
-that mechanism.
 
-
-### I messed up by double-scanning some papers and uploading and now I have collisions!
+I messed up by double-scanning some papers and uploading and now I have collisions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If there are only collisions in your bundle, you can remove the bundle
 without pushing it.
@@ -225,7 +232,8 @@ colliding pages, so that you can push the remaining non-colliding
 pages.
 
 
-### I messed up by *double-printing* some papers, now I have collisions!
+I messed up by *double-printing* some papers, now I have collisions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This is a serious problem which you should avoid getting into...
 If two students have written on (say) paper number 20, then you will
@@ -234,7 +242,7 @@ get collisions at upload time.
 Let's suppose the scanned bundles are contiguous: that is, the two
 paper number 20s are not interleaved in the scanning process.  For
 example, they are in two separate bundles.  (If this is not so, have
-a cry and consider sorting and rescanning?)
+a little cry and then consider sorting and rescanning?)
 
 At this point you have paper 20 "A" scanned into the system.  Now
 upload paper 20 "B".  You will not be able to push it because of the
@@ -245,13 +253,14 @@ then convert to known pages of some **unused**
 paper number, say 107 (assuming you have spares; if not see below).
 
 
-### I messed up by double-printing and I'm using *multiple versions*
+I messed up by double-printing and I'm using *multiple versions*
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This is similar to the above but we cannot simply push paper number
 20 "B" into a spare unused paper slot (say 107).  This is because
 paper number 107 will have different versions than 20.
 
-A [future version of Plom](https://gitlab.com/plom/plom/-/issues/1745)
+A `future version of Plom <https://gitlab.com/plom/plom/-/issues/1745>`_
 might allow you to instantiate arbitrary new rows of the database using
 the versions of paper number 20.  Roughly: extract the relevant
 version numbers for paper 20.  Use those
@@ -263,14 +272,15 @@ But for now, the workaround is complicated:
   2. Update the duplicated papers into the 2nd server.
   3. Have your grading team grade on both (alternatively, have them
      do most of the grading on Server 1, then download the rubrics
-	 and push those rubrics to Server 2.
+     and push those rubrics to Server 2.
 
 
 
 Changing the spec later
 -----------------------
 
-### Students have already written my assessment, can I split one of my questions up?  Can I merge two questions?
+Students have already written my assessment, can I split one of my questions up?  Can I merge two questions?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Yes, although there is some work.  Keep the old server up for now
 ("Server A").  Make a new server ("Server B").  Hack the spec to
@@ -281,18 +291,17 @@ have mono-versioned test, nothing else is required: upload the papers
 to Server B.
 
 If you have a multiversioned test, its a bit harder:
-  1. extract the version map from Server A
-     (``plom-create get-ver-map -s plomA.example.com``).
+  1. extract the version map from Server A.
   2. modify that version map for your new paper layout.  For example,
      if you are splitting "Q5" (physically laid out as 5(a) on Page 11
      and 5(b) on Page 12) into separate "Q5" and "Q6", then they must
      both have the same version as the original Q5.
   3. upload that version map to Server B when making the database.
-     ``plom-create make-db --from-file my_new_vermap.csv -s plomB.example.com``
   4. Upload the papers to Server B.
 
 
-### I have already uploaded scans, can I split one of my questions up?  Can I merge two questions?
+I have already uploaded scans, can I split one of my questions up?  Can I merge two questions?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Not easily.  Currently we would suggest re-uploading to a new server
 following the instructions above.
