@@ -283,11 +283,10 @@ class MarkingTaskService:
             plomfile (str): a JSON field representing annotation data.
 
         Returns:
-            tuple: three things in a tuple;
-            `cleaned_data (dict)`: cleaned request data.
-            `annot_data (dict)`: annotation-image data parsed from a JSON string.
-            `rubrics_used (list)`: a list of Rubric objects, extracted based on
-            keys found inside the `annot_data`.
+            Two things in a tuple;
+            `cleaned_data`: dict of the cleaned request data.
+            `annot_data`: dict of the annotation-image data parsed from
+            a JSON string.
 
         Raises:
             ValidationError
@@ -326,18 +325,27 @@ class MarkingTaskService:
         except (ValueError, TypeError) as e:
             raise ValidationError(f"Could not get 'integrity_check' as a int: {e}")
 
-        # unpack the rubrics, potentially record which ones were used
-        # TODO: similar code to this in annotations.py:_add_annotation_to_rubrics
-        annotations = annot_data["sceneItems"]
+        # unpack the rubrics and ensure they all exist in the DB
+        from Mark.services.annotations import (
+            _get_rubric_rid_rev_pairs_from_annotation_data,
+        )
+
+        rid_rev_pairs = _get_rubric_rid_rev_pairs_from_annotation_data(annot_data)
+
+        # this oversamples b/c we only check the rid and it also doesn't check
+        # that any particular rubric was found: use a loop below to address both
+        # rubrics = Rubric.objects.filter(rid__in=[x[0] for x in pairs])
+        # Meh, can't bebothered for now its just a loop with multiple DB looks
+
         rubrics_used = []
-        for ann in annotations:
-            if ann[0] == "Rubric":
-                rid = ann[3]["rid"]
-                try:
-                    rubric = Rubric.objects.get(rid=rid, latest=True)
-                except ObjectDoesNotExist:
-                    raise ValidationError(f"Invalid rubric rid: {rid}")
-                rubrics_used.append(rubric)
+        for rid, rev in rid_rev_pairs:
+            try:
+                rubric = Rubric.objects.get(rid=rid, revision=rev)
+                # TODO Issue 3343, possibly ensure all rubrics are latest
+                # ..., latest=True)?
+            except ObjectDoesNotExist:
+                raise ValidationError(f"Invalid rubric rid {rid} revision {rev}")
+            rubrics_used.append(rubric)
 
         src_img_data = annot_data["base_images"]
         for image_data in src_img_data:
@@ -345,7 +353,7 @@ class MarkingTaskService:
             if not img_path.exists():
                 raise ValidationError("Invalid original-image in request.")
 
-        return cleaned_data, annot_data, rubrics_used
+        return cleaned_data, annot_data
 
     def get_latest_annotation(self, paper: int, question_idx: int) -> Annotation:
         """Get the latest annotation for a particular paper/question.

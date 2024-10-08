@@ -95,6 +95,17 @@ def _create_new_annotation_in_database(
     return new_annotation
 
 
+def _get_rubric_rid_rev_pairs_from_annotation_data(
+    raw_annot_data,
+) -> list[tuple[int, int]]:
+    scene_items = raw_annot_data["sceneItems"]
+    # rids = [x[3]["rid"] for x in scene_items if x[0] == "Rubric"]
+    rubric_rid_rev_pairs = [
+        (x[3]["rid"], x[3]["revision"]) for x in scene_items if x[0] == "Rubric"
+    ]
+    return rubric_rid_rev_pairs
+
+
 def _add_annotation_to_rubrics(annotation: Annotation) -> None:
     """Add a relation to this annotation for every rubric that this annotation uses."""
     scene_items = annotation.annotation_data["sceneItems"]

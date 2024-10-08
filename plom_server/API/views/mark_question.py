@@ -173,7 +173,7 @@ class QuestionMarkingViewSet(ViewSet):
         plomfile_data = plomfile.read().decode("utf-8")
 
         try:
-            mark_data, annot_data, rubrics_used = mts.validate_and_clean_marking_data(
+            mark_data, annot_data = mts.validate_and_clean_marking_data(
                 code, data, plomfile_data
             )
         except ObjectDoesNotExist as e:
