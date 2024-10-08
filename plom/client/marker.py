@@ -84,6 +84,7 @@ from .image_view_widget import ImageViewWidget
 from .viewers import QuestionViewDialog, SelectPaperQuestion
 from .tagging import AddRemoveTagDialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion
+from .useful_classes import _json_path_to_str
 from .tagging_range_dialog import TaggingAndRangeOptions
 from .quota_dialogs import ExplainQuotaDialog, ReachedQuotaLimitDialog
 from .task_model import MarkerExamModel, ProxyModel
@@ -475,18 +476,28 @@ class MarkerClient(QWidget):
         TODO: maybe it could not aggressively download the src images: sometimes
         people just want to look at the annotated image.
 
+        Note that the local source image data will be replaced by data
+        extracted from the Plom file.
+
         Args:
             task: the task for the image files to be loaded from.
                 Takes the form "q1234g9" = test 1234 question 9
 
         Returns:
-            True if the data exists, False if not.  User will have seen
-            an error message if False is returned.
+            True if the src_img_data, and the annotation files exist,
+            False if not.  User will have seen an error message if
+            False is returned.
 
         Raises:
             Uses error dialogs; not currently expected to throw exceptions
         """
-        if len(self.examModel.get_source_image_data(task)) > 0:
+        # First, check if we have the three things: if so we're done.
+        # TODO: special hack as empty "" comes back as Path which is "."
+        if (
+            self.examModel.get_source_image_data(task)
+            and self.examModel.getPaperDirByTask(task)
+            and str(self.examModel.getAnnotatedFileByTask(task)) != "."
+        ):
             return True
 
         num, question_idx = task_id_str_to_paper_question_index(task)
@@ -555,7 +566,7 @@ class MarkerClient(QWidget):
         with open(aname, "wb") as fh:
             fh.write(annot_img_bytes)
         with open(pname, "w") as f:
-            json.dump(plomdata, f, indent="  ")
+            json.dump(plomdata, f, indent="  ", default=_json_path_to_str)
             f.write("\n")
         self.examModel.setAnnotatedFile(task, aname, pname)
         return True
@@ -613,6 +624,7 @@ class MarkerClient(QWidget):
         if src_img_data:
             self.get_downloads_for_src_img_data(src_img_data)
             self.testImg.updateImage(src_img_data)
+            return
 
         # All else fails, just wipe the display (e.g., pages removed from server)
         self.testImg.updateImage(None)
@@ -872,16 +884,28 @@ class MarkerClient(QWidget):
         self.get_downloads_for_src_img_data(src_img_data)
 
         # TODO: do we really want to just hardcode "untouched" here?
-        self.examModel.modify_task(
-            task,
-            src_img_data=src_img_data,
-            status="untouched",
-            mark=-1,
-            marking_time=0.0,
-            tags=tags,
-            integrity_check=integrity_check,
-            username=self.msgr.username,
-        )
+        if self.examModel.has_task(task):
+            self.examModel.update_task(
+                task,
+                src_img_data=src_img_data,
+                status="untouched",
+                mark=-1,
+                marking_time=0.0,
+                tags=tags,
+                integrity=integrity_check,
+                username=self.msgr.username,
+            )
+        else:
+            self.examModel.add_task(
+                task,
+                src_img_data=src_img_data,
+                status="untouched",
+                mark=-1,
+                marking_time=0.0,
+                tags=tags,
+                integrity_check=integrity_check,
+                username=self.msgr.username,
+            )
 
     def moveSelectionToTask(self, task):
         """Update the selection in the list of papers."""
@@ -1133,6 +1157,7 @@ class MarkerClient(QWidget):
             # mismatch b/w server status and how we represent claimed tasks locally
             if status.casefold() == "out" and username == our_username:
                 status = "untouched"
+
             try:
                 self.examModel.add_task(
                     task_id_str,
@@ -1145,26 +1170,47 @@ class MarkerClient(QWidget):
                     integrity_check=integrity,
                 )
             except KeyError:
-                if username != our_username:
-                    # If server says its not our task, then overwrite local state
-                    # b/c the task may have been reassigned.
-                    # TODO: but this stomps on local cached annotation data, so that's wasteful
-                    # TODO: use the integrity_check?
-                    self.examModel.modify_task(
+                # Be careful b/c we don't want to stomp local state during
+                # in-progress uploads or situations we might want to retry
+                local_status = self.examModel.getStatusByTask(task_id_str)
+                if local_status.casefold() in ("uploading...", "failed upload"):
+                    log.info(
+                        'Refreshing but task %s has status "%s": not touching local data',
                         task_id_str,
-                        src_img_data=[],
-                        mark=mark,
-                        marking_time=t.get("marking_time", 0.0),
-                        status=status,
-                        tags=t["tags"],
-                        username=username,
+                        local_status,
                     )
+                    # even for those, we should update the tags
+                    self.tags_changed_signal.emit(task_id_str, t["tags"])
                     continue
-                # If it is our task, be careful b/c we don't want to stomp local state
-                # such as downloaded images, in-progress uploads etc.
-                # Currently we just keep the local state but this may not be correct
-                # if server has changed something.  TODO: use the integrity_check
-                # print(f"keeping local copy for {task_id_str}:\n\t{t}")
+
+                # In future, could try to keep existing src_img_data by *not* including
+                # it here: examModel will preserve it if possible.  This could decrease
+                # metadata transfer from server (but note page images are already cached).
+                self.examModel.update_task(
+                    task_id_str,
+                    src_img_data=t.get("src_img_data"),
+                    integrity=t.get("integrity"),
+                    mark=mark,
+                    marking_time=t.get("marking_time", 0.0),
+                    status=status,
+                    tags=t["tags"],
+                    username=username,
+                )
+
+                # TODO: in the future, the `t` data could have information about the
+                # latest annotation but for now we just clear, unless the task is ours.
+                # This will cause images to be downloaded again after refreshes.
+                # Issue #3630 proposes improvements.
+                if username != our_username:
+                    self.examModel.setAnnotatedFile(task_id_str, "", "")
+                    self.examModel.setPaperDirByTask(task_id_str, "")
+                else:
+                    # for now, also force redownloads of our own annotation images, else
+                    # we would need to fix Issue #3631: wrong annot image in corner cases
+                    self.examModel.setAnnotatedFile(task_id_str, "", "")
+                    self.examModel.setPaperDirByTask(task_id_str, "")
+
+        self._updateCurrentlySelectedRow()
         return True
 
     def reassign_task(self):
