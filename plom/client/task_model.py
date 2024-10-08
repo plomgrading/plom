@@ -173,8 +173,8 @@ class MarkerExamModel(QStandardItemModel):
         self,
         task_id_str: str,
         *,
-        src_img_data: list[dict[str, Any]] | None = None,
         integrity: str,
+        src_img_data: list[dict[str, Any]] | None = None,
         status: str = "untouched",
         mark: int = -1,
         marking_time: float = 0.0,
@@ -206,7 +206,7 @@ class MarkerExamModel(QStandardItemModel):
         Returns:
             The integer row identifier of the added/modified paper.
 
-        Raisees:
+        Raises:
             ValueError: cannot find task.
         """
         r = self._findTask(task_id_str)
