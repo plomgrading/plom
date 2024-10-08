@@ -98,11 +98,19 @@ def _create_new_annotation_in_database(
 def _add_annotation_to_rubrics(annotation: Annotation) -> None:
     """Add a relation to this annotation for every rubric that this annotation uses."""
     scene_items = annotation.annotation_data["sceneItems"]
-    rids = [item[3]["rid"] for item in scene_items if item[0] == "Rubric"]
+    rids = [x[3]["rid"] for x in scene_items if x[0] == "Rubric"]
+    rid_rev_pairs = [
+        (x[3]["rid"], x[3]["revision"]) for x in scene_items if x[0] == "Rubric"
+    ]
+    # TODO: update this query to respect the revisions directly?  My DB-fu is weak
+    # so I'll "fix it in postprocessing"; unlikely to make practical difference.
     rubrics = Rubric.objects.filter(rid__in=rids).select_for_update()
     for rubric in rubrics:
-        rubric.annotations.add(annotation)
-        rubric.save()
+        # we have drawn too many rubrics above due to Colin's sloppy DB skills
+        # so filter out any that don't match something in rid_rev_pairs
+        if any((p, q) == (rubric.rid, rubric.revision) for (p, q) in rid_rev_pairs):
+            rubric.annotations.add(annotation)
+            rubric.save()
 
 
 def _add_new_annotation_image_to_database(
