@@ -202,6 +202,7 @@
                             <th>Kind</th>
                             <th>Display Delta</th>
                             <th>Text</th>
+                            <th>revision</th>
                             <th>More details</th>
                         </tr>
                     </thead>
@@ -213,6 +214,7 @@
                                 <td>{{ rubric.kind }}</td>
                                 <td>{{ rubric.display_delta }}</td>
                                 <td>{{ rubric.text }}</td>
+                                <td>{{ rubric.revision }}</td>
                                 <td class="text-center">
                                     <a class="btn btn-outline-primary"
                                        href="{% url 'rubric_item' rubric.rid %}">info</a>

@@ -186,6 +186,10 @@ class Rubric(models.Model):
             # ),
         ]
 
+    # TODO: issue #3648, seeking a way to display how often they are used
+    # def get_usage_count(self) -> int:
+    #     return 42
+
 
 class RubricPane(models.Model):
     """A user's configuration for the 'rubrics' pane in the annotation window."""
@@ -195,7 +199,9 @@ class RubricPane(models.Model):
     data = models.JSONField(null=False, default=dict)
 
 
-# TODO: why does this live here in models?  It hopefully isn't a DB table
+# TODO: why does this live here in models?  Why can't I build this in a service
+# with "normal" prefetch etc for efficiency instead of whatever special pixie
+# dust is driving this?  What makes it so special to live here in the model?
 class RubricTable(django_tables2.Table):
     """Table class for displaying rubrics.
 
@@ -204,7 +210,14 @@ class RubricTable(django_tables2.Table):
     """
 
     rid = django_tables2.Column("rid", linkify=True)
-    times_used = django_tables2.Column(verbose_name="# Used")
+    # TODO: issue #3648, seeking a way to display how often they are used
+    # times_used = django_tables2.Column(
+    #     verbose_name="# Used",
+    #     accessor="get_usage_count",
+    #     orderable=False
+    # )
+    # TODO: accessor="annotations__xxx__xxx" somehow?
+    # TODO: i want to make sortable but it just crashes unless orderable=False
 
     class Meta:
         model = Rubric
@@ -213,6 +226,7 @@ class RubricTable(django_tables2.Table):
             "rid",
             "display_delta",
             "last_modified",
+            "revision",
             "kind",
             "system_rubric",
             "question",
@@ -222,6 +236,7 @@ class RubricTable(django_tables2.Table):
             "rid",
             "display_delta",
             "last_modified",
+            "revision",
             "kind",
             "system_rubric",
             "question",

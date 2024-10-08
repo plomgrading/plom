@@ -179,9 +179,9 @@
             {% for task in marking_tasks %}
                 <tr>
                     <td>{{ task.paper.paper_number }}</td>
-                    <td>{{ task.latest_annotation.edition }}</td>
                     <td>{{ task.question_index }}</td>
                     <td>{{ task.question_version }}</td>
+                    <td>{{ task.latest_annotation.edition }}</td>
                     <td>{{ task.assigned_user }}</td>
                     <td>{{ task.latest_annotation.score_str }}</td>
                     <td class="text-center">

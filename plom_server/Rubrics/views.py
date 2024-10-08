@@ -272,7 +272,7 @@ class RubricLandingPageView(ManagerRequiredView):
         # TODO: consider getting rid of this dumps stuff...  maybe plain ol' list?
         context.update(
             {
-                "rubrics": rubrics_table,
+                "rubrics_table": rubrics_table,
                 "rubric_filter_form": filter_form,
                 "edit_form": rubric_form,
                 "question_max_marks_dict": json.dumps(question_max_marks_dict),
@@ -300,6 +300,7 @@ class RubricItemView(UpdateView, ManagerRequiredView):
         revisions = rs.get_past_revisions_by_rid(rid)
         marking_tasks = rs.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
         rubric_form = RubricItemForm(instance=rubric)
+        # TODO: does this enumerate serve any purpose?  workaround for...?
         for _, task in enumerate(marking_tasks):
             task.latest_annotation.score_str = pprint_score(
                 task.latest_annotation.score
