@@ -152,6 +152,9 @@ class BaseMessenger:
         except urllib3.exceptions.LocationParseError as e:
             raise PlomConnectionError(f'Cannot parse the URL "{base}"') from e
         self.scheme = parsed_url.scheme
+        # remove any trailing slashes from the path, Issue #3649
+        while base.endswith("/"):
+            base = base[:-1]
         self.base = base
         self.SRmutex = threading.Lock()
         self.verify_ssl = verify_ssl
