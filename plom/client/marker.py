@@ -892,7 +892,7 @@ class MarkerClient(QWidget):
                 mark=-1,
                 marking_time=0.0,
                 tags=tags,
-                integrity_check=integrity_check,
+                integrity=integrity_check,
                 username=self.msgr.username,
             )
         else:
