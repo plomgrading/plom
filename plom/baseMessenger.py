@@ -400,10 +400,10 @@ class BaseMessenger:
                 response = self.get("/Version", timeout=2)
                 response.raise_for_status()
                 return response.text
-        except requests.ConnectionError as err:
-            raise PlomConnectionError(err) from None
         except requests.exceptions.InvalidURL as err:
             raise PlomConnectionError(f"Invalid URL: {err}") from None
+        except requests.RequestException as err:
+            raise PlomConnectionError(err) from None
 
     def start(self) -> str:
         """Start the messenger session, including compatibility checks and detecting legacy servers.
