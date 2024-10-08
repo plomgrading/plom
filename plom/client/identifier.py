@@ -624,7 +624,7 @@ class IDClient(QWidget):
             # ask server for ID of next task
             try:
                 test = self.msgr.IDaskNextTask()
-                if not test:  # no tasks left
+                if test is None:
                     InfoMsg(self, "No more tasks left on server.").exec()
                     return False
             except PlomSeriousException as err:
