@@ -272,7 +272,7 @@ class RubricLandingPageView(ManagerRequiredView):
         # TODO: consider getting rid of this dumps stuff...  maybe plain ol' list?
         context.update(
             {
-                "rubrics": rubrics_table,
+                "rubrics_table": rubrics_table,
                 "rubric_filter_form": filter_form,
                 "edit_form": rubric_form,
                 "question_max_marks_dict": json.dumps(question_max_marks_dict),
