@@ -1277,8 +1277,15 @@ class MarkerClient(QWidget):
         # maybe it was there already: should be harmless
         self.moveSelectionToTask(task)
 
-    def defer_task(self):
-        """Mark task as "defer" - to be skipped until later."""
+    def defer_task(self, *, advance_to_next: bool = True) -> None:
+        """Mark task as "defer" - to be skipped until later.
+
+        You'll still have to do it.
+
+        Keyword Args:
+            advance_to_next: whether to also advance to the next task
+                (default).
+        """
         task = self.get_current_task_id_or_none()
         if not task:
             return
@@ -1300,6 +1307,8 @@ class MarkerClient(QWidget):
             InfoMsg(self, "Cannot defer a marked test.").exec()
             return
         self.examModel.deferPaper(task)
+        if advance_to_next:
+            self.requestNext()
 
     def startTheAnnotator(self, initialData) -> None:
         """This fires up the annotation window for user annotation + marking.
