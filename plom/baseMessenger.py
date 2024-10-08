@@ -152,6 +152,9 @@ class BaseMessenger:
         except urllib3.exceptions.LocationParseError as e:
             raise PlomConnectionError(f'Cannot parse the URL "{base}"') from e
         self.scheme = parsed_url.scheme
+        # remove any trailing slashes from the path, Issue #3649
+        while base.endswith("/"):
+            base = base[:-1]
         self.base = base
         self.SRmutex = threading.Lock()
         self.verify_ssl = verify_ssl
@@ -400,10 +403,10 @@ class BaseMessenger:
                 response = self.get("/Version", timeout=2)
                 response.raise_for_status()
                 return response.text
-        except requests.ConnectionError as err:
-            raise PlomConnectionError(err) from None
         except requests.exceptions.InvalidURL as err:
             raise PlomConnectionError(f"Invalid URL: {err}") from None
+        except requests.RequestException as err:
+            raise PlomConnectionError(err) from None
 
     def start(self) -> str:
         """Start the messenger session, including compatibility checks and detecting legacy servers.
