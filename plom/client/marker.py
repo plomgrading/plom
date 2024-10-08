@@ -884,7 +884,7 @@ class MarkerClient(QWidget):
         self.get_downloads_for_src_img_data(src_img_data)
 
         # TODO: do we really want to just hardcode "untouched" here?
-        self.examModel.modify_task(
+        self.examModel.update_task(
             task,
             src_img_data=src_img_data,
             status="untouched",

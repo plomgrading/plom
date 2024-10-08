@@ -169,61 +169,6 @@ class MarkerExamModel(QStandardItemModel):
         )
         return self.rowCount() - 1
 
-    def modify_task(
-        self,
-        task_id_str: str,
-        *,
-        src_img_data: list[dict[str, Any]] = [],
-        status: str = "untouched",
-        mark: int = -1,
-        marking_time: float = 0.0,
-        tags: list[str] = [],
-        integrity_check: str = "",
-        username: str = "",
-    ) -> int:
-        """Modify an existing row, or add a new one if it does not yet exist.
-
-        Args:
-            task_id_str: the Task ID for the page being uploaded. Takes the form
-                "q1234g9" for paper 1234 question 9.
-
-        Keywords Args:
-            status: task status string.
-            mark: the mark of the question.
-            marking_time (float/int): marking time spent on that page in seconds.
-            tags: Tags corresponding to the exam.  We will flatten to a
-                space-separated string.  TODO: maybe we should do that for display
-                but store as repr/json.
-            integrity_check: something from the server, especially legacy
-                servers, generally a concat of md5sums of underlying images.
-                The server expects us to be able to give it back to them.
-                On new servers its an integer (probably in a string) which
-                the server identifies with the specific task (like the task
-                primary key).
-            src_img_data: a list of dicts of md5sums, filenames and other
-                metadata of the images for the test question.
-            username: who owns this task.
-
-        Returns:
-            The integer row identifier of the added/modified paper.
-        """
-        try:
-            r = self._findTask(task_id_str)
-        except ValueError as e:
-            assert "not found" in str(e), f"Oh my, unexpected stuff: {e}"
-            r = self.add_task(task_id_str)
-        else:
-            log.debug(f"Found task {task_id_str} in the table at r={r}, updating...")
-
-        self.set_source_image_data(task_id_str, src_img_data)
-        self._setStatus(r, status)
-        self._set_mark(r, mark)
-        self._set_marking_time(r, marking_time)
-        self.setTagsByTask(task_id_str, tags)
-        self.set_integrity_by_task(task_id_str, integrity_check)
-        self.set_username_by_task(task_id_str, username)
-        return r
-
     def update_task(
         self,
         task_id_str: str,
