@@ -9,6 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
+from django.db.utils import IntegrityError
 
 from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 from plom.version_maps import version_map_from_file
@@ -56,6 +57,26 @@ class Command(BaseCommand):
 
         p = sp.add_parser("upload", help="Upload a question-version map")
         p.add_argument("csv_or_json_file")
+
+        p = sp.add_parser(
+            "append",
+            help="""
+                Append rows to the question-version map.
+                The new paper numbers must not be in the database or you'll get an error.
+            """,
+        )
+        p.add_argument("csv_or_json_file")
+        p.add_argument(
+            "--force",
+            action="store_true",
+            help="""
+                Try to append even if papers have already been printed/scanned.
+                **Caution:** you're sticking your fingers into the machinery.
+                There might be various places, such as the client, that aren't
+                expecting the largest paper number to increase.  All users should
+                probably logout and login again.
+            """,
+        )
 
         sp.add_parser("clear", help="Clear the database of test-papers.")
 
@@ -140,6 +161,23 @@ class Command(BaseCommand):
             raise CommandError(e) from e
         self.stdout.write(f"Uploaded qvmap from {f}")
 
+    def append_rows_to_pqv_map(self, f: Path, *, force: bool = False) -> None:
+        self.stdout.write(f"Reading proposed new qvmap rows from {f}")
+        try:
+            vm = version_map_from_file(f)
+        except ValueError as e:
+            raise CommandError(e)
+        try:
+            PaperCreatorService.append_papers_to_qv_map(vm, force=force)
+        except (
+            ValueError,
+            PlomDependencyConflict,
+            PlomDatabaseCreationError,
+            IntegrityError,
+        ) as e:
+            raise CommandError(e) from e
+        self.stdout.write(f"Uploaded qvmap from {f}")
+
     def handle(self, *args, **options):
         if options["command"] == "status":
             self.papers_status()
@@ -154,5 +192,9 @@ class Command(BaseCommand):
             self.upload_pqv_map(options["csv_or_json_file"])
         elif options["command"] == "clear":
             self.clear_papers()
+        elif options["command"] == "append":
+            self.append_rows_to_pqv_map(
+                options["csv_or_json_file"], force=options["force"]
+            )
         else:
             self.print_help("manage.py", "plom_qvmap")

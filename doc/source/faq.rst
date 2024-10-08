@@ -260,13 +260,17 @@ This is similar to the above but we cannot simply push paper number
 20 "B" into a spare unused paper slot (say 107).  This is because
 paper number 107 will have different versions than 20.
 
-A `future version of Plom <https://gitlab.com/plom/plom/-/issues/1745>`_
-might allow you to instantiate arbitrary new rows of the database using
-the versions of paper number 20.  Roughly: extract the relevant
-version numbers for paper 20.  Use those
-to make the brand new row, using a complete new paper number: say 1020.
+We need to instantiate a new row of the database using the versions of
+paper number 20.  Extract the version map.  Use the relevant values to
+make a ``csv`` file with one row, using a completely new paper number:
+say 1020.  Next we need command line access to the server, a topic that needs its own FAQ entry...
 
-But for now, the workaround is complicated:
+Using the command line access, use ``django-command plom-qvmap`` and
+see the ``append`` option.  Now you should be able to assign the
+conflicting work to paper 1020.
+
+If the command line access is not feasible, another option is:
+
   1. Clone the server from the pre-scanning state (see question
      elsewhere).
   2. Update the duplicated papers into the 2nd server.
