@@ -761,12 +761,21 @@ class RubricService:
         Returns:
             A query of MarkingTask instances.
         """
+        # Caution here: Issue #3647, there is more than one rubric with a particular
+        # rid (b/c of rubric revisions).  Surely at most one of those is used in the
+        # latest annotation and yet we got multiple copies of the same task back in
+        # this QuerySET ("set" apparently being a misnomer).
+        # https://docs.djangoproject.com/en/5.1/ref/models/querysets/#distinct
+        # TODO: same docs say "if you are using distinct() be careful about ordering
+        # by related models": perhaps we should stop ordering this (?)
+        # Or rethink this whole query to be less flaky!
         return (
             MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE, latest_annotation__rubric__rid=rubric.rid
             )
             .order_by("paper__paper_number")
             .prefetch_related("paper", "assigned_user", "latest_annotation")
+            .distinct()
         )
 
     def get_rubrics_from_annotation(self, annotation: Annotation) -> QuerySet[Rubric]:
