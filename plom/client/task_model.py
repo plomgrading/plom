@@ -335,6 +335,13 @@ class MarkerExamModel(QStandardItemModel):
         column_idx = _idx_marking_time
         self.setData(self.index(r, column_idx), _marking_time_as_str(marking_time))
 
+    def has_task(self, task: str) -> bool:
+        try:
+            self._findTask(task)
+        except ValueError:
+            return False
+        return True
+
     def _findTask(self, task: str) -> int:
         """Return the row index of this task.
 

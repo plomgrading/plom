@@ -884,16 +884,28 @@ class MarkerClient(QWidget):
         self.get_downloads_for_src_img_data(src_img_data)
 
         # TODO: do we really want to just hardcode "untouched" here?
-        self.examModel.update_task(
-            task,
-            src_img_data=src_img_data,
-            status="untouched",
-            mark=-1,
-            marking_time=0.0,
-            tags=tags,
-            integrity_check=integrity_check,
-            username=self.msgr.username,
-        )
+        if self.examModel.has_task(task):
+            self.examModel.update_task(
+                task,
+                src_img_data=src_img_data,
+                status="untouched",
+                mark=-1,
+                marking_time=0.0,
+                tags=tags,
+                integrity_check=integrity_check,
+                username=self.msgr.username,
+            )
+        else:
+            self.examModel.add_task(
+                task,
+                src_img_data=src_img_data,
+                status="untouched",
+                mark=-1,
+                marking_time=0.0,
+                tags=tags,
+                integrity_check=integrity_check,
+                username=self.msgr.username,
+            )
 
     def moveSelectionToTask(self, task):
         """Update the selection in the list of papers."""
