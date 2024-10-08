@@ -6,14 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [0.16.5] - 2024-10-08
 
 ### Added
+* Using backend commandline its possible to retroactively add new rows to the paper database, to recover from various mistakes.
 
 ### Changed
+* Client: the intention is that only lead markers can ID papers but this is, for now, just a warning.
 
 ### Fixed
-
+* Server was recording rubric usage incorrectly: info about which tasks used which rubrics is likely incorrect in previous versions, even after server upgrade.  Nothing student-visible.
+* Server was rendering some rubric table headers incorrectly.
+* Improved client refresh, especially when other users tag your tasks.
+* Client: don't crash on URLs with trailing slash.
+* Client: can now ID paper number zero.
+* Misc bug fixes.
+* Documentation updates
 
 
 ## [0.16.4] - 2024-10-02
@@ -1279,7 +1287,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.16.4...main
+[0.16.5]: https://gitlab.com/plom/plom/-/compare/v0.16.4...v0.16.5
 [0.16.4]: https://gitlab.com/plom/plom/-/compare/v0.16.3...v0.16.4
 [0.16.3]: https://gitlab.com/plom/plom/-/compare/v0.16.2...v0.16.3
 [0.16.2]: https://gitlab.com/plom/plom/-/compare/v0.16.0...v0.16.2
