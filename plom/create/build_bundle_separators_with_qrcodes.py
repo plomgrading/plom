@@ -8,7 +8,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-
 import segno
 
 import plom.create
@@ -26,7 +25,7 @@ def build_bundle_separator_paper_pdf(destination_dir=None) -> None:
     src_tex = (resources.files(plom.create) / "bundle_separator_src.tex").read_text()
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmp_path = Path(tmpdirname)
-        with open(tmp_path / "bundle_separator.tex", "w") as fh:
+        with open(tmp_path / "bundle_separator_paper.tex", "w") as fh:
             fh.write(src_tex)
 
         for crn in range(1, 9):
