@@ -44,8 +44,7 @@ def build_bundle_separator_paper_pdf(destination_dir=None) -> None:
             cwd=tmp_path,
             stdout=subprocess.DEVNULL,
         )
-        shutil.copy(tmp_path / "bundle_separator_paper.pdf", destination_dir) 
-
+        shutil.copy(tmp_path / "bundle_separator_paper.pdf", destination_dir)
 
 
 if __name__ == "__main__":
