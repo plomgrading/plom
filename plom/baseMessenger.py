@@ -387,7 +387,7 @@ class BaseMessenger:
 
         try:
             try:
-                response = self.get("/Version", timeout=2)
+                response = self.get("/Version")
                 response.raise_for_status()
                 return response.text
             except requests.exceptions.SSLError as err:
@@ -400,7 +400,7 @@ class BaseMessenger:
                 else:
                     raise PlomSSLError(err) from None
                 self.force_ssl_unverified()
-                response = self.get("/Version", timeout=2)
+                response = self.get("/Version")
                 response.raise_for_status()
                 return response.text
         except requests.exceptions.InvalidURL as err:
