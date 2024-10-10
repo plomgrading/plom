@@ -52,7 +52,7 @@
                         {% elif n_incomplete == 0 %}
                             <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
                             <!-- note that the midPush variable is defined in the parent html file which includes this html file -->
-                            &ensp; has no pages requiring attentions -
+                            &ensp; has no pages requiring attention -
                             <button class="btn btn-success"
                                     hx-confirm="Please confirm that you want to push this bundle."
                                     hx-post="{% url 'scan_push_all' bundle_id %}"
