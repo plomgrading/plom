@@ -618,4 +618,14 @@ class DemoBundleCreationService:
                 obscure_qr_papers=bundle["obscure_qr_papers"],
                 mucking_operation=bundle["operations"],
             )
+
+        for i in range(min(2, n_bundles)):
+            bundle_path = Path(f"fake_bundle{i + 1}.pdf")
+            print(f"Reversing order of bundle {bundle_path}")
+            d2 = pymupdf.open()
+            with pymupdf.open(bundle_path) as doc:
+                for i in range(len(doc) - 1, -1, -1):
+                    d2.insert_pdf(doc, from_page=i, to_page=i)
+            d2.ez_save(bundle_path)
+
         print("^" * 40)
