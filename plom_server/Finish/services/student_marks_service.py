@@ -262,7 +262,7 @@ class StudentMarkService:
             the mark information for each question in the paper.
         """
         try:
-            paper_obj = Paper.objects.get(pk=paper_num)
+            paper_obj = Paper.objects.get(paper_number=paper_num)
         except Paper.DoesNotExist:
             return {}
         marking_tasks = (
@@ -355,7 +355,7 @@ class StudentMarkService:
         Raises:
             Paper.DoesNotExist: If the paper does not exist in the database.
         """
-        paper_obj = Paper.objects.get(pk=paper_num)
+        paper_obj = Paper.objects.get(paper_number=paper_num)
         # TODO - this spreadsheet stuff in reassemble service should move to student mark service
         return self.paper_spreadsheet_dict(paper_obj)
 
