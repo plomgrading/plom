@@ -165,6 +165,8 @@ class PageDataService:
         if not include_dnmpages:
             fixed_pages = fixed_pages.not_instance_of(DNMPage)
 
+        # probably this is the fix but some further understanding would be good
+        # for page in fixed_pages.order_by("page_number"):
         for page in fixed_pages:
             if question is None:
                 # TODO: or is it better to not include this key?  That's likely
