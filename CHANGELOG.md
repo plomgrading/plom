@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+* Fixed a crash when reassembling papers when non-unit starting or non-contiguous paper numbers are used.
 
 
 
