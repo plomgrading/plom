@@ -15,7 +15,7 @@ import shutil
 import tempfile
 from typing import List, Dict, Any
 
-import pymupdf as fitz
+import pymupdf
 
 from django.core.management import call_command
 from django.conf import settings
@@ -67,7 +67,7 @@ class DemoBundleCreationService:
         bundles = config.bundles
         default_n_pages = self.get_default_paper_length()
 
-        with fitz.open(out_file) as scribble_pdf:
+        with pymupdf.open(out_file) as scribble_pdf:
             from_page_idx = 0
             to_page_idx = default_n_pages
             curr_bundle_idx = 0
@@ -90,7 +90,7 @@ class DemoBundleCreationService:
                                 to_page_idx += 1
 
                 if paper == curr_bundle["first_paper"]:
-                    bundle_doc = fitz.open()
+                    bundle_doc = pymupdf.open()
                 bundle_doc.insert_pdf(
                     scribble_pdf, from_page=from_page_idx, to_page=to_page_idx
                 )
@@ -162,7 +162,7 @@ class DemoBundleCreationService:
         return assignment
 
     def make_last_page_with_wrong_version(
-        self, pdf_doc: fitz.Document, paper_number: int
+        self, pdf_doc: pymupdf.Document, paper_number: int
     ) -> None:
         """Muck around with the last page for testing purposes.
 
@@ -171,8 +171,8 @@ class DemoBundleCreationService:
         that the version is wrong.
 
         Args:
-            pdf_doc (fitz.Document): a pdf document of a test-paper.
-            paper_number (int): the paper_number of that test-paper.
+            pdf_doc: a pdf document of a test-paper.
+            paper_number: the paper_number of that test-paper.
 
         Returns:
             None, but modifies ``pdf_doc``  as a side effect.
@@ -203,8 +203,10 @@ class DemoBundleCreationService:
                 color=[0, 0.75, 0.75],
             )
             # hard-code one qr-code in top-left
-            rect = fitz.Rect(50, 50, 50 + 70, 50 + 70)
-            pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[1]), overlay=True)
+            rect = pymupdf.Rect(50, 50, 50 + 70, 50 + 70)
+            pdf_doc[-1].insert_image(
+                rect, pixmap=pymupdf.Pixmap(qr_pngs[1]), overlay=True
+            )
 
     def append_extra_page(self, pdf_doc, paper_number, student_id, extra_page_path):
         """Append a simulated extra page to the pdf from the given student.
@@ -214,7 +216,7 @@ class DemoBundleCreationService:
         A scanner-user then needs to enter the details (which are stamped on the
         page by this function).
         """
-        with fitz.open(extra_page_path) as extra_pages_pdf:
+        with pymupdf.open(extra_page_path) as extra_pages_pdf:
             pdf_doc.insert_pdf(
                 extra_pages_pdf,
                 from_page=0,
@@ -223,16 +225,16 @@ class DemoBundleCreationService:
             )
             page_rect = pdf_doc[-1].rect
             # stamp some info on it - TODO - make this look better.
-            tw = fitz.TextWriter(page_rect, color=(0, 0, 1))
+            tw = pymupdf.TextWriter(page_rect, color=(0, 0, 1))
             # TODO - make these numbers less magical
-            maxbox = fitz.Rect(25, 400, 500, 600)
+            maxbox = pymupdf.Rect(25, 400, 500, 600)
             # page.draw_rect(maxbox, color=(1, 0, 0))
             excess = tw.fill_textbox(
                 maxbox,
                 f"EXTRA PAGE - t{paper_number} Q1 - {student_id}",
-                align=fitz.TEXT_ALIGN_LEFT,
+                align=pymupdf.TEXT_ALIGN_LEFT,
                 fontsize=18,
-                font=fitz.Font("helv"),
+                font=pymupdf.Font("helv"),
             )
             assert not excess, "Text didn't fit: is extra-page text too long?"
             tw.write_text(pdf_doc[-1])
@@ -245,7 +247,7 @@ class DemoBundleCreationService:
         their assessment and it being included in the bundle. This should then
         be automatically marked as 'discard' by plom-scan on upload.
         """
-        with fitz.open(scrap_paper_path) as scrap_paper_pdf:
+        with pymupdf.open(scrap_paper_path) as scrap_paper_pdf:
             pdf_doc.insert_pdf(
                 scrap_paper_pdf,
                 from_page=0,
@@ -254,22 +256,22 @@ class DemoBundleCreationService:
             )
             page_rect = pdf_doc[-1].rect
             # stamp some info on it - TODO - make this look better.
-            tw = fitz.TextWriter(page_rect, color=(0, 0, 1))
+            tw = pymupdf.TextWriter(page_rect, color=(0, 0, 1))
             # TODO - make these numbers less magical
-            maxbox = fitz.Rect(25, 400, 500, 600)
+            maxbox = pymupdf.Rect(25, 400, 500, 600)
             # page.draw_rect(maxbox, color=(1, 0, 0))
             excess = tw.fill_textbox(
                 maxbox,
                 f"SCRAP PAPER DNM - t{paper_number} - {student_id}",
-                align=fitz.TEXT_ALIGN_LEFT,
+                align=pymupdf.TEXT_ALIGN_LEFT,
                 fontsize=18,
-                font=fitz.Font("helv"),
+                font=pymupdf.Font("helv"),
             )
             assert not excess, "Text didn't fit: is scrap-paper text too long?"
             tw.write_text(pdf_doc[-1])
             tw.write_text(pdf_doc[-2])
 
-    def append_duplicate_page(self, pdf_doc: fitz.Document) -> None:
+    def append_duplicate_page(self, pdf_doc: pymupdf.Document) -> None:
         """Makes a (deep) copy of the last page of the PDF and appends it.
 
         This is to simulate sloppy scanning procedures in which a given
@@ -279,7 +281,7 @@ class DemoBundleCreationService:
         pdf_doc.fullcopy_page(last_page)
 
     def insert_qr_from_previous_page(
-        self, pdf_doc: fitz.Document, paper_number: int
+        self, pdf_doc: pymupdf.Document, paper_number: int
     ) -> None:
         """Muck around with the penultimate page for testing purposes.
 
@@ -288,8 +290,8 @@ class DemoBundleCreationService:
         happen when, for example, a folded page is fed into the scanner.
 
         Args:
-            pdf_doc (fitz.Document): a pdf document of a test-paper.
-            paper_number (int): the paper_number of that test-paper.
+            pdf_doc: a pdf document of a test-paper.
+            paper_number: the paper_number of that test-paper.
 
         Returns:
             None, but modifies ``pdf_doc`` as a side effect.
@@ -312,8 +314,10 @@ class DemoBundleCreationService:
                 color=[0, 0.75, 0.75],
             )
             # hard-code one qr-code in top-left
-            rect = fitz.Rect(50, 50 + 70, 50 + 70, 50 + 70 * 2)
-            pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[1]), overlay=True)
+            rect = pymupdf.Rect(50, 50 + 70, 50 + 70, 50 + 70 * 2)
+            pdf_doc[-1].insert_image(
+                rect, pixmap=pymupdf.Pixmap(qr_pngs[1]), overlay=True
+            )
 
     def append_garbage_page(self, pdf_doc):
         """Append a 'garbage' page to the pdf.
@@ -353,9 +357,11 @@ class DemoBundleCreationService:
                 color=[0, 0.75, 0.75],
             )
             # hard-code one qr-code in top-left
-            rect = fitz.Rect(50, 50, 50 + 70, 50 + 70)
+            rect = pymupdf.Rect(50, 50, 50 + 70, 50 + 70)
             # the 2nd qr-code goes in NW corner.
-            pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[1]), overlay=True)
+            pdf_doc[-1].insert_image(
+                rect, pixmap=pymupdf.Pixmap(qr_pngs[1]), overlay=True
+            )
             # (note don't care if even/odd page: is a new page, no staple indicator)
 
     def append_out_of_range_paper_and_page(self, pdf_doc):
@@ -376,9 +382,11 @@ class DemoBundleCreationService:
                 color=[0, 0.75, 0.75],
             )
             # hard-code one qr-code in top-left
-            rect = fitz.Rect(50, 50, 50 + 70, 50 + 70)
+            rect = pymupdf.Rect(50, 50, 50 + 70, 50 + 70)
             # the 2nd qr-code goes in NW corner.
-            pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[1]), overlay=True)
+            pdf_doc[-1].insert_image(
+                rect, pixmap=pymupdf.Pixmap(qr_pngs[1]), overlay=True
+            )
 
             qr_pngs = create_QR_codes(1, 999, 1, code, Path(td))
             pdf_doc.new_page(-1)
@@ -389,9 +397,11 @@ class DemoBundleCreationService:
                 color=[0, 0.75, 0.75],
             )
             # hard-code one qr-code in top-left
-            rect = fitz.Rect(50, 50, 50 + 70, 50 + 70)
+            rect = pymupdf.Rect(50, 50, 50 + 70, 50 + 70)
             # the 2nd qr-code goes in NW corner.
-            pdf_doc[-1].insert_image(rect, pixmap=fitz.Pixmap(qr_pngs[1]), overlay=True)
+            pdf_doc[-1].insert_image(
+                rect, pixmap=pymupdf.Pixmap(qr_pngs[1]), overlay=True
+            )
 
     def _convert_duplicates_dict(self, duplicates):
         """If duplicates is a list of dicts, convert into a dict."""
@@ -414,7 +424,7 @@ class DemoBundleCreationService:
             filepath: path to the file to be mucked.
             operation: the type of muck operation to do.
         """
-        second_to_last_page = fitz.open(filepath).page_count - 1
+        second_to_last_page = pymupdf.open(filepath).page_count - 1
         corner = "bottom_left"
 
         severity = 0.8
@@ -479,9 +489,9 @@ class DemoBundleCreationService:
         Returns:
             None.
         """
-        with fitz.open() as all_pdf_documents:
+        with pymupdf.open() as all_pdf_documents:
             for paper in assigned_papers_ids:
-                with fitz.open(paper["path"]) as pdf_document:
+                with pymupdf.open(paper["path"]) as pdf_document:
                     # first put an ID on paper if it is not prenamed.
                     paper_number = int(paper["paper_number"])
 
@@ -536,7 +546,7 @@ class DemoBundleCreationService:
                             operation = mucking_operation[0]
                             mucking_operation.pop(0)
                             self.muck_paper(temp_pdf_path, operation)
-                            pdf_document = fitz.open(temp_pdf_path)
+                            pdf_document = pymupdf.open(temp_pdf_path)
 
                     # finally, append this to the bundle
                     all_pdf_documents.insert_pdf(pdf_document)
