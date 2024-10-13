@@ -160,7 +160,8 @@ packages = [
     "plom/demoClassList.csv",
     "plom/demo_rubrics.toml",
     "plom/create/extra_pages_src.tex",
-    "plom/create/scrap_paper_src.tex"
+    "plom/create/scrap_paper_src.tex",
+    "plom/create/bundle_separator_src.tex"
 ]
 "share/plom/testTemplates" = ["testTemplates/*"]
 "share/applications" = ["org.plomgrading.PlomClient.desktop"]

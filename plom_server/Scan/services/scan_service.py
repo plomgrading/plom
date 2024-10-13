@@ -416,7 +416,7 @@ class ScanService:
                     'x_coord': 2203,
                     'y_coord': 2906.5
                 }
-            Similarly, if the page is a scrap-paper page, then returns
+            Similarly, if the page is a bundle-separator-paper page, then returns
                     'SE': {
                     'page_type': 'plom_bundle_separator',
                     'quadrant': '4',
