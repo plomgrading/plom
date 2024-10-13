@@ -5,6 +5,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2020 Andreas Buttenschoen
 
 from __future__ import annotations
 
