@@ -115,6 +115,11 @@ class PageDataService:
     ) -> list[dict[str, Any]]:
         """Return a list of metadata for all pages in a paper.
 
+        The pages are "in order".  FixedPages ("expected" pages that have
+        QR-codes and predictable positions in the paper) will appear in
+        order of their page number.  MobilePages will appear after the
+        FixedPages.
+
         Args:
             paper (int): test-paper number
 
@@ -122,7 +127,6 @@ class PageDataService:
             question (int/None): question index, if not None.
             include_idpage (bool): whether to include ID pages in this
                 request (default: False)
-
             include_dnmpages (bool): whether to include any DNM pages in
                 this request (default: True)
 
@@ -165,9 +169,7 @@ class PageDataService:
         if not include_dnmpages:
             fixed_pages = fixed_pages.not_instance_of(DNMPage)
 
-        # probably this is the fix but some further understanding would be good
-        # for page in fixed_pages.order_by("page_number"):
-        for page in fixed_pages:
+        for page in fixed_pages.order_by("page_number"):
             if question is None:
                 # TODO: or is it better to not include this key?  That's likely
                 # what the legacy server does...
