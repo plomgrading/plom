@@ -226,9 +226,6 @@ class MgetPageDataQuestionInContext(APIView):
                 include_idpage=True,
                 include_dnmpages=True,
             )
-            for x in page_metadata:
-                print(x)
-                print(f"  {x['pagename']} {x['id']} order={x['order']}")
         except ObjectDoesNotExist as e:
             return _error_response(
                 f"Paper {papernum} does not exist: {e}", status.HTTP_409_CONFLICT

@@ -81,9 +81,6 @@ def get_question_pages_list(paper: int, question_index: int) -> list[dict[str, A
             }
         )
 
-    # import random
-    # random.shuffle(page_list)
-    # print(page_list)
     return page_list
 
 
@@ -231,8 +228,6 @@ class PageDataService:
                 }
             )
 
-        # import random
-        # random.shuffle(pages_metadata)
         return pages_metadata
 
     @transaction.atomic
