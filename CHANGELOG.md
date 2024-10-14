@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Fixed a crash when reassembling papers when non-unit starting or non-contiguous paper numbers are used.
+* Server now uses 4 workers in production mode by default.  This can be tuned live using SIGTTIN and SIGTTOU, search the gunicorn docs for more info.
+* Some paper views would should pages in the order they were scanned rather than their paper order.
 
 
 
