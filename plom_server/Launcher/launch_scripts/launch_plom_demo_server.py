@@ -243,7 +243,7 @@ def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
     """
     print("Launching Gunicorn web-server.")
     # TODO - put in an 'are we in production' check.
-    cmd = f"gunicorn Web_Plom.wsgi --bind 0.0.0.0:{port}"
+    cmd = f"gunicorn Web_Plom.wsgi --workers 4 --bind 0.0.0.0:{port}"
     return subprocess.Popen(split(cmd))
 
 
