@@ -320,7 +320,7 @@ black:
   stage: static_analysis
   image: python:3.12
   before_script:
-    - pip3 install "black~=24.8.0"
+    - pip3 install "black~=24.10.0"
   script:
     - black --check --diff .
   allow_failure: true
@@ -341,7 +341,7 @@ coverage:
   needs: ["container-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.6.1
+    - pip install pytest pytest-cov coverage[toml]~=7.6.2
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -373,8 +373,8 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
-    - python3 -m pip install astroid~=3.3.2  # codespell:ignore astroid
-    - python3 -m pip install pylint~=3.2.7
+    - python3 -m pip install astroid~=3.3.5  # codespell:ignore astroid
+    - python3 -m pip install pylint~=3.3.1
   script:
     - pylint plom
     - pylint plom_server
@@ -406,7 +406,7 @@ pyright:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - python3 -m pip install pyright~=1.1.380
+    - python3 -m pip install pyright~=1.1.384
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -430,7 +430,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.6.5
+    - python3 -m pip install ruff~=0.6.9
   script:
     - ruff check .
     # ruff format .
@@ -441,7 +441,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.6.5
+    - python3 -m pip install ruff~=0.6.9
   script:
     # run once just for log out but don't fail
     - EXCEPTIONS="D101,D102,D103,D104,D106"
@@ -476,7 +476,7 @@ webplom_test:
   image: $IM
   script:
     - export PYTHONPATH=$PWD
-    - python3 -m pip install coverage~=7.6.1
+    - python3 -m pip install coverage~=7.6.2
     - pushd plom_server
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py makemigrations
