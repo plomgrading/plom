@@ -5,17 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
 
-### Added
-
-### Changed
+## [0.16.7] - 2024-10-14
 
 ### Fixed
 * Fixed a crash when reassembling papers when non-unit starting or non-contiguous paper numbers are used.
 * Server now uses 4 workers in production mode by default.  This can be tuned live using SIGTTIN and SIGTTOU, search the gunicorn docs for more info.
-* Some paper views would should pages in the order they were scanned rather than their paper order.
-
+* Some paper views showed pages in the order they were scanned rather than their paper order.
 
 
 ## [0.16.6] - 2024-10-10
@@ -1305,7 +1301,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.16.6...main
+[0.16.7]: https://gitlab.com/plom/plom/-/compare/v0.16.6...v0.16.7
 [0.16.6]: https://gitlab.com/plom/plom/-/compare/v0.16.5...v0.16.6
 [0.16.5]: https://gitlab.com/plom/plom/-/compare/v0.16.4...v0.16.5
 [0.16.4]: https://gitlab.com/plom/plom/-/compare/v0.16.3...v0.16.4
