@@ -253,7 +253,7 @@ def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
     cmd = f"gunicorn Web_Plom.wsgi --workers {num_workers}"
 
     # TODO: temporary increase to 60s by default, Issue #3676
-    timeout = os.environ.get("PLOM_GUNICORN_TIMEOUT", 120)
+    timeout = os.environ.get("PLOM_GUNICORN_TIMEOUT", 180)
     cmd += f" --timeout {timeout}"
 
     # TODO: long-term code here:
