@@ -692,10 +692,10 @@ if __name__ == "__main__":
     try:
         print("v" * 50)
         huey_processes = launch_huey_process()
-        if args.production:
-            server_process = launch_gunicorn_production_server_process(port=args.port)
-        else:
+        if args.development:
             server_process = launch_django_dev_server_process(port=args.port)
+        else:
+            server_process = launch_gunicorn_production_server_process(port=args.port)
         # processes still running after small delay? probably working
         time.sleep(0.25)
         for hp in huey_processes:
