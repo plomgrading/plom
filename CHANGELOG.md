@@ -6,14 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [0.16.8] - 2024-10-15
 
 ### Added
-
-### Changed
+* Respect the `WEB_CONCURRENCY` environment variable: it chooses how many `gunicorn` workers we use (but only if it is defined).
+* The `PLOM_GUNICORN_TIMEOUT` environment variable can be used to set the timeout of `gunicorn` workers.
 
 ### Fixed
+* Temporarily increasing `gunicorn` timeouts, and decreasing default number of workers to 2.
 
+### Removed
+* Temporarily remove report building: it will return soon but is too slow in production for now.
 
 
 ## [0.16.7] - 2024-10-14
@@ -1311,7 +1314,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.16.7...main
+[0.16.8]: https://gitlab.com/plom/plom/-/compare/v0.16.7...v0.16.8
 [0.16.7]: https://gitlab.com/plom/plom/-/compare/v0.16.6...v0.16.7
 [0.16.6]: https://gitlab.com/plom/plom/-/compare/v0.16.5...v0.16.6
 [0.16.5]: https://gitlab.com/plom/plom/-/compare/v0.16.4...v0.16.5
