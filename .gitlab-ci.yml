@@ -1361,7 +1361,7 @@ macos13_universal_client:
   - /usr/local/bin/python3 -m pip install Pillow --no-binary ":all:"
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
-  - /usr/local/bin/python3 -m pip install pyinstaller
+  - /usr/local/bin/python3 -m pip install pyinstaller~=6.10.0
   - /usr/local/bin/python3 -m pip install . --no-deps  # pyinstaller spec needs version
   - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-universal2.spec
   - ls dist/
@@ -1411,7 +1411,7 @@ macos13_arm64_client:
   - /usr/local/bin/python3 --version
   - /usr/local/bin/python3 -m pip install --upgrade pip
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
-  - /usr/local/bin/python3 -m pip install pyinstaller>=6.0.0
+  - /usr/local/bin/python3 -m pip install pyinstaller~=6.10.0
   - /usr/local/bin/python3 -m pip install . --no-deps  # pyinstaller spec needs version
   - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
@@ -1467,7 +1467,7 @@ macos13_x86_64_client:
   # hacks for charset_normalizer, following https://github.com/machawk1/wail/pull/562/
   - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
-  - arch -x86_64 /usr/local/bin/python3 -m pip install pyinstaller>=6.0.0
+  - arch -x86_64 /usr/local/bin/python3 -m pip install pyinstaller~=6.10.0
   - arch -x86_64 /usr/local/bin/python3 -m pip install . --no-deps  # pyinstaller spec needs version
   - arch -x86_64 /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-x86_64.spec
   - ls dist/

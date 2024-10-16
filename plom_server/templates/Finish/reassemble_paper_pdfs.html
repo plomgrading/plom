@@ -8,10 +8,10 @@
 {% extends "base/base.html" %}
 {% load static %}
 {% block title %}
-    Reassemble Papers and Student Reports
+    Reassemble Papers (and Student Reports in the future)
 {% endblock title %}
 {% block page_heading %}
-    Reassemble Papers and Student Reports
+    Reassemble Papers (and Student Reports in the future)
 {% endblock page_heading %}
 {% block main_content %}
     <div class="card w-75">
@@ -62,11 +62,11 @@
                 {% endif %}
             </ul>
             {% if n_outdated %}
-                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-danger">Download zip of reassembled papers + student reports</a> some papers outdated
+                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-danger">Download zip of reassembled papers</a> some papers outdated
             {% elif n_complete == n_papers %}
-                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-success">Download zip of reassembled papers + student reports</a>
+                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-success">Download zip of reassembled papers</a>
             {% elif n_complete %}
-                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-warning">Download zip of reassembled papers + student reports</a>
+                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-warning">Download zip of reassembled papers</a>
                 warning - not all papers reassembled
             {% endif %}
         </div>
@@ -141,7 +141,7 @@
                                            class="btn btn-warning"><i class="bi bi-exclamation-diamond-fill">view</i></a>
                                         <a href="{% url 'get_student_report' row.paper_num %}"
                                            target="_blank"
-                                           class="btn btn-warning"><i class="bi bi-exclamation-diamond-fill">view report</i></a>
+                                           class="btn btn-warning disabled"><i class="bi bi-exclamation-diamond-fill">view report</i></a>
                                         <button hx-put="{% url 'reassemble_one_paper' row.paper_num %}"
                                                 class="btn btn-warning">
                                             <i class="bi bi-exclamation-diamond-fill">
@@ -156,7 +156,7 @@
                                            class="btn btn-success">view</a>
                                         <a href="{% url 'get_student_report' row.paper_num %}"
                                            target="_blank"
-                                           class="btn btn-info">view report</a>
+                                           class="btn btn-info disabled">view report</a>
                                         <button hx-delete="{% url 'reassemble_one_paper' row.paper_num %}"
                                                 class="btn btn-warning">delete</button>
                                     {% endif %}
