@@ -121,9 +121,9 @@ def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
     cmd += f" --timeout {timeout}"
 
     # TODO: long-term code here:
-    # timeout = os.environ.get("PLOM_GUNICORN_TIMEOUT", None)
+    # timeout = os.environ.get("PLOM_GUNICORN_TIMEOUT", "")
     # # just omit and use gunicorn's default if unspecified
-    # if timeout is not None:
+    # if timeout:
     #     cmd += f" --timeout {timeout}"
 
     cmd += f" --bind 0.0.0.0:{port}"
