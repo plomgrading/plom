@@ -250,7 +250,19 @@ def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
     print("Launching Gunicorn web-server.")
     # TODO - put in an 'are we in production' check.
     num_workers = os.environ.get("WEB_CONCURRENCY", 2)
-    cmd = f"gunicorn Web_Plom.wsgi --workers {num_workers} --bind 0.0.0.0:{port}"
+    cmd = f"gunicorn Web_Plom.wsgi --workers {num_workers}"
+
+    # TODO: temporary increase to 60s by default, Issue #3676
+    timeout = os.environ.get("PLOM_GUNICORN_TIMEOUT", 120)
+    cmd += f" --timeout {timeout}"
+
+    # TODO: long-term code here:
+    # timeout = os.environ.get("PLOM_GUNICORN_TIMEOUT", "")
+    # # just omit and use gunicorn's default if unspecified
+    # if timeout:
+    #     cmd += f" --timeout {timeout}"
+
+    cmd += f" --bind 0.0.0.0:{port}"
     return subprocess.Popen(split(cmd))
 
 
