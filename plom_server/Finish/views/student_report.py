@@ -3,7 +3,7 @@
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
-from django.http import FileResponse
+from django.http import FileResponse, Http404
 
 from Base.base_group_views import ManagerRequiredView
 from ..services import (
@@ -13,5 +13,6 @@ from ..services import (
 
 class StudentReportView(ManagerRequiredView):
     def get(self, request, paper_number):
-        pdf_file = ReassembleService().get_single_student_report(paper_number)
-        return FileResponse(pdf_file)
+        raise Http404("No student reports as yet - on our TODO list.")
+        # pdf_file = ReassembleService().get_single_student_report(paper_number)
+        # return FileResponse(pdf_file)

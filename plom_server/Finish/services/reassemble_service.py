@@ -675,15 +675,16 @@ class ReassembleService:
             }
             for pdf_file, display_filename in self.get_completed_pdf_files_and_names()
         ]
-        report_paths = [
-            {
-                "fs": report_pdf_file.path,
-                "n": f"student_reports/{report_display_filename}",
-            }
-            for report_pdf_file, report_display_filename in self.get_completed_report_files_and_names()
-        ]
+        # report_paths = [
+        #     {
+        #         "fs": report_pdf_file.path,
+        #         "n": f"student_reports/{report_display_filename}",
+        #     }
+        #     for report_pdf_file, report_display_filename in self.get_completed_report_files_and_names()
+        # ]
 
-        zfly = zipfly.ZipFly(paths=paths + report_paths, chunksize=chunksize)
+        # zfly = zipfly.ZipFly(paths=paths + report_paths, chunksize=chunksize)
+        zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)
         return zfly.generator()
 
 
@@ -723,17 +724,17 @@ def huey_reassemble_paper(
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
-    from .build_student_report_service import BuildStudentReportService
+    # from .build_student_report_service import BuildStudentReportService
 
     with tempfile.TemporaryDirectory() as tempdir:
         save_path = ReassembleService().reassemble_paper(
             paper_obj, outdir=Path(tempdir)
         )
-        report_data = BuildStudentReportService().build_one_report(paper_number)
-        # save the report data to file in tempdir - TODO can we do this all in memory?
-        report_path = Path(tempdir) / report_data["filename"]
-        with report_path.open("wb") as fh:
-            fh.write(report_data["bytes"])
+        # report_data = BuildStudentReportService().build_one_report(paper_number)
+        # # save the report data to file in tempdir - TODO can we do this all in memory?
+        # report_path = Path(tempdir) / report_data["filename"]
+        # with report_path.open("wb") as fh:
+        #     fh.write(report_data["bytes"])
 
         if _debug_be_flaky:
             for i in range(5):
@@ -752,10 +753,10 @@ def huey_reassemble_paper(
                     chore.pdf_file = File(f, name=save_path.name)
                     chore.display_filename = save_path.name
                     chore.save()
-                with report_path.open("rb") as f2:
-                    chore.report_pdf_file = File(f2, name=report_path.name)
-                    chore.report_display_filename = report_path.name
-                    chore.save()
+                # with report_path.open("rb") as f2:
+                #     chore.report_pdf_file = File(f2, name=report_path.name)
+                #     chore.report_display_filename = report_path.name
+                #     chore.save()
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
     return True
