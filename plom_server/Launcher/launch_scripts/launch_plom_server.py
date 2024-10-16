@@ -102,12 +102,19 @@ def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
 
     Note that this should always be used in production.
 
+    If the WEB_CONCURRENCY environment variable is set, we use that many
+    worker processes.  Otherwise we use a default value (currently 2).
+
     Args:
         port: the port for the server.
+
+    Returns:
+        Open ``Popen`` on the gunicorn process.
     """
     print("Launching Gunicorn web-server.")
     # TODO - put in an 'are we in production' check.
-    cmd = f"gunicorn Web_Plom.wsgi --workers 4 --bind 0.0.0.0:{port}"
+    num_workers = os.environ.get("WEB_CONCURRENCY", 2)
+    cmd = f"gunicorn Web_Plom.wsgi --workers {num_workers} --bind 0.0.0.0:{port}"
     return subprocess.Popen(split(cmd))
 
 
