@@ -355,6 +355,16 @@ LOGGING: dict[str, Any] = {
     },
 }
 
+# When hunting down slow http request / db queries make use of the django-silk package
+# https://github.com/jazzband/django-silk
+# because we need to access this variable from urls.py to get silk working
+# it needs to be upper case.
+# https://docs.djangoproject.com/en/5.1/topics/settings/#creating-your-own-settings
+IM_HUNTING_SILK = True
+if IM_HUNTING_SILK:
+    MIDDLEWARE.append("silk.middleware.SilkyMiddleware")
+    INSTALLED_APPS.append("silk")
+
 # When hunting down n-plus-1 query problems make use of the nplusone package
 # https://github.com/jmcarp/nplusone
 
