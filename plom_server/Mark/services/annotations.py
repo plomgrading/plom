@@ -115,7 +115,7 @@ def _add_annotation_to_rubrics(annotation: Annotation) -> None:
     # TODO: update this query to respect the revisions directly?  My DB-fu is weak
     # so I'll "fix it in postprocessing"; unlikely to make practical difference.
     rids = [rid for rid, rev in rid_rev_pairs]
-    rubrics = Rubric.objects.filter(rid__in=rids).select_for_update()
+    rubrics = Rubric.objects.filter(rid__in=rids)  # .select_for_update()
 
     found = {(rid, rev): False for (rid, rev) in rid_rev_pairs}
     for rubric in rubrics:
