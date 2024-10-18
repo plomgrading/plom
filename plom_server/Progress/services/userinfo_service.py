@@ -138,16 +138,17 @@ class UserInfoServices:
         """
         result = dict()
 
-        annotations = (
-            MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
-        )
         markers_and_managers = User.objects.filter(
             groups__name__in=["marker"]
         ).order_by("groups__name", "username")
+
         annotation_count_dict: dict[str, int] = {
             user.username: 0 for user in markers_and_managers
         }
-
+        annotations = (
+            MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
+        )
+        annotations = annotations.prefetch_related("user")
         for annotation in annotations:
             if annotation.user.username in annotation_count_dict:
                 annotation_count_dict[annotation.user.username] += 1
