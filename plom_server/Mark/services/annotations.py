@@ -123,7 +123,7 @@ def _add_annotation_to_rubrics(annotation: Annotation) -> None:
             rubric.annotations.add(annotation)
             # TODO: do these *need* saved?  We're creating entries in a many-to-many
             # not modifying any rubric per se.
-            rubric.save()
+            # rubric.save()
 
 
 def _add_new_annotation_image_to_database(
