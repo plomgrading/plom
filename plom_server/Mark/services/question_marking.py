@@ -202,7 +202,11 @@ class QuestionMarkingService:
             )
 
         # regrab it, selected-for-update, b/c we're going to write to it
-        task = MarkingTask.objects.select_for_update().get(pk=task.pk)
+        task = (
+            MarkingTask.objects.select_for_update()
+            .prefetch_related("assigned_user")
+            .get(pk=task.pk)
+        )
         tag_marked_during_quota = "during_quota"
 
         # Check if the user has quota limits

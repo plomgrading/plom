@@ -49,6 +49,7 @@ def get_latest_task(
         raise ObjectDoesNotExist(f"Task for paper {paper_number} does not exist") from e
     r = (
         MarkingTask.objects.filter(paper=paper, question_index=question_idx)
+        .prefetch_related("assigned_user")
         .order_by("-time")
         .first()
     )
