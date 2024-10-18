@@ -167,7 +167,7 @@ class BaseMessenger:
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     @classmethod
-    def clone(cls, m):
+    def clone(cls, m: BaseMessenger) -> BaseMessenger:
         """Clone an existing messenger, keeps token.
 
         In particular, we have our own mutex.
