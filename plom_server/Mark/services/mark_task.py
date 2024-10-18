@@ -69,7 +69,6 @@ def get_latest_task(
     return r
 
 
-@transaction.atomic
 def unpack_code(code: str) -> tuple[int, int]:
     """Return a tuple of (paper_number, question_index) from a task code string.
 
