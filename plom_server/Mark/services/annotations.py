@@ -96,11 +96,8 @@ def _create_new_annotation_in_database(
     return new_annotation
 
 
-def _get_rubric_rid_rev_pairs_from_annotation_data(
-    raw_annot_data,
-) -> list[tuple[int, int]]:
+def _extract_rubric_rid_rev_pairs(raw_annot_data) -> list[tuple[int, int]]:
     scene_items = raw_annot_data["sceneItems"]
-    # rids = [x[3]["rid"] for x in scene_items if x[0] == "Rubric"]
     rubric_rid_rev_pairs = [
         (x[3]["rid"], x[3]["revision"]) for x in scene_items if x[0] == "Rubric"
     ]
@@ -113,13 +110,11 @@ def _add_annotation_to_rubrics(annotation: Annotation) -> None:
     Raises:
         KeyError: one or more non-existent rubrics where used.
     """
-    scene_items = annotation.annotation_data["sceneItems"]
-    rids = [x[3]["rid"] for x in scene_items if x[0] == "Rubric"]
-    rid_rev_pairs = [
-        (x[3]["rid"], x[3]["revision"]) for x in scene_items if x[0] == "Rubric"
-    ]
+    rid_rev_pairs = _extract_rubric_rid_rev_pairs(annotation.annotation_data)
+
     # TODO: update this query to respect the revisions directly?  My DB-fu is weak
     # so I'll "fix it in postprocessing"; unlikely to make practical difference.
+    rids = [rid for rid, rev in rid_rev_pairs]
     rubrics = Rubric.objects.filter(rid__in=rids).select_for_update()
 
     found = {(rid, rev): False for (rid, rev) in rid_rev_pairs}
