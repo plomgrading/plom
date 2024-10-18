@@ -325,27 +325,9 @@ class MarkingTaskService:
         except (ValueError, TypeError) as e:
             raise ValidationError(f"Could not get 'integrity_check' as a int: {e}")
 
-        # unpack the rubrics and ensure they all exist in the DB
-        from Mark.services.annotations import (
-            _get_rubric_rid_rev_pairs_from_annotation_data,
-        )
-
-        rid_rev_pairs = _get_rubric_rid_rev_pairs_from_annotation_data(annot_data)
-
-        # this oversamples b/c we only check the rid and it also doesn't check
-        # that any particular rubric was found: use a loop below to address both
-        # rubrics = Rubric.objects.filter(rid__in=[x[0] for x in pairs])
-        # Meh, can't bebothered for now its just a loop with multiple DB looks
-
-        rubrics_used = []
-        for rid, rev in rid_rev_pairs:
-            try:
-                rubric = Rubric.objects.get(rid=rid, revision=rev)
-                # TODO Issue 3343, possibly ensure all rubrics are latest
-                # ..., latest=True)?
-            except ObjectDoesNotExist:
-                raise ValidationError(f"Invalid rubric rid {rid} revision {rev}")
-            rubrics_used.append(rubric)
+        # We used to unpack the rubrics and ensure they all exist in the DB.
+        # That will happen later when we try to save: I'm not sure its worth
+        # the overhead of checking twice: smells like asking permission...
 
         src_img_data = annot_data["base_images"]
         for image_data in src_img_data:
