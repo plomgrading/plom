@@ -275,6 +275,11 @@ class MarkingTaskService:
     ) -> tuple[dict[str, Any], dict]:
         """Validate the incoming marking data.
 
+        Note this doesn't actually touch the database.  Its more like type checking
+        of the inputs and in-expensive things like that.  There is one exception:
+        it confirms that all the underlying images actually exist on the server.
+        This is a file system (later object store) hit, which will have some IO cost.
+
         Args:
             code (str): key of the associated task.
             data (dict): information about the mark, rubrics, and annotation images.
