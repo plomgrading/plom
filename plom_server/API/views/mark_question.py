@@ -196,6 +196,8 @@ class QuestionMarkingViewSet(ViewSet):
             )
         except ValueError as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
+        except KeyError as e:
+            return _error_response(e, status.HTTP_400_BAD_REQUEST)
         except PlomTaskChangedError as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
         except PlomTaskDeletedError as e:

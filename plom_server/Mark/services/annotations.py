@@ -52,6 +52,7 @@ def create_new_annotation_in_database(
 
     Raises:
         ValueError: unsupported type of image, based on extension.
+        KeyError: uses non-existent rubrics.
     """
     annotation_image = _add_new_annotation_image_to_database(
         annot_img_md5sum,
@@ -107,7 +108,11 @@ def _get_rubric_rid_rev_pairs_from_annotation_data(
 
 
 def _add_annotation_to_rubrics(annotation: Annotation) -> None:
-    """Add a relation to this annotation for every rubric that this annotation uses."""
+    """Add a relation to this annotation for every rubric that this annotation uses.
+
+    Raises:
+        KeyError: one or more non-existent rubrics where used.
+    """
     scene_items = annotation.annotation_data["sceneItems"]
     rids = [x[3]["rid"] for x in scene_items if x[0] == "Rubric"]
     rid_rev_pairs = [
@@ -116,14 +121,24 @@ def _add_annotation_to_rubrics(annotation: Annotation) -> None:
     # TODO: update this query to respect the revisions directly?  My DB-fu is weak
     # so I'll "fix it in postprocessing"; unlikely to make practical difference.
     rubrics = Rubric.objects.filter(rid__in=rids).select_for_update()
+
+    found = {(rid, rev): False for (rid, rev) in rid_rev_pairs}
     for rubric in rubrics:
         # we have drawn too many rubrics above due to Colin's sloppy DB skills
         # so filter out any that don't match something in rid_rev_pairs
-        if any((p, q) == (rubric.rid, rubric.revision) for (p, q) in rid_rev_pairs):
-            rubric.annotations.add(annotation)
-            # TODO: do these *need* saved?  We're creating entries in a many-to-many
-            # not modifying any rubric per se.
-            # rubric.save()
+        for rid, rev in rid_rev_pairs:
+            if (rid, rev) == (rubric.rid, rubric.revision):
+                found[(rid, rev)] = True
+                rubric.annotations.add(annotation)
+                # TODO: do these *need* saved?  We're creating entries in a
+                # many-to-many, not modifying any rubric per se.
+                # rubric.save()
+
+    if not all(found.values()):
+        raise KeyError(
+            "Unexpectedly, some non-existent Rubrics were used.  "
+            f"Please report the following: {found}"
+        )
 
 
 def _add_new_annotation_image_to_database(
