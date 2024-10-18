@@ -8,7 +8,6 @@
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Bryan Tanady
 
-
 from __future__ import annotations
 
 import json
@@ -26,7 +25,6 @@ from django.db import transaction
 from plom import is_valid_tag_text
 from Papers.services import ImageBundleService, PaperInfoService
 from Papers.models import Paper
-from Rubrics.models import Rubric
 
 from . import marking_priority, mark_task
 from ..models import (
@@ -274,7 +272,7 @@ class MarkingTaskService:
 
     def validate_and_clean_marking_data(
         self, code: str, data: dict[str, Any], plomfile: str
-    ) -> tuple[dict[str, Any], dict, list[Rubric]]:
+    ) -> tuple[dict[str, Any], dict]:
         """Validate the incoming marking data.
 
         Args:

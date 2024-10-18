@@ -7,9 +7,11 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Aidan Murphy
 
+from __future__ import annotations
+
 """Services for annotations and annotation images."""
 
-from typing import Any, Dict
+from typing import Any
 
 import pathlib
 
@@ -27,7 +29,7 @@ def create_new_annotation_in_database(
     time: int,
     annot_img_md5sum: str,
     annot_img_file: InMemoryUploadedFile,
-    data: Dict[str, Any],
+    data: dict[str, Any],
 ) -> Annotation:
     """Save an annotation.
 
@@ -67,7 +69,7 @@ def _create_new_annotation_in_database(
     score: float,
     time: int,
     annotation_image: AnnotationImage,
-    data: Dict[str, Any],
+    data: dict[str, Any],
 ) -> Annotation:
     if task.latest_annotation:
         last_annotation_edition = task.latest_annotation.edition
