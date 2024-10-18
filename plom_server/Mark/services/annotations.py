@@ -121,6 +121,8 @@ def _add_annotation_to_rubrics(annotation: Annotation) -> None:
         # so filter out any that don't match something in rid_rev_pairs
         if any((p, q) == (rubric.rid, rubric.revision) for (p, q) in rid_rev_pairs):
             rubric.annotations.add(annotation)
+            # TODO: do these *need* saved?  We're creating entries in a many-to-many
+            # not modifying any rubric per se.
             rubric.save()
 
 
