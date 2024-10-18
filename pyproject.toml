@@ -100,6 +100,8 @@ dependencies = [
     "whitenoise>=6.4.0",
     "zipfly>=6.0.1",
     "zxing-cpp>=1.4.0",
+    # "nplusone>=1.0.0",
+    "django-silk>=5.2.0",
 ]
 # TODO: how to get "or"?: https://gitlab.com/plom/plom/-/issues/1570
 #   "file-magic || python-magic>=0.4.20",
