@@ -360,18 +360,11 @@ class StudentMarkService:
         # TODO - this spreadsheet stuff in reassemble service should move to student mark service
         return self.paper_spreadsheet_dict(paper_obj)
 
-    def get_all_students_download(
-        self,
-        version_info: bool,
-        timing_info: bool,
-        warning_info: bool,
-    ) -> list:
+    def get_all_students_download(self) -> list:
         """Get the info for all students in a list for building a csv file to download.
 
-        Args:
-            version_info: Whether to include the version info.
-            timing_info: Whether to include the timing info.
-            warning_info: Whether to include the warning info.
+        Warning - this is slow in production since it loops over each paper generating
+            too many queries. Will deprecate in favour of a faster function.
 
         Returns:
             List where each element is a dictionary containing the information about an individual student.
@@ -379,6 +372,7 @@ class StudentMarkService:
         Raises:
             None expected
         """
+        # first find all the used paper-numbers
         paper_nums = sorted(
             MarkingTask.objects.values_list("paper__paper_number", flat=True).distinct()
         )
@@ -427,17 +421,113 @@ class StudentMarkService:
         self, version_info: bool, timing_info: bool, warning_info: bool
     ) -> str:
         sms = StudentMarkService()
+        # student_marks = sms.get_all_students_download()
+        student_marks = self.get_all_marking_info_faster()
+        # ignore any extra fields in the dictionary - this means
+        # that if the version_info, or timing_info or warning_info
+        # not in the header, then it won't be put into the csv.
         keys = sms.get_csv_header(version_info, timing_info, warning_info)
-        student_marks = sms.get_all_students_download(
-            version_info, timing_info, warning_info
-        )
-
         csv_io = StringIO()
-
-        # ignore any extra fields in the dictionary.
         w = csv.DictWriter(csv_io, keys, extrasaction="ignore")
         w.writeheader()
         w.writerows(student_marks)
 
         csv_io.seek(0)
         return csv_io.getvalue()
+
+    def get_all_marking_info_faster(self):
+        # we build a big dictionary with all the required info
+        # indexed on paper_number.
+        all_papers = {}
+        # First build a "row" of this dict
+        # get question indices:
+        q_indices = SpecificationService.get_question_indices()
+        # now build a dict of all the data index on paper_number
+        row = {
+            "PaperNumber": None,
+            "identified": False,
+            "marked": False,
+            "StudentID": "",
+            "StudentName": "",
+            "Total": None,
+            "last_update": None,
+            "warnings": "",
+        }
+        row.update({f"q{i}_mark": None for i in q_indices})
+        row.update({f"q{i}_version": None for i in q_indices})
+
+        # get all completed ID-tasks
+        completed_id_task_info = (
+            PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE)
+            .prefetch_related("paper", "latest_action")
+            .order_by("paper__paper_number")
+            .values_list(
+                "paper__paper_number",
+                "latest_action__student_id",
+                "latest_action__student_name",
+                "last_update",
+            )
+        )
+        # get the id-info into the dict
+        for pn, sid, sname, lu in completed_id_task_info:
+            if pn not in all_papers:
+                all_papers[pn] = row.copy()
+            all_papers[pn]["identified"] = True
+            all_papers[pn]["StudentID"] = sid
+            all_papers[pn]["StudentName"] = sname
+            all_papers[pn]["last_update"] = lu
+
+        # a little utility function to get latter-time
+        def latter_time(A, B):
+            # get the latter time, treating None as infinite-past
+            if A is None:
+                return B
+            if B is None:
+                return A
+            if A < B:
+                return B
+            else:
+                return A
+
+        # get all completed marking tasks
+        completed_marking_task_info = (
+            MarkingTask.objects.filter(status=MarkingTask.COMPLETE)
+            .prefetch_related("paper", "latest_annotation")
+            .order_by("paper__paper_number", "question_index")
+            .values_list(
+                "paper__paper_number",
+                "question_index",
+                "question_version",
+                "latest_annotation__score",
+                "last_update",
+            )
+        )
+        # now get the marking info into the dict
+        for pn, qi, qv, sc, lu in completed_marking_task_info:
+            if pn not in all_papers:
+                all_papers[pn] = row.copy()
+            all_papers[pn][f"q{qi}_mark"] = sc
+            all_papers[pn][f"q{qi}_version"] = qv
+            all_papers[pn]["last_update"] = latter_time(
+                all_papers[pn]["last_update"], lu
+            )
+        # now add paper-number and any warnings and total
+        for pn, dat in all_papers.items():
+            wrn = []
+            all_papers[pn]["PaperNumber"] = pn
+            # check if ID'd
+            if not dat["identified"]:
+                wrn.append("Not identified")
+            # check all questions marked
+            scores = [dat[f"q{qi}_mark"] for qi in q_indices]
+            if None in scores:
+                wrn.append("Not marked")
+            else:
+                all_papers[pn]["Total"] = sum(scores)
+                all_papers[pn]["marked"] = True
+            if wrn:
+                all_papers[pn]["warnings"] = ",".join(wrn)
+            if dat["last_update"]:
+                all_papers[pn]["last_update"] = dat["last_update"].strftime("%c")
+
+        return [v for k, v in sorted(all_papers.items())]
