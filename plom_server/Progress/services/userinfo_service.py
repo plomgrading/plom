@@ -185,22 +185,6 @@ class UserInfoServices:
 
         return result
 
-    # @transaction.atomic
-    # def get_total_claimed_task_for_each_user(self) -> dict[str, int]:
-    #     """Retrieve the number of tasks claimed by the user."""
-    #     annotations = (
-    #         MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
-    #     )
-    #     total_complete_annot_dict = self.get_annotations_based_on_user(annotations)
-    #     claimed_task_count_dict = dict()
-
-    #     for usr in total_complete_annot_dict.keys():
-    #         claimed_task_count_dict[usr] = total_complete_annot_dict[
-    #             usr
-    #         ] + self.get_total_claimed_but_unmarked_task_by_a_user(usr)
-
-    #     return claimed_task_count_dict
-
     @staticmethod
     def get_total_claimed_but_unmarked_task_by_a_user(username: str) -> int:
         """Retrieve the number of tasks claimed but unmarked by a user.
