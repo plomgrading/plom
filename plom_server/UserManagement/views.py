@@ -128,7 +128,7 @@ class SetQuotaView(ManagerRequiredView):
         # Special flag received when user confirms to force setting, ignoring limit restriction.
         if "force_set_quota" in request.POST:
             complete_and_claimed_tasks = (
-                UserInfoServices.get_total_annotated_and_claimed_count_by_user()
+                UserInfoServices.get_total_annotated_and_claimed_count_by_users()
             )
             complete, claimed = complete_and_claimed_tasks[username]
             quota, created = Quota.objects.get_or_create(user=user, limit=complete)

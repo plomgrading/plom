@@ -37,7 +37,9 @@ class UserInfoServices:
             A dict whose keys are "tasks_claimed", "tasks_marked",
             "user_has_quota_limit", "user_quota_limit".
         """
-        complete_claimed_task_dict = cls.get_total_annotated_and_claimed_count_by_user()
+        complete_claimed_task_dict = (
+            cls.get_total_annotated_and_claimed_count_by_users()
+        )
         try:
             tasks_marked, tasks_claimed = complete_claimed_task_dict[username]
         except KeyError:
@@ -70,7 +72,9 @@ class UserInfoServices:
         # get everything from DB first, then we can do loops to assemble...
 
         # this will be missing keys for users that haven't claimed or marked
-        complete_claimed_task_dict = cls.get_total_annotated_and_claimed_count_by_user()
+        complete_claimed_task_dict = (
+            cls.get_total_annotated_and_claimed_count_by_users()
+        )
 
         # this one will be missing all those without quota
         quota_limits_dict = {
@@ -124,7 +128,7 @@ class UserInfoServices:
 
     @classmethod
     @transaction.atomic
-    def get_total_annotated_and_claimed_count_by_user(
+    def get_total_annotated_and_claimed_count_by_users(
         cls,
     ) -> dict[str, tuple[int, int]]:
         """Retrieve count of complete and total claimed by users.
