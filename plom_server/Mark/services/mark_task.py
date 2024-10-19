@@ -9,14 +9,12 @@
 
 from __future__ import annotations
 
-from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 
 from Papers.models import Paper
 from ..models import MarkingTask
 
 
-@transaction.atomic
 def get_latest_task(
     paper_number: int, question_idx: int, *, question_version: int | None = None
 ) -> MarkingTask:
