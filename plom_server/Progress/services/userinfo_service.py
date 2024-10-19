@@ -115,7 +115,6 @@ class UserInfoServices:
         return data
 
     @staticmethod
-    @transaction.atomic
     def annotation_exists() -> bool:
         """Return True if there are any annotations in the database.
 
