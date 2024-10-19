@@ -240,5 +240,6 @@ class QuestionMarkingService:
             annotation_data,
         )
         # Note the helper function above also performs `task.save`; that seems ok.
+        # TODO: consider moving this into the helper in annotations.py
         task.status = MarkingTask.COMPLETE
         task.save()
