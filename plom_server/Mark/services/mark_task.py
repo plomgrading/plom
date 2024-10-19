@@ -24,6 +24,8 @@ def get_latest_task(
     this is a low-level routine.  Apply whatever safeguards you need in
     the caller.
 
+    We prefetch the ``assigned_user`` fields as some callers want that.
+
     Args:
         paper_number: which paper.
         question_idx: which question, by 1-based question index.
