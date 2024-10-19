@@ -134,12 +134,12 @@ class UserInfoServices:
         Raises:
             Not expected to raise any exceptions.
         """
-        annotations = (
+        complete = (
             MarkingTaskService()
             .get_latest_annotations_from_complete_marking_tasks()
             .filter(user__username=username)
+            .count()
         )
-        complete = len(annotations)
 
         claimed = complete + cls.get_total_claimed_but_unmarked_task_by_a_user(username)
         return (complete, claimed)
