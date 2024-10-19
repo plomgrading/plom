@@ -132,7 +132,7 @@ class UserInfoServices:
             A tuple of the count of the complete and claimed tasks.
 
         Raises:
-            Not expected to raise any exceptions.   TODO
+            Not expected to raise any exceptions.
         """
         annotations = (
             MarkingTaskService()
@@ -157,7 +157,7 @@ class UserInfoServices:
             A dictionary mapping the marker to a tuple of the count of the complete and claimed tasks respectively.
 
         Raises:
-            KeyError: user has not claimed any papers yet.
+            Not expected to raise any exceptions.
         """
         result = dict()
 
@@ -202,7 +202,6 @@ class UserInfoServices:
     #     return claimed_task_count_dict
 
     @staticmethod
-    @transaction.atomic
     def get_total_claimed_but_unmarked_task_by_a_user(username: str) -> int:
         """Retrieve the number of tasks claimed but unmarked by a user.
 
