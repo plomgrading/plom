@@ -17,7 +17,7 @@ from django.db.models.query import QuerySet
 from django.utils import timezone
 
 from Mark.models import Annotation, MarkingTask
-from Mark.services import MarkingTaskService, MarkingStatsService
+from Mark.services import MarkingTaskService
 
 from UserManagement.models import Quota
 
@@ -213,11 +213,9 @@ class UserInfoServices:
         Returns:
             number of tasks claimed by the user whose status is still 'OUT'.
         """
-        return len(
-            MarkingStatsService().filter_marking_task_annotation_info(
-                username=username, status=MarkingTask.OUT
-            )
-        )
+        return MarkingTask.objects.filter(
+            assigned_user__username=username, status=MarkingTask.OUT
+        ).count()
 
     @transaction.atomic
     def get_annotations_based_on_user(
