@@ -43,12 +43,13 @@ class UserInfoServices:
         except KeyError:
             # User hasn't marked nor claimed any paper yet:
             tasks_marked, tasks_claimed = 0, 0
-        user = User.objects.get(username=username)
-        has_limit = Quota.objects.filter(user=user).exists()
-        if has_limit:
-            limit = Quota.objects.get(user=user).limit
-        else:
+
+        try:
+            limit = Quota.objects.get(user__username=username).limit
+            has_limit = True
+        except ObjectDoesNotExist:
             limit = None
+            has_limit = False
 
         data = {
             "user_tasks_claimed": tasks_claimed,
