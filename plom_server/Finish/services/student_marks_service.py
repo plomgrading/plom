@@ -404,11 +404,12 @@ class StudentMarkService:
         # excepting paper_number = PaperNumber
         # since in legacy was TestNumber (which we avoid in webplom)
         keys = ["StudentID", "StudentName", "PaperNumber", "Total"]
+        q_indices = SpecificationService.get_question_indices()
         # if the above changed then make sure that the dict-keys also changed
-        for q in SpecificationService.get_question_indices():
+        for q in q_indices:
             keys.append(f"q{q}_mark")
         if version_info:
-            for q in SpecificationService.get_question_indices():
+            for q in q_indices:
                 keys.append(f"q{q}_version")
         if timing_info:
             keys.extend(["last_update"])
@@ -439,11 +440,12 @@ class StudentMarkService:
         # we build a big dictionary with all the required info
         # indexed on paper_number.
         all_papers = {}
-        # First build a "row" of this dict
+        # Each entry will be a "row" of the resulting csv
+        # so we build a template-csv-row to copy into place.
         # get question indices:
         q_indices = SpecificationService.get_question_indices()
         # now build a dict of all the data index on paper_number
-        row = {
+        csv_row_template = {
             "PaperNumber": None,
             "identified": False,
             "marked": False,
@@ -453,8 +455,8 @@ class StudentMarkService:
             "last_update": None,
             "warnings": "",
         }
-        row.update({f"q{i}_mark": None for i in q_indices})
-        row.update({f"q{i}_version": None for i in q_indices})
+        csv_row_template.update({f"q{i}_mark": None for i in q_indices})
+        csv_row_template.update({f"q{i}_version": None for i in q_indices})
 
         # get all completed ID-tasks
         completed_id_task_info = (
@@ -471,7 +473,8 @@ class StudentMarkService:
         # get the id-info into the dict
         for pn, sid, sname, lu in completed_id_task_info:
             if pn not in all_papers:
-                all_papers[pn] = row.copy()
+                all_papers[pn] = csv_row_template.copy()
+                all_papers[pn]["PaperNumber"] = pn
             all_papers[pn]["identified"] = True
             all_papers[pn]["StudentID"] = sid
             all_papers[pn]["StudentName"] = sname
@@ -484,10 +487,7 @@ class StudentMarkService:
                 return B
             if B is None:
                 return A
-            if A < B:
-                return B
-            else:
-                return A
+            return max(A, B)
 
         # get all completed marking tasks
         completed_marking_task_info = (
@@ -505,7 +505,8 @@ class StudentMarkService:
         # now get the marking info into the dict
         for pn, qi, qv, sc, lu in completed_marking_task_info:
             if pn not in all_papers:
-                all_papers[pn] = row.copy()
+                all_papers[pn] = csv_row_template.copy()
+                all_papers[pn]["PaperNumber"] = pn
             all_papers[pn][f"q{qi}_mark"] = sc
             all_papers[pn][f"q{qi}_version"] = qv
             all_papers[pn]["last_update"] = latter_time(
@@ -530,12 +531,12 @@ class StudentMarkService:
         )
         for pn in unfinished_tasks:
             if pn not in all_papers:
-                all_papers[pn] = row.copy()
+                all_papers[pn] = csv_row_template.copy()
+                all_papers[pn]["PaperNumber"] = pn
 
-        # now add paper-number and any warnings and total
+        # now put in total and any warnings
         for pn, dat in all_papers.items():
             wrn = []
-            all_papers[pn]["PaperNumber"] = pn
             # check if ID'd
             if not dat["identified"]:
                 wrn.append("Not identified")
@@ -550,5 +551,6 @@ class StudentMarkService:
                 all_papers[pn]["warnings"] = ",".join(wrn)
             if dat["last_update"]:
                 all_papers[pn]["last_update"] = dat["last_update"].strftime("%c")
-
+        # we return a list of dicts - these will be the rows
+        # of our marks.csv spreadsheet.
         return [all_papers[k] for k in sorted(all_papers.keys())]
