@@ -10,7 +10,8 @@
 Overview:
 
   1. Finish grading
-  2. Run `plom-finish csv` and `plom-finish reassemble`.
+  2. Download the `marks.csv`, the reassembled papers,
+     and the solutions from Plom.
   3. Copy this script into the current directory.
   4. Run this script and follow the interactive menus:
      ```
@@ -242,20 +243,24 @@ if __name__ == "__main__":
         print(f'Note: you can use "--assignment {assignment.id}" to reselect.\n')
     print(f"Ok uploading to Assignment: {assignment}")
 
-    print("\nChecking if you have run `plom-finish`...")
+    print("\nChecking if you have `marks.csv`...")
     print("  --------------------------------------------------------------------")
     if not Path("marks.csv").exists():
-        raise ValueError('Missing "marks.csv": run `plom-finish csv`')
+        raise ValueError('Missing "marks.csv": download it from Plom and try again')
     print('  Found "marks.csv" file.')
     if not Path("reassembled").exists():
-        raise ValueError('Missing "reassembled/": run `plom-finish reassemble`')
+        raise ValueError(
+            'Missing "reassembled/": '
+            "download the reassembled papers from Plom and try again"
+        )
     print('  Found "reassembled/" directory.')
 
     if args.solutions:
         soln_dir = Path("solutions")
         if not soln_dir.exists():
             raise ValueError(
-                f'Missing "{soln_dir}": run `plom-finish solutions` or pass `--no-solutions` to omit'
+                f'Missing "{soln_dir}": download solutions from Plom '
+                "or pass `--no-solutions` to omit"
             )
         print(f'  Found "{soln_dir}" directory.')
 
