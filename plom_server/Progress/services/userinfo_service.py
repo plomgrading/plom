@@ -37,14 +37,9 @@ class UserInfoServices:
             A dict whose keys are "tasks_claimed", "tasks_marked",
             "user_has_quota_limit", "user_quota_limit".
         """
-        complete_claimed_task_dict = (
-            cls.get_total_annotated_and_claimed_count_by_users()
+        tasks_marked, tasks_claimed = cls.get_total_annotated_and_claimed_count_by_user(
+            username
         )
-        try:
-            tasks_marked, tasks_claimed = complete_claimed_task_dict[username]
-        except KeyError:
-            # User hasn't marked nor claimed any paper yet:
-            tasks_marked, tasks_claimed = 0, 0
 
         try:
             limit = Quota.objects.get(user__username=username).limit
@@ -126,19 +121,45 @@ class UserInfoServices:
         return Annotation.objects.exists()
 
     @classmethod
+    def get_total_annotated_and_claimed_count_by_user(
+        cls, username: str
+    ) -> tuple[int, int]:
+        """Retrieve count of complete and total claimed by a particular username.
+
+        "Claimed tasks" are those tasks associated with the user with status OUT or Complete.
+
+        Returns:
+            A tuple of the count of the complete and claimed tasks.
+
+        Raises:
+            Not expected to raise any exceptions.   TODO
+        """
+        annotations = (
+            MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
+        )
+        annotations = annotations.prefetch_related("user")
+        complete = 0
+        for annotation in annotations:
+            if annotation.user.username == username:
+                complete += 1
+
+        claimed = complete + cls.get_total_claimed_but_unmarked_task_by_a_user(username)
+        return (complete, claimed)
+
+    @classmethod
     @transaction.atomic
     def get_total_annotated_and_claimed_count_by_users(
         cls,
     ) -> dict[str, tuple[int, int]]:
         """Retrieve count of complete and total claimed by users.
 
-        claimed tasks are those tasks associated with the user with status OUT or Complete.
+        "Claimed tasks" are those tasks associated with the user with status OUT or Complete.
 
         Returns:
             A dictionary mapping the marker to a tuple of the count of the complete and claimed tasks respectively.
 
         Raises:
-            Not expected to raise any exceptions.
+            KeyError: user has not claimed any papers yet.
         """
         result = dict()
 

@@ -26,10 +26,9 @@ def is_proposed_limit_valid(limit: int, user: User) -> bool:
     Returns:
         True if the new limit can be applied to the user.
     """
-    complete_and_claimed_tasks_dict = (
-        UserInfoServices.get_total_annotated_and_claimed_count_by_users()
+    complete, claimed = UserInfoServices.get_total_annotated_and_claimed_count_by_user(
+        user.username
     )
-    complete, claimed = complete_and_claimed_tasks_dict[user.username]
 
     if (limit >= 0) & (limit >= complete):
         return True
@@ -50,10 +49,9 @@ def can_set_quota(user: User) -> bool:
     Returns:
         True if the user can be set to quota limited, otherwise false.
     """
-    complete_and_claim_dict = (
-        UserInfoServices.get_total_annotated_and_claimed_count_by_users()
+    complete, claimed = UserInfoServices.get_total_annotated_and_claimed_count_by_user(
+        user.username
     )
-    complete, claimed = complete_and_claim_dict[user.username]
 
     if complete > Quota.default_limit:
         return False
