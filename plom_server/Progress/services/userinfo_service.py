@@ -135,13 +135,11 @@ class UserInfoServices:
             Not expected to raise any exceptions.   TODO
         """
         annotations = (
-            MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
+            MarkingTaskService()
+            .get_latest_annotations_from_complete_marking_tasks()
+            .filter(user__username=username)
         )
-        annotations = annotations.prefetch_related("user")
-        complete = 0
-        for annotation in annotations:
-            if annotation.user.username == username:
-                complete += 1
+        complete = len(annotations)
 
         claimed = complete + cls.get_total_claimed_but_unmarked_task_by_a_user(username)
         return (complete, claimed)
