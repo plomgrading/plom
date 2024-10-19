@@ -40,22 +40,18 @@ def get_latest_task(
         ValueError: that paper/question pair does exist but not with the
             specified version.
     """
-    try:
-        paper = Paper.objects.get(paper_number=paper_number)
-    except ObjectDoesNotExist as e:
-        # reraise with a more detailed error message
-        raise ObjectDoesNotExist(f"Task for paper {paper_number} does not exist") from e
     r = (
-        MarkingTask.objects.filter(paper=paper, question_index=question_idx)
+        MarkingTask.objects.filter(
+            paper__paper_number=paper_number, question_index=question_idx
+        )
         .prefetch_related("assigned_user")
         .order_by("-time")
         .first()
     )
-    # Issue #2851, special handling of the None return
     if r is None:
         raise ObjectDoesNotExist(
-            f"Task does not exist: we have paper {paper_number} but "
-            f"not question index {question_idx}"
+            f"Task for paper number {paper_number}"
+            f" question index {question_idx} does not exist"
         )
     if question_version is not None:
         if r.question_version != question_version:
