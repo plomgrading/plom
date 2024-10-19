@@ -5,7 +5,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aidan Murphy
-# Copyright (C) 2020 Andreas Buttenschoen
+# Copyright (C) 2024 Andreas Buttenschoen
 
 from __future__ import annotations
 
@@ -511,6 +511,27 @@ class StudentMarkService:
             all_papers[pn]["last_update"] = latter_time(
                 all_papers[pn]["last_update"], lu
             )
+        # now get paper-number of any unfinished ID / Marking tasks
+        unfinished_id_task_info = (
+            PaperIDTask.objects.filter(status__in=[PaperIDTask.TO_DO, PaperIDTask.OUT])
+            .prefetch_related("paper")
+            .order_by("paper__paper_number")
+            .values_list("paper__paper_number", flat=True)
+        )
+        unfinished_marking_task_info = (
+            MarkingTask.objects.filter(status__in=[MarkingTask.TO_DO, MarkingTask.OUT])
+            .prefetch_related("paper")
+            .order_by("paper__paper_number")
+            .values_list("paper__paper_number", flat=True)
+        )
+        # and add them to all_papers
+        unfinished_tasks = list(
+            set(list(unfinished_id_task_info) + list(unfinished_marking_task_info))
+        )
+        for pn in unfinished_tasks:
+            if pn not in all_papers:
+                all_papers[pn] = row.copy()
+
         # now add paper-number and any warnings and total
         for pn, dat in all_papers.items():
             wrn = []
@@ -530,4 +551,4 @@ class StudentMarkService:
             if dat["last_update"]:
                 all_papers[pn]["last_update"] = dat["last_update"].strftime("%c")
 
-        return [v for k, v in sorted(all_papers.items())]
+        return [all_papers[k] for k in sorted(all_papers.keys())]
