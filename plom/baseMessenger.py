@@ -146,7 +146,7 @@ class BaseMessenger:
         self.user: str | None = None
         # on legacy, it is a string, modern server it is a dict
         self.token: str | dict[str, str] | None = None
-        self.default_timeout = (10, 60)
+        self.default_timeout = (15, 90)
         self._interactive_timeout = 3
         try:
             parsed_url = urllib3.util.parse_url(base)
