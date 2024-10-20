@@ -49,7 +49,7 @@
                                 {{ user.username }}
                                 {% if user in lead_markers %}<i class="bi bi-bookmark-star text-primary"></i>{% endif %}
                             </td>
-                            {% if user in request.online_now %}
+                            {% if user in online_now_ids %}
                                 <td class="bg-success-subtle">Online</td>
                             {% else %}
                                 <td>Offline</td>
@@ -145,7 +145,7 @@
                     {% for user in scanners %}
                         <tr>
                             <td>{{ user.username }}</td>
-                            {% if user in request.online_now %}
+                            {% if user in online_now_ids %}
                                 <td class="bg-success-subtle">Online</td>
                             {% else %}
                                 <td>Offline</td>
@@ -188,7 +188,7 @@
                     {% for user in managers %}
                         <tr>
                             <td>{{ user.username }}</td>
-                            {% if user in request.online_now %}
+                            {% if user in online_now_ids %}
                                 <td class="bg-success-subtle">Online</td>
                             {% else %}
                                 <td>Offline</td>

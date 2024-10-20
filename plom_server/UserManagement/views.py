@@ -47,7 +47,12 @@ class UserPage(ManagerRequiredView):
         markers = User.objects.filter(groups__name="marker").prefetch_related(
             "auth_token"
         )
+        # fetch these so that we don't loop over this in the template
+        # remove db hits in loops.
+        online_now_ids = request.online_now_ids
+
         context = {
+            "online_now_ids": online_now_ids,
             "scanners": scanners,
             "markers": markers,
             "lead_markers": lead_markers,
