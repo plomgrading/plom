@@ -606,7 +606,6 @@ class BaseMessenger:
                     "api": Plom_API_Version,
                     "client_ver": __version__,
                 },
-                timeout=5,
             )
             try:
                 response.raise_for_status()
