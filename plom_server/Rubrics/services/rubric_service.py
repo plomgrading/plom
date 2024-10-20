@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2019-2024 Colin B. Macdonald
-# Copyright (C) 2019-2023 Andrew Rechnitzer
+# Copyright (C) 2019-2024 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2023 Julian Lapenna
@@ -382,7 +382,9 @@ class RubricService:
             rubric_queryset = rubric_queryset.filter(question=question, latest=True)
         rubric_data = []
 
-        for r in rubric_queryset.prefetch_related("user"):
+        # see issue #3683 - need to prefetch these fields for
+        # the _Rubric_to_dict function.
+        for r in rubric_queryset.prefetch_related("user", "modified_by_user"):
             rubric_data.append(_Rubric_to_dict(r))
 
         new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))
