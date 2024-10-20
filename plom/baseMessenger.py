@@ -178,7 +178,7 @@ class BaseMessenger:
             verify_ssl=m.verify_ssl,
             _server_API_version=m._server_API_version,
         )
-        x.start()
+        x._start_session()
         log.debug("copying user/token into cloned messenger")
         x.user = m.user
         x.token = m.token
@@ -357,6 +357,17 @@ class BaseMessenger:
         assert self.session
         return self.session.patch(self.base + url, *args, **kwargs)
 
+    def _start_session(self):
+        """Start the messenger session, low-level without any checks."""
+        self.session = requests.Session()
+        assert self.session
+        # TODO: not clear retries help: e.g., requests will not redo PUTs.
+        # More likely, just delays inevitable failures.
+        self.session.mount(
+            f"{self.scheme}://", requests.adapters.HTTPAdapter(max_retries=2)
+        )
+        self.session.verify = self.verify_ssl
+
     def _start(self) -> str:
         """Start the messenger session, low-level without compatibility checks.
 
@@ -376,14 +387,7 @@ class BaseMessenger:
             log.debug("already have an requests-session")
         else:
             log.debug("starting a new requests-session")
-            self.session = requests.Session()
-            assert self.session
-            # TODO: not clear retries help: e.g., requests will not redo PUTs.
-            # More likely, just delays inevitable failures.
-            self.session.mount(
-                f"{self.scheme}://", requests.adapters.HTTPAdapter(max_retries=2)
-            )
-            self.session.verify = self.verify_ssl
+            self._start_session()
 
         try:
             try:
