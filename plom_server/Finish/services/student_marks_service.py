@@ -443,7 +443,6 @@ class StudentMarkService:
             RuntimeError: if there are two complete ID-tasks for the same paper,
             or if there are two complete MarkingTasks for the same paper/question.
         """
-
         # we build a big dictionary with all the required info
         # indexed on paper_number.
         all_papers = {}
