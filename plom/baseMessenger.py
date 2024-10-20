@@ -172,7 +172,7 @@ class BaseMessenger:
 
         In particular, we have our own mutex.
         """
-        log.debug("cloning a messeger, but building new session...")
+        log.debug("cloning a messenger, but building new session...")
         x = cls(
             m.base,
             verify_ssl=m.verify_ssl,

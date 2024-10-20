@@ -56,7 +56,7 @@ class Downloader(QObject):
 
     The current queue can be cleared with :meth:`clear_queue`.
     For shutting down the queue, see :meth:`stop`.
-    The Downlaoder keeps a clone of the messenger: if you logout
+    The Downloader keeps a clone of the messenger: if you logout
     (revoke the token) in another msgr while this is downloading,
     you'll get a crash.
 
