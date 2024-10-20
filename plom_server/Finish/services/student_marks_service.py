@@ -436,7 +436,7 @@ class StudentMarkService:
         csv_io.seek(0)
         return csv_io.getvalue()
 
-    def get_all_marking_info_faster(self) -> list[dict]:
+    def get_all_marking_info_faster(self) -> list[dict[str, Any]]:
         """Build a list of dictionaries being the rows of the marking spreadsheet.
 
         Raises:
@@ -445,7 +445,7 @@ class StudentMarkService:
         """
         # we build a big dictionary with all the required info
         # indexed on paper_number.
-        all_papers = {}
+        all_papers: dict[int, dict[str, Any]] = {}
         # Each entry will be a "row" of the resulting csv
         # so we build a template-csv-row to copy into place.
         # get question indices:
