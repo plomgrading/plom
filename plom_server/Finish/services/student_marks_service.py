@@ -5,7 +5,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aidan Murphy
-# Copyright (C) 2020 Andreas Buttenschoen
+# Copyright (C) 2024 Andreas Buttenschoen
 
 from __future__ import annotations
 
@@ -360,18 +360,11 @@ class StudentMarkService:
         # TODO - this spreadsheet stuff in reassemble service should move to student mark service
         return self.paper_spreadsheet_dict(paper_obj)
 
-    def get_all_students_download(
-        self,
-        version_info: bool,
-        timing_info: bool,
-        warning_info: bool,
-    ) -> list:
+    def get_all_students_download(self) -> list:
         """Get the info for all students in a list for building a csv file to download.
 
-        Args:
-            version_info: Whether to include the version info.
-            timing_info: Whether to include the timing info.
-            warning_info: Whether to include the warning info.
+        Warning - this is slow in production since it loops over each paper generating
+            too many queries. Will deprecate in favour of a faster function.
 
         Returns:
             List where each element is a dictionary containing the information about an individual student.
@@ -379,6 +372,7 @@ class StudentMarkService:
         Raises:
             None expected
         """
+        # first find all the used paper-numbers
         paper_nums = sorted(
             MarkingTask.objects.values_list("paper__paper_number", flat=True).distinct()
         )
@@ -410,11 +404,12 @@ class StudentMarkService:
         # excepting paper_number = PaperNumber
         # since in legacy was TestNumber (which we avoid in webplom)
         keys = ["StudentID", "StudentName", "PaperNumber", "Total"]
+        q_indices = SpecificationService.get_question_indices()
         # if the above changed then make sure that the dict-keys also changed
-        for q in SpecificationService.get_question_indices():
+        for q in q_indices:
             keys.append(f"q{q}_mark")
         if version_info:
-            for q in SpecificationService.get_question_indices():
+            for q in q_indices:
                 keys.append(f"q{q}_version")
         if timing_info:
             keys.extend(["last_update"])
@@ -427,17 +422,163 @@ class StudentMarkService:
         self, version_info: bool, timing_info: bool, warning_info: bool
     ) -> str:
         sms = StudentMarkService()
+        # student_marks = sms.get_all_students_download()
+        student_marks = self.get_all_marking_info_faster()
+        # ignore any extra fields in the dictionary - this means
+        # that if the version_info, or timing_info or warning_info
+        # not in the header, then it won't be put into the csv.
         keys = sms.get_csv_header(version_info, timing_info, warning_info)
-        student_marks = sms.get_all_students_download(
-            version_info, timing_info, warning_info
-        )
-
         csv_io = StringIO()
-
-        # ignore any extra fields in the dictionary.
         w = csv.DictWriter(csv_io, keys, extrasaction="ignore")
         w.writeheader()
         w.writerows(student_marks)
 
         csv_io.seek(0)
         return csv_io.getvalue()
+
+    def get_all_marking_info_faster(self) -> list[dict[str, Any]]:
+        """Build a list of dictionaries being the rows of the marking spreadsheet.
+
+        Raises:
+            RuntimeError: if there are two complete ID-tasks for the same paper,
+            or if there are two complete MarkingTasks for the same paper/question.
+        """
+        # we build a big dictionary with all the required info
+        # indexed on paper_number.
+        all_papers: dict[int, dict[str, Any]] = {}
+        # Each entry will be a "row" of the resulting csv
+        # so we build a template-csv-row to copy into place.
+        # get question indices:
+        q_indices = SpecificationService.get_question_indices()
+        # now build a dict of all the data index on paper_number
+        csv_row_template = {
+            "PaperNumber": None,
+            "identified": False,
+            "marked": False,
+            "StudentID": "",
+            "StudentName": "",
+            "Total": None,
+            "last_update": None,
+            "warnings": "",
+        }
+        csv_row_template.update({f"q{i}_mark": None for i in q_indices})
+        csv_row_template.update({f"q{i}_version": None for i in q_indices})
+
+        # get all completed ID-tasks
+        completed_id_task_info = (
+            PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE)
+            .prefetch_related("paper", "latest_action")
+            .values_list(
+                "paper__paper_number",
+                "latest_action__student_id",
+                "latest_action__student_name",
+                "last_update",
+            )
+        )
+        # get the id-info for each paper into our dict
+        for pn, sid, sname, lu in completed_id_task_info:
+            if pn not in all_papers:
+                all_papers[pn] = csv_row_template.copy()
+                all_papers[pn]["PaperNumber"] = pn
+            else:
+                # We have a problem - we have two valid complete ID-tasks for
+                # the same paper - this should not happen!
+                raise RuntimeError(
+                    "There should at most one complete ID task for each paper."
+                )
+            all_papers[pn]["identified"] = True
+            all_papers[pn]["StudentID"] = sid
+            all_papers[pn]["StudentName"] = sname
+            all_papers[pn]["last_update"] = lu
+
+        # a little utility function to get latter-time
+        def latter_time(A, B):
+            # get the latter time, treating None as infinite-past
+            if A is None:
+                return B
+            if B is None:
+                return A
+            return max(A, B)
+
+        # get all completed marking tasks
+        completed_marking_task_info = (
+            MarkingTask.objects.filter(status=MarkingTask.COMPLETE)
+            .prefetch_related("paper", "latest_annotation")
+            .values_list(
+                "paper__paper_number",
+                "question_index",
+                "question_version",
+                "latest_annotation__score",
+                "last_update",
+            )
+        )
+        # now get the marking info for each paper into the dict
+        # note that some of these papers might not have been ID'd
+        # so we might have to put the csv-row-template into place.
+        for pn, qi, qv, sc, lu in completed_marking_task_info:
+            if pn not in all_papers:
+                all_papers[pn] = csv_row_template.copy()
+                all_papers[pn]["PaperNumber"] = pn
+            # make sure that we have not already put this paper/question into
+            # the dictionary as that would indicate that we have more than
+            # one complete marking tasks for the same question/version
+            if all_papers[pn][f"q{qi}_mark"] is not None:
+                raise RuntimeError(
+                    "There should be only one complete marking task for each paper/question."
+                )
+
+            all_papers[pn][f"q{qi}_mark"] = sc
+            all_papers[pn][f"q{qi}_version"] = qv
+            all_papers[pn]["last_update"] = latter_time(
+                all_papers[pn]["last_update"], lu
+            )
+        # now it is also possible that we have some papers that have
+        # been scanned, but not been ID'd or marked - these also need
+        # to go into our marking spreadsheet
+        # so get paper-number of any unfinished ID / Marking tasks
+        unfinished_id_tasks = (
+            PaperIDTask.objects.filter(status__in=[PaperIDTask.TO_DO, PaperIDTask.OUT])
+            .prefetch_related("paper")
+            .values_list("paper__paper_number", flat=True)
+        )
+        unfinished_marking_tasks = (
+            MarkingTask.objects.filter(status__in=[MarkingTask.TO_DO, MarkingTask.OUT])
+            .prefetch_related("paper")
+            .values_list("paper__paper_number", flat=True)
+        )
+        # so we iterate over all of these and if we haven't seen
+        # these paper-numbers, we add them to our paper-dictionary
+        unfinished_tasks = list(
+            set(list(unfinished_id_tasks) + list(unfinished_marking_tasks))
+        )
+        for pn in unfinished_tasks:
+            if pn not in all_papers:
+                all_papers[pn] = csv_row_template.copy()
+                all_papers[pn]["PaperNumber"] = pn
+            # note we expect to have seen most of these paper-numbers
+            # since it should be pretty rare to be building this
+            # spreadsheet when we still have scanned papers which have
+            # been neither marked nor id'd.
+
+        # Now that all the data is in, we can do a final scan through
+        # the dictionary to put in total-mark and any warning for
+        # not-id'd and not-marked.
+        for pn, dat in all_papers.items():
+            wrn = []
+            # check if ID'd
+            if not dat["identified"]:
+                wrn.append("Not identified")
+            # check all questions marked
+            scores = [dat[f"q{qi}_mark"] for qi in q_indices]
+            if None in scores:
+                wrn.append("Not marked")
+            else:
+                all_papers[pn]["Total"] = sum(scores)
+                all_papers[pn]["marked"] = True
+            if wrn:
+                all_papers[pn]["warnings"] = ",".join(wrn)
+            if dat["last_update"]:
+                all_papers[pn]["last_update"] = dat["last_update"].strftime("%c")
+        # we return a list of dicts - these will be the rows
+        # of our marks.csv spreadsheet.
+        return [all_papers[k] for k in sorted(all_papers.keys())]
