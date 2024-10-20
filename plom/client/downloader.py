@@ -26,7 +26,7 @@ from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot
 from PyQt6.QtCore import QThreadPool, QRunnable
 
 from plom.messenger import Messenger, BaseMessenger
-from plom.plom_exceptions import PlomException
+from plom.plom_exceptions import PlomException, PlomConnectionError
 from .pagecache import PageCache
 
 
@@ -263,6 +263,7 @@ class Downloader(QObject):
 
         Raises:
             RuntimeError: something unexpected happened.
+            PlomConnectionError: we do not have a valid Messenger.
 
         Does not start a new download if the Page Cache already has that image.
         It also tries to avoid enquing another request for the same image.
@@ -296,7 +297,9 @@ class Downloader(QObject):
         target_name = self.basedir / (Path(target_name).name)
 
         if not self.msgr:
-            raise RuntimeError("Cannot download as we don't have an active connection")
+            raise PlomConnectionError(
+                "Cannot download as we don't have an active Messenger"
+            )
         assert self.msgr is not None
         worker = DownloadWorker(
             self.msgr,
