@@ -395,7 +395,7 @@ class Chooser(QDialog):
         _ssl_excused = False
         try:
             try:
-                server_ver_str = msgr._start()
+                server_ver_str = msgr._start(interactive=True)
             except PlomSSLError as e:
                 msg = WarningQuestion(
                     self,
@@ -408,7 +408,7 @@ class Chooser(QDialog):
                     return False
                 _ssl_excused = True
                 msgr.force_ssl_unverified()
-                server_ver_str = msgr._start()
+                server_ver_str = msgr._start(interactive=True)
         except PlomBenignException as e:
             WarnMsg(
                 self,

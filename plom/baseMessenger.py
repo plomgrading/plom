@@ -147,6 +147,7 @@ class BaseMessenger:
         # on legacy, it is a string, modern server it is a dict
         self.token: str | dict[str, str] | None = None
         self.default_timeout = (10, 60)
+        self._interactive_timeout = 3
         try:
             parsed_url = urllib3.util.parse_url(base)
         except urllib3.exceptions.LocationParseError as e:
@@ -368,12 +369,16 @@ class BaseMessenger:
         )
         self.session.verify = self.verify_ssl
 
-    def _start(self) -> str:
-        """Start the messenger session, low-level without compatibility checks.
+    def _start(self, *, interactive: bool = False) -> str:
+        """Start the messenger session, low-level with minimal compatibility checks.
 
         Caution: if you're using this, you'll need to check server versions yourself.
         The server itself will check if your client is too old, but not if its too
         new; you have to do that yourself, or see :meth:`start` instead.
+
+        Keyword Args:
+            interactive: if true, we shorten the timeout so the caller finds
+                out quicker if they cannot connect.
 
         Returns:
             the version string of the server.
@@ -391,7 +396,10 @@ class BaseMessenger:
 
         try:
             try:
-                response = self.get("/Version")
+                if interactive:
+                    response = self.get("/Version", timeout=self._interactive_timeout)
+                else:
+                    response = self.get("/Version")
                 response.raise_for_status()
                 return response.text
             except requests.exceptions.SSLError as err:
@@ -404,7 +412,10 @@ class BaseMessenger:
                 else:
                     raise PlomSSLError(err) from None
                 self.force_ssl_unverified()
-                response = self.get("/Version")
+                if interactive:
+                    response = self.get("/Version", timeout=self._interactive_timeout)
+                else:
+                    response = self.get("/Version")
                 response.raise_for_status()
                 return response.text
         except requests.exceptions.InvalidURL as err:
