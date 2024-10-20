@@ -8,7 +8,6 @@
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Bryan Tanady
 
-
 from __future__ import annotations
 
 import json
@@ -26,7 +25,6 @@ from django.db import transaction
 from plom import is_valid_tag_text
 from Papers.services import ImageBundleService, PaperInfoService
 from Papers.models import Paper
-from Rubrics.models import Rubric
 
 from . import marking_priority, mark_task
 from ..models import (
@@ -274,7 +272,7 @@ class MarkingTaskService:
 
     def validate_and_clean_marking_data(
         self, code: str, data: dict[str, Any], plomfile: str
-    ) -> tuple[dict[str, Any], dict, list[Rubric]]:
+    ) -> tuple[dict[str, Any], dict]:
         """Validate the incoming marking data.
 
         Args:
@@ -283,11 +281,10 @@ class MarkingTaskService:
             plomfile (str): a JSON field representing annotation data.
 
         Returns:
-            tuple: three things in a tuple;
-            `cleaned_data (dict)`: cleaned request data.
-            `annot_data (dict)`: annotation-image data parsed from a JSON string.
-            `rubrics_used (list)`: a list of Rubric objects, extracted based on
-            keys found inside the `annot_data`.
+            Two things in a tuple;
+            `cleaned_data`: dict of the cleaned request data.
+            `annot_data`: dict of the annotation-image data parsed from
+            a JSON string.
 
         Raises:
             ValidationError
@@ -326,18 +323,9 @@ class MarkingTaskService:
         except (ValueError, TypeError) as e:
             raise ValidationError(f"Could not get 'integrity_check' as a int: {e}")
 
-        # unpack the rubrics, potentially record which ones were used
-        # TODO: similar code to this in annotations.py:_add_annotation_to_rubrics
-        annotations = annot_data["sceneItems"]
-        rubrics_used = []
-        for ann in annotations:
-            if ann[0] == "Rubric":
-                rid = ann[3]["rid"]
-                try:
-                    rubric = Rubric.objects.get(rid=rid, latest=True)
-                except ObjectDoesNotExist:
-                    raise ValidationError(f"Invalid rubric rid: {rid}")
-                rubrics_used.append(rubric)
+        # We used to unpack the rubrics and ensure they all exist in the DB.
+        # That will happen later when we try to save: I'm not sure its worth
+        # the overhead of checking twice: smells like asking permission...
 
         src_img_data = annot_data["base_images"]
         for image_data in src_img_data:
@@ -345,7 +333,7 @@ class MarkingTaskService:
             if not img_path.exists():
                 raise ValidationError("Invalid original-image in request.")
 
-        return cleaned_data, annot_data, rubrics_used
+        return cleaned_data, annot_data
 
     def get_latest_annotation(self, paper: int, question_idx: int) -> Annotation:
         """Get the latest annotation for a particular paper/question.
