@@ -25,9 +25,8 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
-
-# for django-silk we need this
 from django.conf import settings
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -53,7 +52,7 @@ urlpatterns = [
     path("questiontags/", include("QuestionTags.urls")),
 ]
 
-# if we are using django-silk then we need to add a url-pattern for it to work.
-# see https://github.com/jazzband/django-silk
-if settings.IM_HUNTING_SILK:
+# If debugging/profiling using django-silk, need to add pattern, presumably
+# not during production.  See https://github.com/jazzband/django-silk
+if settings.PROFILER_SILK_ENABLED:
     urlpatterns += [path("silk/", include("silk.urls", namespace="silk"))]
