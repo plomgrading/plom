@@ -159,7 +159,7 @@ class StudentMarkService:
             mark = None
         return version, mark
 
-    def paper_spreadsheet_dict(self, paper: Paper) -> dict[str, Any]:
+    def _paper_spreadsheet_dict(self, paper: Paper) -> dict[str, Any]:
         """Return a dictionary representing a paper.
 
         Args:
@@ -215,7 +215,7 @@ class StudentMarkService:
         spreadsheet_data = {}
         papers = Paper.objects.all()
         for paper in papers:
-            spreadsheet_data[paper.paper_number] = self.paper_spreadsheet_dict(paper)
+            spreadsheet_data[paper.paper_number] = self._paper_spreadsheet_dict(paper)
         return spreadsheet_data
 
     def get_paper_status(
