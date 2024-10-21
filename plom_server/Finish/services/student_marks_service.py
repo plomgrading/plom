@@ -341,47 +341,6 @@ class StudentMarkService:
             .count()
         )
 
-    def get_student_info_from_paper(
-        self,
-        paper_num: int,
-    ) -> dict:
-        """Get student info from a paper number.
-
-        Args:
-            paper_num: The paper number.
-
-        Returns:
-            Dict keyed by string information about the student (i.e. "StudentID": 1234, "q1_version" : 2).
-
-        Raises:
-            Paper.DoesNotExist: If the paper does not exist in the database.
-        """
-        paper_obj = Paper.objects.get(paper_number=paper_num)
-        # TODO - this spreadsheet stuff in reassemble service should move to student mark service
-        return self.paper_spreadsheet_dict(paper_obj)
-
-    def get_all_students_download(self) -> list:
-        """Get the info for all students in a list for building a csv file to download.
-
-        Warning - this is slow in production since it loops over each paper generating
-            too many queries. Will deprecate in favour of a faster function.
-
-        Returns:
-            List where each element is a dictionary containing the information about an individual student.
-
-        Raises:
-            None expected
-        """
-        # first find all the used paper-numbers
-        paper_nums = sorted(
-            MarkingTask.objects.values_list("paper__paper_number", flat=True).distinct()
-        )
-        csv_data = []
-        for paper_num in paper_nums:
-            csv_data.append(self.get_student_info_from_paper(paper_num))
-
-        return csv_data
-
     def get_csv_header(
         self, version_info: bool, timing_info: bool, warning_info: bool
     ) -> list[str]:
@@ -422,7 +381,6 @@ class StudentMarkService:
         self, version_info: bool, timing_info: bool, warning_info: bool
     ) -> str:
         sms = StudentMarkService()
-        # student_marks = sms.get_all_students_download()
         student_marks = self.get_all_marking_info_faster()
         # ignore any extra fields in the dictionary - this means
         # that if the version_info, or timing_info or warning_info

@@ -31,7 +31,7 @@ class DataExtractionService:
         sms = StudentMarkService()
         tms = TaMarkingService()
 
-        student_dict = sms.get_all_students_download()
+        student_dict = sms.get_all_marking_info_faster()
         student_keys = sms.get_csv_header(
             version_info=True, timing_info=False, warning_info=False
         )
