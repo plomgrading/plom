@@ -337,7 +337,11 @@ class ScanService:
 
     @transaction.atomic
     def get_all_staging_bundles(self) -> list[StagingBundle]:
-        """Return all of the staging bundles in reverse chronological order."""
+        """Return all of the staging bundles in reverse chronological order.
+
+        Note - for each set we prefetch the associated user info and the
+            info about the associated staging images.
+        """
         return list(
             StagingBundle.objects.all()
             .prefetch_related("stagingimage_set", "user")

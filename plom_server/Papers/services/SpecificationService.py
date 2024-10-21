@@ -239,7 +239,7 @@ def get_shortname() -> str:
 
 
 @transaction.atomic
-def get_short_and_long_names_or_empty() -> (str, str):
+def get_short_and_long_names_or_empty() -> Tuple[str, str]:
     """Get the long and short names of the exam, or return empty strings."""
     try:
         spec = Specification.objects.get()
