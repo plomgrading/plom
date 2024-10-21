@@ -338,7 +338,11 @@ class ScanService:
     @transaction.atomic
     def get_all_staging_bundles(self) -> list[StagingBundle]:
         """Return all of the staging bundles in reverse chronological order."""
-        return list(StagingBundle.objects.all().order_by("-timestamp"))
+        return list(
+            StagingBundle.objects.all()
+            .prefetch_related("stagingimage_set", "user")
+            .order_by("-timestamp")
+        )
 
     def get_most_recent_unpushed_bundle(self) -> StagingBundle | None:
         """Return all of the staging bundles in reverse chronological order."""
