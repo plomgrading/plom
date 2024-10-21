@@ -34,7 +34,7 @@ from plom.tpv_utils import (
 )
 
 from Papers.services import ImageBundleService, SpecificationService
-from Papers.models import Image
+from Papers.models import FixedPage
 from Base.models import HueyTaskTracker
 from ..models import (
     StagingBundle,
@@ -319,8 +319,10 @@ class ScanService:
 
         To uniquely identify an image, we need a bundle and a page index.
         """
-        bundle_obj = self.get_bundle_from_pk(bundle_pk)
-        img = StagingImage.objects.get(bundle=bundle_obj, bundle_order=index)
+        # try to do this in one query to reduce DB hits.
+        img = StagingImage.objects.select_related("stagingthumbnail").get(
+            bundle__pk=bundle_pk, bundle_order=index
+        )
         return img.stagingthumbnail
 
     @transaction.atomic
@@ -335,8 +337,16 @@ class ScanService:
 
     @transaction.atomic
     def get_all_staging_bundles(self) -> list[StagingBundle]:
-        """Return all of the staging bundles in reverse chronological order."""
-        return list(StagingBundle.objects.all().order_by("-timestamp"))
+        """Return all of the staging bundles in reverse chronological order.
+
+        Note - for each set we prefetch the associated user info and the
+            info about the associated staging images.
+        """
+        return list(
+            StagingBundle.objects.all()
+            .prefetch_related("stagingimage_set", "user")
+            .order_by("-timestamp")
+        )
 
     def get_most_recent_unpushed_bundle(self) -> StagingBundle | None:
         """Return all of the staging bundles in reverse chronological order."""
@@ -1401,21 +1411,23 @@ class ScanService:
         # if it has been pushed then no collisions
         if bundle_obj.pushed:
             return []
-
-        # look at each known-image and see if it corresponds to a
-        # paper/page that already has an image
-        colliding_images = []
-        for img in (
-            bundle_obj.stagingimage_set.filter(image_type=StagingImage.KNOWN)
-            .prefetch_related("knownstagingimage")
-            .order_by("bundle_order")
-        ):
-            known = img.knownstagingimage
-            if Image.objects.filter(
-                fixedpage__paper__paper_number=known.paper_number,
-                fixedpage__page_number=known.page_number,
-            ).exists():
-                colliding_images.append(img.bundle_order)
+        # get all the known paper/pages in the bundle
+        bundle_ppbo_list = KnownStagingImage.objects.filter(
+            staging_image__bundle=bundle_obj
+        ).values_list("paper_number", "page_number", "staging_image__bundle_order")
+        bundle_papers_list = list(set([X[0] for X in bundle_ppbo_list]))
+        if not bundle_papers_list:
+            return []
+        # now get all paper/pages of any scanned fixed pages from these papers.
+        pushed_pp_list = FixedPage.objects.filter(
+            image__isnull=False, paper__paper_number__in=bundle_papers_list
+        ).values_list("paper__paper_number", "page_number")
+        # now compare the lists and return the bundle order of any
+        # colliding image (ie an image in this bundle that maps to a
+        # fixed page that already has been pushed)
+        colliding_images = [
+            X[2] for X in bundle_ppbo_list if (X[0], X[1]) in pushed_pp_list
+        ]
         return sorted(colliding_images)
 
 
