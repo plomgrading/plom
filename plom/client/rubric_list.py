@@ -1767,7 +1767,7 @@ class RubricWidget(QWidget):
             )
         )
         com["meta"] = "\n".join(newmeta)
-        com["rid"] = None
+        del com["rid"]
         com["username"] = self.username
         self._new_or_edit_rubric(com, edit=False)
 

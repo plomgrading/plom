@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Many performance improvements to services that were using too manyi or inefficient database queries, based on real-life experiences at scale, and from using the "Django-Silk" profiler.
+* Client: fixed a crash when editing a copy of someone else's rubric.
 
 
 
