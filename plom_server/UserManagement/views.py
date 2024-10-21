@@ -47,7 +47,12 @@ class UserPage(ManagerRequiredView):
         markers = User.objects.filter(groups__name="marker").prefetch_related(
             "auth_token"
         )
+        # fetch these so that we don't loop over this in the template
+        # remove db hits in loops.
+        online_now_ids = request.online_now_ids
+
         context = {
+            "online_now_ids": online_now_ids,
             "scanners": scanners,
             "markers": markers,
             "lead_markers": lead_markers,
@@ -127,10 +132,9 @@ class SetQuotaView(ManagerRequiredView):
 
         # Special flag received when user confirms to force setting, ignoring limit restriction.
         if "force_set_quota" in request.POST:
-            complete_and_claimed_tasks = (
-                UserInfoServices.get_total_annotated_and_claimed_count_by_user()
+            complete, claimed = (
+                UserInfoServices.get_total_annotated_and_claimed_count_by_user(username)
             )
-            complete, claimed = complete_and_claimed_tasks[username]
             quota, created = Quota.objects.get_or_create(user=user, limit=complete)
 
         # No special flag received, proceed to check whether the marker fulfills the restriction.

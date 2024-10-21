@@ -97,3 +97,21 @@ class MiscIncomingAnnotationsTests(TestCase):
         # Do we care?  Maybe is illdefined what latest should point to?
         task.latest_annotation == a2
         # TODO: test the effects of setting something out of date.
+
+    def test_marking_submits_non_existent_rubrics(self) -> None:
+        user0: User = baker.make(User)
+        paper2 = baker.make(Paper, paper_number=2)
+        baker.make(QuestionPage, paper=paper2, page_number=3, question_index=1)
+        task = baker.make(
+            MarkingTask,
+            code="q0002g1",
+            status=MarkingTask.TO_DO,
+            assigned_user=user0,
+            paper=paper2,
+            question_index=1,
+        )
+        MarkingTaskService.assign_task_to_user(task.pk, user0)
+        img = baker.make(AnnotationImage)
+        data = {"sceneItems": [["Rubric", 1, 1, {"rid": 123456, "revision": 42}]]}
+        with self.assertRaises(KeyError):
+            _create_new_annotation_in_database(task, 3.0, 21, img, data)

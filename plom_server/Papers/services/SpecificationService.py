@@ -239,6 +239,16 @@ def get_shortname() -> str:
 
 
 @transaction.atomic
+def get_short_and_long_names_or_empty() -> Tuple[str, str]:
+    """Get the long and short names of the exam, or return empty strings."""
+    try:
+        spec = Specification.objects.get()
+        return (spec.name, spec.longName)
+    except ObjectDoesNotExist:
+        return ("", "")
+
+
+@transaction.atomic
 def get_short_name_slug() -> str:
     """Get the short name of the exam, slugified.
 
@@ -314,9 +324,11 @@ def get_list_of_versions() -> list[int]:
 
     If there is no spec, an empty list.
     """
-    if not is_there_a_spec():
+    # get n versions throws an ObjectDoesNotExist when no spec
+    try:
+        return [v + 1 for v in range(get_n_versions())]
+    except ObjectDoesNotExist:
         return []
-    return [v + 1 for v in range(get_n_versions())]
 
 
 def get_question_indices() -> list[int]:
@@ -326,9 +338,11 @@ def get_question_indices() -> list[int]:
 
     If there is no spec, return an empty list.
     """
-    if not is_there_a_spec():
+    # get n questions throws an ObjectDoesNotExist when no spec
+    try:
+        return [n + 1 for n in range(get_n_questions())]
+    except ObjectDoesNotExist:
         return []
-    return [n + 1 for n in range(get_n_questions())]
 
 
 @transaction.atomic

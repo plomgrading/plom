@@ -7,9 +7,11 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Aidan Murphy
 
+from __future__ import annotations
+
 """Services for annotations and annotation images."""
 
-from typing import Any, Dict
+from typing import Any
 
 import pathlib
 
@@ -27,7 +29,7 @@ def create_new_annotation_in_database(
     time: int,
     annot_img_md5sum: str,
     annot_img_file: InMemoryUploadedFile,
-    data: Dict[str, Any],
+    data: dict[str, Any],
 ) -> Annotation:
     """Save an annotation.
 
@@ -52,6 +54,7 @@ def create_new_annotation_in_database(
 
     Raises:
         ValueError: unsupported type of image, based on extension.
+        KeyError: uses non-existent rubrics.
     """
     annotation_image = _add_new_annotation_image_to_database(
         annot_img_md5sum,
@@ -66,7 +69,7 @@ def _create_new_annotation_in_database(
     score: float,
     time: int,
     annotation_image: AnnotationImage,
-    data: Dict[str, Any],
+    data: dict[str, Any],
 ) -> Annotation:
     if task.latest_annotation:
         last_annotation_edition = task.latest_annotation.edition
@@ -95,22 +98,44 @@ def _create_new_annotation_in_database(
     return new_annotation
 
 
-def _add_annotation_to_rubrics(annotation: Annotation) -> None:
-    """Add a relation to this annotation for every rubric that this annotation uses."""
-    scene_items = annotation.annotation_data["sceneItems"]
-    rids = [x[3]["rid"] for x in scene_items if x[0] == "Rubric"]
-    rid_rev_pairs = [
+def _extract_rubric_rid_rev_pairs(raw_annot_data) -> list[tuple[int, int]]:
+    scene_items = raw_annot_data["sceneItems"]
+    rubric_rid_rev_pairs = [
         (x[3]["rid"], x[3]["revision"]) for x in scene_items if x[0] == "Rubric"
     ]
+    return rubric_rid_rev_pairs
+
+
+def _add_annotation_to_rubrics(annotation: Annotation) -> None:
+    """Add a relation to this annotation for every rubric that this annotation uses.
+
+    Raises:
+        KeyError: one or more non-existent rubrics where used.
+    """
+    rid_rev_pairs = _extract_rubric_rid_rev_pairs(annotation.annotation_data)
+
     # TODO: update this query to respect the revisions directly?  My DB-fu is weak
     # so I'll "fix it in postprocessing"; unlikely to make practical difference.
-    rubrics = Rubric.objects.filter(rid__in=rids).select_for_update()
+    rids = [rid for rid, rev in rid_rev_pairs]
+    rubrics = Rubric.objects.filter(rid__in=rids)  # .select_for_update()
+
+    found = {(rid, rev): False for (rid, rev) in rid_rev_pairs}
     for rubric in rubrics:
         # we have drawn too many rubrics above due to Colin's sloppy DB skills
         # so filter out any that don't match something in rid_rev_pairs
-        if any((p, q) == (rubric.rid, rubric.revision) for (p, q) in rid_rev_pairs):
-            rubric.annotations.add(annotation)
-            rubric.save()
+        for rid, rev in rid_rev_pairs:
+            if (rid, rev) == (rubric.rid, rubric.revision):
+                found[(rid, rev)] = True
+                rubric.annotations.add(annotation)
+                # TODO: do these *need* saved?  We're creating entries in a
+                # many-to-many, not modifying any rubric per se.
+                # rubric.save()
+
+    if not all(found.values()):
+        raise KeyError(
+            "Unexpectedly, some non-existent Rubrics were used.  "
+            f"Please report the following: {found}"
+        )
 
 
 def _add_new_annotation_image_to_database(

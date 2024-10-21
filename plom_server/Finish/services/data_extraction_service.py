@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024 Andrew Rechnitzer
 
 from typing import Dict, List, Optional, Tuple
 
@@ -30,9 +31,7 @@ class DataExtractionService:
         sms = StudentMarkService()
         tms = TaMarkingService()
 
-        student_dict = sms.get_all_students_download(
-            version_info=True, timing_info=False, warning_info=False
-        )
+        student_dict = sms.get_all_marking_info_faster()
         student_keys = sms.get_csv_header(
             version_info=True, timing_info=False, warning_info=False
         )

@@ -202,7 +202,11 @@ class QuestionMarkingService:
             )
 
         # regrab it, selected-for-update, b/c we're going to write to it
-        task = MarkingTask.objects.select_for_update().get(pk=task.pk)
+        task = (
+            MarkingTask.objects.select_for_update()
+            .prefetch_related("assigned_user")
+            .get(pk=task.pk)
+        )
         tag_marked_during_quota = "during_quota"
 
         # Check if the user has quota limits
@@ -236,5 +240,6 @@ class QuestionMarkingService:
             annotation_data,
         )
         # Note the helper function above also performs `task.save`; that seems ok.
+        # TODO: consider moving this into the helper in annotations.py
         task.status = MarkingTask.COMPLETE
         task.save()

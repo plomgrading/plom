@@ -17,7 +17,7 @@ from django.db.models.query import QuerySet
 from django.utils import timezone
 
 from Mark.models import Annotation, MarkingTask
-from Mark.services import MarkingTaskService, MarkingStatsService
+from Mark.services import MarkingTaskService
 
 from UserManagement.models import Quota
 
@@ -37,18 +37,16 @@ class UserInfoServices:
             A dict whose keys are "tasks_claimed", "tasks_marked",
             "user_has_quota_limit", "user_quota_limit".
         """
-        complete_claimed_task_dict = cls.get_total_annotated_and_claimed_count_by_user()
+        tasks_marked, tasks_claimed = cls.get_total_annotated_and_claimed_count_by_user(
+            username
+        )
+
         try:
-            tasks_marked, tasks_claimed = complete_claimed_task_dict[username]
-        except KeyError:
-            # User hasn't marked nor claimed any paper yet:
-            tasks_marked, tasks_claimed = 0, 0
-        user = User.objects.get(username=username)
-        has_limit = Quota.objects.filter(user=user).exists()
-        if has_limit:
-            limit = Quota.objects.get(user=user).limit
-        else:
+            limit = Quota.objects.get(user__username=username).limit
+            has_limit = True
+        except ObjectDoesNotExist:
             limit = None
+            has_limit = False
 
         data = {
             "user_tasks_claimed": tasks_claimed,
@@ -69,7 +67,9 @@ class UserInfoServices:
         # get everything from DB first, then we can do loops to assemble...
 
         # this will be missing keys for users that haven't claimed or marked
-        complete_claimed_task_dict = cls.get_total_annotated_and_claimed_count_by_user()
+        complete_claimed_task_dict = (
+            cls.get_total_annotated_and_claimed_count_by_users()
+        )
 
         # this one will be missing all those without quota
         quota_limits_dict = {
@@ -110,7 +110,6 @@ class UserInfoServices:
         return data
 
     @staticmethod
-    @transaction.atomic
     def annotation_exists() -> bool:
         """Return True if there are any annotations in the database.
 
@@ -122,13 +121,37 @@ class UserInfoServices:
         return Annotation.objects.exists()
 
     @classmethod
-    @transaction.atomic
     def get_total_annotated_and_claimed_count_by_user(
+        cls, username: str
+    ) -> tuple[int, int]:
+        """Retrieve count of complete and total claimed by a particular username.
+
+        "Claimed tasks" are those tasks associated with the user with status OUT or Complete.
+
+        Returns:
+            A tuple of the count of the complete and claimed tasks.
+
+        Raises:
+            Not expected to raise any exceptions.
+        """
+        complete = (
+            MarkingTaskService()
+            .get_latest_annotations_from_complete_marking_tasks()
+            .filter(user__username=username)
+            .count()
+        )
+
+        claimed = complete + cls.get_total_claimed_but_unmarked_task_by_a_user(username)
+        return (complete, claimed)
+
+    @classmethod
+    @transaction.atomic
+    def get_total_annotated_and_claimed_count_by_users(
         cls,
     ) -> dict[str, tuple[int, int]]:
         """Retrieve count of complete and total claimed by users.
 
-        claimed tasks are those tasks associated with the user with status OUT or Complete.
+        "Claimed tasks" are those tasks associated with the user with status OUT or Complete.
 
         Returns:
             A dictionary mapping the marker to a tuple of the count of the complete and claimed tasks respectively.
@@ -138,16 +161,17 @@ class UserInfoServices:
         """
         result = dict()
 
-        annotations = (
-            MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
-        )
         markers_and_managers = User.objects.filter(
             groups__name__in=["marker"]
         ).order_by("groups__name", "username")
+
         annotation_count_dict: dict[str, int] = {
             user.username: 0 for user in markers_and_managers
         }
-
+        annotations = (
+            MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
+        )
+        annotations = annotations.prefetch_related("user")
         for annotation in annotations:
             if annotation.user.username in annotation_count_dict:
                 annotation_count_dict[annotation.user.username] += 1
@@ -161,24 +185,7 @@ class UserInfoServices:
 
         return result
 
-    # @transaction.atomic
-    # def get_total_claimed_task_for_each_user(self) -> dict[str, int]:
-    #     """Retrieve the number of tasks claimed by the user."""
-    #     annotations = (
-    #         MarkingTaskService().get_latest_annotations_from_complete_marking_tasks()
-    #     )
-    #     total_complete_annot_dict = self.get_annotations_based_on_user(annotations)
-    #     claimed_task_count_dict = dict()
-
-    #     for usr in total_complete_annot_dict.keys():
-    #         claimed_task_count_dict[usr] = total_complete_annot_dict[
-    #             usr
-    #         ] + self.get_total_claimed_but_unmarked_task_by_a_user(usr)
-
-    #     return claimed_task_count_dict
-
     @staticmethod
-    @transaction.atomic
     def get_total_claimed_but_unmarked_task_by_a_user(username: str) -> int:
         """Retrieve the number of tasks claimed but unmarked by a user.
 
@@ -190,11 +197,9 @@ class UserInfoServices:
         Returns:
             number of tasks claimed by the user whose status is still 'OUT'.
         """
-        return len(
-            MarkingStatsService().filter_marking_task_annotation_info(
-                username=username, status=MarkingTask.OUT
-            )
-        )
+        return MarkingTask.objects.filter(
+            assigned_user__username=username, status=MarkingTask.OUT
+        ).count()
 
     @transaction.atomic
     def get_annotations_based_on_user(
