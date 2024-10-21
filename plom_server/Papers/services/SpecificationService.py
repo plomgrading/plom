@@ -239,6 +239,16 @@ def get_shortname() -> str:
 
 
 @transaction.atomic
+def get_short_and_long_names_or_empty() -> (str, str):
+    """Get the long and short names of the exam, or return empty strings."""
+    try:
+        spec = Specification.objects.get()
+        return (spec.name, spec.longName)
+    except ObjectDoesNotExist:
+        return ("", "")
+
+
+@transaction.atomic
 def get_short_name_slug() -> str:
     """Get the short name of the exam, slugified.
 
