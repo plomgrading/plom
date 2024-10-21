@@ -34,7 +34,7 @@ from plom.tpv_utils import (
 )
 
 from Papers.services import ImageBundleService, SpecificationService
-from Papers.models import Image, FixedPage
+from Papers.models import FixedPage
 from Base.models import HueyTaskTracker
 from ..models import (
     StagingBundle,
