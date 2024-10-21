@@ -190,6 +190,9 @@ class ReassembleService:
         """
         marked_pages = []
         mts = MarkingTaskService()
+        # note issue #3689 - does not happen here because
+        # the question indices from spec are always in
+        # the right order
         for qi in SpecificationService.get_question_indices():
             annotation = mts.get_latest_annotation(paper.paper_number, qi)
             marked_pages.append(annotation.image.image.path)

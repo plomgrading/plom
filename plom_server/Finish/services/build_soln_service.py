@@ -164,8 +164,10 @@ class BuildSolutionService:
             )
             with fitz.open(cp_path) as dest_doc:
                 # now append required soln pages.
-                for qn, v in qv_map.items():
-                    pg_list = SolnSpecQuestion.objects.get(solution_number=qn).pages
+                # do this in order of the solution-number
+                # see issue #3689
+                for qi, v in sorted(qv_map.items()):
+                    pg_list = SolnSpecQuestion.objects.get(solution_number=qi).pages
                     # minus one b/c pg_list is 1-indexed but pymupdf pages 0-indexed
                     dest_doc.insert_pdf(soln_doc[v], pg_list[0] - 1, pg_list[-1] - 1)
 
