@@ -81,4 +81,4 @@ zxing-cpp==2.2.0
 
 #---------- for dev / debug work - comment out unless using it.
 # nplusone==1.0.0  # for hunting down potential n+1 query problems
-django-silk==5.2.0  # for hunting down inefficient db queries
+# django-silk==5.2.0  # for hunting down inefficient db queries
