@@ -146,7 +146,10 @@ class BaseMessenger:
         self.user: str | None = None
         # on legacy, it is a string, modern server it is a dict
         self.token: str | dict[str, str] | None = None
+        # first number: connection timeout for each API call, second number
+        # is read timeout: how long the server might spend executing the call
         self.default_timeout = (15, 90)
+        # when requested by caller, use shorter timeout for increased interactivity
         self._interactive_timeout = 3
         try:
             parsed_url = urllib3.util.parse_url(base)
