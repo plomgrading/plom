@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Server can now be run using the "Django-Silk" profiler, if enabled in `settings.py`.
+* Server respects additional environment variables `PLOM_NUMBER_HUEY_WORKERS` and `PLOM_NUMBER_HUEY_PARENT_WORKERS`.
 
 ### Changed
 

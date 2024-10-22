@@ -256,6 +256,12 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 
 # Django huey configuration
+_num_huey_workers = os.environ.get("PLOM_NUMBER_HUEY_WORKERS")
+if not _num_huey_workers:
+    _num_huey_workers = 4
+_num_huey_parent_workers = os.environ.get("PLOM_NUMBER_HUEY_PARENT_WORKERS")
+if not _num_huey_parent_workers:
+    _num_huey_parent_workers = 2
 HUEY = {"immediate": False}
 DJANGO_HUEY = {
     "default": "tasks",
@@ -268,7 +274,7 @@ DJANGO_HUEY = {
             "immediate": False,
             "utc": True,
             "consumer": {
-                "workers": 4,
+                "workers": _num_huey_workers,
                 "worker_type": "process",
                 "initial_delay": 0.1,
                 "backoff": 1.15,
@@ -287,7 +293,7 @@ DJANGO_HUEY = {
             "immediate": False,
             "utc": True,
             "consumer": {
-                "workers": 2,
+                "workers": _num_huey_parent_workers,
                 "worker_type": "process",
                 "initial_delay": 0.1,
                 "backoff": 1.15,

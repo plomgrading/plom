@@ -57,6 +57,11 @@ services:
       # For production, set PLOM_DEBUG to 0; and must define a random secret
       # - PLOM_DEBUG=0
       # - PLOM_SECRET_KEY=bismarkomitleafagebuckbank
+      # Performance tweaks:
+      # - PLOM_GUNICORN_TIMEOUT=180
+      # - WEB_CONCURRENCY=4  # how many gunicorn processes
+      # - PLOM_NUMBER_HUEY_WORKERS=4
+      # - PLOM_NUMBER_HUEY_PARENT_WORKERS=2
 
   postgres:
     image: postgres:16
