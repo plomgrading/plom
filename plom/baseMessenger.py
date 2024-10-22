@@ -358,7 +358,7 @@ class BaseMessenger:
         assert self.session
         return self.session.patch(self.base + url, *args, **kwargs)
 
-    def _start_session(self):
+    def _start_session(self) -> None:
         """Start the messenger session, low-level without any checks."""
         self.session = requests.Session()
         assert self.session
@@ -378,7 +378,9 @@ class BaseMessenger:
 
         Keyword Args:
             interactive: if true, we shorten the timeout so the caller finds
-                out quicker if they cannot connect.
+                out quicker if they cannot connect.  E.g., during interactive
+                login, we can shorten the timeout, compared to normal
+                operations such as image downloads.
 
         Returns:
             the version string of the server.
