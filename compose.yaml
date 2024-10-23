@@ -60,8 +60,8 @@ services:
       # Performance tweaks:
       # - PLOM_GUNICORN_TIMEOUT=180
       # - WEB_CONCURRENCY=4  # how many gunicorn processes
-      # - PLOM_NUMBER_HUEY_WORKERS=4
-      # - PLOM_NUMBER_HUEY_PARENT_WORKERS=2
+      # - PLOM_HUEY_WORKERS=4
+      # - PLOM_HUEY_PARENT_WORKERS=2
 
   postgres:
     image: postgres:16
