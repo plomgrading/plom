@@ -657,12 +657,12 @@ class IDBoxProcessorService:
             )
 
     def _greedy_predictor(
-        self, student_IDs: list[int], probabilities: dict[int, Any]
+        self, student_IDs: list[str], probabilities: dict[int, Any]
     ) -> list[tuple[int, int, float]]:
         """Generate greedy predictions for student ID numbers.
 
         Args:
-            student_IDs: integer list of student ID numbers
+            student_IDs: list of student ID numbers as strings of integers.
 
             probabilities: dict with paper_number -> probability matrix.
             Each matrix contains probabilities that the ith ID char is matched with digit j.
