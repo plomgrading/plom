@@ -255,7 +255,13 @@ SESSION_COOKIE_AGE = 60 * 60 * 2
 SESSION_SAVE_EVERY_REQUEST = True
 
 
-# Django huey configuration
+# Django Huey configuration
+# Huey handles background tasks.  PLOM_HUEY_PARENT_WORKERS controls how many
+# simultaneous bundle processing tasks can happen (additional bundles will queue).
+# PLOM_HUEY_WORKERS are lower-level jobs such as extracting several pages from
+# a bundle and reading the QR codes.
+_huey_workers = int(os.environ.get("PLOM_HUEY_WORKERS", 4))
+_huey_parent_workers = int(os.environ.get("PLOM_HUEY_PARENT_WORKERS", 2))
 HUEY = {"immediate": False}
 DJANGO_HUEY = {
     "default": "tasks",
@@ -268,7 +274,7 @@ DJANGO_HUEY = {
             "immediate": False,
             "utc": True,
             "consumer": {
-                "workers": 4,
+                "workers": _huey_workers,
                 "worker_type": "process",
                 "initial_delay": 0.1,
                 "backoff": 1.15,
@@ -287,7 +293,7 @@ DJANGO_HUEY = {
             "immediate": False,
             "utc": True,
             "consumer": {
-                "workers": 2,
+                "workers": _huey_parent_workers,
                 "worker_type": "process",
                 "initial_delay": 0.1,
                 "backoff": 1.15,

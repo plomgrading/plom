@@ -10,8 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Server can now be run using the "Django-Silk" profiler, if enabled in `settings.py`.
-
-### Changed
+* Server respects additional environment variables `PLOM_HUEY_WORKERS` and `PLOM_HUEY_PARENT_WORKERS` to control how many background workers are used.  Current defaults (subject to change) are 4 and 2, and are set in `settings.py`.
 
 ### Fixed
 * Many performance improvements to services that were using too manyi or inefficient database queries, based on real-life experiences at scale, and from using the "Django-Silk" profiler.
