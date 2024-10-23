@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [0.16.9] - 2024-10-23
 
 ### Added
 * Server can now be run using the "Django-Silk" profiler, if enabled in `settings.py`.
@@ -15,7 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Many performance improvements to services that were using too manyi or inefficient database queries, based on real-life experiences at scale, and from using the "Django-Silk" profiler.
 * Client: fixed a crash when editing a copy of someone else's rubric.
-
 
 
 ## [0.16.8] - 2024-10-15
@@ -1326,7 +1325,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.16.8...main
+[0.16.9]: https://gitlab.com/plom/plom/-/compare/v0.16.8...v0.16.9
 [0.16.8]: https://gitlab.com/plom/plom/-/compare/v0.16.7...v0.16.8
 [0.16.7]: https://gitlab.com/plom/plom/-/compare/v0.16.6...v0.16.7
 [0.16.6]: https://gitlab.com/plom/plom/-/compare/v0.16.5...v0.16.6
