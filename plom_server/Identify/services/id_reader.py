@@ -605,7 +605,12 @@ class IDBoxProcessorService:
         id_box_files: dict[int, Path],
         *,
         recompute_heatmap: bool = True,
-    ):
+    ) -> None:
+        """Predict which IDs correspond to which SID from the classlist.
+
+        Raises:
+            ValueError: no classlist.
+        """
         if recompute_heatmap:
             probabilities = self.compute_and_save_probability_heatmap(id_box_files)
         else:
@@ -615,6 +620,8 @@ class IDBoxProcessorService:
             probabilities = {int(k): v for k, v in probabilities.items()}
 
         student_ids = ClasslistService.get_classlist_sids_for_ID_matching()
+        if not student_ids:
+            raise ValueError("No student IDs provided")
         self.run_greedy(user, student_ids, probabilities)
         self.run_lap_solver(user, student_ids, probabilities)
 
@@ -649,7 +656,9 @@ class IDBoxProcessorService:
                 user, prediction[0], prediction[1], prediction[2], "MLLAP"
             )
 
-    def _greedy_predictor(self, student_IDs, probabilities):
+    def _greedy_predictor(
+        self, student_IDs: list[int], probabilities: dict[int, Any]
+    ) -> list[tuple[int, int, float]]:
         """Generate greedy predictions for student ID numbers.
 
         Args:
