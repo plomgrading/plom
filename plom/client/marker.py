@@ -60,6 +60,7 @@ from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomBadTagError,
     PlomBenignException,
+    PlomConnectionError,
     PlomForceLogoutException,
     PlomRangeException,
     PlomVersionMismatchException,
@@ -856,7 +857,15 @@ class MarkerClient(QWidget):
                 continue
             all_present = False
             log.info("triggering download for image id %d", row["id"])
-            self.downloader.download_in_background_thread(row)
+            try:
+                self.downloader.download_in_background_thread(row)
+            except PlomConnectionError as e:
+                # Issue #3427: it seems some kind of race can happen, presumably
+                # when we call downloader.detach_messenger, but somehow one of
+                # the various ways of refreshing the image is still triggered.
+                # In this happens, don't crash, log that it happened.  Worst case
+                # we're left staring at the placeholder.
+                log.error(f"{e}")
             row["filename"] = self.downloader.get_placeholder_path()
         return all_present
 

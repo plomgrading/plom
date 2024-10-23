@@ -146,7 +146,11 @@ class BaseMessenger:
         self.user: str | None = None
         # on legacy, it is a string, modern server it is a dict
         self.token: str | dict[str, str] | None = None
-        self.default_timeout = (10, 60)
+        # first number: connection timeout for each API call, second number
+        # is read timeout: how long the server might spend executing the call
+        self.default_timeout = (15, 90)
+        # when requested by caller, use shorter timeout for increased interactivity
+        self._interactive_timeout = 3
         try:
             parsed_url = urllib3.util.parse_url(base)
         except urllib3.exceptions.LocationParseError as e:
@@ -167,18 +171,18 @@ class BaseMessenger:
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     @classmethod
-    def clone(cls, m):
+    def clone(cls, m: BaseMessenger) -> BaseMessenger:
         """Clone an existing messenger, keeps token.
 
         In particular, we have our own mutex.
         """
-        log.debug("cloning a messeger, but building new session...")
+        log.debug("cloning a messenger, but building new session...")
         x = cls(
             m.base,
             verify_ssl=m.verify_ssl,
             _server_API_version=m._server_API_version,
         )
-        x.start()
+        x._start_session()
         log.debug("copying user/token into cloned messenger")
         x.user = m.user
         x.token = m.token
@@ -357,12 +361,29 @@ class BaseMessenger:
         assert self.session
         return self.session.patch(self.base + url, *args, **kwargs)
 
-    def _start(self) -> str:
-        """Start the messenger session, low-level without compatibility checks.
+    def _start_session(self) -> None:
+        """Start the messenger session, low-level without any checks."""
+        self.session = requests.Session()
+        assert self.session
+        # TODO: not clear retries help: e.g., requests will not redo PUTs.
+        # More likely, just delays inevitable failures.
+        self.session.mount(
+            f"{self.scheme}://", requests.adapters.HTTPAdapter(max_retries=2)
+        )
+        self.session.verify = self.verify_ssl
+
+    def _start(self, *, interactive: bool = False) -> str:
+        """Start the messenger session, low-level with minimal compatibility checks.
 
         Caution: if you're using this, you'll need to check server versions yourself.
         The server itself will check if your client is too old, but not if its too
         new; you have to do that yourself, or see :meth:`start` instead.
+
+        Keyword Args:
+            interactive: if true, we shorten the timeout so the caller finds
+                out quicker if they cannot connect.  E.g., during interactive
+                login, we can shorten the timeout, compared to normal
+                operations such as image downloads.
 
         Returns:
             the version string of the server.
@@ -376,18 +397,14 @@ class BaseMessenger:
             log.debug("already have an requests-session")
         else:
             log.debug("starting a new requests-session")
-            self.session = requests.Session()
-            assert self.session
-            # TODO: not clear retries help: e.g., requests will not redo PUTs.
-            # More likely, just delays inevitable failures.
-            self.session.mount(
-                f"{self.scheme}://", requests.adapters.HTTPAdapter(max_retries=2)
-            )
-            self.session.verify = self.verify_ssl
+            self._start_session()
 
         try:
             try:
-                response = self.get("/Version")
+                if interactive:
+                    response = self.get("/Version", timeout=self._interactive_timeout)
+                else:
+                    response = self.get("/Version")
                 response.raise_for_status()
                 return response.text
             except requests.exceptions.SSLError as err:
@@ -400,7 +417,10 @@ class BaseMessenger:
                 else:
                     raise PlomSSLError(err) from None
                 self.force_ssl_unverified()
-                response = self.get("/Version")
+                if interactive:
+                    response = self.get("/Version", timeout=self._interactive_timeout)
+                else:
+                    response = self.get("/Version")
                 response.raise_for_status()
                 return response.text
         except requests.exceptions.InvalidURL as err:
@@ -591,7 +611,6 @@ class BaseMessenger:
                     "api": Plom_API_Version,
                     "client_ver": __version__,
                 },
-                timeout=5,
             )
             try:
                 response.raise_for_status()
