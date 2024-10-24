@@ -91,7 +91,7 @@
                 {% if error_pages %}
                     <div class="alert alert-danger">
                         <details>
-                            <summary>This bundle has {{ error_pages }} error page(s)</summary>
+                            <summary>This bundle contains {{ error_pages }} error page{{ error_pages|pluralize }}</summary>
                             <ul>
                                 <li>this typically indicates serious scanning problems</li>
                                 <li>while these can be repaired here, we recommend that you do not</li>
@@ -107,20 +107,55 @@
                 {% endif %}
                 {% if n_collisions %}
                     <div class="alert alert-danger">
-                        <h5>This bundle contains scans of pages that have already been pushed</h5>
-                        <p>Images: {{ colliding_images_nice_format }}</p>
+                        <h5>
+                            This bundle contains {{ n_collisions }} scan{{ n_collisions|pluralize }} of pages that have already been pushed
+                        </h5>
                         <p>
-                            Generally this indicates either
+                            Generally this indicates one of the following:
                             <ul>
+                                <li>You have scanned papers twice &mdash; this usually not a big problem:</li>
+                                <ul>
+                                    <li>
+                                        You can delete this bundle
+                                        (e.g., if everything here
+                                        collides which pages you
+                                        already have, or if you want
+                                        to rescan part of it).
+                                    </li>
+                                    <li>
+                                        You can discard the pages of this
+                                        bundle that collide, and then push
+                                        the remaining pages bundle.
+                                    </li>
+                                </ul>
+                                <li>You are midway through replacing some poorly-scanned papers:</li>
+                                <ul>
+                                    <li>
+                                        you may want to <q>discard</q> the
+                                        existing (pushed) poorly-scanned
+                                        pages and then return here,
+                                    </li>
+                                    <li>
+                                        or you can discard some of these
+                                        staged pages to resolve the
+                                        collision;
+                                    </li>
+                                    <li>
+                                        it just depends whether
+                                        you want to keep the staged image
+                                        or the previously-pushed image.
+                                    </li>
+                                </ul>
                                 <li>
-                                    You are midway through replacing some poorly scanned papers. You should <q>discard</q> the existing pushed poorly scanned pages and then return here.
-                                </li>
-                                <li>You have accidentally scanned papers twice &mdash; this is not a problem, simply delete this bundle</li>
-                                <li>
-                                    You have accidentally re-used papers &mdash; this is a <a href="https://plom.readthedocs.io/en/latest/faq.html#i-messed-up-by-double-printing-some-papers-now-i-have-collisions">substantial problem!</a>
+                                    You have accidentally re-used
+                                    papers&mdash;different students have
+                                    written on the same paper&mdash;which
+                                    is a
+                                    <a href="https://plom.readthedocs.io/en/latest/faq.html#i-messed-up-by-double-printing-some-papers-now-i-have-collisions">substantial problem!</a>
                                 </li>
                             </ul>
                         </p>
+                        <p>The colliding image{{ n_collisions|pluralize }}: {{ colliding_images_nice_format }}</p>
                     </div>
                 {% endif %}
                 <p>
