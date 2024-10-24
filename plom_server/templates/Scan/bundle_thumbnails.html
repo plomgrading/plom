@@ -76,16 +76,56 @@
                     <div class="alert alert-warning">
                         <details>
                             <summary>This bundle contains {{ n_incomplete }} incomplete paper{{ n_incomplete|pluralize }}</summary>
-                            <ul>
-                                <li>Incomplete papers contain some, but not all their pages.</li>
-                                <li>
-                                    If you push the incomplete papers you can start marking them, but you cannot complete them until all their pages are pushed.
-                                </li>
-                                <li>
-                                    Incomplete papers often indicates some sort of problem with scanning &mdash; like some pages stuck together. It can also occur if a paper is split across two bundles.
-                                </li>
-                                <li>It may be better to delete this bundle and rescan the physical papers.</li>
-                            </ul>
+                            {% if is_pushed %}
+                                <ul>
+                                    <li>Incomplete papers contain some, but not all their pages.</li>
+                                    <li>
+                                        Any question that is missing
+                                        pages <em>will not</em> be
+                                        sent out for marking.
+                                    </li>
+                                    <li>
+                                        Incomplete papers can indicate
+                                        problems with scanning such as two
+                                        pages stuck together.
+                                    </li>
+                                    <li>
+                                        Incomplete papers also occur if a paper is
+                                        split across two bundles.  In this
+                                        case, just keep pushing bundles and
+                                        Plom will automatically complete
+                                        these papers when the additional
+                                        pages become available.
+                                    </li>
+                                </ul>
+                            {% else %}
+                                <ul>
+                                    <li>Incomplete papers contain some, but not all their pages.</li>
+                                    <li>
+                                        If you push the incomplete
+                                        papers you can start marking
+                                        any questions that have all
+                                        their pages.
+                                    </li>
+                                    <li>
+                                        Incomplete papers can indicate
+                                        problems with scanning such as two
+                                        pages stuck together.
+                                    </li>
+                                    <li>
+                                        Incomplete papers also occur if a paper is
+                                        split across two bundles.  In this
+                                        case, after you push both bundles the
+                                        paper will become complete automatically.
+                                    </li>
+                                    <li>
+                                        If you wish, you can always
+                                        decide to delete this bundle
+                                        and rescan the physical
+                                        papers.
+                                    </li>
+                                </ul>
+                            {% endif %}
                         </details>
                     </div>
                 {% endif %}
