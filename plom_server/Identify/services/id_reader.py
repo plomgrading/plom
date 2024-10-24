@@ -268,7 +268,7 @@ def huey_id_reading_task(
     tracker_pk: int,
     task=None,
 ) -> bool:
-    """Run the id reading process in the background via huey.
+    """Run the id reading process in the background via Huey.
 
     It is important to understand that running this function starts an
     async task in queue that will run sometime in the future.
@@ -305,9 +305,16 @@ def huey_id_reading_task(
         tracker_pk, "ID boxes from page images saved. Computing predictions."
     )
 
-    IDBoxProcessorService().make_id_predictions(
-        user, id_box_image_dict, recompute_heatmap=recompute_heatmap
-    )
+    try:
+        IDBoxProcessorService().make_id_predictions(
+            user, id_box_image_dict, recompute_heatmap=recompute_heatmap
+        )
+    except ValueError as e:
+        HueyTaskTracker.transition_chore_to_error(
+            tracker_pk, f"Did you upload a classlist?  {e}"
+        )
+        return True
+
     IDReadingHueyTaskTracker.set_message_to_user(tracker_pk, "ID predictions complete.")
 
     HueyTaskTracker.transition_to_complete(tracker_pk)

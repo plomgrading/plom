@@ -196,11 +196,18 @@ class HueyTaskTracker(models.Model):
         cls.objects.all().update(obsolete=True)
 
     def transition_to_error(self, errmsg: str) -> None:
-        """Move to the error state."""
+        """Move ourself to the error state."""
         self.huey_id = None
         self.status = self.ERROR
         self.message = errmsg
         self.save()
+
+    @classmethod
+    def transition_chore_to_error(cls, pk: int, errmsg: str) -> None:
+        """Move a chore to the error state via its primary key."""
+        with transaction.atomic(durable=True):
+            tr = cls.objects.select_for_update().get(pk=pk)
+            tr.transition_to_error(errmsg)
 
     @classmethod
     def set_every_task_with_status_error_obsolete(cls):
