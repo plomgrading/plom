@@ -45,10 +45,10 @@
                             Staged bundle
                         {% endif %}
                     {% endif %}
-                    &ensp; <q>{{ slug }}</q>
+                    <q><tt>{{ slug }}</tt></q>
                     {% if has_page_images and finished_reading_qr and is_perfect and not is_pushed %}
                         {% if n_collisions %}
-                            &ensp; contains {{ n_collisions }} colliding page images
+                            contains {{ n_collisions }} colliding page image{{ n_collisions|pluralize }}
                         {% elif n_incomplete == 0 %}
                             <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
                             <!-- note that the midPush variable is defined in the parent html file which includes this html file -->
@@ -62,7 +62,7 @@
                             &ensp; has no problems, but contains incomplete papers. You can
                             <!-- Issue #3411: provide link to additional info -->
                             <button class="btn btn-danger"
-                                    hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). Pushing may create incomplete and unmarkable papers on your server so this isn't best practice. Are you sure you wish to push?"
+                                    hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper{{ n_incomplete|pluralize }}. Pushing may create incomplete and unmarkable papers on your server so this isn't best practice. Are you sure you wish to push?"
                                     hx-post="{% url 'scan_push_all' bundle_id %}"
                                     x-bind:disabled="midPush"
                                     @htmx:before-send="midPush=true;">Push</button>
@@ -74,7 +74,7 @@
                 {% if n_incomplete %}
                     <div class="alert alert-warning">
                         <details>
-                            <summary>This bundle contains {{ n_incomplete }} incomplete paper(s)</summary>
+                            <summary>This bundle contains {{ n_incomplete }} incomplete paper{{ n_incomplete|pluralize }}</summary>
                             <ul>
                                 <li>Incomplete papers contain some, but not all their pages.</li>
                                 <li>
