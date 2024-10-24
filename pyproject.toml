@@ -299,7 +299,8 @@ ignore-words = ".codespell-ignorewords"
 exclude-file = ".codespell-ignorelines"
 
 [tool.ruff.lint]
-# enable docstring
+# enable docstring checking and import reordering
+# select = ["D", "I"]  # TODO: later?
 select = ["D"]
 # D107: perhaps init methods don't need docstrings
 # D100: public module docstrings: seem to get a lot of false positives
@@ -313,7 +314,7 @@ convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 # F401: defining __all__ might be right fix
-# E402: re-ordering causes circular imports
-'__init__.py' = ['F401', 'E402']
+# E402, I001: re-ordering causes circular imports
+'__init__.py' = ['F401', 'E402', 'I001']
 # tests don't need docstrings
 'plom*/**/test*.py' = ['D100', 'D101', 'D102', 'D103', 'D104']

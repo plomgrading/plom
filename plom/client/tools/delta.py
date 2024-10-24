@@ -4,10 +4,10 @@
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QPen, QColor
-from PyQt6.QtWidgets import QGraphicsTextItem, QGraphicsItem
+from PyQt6.QtGui import QColor, QFont, QPen
+from PyQt6.QtWidgets import QGraphicsItem, QGraphicsTextItem
 
-from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
+from plom.client.tools import OutOfBoundsFill, OutOfBoundsPen
 from plom.client.tools.text import UndoStackMoveTextMixin
 
 

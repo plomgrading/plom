@@ -5,10 +5,14 @@
 
 from PyQt6.QtCore import QRectF
 from PyQt6.QtGui import QBrush, QPen
-from PyQt6.QtWidgets import QGraphicsRectItem, QGraphicsItem
+from PyQt6.QtWidgets import QGraphicsItem, QGraphicsRectItem
 
-from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
-from plom.client.tools import CommandTool, UndoStackMoveMixin
+from plom.client.tools import (
+    CommandTool,
+    OutOfBoundsFill,
+    OutOfBoundsPen,
+    UndoStackMoveMixin,
+)
 
 
 class CommandBox(CommandTool):

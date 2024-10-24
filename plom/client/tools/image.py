@@ -7,24 +7,28 @@ from __future__ import annotations
 
 from typing import Any
 
-from PyQt6.QtCore import QIODevice, QPointF, QBuffer, QByteArray
-from PyQt6.QtGui import QColor, QImage, QPixmap, QPen
+from PyQt6.QtCore import QBuffer, QByteArray, QIODevice, QPointF
+from PyQt6.QtGui import QColor, QImage, QPen, QPixmap
 from PyQt6.QtWidgets import (
+    QCheckBox,
+    QDialog,
+    QDialogButtonBox,
+    QFormLayout,
     QGraphicsItem,
     QGraphicsPixmapItem,
     QGraphicsSceneMouseEvent,
-    QDialog,
-    QSpinBox,
-    QCheckBox,
-    QVBoxLayout,
-    QLabel,
-    QDialogButtonBox,
     QGroupBox,
-    QFormLayout,
+    QLabel,
+    QSpinBox,
+    QVBoxLayout,
 )
 
-from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
-from plom.client.tools import CommandTool, UndoStackMoveMixin
+from plom.client.tools import (
+    CommandTool,
+    OutOfBoundsFill,
+    OutOfBoundsPen,
+    UndoStackMoveMixin,
+)
 
 
 class CommandImage(CommandTool):

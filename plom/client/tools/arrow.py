@@ -5,13 +5,12 @@
 
 from math import sqrt
 
-from PyQt6.QtCore import Qt, QPointF
-from PyQt6.QtGui import QPen, QPainterPath, QBrush
-from PyQt6.QtWidgets import QGraphicsPathItem, QGraphicsItem
+from PyQt6.QtCore import QPointF, Qt
+from PyQt6.QtGui import QBrush, QPainterPath, QPen
+from PyQt6.QtWidgets import QGraphicsItem, QGraphicsPathItem
 
-from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
+from plom.client.tools import OutOfBoundsFill, OutOfBoundsPen, UndoStackMoveMixin
 from plom.client.tools.line import CommandLine, LineItem
-from plom.client.tools import UndoStackMoveMixin
 
 
 class CommandArrow(CommandLine):

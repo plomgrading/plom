@@ -5,12 +5,16 @@
 # Copyright (C) 2024 Bryan Tanady
 
 from PyQt6.QtCore import QPointF
-from PyQt6.QtGui import QPen, QPainterPath
-from PyQt6.QtWidgets import QGraphicsPathItem, QGraphicsItem
+from PyQt6.QtGui import QPainterPath, QPen
+from PyQt6.QtWidgets import QGraphicsItem, QGraphicsPathItem
 
-from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
-from plom.client.tools import CommandTool, UndoStackMoveMixin
-from plom.client.tools import DefaultTickRadius
+from plom.client.tools import (
+    CommandTool,
+    DefaultTickRadius,
+    OutOfBoundsFill,
+    OutOfBoundsPen,
+    UndoStackMoveMixin,
+)
 
 
 class CommandCross(CommandTool):

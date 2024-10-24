@@ -3,11 +3,12 @@
 
 from __future__ import annotations
 
-from pytest import raises
 from typing import Any
 
-from plom.client.rubrics import compute_score_locabs as score
+from pytest import raises
+
 from plom.client.rubrics import check_for_illadvised
+from plom.client.rubrics import compute_score_locabs as score
 
 
 def test_ill_no_warnings() -> None:

@@ -16,10 +16,10 @@ __license__ = "AGPL-3.0-or-later"
 import html
 import json
 import logging
-from pathlib import Path
 import os
 import re
 import sys
+from pathlib import Path
 from textwrap import dedent
 from typing import Any, Dict
 
@@ -28,13 +28,13 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
-from PyQt6 import uic, QtGui
+from PyQt6 import QtGui, uic
 from PyQt6.QtCore import (
+    QElapsedTimer,
     Qt,
     QTimer,
-    QElapsedTimer,
-    pyqtSlot,
     pyqtSignal,
+    pyqtSlot,
 )
 from PyQt6.QtGui import (
     QCursor,
@@ -44,21 +44,21 @@ from PyQt6.QtGui import (
     QShortcut,
 )
 from PyQt6.QtWidgets import (
+    QBoxLayout,
+    QColorDialog,
     QComboBox,
     QDialog,
+    QFileDialog,
     QFrame,
+    QGraphicsRectItem,
     QLabel,
     QMenu,
     QMessageBox,
     QProgressDialog,
     QPushButton,
     QToolButton,
-    QBoxLayout,
-    QFileDialog,
-    QColorDialog,
     QWidget,
 )
-from PyQt6.QtWidgets import QGraphicsRectItem
 
 from plom.misc_utils import pprint_score
 import plom.client.cursors

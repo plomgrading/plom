@@ -5,10 +5,9 @@ from PyQt6.QtCore import QObject
 from PyQt6.QtCore import QPropertyAnimation, QAbstractAnimation
 from PyQt6.QtCore import pyqtProperty  # type: ignore[attr-defined]
 from PyQt6.QtGui import QBrush, QColor, QPen
-from PyQt6.QtWidgets import QGraphicsRectItem, QGraphicsPathItem
+from PyQt6.QtWidgets import QGraphicsPathItem, QGraphicsRectItem
 
 from plom.client.tools import log
-
 
 # rough length of animations take in milliseconds: some might be shorter,
 # some longer but they will be scaled by this value.

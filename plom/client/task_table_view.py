@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QCursor, QContextMenuEvent
+from PyQt6.QtGui import QAction, QContextMenuEvent, QCursor
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QMenu,

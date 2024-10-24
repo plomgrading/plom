@@ -29,7 +29,6 @@ from PyQt6.QtWidgets import (
 from .image_view_widget import ImageViewWidget
 from .useful_classes import WarnMsg
 
-
 log = logging.getLogger("viewerdialog")
 
 

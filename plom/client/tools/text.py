@@ -8,13 +8,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from PyQt6.QtCore import Qt, QPointF, QTimer
-from PyQt6.QtGui import QColor, QFont, QUndoCommand, QPixmap
+from PyQt6.QtCore import QPointF, Qt, QTimer
+from PyQt6.QtGui import QColor, QFont, QPixmap, QUndoCommand
 from PyQt6.QtWidgets import QGraphicsItem, QGraphicsTextItem
 
-from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
-from plom.client.tools import CommandTool
-from plom.client.tools import log
+from plom.client.tools import CommandTool, OutOfBoundsFill, OutOfBoundsPen, log
 
 
 # TODO: move this to move.py?

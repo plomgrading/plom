@@ -36,14 +36,12 @@ else:
     import importlib_resources as resources
 
 from packaging.version import Version
-
-
-from PyQt6 import uic, QtGui
+from PyQt6 import QtGui, uic
 from PyQt6.QtCore import (
     Qt,
     QTimer,
-    pyqtSlot,
     pyqtSignal,
+    pyqtSlot,
 )
 from PyQt6.QtWidgets import (
     QDialog,

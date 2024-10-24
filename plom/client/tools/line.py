@@ -5,10 +5,14 @@
 
 from PyQt6.QtCore import QLineF, QPointF
 from PyQt6.QtGui import QPen
-from PyQt6.QtWidgets import QGraphicsLineItem, QGraphicsItem
+from PyQt6.QtWidgets import QGraphicsItem, QGraphicsLineItem
 
-from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
-from plom.client.tools import CommandTool, UndoStackMoveMixin
+from plom.client.tools import (
+    CommandTool,
+    OutOfBoundsFill,
+    OutOfBoundsPen,
+    UndoStackMoveMixin,
+)
 
 
 class CommandLine(CommandTool):

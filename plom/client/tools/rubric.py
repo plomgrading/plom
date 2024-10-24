@@ -8,12 +8,16 @@
 from copy import deepcopy
 from typing import Any, Dict, List, Union
 
-from PyQt6.QtCore import Qt, QPointF
+from PyQt6.QtCore import QPointF, Qt
 from PyQt6.QtGui import QColor, QFont, QPen
-from PyQt6.QtWidgets import QGraphicsItemGroup, QGraphicsItem
+from PyQt6.QtWidgets import QGraphicsItem, QGraphicsItemGroup
 
-from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
-from plom.client.tools import CommandTool, UndoStackMoveMixin
+from plom.client.tools import (
+    CommandTool,
+    OutOfBoundsFill,
+    OutOfBoundsPen,
+    UndoStackMoveMixin,
+)
 from plom.client.tools.delta import DeltaItem, GhostDelta
 from plom.client.tools.text import GhostText, TextItem
 

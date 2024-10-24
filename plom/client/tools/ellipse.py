@@ -4,11 +4,15 @@
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt6.QtCore import QRectF
-from PyQt6.QtGui import QPen, QBrush
+from PyQt6.QtGui import QBrush, QPen
 from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsItem
 
-from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
-from plom.client.tools import CommandTool, UndoStackMoveMixin
+from plom.client.tools import (
+    CommandTool,
+    OutOfBoundsFill,
+    OutOfBoundsPen,
+    UndoStackMoveMixin,
+)
 
 
 class CommandEllipse(CommandTool):

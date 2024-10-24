@@ -9,7 +9,6 @@ from PyQt6.QtWidgets import QMessageBox
 
 from plom import __version__
 
-
 # TODO: requests version
 # TODO: use resources to important contributors list?
 

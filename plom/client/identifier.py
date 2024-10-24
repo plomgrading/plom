@@ -23,12 +23,12 @@ if sys.version_info >= (3, 9):
 else:
     import importlib_resources as resources
 
-from PyQt6 import uic, QtGui
+from PyQt6 import QtGui, uic
 from PyQt6.QtCore import (
-    Qt,
     QAbstractTableModel,
     QModelIndex,
     QStringListModel,
+    Qt,
     QTimer,
     QVariant,
     pyqtSignal,
@@ -36,11 +36,12 @@ from PyQt6.QtCore import (
 from PyQt6.QtWidgets import (
     QCompleter,
     QDialog,
-    QWidget,
     QMessageBox,
+    QWidget,
 )
 
 import plom.client.ui_files
+from plom import isValidStudentID
 from plom.plom_exceptions import (
     PlomBenignException,
     PlomConflict,
@@ -48,15 +49,20 @@ from plom.plom_exceptions import (
     PlomSeriousException,
     PlomTakenException,
 )
-from plom import isValidStudentID
 
 # from plom.rules import censorStudentID as censorID
 from plom.rules import censorStudentName as censorName
 
 from .image_view_widget import ImageViewWidget
-from .useful_classes import ErrorMsg, WarnMsg, InfoMsg
-from .useful_classes import SimpleQuestion, WarningQuestion
-from .useful_classes import BlankIDBox, SNIDBox
+from .useful_classes import (
+    BlankIDBox,
+    ErrorMsg,
+    InfoMsg,
+    SimpleQuestion,
+    SNIDBox,
+    WarningQuestion,
+    WarnMsg,
+)
 from .viewers import WholeTestView
 
 
