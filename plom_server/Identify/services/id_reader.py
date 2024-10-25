@@ -632,7 +632,7 @@ class IDBoxProcessorService:
         self.run_greedy(user, student_ids, probabilities)
         self.run_lap_solver(user, student_ids, probabilities)
 
-    def run_greedy(self, user: User, student_ids, probabilities):
+    def run_greedy(self, user: User, student_ids: list[str], probabilities) -> None:
         id_reader_service = IDReaderService()
         # Different predictors go here.
         greedy_predictions = self._greedy_predictor(student_ids, probabilities)
@@ -641,7 +641,7 @@ class IDBoxProcessorService:
                 user, prediction[0], prediction[1], prediction[2], "MLGreedy"
             )
 
-    def run_lap_solver(self, user: User, student_ids, probabilities):
+    def run_lap_solver(self, user: User, student_ids: list[str], probabilities) -> None:
         # start by removing any IDs that have already been used.
         id_reader_service = IDReaderService()
         for ided_stu in id_reader_service.get_already_matched_sids():
@@ -665,7 +665,7 @@ class IDBoxProcessorService:
 
     def _greedy_predictor(
         self, student_IDs: list[str], probabilities: dict[int, Any]
-    ) -> list[tuple[int, int, float]]:
+    ) -> list[tuple[int, str, float]]:
         """Generate greedy predictions for student ID numbers.
 
         Args:
@@ -745,18 +745,20 @@ class IDBoxProcessorService:
             costs.append(row)
         return costs
 
-    def _lap_predictor(self, paper_numbers, student_IDs, probabilities):
+    def _lap_predictor(
+        self, paper_numbers: list[int], student_IDs: list[str], probabilities
+    ) -> list[tuple[int, str, float]]:
         """Run SciPy's linear sum assignment problem solver, return prediction results.
 
         Args:
-            paper_numbers (list): int, the ones we want to match.
-            student_IDs (list): A list of student ID numbers.
-            probabilities (dict): dict with keys that contain a test number
-            and values that contain a probability matrix,
-            which is a list of lists of floats.
+            paper_numbers: int, the ones we want to match.
+            student_IDs: A list of student ID numbers.
+            probabilities: dict with keys that contain a test number
+                and values that contain a probability matrix,
+                which is a list of lists of floats.
 
         Returns:
-            list: triples of (`paper_number`, `student_ID`, `certainty`),
+            List of triples of (`paper_number`, `student_ID`, `certainty`),
             where certainty is the mean of digit probabilities for the student_ID
             selected by LAP solver.
         """
