@@ -49,7 +49,8 @@ class UserPage(ManagerRequiredView):
             "auth_token"
         )
         # fetch these so that we don't loop over this in the template
-        # remove db hits in loops.
+        # remove db hits in loops.  TODO: feels strange that this comes
+        # from the request.  See code code copy-pasted into middleware.py
         online_now_ids = request.online_now_ids
 
         context = {

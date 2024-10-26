@@ -3,7 +3,6 @@
 
 from django.core.management.base import BaseCommand, CommandError
 
-from ...services import PermissionChanger
 from ...services import UsersService
 
 
@@ -16,6 +15,8 @@ class Command(BaseCommand):
     def list_users(self) -> None:
         print("TODO")
         print(UsersService.get_user_info())
+        if False:
+            CommandError("foo")
 
     def add_arguments(self, parser):
         parser.add_argument(
