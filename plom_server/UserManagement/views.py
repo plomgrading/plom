@@ -38,7 +38,8 @@ class UserPage(ManagerRequiredView):
     set_quota_confirmation: the tag for the confirmation dialog interaction.
     """
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
+        # TODO: use UsersService here
         managers = User.objects.filter(groups__name="manager")
         scanners = User.objects.filter(groups__name="scanner").exclude(
             groups__name="manager"
@@ -61,7 +62,7 @@ class UserPage(ManagerRequiredView):
         }
         return render(request, "UserManagement/users.html", context)
 
-    def post(self, request, username):
+    def post(self, request: HttpRequest, username: str) -> HttpResponse:
         PermissionChanger.toggle_user_active(username)
 
         return HttpResponseClientRefresh()
