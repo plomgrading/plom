@@ -4,6 +4,10 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
+#
+# But this codes seems to have originally come from
+#    https://gist.github.com/un33k/2913897
+# (or perhaps that is just a fork).
 
 from django.core.cache import cache
 from django.conf import settings
