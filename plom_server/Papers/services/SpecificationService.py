@@ -481,6 +481,11 @@ def get_question_html_label_triples() -> list[Tuple[int, str, str]]:
     ]
 
 
+def get_question_label_str_and_html(qidx: int) -> tuple[str, str]:
+    """Get the question string label and fancy HTML label for q question index."""
+    return get_question_label(qidx), render_html_question_label(qidx)
+
+
 def question_list_to_dict(questions: list[dict]) -> dict[str, dict]:
     """Convert a list of question dictionaries to a nested dict with question index as str keys."""
     return {str(i + 1): q for i, q in enumerate(questions)}

@@ -1,22 +1,22 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Andrew Rechnitzer
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2024 Colin B. Macdonald
     Copyright (C) 2024 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Detailed view of Question {{ question }} Version {{ version }}
+    Detailed view of {{ question_label }} version {{ version }}
 {% endblock title %}
 {% block page_heading %}
-    Detailed view of Question {{ question }} Version {{ version }}
+    Detailed view of {{ question_label_html|safe }} version {{ version }}
 {% endblock page_heading %}
 {% block main_content %}
     <a class="btn btn-primary" href="{% url 'progress_mark_home' %}">Marking progress overview</a>
-    <a href="{% url 'progress_mark_version_compare' question %}"
-       class="btn btn-success">compare all Q{{ question }} versions</a>
+    <a href="{% url 'progress_mark_version_compare' question_idx %}"
+       class="btn btn-success">compare all {{ question_label }} versions</a>
     <a class="btn btn-info"
-       href="{% url 'progress_marking_task_filter' %}?question={{ question }}&version={{ version }}">tasks & annotations</a>
+       href="{% url 'progress_marking_task_filter' %}?question={{ question_idx }}&version={{ version }}">tasks & annotations</a>
     <div class="container my-4">
         <div class="card">
             <div class="card-header">

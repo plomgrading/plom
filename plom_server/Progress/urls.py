@@ -50,12 +50,12 @@ urlpatterns = [
         name="mark_papers",
     ),
     path(
-        "mark/stats/<int:question>/<int:version>",
+        "mark/stats/<int:question_idx>/<int:version>",
         ProgressMarkStatsView.as_view(),
         name="progress_mark_stats",
     ),
     path(
-        "mark/details/<int:question>/<int:version>",
+        "mark/details/<int:question_idx>/<int:version>",
         ProgressMarkDetailsView.as_view(),
         name="progress_mark_details",
     ),
@@ -90,7 +90,7 @@ urlpatterns = [
         name="progress_original_img_wrap",
     ),
     path(
-        "mark/compare/<int:question>",
+        "mark/compare/<int:question_idx>",
         ProgressMarkVersionCompareView.as_view(),
         name="progress_mark_version_compare",
     ),
