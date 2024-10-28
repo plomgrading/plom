@@ -20,7 +20,7 @@ a **Plom Client**.
 Fedora
 ------
 
-Tested on Fedora 39.  Some stuff from the package manager:
+Tested on Fedora 40.  Some stuff from the package manager:
 ```
   # sudo dnf install \
         ImageMagick gcc gcc-c++ cmake \
@@ -39,6 +39,7 @@ Tested on Fedora 39.  Some stuff from the package manager:
         python3-aiohttp python3-peewee python3-cryptography \
         python3-zxing-cpp \
         python3-gunicorn python3-whitenoise \
+        python3-weasyprint python3-pyqt6 python3-django-tables2 \
         latexmk tex-dvipng texlive-scheme-basic \
         tex-preview tex-charter tex-exam tex-preprint \
         python3-myst-parser python3-sphinx python3-sphinx_rtd_theme \
