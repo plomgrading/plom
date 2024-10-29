@@ -508,7 +508,12 @@ def get_question_labels_str_and_html_map() -> dict[int, tuple[str, str]]:
 
 
 def get_question_label_str_and_html(qidx: int) -> tuple[str, str]:
-    """Get the question string label and fancy HTML label for q question index."""
+    """Get the question string label and fancy HTML label for question index.
+
+    Note: if you need this for multiple questions, it will generally be more
+    efficient for the database if you ask for all them at once with
+    :func:`get_question_html_label_triples`.
+    """
     qlabel = get_question_label(qidx)
     return qlabel, _render_html_question_label(qidx, qlabel)
 
