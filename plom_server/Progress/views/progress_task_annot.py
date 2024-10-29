@@ -6,7 +6,8 @@
 import html
 
 from django.contrib.auth.models import User
-from django.http import HttpRequest, HttpResponse, FileResponse
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpRequest, HttpResponse, FileResponse, Http404
 from django.shortcuts import render, reverse, redirect
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 from rest_framework.exceptions import ValidationError
@@ -131,7 +132,10 @@ class AnnotationImageWrapView(LeadMarkerOrManagerView):
     def get(
         self, request: HttpRequest, *, paper: int, question_idx: int
     ) -> HttpResponse:
-        annot = MarkingTaskService().get_latest_annotation(paper, question_idx)
+        try:
+            annot = MarkingTaskService().get_latest_annotation(paper, question_idx)
+        except (ValueError, ObjectDoesNotExist) as e:
+            raise Http404(e)
         context = {
             "paper": paper,
             "question_idx": question_idx,
