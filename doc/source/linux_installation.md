@@ -45,12 +45,9 @@ Tested on Fedora 40.  Some stuff from the package manager:
         python3-myst-parser python3-sphinx python3-sphinx_rtd_theme \
         python3-sphinx-argparse
 ```
-At this point `pip install plom` (or `pip install --user .` from inside
+At this point `pip install plom` (or `pip install .` from inside
 the Plom source tree) should pull in the remaining dependencies.
-There are additional dependencies for the machine-learning-based ID Reader:
-```
-  # pip install --user imutils opencv-python-headless
-```
+
 If you're building a production server you may want to ignore some of the above
 and instead use pinned versions:
 ```
