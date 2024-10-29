@@ -473,17 +473,36 @@ def get_question_labels_map() -> dict[int, str]:
     return {i: label for i, label in get_question_index_label_pairs()}
 
 
-def get_question_html_label_triples() -> list[Tuple[int, str, str]]:
+def get_question_labels_str_and_html_map() -> dict[int, tuple[str, str]]:
+    """Get the question labels in str/html as a mapping from unit-indexed question indices.
+
+    Returns:
+        The question labels in str/html as a dictionary mapping
+        from unit-indexed question indices.
+    """
+    return {
+        i: (label, label_html)
+        for i, label, label_html in get_question_html_label_triples()
+    }
+
+
+def get_question_html_label_triples() -> list[tuple[int, str, str]]:
     """Get the question indices, string labels and fancy HTML labels as a list of triples."""
+    # TODO: can we do just one DB query here?
     return [
-        (i, get_question_label(i), render_html_question_label(i))
+        (
+            i,
+            get_question_label(i),
+            _render_html_question_label(i, get_question_label(i)),
+        )
         for i in get_question_indices()
     ]
 
 
 def get_question_label_str_and_html(qidx: int) -> tuple[str, str]:
     """Get the question string label and fancy HTML label for q question index."""
-    return get_question_label(qidx), render_html_question_label(qidx)
+    qlabel = get_question_label(qidx)
+    return qlabel, _render_html_question_label(qidx, qlabel)
 
 
 def question_list_to_dict(questions: list[dict]) -> dict[str, dict]:
@@ -491,9 +510,7 @@ def question_list_to_dict(questions: list[dict]) -> dict[str, dict]:
     return {str(i + 1): q for i, q in enumerate(questions)}
 
 
-def render_html_question_label(qidx: int) -> str:
-    """HTML rendering of the question label for a particular question index."""
-    qlabel = get_question_label(qidx)
+def _render_html_question_label(qidx: int, qlabel: str) -> str:
     qlabel = html.escape(qlabel)
     if qlabel == f"Q{qidx}":
         return qlabel
@@ -509,7 +526,8 @@ def render_html_flat_question_label_list(qindices: list[int] | None) -> str:
     """
     if not qindices:
         return "None"
-    return ", ".join(render_html_question_label(qidx) for qidx in qindices)
+    T = get_question_labels_str_and_html_map()
+    return ", ".join(T[qidx][1] for qidx in qindices)
 
 
 def get_question_selection_method(question_index: int) -> str:
