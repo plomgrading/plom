@@ -13,7 +13,7 @@
 {% block page_heading %}
     Marking task info
     <a class="btn btn-primary"
-       href="{% url 'progress_marking_task_filter' %}?question={{ question }}&version={{ version }}">browse marking</a>
+       href="{% url 'progress_marking_task_filter' %}?question={{ question_idx }}&version={{ version }}">browse marking</a>
     <a class="btn btn-primary" href="{% url 'all_task_overview' %}">table of all tasks</a>
 {% endblock page_heading %}
 {% block main_content %}
@@ -69,7 +69,7 @@
                 {% endif %}
                 <div class="py-2">
                     <p>Paper: {{ paper_number }}</p>
-                    <p>Question index: {{ question }}</p>
+                    <p>Question: {{ question_label_html|safe }}</p>
                     <p>Version: {{ version }}</p>
                     <p>
                         Status: {{ status }}
@@ -92,12 +92,12 @@
                     {% endif %}
                 </div>
                 <p>
-                    <button hx-get="{% url 'progress_original_img_wrap' paper_number question %}"
+                    <button hx-get="{% url 'progress_original_img_wrap' paper_number question_idx %}"
                             hx-target="#imageHere"
                             hx-replace="innerHTML"
                             class="btn btn-outline-info">show original</button>
                     {% if status == "Complete" %}
-                        <button hx-get="{% url 'progress_annotation_img_wrap' paper_number question %}"
+                        <button hx-get="{% url 'progress_annotation_img_wrap' paper_number question_idx %}"
                                 hx-target="#imageHere"
                                 hx-replace="innerHTML"
                                 hx-trigger="load, click"
