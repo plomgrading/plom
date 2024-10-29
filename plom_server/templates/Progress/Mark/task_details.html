@@ -77,7 +77,7 @@
                         Status: {{ status }}
                         {% if status == "Out Of Date" %}
                             <a href="{% url 'progress_newest_marking_task_details' task_pk %}"
-                               class="btn btn-success">show newest</a>
+                               class="btn btn-success">Go to newest</a>
                         {% endif %}
                     </p>
                     {% if status == "Complete" %}
