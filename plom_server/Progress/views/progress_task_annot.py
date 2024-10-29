@@ -22,7 +22,7 @@ from Mark.services import (
 )
 from Papers.services import SpecificationService
 from Rubrics.services import RubricService
-from Mark.models import MarkingTask
+from Mark.models import MarkingTask, AnnotationImage
 from ..services import ProgressOverviewService
 
 
@@ -128,18 +128,24 @@ class ProgressMarkingTaskFilterView(LeadMarkerOrManagerView):
 
 
 class AnnotationImageWrapView(LeadMarkerOrManagerView):
-    def get(self, request, paper, question):
-        annot = MarkingTaskService().get_latest_annotation(paper, question)
-        context = {"paper": paper, "question": question, "annotation_pk": annot.pk}
+    def get(
+        self, request: HttpRequest, *, paper: int, question_idx: int
+    ) -> HttpResponse:
+        annot = MarkingTaskService().get_latest_annotation(paper, question_idx)
+        context = {
+            "paper": paper,
+            "question_idx": question_idx,
+            "annotation_image_id": annot.image.pk,
+        }
         return render(
             request, "Progress/Mark/annotation_image_wrap_fragment.html", context
         )
 
 
 class AnnotationImageView(LeadMarkerOrManagerView):
-    def get(self, request, paper, question):
-        annot = MarkingTaskService().get_latest_annotation(paper, question)
-        return FileResponse(annot.image.image)
+    def get(self, request: HttpRequest, *, annotation_image_id: int) -> FileResponse:
+        annot_img = AnnotationImage.objects.get(pk=annotation_image_id)
+        return FileResponse(annot_img.image)
 
 
 class OriginalImageWrapView(LeadMarkerOrManagerView):
