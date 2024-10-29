@@ -46,8 +46,12 @@ class SpecficiationServiceQuestionLabelTests(TestCase):
             assert m[x[0]] == x[1]
 
     def test_render_qlabel_html(self) -> None:
-        assert "Q1" in serv.get_question_label_str_and_html(1)[1]
-        assert "Q&lt;3" in serv.get_question_label_str_and_html(3)[1]
+        label, label_html = serv.get_question_label_str_and_html(1)
+        assert "Q1" == label
+        assert "Q1" in label_html
+        label, label_html = serv.get_question_label_str_and_html(3)
+        assert "Q<3" == label
+        assert "Q&lt;3" in label_html
 
     def test_render_qlabel_html_abbr(self) -> None:
         assert "abbr" not in serv.get_question_label_str_and_html(1)[1]

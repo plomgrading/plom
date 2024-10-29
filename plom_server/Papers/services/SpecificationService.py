@@ -443,14 +443,35 @@ def get_question_label(question_index: str | int) -> str:
     return question.label
 
 
-def get_question_index_label_pairs() -> list[Tuple[int, str]]:
+def get_question_index_label_pairs() -> list[tuple[int, str]]:
     """Get the question indices and labels as a list of pairs of tuples.
 
     Returns:
         The question indices and labels as pairs of tuples in a list.
         The pairs are ordered by their indices.
     """
-    return [(i, get_question_label(i)) for i in get_question_indices()]
+    questions = SpecQuestion.objects.all().order_by("question_index")
+    lst = []
+    for q in questions:
+        qidx = q.question_index
+        label = q.label
+        if label is None:
+            label = f"Q{qidx}"
+        lst.append((qidx, label))
+    return lst
+
+
+def get_question_html_label_triples() -> list[tuple[int, str, str]]:
+    """Get the question indices, string labels and fancy HTML labels as a list of triples."""
+    questions = SpecQuestion.objects.all().order_by("question_index")
+    lst = []
+    for q in questions:
+        qidx = q.question_index
+        label = q.label
+        if label is None:
+            label = f"Q{qidx}"
+        lst.append((qidx, label, _render_html_question_label(qidx, label)))
+    return lst
 
 
 def get_question_labels() -> list[str]:
@@ -484,19 +505,6 @@ def get_question_labels_str_and_html_map() -> dict[int, tuple[str, str]]:
         i: (label, label_html)
         for i, label, label_html in get_question_html_label_triples()
     }
-
-
-def get_question_html_label_triples() -> list[tuple[int, str, str]]:
-    """Get the question indices, string labels and fancy HTML labels as a list of triples."""
-    # TODO: can we do just one DB query here?
-    return [
-        (
-            i,
-            get_question_label(i),
-            _render_html_question_label(i, get_question_label(i)),
-        )
-        for i in get_question_indices()
-    ]
 
 
 def get_question_label_str_and_html(qidx: int) -> tuple[str, str]:
