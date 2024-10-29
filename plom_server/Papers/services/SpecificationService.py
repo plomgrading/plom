@@ -569,23 +569,3 @@ def get_selection_method_of_all_questions() -> dict[int, str]:
     for question in SpecQuestion.objects.all().order_by("question_index"):
         selection_method[question.question_index] = question.select
     return selection_method
-
-
-def get_fix_questions() -> list[str]:
-    """Return list of html labels of questions that are select=fix."""
-    return [
-        render_html_question_label(question.question_index)
-        for question in SpecQuestion.objects.filter(select="fix").order_by(
-            "question_index"
-        )
-    ]
-
-
-def get_shuffle_questions() -> list[str]:
-    """Return list of html labels of questions that are select=shuffle."""
-    return [
-        render_html_question_label(question.question_index)
-        for question in SpecQuestion.objects.filter(select="shuffle").order_by(
-            "question_index"
-        )
-    ]
