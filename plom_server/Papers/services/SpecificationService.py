@@ -554,6 +554,8 @@ def get_question_selection_method(question_index: int) -> str:
 
     Raises:
         ObjectDoesNotExist: no question exists with the given index.
+
+    As of Oct 2024, no one is calling this.  Deprecated?
     """
     question = SpecQuestion.objects.get(question_index=question_index)
     return question.select
