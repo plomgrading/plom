@@ -113,6 +113,8 @@ class PQVMappingView(ManagerRequiredView):
         labels_fix = ", ".join(t[2] for t in triples if fixshuf[t[0]] == "fix")
         labels_shf = ", ".join(t[2] for t in triples if fixshuf[t[0]] == "shuffle")
 
+        num_students = StagingStudentService().how_many_students()
+
         context = {
             "question_indices": question_indices,
             "question_labels_html": triples,
@@ -120,10 +122,9 @@ class PQVMappingView(ManagerRequiredView):
             "question_labels_html_shuffle": labels_shf,
             "prenaming": PrenameSettingService().get_prenaming_setting(),
             "pqv_mapping_present": PaperInfoService().is_paper_database_fully_populated(),
-            "number_of_students": StagingStudentService().how_many_students(),
-            "number_plus_twenty": StagingStudentService().how_many_students() + 20,
-            "number_times_1dot1": (StagingStudentService().how_many_students() * 11)
-            // 10,
+            "number_of_students": num_students,
+            "number_plus_twenty": num_students + 20,
+            "number_times_1dot1": (num_students * 11) // 10,
             "student_list_present": StagingStudentService().are_there_students(),
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
             "chore_in_progress": PaperCreatorService.is_chore_in_progress(),
