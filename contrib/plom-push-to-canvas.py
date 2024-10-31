@@ -243,10 +243,11 @@ if __name__ == "__main__":
         print(f'Note: you can use "--assignment {assignment.id}" to reselect.\n')
     print(f"Ok uploading to Assignment: {assignment}")
 
-    print(f'\nChecking if "{assignment}" is published...')
-    if not assignment.published:
+    print(f"  * Assignment is published: {assignment.published}")
+    print(f'  * Assignment is "post_manually": {assignment.post_manually}')
+    if not assignment.published or not assignment.post_manually:
         raise ValueError(
-            "Assignment is NOT published: see the docs at "
+            "Assignment must be published and set to manually release grades: see "
             "https://plom.rtfd.io/en/latest/returning.html#return-via-canvas"
         )
 
