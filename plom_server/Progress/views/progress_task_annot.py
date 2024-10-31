@@ -197,12 +197,16 @@ class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
     def get(self, request, task_pk):
         # todo = move most of this DB work to a service.
         task_obj = MarkingTask.objects.get(pk=task_pk)
+        _, question_label_html = SpecificationService.get_question_label_str_and_html(
+            task_obj.question_index
+        )
         context = self.build_context()
         context.update(
             {
                 "task_pk": task_pk,
                 "paper_number": task_obj.paper.paper_number,
-                "question": task_obj.question_index,
+                "question_idx": task_obj.question_index,
+                "question_label_html": question_label_html,
                 "version": task_obj.question_version,
                 "status": task_obj.get_status_display(),
                 "lead_markers": User.objects.filter(groups__name="lead_marker"),
