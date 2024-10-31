@@ -53,6 +53,7 @@ class PlomClasslistValidator:
             dialect = csv.Sniffer().sniff(sample)
             # build the dict_reader
             reader = csv.DictReader(csvfile, dialect=dialect)
+
             # check it has a header - csv.sniffer.has_header is a bit flakey
             # instead check that we have some of the potential keys - careful of case
             if not reader.fieldnames:
@@ -62,6 +63,16 @@ class PlomClasslistValidator:
                 print("Appears to have reasonable header - continuing.")
             else:
                 raise ValueError("The CSV header has no fields that Plom recognises")
+
+            # Check for repeated column names, Issue #3667.
+            # (cannot be in checkHeaders because DictReader picks one silently)
+            for x in potential_column_names:
+                if sum([x == y for y in column_names]) > 1:
+                    raise ValueError(
+                        f'Column "{x}" is repeated multiple times'
+                        f" in the CSV header: {column_names}"
+                    )
+
             # now actually read the entries
             for row in reader:
                 row["_src_line"] = reader.line_num
