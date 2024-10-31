@@ -1,11 +1,14 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Julian Lapenna
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2024 Colin B. Macdonald
     Copyright (C) 2024 Bryan Tanady
 -->
 {% extends "base/base.html" %}
 {% load static %}
+{% block title %}
+    Task Ordering
+{% endblock title %}
 {% block page_heading %}
     Task Ordering
 {% endblock page_heading %}
@@ -17,14 +20,14 @@
                   enctype="multipart/form-data">
                 {% csrf_token %}
                 {{ order_form.as_p }}
-                {{ upload_form.as_p }}
-                <button class="btn btn-outline-primary" type="submit">Update task order</button>
+                <ul>
+                    {{ upload_form.as_p }}
+                </ul>
+                <button class="btn btn-primary" type="submit">Update task order</button>
             </form>
-            <form method="post"
-                  action="{% url 'download_priorities' %}"
-                  style="padding-top: 0.3%">
+            <form method="post" action="{% url 'download_priorities' %}">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-outline-success">Download priorities</button>
+                <button type="submit" class="btn btn-outline-success mt-1">Download priorities</button>
             </form>
         </div>
         <div class="col">
@@ -55,20 +58,20 @@
         <div class="table-responsive" style="max-height: 80vh;">
             <table class="table table-small sortable text-center align-middle table-bordered border-dark-subtle">
                 <thead class="sticky-top">
-                    <th scope="col" class="border border-secondary">Paper ID</th>
-                    {% for q in q_labels %}<th scope="col" class="border border-secondary">{{ q }}</th>{% endfor %}
+                    <th scope="col">Paper ID</th>
+                    {% for q in q_labels %}<th scope="col">{{ q }}</th>{% endfor %}
                 </thead>
                 <tbody>
                     {% for p, priority_status_list in paper_to_priority_dict.items %}
                         <tr>
-                            <td class="border border-secondary w-25">{{ p }}</td>
+                            <td class="w-25">{{ p }}</td>
                             {% for priority_status in priority_status_list %}
                                 {% if priority_status.1 == "Complete" %}
                                     <td class="table-success">{{ priority_status.0|floatformat:1 }}</td>
                                 {% elif priority_status.1 == "Missing" %}
                                     <td class="table-danger">Missing</td>
                                 {% else %}
-                                    <td class="border border-secondary">{{ priority_status.0|floatformat:1 }}</td>
+                                    <td>{{ priority_status.0|floatformat:1 }}</td>
                                 {% endif %}
                             {% endfor %}
                         </tr>
