@@ -4,16 +4,16 @@
 # This file tracks the various warnings that are presented to users
 # when annotating, and whether they can "don't-ask-me-again".
 #
-# In the future, some of these might be relaxed/tightened on a
-# per-server basis.
+# These can be relaxed/tightened on a per-server basis.  This file
+# contains the static data for the initial configuration.
 #
 # Fields:
 #     explanation: an html string that describes the situation.  This
 #         can include substitutions such as ``{max_mark}``.  The
 #         variables in these should be readable if the explanation
 #         is viewed in a generic way.
-#     allowed: this situation is not allowed.  Users should be shown
-#         an explanation but prevented from submitting.
+#     allowed: if false then this situation is not allowed.  Users
+#         should be shown an explanation but prevented from submitting.
 #     warn: this situation is questionable.  Users can make a choice
 #         after reading (hah) an explanation and making an informed
 #         well-considered choice (hah!)
