@@ -51,18 +51,4 @@
             </ul>
         </div>
     </div>
-    <div class="card m-2">
-        <div class="card-body pb-0">
-            <a class="btn btn-secondary" href="{% url 'id_prediction_home' %}">ID predictor</a>
-            <ul>
-                <li>User can launch the ID-reader which attempts to read student IDs from the ID page.</li>
-                <li>Those predicted IDs are shown to the marker when ID-ing papers.</li>
-                <li>Note that this relies on using the standard "ID Box" template on ID pages in your assessment.</li>
-            </ul>
-            <a class="btn btn-secondary" href="{% url 'task_order_landing' %}">Change marking task ordering</a>
-            <ul>
-                <li>User can change the order in which tasks are presented to markers.</li>
-            </ul>
-        </div>
-    </div>
 {% endblock main_content %}

@@ -1,0 +1,37 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Julian Lapenna
+    Copyright (C) 2023-2024 Andrew Rechnitzer
+    Copyright (C) 2023 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
+{% block title %}
+    Tools
+{% endblock title %}
+{% block page_heading %}
+    Tools
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="card m-2">
+        <div class="card-body pb-0">
+            <a class="btn btn-secondary" href="{% url 'id_prediction_home' %}">ID predictor</a>
+            <ul>
+                <li>User can launch the ID-reader which attempts to read student IDs from the ID page.</li>
+                <li>Those predicted IDs are shown to the marker when ID-ing papers.</li>
+                <li>Note that this relies on using the standard "ID Box" template on ID pages in your assessment.</li>
+            </ul>
+        </div>
+    </div>
+    <div class="card m-2">
+        <div class="card-body pb-0">
+            <a class="btn btn-secondary" href="{% url 'task_order_landing' %}">Change marking task ordering</a>
+            <p>Change the order in which tasks are presented to markers.</p>
+        </div>
+    </div>
+    <div class="card m-2">
+        <div class="card-body pb-0">
+            <a class="btn btn-secondary" href="{% url 'rectangle_home' %}">Rectangle extraction</a>
+            <p>Systematically extract regions of pages for external analysis.  Experimental!</p>
+        </div>
+    </div>
+{% endblock main_content %}

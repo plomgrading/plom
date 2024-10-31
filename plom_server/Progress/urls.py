@@ -26,6 +26,7 @@ from .views import (
     ProgressUserInfoHome,
     AllTaskOverviewView,
     OverviewLandingView,
+    ToolsLandingView,
     IDImageView,
     ClearID,
     IDImageWrapView,
@@ -128,6 +129,11 @@ urlpatterns = [
         "overview_landing/",
         OverviewLandingView.as_view(),
         name="overview_landing",
+    ),
+    path(
+        "tools_landing/",
+        ToolsLandingView.as_view(),
+        name="tools_landing",
     ),
     path(
         "task_tag/<int:task_pk>/<int:tag_pk>",
