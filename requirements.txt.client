@@ -29,7 +29,7 @@ requests==2.32.3
 requests-toolbelt==1.0.0
 segno==1.6.1
 stdiomask==0.0.6
-tomli==2.0.1
+tomli==2.0.2
 tomlkit==0.13.2
-tqdm==4.66.5
+tqdm==4.66.6
 urllib3==2.2.3
