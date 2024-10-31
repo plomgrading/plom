@@ -74,11 +74,11 @@
                     {% for data in feedback_rules %}
                         <tr>
                             <td>
-                                <small>{{ data.code }}</small>
+                                <small class="{% if not data.override_allowed %}fw-lighter{% endif %}">{{ data.code }}</small>
                             </td>
                             <td>
                                 <!-- lh-1 for tighter line-spacing -->
-                                <small class="lh-1">{{ data.explanation|safe }}</small>
+                                <small class="lh-1 {% if not data.override_allowed %}fw-lighter{% endif %}">{{ data.explanation|safe }}</small>
                             </td>
                             <td>
                                 <div class="form-check form-switch">
@@ -86,7 +86,7 @@
                                            type="checkbox"
                                            name="{{ data.code }}-allowed"
                                            {% if data.allowed %}checked{% endif %}
-                                           {% if data.server_changeable %}disabled{% endif %}>
+                                           {% if not data.override_allowed %}disabled{% endif %}>
                                 </div>
                             </td>
                             <td>
@@ -95,7 +95,7 @@
                                            type="checkbox"
                                            name="{{ data.code }}-warn"
                                            {% if data.warn %}checked{% endif %}
-                                           {% if data.server_changeable %}disabled{% endif %}>
+                                           {% if not data.override_allowed %}disabled{% endif %}>
                                 </div>
                             </td>
                             <td>
@@ -104,7 +104,7 @@
                                            type="checkbox"
                                            name="{{ data.code }}-dama_allowed"
                                            {% if data.dama_allowed %}checked{% endif %}
-                                           {% if data.server_changeable %}disabled{% endif %}>
+                                           {% if not data.override_allowed %}disabled{% endif %}>
                                 </div>
                             </td>
                         </tr>

@@ -21,6 +21,8 @@
 #         users will have to answer the question every time, which can
 #         get very repetitive so consider carefully before deploying the
 #         case of ``warn=True`` and ``dama_allowed=False``.
+#     override_allowed: instructors are able to customize this setting
+#         on a per-server basis.
 #
 # Notes:
 #   - It might be possible for some of these to be difficult/impossible
@@ -39,26 +41,30 @@ feedback_rules = {
         "allowed": True,
         "warn": True,
         "dama_allowed": True,
+        "override_allowed": True,
     },
     "zero-marks-but-has-only-ticks": {
         "explanation": """
-            <p>You have given <b>0/{max_mark}</b>
+            <p>You have given 0/{max_mark}
             but there are <em>only ticks on the page!</em>
             Please confirm, or consider using comments to clarify.</p>
         """,
         "allowed": True,
         "warn": True,
         "dama_allowed": False,
+        "override_allowed": False,
+        # currently not realizable in modern clients
     },
     "zero-marks-but-has-ticks": {
         "explanation": """
-            <p>You have given <b>0/{max_mark}</b>
+            <p>You have given 0/{max_mark}
             but there are some ticks on the page.
             Please confirm, or consider using comments to clarify.</p>
         """,
         "allowed": True,
         "warn": True,
         "dama_allowed": True,
+        "override_allowed": True,
     },
     "full-marks-but-has-only-crosses": {
         "explanation": """
@@ -69,6 +75,8 @@ feedback_rules = {
         "allowed": True,
         "warn": True,
         "dama_allowed": False,
+        "override_allowed": False,
+        # currently not realizable in modern clients
     },
     "full-marks-but-has-crosses": {
         "explanation": """
@@ -79,6 +87,7 @@ feedback_rules = {
         "allowed": True,
         "warn": True,
         "dama_allowed": True,
+        "override_allowed": True,
     },
     "full-marks-but-other-annotations-contradictory": {
         "explanation": """
@@ -89,6 +98,7 @@ feedback_rules = {
         "allowed": True,
         "warn": True,
         "dama_allowed": True,
+        "override_allowed": True,
     },
     "out-of-does-not-match-max-mark": {
         "explanation": """
@@ -100,6 +110,7 @@ feedback_rules = {
         "allowed": True,
         "warn": True,
         "dama_allowed": True,
+        "override_allowed": True,
     },
     "confusing-to-mix-abs-minus-relative": {
         "explanation": """
@@ -111,14 +122,15 @@ feedback_rules = {
             <blockquote>
               {exemplar2}
             </blockquote>
-            <p>because the reader may be uncertain what is changed by the
-              &ldquo;<b>{exemplar2_display_delta}</b>&rdquo;.
+            <p>because the reader may be uncertain what is changed by that
+              &ldquo;{exemplar2_display_delta}&rdquo;.
             </p>
             <p>Are you sure this feedback will be understandable?</p>
         """,
         "allowed": True,
         "warn": True,
         "dama_allowed": True,
+        "override_allowed": True,
     },
     "confusing-to-mix-abs-plus-relative": {
         "explanation": """
@@ -131,13 +143,14 @@ feedback_rules = {
               {exemplar2}
             </blockquote>
             <p>is potentially confusing.</p>
-            <p>You may want to <b>check with your team</b>
+            <p>You may want to <em>check with your team</em>
             to decide if this case is acceptable or not.</p>
             <p>Do you want to continue?</p>
         """,
         "allowed": True,
         "warn": True,
         "dama_allowed": True,
+        "override_allowed": True,
     },
     "each-page-should-be-annotated": {
         "explanation": """
@@ -154,6 +167,7 @@ feedback_rules = {
         "allowed": True,
         "warn": True,
         "dama_allowed": True,
+        "override_allowed": True,
     },
     # These not implemented yet: Issue #2037
     "mix-up-and-down-rubrics-unambiguous-case": {
@@ -164,11 +178,13 @@ feedback_rules = {
         "allowed": False,
         "warn": True,
         "dama_allowed": False,
+        "override_allowed": False,
     },
     "mix-up-and-down-rubrics-ambiguous-case": {
         "explanation": "TODO: not implemented within this system",
         "allowed": False,
         "warn": True,
         "dama_allowed": False,
+        "override_allowed": False,
     },
 }

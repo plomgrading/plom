@@ -322,9 +322,17 @@ def _rules_as_list(rules: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     # dict, so use a list, sorted alphabetically by code (TODO: for now!)
     L = []
     for code in sorted(rules.keys()):
-        data = rules[code].copy()
-        data.update({"code": code})
-        L.append(data)
+        data = rules[code]
+        if data["override_allowed"]:
+            data = data.copy()
+            data.update({"code": code})
+            L.append(data)
+    for code in sorted(rules.keys()):
+        data = rules[code]
+        if not data["override_allowed"]:
+            data = data.copy()
+            data.update({"code": code})
+            L.append(data)
     return L
 
 
