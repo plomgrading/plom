@@ -60,7 +60,8 @@ class PlomClasslistValidator:
                 raise ValueError("The CSV file has no header")
             column_names = [x.casefold() for x in reader.fieldnames]
             if any(x in potential_column_names for x in column_names):
-                print("Appears to have reasonable header - continuing.")
+                pass
+                # print("Appears to have reasonable header - continuing.")
             else:
                 raise ValueError("The CSV header has no fields that Plom recognises")
 
