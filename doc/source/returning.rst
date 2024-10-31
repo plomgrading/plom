@@ -149,10 +149,8 @@ Make an "API key" for your Canvas account:
     and at least before 2022-11-08 at UBC, it would fail for TA Graders,
     `Issue #2338 <https://gitlab.com/plom/plom/-/issues/2338>`_.
 
-Also in Canvas, create column "Midterm 1" (or whatever) in Canvas with the
-correct number of points.  **Publish the column** but set to manual release
-(if you don't publish, you may get confusing error messages such
-as "user not authorized to perform that action").
+Also in Canvas, create an Assignment "Midterm 1" (or whatever) in Canvas with the
+correct number of points.  **Publish the Assignment** but set to manual release.
 
 Run ``./plom-push-to-canvas.py --help`` for instructions.
 Use the ``--dry-run`` mode first!
