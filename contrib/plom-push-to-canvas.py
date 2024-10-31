@@ -243,6 +243,13 @@ if __name__ == "__main__":
         print(f'Note: you can use "--assignment {assignment.id}" to reselect.\n')
     print(f"Ok uploading to Assignment: {assignment}")
 
+    print(f'\nChecking if "{assignment}" is published...')
+    if not assignment.published:
+        raise ValueError(
+            "Assignment is NOT published: see the docs at "
+            "https://plom.rtfd.io/en/latest/returning.html#return-via-canvas"
+        )
+
     print("\nChecking if you have `marks.csv`...")
     print("  --------------------------------------------------------------------")
     if not Path("marks.csv").exists():
