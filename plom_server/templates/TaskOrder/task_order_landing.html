@@ -59,7 +59,7 @@
             <table class="table table-small sortable text-center align-middle">
                 <thead class="sticky-top">
                     <th scope="col">Paper ID</th>
-                    {% for q in q_labels %}<th scope="col">{{ q }}</th>{% endfor %}
+                    {% for qi, qlabelstr, qlabelhtml in qlabels %}<th scope="col">{{ qlabelhtml|safe }}</th>{% endfor %}
                 </thead>
                 <tbody>
                     {% for p, priority_status_list in paper_to_priority_dict.items %}
