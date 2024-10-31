@@ -70,8 +70,8 @@ class PlomClasslistValidator:
             for x in potential_column_names:
                 if sum([x == y for y in column_names]) > 1:
                     raise ValueError(
-                        f'Column "{x}" is repeated multiple times'
-                        f" in the CSV header: {column_names}"
+                        f'Column "{x}" is repeated multiple times in the '
+                        f'CSV header: {", ".join(x for x in reader.fieldnames)}'
                     )
 
             # now actually read the entries
@@ -304,8 +304,7 @@ class PlomClasslistValidator:
         try:
             cl_as_dicts = self.readClassList(filename)
         except (ValueError, FileNotFoundError) as err:
-            e = f"Can't read {filename}: {err}"
-            werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": e})
+            werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": f"{err}"})
             return (False, werr)
         except Exception as err:
             e = f"Some other sort of error reading {filename}: {err}"
