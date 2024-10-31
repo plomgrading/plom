@@ -5,11 +5,11 @@
 -->
 <div>
     <div class="d-flex justify-content-between p-2">
-        <span class="fs-6">Paper {{ paper }} question index {{ question }}</span>
+        <span class="fs-6">Paper {{ paper }} question index {{ question_idx }}</span>
     </div>
 </div>
 <div class="overflow-x-scroll overflow-y-scroll">
     <img class="m-1 p-1 border"
-         src="{% url 'progress_annotation_img' paper question %}"
+         src="{% url '_progress_annotation_img' annotation_image_id %}"
          style="height: 55vh" />
 </div>

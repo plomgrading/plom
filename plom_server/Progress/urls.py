@@ -75,14 +75,14 @@ urlpatterns = [
         name="progress_newest_marking_task_details",
     ),
     path(
-        "mark/task_annotation/annotation_img_wrap/<int:paper>/<int:question>",
+        "mark/task_annotation/annotation_img_wrap/<int:paper>/<int:question_idx>",
         AnnotationImageWrapView.as_view(),
         name="progress_annotation_img_wrap",
     ),
     path(
-        "mark/task_annotation/annotation_img/<int:paper>/<int:question>",
+        "mark/task_annotation/annotation_img/<int:annotation_image_id>",
         AnnotationImageView.as_view(),
-        name="progress_annotation_img",
+        name="_progress_annotation_img",
     ),
     path(
         "mark/task_annotation/original_img_wrap/<int:paper>/<int:question>",
