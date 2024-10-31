@@ -107,18 +107,24 @@ class PQVMappingView(ManagerRequiredView):
         if not SpecificationService.is_there_a_spec():
             return {"no_spec": True}
 
+        triples = SpecificationService.get_question_html_label_triples()
+        question_indices = [t[0] for t in triples]
+        fixshuf = SpecificationService.get_selection_method_of_all_questions()
+        labels_fix = ", ".join(t[2] for t in triples if fixshuf[t[0]] == "fix")
+        labels_shf = ", ".join(t[2] for t in triples if fixshuf[t[0]] == "shuffle")
+
+        num_students = StagingStudentService().how_many_students()
+
         context = {
-            "number_of_questions": SpecificationService.get_n_questions(),
-            "question_indices": SpecificationService.get_question_indices(),
-            "question_labels_html": SpecificationService.get_question_html_label_triples(),
-            "fix_questions": SpecificationService.get_fix_questions(),
-            "shuffle_questions": SpecificationService.get_shuffle_questions(),
+            "question_indices": question_indices,
+            "question_labels_html": triples,
+            "question_labels_html_fix": labels_fix,
+            "question_labels_html_shuffle": labels_shf,
             "prenaming": PrenameSettingService().get_prenaming_setting(),
             "pqv_mapping_present": PaperInfoService().is_paper_database_fully_populated(),
-            "number_of_students": StagingStudentService().how_many_students(),
-            "number_plus_twenty": StagingStudentService().how_many_students() + 20,
-            "number_times_1dot1": (StagingStudentService().how_many_students() * 11)
-            // 10,
+            "number_of_students": num_students,
+            "number_plus_twenty": num_students + 20,
+            "number_times_1dot1": (num_students * 11) // 10,
             "student_list_present": StagingStudentService().are_there_students(),
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
             "chore_in_progress": PaperCreatorService.is_chore_in_progress(),

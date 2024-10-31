@@ -26,22 +26,16 @@
                 <p>
                     Assessment specification indicates:
                     <ul>
-                        {% if fix_questions %}
+                        {% if question_labels_html_fix %}
                             <li>
                                 The following questions will all be taken from source-version 1:
-                                {% for ql in fix_questions %}
-                                    {{ ql|safe }}
-                                    {% if not forloop.last %},{% endif %}
-                                {% endfor %}
+                                {{ question_labels_html_fix|safe }}
                             </li>
                         {% endif %}
-                        {% if shuffle_questions %}
+                        {% if question_labels_html_shuffle %}
                             <li>
                                 The following questions will be selected randomly from all source-versions:
-                                {% for ql in shuffle_questions %}
-                                    {{ ql|safe }}
-                                    {% if not forloop.last %},{% endif %}
-                                {% endfor %}
+                                {{ question_labels_html_shuffle|safe }}
                             </li>
                         {% endif %}
                     </ul>
@@ -266,7 +260,7 @@
                                                         a <tt>paper_number</tt> column
                                                     </li>
                                                     <li>
-                                                        {{ number_of_questions }} columns with headers
+                                                        {{ question_indices|length }} columns with headers
                                                         <tt>q{{ question_indices|first }}.version</tt>
                                                         up to
                                                         <tt>q{{ question_indices|last }}.version</tt>
