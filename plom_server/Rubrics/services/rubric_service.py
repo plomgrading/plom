@@ -447,33 +447,26 @@ class RubricService:
             Rubric.objects.filter(rid=rid, latest=False).all().order_by("revision")
         )
 
-    def init_rubrics(self, username: str) -> bool:
+    def init_rubrics(self) -> bool:
         """Add special rubrics such as deltas and per-question specific.
-
-        Args:
-            username: which user to associate with the initialized rubrics.
 
         Returns:
             True if initialized or False if it was already initialized.
 
-        Exceptions:
-            ValueError: username does not exist or is not part of the manager group.
         """
-        try:
-            _ = User.objects.get(username__iexact=username, groups__name="manager")
-        except ObjectDoesNotExist as e:
-            raise ValueError(
-                f"User '{username}' does not exist or has wrong permissions!"
-            ) from e
-        # TODO: legacy checks for specific "no answer given" rubric, see `db_create.py`
         existing_rubrics = Rubric.objects.all()
         if existing_rubrics:
             return False
-        self._build_system_rubrics(username)
+        self._build_system_rubrics()
         return True
 
-    def _build_system_rubrics(self, username: str) -> None:
+    def _build_system_rubrics(self) -> None:
         log.info("Building special manager-generated rubrics")
+
+        # get the first manager object
+        any_manager = User.objects.filter(groups__name="manager").first()
+        username = any_manager.username
+
         # create standard manager delta-rubrics - but no 0, nor +/- max-mark
         for q in SpecificationService.get_question_indices():
             mx = SpecificationService.get_question_max_mark(q)

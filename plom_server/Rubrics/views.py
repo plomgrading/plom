@@ -5,6 +5,7 @@
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Andrew Rechnitzer
 
 from __future__ import annotations
 
@@ -27,10 +28,10 @@ from plom.misc_utils import pprint_score
 from Base.base_group_views import ManagerRequiredView
 from Base.models import SettingsModel
 from Papers.services import SpecificationService
+from Preparation.services import PapersPrinted
 from .services import RubricService
 from .forms import (
-    RubricAdminForm,
-    RubricDemoAdminForm,
+    RubricHalfMarkForm,
     RubricDiffForm,
     RubricWipeForm,
     RubricFilterForm,
@@ -45,20 +46,22 @@ class RubricAdminPageView(ManagerRequiredView):
     """Initializing rubrics, maybe other features in the future."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        context = self.build_context()
+
+        if not PapersPrinted.have_papers_been_printed():
+            return render(request, "Finish/finish_not_printed.html", context=context)
+
         template_name = "Rubrics/rubrics_admin.html"
-        form = RubricAdminForm(request.GET)
-        rubric_demo_form = RubricDemoAdminForm(request.GET)
+        rubric_halfmark_form = RubricHalfMarkForm(request.GET)
         download_form = RubricDownloadForm(request.GET)
         upload_form = RubricUploadForm()
-        context = self.build_context()
         rubrics = RubricService.get_all_rubrics()
         demo_rubrics = rubrics.filter(value__exact=0.5).filter(text__exact=".")
         context.update(
             {
                 "rubrics": rubrics,
                 "demo_rubrics": demo_rubrics,
-                "rubric_admin_form": form,
-                "rubric_demo_admin_form": rubric_demo_form,
+                "rubric_halfmark_form": rubric_halfmark_form,
                 "rubric_download_form": download_form,
                 "rubric_upload_form": upload_form,
             }
@@ -67,22 +70,15 @@ class RubricAdminPageView(ManagerRequiredView):
 
     def post(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/rubrics_admin.html"
-        form = RubricAdminForm(request.POST)
-        rubric_demo_form = RubricDemoAdminForm(request.GET)
+        rubric_halfmark_form = RubricHalfMarkForm(request.GET)
         download_form = RubricDownloadForm(request.GET)
         upload_form = RubricUploadForm()
         context = self.build_context()
-        if form.is_valid():
-            # TODO: not necessarily the one who logged in; does it matter?
-            any_manager = User.objects.filter(groups__name="manager").first()
-            RubricService().init_rubrics(any_manager.username)
-        # and if not valid, this just kinda DTRT (?)
         rubrics = RubricService.get_all_rubrics()
         context.update(
             {
                 "rubrics": rubrics,
-                "rubric_admin_form": form,
-                "rubric_demo_admin_form": rubric_demo_form,
+                "rubric_halfmark_form": rubric_halfmark_form,
                 "rubric_download_form": download_form,
                 "rubric_upload_form": upload_form,
             }
@@ -90,7 +86,7 @@ class RubricAdminPageView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
 
-class RubricDemoView(ManagerRequiredView):
+class RubricHalfMarksView(ManagerRequiredView):
     """Create demo rubrics."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
@@ -236,6 +232,8 @@ class RubricLandingPageView(ManagerRequiredView):
         context = self.build_context()
         if not SpecificationService.is_there_a_spec():
             return render(request, "Finish/finish_no_spec.html", context=context)
+        if not PapersPrinted.have_papers_been_printed():
+            return render(request, "Finish/finish_not_printed.html", context=context)
 
         template_name = "Rubrics/rubrics_landing.html"
         rubric_filter_form = RubricFilterForm

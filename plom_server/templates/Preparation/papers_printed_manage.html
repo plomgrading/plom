@@ -18,9 +18,10 @@
                     {% if can_unset_papers_printed %}
                         <p>
                             <ul>
-                                <li>Although you have set this, no scans have been uploaded, so this can be unset.</li>
-                                <li>
-                                    Be extremely careful doing this. Any existing papers - both PDFs and physical hard-copies - should be discarded before you change anything.
+                                <li class="alert alert-info">Although you have set this, no scans have been uploaded, so this can be unset.</li>
+                                <li class="alert alert-warning">Note that if you unset this any existing rubrics will be deleted</li>
+                                <li class="alert alert-warning">
+                                    Any existing papers - both PDFs and physical hard-copies - should be discarded before you change this setting.
                                 </li>
                             </ul>
                         </p>
@@ -34,8 +35,8 @@
                     <h4 class="card-title">Papers have not yet been printed</h4>
                     <p>
                         <ul>
-                            <li>Before this set you can modify your assessment, but you cannot upload scanned paper bundles.</li>
-                            <li>After it is set, you cannot modify your assessment,  but you can upload scanned papers.</li>
+                            <li class="alert alert-success">Before this set you can modify your assessment, but you cannot upload scanned paper bundles or build rubrics.</li>
+                            <li class="alert alert-warning">After it is set, you cannot modify your assessment,  but you can upload scanned papers and build rubrics.</li>
                             <li>
                                 Note that it is possible to unset this provided you have not uploaded any scans - but be careful to make sure any existing papers are discarded.
                             </li>

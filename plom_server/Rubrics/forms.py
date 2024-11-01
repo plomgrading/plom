@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Andrew Rechnitzer
 
 from django import forms
 
@@ -10,16 +11,8 @@ from Papers.services import SpecificationService
 from .models import Rubric
 
 
-class RubricAdminForm(forms.Form):
-    pass
-    # TODO: "Also create the +1, +2, -1, -2, "naked delta" rubrics"
-    # TODO: Issue #2915
-    # create_naked_deltas = forms.BooleanField(
-    #     required=False, widget=forms.CheckboxInput(attrs={"checked": True})
-    # )
-
-
-class RubricDemoAdminForm(forms.Form):
+class RubricHalfMarkForm(forms.Form):
+    # creates half-mark rubrics
     pass
 
 

@@ -2,6 +2,7 @@
 # Copyright (C) 2021-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Andrew Rechnitzer
 
 from __future__ import annotations
 
@@ -103,9 +104,9 @@ class Command(BaseCommand):
                 raise CommandError(e)
         return len(rubrics)
 
-    def init_rubrics_cmd(self, username):
+    def init_rubrics_cmd(self):
         service = RubricService()
-        return service.init_rubrics(username)
+        return service.init_rubrics()
 
     def erase_all_rubrics_cmd(self):
         service = RubricService()
@@ -196,15 +197,10 @@ class Command(BaseCommand):
             description="Various tasks about rubrics.",
         )
 
-        sp_init = sub.add_parser(
+        _ = sub.add_parser(
             "init",
             help="Initialize the rubric system with system rubrics",
             description="Initialize the rubric system with system rubrics.",
-        )
-        sp_init.add_argument(
-            "username",
-            type=str,
-            help="Name of user who is initializing the rubrics.",
         )
 
         sp_wipe = sub.add_parser(
@@ -272,7 +268,7 @@ class Command(BaseCommand):
     def handle(self, *args, **opt):
         if opt["command"] == "init":
             try:
-                if self.init_rubrics_cmd(opt["username"]):
+                if self.init_rubrics_cmd():
                     self.stdout.write(self.style.SUCCESS("rubric system initialized"))
                 else:
                     raise CommandError("rubric system already initialized")
