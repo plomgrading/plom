@@ -29,31 +29,31 @@
            href="{% url 'feedback_rules' %}">Feedback rules&hellip;</a>
     </div>
     <div class="card my-2">
-    <div class="row my-2 mx-2">
-        <div class="col-10">
-            <form method="get" action="" class="form-inline">
-                <div class="form-group mr-2">
-                    {{ rubric_filter_form }}
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-filter"></i> Filter
-                    </button>
-                </div>
-            </form>
+        <div class="row my-2 mx-2">
+            <div class="col-10">
+                <form method="get" action="" class="form-inline">
+                    <div class="form-group mr-2">
+                        {{ rubric_filter_form }}
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-filter"></i> Filter
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-2">
+                <button type="submit"
+                        class="btn btn-primary float-end"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editModal"
+                        disabled
+                        onclick="populateFields()">
+                    <i class="bi bi-plus-circle-fill"></i> Create Rubric
+                    <p>FUTURE USE</p>
+                </button>
+            </div>
         </div>
-        <div class="col-2">
-            <button type="submit"
-                    class="btn btn-primary float-end"
-                    data-bs-toggle="modal"
-                    data-bs-target="#editModal"
-                    disabled
-                    onclick="populateFields()">
-                <i class="bi bi-plus-circle-fill"></i> Create Rubric
-                <p>FUTURE USE</p>
-            </button>
-        </div>
-    </div>
-    {% comment %} Table {% endcomment %}
-    <div class="m-2">{% render_table rubrics_table %}</div>
+        {% comment %} Table {% endcomment %}
+        <div class="m-2">{% render_table rubrics_table %}</div>
     </div>
     {% include "./modal_forms.html" %}
 {% endblock main_content %}
