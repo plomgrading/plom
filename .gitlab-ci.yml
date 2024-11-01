@@ -28,10 +28,10 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:26.1.3
+image: docker:27.3.1
 
 services:
-  - docker:26.1.3-dind
+  - docker:27.3.1-dind
 
 # $CI_REGISTRY_IMAGE is:
 # registry.gitlab.com/plom/plom
@@ -145,7 +145,7 @@ djlint:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.35.2
+    - pip install djlint~=1.35.3
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --profile django
 
@@ -154,7 +154,7 @@ djlint-check:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.35.2
+    - pip install djlint~=1.35.3
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --check
 
@@ -341,7 +341,7 @@ coverage:
   needs: ["container-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.6.2
+    - pip install pytest pytest-cov coverage[toml]~=7.6.4
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -391,7 +391,7 @@ mypy-type-checking:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - python3 -m pip install mypy~=1.11.2
+    - python3 -m pip install mypy~=1.13.0
   script:
     - mypy --version
     - mypy plom --python-ver 3.8 --install-types --non-interactive || true
@@ -406,7 +406,7 @@ pyright:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - python3 -m pip install pyright~=1.1.384
+    - python3 -m pip install pyright~=1.1.387
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -430,7 +430,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.6.9
+    - python3 -m pip install ruff~=0.7.1
   script:
     - ruff check .
     # ruff format .
@@ -441,7 +441,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.6.9
+    - python3 -m pip install ruff~=0.7.1
   script:
     # run once just for log out but don't fail
     - EXCEPTIONS="D101,D102,D103,D104,D106"
@@ -476,7 +476,7 @@ webplom_test:
   image: $IM
   script:
     - export PYTHONPATH=$PWD
-    - python3 -m pip install coverage~=7.6.2
+    - python3 -m pip install coverage~=7.6.4
     - pushd plom_server
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py makemigrations
