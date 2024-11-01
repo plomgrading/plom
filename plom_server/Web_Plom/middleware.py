@@ -4,6 +4,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024 Aidan Murphy
 #
 # But this codes seems to have originally come from
 #    https://gist.github.com/un33k/2913897
@@ -11,30 +12,27 @@
 
 from django.core.cache import cache
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.utils.deprecation import MiddlewareMixin
 
-# Online Threshold: If the user was logged out for 30 minutes after 2 hours inactivity,
-#                   The user will become inactive status
-# Online Max: Maximum markers and scanners in total allowed to be active together
+# Online Threshold: A user is considered 'inactive' after this many seconds idle
+# Online Max: Only track this many users at once, for performance reasons
 ONLINE_THRESHOLD = getattr(settings, "ONLINE_THRESHOLD", 60 * 30)
 ONLINE_MAX = getattr(settings, "ONLINE_MAX", 60)
-
-
-def get_online_now(self):
-    return User.objects.filter(id__in=self.online_now_ids or [])
 
 
 class OnlineNowMiddleware(MiddlewareMixin):
     """Maintains a list of users who have interacted with the website recently.
 
-    Their user IDs are available as ``online_now_ids`` on the request object,
-    and their corresponding users are available (lazily) as the
-    ``online_now`` property on the request object.
+    Rather than posting to the db every time a user makes a request,
+    it is cached for fast recall.
+    Using the cache means the list isn't reliable if the server is multithreaded.
     """
 
     def process_request(self, request):
-        # First get the index
+        """Update the list of online users.
+
+        The list is ordered according to who has spen the most time idle.
+        """
         uids = cache.get("online-now", [])
 
         # Perform the multiget on the individual online uid keys
@@ -42,23 +40,16 @@ class OnlineNowMiddleware(MiddlewareMixin):
         fresh = cache.get_many(online_keys).keys()
         online_now_ids = [int(k.replace("online-", "")) for k in fresh]
 
-        # If the user is authenticated, add their id to the list
         if request.user.is_authenticated:
             uid = request.user.id
-            # If their uid is already in the list, we want to bump it
-            # to the top, so we remove the earlier entry.
+            # order list by recency
             if uid in online_now_ids:
                 online_now_ids.remove(uid)
             online_now_ids.append(uid)
-            # If the total number of online users is greater than 60,
-            # we will force to logout some users
+            # long lists cause performance issues
             if len(online_now_ids) > ONLINE_MAX:
                 del online_now_ids[0]
 
-        # Attach our modifications to the request object
-        request.__class__.online_now_ids = online_now_ids
-        request.__class__.online_now = property(get_online_now)
-
         # Set the new cache
         cache.set("online-%s" % (request.user.pk,), True, ONLINE_THRESHOLD)
-        cache.set("online-now", online_now_ids, ONLINE_THRESHOLD)
+        cache.set("online-now", online_now_ids, ONLINE_THRESHOLD)  # race condition

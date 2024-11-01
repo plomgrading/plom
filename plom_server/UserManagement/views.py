@@ -12,6 +12,7 @@ import json
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.http import HttpRequest, HttpResponse, Http404
 from django_htmx.http import HttpResponseClientRefresh
 from django.shortcuts import get_object_or_404
@@ -49,9 +50,12 @@ class UserPage(ManagerRequiredView):
             "auth_token"
         )
         # fetch these so that we don't loop over this in the template
-        # remove db hits in loops.  TODO: feels strange that this comes
-        # from the request.  See code code copy-pasted into middleware.py
-        online_now_ids = request.online_now_ids
+        # remove db hits in loops.
+        uids = cache.get("online-now", [])
+
+        online_keys = ["online-%s" % (u,) for u in uids]
+        fresh = cache.get_many(online_keys).keys()
+        online_now_ids = [int(k.replace("online-", "")) for k in fresh]
 
         context = {
             "online_now_ids": online_now_ids,
