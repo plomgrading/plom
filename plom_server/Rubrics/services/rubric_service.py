@@ -693,6 +693,12 @@ class RubricService:
     def erase_all_rubrics(self) -> int:
         """Remove all rubrics, permanently deleting them.  BE CAREFUL.
 
+        Warning - this does not check to see if any of these rubrics have been
+        used. This should only be called by the papers_are_printed setter.
+
+        TODO - this should raise an exception if one attempts to
+        erase rubrics that have been used.
+
         Returns:
             How many rubrics were removed.
         """

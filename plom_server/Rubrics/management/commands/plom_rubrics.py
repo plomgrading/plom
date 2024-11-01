@@ -108,10 +108,6 @@ class Command(BaseCommand):
         service = RubricService()
         return service.init_rubrics()
 
-    def erase_all_rubrics_cmd(self):
-        service = RubricService()
-        return service.erase_all_rubrics()
-
     def download_rubrics_to_file(
         self,
         filename: None | str | pathlib.Path,
@@ -203,18 +199,6 @@ class Command(BaseCommand):
             description="Initialize the rubric system with system rubrics.",
         )
 
-        sp_wipe = sub.add_parser(
-            "wipe",
-            help="Erase all rubrics, including system rubrics (CAREFUL)",
-            description="""
-                Erase all rubrics, including system rubrics.
-                BE CAREFUL: this will remove any rubrics that markers have added.
-            """,
-        )
-        sp_wipe.add_argument(
-            "--yes", action="store_true", help="Don't ask for confirmation."
-        )
-
         sp_push = sub.add_parser(
             "push",
             help="Add pre-build rubrics",
@@ -274,15 +258,6 @@ class Command(BaseCommand):
                     raise CommandError("rubric system already initialized")
             except ValueError as e:
                 raise CommandError(e)
-
-        elif opt["command"] == "wipe":
-            self.stdout.write(self.style.WARNING("CAUTION: "), ending="")
-            self.stdout.write("This will erase ALL rubrics on the server!")
-            if not opt["yes"]:
-                if input('  Are you sure?  (type "yes" to continue) ') != "yes":
-                    return
-            N = self.erase_all_rubrics_cmd()
-            self.stdout.write(self.style.SUCCESS(f"{N} rubrics permanently deleted"))
 
         elif opt["command"] == "push":
             if opt["demo"]:

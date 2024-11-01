@@ -99,47 +99,6 @@ class RubricHalfMarksView(ManagerRequiredView):
         return redirect("rubrics_admin")
 
 
-class RubricWipePageView(ManagerRequiredView):
-    """Confirm before wiping rubrics."""
-
-    def get(self, request: HttpRequest) -> HttpResponse:
-        template_name = "Rubrics/rubrics_wipe.html"
-        context = self.build_context()
-        form = RubricWipeForm()
-        # TODO: what is supposed to happen if we don't have a shortname yet?
-        # TODO: do we need a `get_shortname_or_None`?  Related to Issue #2996
-        context.update(
-            {
-                "rubric_wipe_form": form,
-                "short_name": SpecificationService.get_shortname(),
-                "long_name": SpecificationService.get_longname(),
-                "n_rubrics": RubricService().get_rubric_count(),
-            }
-        )
-        return render(request, template_name, context=context)
-
-    def post(self, request: HttpRequest) -> HttpResponse:
-        template_name = "Rubrics/rubrics_wipe.html"
-        context = self.build_context()
-        form = RubricWipeForm(request.POST)
-        short_name = SpecificationService.get_shortname()
-        _confirm_field = "confirm_by_typing_the_short_name"
-        if form.is_valid():
-            if form.cleaned_data[_confirm_field] == short_name:
-                RubricService().erase_all_rubrics()
-                return HttpResponseRedirect(reverse("rubrics_landing"))
-            form.add_error(_confirm_field, "Short name did not match")
-        context.update(
-            {
-                "rubric_wipe_form": form,
-                "short_name": SpecificationService.get_shortname(),
-                "long_name": SpecificationService.get_longname(),
-                "n_rubrics": RubricService().get_rubric_count(),
-            }
-        )
-        return render(request, template_name, context=context)
-
-
 class RubricAccessPageView(ManagerRequiredView):
     """Highlevel control of who can modify/create rubrics."""
 
