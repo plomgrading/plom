@@ -24,6 +24,7 @@ from Base.base_group_views import ManagerRequiredView
 from Progress.services.userinfo_service import UserInfoServices
 from .services import PermissionChanger
 from .services import QuotaService
+from .services.UsersService import get_user_info
 from .models import Quota
 
 
@@ -40,15 +41,7 @@ class UserPage(ManagerRequiredView):
     """
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        # TODO: use UsersService here
-        managers = User.objects.filter(groups__name="manager")
-        scanners = User.objects.filter(groups__name="scanner").exclude(
-            groups__name="manager"
-        )
-        lead_markers = User.objects.filter(groups__name="lead_marker")
-        markers = User.objects.filter(groups__name="marker").prefetch_related(
-            "auth_token"
-        )
+        users = get_user_info()
         # fetch these so that we don't loop over this in the template
         # remove db hits in loops.
         uids = cache.get("online-now", [])
@@ -59,10 +52,10 @@ class UserPage(ManagerRequiredView):
 
         context = {
             "online_now_ids": online_now_ids,
-            "scanners": scanners,
-            "markers": markers,
-            "lead_markers": lead_markers,
-            "managers": managers,
+            "scanners": users["scanners"],
+            "markers": users["markers"],
+            "lead_markers": users["lead_markers"],
+            "managers": users["managers"],
             "users_with_quota_by_pk": QuotaService.get_list_of_user_pks_with_quotas(),
         }
         return render(request, "UserManagement/users.html", context)
