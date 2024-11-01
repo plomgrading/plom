@@ -30,6 +30,7 @@ def set_papers_printed(status: bool, *, ignore_dependencies: bool = False):
     KWArgs:
         ignore_dependencies: set this for testing purposes, so that one
             can set papers-printed=true, without actually building pdfs.
+            Setting this also means rubrics will not be produced.
 
     Raises:
         PlomDependencyConflict: if status cannot be set true/false.
@@ -45,6 +46,9 @@ def set_papers_printed(status: bool, *, ignore_dependencies: bool = False):
     setting_obj = PapersPrintedSettingModel.load()
     setting_obj.have_printed_papers = status
     setting_obj.save()
+
+    if ignore_dependencies:
+        return
 
     from Rubrics.services import RubricService
 
