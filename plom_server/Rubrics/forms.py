@@ -16,11 +16,6 @@ class RubricHalfMarkForm(forms.Form):
     pass
 
 
-class RubricWipeForm(forms.Form):
-    I_am_sure = forms.BooleanField()
-    confirm_by_typing_the_short_name = forms.CharField()
-
-
 class RubricFilterForm(forms.Form):
     KIND_CHOICES = [
         ("", "All Kinds"),

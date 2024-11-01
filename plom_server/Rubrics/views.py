@@ -16,8 +16,7 @@ from typing import Any
 from io import TextIOWrapper, StringIO, BytesIO
 
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.http import HttpResponseRedirect
-from django.shortcuts import render, redirect, reverse
+from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.views.generic.edit import UpdateView
@@ -33,7 +32,6 @@ from .services import RubricService
 from .forms import (
     RubricHalfMarkForm,
     RubricDiffForm,
-    RubricWipeForm,
     RubricFilterForm,
     RubricUploadForm,
     RubricDownloadForm,
