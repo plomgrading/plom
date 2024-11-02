@@ -41,6 +41,15 @@
         <link rel="stylesheet"
               type="text/css"
               href="{% static '/css/diff_table.css' %}" />
+        <!-- Prevents indicator flicker on page load: https://github.com/bigskysoftware/htmx/issues/566 -->
+        <style>
+            .htmx-indicator {
+                opacity: 0;
+            }
+            .htmx-request .htmx-indicator {
+                opacity: 1;
+            }
+        </style>
         <title>
             {% block full_title %}
                 {% block title_prefix %}
