@@ -171,7 +171,7 @@ class RubricService:
             raise ValidationError(serializer.errors)
         new_rubric = serializer.save()
         # TODO: if its new why do we need to clear these?
-        new_rubric.pedagogy_tags.clear()
+        # new_rubric.pedagogy_tags.clear()
         for tag in incoming_data.get("pedagogy_tags", []):
             new_rubric.pedagogy_tags.add(tag)
         rubric_obj = serializer.instance
