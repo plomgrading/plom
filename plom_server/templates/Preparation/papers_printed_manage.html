@@ -4,6 +4,7 @@
     Copyright (C) 2024 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
+{% load static %}
 {% block title %}
     Papers printed
 {% endblock title %}
@@ -34,7 +35,12 @@
                     {% endif %}
                     <a class="btn btn-danger"
                        hx-post="{% url 'prep_finished' %}"
+                       hx-indicator="#myindicator2"
                        hx-confirm="This is dangerous. Are you sure?">Unset 'papers are printed'</a>
+                    <div id="myindicator2" class="htmx-indicator">
+                        <span>Please wait!</span>
+                        <img src="{% static 'ball_triangle.svg' %}" />
+                    </div>
                 {% else %}
                     <h4 class="card-title">Papers have not yet been printed</h4>
                     <p>
@@ -50,7 +56,13 @@
                             </li>
                         </ul>
                     </p>
-                    <a class="btn btn-success" hx-post="{% url 'prep_finished' %}">Set 'papers are printed'</a>
+                    <a class="btn btn-success"
+                       hx-post="{% url 'prep_finished' %}"
+                       hx-indicator="#myindicator1">Set 'papers are printed'</a>
+                    <div id="myindicator1" class="htmx-indicator">
+                        <span>Please wait!</span>
+                        <img src="{% static 'ball_triangle.svg' %}" />
+                    </div>
                 {% endif %}
             </div>
         </div>
