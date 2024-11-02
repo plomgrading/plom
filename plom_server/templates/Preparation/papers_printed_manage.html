@@ -37,10 +37,10 @@
                        hx-post="{% url 'prep_finished' %}"
                        hx-indicator="#myindicator2"
                        hx-confirm="This is dangerous. Are you sure?">Unset 'papers are printed'</a>
-                    <div id="myindicator2" class="htmx-indicator">
-                        <span>Please wait!</span>
+                    <span id="myindicator2" class="htmx-indicator">
                         <img src="{% static 'ball_triangle.svg' %}" />
-                    </div>
+                        Please wait
+                    </span>
                 {% else %}
                     <h4 class="card-title">Papers have not yet been printed</h4>
                     <p>
@@ -59,10 +59,10 @@
                     <a class="btn btn-success"
                        hx-post="{% url 'prep_finished' %}"
                        hx-indicator="#myindicator1">Set 'papers are printed'</a>
-                    <div id="myindicator1" class="htmx-indicator">
-                        <span>Please wait!</span>
+                    <span id="myindicator1" class="htmx-indicator">
                         <img src="{% static 'ball_triangle.svg' %}" />
-                    </div>
+                        Please wait
+                    </span>
                 {% endif %}
             </div>
         </div>
