@@ -155,24 +155,49 @@ class RubricService:
         return self._create_rubric_lowlevel(incoming_data)
 
     # less error checking, for internal use only
-    def _create_rubric_lowlevel(self, incoming_data: dict[str, Any]) -> Rubric:
-        if incoming_data.get("display_delta", None) is None:
+    def _create_rubric_lowlevel(
+        self,
+        data: dict[str, Any],
+        *,
+        _bypass_serializer: bool = False,
+        _bypass_user: User | None = None,
+    ) -> Rubric:
+        if data.get("display_delta", None) is None:
             # if we don't have a display_delta, we'll generate a default one
-            incoming_data["display_delta"] = self._generate_display_delta(
+            data["display_delta"] = self._generate_display_delta(
                 # if value is missing, can only be neutral
                 # missing value will be prohibited in a future MR
-                incoming_data.get("value", 0),
-                incoming_data["kind"],
-                incoming_data.get("out_of", None),
+                data.get("value", 0),
+                data["kind"],
+                data.get("out_of", None),
             )
-        incoming_data["latest"] = True
-        serializer = RubricSerializer(data=incoming_data)
+        data["latest"] = True
+        if _bypass_serializer:
+            new_rubric = Rubric.objects.create(
+                text=data["text"],
+                question=data["question"],
+                system_rubric=data["system_rubric"],
+                kind=data["kind"],
+                value=data["value"],
+                out_of=data["out_of"],
+                display_delta=data.get("display_delta"),
+                meta=data.get("meta"),
+                user=_bypass_user,  # TODO: None seems just fine too (?)
+                modified_by_user=_bypass_user,
+                latest=data.get("latest"),
+                versions=data.get("versions"),
+            )
+            for tag in data.get("pedagogy_tags", []):
+                new_rubric.pedagogy_tags.add(tag)
+            return new_rubric
+
+        serializer = RubricSerializer(data=data)
         if not serializer.is_valid():
             raise ValidationError(serializer.errors)
         new_rubric = serializer.save()
         # TODO: if its new why do we need to clear these?
         # new_rubric.pedagogy_tags.clear()
-        for tag in incoming_data.get("pedagogy_tags", []):
+        for tag in data.get("pedagogy_tags", []):
             new_rubric.pedagogy_tags.add(tag)
         rubric_obj = serializer.instance
         return rubric_obj
@@ -465,13 +490,16 @@ class RubricService:
         # raise an exception if there aren't any managers.
         if any_manager is None:
             raise ObjectDoesNotExist("No manager users have been created.")
-        any_manager_pk = any_manager.pk
+        # TODO: experimenting with passing in User object instead...
+        # any_manager_pk = any_manager.pk
 
         def create_system_rubric(data):
-            data["user"] = any_manager_pk
-            data["modified_by_user"] = any_manager_pk
+            # data["user"] = any_manager_pk
+            # data["modified_by_user"] = any_manager_pk
             data["system_rubric"] = True
-            self._create_rubric_lowlevel(data)
+            self._create_rubric_lowlevel(
+                data, _bypass_serializer=True, _bypass_user=any_manager
+            )
 
         # create standard manager delta-rubrics - but no 0, nor +/- max-mark
         for q in SpecificationService.get_question_indices():
