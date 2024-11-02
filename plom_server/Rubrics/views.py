@@ -67,11 +67,15 @@ class RubricAdminPageView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        context = self.build_context()
+        # no sneaky using curl to get here.
+        if not PapersPrinted.have_papers_been_printed():
+            return render(request, "Finish/finish_not_printed.html", context=context)
+
         template_name = "Rubrics/rubrics_admin.html"
         rubric_halfmark_form = RubricHalfMarkForm(request.GET)
         download_form = RubricDownloadForm(request.GET)
         upload_form = RubricUploadForm()
-        context = self.build_context()
         rubrics = RubricService.get_all_rubrics()
         context.update(
             {
