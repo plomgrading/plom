@@ -13,7 +13,7 @@ papers, build a spreadsheet and return results to students.
 
 Plom doesn't interface directly with students; Plom is not an LMS!
 
-Use can use the "Reassemble" and "Spreadsheets and Reports" sections
+You can use the "Reassemble" and "Spreadsheets and Reports" sections
 of the Plom web interface to extract files and data from Plom to
 return to students via other means.
 
