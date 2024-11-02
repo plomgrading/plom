@@ -145,6 +145,7 @@ class Rubric(models.Model):
     pedagogy_tags = models.ManyToManyField("QuestionTags.PedagogyTag", blank=True)
 
     def save(self, *args, **kwargs):
+        # TODO: this still gets called even when we bypass the serializer: queries users
         self.full_clean()
         return super(Rubric, self).save(*args, **kwargs)
 
