@@ -452,10 +452,8 @@ class RubricService:
 
         Returns:
             True if initialized or False if it was already initialized.
-
         """
-        existing_rubrics = Rubric.objects.all()
-        if existing_rubrics:
+        if Rubric.objects.exists():
             return False
         self._build_system_rubrics()
         return True
