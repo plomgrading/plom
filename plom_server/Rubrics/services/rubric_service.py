@@ -485,10 +485,7 @@ class RubricService:
                 "username": username,
                 "system_rubric": True,
             }
-            try:
-                r = self.create_rubric(rubric)
-            except AssertionError:
-                print("Skipping absolute rubric, not implemented yet, Issue #2641")
+            self.create_rubric(rubric)
             # log.info("Built no-answer-rubric Q%s: key %s", q, r.pk)
 
             rubric = {
@@ -503,10 +500,7 @@ class RubricService:
                 "username": username,
                 "system_rubric": True,
             }
-            try:
-                r = self.create_rubric(rubric)
-            except AssertionError:
-                print("Skipping absolute rubric, not implemented yet, Issue #2641")
+            self.create_rubric(rubric)
             # log.info("Built no-marks-rubric Q%s: key %s", q, r.pk)
 
             rubric = {
@@ -521,10 +515,7 @@ class RubricService:
                 "username": username,
                 "system_rubric": True,
             }
-            try:
-                r = self.create_rubric(rubric)
-            except AssertionError:
-                print("Skipping absolute rubric, not implemented yet, Issue #2641")
+            self.create_rubric(rubric)
             # log.info("Built full-marks-rubric Q%s: key %s", q, r.pk)
 
             # now make delta-rubrics
