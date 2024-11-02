@@ -12,6 +12,7 @@ import json
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.http import HttpRequest, HttpResponse, Http404
 from django_htmx.http import HttpResponseClientRefresh
 from django.shortcuts import get_object_or_404
@@ -23,6 +24,7 @@ from Base.base_group_views import ManagerRequiredView
 from Progress.services.userinfo_service import UserInfoServices
 from .services import PermissionChanger
 from .services import QuotaService
+from .services.UsersService import get_user_info
 from .models import Quota
 
 
@@ -39,26 +41,21 @@ class UserPage(ManagerRequiredView):
     """
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        # TODO: use UsersService here
-        managers = User.objects.filter(groups__name="manager")
-        scanners = User.objects.filter(groups__name="scanner").exclude(
-            groups__name="manager"
-        )
-        lead_markers = User.objects.filter(groups__name="lead_marker")
-        markers = User.objects.filter(groups__name="marker").prefetch_related(
-            "auth_token"
-        )
+        users = get_user_info()
         # fetch these so that we don't loop over this in the template
-        # remove db hits in loops.  TODO: feels strange that this comes
-        # from the request.  See code code copy-pasted into middleware.py
-        online_now_ids = request.online_now_ids
+        # remove db hits in loops.
+        uids = cache.get("online-now", [])
+
+        online_keys = ["online-%s" % (u,) for u in uids]
+        fresh = cache.get_many(online_keys).keys()
+        online_now_ids = [int(k.replace("online-", "")) for k in fresh]
 
         context = {
             "online_now_ids": online_now_ids,
-            "scanners": scanners,
-            "markers": markers,
-            "lead_markers": lead_markers,
-            "managers": managers,
+            "scanners": users["scanners"],
+            "markers": users["markers"],
+            "lead_markers": users["lead_markers"],
+            "managers": users["managers"],
             "users_with_quota_by_pk": QuotaService.get_list_of_user_pks_with_quotas(),
         }
         return render(request, "UserManagement/users.html", context)
