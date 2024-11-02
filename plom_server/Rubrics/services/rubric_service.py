@@ -465,6 +465,9 @@ class RubricService:
 
         # get the first manager object
         any_manager = User.objects.filter(groups__name="manager").first()
+        # raise an exception if there aren't any managers.
+        if any_manager is None:
+            raise ObjectDoesNotExist("No manager users have been created.")
         username = any_manager.username
 
         # create standard manager delta-rubrics - but no 0, nor +/- max-mark
@@ -696,12 +699,20 @@ class RubricService:
         Warning - this does not check to see if any of these rubrics have been
         used. This should only be called by the papers_are_printed setter.
 
+        Raises:
+            ValueError: when any annotations have been created.
+
         TODO - this should raise an exception if one attempts to
         erase rubrics that have been used.
 
         Returns:
             How many rubrics were removed.
         """
+        if Annotation.objects.exists():
+            raise ValueError(
+                "Annotations have been created. You cannot delete rubrics."
+            )
+
         n = 0
         with transaction.atomic():
             for r in Rubric.objects.all().select_for_update():
