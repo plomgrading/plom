@@ -54,6 +54,7 @@
                                 use <q>safe mode rendering</q> of each page
                             </label>
                         </div>
+                        <!-- TODO: can't get hx-disabled-elt="self" working on this button -->
                         <button type="submit" class="btn btn-primary" hx-indicator="#myindicator">Upload</button>
                         <span id="myindicator" class="htmx-indicator">
                             <img src="{% static 'ball_triangle.svg' %}" />
