@@ -14,6 +14,7 @@ from datetime import datetime
 from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
 from django.http import Http404, FileResponse
 from django.shortcuts import render
@@ -158,48 +159,46 @@ class ScannerUploadView(ScannerRequiredView):
         return render(request, "Scan/bundle_upload.html", context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        context = self.build_context()
         form = BundleUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            data = form.cleaned_data  # this checks the file really is a valid PDF
-
-            user = request.user
-            slug = data["slug"]
-            bundle_file = data["pdf"]
-            pdf_hash = data["sha256"]
-            number_of_pages = data["number_of_pages"]
-            timestamp = datetime.timestamp(data["time_uploaded"])
-
-            ScanService().upload_bundle(
-                bundle_file,
-                slug,
-                user,
-                timestamp,
-                pdf_hash,
-                number_of_pages,
-                force_render=data["force_render"],
-                read_after=data["read_after"],
-            )
-            if len(pdf_hash) >= (12 + 12 + 3):
-                brief_hash = pdf_hash[:12] + "..." + pdf_hash[-12:]
-            else:
-                brief_hash = pdf_hash
-            context.update(
-                {
-                    "success_msg": (
-                        f"Uploaded {slug} with {number_of_pages} pages "
-                        f"and hash {brief_hash}. "
-                        "Background processing started."
-                    )
-                }
-            )
-        else:
+        if not form.is_valid():
             # we can get the errors from the form and pass them into the context
             # unfortunately form.errors is a dict of lists, so lets flatten it a bit.
             # see = https://docs.djangoproject.com/en/5.0/ref/forms/api/#django.forms.Form.errors
             error_list: list[str] = sum(form.errors.values(), [])
-            context.update({"upload_errors": error_list})
-        return render(request, "Scan/bundle_upload.html", context)
+            messages.add_message(request, messages.ERROR, error_list)
+            return HttpResponseClientRefresh()
+
+        data = form.cleaned_data  # this checks the file really is a valid PDF
+        user = request.user
+        slug = data["slug"]
+        bundle_file = data["pdf"]
+        pdf_hash = data["sha256"]
+        number_of_pages = data["number_of_pages"]
+        timestamp = datetime.timestamp(data["time_uploaded"])
+        ScanService().upload_bundle(
+            bundle_file,
+            slug,
+            user,
+            timestamp,
+            pdf_hash,
+            number_of_pages,
+            force_render=data["force_render"],
+            read_after=data["read_after"],
+        )
+        if len(pdf_hash) >= (12 + 12 + 3):
+            brief_hash = pdf_hash[:12] + "..." + pdf_hash[-12:]
+        else:
+            brief_hash = pdf_hash
+        messages.add_message(
+            request,
+            messages.INFO,
+            (
+                f"Uploaded {slug} with {number_of_pages} pages "
+                f"and hash {brief_hash}. "
+                "Background processing started."
+            ),
+        )
+        return HttpResponseClientRefresh()
 
 
 class GetBundleView(ScannerRequiredView):
