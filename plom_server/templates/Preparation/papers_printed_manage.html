@@ -33,10 +33,11 @@
                     {% else %}
                         <p>Papers have been scanned, so you cannot change this setting.</p>
                     {% endif %}
-                    <a class="btn btn-danger"
-                       hx-post="{% url 'prep_finished' %}"
-                       hx-indicator="#myindicator2"
-                       hx-confirm="This is dangerous. Are you sure?">Unset 'papers are printed'</a>
+                    <button class="btn btn-danger"
+                            hx-post="{% url 'prep_finished' %}"
+                            hx-disabled-elt="this"
+                            hx-indicator="#myindicator2"
+                            hx-confirm="This is dangerous. Are you sure?">Unset 'papers are printed'</button>
                     <span id="myindicator2" class="htmx-indicator">
                         <img src="{% static 'ball_triangle.svg' %}" />
                         Please wait
@@ -56,9 +57,10 @@
                             </li>
                         </ul>
                     </p>
-                    <a class="btn btn-success"
-                       hx-post="{% url 'prep_finished' %}"
-                       hx-indicator="#myindicator1">Set 'papers are printed'</a>
+                    <button class="btn btn-success"
+                            hx-post="{% url 'prep_finished' %}"
+                            hx-disabled-elt="this"
+                            hx-indicator="#myindicator1">Set 'papers are printed'</button>
                     <span id="myindicator1" class="htmx-indicator">
                         <img src="{% static 'ball_triangle.svg' %}" />
                         Please wait
