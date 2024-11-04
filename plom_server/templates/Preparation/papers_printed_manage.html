@@ -1,8 +1,13 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Andrew Rechnitzer
+    Copyright (C) 2024 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    Papers printed
+{% endblock title %}
 {% block page_heading %}
     Tell Plom that papers have been printed
 {% endblock page_heading %}
@@ -28,9 +33,15 @@
                     {% else %}
                         <p>Papers have been scanned, so you cannot change this setting.</p>
                     {% endif %}
-                    <a class="btn btn-danger"
-                       hx-post="{% url 'prep_finished' %}"
-                       hx-confirm="This is dangerous. Are you sure?">Unset 'papers are printed'</a>
+                    <button class="btn btn-danger"
+                            hx-post="{% url 'prep_finished' %}"
+                            hx-disabled-elt="this"
+                            hx-indicator="#myindicator2"
+                            hx-confirm="This is dangerous. Are you sure?">Unset 'papers are printed'</button>
+                    <span id="myindicator2" class="htmx-indicator">
+                        <img src="{% static 'ball_triangle.svg' %}" />
+                        Please wait
+                    </span>
                 {% else %}
                     <h4 class="card-title">Papers have not yet been printed</h4>
                     <p>
@@ -46,7 +57,14 @@
                             </li>
                         </ul>
                     </p>
-                    <a class="btn btn-success" hx-post="{% url 'prep_finished' %}">Set 'papers are printed'</a>
+                    <button class="btn btn-success"
+                            hx-post="{% url 'prep_finished' %}"
+                            hx-disabled-elt="this"
+                            hx-indicator="#myindicator1">Set 'papers are printed'</button>
+                    <span id="myindicator1" class="htmx-indicator">
+                        <img src="{% static 'ball_triangle.svg' %}" />
+                        Please wait
+                    </span>
                 {% endif %}
             </div>
         </div>

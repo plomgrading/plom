@@ -152,31 +152,55 @@ class RubricService:
                 )
             pass
 
-        # Now do actual stuff
+        return self._create_rubric_lowlevel(incoming_data)
 
-        if incoming_data.get("display_delta", None) is None:
+    # less error checking, for internal use only
+    def _create_rubric_lowlevel(
+        self,
+        data: dict[str, Any],
+        *,
+        _bypass_serializer: bool = False,
+        _bypass_user: User | None = None,
+    ) -> Rubric:
+        if data.get("display_delta", None) is None:
             # if we don't have a display_delta, we'll generate a default one
-            incoming_data["display_delta"] = self._generate_display_delta(
+            data["display_delta"] = self._generate_display_delta(
                 # if value is missing, can only be neutral
                 # missing value will be prohibited in a future MR
-                incoming_data.get("value", 0),
-                incoming_data["kind"],
-                incoming_data.get("out_of", None),
+                data.get("value", 0),
+                data["kind"],
+                data.get("out_of", None),
             )
-
-        incoming_data["latest"] = True
-        serializer = RubricSerializer(data=incoming_data)
-        if serializer.is_valid():
-            new_rubric = serializer.save()
-
-            new_rubric.pedagogy_tags.clear()
-            for tag in incoming_data.get("pedagogy_tags", []):
+        data["latest"] = True
+        if _bypass_serializer:
+            new_rubric = Rubric.objects.create(
+                text=data["text"],
+                question=data["question"],
+                system_rubric=data["system_rubric"],
+                kind=data["kind"],
+                value=data["value"],
+                out_of=data["out_of"],
+                display_delta=data.get("display_delta"),
+                meta=data.get("meta"),
+                user=_bypass_user,  # TODO: None seems just fine too (?)
+                modified_by_user=_bypass_user,
+                latest=data.get("latest"),
+                versions=data.get("versions"),
+            )
+            for tag in data.get("pedagogy_tags", []):
                 new_rubric.pedagogy_tags.add(tag)
+            return new_rubric
 
-            rubric_obj = serializer.instance
-            return rubric_obj
-        else:
+        serializer = RubricSerializer(data=data)
+        if not serializer.is_valid():
             raise ValidationError(serializer.errors)
+        new_rubric = serializer.save()
+        # TODO: if its new why do we need to clear these?
+        # new_rubric.pedagogy_tags.clear()
+        for tag in data.get("pedagogy_tags", []):
+            new_rubric.pedagogy_tags.add(tag)
+        rubric_obj = serializer.instance
+        return rubric_obj
 
     @transaction.atomic
     def modify_rubric(
@@ -452,10 +476,8 @@ class RubricService:
 
         Returns:
             True if initialized or False if it was already initialized.
-
         """
-        existing_rubrics = Rubric.objects.all()
-        if existing_rubrics:
+        if Rubric.objects.exists():
             return False
         self._build_system_rubrics()
         return True
@@ -468,7 +490,16 @@ class RubricService:
         # raise an exception if there aren't any managers.
         if any_manager is None:
             raise ObjectDoesNotExist("No manager users have been created.")
-        username = any_manager.username
+        # TODO: experimenting with passing in User object instead...
+        # any_manager_pk = any_manager.pk
+
+        def create_system_rubric(data):
+            # data["user"] = any_manager_pk
+            # data["modified_by_user"] = any_manager_pk
+            data["system_rubric"] = True
+            self._create_rubric_lowlevel(
+                data, _bypass_serializer=True, _bypass_user=any_manager
+            )
 
         # create standard manager delta-rubrics - but no 0, nor +/- max-mark
         for q in SpecificationService.get_question_indices():
@@ -484,13 +515,8 @@ class RubricService:
                 "meta": "Is this answer blank or nearly blank?  Please do not use "
                 + "if there is any possibility of relevant writing on the page.",
                 "tags": "",
-                "username": username,
-                "system_rubric": True,
             }
-            try:
-                r = self.create_rubric(rubric)
-            except AssertionError:
-                print("Skipping absolute rubric, not implemented yet, Issue #2641")
+            create_system_rubric(rubric)
             # log.info("Built no-answer-rubric Q%s: key %s", q, r.pk)
 
             rubric = {
@@ -502,13 +528,8 @@ class RubricService:
                 "question": q,
                 "meta": "There is writing here but its not sufficient for any points.",
                 "tags": "",
-                "username": username,
-                "system_rubric": True,
             }
-            try:
-                r = self.create_rubric(rubric)
-            except AssertionError:
-                print("Skipping absolute rubric, not implemented yet, Issue #2641")
+            create_system_rubric(rubric)
             # log.info("Built no-marks-rubric Q%s: key %s", q, r.pk)
 
             rubric = {
@@ -520,13 +541,8 @@ class RubricService:
                 "question": q,
                 "meta": "",
                 "tags": "",
-                "username": username,
-                "system_rubric": True,
             }
-            try:
-                r = self.create_rubric(rubric)
-            except AssertionError:
-                print("Skipping absolute rubric, not implemented yet, Issue #2641")
+            create_system_rubric(rubric)
             # log.info("Built full-marks-rubric Q%s: key %s", q, r.pk)
 
             # now make delta-rubrics
@@ -541,11 +557,9 @@ class RubricService:
                     "question": q,
                     "meta": "",
                     "tags": "",
-                    "username": username,
-                    "system_rubric": True,
                 }
-                r = self.create_rubric(rubric)
-                log.info("Built delta-rubric +%d for Q%s: %s", m, q, r["rid"])
+                create_system_rubric(rubric)
+                # log.info("Built delta-rubric +%d for Q%s: %s", m, q, r["rid"])
                 # make negative delta
                 rubric = {
                     "display_delta": "-{}".format(m),
@@ -556,11 +570,9 @@ class RubricService:
                     "question": q,
                     "meta": "",
                     "tags": "",
-                    "username": username,
-                    "system_rubric": True,
                 }
-                r = self.create_rubric(rubric)
-                log.info("Built delta-rubric -%d for Q%s: %s", m, q, r["rid"])
+                create_system_rubric(rubric)
+                # log.info("Built delta-rubric -%d for Q%s: %s", m, q, r["rid"])
 
             # TODO: testing non-integer rubrics in demo: change to True
             if False:
@@ -571,8 +583,6 @@ class RubricService:
                         "text": "testing non-integer rubric",
                         "kind": "relative",
                         "question": q,
-                        "username": username,
-                        "system_rubric": True,
                     },
                     {
                         "display_delta": "-\N{Vulgar Fraction One Half}",
@@ -580,8 +590,6 @@ class RubricService:
                         "text": "testing negative non-integer rubric",
                         "kind": "relative",
                         "question": q,
-                        "username": username,
-                        "system_rubric": True,
                     },
                     {
                         "display_delta": "+a tenth",
@@ -589,8 +597,6 @@ class RubricService:
                         "text": "one tenth of one point",
                         "kind": "relative",
                         "question": q,
-                        "username": username,
-                        "system_rubric": True,
                     },
                     {
                         "display_delta": "+1/29",
@@ -598,8 +604,6 @@ class RubricService:
                         "text": "ADR will love co-prime pairs",
                         "kind": "relative",
                         "question": q,
-                        "username": username,
-                        "system_rubric": True,
                     },
                     {
                         "display_delta": "+1/31",
@@ -607,8 +611,6 @@ class RubricService:
                         "text": r"tex: Note that $31 \times 29 = 899$.",
                         "kind": "relative",
                         "question": q,
-                        "username": username,
-                        "system_rubric": True,
                     },
                     {
                         "display_delta": "1/49 of 1/7",
@@ -617,18 +619,16 @@ class RubricService:
                         "text": "testing absolute rubric",
                         "kind": "absolute",
                         "question": q,
-                        "username": username,
-                        "system_rubric": True,
                     },
                 ]:
-                    r = self.create_rubric(rubric)
-                    log.info(
-                        "Built %s rubric %s for Q%s: %s",
-                        r["kind"],
-                        r["display_delta"],
-                        q,
-                        r["rid"],
-                    )
+                    create_system_rubric(rubric)
+                    # log.info(
+                    #     "Built %s rubric %s for Q%s: %s",
+                    #     r["kind"],
+                    #     r["display_delta"],
+                    #     q,
+                    #     r["rid"],
+                    # )
 
     def build_half_mark_delta_rubrics(self, username: str) -> bool:
         """Create the plus and minus one-half delta rubrics that are optional.
