@@ -5,6 +5,7 @@
     Copyright (C) 2023 Divy Patel
     Copyright (C) 2023-2024 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
+    Copyright (C) 2024 Andrew Rechnitzer
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -19,26 +20,10 @@
     {% endif %}
     <div class="card m-2">
         <div class="card-body">
-            <form method="post" name="system_rubrics" action="">
-                {% csrf_token %}
-                <div class="form-group mr-2">{{ rubric_admin_form }}</div>
-                <button type="submit"
-                        class="btn btn-success"
-                        name="init_system_rubrics"
-                        {% if rubrics %}disabled{% endif %}>Create system rubrics</button>
-            </form>
-            <p>
-                These are basic rubrics that Plom needs to function.
-                {% if rubrics %}
-                    They have already been created.
-                {% else %}
-                    Marking cannot begin until these are created.
-                {% endif %}
-            </p>
             <!--<p>(TODO: should this happen automatically when clients connect?)</p>-->
-            <form method="post" action="{% url 'rubric_demo' %}">
+            <form method="post" action="{% url 'rubric_half' %}">
                 {% csrf_token %}
-                <div class="form-group mr-2">{{ rubric_demo_form }}</div>
+                <div class="form-group mr-2">{{ rubric_halfmark_form }}</div>
                 <button type="submit"
                         class="btn btn-danger"
                         name="init_system_rubrics"
@@ -69,8 +54,6 @@
                 </div>
             </form>
             <p>Upload a rubric.</p>
-            <a class="btn btn-danger" href="{% url 'rubrics_wipe' %}">Wipe all rubrics&hellip;</a>
-            <p>(A destructive action; you'll need to confirm it on the next screen)</p>
         </div>
     </div>
 {% endblock main_content %}

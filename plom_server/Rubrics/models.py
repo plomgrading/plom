@@ -74,7 +74,6 @@ class Rubric(models.Model):
         question: the question this rubric is associated with.
         tags: a list of tags for this rubric.
         meta: text shown only to markers, not to students.
-        versions: a list of question versions the rubric can be used on.
         parameters: a list of parameters for the rubric, used in
             parameterized rubrics.
         annotations: a mapping to Annotation objects.  Its many-to-many
@@ -146,6 +145,7 @@ class Rubric(models.Model):
     pedagogy_tags = models.ManyToManyField("QuestionTags.PedagogyTag", blank=True)
 
     def save(self, *args, **kwargs):
+        # TODO: this still gets called even when we bypass the serializer: queries users
         self.full_clean()
         return super(Rubric, self).save(*args, **kwargs)
 
