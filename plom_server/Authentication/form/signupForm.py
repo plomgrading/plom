@@ -14,11 +14,6 @@ from .choices import (
     USER_TYPE_WITHOUT_MANAGER_CHOICES,
 )
 
-"""
-This is the collection of forms to be use in a website.
-Also can customize the default form that django gives us.
-"""
-
 
 class CreateUserForm(UserCreationForm):
     username = forms.CharField(max_length=40, help_text="Username")
