@@ -66,6 +66,7 @@
                         </span>
                     </form>
                 </div>
+                <!-- https://gitlab.com/plom/plom/-/issues/3705 -->
                 {% if messages %}
                     {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
                 {% endif %}
