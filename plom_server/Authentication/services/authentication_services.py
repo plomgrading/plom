@@ -78,7 +78,8 @@ class AuthenticationServices:
 
         Raises:
             ObjectDoesNotExist: no such group.
-            IntegrityError: user already exists.
+            IntegrityError: user already exists; or perhaps a nearby one
+                does, such as one that differs only in case.
         """
         if group_name == "manager":
             # special case, maybe should call create_manager_user instead
@@ -88,6 +89,17 @@ class AuthenticationServices:
             ]
         else:
             groups = [Group.objects.get(name=group_name)]
+
+        # if username that matches in case exists, fail.  Note that doesn't seem
+        # to get raises by the call to "create_user" although it DOES get flagged
+        # by some form validator stuff.  However, we cannot assume that all our
+        # usernames come through the validator: for example the bulk creator
+        # See Issue #3643
+        if User.objects.filter(username__iexact=username).exists():
+            raise IntegrityError(
+                f'username "{username}" already exists or differs only in case'
+            )
+
         User.objects.create_user(
             username=username, email=email, password=None
         ).groups.add(*groups)
