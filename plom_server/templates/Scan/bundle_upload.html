@@ -173,6 +173,7 @@
             <a class="btn btn-primary" href="{% url 'scan_list_pushed' %}">Pushed bundles</a>
         </div>
     </div>
+    <!-- javascript for progress-bar updates, from https://htmx.org/examples/file-upload/ -->
     <script>
         htmx.on('#form', 'htmx:xhr:progress', function(evt) {
           htmx.find('#progress').setAttribute('value', evt.detail.loaded/evt.detail.total * 100)
