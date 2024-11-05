@@ -693,31 +693,23 @@ class RubricService:
                 r["rid"],
             )
 
-    def erase_all_rubrics(self) -> int:
+    def erase_all_rubrics(self):
         """Remove all rubrics, permanently deleting them.  BE CAREFUL.
 
-        Warning - this does not check to see if any of these rubrics have been
-        used. This should only be called by the papers_are_printed setter.
+        Warning - this does not check (carefully) to see if any of these
+        rubrics have been used. It does check if any annotations have been
+        produced at all. Accordingly, this should only be called by the
+        papers_are_printed setter, and NO ONE ELSE.
 
         Raises:
             ValueError: when any annotations have been created.
-
-        TODO - this should raise an exception if one attempts to
-        erase rubrics that have been used.
-
-        Returns:
-            How many rubrics were removed.
         """
         if Annotation.objects.exists():
             raise ValueError(
                 "Annotations have been created. You cannot delete rubrics."
             )
 
-        with transaction.atomic():
-            rubric_objs = Rubric.objects.all().select_for_update()
-            n = rubric_objs.count()
-            rubric_objs.delete()
-        return n
+        Rubric.objects.all().select_for_update().delete()
 
     def get_rubric_pane(self, user: User, question: int) -> dict:
         """Gets a rubric pane for a user.
