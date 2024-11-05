@@ -115,6 +115,58 @@ class GetTasks(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
+# PATCH: /MK/reassign_task/{code}/{new_username}
+class ReassignTask(APIView):
+    """Reassign a task to another user.
+
+    Returns:
+        200: returns json of True.
+        404: task or user not found.
+        406: request not acceptable from calling user, e.g.,
+            not lead marker or manager.
+    """
+
+    def patch(self, request: Request, *, code: str, new_username: str) -> Response:
+        """Reassign a task to another user.
+
+        TODO: consider the overlap between this and `Progress/views/progress_task_annot.py`.
+        """
+        # TODO: need to ensure we're allowed to (lead marker/manager)
+        calling_user = request.user
+        # TODO and what to raise/return if not?
+        if False:
+            return _error_response("meh", status.HTTP_406_NOT_ACCEPTABLE)
+
+        try:
+            task = MarkingTaskService().get_task_from_code(code)
+            task_pk = task.pk
+        except (ValueError, RuntimeError) as e:
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
+
+        # Note a task is reassigned by both tagging it @username,
+        # and also clearing / changing the task.assigned_user field.
+        # accordingly we call two functions.
+        try:
+            # first reassign the task - this checks if the username
+            # corresponds to an existing marker-user
+            MarkingTaskService.reassign_task_to_user(task_pk, new_username)
+            # note - the service creates the tag if needed
+            attn_user_tag_text = f"@{new_username}"
+            MarkingTaskService().create_tag_and_attach_to_task(
+                calling_user, task_pk, attn_user_tag_text
+            )
+        except ValueError as e:
+            # TODO error
+            # ValueError: cannot find user, or cannot find marking task.
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
+        except ValidationError as e:
+            # if the tag text is not legal: TODO: I don't think this can happen
+            # TODO: so ignore for 500?
+            return _error_response(e, status.HTTP_400_BAD_REQUEST)
+
+        return Response(True, status=status.HTTP_200_OK)
+
+
 # GET: /pagedata/{papernum}
 # GET: /pagedata/{papernum}/context/{questionidx}
 class MgetPageDataQuestionInContext(APIView):

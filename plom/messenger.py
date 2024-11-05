@@ -35,6 +35,7 @@ from plom.plom_exceptions import (
     PlomTaskDeletedError,
     PlomTimeoutError,
     PlomQuotaLimitExceeded,
+    PlomNoPermission,
 )
 
 
@@ -446,6 +447,45 @@ class Messenger(BaseMessenger):
                     raise PlomRangeException(response.reason) from None
                 if response.status_code == 410:
                     raise PlomRangeException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def reassign_task(self, code: str, username: str) -> None:
+        """Reassign a task that belongs to a user to a different user.
+
+        Some cases to consider:
+          - if its TO_DO should we claim it for the user?
+          - if it already belongs to that user, is that an error?
+
+        Args:
+            code: a task code such as `"q0123g2"`.
+            username: who should we assign it to?
+
+        Returns:
+            None.
+
+        Raises:
+            PlomRangeException: no such test number or not yet scanned.
+            PlomNoPermission: you don't have permission to reassign tasks.
+            PlomAuthenticationException: no logged in.
+            PlomSeriousException: generic unexpected error.
+        """
+        # TODO: API-dependent here!
+        if self.is_legacy_server():
+            raise PlomNoServerSupportException(
+                "Legacy server does not support reassign"
+            )
+
+        with self.SRmutex:
+            try:
+                response = self.patch_auth(f"/MK/reassign_task/{code}/{username}")
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 404:
+                    raise PlomRangeException(response.reason) from None
+                if response.status_code == 406:
+                    raise PlomNoPermission(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MlatexFragment(self, latex: str) -> tuple[bool, bytes | str]:

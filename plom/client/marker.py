@@ -68,6 +68,7 @@ from plom.plom_exceptions import (
     PlomTaskDeletedError,
     PlomConflict,
     PlomNoPaper,
+    PlomNoPermission,
     PlomNoServerSupportException,
     PlomNoSolutionException,
 )
@@ -374,8 +375,7 @@ class MarkerClient(QWidget):
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         m = QMenu(self)
-        # TODO: once enabled we don't need the explicit QAction
-        # m.addAction("Reassign task to...", self.reassign_task)
+        m.addAction("Reassign task to...", self.reassign_task)
         m.addAction("Claim task for me", self.claim_task)
         self.ui.deferButton.setMenu(m)
         self.ui.deferButton.clicked.connect(self.defer_task)
@@ -1224,33 +1224,40 @@ class MarkerClient(QWidget):
         return True
 
     def reassign_task(self):
-        """TODO: just a stub for now, no one is calling this."""
+        """TODO: just a stub for now, no one is calling this.
+
+        TODO: do we want a direct "reassign-to-me" without a lot of clicking
+        confirmation dialogs etc?
+        """
         task = self.get_current_task_id_or_none()
         if not task:
             return
         # TODO: combobox
+        # TODO: or for now, prefill with our name?
         assign_to, ok = QInputDialog.getText(
-            self, "Reassign to", f"Who would you like to reassign {task} to?"
+            self,
+            "Reassign to",
+            f"Who would you like to reassign {task} to?",
+            text=self.msgr.username,
         )
         if not ok:
             return
-        # try:
-        #     self.msgr.TODO_New_Function(task, self.user, assign_to, reason="help")
-        # except PlomNoServerSupportException as e:
-        #     InfoMsg(self, e).exec()
-        #     return
-        # except PlomNoPermission as e:
-        #     InfoMsg(self, "You don't have permission to reassign that task: {e}").exec()
-        #     return
-        if random.random() < 0.5:
-            WarnMsg(
-                self, f'TODO: faked error reassigning {task} to "{assign_to}"'
+        try:
+            # TODO: consider augmenting with a reason, e.g., reason="help" kwarg
+            self.msgr.reassign_task(task, assign_to)
+        except PlomNoServerSupportException as e:
+            InfoMsg(self, e).exec()
+            return
+        except PlomNoPermission as e:
+            InfoMsg(
+                self, f"You don't have permission to reassign that task: {e}"
             ).exec()
             return
-        InfoMsg(self, f'TODO: faked success reassigning {task} to "{assign_to}"').exec()
         # TODO, now what?
         # TODO: adding a new possibility here will have some fallout
-        self.examModel.setStatusByTask(task, "reassigned")
+        # self.examModel.setStatusByTask(task, "reassigned")
+        # TODO: the simplest thing would be to refresh/rebuild the task list
+        self.refresh_server_data()
 
     def claim_task(self) -> None:
         """Try to claim the currently selected task for this user."""
