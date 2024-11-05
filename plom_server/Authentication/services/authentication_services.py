@@ -78,6 +78,7 @@ class AuthenticationServices:
 
         Raises:
             ObjectDoesNotExist: no such group.
+            IntegrityError: user already exists.
         """
         if group_name == "manager":
             # special case, maybe should call create_manager_user instead
