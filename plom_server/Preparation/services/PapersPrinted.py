@@ -55,4 +55,4 @@ def set_papers_printed(status: bool, *, ignore_dependencies: bool = False):
     if status:
         RubricService().init_rubrics()
     else:
-        RubricService().erase_all_rubrics()
+        RubricService()._erase_all_rubrics()

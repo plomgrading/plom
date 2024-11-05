@@ -693,13 +693,12 @@ class RubricService:
                 r["rid"],
             )
 
-    def erase_all_rubrics(self):
+    def _erase_all_rubrics(self) -> None:
         """Remove all rubrics, permanently deleting them.  BE CAREFUL.
 
-        Warning - this does not check (carefully) to see if any of these
-        rubrics have been used. It does check if any annotations have been
-        produced at all. Accordingly, this should only be called by the
-        papers_are_printed setter, and NO ONE ELSE.
+        Warning - although this checks if any annotations have been produced
+        before deleting, it should only be called by the papers_are_printed
+        setter, and NO ONE ELSE.
 
         Raises:
             ValueError: when any annotations have been created.
