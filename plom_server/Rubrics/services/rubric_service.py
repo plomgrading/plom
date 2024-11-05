@@ -713,11 +713,10 @@ class RubricService:
                 "Annotations have been created. You cannot delete rubrics."
             )
 
-        n = 0
         with transaction.atomic():
-            for r in Rubric.objects.all().select_for_update():
-                r.delete()
-                n += 1
+            rubric_objs = Rubric.objects.all().select_for_update()
+            n = rubric_objs.count()
+            rubric_objs.delete()
         return n
 
     def get_rubric_pane(self, user: User, question: int) -> dict:
