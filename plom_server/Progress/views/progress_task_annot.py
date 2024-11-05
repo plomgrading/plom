@@ -358,7 +358,8 @@ class MarkingTaskReassignView(LeadMarkerOrManagerView):
                 request.user, task_pk, attn_user_tag_text
             )
         except ValueError:
-            # TO DO - report the error
+            # TODO - report the error
+            # return HttpResponseClientRedirect("some_error_page.html")
             pass
 
         return HttpResponseClientRedirect(
