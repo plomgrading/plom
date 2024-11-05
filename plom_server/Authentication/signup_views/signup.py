@@ -45,6 +45,7 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
                 "form": form,
                 "current_page": "single",
                 "created": False,
+                # TODO: this looks overly specific: perhaps it could fail in many ways
                 "error": form.errors["username"][0],
             }
         return render(request, self.template_name, context)
