@@ -37,12 +37,10 @@ class TaskOrderService:
             of (priority, MarkingTask's status (str)), and a set of paper numbers
             for papers found in MarkingTask.
         """
-        _marking_tasks = MarkingTask.objects.exclude(
-            status=MarkingTask.OUT_OF_DATE
-        ).select_related("paper")
-
-        marking_tasks = list(
-            _marking_tasks.order_by("paper__paper_number", "question_index")
+        marking_tasks = (
+            MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
+            .select_related("paper")
+            .order_by("paper__paper_number", "question_index")
         )
 
         task_priorities = {}
