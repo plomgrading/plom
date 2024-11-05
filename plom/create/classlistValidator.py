@@ -53,15 +53,27 @@ class PlomClasslistValidator:
             dialect = csv.Sniffer().sniff(sample)
             # build the dict_reader
             reader = csv.DictReader(csvfile, dialect=dialect)
+
             # check it has a header - csv.sniffer.has_header is a bit flakey
             # instead check that we have some of the potential keys - careful of case
             if not reader.fieldnames:
                 raise ValueError("The CSV file has no header")
             column_names = [x.casefold() for x in reader.fieldnames]
             if any(x in potential_column_names for x in column_names):
-                print("Appears to have reasonable header - continuing.")
+                pass
+                # print("Appears to have reasonable header - continuing.")
             else:
                 raise ValueError("The CSV header has no fields that Plom recognises")
+
+            # Check for repeated column names, Issue #3667.
+            # (cannot be in checkHeaders because DictReader picks one silently)
+            for x in potential_column_names:
+                if sum([x == y for y in column_names]) > 1:
+                    raise ValueError(
+                        f'Column "{x}" is repeated multiple times in the '
+                        f'CSV header: {", ".join(x for x in reader.fieldnames)}'
+                    )
+
             # now actually read the entries
             for row in reader:
                 row["_src_line"] = reader.line_num
@@ -292,8 +304,7 @@ class PlomClasslistValidator:
         try:
             cl_as_dicts = self.readClassList(filename)
         except (ValueError, FileNotFoundError) as err:
-            e = f"Can't read {filename}: {err}"
-            werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": e})
+            werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": f"{err}"})
             return (False, werr)
         except Exception as err:
             e = f"Some other sort of error reading {filename}: {err}"

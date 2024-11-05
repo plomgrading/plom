@@ -2,13 +2,14 @@
      SPDX-License-Identifier: AGPL-3.0-or-later
      Copyright (C) 2023-2024 Andrew Rechnitzer
      Copyright (C) 2024 Aidan Murphy
+     Copyright (C) 2024 Colin B. Macdonald
 -->
-<div class="card m-2" id="stats_{{ question }}_{{ version }}">
+<div class="card m-2" id="stats_{{ question_idx }}_{{ version }}">
     {% if stats.all_task_count == 0 %}
-        <div class="card-header">Question {{ question }} Version {{ version }}: no tasks</div>
+        <div class="card-header">{{ question_label_html|safe }} version {{ version }}: no tasks</div>
     {% else %}
         <div class="card-header">
-            Question {{ question }} Version {{ version }}
+            {{ question_label_html|safe }} version {{ version }}
             {% if stats.all_task_count == stats.number_of_completed_tasks %}
                 <i class="bi bi-check-circle text-success"></i>
             {% endif %}
@@ -59,13 +60,13 @@
         <div class="card-footer">
             <button class="btn btn-info"
                     hx-swap="outerHTML"
-                    hx-target="#stats_{{ question }}_{{ version }}"
-                    hx-get="{% url 'progress_mark_stats' question version %}">refresh</button>
+                    hx-target="#stats_{{ question_idx }}_{{ version }}"
+                    hx-get="{% url 'progress_mark_stats' question_idx version %}">refresh</button>
             {% if stats.all_task_count %}
-                <a href="{% url 'progress_mark_details' question version %}"
+                <a href="{% url 'progress_mark_details' question_idx version %}"
                    class="btn btn-success">Details by marker</a>
             {% endif %}
-            <a href="{% url 'progress_mark_version_compare' question %}"
+            <a href="{% url 'progress_mark_version_compare' question_idx %}"
                class="btn btn-success">Details of all versions</a>
         </div>
     {% endif %}

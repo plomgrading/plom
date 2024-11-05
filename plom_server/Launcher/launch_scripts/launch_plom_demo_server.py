@@ -416,6 +416,7 @@ def run_demo_preparation_commands(
     download_zip()
 
     # now set preparation status as done
+    # note that this also creates system rubrics
     run_django_manage_command("plom_preparation_status --set finished")
 
     return True
@@ -622,7 +623,6 @@ def run_marking_commands(*, port: int, stop_after=None) -> bool:
     """
     # add rubrics, question-tags and then run the randomaker.
     # add system rubrics first, then push the demo ones from toml
-    run_django_manage_command("plom_rubrics init manager")
     push_demo_rubrics()
     if stop_after == "rubrics":
         return False

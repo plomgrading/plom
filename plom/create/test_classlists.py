@@ -62,7 +62,37 @@ def test_two_ID_column_fails(tmpdir) -> None:
             {
                 "warn_or_err": "error",
                 "werr_line": 0,
-                "werr_text": "Cannot have multiple id columns",
+                "werr_text": (
+                    'Column "id" is repeated multiple times in the '
+                    "CSV header: ID, Name, id, paper_number"
+                ),
+            }
+        ]
+        assert not success
+        # check these lists against each other - order not important
+        assert len(warn_err) == len(expected)
+        for X in expected:
+            assert X in warn_err
+
+
+def test_two_id_column_same_case_fails_issue3667(tmpdir) -> None:
+    tmpdir = Path(tmpdir)
+    vlad = PlomClasslistValidator()
+    with working_directory(tmpdir):
+        foo = tmpdir / "foo.csv"
+        with open(foo, "w") as f:
+            f.write('"id","Name","id","paper_number"\n')
+            f.write('12345678,"Doe",98765432,3\n')
+        assert not vlad.check_is_non_canvas_csv(foo)
+        success, warn_err = vlad.validate_csv(foo, spec=None)
+        expected = [
+            {
+                "warn_or_err": "error",
+                "werr_line": 0,
+                "werr_text": (
+                    'Column "id" is repeated multiple times in the '
+                    "CSV header: id, Name, id, paper_number"
+                ),
             }
         ]
         assert not success
@@ -106,7 +136,10 @@ def test_two_name_column_fails(tmpdir) -> None:
             {
                 "warn_or_err": "error",
                 "werr_line": 0,
-                "werr_text": "Cannot have multiple name columns",
+                "werr_text": (
+                    'Column "name" is repeated multiple times in the '
+                    "CSV header: ID, name, Name, paper_number"
+                ),
             }
         ]
         assert not success
@@ -130,7 +163,10 @@ def test_two_papernumber_column_fails(tmpdir) -> None:
             {
                 "warn_or_err": "error",
                 "werr_line": 0,
-                "werr_text": "Cannot have multiple paper number columns",
+                "werr_text": (
+                    'Column "paper_number" is repeated multiple times in the '
+                    "CSV header: ID, name, paper_number, PAper_NUmber"
+                ),
             }
         ]
         assert not success

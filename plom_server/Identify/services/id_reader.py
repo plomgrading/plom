@@ -268,7 +268,7 @@ def huey_id_reading_task(
     tracker_pk: int,
     task=None,
 ) -> bool:
-    """Run the id reading process in the background via huey.
+    """Run the id reading process in the background via Huey.
 
     It is important to understand that running this function starts an
     async task in queue that will run sometime in the future.
@@ -305,9 +305,16 @@ def huey_id_reading_task(
         tracker_pk, "ID boxes from page images saved. Computing predictions."
     )
 
-    IDBoxProcessorService().make_id_predictions(
-        user, id_box_image_dict, recompute_heatmap=recompute_heatmap
-    )
+    try:
+        IDBoxProcessorService().make_id_predictions(
+            user, id_box_image_dict, recompute_heatmap=recompute_heatmap
+        )
+    except ValueError as e:
+        HueyTaskTracker.transition_chore_to_error(
+            tracker_pk, f"Did you upload a classlist?  {e}"
+        )
+        return True
+
     IDReadingHueyTaskTracker.set_message_to_user(tracker_pk, "ID predictions complete.")
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
@@ -605,7 +612,12 @@ class IDBoxProcessorService:
         id_box_files: dict[int, Path],
         *,
         recompute_heatmap: bool = True,
-    ):
+    ) -> None:
+        """Predict which IDs correspond to which SID from the classlist.
+
+        Raises:
+            ValueError: no classlist.
+        """
         if recompute_heatmap:
             probabilities = self.compute_and_save_probability_heatmap(id_box_files)
         else:
@@ -615,10 +627,12 @@ class IDBoxProcessorService:
             probabilities = {int(k): v for k, v in probabilities.items()}
 
         student_ids = ClasslistService.get_classlist_sids_for_ID_matching()
+        if not student_ids:
+            raise ValueError("No student IDs provided")
         self.run_greedy(user, student_ids, probabilities)
         self.run_lap_solver(user, student_ids, probabilities)
 
-    def run_greedy(self, user: User, student_ids, probabilities):
+    def run_greedy(self, user: User, student_ids: list[str], probabilities) -> None:
         id_reader_service = IDReaderService()
         # Different predictors go here.
         greedy_predictions = self._greedy_predictor(student_ids, probabilities)
@@ -627,7 +641,7 @@ class IDBoxProcessorService:
                 user, prediction[0], prediction[1], prediction[2], "MLGreedy"
             )
 
-    def run_lap_solver(self, user: User, student_ids, probabilities):
+    def run_lap_solver(self, user: User, student_ids: list[str], probabilities) -> None:
         # start by removing any IDs that have already been used.
         id_reader_service = IDReaderService()
         for ided_stu in id_reader_service.get_already_matched_sids():
@@ -649,11 +663,13 @@ class IDBoxProcessorService:
                 user, prediction[0], prediction[1], prediction[2], "MLLAP"
             )
 
-    def _greedy_predictor(self, student_IDs, probabilities):
+    def _greedy_predictor(
+        self, student_IDs: list[str], probabilities: dict[int, Any]
+    ) -> list[tuple[int, str, float]]:
         """Generate greedy predictions for student ID numbers.
 
         Args:
-            student_IDs: integer list of student ID numbers
+            student_IDs: list of student ID numbers as strings of integers.
 
             probabilities: dict with paper_number -> probability matrix.
             Each matrix contains probabilities that the ith ID char is matched with digit j.
@@ -729,18 +745,20 @@ class IDBoxProcessorService:
             costs.append(row)
         return costs
 
-    def _lap_predictor(self, paper_numbers, student_IDs, probabilities):
+    def _lap_predictor(
+        self, paper_numbers: list[int], student_IDs: list[str], probabilities
+    ) -> list[tuple[int, str, float]]:
         """Run SciPy's linear sum assignment problem solver, return prediction results.
 
         Args:
-            paper_numbers (list): int, the ones we want to match.
-            student_IDs (list): A list of student ID numbers.
-            probabilities (dict): dict with keys that contain a test number
-            and values that contain a probability matrix,
-            which is a list of lists of floats.
+            paper_numbers: int, the ones we want to match.
+            student_IDs: A list of student ID numbers.
+            probabilities: dict with keys that contain a test number
+                and values that contain a probability matrix,
+                which is a list of lists of floats.
 
         Returns:
-            list: triples of (`paper_number`, `student_ID`, `certainty`),
+            List of triples of (`paper_number`, `student_ID`, `certainty`),
             where certainty is the mean of digit probabilities for the student_ID
             selected by LAP solver.
         """

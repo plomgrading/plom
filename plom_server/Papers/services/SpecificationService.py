@@ -443,14 +443,35 @@ def get_question_label(question_index: str | int) -> str:
     return question.label
 
 
-def get_question_index_label_pairs() -> list[Tuple[int, str]]:
+def get_question_index_label_pairs() -> list[tuple[int, str]]:
     """Get the question indices and labels as a list of pairs of tuples.
 
     Returns:
         The question indices and labels as pairs of tuples in a list.
         The pairs are ordered by their indices.
     """
-    return [(i, get_question_label(i)) for i in get_question_indices()]
+    questions = SpecQuestion.objects.all().order_by("question_index")
+    lst = []
+    for q in questions:
+        qidx = q.question_index
+        label = q.label
+        if label is None:
+            label = f"Q{qidx}"
+        lst.append((qidx, label))
+    return lst
+
+
+def get_question_html_label_triples() -> list[tuple[int, str, str]]:
+    """Get the question indices, string labels and fancy HTML labels as a list of triples."""
+    questions = SpecQuestion.objects.all().order_by("question_index")
+    lst = []
+    for q in questions:
+        qidx = q.question_index
+        label = q.label
+        if label is None:
+            label = f"Q{qidx}"
+        lst.append((qidx, label, _render_html_question_label(qidx, label)))
+    return lst
 
 
 def get_question_labels() -> list[str]:
@@ -473,12 +494,28 @@ def get_question_labels_map() -> dict[int, str]:
     return {i: label for i, label in get_question_index_label_pairs()}
 
 
-def get_question_html_label_triples() -> list[Tuple[int, str, str]]:
-    """Get the question indices, string labels and fancy HTML labels as a list of triples."""
-    return [
-        (i, get_question_label(i), render_html_question_label(i))
-        for i in get_question_indices()
-    ]
+def get_question_labels_str_and_html_map() -> dict[int, tuple[str, str]]:
+    """Get the question labels in str/html as a mapping from unit-indexed question indices.
+
+    Returns:
+        The question labels in str/html as a dictionary mapping
+        from unit-indexed question indices.
+    """
+    return {
+        i: (label, label_html)
+        for i, label, label_html in get_question_html_label_triples()
+    }
+
+
+def get_question_label_str_and_html(qidx: int) -> tuple[str, str]:
+    """Get the question string label and fancy HTML label for question index.
+
+    Note: if you need this for multiple questions, it will generally be more
+    efficient for the database if you ask for all them at once with
+    :func:`get_question_html_label_triples`.
+    """
+    qlabel = get_question_label(qidx)
+    return qlabel, _render_html_question_label(qidx, qlabel)
 
 
 def question_list_to_dict(questions: list[dict]) -> dict[str, dict]:
@@ -486,9 +523,7 @@ def question_list_to_dict(questions: list[dict]) -> dict[str, dict]:
     return {str(i + 1): q for i, q in enumerate(questions)}
 
 
-def render_html_question_label(qidx: int) -> str:
-    """HTML rendering of the question label for a particular question index."""
-    qlabel = get_question_label(qidx)
+def _render_html_question_label(qidx: int, qlabel: str) -> str:
     qlabel = html.escape(qlabel)
     if qlabel == f"Q{qidx}":
         return qlabel
@@ -504,7 +539,8 @@ def render_html_flat_question_label_list(qindices: list[int] | None) -> str:
     """
     if not qindices:
         return "None"
-    return ", ".join(render_html_question_label(qidx) for qidx in qindices)
+    T = get_question_labels_str_and_html_map()
+    return ", ".join(T[qidx][1] for qidx in qindices)
 
 
 def get_question_selection_method(question_index: int) -> str:
@@ -518,6 +554,8 @@ def get_question_selection_method(question_index: int) -> str:
 
     Raises:
         ObjectDoesNotExist: no question exists with the given index.
+
+    As of Oct 2024, no one is calling this.  Deprecated?
     """
     question = SpecQuestion.objects.get(question_index=question_index)
     return question.select
@@ -533,23 +571,3 @@ def get_selection_method_of_all_questions() -> dict[int, str]:
     for question in SpecQuestion.objects.all().order_by("question_index"):
         selection_method[question.question_index] = question.select
     return selection_method
-
-
-def get_fix_questions() -> list[str]:
-    """Return list of html labels of questions that are select=fix."""
-    return [
-        render_html_question_label(question.question_index)
-        for question in SpecQuestion.objects.filter(select="fix").order_by(
-            "question_index"
-        )
-    ]
-
-
-def get_shuffle_questions() -> list[str]:
-    """Return list of html labels of questions that are select=shuffle."""
-    return [
-        render_html_question_label(question.question_index)
-        for question in SpecQuestion.objects.filter(select="shuffle").order_by(
-            "question_index"
-        )
-    ]

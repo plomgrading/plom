@@ -30,13 +30,12 @@ class TaskOrderPageView(ManagerRequiredView):
             "order_tasks_by",
         )
         paper_to_priority_dict = tos.get_paper_number_to_priority_list()
-        q_labels = SpecificationService.get_question_labels()
 
         context.update(
             {
                 "order_form": order_form,
                 "upload_form": upload_form,
-                "q_labels": q_labels,
+                "qlabels": SpecificationService.get_question_html_label_triples(),
                 "paper_to_priority_dict": paper_to_priority_dict,
             }
         )

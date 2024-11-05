@@ -71,7 +71,7 @@ from plom.canvas import (
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.2.1"
+__script_version__ = "0.3.0"
 
 
 def sis_id_to_student_dict(student_list):
@@ -242,6 +242,14 @@ if __name__ == "__main__":
         assignment = interactively_get_assignment(course)
         print(f'Note: you can use "--assignment {assignment.id}" to reselect.\n')
     print(f"Ok uploading to Assignment: {assignment}")
+
+    print(f"  * Assignment is published: {assignment.published}")
+    print(f'  * Assignment is "post_manually": {assignment.post_manually}')
+    if not assignment.published or not assignment.post_manually:
+        raise ValueError(
+            "Assignment must be published and set to manually release grades: see "
+            "https://plom.rtfd.io/en/latest/returning.html#return-via-canvas"
+        )
 
     print("\nChecking if you have `marks.csv`...")
     print("  --------------------------------------------------------------------")

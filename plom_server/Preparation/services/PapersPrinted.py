@@ -23,9 +23,14 @@ def have_papers_been_printed() -> bool:
 def set_papers_printed(status: bool, *, ignore_dependencies: bool = False):
     """Set the papers as (true) 'printed' or (false) 'yet to be printed'.
 
+    Note that as a side-effect when setting
+      * true => will create system rubrics
+      * false => will delete all existing rubrics
+
     KWArgs:
         ignore_dependencies: set this for testing purposes, so that one
             can set papers-printed=true, without actually building pdfs.
+            Setting this also means rubrics will not be produced.
 
     Raises:
         PlomDependencyConflict: if status cannot be set true/false.
@@ -41,3 +46,13 @@ def set_papers_printed(status: bool, *, ignore_dependencies: bool = False):
     setting_obj = PapersPrintedSettingModel.load()
     setting_obj.have_printed_papers = status
     setting_obj.save()
+
+    if ignore_dependencies:
+        return
+
+    from Rubrics.services import RubricService
+
+    if status:
+        RubricService().init_rubrics()
+    else:
+        RubricService().erase_all_rubrics()

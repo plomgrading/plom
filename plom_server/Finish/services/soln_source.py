@@ -134,12 +134,15 @@ class SolnSourceService:
             self._create_solution_images(version, doc)
 
     def _create_solution_images(self, version: int, doc: fitz.Document) -> None:
-        """Create one solution image for each question of the given version, for client."""
+        """Create one solution image for each question of the given version, for client.
+
+        Images are extracted at 150 DPI.
+        """
         # for each solution, glue the corresponding page images into a single row.
         for sqs_obj in SolnSpecQuestion.objects.all():
             # see https://pymupdf.readthedocs.io/en/latest/recipes-images.html#how-to-use-pixmaps-gluing-images
-            # get an image for each page - note fitz pages are 0-indexed.
-            pix_list = [doc[pg - 1].get_pixmap() for pg in sqs_obj.pages]
+            # get an image for each page - pymupdf pages are 0-indexed.
+            pix_list = [doc[pg - 1].get_pixmap(dpi=150) for pg in sqs_obj.pages]
             total_w = sum([X.width for X in pix_list])
             max_h = max([X.height for X in pix_list])
             # creage a dest image on which to tile these images - with given max height and total width.

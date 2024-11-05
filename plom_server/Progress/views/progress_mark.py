@@ -44,16 +44,23 @@ class ProgressMarkStartMarking(MarkerLeadMarkerOrManagerView):
 
 
 class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
-    def get(self, request: HttpRequest, *, question, version) -> HttpResponse:
+    def get(
+        self, request: HttpRequest, *, question_idx: int, version: int
+    ) -> HttpResponse:
         context = super().build_context()
         mss = MarkingStatsService()
+        question_label, question_label_html = (
+            SpecificationService.get_question_label_str_and_html(question_idx)
+        )
         context.update(
             {
-                "question": question,
+                "question_idx": question_idx,
+                "question_label": question_label,
+                "question_label_html": question_label_html,
                 "version": version,
-                "stats": mss.get_basic_marking_stats(question, version=version),
+                "stats": mss.get_basic_marking_stats(question_idx, version=version),
                 "status_counts": ProgressOverviewService().get_mark_task_status_counts_by_qv(
-                    question, version
+                    question_idx, version
                 ),
             }
         )
@@ -62,15 +69,17 @@ class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
 
 
 class ProgressMarkDetailsView(LeadMarkerOrManagerView):
-    def get(self, request: HttpRequest, *, question, version) -> HttpResponse:
+    def get(
+        self, request: HttpRequest, *, question_idx: int, version: int
+    ) -> HttpResponse:
         context = super().build_context()
         mss = MarkingStatsService()
-        stats = mss.get_basic_marking_stats(question, version=version)
-        histogram = mss.get_mark_histogram(question, version=version)
+        stats = mss.get_basic_marking_stats(question_idx, version=version)
+        histogram = mss.get_mark_histogram(question_idx, version=version)
         hist_keys, hist_values = zip(*histogram.items())
         # user_list = mss.get_list_of_users_who_marked(question, version=version)
         user_hists_and_stats = mss.get_mark_histogram_and_stats_by_users(
-            question, version=version
+            question_idx, version=version
         )
         # for the charts we need a list of histogram values for each user, hence the following
         # we also want to show it against scaled histogram of all users
@@ -86,10 +95,14 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
             ]
         # to show incomplete pie-chart need this value
         remaining_tasks = stats["all_task_count"] - stats["number_of_completed_tasks"]
-
+        question_label, question_label_html = (
+            SpecificationService.get_question_label_str_and_html(question_idx)
+        )
         context.update(
             {
-                "question": question,
+                "question_idx": question_idx,
+                "question_label": question_label,
+                "question_label_html": question_label_html,
                 "version": version,
                 "stats": stats,
                 "hist_keys": list(hist_keys),
@@ -97,7 +110,7 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
                 "user_hists": user_hists_and_stats,
                 "remaining_tasks": remaining_tasks,
                 "status_counts": ProgressOverviewService().get_mark_task_status_counts_by_qv(
-                    question, version
+                    question_idx, version
                 ),
             }
         )
@@ -106,14 +119,16 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
 
 
 class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
-    def get(self, request: HttpRequest, *, question) -> HttpResponse:
+    def get(self, request: HttpRequest, *, question_idx: int) -> HttpResponse:
         version = 1
         context = super().build_context()
         mss = MarkingStatsService()
-        stats = mss.get_basic_marking_stats(question, version=None)
-        histogram = mss.get_mark_histogram(question, version=None)
+        stats = mss.get_basic_marking_stats(question_idx, version=None)
+        histogram = mss.get_mark_histogram(question_idx, version=None)
         hist_keys, hist_values = zip(*histogram.items())
-        version_hists_and_stats = mss.get_mark_histogram_and_stats_by_versions(question)
+        version_hists_and_stats = mss.get_mark_histogram_and_stats_by_versions(
+            question_idx
+        )
         # for the charts we need a list of histogram values for each version, hence the following
         # we also want to show it against scaled histogram of all versions
         for ver in version_hists_and_stats:
@@ -128,16 +143,21 @@ class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
                 v * scale for v in hist_values
             ]
 
+        question_label, question_label_html = (
+            SpecificationService.get_question_label_str_and_html(question_idx)
+        )
         context.update(
             {
-                "question": question,
+                "question_idx": question_idx,
+                "question_label": question_label,
+                "question_label_html": question_label_html,
                 "version": version,
                 "stats": stats,
                 "hist_keys": list(hist_keys),
                 "hist_values": list(hist_values),
                 "version_hists": version_hists_and_stats,
                 "status_counts": ProgressOverviewService().get_mark_task_status_counts_by_qv(
-                    question, version=None
+                    question_idx, version=None
                 ),
             }
         )

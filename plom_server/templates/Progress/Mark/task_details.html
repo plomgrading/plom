@@ -13,7 +13,7 @@
 {% block page_heading %}
     Marking task info
     <a class="btn btn-primary"
-       href="{% url 'progress_marking_task_filter' %}?question={{ question }}&version={{ version }}">browse marking</a>
+       href="{% url 'progress_marking_task_filter' %}?question={{ question_idx }}&version={{ version }}">browse marking</a>
     <a class="btn btn-primary" href="{% url 'all_task_overview' %}">table of all tasks</a>
 {% endblock page_heading %}
 {% block main_content %}
@@ -23,6 +23,7 @@
                 {% if user_is_manager or user_is_lead_marker %}
                     <p>
                         <button class="btn btn-danger"
+                                {% if status == "Out Of Date" %}disabled{% endif %}
                                 hx-confirm="This will reset the task and mark any current annotations as out of date. Are you sure you wish to proceed?"
                                 hx-put="{% url 'reset_marking_task' task_pk %}">reset</button>
                         &mdash; invalidates any existing marking and creates a new marking task.
@@ -31,7 +32,7 @@
                         <button class="btn btn-warning dropdown-toggle"
                                 type="button"
                                 data-bs-toggle="dropdown"
-                                {% if not lead_markers %}disabled{% endif %}
+                                {% if not lead_markers or status == "Out Of Date" %}disabled{% endif %}
                                 aria-expanded="false">Tag for / reassign to lead marker</button>
                         <ul class="dropdown-menu">
                             {% for user in lead_markers %}
@@ -50,6 +51,7 @@
                     <span class="dropdown">
                         <button class="btn btn-danger dropdown-toggle"
                                 type="button"
+                                {% if status == "Out Of Date" %}disabled{% endif %}
                                 data-bs-toggle="dropdown"
                                 aria-expanded="false">Tag for / reassign to marker</button>
                         <ul class="dropdown-menu">
@@ -69,13 +71,13 @@
                 {% endif %}
                 <div class="py-2">
                     <p>Paper: {{ paper_number }}</p>
-                    <p>Question index: {{ question }}</p>
+                    <p>Question: {{ question_label_html|safe }}</p>
                     <p>Version: {{ version }}</p>
                     <p>
                         Status: {{ status }}
                         {% if status == "Out Of Date" %}
                             <a href="{% url 'progress_newest_marking_task_details' task_pk %}"
-                               class="btn btn-success">show newest</a>
+                               class="btn btn-success">Go to newest</a>
                         {% endif %}
                     </p>
                     {% if status == "Complete" %}
@@ -92,22 +94,23 @@
                     {% endif %}
                 </div>
                 <p>
-                    <button hx-get="{% url 'progress_original_img_wrap' paper_number question %}"
+                    <button hx-get="{% url 'progress_original_img_wrap' paper_number question_idx %}"
                             hx-target="#imageHere"
                             hx-replace="innerHTML"
-                            class="btn btn-outline-info">show original</button>
+                            class="btn btn-outline-info">Show original images</button>
                     {% if status == "Complete" %}
-                        <button hx-get="{% url 'progress_annotation_img_wrap' paper_number question %}"
+                        <button hx-get="{% url 'progress_annotation_img_wrap' paper_number question_idx %}"
                                 hx-target="#imageHere"
                                 hx-replace="innerHTML"
                                 hx-trigger="load, click"
-                                class="btn btn-outline-success">show annotation</button>
+                                class="btn btn-outline-success">Show annotation</button>
                     {% endif %}
                 </p>
                 <span>
                     <span class="dropdown">
                         <button class="btn btn-success dropdown-toggle"
                                 type="button"
+                                {% if status == "Out Of Date" %}disabled{% endif %}
                                 data-bs-toggle="dropdown"
                                 aria-expanded="false">Add tag</button>
                         <ul class="dropdown-menu">
@@ -163,6 +166,7 @@
                     <span class="dropdown">
                         <button class="btn btn-warning dropdown-toggle"
                                 type="button"
+                                {% if status == "Out Of Date" %}disabled{% endif %}
                                 data-bs-toggle="dropdown"
                                 aria-expanded="false">Flag to user</button>
                         <ul class="dropdown-menu">
@@ -198,7 +202,7 @@
                     <thead>
                         <tr>
                             <th>Rubric-ID</th>
-                            <th>Question</th>
+                            <th>question idx</th>
                             <th>Kind</th>
                             <th>Display Delta</th>
                             <th>Text</th>

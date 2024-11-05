@@ -11,9 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Improve error message when running the auto-ID reader without a classlist.
+* Improve UI when looking at out-of-date tasks by disabling irrelevant buttons such as "reset".
 
 ### Fixed
-
+* Clarify on-screen help about collisions during scanning.
+* Use higher resolution for in-client solution images.
+* Improve error handling around annotation images.
 
 
 ## [0.16.9] - 2024-10-23

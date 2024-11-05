@@ -111,7 +111,8 @@ class IDPrediction(models.Model):
 class IDReadingHueyTaskTracker(HueyTaskTracker):
     """Support running the ID-box extraction and ID prediction in the background.
 
-    Note that this inherits fields from the base class table. Note that this has no additional fields.
+    Note that this inherits fields from the base class table.  Note that
+    this has no additional fields.
     """
 
     @classmethod
