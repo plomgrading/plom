@@ -45,7 +45,7 @@ class AuthenticationServices_user_creation(TestCase):
         user2 = User.objects.get(username="m", groups__name="manager")
         self.assertTrue(user1 == user2)
 
-    def test_create_user_only_case_different_issue3643(self) -> None:
+    def test_case_insensitive_username_collision(self) -> None:
         baker.make(Group, name="manager")
         baker.make(Group, name="scanner")
         AuthenticationServices.create_user_and_add_to_group("Euler", "manager")
