@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Bundle upload displays a progress bar.
 
 ### Changed
 * Improve error message when running the auto-ID reader without a classlist.
@@ -18,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Clarify on-screen help about collisions during scanning.
 * Use higher resolution for in-client solution images.
 * Improve error handling around annotation images.
+* Upload bundle and some other places have improved UI (for example disabling the form during a long upload).
+* Fixed errors related to users differing only in case.
+* Other tweaks and fixes.
 
 
 ## [0.16.9] - 2024-10-23
