@@ -3,6 +3,9 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Colin B. Macdonald
 
+import humanize
+
+from django.conf import settings
 from django.shortcuts import render
 
 from ..services import AuthenticationServices
@@ -12,10 +15,15 @@ from Base.base_group_views import AdminOrManagerRequiredView
 
 class SingleUserSignUp(AdminOrManagerRequiredView):
     template_name = "Authentication/signup_single_user.html"
+    link_expiry_period = humanize.naturaldelta(settings.PASSWORD_RESET_TIMEOUT)
     form = CreateUserForm()
 
     def get(self, request):
-        context = {"form": self.form, "current_page": "single"}
+        context = {
+            "form": self.form,
+            "current_page": "single",
+            "link_expiry_period": self.link_expiry_period,
+        }
         return render(request, self.template_name, context)
 
     def post(self, request):
@@ -37,6 +45,7 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
             context = {
                 "form": self.form,
                 "current_page": "single",
+                "link_expiry_period": self.link_expiry_period,
                 "links": password_reset_links,
                 "created": True,
             }
@@ -44,6 +53,7 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
             context = {
                 "form": form,
                 "current_page": "single",
+                "link_expiry_period": self.link_expiry_period,
                 "created": False,
                 # TODO: this looks overly specific: perhaps it could fail in many ways
                 "error": form.errors["username"][0],
