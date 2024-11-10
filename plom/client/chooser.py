@@ -328,9 +328,14 @@ class Chooser(QDialog):
         self.saveDetails()
         dl = getattr(self.Qapp, "downloader", None)
         if dl:
-            # TODO: do we really just wait forever?
-            dl.stop(-1)
-            dl.basedir.rmdir()
+            while True:
+                if dl.stop(1):
+                    # basedir should be empty; sometimes it isn't (Issue #3644)
+                    # dl.basedir.rmdir()
+                    shutil.rmtree(dl.basedir)
+                    break
+                log.warning("still waiting for download to stop...")
+                time.sleep(0.25)
         log.info("Wiping temp directory %s", self._workdir)
         shutil.rmtree(self._workdir)
         self.logout()
