@@ -7,8 +7,9 @@
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Bryan Tanady
 
-import humanize
 import json
+
+import arrow
 
 from django.conf import settings
 from django.contrib import messages
@@ -97,12 +98,14 @@ class UserPage(ManagerRequiredView):
 class PasswordResetPage(ManagerRequiredView):
     def get(self, request, username):
         user_obj = User.objects.get(username=username)
+
+        def humanize_delta(s: float) -> str:
+            return arrow.now().shift(seconds=s).humanize(s, only_distance=True)
+
         context = {
             "username": username,
             "link": AuthenticationServices().generate_link(request, user_obj),
-            "link_expiry_period": humanize.naturaldelta(
-                settings.PASSWORD_RESET_TIMEOUT
-            ),
+            "link_expiry_period": humanize_delta(settings.PASSWORD_RESET_TIMEOUT),
         }
 
         return render(request, "UserManagement/password_reset_page.html", context)

@@ -11,9 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Increase default password reset link expiry to 14 days.
 
 ### Fixed
-
+* Misc fixes and cleanups.
 
 
 
