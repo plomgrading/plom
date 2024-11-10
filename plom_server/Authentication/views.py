@@ -22,9 +22,7 @@ from django.views.generic import View
 from braces.views import GroupRequiredMixin
 from bs4 import BeautifulSoup
 
-from .services import AuthenticationServices
 from Base.base_group_views import (
-    AdminRequiredView,
     RoleRequiredView,
 )
 
@@ -186,23 +184,6 @@ class LogoutView(View):
     def get(self, request: HttpRequest) -> HttpResponse:
         logout(request)
         return redirect("login")
-
-
-class PasswordResetLinks(AdminRequiredView):
-    template_name = "Authentication/regenerative_links.html"
-    activation_link = "Authentication/manager_activation_link.html"
-
-    def get(self, request: HttpRequest) -> HttpResponse:
-        users = User.objects.all().filter(groups__name="manager").values()
-        context = {"users": users}
-        return render(request, self.template_name, context)
-
-    def post(self, request: HttpRequest) -> HttpResponse:
-        username = request.POST.get("new_link")
-        user = User.objects.get(username=username)
-        link = AuthenticationServices().generate_link(request, user)
-        context = {"link": link}
-        return render(request, self.activation_link, context)
 
 
 class Maintenance(Home, View):

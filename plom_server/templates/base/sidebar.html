@@ -26,9 +26,6 @@
         <li class="nav-item">
             <a class="nav-link" href="{% url 'users' %}">Manage Users</a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link" href="{% url 'password_reset' %}">Password Reset Link</a>
-        </li>
     {% elif user_is_manager %}
         <li class="nav-item">
             <a class="nav-link" href="{% url 'users' %}">Manage Users</a>
