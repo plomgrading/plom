@@ -3,11 +3,10 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Colin B. Macdonald
 
-import arrow
-
 from django.conf import settings
 from django.shortcuts import render
 
+from plom.misc_utils import humanize_seconds
 from ..services import AuthenticationServices
 from ..form.signupForm import CreateUserForm, CreateMultiUsersForm
 from Base.base_group_views import AdminOrManagerRequiredView
@@ -16,10 +15,7 @@ from Base.base_group_views import AdminOrManagerRequiredView
 class SingleUserSignUp(AdminOrManagerRequiredView):
     template_name = "Authentication/signup_single_user.html"
 
-    def humanize_delta(s: float) -> str:
-        return arrow.now().shift(seconds=s).humanize(s, only_distance=True)
-
-    link_expiry_period = humanize_delta(settings.PASSWORD_RESET_TIMEOUT)
+    link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
     form = CreateUserForm()
 
     def get(self, request):
