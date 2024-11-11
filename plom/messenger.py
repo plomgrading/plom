@@ -464,7 +464,7 @@ class Messenger(BaseMessenger):
             None.
 
         Raises:
-            PlomRangeException: no such test number or not yet scanned.
+            PlomRangeException: no such task, or no such user.
             PlomNoPermission: you don't have permission to reassign tasks.
             PlomNoServerSupportException: server too old, does not support.
             PlomAuthenticationException: no logged in.

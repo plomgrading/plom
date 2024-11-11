@@ -136,7 +136,9 @@ class ReassignTask(APIView):
         group_list = list(request.user.groups.values_list("name", flat=True))
         if not ("lead_marker" in group_list or "manager" in group_list):
             return _error_response(
-                "You are not a lead marker or manager", status.HTTP_406_NOT_ACCEPTABLE
+                f"You ({calling_user}) cannot reassign tasks because "
+                "you are not a lead marker or manager",
+                status.HTTP_406_NOT_ACCEPTABLE,
             )
 
         try:

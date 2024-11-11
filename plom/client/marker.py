@@ -1245,13 +1245,12 @@ class MarkerClient(QWidget):
         try:
             # TODO: consider augmenting with a reason, e.g., reason="help" kwarg
             self.msgr.reassign_task(task, assign_to)
-        except PlomNoServerSupportException as e:
-            InfoMsg(self, e).exec()
-            return
-        except PlomNoPermission as e:
-            InfoMsg(
-                self, f"You don't have permission to reassign that task: {e}"
-            ).exec()
+        except (
+            PlomNoServerSupportException,
+            PlomRangeException,
+            PlomNoPermission,
+        ) as e:
+            InfoMsg(self, f"{e}").exec()
             return
         # TODO, now what?
         # TODO: adding a new possibility here will have some fallout
