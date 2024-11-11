@@ -466,13 +466,13 @@ class Messenger(BaseMessenger):
         Raises:
             PlomRangeException: no such test number or not yet scanned.
             PlomNoPermission: you don't have permission to reassign tasks.
+            PlomNoServerSupportException: server too old, does not support.
             PlomAuthenticationException: no logged in.
             PlomSeriousException: generic unexpected error.
         """
-        # TODO: API-dependent here!
-        if self.is_legacy_server():
+        if self.is_server_api_less_than(113):
             raise PlomNoServerSupportException(
-                "Legacy server does not support reassign"
+                "Server too old: does not support reassign"
             )
 
         with self.SRmutex:
