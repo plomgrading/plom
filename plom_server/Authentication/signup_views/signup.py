@@ -64,9 +64,14 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
 class MultiUsersSignUp(AdminOrManagerRequiredView):
     template_name = "Authentication/signup_multiple_users.html"
     form = CreateMultiUsersForm()
+    link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
 
     def get(self, request):
-        context = {"form": self.form, "current_page": "multiple"}
+        context = {
+            "form": self.form,
+            "current_page": "multiple",
+            "link_expiry_period": self.link_expiry_period,
+        }
         return render(request, self.template_name, context)
 
     def post(self, request):
@@ -107,6 +112,7 @@ class MultiUsersSignUp(AdminOrManagerRequiredView):
             context = {
                 "form": self.form,
                 "current_page": "multiple",
+                "link_expiry_period": self.link_expiry_period,
                 "links": password_reset_links,
                 "tsv": tsv,
                 "created": True,
