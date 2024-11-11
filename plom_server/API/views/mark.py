@@ -133,9 +133,11 @@ class ReassignTask(APIView):
         """
         # TODO: need to ensure we're allowed to (lead marker/manager)
         calling_user = request.user
-        # TODO and what to raise/return if not?
-        if False:
-            return _error_response("meh", status.HTTP_406_NOT_ACCEPTABLE)
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if not ("lead_marker" in group_list or "manager" in group_list):
+            return _error_response(
+                "You are not a lead marker or manager", status.HTTP_406_NOT_ACCEPTABLE
+            )
 
         try:
             task = MarkingTaskService().get_task_from_code(code)
