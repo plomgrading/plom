@@ -202,7 +202,7 @@ class PasswordResetLinks(AdminRequiredView):
         username = request.POST.get("new_link")
         user = User.objects.get(username=username)
         request_domain = get_current_site(request).domain
-        link = AuthenticationServices().generate_link(user, request)
+        link = AuthenticationServices().generate_link(user, request_domain)
         context = {"link": link}
         return render(request, self.activation_link, context)
 
