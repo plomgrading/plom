@@ -188,26 +188,28 @@ class AuthenticationServices:
             Dictionary of username to password reset link.
         """
         links_dict = {}
+        request_domain = get_current_site(request).domain
         for username in username_list:
             user = User.objects.get(username=username)
-            links_dict[username] = self.generate_link(request, user)
+            links_dict[username] = self.generate_link(user, request_domain)
         return links_dict
 
     @transaction.atomic
-    def generate_link(self, request: HttpRequest, user: User) -> str:
+    def generate_link(self, user: User, hostname: str = "") -> str:
         """Generate a password reset link for a user.
 
         Args:
-            request: The HTTP request object.
             user: The user object for whom the password reset link is
                 generated.
+            hostname: If the server cannot find a domain while constructing
+                the link, this variable will be used as the domain.
 
         Returns:
             The generated password reset link as a string.
 
-        See :method:`get_base_link` for details about how to influence this link,
+        See :method:`get_base_link` for details about how to influence this link.
         """
-        baselink = self.get_base_link(default_host=get_current_site(request).domain)
+        baselink = self.get_base_link(default_host=hostname)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
         link = baselink + f"reset/{uid}/{token}"

@@ -12,6 +12,7 @@ import json
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
 from django.http import HttpRequest, HttpResponse, Http404
 from django_htmx.http import HttpResponseClientRefresh
@@ -94,7 +95,8 @@ class UserPage(ManagerRequiredView):
 class PasswordResetPage(ManagerRequiredView):
     def get(self, request, username):
         user_obj = User.objects.get(username=username)
-        link = AuthenticationServices().generate_link(request, user_obj)
+        request_domain = get_current_site(request).domain
+        link = AuthenticationServices().generate_link(user_obj, request_domain)
 
         context = {"username": username, "link": link}
         return render(request, "UserManagement/password_reset_page.html", context)

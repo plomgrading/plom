@@ -15,6 +15,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpRequest, HttpResponse
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
@@ -200,7 +201,8 @@ class PasswordResetLinks(AdminRequiredView):
     def post(self, request: HttpRequest) -> HttpResponse:
         username = request.POST.get("new_link")
         user = User.objects.get(username=username)
-        link = AuthenticationServices().generate_link(request, user)
+        request_domain = get_current_site(request).domain
+        link = AuthenticationServices().generate_link(user, request)
         context = {"link": link}
         return render(request, self.activation_link, context)
 

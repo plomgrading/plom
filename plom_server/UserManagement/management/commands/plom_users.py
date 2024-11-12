@@ -2,10 +2,8 @@
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
-from django.test.client import RequestFactory
 from django.db.models import Q
 
 from Authentication.services import AuthenticationServices
@@ -80,15 +78,8 @@ class Command(BaseCommand):
                 user_dict["username"], user_dict["usergroup"]
             )
             # TODO: if --raw-password, append a password instead of a link
-            rf = RequestFactory()
-            # serverside env variables correct
-            # for shoddy dummy request, see `generate_link()`.
-            dummy_request = rf.post("/submit/", {"foo": "bar"})
-            # SERVER_NAME is checked by Django, choice is important.
-            dummy_request.META["SERVER_NAME"] = settings.ALLOWED_HOSTS[0]
-
             user = User.objects.get(username=user_dict["username"])
-            user_dict["reset_link"] = AuS.generate_link(dummy_request, user)
+            user_dict["reset_link"] = AuS.generate_link(user)
 
         with io.StringIO() as iostream:
             writer = csv.DictWriter(
