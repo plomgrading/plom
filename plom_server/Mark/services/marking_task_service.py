@@ -745,7 +745,7 @@ class MarkingTaskService:
         *,
         new_username: str,
         calling_user: User,
-        unassign_others: False,
+        unassign_others: bool = False,
     ) -> None:
         """Reassign a task to a different user.
 
@@ -764,7 +764,8 @@ class MarkingTaskService:
         Keyword Args:
             new_username: a string of a username to reassign to.
             calling_user: the user who is doing the reassigning.
-            unassign_others: untag any other users assigned to this.
+            unassign_others: untag any other users assigned to this task,
+                defaults to False.
 
         Returns:
             None.
