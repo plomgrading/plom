@@ -340,22 +340,14 @@ class MarkingTaskResetView(LeadMarkerOrManagerView):
 
 
 class MarkingTaskReassignView(LeadMarkerOrManagerView):
-    def post(self, request, task_pk: int):
+    def post(self, request: HttpRequest, *, task_pk: int) -> HttpResponse:
         if "newUser" not in request.POST:
             return HttpResponseClientRefresh()
         new_username = request.POST.get("newUser")
 
-        # Note a task is reassigned by both tagging it @username,
-        # and also clearing / changing the task.assigned_user field.
-        # accordingly we call two functions.
         try:
-            # first reassign the task - this checks if the username
-            # corresponds to an existing marker-user
-            MarkingTaskService.reassign_task_to_user(task_pk, new_username)
-            # note - the service creates the tag if needed
-            attn_user_tag_text = f"@{new_username}"
-            MarkingTaskService().create_tag_and_attach_to_task(
-                request.user, task_pk, attn_user_tag_text
+            MarkingTaskService.reassign_task_to_user(
+                task_pk, new_username=new_username, calling_user=request.user
             )
         except ValueError:
             # TODO - report the error

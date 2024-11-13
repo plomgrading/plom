@@ -4,7 +4,6 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
-
 from __future__ import annotations
 
 from rest_framework.views import APIView
@@ -127,11 +126,7 @@ class ReassignTask(APIView):
     """
 
     def patch(self, request: Request, *, code: str, new_username: str) -> Response:
-        """Reassign a task to another user.
-
-        TODO: consider the overlap between this and `Progress/views/progress_task_annot.py`.
-        """
-        # TODO: need to ensure we're allowed to (lead marker/manager)
+        """Reassign a task to another user."""
         calling_user = request.user
         group_list = list(request.user.groups.values_list("name", flat=True))
         if not ("lead_marker" in group_list or "manager" in group_list):
@@ -147,26 +142,12 @@ class ReassignTask(APIView):
         except (ValueError, RuntimeError) as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
 
-        # Note a task is reassigned by both tagging it @username,
-        # and also clearing / changing the task.assigned_user field.
-        # accordingly we call two functions.
         try:
-            # first reassign the task - this checks if the username
-            # corresponds to an existing marker-user
-            MarkingTaskService.reassign_task_to_user(task_pk, new_username)
-            # note - the service creates the tag if needed
-            attn_user_tag_text = f"@{new_username}"
-            MarkingTaskService().create_tag_and_attach_to_task(
-                calling_user, task_pk, attn_user_tag_text
+            MarkingTaskService.reassign_task_to_user(
+                task_pk, new_username=new_username, calling_user=calling_user
             )
         except ValueError as e:
-            # TODO error
-            # ValueError: cannot find user, or cannot find marking task.
             return _error_response(e, status.HTTP_404_NOT_FOUND)
-        except ValidationError as e:
-            # if the tag text is not legal: TODO: I don't think this can happen
-            # TODO: so ignore for 500?
-            return _error_response(e, status.HTTP_400_BAD_REQUEST)
 
         return Response(True, status=status.HTTP_200_OK)
 
