@@ -375,7 +375,7 @@ class MarkerClient(QWidget):
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         m = QMenu(self)
-        m.addAction("Reassign task to...", self.reassign_task)
+        m.addAction("Reassign task...", self.reassign_task)
         m.addAction("Claim task for me", self.claim_task)
         self.ui.deferButton.setMenu(m)
         self.ui.deferButton.clicked.connect(self.defer_task)
@@ -1223,25 +1223,26 @@ class MarkerClient(QWidget):
         self._updateCurrentlySelectedRow()
         return True
 
-    def reassign_task(self):
-        """TODO: just a stub for now, no one is calling this.
+    def reassign_task(self, *, assign_to: str | None = None) -> None:
+        """Reassign the currently-selected task to ourselves or another user.
 
-        TODO: do we want a direct "reassign-to-me" without a lot of clicking
-        confirmation dialogs etc?
+        Keyword Args:
+            assign_to: if present, try to reassign to this user directly.
+                If omitted, we'll ask using a popup dialog.
         """
         task = self.get_current_task_id_or_none()
         if not task:
             return
-        # TODO: combobox
-        # TODO: or for now, prefill with our name?
-        assign_to, ok = QInputDialog.getText(
-            self,
-            "Reassign to",
-            f"Who would you like to reassign {task} to?",
-            text=self.msgr.username,
-        )
-        if not ok:
-            return
+        if assign_to is None:
+            # TODO: combobox
+            assign_to, ok = QInputDialog.getText(
+                self,
+                "Reassign to",
+                f"Who would you like to reassign {task} to?",
+                text=self.msgr.username,
+            )
+            if not ok:
+                return
         try:
             # TODO: consider augmenting with a reason, e.g., reason="help" kwarg
             self.msgr.reassign_task(task, assign_to)
