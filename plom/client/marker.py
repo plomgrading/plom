@@ -343,6 +343,7 @@ class MarkerClient(QWidget):
         self.ui.tableView.claimSignal.connect(self.claim_task)
         self.ui.tableView.deferSignal.connect(self.defer_task)
         self.ui.tableView.reassignSignal.connect(self.reassign_task)
+        self.ui.tableView.reassignToMeSignal.connect(self.reassign_task_to_me)
 
         if Version(__version__).is_devrelease:
             self.ui.technicalButton.setChecked(True)
@@ -374,6 +375,7 @@ class MarkerClient(QWidget):
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         m = QMenu(self)
+        m.addAction("Reassign task to me", self.reassign_task_to_me)
         m.addAction("Reassign task...", self.reassign_task)
         m.addAction("Claim task for me", self.claim_task)
         self.ui.deferButton.setMenu(m)
@@ -1221,6 +1223,9 @@ class MarkerClient(QWidget):
 
         self._updateCurrentlySelectedRow()
         return True
+
+    def reassign_task_to_me(self) -> None:
+        self.reassign_task(assign_to=self.msgr.username)
 
     def reassign_task(self, *, assign_to: str | None = None) -> None:
         """Reassign the currently-selected task to ourselves or another user.
