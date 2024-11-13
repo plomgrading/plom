@@ -331,7 +331,9 @@ class ImageBundleService:
 
         # note - only known-images will create collisions.
         # extra pages and discards will never collide.
-        for image in staged_imgs.filter(image_type=StagingImage.KNOWN):
+        for image in staged_imgs.filter(image_type=StagingImage.KNOWN).prefetch_related(
+            "knownstagingimage"
+        ):
             knw = image.knownstagingimage
             tpv = encodePaperPageVersion(knw.paper_number, knw.page_number, knw.version)
             # append this image.primary-key to the list of images with that tpv
@@ -355,16 +357,25 @@ class ImageBundleService:
         """
         collisions = []
         # note that only known images can cause collisions
-        for image in staged_imgs.filter(image_type=StagingImage.KNOWN):
-            known = image.knownstagingimage
-            colls = Image.objects.filter(
-                fixedpage__paper__paper_number=known.paper_number,
-                fixedpage__page_number=known.page_number,
-            )
-            for colliding_img in colls:
-                collisions.append(
-                    (image, colliding_img, known.paper_number, known.page_number)
-                )
+        # get all the known paper/pages in the bundle
+        staged_pp_img_dict = {
+            (img.knownstagingimage.paper_number, img.knownstagingimage.page_number): img
+            for img in staged_imgs.filter(image_type=StagingImage.KNOWN)
+        }
+        # get the list of papers in the bundle so that we can grab all
+        # known pages from just those papers.
+        staged_paper_list = [X[0] for X in staged_pp_img_dict.keys()]
+        pushed_img_pp_dict = {
+            (X.paper.paper_number, X.page_number): X.image
+            for X in FixedPage.objects.filter(
+                image__isnull=False, paper__paper_number__in=staged_paper_list
+            ).prefetch_related("paper", "image")
+        }
+        # now compare image by image and store list of collsions
+        collisions = []
+        for pp, img in staged_pp_img_dict.items():
+            if pp in pushed_img_pp_dict:
+                collisions.append((img, pushed_img_pp_dict[pp], pp[0], pp[1]))
         return collisions
 
     @transaction.atomic

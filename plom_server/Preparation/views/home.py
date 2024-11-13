@@ -3,9 +3,11 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2024 Colin B. Macdonald
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpRequest
 from django.shortcuts import render
 from django.urls import reverse
+from django.utils.text import slugify
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 
 from django.contrib import messages
@@ -44,19 +46,19 @@ class PreparationLandingView(ManagerRequiredView):
             "any_papers_built": bps.are_any_papers_built(),
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
         }
-
-        if SpecificationService.is_there_a_spec():
+        try:
+            spec = SpecificationService.get_the_spec()
             context.update(
                 {
                     "valid_spec": True,
                     "can_upload_source_tests": True,
-                    "spec_longname": SpecificationService.get_longname(),
-                    "spec_shortname": SpecificationService.get_shortname(),
-                    "slugged_spec_shortname": SpecificationService.get_short_name_slug(),
-                    "num_versions": SpecificationService.get_n_versions(),
+                    "spec_longname": spec["longName"],
+                    "spec_shortname": spec["name"],
+                    "slugged_spec_shortname": slugify(spec["name"]),
+                    "num_versions": spec["numberOfVersions"],
                 }
             )
-        else:
+        except ObjectDoesNotExist:
             context.update(
                 {
                     "valid_spec": False,
