@@ -138,7 +138,7 @@ class AuthenticationServices:
             manager.save()
 
     @transaction.atomic
-    def create_users_from_csv(self, file_path: Path | str) -> list[dict[str]]:
+    def create_users_from_csv(self, file_path: Path | str) -> list[dict[str, str]]:
         """Creates multiple users from a .csv file.
 
         Args:
