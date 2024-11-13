@@ -213,9 +213,10 @@ class BaseMessenger:
         return self.get_server_API_version() == int(Plom_Legacy_Server_API_Version)
 
     def is_server_api_less_than(self, api_number: int) -> bool | None:
-        if self.get_server_API_version() is None:
+        ver = self.get_server_API_version()
+        if ver is None:
             return None
-        return self.get_server_API_version() < api_number
+        return int(ver) < api_number
 
     @property
     def server(self) -> str:
