@@ -22,7 +22,6 @@ import logging
 from math import ceil
 from pathlib import Path
 import platform
-import random
 import sys
 import tempfile
 from textwrap import shorten
