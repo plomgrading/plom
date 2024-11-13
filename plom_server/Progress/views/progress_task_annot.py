@@ -347,7 +347,10 @@ class MarkingTaskReassignView(LeadMarkerOrManagerView):
 
         try:
             MarkingTaskService.reassign_task_to_user(
-                task_pk, new_username=new_username, calling_user=request.user
+                task_pk,
+                new_username=new_username,
+                calling_user=request.user,
+                unassign_others=True,
             )
         except ValueError:
             # TODO - report the error
