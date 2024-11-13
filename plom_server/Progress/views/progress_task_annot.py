@@ -352,10 +352,12 @@ class MarkingTaskReassignView(LeadMarkerOrManagerView):
                 calling_user=request.user,
                 unassign_others=True,
             )
-        except ValueError:
-            # TODO - report the error
+        except ValueError as e:
+            print("TODO: Error happened, but not sure how to report it")
+            print(e)
             # return HttpResponseClientRedirect("some_error_page.html")
-            pass
+            # for now. let's just get the yellow-screen-of-death
+            raise
 
         return HttpResponseClientRedirect(
             reverse("progress_marking_task_details", args=[task_pk])
