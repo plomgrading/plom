@@ -2,6 +2,7 @@
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 from django.db import IntegrityError
 
@@ -40,11 +41,11 @@ class Command(BaseCommand):
         """Imports users from a file.
 
         Input file must be a .csv containing fields: 'username', 'usergroup'
-        created users are written to stdout int the format of a .csv.
+        created users are written to stdout in the format of a .csv.
         """
         try:
             new_user_list = AuthenticationServices().create_users_from_csv(file_path)
-        except (IntegrityError, KeyError) as e:
+        except (IntegrityError, ObjectDoesNotExist, KeyError) as e:
             raise CommandError(e)
 
         with io.StringIO() as iostream:

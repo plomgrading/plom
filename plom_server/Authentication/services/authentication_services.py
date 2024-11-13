@@ -15,7 +15,6 @@ from django.http import HttpRequest
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from random_username.generate import generate_username
-from django.db.models import Q
 
 
 from pathlib import Path
@@ -140,39 +139,27 @@ class AuthenticationServices:
 
     @transaction.atomic
     def create_users_from_csv(self, file_path: Path | str) -> list[dict[str]]:
-        """Creates multiple users from a csv file.
+        """Creates multiple users from a .csv file.
+
+        Args:
+            file_path: path to the .csv file
 
         Returns:
             A list of dicts containing information for each user.
 
-            .csv must contain `username`, and `usergroup` fields.
+        Raises:
+            KeyError: .csv file is missing required fields: `username`;`usergroup`.
+            IntegrityError: attempted to create a user that already exists.
+            ObjectDoesNotExist: specified usergroup doesn't exists.
         """
-        # TODO: unit tests
         with open(file_path) as csvfile:
             new_user_list = list(csv.DictReader(csvfile))
 
         required_fields = set(["username", "usergroup"])
         if not required_fields.issubset(new_user_list[0].keys()):
             raise KeyError(
-                f".csv is missing required fields, it must contain: {required_fields}"
+                f"{file_path} is missing required fields, it must contain: {required_fields}"
             )
-
-        # lots of checks before creating new users, don't want to fail midway
-        new_usernames = [u["username"] for u in new_user_list]
-        # check no duplicates among new users
-        if len(set([u.lower() for u in new_usernames])) != len(new_usernames):
-            raise IntegrityError(
-                "your .csv contains duplicate users, case doesn't distinguish them"
-            )
-        # check against existing users, case insensitive makes this tricky
-        # https://stackoverflow.com/questions/14907525/how-can-i-chain-djangos-in-and-iexact-queryset-field-lookups
-        q_list = Q()
-        for q in [Q(username__iexact=n) for n in new_usernames]:
-            q_list |= q
-        collisions = User.objects.filter(q_list)
-        if collisions.exists():
-            collisions = list(collisions.values_list("username", flat=True))
-            raise IntegrityError(f"The following users already exist: {collisions}")
 
         # TODO: batch user creation?
         for index, user_dict in enumerate(new_user_list):
