@@ -144,7 +144,10 @@ class ReassignTask(APIView):
 
         try:
             MarkingTaskService.reassign_task_to_user(
-                task_pk, new_username=new_username, calling_user=calling_user
+                task_pk,
+                new_username=new_username,
+                calling_user=calling_user,
+                unassign_others=True,
             )
         except ValueError as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
