@@ -361,7 +361,7 @@ LOGGING: dict[str, Any] = {
 
 # When hunting down slow http request / db queries make use of the django-silk package
 # https://github.com/jazzband/django-silk
-PROFILER_SILK_ENABLED = False
+PROFILER_SILK_ENABLED = True
 if PROFILER_SILK_ENABLED:
     MIDDLEWARE.append("silk.middleware.SilkyMiddleware")
     INSTALLED_APPS.append("silk")

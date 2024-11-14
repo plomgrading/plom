@@ -7,7 +7,7 @@
 # Copyright (C) 2024 Colin B. Macdonald
 
 from __future__ import annotations
-
+from collections import defaultdict
 import pathlib
 import uuid
 
@@ -406,11 +406,31 @@ class ImageBundleService:
 
         # now make list of all papers/questions updated by this bundle
         # note that values_list does not return a list, it returns a "query-set"
-        papers_in_bundle = list(
-            question_pages.values_list("paper__paper_number", "question_index")
-        ) + list(extras.values_list("paper__paper_number", "question_index"))
         # remove duplicates by casting to a set
-        papers_questions_updated_by_bundle = set(papers_in_bundle)
+        papers_questions_updated_by_bundle = set(
+            list(question_pages.values_list("paper__paper_number", "question_index"))
+            + list(extras.values_list("paper__paper_number", "question_index"))
+        )
+        # now get all paper-numbers updated by the bundle
+        papers_updated_by_bundle = list(
+            set([X[0] for X in papers_questions_updated_by_bundle])
+        )
+        # use this to get all QuestionPage and MobilePage in those papers
+        pq_qpage_with_img = defaultdict(int)
+        pq_qpage_no_img = defaultdict(int)
+        for qpage in QuestionPage.objects.filter(
+            paper__paper_number__in=papers_updated_by_bundle
+        ).prefetch_related("paper", "image"):
+            pnqi = (qpage.paper.paper_number, qpage.question_index)
+            if qpage.image is None:
+                pq_qpage_no_img[pnqi] += 1
+            else:
+                pq_qpage_with_img[pnqi] += 1
+        pq_mpage = defaultdict(int)
+        for mpage in MobilePage.objects.filter(
+            paper__paper_number__in=papers_updated_by_bundle
+        ).prefetch_related("paper", "image"):
+            pq_mpage[(qpage.paper.paper_number, qpage.question_index)] += 1
 
         # for each paper/question that has been updated, check if has either
         # all fixed pages, or no fixed pages but some mobile-pages.
@@ -419,27 +439,19 @@ class ImageBundleService:
         result: dict[str, list[tuple[int, int]]] = {"ready": [], "not_ready": []}
 
         for paper_number, question_index in papers_questions_updated_by_bundle:
-            q_pages = QuestionPage.objects.filter(
-                paper__paper_number=paper_number, question_index=question_index
-            )
-            pages_no_img = q_pages.filter(image__isnull=True).count()
-            if pages_no_img == 0:  # all fixed pages have images
+            if (
+                pq_qpage_no_img[(paper_number, question_index)] == 0
+            ):  # all fixed pages have images
                 result["ready"].append((paper_number, question_index))
                 continue
             # question has some images
             pages_with_img = q_pages.filter(image__isnull=False).count()
-            if (
-                pages_with_img > 0
-            ):  # question has some pages with and some without images - not ready
+            if pq_qpage_with_img[(paper_number, question_index)] > 0:
+                # question has some pages with and some without images - not ready
                 result["not_ready"].append((paper_number, question_index))
                 continue
             # all fixed pages without images - check if has any mobile pages
-            if (
-                MobilePage.objects.filter(
-                    paper__paper_number=paper_number, question_index=question_index
-                ).count()
-                > 0
-            ):
+            if pq_mpage[(paper_number, question_index)] > 0:
                 result["ready"].append((paper_number, question_index))
 
         return result
@@ -454,7 +466,7 @@ class ImageBundleService:
         Returns:
             A query of only the ID pages in the input bundle
         """
-        return IDPage.objects.filter(image__bundle=bundle)
+        return IDPage.objects.filter(image__bundle=bundle).prefetch_related("paper")
 
     @transaction.atomic
     def is_given_paper_ready_for_id_ing(self, paper_obj: Paper) -> bool:
