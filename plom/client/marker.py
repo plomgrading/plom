@@ -1238,7 +1238,7 @@ class MarkerClient(QWidget):
         if not task:
             return
         if assign_to is None:
-            # TODO: combobox
+            # TODO: combobox or similar to choose users
             assign_to, ok = QInputDialog.getText(
                 self,
                 "Reassign to",
@@ -1257,11 +1257,11 @@ class MarkerClient(QWidget):
         ) as e:
             InfoMsg(self, f"{e}").exec()
             return
-        # TODO, now what?
-        # TODO: adding a new possibility here will have some fallout
-        # self.examModel.setStatusByTask(task, "reassigned")
-        # TODO: the simplest thing would be to refresh/rebuild the task list
+        # The simplest thing is simply to refresh/rebuild the task list
         self.refresh_server_data()
+        # TODO: similar to Issue #3664, reassigning a task to someone else
+        # while NOT viewing all tasks, will result in it NOT going away and
+        # showing out of date info :(
 
     def claim_task(self) -> None:
         """Try to claim the currently selected task for this user."""
