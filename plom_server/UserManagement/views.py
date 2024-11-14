@@ -9,6 +9,7 @@
 
 import json
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -18,6 +19,7 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
+from plom.misc_utils import humanize_seconds
 from Authentication.services import AuthenticationServices
 from Base.base_group_views import ManagerRequiredView
 from Progress.services.userinfo_service import UserInfoServices
@@ -95,9 +97,13 @@ class UserPage(ManagerRequiredView):
 class PasswordResetPage(ManagerRequiredView):
     def get(self, request, username):
         user_obj = User.objects.get(username=username)
-        link = AuthenticationServices().generate_link(request, user_obj)
 
-        context = {"username": username, "link": link}
+        context = {
+            "username": username,
+            "link": AuthenticationServices().generate_link(request, user_obj),
+            "link_expiry_period": humanize_seconds(settings.PASSWORD_RESET_TIMEOUT),
+        }
+
         return render(request, "UserManagement/password_reset_page.html", context)
 
 
