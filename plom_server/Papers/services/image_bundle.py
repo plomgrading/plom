@@ -371,7 +371,7 @@ class ImageBundleService:
                 image__isnull=False, paper__paper_number__in=staged_paper_list
             ).prefetch_related("paper", "image")
         }
-        # now compare image by image and store list of collsions
+        # now compare image by image and store list of collisions
         collisions = []
         for pp, img in staged_pp_img_dict.items():
             if pp in pushed_img_pp_dict:
