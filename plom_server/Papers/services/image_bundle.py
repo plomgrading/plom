@@ -9,6 +9,7 @@
 from __future__ import annotations
 from collections import defaultdict
 import pathlib
+from typing import List, Tuple
 import uuid
 
 from plom.tpv_utils import encodePaperPageVersion
@@ -234,25 +235,24 @@ class ImageBundleService:
         from Preparation.services import StagingStudentService
 
         mts = MarkingTaskService()
-        its = IdentifyTaskService()
         questions = self.get_ready_questions(uploaded_bundle)
         for paper, question in questions["ready"]:
             paper_instance = Paper.objects.get(paper_number=paper)
             mts.create_task(paper_instance, question)
 
-        for id_page in self.get_id_pages_in_bundle(uploaded_bundle):
-            paper = id_page.paper
-            if not its.id_task_exists(paper):
-                its.create_task(paper)
-
-                # instantiate prename predictions
-                student_service = StagingStudentService()
-                prename_sid = student_service.get_prename_for_paper(paper.paper_number)
-                if prename_sid:
-                    id_reader_service = IDReaderService()
-                    id_reader_service.add_prename_ID_prediction(
-                        user_obj, prename_sid, paper.paper_number
-                    )
+        # bulk create the associated ID tasks in O(1).
+        papers = [
+            id_page.paper for id_page in self.get_id_pages_in_bundle(uploaded_bundle)
+        ]
+        IdentifyTaskService().bulk_create_id_tasks(papers)
+        # now create any prename-predictions - still O(n) unfortunately
+        prenamed_papers = StagingStudentService().get_prenamed_papers()
+        for paper in papers:
+            if paper.paper_number in prenamed_papers:
+                sid = prenamed_papers[paper.paper_number][0]
+                IDReaderService().add_prename_ID_prediction(
+                    user_obj, sid, paper.paper_number
+                )
 
     def get_staged_img_location(
         self, staged_image: StagingImage
@@ -355,7 +355,7 @@ class ImageBundleService:
         Returns:
             list [(StagingImage, Image, paper_number, page_number)]: list of unordered collisions.
         """
-        collisions = []
+        collisions: List[Tuple[StagingImage, Image, int, int]] = []
         # note that only known images can cause collisions
         # get all the known paper/pages in the bundle
         staged_pp_img_dict = {
@@ -416,8 +416,8 @@ class ImageBundleService:
             set([X[0] for X in papers_questions_updated_by_bundle])
         )
         # use this to get all QuestionPage and MobilePage in those papers
-        pq_qpage_with_img = defaultdict(int)
-        pq_qpage_no_img = defaultdict(int)
+        pq_qpage_with_img: dict[Tuple[int, int], int] = defaultdict(int)
+        pq_qpage_no_img: dict[Tuple[int, int], int] = defaultdict(int)
         for qpage in QuestionPage.objects.filter(
             paper__paper_number__in=papers_updated_by_bundle
         ).prefetch_related("paper", "image"):
@@ -426,7 +426,7 @@ class ImageBundleService:
                 pq_qpage_no_img[pnqi] += 1
             else:
                 pq_qpage_with_img[pnqi] += 1
-        pq_mpage = defaultdict(int)
+        pq_mpage: dict[Tuple[int, int], int] = defaultdict(int)
         for mpage in MobilePage.objects.filter(
             paper__paper_number__in=papers_updated_by_bundle
         ).prefetch_related("paper", "image"):
@@ -445,7 +445,6 @@ class ImageBundleService:
                 result["ready"].append((paper_number, question_index))
                 continue
             # question has some images
-            pages_with_img = q_pages.filter(image__isnull=False).count()
             if pq_qpage_with_img[(paper_number, question_index)] > 0:
                 # question has some pages with and some without images - not ready
                 result["not_ready"].append((paper_number, question_index))
