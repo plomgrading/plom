@@ -15,7 +15,6 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpRequest, HttpResponse
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
@@ -23,9 +22,7 @@ from django.views.generic import View
 from braces.views import GroupRequiredMixin
 from bs4 import BeautifulSoup
 
-from .services import AuthenticationServices
 from Base.base_group_views import (
-    AdminRequiredView,
     RoleRequiredView,
 )
 
@@ -187,24 +184,6 @@ class LogoutView(View):
     def get(self, request: HttpRequest) -> HttpResponse:
         logout(request)
         return redirect("login")
-
-
-class PasswordResetLinks(AdminRequiredView):
-    template_name = "Authentication/regenerative_links.html"
-    activation_link = "Authentication/manager_activation_link.html"
-
-    def get(self, request: HttpRequest) -> HttpResponse:
-        users = User.objects.all().filter(groups__name="manager").values()
-        context = {"users": users}
-        return render(request, self.template_name, context)
-
-    def post(self, request: HttpRequest) -> HttpResponse:
-        username = request.POST.get("new_link")
-        user = User.objects.get(username=username)
-        request_domain = get_current_site(request).domain
-        link = AuthenticationServices().generate_link(user, request_domain)
-        context = {"link": link}
-        return render(request, self.activation_link, context)
 
 
 class Maintenance(Home, View):

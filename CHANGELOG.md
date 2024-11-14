@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Increase default password reset link expiry to 14 days.
+
+### Fixed
+* Misc fixes and cleanups.
+
+
+
+## [2024-11-06]
+
+### Added
+* Bundle upload displays a progress bar.
+
+### Changed
 * Improve error message when running the auto-ID reader without a classlist.
 * Improve UI when looking at out-of-date tasks by disabling irrelevant buttons such as "reset".
 
@@ -18,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Clarify on-screen help about collisions during scanning.
 * Use higher resolution for in-client solution images.
 * Improve error handling around annotation images.
+* Upload bundle and some other places have improved UI (for example disabling the form during a long upload).
+* Fixed errors related to users differing only in case.
+* Other tweaks and fixes.
 
 
 ## [0.16.9] - 2024-10-23
@@ -1339,7 +1355,8 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.16.9...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.16.10...main
+[0.16.10]: https://gitlab.com/plom/plom/-/compare/v0.16.9...v0.16.10
 [0.16.9]: https://gitlab.com/plom/plom/-/compare/v0.16.8...v0.16.9
 [0.16.8]: https://gitlab.com/plom/plom/-/compare/v0.16.7...v0.16.8
 [0.16.7]: https://gitlab.com/plom/plom/-/compare/v0.16.6...v0.16.7

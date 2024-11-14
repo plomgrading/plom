@@ -54,6 +54,12 @@ def delta_time_strings(ta, tb):
     return arrow.get(ta) - arrow.get(tb)
 
 
+def humanize_seconds(s: float) -> str:
+    """Return a string like "7 days" to describe a number of seconds."""
+    x = arrow.now()
+    return x.shift(seconds=s).humanize(x, only_distance=True)
+
+
 def is_within_one_hour_of_now(timestamp):
     if arrow.get(timestamp) > arrow.utcnow().shift(hours=-1):
         return True

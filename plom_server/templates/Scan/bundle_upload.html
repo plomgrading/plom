@@ -25,9 +25,11 @@
                 <div class="alert alert-warning">No bundles to upload - papers have not yet been printed.</div>
             {% else %}
                 <div class="m-3 p-3 border fs-5 w-50">
-                    <form id="form"
+                    <form id="myform"
                           enctype="multipart/form-data"
-                          hx-post="{% url 'scan_upload' %}">
+                          hx-post="{% url 'scan_upload' %}"
+                          hx-disabled-elt="#upload_btn, #pdf_file, #read_after, #force_render"
+                          hx-indicator="#myindicator">
                         {% csrf_token %}
                         <div class="mb-2">
                             <input class="form-control form-control-lg"
@@ -35,7 +37,7 @@
                                    name="pdf"
                                    accept="application/pdf"
                                    required
-                                   id="id_pdf">
+                                   id="pdf_file">
                         </div>
                         <div class="form-check mb-2">
                             <input class="form-check-input"
@@ -54,15 +56,17 @@
                                 use <q>safe mode rendering</q> of each page
                             </label>
                         </div>
-                        <!-- TODO: can't get hx-disabled-elt="self" working on this button -->
-                        <button type="submit" class="btn btn-primary" hx-indicator="#myindicator">Upload</button>
+                        <!-- hx-disabled-elt="self" on this button doesn't work b/c this button doesn't have hx-post -->
+                        <!-- https://stackoverflow.com/questions/78888026/setting-hx-disabled-elt-not-disabling-my-button -->
+                        <button type="submit" class="btn btn-primary" id="upload_btn">Upload</button>
                         <span id="myindicator" class="htmx-indicator">
                             <img src="{% static 'ball_triangle.svg' %}" />
+                            upload in progress
                             <progress id="progress" value="0" max="100"></progress>
-                            <!--Please wait-->
                         </span>
                     </form>
                 </div>
+                <!-- https://gitlab.com/plom/plom/-/issues/3705 -->
                 {% if messages %}
                     {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
                 {% endif %}

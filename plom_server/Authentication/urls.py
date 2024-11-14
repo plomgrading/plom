@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.urls import path
 
@@ -18,7 +18,6 @@ urlpatterns = [
     path(
         "maintenance/", Authentication.views.Maintenance.as_view(), name="maintenance"
     ),
-    # signup path
     path(
         "signup/single/",
         SingleUserSignUp.as_view(),
@@ -38,10 +37,5 @@ urlpatterns = [
         "reset/done/",
         Authentication.views.SetPasswordComplete.as_view(),
         name="password_reset_complete",
-    ),
-    path(
-        "passwordresetlinks/",
-        Authentication.views.PasswordResetLinks.as_view(),
-        name="password_reset",
     ),
 ]
