@@ -217,7 +217,7 @@ class IDReaderService:
         for paper in papers:
             # check if paper is actually prenamed.
             if paper.paper_number not in prenamed_papers:
-                continue 
+                continue
             if paper.paper_number in existing_prename_predictions:
                 pred = existing_prename_predictions[paper.paper_numbers]
                 pred.student_id = prenamed_papers[paper.paper_number][0]
