@@ -20,7 +20,6 @@
     {% endif %}
     <div class="card m-2">
         <div class="card-body">
-            <!--<p>(TODO: should this happen automatically when clients connect?)</p>-->
             <form method="post" action="{% url 'rubric_half' %}">
                 {% csrf_token %}
                 <div class="form-group mr-2">{{ rubric_halfmark_form }}</div>
@@ -28,12 +27,12 @@
                         class="btn btn-danger"
                         name="init_system_rubrics"
                         {% if not rubrics %}disabled{% endif %}
-                        {% if demo_rubrics %}disabled{% endif %}>Create half mark rubrics (OPTIONAL)</button>
+                        {% if half_point_rubrics %}disabled{% endif %}>Create half mark rubrics (OPTIONAL)</button>
             </form>
             <p>
                 Introduce two additional rubrics to each question: +&#189; and -&#189;.
                 {% if not rubrics %}The system rubrics must be created before this button is enabled.{% endif %}
-                {% if demo_rubrics %}These rubrics have already been created.{% endif %}
+                {% if half_point_rubrics %}These rubrics have already been created.{% endif %}
             </p>
             <form method="get" action={% url 'rubric_download' %} class="form-inline">
                 {% csrf_token %}
