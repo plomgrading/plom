@@ -1153,10 +1153,12 @@ class MarkerClient(QWidget):
             WarnMsg(self, str(e)).exec()
             return False
         our_username = self.msgr.username
+        task_ids_seen = []
         for t in tasks:
             task_id_str = paper_question_index_to_task_id_str(
                 t["paper_number"], t["question"]
             )
+            task_ids_seen.append(task_id_str)
             username = t.get("username", "")
             integrity = t.get("integrity", "")
             # TODO: maybe task_model can support None for mark too...?
@@ -1221,6 +1223,17 @@ class MarkerClient(QWidget):
                     self.examModel.setAnnotatedFile(task_id_str, "", "")
                     self.examModel.setPaperDirByTask(task_id_str, "")
 
+        # Prune stale tasks that the server no longer lists as ours, carefully keep
+        # any that might not be saved yet (even if not seen in previous loop).
+        for task_id_str in self.examModel.get_all_tasks():
+            local_status = self.examModel.getStatusByTask(task_id_str)
+            if local_status.casefold() in ("uploading...", "failed upload"):
+                continue
+            if task_id_str in task_ids_seen:
+                continue
+            log.info("Removing row %s: server no longer says its ours", task_id_str)
+            self.examModel.remove_task(task_id_str)
+
         self._updateCurrentlySelectedRow()
         return True
 
@@ -1259,9 +1272,6 @@ class MarkerClient(QWidget):
             return
         # The simplest thing is simply to refresh/rebuild the task list
         self.refresh_server_data()
-        # TODO: similar to Issue #3664, reassigning a task to someone else
-        # while NOT viewing all tasks, will result in it NOT going away and
-        # showing out of date info :(
 
     def claim_task(self) -> None:
         """Try to claim the currently selected task for this user."""
