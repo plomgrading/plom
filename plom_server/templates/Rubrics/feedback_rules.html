@@ -27,11 +27,6 @@
             You can disable this feature if you'd prefer that markers
             acknowledge the warning each time it occurs.
         </p>
-        <p>
-            <strong>Note:</strong> changes to this page may not take
-            effect instantly: you first must save the changes and
-            markers may need to refresh or restart their client.
-        </p>
     </div>
     <hr />
     <div>
@@ -40,7 +35,12 @@
               method="post"
               action="{% url 'feedback_rules' %}">
             {% csrf_token %}
-            <div class="mt-4">
+            <p>
+                <strong>Note:</strong> changes to this page do not take
+                effect instantly: you first must click the button to save
+                the changes and markers may need to refresh their client.
+            </p>
+            <div>
                 <button class="btn btn-primary" type="submit" name="_whut_do" value="">Save settings</button>
                 <button class="btn btn-outline-secondary ms-2 me-2"
                         type="action"
@@ -58,7 +58,7 @@
                 {% endif %}
             </div>
             <!-- consider adding "sortable" to the class for clickable headers -->
-            <table class="table">
+            <table class="tablem mt-3">
                 <thead>
                     <tr>
                         <!-- TODO: add tooltips or some other explanation -->
