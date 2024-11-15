@@ -363,7 +363,7 @@ class MarkingStatsService:
             task_set = task_set.filter(status=status)
         task_info = []
         for task in task_set.prefetch_related(
-            "latest_annotation", "paper", "assigned_user"
+            "latest_annotation", "paper", "assigned_user", "markingtasktag_set"
         ).order_by("paper__paper_number"):
             dat = {
                 "paper_number": task.paper.paper_number,

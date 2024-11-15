@@ -99,11 +99,14 @@ class IdentifyTaskService:
         id_list = []
         for task in PaperIDTask.objects.filter(
             status=PaperIDTask.COMPLETE, assigned_user=user
-        ):
-            latest = self.get_latest_id_results(task)
-            if latest:
+        ).prefetch_related("paper", "latest_action"):
+            if task.latest_action:
                 id_list.append(
-                    [task.paper.paper_number, latest.student_id, latest.student_name]
+                    [
+                        task.paper.paper_number,
+                        task.latest_action.student_id,
+                        task.latest_action.student_name,
+                    ]
                 )
         return id_list
 

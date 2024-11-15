@@ -78,8 +78,9 @@ class IDReaderService:
         """
         predictions = {}
         if predictor:
-            pred_query = IDPrediction.objects.filter(predictor=predictor)
-            for pred in pred_query:
+            for pred in IDPrediction.objects.filter(
+                predictor=predictor
+            ).prefetch_related("paper"):
                 predictions[pred.paper.paper_number] = {
                     "student_id": pred.student_id,
                     "certainty": pred.certainty,
@@ -89,8 +90,7 @@ class IDReaderService:
 
         # else we want all predictors
         allpred: dict[int, list[dict[str, Any]]] = {}
-        pred_query = IDPrediction.objects.all()
-        for pred in pred_query:
+        for pred in IDPrediction.objects.all().prefetch_related("paper"):
             if allpred.get(pred.paper.paper_number) is None:
                 allpred[pred.paper.paper_number] = []
             allpred[pred.paper.paper_number].append(
