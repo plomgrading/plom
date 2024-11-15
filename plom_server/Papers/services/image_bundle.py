@@ -170,6 +170,29 @@ class ImageBundleService:
             suffix = pathlib.Path(staged.image_file.name).suffix
             return prefix + str(uuid.uuid4()) + suffix
 
+        # we create all the images as O(n) but then update
+        # fixed-pages and associated structures in O(1) - I hope
+        new_mobile_pages = []
+        new_discard_pages = []
+        updated_fixed_pages = []
+        # we need all the fixed pages that are touched by these new images
+        # to get that we find all the papers that are touched and
+        # then get **all** the fixed pages from those papers.
+        paper_numbers = set(
+            staged.knownstagingimage.paper_number
+            for staged in bundle_images
+            if staged.image_type == StagingImage.KNOWN
+        )
+        # make an easy look-up dict - note that a given pn/page may have
+        # multiple fixed pages since when questions share pages.
+        fp_by_pn_and_page = defaultdict(list)
+        for fp in (
+            FixedPage.objects.select_for_update()
+            .filter(paper__paper_number__in=paper_numbers)
+            .prefetch_related("paper")
+        ):
+            fp_by_pn_and_page[(fp.paper.paper_number, fp.page_number)].append(fp)
+
         for staged in bundle_images:
             with staged.image_file.open("rb") as fh:
                 # ensure that a pushed image has a defined rotation
@@ -194,19 +217,17 @@ class ImageBundleService:
             if staged.image_type == StagingImage.KNOWN:
                 known = staged.knownstagingimage
                 # Note that since fixedpage is polymorphic, this will handle question, ID and DNM pages.
-                pages = FixedPage.objects.filter(
-                    paper__paper_number=known.paper_number,
-                    page_number=known.page_number,
-                ).select_for_update()
-                if not pages:
+                fp_list = fp_by_pn_and_page[(known.paper_number, known.page_number)]
+                if len(fp_list) == 0:
                     raise ObjectDoesNotExist(
                         f"Paper {known.paper_number}"
                         f" page {known.page_number} does not exist"
                     )
-                # Can be more than one FixedPage when questions share pages
-                for page in pages:
-                    page.image = image
-                    page.save(update_fields=["image"])
+                else:
+                    for fp in fp_list:
+                        fp.image = image
+                        updated_fixed_pages.append(fp)
+
             elif staged.image_type == StagingImage.EXTRA:
                 # need to make one mobile page for each question in the question-list
                 extra = staged.extrastagingimage
@@ -216,29 +237,33 @@ class ImageBundleService:
                     v = pi_service.get_version_from_paper_question(
                         extra.paper_number, q
                     )
-                    MobilePage.objects.create(
-                        paper=paper, image=image, question_index=q, version=v
+                    new_mobile_pages.append(
+                        MobilePage(
+                            paper=paper, image=image, question_index=q, version=v
+                        )
                     )
             elif staged.image_type == StagingImage.DISCARD:
                 disc = staged.discardstagingimage
-                DiscardPage.objects.create(
-                    image=image, discard_reason=disc.discard_reason
+                new_discard_pages.append(
+                    DiscardPage(image=image, discard_reason=disc.discard_reason)
                 )
             else:
                 raise ValueError(
                     f"Pushed images must be known, extra or discards - found {staged.image_type}"
                 )
+        MobilePage.objects.bulk_create(new_mobile_pages)
+        DiscardPage.objects.bulk_create(new_discard_pages)
+        FixedPage.objects.bulk_update(updated_fixed_pages, ["image"])
 
         from Mark.services import MarkingTaskService
         from Identify.services import IdentifyTaskService
         from Identify.services import IDReaderService
         from Preparation.services import StagingStudentService
 
-        mts = MarkingTaskService()
-        questions = self.get_ready_questions(uploaded_bundle)
-        for paper, question in questions["ready"]:
-            paper_instance = Paper.objects.get(paper_number=paper)
-            mts.create_task(paper_instance, question)
+        # bulk create the associated marking tasks in O(1)
+        MarkingTaskService().bulk_create_marking_tasks(
+            self.get_ready_questions(uploaded_bundle)["ready"]
+        )
 
         # bulk create the associated ID tasks in O(1).
         papers = [
@@ -379,7 +404,9 @@ class ImageBundleService:
         return collisions
 
     @transaction.atomic
-    def get_ready_questions(self, bundle: Bundle) -> dict[str, list[tuple[int, int]]]:
+    def get_ready_questions(
+        self, bundle: Bundle
+    ) -> dict[str, list[tuple[int, int, int]]]:
         """Find questions across all test-papers in the database that now ready.
 
         A question is ready when either it has all of its
@@ -394,7 +421,7 @@ class ImageBundleService:
 
         Returns:
             Dict with two keys, each to a list of ints.
-            "ready" is the list of paper_number/question_index pairs
+            "ready" is the list of paper_number/question_index/version triples
             that have pages in this bundle, and are now ready to be marked.
             "not_ready" are paper_number/question_index pairs that have pages
             in this bundle, but are not ready to be marked yet.
@@ -407,51 +434,63 @@ class ImageBundleService:
         # now make list of all papers/questions updated by this bundle
         # note that values_list does not return a list, it returns a "query-set"
         # remove duplicates by casting to a set
-        papers_questions_updated_by_bundle = set(
-            list(question_pages.values_list("paper__paper_number", "question_index"))
-            + list(extras.values_list("paper__paper_number", "question_index"))
+        papers_questions_versions_updated_by_bundle = set(
+            list(
+                question_pages.values_list(
+                    "paper__paper_number", "question_index", "version"
+                )
+            )
+            + list(
+                extras.values_list("paper__paper_number", "question_index", "version")
+            )
         )
         # now get all paper-numbers updated by the bundle
         papers_updated_by_bundle = list(
-            set([X[0] for X in papers_questions_updated_by_bundle])
+            set([X[0] for X in papers_questions_versions_updated_by_bundle])
         )
         # use this to get all QuestionPage and MobilePage in those papers
-        pq_qpage_with_img: dict[Tuple[int, int], int] = defaultdict(int)
-        pq_qpage_no_img: dict[Tuple[int, int], int] = defaultdict(int)
+        pq_qpage_with_img: dict[Tuple[int, int, int], int] = defaultdict(int)
+        pq_qpage_no_img: dict[Tuple[int, int, int], int] = defaultdict(int)
         for qpage in QuestionPage.objects.filter(
             paper__paper_number__in=papers_updated_by_bundle
         ).prefetch_related("paper", "image"):
-            pnqi = (qpage.paper.paper_number, qpage.question_index)
+            pnqiv = (qpage.paper.paper_number, qpage.question_index, qpage.version)
             if qpage.image is None:
-                pq_qpage_no_img[pnqi] += 1
+                pq_qpage_no_img[pnqiv] += 1
             else:
-                pq_qpage_with_img[pnqi] += 1
-        pq_mpage: dict[Tuple[int, int], int] = defaultdict(int)
+                pq_qpage_with_img[pnqiv] += 1
+        pq_mpage: dict[Tuple[int, int, int], int] = defaultdict(int)
         for mpage in MobilePage.objects.filter(
             paper__paper_number__in=papers_updated_by_bundle
         ).prefetch_related("paper", "image"):
-            pq_mpage[(qpage.paper.paper_number, qpage.question_index)] += 1
+            pq_mpage[
+                (mpage.paper.paper_number, mpage.question_index, mpage.version)
+            ] += 1
 
         # for each paper/question that has been updated, check if has either
         # all fixed pages, or no fixed pages but some mobile-pages.
         # if some, but not all, fixed pages then is not ready.
 
-        result: dict[str, list[tuple[int, int]]] = {"ready": [], "not_ready": []}
+        result: dict[str, list[tuple[int, int, int]]] = {"ready": [], "not_ready": []}
 
-        for paper_number, question_index in papers_questions_updated_by_bundle:
+        for (
+            paper_number,
+            question_index,
+            version,
+        ) in papers_questions_versions_updated_by_bundle:
             if (
-                pq_qpage_no_img[(paper_number, question_index)] == 0
+                pq_qpage_no_img[(paper_number, question_index, version)] == 0
             ):  # all fixed pages have images
-                result["ready"].append((paper_number, question_index))
+                result["ready"].append((paper_number, question_index, version))
                 continue
             # question has some images
-            if pq_qpage_with_img[(paper_number, question_index)] > 0:
+            if pq_qpage_with_img[(paper_number, question_index, version)] > 0:
                 # question has some pages with and some without images - not ready
-                result["not_ready"].append((paper_number, question_index))
+                result["not_ready"].append((paper_number, question_index, version))
                 continue
             # all fixed pages without images - check if has any mobile pages
-            if pq_mpage[(paper_number, question_index)] > 0:
-                result["ready"].append((paper_number, question_index))
+            if pq_mpage[(paper_number, question_index, version)] > 0:
+                result["ready"].append((paper_number, question_index, version))
 
         return result
 
