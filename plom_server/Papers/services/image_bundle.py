@@ -270,14 +270,11 @@ class ImageBundleService:
             id_page.paper for id_page in self.get_id_pages_in_bundle(uploaded_bundle)
         ]
         IdentifyTaskService().bulk_create_id_tasks(papers)
-        # now create any prename-predictions - still O(n) unfortunately
+        # now create any prename-predictions
         prenamed_papers = StagingStudentService().get_prenamed_papers()
-        for paper in papers:
-            if paper.paper_number in prenamed_papers:
-                sid = prenamed_papers[paper.paper_number][0]
-                IDReaderService().add_prename_ID_prediction(
-                    user_obj, sid, paper.paper_number
-                )
+        IDReaderService().bulk_add_prename_ID_predictions(
+            user_obj, papers, prenamed_papers
+        )
 
     def get_staged_img_location(
         self, staged_image: StagingImage

@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 import cv2 as cv
 import json
 import numpy as np
@@ -189,6 +190,67 @@ class IDReaderService:
     ) -> None:
         """Add ID prediction for a prenamed paper."""
         self.add_or_change_ID_prediction(user, paper_number, student_id, 0.9, "prename")
+
+    @transaction.atomic
+    def bulk_add_prename_ID_predictions(
+        sef,
+        user: User,
+        papers: list[Paper],
+        prenamed_papers: dict[int, tuple[str, str]],
+    ) -> None:
+        paper_numbers = [paper.paper_number for paper in papers]
+        # find existing prename-predictions from these papers
+        existing_prename_predictions = {}
+        for pred in IDPrediction.objects.filter(
+            predictor="prenamed", paper__paper_number__in=paper_numbers
+        ).prefetch_related("paper"):
+            existing_prename_predictions[pred.paper.paper_number] = pred
+        # find any existing predictions from these papers
+        existing_predictions = defaultdict(list)
+        for pred in IDPrediction.objects.filter(
+            paper__paper_number__in=paper_numbers
+        ).prefetch_related("paper"):
+            existing_predictions[pred.paper.paper_number].append(pred)
+
+        new_predictions = []
+        predictions_to_update = []
+        for paper in papers:
+            # check if paper is actually prenamed.
+            if paper.paper_number not in prenamed_papers:
+                continue 
+            if paper.paper_number in existing_prename_predictions:
+                pred = existing_prename_predictions[paper.paper_numbers]
+                pred.student_id = prenamed_papers[paper.paper_number][0]
+                predictions_to_update.append(pred)
+            else:
+                new_predictions.append(
+                    IDPrediction(
+                        user=user,
+                        paper=paper,
+                        predictor="prenamed",
+                        student_id=prenamed_papers[paper.paper_number][0],
+                        certainty=0.9,
+                    )
+                )
+        IDPrediction.objects.bulk_update(predictions_to_update, ["student_id"])
+        IDPrediction.objects.bulk_create(new_predictions)
+        # now update the priorities of the associated IDtasks
+        # note that the updated IDPredictions did not change certainties, so
+        # they don't change the associated priorities
+        priority_updates = []
+        for idt in PaperIDTask.objects.filter(
+            paper__paper_number__in=paper_numbers
+        ).prefetch_related("paper"):
+            if idt.paper.paper_number in existing_prename_predictions:
+                certs = [
+                    X.certainty
+                    for X in existing_prename_predictions[paper.paper_number]
+                ]
+                idt.iding_priority = min(certs)
+            else:
+                idt.iding_priority = 0.9
+            priority_updates.append(idt)
+        PaperIDTask.objects.bulk_update(priority_updates, ["iding_priority"])
 
     def run_the_id_reader_in_foreground(
         self,
