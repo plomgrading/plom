@@ -656,14 +656,7 @@ class ProxyModel(QSortFilterProxyModel):
         return all_search_terms_in_tags
 
     def getPrefix(self, r: int) -> str:
-        """Returns the task code of inputted row index.
-
-        Args:
-            r: the row index forwhich row of the table.
-
-        Returns:
-            The task code.
-        """
+        """Returns the task code of a given row index."""
         return self.data(self.index(r, _idx_task_id))
 
     def getStatus(self, r: int) -> str:
