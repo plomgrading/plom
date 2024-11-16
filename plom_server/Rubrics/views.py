@@ -319,10 +319,13 @@ def compare_rubrics(request, rid):
 
 def _rules_as_list(rules: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     # something (possible jsonfield) is randomly re-ordering the Python
-    # dict, so use a list, sorted alphabetically by code (TODO: for now!)
+    # dict, so use a list, sorted:
+    #   - first by whether admins can override the defaults
+    #   - secondly alphabetically by code
     L = []
     for code in sorted(rules.keys()):
         data = rules[code]
+        # keep the overridable rules on top
         if data["override_allowed"]:
             data = data.copy()
             data.update({"code": code})
