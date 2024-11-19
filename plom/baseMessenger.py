@@ -49,6 +49,7 @@ from plom.plom_exceptions import (
 
 # We can support earlier servers by special-case code, so
 # define an allow-list of versions we support.
+# TODO: Issue #3717: some later versions of 112 have a "preview" of this API
 Supported_Server_API_Versions = [
     int(Plom_Legacy_Server_API_Version),
     # 112,
