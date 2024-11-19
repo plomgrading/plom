@@ -114,7 +114,7 @@ class GetTasks(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
-# PATCH: /MK/reassign_task/{code}/{new_username}
+# PATCH: /MK/tasks/{code}/reassign/{new_username}
 class ReassignTask(APIView):
     """Reassign a task to another user.
 

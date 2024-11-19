@@ -52,10 +52,10 @@ class MarkURLPatterns:
         ]
         mark_patterns += tasks
 
-        # PATCH: /MK/reassign_task/{code}/{new_username}
+        # PATCH: /MK/tasks/{code}/reassign/{new_username}
         mark_patterns.append(
             path(
-                "reassign_task/<str:code>/<str:new_username>",
+                "tasks/<str:code>/reassign/<str:new_username>",
                 ReassignTask.as_view(),
                 name="api_MK_reassign_task_new_username",
             )

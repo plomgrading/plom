@@ -478,7 +478,7 @@ class Messenger(BaseMessenger):
 
         with self.SRmutex:
             try:
-                response = self.patch_auth(f"/MK/reassign_task/{code}/{username}")
+                response = self.patch_auth(f"/MK/tasks/{code}/reassign/{username}")
                 response.raise_for_status()
             except requests.HTTPError as e:
                 if response.status_code == 401:
