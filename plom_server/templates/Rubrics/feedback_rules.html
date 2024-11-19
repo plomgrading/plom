@@ -24,12 +24,8 @@
             after careful consideration, they might toggle
             &ldquo;Don't ask me again&ldquo;
             (<abbr title="Don't ask me again">DAMA</abbr>).
-            You can disable this feature if you wish.
-        </p>
-        <p>
-            <strong>Note:</strong> changes to this page may not take
-            effect instantly: you first must save the changes and
-            markers may need to refresh or restart their client.
+            You can disable this feature if you'd prefer that markers
+            acknowledge the warning each time it occurs.
         </p>
     </div>
     <hr />
@@ -39,7 +35,12 @@
               method="post"
               action="{% url 'feedback_rules' %}">
             {% csrf_token %}
-            <div class="mt-4">
+            <p>
+                <strong>Note:</strong> changes to this page do not take
+                effect instantly: you first must click the button to save
+                the changes and markers may need to refresh their client.
+            </p>
+            <div>
                 <button class="btn btn-primary" type="submit" name="_whut_do" value="">Save settings</button>
                 <button class="btn btn-outline-secondary ms-2 me-2"
                         type="action"
@@ -57,7 +58,7 @@
                 {% endif %}
             </div>
             <!-- consider adding "sortable" to the class for clickable headers -->
-            <table class="table">
+            <table class="tablem mt-3">
                 <thead>
                     <tr>
                         <!-- TODO: add tooltips or some other explanation -->
@@ -74,11 +75,11 @@
                     {% for data in feedback_rules %}
                         <tr>
                             <td>
-                                <small>{{ data.code }}</small>
+                                <small class="{% if not data.override_allowed %}fw-lighter{% endif %}">{{ data.code }}</small>
                             </td>
                             <td>
                                 <!-- lh-1 for tighter line-spacing -->
-                                <small class="lh-1">{{ data.explanation|safe }}</small>
+                                <small class="lh-1 {% if not data.override_allowed %}fw-lighter{% endif %}">{{ data.explanation|safe }}</small>
                             </td>
                             <td>
                                 <div class="form-check form-switch">
@@ -86,7 +87,7 @@
                                            type="checkbox"
                                            name="{{ data.code }}-allowed"
                                            {% if data.allowed %}checked{% endif %}
-                                           {% if data.server_changeable %}disabled{% endif %}>
+                                           {% if not data.override_allowed %}disabled{% endif %}>
                                 </div>
                             </td>
                             <td>
@@ -95,7 +96,7 @@
                                            type="checkbox"
                                            name="{{ data.code }}-warn"
                                            {% if data.warn %}checked{% endif %}
-                                           {% if data.server_changeable %}disabled{% endif %}>
+                                           {% if not data.override_allowed %}disabled{% endif %}>
                                 </div>
                             </td>
                             <td>
@@ -104,7 +105,7 @@
                                            type="checkbox"
                                            name="{{ data.code }}-dama_allowed"
                                            {% if data.dama_allowed %}checked{% endif %}
-                                           {% if data.server_changeable %}disabled{% endif %}>
+                                           {% if not data.override_allowed %}disabled{% endif %}>
                                 </div>
                             </td>
                         </tr>
