@@ -353,7 +353,8 @@ class MarkingTaskReassignView(LeadMarkerOrManagerView):
                 unassign_others=True,
             )
         except ValueError as e:
-            print("TODO: Error happened, but not sure how to report it")
+            # TODO: fix Issue #3718
+            print("TODO: Error happened, not sure how to report it: Issue #3718")
             print(e)
             # return HttpResponseClientRedirect("some_error_page.html")
             # for now. let's just get the yellow-screen-of-death
