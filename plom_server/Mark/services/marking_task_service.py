@@ -604,7 +604,6 @@ class MarkingTaskService:
         # task = MarkingTask.objects.select_for_update().get(pk=task_pk)
         if unassign_others:
             for tag in task.markingtasktag_set.all():
-                print(tag)
                 if tag.text.startswith("@"):
                     # TODO: colin doesn't understand this notation
                     tag.task.remove(task)
