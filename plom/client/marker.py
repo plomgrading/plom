@@ -1165,6 +1165,9 @@ class MarkerClient(QWidget):
             if status.casefold() == "out" and username == our_username:
                 status = "untouched"
 
+            # Issue #3706: sometimes server sends attn_tags...
+            tags = t["tags"]
+            tags.extend(t.get("attn_tags", []))
             try:
                 self.examModel.add_task(
                     task_id_str,
@@ -1172,7 +1175,7 @@ class MarkerClient(QWidget):
                     mark=mark,
                     marking_time=t.get("marking_time", 0.0),
                     status=status,
-                    tags=t["tags"],
+                    tags=tags,
                     username=username,
                     integrity_check=integrity,
                 )
@@ -1187,7 +1190,7 @@ class MarkerClient(QWidget):
                         local_status,
                     )
                     # even for those, we should update the tags
-                    self.tags_changed_signal.emit(task_id_str, t["tags"])
+                    self.tags_changed_signal.emit(task_id_str, tags)
                     continue
 
                 # In future, could try to keep existing src_img_data by *not* including
@@ -1200,7 +1203,7 @@ class MarkerClient(QWidget):
                     mark=mark,
                     marking_time=t.get("marking_time", 0.0),
                     status=status,
-                    tags=t["tags"],
+                    tags=tags,
                     username=username,
                 )
 
