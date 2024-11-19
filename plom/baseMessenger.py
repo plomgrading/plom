@@ -51,8 +51,8 @@ from plom.plom_exceptions import (
 # define an allow-list of versions we support.
 Supported_Server_API_Versions = [
     int(Plom_Legacy_Server_API_Version),
-    112,
-    113,  # introduced /MK/reassign_task/{code}/{username}
+    # 112,
+    # 113,  # introduced /MK/reassign_task/{code}/{username}
     int(Plom_API_Version),
 ]
 

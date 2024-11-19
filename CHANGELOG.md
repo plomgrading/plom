@@ -10,7 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Server accepts upload of userlist in csv format.
-* When using the latest server, lead markers can reassign tasks from within the client.
 
 ### Changed
 * Increase default password reset link expiry to 14 days.
