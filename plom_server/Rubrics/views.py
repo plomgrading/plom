@@ -54,32 +54,11 @@ class RubricAdminPageView(ManagerRequiredView):
         download_form = RubricDownloadForm(request.GET)
         upload_form = RubricUploadForm()
         rubrics = RubricService.get_all_rubrics()
-        demo_rubrics = rubrics.filter(value__exact=0.5).filter(text__exact=".")
+        half_point_rubrics = rubrics.filter(value__exact=0.5).filter(text__exact=".")
         context.update(
             {
                 "rubrics": rubrics,
-                "demo_rubrics": demo_rubrics,
-                "rubric_halfmark_form": rubric_halfmark_form,
-                "rubric_download_form": download_form,
-                "rubric_upload_form": upload_form,
-            }
-        )
-        return render(request, template_name, context=context)
-
-    def post(self, request: HttpRequest) -> HttpResponse:
-        context = self.build_context()
-        # no sneaky using curl to get here.
-        if not PapersPrinted.have_papers_been_printed():
-            return render(request, "Finish/finish_not_printed.html", context=context)
-
-        template_name = "Rubrics/rubrics_admin.html"
-        rubric_halfmark_form = RubricHalfMarkForm(request.GET)
-        download_form = RubricDownloadForm(request.GET)
-        upload_form = RubricUploadForm()
-        rubrics = RubricService.get_all_rubrics()
-        context.update(
-            {
-                "rubrics": rubrics,
+                "half_point_rubrics": half_point_rubrics,
                 "rubric_halfmark_form": rubric_halfmark_form,
                 "rubric_download_form": download_form,
                 "rubric_upload_form": upload_form,
