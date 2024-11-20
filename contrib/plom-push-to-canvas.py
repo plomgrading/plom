@@ -71,7 +71,7 @@ from plom.canvas import (
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.3.0"
+__script_version__ = "0.3.1"
 
 
 def sis_id_to_student_dict(student_list):
@@ -321,6 +321,12 @@ if __name__ == "__main__":
         sis_id = pdf.stem.split("_")[-1]
         # rebuild the stuff before the last underscore
         basename = "_".join(pdf.stem.split("_")[0:-1])
+        if sis_id == "None":
+            print(f"\nWARNING: PDF {pdf} has a 'None' ID")
+            print("  probably someone didn't fill in the front")
+            print("  (or possibly its a blank paper)")
+            print("Skipping for now; you will have to deal with this one manually")
+            continue
         assert len(sis_id) == 8, f"sis_id {sis_id} did not have 8 digits"
         assert set(sis_id) <= set(string.digits), f"sis_id {sis_id} had non-digit chars"
         try:
@@ -328,7 +334,7 @@ if __name__ == "__main__":
             student = sis_id_to_students[sis_id]
             mark = sis_id_to_marks[sis_id]
         except KeyError:
-            print(f"No student # {sis_id} in Canvas!")
+            print(f"\nWARNING: No student # {sis_id} in Canvas!")
             print("  Hopefully this is 1-1 w/ a prev canvas id error")
             print("  SKIPPING this paper and continuing")
             continue
@@ -337,6 +343,7 @@ if __name__ == "__main__":
             # stuff "solutions" into filename, b/w base and SID
             soln_pdf = soln_dir / f"{basename}_solutions_{sis_id}.pdf"
             if not soln_pdf.exists():
+                print()
                 print(f"WARNING: Student #{sis_id} has no solutions: {soln_pdf}")
                 soln_pdf = None
 

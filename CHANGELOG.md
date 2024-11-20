@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Increase default password reset link expiry to 14 days.
 
 ### Fixed
+* plom-push-to-canvas can handle blank-ID pages more gracefully by warning the user instead of crashing.
 * Misc fixes and cleanups.
 
 
