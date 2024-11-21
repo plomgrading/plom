@@ -7,13 +7,13 @@
 from __future__ import annotations
 from typing import Any
 
-from django.contrib.auth.models import User
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 
 from ..models import StagingBundle, StagingImage
 from .util import check_bundle_object_is_neither_locked_nor_pushed
 from .util import update_thumbnail_after_rotation
+from .cast_service import _manager_or_scanner_user_from_username
 
 
 class ImageRotateService:
@@ -56,14 +56,7 @@ class ImageRotateService:
     def rotate_image_cmd(
         self, username: str, bundle_name: str, bundle_order: int
     ) -> None:
-        try:
-            User.objects.get(
-                username__iexact=username, groups__name__in=["scanner", "manager"]
-            )
-        except ObjectDoesNotExist:
-            raise PermissionError(
-                f"User '{username}' does not exist or has wrong permissions!"
-            )
+        user_obj = _manager_or_scanner_user_from_username(username)
 
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
