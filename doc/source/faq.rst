@@ -279,6 +279,29 @@ If the command line access is not feasible, another option is:
      and push those rubrics to Server 2.
 
 
+How do I run the command-line tools in my Docker/Podman container?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You will first need ``ssh`` access to the host machine: talk to your sysadmin.
+
+Next, find the name of the container.  At UBC, in Nov 2024, these are
+organized by term and port number, for example
+``plom2024w141234_plom_1`` is served on port 41234.
+
+Using the name of the container, you can run commands directly::
+
+    docker exec -it plom2024w141234_plom_1 bash -c "cd /src/plom_server; python3 manage.py plom_download_marks_csv; ls"
+
+    docker cp plom2024w141234_plom_1:/src/plom_server/marks.csv .
+
+Note that because of a `long-standing issue <https://gitlab.com/plom/plom/-/issues/2759>`_,
+you must run the command from the directly ``src/plom_server``.
+
+You can also get an interactive ``bash`` prompt::
+
+    docker exec -it plom2024w141234_plom_1 bash
+
+
 
 Changing the spec later
 -----------------------
