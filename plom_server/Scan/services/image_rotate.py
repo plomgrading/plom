@@ -25,7 +25,10 @@ class ImageRotateService:
         *,
         angle: int,
     ) -> None:
-        """A wrapper around rotate_image_cmd.
+        """Rotate a particular page within a bundle.
+
+        See also :method:`rotate_image_cmd`. which is very similar.
+        TODO: consider merging these codes (Issue #3731).
 
         Args:
             bundle_id: which bundle, by the pk of the bundle.
@@ -38,6 +41,7 @@ class ImageRotateService:
             None.
 
         Raises:
+            ObjectDoesNotExist: no such bundle.
             PlomBundleLockedException: when the bundle is pushed or push-locked
             ValueError: when no image at that order in the bundle
         """
@@ -56,7 +60,8 @@ class ImageRotateService:
     def rotate_image_cmd(
         self, username: str, bundle_name: str, bundle_order: int
     ) -> None:
-        user_obj = _manager_or_scanner_user_from_username(username)
+        # it seems we don't actually record the user (Issue #3731)
+        _ = _manager_or_scanner_user_from_username(username)
 
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
