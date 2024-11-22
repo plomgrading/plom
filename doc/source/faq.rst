@@ -263,7 +263,8 @@ paper number 107 will have different versions than 20.
 We need to instantiate a new row of the database using the versions of
 paper number 20.  Extract the version map.  Use the relevant values to
 make a ``csv`` file with one row, using a completely new paper number:
-say 1020.  Next we need command line access to the server, a topic that needs its own FAQ entry...
+say 1020.  Next we
+need :ref:`command line access to the server <cmdline_in_container>`.
 
 Using the command line access, use ``django-command plom-qvmap`` and
 see the ``append`` option.  Now you should be able to assign the
@@ -278,6 +279,8 @@ If the command line access is not feasible, another option is:
      do most of the grading on Server 1, then download the rubrics
      and push those rubrics to Server 2.
 
+
+.. _cmdline_in_container:
 
 How do I run the command-line tools in my Docker/Podman container?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
