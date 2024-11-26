@@ -76,9 +76,9 @@ It is still possible to install Plom Client by first
 on your Chromebook.
 Then we install some of the dependencies manually in the terminal::
 
-  apt install python3-pyqt6 pyqt6-dev-tools \
+  apt install python3-pyqt6 python3-pyqt6.qtsvg pyqt6-dev-tools \
       python3-platformdirs python3-packaging python3-requests-toolbelt \
-      python3-tomlkit python3-tqdm
+      python3-tomlkit python3-tqdm python3-arrow
 
 
 .. note::
@@ -91,7 +91,7 @@ Then we install some of the dependencies manually in the terminal::
 
 Next we install some dependencies that are not available in Debian 12.8, again
 using the terminal:
-``pip --break-system-packages install arrow pyspellchecker``
+``pip --break-system-packages install pyspellchecker``
 (yes that looks scary: feel free to learn about ``venv`` instead if you wish).
 
 Finally you can type ``pip install --no-deps --break-system-packages
@@ -101,4 +101,8 @@ we intend to decouple the client and server packages.
 
 To launch Plom Client, open the terminal and type::
 
-  plom-client
+  ./local/bin/plom-client
+
+or::
+
+  python3 -m plom.client
