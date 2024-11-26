@@ -66,7 +66,8 @@ Some stuff from the package manager:
 ```
   # sudo apt install \
         cmake make imagemagick dvipng g++ \
-        python3-passlib python3-pandas python3-pyqt6 python3-pytest \
+        python3-passlib python3-pandas python3-pytest \
+		python3-pyqt6 pyqt6-dev-tools \
         python3-dev python3-pip python3-setuptools python3-wheel \
         python3-requests-toolbelt texlive-latex-extra \
         latexmk texlive-fonts-recommended python3-pillow \
