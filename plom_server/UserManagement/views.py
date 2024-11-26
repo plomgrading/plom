@@ -188,7 +188,7 @@ class EditQuotaLimitView(ManagerRequiredView):
         new_limit = int(request.POST.get("limit"))
         user = get_object_or_404(User, username=username)
 
-        if QuotaService.is_proposed_limit_valid(new_limit, user):
+        if QuotaService.can_set_quota(user, limit=new_limit):
             quota = Quota.objects.filter(user=user).first()
             quota.limit = new_limit
             quota.save()
@@ -211,22 +211,9 @@ class ModifyQuotaView(ManagerRequiredView):
         """Handle the POST request to update the quota limits for the specified users."""
         user_ids = request.POST.getlist("users")
         new_limit = int(request.POST.get("limit"))
-        valid_markers = []
-        invalid_markers = []
-
-        if not user_ids:
-            messages.error(request, "No users selected.")
-            return redirect(reverse("progress_user_info_home"))
-
-        for user_id in user_ids:
-            user = get_object_or_404(User, pk=user_id)
-            quota = Quota.objects.get(user=user)
-            if not QuotaService.is_proposed_limit_valid(limit=new_limit, user=user):
-                invalid_markers.append(user.username)
-            else:
-                valid_markers.append(user.username)
-                quota.limit = new_limit
-                quota.save()
+        valid_markers, invalid_markers = QuotaService.set_quotas_for_userlist(
+            user_ids, new_limit
+        )
 
         if len(invalid_markers) > 0:
             messages.success(
