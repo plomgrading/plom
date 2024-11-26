@@ -321,6 +321,7 @@ class IdentifyTaskTests(TestCase):
                 "student_id": "991",
                 "student_name": "AB1",
                 "in_classlist": False,
+                "username": "marker0",
             },
             2: {"idpageimage_pk": None, "status": "To Do", "prediction": None},
         }
@@ -344,6 +345,7 @@ class IdentifyTaskTests(TestCase):
                 "student_id": "991",
                 "student_name": "AB1",
                 "in_classlist": False,
+                "username": "marker0",
             },
             2: {
                 "idpageimage_pk": None,
@@ -351,6 +353,7 @@ class IdentifyTaskTests(TestCase):
                 "student_id": "992",
                 "student_name": "AB2",
                 "in_classlist": False,
+                "username": "marker0",
             },
         }
 
