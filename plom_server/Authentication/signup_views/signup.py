@@ -2,14 +2,22 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Aidan Murphy
 
 from django.conf import settings
+from django.contrib import messages
+from django.db import IntegrityError
+from django.core.exceptions import ObjectDoesNotExist
+
 from django.shortcuts import render
 
 from plom.misc_utils import humanize_seconds
 from ..services import AuthenticationServices
 from ..form.signupForm import CreateUserForm, CreateMultiUsersForm
 from Base.base_group_views import AdminOrManagerRequiredView
+
+from io import StringIO
+import csv
 
 
 class SingleUserSignUp(AdminOrManagerRequiredView):
@@ -126,6 +134,7 @@ class ImportUsers(AdminOrManagerRequiredView):
     template_name = "Authentication/signup_import_users.html"
     link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
 
+    # TODO: add example csv to context
     def get(self, request):
         context = {
             "current_page": "import",
@@ -138,8 +147,41 @@ class ImportUsers(AdminOrManagerRequiredView):
             "current_page": "import",
             "link_expiry_period": self.link_expiry_period,
         }
-        # TODO: read csv, return csv using service
-        csv_file = request.POST.get(".csv")
 
-        print(csv_file)
+        # TODO: unsafe, fix this
+        csv_bytes = request.FILES[".csv"].file.getvalue()
+        user_list = {}
+        try:
+            AuS = AuthenticationServices()
+            user_list = AuS.create_users_from_csv(csv_bytes)
+        except (IntegrityError, KeyError) as e:
+            messages.error(request, str(e))
+            return render(request, self.template_name, context)
+        except ObjectDoesNotExist:
+            messages.error(
+                request,
+                # TODO: find the offending row[s] and tell the user.
+                f"One or more rows in {request.FILES['.csv'].name} references an invalid usergroup.\nThe valid usergroups are: marker, scanner, manager.",
+            )
+            return render(request, self.template_name, context)
+
+        users = {user["username"]: user["reset_link"] for user in user_list}
+        with StringIO() as iostream:
+            writer = csv.DictWriter(
+                iostream,
+                fieldnames=list(user_list[0].keys()),
+                delimiter="\t",
+            )
+            writer.writeheader()
+            writer.writerows(user_list)
+            tsv_string = iostream.getvalue()
+            # TODO: pass downloadable output csv to context
+        context.update(
+            {
+                "links": users,
+                "tsv": tsv_string,
+                "created": True,
+            }
+        )
+
         return render(request, self.template_name, context)

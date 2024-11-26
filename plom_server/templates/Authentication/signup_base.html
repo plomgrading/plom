@@ -58,6 +58,11 @@
                 <strong>Please note:</strong> user links will <em>expire</em>
                 in {{ link_expiry_period }}.
             </p>
+            {% if messages %}
+                <div>
+                    {% for message in messages %}<div class="alert alert-danger">{{ message }}</div>{% endfor %}
+                </div>
+            {% endif %}
         </div>
     </div>
     {% if created %}
