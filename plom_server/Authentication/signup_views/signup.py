@@ -118,3 +118,28 @@ class MultiUsersSignUp(AdminOrManagerRequiredView):
                 "created": True,
             }
             return render(request, self.template_name, context)
+
+
+class ImportUsers(AdminOrManagerRequiredView):
+    """Make many users from a formatted .csv file."""
+
+    template_name = "Authentication/signup_import_users.html"
+    link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
+
+    def get(self, request):
+        context = {
+            "current_page": "import",
+            "link_expiry_period": self.link_expiry_period,
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        context = {
+            "current_page": "import",
+            "link_expiry_period": self.link_expiry_period,
+        }
+        # TODO: read csv, return csv using service
+        csv_file = request.POST.get(".csv")
+
+        print(csv_file)
+        return render(request, self.template_name, context)
