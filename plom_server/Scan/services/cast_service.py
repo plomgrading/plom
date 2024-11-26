@@ -23,6 +23,23 @@ from ..models import (
 from ..services.util import check_bundle_object_is_neither_locked_nor_pushed
 
 
+def _manager_or_scanner_user_from_username(username: str) -> User:
+    try:
+        # caution: result has duplicates until we call distinct (Issue #3727)
+        user_obj = (
+            User.objects.filter(
+                username__iexact=username, groups__name__in=["scanner", "manager"]
+            )
+            .distinct()
+            .get()
+        )
+    except ObjectDoesNotExist:
+        raise PermissionDenied(
+            f"User '{username}' does not exist or has wrong permissions!"
+        )
+    return user_obj
+
+
 class ScanCastService:
     """Functions for casting staging images to different types."""
 
@@ -173,15 +190,7 @@ class ScanCastService:
         *,
         image_type: str | None = None,
     ) -> None:
-        try:
-            user_obj = User.objects.get(
-                username__iexact=username, groups__name__in=["scanner", "manager"]
-            )
-        except ObjectDoesNotExist:
-            raise PermissionDenied(
-                f"User '{username}' does not exist or has wrong permissions!"
-            )
-
+        user_obj = _manager_or_scanner_user_from_username(username)
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist:
@@ -339,15 +348,7 @@ class ScanCastService:
         *,
         image_type: int | None = None,
     ) -> None:
-        try:
-            user_obj = User.objects.get(
-                username__iexact=username, groups__name__in=["scanner", "manager"]
-            )
-        except ObjectDoesNotExist:
-            raise PermissionDenied(
-                f"User '{username}' does not exist or has wrong permissions!"
-            )
-
+        user_obj = _manager_or_scanner_user_from_username(username)
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist:
@@ -503,15 +504,9 @@ class ScanCastService:
 
         Raises:
             ValueError: can't find things.
+            PermissionDenied: username does not exist or wrong group.
         """
-        try:
-            user_obj = User.objects.get(
-                username__iexact=username, groups__name__in=["scanner", "manager"]
-            )
-        except ObjectDoesNotExist:
-            raise PermissionDenied(
-                f"User '{username}' does not exist or has wrong permissions!"
-            )
+        user_obj = _manager_or_scanner_user_from_username(username)
 
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
@@ -573,14 +568,7 @@ class ScanCastService:
     def clear_extra_page_cmd(
         self, username: str, bundle_name: str, bundle_order: int
     ) -> None:
-        try:
-            user_obj = User.objects.get(
-                username__iexact=username, groups__name__in=["scanner", "manager"]
-            )
-        except ObjectDoesNotExist:
-            raise PermissionDenied(
-                f"User '{username}' does not exist or has wrong permissions!"
-            )
+        user_obj = _manager_or_scanner_user_from_username(username)
 
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
@@ -684,14 +672,7 @@ class ScanCastService:
         *,
         image_type: str | None = None,
     ) -> None:
-        try:
-            user_obj = User.objects.get(
-                username__iexact=username, groups__name__in=["scanner", "manager"]
-            )
-        except ObjectDoesNotExist:
-            raise PermissionDenied(
-                f"User '{username}' does not exist or has wrong permissions!"
-            )
+        user_obj = _manager_or_scanner_user_from_username(username)
 
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
@@ -805,14 +786,7 @@ class ScanCastService:
         paper_number: int,
         page_number: int,
     ) -> None:
-        try:
-            user_obj = User.objects.get(
-                username__iexact=username, groups__name__in=["scanner", "manager"]
-            )
-        except ObjectDoesNotExist:
-            raise PermissionDenied(
-                f"User '{username}' does not exist or has wrong permissions!"
-            )
+        user_obj = _manager_or_scanner_user_from_username(username)
 
         if page_number < 0 or page_number > SpecificationService.get_n_pages():
             raise ValueError("Page number out of range - check the specification")

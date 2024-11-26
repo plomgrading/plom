@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * In some cases, discarding a pushed paper and re-uploading prevented the paper from being identified.
 * Client was not showing tags drawing attention to a particular user.
 * plom-push-to-canvas can handle blank-ID pages more gracefully by warning the user instead of crashing.
+* Fix command-line tools for manipulating staging bundles which were incorrectly complaining about multiple users.
 * Misc fixes and cleanups.
 
 
