@@ -253,6 +253,8 @@ then convert to known pages of some **unused**
 paper number, say 107 (assuming you have spares; if not see below).
 
 
+.. _dblprint_multiver:
+
 I messed up by double-printing and I'm using *multiple versions*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -278,6 +280,34 @@ If the command line access is not feasible, another option is:
   3. Have your grading team grade on both (alternatively, have them
      do most of the grading on Server 1, then download the rubrics
      and push those rubrics to Server 2.
+
+
+...I have many re-used the same paper _many_ times
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Read the above answers.  Suppose Paper 20 has been re-used 100 times;
+too many to contemplate manual work and you want to write a _script_
+to deal with the reassignment of these onto (newly created) Papers 400
+to 499.
+First :ref:`append the version map <dblprint_multiver>` to make 100
+new rows with the same versions as Paper 20.
+Suppose all 100 copies of Paper 20 are in scanned in ``bundleA``.
+Next, using :ref:`command-line access <cmdline_in_container>`, you
+can perform commands such as::
+
+    python3 manage.py plom_staging_bundles status
+    python3 manage.py plom_staging_bundles pages bunddleA
+    python3 manage.py plom_staging_discard manager bundleA 1
+    python3 manage.py plom_staging_knowify bundleA assign -u manager -i 1 -p 100 -g 1
+    python3 manage.py plom_staging_discard manager bundleA 2
+    python3 manage.py plom_staging_knowify bundleA assign -u manager -i 2 -p 100 -g 2
+    ...
+
+This assumes the papers are in order: you'll want to check that
+against the output of
+``python3 manage.py plom_staging_bundles pages bunddleA``,
+perhaps scraping the output of that command to decide more robustly
+where to send each page.
 
 
 .. _cmdline_in_container:
