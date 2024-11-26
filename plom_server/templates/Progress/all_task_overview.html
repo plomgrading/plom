@@ -46,7 +46,14 @@
                                 <td class="table-success"
                                     data-bs-toggle="tooltip"
                                     data-bs-placement="bottom"
-                                    data-bs-title="by {{ dat.user }}">{{ dat.sid }}</td>
+                                    data-bs-title="by {{ dat.user }}">
+                                    {% if dat.sid is none %}
+                                        None
+                                        <i class="bi bi-exclamation-diamond-fill"></i>
+                                    {% else %}
+                                        {{ dat.sid }}
+                                    {% endif %}
+                                </td>
                             {% elif dat.status == "To Do" %}
                                 <td class="table-warning">to do</td>
                             {% elif dat.status == "Out" %}

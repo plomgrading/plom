@@ -66,7 +66,7 @@ class IDProgressService:
                         "student_id": sid,
                         "student_name": task.latest_action.student_name,
                         "in_classlist": sid in registered_sid,
-                        "username": task.latest_action.user.username
+                        "username": task.latest_action.user.username,
                     }
                 )
             if task.status in [PaperIDTask.TO_DO, PaperIDTask.OUT]:
