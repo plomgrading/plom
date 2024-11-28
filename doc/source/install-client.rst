@@ -63,3 +63,46 @@ Open a terminal and go to the directory where you saved the binary::
 
   chmod +x PlomClient-x.y.z-x86_64.AppImage
   ./PlomClient-x.y.z-x86_64.AppImage
+
+
+For ChromeOS (Chromebook)
+-------------------------
+
+In theory, installing via Flathub should work, but in practice it does
+not (`Issue #3131`_).
+
+It is still possible to install Plom Client by first
+`enabling the Linux container <https://support.google.com/chromebook/answer/9145439?hl=en>`_
+on your Chromebook.
+Then we install some of the dependencies manually in the terminal::
+
+  apt install python3-pyqt6 python3-pyqt6.qtsvg pyqt6-dev-tools \
+      python3-platformdirs python3-packaging python3-requests-toolbelt \
+      python3-tomlkit python3-tqdm python3-arrow
+
+
+.. note::
+
+    It is important to install ``PyQt6`` using ``apt``, rather than with
+    ``pip``: the latter will hit (as of Nov 2024) the same
+    `Issue #3131`_ mentioned above.
+
+    .. _Issue #3131: https://gitlab.com/plom/plom/-/issues/3131
+
+Next we install some dependencies that are not available in Debian 12.8, again
+using the terminal:
+``pip --break-system-packages install pyspellchecker``
+(yes that looks scary: feel free to learn about ``venv`` instead if you wish).
+
+Finally you can type ``pip install --no-deps --break-system-packages
+plom``.  The reason for ``--no-deps`` is because we want to avoid
+installing all the dependencies for the Plom Server.  In the future,
+we intend to decouple the client and server packages.
+
+To launch Plom Client, open the terminal and type::
+
+  ./local/bin/plom-client
+
+or::
+
+  python3 -m plom.client
