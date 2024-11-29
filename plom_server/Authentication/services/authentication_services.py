@@ -151,11 +151,11 @@ class AuthenticationServices:
             manager.save()
 
     @transaction.atomic
-    def create_users_from_csv(self, file: Path | str | bytes) -> list[dict[str, str]]:
+    def create_users_from_csv(self, f: Path | str | bytes) -> list[dict[str, str]]:
         """Creates multiple users from a .csv file.
 
         Args:
-            file: a path to the .csv file, or the bytes of a
+            f: a path to the .csv file, or the bytes of a
             .csv file.
 
         Returns:
@@ -164,19 +164,19 @@ class AuthenticationServices:
         Raises:
             KeyError: .csv file is missing required fields: `username`;`usergroup`.
             IntegrityError: attempted to create a user that already exists.
-            ObjectDoesNotExist: specified usergroup doesn't exists.
+            ObjectDoesNotExist: specified usergroup doesn't exist.
         """
-        if isinstance(file, bytes):
-            new_user_list = list(csv.DictReader(file.decode("utf-8").splitlines()))
+        if isinstance(f, bytes):
+            new_user_list = list(csv.DictReader(f.decode("utf-8").splitlines()))
         else:
-            with open(file) as csvfile:
+            with open(f) as csvfile:
                 new_user_list = list(csv.DictReader(csvfile))
 
         required_fields = set(["username", "usergroup"])
         if not required_fields.issubset(new_user_list[0].keys()):
-            file = "csv file" if isinstance(file, bytes) else file
+            f = "csv file" if isinstance(f, bytes) else f
             raise KeyError(
-                f"{file} is missing required fields, it must contain: {required_fields}"
+                f"{f} is missing required fields, it must contain: {required_fields}"
             )
 
         # TODO: batch user creation?

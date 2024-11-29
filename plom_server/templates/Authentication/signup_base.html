@@ -29,30 +29,21 @@
         <div class="card-header">
             <ul class="nav nav-pills nav-fill">
                 <li class="nav-item">
-                    {% if current_page == "single" %}
-                        <a class="nav-link active" href="{% url 'signup_single' %}">Create Single User</a>
-                    {% else %}
-                        <a class="nav-link" href="{% url 'signup_single' %}">Create Single User</a>
-                    {% endif %}
+                    <a class="nav-link{% if current_page == "single" %} active{% endif %}"
+                       href="{% url 'signup_single' %}">Create Single User</a>
                 </li>
                 <li class="nav-item">
-                    {% if current_page == "multiple" %}
-                        <a class="nav-link active" href="{% url 'signup_multiple' %}">Create Multiple Users</a>
-                    {% else %}
-                        <a class="nav-link" href="{% url 'signup_multiple' %}">Create Multiple Users</a>
-                    {% endif %}
+                    <a class="nav-link{% if current_page == "multiple" %} active{% endif %}"
+                       href="{% url 'signup_multiple' %}">Create Multiple Users</a>
                 </li>
                 <li class="nav-item">
-                    {% if current_page == "import" %}
-                        <a class="nav-link active" href="{% url 'signup_import' %}">Import Users From .csv</a>
-                    {% else %}
-                        <a class="nav-link" href="{% url 'signup_import' %}">Import Users From .csv</a>
-                    {% endif %}
+                    <a class="nav-link{% if current_page == "import" %} active{% endif %}"
+                       href="{% url 'signup_import' %}">Import Users From .csv</a>
                 </li>
             </ul>
         </div>
         <div class="card-body">
-            {% if example_input_csv %}
+            {% if current_page == "import" %}
                 <button class="btn btn-link"
                         onclick="downloadCSV(this)"
                         id="download-all"
