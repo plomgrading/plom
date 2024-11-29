@@ -79,6 +79,11 @@
                                         onclick="copyText(this)"
                                         id="copy-all"
                                         data-copyText="{{ tsv|safe }}">Copy all</button>
+                                <button class="btn btn-primary"
+                                        onclick="downloadCSV(this)"
+                                        id="download-all"
+                                        data-downloadText="{{ csv|safe }}"
+                                        data-filename="new_users.csv">Download csv</button>
                             {% endif %}
                         </th>
                     </tr>
@@ -107,6 +112,19 @@
               await new Promise(r => setTimeout(r, 2000));
               button.innerText = prevText;
             }
+            async function downloadCSV(buttonObj) {
+	    const csvContent = buttonObj.dataset.downloadtext;
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+
+            // download via 'a' element
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = buttonObj.dataset.filename;
+
+            link.click();
+            URL.revokeObjectURL(link.href);
+            }
+
         </script>
     {% endif %}
     <div class="card my-2">

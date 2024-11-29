@@ -176,10 +176,20 @@ class ImportUsers(AdminOrManagerRequiredView):
             writer.writerows(user_list)
             tsv_string = iostream.getvalue()
             # TODO: pass downloadable output csv to context
+        with StringIO() as iostream:
+            writer = csv.DictWriter(
+                iostream,
+                fieldnames=list(user_list[0].keys()),
+            )
+            writer.writeheader()
+            writer.writerows(user_list)
+            csv_string = iostream.getvalue()
+
         context.update(
             {
                 "links": users,
                 "tsv": tsv_string,
+                "csv": csv_string,
                 "created": True,
             }
         )
