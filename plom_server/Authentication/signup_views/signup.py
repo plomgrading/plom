@@ -55,14 +55,12 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
                 "current_page": "single",
                 "link_expiry_period": self.link_expiry_period,
                 "links": password_reset_links,
-                "created": True,
             }
         else:
             context = {
                 "form": form,
                 "current_page": "single",
                 "link_expiry_period": self.link_expiry_period,
-                "created": False,
                 # TODO: this looks overly specific: perhaps it could fail in many ways
                 "error": form.errors["username"][0],
             }
@@ -123,7 +121,6 @@ class MultiUsersSignUp(AdminOrManagerRequiredView):
                 "link_expiry_period": self.link_expiry_period,
                 "links": password_reset_links,
                 "tsv": tsv,
-                "created": True,
             }
             return render(request, self.template_name, context)
 
@@ -133,12 +130,13 @@ class ImportUsers(AdminOrManagerRequiredView):
 
     template_name = "Authentication/signup_import_users.html"
     link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
+    example_csv = "username,usergroup\nExampleName1,marker\nExampleName14,scanner\nexampleName37,manager"
 
-    # TODO: add example csv to context
     def get(self, request):
         context = {
             "current_page": "import",
             "link_expiry_period": self.link_expiry_period,
+            "example_input_csv": self.example_csv,
         }
         return render(request, self.template_name, context)
 
@@ -146,6 +144,7 @@ class ImportUsers(AdminOrManagerRequiredView):
         context = {
             "current_page": "import",
             "link_expiry_period": self.link_expiry_period,
+            "example_input_csv": self.example_csv,
         }
 
         # TODO: unsafe, fix this
@@ -161,7 +160,7 @@ class ImportUsers(AdminOrManagerRequiredView):
             messages.error(
                 request,
                 # TODO: find the offending row[s] and tell the user.
-                f"One or more rows in {request.FILES['.csv'].name} references an invalid usergroup.\nThe valid usergroups are: marker, scanner, manager.",
+                f"One or more rows in {request.FILES['.csv'].name} references an invalid usergroup.\nThe valid usergroups are: 'marker', 'scanner', 'manager'.",
             )
             return render(request, self.template_name, context)
 
@@ -175,7 +174,6 @@ class ImportUsers(AdminOrManagerRequiredView):
             writer.writeheader()
             writer.writerows(user_list)
             tsv_string = iostream.getvalue()
-            # TODO: pass downloadable output csv to context
         with StringIO() as iostream:
             writer = csv.DictWriter(
                 iostream,
@@ -190,7 +188,6 @@ class ImportUsers(AdminOrManagerRequiredView):
                 "links": users,
                 "tsv": tsv_string,
                 "csv": csv_string,
-                "created": True,
             }
         )
 
