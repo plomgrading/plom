@@ -74,11 +74,13 @@
                         <th scope="col">Usernames</th>
                         <th scope="col">Links</th>
                         <th scope="col">
-                            {% if links|length > 1 %}
+                            {% if tsv %}
                                 <button class="btn btn-primary"
                                         onclick="copyText(this)"
                                         id="copy-all"
                                         data-copyText="{{ tsv|safe }}">Copy all</button>
+                            {% endif %}
+                            {% if csv %}
                                 <button class="btn btn-primary"
                                         onclick="downloadCSV(this)"
                                         id="download-all"
