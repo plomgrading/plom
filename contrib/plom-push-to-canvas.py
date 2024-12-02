@@ -71,7 +71,7 @@ from plom.canvas import (
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.3.1"
+__script_version__ = "0.3.2"
 
 
 def sis_id_to_student_dict(student_list):
@@ -110,9 +110,23 @@ def get_sis_id_to_sub_and_name_table(subs):
 def get_sis_id_to_marks():
     """A dictionary of the Student Number ("sis id") to total mark."""
     df = pandas.read_csv("marks.csv", dtype="object")
-    return df.set_index("StudentID")["Total"].to_dict()
+    try:
+        d = df.set_index("StudentID")["Total"].to_dict()
+    except KeyError as e:
+        # Issue #3722, if something goes wrong give a very verbose error:
+        print(f'Pandas raised a KeyError reading "marks.csv":\n    {e}')
+        header_names = ", ".join(f'"{x}"' for x in df.columns)
+        print(f"We have headers:\n    {header_names}")
+        print(f'The first few lines of "marks.csv" looks like:\n{df.head()}')
+        raise KeyError(
+            'Something wrong with "StudentID" or "Total" columns?\n'
+            '  "marks.csv" contains headers:\n'
+            f"    {header_names}\n"
+            f"  KeyError was raised: {e}\n"
+        ) from e
     # TODO: if specific types are needed
     # return {str(k): int(v) for k,v in d.items()}
+    return d
 
 
 parser = argparse.ArgumentParser(
