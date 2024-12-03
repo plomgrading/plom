@@ -248,11 +248,13 @@ class ScanService:
                 StagingBundle.objects.select_for_update().filter(pk=bundle_pk).get()
             )
 
-            if self.is_bundle_mid_splitting(_bundle_obj.pk):
+            # TODO: TEMPORARILY, don't check if we *should* delete...
+            force = True
+            if not force and self.is_bundle_mid_splitting(_bundle_obj.pk):
                 raise PlomBundleLockedException(
                     "Bundle is upload / splitting. Wait until that is finished before removing it"
                 )
-            if self.is_bundle_mid_qr_read(_bundle_obj.pk):
+            if not force and self.is_bundle_mid_qr_read(_bundle_obj.pk):
                 raise PlomBundleLockedException(
                     "Bundle is mid qr read. Wait until that is finished before removing it"
                 )
