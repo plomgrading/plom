@@ -245,12 +245,30 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         else:
             cover_img_rotation = 0
 
+        from ..models import (
+            PagesToImagesHueyTask,
+            ManageParseQR,
+        )
+
+        try:
+            _proc = PagesToImagesHueyTask.objects.get(
+                bundle=bundle
+            ).get_status_display()
+        except PagesToImagesHueyTask.DoesNotExist:
+            _proc = None
+        try:
+            _read = ManageParseQR.objects.get(bundle=bundle).get_status_display()
+        except ManageParseQR.DoesNotExist:
+            _read = None
+
         context = {
             "bundle_id": bundle.pk,
             "timestamp": bundle.timestamp,
             "slug": bundle.slug,
             "when": arrow.get(bundle.timestamp).humanize(),
             "username": bundle.user.username,
+            "proc_chore_status": _proc,
+            "readQR_chore_status": _read,
             "number_of_pages": bundle.number_of_pages,
             "has_been_processed": bundle.has_page_images,
             "has_qr_codes": bundle.has_qr_codes,
