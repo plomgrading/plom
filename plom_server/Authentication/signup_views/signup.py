@@ -109,18 +109,26 @@ class MultiUsersSignUp(AdminOrManagerRequiredView):
                 )
             )
 
-            # Using tsv format for easy pasting into spreadsheet software
-            tsv = "Username\tReset Link\n".format()
-            for username, link in password_reset_links.items():
-                append = "{}{}{}{}".format(username, "\t", link, "\n")
-                tsv = tsv + append
+            # tsv's and csv's
+            with StringIO() as iostream:
+                writer = csv.writer(iostream, delimiter="\t")
+                writer.writerows(password_reset_links.items())
+                tsv_string = iostream.getvalue()
+
+            fields = ["Username", "Reset Link"]
+            with StringIO() as iostream:
+                writer = csv.writer(iostream, delimiter=",")
+                writer.writerow(fields)
+                writer.writerows(password_reset_links.items())
+                csv_string = iostream.getvalue()
 
             context = {
                 "form": self.form,
                 "current_page": "multiple",
                 "link_expiry_period": self.link_expiry_period,
                 "links": password_reset_links,
-                "tsv": tsv,
+                "tsv": tsv_string,
+                "csv": csv_string,
             }
             return render(request, self.template_name, context)
 
