@@ -3,6 +3,7 @@
 
 from django.test import TestCase
 from django.contrib.auth.models import User, Group
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from model_bakery import baker
 
@@ -53,3 +54,18 @@ class AuthenticationServices_user_creation(TestCase):
             AuthenticationServices.create_user_and_add_to_group("euler", "manager")
         with self.assertRaises(IntegrityError):
             AuthenticationServices.create_user_and_add_to_group("euleR", "manager")
+
+    def test_create_admin_fails(self) -> None:
+        baker.make(Group, name="admin")
+        with self.assertRaises(ValueError):
+            AuthenticationServices.create_user_and_add_to_group("Don_Admin", "admin")
+
+    def test_lead_marker_requires_marker(self) -> None:
+        baker.make(Group, name="lead_marker")
+        with self.assertRaises(ObjectDoesNotExist):
+            AuthenticationServices.create_user_and_add_to_group(
+                "Lee_Marker", "lead_marker"
+            )
+
+        baker.make(Group, name="marker")
+        AuthenticationServices.create_user_and_add_to_group("Lee_Marker", "lead_marker")

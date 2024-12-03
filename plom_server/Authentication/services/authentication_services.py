@@ -82,17 +82,22 @@ class AuthenticationServices:
 
         Raises:
             ObjectDoesNotExist: no such group.
+            ValueError: illegal user group received
             IntegrityError: user already exists; or perhaps a nearby one
                 does, such as one that differs only in case.
         """
+        if group_name == "admin":
+            raise ValueError(
+                f"cannot create a user belonging to the {group_name} group."
+            )
+
+        groups = [Group.objects.get(name=group_name)]
+        # some users belong to more than one group.
         if group_name == "manager":
-            # special case, maybe should call create_manager_user instead
-            groups = [
-                Group.objects.get(name=group_name),
-                Group.objects.get(name="scanner"),
-            ]
-        else:
-            groups = [Group.objects.get(name=group_name)]
+            # maybe should call create_manager_user instead
+            groups.append(Group.objects.get(name="scanner"))
+        elif group_name == "lead_marker":
+            groups.append(Group.objects.get(name="marker"))
 
         # if username that matches in case exists, fail.  Note that doesn't seem
         # to get raises by the call to "create_user" although it DOES get flagged
