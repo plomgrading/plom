@@ -82,7 +82,7 @@ class ScanServiceTests(TestCase):
         bundle_path.parent.rmdir()
 
     def test_remove_bundle(self) -> None:
-        """Test ScanService.remove_bundle() and assert uploaded PDF file removed from disk."""
+        """Test removing a bundle and assert uploaded PDF file removed from disk."""
         timestamp = timezone.now().timestamp()
         # make a pdf and save it to a tempfile
         with tempfile.NamedTemporaryFile() as ntf:
@@ -105,7 +105,7 @@ class ScanServiceTests(TestCase):
         self.assertTrue(bundle_path.exists())
         # now remove it using the scan services
         scanner = ScanService()
-        scanner.remove_bundle("_test_bundle", user=self.user)
+        scanner.remove_bundle_by_pk(bundle.pk)
         # that path should no longer exist, nor should the bundle
         self.assertFalse(bundle_path.exists())
         self.assertFalse(StagingBundle.objects.exists())

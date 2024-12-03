@@ -298,7 +298,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         """Triggers deletion of the bundle."""
         scanner = ScanService()
         try:
-            scanner._remove_bundle_by_pk(bundle_id)
+            scanner.remove_bundle_by_pk(bundle_id)
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
