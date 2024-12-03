@@ -1651,7 +1651,7 @@ def huey_child_get_page_images(
     basedir: pathlib.Path,
     *,
     _debug_be_flaky: bool = False,
-    task: huey.api.Task,
+    task: huey.api.Task | None = None,
 ) -> list[dict[str, Any]]:
     """Render page images and save to disk in the background.
 
@@ -1753,7 +1753,7 @@ def huey_child_parse_qr_code(
     image_pk: int,
     *,
     _debug_be_flaky: bool = False,
-    task: huey.api.Task,
+    task: huey.api.Task | None = None,
 ) -> dict[str, Any]:
     """Huey task to parse QR codes, check QR errors, and save to database in the background.
 
