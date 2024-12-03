@@ -130,13 +130,16 @@ class ImportUsers(AdminOrManagerRequiredView):
 
     template_name = "Authentication/signup_import_users.html"
     link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
-    example_csv = "username,usergroup\nExampleName1,marker\nExampleName14,scanner\nexampleName37,manager"
+    example_csv = "username,usergroup\nExampleName1,marker\nExampleName2,lead_marker\nExampleName14,scanner\nexampleName37,manager"
+    # TODO: this bunch of strings should exist somewhere else
+    user_groups = ["marker", "lead_marker", "scanner", "manager"]
 
     def get(self, request):
         context = {
             "current_page": "import",
             "link_expiry_period": self.link_expiry_period,
             "example_input_csv": self.example_csv,
+            "user_groups": self.user_groups,
         }
         return render(request, self.template_name, context)
 
@@ -145,22 +148,29 @@ class ImportUsers(AdminOrManagerRequiredView):
             "current_page": "import",
             "link_expiry_period": self.link_expiry_period,
             "example_input_csv": self.example_csv,
+            "user_groups": self.user_groups,
         }
 
-        # TODO: unsafe, fix this
+        if request.FILES[".csv"].size > settings.MAX_FILE_SIZE:
+            messages.error(
+                request,
+                f"{request.FILES['.csv']} exceeds the {settings.MAX_FILE_SIZE / 1e6}MB file size limit",
+            )
+            return render(request, self.template_name, context)
         csv_bytes = request.FILES[".csv"].file.getvalue()
+
         user_list = {}
         try:
             AuS = AuthenticationServices()
             user_list = AuS.create_users_from_csv(csv_bytes)
-        except (IntegrityError, KeyError) as e:
+        except (IntegrityError, KeyError, ValueError) as e:
             messages.error(request, str(e))
             return render(request, self.template_name, context)
         except ObjectDoesNotExist:
             messages.error(
                 request,
                 # TODO: find the offending row[s] and tell the user.
-                f"One or more rows in {request.FILES['.csv'].name} references an invalid usergroup.\nThe valid usergroups are: 'marker', 'scanner', 'manager'.",
+                f"One or more rows in {request.FILES['.csv'].name} references an invalid usergroup.\nThe valid usergroups are: {self.user_groups}.",
             )
             return render(request, self.template_name, context)
 

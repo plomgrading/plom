@@ -44,11 +44,31 @@
         </div>
         <div class="card-body">
             {% if current_page == "import" %}
-                <button class="btn btn-link"
-                        onclick="downloadCSV(this)"
-                        id="download-all"
-                        data-downloadText="{{ example_input_csv|safe }}"
-                        data-filename="user_import_template.csv">file template</button>
+                <p>
+                    Create many users via .csv file!
+                    <details>
+                        <summary>File requirements</summary>
+                        A valid .csv file must contain 2 columns:
+                        <ul>
+                            <!-- WET - see authentication_service.create_users_from_csv -->
+                            <li>'username'</li>
+                            <li>'usergroup'. This can be one of:</li>
+                            <ul>
+                                {% for user_group in user_groups %}<li>{{ user_group }}</li>{% endfor %}
+                            </ul>
+                        </ul>
+                        <p>
+                            Here's a valid template:
+                            <button class="btn btn-link"
+                                    onclick="downloadCSV(this)"
+                                    id="download-all"
+                                    data-downloadText="{{ example_input_csv|safe }}"
+                                    data-filename="user_import_template.csv">
+                                new_users.csv<i class="bi bi-download"></i>
+                            </button>
+                        </p>
+                    </details>
+                </p>
             {% endif %}
             {% block card_content %}
             {% endblock card_content %}
