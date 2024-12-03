@@ -702,7 +702,7 @@ def huey_reassemble_paper(
     tracker_pk: int,
     build_student_report: bool = True,
     _debug_be_flaky: bool = False,
-    task: huey.api.Task,
+    task: huey.api.Task | None = None,
 ) -> bool:
     """Reassemble a single paper, updating the database with progress and resulting PDF.
 
@@ -723,12 +723,12 @@ def huey_reassemble_paper(
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
+    assert task is not None
     try:
         paper_obj = Paper.objects.get(paper_number=paper_number)
     except Paper.DoesNotExist:
         raise ValueError("No paper with that number") from None
 
-    assert task is not None
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     # from .build_student_report_service import BuildStudentReportService

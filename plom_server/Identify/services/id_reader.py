@@ -269,7 +269,7 @@ def huey_id_reading_task(
     recompute_heatmap: bool,
     *,
     tracker_pk: int,
-    task: huey.api.Task,
+    task: huey.api.Task | None = None,
 ) -> bool:
     """Run the id reading process in the background via Huey.
 
@@ -292,6 +292,7 @@ def huey_id_reading_task(
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
+    assert task is not None
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
     IDReadingHueyTaskTracker.set_message_to_user(
         tracker_pk, "ID Reading task has started. Getting ID boxes."

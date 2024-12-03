@@ -34,7 +34,10 @@ log = logging.getLogger("PaperCreatorService")
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks", context=True)
 def huey_populate_whole_db(
-    qv_map: dict[int, dict[int, int]], *, tracker_pk: int, task: huey.api.Task
+    qv_map: dict[int, dict[int, int]],
+    *,
+    tracker_pk: int,
+    task: huey.api.Task | None = None,
 ) -> bool:
     """Populate the database in a background Huey chore.
 
@@ -52,6 +55,7 @@ def huey_populate_whole_db(
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
+    assert task is not None
     PopulateEvacuateDBChore.transition_to_running(tracker_pk, task.id)
     N = len(qv_map)
 
@@ -87,7 +91,9 @@ def huey_populate_whole_db(
 
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks", context=True)
-def huey_evacuate_whole_db(*, tracker_pk: int, task: huey.api.Task) -> bool:
+def huey_evacuate_whole_db(
+    *, tracker_pk: int, task: huey.api.Task | None = None
+) -> bool:
     """Populate the database in a background Huey chore.
 
     Keyword Args:
@@ -101,6 +107,7 @@ def huey_evacuate_whole_db(*, tracker_pk: int, task: huey.api.Task) -> bool:
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
+    assert task is not None
     PopulateEvacuateDBChore.transition_to_running(tracker_pk, task.id)
     all_papers = Paper.objects.all().prefetch_related("fixedpage_set")
     N = all_papers.count()

@@ -1422,7 +1422,7 @@ def huey_parent_split_bundle_task(
     *,
     tracker_pk: int,
     read_after: bool = False,
-    task: huey.api.Task,
+    task: huey.api.Task | None = None,
 ) -> bool:
     """Split a PDF document into individual page images.
 
@@ -1448,6 +1448,8 @@ def huey_parent_split_bundle_task(
         block or detect whether a task has finished".
     """
     from time import sleep, time
+
+    assert task is not None
 
     start_time = time()
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
@@ -1541,7 +1543,7 @@ def huey_parent_read_qr_codes_task(
     bundle_pk: int,
     *,
     tracker_pk: int,
-    task: huey.api.Task,
+    task: huey.api.Task | None = None,
 ) -> bool:
     """Read the QR codes of a bunch of pages.
 
@@ -1563,6 +1565,8 @@ def huey_parent_read_qr_codes_task(
         block or detect whether a task has finished".
     """
     from time import sleep, time
+
+    assert task is not None
 
     start_time = time()
 

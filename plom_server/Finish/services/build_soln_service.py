@@ -420,7 +420,7 @@ def huey_build_soln_for_paper(
     *,
     tracker_pk: int,
     _debug_be_flaky: bool = False,
-    task: huey.api.Task,
+    task: huey.api.Task | None = None,
 ) -> bool:
     """Build a solution pdf for a single paper, updating the database with progress and resulting PDF.
 
@@ -440,6 +440,7 @@ def huey_build_soln_for_paper(
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
+    assert task is not None
     try:
         Paper.objects.get(paper_number=paper_number)
     except Paper.DoesNotExist:

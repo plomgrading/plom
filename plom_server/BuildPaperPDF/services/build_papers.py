@@ -56,7 +56,7 @@ def huey_build_single_paper(
     prename_config: dict[str, Any],
     tracker_pk: int,
     _debug_be_flaky: bool = False,
-    task: huey.api.Task,
+    task: huey.api.Task | None = None,
 ) -> bool:
     """Build a single paper and prename it.
 
@@ -90,6 +90,7 @@ def huey_build_single_paper(
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
+    assert task is not None
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
     with TemporaryDirectory() as tempdir:
         save_path = make_PDF(
