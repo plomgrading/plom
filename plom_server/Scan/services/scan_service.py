@@ -8,9 +8,12 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 from math import ceil
 import pathlib
+import random
 import tempfile
+import time
 from typing import Any
 
 from django.conf import settings
@@ -56,6 +59,9 @@ from ..services.util import (
     check_bundle_object_is_neither_locked_nor_pushed,
 )
 from plom.plom_exceptions import PlomBundleLockedException, PlomPushCollisionException
+
+
+log = logging.getLogger(__name__)
 
 
 class ScanService:
@@ -1478,6 +1484,7 @@ def huey_parent_split_bundle_task(
                 bundle_pk,
                 ord_chnk,  # note pg is 1-indexed
                 pathlib.Path(tmpdir),
+                _debug_be_flaky=True,
             )
             for ord_chnk in order_chunks
         ]
@@ -1620,11 +1627,14 @@ def huey_parent_read_qr_codes_task(
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks")
+@db_task(queue="tasks", context=True)
 def huey_child_get_page_images(
     bundle_pk: int,
     order_list: list[int],
     basedir: pathlib.Path,
+    *,
+    _debug_be_flaky: bool = False,
+    task: huey.Task,
 ) -> list[dict[str, Any]]:
     """Render page images and save to disk in the background.
 
@@ -1635,6 +1645,11 @@ def huey_child_get_page_images(
         bundle_pk: bundle DB object's primary key
         order_list: a list of bundle orders of pages to extract - 1-indexed
         basedir (pathlib.Path): were to put the image
+        _debug_be_flaky: for debugging, all take a while and some
+            percentage will fail.
+        task: includes our ID in the Huey process queue.  This is added
+            by the `context=True` in decorator: callers in our code should
+            not pass this in!
 
     Returns:
         Information about the page image, including its file name,
@@ -1644,12 +1659,23 @@ def huey_child_get_page_images(
     from plom.scan import rotate
     from PIL import Image
 
+    assert task is not None
+    print("--------------------- " * 30)
+    print(type(task))
+    print(task)
+    log.info("Huey debug, we are task %s with id %s", task, task.id)
+    # HueyTaskTracker.transition_to_running(tracker_pk, task.id)
+
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     rendered_page_info = []
 
     with fitz.open(bundle_obj.pdf_file.path) as pdf_doc:
         for order in order_list:
+            if _debug_be_flaky:
+                print(f"Huey debug, random sleep in task {task.id}")
+                log.info("Huey debug, random sleep in task %d", task.id)
+                time.sleep(random.random() * 2)
             basename = f"page{order:05}"
             if bundle_obj.force_page_render:
                 save_path = None
@@ -1725,10 +1751,13 @@ def huey_child_parse_qr_code(image_pk: int) -> dict[str, Any]:
     scanner = ScanService()
 
     code_dict = QRextract(image_path)
+    time.sleep(random.random() * 2)
     page_data = scanner.parse_qr_code([code_dict])
 
     pipr = PageImageProcessor()
 
+    if random.random() < 0.2:
+        raise RuntimeError("Flaky simulated failure")
     rotation = pipr.get_rotation_angle_or_None_from_QRs(page_data)
 
     # Andrew wanted to leave the possibility of re-introducing hard
