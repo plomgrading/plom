@@ -1690,6 +1690,8 @@ def huey_child_get_page_images(
                 print(f"Huey debug, random sleep in task {task.id}")
                 log.debug("Huey debug, random sleep in task %d", task.id)
                 time.sleep(random.random() * 2)
+                if random.random() < 0.1:
+                    raise RuntimeError("Flaky simulated image split failure")
             basename = f"page{order:05}"
             if bundle_obj.force_page_render:
                 save_path = None
@@ -1789,8 +1791,8 @@ def huey_child_parse_qr_code(
         print(f"Huey debug, random sleep in task {task.id}")
         log.debug("Huey debug, random sleep in task %d", task.id)
         time.sleep(random.random() * 2)
-        if random.random() < 0.2:
-            raise RuntimeError("Flaky simulated failure")
+        if random.random() < 0.1:
+            raise RuntimeError("Flaky simulated QR read failure")
 
     rotation = pipr.get_rotation_angle_or_None_from_QRs(page_data)
 
