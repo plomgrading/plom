@@ -198,11 +198,12 @@ class ScanService:
                 status=PagesToImagesHueyTask.STARTING,
             )
             tracker_pk = x.pk
-        res = huey_parent_split_bundle_task(
+        res = huey_parent_split_bundle_chore(
             bundle_pk,
             number_of_chunks,
             tracker_pk=tracker_pk,
             read_after=read_after,
+            _debug_be_flaky=True,  # TODO
         )
         # print(f"Just enqueued Huey parent_split_and_save task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
@@ -507,7 +508,10 @@ class ScanService:
             )
             tracker_pk = x.pk
 
-        res = huey_parent_read_qr_codes_task(bundle_pk, tracker_pk=tracker_pk)
+        print("starting the read_qr_codes_chore...")
+        res = huey_parent_read_qr_codes_chore(
+            bundle_pk, tracker_pk=tracker_pk, _debug_be_flaky=True  # TODO
+        )
         # print(f"Just enqueued Huey parent_read_qr_codes task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
@@ -1422,12 +1426,13 @@ class ScanService:
 
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="parentchores", context=True)
-def huey_parent_split_bundle_task(
+def huey_parent_split_bundle_chore(
     bundle_pk: int,
     number_of_chunks: int,
     *,
     tracker_pk: int,
     read_after: bool = False,
+    _debug_be_flaky: bool = False,
     task: huey.api.Task | None = None,
 ) -> bool:
     """Split a PDF document into individual page images.
@@ -1482,7 +1487,7 @@ def huey_parent_split_bundle_task(
                 bundle_pk,
                 ord_chnk,  # note pg is 1-indexed
                 pathlib.Path(tmpdir),
-                _debug_be_flaky=True,
+                _debug_be_flaky=_debug_be_flaky,
             )
             for ord_chnk in order_chunks
         ]
@@ -1549,10 +1554,11 @@ def huey_parent_split_bundle_task(
 
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="parentchores", context=True)
-def huey_parent_read_qr_codes_task(
+def huey_parent_read_qr_codes_chore(
     bundle_pk: int,
     *,
     tracker_pk: int,
+    _debug_be_flaky: bool = False,
     task: huey.api.Task | None = None,
 ) -> bool:
     """Read the QR codes of a bunch of pages.
@@ -1583,7 +1589,7 @@ def huey_parent_read_qr_codes_task(
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     task_list = [
-        huey_child_parse_qr_code(page.pk, _debug_be_flaky=True)
+        huey_child_parse_qr_code(page.pk, _debug_be_flaky=_debug_be_flaky)
         for page in bundle_obj.stagingimage_set.all()
     ]
 
