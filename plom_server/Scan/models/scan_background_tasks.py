@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.db import models
 
@@ -24,6 +24,8 @@ class ManageParseQR(HueyTaskTracker):
     completed_pages = models.PositiveIntegerField(default=0)
 
 
+# TODO: do we need this or can I use a plain ol HueyTaskTracker?
+# It is currently unused: if we keep it, rename to ParseQRChore
 class ParseQR(HueyTaskTracker):
     """Parse a page of QR codes in the background."""
 
