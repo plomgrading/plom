@@ -21,6 +21,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 from django_huey import db_task, get_queue
+import huey
 
 from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
@@ -379,8 +380,8 @@ class ReassembleService:
         res = huey_reassemble_paper(
             paper_num,
             tracker_pk=tracker_pk,
-            _debug_be_flaky=False,
             build_student_report=build_student_report,
+            _debug_be_flaky=False,
         )
         print(f"Just enqueued Huey reassembly task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
@@ -692,16 +693,15 @@ class ReassembleService:
 
 
 # The decorated function returns a ``huey.api.Result``
-# ``context=True`` so that the task knows its ID etc.
 # TODO: investigate "preserve=True" here if we want to wait on them?
 @db_task(queue="tasks", context=True)
 def huey_reassemble_paper(
     paper_number: int,
     *,
     tracker_pk: int,
-    task=None,
-    _debug_be_flaky: bool = False,
     build_student_report: bool = True,
+    _debug_be_flaky: bool = False,
+    task: huey.api.Task,
 ) -> bool:
     """Reassemble a single paper, updating the database with progress and resulting PDF.
 
@@ -711,10 +711,12 @@ def huey_reassemble_paper(
     Keyword Args:
         tracker_pk: a key into the database for anyone interested in
             our progress.
-        task: includes our ID in the Huey process queue.
+        build_student_report: whether or not to build the student report at the same time.
         _debug_be_flaky: for debugging, all take a while and some
             percentage will fail.
-        build_student_report: whether or not to build the student report at the same time.
+        task: includes our ID in the Huey process queue.  This kwarg is
+            passed by `context=True` in decorator: callers should not
+            pass this in!
 
     Returns:
         True, no meaning, just as per the Huey docs: "if you need to
@@ -725,6 +727,7 @@ def huey_reassemble_paper(
     except Paper.DoesNotExist:
         raise ValueError("No paper with that number") from None
 
+    assert task is not None
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     # from .build_student_report_service import BuildStudentReportService

@@ -15,12 +15,12 @@ import arrow
 import pymupdf as fitz
 import zipfly
 
-from django_huey import db_task, get_queue
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import transaction
 from django.db.models import Q
+from django_huey import db_task, get_queue
+import huey
 
 from .soln_source import SolnSourceService
 from .reassemble_service import ReassembleService
@@ -412,11 +412,14 @@ class BuildSolutionService:
 
 
 # The decorated function returns a ``huey.api.Result``
-# ``context=True`` so that the task knows its ID etc.
 # TODO: investigate "preserve=True" here if we want to wait on them?
 @db_task(queue="tasks", context=True)
 def huey_build_soln_for_paper(
-    paper_number: int, *, tracker_pk: int, task=None, _debug_be_flaky: bool = False
+    paper_number: int,
+    *,
+    tracker_pk: int,
+    _debug_be_flaky: bool = False,
+    task: huey.api.Task,
 ) -> bool:
     """Build a solution pdf for a single paper, updating the database with progress and resulting PDF.
 
@@ -426,9 +429,11 @@ def huey_build_soln_for_paper(
     Keyword Args:
         tracker_pk: a key into the database for anyone interested in
             our progress.
-        task: includes our ID in the Huey process queue.
         _debug_be_flaky: for debugging, all take a while and some
             percentage will fail.
+        task: includes our ID in the Huey process queue.  This kwarg is
+            passed by `context=True` in decorator: callers should not
+            pass this in!
 
     Returns:
         True, no meaning, just as per the Huey docs: "if you need to

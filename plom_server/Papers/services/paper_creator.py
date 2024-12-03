@@ -11,6 +11,7 @@ import logging
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django_huey import db_task
+import huey
 
 from plom.plom_exceptions import PlomDatabaseCreationError
 from Preparation.services.preparation_dependency_service import (
@@ -29,10 +30,27 @@ from ..models import (
 log = logging.getLogger("PaperCreatorService")
 
 
+# The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks", context=True)
 def huey_populate_whole_db(
-    qv_map: dict[int, dict[int, int]], *, tracker_pk: int, task=None
+    qv_map: dict[int, dict[int, int]], *, tracker_pk: int, task: huey.api.Task
 ) -> bool:
+    """Populate the database in a background Huey chore.
+
+    Args:
+        qv_map: the question-version map.
+
+    Keyword Args:
+        tracker_pk: a key into the database for anyone interested in
+            our progress.
+        task: includes our ID in the Huey process queue.  This kwarg is
+            passed by `context=True` in decorator: callers should not
+            pass this in!
+
+    Returns:
+        True, no meaning, just as per the Huey docs: "if you need to
+        block or detect whether a task has finished".
+    """
     PopulateEvacuateDBChore.transition_to_running(tracker_pk, task.id)
     N = len(qv_map)
 
@@ -66,8 +84,22 @@ def huey_populate_whole_db(
     return True
 
 
+# The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks", context=True)
-def huey_evacuate_whole_db(*, tracker_pk: int, task=None) -> bool:
+def huey_evacuate_whole_db(*, tracker_pk: int, task: huey.api.Task) -> bool:
+    """Populate the database in a background Huey chore.
+
+    Keyword Args:
+        tracker_pk: a key into the database for anyone interested in
+            our progress.
+        task: includes our ID in the Huey process queue.  This kwarg is
+            passed by `context=True` in decorator: callers should not
+            pass this in!
+
+    Returns:
+        True, no meaning, just as per the Huey docs: "if you need to
+        block or detect whether a task has finished".
+    """
     PopulateEvacuateDBChore.transition_to_running(tracker_pk, task.id)
     all_papers = Paper.objects.all().prefetch_related("fixedpage_set")
     N = all_papers.count()

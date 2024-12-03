@@ -20,6 +20,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q  # for queries involving "or", "and"
 from django_huey import db_task
+import huey
 
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap, try_to_extract_image
@@ -1444,8 +1445,7 @@ def huey_parent_split_bundle_task(
     *,
     tracker_pk: int,
     read_after: bool = False,
-    # TODO - CBM - what type should task have?
-    task=None,
+    task: huey.api.Task,
 ) -> bool:
     """Split a PDF document into individual page images.
 
@@ -1462,7 +1462,9 @@ def huey_parent_split_bundle_task(
         tracker_pk: a key into the database for anyone interested in
             our progress.
         read_after: automatically trigger a qr-code read after splitting finished.
-        task: includes our ID in the Huey process queue.
+        task: includes our ID in the Huey process queue.  This kwarg is
+            passed by `context=True` in decorator: callers should not
+            pass this in!
 
     Returns:
         True, no meaning, just as per the Huey docs: "if you need to
@@ -1562,8 +1564,7 @@ def huey_parent_read_qr_codes_task(
     bundle_pk: int,
     *,
     tracker_pk: int,
-    # TODO - CBM - what type should task have?
-    task=None,
+    task: huey.api.Task,
 ) -> bool:
     """Read the QR codes of a bunch of pages.
 
@@ -1576,7 +1577,9 @@ def huey_parent_read_qr_codes_task(
     Keyword Args:
         tracker_pk: a key into the database for anyone interested in
             our progress.
-        task: includes our ID in the Huey process queue.
+        task: includes our ID in the Huey process queue.  This kwarg is
+            passed by `context=True` in decorator: callers should not
+            pass this in!
 
     Returns:
         True, no meaning, just as per the Huey docs: "if you need to

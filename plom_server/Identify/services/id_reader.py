@@ -21,6 +21,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import transaction
 from django_huey import db_task
+import huey
 
 from plom.idreader.model_utils import load_model, download_model, is_model_present
 from Base.models import HueyTaskTracker
@@ -259,6 +260,7 @@ class IDReaderService:
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
 
+# The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks", context=True)
 def huey_id_reading_task(
     user: User,
@@ -266,7 +268,7 @@ def huey_id_reading_task(
     recompute_heatmap: bool,
     *,
     tracker_pk: int,
-    task=None,
+    task: huey.api.Task,
 ) -> bool:
     """Run the id reading process in the background via Huey.
 
@@ -281,7 +283,9 @@ def huey_id_reading_task(
     Keyword Args:
         tracker_pk: a key into the database for anyone interested in
             our progress.
-        task: includes our ID in the Huey process queue.
+        task: includes our ID in the Huey process queue.  This kwarg is
+            passed by `context=True` in decorator: callers should not
+            pass this in!
 
     Returns:
         True, no meaning, just as per the Huey docs: "if you need to

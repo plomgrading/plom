@@ -5,6 +5,7 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 
+import huey
 from huey.signals import SIGNAL_ERROR, SIGNAL_INTERRUPTED
 from django.db import models
 from django.db import transaction
@@ -306,7 +307,7 @@ class SettingsModel(SingletonABCModel):
 
 
 @queue.signal(SIGNAL_ERROR)
-def on_huey_task_error(signal, task, exc):
+def on_huey_task_error(signal, task: huey.api.Task, exc):
     """Action to take when a Huey task fails."""
     logging.warn(f"Error in task {task.id} {task.name} {task.args} - {exc}")
     print(f"Error in task {task.id} {task.name} {task.args} - {exc}")
@@ -329,5 +330,5 @@ def on_huey_task_error(signal, task, exc):
 
 
 @queue.signal(SIGNAL_INTERRUPTED)
-def on_huey_task_interrupted(signal, task):
+def on_huey_task_interrupted(signal, task: huey.api.Task):
     print(f"Interrupt was sent to task {task.id} - {task.name} {task.args}")
