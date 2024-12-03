@@ -12,6 +12,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django_huey import db_task
 import huey
+import huey.api
 
 from plom.plom_exceptions import PlomDatabaseCreationError
 from Preparation.services.preparation_dependency_service import (

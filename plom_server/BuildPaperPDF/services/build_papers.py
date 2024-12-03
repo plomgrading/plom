@@ -24,6 +24,7 @@ from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django_huey import db_task, get_queue
 import huey
+import huey.api
 
 from plom.create.mergeAndCodePages import make_PDF
 

@@ -22,6 +22,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import transaction
 from django_huey import db_task
 import huey
+import huey.api
 
 from plom.idreader.model_utils import load_model, download_model, is_model_present
 from Base.models import HueyTaskTracker

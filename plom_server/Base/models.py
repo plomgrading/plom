@@ -6,6 +6,7 @@
 # Copyright (C) 2024 Aden Chan
 
 import huey
+import huey.api
 from huey.signals import SIGNAL_ERROR, SIGNAL_INTERRUPTED
 from django.db import models
 from django.db import transaction

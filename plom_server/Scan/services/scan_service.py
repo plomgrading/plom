@@ -21,6 +21,7 @@ from django.db import transaction
 from django.db.models import Q  # for queries involving "or", "and"
 from django_huey import db_task
 import huey
+import huey.api
 
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap, try_to_extract_image

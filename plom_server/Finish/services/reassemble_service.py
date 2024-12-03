@@ -22,6 +22,7 @@ from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 from django_huey import db_task, get_queue
 import huey
+import huey.api
 
 from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble

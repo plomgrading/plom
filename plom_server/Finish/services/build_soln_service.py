@@ -21,6 +21,7 @@ from django.db import transaction
 from django.db.models import Q
 from django_huey import db_task, get_queue
 import huey
+import huey.api
 
 from .soln_source import SolnSourceService
 from .reassemble_service import ReassembleService
