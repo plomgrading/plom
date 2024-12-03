@@ -1491,7 +1491,14 @@ def huey_parent_split_bundle_task(
         n_tasks = len(task_list)
         while True:
             # list items are None (if not completed) or list [dict of page info]
-            result_chunks = [X.get() for X in task_list]
+            try:
+                result_chunks = [X.get() for X in task_list]
+            except huey.exceptions.TaskException as e:
+                print(f"Parent: child image split chore failed with {e}")
+                log.error("Parent: child image split chore failed with %s", str(e))
+                # TODO: what about the child tasks still running?
+                raise RuntimeError(f"child task failed QR read: {e}") from e
+
             # remove all the nones to get list of completed tasks
             not_none_result_chunks = [
                 chunk for chunk in result_chunks if chunk is not None
@@ -1500,8 +1507,6 @@ def huey_parent_split_bundle_task(
             # flatten that list of lists to get a list of rendered pages
             results = [X for chunk in not_none_result_chunks for X in chunk]
             rendered_page_count = len(results)
-
-            # TODO - check for error status here.
 
             with transaction.atomic():
                 _task = PagesToImagesHueyTask.objects.select_for_update().get(
@@ -1585,7 +1590,14 @@ def huey_parent_read_qr_codes_task(
 
     n_tasks = len(task_list)
     while True:
-        results = [X.get() for X in task_list]
+        try:
+            results = [X.get() for X in task_list]
+        except huey.exceptions.TaskException as e:
+            print(f"Parent: child QR read chore failed with {e}")
+            log.error("Parent: child QR read chore failed with %s", str(e))
+            # TODO: what about the child tasks still running?
+            raise RuntimeError(f"child task failed QR read: {e}") from e
+
         count = sum(1 for X in results if X is not None)
 
         with transaction.atomic():
