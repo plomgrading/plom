@@ -1583,7 +1583,8 @@ def huey_parent_read_qr_codes_task(
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     task_list = [
-        huey_child_parse_qr_code(page.pk) for page in bundle_obj.stagingimage_set.all()
+        huey_child_parse_qr_code(page.pk, _debug_be_flaky=True)
+        for page in bundle_obj.stagingimage_set.all()
     ]
 
     # results = [X.get(blocking=True) for X in task_list]
@@ -1642,7 +1643,7 @@ def huey_child_get_page_images(
     basedir: pathlib.Path,
     *,
     _debug_be_flaky: bool = False,
-    task: huey.Task,
+    task: huey.api.Task,
 ) -> list[dict[str, Any]]:
     """Render page images and save to disk in the background.
 
@@ -1668,10 +1669,7 @@ def huey_child_get_page_images(
     from PIL import Image
 
     assert task is not None
-    print("--------------------- " * 30)
-    print(type(task))
-    print(task)
-    log.info("Huey debug, we are task %s with id %s", task, task.id)
+    log.debug("Huey debug, we are task %s with id %s", task, task.id)
     # HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
@@ -1682,7 +1680,7 @@ def huey_child_get_page_images(
         for order in order_list:
             if _debug_be_flaky:
                 print(f"Huey debug, random sleep in task {task.id}")
-                log.info("Huey debug, random sleep in task %d", task.id)
+                log.debug("Huey debug, random sleep in task %d", task.id)
                 time.sleep(random.random() * 2)
             basename = f"page{order:05}"
             if bundle_obj.force_page_render:
@@ -1740,8 +1738,13 @@ def huey_child_get_page_images(
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks")
-def huey_child_parse_qr_code(image_pk: int) -> dict[str, Any]:
+@db_task(queue="tasks", context=True)
+def huey_child_parse_qr_code(
+    image_pk: int,
+    *,
+    _debug_be_flaky: bool = False,
+    task: huey.api.Task,
+) -> dict[str, Any]:
     """Huey task to parse QR codes, check QR errors, and save to database in the background.
 
     It is important to understand that running this function starts an
@@ -1750,22 +1753,37 @@ def huey_child_parse_qr_code(image_pk: int) -> dict[str, Any]:
     Args:
         image_pk: primary key of the image
 
+    Keyword Args:
+        _debug_be_flaky: for debugging, all take a while and some
+            percentage will fail.
+        task: includes our ID in the Huey process queue.  This is added
+            by the `context=True` in decorator: callers in our code should
+            not pass this in!
+
     Returns:
         Information about the QR codes.
     """
+    assert task is not None
+    log.debug("Huey debug, we are task %s with id %s", task, task.id)
+
     img = StagingImage.objects.get(pk=image_pk)
     image_path = img.image_file.path
 
     scanner = ScanService()
 
     code_dict = QRextract(image_path)
-    time.sleep(random.random() * 2)
+
     page_data = scanner.parse_qr_code([code_dict])
 
     pipr = PageImageProcessor()
 
-    if random.random() < 0.2:
-        raise RuntimeError("Flaky simulated failure")
+    if _debug_be_flaky:
+        print(f"Huey debug, random sleep in task {task.id}")
+        log.debug("Huey debug, random sleep in task %d", task.id)
+        time.sleep(random.random() * 2)
+        if random.random() < 0.2:
+            raise RuntimeError("Flaky simulated failure")
+
     rotation = pipr.get_rotation_angle_or_None_from_QRs(page_data)
 
     # Andrew wanted to leave the possibility of re-introducing hard
