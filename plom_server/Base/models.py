@@ -7,23 +7,21 @@
 
 import huey
 import huey.api
-from huey.signals import SIGNAL_ERROR, SIGNAL_INTERRUPTED
+import huey.signals
 from django.db import models
 from django.db import transaction
 from django.contrib.auth.models import User
-from django_huey import get_queue
+from django_huey import get_queue, signal
 from django.utils import timezone
 
 import logging
 
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 
-# TODO: what is this?  It is happening at import-time... scary
-# It comes from Django-Huey project and allows you to have multiple
-# task queues
-# TODO: this is used for the decorators to define the signal handlers
-# below, so it must presumably somehow be lazy...  but this :-(
-queue = get_queue("tasks")
+# TODO: I expected signal above handled signals from all queues
+# but it seems this is not so.
+# queue = get_queue("tasks")
+parent_queue = get_queue("parentchores")
 
 
 class HueyTaskTracker(models.Model):
@@ -307,7 +305,7 @@ class SettingsModel(SingletonABCModel):
 # on the same computer, such as our test suite Issue #2800.
 
 
-@queue.signal(SIGNAL_ERROR)
+@signal(huey.signals.SIGNAL_ERROR)
 def on_huey_task_error(signal, task: huey.api.Task, exc):
     """Action to take when a Huey task fails."""
     logging.warn(f"Error in task {task.id} {task.name} {task.args} - {exc}")
@@ -330,6 +328,38 @@ def on_huey_task_error(signal, task: huey.api.Task, exc):
         task_obj.save()
 
 
-@queue.signal(SIGNAL_INTERRUPTED)
+@signal(huey.signals.SIGNAL_INTERRUPTED)
 def on_huey_task_interrupted(signal, task: huey.api.Task):
+    print(f"Interrupt was sent to task {task.id} - {task.name} {task.args}")
+
+
+@parent_queue.signal(huey.signals.SIGNAL_ERROR)
+def on_huey_task_error2(signal, task: huey.api.Task, exc):
+    """Action to take when a Huey task fails.
+
+    TODO: why do I need to duplicate this for each queue?
+    """
+    logging.warn(f"Error in task {task.id} {task.name} {task.args} - {exc}")
+    print(f"Error in task {task.id} {task.name} {task.args} - {exc}")
+
+    # Note: using filter except of a exception on DoesNotExist because I think
+    # the exception handling was rewinding some atomic transactions
+    if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
+        # task has been deleted from underneath us, or did not exist yet b/c of race conditions
+        print(
+            f"(Error) Task {task.id} {task.name} with args {task.args}"
+            " is no longer (or not yet) in the database."
+        )
+        return
+
+    with transaction.atomic():
+        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
+        task_obj.status = HueyTaskTracker.ERROR
+        task_obj.message = exc
+        task_obj.save()
+
+
+@parent_queue.signal(huey.signals.SIGNAL_INTERRUPTED)
+def on_huey_task_interrupted2(signal, task: huey.api.Task):
+    # TODO: why do I need to duplicate this for each queue?
     print(f"Interrupt was sent to task {task.id} - {task.name} {task.args}")
