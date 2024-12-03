@@ -1453,11 +1453,9 @@ def huey_parent_split_bundle_task(
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
-    from time import sleep, time
-
     assert task is not None
 
-    start_time = time()
+    start_time = time.time()
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
@@ -1515,7 +1513,7 @@ def huey_parent_split_bundle_task(
             if completed_tasks == n_tasks:
                 break
             else:
-                sleep(1)
+                time.sleep(1)
 
         with transaction.atomic():
             for X in results:
@@ -1534,7 +1532,7 @@ def huey_parent_split_bundle_task(
             # get a new reference for updating the bundle itself
             _write_bundle = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
             _write_bundle.has_page_images = True
-            _write_bundle.time_to_make_page_images = time() - start_time
+            _write_bundle.time_to_make_page_images = time.time() - start_time
             _write_bundle.save()
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
@@ -1571,11 +1569,9 @@ def huey_parent_read_qr_codes_task(
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
-    from time import sleep, time
-
     assert task is not None
 
-    start_time = time()
+    start_time = time.time()
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
@@ -1600,7 +1596,7 @@ def huey_parent_read_qr_codes_task(
         if count == n_tasks:
             break
         else:
-            sleep(1)
+            time.sleep(1)
 
     with transaction.atomic():
         for X in results:
@@ -1616,7 +1612,7 @@ def huey_parent_read_qr_codes_task(
         # get a new reference for updating the bundle itself
         _write_bundle = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
         _write_bundle.has_qr_codes = True
-        _write_bundle.time_to_read_qr = time() - start_time
+        _write_bundle.time_to_read_qr = time.time() - start_time
         _write_bundle.save()
 
     bundle_obj.refresh_from_db()
