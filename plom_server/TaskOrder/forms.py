@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Edith Coates
+# Copyright (C) 2024 Aidan Murphy
 
 import csv
 from io import StringIO
 
 from django import forms
+from django.conf import settings
 from django.core.validators import FileExtensionValidator
 from django.core.exceptions import ValidationError
 
@@ -13,8 +15,10 @@ from django.core.exceptions import ValidationError
 def validate_file_size(value):
     filesize = value.size
 
-    if filesize > 10485760:  # 10MB
-        raise ValidationError("The maximum file size that can be uploaded is 10MB")
+    if filesize > settings.MAX_FILE_SIZE:
+        raise ValidationError(
+            "The maximum file size that can be uploaded is {settings.MAX_FILE_SIZE / 1e6}MB"
+        )
     else:
         return value
 
