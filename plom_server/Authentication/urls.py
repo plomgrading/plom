@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Aidan Murphy
 
 from django.urls import path
 
