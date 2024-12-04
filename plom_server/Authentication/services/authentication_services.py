@@ -109,10 +109,8 @@ class AuthenticationServices:
                 f'username "{username}" already exists or differs only in case'
             )
 
-        User.objects.create_user(
-            username=username, email=email, password=None
-        ).groups.add(*groups)
-        user = User.objects.get(username=username)
+        user = User.objects.create_user(username=username, email=email, password=None)
+        user.groups.add(*groups)
         user.is_active = False
         user.save()
 
