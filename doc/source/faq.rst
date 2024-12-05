@@ -171,12 +171,12 @@ How do I change the public code and/or private seed of my server?
 This can be done provided you have not yet made PDF files (whose
 QR-codes would contain that public Code).
 
-On the new Django-based server, login as any Admin user, then go to `/admin`.
+On the new Django-based server, login as any Admin user, then go to ``/admin``.
 This gives your direct access to most of the raw database tables.
-Find the Specification and change the publicCode and/or privateSeed.
+Find the Specification and change the ``publicCode`` and/or ``privateSeed``.
 
 One should be very carefully doing this sort of thing: the
-`publicCode` exists to make it difficult to accidentally upload the
+``publicCode`` exists to make it difficult to accidentally upload the
 papers to the wrong server.  This question shows you how to defeat
 that mechanism.
 
@@ -207,14 +207,14 @@ printed from the original server.  In future, this might require
 more effort such as passing a ``--force``.
 
 If you do not have access to the file system of your old server, it
-should be possible to extract the `publicCode` from the QR codes of
+should be possible to extract the ``publicCode`` from the QR codes of
 the printed pages.  See the source code ``plom/tpv_utils.py`` for
-hints on how to do this.  The `privateSeed` should not be necessary
+hints on how to do this.  The ``privateSeed`` should not be necessary
 for this procedure.
 
 .. caution::
     One should be very carefully doing this sort of thing: the
-    `publicCode` exists to make it difficult to accidentally upload the
+    ``publicCode`` exists to make it difficult to accidentally upload the
     papers to the wrong server.  This question shows you how to defeat
     that mechanism.
 
@@ -253,6 +253,8 @@ then convert to known pages of some **unused**
 paper number, say 107 (assuming you have spares; if not see below).
 
 
+.. _dblprint_multiver:
+
 I messed up by double-printing and I'm using *multiple versions*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -263,7 +265,8 @@ paper number 107 will have different versions than 20.
 We need to instantiate a new row of the database using the versions of
 paper number 20.  Extract the version map.  Use the relevant values to
 make a ``csv`` file with one row, using a completely new paper number:
-say 1020.  Next we need command line access to the server, a topic that needs its own FAQ entry...
+say 1020.  Next we
+need :ref:`command line access to the server <cmdline_in_container>`.
 
 Using the command line access, use ``django-command plom-qvmap`` and
 see the ``append`` option.  Now you should be able to assign the
@@ -277,6 +280,59 @@ If the command line access is not feasible, another option is:
   3. Have your grading team grade on both (alternatively, have them
      do most of the grading on Server 1, then download the rubrics
      and push those rubrics to Server 2.
+
+
+...I have many re-used the same paper _many_ times
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Read the above answers.  Suppose Paper 20 has been re-used 100 times;
+too many to contemplate manual work and you want to write a _script_
+to deal with the reassignment of these onto (newly created) Papers 400
+to 499.
+First :ref:`append the version map <dblprint_multiver>` to make 100
+new rows with the same versions as Paper 20.
+Suppose all 100 copies of Paper 20 are in scanned in ``bundleA``.
+Next, using :ref:`command-line access <cmdline_in_container>`, you
+can perform commands such as::
+
+    python3 manage.py plom_staging_bundles status
+    python3 manage.py plom_staging_bundles pages bunddleA
+    python3 manage.py plom_staging_discard manager bundleA 1
+    python3 manage.py plom_staging_knowify bundleA assign -u manager -i 1 -p 100 -g 1
+    python3 manage.py plom_staging_discard manager bundleA 2
+    python3 manage.py plom_staging_knowify bundleA assign -u manager -i 2 -p 100 -g 2
+    ...
+
+This assumes the papers are in order: you'll want to check that
+against the output of
+``python3 manage.py plom_staging_bundles pages bunddleA``,
+perhaps scraping the output of that command to decide more robustly
+where to send each page.
+
+
+.. _cmdline_in_container:
+
+How do I run the command-line tools in my Docker/Podman container?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You will first need ``ssh`` access to the host machine: talk to your sysadmin.
+
+Next, find the name of the container.  At UBC, in Nov 2024, these are
+organized by term and port number, for example
+``plom2024w141234_plom_1`` is served on port 41234.
+
+Using the name of the container, you can run commands directly::
+
+    docker exec -it plom2024w141234_plom_1 bash -c "cd /src/plom_server; python3 manage.py plom_download_marks_csv; ls"
+
+    docker cp plom2024w141234_plom_1:/src/plom_server/marks.csv .
+
+Note that because of a `long-standing issue <https://gitlab.com/plom/plom/-/issues/2759>`_,
+you must run the command from the directory ``src/plom_server``.
+
+You can also get an interactive ``bash`` prompt::
+
+    docker exec -it plom2024w141234_plom_1 bash
 
 
 
