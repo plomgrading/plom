@@ -4,20 +4,19 @@
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
+from io import StringIO
+import csv
+
 from django.conf import settings
 from django.contrib import messages
-from django.db import IntegrityError
 from django.core.exceptions import ObjectDoesNotExist
-
+from django.db import IntegrityError
 from django.shortcuts import render
 
 from plom.misc_utils import humanize_seconds
+from Base.base_group_views import AdminOrManagerRequiredView
 from ..services import AuthenticationServices
 from ..form.signupForm import CreateUserForm, CreateMultiUsersForm
-from Base.base_group_views import AdminOrManagerRequiredView
-
-from io import StringIO
-import csv
 
 
 class SingleUserSignUp(AdminOrManagerRequiredView):

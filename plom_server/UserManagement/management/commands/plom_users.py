@@ -2,18 +2,17 @@
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
+import csv
+import io
+from pathlib import Path
+from tabulate import tabulate
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 from django.db import IntegrityError
 
 from Authentication.services import AuthenticationServices
-
 from ...services import UsersService
-
-from pathlib import Path
-from tabulate import tabulate
-import csv
-import io
 
 
 class Command(BaseCommand):
