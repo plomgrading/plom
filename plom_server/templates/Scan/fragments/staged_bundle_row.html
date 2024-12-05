@@ -6,12 +6,16 @@
 {% load static %}
 <td>
     <div class="bundle-thumb">
-        {% if not has_been_processed or is_mid_qr_read %}
+        {% if is_waiting_or_processing %}
             <img src="{% static 'ball_triangle.svg' %}"
                  hx-get="{% url 'scan_get_staged_bundle_fragment' bundle_id %}"
                  hw-swap="innerHTML"
                  hx-trigger="load delay:2s"
                  hx-target="#bundle{{ slug }}" />
+        {% elif is_error %}
+            <p>
+                Error <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+            </p>
         {% else %}
             <img src="{% url 'scan_get_thumbnail' bundle_id 1 %}" />
         {% endif %}

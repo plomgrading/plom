@@ -261,6 +261,13 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         except ManageParseQR.DoesNotExist:
             _read = None
 
+        is_waiting_or_processing = False
+        if _proc in ("Queued", "Starting", "Running"):
+            is_waiting_or_processing = True
+        if _read in ("Queued", "Starting", "Running"):
+            is_waiting_or_processing = True
+        is_error = _proc == "Error" or _read == "Error"
+
         context = {
             "bundle_id": bundle.pk,
             "timestamp": bundle.timestamp,
@@ -272,6 +279,8 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             "number_of_pages": bundle.number_of_pages,
             "has_been_processed": bundle.has_page_images,
             "has_qr_codes": bundle.has_qr_codes,
+            "is_waiting_or_processing": is_waiting_or_processing,
+            "is_error": is_error,
             "is_mid_qr_read": scanner.is_bundle_mid_qr_read(bundle.pk),
             "is_push_locked": bundle.is_push_locked,
             "is_perfect": scanner.is_bundle_perfect(bundle.pk),
