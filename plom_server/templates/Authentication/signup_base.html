@@ -7,10 +7,10 @@
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Sign Up
+    Create users
 {% endblock title %}
 {% block page_heading %}
-    Sign up
+    Create users
 {% endblock page_heading %}
 {% block main_content %}
     <style>
@@ -31,25 +31,25 @@
             <ul class="nav nav-pills nav-fill">
                 <li class="nav-item">
                     <a class="nav-link{% if current_page == "single" %} active{% endif %}"
-                       href="{% url 'signup_single' %}">Create Single User</a>
+                       href="{% url 'signup_single' %}">Create single user</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link{% if current_page == "multiple" %} active{% endif %}"
-                       href="{% url 'signup_multiple' %}">Create Multiple Users</a>
+                       href="{% url 'signup_multiple' %}">Create multiple users</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link{% if current_page == "import" %} active{% endif %}"
-                       href="{% url 'signup_import' %}">Import Users From .csv</a>
+                       href="{% url 'signup_import' %}">Import users from file</a>
                 </li>
             </ul>
         </div>
         <div class="card-body">
             {% if current_page == "import" %}
                 <p>
-                    Create many users via .csv file!
+                    Create many users via a <tt>.csv</tt> file.
                     <details>
                         <summary>File requirements</summary>
-                        A valid .csv file must contain 2 columns:
+                        A valid <tt>.csv</tt> file must contain 2 columns:
                         <ul>
                             <!-- WET - see authentication_service.create_users_from_csv -->
                             <li>'username'</li>
@@ -59,7 +59,7 @@
                             </ul>
                         </ul>
                         <p>
-                            Here's a valid template:
+                            Here is a template:
                             <button class="btn btn-link"
                                     onclick="downloadCSV(this)"
                                     id="download-all"
