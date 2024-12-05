@@ -10,15 +10,15 @@ from Base.models import HueyTaskTracker
 from ..models import StagingBundle
 
 
-class PagesToImagesHueyTask(HueyTaskTracker):
-    """Manage the background task for converting PDF pages into images."""
+class PagesToImagesChore(HueyTaskTracker):
+    """Manage the background chore (Huey Task) for converting PDF pages into images."""
 
     bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)
     completed_pages = models.PositiveIntegerField(default=0)
 
 
-class ManageParseQR(HueyTaskTracker):
-    """Manage the background parse-qr tasks."""
+class ManageParseQRChore(HueyTaskTracker):
+    """Manage the background chore (Huey Task) to parse QR codes from images."""
 
     bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)
     completed_pages = models.PositiveIntegerField(default=0)

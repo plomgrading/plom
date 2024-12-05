@@ -14,8 +14,8 @@ from .staging_images import (
     ErrorStagingImage,
 )
 
-from .scan_background_tasks import (
-    PagesToImagesHueyTask,
-    ManageParseQR,
+from .scan_background_chores import (
+    PagesToImagesChore,
+    ManageParseQRChore,
     ParseQR,
 )

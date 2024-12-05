@@ -246,20 +246,15 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         else:
             cover_img_rotation = 0
 
-        from ..models import (
-            PagesToImagesHueyTask,
-            ManageParseQR,
-        )
+        from ..models import PagesToImagesChore, ManageParseQRChore
 
         try:
-            _proc = PagesToImagesHueyTask.objects.get(
-                bundle=bundle
-            ).get_status_display()
-        except PagesToImagesHueyTask.DoesNotExist:
+            _proc = PagesToImagesChore.objects.get(bundle=bundle).get_status_display()
+        except PagesToImagesChore.DoesNotExist:
             _proc = None
         try:
-            _read = ManageParseQR.objects.get(bundle=bundle).get_status_display()
-        except ManageParseQR.DoesNotExist:
+            _read = ManageParseQRChore.objects.get(bundle=bundle).get_status_display()
+        except ManageParseQRChore.DoesNotExist:
             _read = None
 
         is_waiting_or_processing = False
