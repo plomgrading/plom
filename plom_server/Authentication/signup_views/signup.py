@@ -162,7 +162,8 @@ class ImportUsers(AdminOrManagerRequiredView):
         if request.FILES[".csv"].size > settings.MAX_FILE_SIZE:
             messages.error(
                 request,
-                f"{request.FILES['.csv']} exceeds the {settings.MAX_FILE_SIZE_DISPLAY} file size limit",
+                f"{request.FILES['.csv']} exceeds the "
+                f"{settings.MAX_FILE_SIZE_DISPLAY} file size limit",
             )
             return render(request, self.template_name, context)
         csv_bytes = request.FILES[".csv"].file.getvalue()
@@ -178,7 +179,9 @@ class ImportUsers(AdminOrManagerRequiredView):
             messages.error(
                 request,
                 # TODO: find the offending row[s] and tell the user.
-                f"One or more rows in {request.FILES['.csv'].name} references an invalid usergroup.\nThe valid usergroups are: {self.user_groups}.",
+                f"One or more rows in {request.FILES['.csv'].name} "
+                " references an invalid usergroup.\n"
+                f"The valid usergroups are: {', '.join(self.user_groups)}.",
             )
             return render(request, self.template_name, context)
 
