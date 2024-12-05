@@ -227,7 +227,7 @@ class ScanService:
                 return True
             else:  # all have finished previously
                 return False
-        else:  # no such qr-reading tasks have been done
+        else:  # no bundle-split chore have been done
             return False
 
     def are_bundles_mid_splitting(self) -> dict[str, bool]:
