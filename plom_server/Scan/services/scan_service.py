@@ -504,6 +504,7 @@ class ScanService:
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         # check that the qr-codes have not been read already, or that a task has not been set
 
+        # Currently, even a status Error chore would prevent it from being rerun
         if ManageParseQR.objects.filter(bundle=bundle_obj).exists():
             return
 
