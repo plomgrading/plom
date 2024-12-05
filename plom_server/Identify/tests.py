@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 
@@ -248,6 +248,9 @@ class IdentifyTaskTests(TestCase):
         self.assertFalse(its.id_task_exists(paper))
         its.create_task(paper)
         self.assertTrue(its.id_task_exists(paper))
+        # make sure when it is out of date that this function shows false.
+        its.set_paper_idtask_outdated(10)
+        self.assertFalse(its.id_task_exists(paper))
 
     def test_idtask_outdated(self) -> None:
         its = IdentifyTaskService()
@@ -318,6 +321,7 @@ class IdentifyTaskTests(TestCase):
                 "student_id": "991",
                 "student_name": "AB1",
                 "in_classlist": False,
+                "username": "marker0",
             },
             2: {"idpageimage_pk": None, "status": "To Do", "prediction": None},
         }
@@ -341,6 +345,7 @@ class IdentifyTaskTests(TestCase):
                 "student_id": "991",
                 "student_name": "AB1",
                 "in_classlist": False,
+                "username": "marker0",
             },
             2: {
                 "idpageimage_pk": None,
@@ -348,6 +353,7 @@ class IdentifyTaskTests(TestCase):
                 "student_id": "992",
                 "student_name": "AB2",
                 "in_classlist": False,
+                "username": "marker0",
             },
         }
 

@@ -55,7 +55,7 @@ class IDProgressService:
         # first get all the task info, then get the id page image pk if they exist
         for task in (
             PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE)
-            .prefetch_related("latest_action", "paper")
+            .prefetch_related("latest_action", "paper", "latest_action__user")
             .order_by("paper__paper_number")
         ):
             dat = {"status": task.get_status_display(), "idpageimage_pk": None}
@@ -66,6 +66,7 @@ class IDProgressService:
                         "student_id": sid,
                         "student_name": task.latest_action.student_name,
                         "in_classlist": sid in registered_sid,
+                        "username": task.latest_action.user.username,
                     }
                 )
             if task.status in [PaperIDTask.TO_DO, PaperIDTask.OUT]:

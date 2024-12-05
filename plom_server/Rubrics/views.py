@@ -54,32 +54,11 @@ class RubricAdminPageView(ManagerRequiredView):
         download_form = RubricDownloadForm(request.GET)
         upload_form = RubricUploadForm()
         rubrics = RubricService.get_all_rubrics()
-        demo_rubrics = rubrics.filter(value__exact=0.5).filter(text__exact=".")
+        half_point_rubrics = rubrics.filter(value__exact=0.5).filter(text__exact=".")
         context.update(
             {
                 "rubrics": rubrics,
-                "demo_rubrics": demo_rubrics,
-                "rubric_halfmark_form": rubric_halfmark_form,
-                "rubric_download_form": download_form,
-                "rubric_upload_form": upload_form,
-            }
-        )
-        return render(request, template_name, context=context)
-
-    def post(self, request: HttpRequest) -> HttpResponse:
-        context = self.build_context()
-        # no sneaky using curl to get here.
-        if not PapersPrinted.have_papers_been_printed():
-            return render(request, "Finish/finish_not_printed.html", context=context)
-
-        template_name = "Rubrics/rubrics_admin.html"
-        rubric_halfmark_form = RubricHalfMarkForm(request.GET)
-        download_form = RubricDownloadForm(request.GET)
-        upload_form = RubricUploadForm()
-        rubrics = RubricService.get_all_rubrics()
-        context.update(
-            {
-                "rubrics": rubrics,
+                "half_point_rubrics": half_point_rubrics,
                 "rubric_halfmark_form": rubric_halfmark_form,
                 "rubric_download_form": download_form,
                 "rubric_upload_form": upload_form,
@@ -319,12 +298,23 @@ def compare_rubrics(request, rid):
 
 def _rules_as_list(rules: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     # something (possible jsonfield) is randomly re-ordering the Python
-    # dict, so use a list, sorted alphabetically by code (TODO: for now!)
+    # dict, so use a list, sorted:
+    #   - first by whether admins can override the defaults
+    #   - secondly alphabetically by code
     L = []
     for code in sorted(rules.keys()):
-        data = rules[code].copy()
-        data.update({"code": code})
-        L.append(data)
+        data = rules[code]
+        # keep the overridable rules on top
+        if data["override_allowed"]:
+            data = data.copy()
+            data.update({"code": code})
+            L.append(data)
+    for code in sorted(rules.keys()):
+        data = rules[code]
+        if not data["override_allowed"]:
+            data = data.copy()
+            data.update({"code": code})
+            L.append(data)
     return L
 
 

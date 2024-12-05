@@ -1165,6 +1165,9 @@ class MarkerClient(QWidget):
             if status.casefold() == "out" and username == our_username:
                 status = "untouched"
 
+            # Issue #3706: sometimes server sends attn_tags...
+            tags = t["tags"]
+            tags.extend(t.get("attn_tags", []))
             try:
                 self.examModel.add_task(
                     task_id_str,
@@ -1172,7 +1175,7 @@ class MarkerClient(QWidget):
                     mark=mark,
                     marking_time=t.get("marking_time", 0.0),
                     status=status,
-                    tags=t["tags"],
+                    tags=tags,
                     username=username,
                     integrity_check=integrity,
                 )
@@ -1187,7 +1190,7 @@ class MarkerClient(QWidget):
                         local_status,
                     )
                     # even for those, we should update the tags
-                    self.tags_changed_signal.emit(task_id_str, t["tags"])
+                    self.tags_changed_signal.emit(task_id_str, tags)
                     continue
 
                 # In future, could try to keep existing src_img_data by *not* including
@@ -1200,7 +1203,7 @@ class MarkerClient(QWidget):
                     mark=mark,
                     marking_time=t.get("marking_time", 0.0),
                     status=status,
-                    tags=t["tags"],
+                    tags=tags,
                     username=username,
                 )
 
@@ -1349,17 +1352,8 @@ class MarkerClient(QWidget):
         task = self.get_current_task_id_or_none()
         if not task:
             return
-        if not self.examModel.is_our_task(task, self.msgr.username):
-            InfoMsg(self, f"Cannot annotate {task}: it is not assigned to you").exec()
-            return
         inidata = self.getDataForAnnotator(task)
         if inidata is None:
-            InfoMsg(
-                self,
-                f"Cannot annotate {task},"
-                " perhaps it is not assigned to you, or a download failed"
-                " perhaps due to poor or missing internet connection.",
-            ).exec()
             return
 
         # If we're at quota, don't start marking as server will reject them
@@ -1393,28 +1387,31 @@ class MarkerClient(QWidget):
         return self._user_reached_quota_limit
 
     def getDataForAnnotator(self, task: str) -> tuple | None:
-        """Start annotator on a particular task.
+        """Get the data the Annotator will need for a particular task.
 
         Args:
             task: the task id.  If original qXXXXgYY, then annotated
                 version is GXXXXgYY (G=graded).
 
         Returns:
-            A tuple of data or None.
+            A tuple of data or None.  In the case of None, the user has already
+            been shown a dialog, or parhaps choose a course of action already.
         """
-        status = self.examModel.getStatusByTask(task)
-
-        if status.casefold() not in (
-            "complete",
-            "marked",
-            "uploading...",
-            "failed upload",
-            "untouched",
-            "deferred",
-        ):
-            # TODO: should this make a dialog somewhere?
-            log.warn(f"task {task} status '{status}' is not your's to annotate")
+        if not self.examModel.is_our_task(task, self.msgr.username):
+            InfoMsg(
+                self,
+                f"Cannot annotate {task}: it is not assigned to you.",
+                info=(
+                    "Perhaps it was originally assigned to you and"
+                    " has recently changed ownership. Or if you recently "
+                    " re-assigned it yourself, try refreshing your task "
+                    " list as a server change may not yet have propagated."
+                ),
+                info_pre=False,
+            ).exec()
             return None
+
+        status = self.examModel.getStatusByTask(task)
 
         # Create annotated filename.
         assert task.startswith("q")
@@ -1464,9 +1461,12 @@ class MarkerClient(QWidget):
         # maybe the downloader failed for some (rare) reason
         for data in src_img_data:
             if not Path(data["filename"]).exists():
-                log.warning(
-                    "some kind of downloader fail? (unexpected, but probably harmless"
-                )
+                WarnMsg(
+                    self,
+                    f"Cannot annotate {task} because a file we expected "
+                    "to find does not exist. Some kind of downloader fail?"
+                    " While unnexpected, this is probably harmless.",
+                ).exec()
                 return None
 
         # we used to set status to indicate annotation-in-progress; removed as
