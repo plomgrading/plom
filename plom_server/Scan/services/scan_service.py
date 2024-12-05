@@ -587,20 +587,24 @@ class ScanService:
 
     @transaction.atomic
     def is_bundle_mid_qr_read(self, bundle_pk: int) -> int:
+        """Check if the bundle with this id is currently in the midst of reading QR codes."""
+        # TODO: use a prefetch to avoid two DB calls in this function
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         if bundle_obj.has_qr_codes:
             return False
 
-        query = ManageParseQR.objects.filter(bundle=bundle_obj)
-        if query.exists():  # have run a qr-read task previously
-            if query.exclude(
-                status=ManageParseQR.COMPLETE
-            ).exists():  # one of these is not completed, so must be mid-run
-                return True
-            else:  # all have finished previously
-                return False
-        else:  # no such qr-reading tasks have been done
-            return False
+        # If there are only Error/Complete chores then we are not reading
+        if ManageParseQR.objects.filter(
+            bundle=bundle_obj,
+            status__in=(
+                HueyTaskTracker.TO_DO,
+                HueyTaskTracker.STARTING,
+                HueyTaskTracker.QUEUED,
+                HueyTaskTracker.RUNNING,
+            ),
+        ).exists():
+            return True
+        return False
 
     def are_bundles_mid_qr_read(self) -> dict[str, bool]:
         """Returns a dict of each staging bundle (slug) and whether it is still mid-qr-read."""
