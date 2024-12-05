@@ -1504,7 +1504,11 @@ def huey_parent_split_bundle_chore(
             except huey.exceptions.TaskException as e:
                 print(f"Parent: child image split chore failed with {e}")
                 log.error("Parent: child image split chore failed with %s", str(e))
-                # TODO: what about the child tasks still running?
+                # make an attempt to stop any remaining unqueued child tasks.
+                # note those already started probably will not stop.
+                for chore in task_list:
+                    log.info("Parent: trying to revoke child chore %s", chore)
+                    chore.revoke()
                 raise RuntimeError(f"child task failed QR read: {e}") from e
 
             # remove all the nones to get list of completed tasks
