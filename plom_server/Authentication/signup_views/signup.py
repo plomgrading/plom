@@ -162,7 +162,7 @@ class ImportUsers(AdminOrManagerRequiredView):
         if request.FILES[".csv"].size > settings.MAX_FILE_SIZE:
             messages.error(
                 request,
-                f"{request.FILES['.csv']} exceeds the {settings.MAX_FILE_SIZE / 1e6}MB file size limit",
+                f"{request.FILES['.csv']} exceeds the {settings.MAX_FILE_SIZE_DISPLAY} file size limit",
             )
             return render(request, self.template_name, context)
         csv_bytes = request.FILES[".csv"].file.getvalue()
