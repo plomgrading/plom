@@ -196,7 +196,7 @@ class ScanService:
         with transaction.atomic(durable=True):
             x = PagesToImagesHueyTask.objects.create(
                 bundle=bundle_obj,
-                status=PagesToImagesHueyTask.STARTING,
+                status=HueyTaskTracker.STARTING,
             )
             tracker_pk = x.pk
         res = huey_parent_split_bundle_chore(
@@ -225,10 +225,10 @@ class ScanService:
         if PagesToImagesHueyTask.objects.filter(
             bundle=bundle_obj,
             status__in=(
-                PagesToImagesHueyTask.TO_DO,
-                PagesToImagesHueyTask.STARTING,
-                PagesToImagesHueyTask.QUEUED,
-                PagesToImagesHueyTask.RUNNING,
+                HueyTaskTracker.TO_DO,
+                HueyTaskTracker.STARTING,
+                HueyTaskTracker.QUEUED,
+                HueyTaskTracker.RUNNING,
             ),
         ).exists():
             return True
