@@ -515,7 +515,7 @@ class ScanService:
             )
             tracker_pk = x.pk
 
-        print("starting the read_qr_codes_chore...")
+        log.info("starting the read_qr_codes_chore...")
         res = huey_parent_read_qr_codes_chore(
             bundle_pk, tracker_pk=tracker_pk, _debug_be_flaky=True  # TODO
         )
