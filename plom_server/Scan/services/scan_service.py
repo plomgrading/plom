@@ -214,7 +214,6 @@ class ScanService:
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         return PagesToImagesHueyTask.objects.get(bundle=bundle_obj).completed_pages
 
-    @transaction.atomic
     def is_bundle_mid_splitting(self, bundle_pk: int) -> bool:
         """Check if the bundle with this id is currently in the midst of splitting its pages."""
         # TODO: use a prefetch to avoid two DB calls in this function
@@ -585,7 +584,6 @@ class ScanService:
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         return ManageParseQR.objects.get(bundle=bundle_obj).completed_pages
 
-    @transaction.atomic
     def is_bundle_mid_qr_read(self, bundle_pk: int) -> int:
         """Check if the bundle with this id is currently in the midst of reading QR codes."""
         # TODO: use a prefetch to avoid two DB calls in this function
