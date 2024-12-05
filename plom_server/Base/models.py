@@ -315,9 +315,11 @@ def on_huey_task_error(signal, task: huey.api.Task, exc):
     # the exception handling was rewinding some atomic transactions
     if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
+        # or perhaps this huey task is not being tracked by a one of our trackers
+        # (for example, it may have a parent task that is doing the tracking)
         print(
             f"(Error) Task {task.id} {task.name} with args {task.args}"
-            " is no longer (or not yet) in the database."
+            " is no longer (or not yet or never will be) in the database."
         )
         return
 

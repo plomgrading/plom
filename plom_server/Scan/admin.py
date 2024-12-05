@@ -11,7 +11,6 @@ from .models import (
     StagingImage,
     PagesToImagesChore,
     ManageParseQRChore,
-    ParseQR,
     KnownStagingImage,
     UnknownStagingImage,
     ExtraStagingImage,
@@ -29,4 +28,3 @@ admin.site.register(DiscardStagingImage)
 admin.site.register(UnknownStagingImage)
 admin.site.register(PagesToImagesChore)
 admin.site.register(ManageParseQRChore)
-admin.site.register(ParseQR)

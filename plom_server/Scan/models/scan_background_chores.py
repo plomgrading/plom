@@ -22,13 +22,3 @@ class ManageParseQRChore(HueyTaskTracker):
 
     bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)
     completed_pages = models.PositiveIntegerField(default=0)
-
-
-# TODO: do we need this or can I use a plain ol HueyTaskTracker?
-# It is currently unused: if we keep it, rename to ParseQRChore
-class ParseQR(HueyTaskTracker):
-    """Parse a page of QR codes in the background."""
-
-    file_path = models.TextField(default="")
-    bundle = models.ForeignKey(StagingBundle, null=True, on_delete=models.CASCADE)
-    page_index = models.PositiveIntegerField(null=True)

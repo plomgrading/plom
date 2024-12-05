@@ -17,5 +17,4 @@ from .staging_images import (
 from .scan_background_chores import (
     PagesToImagesChore,
     ManageParseQRChore,
-    ParseQR,
 )
