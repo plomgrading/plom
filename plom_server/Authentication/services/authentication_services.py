@@ -82,17 +82,22 @@ class AuthenticationServices:
 
         Raises:
             ObjectDoesNotExist: no such group.
+            ValueError: illegal user group received
             IntegrityError: user already exists; or perhaps a nearby one
                 does, such as one that differs only in case.
         """
+        if group_name == "admin":
+            raise ValueError(
+                f"cannot create a user belonging to the {group_name} group."
+            )
+
+        groups = [Group.objects.get(name=group_name)]
+        # some users belong to more than one group.
         if group_name == "manager":
-            # special case, maybe should call create_manager_user instead
-            groups = [
-                Group.objects.get(name=group_name),
-                Group.objects.get(name="scanner"),
-            ]
-        else:
-            groups = [Group.objects.get(name=group_name)]
+            # maybe should call create_manager_user instead
+            groups.append(Group.objects.get(name="scanner"))
+        elif group_name == "lead_marker":
+            groups.append(Group.objects.get(name="marker"))
 
         # if username that matches in case exists, fail.  Note that doesn't seem
         # to get raises by the call to "create_user" although it DOES get flagged
@@ -104,10 +109,8 @@ class AuthenticationServices:
                 f'username "{username}" already exists or differs only in case'
             )
 
-        User.objects.create_user(
-            username=username, email=email, password=None
-        ).groups.add(*groups)
-        user = User.objects.get(username=username)
+        user = User.objects.create_user(username=username, email=email, password=None)
+        user.groups.add(*groups)
         user.is_active = False
         user.save()
 
@@ -151,11 +154,12 @@ class AuthenticationServices:
             manager.save()
 
     @transaction.atomic
-    def create_users_from_csv(self, file_path: Path | str) -> list[dict[str, str]]:
+    def create_users_from_csv(self, f: Path | str | bytes) -> list[dict[str, str]]:
         """Creates multiple users from a .csv file.
 
         Args:
-            file_path: path to the .csv file
+            f: a path to the .csv file, or the bytes of a
+            .csv file.
 
         Returns:
             A list of dicts containing information for each user.
@@ -163,15 +167,19 @@ class AuthenticationServices:
         Raises:
             KeyError: .csv file is missing required fields: `username`;`usergroup`.
             IntegrityError: attempted to create a user that already exists.
-            ObjectDoesNotExist: specified usergroup doesn't exists.
+            ObjectDoesNotExist: specified usergroup doesn't exist.
         """
-        with open(file_path) as csvfile:
-            new_user_list = list(csv.DictReader(csvfile))
+        if isinstance(f, bytes):
+            new_user_list = list(csv.DictReader(f.decode("utf-8").splitlines()))
+        else:
+            with open(f) as csvfile:
+                new_user_list = list(csv.DictReader(csvfile))
 
         required_fields = set(["username", "usergroup"])
         if not required_fields.issubset(new_user_list[0].keys()):
+            f = "csv file" if isinstance(f, bytes) else f
             raise KeyError(
-                f"{file_path} is missing required fields, it must contain: {required_fields}"
+                f"{f} is missing required fields, it must contain: {required_fields}"
             )
 
         # TODO: batch user creation?
