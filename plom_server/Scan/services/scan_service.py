@@ -216,20 +216,23 @@ class ScanService:
 
     @transaction.atomic
     def is_bundle_mid_splitting(self, bundle_pk: int) -> bool:
+        """Check if the bundle with this id is currently in the midst of splitting its pages."""
+        # TODO: use a prefetch to avoid two DB calls in this function
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         if bundle_obj.has_page_images:
             return False
-
-        query = PagesToImagesHueyTask.objects.filter(bundle=bundle_obj)
-        if query.exists():  # have run a bundle-split task previously
-            if query.exclude(
-                status=PagesToImagesHueyTask.COMPLETE
-            ).exists():  # one of these is not completed, so must be mid-run
-                return True
-            else:  # all have finished previously
-                return False
-        else:  # no bundle-split chore have been done
-            return False
+        # If there are only Error/Complete chores then we are not splitting
+        if PagesToImagesHueyTask.objects.filter(
+            bundle=bundle_obj,
+            status__in=(
+                PagesToImagesHueyTask.TO_DO,
+                PagesToImagesHueyTask.STARTING,
+                PagesToImagesHueyTask.QUEUED,
+                PagesToImagesHueyTask.RUNNING,
+            ),
+        ).exists():
+            return True
+        return False
 
     def are_bundles_mid_splitting(self) -> dict[str, bool]:
         """Returns a dict of each staging bundle (slug) and whether it is still mid-split."""
