@@ -158,8 +158,7 @@ class AuthenticationServices:
         """Creates multiple users from a .csv file.
 
         Args:
-            f: a path to the .csv file, or the bytes of a
-            .csv file.
+            f: a path to the .csv file, or the bytes of a .csv file.
 
         Returns:
             A list of dicts containing information for each user.
@@ -171,15 +170,17 @@ class AuthenticationServices:
         """
         if isinstance(f, bytes):
             new_user_list = list(csv.DictReader(f.decode("utf-8").splitlines()))
+            _filename = "csv file"
         else:
+            _filename = f
             with open(f) as csvfile:
                 new_user_list = list(csv.DictReader(csvfile))
 
         required_fields = set(["username", "usergroup"])
         if not required_fields.issubset(new_user_list[0].keys()):
-            f = "csv file" if isinstance(f, bytes) else f
             raise KeyError(
-                f"{f} is missing required fields, it must contain: {required_fields}"
+                f"{_filename} is missing required fields,"
+                f" it must contain: {required_fields}"
             )
 
         # TODO: batch user creation?
