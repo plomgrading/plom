@@ -2,20 +2,18 @@
 /* Copyright (C) 2022 Edith Coates */
 /* Copyright (C) 2022-2023 Brennen Chiu */
 /* Copyright (C) 2023 Andrew Rechnitzer */
+/* Copyright (C) 2024 Colin B. Macdonald */
 
+/* Bootstrap classes should be used instead of custom CSS
+ *
+ * TODO: each thing here should come with a brief comment about why its
+ * here.
+ *
+ * TODO: hardcoded colours here should be removed or at least avoided
+ * and commented carefully why they are here.
+ */
 
 [x-cloak] { display: none !important; }
-
-div.list-group {
-    --bs-list-group-bg: #F5F6FA;
-    --bs-list-group-action-hover-bg: #dadce2;
-    margin-right: 10px;
-
-}
-
-div.list-group-item {
-    border-bottom: 0;
-}
 
 div.is_pdf_thumbnail {
     width: 10rem;
@@ -26,16 +24,12 @@ div.is_pdf_thumbnail:hover {
     opacity: 0.5;
 }
 
-
+/* TODO: remove? */
 .nav-link {
     color: black;
 }
 .nav-link:hover {
     text-decoration: underline;
-}
-
-a.list-group-item {
-    border-bottom: 0;
 }
 
 p.is_test_spec_nav_text {
