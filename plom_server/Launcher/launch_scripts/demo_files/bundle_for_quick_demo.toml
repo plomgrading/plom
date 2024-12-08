@@ -5,6 +5,7 @@
 [[bundles]]
 first_paper = 1
 last_paper = 10
+invalid_qr_papers = [10]
 
 
 # HW bundle 1

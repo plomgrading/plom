@@ -488,6 +488,14 @@ class ScanService:
                             "tpv": "plomS",
                         }
                     )
+                else:
+                    # it is not a valid qr-code
+                    qr_code_dict.update(
+                        {
+                            "page_type": "invalid_qr",
+                            "quadrant": 0,
+                        }
+                    )
                 groupings[quadrant] = qr_code_dict
         return groupings
 

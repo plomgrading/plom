@@ -425,8 +425,8 @@ class DemoBundleCreationService:
                 fontsize=18,
                 color=[0, 0.75, 0.75],
             )
-            # 0th item is the qr-code
-            rect = pymupdf.Rect(100, 100, 200, 200)
+            # 0th item is the qr-code --- put it in standard place
+            rect = pymupdf.Rect(50, 50, 50 + 70, 50 + 70)
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(invalid_qr_bar_codes[0]), overlay=True
             )

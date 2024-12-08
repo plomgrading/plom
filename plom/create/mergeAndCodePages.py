@@ -530,7 +530,7 @@ def create_invalid_QR_and_bar_codes(dur: pathlib.Path) -> list[pathlib.Path]:
         List of ``pathlib.Path` for PNG files, the qr-code then the barcodes.
     """
     qr_files = []
-    filename = dur / f"qr_invalid.png"
+    filename = dur / "qr_invalid.png"
     # make a qr-code using segno
     qr_code = segno.make("not even wrong", error="H")
     qr_code.save(filename, scale=4)  # type: ignore[arg-type]
