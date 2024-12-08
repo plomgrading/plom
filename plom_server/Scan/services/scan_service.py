@@ -245,6 +245,10 @@ class ScanService:
 
         Args:
             bundle_pk: the primary key for a particular bundle.
+
+        Exceptions:
+            PlomBundleLockedException: bundle was splitting or reading QR
+                codes, or "push-locked", or already pushed.
         """
         with transaction.atomic():
             _bundle_obj = (
