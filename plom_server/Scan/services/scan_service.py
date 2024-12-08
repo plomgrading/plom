@@ -245,19 +245,21 @@ class ScanService:
 
         Args:
             bundle_pk: the primary key for a particular bundle.
+
+        Exceptions:
+            PlomBundleLockedException: bundle was splitting or reading QR
+                codes, or "push-locked", or already pushed.
         """
         with transaction.atomic():
             _bundle_obj = (
                 StagingBundle.objects.select_for_update().filter(pk=bundle_pk).get()
             )
 
-            # TODO: TEMPORARILY, don't check if we *should* delete...
-            force = True
-            if not force and self.is_bundle_mid_splitting(_bundle_obj.pk):
+            if self.is_bundle_mid_splitting(_bundle_obj.pk):
                 raise PlomBundleLockedException(
                     "Bundle is upload / splitting. Wait until that is finished before removing it"
                 )
-            if not force and self.is_bundle_mid_qr_read(_bundle_obj.pk):
+            if self.is_bundle_mid_qr_read(_bundle_obj.pk):
                 raise PlomBundleLockedException(
                     "Bundle is mid qr read. Wait until that is finished before removing it"
                 )
@@ -1700,8 +1702,8 @@ def huey_child_get_page_images(
             if _debug_be_flaky:
                 print(f"Huey debug, random sleep in task {task.id}")
                 log.debug("Huey debug, random sleep in task %d", task.id)
-                time.sleep(random.random() * 2)
-                if random.random() < 0.1:
+                time.sleep(random.random() * 4)
+                if random.random() < 0.04:
                     raise RuntimeError("Flaky simulated image split failure")
             basename = f"page{order:05}"
             if bundle_obj.force_page_render:
@@ -1801,8 +1803,8 @@ def huey_child_parse_qr_code(
     if _debug_be_flaky:
         print(f"Huey debug, random sleep in task {task.id}")
         log.debug("Huey debug, random sleep in task %d", task.id)
-        time.sleep(random.random() * 2)
-        if random.random() < 0.1:
+        time.sleep(random.random() * 4)
+        if random.random() < 0.04:
             raise RuntimeError("Flaky simulated QR read failure")
 
     rotation = pipr.get_rotation_angle_or_None_from_QRs(page_data)

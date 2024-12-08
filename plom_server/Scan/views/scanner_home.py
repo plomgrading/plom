@@ -214,10 +214,10 @@ class GetBundleView(ScannerRequiredView):
 
 
 class GetStagedBundleFragmentView(ScannerRequiredView):
-    """Return a user-uploaded bundle PDF."""
+    """Various http methods for a staged-but-not-pushed user-uploaded bundle PDF."""
 
     def get(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
-        """Rendered fragment of a staged but not pushed bundle.
+        """Rendered fragment for one row of a staged bundle.
 
         Args:
             request: the request.
@@ -227,7 +227,8 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
                 internally.
 
         Returns:
-            A rendered HTML page.
+            A rendered HTML fragment to be inserted into a complete
+            page using htmx.
         """
         scanner = ScanService()
 
@@ -326,7 +327,8 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         scanner = ScanService()
         try:
             scanner.remove_bundle_by_pk(bundle_id)
-        except PlomBundleLockedException:
+        except PlomBundleLockedException as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
