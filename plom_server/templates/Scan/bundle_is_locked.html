@@ -22,20 +22,32 @@
                     <p>
                         If you are here then it is because the
                         bundle <q>{{ slug }}</q> is locked, or already
-                        pushed, or similar error condition.
-                        There might be more information below.
+                        pushed, or in some other condition that prevents
+                        the operation you were trying to perform.
+                        In some cases there will be more information below.
                     </p>
                     <p>
                         Note that
                         <ul>
-                            <li>Only one bundle can be pushed at a given time, and</li>
+                            <li>Only one bundle can be pushed at a given time.</li>
                             <li>
-                                You may not change a bundle when it is mid-push; another user may have pushed the bundle while you were trying to altering things.
+                                You may not change a bundle when it is mid-push;
+                                another user may have pushed the bundle while
+                                you were trying to alter things.
+                            </li>
+                            <li>
+                                Many operations cannot be performed while bundles
+                                are in the process of uploading, processing pages,
+                                or reading QR codes.
                             </li>
                         </ul>
                     </p>
-                    <p>Please return to the main scanning overview page.</p>
+                    <p class="mb-0">
+                        Please return to the main scanning overview page;
+                        you may be able to re-try your operation in a moment.
+                    </p>
                 </div>
+                <h4>Error messages (if available)</h4>
                 <div class="card-text">
                     <ul>
                         {% for msg in reasons %}<li>{{ msg }}</li>{% endfor %}
