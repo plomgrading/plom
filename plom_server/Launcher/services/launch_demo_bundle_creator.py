@@ -407,7 +407,7 @@ class DemoBundleCreationService:
             )
 
     def append_invalid_qr_code_page(self, pdf_doc):
-        """Append a garbarge page with invalid qr-codes on it.
+        """Append a garbage page with invalid qr-codes on it.
 
         This is intended to simulate the user accidentally uploading a page
         with non-plom qr codes on it (eg a supermarket receipt).

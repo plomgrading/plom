@@ -11,14 +11,7 @@ import os
 from pathlib import Path
 from shlex import split
 import subprocess
-import sys
 import time
-
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
-
 
 # we specify this directory relative to the plom_server
 # root directory, rather than getting Django things up and
