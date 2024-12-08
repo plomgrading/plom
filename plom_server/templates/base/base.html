@@ -11,6 +11,8 @@
 {% load django_htmx %}
 <!DOCTYPE html>
 <html lang="en">
+    <!-- always dark mode: -->
+    <!-- html lang="en" data-bs-theme="dark" -->
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -50,6 +52,19 @@
                 opacity: 1;
             }
         </style>
+        <script>
+           // Set theme to the user's preferred color scheme
+           function updateTheme() {
+             const colorMode = window.matchMedia("(prefers-color-scheme: dark)").matches ?
+               "dark" :
+               "light";
+             document.querySelector("html").setAttribute("data-bs-theme", colorMode);
+           }
+           // Set theme on load
+           updateTheme()
+           // Update theme when the preferred scheme changes
+           window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTheme)
+        </script>
         <title>
             {% block full_title %}
                 {% block title_prefix %}
