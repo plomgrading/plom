@@ -518,3 +518,42 @@ def make_PDF(
     exam.close()
 
     return save_name
+
+
+def create_invalid_QR_and_bar_codes(dur: pathlib.Path) -> list[pathlib.Path]:
+    """Creates a non-plom QR code and two non-plom bar-codes as png files.
+
+    Arguments:
+        dur: a directory to save the QR codes.
+
+    Returns:
+        List of ``pathlib.Path` for PNG files, the qr-code then the barcodes.
+    """
+    qr_files = []
+    filename = dur / f"qr_invalid.png"
+    # make a qr-code using segno
+    qr_code = segno.make("not even wrong", error="H")
+    qr_code.save(filename, scale=4)  # type: ignore[arg-type]
+    qr_files.append(filename)
+
+    # a barcode using zxing-cpp
+    # see https://github.com/zxing-cpp/zxing-cpp/blob/master/wrappers/python/demo_writer.py
+    import zxingcpp
+    from PIL import Image
+
+    # make an EAN-13
+    filename = dur / "ean_invalid.png"
+    img = zxingcpp.write_barcode(
+        zxingcpp.BarcodeFormat.EAN13, "0123456789012", width=300, height=100
+    )
+    Image.fromarray(img).save(filename)
+    qr_files.append(filename)
+    # make a CODE128
+    filename = dur / "code_invalid.png"
+    img = zxingcpp.write_barcode(
+        zxingcpp.BarcodeFormat.Code128, "even more wrong", width=300, height=100
+    )
+    Image.fromarray(img).save(filename)
+    qr_files.append(filename)
+
+    return qr_files

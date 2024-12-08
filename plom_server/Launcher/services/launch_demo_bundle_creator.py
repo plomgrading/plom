@@ -21,7 +21,10 @@ from django.core.management import call_command
 from django.conf import settings
 
 from plom import SpecVerifier
-from plom.create.mergeAndCodePages import create_QR_codes
+from plom.create.mergeAndCodePages import (
+    create_QR_codes,
+    create_invalid_QR_and_bar_codes,
+)
 from plom.create.scribble_utils import scribble_name_and_id, scribble_pages
 from plom.scan import pdfmucker
 
@@ -403,6 +406,40 @@ class DemoBundleCreationService:
                 rect, pixmap=pymupdf.Pixmap(qr_pngs[1]), overlay=True
             )
 
+    def append_invalid_qr_code_page(self, pdf_doc):
+        """Append a garbarge page with invalid qr-codes on it.
+
+        This is intended to simulate the user accidentally uploading a page
+        with non-plom qr codes on it (eg a supermarket receipt).
+        """
+        # a rather cludge way to get at the spec via commandline tools
+        # really we just need the public code.
+        with tempfile.TemporaryDirectory() as td:
+            invalid_qr_bar_codes = create_invalid_QR_and_bar_codes(Path(td))
+            # now we have a qr-code and 2 bar-codes which are not
+            # valid for plom. These are 300-wide and 100-heigh
+            pdf_doc.new_page(-1)
+            pdf_doc[-1].insert_text(
+                (120, 60),
+                text="This is a page with invalid qr-code and bar-codes",
+                fontsize=18,
+                color=[0, 0.75, 0.75],
+            )
+            # 0th item is the qr-code
+            rect = pymupdf.Rect(100, 100, 200, 200)
+            pdf_doc[-1].insert_image(
+                rect, pixmap=pymupdf.Pixmap(invalid_qr_bar_codes[0]), overlay=True
+            )
+            # the next two are barcodes - make them wider
+            rect = pymupdf.Rect(100, 250, 400, 350)
+            pdf_doc[-1].insert_image(
+                rect, pixmap=pymupdf.Pixmap(invalid_qr_bar_codes[1]), overlay=True
+            )
+            rect = pymupdf.Rect(100, 400, 400, 500)
+            pdf_doc[-1].insert_image(
+                rect, pixmap=pymupdf.Pixmap(invalid_qr_bar_codes[2]), overlay=True
+            )
+
     def _convert_duplicates_dict(self, duplicates):
         """If duplicates is a list of dicts, convert into a dict."""
         duplicates_dict = {}
@@ -457,6 +494,7 @@ class DemoBundleCreationService:
         wrong_assessment: list = [],
         out_of_range_papers: list = [],
         obscure_qr_papers: list = [],
+        invalid_qr_papers: list = [],
         mucking_operation: list[str] = [],
     ) -> None:
         """Scribble on some of the papers to create a bundle, along with various others inclusions.
@@ -479,6 +517,8 @@ class DemoBundleCreationService:
             duplicate_qr: TODO.
             out_of_range_papers: TODO.
             obscure_qr_papers: TODO.
+            invalid_qr_papers: list of papers to which we append a
+                final page stamped with invalid qr-code and bar-code.
             mucking_operation: a list of mucking operations to apply,
                 simulating various sorts of damage to the pages.
             wrong_version: list of paper numbers to which we replace last
@@ -536,6 +576,8 @@ class DemoBundleCreationService:
                         self.append_page_from_another_assessment(pdf_document)
                     if paper_number in out_of_range_papers:
                         self.append_out_of_range_paper_and_page(pdf_document)
+                    if paper_number in invalid_qr_papers:
+                        self.append_invalid_qr_code_page(pdf_document)
 
                     with tempfile.NamedTemporaryFile(
                         delete=True, suffix=".pdf"
@@ -616,6 +658,7 @@ class DemoBundleCreationService:
                 wrong_assessment=bundle["wrong_assessment_papers"],
                 out_of_range_papers=bundle["out_of_range_papers"],
                 obscure_qr_papers=bundle["obscure_qr_papers"],
+                invalid_qr_papers=bundle["invalid_qr_papers"],
                 mucking_operation=bundle["operations"],
             )
 

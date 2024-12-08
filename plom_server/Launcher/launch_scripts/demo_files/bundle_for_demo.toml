@@ -21,6 +21,7 @@ scrap_page_papers = [7, 8]
 wrong_assessment_papers = [1, 2]
 out_of_range_papers = [5]
 obscure_qr_papers = [11, 12, 13, 14, 15]
+invalid_qr_papers = [16, 17]
 operations = ["tear", "fold", "rotate", "compress", "lighten"]
 
 

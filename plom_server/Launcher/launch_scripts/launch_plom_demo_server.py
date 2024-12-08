@@ -422,23 +422,6 @@ def run_demo_preparation_commands(
     return True
 
 
-def _read_bundle_config(length):
-    # read the config toml file
-    if length == "quick":
-        fname = "bundle_for_quick_demo.toml"
-    elif length == "long":
-        fname = "bundle_for_long_demo.toml"
-    elif length == "plaid":
-        fname = "bundle_for_plaid_demo.toml"
-    else:
-        fname = "bundle_for_demo.toml"
-    with open(demo_file_directory / fname, "rb") as fh:
-        try:
-            return tomllib.load(fh)
-        except tomllib.TOMLDecodeError as e:
-            raise RuntimeError(e)
-
-
 def build_the_bundles(length="normal"):
     """Create bundles of papers to simulate scanned student papers.
 
