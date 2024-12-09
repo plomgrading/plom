@@ -586,7 +586,7 @@ class ScanService:
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         return ManageParseQR.objects.get(bundle=bundle_obj).completed_pages
 
-    def is_bundle_mid_qr_read(self, bundle_pk: int) -> int:
+    def is_bundle_mid_qr_read(self, bundle_pk: int) -> bool:
         """Check if the bundle with this id is currently in the midst of reading QR codes."""
         # TODO: use a prefetch to avoid two DB calls in this function
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
