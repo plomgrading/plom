@@ -47,7 +47,6 @@ requires-python = '>=3.8'
 dependencies = [
     "aiohttp>=3.7.2",
     "arrow>=1.1.1",
-    "beautifulsoup4>=4.12.2",
     "canvasapi>=3.0.0",
     "cryptography>=41.0.3",
     "pyOpenSSL>=23.2.0",

@@ -24,6 +24,8 @@ class Command(BaseCommand):
     Then, add the users to their respective group.
     This command also prints a table with a list of the demo users and
     passwords.
+
+    TODO: consider centralizing this code into UserManagement App.
     """
 
     def handle(self, *args, **options) -> None:

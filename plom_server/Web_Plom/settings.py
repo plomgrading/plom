@@ -337,9 +337,12 @@ FIXTURE_DIRS = [BASE_DIR / "fixtures"]
 MAX_BUNDLE_SIZE = 536870912
 MAX_BUNDLE_PAGES = 2500
 
-# Max file size for a single file upload (1 MB for now)
-# MAX_FILE_SIZE = 1e6
-# TODO: this is (probably) UNUSED at the moment, possible for future use.
+# User uploaded (non-bundle) files are rejected if they exceed this byte size.
+# TODO: nginx also checks file size, does this serve a purpose?
+MAX_FILE_SIZE = 1024 * 1024
+MAX_FILE_SIZE_DISPLAY = "1 MiB"
+# User uploaded files are written to /tmp if they exceed this, default is 2.5e6.
+# FILE_UPLOAD_MAX_MEMORY_SIZE = 2.5e6
 
 LOGGING: dict[str, Any] = {
     "version": 1,
