@@ -129,12 +129,12 @@ class LoginView(View):
             return redirect("home")
 
         username = request.POST.get("username")
-        """be wary making db calls for unauthenticated users, see #3733
-        temp_username = User.objects.filter(username__iexact=username).values()
-        if not temp_username.exists():
-            messages.info(request, "User does not exist!")
-            return render(request, self.template_name)
-        """
+        # be wary making db calls for unauthenticated users, see #3733
+        # TODO: maybe just delete this?
+        # temp_username = User.objects.filter(username__iexact=username).values()
+        # if not temp_username.exists():
+        #     messages.info(request, "User does not exist!")
+        #     return render(request, self.template_name)
         user = authenticate(
             request,
             username=username,
