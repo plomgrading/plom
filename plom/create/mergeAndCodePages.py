@@ -25,7 +25,7 @@ from plom.specVerifier import (
     get_question_labels,
     build_page_to_version_dict,
 )
-from plom.tpv_utils import encodeTPV
+from plom.tpv_utils import encodeTPV, encodeScrapPaperCode
 
 
 # from plom.misc_utils import run_length_encoding
@@ -521,7 +521,8 @@ def make_PDF(
 
 
 def create_invalid_QR_and_bar_codes(dur: pathlib.Path) -> list[pathlib.Path]:
-    """Creates a non-plom QR code and two non-plom bar-codes as png files.
+    """Creates a non-plom QR code and two non-plom bar-codes as png files,
+    and one valid plom scrap-paper qr-code.
 
     Arguments:
         dur: a directory to save the QR codes.
@@ -554,6 +555,12 @@ def create_invalid_QR_and_bar_codes(dur: pathlib.Path) -> list[pathlib.Path]:
         zxingcpp.BarcodeFormat.Code128, "even more wrong", width=300, height=100
     )
     Image.fromarray(img).save(filename)
+    qr_files.append(filename)
+    # make a top-left scrap-paper micro qr code
+    filename = dur / "valid_tl_scrap_code.png"
+    qr = segno.make_micro(encodeScrapPaperCode(1))
+    # MyPy complains about pathlib.Path here but it works
+    qr.save(filename, border=2, scale=4)  # type: ignore[arg-type]
     qr_files.append(filename)
 
     return qr_files

@@ -406,8 +406,9 @@ class DemoBundleCreationService:
                 rect, pixmap=pymupdf.Pixmap(qr_pngs[1]), overlay=True
             )
 
-    def append_invalid_qr_code_page(self, pdf_doc):
-        """Append a garbage page with invalid qr-codes on it.
+    def append_invalid_qr_code_pages(self, pdf_doc):
+        """Append a garbage page with invalid qr-codes on it, and
+        another one with a valid qr and an invalid qr.
 
         This is intended to simulate the user accidentally uploading a page
         with non-plom qr codes on it (eg a supermarket receipt).
@@ -417,7 +418,9 @@ class DemoBundleCreationService:
         with tempfile.TemporaryDirectory() as td:
             invalid_qr_bar_codes = create_invalid_QR_and_bar_codes(Path(td))
             # now we have a qr-code and 2 bar-codes which are not
-            # valid for plom. These are 300-wide and 100-heigh
+            # valid for plom, and finally one valid scrap-paper code
+            # for the top-left corner. The barcodes are 300-wide and 100-high
+            # and the qr-codes are 70x70
             pdf_doc.new_page(-1)
             pdf_doc[-1].insert_text(
                 (120, 60),
@@ -438,6 +441,22 @@ class DemoBundleCreationService:
             rect = pymupdf.Rect(100, 400, 400, 500)
             pdf_doc[-1].insert_image(
                 rect, pixmap=pymupdf.Pixmap(invalid_qr_bar_codes[2]), overlay=True
+            )
+            pdf_doc.new_page(-1)
+            w = pdf_doc[-1].rect.width
+            pdf_doc[-1].insert_text(
+                (120, 60),
+                text="This is a page with 1 valid qr and 1 invalid qr",
+                fontsize=18,
+                color=[0, 0.75, 0.75],
+            )
+            rect = pymupdf.Rect(50, 50, 50 + 70, 50 + 70)
+            pdf_doc[-1].insert_image(
+                rect, pixmap=pymupdf.Pixmap(invalid_qr_bar_codes[3]), overlay=True
+            )
+            rect = pymupdf.Rect(w - 50 - 70, 50, w - 50, 50 + 70)
+            pdf_doc[-1].insert_image(
+                rect, pixmap=pymupdf.Pixmap(invalid_qr_bar_codes[0]), overlay=True
             )
 
     def _convert_duplicates_dict(self, duplicates):
@@ -577,7 +596,7 @@ class DemoBundleCreationService:
                     if paper_number in out_of_range_papers:
                         self.append_out_of_range_paper_and_page(pdf_document)
                     if paper_number in invalid_qr_papers:
-                        self.append_invalid_qr_code_page(pdf_document)
+                        self.append_invalid_qr_code_pages(pdf_document)
 
                     with tempfile.NamedTemporaryFile(
                         delete=True, suffix=".pdf"

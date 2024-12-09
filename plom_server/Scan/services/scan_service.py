@@ -493,7 +493,7 @@ class ScanService:
                     qr_code_dict.update(
                         {
                             "page_type": "invalid_qr",
-                            "quadrant": 0,
+                            "quadrant": "0",
                         }
                     )
                 groupings[quadrant] = qr_code_dict
