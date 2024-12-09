@@ -137,7 +137,13 @@ class ImportUsers(AdminOrManagerRequiredView):
 
     template_name = "Authentication/signup_import_users.html"
     link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
-    example_csv = "username,usergroup\nExampleName1,marker\nExampleName2,lead_marker\nExampleName14,scanner\nexampleName37,manager"
+    example_csv = (
+        "username,usergroup\n"
+        "ExampleName1,marker\n"
+        "ExampleName2,lead_marker\n"
+        "ExampleName14,scanner\n"
+        "exampleName37,manager"
+    )
     # TODO: this bunch of strings should exist somewhere else
     user_groups = ["marker", "lead_marker", "scanner", "manager"]
 

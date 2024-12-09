@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Server accepts upload of userlist in csv format.
 
 ### Changed
 * Increase default password reset link expiry to 14 days.
