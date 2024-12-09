@@ -196,7 +196,7 @@ class ScanService:
         with transaction.atomic(durable=True):
             x = PagesToImagesHueyTask.objects.create(
                 bundle=bundle_obj,
-                status=PagesToImagesHueyTask.STARTING,
+                status=HueyTaskTracker.STARTING,
             )
             tracker_pk = x.pk
         res = huey_parent_split_bundle_chore(
@@ -204,7 +204,7 @@ class ScanService:
             number_of_chunks,
             tracker_pk=tracker_pk,
             read_after=read_after,
-            _debug_be_flaky=True,  # TODO
+            _debug_be_flaky=False,
         )
         # print(f"Just enqueued Huey parent_split_and_save task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
@@ -214,22 +214,24 @@ class ScanService:
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         return PagesToImagesHueyTask.objects.get(bundle=bundle_obj).completed_pages
 
-    @transaction.atomic
     def is_bundle_mid_splitting(self, bundle_pk: int) -> bool:
+        """Check if the bundle with this id is currently in the midst of splitting its pages."""
+        # TODO: use a prefetch to avoid two DB calls in this function
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         if bundle_obj.has_page_images:
             return False
-
-        query = PagesToImagesHueyTask.objects.filter(bundle=bundle_obj)
-        if query.exists():  # have run a bundle-split task previously
-            if query.exclude(
-                status=PagesToImagesHueyTask.COMPLETE
-            ).exists():  # one of these is not completed, so must be mid-run
-                return True
-            else:  # all have finished previously
-                return False
-        else:  # no bundle-split chore have been done
-            return False
+        # If there are only Error/Complete chores then we are not splitting
+        if PagesToImagesHueyTask.objects.filter(
+            bundle=bundle_obj,
+            status__in=(
+                HueyTaskTracker.TO_DO,
+                HueyTaskTracker.STARTING,
+                HueyTaskTracker.QUEUED,
+                HueyTaskTracker.RUNNING,
+            ),
+        ).exists():
+            return True
+        return False
 
     def are_bundles_mid_splitting(self) -> dict[str, bool]:
         """Returns a dict of each staging bundle (slug) and whether it is still mid-split."""
@@ -243,19 +245,21 @@ class ScanService:
 
         Args:
             bundle_pk: the primary key for a particular bundle.
+
+        Exceptions:
+            PlomBundleLockedException: bundle was splitting or reading QR
+                codes, or "push-locked", or already pushed.
         """
         with transaction.atomic():
             _bundle_obj = (
                 StagingBundle.objects.select_for_update().filter(pk=bundle_pk).get()
             )
 
-            # TODO: TEMPORARILY, don't check if we *should* delete...
-            force = True
-            if not force and self.is_bundle_mid_splitting(_bundle_obj.pk):
+            if self.is_bundle_mid_splitting(_bundle_obj.pk):
                 raise PlomBundleLockedException(
                     "Bundle is upload / splitting. Wait until that is finished before removing it"
                 )
-            if not force and self.is_bundle_mid_qr_read(_bundle_obj.pk):
+            if self.is_bundle_mid_qr_read(_bundle_obj.pk):
                 raise PlomBundleLockedException(
                     "Bundle is mid qr read. Wait until that is finished before removing it"
                 )
@@ -501,6 +505,7 @@ class ScanService:
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         # check that the qr-codes have not been read already, or that a task has not been set
 
+        # Currently, even a status Error chore would prevent it from being rerun
         if ManageParseQR.objects.filter(bundle=bundle_obj).exists():
             return
 
@@ -511,9 +516,9 @@ class ScanService:
             )
             tracker_pk = x.pk
 
-        print("starting the read_qr_codes_chore...")
+        log.info("starting the read_qr_codes_chore...")
         res = huey_parent_read_qr_codes_chore(
-            bundle_pk, tracker_pk=tracker_pk, _debug_be_flaky=True  # TODO
+            bundle_pk, tracker_pk=tracker_pk, _debug_be_flaky=False
         )
         # print(f"Just enqueued Huey parent_read_qr_codes task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
@@ -581,22 +586,25 @@ class ScanService:
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         return ManageParseQR.objects.get(bundle=bundle_obj).completed_pages
 
-    @transaction.atomic
     def is_bundle_mid_qr_read(self, bundle_pk: int) -> int:
+        """Check if the bundle with this id is currently in the midst of reading QR codes."""
+        # TODO: use a prefetch to avoid two DB calls in this function
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         if bundle_obj.has_qr_codes:
             return False
 
-        query = ManageParseQR.objects.filter(bundle=bundle_obj)
-        if query.exists():  # have run a qr-read task previously
-            if query.exclude(
-                status=ManageParseQR.COMPLETE
-            ).exists():  # one of these is not completed, so must be mid-run
-                return True
-            else:  # all have finished previously
-                return False
-        else:  # no such qr-reading tasks have been done
-            return False
+        # If there are only Error/Complete chores then we are not reading
+        if ManageParseQR.objects.filter(
+            bundle=bundle_obj,
+            status__in=(
+                HueyTaskTracker.TO_DO,
+                HueyTaskTracker.STARTING,
+                HueyTaskTracker.QUEUED,
+                HueyTaskTracker.RUNNING,
+            ),
+        ).exists():
+            return True
+        return False
 
     def are_bundles_mid_qr_read(self) -> dict[str, bool]:
         """Returns a dict of each staging bundle (slug) and whether it is still mid-qr-read."""
@@ -1694,8 +1702,8 @@ def huey_child_get_page_images(
             if _debug_be_flaky:
                 print(f"Huey debug, random sleep in task {task.id}")
                 log.debug("Huey debug, random sleep in task %d", task.id)
-                time.sleep(random.random() * 2)
-                if random.random() < 0.1:
+                time.sleep(random.random() * 4)
+                if random.random() < 0.04:
                     raise RuntimeError("Flaky simulated image split failure")
             basename = f"page{order:05}"
             if bundle_obj.force_page_render:
@@ -1795,8 +1803,8 @@ def huey_child_parse_qr_code(
     if _debug_be_flaky:
         print(f"Huey debug, random sleep in task {task.id}")
         log.debug("Huey debug, random sleep in task %d", task.id)
-        time.sleep(random.random() * 2)
-        if random.random() < 0.1:
+        time.sleep(random.random() * 4)
+        if random.random() < 0.04:
             raise RuntimeError("Flaky simulated QR read failure")
 
     rotation = pipr.get_rotation_angle_or_None_from_QRs(page_data)
