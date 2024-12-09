@@ -172,7 +172,7 @@ class AuthenticationServices:
             new_user_list = list(csv.DictReader(f.decode("utf-8").splitlines()))
             _filename = "csv file"
         else:
-            _filename = f
+            _filename = str(f)
             with open(f) as csvfile:
                 new_user_list = list(csv.DictReader(csvfile))
 
