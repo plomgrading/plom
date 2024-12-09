@@ -22,9 +22,7 @@ from django.utils.encoding import force_str
 from django.views.generic import View
 from braces.views import GroupRequiredMixin
 
-from Base.base_group_views import (
-    RoleRequiredView,
-)
+from Base.base_group_views import RoleRequiredView
 
 
 class SetPassword(View):
@@ -42,7 +40,7 @@ class SetPassword(View):
     ]
 
     def get(self, request: HttpRequest, uidb64: str, token: str) -> HttpResponse:
-        """The Password setting page."""
+        """Get the password setting page."""
         try:
             uid = force_str((urlsafe_base64_decode(uidb64)))
             user = User.objects.get(pk=uid)
@@ -92,8 +90,9 @@ class SetPassword(View):
             return render(request, self.template_name, context)
 
 
-# When user enters their password successfully
 class SetPasswordComplete(LoginRequiredMixin, GroupRequiredMixin, View):
+    """Displayed when user has successfully completed setting their password."""
+
     template_name = "Authentication/set_password_complete.html"
     login_url = "login"
     group_required = ["manager", "marker", "scanner"]
@@ -113,12 +112,13 @@ class Home(RoleRequiredView):
         return render(request, "Authentication/home.html", context)
 
 
-# Login the user
 class LoginView(View):
+    """The login page and action of logging in."""
+
     template_name = "Authentication/login.html"
 
     def get(self, request):
-        """The login page."""
+        """Get the login page."""
         if request.user.is_authenticated:
             return redirect("home")
         return render(request, self.template_name)
@@ -151,14 +151,17 @@ class LoginView(View):
             return redirect("home")
 
 
-# Logout User
 class LogoutView(View):
+    """Logout a user."""
+
     def get(self, request: HttpRequest) -> HttpResponse:
         logout(request)
         return redirect("login")
 
 
 class Maintenance(Home, View):
+    """The accounts maintenance page."""
+
     def get(self, request: HttpRequest) -> HttpResponse:
         context: dict[str, Any] = {}
         return render(request, "Authentication/maintenance.html", context)
