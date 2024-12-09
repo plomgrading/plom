@@ -204,7 +204,7 @@ class ScanService:
             number_of_chunks,
             tracker_pk=tracker_pk,
             read_after=read_after,
-            _debug_be_flaky=True,  # TODO
+            _debug_be_flaky=False,
         )
         # print(f"Just enqueued Huey parent_split_and_save task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
@@ -518,7 +518,7 @@ class ScanService:
 
         log.info("starting the read_qr_codes_chore...")
         res = huey_parent_read_qr_codes_chore(
-            bundle_pk, tracker_pk=tracker_pk, _debug_be_flaky=True  # TODO
+            bundle_pk, tracker_pk=tracker_pk, _debug_be_flaky=False
         )
         # print(f"Just enqueued Huey parent_read_qr_codes task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
