@@ -31,7 +31,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "username",
             type=str,
-            help="Which user to operator on",
+            help="Which user to query or set.",
         )
         parser.add_argument(
             "--toggle",

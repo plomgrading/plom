@@ -7,6 +7,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 from django.views.generic import View
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.sites.shortcuts import get_current_site
 from .edit_profile_form import EditProfileForm
 from Authentication.services import AuthenticationServices
 
@@ -67,5 +68,6 @@ class ProfileView(LoginRequiredMixin, View):
 
 
 def password_change_redirect(request):
-    link = AuthenticationServices().generate_link(request, request.user)
+    request_domain = get_current_site(request).domain
+    link = AuthenticationServices().generate_link(request.user, request_domain)
     return redirect(link)
