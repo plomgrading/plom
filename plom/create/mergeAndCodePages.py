@@ -521,8 +521,13 @@ def make_PDF(
 
 
 def create_invalid_QR_and_bar_codes(dur: pathlib.Path) -> list[pathlib.Path]:
-    """Creates a non-plom QR code and two non-plom bar-codes as png files,
-    and one valid plom scrap-paper qr-code.
+    """Creates qr-codes and barcodes to make sure we handle invalid codes.
+
+    More precisely, it creates 4 png images.
+        * an invalid plom qr-code (read by plom)
+        * an EAN-13 barcode (plom ignores)
+        * a Code128 barcode (plom ignores)
+        * a valid micro-qr scrap-paper code for the top-left corner of a page
 
     Arguments:
         dur: a directory to save the QR codes.

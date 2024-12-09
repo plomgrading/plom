@@ -407,8 +407,13 @@ class DemoBundleCreationService:
             )
 
     def append_invalid_qr_code_pages(self, pdf_doc):
-        """Append a garbage page with invalid qr-codes on it, and
-        another one with a valid qr and an invalid qr.
+        """Append two garbage pages with mix of valid/invalid qr/bar-codes.
+
+        More precisely
+            * append a page with an invalid qr-code in top-left corner
+            and two barcodes near middle of page, then
+            * append a second page with a valid plom scrap paper qr-code
+            in top-left corner and an invalid qr-code at top-right corner.
 
         This is intended to simulate the user accidentally uploading a page
         with non-plom qr codes on it (eg a supermarket receipt).
