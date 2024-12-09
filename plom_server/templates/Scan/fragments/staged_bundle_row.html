@@ -13,8 +13,10 @@
                  hx-trigger="load delay:2s"
                  hx-target="#bundle{{ slug }}" />
         {% elif is_error %}
-            <p>
+            <p class="alert alert-danger p-1 mb-0">
                 Error <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                <br />
+                <small>(you could try removing and then re-uploading)</small>
             </p>
         {% else %}
             <img src="{% url 'scan_get_thumbnail' bundle_id 1 %}" />
