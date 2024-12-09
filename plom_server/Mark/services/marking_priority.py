@@ -64,18 +64,13 @@ def set_marking_piority_shuffle():
 
 @transaction.atomic
 def set_marking_priority_paper_number():
-    """Set the priority to paper number: every marking task gets a priority value of n_papers - paper_number."""
-    largest_paper_number = 0
-    for x in Paper.objects.filter():
-        largest_paper_number = max(largest_paper_number, x.paper_number)
-    print(f"largest paper number: {largest_paper_number}")
-    largest_paper_number = Paper.objects.all().aggregate(Max("paper_number"))[
+    """Set the priority inversely proportional to the paper number."""
+    largest_paper_num = Paper.objects.all().aggregate(Max("paper_number"))[
         "paper_number__max"
     ]
-    print(f"largest paper number: {largest_paper_number}")
     tasks = get_tasks_to_update_priority()
     for task in tasks:
-        task.marking_priority = largest_paper_number - task.paper.paper_number
+        task.marking_priority = largest_paper_num - task.paper.paper_number
     MarkingTask.objects.bulk_update(tasks, ["marking_priority"])
     set_marking_priority_strategy(MarkingTaskPriority.PAPER_NUMBER)
 
