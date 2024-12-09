@@ -175,7 +175,7 @@ class Command(BaseCommand):
             PlomDatabaseCreationError,
             IntegrityError,
         ) as e:
-            raise CommandError(e) from e
+            raise CommandError(f"{e} (perhaps you need to force?)") from e
         self.stdout.write(f"Uploaded qvmap from {f}")
 
     def handle(self, *args, **options):
