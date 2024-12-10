@@ -586,13 +586,29 @@ class MarkingTaskService:
 
     @transaction.atomic
     def remove_tag_from_task_via_pks(self, tag_pk: int, task_pk: int) -> None:
-        """Add existing tag with given pk to the marking task with given pk."""
+        """Remove tag with given pk from the marking task with given pk."""
         try:
             the_task = MarkingTask.objects.select_for_update().get(pk=task_pk)
             the_tag = MarkingTaskTag.objects.get(pk=tag_pk)
         except (MarkingTask.DoesNotExist, MarkingTaskTag.DoesNotExist):
             raise ValueError("Cannot find task or tag with given pk")
         self._remove_tag_from_task(the_tag, the_task)
+
+    @classmethod
+    def _tag_task_pk_for_user(
+        cls, task_pk: int, username: str, calling_user: User, unassign_others: bool
+    ) -> None:
+        """Tag a task for a user, removing other user tags."""
+        task = MarkingTask.objects.get(pk=task_pk)
+        # TODO: maybe these many-to-many things don't need select_for_update
+        # task = MarkingTask.objects.select_for_update().get(pk=task_pk)
+        if unassign_others:
+            for tag in task.markingtasktag_set.all():
+                if tag.text.startswith("@"):
+                    # TODO: colin doesn't understand this notation
+                    tag.task.remove(task)
+        attn_user_tag_text = f"@{username}"
+        cls().create_tag_and_attach_to_task(calling_user, task_pk, attn_user_tag_text)
 
     @transaction.atomic
     def set_paper_marking_task_outdated(
@@ -671,21 +687,14 @@ class MarkingTaskService:
         tag_obj = self.get_or_create_tag(user, tag_text)
         self.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
 
-    @transaction.atomic
     @staticmethod
-    def reassign_task_to_user(task_pk: int, username: str) -> None:
-        """Reassign a task to a different user.
+    def _reassign_task_to_user(task_pk: int, username: str) -> None:
+        """Reassign a task to a different user, low level routine.
 
         If tasks status is "COMPLETE" then the assigned_user will be updated,
         while if it is "OUT" or "TO_DO", then assigned user will be set to None.
         ie - this function assumes that the task will also be tagged with
         an appropriate @username tag (by the caller; we don't do it for you!)
-
-        Note: this looks superficially like :method:`assign_task_to_user` but
-        its used in a different way.  That method is about claiming tasks.
-        This current method is most useful for "unclaiming" tasks, and---with
-        extra tagging effort described above---pushing them toward a different
-        user.
 
         Args:
             task_pk: the primary key of a task.
@@ -727,3 +736,47 @@ class MarkingTaskService:
                 task_obj.save()
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find marking task {task_pk}")
+
+    @classmethod
+    def reassign_task_to_user(
+        cls,
+        task_pk: int,
+        *,
+        new_username: str,
+        calling_user: User,
+        unassign_others: bool = False,
+    ) -> None:
+        """Reassign a task to a different user.
+
+        If tasks status is "COMPLETE" then the assigned_user will be updated.
+        If it is "OUT" or "TO_DO", then assigned user will be set to None
+        and the task will be tagged with an appropriate @username tag.
+
+        Note: this looks superficially like :method:`assign_task_to_user` but
+        its used in a different way.  That method is about claiming tasks.
+        This current method is most useful for "unclaiming" tasks, and pushing
+        them toward a different user.
+
+        Args:
+            task_pk: the primary key of a task.
+
+        Keyword Args:
+            new_username: a string of a username to reassign to.
+            calling_user: the user who is doing the reassigning.
+            unassign_others: untag any other users assigned to this task,
+                defaults to False.
+
+        Returns:
+            None.
+
+        Raises:
+            ValueError: cannot find user, or cannot find marking task.
+            ValidationError: tag name failure, unexpected as we make the tag.
+        """
+        with transaction.atomic():
+            # first reassign the task - this checks if the username
+            # corresponds to an existing marker-user
+            cls._reassign_task_to_user(task_pk, new_username)
+            cls._tag_task_pk_for_user(
+                task_pk, new_username, calling_user, unassign_others
+            )

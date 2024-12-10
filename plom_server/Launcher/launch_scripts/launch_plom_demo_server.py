@@ -378,6 +378,8 @@ def run_demo_preparation_commands(
 
     # TODO = remove this demo-specific command
     run_django_manage_command("plom_create_demo_users")
+    run_django_manage_command("plom_leadmarker_membership --toggle demoMarker1")
+    run_django_manage_command("plom_leadmarker_membership --toggle demoMarker2")
     if stop_after == "users":
         print("Stopping after users created.")
         return False

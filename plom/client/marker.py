@@ -22,7 +22,6 @@ import logging
 from math import ceil
 from pathlib import Path
 import platform
-import random
 import sys
 import tempfile
 from textwrap import shorten
@@ -68,6 +67,7 @@ from plom.plom_exceptions import (
     PlomTaskDeletedError,
     PlomConflict,
     PlomNoPaper,
+    PlomNoPermission,
     PlomNoServerSupportException,
     PlomNoSolutionException,
 )
@@ -343,6 +343,7 @@ class MarkerClient(QWidget):
         self.ui.tableView.claimSignal.connect(self.claim_task)
         self.ui.tableView.deferSignal.connect(self.defer_task)
         self.ui.tableView.reassignSignal.connect(self.reassign_task)
+        self.ui.tableView.reassignToMeSignal.connect(self.reassign_task_to_me)
 
         if Version(__version__).is_devrelease:
             self.ui.technicalButton.setChecked(True)
@@ -374,8 +375,9 @@ class MarkerClient(QWidget):
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         m = QMenu(self)
-        # TODO: once enabled we don't need the explicit QAction
-        # m.addAction("Reassign task to...", self.reassign_task)
+        # TODO: enable in Issue #3717.
+        # m.addAction("Reassign task to me", self.reassign_task_to_me)
+        # m.addAction("Reassign task...", self.reassign_task)
         m.addAction("Claim task for me", self.claim_task)
         self.ui.deferButton.setMenu(m)
         self.ui.deferButton.clicked.connect(self.defer_task)
@@ -1152,10 +1154,12 @@ class MarkerClient(QWidget):
             WarnMsg(self, str(e)).exec()
             return False
         our_username = self.msgr.username
+        task_ids_seen = []
         for t in tasks:
             task_id_str = paper_question_index_to_task_id_str(
                 t["paper_number"], t["question"]
             )
+            task_ids_seen.append(task_id_str)
             username = t.get("username", "")
             integrity = t.get("integrity", "")
             # TODO: maybe task_model can support None for mark too...?
@@ -1220,37 +1224,55 @@ class MarkerClient(QWidget):
                     self.examModel.setAnnotatedFile(task_id_str, "", "")
                     self.examModel.setPaperDirByTask(task_id_str, "")
 
+        # Prune stale tasks that the server no longer lists as ours, carefully keep
+        # any that might not be saved yet (even if not seen in previous loop).
+        for task_id_str in self.examModel.get_all_tasks():
+            local_status = self.examModel.getStatusByTask(task_id_str)
+            if local_status.casefold() in ("uploading...", "failed upload"):
+                continue
+            if task_id_str in task_ids_seen:
+                continue
+            log.info("Removing row %s: server no longer says its ours", task_id_str)
+            self.examModel.remove_task(task_id_str)
+
         self._updateCurrentlySelectedRow()
         return True
 
-    def reassign_task(self):
-        """TODO: just a stub for now, no one is calling this."""
+    def reassign_task_to_me(self) -> None:
+        self.reassign_task(assign_to=self.msgr.username)
+
+    def reassign_task(self, *, assign_to: str | None = None) -> None:
+        """Reassign the currently-selected task to ourselves or another user.
+
+        Keyword Args:
+            assign_to: if present, try to reassign to this user directly.
+                If omitted, we'll ask using a popup dialog.
+        """
         task = self.get_current_task_id_or_none()
         if not task:
             return
-        # TODO: combobox
-        assign_to, ok = QInputDialog.getText(
-            self, "Reassign to", f"Who would you like to reassign {task} to?"
-        )
-        if not ok:
+        if assign_to is None:
+            # TODO: combobox or similar to choose users
+            assign_to, ok = QInputDialog.getText(
+                self,
+                "Reassign to",
+                f"Who would you like to reassign {task} to?",
+                text=self.msgr.username,
+            )
+            if not ok:
+                return
+        try:
+            # TODO: consider augmenting with a reason, e.g., reason="help" kwarg
+            self.msgr.reassign_task(task, assign_to)
+        except (
+            PlomNoServerSupportException,
+            PlomRangeException,
+            PlomNoPermission,
+        ) as e:
+            InfoMsg(self, f"{e}").exec()
             return
-        # try:
-        #     self.msgr.TODO_New_Function(task, self.user, assign_to, reason="help")
-        # except PlomNoServerSupportException as e:
-        #     InfoMsg(self, e).exec()
-        #     return
-        # except PlomNoPermission as e:
-        #     InfoMsg(self, "You don't have permission to reassign that task: {e}").exec()
-        #     return
-        if random.random() < 0.5:
-            WarnMsg(
-                self, f'TODO: faked error reassigning {task} to "{assign_to}"'
-            ).exec()
-            return
-        InfoMsg(self, f'TODO: faked success reassigning {task} to "{assign_to}"').exec()
-        # TODO, now what?
-        # TODO: adding a new possibility here will have some fallout
-        self.examModel.setStatusByTask(task, "reassigned")
+        # The simplest thing is simply to refresh/rebuild the task list
+        self.refresh_server_data()
 
     def claim_task(self) -> None:
         """Try to claim the currently selected task for this user."""

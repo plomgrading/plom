@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * plom-push-to-canvas can handle blank-ID pages more gracefully by warning the user instead of crashing.
 * Fix command-line tools for manipulating staging bundles which were incorrectly complaining about multiple users.
 * Better (but not yet ideal) error handling during scan upload.
+* Reassigning a task to another user removes existing user tags from that task.
 * Misc fixes, cleanups and documentation improvements.
 
 

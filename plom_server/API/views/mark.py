@@ -4,7 +4,6 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
-
 from __future__ import annotations
 
 from rest_framework.views import APIView
@@ -113,6 +112,47 @@ class GetTasks(APIView):
             username=username,
         )
         return Response(data, status=status.HTTP_200_OK)
+
+
+# PATCH: /MK/tasks/{code}/reassign/{new_username}
+class ReassignTask(APIView):
+    """Reassign a task to another user.
+
+    Returns:
+        200: returns json of True.
+        404: task or user not found.
+        406: request not acceptable from calling user, e.g.,
+            not lead marker or manager.
+    """
+
+    def patch(self, request: Request, *, code: str, new_username: str) -> Response:
+        """Reassign a task to another user."""
+        calling_user = request.user
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if not ("lead_marker" in group_list or "manager" in group_list):
+            return _error_response(
+                f"You ({calling_user}) cannot reassign tasks because "
+                "you are not a lead marker or manager",
+                status.HTTP_406_NOT_ACCEPTABLE,
+            )
+
+        try:
+            task = MarkingTaskService().get_task_from_code(code)
+            task_pk = task.pk
+        except (ValueError, RuntimeError) as e:
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
+
+        try:
+            MarkingTaskService.reassign_task_to_user(
+                task_pk,
+                new_username=new_username,
+                calling_user=calling_user,
+                unassign_others=True,
+            )
+        except ValueError as e:
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
+
+        return Response(True, status=status.HTTP_200_OK)
 
 
 # GET: /pagedata/{papernum}

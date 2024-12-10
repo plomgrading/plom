@@ -31,6 +31,7 @@ from .mark import (
     MgetAnnotations,
     MgetAnnotationImage,
     GetTasks,
+    ReassignTask,
     TagsFromCodeView,
     GetAllTags,
     GetSolutionImage,

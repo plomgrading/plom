@@ -340,26 +340,28 @@ class MarkingTaskResetView(LeadMarkerOrManagerView):
 
 
 class MarkingTaskReassignView(LeadMarkerOrManagerView):
-    def post(self, request, task_pk: int):
+    """Operations for reassigning tasks betweeb users."""
+
+    def post(self, request: HttpRequest, *, task_pk: int) -> HttpResponse:
+        """Posting reassigns a task to a possibly different user."""
         if "newUser" not in request.POST:
             return HttpResponseClientRefresh()
         new_username = request.POST.get("newUser")
 
-        # Note a task is reassigned by both tagging it @username,
-        # and also clearing / changing the task.assigned_user field.
-        # accordingly we call two functions.
         try:
-            # first reassign the task - this checks if the username
-            # corresponds to an existing marker-user
-            MarkingTaskService.reassign_task_to_user(task_pk, new_username)
-            # note - the service creates the tag if needed
-            attn_user_tag_text = f"@{new_username}"
-            MarkingTaskService().create_tag_and_attach_to_task(
-                request.user, task_pk, attn_user_tag_text
+            MarkingTaskService.reassign_task_to_user(
+                task_pk,
+                new_username=new_username,
+                calling_user=request.user,
+                unassign_others=True,
             )
-        except ValueError:
-            # TO DO - report the error
-            pass
+        except ValueError as e:
+            # TODO: fix Issue #3718
+            print("TODO: Error happened, not sure how to report it: Issue #3718")
+            print(e)
+            # return HttpResponseClientRedirect("some_error_page.html")
+            # for now. let's just get the yellow-screen-of-death
+            raise
 
         return HttpResponseClientRedirect(
             reverse("progress_marking_task_details", args=[task_pk])
