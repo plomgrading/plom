@@ -51,27 +51,27 @@ imutils==0.5.4
 matplotlib==3.8.4
 model-bakery==1.19.5
 numpy==1.26.4
-opencv-python-headless==4.9.0.80
-packaging==24.1
+opencv-python-headless==4.10.0.84
+packaging==24.2
 pandas==2.1.4
 passlib==1.7.4
 Pillow==10.4.0
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.10
 pydyf==0.9.0  # Issue #3589, hold back
 pymupdf==1.24.10
 PyMySQL==1.1.1
 random-username==1.0.2
 requests==2.32.3
 requests-toolbelt==1.0.0
-scikit-learn==1.5.2
+scikit-learn==1.6.0
 scipy==1.13.1
 seaborn==0.13.2
 segno==1.6.1
 stdiomask==0.0.6
 tabulate==0.9.0
-tomli==2.0.2
+tomli==2.2.1
 tomlkit==0.13.2
-tqdm==4.66.6
+tqdm==4.67.1
 urllib3==2.2.3
 weasyprint==60.2  # Issue #3589, hold back
 whitenoise==6.7.0
