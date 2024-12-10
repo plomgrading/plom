@@ -3,9 +3,9 @@
 # Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 
+from __future__ import annotations
+
 import pathlib
-import platform
-from typing import Any, Optional, Union
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -61,11 +61,11 @@ class ErrorMsg(QMessageBox):
 
     def __init__(
         self,
-        parent: Union[QWidget, None],
+        parent: QWidget | None,
         txt: str,
         *,
-        details: Optional[str] = None,
-        info: Optional[str] = None,
+        details: str | None = None,
+        info: str | None = None,
         info_pre: bool = True,
     ):
         super().__init__(parent)
@@ -116,14 +116,14 @@ class _CustomDetailsDialog(QDialog):
 
     def __init__(
         self,
-        parent: Union[None, QWidget],
+        parent: None | QWidget,
         summary: str,
         *,
-        details: Optional[str] = "",
-        details_html: Optional[str] = "",
-        info: Optional[str] = None,
+        details: str = "",
+        details_html: str = "",
+        info: str | None = None,
         info_pre: bool = True,
-        _extra_big: Optional[bool] = None,
+        _extra_big: bool = False,
     ):
         super().__init__(parent)
 
