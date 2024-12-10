@@ -42,7 +42,7 @@ imutils==0.5.4
 matplotlib==3.8.4
 model-bakery==1.19.5
 numpy==1.26.4
-opencv-python-headless==4.10.0.84
+opencv-python-headless==4.9.0.80  # hold back, type troubles
 packaging==24.2
 pandas==2.1.4
 passlib==1.7.4
