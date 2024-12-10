@@ -22,8 +22,9 @@ from django.db.models import Q
 from django.db import transaction
 from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
-from django_huey import db_task
-from django_huey import get_queue
+from django_huey import db_task, get_queue
+import huey
+import huey.api
 
 from plom.create.mergeAndCodePages import make_PDF
 
@@ -45,7 +46,6 @@ from Preparation.services.preparation_dependency_service import (
 
 
 # The decorated function returns a ``huey.api.Result``
-# ``context=True`` so that the task knows its ID etc.
 @db_task(queue="tasks", context=True)
 def huey_build_single_paper(
     papernum: int,
@@ -55,8 +55,8 @@ def huey_build_single_paper(
     student_info: dict[str, Any] | None = None,
     prename_config: dict[str, Any],
     tracker_pk: int,
-    task=None,
     _debug_be_flaky: bool = False,
+    task: huey.api.Task | None = None,
 ) -> bool:
     """Build a single paper and prename it.
 
@@ -80,14 +80,17 @@ def huey_build_single_paper(
             ``"ycoord"``, used to position the prenaming box if student_info isn't None.
         tracker_pk: a key into the database for anyone interested in
             our progress.
-        task: includes our ID in the Huey process queue.
         _debug_be_flaky: for debugging, all take a while and some
             percentage will fail.
+        task: includes our ID in the Huey process queue.  This kwarg is
+            passed by `context=True` in decorator: callers should not
+            pass this in!
 
     Returns:
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
+    assert task is not None
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
     with TemporaryDirectory() as tempdir:
         save_path = make_PDF(

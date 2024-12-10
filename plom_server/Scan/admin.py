@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.contrib import admin
 
@@ -10,6 +10,7 @@ from .models import (
     StagingBundle,
     StagingImage,
     PagesToImagesHueyTask,
+    ManageParseQR,
     ParseQR,
     KnownStagingImage,
     UnknownStagingImage,
@@ -27,4 +28,5 @@ admin.site.register(ErrorStagingImage)
 admin.site.register(DiscardStagingImage)
 admin.site.register(UnknownStagingImage)
 admin.site.register(PagesToImagesHueyTask)
+admin.site.register(ManageParseQR)
 admin.site.register(ParseQR)

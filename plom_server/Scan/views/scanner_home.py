@@ -214,10 +214,10 @@ class GetBundleView(ScannerRequiredView):
 
 
 class GetStagedBundleFragmentView(ScannerRequiredView):
-    """Return a user-uploaded bundle PDF."""
+    """Various http methods for a staged-but-not-pushed user-uploaded bundle PDF."""
 
     def get(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
-        """Rendered fragment of a staged but not pushed bundle.
+        """Rendered fragment for one row of a staged bundle.
 
         Args:
             request: the request.
@@ -227,7 +227,8 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
                 internally.
 
         Returns:
-            A rendered HTML page.
+            A rendered HTML fragment to be inserted into a complete
+            page using htmx.
         """
         scanner = ScanService()
 
@@ -245,15 +246,42 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         else:
             cover_img_rotation = 0
 
+        from ..models import (
+            PagesToImagesHueyTask,
+            ManageParseQR,
+        )
+
+        try:
+            _proc = PagesToImagesHueyTask.objects.get(
+                bundle=bundle
+            ).get_status_display()
+        except PagesToImagesHueyTask.DoesNotExist:
+            _proc = None
+        try:
+            _read = ManageParseQR.objects.get(bundle=bundle).get_status_display()
+        except ManageParseQR.DoesNotExist:
+            _read = None
+
+        is_waiting_or_processing = False
+        if _proc in ("Queued", "Starting", "Running"):
+            is_waiting_or_processing = True
+        if _read in ("Queued", "Starting", "Running"):
+            is_waiting_or_processing = True
+        is_error = _proc == "Error" or _read == "Error"
+
         context = {
             "bundle_id": bundle.pk,
             "timestamp": bundle.timestamp,
             "slug": bundle.slug,
             "when": arrow.get(bundle.timestamp).humanize(),
             "username": bundle.user.username,
+            "proc_chore_status": _proc,
+            "readQR_chore_status": _read,
             "number_of_pages": bundle.number_of_pages,
             "has_been_processed": bundle.has_page_images,
             "has_qr_codes": bundle.has_qr_codes,
+            "is_waiting_or_processing": is_waiting_or_processing,
+            "is_error": is_error,
             "is_mid_qr_read": scanner.is_bundle_mid_qr_read(bundle.pk),
             "is_push_locked": bundle.is_push_locked,
             "is_perfect": scanner.is_bundle_perfect(bundle.pk),
@@ -298,8 +326,9 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         """Triggers deletion of the bundle."""
         scanner = ScanService()
         try:
-            scanner._remove_bundle_by_pk(bundle_id)
-        except PlomBundleLockedException:
+            scanner.remove_bundle_by_pk(bundle_id)
+        except PlomBundleLockedException as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )

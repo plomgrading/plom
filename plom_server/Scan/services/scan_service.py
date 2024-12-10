@@ -8,9 +8,12 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 from math import ceil
 import pathlib
+import random
 import tempfile
+import time
 from typing import Any
 
 from django.conf import settings
@@ -20,6 +23,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q  # for queries involving "or", "and"
 from django_huey import db_task
+import huey
+import huey.api
+import huey.exceptions
 
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap, try_to_extract_image
@@ -54,6 +60,9 @@ from ..services.util import (
     check_bundle_object_is_neither_locked_nor_pushed,
 )
 from plom.plom_exceptions import PlomBundleLockedException, PlomPushCollisionException
+
+
+log = logging.getLogger(__name__)
 
 
 class ScanService:
@@ -187,14 +196,15 @@ class ScanService:
         with transaction.atomic(durable=True):
             x = PagesToImagesHueyTask.objects.create(
                 bundle=bundle_obj,
-                status=PagesToImagesHueyTask.STARTING,
+                status=HueyTaskTracker.STARTING,
             )
             tracker_pk = x.pk
-        res = huey_parent_split_bundle_task(
+        res = huey_parent_split_bundle_chore(
             bundle_pk,
             number_of_chunks,
             tracker_pk=tracker_pk,
             read_after=read_after,
+            _debug_be_flaky=False,
         )
         # print(f"Just enqueued Huey parent_split_and_save task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
@@ -204,22 +214,24 @@ class ScanService:
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         return PagesToImagesHueyTask.objects.get(bundle=bundle_obj).completed_pages
 
-    @transaction.atomic
     def is_bundle_mid_splitting(self, bundle_pk: int) -> bool:
+        """Check if the bundle with this id is currently in the midst of splitting its pages."""
+        # TODO: use a prefetch to avoid two DB calls in this function
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         if bundle_obj.has_page_images:
             return False
-
-        query = PagesToImagesHueyTask.objects.filter(bundle=bundle_obj)
-        if query.exists():  # have run a bundle-split task previously
-            if query.exclude(
-                status=PagesToImagesHueyTask.COMPLETE
-            ).exists():  # one of these is not completed, so must be mid-run
-                return True
-            else:  # all have finished previously
-                return False
-        else:  # no such qr-reading tasks have been done
-            return False
+        # If there are only Error/Complete chores then we are not splitting
+        if PagesToImagesHueyTask.objects.filter(
+            bundle=bundle_obj,
+            status__in=(
+                HueyTaskTracker.TO_DO,
+                HueyTaskTracker.STARTING,
+                HueyTaskTracker.QUEUED,
+                HueyTaskTracker.RUNNING,
+            ),
+        ).exists():
+            return True
+        return False
 
     def are_bundles_mid_splitting(self) -> dict[str, bool]:
         """Returns a dict of each staging bundle (slug) and whether it is still mid-split."""
@@ -228,35 +240,15 @@ class ScanService:
             for bundle_obj in StagingBundle.objects.all()
         }
 
-    @transaction.atomic
-    def remove_bundle(self, bundle_name: str, *, user: str | None = None) -> None:
-        """Remove a bundle PDF from the filesystem and database.
-
-        Args:
-            bundle_name (str): which bundle.
-
-        Keyword Args:
-            user (None/str): also filter by user. TODO: user is *not* for
-                permissions: looks like just a way to identify a bundle.
-
-        Returns:
-            None
-        """
-        # TODO - deprecate this function in place of the one that uses PK instead of name
-        if user:
-            bundle = StagingBundle.objects.get(
-                user=user,
-                slug=bundle_name,
-            )
-        else:
-            bundle = StagingBundle.objects.get(slug=bundle_name)
-        self._remove_bundle_by_pk(bundle.pk)
-
-    def _remove_bundle_by_pk(self, bundle_pk: int) -> None:
+    def remove_bundle_by_pk(self, bundle_pk: int) -> None:
         """Remove a bundle PDF from the filesystem + database.
 
         Args:
             bundle_pk: the primary key for a particular bundle.
+
+        Exceptions:
+            PlomBundleLockedException: bundle was splitting or reading QR
+                codes, or "push-locked", or already pushed.
         """
         with transaction.atomic():
             _bundle_obj = (
@@ -521,6 +513,7 @@ class ScanService:
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         # check that the qr-codes have not been read already, or that a task has not been set
 
+        # Currently, even a status Error chore would prevent it from being rerun
         if ManageParseQR.objects.filter(bundle=bundle_obj).exists():
             return
 
@@ -531,7 +524,10 @@ class ScanService:
             )
             tracker_pk = x.pk
 
-        res = huey_parent_read_qr_codes_task(bundle_pk, tracker_pk=tracker_pk)
+        log.info("starting the read_qr_codes_chore...")
+        res = huey_parent_read_qr_codes_chore(
+            bundle_pk, tracker_pk=tracker_pk, _debug_be_flaky=False
+        )
         # print(f"Just enqueued Huey parent_read_qr_codes task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
@@ -598,22 +594,25 @@ class ScanService:
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         return ManageParseQR.objects.get(bundle=bundle_obj).completed_pages
 
-    @transaction.atomic
-    def is_bundle_mid_qr_read(self, bundle_pk: int) -> int:
+    def is_bundle_mid_qr_read(self, bundle_pk: int) -> bool:
+        """Check if the bundle with this id is currently in the midst of reading QR codes."""
+        # TODO: use a prefetch to avoid two DB calls in this function
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         if bundle_obj.has_qr_codes:
             return False
 
-        query = ManageParseQR.objects.filter(bundle=bundle_obj)
-        if query.exists():  # have run a qr-read task previously
-            if query.exclude(
-                status=ManageParseQR.COMPLETE
-            ).exists():  # one of these is not completed, so must be mid-run
-                return True
-            else:  # all have finished previously
-                return False
-        else:  # no such qr-reading tasks have been done
-            return False
+        # If there are only Error/Complete chores then we are not reading
+        if ManageParseQR.objects.filter(
+            bundle=bundle_obj,
+            status__in=(
+                HueyTaskTracker.TO_DO,
+                HueyTaskTracker.STARTING,
+                HueyTaskTracker.QUEUED,
+                HueyTaskTracker.RUNNING,
+            ),
+        ).exists():
+            return True
+        return False
 
     def are_bundles_mid_qr_read(self) -> dict[str, bool]:
         """Returns a dict of each staging bundle (slug) and whether it is still mid-qr-read."""
@@ -1446,14 +1445,14 @@ class ScanService:
 
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="parentchores", context=True)
-def huey_parent_split_bundle_task(
+def huey_parent_split_bundle_chore(
     bundle_pk: int,
     number_of_chunks: int,
     *,
     tracker_pk: int,
     read_after: bool = False,
-    # TODO - CBM - what type should task have?
-    task=None,
+    _debug_be_flaky: bool = False,
+    task: huey.api.Task | None = None,
 ) -> bool:
     """Split a PDF document into individual page images.
 
@@ -1470,15 +1469,17 @@ def huey_parent_split_bundle_task(
         tracker_pk: a key into the database for anyone interested in
             our progress.
         read_after: automatically trigger a qr-code read after splitting finished.
-        task: includes our ID in the Huey process queue.
+        task: includes our ID in the Huey process queue.  This kwarg is
+            passed by `context=True` in decorator: callers should not
+            pass this in!
 
     Returns:
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
-    from time import sleep, time
+    assert task is not None
 
-    start_time = time()
+    start_time = time.time()
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
@@ -1505,6 +1506,7 @@ def huey_parent_split_bundle_task(
                 bundle_pk,
                 ord_chnk,  # note pg is 1-indexed
                 pathlib.Path(tmpdir),
+                _debug_be_flaky=_debug_be_flaky,
             )
             for ord_chnk in order_chunks
         ]
@@ -1513,7 +1515,18 @@ def huey_parent_split_bundle_task(
         n_tasks = len(task_list)
         while True:
             # list items are None (if not completed) or list [dict of page info]
-            result_chunks = [X.get() for X in task_list]
+            try:
+                result_chunks = [X.get() for X in task_list]
+            except huey.exceptions.TaskException as e:
+                print(f"Parent: child image split chore failed with {e}")
+                log.error("Parent: child image split chore failed with %s", str(e))
+                # make an attempt to stop any remaining unqueued child tasks.
+                # note those already started probably will not stop.
+                for chore in task_list:
+                    log.info("Parent: trying to revoke child chore %s", chore)
+                    chore.revoke()
+                raise RuntimeError(f"child task failed QR read: {e}") from e
+
             # remove all the nones to get list of completed tasks
             not_none_result_chunks = [
                 chunk for chunk in result_chunks if chunk is not None
@@ -1522,8 +1535,6 @@ def huey_parent_split_bundle_task(
             # flatten that list of lists to get a list of rendered pages
             results = [X for chunk in not_none_result_chunks for X in chunk]
             rendered_page_count = len(results)
-
-            # TODO - check for error status here.
 
             with transaction.atomic():
                 _task = PagesToImagesHueyTask.objects.select_for_update().get(
@@ -1535,7 +1546,7 @@ def huey_parent_split_bundle_task(
             if completed_tasks == n_tasks:
                 break
             else:
-                sleep(1)
+                time.sleep(1)
 
         with transaction.atomic():
             for X in results:
@@ -1554,7 +1565,7 @@ def huey_parent_split_bundle_task(
             # get a new reference for updating the bundle itself
             _write_bundle = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
             _write_bundle.has_page_images = True
-            _write_bundle.time_to_make_page_images = time() - start_time
+            _write_bundle.time_to_make_page_images = time.time() - start_time
             _write_bundle.save()
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
@@ -1566,12 +1577,12 @@ def huey_parent_split_bundle_task(
 
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="parentchores", context=True)
-def huey_parent_read_qr_codes_task(
+def huey_parent_read_qr_codes_chore(
     bundle_pk: int,
     *,
     tracker_pk: int,
-    # TODO - CBM - what type should task have?
-    task=None,
+    _debug_be_flaky: bool = False,
+    task: huey.api.Task | None = None,
 ) -> bool:
     """Read the QR codes of a bunch of pages.
 
@@ -1584,29 +1595,39 @@ def huey_parent_read_qr_codes_task(
     Keyword Args:
         tracker_pk: a key into the database for anyone interested in
             our progress.
-        task: includes our ID in the Huey process queue.
+        task: includes our ID in the Huey process queue.  This kwarg is
+            passed by `context=True` in decorator: callers should not
+            pass this in!
 
     Returns:
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
-    from time import sleep, time
+    assert task is not None
 
-    start_time = time()
+    start_time = time.time()
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     task_list = [
-        huey_child_parse_qr_code(page.pk) for page in bundle_obj.stagingimage_set.all()
+        huey_child_parse_qr_code(page.pk, _debug_be_flaky=_debug_be_flaky)
+        for page in bundle_obj.stagingimage_set.all()
     ]
 
     # results = [X.get(blocking=True) for X in task_list]
 
     n_tasks = len(task_list)
     while True:
-        results = [X.get() for X in task_list]
+        try:
+            results = [X.get() for X in task_list]
+        except huey.exceptions.TaskException as e:
+            print(f"Parent: child QR read chore failed with {e}")
+            log.error("Parent: child QR read chore failed with %s", str(e))
+            # TODO: what about the child tasks still running?
+            raise RuntimeError(f"child task failed QR read: {e}") from e
+
         count = sum(1 for X in results if X is not None)
 
         with transaction.atomic():
@@ -1617,7 +1638,7 @@ def huey_parent_read_qr_codes_task(
         if count == n_tasks:
             break
         else:
-            sleep(1)
+            time.sleep(1)
 
     with transaction.atomic():
         for X in results:
@@ -1633,7 +1654,7 @@ def huey_parent_read_qr_codes_task(
         # get a new reference for updating the bundle itself
         _write_bundle = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
         _write_bundle.has_qr_codes = True
-        _write_bundle.time_to_read_qr = time() - start_time
+        _write_bundle.time_to_read_qr = time.time() - start_time
         _write_bundle.save()
 
     bundle_obj.refresh_from_db()
@@ -1644,11 +1665,14 @@ def huey_parent_read_qr_codes_task(
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks")
+@db_task(queue="tasks", context=True)
 def huey_child_get_page_images(
     bundle_pk: int,
     order_list: list[int],
     basedir: pathlib.Path,
+    *,
+    _debug_be_flaky: bool = False,
+    task: huey.api.Task | None = None,
 ) -> list[dict[str, Any]]:
     """Render page images and save to disk in the background.
 
@@ -1659,6 +1683,11 @@ def huey_child_get_page_images(
         bundle_pk: bundle DB object's primary key
         order_list: a list of bundle orders of pages to extract - 1-indexed
         basedir (pathlib.Path): were to put the image
+        _debug_be_flaky: for debugging, all take a while and some
+            percentage will fail.
+        task: includes our ID in the Huey process queue.  This is added
+            by the `context=True` in decorator: callers in our code should
+            not pass this in!
 
     Returns:
         Information about the page image, including its file name,
@@ -1668,12 +1697,22 @@ def huey_child_get_page_images(
     from plom.scan import rotate
     from PIL import Image
 
+    assert task is not None
+    log.debug("Huey debug, we are task %s with id %s", task, task.id)
+    # HueyTaskTracker.transition_to_running(tracker_pk, task.id)
+
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     rendered_page_info = []
 
     with fitz.open(bundle_obj.pdf_file.path) as pdf_doc:
         for order in order_list:
+            if _debug_be_flaky:
+                print(f"Huey debug, random sleep in task {task.id}")
+                log.debug("Huey debug, random sleep in task %d", task.id)
+                time.sleep(random.random() * 4)
+                if random.random() < 0.04:
+                    raise RuntimeError("Flaky simulated image split failure")
             basename = f"page{order:05}"
             if bundle_obj.force_page_render:
                 save_path = None
@@ -1730,8 +1769,13 @@ def huey_child_get_page_images(
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks")
-def huey_child_parse_qr_code(image_pk: int) -> dict[str, Any]:
+@db_task(queue="tasks", context=True)
+def huey_child_parse_qr_code(
+    image_pk: int,
+    *,
+    _debug_be_flaky: bool = False,
+    task: huey.api.Task | None = None,
+) -> dict[str, Any]:
     """Huey task to parse QR codes, check QR errors, and save to database in the background.
 
     It is important to understand that running this function starts an
@@ -1740,18 +1784,36 @@ def huey_child_parse_qr_code(image_pk: int) -> dict[str, Any]:
     Args:
         image_pk: primary key of the image
 
+    Keyword Args:
+        _debug_be_flaky: for debugging, all take a while and some
+            percentage will fail.
+        task: includes our ID in the Huey process queue.  This is added
+            by the `context=True` in decorator: callers in our code should
+            not pass this in!
+
     Returns:
         Information about the QR codes.
     """
+    assert task is not None
+    log.debug("Huey debug, we are task %s with id %s", task, task.id)
+
     img = StagingImage.objects.get(pk=image_pk)
     image_path = img.image_file.path
 
     scanner = ScanService()
 
     code_dict = QRextract(image_path)
+
     page_data = scanner.parse_qr_code([code_dict])
 
     pipr = PageImageProcessor()
+
+    if _debug_be_flaky:
+        print(f"Huey debug, random sleep in task {task.id}")
+        log.debug("Huey debug, random sleep in task %d", task.id)
+        time.sleep(random.random() * 4)
+        if random.random() < 0.04:
+            raise RuntimeError("Flaky simulated QR read failure")
 
     rotation = pipr.get_rotation_angle_or_None_from_QRs(page_data)
 

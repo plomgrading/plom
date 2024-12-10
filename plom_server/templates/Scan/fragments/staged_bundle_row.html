@@ -6,12 +6,18 @@
 {% load static %}
 <td>
     <div class="bundle-thumb">
-        {% if not has_been_processed or is_mid_qr_read %}
+        {% if is_waiting_or_processing %}
             <img src="{% static 'ball_triangle.svg' %}"
                  hx-get="{% url 'scan_get_staged_bundle_fragment' bundle_id %}"
                  hw-swap="innerHTML"
                  hx-trigger="load delay:2s"
                  hx-target="#bundle{{ slug }}" />
+        {% elif is_error %}
+            <p class="alert alert-danger p-1 mb-0">
+                Error <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                <br />
+                <small>(you could try removing and then re-uploading)</small>
+            </p>
         {% else %}
             <img src="{% url 'scan_get_thumbnail' bundle_id 1 %}" />
         {% endif %}
@@ -95,6 +101,10 @@
             {% endif %}
         {% endif %}
     </ul>
+    <p class="fw-light small lh-1 mt-0">
+        Debug: image extract chore: {{ proc_chore_status }};
+        read QR chore: {{ readQR_chore_status }}
+    </p>
 </td>
 <td>
     <div class="d-flex justify-content-evenly my-2">
