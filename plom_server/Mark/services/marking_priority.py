@@ -65,7 +65,9 @@ def set_marking_piority_shuffle():
 @transaction.atomic
 def set_marking_priority_paper_number():
     """Set the priority inversely proportional to the paper number."""
-    largest_paper_num = Paper.objects.all().aggregate(x=Max("paper_number"))["x"]
+    largest_paper_num = (
+        Paper.objects.all().order_by("-paper_number").first().paper_number
+    )
     tasks = get_tasks_to_update_priority()
     for task in tasks:
         task.marking_priority = largest_paper_num - task.paper.paper_number
