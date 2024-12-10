@@ -11,14 +11,7 @@ import os
 from pathlib import Path
 from shlex import split
 import subprocess
-import sys
 import time
-
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
-
 
 # we specify this directory relative to the plom_server
 # root directory, rather than getting Django things up and
@@ -420,23 +413,6 @@ def run_demo_preparation_commands(
     run_django_manage_command("plom_preparation_status --set finished")
 
     return True
-
-
-def _read_bundle_config(length):
-    # read the config toml file
-    if length == "quick":
-        fname = "bundle_for_quick_demo.toml"
-    elif length == "long":
-        fname = "bundle_for_long_demo.toml"
-    elif length == "plaid":
-        fname = "bundle_for_plaid_demo.toml"
-    else:
-        fname = "bundle_for_demo.toml"
-    with open(demo_file_directory / fname, "rb") as fh:
-        try:
-            return tomllib.load(fh)
-        except tomllib.TOMLDecodeError as e:
-            raise RuntimeError(e)
 
 
 def build_the_bundles(length="normal"):
