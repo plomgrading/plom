@@ -470,8 +470,7 @@ class Messenger(BaseMessenger):
             PlomAuthenticationException: no logged in.
             PlomSeriousException: generic unexpected error.
         """
-        # TODO: in future, gate this on 113: Issue #3717
-        if self.is_server_api_less_than(112):
+        if self.is_server_api_less_than(113):
             raise PlomNoServerSupportException(
                 "Server too old: does not support reassign"
             )
