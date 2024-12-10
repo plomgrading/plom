@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [0.16.11] - [2024-12-10
 
 ### Added
 * Server accepts upload of userlist in csv format.
@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Misc fixes, cleanups and documentation improvements.
 
 
-## [2024-11-06]
+## [0.16.10] - 2024-11-06
 
 ### Added
 * Bundle upload displays a progress bar.
@@ -1361,7 +1361,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.16.10...main
+[0.16.11]: https://gitlab.com/plom/plom/-/compare/v0.16.10...v0.16.11
 [0.16.10]: https://gitlab.com/plom/plom/-/compare/v0.16.9...v0.16.10
 [0.16.9]: https://gitlab.com/plom/plom/-/compare/v0.16.8...v0.16.9
 [0.16.8]: https://gitlab.com/plom/plom/-/compare/v0.16.7...v0.16.8
