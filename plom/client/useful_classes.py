@@ -36,7 +36,7 @@ def _json_path_to_str(x) -> str:
     raise TypeError
 
 
-class _ErrorMsg(QMessageBox):
+class ErrorMsg(QMessageBox):
     """A simple error message pop-up.
 
     See also subclasses ``WarnMsg`` and ``InfoMsg``, in order of
@@ -94,7 +94,7 @@ class BigTextEdit(QTextEdit):
         return sz
 
 
-class CustomDetailsDialog(QDialog):
+class _CustomDetailsDialog(QDialog):
     """A dialog with an expanding details field, instead of the Qt builtin options.
 
     Args:
@@ -198,15 +198,6 @@ class CustomDetailsDialog(QDialog):
         self.adjustSize()
 
 
-# TODO: Temporary workaround on macOS: after 6.5.4 or 6.6.1/6.6.2 we should
-# drop this and let QMessageBox do its job.  Issue #3217.
-if platform.system() == "Darwin":
-    # on macOS, detailedText of QMessageBox does not scroll (Issue #3217)
-    ErrorMsg: Any = CustomDetailsDialog  # type: ignore
-else:
-    ErrorMsg: Any = _ErrorMsg  # type: ignore
-
-
 class WarnMsg(ErrorMsg):
     """A simple warning message pop-up."""
 
@@ -223,7 +214,7 @@ class InfoMsg(ErrorMsg):
         self.setIcon(QMessageBox.Icon.Information)
 
 
-class BigMessageDialog(CustomDetailsDialog):
+class BigMessageDialog(_CustomDetailsDialog):
     """A dialog for showing lots of stuff, might need scrollbars.
 
     Args:
