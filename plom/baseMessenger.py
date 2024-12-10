@@ -209,11 +209,24 @@ class BaseMessenger:
         return self.whoami()
 
     def is_legacy_server(self) -> bool | None:
+        """Check if the server is the older legacy server.
+
+        Returns:
+            True/False, or None if we're not connected.
+        """
         if self.get_server_API_version() is None:
             return None
         return self.get_server_API_version() == int(Plom_Legacy_Server_API_Version)
 
     def is_server_api_less_than(self, api_number: int) -> bool | None:
+        """Check if the server API is strictly less than a value.
+
+        Args:
+            api_number: what value to compare to.
+
+        Returns:
+            True/False, or None if we're not connected.
+        """
         ver = self.get_server_API_version()
         if ver is None:
             return None

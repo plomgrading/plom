@@ -340,7 +340,10 @@ class MarkingTaskResetView(LeadMarkerOrManagerView):
 
 
 class MarkingTaskReassignView(LeadMarkerOrManagerView):
+    """Operations for reassigning tasks betweeb users."""
+
     def post(self, request: HttpRequest, *, task_pk: int) -> HttpResponse:
+        """Posting reassigns a task to a possibly different user."""
         if "newUser" not in request.POST:
             return HttpResponseClientRefresh()
         new_username = request.POST.get("newUser")
