@@ -28,10 +28,10 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:27.3.1
+image: docker:27.4.0
 
 services:
-  - docker:27.3.1-dind
+  - docker:27.4.0-dind
 
 # $CI_REGISTRY_IMAGE is:
 # registry.gitlab.com/plom/plom
@@ -145,7 +145,7 @@ djlint:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.35.3
+    - pip install djlint~=1.36.3
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --profile django
 
@@ -154,7 +154,7 @@ djlint-check:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.35.3
+    - pip install djlint~=1.36.3
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --check
 
@@ -341,7 +341,7 @@ coverage:
   needs: ["container-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.6.4
+    - pip install pytest pytest-cov coverage[toml]~=7.6.9
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -373,8 +373,8 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
-    - python3 -m pip install astroid~=3.3.5  # codespell:ignore astroid
-    - python3 -m pip install pylint~=3.3.1
+    - python3 -m pip install astroid~=3.3.6  # codespell:ignore astroid
+    - python3 -m pip install pylint~=3.3.2
   script:
     - pylint plom
     - pylint plom_server
@@ -406,7 +406,7 @@ pyright:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - python3 -m pip install pyright~=1.1.387
+    - python3 -m pip install pyright~=1.1.390
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -430,7 +430,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.7.1
+    - python3 -m pip install ruff~=0.8.2
   script:
     - ruff check .
     # ruff format .
@@ -441,7 +441,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.7.1
+    - python3 -m pip install ruff~=0.8.2
   script:
     # run once just for log out but don't fail
     - EXCEPTIONS="D101,D102,D103,D104,D106"
@@ -451,7 +451,7 @@ count-no-docstring:
     - ruff check --select $EXCEPTIONS --statistics --exit-zero
     - echo "Total $HOWMANY things without docstrings, please don't increase it"
     # Dear hackers: please try to decrease this number
-    - bash -c "[[ $HOWMANY -le 1518 ]]"
+    - bash -c "[[ $HOWMANY -le 1515 ]]"
   allow_failure: true
 
 
@@ -476,7 +476,7 @@ webplom_test:
   image: $IM
   script:
     - export PYTHONPATH=$PWD
-    - python3 -m pip install coverage~=7.6.4
+    - python3 -m pip install coverage~=7.6.9
     - pushd plom_server
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py makemigrations
