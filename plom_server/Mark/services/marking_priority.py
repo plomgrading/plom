@@ -7,11 +7,12 @@
 
 """Functions for setting and modifying priority for marking tasks."""
 
+from __future__ import annotations
+
 import random
-from typing import Dict, Tuple
 
 from django.db import transaction
-from django.db.models import Max, QuerySet
+from django.db.models import QuerySet
 
 from Papers.models import Paper
 from ..models import MarkingTask, MarkingTaskPriority
@@ -76,7 +77,7 @@ def set_marking_priority_paper_number():
 
 
 @transaction.atomic
-def set_marking_priority_custom(custom_order: Dict[Tuple[int, int], int]):
+def set_marking_priority_custom(custom_order: dict[tuple[int, int], int]):
     """Set the priority to a custom ordering.
 
     Args:
