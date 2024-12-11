@@ -375,9 +375,8 @@ class MarkerClient(QWidget):
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         m = QMenu(self)
-        # TODO: enable in Issue #3717.
-        # m.addAction("Reassign task to me", self.reassign_task_to_me)
-        # m.addAction("Reassign task...", self.reassign_task)
+        m.addAction("Reassign task to me", self.reassign_task_to_me)
+        m.addAction("Reassign task...", self.reassign_task)
         m.addAction("Claim task for me", self.claim_task)
         self.ui.deferButton.setMenu(m)
         self.ui.deferButton.clicked.connect(self.defer_task)
