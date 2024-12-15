@@ -108,8 +108,10 @@ class RubricItemForm(forms.ModelForm):
         initial=Rubric.RubricKind.ABSOLUTE,
         widget=forms.Select(attrs={"onchange": "updateKind()"}),
     )
-    out_of = forms.IntegerField(required=False, 
-                                widget=forms.NumberInput(attrs={"onchange": "updateValueConstraints()"}))
+    out_of = forms.IntegerField(
+        required=False,
+        widget=forms.NumberInput(attrs={"onchange": "updateValueConstraints()"}),
+    )
     versions = forms.MultipleChoiceField(required=False)
 
     class Meta:
@@ -146,11 +148,3 @@ class RubricItemForm(forms.ModelForm):
 
         for field in self.fields:
             self.fields[field].widget.attrs["class"] = "form-control"
-    
-    def clean(self):
-        cleaned_data = super().clean()
-        value = cleaned_data.get("value")
-        out_of = cleaned_data.get("out_of")
-
-        if out_of is not None and value is not None and value > out_of:
-            self.add_error("value", "Mark value must be smaller or equal to out of.")
