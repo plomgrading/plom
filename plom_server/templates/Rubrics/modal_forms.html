@@ -13,34 +13,63 @@
         updateKind();
     }
 
-    function updateQuestion() {
+    function getMaximumMarks() {
         var question_dict = JSON.parse('{{ question_max_marks_dict|escapejs }}');
         var question_idx = document.getElementById("id_question").value;
-        var out_of = question_dict[question_idx];
+        return question_dict[question_idx];
+    }
+
+    function updateQuestion() {
+        var out_of = getMaximumMarks();
         document.getElementById("id_out_of").value = out_of;
-        updateConstraints(out_of);
+        updateKindConstraints(out_of);
     }
 
     function updateKind() {
+        var out_of = getMaximumMarks();
         var kind = document.getElementById("id_kind").value;
         if (kind === "absolute") {
             document.getElementById("id_out_of_label").innerHTML = "out of";
         } else {
             document.getElementById("id_out_of_label").innerHTML = "Max:";
         }
-        updateConstraints(document.getElementById("id_out_of").value);
+        updateKindConstraints(out_of);
     }
 
-    function updateConstraints(out_of) {
+    function updateKindConstraints(out_of) {
         var kind = document.getElementById("id_kind").value;
+        var valueField = document.getElementById("id_value");
+        var outOfField = document.getElementById("id_out_of");
         if (kind === "absolute") {
-            document.getElementById("id_value").min = 0;
-            document.getElementById("id_value").max = out_of;
+            valueField.readOnly = false;
+            valueField.min = 0;
+            valueField.max = out_of;
+
+            outOfField.readOnly = false;
+            outOfField.min = 0;
+            outOfField.max = out_of;
         } else if (kind === "relative") {
-            document.getElementById("id_value").min = -1 * out_of;
-            document.getElementById("id_value").max = out_of;
+            valueField.readOnly = false;
+            valueField.min = -1 * out_of;
+            valueField.max = out_of;
+
+            outOfField.value = out_of;
+            outOfField.readOnly = true;
         } else {
-            document.getElementById("id_value").value = 0;
+            outOfField.value = out_of;
+            outOfField.readOnly = true;
+
+            valueField.value = 0;
+            valueField.readOnly = true;
+        }
+    }
+
+    function updateValueConstraints() {
+        var valueField = document.getElementById("id_value");
+        var out_of = document.getElementById("id_out_of").value;
+        valueField.max = out_of;
+        if (valueField.value > out_of) {
+            valueField.value = out_of;
         }
     }
 </script>
