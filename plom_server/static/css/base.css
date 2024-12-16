@@ -13,6 +13,7 @@
  * and commented carefully why they are here.
  */
 
+/* prevents flicker during page load of some pages using Alpine */
 [x-cloak] { display: none !important; }
 
 div.is_pdf_thumbnail {
@@ -24,12 +25,18 @@ div.is_pdf_thumbnail:hover {
     opacity: 0.5;
 }
 
+/* Customization of the left-hand/popup menu bar */
 /* TODO: remove? */
 .nav-link {
     color: black;
 }
+
 .nav-link:hover {
     text-decoration: underline;
+}
+
+.is_sidebar_link {
+    text-align: center;
 }
 
 p.is_test_spec_nav_text {
@@ -37,11 +44,12 @@ p.is_test_spec_nav_text {
     margin-right: 20px;
 }
 
-
+/* TODO: remove? */
 a.btn.btn-primary.btn-lg {
     color: black;
 }
 
+/* TODO: remove? */
 .btn-primary:focus {
     box-shadow: 0 0 0 .2rem #282828 !important;
 }
@@ -50,11 +58,7 @@ a.btn.btn-primary.btn-lg {
     box-shadow: 0 0 0 .2rem #AD9CFF !important;
 }
 
-.is_sidebar_link {
-    text-align: center;
-}
-
-
+/* TODO: document what this is for */
 .offcanvas-backdrop {
     width: 100%;
     height: 100%;
