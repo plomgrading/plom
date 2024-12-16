@@ -155,68 +155,50 @@ Ok, how do I setup SSL certificates?
 `LetsEncrypt <https://letsencrypt.org>`_ is probably a good place to start.
 
 
-How can I clone a legacy server?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. _clone_server:
 
-For example, how can I make another copy of a running legacy server?  One way
-is to copy the filesystem of the running server, then modify
-``serverDetails.toml`` to change the port.
-Its also possible to make a new server from scratch that accepts scans
-intended for the old server.  This is discussed next.
+How can I clone a server so that it accepts scans intended for another server?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-
-How do I change the public code and/or private seed of my server?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-This can be done provided you have not yet made PDF files (whose
-QR-codes would contain that public Code).
-
-On the new Django-based server, login as any Admin user, then go to ``/admin``.
-This gives your direct access to most of the raw database tables.
-Find the Specification and change the ``publicCode`` and/or ``privateSeed``.
-
-One should be very carefully doing this sort of thing: the
-``publicCode`` exists to make it difficult to accidentally upload the
-papers to the wrong server.  This question shows you how to defeat
-that mechanism.
-
-
-How do I reset my legacy server to the pre-scanned state?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-You need two things: the ``question_version_map.csv`` file which you
-can get with the command line tools: ``plom-create get-ver-map``.
-This is important because Plom needs to know which versions to expect
-for which question.  You can upload this to your new server using
-``plom-create make-db --from-file old_qvmap.csv``.
-
-You will also need the ``verifiedSpec.toml`` which is harder to get:
-it can be extracted from the file system of your old server by copying
-``specAndDatabase/verifiedSpec.toml``.
-
-There are two fields in ``verifiedSpec.toml`` that are probably not
-in your original spec file::
-
-    privateSeed = "0052084227513987"
-    publicCode = "302386"
-
-Calling ``plom-create uploadspec verifiedSpec.toml`` to push this spec
-into the new server will (currently) populate those fields as-is,
-thus ensuring the server will be able to read in physical papers
-printed from the original server.  In future, this might require
-more effort such as passing a ``--force``.
-
-If you do not have access to the file system of your old server, it
-should be possible to extract the ``publicCode`` from the QR codes of
-the printed pages.  See the source code ``plom/tpv_utils.py`` for
-hints on how to do this.  The ``privateSeed`` should not be necessary
-for this procedure.
+You need two things from the existing server: the server specification `.toml` file
+and (if multi-versioned) the question-version map `.csv`.
+Double-check that the `.toml` file contains the ``publicCode``,
+something like: ``publicCode = "12345"``.
 
 .. caution::
     One should be very carefully doing this sort of thing: the
-    ``publicCode`` exists to make it difficult to accidentally upload the
+    ``publicCode`` exists to make it difficult to accidentally upload
     papers to the wrong server.  This question shows you how to defeat
     that mechanism.
+
+Use the saved `.toml` to provision the new server.
+If the original server was a multi-versioned assessment, you will need
+to provision the version map using the saved version map `.csv`.
+
+Continue provisioning the server, creating the database etc.  No need
+to physically print the papers (as they should be identical!)  You
+should then be able to upload your scans (produced on the original
+server) to this new server.
+
+.. note::
+    If you do not have access to your old server, you can carefully
+    manually reconstruct the specification.
+    You can extract the ``publicCode`` from the QR codes of the
+    printed pages (e.g., using a QR app on your phone).
+    See the source code ``plom/tpv_utils.py`` for hints on
+    interpreting the results.
+    If the server was multi-versioned, you're in trouble: in
+    principle as of 2024, you could write a script to
+    extract the version map from the scans themselves.
+
+
+
+How can I clone a legacy server?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Similar to :ref:`clone_server`, you need to download the ``.toml``
+specification and the version-map, using the command-line legacy
+management tools.
 
 
 I messed up by double-scanning some papers and uploading and now I have collisions
