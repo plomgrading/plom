@@ -273,10 +273,9 @@ class ExtraliseImageView(ScannerRequiredView):
             # set all the questions
             to_questions = SpecificationService.get_question_indices()
         else:
-            if len(extra_page_data.get("questions", [])):
-                # NOTE - must use getlist here instead of a simple get so that return is a list
-                to_questions = [int(q) for q in extra_page_data.getlist("questions")]
-            else:
+            # caution: `get` would return just the last entry
+            to_questions = [int(q) for q in extra_page_data.getlist("questions")]
+            if not to_questions:
                 return HttpResponse(
                     """<span class="alert alert-danger">At least one question</span>"""
                 )

@@ -415,6 +415,7 @@ class ScanCastService:
 
         Raises:
             ValueError: can't find things, or extra page already has information.
+            PlomBundleLockedException:
         """
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
