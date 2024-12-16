@@ -12,32 +12,34 @@ def _parse_questions(s: Any) -> Any:
     if isinstance(s, str):
         if s.casefold() == "all":
             return "all"
+        if s.casefold() == "dnm":
+            return "dnm"
         s = ast.literal_eval(s)
     return s
 
 
 def check_question_list(s: str | list | tuple, n_questions: int) -> list[int]:
-    """Make a canonical list of questions.
+    """Make a canonical list of question indices.
 
     Args:
-        s (str/list/tuple): the input, can be a special string "all"
-            or a string which we will parse.  Or an integer.  Or a list
-            of ints.
-        n_questions (int): how many questions total, used for checking
-            input.
+        s: the input, can be a special strings "all", "dnm" or a string
+            which we will parse.  Or an integer.  Or a list of ints.
+        n_questions: how many questions total, used for checking input.
 
     Returns:
-        list:
+        List of ints.
     """
     s = _parse_questions(s)
     if s == "all":
         s = list(range(1, n_questions + 1))
+    if s == "dnm":
+        s = []
 
     question_list = s
     del s
 
     if isinstance(question_list, str):
-        raise ValueError('question cannot be a string, unless its "all"')
+        raise ValueError('question cannot be a string, unless its "all" or "dnm"')
 
     if isinstance(question_list, int):
         question_list = [question_list]

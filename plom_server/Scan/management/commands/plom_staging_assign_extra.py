@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from tabulate import tabulate
 
@@ -114,6 +114,9 @@ class Command(BaseCommand):
                 which updates each page to questions 1, 2 and 3.
                 You can also pass the special string `all` which uploads
                 the page to all questions (this is also the default).
+
+                If you pass `dnm` it will be attached to the "do not mark"
+                group, making it available to this paper but not generally marked.
             """,
         )
         spc = sp.add_parser(
