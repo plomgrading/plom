@@ -116,6 +116,20 @@ to discard the colliding pages.
 Server administration
 ---------------------
 
+What are the most important files to backup in case of server failure?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Before grading begins, the important files are the specification
+`.toml`, the version-map .csv`, and the source PDF files of the
+assessment, because the server can be :ref:`reconstructed from these
+files <clone_server>`.
+
+After grading begins, it obviously becomes much harder: one typically
+needs the entire database and media directory.
+TODO: add documentation on backing up a Plom server.
+
+
+
 My legacy server sometimes has random disk I/O errors
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
