@@ -28,6 +28,9 @@ def check_question_list(s: str | list | tuple, n_questions: int) -> list[int]:
 
     Returns:
         List of ints.
+
+    Raises:
+        ValueError: invalid input, with explanation.
     """
     s = _parse_questions(s)
     if s == "all":
