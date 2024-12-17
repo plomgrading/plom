@@ -269,28 +269,52 @@
                                                         {% for pn in all_paper_numbers %}<option value="{{ pn }}">{{ pn }}</option>{% endfor %}
                                                     </select>
                                                 </div>
-                                                Questions:
-                                                <div x-data="{allq: false}">
+                                                <div x-data="{showq: false}" class="mt-2">
                                                     <div class="form-check">
-                                                        <input name="questionAll"
-                                                               value="all"
+                                                        <input name="question_all_dnm"
+                                                               value="choose_q"
                                                                class="form-check-input"
-                                                               type="checkbox"
-                                                               id="questionall"
-                                                               x-model="allq" />
-                                                        <label class="form-check-label" for="questionall">all questions</label>
+                                                               type="radio"
+                                                               id="question_all_dnm1"
+                                                               x-model="showq"
+                                                               checked />
+                                                        <label class="form-check-label" for="question_all_dnm1">Attach to specific question(s):</label>
                                                     </div>
-                                                    <div x-show="!allq" x-transition>
+                                                    <div class="ms-4">
+                                                        <!-- div class="ms-4" x-show="showq == 'choose_q'" x-transition -->
                                                         {% for qidx, qlabel, qlabel_html in question_labels_html %}
                                                             <div class="form-check">
                                                                 <input name="questions"
                                                                        class="form-check-input"
                                                                        type="checkbox"
                                                                        value="{{ qidx }}"
-                                                                       id="qidx{{ qidx }}" />
+                                                                       id="qidx{{ qidx }}"
+                                                                       x-bind:disabled="showq != 'choose_q'" />
                                                                 <label class="form-check-label" for="qidx{{ qidx }}">{{ qlabel_html | safe }}</label>
                                                             </div>
                                                         {% endfor %}
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input name="question_all_dnm"
+                                                               value="choose_all"
+                                                               class="form-check-input"
+                                                               type="radio"
+                                                               id="question_all_dnm2"
+                                                               x-model="showq" />
+                                                        <label class="form-check-label" for="question_all_dnm2">
+                                                            Attach to <em>all</em> questions
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input name="question_all_dnm"
+                                                               value="choose_dnm"
+                                                               class="form-check-input"
+                                                               type="radio"
+                                                               id="question_all_dnm3"
+                                                               x-model="showq" />
+                                                        <label class="form-check-label" for="question_all_dnm3">
+                                                            Do not mark <small>(but keep with this paper)</small>
+                                                        </label>
                                                     </div>
                                                 </div>
                                             </div>
