@@ -60,6 +60,7 @@ def check_question_list(s: str | list | tuple, n_questions: int) -> list[int]:
                 f"Question numbers must be integers between 1 and {n_questions} (inclusive)"
             )
     # TODO: would we like an explicit error on dupes?
+    # TODO: this is not order preserving, which callers might find unexpected!
     return list(set(question_list))
 
 
