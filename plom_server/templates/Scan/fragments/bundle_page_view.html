@@ -227,7 +227,7 @@
                                    hx-post="{% url 'discard_image' the_filter bundle_id index %}"
                                    hx-confirm="Are you sure you wish to discard this extra page?">Discard</a>
                             </div>
-                            {% if current_page.info.paper_number and current_page.info.question_index_list %}
+                            {% if current_page.info.paper_number %}
                                 <div>
                                     <a class="btn btn-danger text-center w-100 mb-3"
                                        hx-delete="{% url 'extralise_image' the_filter bundle_id index %}"
