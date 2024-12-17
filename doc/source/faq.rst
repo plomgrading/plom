@@ -174,8 +174,8 @@ Ok, how do I setup SSL certificates?
 How can I clone a server so that it accepts scans intended for another server?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You need two things from the existing server: the server specification `.toml` file
-and (if multi-versioned) the question-version map `.csv`.
+You need three things from the existing server: the server specification `.toml` file,
+the question-version map `.csv`, and the classlist.
 Double-check that the `.toml` file contains the ``publicCode``,
 something like: ``publicCode = "12345"``.
 
@@ -185,10 +185,9 @@ something like: ``publicCode = "12345"``.
     papers to the wrong server.  This question shows you how to defeat
     that mechanism.
 
-Use the saved `.toml` to provision the new server.
-If the original server was a multi-versioned assessment, you will need
-to provision the version map using the saved version map `.csv`.
-
+Use the saved `.toml` and the saved version map `.csv` to provision
+the new server.
+If prenaming, ensure you use the same settings as before.
 Continue provisioning the server, creating the database etc.  No need
 to physically print the papers (as they should be identical!)  You
 should then be able to upload your scans (produced on the original
@@ -204,6 +203,14 @@ server) to this new server.
     If the server was multi-versioned, you're in trouble: in
     principle as of 2024, you could write a script to
     extract the version map from the scans themselves.
+
+
+I have only one version, can I skip the version map `.csv` above?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In principle, yes, but you'll need to be careful to produce (at least)
+the same paper numbers that you had before.
+You'll also want to be careful with any prenaming.
 
 
 
