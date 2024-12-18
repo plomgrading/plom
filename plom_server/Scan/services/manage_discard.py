@@ -390,6 +390,8 @@ class ManageDiscardService:
         Generally, this will be a page without QR codes such as a self-scanned
         "homework" page or an "oops that wasn't scrap" or a sheet of plain paper.
 
+        TODO: is this dead code?
+
         Args:
             user_obj: which user, as a database object.
             page_pk: which discard page.
@@ -439,7 +441,7 @@ class ManageDiscardService:
         username: str,
         discard_pk: int,
         paper_number: int,
-        question_list: list[int],
+        assign_to_question_indices: list[int],
     ) -> None:
         """A wrapper around the assign_discard_page_to_mobile_page command.
 
@@ -448,8 +450,9 @@ class ManageDiscardService:
                 Must be a manager.
             discard_pk: the pk of the discard page to be reassigned.
             paper_number: the number of the paper containing the fixed page.
-            question_list: a list of the questions on the discard page. A
-                mobile page is created for each question.
+            assign_to_question_indices: a list of the questions on the
+                discard page. A mobile page is created for each.
+                TODO: what is supposed to happen if you pass an empty list?
         """
         try:
             user_obj = User.objects.get(
@@ -461,5 +464,5 @@ class ManageDiscardService:
             ) from e
 
         self._assign_discard_to_mobile_page(
-            user_obj, discard_pk, paper_number, question_list
+            user_obj, discard_pk, paper_number, assign_to_question_indices
         )

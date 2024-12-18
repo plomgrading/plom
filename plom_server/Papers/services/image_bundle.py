@@ -159,8 +159,10 @@ class ImageBundleService:
             elif staged.image_type == StagingImage.EXTRA:
                 extra = staged.extrastagingimage
                 prefix = f"extra_{extra.paper_number}_"
-                for q in extra.question_list:
+                for q in extra.question_idx_list:
                     prefix += f"{q}_"
+                else:
+                    prefix += "dnm_"
             elif staged.image_type == StagingImage.DISCARD:
                 prefix = "discard_"
             else:
@@ -210,7 +212,7 @@ class ImageBundleService:
                 # need to make one mobile page for each question in the question-list
                 extra = staged.extrastagingimage
                 paper = Paper.objects.get(paper_number=extra.paper_number)
-                for q in extra.question_list:
+                for q in extra.question_idx_list:
                     # get the version from the paper/question info
                     v = pi_service.get_version_from_paper_question(
                         extra.paper_number, q

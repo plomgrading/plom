@@ -68,7 +68,10 @@ class Command(BaseCommand):
             "-p",
             "--page",
             type=int,
-            help="The page number to which the discarded page is assigned (as a fixed page)",
+            help="""
+                The page number to which the discarded page is assigned (as a fixed page).
+                You cannot specify both this and --question.
+            """,
         )
         grp.add_argument(
             "-q",

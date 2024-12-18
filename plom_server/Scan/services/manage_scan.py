@@ -427,7 +427,7 @@ class ManageScanService:
             * image_pk: the pk of the image in the fixed page.
             * bundle_name: the name of the bundle containing the image.
             * bundle_order: the order of the image inside the bundle.
-            * question_index_list: the list of question-indices which share the underlying image.
+            * question_idx_list: the list of question-indices which share the underlying image.
                 ie if a given image is used in two mobile pages with different question-indices,
                 both indices will be in this list.
             * question_list_html: nice html rendering of the list of questions
@@ -442,7 +442,7 @@ class ManageScanService:
         return {
             "page_type": "mobile",
             "paper_number": mp_obj.paper.paper_number,
-            "question_index_list": q_idx_list,
+            "question_idx_list": q_idx_list,
             "question_list_html": _render(q_idx_list),
             "image_pk": img.pk,
             "bundle_name": img.bundle.name,

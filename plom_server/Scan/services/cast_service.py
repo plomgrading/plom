@@ -446,14 +446,14 @@ class ScanCastService:
         eximg = img_locked.extrastagingimage
 
         # Throw value error if data has already been set.
-        if (eximg.paper_number is not None) or eximg.question_list:
+        if eximg.paper_number is not None:
             raise ValueError(
                 "Cannot overwrite existing extra-page info; "
                 "potentially another user has set data."
             )
 
         eximg.paper_number = paper_number
-        eximg.question_list = assign_to_question_indices
+        eximg.question_idx_list = assign_to_question_indices
         eximg.save()
 
     @transaction.atomic
@@ -562,7 +562,7 @@ class ScanCastService:
 
         eximg = img.extrastagingimage
         eximg.paper_number = None
-        eximg.question_list = None
+        eximg.question_idx_list = None
         eximg.save()
 
     @transaction.atomic

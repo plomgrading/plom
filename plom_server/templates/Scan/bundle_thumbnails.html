@@ -312,10 +312,9 @@
                                             <div class="card text-center bg-primary-subtle col p-1"
                                                  data-bs-toggle="tooltip"
                                                  data-bs-placement="top"
-                                                 data-bs-title="Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_list }}">
+                                                 data-bs-title="Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_idx_list }}">
                                                 {% include "Scan/fragments/bundle_thumbnail_container.html" %}
                                             </div>
-                                            <!-- above div should say question_index_list, Issue #2716, but I think it works for now -->
                                         </div>
                                     {% else %}
                                         <div class="col">
