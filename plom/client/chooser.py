@@ -450,7 +450,7 @@ class Chooser(QDialog):
         if Version(__version__) < Version(info["version"]):
             s = "\nWARNING: old client!"
             self.ui.infoLabel.setText(self.ui.infoLabel.text() + s)
-            msg = WarnMsg(
+            msg_ = WarnMsg(
                 self,
                 f"Your client version {__version__} is older than the "
                 f"server {info['version']}: you may want to consider upgrading.",
@@ -461,7 +461,7 @@ class Chooser(QDialog):
                 ),
             )
             if not self._old_client_note_seen:
-                msg.exec()
+                msg_.exec()
                 self._old_client_note_seen = True
         return True
 
