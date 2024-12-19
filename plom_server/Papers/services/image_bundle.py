@@ -220,6 +220,10 @@ class ImageBundleService:
                     MobilePage.objects.create(
                         paper=paper, image=image, question_index=q, version=v
                     )
+                else:
+                    raise NotImplementedError(
+                        "Do we need to create something DNMish here?"
+                    )
             elif staged.image_type == StagingImage.DISCARD:
                 disc = staged.discardstagingimage
                 DiscardPage.objects.create(

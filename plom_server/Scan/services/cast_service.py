@@ -425,6 +425,7 @@ class ScanCastService:
         except ObjectDoesNotExist:
             raise ValueError(f"Paper {paper_number} is not in the database.")
         # now check all the questions
+        # TODO: consider using question_list_utils.check_question_list: fewer DB hits?
         for qi in assign_to_question_indices:
             if not QuestionPage.objects.filter(paper=paper, question_index=qi).exists():
                 raise ValueError(f"No question index {qi} in database.")
