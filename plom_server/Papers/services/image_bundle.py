@@ -496,7 +496,7 @@ class ImageBundleService:
         if not q_pages.exists():
             raise ValueError(
                 f"There are no question_pages at all for paper {paper_obj.paper_number}"
-                f"question index {question_index}"
+                f" question index {question_index}"
             )
 
         qp_no_img = q_pages.filter(image__isnull=True).exists()

@@ -104,9 +104,11 @@ class ManageDiscardService:
         # and now delete each of those mobile pages
         for mpg in img_to_disc.mobilepage_set.all():
             mpg.delete()
-        # outdate the associated marking tasks
+        # outdate any associated marking tasks
         # this also makes new marking tasks if possible
         for qn in qn_to_outdate:
+            if qn is None or qn <= 0:
+                continue
             MarkingTaskService().set_paper_marking_task_outdated(paper_number, qn)
 
     def discard_pushed_fixed_page(
