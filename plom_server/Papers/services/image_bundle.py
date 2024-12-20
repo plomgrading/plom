@@ -221,8 +221,9 @@ class ImageBundleService:
                         paper=paper, image=image, question_index=q, version=v
                     )
                 else:
-                    raise NotImplementedError(
-                        "Do we need to create something DNMish here?"
+                    # TODO: 0 vs None?  Both ok according to paper_structure.py
+                    MobilePage.objects.create(
+                        paper=paper, image=image, question_index=0, version=0
                     )
             elif staged.image_type == StagingImage.DISCARD:
                 disc = staged.discardstagingimage
@@ -414,6 +415,8 @@ class ImageBundleService:
         result: dict[str, list[tuple[int, int]]] = {"ready": [], "not_ready": []}
 
         for paper_number, question_index in papers_questions_updated_by_bundle:
+            if question_index is None or question_index <= 0:
+                continue
             q_pages = QuestionPage.objects.filter(
                 paper__paper_number=paper_number, question_index=question_index
             )

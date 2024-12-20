@@ -214,7 +214,8 @@ class PageDataService:
         ):
             qidx = page.question_index
             # no question index, add to DNM pile
-            if qidx is None or qidx < 1:
+            if qidx is None or qidx <= 0:
+                # Currently, None/0 equivalent in paper_structure.py docs
                 qidx = 0
             question_mobile_page_count.setdefault(qidx, 0)
             question_mobile_page_count[qidx] += 1

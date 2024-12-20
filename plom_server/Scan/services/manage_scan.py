@@ -421,22 +421,34 @@ class ManageScanService:
         Args:
             page_pk: the pk of the mobile-page.
 
-        Returns: A dict with keys
-            * page_type: always "mobile"
-            * paper_number: the paper containing that fixed page.
-            * image_pk: the pk of the image in the fixed page.
-            * bundle_name: the name of the bundle containing the image.
-            * bundle_order: the order of the image inside the bundle.
-            * question_idx_list: the list of question-indices which share the underlying image.
-                ie if a given image is used in two mobile pages with different question-indices,
-                both indices will be in this list.
-            * question_list_html: nice html rendering of the list of questions
+        Returns:
+            A dict with keys:
+                * page_type: always "mobile".
+                * paper_number: the paper containing that fixed page.
+                * image_pk: the pk of the image in the fixed page.
+                * bundle_name: the name of the bundle containing the image.
+                * bundle_order: the order of the image inside the bundle.
+                * question_idx_list: the list of positive question
+                  indices which share the underlying image.  If an
+                  image is used in two MobilePages with different
+                  question-indices, both indices will be in this list.
+                  Note the list can be empty, for example if this
+                  image is only in MobilePages that do not correspond
+                  to questions.  (these would be DNM in general).
+                * question_list_html: nice html rendering of the list
+                  of questions.  Will be the string "None" if the list
+                  is empty.
+
+        Raises:
+            None expected.
         """
         mp_obj = MobilePage.objects.get(pk=page_pk)
         img = mp_obj.image
         # same image might be used for multiple questions - get all those
         q_idx_list = [
-            mp_obj.question_index for mp_obj in MobilePage.objects.filter(image=img)
+            mp_obj.question_index
+            for mp_obj in MobilePage.objects.filter(image=img)
+            if mp_obj.question_index and mp_obj.question_index > 0
         ]
         _render = SpecificationService.render_html_flat_question_label_list
         return {

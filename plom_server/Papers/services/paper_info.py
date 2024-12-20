@@ -119,11 +119,17 @@ class PaperInfoService:
                 f" for page {page_number} of paper {paper_number}"
             ) from None
 
-    @transaction.atomic
     def get_version_from_paper_question(
         self, paper_number: int, question_idx: int
     ) -> int:
-        """Given a paper number and question index, return the version of that question."""
+        """Given a paper number and question index, return the version of that question.
+
+        Raises:
+            ValueError: no such paper / question_idx exists.  Typically
+                because there is no such paper, or no such paper *yet*,
+                but also includes the case where question_idx is out of
+                bounds, for example, a non-positive integer.
+        """
         try:
             paper = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
