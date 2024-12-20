@@ -28,7 +28,7 @@ class Command(BaseCommand):
         paper_number: int,
         *,
         page_number: int | None = None,
-        question_list: list | None = None,
+        question_idx_list: list | None = None,
         really_do_it: bool = False,
     ):
         mds = ManageDiscardService()
@@ -37,9 +37,9 @@ class Command(BaseCommand):
                 mds.reassign_discard_page_to_fixed_page_cmd(
                     username, discard_pk, paper_number, page_number
                 )
-            elif question_list:
+            elif question_idx_list:
                 mds.reassign_discard_page_to_mobile_page_cmd(
-                    username, discard_pk, paper_number, question_list
+                    username, discard_pk, paper_number, question_idx_list
                 )
         except ValueError as e:
             raise CommandError(e)
@@ -79,26 +79,30 @@ class Command(BaseCommand):
             nargs="?",
             metavar="N",
             help="""
-                Which question(s) are answered on this page?
+                Which question(s) are answered on this page, by question index?
                 You can pass a single integer, or a list like `[1,2,3]`
                 which updates each page to questions 1, 2 and 3.
                 You can also pass the special string `all` which uploads
                 the page to all questions (this is also the default).
+
+                If you pass `dnm` or an empty list, the page will be attached
+                to the "do not mark" group, making it available to this paper
+                but not generally marked.
             """,
         )
 
     def handle(self, *args, **options):
         if options["question"]:
             n_questions = SpecificationService.get_n_questions()
-            question_list = check_question_list(options["question"], n_questions)
+            question_idx_list = check_question_list(options["question"], n_questions)
         else:
-            question_list = []
+            question_idx_list = None
 
         self.reassign_discard_page(
             options["username"],
             options["discard_pk"],
             paper_number=options["paper"],
             page_number=options["page"],
-            question_list=question_list,
+            question_idx_list=question_idx_list,
             really_do_it=options["yes"],
         )
