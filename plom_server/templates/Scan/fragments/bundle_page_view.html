@@ -269,15 +269,15 @@
                                                         {% for pn in all_paper_numbers %}<option value="{{ pn }}">{{ pn }}</option>{% endfor %}
                                                     </select>
                                                 </div>
-                                                <div x-data="{showq: false}" class="mt-2">
+                                                <fieldset x-data="{showq: 'choose_q'}" class="mt-2">
                                                     <div class="form-check">
                                                         <input name="question_all_dnm"
                                                                value="choose_q"
                                                                class="form-check-input"
                                                                type="radio"
                                                                id="question_all_dnm1"
-                                                               x-model="showq"
-                                                               checked />
+                                                               checked
+                                                               x-model="showq" />
                                                         <label class="form-check-label" for="question_all_dnm1">Attach to specific question(s):</label>
                                                     </div>
                                                     <div class="ms-4">
@@ -316,7 +316,7 @@
                                                             Do not mark <small>(but keep with this paper)</small>
                                                         </label>
                                                     </div>
-                                                </div>
+                                                </fieldset>
                                             </div>
                                         </div>
                                         <button class="btn btn-primary" type="submit">Save choices</button>
