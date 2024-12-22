@@ -198,6 +198,9 @@ class ManageScanService:
                         "question_number": mp.question_index,
                         "img_pk": mp.image.pk,
                         "page_pk": mp.pk,
+                        "page_label": (
+                            f"qi.{mp.question_index}" if mp.question_index else "dnm"
+                        ),
                     }
                 )
         for paper in no_fixed_but_some_mobile:
@@ -278,6 +281,9 @@ class ManageScanService:
                         "question_number": mp.question_index,
                         "img_pk": mp.image.pk,
                         "page_pk": mp.pk,
+                        "page_label": (
+                            f"qi.{mp.question_index}" if mp.question_index else "dnm"
+                        ),
                     }
                 )
 
