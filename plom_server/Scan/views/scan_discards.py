@@ -93,16 +93,28 @@ class ScannerReassignView(ManagerRequiredView):
                 return HttpResponse(
                     """<div class="alert alert-danger">Invalid paper number</div>"""
                 )
-            if reassignment_data.get("questionAll", "off") == "all":
+
+            choice = reassignment_data.get("question_all_dnm", "")
+            if choice == "choose_all":
                 # set all the questions
                 to_questions = SpecificationService.get_question_indices()
-            else:
-                if len(reassignment_data.get("questions", [])):
-                    to_questions = [int(q) for q in reassignment_data["questions"]]
-                else:
+            elif choice == "choose_dnm":
+                # TODO: or explicitly empty list or ...?
+                to_questions = []
+            elif choice == "choose_q":
+                # caution: `get` would return just the last entry
+                to_questions = [int(q) for q in reassignment_data.getlist("questions")]
+                if not to_questions:
                     return HttpResponse(
                         """<span class="alert alert-danger">At least one question</span>"""
                     )
+            else:
+                return HttpResponse(
+                    """<span class="alert alert-danger">
+                        Unexpected radio choice: this is a bug; please file an issue!
+                    </span>"""
+                )
+
             try:
                 mds.assign_discard_page_to_mobile_page(
                     request.user, page_pk, paper_number, to_questions
