@@ -87,14 +87,14 @@
                                                 <label class="form-check-label" for="questionall">all questions</label>
                                             </div>
                                             <div x-show="!allq" x-transition>
-                                                {% for qidx, qstr, qlabel in question_html_labels %}
+                                                {% for qidx, qlabel, qlabel_html in question_labels_html %}
                                                     <div class="form-check">
                                                         <input name="questions"
                                                                class="form-check-input"
                                                                type="checkbox"
                                                                value="{{ qidx }}"
                                                                id="qidx{{ qidx }}" />
-                                                        <label class="form-check-label" for="qidx{{ qidx }}">{{ qlabel | safe }}</label>
+                                                        <label class="form-check-label" for="qidx{{ qidx }}">{{ qlabel_html | safe }}</label>
                                                     </div>
                                                 {% endfor %}
                                             </div>

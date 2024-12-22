@@ -51,12 +51,12 @@ class ScannerReassignView(ManagerRequiredView):
 
         papers_missing_fixed_pages = mss.get_papers_missing_fixed_pages()
         used_papers = mss.get_all_used_test_papers()
-        question_html_labels = SpecificationService.get_question_html_label_triples()
+        question_labels_html = SpecificationService.get_question_html_label_triples()
 
         context.update(
             {
                 "papers_missing_fixed_pages": papers_missing_fixed_pages,
-                "question_html_labels": question_html_labels,
+                "question_labels_html": question_labels_html,
                 "used_papers": used_papers,
             }
         )
