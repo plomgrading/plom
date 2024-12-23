@@ -315,6 +315,9 @@ class RubricService:
             new_rubric_data.get("out_of", None),
         )
 
+        if new_rubric_data["kind"] in ["relative", "neutral"]:
+            new_rubric_data["out_of"] = 0
+
         serializer = RubricSerializer(data=new_rubric_data)
 
         if not serializer.is_valid():
