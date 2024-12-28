@@ -30,7 +30,6 @@
                 </div>
                 <div class="col p-2 border">
                     <h5>Reassign the image</h5>
-                    <div class="py-3" id="invalidmessage"></div>
                     <div>
                         <form hx-post="{% url 'reassign_discard' page_pk %}"
                               hx-target="#invalidmessage"
@@ -133,11 +132,9 @@
                                     </div>
                                 </div>
                             </div>
-                            <button class="btn btn-primary m-2" type="submit">Set data</button>
+                            <div class="py-4" id="invalidmessage"></div>
+                            <button class="btn btn-primary" type="submit">Reassign</button>
                         </form>
-                        <a href="{% url 'scan_list_discard' %}">
-                            <button class="btn btn-warning m-2">Go back</button>
-                        </a>
                     </div>
                 </div>
             </div>

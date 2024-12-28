@@ -237,11 +237,11 @@
                                 </div>
                             {% else %}
                                 <div class="alert alert-secondary">
-                                    <h6>Set extra page information</h6>
+                                    <h5>Set extra page information</h5>
                                     <form hx-post="{% url 'extralise_image' the_filter bundle_id index %}"
                                           hx-target="#invalidmessage"
                                           hx-swap="innerHTML">
-                                        <div class="input-group p-3">
+                                        <div class="input-group">
                                             <div x-data="{bundlepapers: true}">
                                                 Paper:
                                                 <div class="form-check">
@@ -322,10 +322,10 @@
                                                 </fieldset>
                                             </div>
                                         </div>
+                                        <div class="py-4" id="invalidmessage"></div>
                                         <button class="btn btn-primary" type="submit">Save choices</button>
                                     </form>
                                 </div>
-                                <div class="py-4" id="invalidmessage"></div>
                             {% endif %}
                         {% endif %}
                     {% endif %}

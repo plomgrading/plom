@@ -74,7 +74,7 @@ class ScannerReassignView(ManagerRequiredView):
                 ).split(",")
             except ValueError:
                 return HttpResponse(
-                    """<div class="alert alert-danger">Choose paper/page</div>"""
+                    """<span class="alert alert-danger">Choose paper/page</span>"""
                 )
             try:
                 mds.assign_discard_page_to_fixed_page(
@@ -91,7 +91,7 @@ class ScannerReassignView(ManagerRequiredView):
                 paper_number = int(paper_number)
             except ValueError:
                 return HttpResponse(
-                    """<div class="alert alert-danger">Invalid paper number</div>"""
+                    """<span class="alert alert-danger">Invalid paper number</span>"""
                 )
 
             choice = reassignment_data.get("question_all_dnm", "")
