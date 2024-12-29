@@ -116,8 +116,11 @@
                             <th>{{ username }}</th>
                             <td id="link">{{ link }}</td>
                             <td>
-                                <button class="btn btn-primary" style="margin-left: 4px" onclick="copyText(this)" data-copyText={{ link }} id="copy-button-{{ forloop.counter0 }}">Copy
-                                </button>
+                                <button class="btn btn-primary"
+                                        style="margin-left: 4px"
+                                        onclick="copyText(this)"
+                                        data-copyText="{{ link }}"
+                                        id="copy-button-{{ forloop.counter0 }}">Copy</button>
                             </td>
                         </tr>
                     {% endfor %}

@@ -10,7 +10,10 @@
      hx-target="#updatePage">
     <div class="bundle-thumb">
         {% if grab_speed %}
-            <img class="img" src="{% url 'scan_get_thumbnail' bundle_id pg.order %}" fetchpriority={{ grab_speed }} loading="lazy" />
+            <img class="img"
+                 src="{% url 'scan_get_thumbnail' bundle_id pg.order %}"
+                 fetchpriority="{{ grab_speed }}"
+                 loading="lazy" />
         {% else %}
             <img class="img"
                  src="{% url 'scan_get_thumbnail' bundle_id pg.order %}"
