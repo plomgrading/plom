@@ -3,9 +3,9 @@
 # Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 
+from __future__ import annotations
+
 import pathlib
-import platform
-from typing import Any, Optional, Union
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -36,7 +36,7 @@ def _json_path_to_str(x) -> str:
     raise TypeError
 
 
-class _ErrorMsg(QMessageBox):
+class ErrorMsg(QMessageBox):
     """A simple error message pop-up.
 
     See also subclasses ``WarnMsg`` and ``InfoMsg``, in order of
@@ -61,11 +61,11 @@ class _ErrorMsg(QMessageBox):
 
     def __init__(
         self,
-        parent: Union[QWidget, None],
+        parent: QWidget | None,
         txt: str,
         *,
-        details: Optional[str] = None,
-        info: Optional[str] = None,
+        details: str | None = None,
+        info: str | None = None,
         info_pre: bool = True,
     ):
         super().__init__(parent)
@@ -94,7 +94,7 @@ class BigTextEdit(QTextEdit):
         return sz
 
 
-class CustomDetailsDialog(QDialog):
+class _CustomDetailsDialog(QDialog):
     """A dialog with an expanding details field, instead of the Qt builtin options.
 
     Args:
@@ -116,14 +116,14 @@ class CustomDetailsDialog(QDialog):
 
     def __init__(
         self,
-        parent: Union[None, QWidget],
+        parent: None | QWidget,
         summary: str,
         *,
-        details: Optional[str] = "",
-        details_html: Optional[str] = "",
-        info: Optional[str] = None,
+        details: str = "",
+        details_html: str = "",
+        info: str | None = None,
         info_pre: bool = True,
-        _extra_big: Optional[bool] = None,
+        _extra_big: bool = False,
     ):
         super().__init__(parent)
 
@@ -198,15 +198,6 @@ class CustomDetailsDialog(QDialog):
         self.adjustSize()
 
 
-# TODO: Temporary workaround on macOS: after 6.5.4 or 6.6.1/6.6.2 we should
-# drop this and let QMessageBox do its job.  Issue #3217.
-if platform.system() == "Darwin":
-    # on macOS, detailedText of QMessageBox does not scroll (Issue #3217)
-    ErrorMsg: Any = CustomDetailsDialog  # type: ignore
-else:
-    ErrorMsg: Any = _ErrorMsg  # type: ignore
-
-
 class WarnMsg(ErrorMsg):
     """A simple warning message pop-up."""
 
@@ -223,7 +214,7 @@ class InfoMsg(ErrorMsg):
         self.setIcon(QMessageBox.Icon.Information)
 
 
-class BigMessageDialog(CustomDetailsDialog):
+class BigMessageDialog(_CustomDetailsDialog):
     """A dialog for showing lots of stuff, might need scrollbars.
 
     Args:

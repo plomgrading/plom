@@ -17,9 +17,9 @@
 
 # Not server deps
 platformdirs==4.3.6
-PyQt6==6.6.1
-PyQt6-Qt6==6.6.3
-PyQt6-sip==13.6.0
+PyQt6==6.7.1
+PyQt6-Qt6==6.7.3
+PyQt6-sip==13.8.0
 pyspellchecker==0.8.1
 pytest-qt==4.4.0
 
