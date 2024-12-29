@@ -49,8 +49,8 @@ from ..models import (
     KnownStagingImage,
     ExtraStagingImage,
     DiscardStagingImage,
-    PagesToImagesHueyTask,
-    ManageParseQR,
+    PagesToImagesChore,
+    ManageParseQRChore,
 )
 from ..services.qr_validators import QRErrorService
 from .image_process import PageImageProcessor
@@ -194,7 +194,7 @@ class ScanService:
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
         with transaction.atomic(durable=True):
-            x = PagesToImagesHueyTask.objects.create(
+            x = PagesToImagesChore.objects.create(
                 bundle=bundle_obj,
                 status=HueyTaskTracker.STARTING,
             )
@@ -212,7 +212,7 @@ class ScanService:
     @transaction.atomic
     def get_bundle_split_completions(self, bundle_pk: int) -> int:
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-        return PagesToImagesHueyTask.objects.get(bundle=bundle_obj).completed_pages
+        return PagesToImagesChore.objects.get(bundle=bundle_obj).completed_pages
 
     def is_bundle_mid_splitting(self, bundle_pk: int) -> bool:
         """Check if the bundle with this id is currently in the midst of splitting its pages."""
@@ -221,7 +221,7 @@ class ScanService:
         if bundle_obj.has_page_images:
             return False
         # If there are only Error/Complete chores then we are not splitting
-        if PagesToImagesHueyTask.objects.filter(
+        if PagesToImagesChore.objects.filter(
             bundle=bundle_obj,
             status__in=(
                 HueyTaskTracker.TO_DO,
@@ -514,13 +514,13 @@ class ScanService:
         # check that the qr-codes have not been read already, or that a task has not been set
 
         # Currently, even a status Error chore would prevent it from being rerun
-        if ManageParseQR.objects.filter(bundle=bundle_obj).exists():
+        if ManageParseQRChore.objects.filter(bundle=bundle_obj).exists():
             return
 
         with transaction.atomic(durable=True):
-            x = ManageParseQR.objects.create(
+            x = ManageParseQRChore.objects.create(
                 bundle=bundle_obj,
-                status=ManageParseQR.STARTING,
+                status=HueyTaskTracker.STARTING,
             )
             tracker_pk = x.pk
 
@@ -592,7 +592,7 @@ class ScanService:
     @transaction.atomic
     def get_bundle_qr_completions(self, bundle_pk: int) -> int:
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-        return ManageParseQR.objects.get(bundle=bundle_obj).completed_pages
+        return ManageParseQRChore.objects.get(bundle=bundle_obj).completed_pages
 
     def is_bundle_mid_qr_read(self, bundle_pk: int) -> bool:
         """Check if the bundle with this id is currently in the midst of reading QR codes."""
@@ -602,7 +602,7 @@ class ScanService:
             return False
 
         # If there are only Error/Complete chores then we are not reading
-        if ManageParseQR.objects.filter(
+        if ManageParseQRChore.objects.filter(
             bundle=bundle_obj,
             status__in=(
                 HueyTaskTracker.TO_DO,
@@ -707,14 +707,14 @@ class ScanService:
             n_errors = self.get_n_error_images(bundle)
 
             if self.is_bundle_mid_splitting(bundle.pk):
-                count = PagesToImagesHueyTask.objects.get(bundle=bundle).completed_pages
+                count = PagesToImagesChore.objects.get(bundle=bundle).completed_pages
                 total_pages = f"in progress: {count} of {bundle.number_of_pages}"
             else:
                 total_pages = images.count()
 
             bundle_qr_read = bundle.has_qr_codes
             if self.is_bundle_mid_qr_read(bundle.pk):
-                count = ManageParseQR.objects.get(bundle=bundle).completed_pages
+                count = ManageParseQRChore.objects.get(bundle=bundle).completed_pages
                 bundle_qr_read = f"in progress ({count})"
 
             bundle_data = (
@@ -1537,7 +1537,7 @@ def huey_parent_split_bundle_chore(
             rendered_page_count = len(results)
 
             with transaction.atomic():
-                _task = PagesToImagesHueyTask.objects.select_for_update().get(
+                _task = PagesToImagesChore.objects.select_for_update().get(
                     bundle=bundle_obj
                 )
                 _task.completed_pages = rendered_page_count
@@ -1631,7 +1631,9 @@ def huey_parent_read_qr_codes_chore(
         count = sum(1 for X in results if X is not None)
 
         with transaction.atomic():
-            _task = ManageParseQR.objects.select_for_update().get(bundle=bundle_obj)
+            _task = ManageParseQRChore.objects.select_for_update().get(
+                bundle=bundle_obj
+            )
             _task.completed_pages = count
             _task.save()
 

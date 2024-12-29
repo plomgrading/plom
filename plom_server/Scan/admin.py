@@ -9,9 +9,8 @@ from django.contrib import admin
 from .models import (
     StagingBundle,
     StagingImage,
-    PagesToImagesHueyTask,
-    ManageParseQR,
-    ParseQR,
+    PagesToImagesChore,
+    ManageParseQRChore,
     KnownStagingImage,
     UnknownStagingImage,
     ExtraStagingImage,
@@ -27,6 +26,5 @@ admin.site.register(ExtraStagingImage)
 admin.site.register(ErrorStagingImage)
 admin.site.register(DiscardStagingImage)
 admin.site.register(UnknownStagingImage)
-admin.site.register(PagesToImagesHueyTask)
-admin.site.register(ManageParseQR)
-admin.site.register(ParseQR)
+admin.site.register(PagesToImagesChore)
+admin.site.register(ManageParseQRChore)
