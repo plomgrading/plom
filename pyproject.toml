@@ -119,7 +119,7 @@ readme = {file = 'README.md', content-type = 'text/markdown'}
 Homepage = "https://plomgrading.org"
 Repository = "https://gitlab.com/plom/plom"
 'Bug Tracker' = "https://gitlab.com/plom/plom/-/issues"
-Documentation = "https://plom.readthedocs.org'"
+Documentation = "https://plom.readthedocs.org"
 Changelog = "https://gitlab.com/plom/plom/-/blob/main/CHANGELOG.md"
 
 # [project.optional-dependencies]
