@@ -45,7 +45,7 @@
                             min="0"
                             max="1"
                             id="help_threshold" 
-                            for="help_threshold"/>
+                            name="help_threshold"/>
                     </div>
                     <div class="form-group">
                         <label for="help_resources">Help Resources:</label>
@@ -118,7 +118,9 @@
                             {% for tag in tags %}
                                 <option value="{{ tag.id }}"
                                         data-description="{{ tag.text }}"
-                                        data-confidential_info="{{ tag.confidential_info }}">
+                                        data-confidential_info="{{ tag.confidential_info }}"
+                                        data-help_threshold="{{ tag.help_threshold }}"
+                                        data-help_resources="{{ tag.help_resources }}">
                                     {{ tag.tag_name }}
                                 </option>
                             {% endfor %}
@@ -138,7 +140,7 @@
                         <textarea class="form-control" id="text_edit" name="text" rows="4" required></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="confidential_info_edit">confidential_info (not shown to students):</label>
+                        <label for="confidential_info_edit">Confidential Information (not shown to students):</label>
                         <textarea class="form-control"
                                   id="confidential_info_edit"
                                   name="confidential_info"
@@ -147,16 +149,16 @@
                     <div class="form-group">
                         <label for="help_threshold">Help Threshold:</label>
                         <input type="number" 
-                            step="0.1"
-                            min="0"
-                            max="1"
-                            id="help_threshold" 
-                            for="help_threshold"/>
+                               min="0"
+                               max="1"
+                               default="0"
+                               id="help_threshold_edit" 
+                               name="help_threshold"/>
                     </div>
                     <div class="form-group">
                         <label for="help_resources">Help Resources:</label>
                         <textarea class="form-control"
-                                  id="help_resources"
+                                  id="help_resources_edit"
                                   name="help_resources"
                                   rows="4"></textarea>
                     </div>

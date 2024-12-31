@@ -150,14 +150,21 @@ class EditTagView(UpdateView, ManagerRequiredView):
         Returns:
             A JSON response object.
         """
+        print(request.POST)
         tag_id = request.POST.get("tag_id")
         # strip out leading/trailing whitespace from name,text,confidential_info
         tag_name = request.POST.get("tagName").strip()
         text = request.POST.get("text").strip()
         confidential_info = request.POST.get("confidential_info").strip()
         try:
+            help_threshold = float(request.POST.get("help_threshold"))
+        except ValueError:
+            return JsonResponse({"error": "Help threshold must be a number"})
+        help_resources = request.POST.get("help_resources").strip()
+        try:
             QuestionTagService.edit_tag(
-                tag_id, tag_name, text, confidential_info=confidential_info
+                tag_id, tag_name, text, confidential_info=confidential_info,
+                help_threshold=help_threshold, help_text=help_resources
             )
         except (ValueError, IntegrityError) as err:
             return JsonResponse({"error": f"{err}"})

@@ -66,7 +66,8 @@
                                                data-bs-toggle="modal"
                                                data-bs-target="#tagModal"
                                                data-tag-name="{{ qt.tag.tag_name }}"
-                                               data-tag-description="{{ qt.tag.text }}">{{ qt.tag.tag_name }}</a>
+                                               data-tag-description="{{ qt.tag.text }}">{{ qt.tag.tag_name }}
+                                            </a>
                                             <form method="post" action="{% url 'qtags_landing' %}" class="d-inline">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="question_tag_id" value="{{ qt.id }}">
@@ -159,6 +160,10 @@
                 $('#text_edit').val(selectedTagDescription);
                 var selectedTagconfidential_info = $(this).find('option:selected').data('confidential_info').trim();
                 $('#confidential_info_edit').val(selectedTagconfidential_info);
+                var selectedTagHelpThreshold = $(this).find('option:selected').data('help_threshold');
+                $('#help_threshold_edit').val(selectedTagHelpThreshold);
+                var selectedTagHelpResources = $(this).find('option:selected').data('help_resources').trim();
+                $('#help_resources_edit').val(selectedTagHelpResources);
             });
 
             $('#tagModal').on('show.bs.modal', function(event) {
