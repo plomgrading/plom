@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Elisa Pan
     Copyright (C) 2024 Colin B. Macdonald
+    Copyright (C) 2024 Aden Chan
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -109,8 +110,10 @@
         <thead>
             <tr>
                 <th style=" width: 25%;">Tag Name</th>
-                <th>Tag Description (shown to students)</th>
-                <th>Confidential information (not shown to students)</th>
+                <th>Tag Description (public)</th>
+                <th>Confidential Information (private)</th>
+                <th>Help Threshold</th>
+                <th>Help Resources</th>
             </tr>
         </thead>
         <tbody>
@@ -119,6 +122,13 @@
                     <td>{{ tag.tag_name }}</td>
                     <td>{{ tag.text }}</td>
                     <td>{{ tag.confidential_info }}</td>
+                    <td>{{ tag.help_threshold }}</td>
+                    <td>{% if tag.help_resources %}
+                        Present
+                        {% else %}
+                        <em>Not Present</em>
+                        {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>
