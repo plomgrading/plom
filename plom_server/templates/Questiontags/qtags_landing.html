@@ -19,7 +19,7 @@
     {% if error_message %}<div class="alert alert-danger">{{ error_message }}</div>{% endif %}
     <h3>Questions</h3>
     <a href="{% url 'download_question_tags' %}?format=csv&csv_type=questions"
-       class="btn btn-primary">Download qtags-link CSV</a>
+       class="btn btn-primary">Download Tag-Question Linking as CSV</a>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -88,7 +88,7 @@
         </tbody>
     </table>
     <a href="{% url 'download_question_tags' %}?format=csv&csv_type=tags"
-       class="btn btn-primary">Download tags CSV</a>
+       class="btn btn-primary">Download Tags as CSV</a>
     <br />
     <h3>Manage Tags</h3>
     <button type="button"
