@@ -137,7 +137,7 @@ class QuestionTagService:
         Args:
             tag_pk: The pk of the tag to edit.
             tag_name: The new name of the tag.
-            description: The new description of the tag.
+            text: The new description of the tag.
 
         Keyword Args:
             confidential_info: text shown only to markers, not the students.
