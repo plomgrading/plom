@@ -2,8 +2,10 @@
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Aden Chan
 
 import csv
+import io
 
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import redirect, get_object_or_404
@@ -163,8 +165,12 @@ class EditTagView(UpdateView, ManagerRequiredView):
         help_resources = request.POST.get("help_resources").strip()
         try:
             QuestionTagService.edit_tag(
-                tag_id, tag_name, text, confidential_info=confidential_info,
-                help_threshold=help_threshold, help_text=help_resources
+                tag_id,
+                tag_name,
+                text,
+                confidential_info=confidential_info,
+                help_threshold=help_threshold,
+                help_text=help_resources,
             )
         except (ValueError, IntegrityError) as err:
             return JsonResponse({"error": f"{err}"})
@@ -213,11 +219,27 @@ class DownloadQuestionTagsView(ManagerRequiredView):
         response["Content-Disposition"] = 'attachment; filename="tags.csv"'
 
         writer = csv.writer(response)
-        writer.writerow(["Name", "Description", "Confidential_Info"])
+        writer.writerow(
+            [
+                "Name",
+                "Description",
+                "Confidential_Info",
+                "Help_Threshold",
+                "Help_Resources",
+            ]
+        )
 
         tags = PedagogyTag.objects.all()
         for tag in tags:
-            writer.writerow([tag.tag_name, tag.text, tag.confidential_info or ""])
+            writer.writerow(
+                [
+                    tag.tag_name,
+                    tag.text,
+                    tag.confidential_info,
+                    tag.help_threshold,
+                    tag.help_resources or "",
+                ]
+            )
 
         return response
 
@@ -238,25 +260,35 @@ class ImportTagsView(ManagerRequiredView):
         if csv_file.multiple_chunks():
             return JsonResponse({"error": "Uploaded file is too big"})
 
-        required_cols = ["Name", "Description", "Confidential_Info"]
-        with csv_file.open("r") as fh:
-            red = csv.DictReader(fh)
-            cols_present = red.fieldnames
-            if any(req not in cols_present for req in required_cols):
-                return JsonResponse(
-                    {"error": "CSV file does not have required column headings"}
-                )
+        required_cols = [
+            "Name",
+            "Description",
+            "Confidential_Info",
+            "Help_Threshold",
+            "Help_Resources",
+        ]
 
-            for row in red:
-                try:
-                    PedagogyTag.objects.get_or_create(
-                        tag_name=row["Name"],
-                        defaults={
-                            "text": row["Description"],
-                            "confidential_info": row["Confidential_Info"],
-                        },
-                    )
-                except IntegrityError as err:
-                    return JsonResponse({"error": f"{err}"})
+        csv_file.open()
+        text_file = io.TextIOWrapper(csv_file.file, encoding='utf-8')
+        red = csv.DictReader(text_file)
+        cols_present = red.fieldnames
+        if any(req not in cols_present for req in required_cols):
+            return JsonResponse(
+                {"error": "CSV file does not have required column headings"}
+            )
+
+        for row in red:
+            try:
+                PedagogyTag.objects.get_or_create(
+                    tag_name=row["Name"],
+                    defaults={
+                        "text": row["Description"],
+                        "confidential_info": row["Confidential_Info"],
+                        "help_threshold": row["Help_Threshold"],
+                        "help_resources": row["Help_Resources"],
+                    },
+                )
+            except Exception as e:
+                return JsonResponse({"error": str(e)})
 
         return JsonResponse({"success": True})
