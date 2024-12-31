@@ -269,7 +269,7 @@ class ImportTagsView(ManagerRequiredView):
         ]
 
         csv_file.open()
-        text_file = io.TextIOWrapper(csv_file.file, encoding='utf-8')
+        text_file = io.TextIOWrapper(csv_file.file, encoding="utf-8")
         red = csv.DictReader(text_file)
         cols_present = red.fieldnames
         if any(req not in cols_present for req in required_cols):

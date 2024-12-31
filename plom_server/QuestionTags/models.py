@@ -19,27 +19,21 @@ It keeps track of multiple tags associated with a single question.
 
 class PedagogyTag(Tag):
     """Represents a tag with its description.
-    
+
     Fields:
         tag_name (TextField): The name of the tag.
         description (TextField): The description of the tag.
         confidential_info (TextField): Private tag information not shown to students.
         help_threshold (FloatField): The score threshold at which help resources are shown in student report.
         help_resources (TextField): The help text to be shown in student report
-    
+
     """
 
     tag_name = models.TextField(unique=True)
-    description = models.TextField(
-        null=True, blank=True, default=""
-    )
-    confidential_info = models.TextField(
-        null=True, blank=True, default=""
-    )
+    description = models.TextField(null=True, blank=True, default="")
+    confidential_info = models.TextField(null=True, blank=True, default="")
     help_threshold = models.FloatField(default=0.5)
-    help_resources = models.TextField(
-        null=True, blank=True, default=""
-    )
+    help_resources = models.TextField(null=True, blank=True, default="")
 
     def __str__(self):
         """Return the tag name."""

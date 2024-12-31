@@ -65,10 +65,13 @@ class QuestionTagService:
 
     @staticmethod
     def create_tag(
-        tag_name: str, description: str, *, user: User, 
+        tag_name: str,
+        description: str,
+        *,
+        user: User,
         confidential_info: str | None = None,
         help_threshold: float = 0.5,
-        help_text: str | None = None
+        help_text: str | None = None,
     ) -> None:
         """Create a new tag.
 
@@ -79,7 +82,7 @@ class QuestionTagService:
         Keyword Args:
             user: The user creating the tag.
             confidential_info: Text shown only to markers, not the students.
-            help_threshold: The score threshold at which help 
+            help_threshold: The score threshold at which help
                             resources are shown in student report.
             help_text: The help text to be shown in student report.
 
@@ -97,7 +100,7 @@ class QuestionTagService:
                 user=user,
                 confidential_info=confidential_info,
                 help_threshold=help_threshold,
-                help_resources=help_text
+                help_resources=help_text,
             )
         except IntegrityError:
             raise IntegrityError(f"A tag with the name '{tag_name}' already exists.")
@@ -120,9 +123,15 @@ class QuestionTagService:
         tag.delete()
 
     @staticmethod
-    def edit_tag(tag_pk, tag_name, text, *, 
-                 confidential_info=None, help_threshold=0.5, 
-                 help_text=None):
+    def edit_tag(
+        tag_pk,
+        tag_name,
+        text,
+        *,
+        confidential_info=None,
+        help_threshold=0.5,
+        help_text=None,
+    ):
         """Edit an existing tag.
 
         Args:
@@ -132,7 +141,7 @@ class QuestionTagService:
 
         Keyword Args:
             confidential_info: text shown only to markers, not the students.
-            help_threshold: The score threshold at which help resources 
+            help_threshold: The score threshold at which help resources
                             are shown in student report.
             help_text: The help text to be shown in student report.
 
