@@ -1,24 +1,20 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2024 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Brennen Chiu
 
 from __future__ import annotations
 
-from copy import deepcopy
 import logging
-from math import ceil
-from pathlib import Path
 import random
 import re
 import sys
+from copy import deepcopy
+from importlib import resources
+from math import ceil
+from pathlib import Path
 from typing import Any
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -28,7 +24,6 @@ import tomlkit
 
 import plom
 from plom.tpv_utils import new_magic_code
-
 
 specdir = Path("specAndDatabase")
 log = logging.getLogger("spec")

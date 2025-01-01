@@ -1,23 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 
+from importlib import resources
 from math import sqrt
-import sys
 
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
-
-from PIL import Image
-from PIL import ImageChops
+from PIL import Image, ImageChops
 
 import plom.scan
 from plom.scan import rotate_bitmap
-from plom.scan.rotate import pil_load_with_jpeg_exif_rot_applied
-from plom.scan.rotate import rot_angle_from_jpeg_exif_tag
+from plom.scan.rotate import (
+    pil_load_with_jpeg_exif_rot_applied,
+    rot_angle_from_jpeg_exif_tag,
+)
 
 
 def relative_error(x, y):

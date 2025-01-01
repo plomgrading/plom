@@ -1,19 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 
-from io import BytesIO
 import subprocess
-import sys
 import tempfile
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
+from importlib import resources
+from io import BytesIO
 
 from PIL import Image
 
 import plom.server
+
 from .textools import texFragmentToPNG as processFragment
 
 # TODO: this too: pageNotSubmitted

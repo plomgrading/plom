@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020-2023 Andrew Rechnitzer
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
@@ -10,23 +10,16 @@
 
 import base64
 import json
-from pathlib import Path
 import random
-import sys
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
+from importlib import resources
+from pathlib import Path
 
 import pymupdf as fitz
 
 import plom.create
 import plom.create.fonts
+from plom.create import build_extra_page_pdf, with_manager_messenger
 from plom.create import paperdir as _paperdir
-from plom.create import with_manager_messenger
-from plom.create import build_extra_page_pdf
-
 
 possible_answers = [
     "I am so sorry, I really did study this... :(",

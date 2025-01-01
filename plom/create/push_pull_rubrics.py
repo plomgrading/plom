@@ -1,15 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 
 """Tools for upload/downloading rubrics from Plom servers."""
 
 import json
 import sys
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
+from importlib import resources
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -19,7 +15,6 @@ import tomlkit
 
 # try to avoid importing Pandas unless we use specific functions: Issue #2154
 # import pandas
-
 from plom.create import with_manager_messenger
 
 
