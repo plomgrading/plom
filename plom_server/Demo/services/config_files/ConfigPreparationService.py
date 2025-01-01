@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
 """Handle creating pre-bundle server state from a config file.
@@ -10,13 +10,9 @@ server will be created in order from test specification to building test-papers.
 """
 
 import sys
-from typing import Dict
+from importlib import resources
 from pathlib import Path
-
-if sys.version_info >= (3, 10):
-    from importlib import resources
-else:
-    import importlib_resources as resources
+from typing import Dict
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
