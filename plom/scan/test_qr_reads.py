@@ -6,10 +6,10 @@
 import json
 from importlib import resources
 
-from PIL import Image
-
 import plom.scan
 from plom.scan import QRextract, QRextract_legacy
+
+from .test_rotations import _PIL_Image_open
 
 
 def relative_error(x, y) -> float:
@@ -17,7 +17,7 @@ def relative_error(x, y) -> float:
 
 
 def test_qr_reads_from_image() -> None:
-    im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
+    im = _PIL_Image_open(resources.files(plom.scan) / "test_zbar_fails.png")
     q = QRextract(im)
     assert not q["NE"]  # staple
     assert q["NW"]["tpv_signature"] == "00002806012823730"
@@ -32,7 +32,7 @@ def test_qr_reads_from_image() -> None:
 
 
 def test_qr_reads_from_image_legacy() -> None:
-    im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
+    im = _PIL_Image_open(resources.files(plom.scan) / "test_zbar_fails.png")
     p = QRextract_legacy(im, write_to_file=False)
     assert p is not None
     assert not p["NE"]  # staple
@@ -42,9 +42,8 @@ def test_qr_reads_from_image_legacy() -> None:
 
 
 def test_qr_reads_slight_rotate() -> None:
-    # mypy unhappy about `im` changing types here
-    _im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
-    im = _im.rotate(10, expand=True)
+    im = _PIL_Image_open(resources.files(plom.scan) / "test_zbar_fails.png")
+    im = im.rotate(10, expand=True)
     q = QRextract(im)
     assert not q["NE"]
     assert q["NW"]["tpv_signature"] == "00002806012823730"
@@ -59,8 +58,8 @@ def test_qr_reads_slight_rotate() -> None:
 
 
 def test_qr_reads_slight_rotate_legacy() -> None:
-    _im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
-    im = _im.rotate(10, expand=True)
+    im = _PIL_Image_open(resources.files(plom.scan) / "test_zbar_fails.png")
+    im = im.rotate(10, expand=True)
     p = QRextract_legacy(im, write_to_file=False)
     assert p is not None
     assert not p["NE"]
@@ -70,8 +69,8 @@ def test_qr_reads_slight_rotate_legacy() -> None:
 
 
 def test_qr_reads_upside_down() -> None:
-    _im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
-    im = _im.rotate(180)
+    im = _PIL_Image_open(resources.files(plom.scan) / "test_zbar_fails.png")
+    im = im.rotate(180)
     q = QRextract(im)
     assert not q["SW"]
     assert q["SE"]["tpv_signature"] == "00002806012823730"
@@ -86,8 +85,8 @@ def test_qr_reads_upside_down() -> None:
 
 
 def test_qr_reads_upside_down_legacy() -> None:
-    _im = Image.open(resources.files(plom.scan) / "test_zbar_fails.png")
-    im = _im.rotate(180)
+    im = _PIL_Image_open(resources.files(plom.scan) / "test_zbar_fails.png")
+    im = im.rotate(180)
     p = QRextract_legacy(im, write_to_file=False)
     assert p is not None
     assert not p["SW"]

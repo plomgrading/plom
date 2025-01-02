@@ -9,13 +9,13 @@ from importlib import resources
 
 import cv2 as cv
 import numpy as np
+from django.test import TestCase
 from PIL import Image
 
-from django.test import TestCase
-
 from plom.scan import QRextract
-from ..services import PageImageProcessor, ScanService
+
 from .. import tests as _Scan_tests
+from ..services import PageImageProcessor, ScanService
 
 
 class PageImageProcessorTests(TestCase):
@@ -135,7 +135,9 @@ class PageImageProcessorTests(TestCase):
     def test_affine_matrix_correct_5_deg_rot(self) -> None:
         """Test PageImageProcessor.create_affine_transformation_matrix() for an image with 5-degree rotation."""
         pipr = PageImageProcessor()
-        test_img = Image.open(resources.files(_Scan_tests) / "id_page_img.png")
+        res = resources.files(_Scan_tests) / "id_page_img.png"
+        assert isinstance(res, (pathlib.Path, resources.abc.Traversable))
+        test_img = Image.open(res)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             img_rot_path = pathlib.Path(tmpdir) / "rot_5_deg_img.png"
@@ -176,7 +178,9 @@ class PageImageProcessorTests(TestCase):
         in_left = 0.09
         in_right = 0.91
         pipr = PageImageProcessor()
-        test_img = Image.open(resources.files(_Scan_tests) / "id_page_img.png")
+        res = resources.files(_Scan_tests) / "id_page_img.png"
+        assert isinstance(res, (pathlib.Path, resources.abc.Traversable))
+        test_img = Image.open(res)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             img_rot_path = pathlib.Path(tmpdir) / "rotated_img.png"

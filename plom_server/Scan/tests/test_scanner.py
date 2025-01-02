@@ -11,24 +11,24 @@ import pathlib
 import random
 import tempfile
 from importlib import resources
+from pathlib import Path
 from typing import Any
 
 import exif
 import pymupdf as fitz
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.files import File
+from django.test import TestCase
+from django.utils import timezone
+from model_bakery import baker
 from PIL import Image
 
-from django.utils import timezone
-from django.test import TestCase
-from django.contrib.auth.models import User
-from django.conf import settings
-from django.core.files import File
-from model_bakery import baker
+from plom.scan import QRextract, pdfmucker, rotate
 
-from plom.scan import QRextract, rotate, pdfmucker
-
-from ..services import ScanService, PageImageProcessor
-from ..models import StagingBundle, StagingImage
 from .. import tests as _Scan_tests
+from ..models import StagingBundle, StagingImage
+from ..services import PageImageProcessor, ScanService
 
 
 class ScanServiceTests(TestCase):
@@ -197,10 +197,10 @@ class MoreScanServiceTests(TestCase):
         scanner = ScanService()
 
         image_upright_path = resources.files(_Scan_tests) / "page_img_good.png"
-
         qrs_upright = QRextract(image_upright_path)
         codes_upright = scanner.parse_qr_code([qrs_upright])
-
+        # mypy complains about Traversable
+        assert isinstance(image_upright_path, (Path, resources.abc.Traversable))
         image_upright = Image.open(image_upright_path)
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -241,7 +241,8 @@ class MoreScanServiceTests(TestCase):
         image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
         qrs_original = QRextract(image_original_path)
         codes_original = scanner.parse_qr_code([qrs_original])
-
+        # mypy complains about Traversable
+        assert isinstance(image_original_path, (Path, resources.abc.Traversable))
         image_original = Image.open(image_original_path)
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -287,7 +288,8 @@ class MoreScanServiceTests(TestCase):
         scanner = ScanService()
 
         image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
-
+        # mypy complains about Traversable
+        assert isinstance(image_original_path, (Path, resources.abc.Traversable))
         image_original = Image.open(image_original_path)
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -316,7 +318,8 @@ class MoreScanServiceTests(TestCase):
         image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
         qrs_original = QRextract(image_original_path)
         codes_original = scanner.parse_qr_code([qrs_original])
-
+        # mypy complains about Traversable
+        assert isinstance(image_original_path, (Path, resources.abc.Traversable))
         image_original = Image.open(image_original_path)
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -361,7 +364,8 @@ class MoreScanServiceTests(TestCase):
         image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
         qrs_original = QRextract(image_original_path)
         codes_original = scanner.parse_qr_code([qrs_original])
-
+        # mypy complains about Traversable
+        assert isinstance(image_original_path, (Path, resources.abc.Traversable))
         image_original = Image.open(image_original_path)
 
         with tempfile.TemporaryDirectory() as tmpdir:

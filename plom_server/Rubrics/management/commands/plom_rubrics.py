@@ -57,8 +57,9 @@ class Command(BaseCommand):
         else:
             question_indices = list(range(1, _numquestions + 1))
 
-        with open(resources.files(plom) / "demo_rubrics.toml", "rb") as f:
-            rubrics_in = tomllib.load(f)["rubric"]
+        with (resources.files(plom) / "demo_rubrics.toml").open("rb") as f:
+            # MyPy complains incompatible type "IO[bytes]" expected "BinaryIO"
+            rubrics_in = tomllib.load(f)["rubric"]  # type: ignore[arg-type]
         rubrics = []
         for rub in rubrics_in:
             if not rub.get("kind"):

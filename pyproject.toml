@@ -242,6 +242,7 @@ module = [
     'canvasapi',
     'exif',
     'importlib_resources',
+    "importlib.resources.abc",
     'imutils.*',
     'requests_toolbelt',
     'sklearn.*',

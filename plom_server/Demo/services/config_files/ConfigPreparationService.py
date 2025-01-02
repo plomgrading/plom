@@ -9,30 +9,28 @@ Assumes that the config describes a valid server state, and that the
 server will be created in order from test specification to building test-papers.
 """
 
+from __future__ import annotations
+
 import sys
 from importlib import resources
 from pathlib import Path
-from typing import Dict
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
 
-from Papers.services import (
-    SpecificationService,
-    PaperCreatorService,
-)
+from Papers.services import PaperCreatorService, SpecificationService
 from Preparation import useful_files_for_testing as useful_files
 from Preparation.services import (
-    SourceService,
-    PrenameSettingService,
-    StagingStudentService,
-    PQVMappingService,
     PapersPrinted,
+    PQVMappingService,
+    PrenameSettingService,
+    SourceService,
+    StagingStudentService,
 )
 
-from . import PlomServerConfig, PlomConfigCreationError
+from . import PlomConfigCreationError, PlomServerConfig
 
 
 def create_specification(config: PlomServerConfig):
@@ -59,8 +57,8 @@ def upload_test_sources(config: PlomServerConfig) -> None:
         version2 = resources.files(useful_files) / "test_version2.pdf"
         source_paths = [version1, version2]
 
-    assert isinstance(source_paths, list)
     try:
+        assert isinstance(source_paths, list)
         for i, path in enumerate(source_paths):
             SourceService.store_source_pdf(i + 1, path)
     except Exception as e:
@@ -78,9 +76,9 @@ def upload_classlist(config: PlomServerConfig):
     if classlist_path == "demo":
         classlist_path = resources.files(useful_files) / "cl_for_demo.csv"
 
-    assert isinstance(classlist_path, Path)
     try:
-        with open(classlist_path, "rb") as classlist_f:
+        assert isinstance(classlist_path, (Path, resources.abc.Traversable))
+        with classlist_path.open("rb") as classlist_f:
             sss = StagingStudentService()
             success, warnings = sss.validate_and_use_classlist_csv(
                 classlist_f, ignore_warnings=True
@@ -96,7 +94,7 @@ def create_qv_map_and_papers(config: PlomServerConfig):
 
     Either generated from a number-to-produce value or a link to a QVmap CSV.
     """
-    qvmap: Dict[int, Dict[int, int]] = {}
+    qvmap: dict[int, dict[int, int]] = {}
     if config.num_to_produce:
         qvmap = PQVMappingService().make_version_map(config.num_to_produce)
     else:

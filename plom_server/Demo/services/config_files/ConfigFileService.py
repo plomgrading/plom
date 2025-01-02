@@ -1,13 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2025 Colin B. Macdonald
 
 """Handle building a server database from a config file."""
 
-from dataclasses import dataclass, asdict
-from pathlib import Path
+from __future__ import annotations
+
 import sys
-from typing import Union, Optional, List
+from dataclasses import asdict, dataclass
+from importlib import resources
+from pathlib import Path
+from typing import List, Optional, Union
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -48,9 +52,9 @@ class PlomServerConfig:
 
     parent_dir: Path
     test_spec: Optional[Union[str, Path]] = None
-    test_sources: Optional[Union[str, List[Path]]] = None
+    test_sources: str | list[Path] | list[resources.abc.Traversable] | None = None
     prenaming_enabled: bool = False
-    classlist: Optional[Union[str, Path]] = None
+    classlist: str | Path | resources.abc.Traversable | None = None
     num_to_produce: Optional[int] = None
     qvmap: Optional[Path] = None
     bundles: Optional[List[DemoBundleConfig]] = None

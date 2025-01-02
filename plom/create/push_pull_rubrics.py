@@ -148,8 +148,9 @@ def upload_demo_rubrics(*, msgr, numquestions: int = 3) -> int:
     The demo data is a bit sparse: we fill in missing pieces and
     multiply over questions.
     """
-    with open(resources.files("plom") / "demo_rubrics.toml", "rb") as f:
-        _rubrics_in = tomllib.load(f)
+    with (resources.files("plom") / "demo_rubrics.toml").open("rb") as f:
+        # MyPy complains incompatible type "IO[bytes]" expected "BinaryIO"
+        _rubrics_in = tomllib.load(f)  # type: ignore[arg-type]
     rubrics_in = _rubrics_in["rubric"]
     rubrics = []
     for rub in rubrics_in:

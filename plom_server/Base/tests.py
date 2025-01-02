@@ -1,17 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from __future__ import annotations
 
-from functools import wraps
-from pathlib import Path
 import pydoc
 import re
+from functools import wraps
+from importlib import resources
 from inspect import getfile
-
-from django.test import TestCase
+from pathlib import Path
 
 from Demo.services import (
     ConfigFileService,
@@ -19,12 +18,13 @@ from Demo.services import (
     ConfigTaskService,
     PlomServerConfig,
 )
+from django.test import TestCase
 
 
 class ConfigTestCase(TestCase):
     """Populate the test database with models following a .toml file."""
 
-    config_file: str | None = None
+    config_file: str | Path | resources.abc.Traversable | None = None
 
     def setUp(self) -> None:
         if self.config_file is None:
