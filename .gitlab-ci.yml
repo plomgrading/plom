@@ -394,10 +394,10 @@ mypy-type-checking:
     - python3 -m pip install mypy~=1.14.0
   script:
     - mypy --version
-    - mypy plom --python-ver 3.8 --install-types --non-interactive || true
-    - mypy plom --python-ver 3.8
-    - mypy plom_server --python-ver 3.8 --install-types --non-interactive || true
-    - mypy plom_server --python-ver 3.8
+    - mypy plom --python-ver 3.10 --install-types --non-interactive || true
+    - mypy plom --python-ver 3.10
+    - mypy plom_server --python-ver 3.10 --install-types --non-interactive || true
+    - mypy plom_server --python-ver 3.10
   allow_failure: true
 
 
