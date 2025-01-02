@@ -996,13 +996,13 @@ newOS_newdeps_webplom:
 
 
 # Ensure minimum listed dependency versions actually work on older system
-# 1. oldest reasonably supported popular OS
-# 2. take python deps from package manager
+# 1. oldest reasonably supported popular OS (Ubuntu 22.04)
+# 2. take python deps from package manager (22.04 has Python 3.10)
 # 3. force the minimum version from setup.py
 # Goal here is to catch changes that need newer features of a dependency.
 oldOS_mindeps:
   stage: alt_build
-  image: ubuntu:20.04
+  image: ubuntu:22.04
   before_script:
     - apt-get update
     - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
@@ -1070,7 +1070,7 @@ oldOS_mindeps:
 # Minimum Python, minimum deps
 minpy_mindeps:
   stage: alt_build
-  image: python:3.8
+  image: python:3.10
   before_script:
     - apt-get update
     - apt-get --no-install-recommends --yes install
@@ -1096,7 +1096,7 @@ minpy_mindeps_webplom:
     POSTGRES_HOST_AUTH_METHOD: trust
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
-  image: python:3.8
+  image: python:3.10
   before_script:
     - apt-get update
     - apt-get --no-install-recommends --yes install
