@@ -25,8 +25,9 @@ class PedagogyTag(Tag):
         description (TextField): The description of the tag.
         confidential_info (TextField): Private tag information not shown to students.
         help_threshold (FloatField): The score threshold at which help resources are shown in student report.
-        help_resources (TextField): The help text to be shown in student report
-
+                                     Score is calculated per student based on the average percentage that
+                                     the student got on questions tagged with a tag.
+        help_resources (TextField): The help text to be shown in student report.
     """
 
     tag_name = models.TextField(unique=True)

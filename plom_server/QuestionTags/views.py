@@ -152,7 +152,6 @@ class EditTagView(UpdateView, ManagerRequiredView):
         Returns:
             A JSON response object.
         """
-        print(request.POST)
         tag_id = request.POST.get("tag_id")
         # strip out leading/trailing whitespace from name,text,confidential_info
         tag_name = request.POST.get("tagName").strip()
@@ -274,7 +273,7 @@ class ImportTagsView(ManagerRequiredView):
         cols_present = red.fieldnames
         if any(req not in cols_present for req in required_cols):
             return JsonResponse(
-                {"error": "CSV file does not have required column headings"}
+                {"error": f"Expected {required_cols} but got {cols_present}"}
             )
 
         for row in red:
@@ -288,7 +287,14 @@ class ImportTagsView(ManagerRequiredView):
                         "help_resources": row["Help_Resources"],
                     },
                 )
+            except IntegrityError as e:
+                return JsonResponse({"error": f"Database Integrity error: {str(e)}"})
+            except ValueError as e:
+                return JsonResponse({"error": f"Value error: {str(e)}"})
+            except KeyError as e:
+                return JsonResponse({"error": f"Missing required field: {str(e)}"})
             except Exception as e:
-                return JsonResponse({"error": str(e)})
+                # To catch any other errors aside form the 3 above which may be expected
+                return JsonResponse({"error": f"Unexpected error: {str(e)}"})
 
         return JsonResponse({"success": True})
