@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Colin B. Macdonald
-# Copyright (C) 2024 Aden Chan
+# Copyright (C) 2025 Aden Chan
 
 from django.contrib.auth.models import User
 from django.db import models

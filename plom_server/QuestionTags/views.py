@@ -2,7 +2,7 @@
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
-# Copyright (C) 2024 Aden Chan
+# Copyright (C) 2025 Aden Chan
 
 import csv
 import io
