@@ -71,7 +71,7 @@ dependencies = [
     "pandas>=1.5.0",
     "passlib",
     "peewee>=3.13.3",
-    "Pillow>=7.0.0",  # Consider >=10.2 for Issue #3216
+    "Pillow>=10.2",
     "platformdirs>=3.0.0",
     "pymupdf>=1.24.6",
     "PyMySQL>=1.0.2",

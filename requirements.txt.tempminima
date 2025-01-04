@@ -42,7 +42,7 @@ imutils==0.5.4
 matplotlib==3.5.3
 numpy==1.21.2
 opencv-python-headless==4.5.4.60
-Pillow==7.0.0
+Pillow==10.2.0
 pandas==1.5.0
 peewee==3.13.3
 platformdirs==3.0.0

@@ -54,7 +54,7 @@ opencv-python-headless==4.9.0.80  # hold back, type troubles
 packaging==24.2
 pandas==2.1.4
 passlib==1.7.4
-Pillow==10.4.0
+Pillow==11.1.0
 psycopg2-binary==2.9.10
 pydyf==0.9.0  # Issue #3589, hold back
 pymupdf==1.24.10
