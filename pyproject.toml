@@ -41,7 +41,6 @@ classifiers=[
 dynamic = ['version']
 requires-python = '>=3.10'
 # note aiohttp and peewee are legacy deps only
-# Note: importlib_resources for < 3.10 in plom_server, not sure why
 # pyopenssl is not a direct dependency but old versions caused trouble: Issue #3150
 dependencies = [
     "aiohttp>=3.7.2",
@@ -241,7 +240,6 @@ module = [
     'api_secrets',
     'canvasapi',
     'exif',
-    'importlib_resources',
     "importlib.resources.abc",
     'imutils.*',
     'requests_toolbelt',

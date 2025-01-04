@@ -9,17 +9,12 @@ from __future__ import annotations
 
 import logging
 import random
-import sys
 import tempfile
 import threading
+from importlib import resources
 from pathlib import Path
 from time import sleep, time
 from typing import Any
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
 
 # from PyQt6.QtCore import QThread
 from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal, pyqtSlot

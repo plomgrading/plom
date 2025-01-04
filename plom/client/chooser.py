@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Forest Kobayashi
 # Copyright (C) 2021 Peter Lee
@@ -16,31 +16,26 @@ __copyright__ = "Copyright (C) 2018-2024 Andrew Rechnitzer, Colin B. Macdonald, 
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-from pathlib import Path
 import logging
 import shutil
 import sys
 import tempfile
 import time
+from importlib import resources
+from pathlib import Path
 from typing import Any
 
 import arrow
 import platformdirs
 from packaging.version import Version
 
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
-
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
 import tomlkit
-
 import urllib3
-from PyQt6 import uic, QtGui
+from PyQt6 import QtGui, uic
 from PyQt6.QtCore import pyqtSlot
 from PyQt6.QtWidgets import QDialog, QMessageBox
 

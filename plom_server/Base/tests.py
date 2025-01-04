@@ -8,7 +8,7 @@ from __future__ import annotations
 import pydoc
 import re
 from functools import wraps
-from importlib import resources
+from importlib.resources.abc import Traversable
 from inspect import getfile
 from pathlib import Path
 
@@ -24,7 +24,7 @@ from django.test import TestCase
 class ConfigTestCase(TestCase):
     """Populate the test database with models following a .toml file."""
 
-    config_file: str | Path | resources.abc.Traversable | None = None
+    config_file: str | Path | Traversable | None = None
 
     def setUp(self) -> None:
         if self.config_file is None:
