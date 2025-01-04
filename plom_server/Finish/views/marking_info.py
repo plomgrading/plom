@@ -19,9 +19,6 @@ from Papers.services import SpecificationService
 from ..services import StudentMarkService, TaMarkingService
 from ..services import DataExtractionService, D3Service
 from ..forms import StudentMarksFilterForm
-import hashlib
-from io import StringIO
-import pandas as pd
 
 
 class MarkingInformationView(ManagerRequiredView):
@@ -110,27 +107,8 @@ class MarkingInformationView(ManagerRequiredView):
         privacy_mode = request.POST.get("privacy_mode", "off") == "on"
         privacy_salt = request.POST.get("privacy_mode_salt", "")
         csv_as_string = StudentMarkService().build_marks_csv_as_string(
-            version_info, timing_info, warning_info
+            version_info, timing_info, warning_info, privacy_mode, privacy_salt
         )
-
-        # Drops the student name and hashes the student ID if privacy mode is on
-        if privacy_mode:
-            csv_file = StringIO(csv_as_string)
-            df = pd.read_csv(csv_file)
-
-            # Remove the student name column
-            if "StudentName" in df.columns:
-                df.drop(columns=["StudentName"], inplace=True)
-
-            # Hash the student IDs
-            if "StudentID" in df.columns:
-                df["StudentID"] = df["StudentID"].apply(
-                    lambda x: hashlib.sha256(
-                        (str(x) + privacy_salt).encode()
-                    ).hexdigest()
-                )
-
-            csv_as_string = df.to_csv(index=False)
 
         filename = (
             "marks--"

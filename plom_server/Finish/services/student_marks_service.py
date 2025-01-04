@@ -6,6 +6,7 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Andreas Buttenschoen
+# Copyright (C) 2025 Aden Chan
 
 from __future__ import annotations
 
@@ -22,6 +23,7 @@ from Mark.models import MarkingTask
 from Papers.models.paper_structure import Paper
 from Papers.services import SpecificationService, PaperInfoService
 from Scan.services import ManageScanService
+import hashlib
 
 
 class StudentMarkService:
@@ -342,7 +344,8 @@ class StudentMarkService:
         )
 
     def get_csv_header(
-        self, version_info: bool, timing_info: bool, warning_info: bool
+        self, version_info: bool, timing_info: bool, warning_info: bool,
+        privacy_mode: bool
     ) -> list[str]:
         """Get the header for the csv file.
 
@@ -374,18 +377,41 @@ class StudentMarkService:
             keys.extend(["last_update"])
         if warning_info:
             keys.append("warnings")
+        if privacy_mode:
+            keys.remove("StudentName")
 
         return keys
 
     def build_marks_csv_as_string(
-        self, version_info: bool, timing_info: bool, warning_info: bool
+        self, version_info: bool, timing_info: bool, warning_info: bool,
+        privacy_mode: bool, privacy_salt: str
     ) -> str:
+        """Generates a csv in string format with the marks of all students.
+
+        Args:
+            version_info (bool): Whether to include the version info.
+            timing_info (bool): Whether to include the timing info.
+            warning_info (bool): Whether to include the warning info.
+            privacy_mode (bool): Whether to hash the student ID.
+            privacy_salt (str): The salt to hash the student ID with.
+
+        Returns:
+            str: The csv in string format.
+        """
         sms = StudentMarkService()
         student_marks = self.get_all_marking_info_faster()
-        # ignore any extra fields in the dictionary - this means
-        # that if the version_info, or timing_info or warning_info
-        # not in the header, then it won't be put into the csv.
-        keys = sms.get_csv_header(version_info, timing_info, warning_info)
+
+        keys = sms.get_csv_header(version_info, timing_info, warning_info, privacy_mode)
+
+        # Hash the StudentID if privacy mode is on
+        if privacy_mode:
+            for mark in student_marks:
+                student_id = mark.get("StudentID", "")
+                if student_id:
+                    salted_id = student_id + privacy_salt
+                    hashed_id = hashlib.sha256(salted_id.encode()).hexdigest()
+                    mark["StudentID"] = hashed_id
+
         csv_io = StringIO()
         w = csv.DictWriter(csv_io, keys, extrasaction="ignore")
         w.writeheader()
