@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2025 Aden Chan
 
 import json
 
@@ -108,7 +109,7 @@ class MarkingInformationView(ManagerRequiredView):
         warning_info = request.POST.get("warning_info", "off") == "on"
         privacy_mode = request.POST.get("privacy_mode", "off") == "on"
         privacy_salt = request.POST.get("privacy_mode_salt", "")
-        print(privacy_mode, privacy_salt)   
+        print(privacy_mode, privacy_salt)
         csv_as_string = StudentMarkService().build_marks_csv_as_string(
             version_info, timing_info, warning_info
         )
@@ -125,7 +126,9 @@ class MarkingInformationView(ManagerRequiredView):
             # Hash the student IDs
             if "StudentID" in df.columns:
                 df["StudentID"] = df["StudentID"].apply(
-                    lambda x: hashlib.sha256((str(x) + privacy_salt).encode()).hexdigest()
+                    lambda x: hashlib.sha256(
+                        (str(x) + privacy_salt).encode()
+                    ).hexdigest()
                 )
 
             csv_as_string = df.to_csv(index=False)
