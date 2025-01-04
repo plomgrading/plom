@@ -15,6 +15,6 @@ class Command(BaseCommand):
         pass
 
     def handle(self, *args, **options):
-        csv_as_string = StudentMarkService().build_marks_csv_as_string(True, True, True)
+        csv_as_string = StudentMarkService().build_marks_csv_as_string(True, True, True, False, "")
         with open("marks.csv", "w+") as fh:
             fh.write(csv_as_string)
