@@ -344,8 +344,11 @@ class StudentMarkService:
         )
 
     def get_csv_header(
-        self, version_info: bool, timing_info: bool, warning_info: bool,
-        privacy_mode: bool
+        self,
+        version_info: bool,
+        timing_info: bool,
+        warning_info: bool,
+        privacy_mode: bool,
     ) -> list[str]:
         """Get the header for the csv file.
 
@@ -353,6 +356,7 @@ class StudentMarkService:
             version_info: Whether to include the version info.
             timing_info: Whether to include the timing info.
             warning_info: Whether to include the warning info.
+            privacy_mode: Whether to hash the student ID and remove the student names.
 
         Returns:
             List holding the header for the csv file. Contains student info, marks,
@@ -383,8 +387,12 @@ class StudentMarkService:
         return keys
 
     def build_marks_csv_as_string(
-        self, version_info: bool, timing_info: bool, warning_info: bool,
-        privacy_mode: bool, privacy_salt: str
+        self,
+        version_info: bool,
+        timing_info: bool,
+        warning_info: bool,
+        privacy_mode: bool,
+        privacy_salt: str,
     ) -> str:
         """Generates a csv in string format with the marks of all students.
 
