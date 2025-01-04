@@ -49,6 +49,20 @@
                         <input type="checkbox" name="timing_info" checked>
                         <label for="check_timing">timing info</label>
                     </div>
+                    <div class="col-auto">
+                        <input type="checkbox" name="privacy_mode" checked>
+                        <label for="check_timing">privacy mode</label>
+                    </div>
+                    <div class="col-auto" id="privacy-mode-salt-div" style="display: none;">
+                        <input type="text" name="privacy_mode_salt">
+                        <label for="check_timing">privacy mode salt</label>
+                    </div>
+                    <script>
+                        document.querySelector('input[name="privacy_mode"]').addEventListener('change', function() {
+                            document.getElementById('privacy-mode-salt-div').style.display = this.checked ? 'block' : 'none';
+                        });
+                        document.querySelector('input[name="privacy_mode"]').dispatchEvent(new Event('change'));
+                    </script>
                 </div>
             </form>
             <p>
@@ -56,6 +70,8 @@
                     <li>this is a standard spreadsheet of student grading information</li>
                     <li>we recommend that you include warning information - it will help you check that papers are ID'd and marked</li>
                     <li>download does not include incomplete grading actions (i.e. ungraded questions, grading in progress, etc.)</li>
+                    <li>privacy mode will replace identifying information with an obfuscated code</li>
+                    <li>using the same salt will allow for matching of student data across tests</li>
                 </ul>
             </p>
         </div>
