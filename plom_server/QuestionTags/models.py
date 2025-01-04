@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2025 Aden Chan
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -17,12 +18,23 @@ It keeps track of multiple tags associated with a single question.
 
 
 class PedagogyTag(Tag):
-    """Represents a tag with its description."""
+    """Represents a tag with its description.
+
+    Fields:
+        tag_name (TextField): The name of the tag.
+        description (TextField): The description of the tag.
+        confidential_info (TextField): Private tag information not shown to students.
+        help_threshold (FloatField): The score threshold at which help resources are shown in student report.
+                                     Score is calculated per student based on the average percentage that
+                                     the student got on questions tagged with a tag.
+        help_resources (TextField): The help text to be shown in student report.
+    """
 
     tag_name = models.TextField(unique=True)
-    confidential_info = models.TextField(
-        null=True, blank=True, default=""
-    )  # can be long
+    description = models.TextField(null=True, blank=True, default="")
+    confidential_info = models.TextField(null=True, blank=True, default="")
+    help_threshold = models.FloatField(default=0.5)
+    help_resources = models.TextField(null=True, blank=True, default="")
 
     def __str__(self):
         """Return the tag name."""

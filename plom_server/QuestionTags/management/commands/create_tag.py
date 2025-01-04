@@ -46,7 +46,7 @@ class Command(BaseCommand):
         try:
             QuestionTagService.create_tag(
                 tag_name=tag_name,
-                text=description,
+                description=description,
                 user=user_obj,
                 confidential_info=confidential_info,
             )
