@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2025 Colin B. Macdonald
 
-import pathlib
 import subprocess
 import tempfile
 from importlib import resources
@@ -37,9 +36,8 @@ def test_frag_broken_tex() -> None:
 
 def test_frag_image_size() -> None:
     res = resources.files(plom.server) / "target_Q_latex_plom.png"
-    # mypy stumbling over resource Traversables
-    assert isinstance(res, (pathlib.Path, resources.abc.Traversable))
-    imgt = Image.open(res)
+    # mypy stumbling over resource Traversables?
+    imgt = Image.open(res)  # type: ignore[arg-type]
     frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
     r, imgdata = processFragment(frag)
     assert r

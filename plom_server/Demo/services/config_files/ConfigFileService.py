@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import sys
 from dataclasses import asdict, dataclass
-from importlib import resources
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -52,9 +51,12 @@ class PlomServerConfig:
 
     parent_dir: Path
     test_spec: Optional[Union[str, Path]] = None
-    test_sources: str | list[Path] | list[resources.abc.Traversable] | None = None
+    # mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
+    # test_sources: str | list[Path] | list[resources.abc.Traversable] | None = None
+    test_sources: str | list[Path] | None = None
     prenaming_enabled: bool = False
-    classlist: str | Path | resources.abc.Traversable | None = None
+    # classlist: str | Path | resources.abc.Traversable | None = None
+    classlist: str | Path | None = None
     num_to_produce: Optional[int] = None
     qvmap: Optional[Path] = None
     bundles: Optional[List[DemoBundleConfig]] = None

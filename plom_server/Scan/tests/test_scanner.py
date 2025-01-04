@@ -11,7 +11,6 @@ import pathlib
 import random
 import tempfile
 from importlib import resources
-from pathlib import Path
 from typing import Any
 
 import exif
@@ -200,8 +199,8 @@ class MoreScanServiceTests(TestCase):
         qrs_upright = QRextract(image_upright_path)
         codes_upright = scanner.parse_qr_code([qrs_upright])
         # mypy complains about Traversable
-        assert isinstance(image_upright_path, (Path, resources.abc.Traversable))
-        image_upright = Image.open(image_upright_path)
+        # assert isinstance(image_upright_path, (Path, resources.abc.Traversable))
+        image_upright = Image.open(image_upright_path)  # type: ignore[arg-type]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_flipped_path = pathlib.Path(tmpdir) / "flipped.png"
@@ -242,8 +241,7 @@ class MoreScanServiceTests(TestCase):
         qrs_original = QRextract(image_original_path)
         codes_original = scanner.parse_qr_code([qrs_original])
         # mypy complains about Traversable
-        assert isinstance(image_original_path, (Path, resources.abc.Traversable))
-        image_original = Image.open(image_original_path)
+        image_original = Image.open(image_original_path)  # type: ignore[arg-type]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_flipped_path = pathlib.Path(tmpdir) / "flipped_no_exif.jpeg"
@@ -289,8 +287,7 @@ class MoreScanServiceTests(TestCase):
 
         image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
         # mypy complains about Traversable
-        assert isinstance(image_original_path, (Path, resources.abc.Traversable))
-        image_original = Image.open(image_original_path)
+        image_original = Image.open(image_original_path)  # type: ignore[arg-type]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_exif_180_path = pathlib.Path(tmpdir) / "upright_exif_180.jpeg"
@@ -319,8 +316,7 @@ class MoreScanServiceTests(TestCase):
         qrs_original = QRextract(image_original_path)
         codes_original = scanner.parse_qr_code([qrs_original])
         # mypy complains about Traversable
-        assert isinstance(image_original_path, (Path, resources.abc.Traversable))
-        image_original = Image.open(image_original_path)
+        image_original = Image.open(image_original_path)  # type: ignore[arg-type]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_flipped_path = pathlib.Path(tmpdir) / "flipped_exif_180.jpeg"
@@ -365,8 +361,7 @@ class MoreScanServiceTests(TestCase):
         qrs_original = QRextract(image_original_path)
         codes_original = scanner.parse_qr_code([qrs_original])
         # mypy complains about Traversable
-        assert isinstance(image_original_path, (Path, resources.abc.Traversable))
-        image_original = Image.open(image_original_path)
+        image_original = Image.open(image_original_path)  # type: ignore[arg-type]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_exif_90_path = pathlib.Path(tmpdir) / "rot_exif_90.jpeg"

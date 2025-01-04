@@ -17,7 +17,8 @@ from . import config_files
 class MarkingTaskPriorityTests(ConfigTestCase):
     """Tests for marking task priority."""
 
-    config_file = resources.files(config_files) / "priority_tests.toml"
+    # mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
+    config_file = resources.files(config_files) / "priority_tests.toml"  # type: ignore[assignment]
 
     def test_taskorder_update(self) -> None:
         """Assert that TaskOrderService.update_priority_ordering() updates MarkingTaskPriority."""

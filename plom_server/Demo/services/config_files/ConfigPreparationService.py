@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import sys
 from importlib import resources
-from pathlib import Path
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -55,7 +54,8 @@ def upload_test_sources(config: PlomServerConfig) -> None:
     if source_paths == "demo":
         version1 = resources.files(useful_files) / "test_version1.pdf"
         version2 = resources.files(useful_files) / "test_version2.pdf"
-        source_paths = [version1, version2]
+        # mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
+        source_paths = [version1, version2]  # type: ignore[list-item]
 
     try:
         assert isinstance(source_paths, list)
@@ -74,10 +74,12 @@ def upload_classlist(config: PlomServerConfig):
     """Upload classlist specified in a config."""
     classlist_path = config.classlist
     if classlist_path == "demo":
-        classlist_path = resources.files(useful_files) / "cl_for_demo.csv"
+        # mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
+        classlist_path = resources.files(useful_files) / "cl_for_demo.csv"  # type: ignore[assignment]
 
+    assert classlist_path is not None
+    assert not isinstance(classlist_path, str)
     try:
-        assert isinstance(classlist_path, (Path, resources.abc.Traversable))
         with classlist_path.open("rb") as classlist_f:
             sss = StagingStudentService()
             success, warnings = sss.validate_and_use_classlist_csv(

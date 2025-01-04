@@ -135,9 +135,7 @@ class PageImageProcessorTests(TestCase):
     def test_affine_matrix_correct_5_deg_rot(self) -> None:
         """Test PageImageProcessor.create_affine_transformation_matrix() for an image with 5-degree rotation."""
         pipr = PageImageProcessor()
-        res = resources.files(_Scan_tests) / "id_page_img.png"
-        assert isinstance(res, (pathlib.Path, resources.abc.Traversable))
-        test_img = Image.open(res)
+        test_img = Image.open(resources.files(_Scan_tests) / "id_page_img.png")  # type: ignore[arg-type]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             img_rot_path = pathlib.Path(tmpdir) / "rot_5_deg_img.png"
@@ -178,9 +176,8 @@ class PageImageProcessorTests(TestCase):
         in_left = 0.09
         in_right = 0.91
         pipr = PageImageProcessor()
-        res = resources.files(_Scan_tests) / "id_page_img.png"
-        assert isinstance(res, (pathlib.Path, resources.abc.Traversable))
-        test_img = Image.open(res)
+        # mypy stumbling over Traversable
+        test_img = Image.open(resources.files(_Scan_tests) / "id_page_img.png")  # type: ignore[arg-type]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             img_rot_path = pathlib.Path(tmpdir) / "rotated_img.png"
