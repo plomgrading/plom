@@ -109,7 +109,6 @@ class MarkingInformationView(ManagerRequiredView):
         warning_info = request.POST.get("warning_info", "off") == "on"
         privacy_mode = request.POST.get("privacy_mode", "off") == "on"
         privacy_salt = request.POST.get("privacy_mode_salt", "")
-        print(privacy_mode, privacy_salt)
         csv_as_string = StudentMarkService().build_marks_csv_as_string(
             version_info, timing_info, warning_info
         )
