@@ -3,8 +3,6 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
 
-from __future__ import annotations
-
 import pydoc
 import re
 from functools import wraps

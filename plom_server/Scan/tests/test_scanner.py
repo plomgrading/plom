@@ -5,8 +5,6 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 
-from __future__ import annotations
-
 import pathlib
 import random
 import tempfile

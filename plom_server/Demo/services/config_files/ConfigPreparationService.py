@@ -9,8 +9,6 @@ Assumes that the config describes a valid server state, and that the
 server will be created in order from test specification to building test-papers.
 """
 
-from __future__ import annotations
-
 import sys
 from importlib import resources
 

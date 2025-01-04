@@ -4,8 +4,6 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
 
-from __future__ import annotations
-
 import pathlib
 import sys
 from importlib import resources

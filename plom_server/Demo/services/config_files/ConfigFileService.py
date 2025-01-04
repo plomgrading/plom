@@ -5,8 +5,6 @@
 
 """Handle building a server database from a config file."""
 
-from __future__ import annotations
-
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
