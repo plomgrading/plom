@@ -51,18 +51,23 @@
                         <label for="check_timing">timing info</label>
                     </div>
                     <div class="col-auto">
-                        <input type="checkbox" name="privacy_mode" checked>
-                        <label for="check_timing">privacy mode</label>
+                        <input type="checkbox" name="privacy_mode" id="privacy_mode">
+                        <label for="privacy_mode">privacy mode</label>
                     </div>
-                    <div class="col-auto" id="privacy-mode-salt-div" style="display: none;">
+                    <div class="col-auto" id="privacy_mode_salt_div" style="display: none;">
                         <input type="text" name="privacy_mode_salt">
-                        <label for="check_timing">privacy mode salt</label>
+                        <label for="privacy_mode_salt">privacy mode salt</label>
                     </div>
                     <script>
-                        document.querySelector('input[name="privacy_mode"]').addEventListener('change', function() {
-                            document.getElementById('privacy-mode-salt-div').style.display = this.checked ? 'block' : 'none';
+                        // Colin asks if whatever this javascript does can be replaced with htmx someday
+                        document.getElementById('privacy_mode').addEventListener('change', function() {
+                            var privacyModeSaltDiv = document.getElementById('privacy_mode_salt_div');
+                            if (this.checked) {
+                                privacyModeSaltDiv.style.display = 'block';
+                            } else {
+                                privacyModeSaltDiv.style.display = 'none';
+                            }
                         });
-                        document.querySelector('input[name="privacy_mode"]').dispatchEvent(new Event('change'));
                     </script>
                 </div>
             </form>
