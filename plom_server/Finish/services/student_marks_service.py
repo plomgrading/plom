@@ -175,7 +175,7 @@ class StudentMarkService:
         paper_dict = {"PaperNumber": paper.paper_number}
         warnings = []
 
-        paper_id_info = StudentMarkService.get_paper_id_or_none(paper)
+        paper_id_info = self.get_paper_id_or_none(paper)
         if paper_id_info:
             student_id, student_name = paper_id_info
             paper_dict["StudentID"] = student_id
@@ -231,7 +231,7 @@ class StudentMarkService:
         Returns:
             tuple of [bool, bool, int, datetime]
         """
-        paper_id_info = StudentMarkService.get_paper_id_or_none(paper)
+        paper_id_info = self.get_paper_id_or_none(paper)
         is_id = paper_id_info is not None
         is_scanned = ManageScanService().is_paper_completely_scanned(paper.paper_number)
         n_marked = self.get_n_questions_marked(paper)
@@ -248,7 +248,7 @@ class StudentMarkService:
         spreadsheet_data = {}
         papers = Paper.objects.all()
         for paper in papers:
-            paper_id_info = StudentMarkService.get_paper_id_or_none(paper)
+            paper_id_info = self.get_paper_id_or_none(paper)
             if paper_id_info:
                 student_id, student_name = paper_id_info
                 spreadsheet_data[paper.paper_number] = [student_id, student_name]
@@ -410,10 +410,9 @@ class StudentMarkService:
         Returns:
             The csv in string format.
         """
-        sms = StudentMarkService()
         student_marks = self.get_all_marking_info_faster()
 
-        keys = sms._get_csv_header(
+        keys = self._get_csv_header(
             version_info=version_info,
             timing_info=timing_info,
             warning_info=warning_info,
