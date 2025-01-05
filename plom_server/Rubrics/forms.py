@@ -117,6 +117,7 @@ class RubricItemForm(forms.ModelForm):
     class Meta:
         model = Rubric
         fields = [
+            "question",
             "text",
             "kind",
             "value",
