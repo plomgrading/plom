@@ -3,7 +3,7 @@
     Copyright (C) 2023 Edith Coates
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023 Divy Patel
-    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
     Copyright (C) 2024 Aidan Murphy
 -->
@@ -28,11 +28,6 @@
     function updateKind() {
         var out_of = getMaximumMarks();
         var kind = document.getElementById("id_kind").value;
-        if (kind === "absolute") {
-            document.getElementById("id_out_of_label").innerHTML = "out of";
-        } else {
-            document.getElementById("id_out_of_label").innerHTML = "Max:";
-        }
         updateKindConstraints(out_of);
     }
 
@@ -46,6 +41,7 @@
             valueField.max = out_of;
 
             outOfField.readOnly = false;
+            outOfField.disabled = false;
             outOfField.min = 0;
             outOfField.max = out_of;
         } else if (kind === "relative") {
@@ -55,9 +51,11 @@
 
             outOfField.value = out_of;
             outOfField.readOnly = true;
+            outOfField.disabled = true;
         } else {
             outOfField.value = out_of;
             outOfField.readOnly = true;
+            outOfField.disabled = true;
 
             valueField.value = 0;
             valueField.readOnly = true;
