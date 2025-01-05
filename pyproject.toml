@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2020-2023 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2022 Elizabeth Xiao
 # Copyright (C) 2022 Natalia Accomazzo Scotti
@@ -119,7 +119,7 @@ readme = {file = 'README.md', content-type = 'text/markdown'}
 Homepage = "https://plomgrading.org"
 Repository = "https://gitlab.com/plom/plom"
 'Bug Tracker' = "https://gitlab.com/plom/plom/-/issues"
-Documentation = "https://plom.readthedocs.org'"
+Documentation = "https://plom.readthedocs.org"
 Changelog = "https://gitlab.com/plom/plom/-/blob/main/CHANGELOG.md"
 
 # [project.optional-dependencies]

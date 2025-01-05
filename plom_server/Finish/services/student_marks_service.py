@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Andreas Buttenschoen
+# Copyright (C) 2025 Aden Chan
 
 from __future__ import annotations
 
@@ -22,12 +23,14 @@ from Mark.models import MarkingTask
 from Papers.models.paper_structure import Paper
 from Papers.services import SpecificationService, PaperInfoService
 from Scan.services import ManageScanService
+import hashlib
 
 
 class StudentMarkService:
     """Service for the Student Marks page."""
 
-    def is_paper_marked(self, paper: Paper) -> bool:
+    @staticmethod
+    def is_paper_marked(paper: Paper) -> bool:
         """Return True if all of the marking tasks are completed.
 
         Args:
@@ -46,12 +49,13 @@ class StudentMarkService:
             n_completed_tasks + n_out_of_date_tasks == n_all_tasks
         )
 
-    def are_all_papers_marked(self) -> bool:
+    @classmethod
+    def are_all_papers_marked(cls) -> bool:
         """Return True if all of the papers that have a task are marked."""
         papers_with_tasks = Paper.objects.exclude(markingtask__isnull=True)
 
         for paper in papers_with_tasks:
-            if not self.is_paper_marked(paper):
+            if not cls.is_paper_marked(paper):
                 return False
         return True
 
@@ -173,7 +177,7 @@ class StudentMarkService:
         paper_dict = {"PaperNumber": paper.paper_number}
         warnings = []
 
-        paper_id_info = StudentMarkService.get_paper_id_or_none(paper)
+        paper_id_info = self.get_paper_id_or_none(paper)
         if paper_id_info:
             student_id, student_name = paper_id_info
             paper_dict["StudentID"] = student_id
@@ -229,7 +233,7 @@ class StudentMarkService:
         Returns:
             tuple of [bool, bool, int, datetime]
         """
-        paper_id_info = StudentMarkService.get_paper_id_or_none(paper)
+        paper_id_info = self.get_paper_id_or_none(paper)
         is_id = paper_id_info is not None
         is_scanned = ManageScanService().is_paper_completely_scanned(paper.paper_number)
         n_marked = self.get_n_questions_marked(paper)
@@ -246,7 +250,7 @@ class StudentMarkService:
         spreadsheet_data = {}
         papers = Paper.objects.all()
         for paper in papers:
-            paper_id_info = StudentMarkService.get_paper_id_or_none(paper)
+            paper_id_info = self.get_paper_id_or_none(paper)
             if paper_id_info:
                 student_id, student_name = paper_id_info
                 spreadsheet_data[paper.paper_number] = [student_id, student_name]
@@ -341,15 +345,21 @@ class StudentMarkService:
             .count()
         )
 
-    def get_csv_header(
-        self, version_info: bool, timing_info: bool, warning_info: bool
+    @staticmethod
+    def _get_csv_header(
+        *,
+        version_info: bool = True,
+        timing_info: bool = False,
+        warning_info: bool = False,
+        include_name: bool = True,
     ) -> list[str]:
         """Get the header for the csv file.
 
-        Args:
+        Keyword Args:
             version_info: Whether to include the version info.
             timing_info: Whether to include the timing info.
             warning_info: Whether to include the warning info.
+            include_name: Whether to include the ``StudentName``.
 
         Returns:
             List holding the header for the csv file. Contains student info, marks,
@@ -374,18 +384,53 @@ class StudentMarkService:
             keys.extend(["last_update"])
         if warning_info:
             keys.append("warnings")
+        if not include_name:
+            keys.remove("StudentName")
 
         return keys
 
+    @classmethod
     def build_marks_csv_as_string(
-        self, version_info: bool, timing_info: bool, warning_info: bool
+        cls,
+        version_info: bool,
+        timing_info: bool,
+        warning_info: bool,
+        *,
+        privacy_mode: bool = False,
+        privacy_salt: str = "",
     ) -> str:
-        sms = StudentMarkService()
-        student_marks = self.get_all_marking_info_faster()
-        # ignore any extra fields in the dictionary - this means
-        # that if the version_info, or timing_info or warning_info
-        # not in the header, then it won't be put into the csv.
-        keys = sms.get_csv_header(version_info, timing_info, warning_info)
+        """Generates a csv in string format with the marks of all students.
+
+        Args:
+            version_info: Whether to include the version info.
+            timing_info: Whether to include the timing info.
+            warning_info: Whether to include the warning info.
+
+        Keyword Args:
+            privacy_mode: Whether to hash the student ID.
+            privacy_salt: The salt to hash the student ID with.
+
+        Returns:
+            The csv in string format.
+        """
+        student_marks = cls.get_all_marking_info_faster()
+
+        keys = cls._get_csv_header(
+            version_info=version_info,
+            timing_info=timing_info,
+            warning_info=warning_info,
+            include_name=(not privacy_mode),
+        )
+
+        # Hash the StudentID if privacy mode is on
+        if privacy_mode:
+            for mark in student_marks:
+                student_id = mark.get("StudentID", "")
+                if student_id:
+                    salted_id = student_id + privacy_salt
+                    hashed_id = hashlib.sha256(salted_id.encode()).hexdigest()
+                    mark["StudentID"] = hashed_id
+
         csv_io = StringIO()
         w = csv.DictWriter(csv_io, keys, extrasaction="ignore")
         w.writeheader()
@@ -394,7 +439,8 @@ class StudentMarkService:
         csv_io.seek(0)
         return csv_io.getvalue()
 
-    def get_all_marking_info_faster(self) -> list[dict[str, Any]]:
+    @staticmethod
+    def get_all_marking_info_faster() -> list[dict[str, Any]]:
         """Build a list of dictionaries being the rows of the marking spreadsheet.
 
         Raises:

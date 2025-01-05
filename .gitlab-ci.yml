@@ -145,7 +145,7 @@ djlint:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.36.3
+    - pip install djlint~=1.36.4
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --profile django
 
@@ -154,7 +154,7 @@ djlint-check:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install djlint~=1.36.3
+    - pip install djlint~=1.36.4
   script:
     - djlint plom_server/templates/*/*.html plom_server/templates/*/*/*.html --check
 
@@ -341,7 +341,7 @@ coverage:
   needs: ["container-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.6.9
+    - pip install pytest pytest-cov coverage[toml]~=7.6.10
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -373,8 +373,8 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
-    - python3 -m pip install astroid~=3.3.6  # codespell:ignore astroid
-    - python3 -m pip install pylint~=3.3.2
+    - python3 -m pip install astroid~=3.3.8  # codespell:ignore astroid
+    - python3 -m pip install pylint~=3.3.3
   script:
     - pylint plom
     - pylint plom_server
@@ -391,7 +391,7 @@ mypy-type-checking:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - python3 -m pip install mypy~=1.13.0
+    - python3 -m pip install mypy~=1.14.0
   script:
     - mypy --version
     - mypy plom --python-ver 3.8 --install-types --non-interactive || true
@@ -406,7 +406,7 @@ pyright:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - python3 -m pip install pyright~=1.1.390
+    - python3 -m pip install pyright~=1.1.391
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -430,7 +430,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.8.2
+    - python3 -m pip install ruff~=0.8.4
   script:
     - ruff check .
     # ruff format .
@@ -441,7 +441,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.8.2
+    - python3 -m pip install ruff~=0.8.4
   script:
     # run once just for log out but don't fail
     - EXCEPTIONS="D101,D102,D103,D104,D106"
@@ -476,7 +476,7 @@ webplom_test:
   image: $IM
   script:
     - export PYTHONPATH=$PWD
-    - python3 -m pip install coverage~=7.6.9
+    - python3 -m pip install coverage~=7.6.10
     - pushd plom_server
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py makemigrations
@@ -1361,7 +1361,7 @@ macos13_universal_client:
   - /usr/local/bin/python3 -m pip install Pillow --no-binary ":all:"
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
-  - /usr/local/bin/python3 -m pip install pyinstaller~=6.10.0
+  - /usr/local/bin/python3 -m pip install pyinstaller~=6.11.1
   - /usr/local/bin/python3 -m pip install . --no-deps  # pyinstaller spec needs version
   - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-universal2.spec
   - ls dist/
@@ -1411,7 +1411,7 @@ macos13_arm64_client:
   - /usr/local/bin/python3 --version
   - /usr/local/bin/python3 -m pip install --upgrade pip
   - /usr/local/bin/python3 -m pip install -r requirements.txt.client
-  - /usr/local/bin/python3 -m pip install pyinstaller~=6.10.0
+  - /usr/local/bin/python3 -m pip install pyinstaller~=6.11.1
   - /usr/local/bin/python3 -m pip install . --no-deps  # pyinstaller spec needs version
   - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos.spec
   - ls dist/
@@ -1467,7 +1467,7 @@ macos13_x86_64_client:
   # hacks for charset_normalizer, following https://github.com/machawk1/wail/pull/562/
   - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
   - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
-  - arch -x86_64 /usr/local/bin/python3 -m pip install pyinstaller~=6.10.0
+  - arch -x86_64 /usr/local/bin/python3 -m pip install pyinstaller~=6.11.1
   - arch -x86_64 /usr/local/bin/python3 -m pip install . --no-deps  # pyinstaller spec needs version
   - arch -x86_64 /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-x86_64.spec
   - ls dist/
@@ -1593,7 +1593,7 @@ winpyinst:
   - c:\python311\python -m pip install -r requirements.txt.client
   - refreshenv
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
-  - c:\python311\python -m pip install pyinstaller~=6.10.0
+  - c:\python311\python -m pip install pyinstaller~=6.11.1
   - refreshenv
   - c:\python311\python -m pip install . --no-deps  # pyinstaller spec needs version
   - refreshenv

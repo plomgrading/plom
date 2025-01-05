@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Colin B. Macdonald
-# Copyright (C) 2024 Andrew Rechntizer
+# Copyright (C) 2022-2023, 2025 Colin B. Macdonald
+# Copyright (C) 2024 Andrew Rechnitzer
 
 name = "plomdemo"
 longName = "Midterm Demo using Plom"
@@ -25,11 +25,11 @@ select = "fix"
 [[question]]
 label = "Ex.3"
 pages = [6]
-mark = 4 
+mark = 4
 select = "shuffle"
 
 [[question]]
 label = "LastQ"
 pages = [7,8]
-mark = 7 
+mark = 7
 select = "shuffle"

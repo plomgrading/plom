@@ -11,16 +11,16 @@ import huey.signals
 from django.db import models
 from django.db import transaction
 from django.contrib.auth.models import User
-from django_huey import get_queue, signal
+from django_huey import get_queue
 from django.utils import timezone
 
 import logging
 
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 
-# TODO: I expected signal above handled signals from all queues
-# but it seems this is not so.
-# queue = get_queue("tasks")
+# TODO: Using the @signal decorator did not work with both queues
+# from django_huey import signal
+main_queue = get_queue("tasks")
 parent_queue = get_queue("parentchores")
 
 
@@ -305,7 +305,8 @@ class SettingsModel(SingletonABCModel):
 # on the same computer, such as our test suite Issue #2800.
 
 
-@signal(huey.signals.SIGNAL_ERROR)
+# @signal(huey.signals.SIGNAL_ERROR)
+@main_queue.signal(huey.signals.SIGNAL_ERROR)
 def on_huey_task_error(signal, task: huey.api.Task, exc):
     """Action to take when a Huey task fails."""
     logging.warn(f"Error in task {task.id} {task.name} {task.args} - {exc}")
@@ -315,9 +316,11 @@ def on_huey_task_error(signal, task: huey.api.Task, exc):
     # the exception handling was rewinding some atomic transactions
     if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
         # task has been deleted from underneath us, or did not exist yet b/c of race conditions
+        # or perhaps this huey task is not being tracked by a one of our trackers
+        # (for example, it may have a parent task that is doing the tracking)
         print(
             f"(Error) Task {task.id} {task.name} with args {task.args}"
-            " is no longer (or not yet) in the database."
+            " is no longer (or not yet or never will be) in the database."
         )
         return
 
@@ -328,16 +331,18 @@ def on_huey_task_error(signal, task: huey.api.Task, exc):
         task_obj.save()
 
 
-@signal(huey.signals.SIGNAL_INTERRUPTED)
+# @signal(huey.signals.SIGNAL_INTERRUPTED)
+@main_queue.signal(huey.signals.SIGNAL_INTERRUPTED)
 def on_huey_task_interrupted(signal, task: huey.api.Task):
     print(f"Interrupt was sent to task {task.id} - {task.name} {task.args}")
 
 
 @parent_queue.signal(huey.signals.SIGNAL_ERROR)
-def on_huey_task_error2(signal, task: huey.api.Task, exc):
+def on_huey_parent_task_error(signal, task: huey.api.Task, exc):
     """Action to take when a Huey task fails.
 
-    TODO: why do I need to duplicate this for each queue?
+    This is slightly different from the regular one above b/c all parent tasks
+    should always have a tracker (but child tasks might not).
     """
     logging.warn(f"Error in task {task.id} {task.name} {task.args} - {exc}")
     print(f"Error in task {task.id} {task.name} {task.args} - {exc}")
@@ -360,6 +365,6 @@ def on_huey_task_error2(signal, task: huey.api.Task, exc):
 
 
 @parent_queue.signal(huey.signals.SIGNAL_INTERRUPTED)
-def on_huey_task_interrupted2(signal, task: huey.api.Task):
-    # TODO: why do I need to duplicate this for each queue?
+def on_huey_parent_task_interrupted(signal, task: huey.api.Task):
+    # TODO: this code is duplicated b/c @signal decorate did work for both queues
     print(f"Interrupt was sent to task {task.id} - {task.name} {task.args}")
