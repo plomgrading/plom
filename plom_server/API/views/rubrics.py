@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aden Chan
 
@@ -21,7 +21,7 @@ from .utils import _error_response
 
 class MgetAllRubrics(APIView):
     def get(self, request: Request) -> Response:
-        all_rubric_data = RubricService.get_rubrics_as_dicts(question=None)
+        all_rubric_data = RubricService.get_rubrics_as_dicts()
         if not all_rubric_data:
             return _error_response(
                 "Server has no rubrics: check server settings",
@@ -32,7 +32,7 @@ class MgetAllRubrics(APIView):
 
 class MgetRubricsByQuestion(APIView):
     def get(self, request: Request, *, question: int) -> Response:
-        all_rubric_data = RubricService.get_rubrics_as_dicts(question=question)
+        all_rubric_data = RubricService.get_rubrics_as_dicts(question_idx=question)
         if not all_rubric_data:
             return _error_response(
                 "Server has no rubrics: check server settings",

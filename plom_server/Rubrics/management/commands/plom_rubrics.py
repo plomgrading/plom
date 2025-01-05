@@ -128,7 +128,7 @@ class Command(BaseCommand):
         service = RubricService()
 
         if not filename:
-            rubrics = service.get_rubrics_as_dicts(question=question)
+            rubrics = service.get_rubrics_as_dicts(question_idx=question)
             if not rubrics and question:
                 self.stdout.write(f"No rubrics for question index {question}")
                 return

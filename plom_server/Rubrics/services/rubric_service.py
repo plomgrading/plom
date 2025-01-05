@@ -391,19 +391,19 @@ class RubricService:
 
     @classmethod
     def get_rubrics_as_dicts(
-        cls, *, question: int | None = None
+        cls, *, question_idx: int | None = None
     ) -> list[dict[str, Any]]:
         """Get the rubrics, possibly filtered by question.
 
         Keyword Args:
-            question: question index or ``None`` for all.
+            question_idx: question index or ``None`` for all.
 
         Returns:
             Collection of dictionaries, one for each rubric.
         """
         rubric_queryset = cls.get_all_rubrics()
-        if question is not None:
-            rubric_queryset = rubric_queryset.filter(question=question, latest=True)
+        if question_idx is not None:
+            rubric_queryset = rubric_queryset.filter(question=question_idx, latest=True)
         rubric_data = []
 
         # see issue #3683 - need to prefetch these fields for
@@ -710,30 +710,34 @@ class RubricService:
 
         Rubric.objects.all().select_for_update().delete()
 
-    def get_rubric_pane(self, user: User, question: int) -> dict:
+    def get_rubric_pane(self, user: User, question_idx: int) -> dict[str, Any]:
         """Gets a rubric pane for a user.
 
         Args:
             user: a User instance
-            question: which question index.
+            question_idx: which question by index.
 
         Returns:
-            dict: the JSON representation of the pane.
+            Rubric pane data as key-value pairs.
         """
-        pane, created = RubricPane.objects.get_or_create(user=user, question=question)
+        pane, created = RubricPane.objects.get_or_create(
+            user=user, question=question_idx
+        )
         if created:
             return {}
         return pane.data
 
-    def update_rubric_pane(self, user: User, question: int, data: dict) -> None:
+    def update_rubric_pane(
+        self, user: User, question_idx: int, data: dict[str, Any]
+    ) -> None:
         """Updates a rubric pane for a user.
 
         Args:
             user: a User instance
-            question: question index associated with the rubric pane.
-            data: dict representing the new pane
+            question_idx: question index associated with the rubric pane.
+            data: dict representing the pane.
         """
-        pane = RubricPane.objects.get(user=user, question=question)
+        pane = RubricPane.objects.get(user=user, question=question_idx)
         pane.data = data
         pane.save()
 
@@ -844,12 +848,13 @@ class RubricService:
             </table>
         """
 
-    def get_rubric_data(self, filetype: str, question: int | None) -> str:
-        """Get the rubric data as a file.
+    def get_rubric_data(self, filetype: str, question_idx: int | None) -> str:
+        """Get the rubric data as the string contents of file of a specified type.
 
         Args:
             filetype: The type of file to generate. Supported file types are "json", "toml", and "csv".
-            question: The question ID to filter the rubric data. If None, all rubrics will be included.
+            question_idx: Filter the rubrics by those relevant to this
+                question, by index.  If None, all rubrics will be included.
 
         Returns:
             A string containing the rubric data from the specified file format.
@@ -857,22 +862,22 @@ class RubricService:
         Raises:
             ValueError: If the specified file type is not supported.
         """
-        rubrics = self.get_rubrics_as_dicts(question=question)
-
         if filetype == "json":
-            if question is not None:
-                queryset = Rubric.objects.filter(question=question)
+            if question_idx is not None:
+                queryset = Rubric.objects.filter(question=question_idx)
             else:
                 queryset = Rubric.objects.all()
             serializer = RubricSerializer(queryset, many=True)
             data_string = json.dumps(serializer.data, indent="  ")
         elif filetype == "toml":
+            rubrics = self.get_rubrics_as_dicts(question_idx=question_idx)
             for dictionary in rubrics:
                 filtered = {k: v for k, v in dictionary.items() if v is not None}
                 dictionary.clear()
                 dictionary.update(filtered)
             data_string = tomlkit.dumps({"rubric": rubrics})
         elif filetype == "csv":
+            rubrics = self.get_rubrics_as_dicts(question_idx=question_idx)
             f = io.StringIO()
             writer = csv.DictWriter(f, fieldnames=rubrics[0].keys())
             writer.writeheader()

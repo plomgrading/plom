@@ -383,17 +383,17 @@ class DownloadRubricView(ManagerRequiredView):
             question = None
 
         if filetype == "json":
-            data_string = service.get_rubric_data("json", question=question)
+            data_string = service.get_rubric_data("json", question_idx=question)
             buf = StringIO(data_string)
             response = HttpResponse(buf.getvalue(), content_type="text/json")
             response["Content-Disposition"] = "attachment; filename=rubrics.json"
         elif filetype == "toml":
-            data_string = service.get_rubric_data("toml", question=question)
+            data_string = service.get_rubric_data("toml", question_idx=question)
             buf2 = BytesIO(data_string.encode("utf-8"))
             response = HttpResponse(buf2.getvalue(), content_type="application/toml")
             response["Content-Disposition"] = "attachment; filename=rubrics.toml"
         else:
-            data_string = service.get_rubric_data("csv", question=question)
+            data_string = service.get_rubric_data("csv", question_idx=question)
             buf3 = StringIO(data_string)
             response = HttpResponse(buf3.getvalue(), content_type="text/csv")
             response["Content-Disposition"] = "attachment; filename=rubrics.csv"
