@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2025 Aden Chan
 
 import json
 
@@ -28,14 +29,13 @@ class MarkingInformationView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         """Get the Student Marks HTML page."""
         mts = MarkingTaskService()
-        sms = StudentMarkService()
         d3s = D3Service()
         des = DataExtractionService()
         tms = TaMarkingService()
 
         context = self.build_context()
 
-        papers = sms.get_all_marks()
+        papers = StudentMarkService().get_all_marks()
         n_questions = SpecificationService.get_n_questions()
         marked_question_counts = [
             [
@@ -56,7 +56,7 @@ class MarkingInformationView(ManagerRequiredView):
         ]
 
         total_tasks = mts.get_n_total_tasks()  # TODO: OUT_OF_DATE tasks? #2924
-        all_marked = sms.are_all_papers_marked() and total_tasks > 0
+        all_marked = StudentMarkService.are_all_papers_marked() and total_tasks > 0
 
         # histogram of grades per question
         question_avgs = des.get_average_grade_on_all_questions()
@@ -103,8 +103,14 @@ class MarkingInformationView(ManagerRequiredView):
         version_info = request.POST.get("version_info", "off") == "on"
         timing_info = request.POST.get("timing_info", "off") == "on"
         warning_info = request.POST.get("warning_info", "off") == "on"
-        csv_as_string = StudentMarkService().build_marks_csv_as_string(
-            version_info, timing_info, warning_info
+        privacy_mode = request.POST.get("privacy_mode", "off") == "on"
+        privacy_salt = request.POST.get("privacy_mode_salt", "")
+        csv_as_string = StudentMarkService.build_marks_csv_as_string(
+            version_info,
+            timing_info,
+            warning_info,
+            privacy_mode=privacy_mode,
+            privacy_salt=privacy_salt,
         )
 
         filename = (
@@ -151,6 +157,5 @@ class MarkingInformationPaperView(ManagerRequiredView):
 
     def get(self, request: HttpRequest, *, paper_num: int) -> JsonResponse:
         """Get the data for the Student Marks page as a JSON blob."""
-        sms = StudentMarkService()
-        marks_dict = sms.get_marks_from_paper(paper_num)
+        marks_dict = StudentMarkService().get_marks_from_paper(paper_num)
         return JsonResponse(marks_dict)

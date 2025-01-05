@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from __future__ import annotations
@@ -66,9 +66,8 @@ class ReassembleService:
             where ``qi`` is 1-indexed question index, ``v`` is version and
             ``m`` is mark.
         """
-        sms = StudentMarkService()
         legacy_cover_page_info: list[list[Any]] = []
-        student_info = sms.get_paper_id_or_none(paper)
+        student_info = StudentMarkService.get_paper_id_or_none(paper)
         if student_info:
             student_id, student_name = student_info
         else:
@@ -76,7 +75,7 @@ class ReassembleService:
         legacy_cover_page_info.append([student_id, student_name])
 
         for i in SpecificationService.get_question_indices():
-            version, mark = sms.get_question_version_and_mark(paper, i)
+            version, mark = StudentMarkService().get_question_version_and_mark(paper, i)
             legacy_cover_page_info.append([i, version, mark])
 
         return legacy_cover_page_info
@@ -121,7 +120,7 @@ class ReassembleService:
         Returns:
             pathlib.Path: filename of the coverpage.
         """
-        tmp = StudentMarkService().get_paper_id_or_none(paper)
+        tmp = StudentMarkService.get_paper_id_or_none(paper)
         if tmp:
             sid, sname = tmp
         else:
@@ -227,7 +226,7 @@ class ReassembleService:
             )
         student_id, student_name = paper_id
 
-        if not StudentMarkService().is_paper_marked(paper):
+        if not StudentMarkService.is_paper_marked(paper):
             raise ValueError(f"Paper {paper.paper_number} is not fully marked.")
 
         shortname = SpecificationService.get_shortname()

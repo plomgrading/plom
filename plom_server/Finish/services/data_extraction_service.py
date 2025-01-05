@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2025 Aden Chan
 
 from typing import Dict, List, Optional, Tuple
 
@@ -28,18 +29,13 @@ class DataExtractionService:
     """
 
     def __init__(self):
-        sms = StudentMarkService()
-        tms = TaMarkingService()
-
-        student_dict = sms.get_all_marking_info_faster()
-        student_keys = sms.get_csv_header(
-            version_info=True, timing_info=False, warning_info=False
-        )
+        student_dict = StudentMarkService.get_all_marking_info_faster()
+        student_keys = StudentMarkService._get_csv_header()
         self.student_df = pd.DataFrame(student_dict, columns=student_keys)
 
+        tms = TaMarkingService()
         ta_dict = tms.build_csv_data()
         ta_keys = tms.get_csv_header()
-
         self.ta_df = pd.DataFrame(ta_dict, columns=ta_keys)
 
     def _get_ta_data(self) -> pd.DataFrame:
