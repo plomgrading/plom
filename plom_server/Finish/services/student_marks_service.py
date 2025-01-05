@@ -348,7 +348,7 @@ class StudentMarkService:
         version_info: bool,
         timing_info: bool,
         warning_info: bool,
-        privacy_mode: bool,
+        include_name: bool = True,
     ) -> list[str]:
         """Get the header for the csv file.
 
@@ -356,7 +356,7 @@ class StudentMarkService:
             version_info: Whether to include the version info.
             timing_info: Whether to include the timing info.
             warning_info: Whether to include the warning info.
-            privacy_mode: Whether to hash the student ID and remove the student names.
+            include_name: Whether to include the student names.
 
         Returns:
             List holding the header for the csv file. Contains student info, marks,
@@ -381,7 +381,7 @@ class StudentMarkService:
             keys.extend(["last_update"])
         if warning_info:
             keys.append("warnings")
-        if privacy_mode:
+        if not include_name:
             keys.remove("StudentName")
 
         return keys
@@ -409,7 +409,10 @@ class StudentMarkService:
         sms = StudentMarkService()
         student_marks = self.get_all_marking_info_faster()
 
-        keys = sms.get_csv_header(version_info, timing_info, warning_info, privacy_mode)
+        keys = sms.get_csv_header(version_info, 
+                                  timing_info, 
+                                  warning_info, 
+                                  not privacy_mode)
 
         # Hash the StudentID if privacy mode is on
         if privacy_mode:

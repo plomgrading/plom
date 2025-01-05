@@ -33,7 +33,10 @@ class DataExtractionService:
 
         student_dict = sms.get_all_marking_info_faster()
         student_keys = sms.get_csv_header(
-            version_info=True, timing_info=False, warning_info=False
+            version_info=True, 
+            timing_info=False, 
+            warning_info=False,
+            include_name=True
         )
         self.student_df = pd.DataFrame(student_dict, columns=student_keys)
 
