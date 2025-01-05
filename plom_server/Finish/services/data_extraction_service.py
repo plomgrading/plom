@@ -29,16 +29,13 @@ class DataExtractionService:
     """
 
     def __init__(self):
-        sms = StudentMarkService()
-        tms = TaMarkingService()
-
-        student_dict = sms.get_all_marking_info_faster()
-        student_keys = sms._get_csv_header()
+        student_dict = StudentMarkService.get_all_marking_info_faster()
+        student_keys = StudentMarkService._get_csv_header()
         self.student_df = pd.DataFrame(student_dict, columns=student_keys)
 
+        tms = TaMarkingService()
         ta_dict = tms.build_csv_data()
         ta_keys = tms.get_csv_header()
-
         self.ta_df = pd.DataFrame(ta_dict, columns=ta_keys)
 
     def _get_ta_data(self) -> pd.DataFrame:

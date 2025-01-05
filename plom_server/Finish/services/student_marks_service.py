@@ -29,7 +29,8 @@ import hashlib
 class StudentMarkService:
     """Service for the Student Marks page."""
 
-    def is_paper_marked(self, paper: Paper) -> bool:
+    @staticmethod
+    def is_paper_marked(paper: Paper) -> bool:
         """Return True if all of the marking tasks are completed.
 
         Args:
@@ -48,12 +49,13 @@ class StudentMarkService:
             n_completed_tasks + n_out_of_date_tasks == n_all_tasks
         )
 
-    def are_all_papers_marked(self) -> bool:
+    @classmethod
+    def are_all_papers_marked(cls) -> bool:
         """Return True if all of the papers that have a task are marked."""
         papers_with_tasks = Paper.objects.exclude(markingtask__isnull=True)
 
         for paper in papers_with_tasks:
-            if not self.is_paper_marked(paper):
+            if not cls.is_paper_marked(paper):
                 return False
         return True
 
@@ -343,8 +345,8 @@ class StudentMarkService:
             .count()
         )
 
+    @staticmethod
     def _get_csv_header(
-        self,
         *,
         version_info: bool = True,
         timing_info: bool = False,
@@ -387,8 +389,9 @@ class StudentMarkService:
 
         return keys
 
+    @classmethod
     def build_marks_csv_as_string(
-        self,
+        cls,
         version_info: bool,
         timing_info: bool,
         warning_info: bool,
@@ -410,9 +413,9 @@ class StudentMarkService:
         Returns:
             The csv in string format.
         """
-        student_marks = self.get_all_marking_info_faster()
+        student_marks = cls.get_all_marking_info_faster()
 
-        keys = self._get_csv_header(
+        keys = cls._get_csv_header(
             version_info=version_info,
             timing_info=timing_info,
             warning_info=warning_info,
@@ -436,7 +439,8 @@ class StudentMarkService:
         csv_io.seek(0)
         return csv_io.getvalue()
 
-    def get_all_marking_info_faster(self) -> list[dict[str, Any]]:
+    @staticmethod
+    def get_all_marking_info_faster() -> list[dict[str, Any]]:
         """Build a list of dictionaries being the rows of the marking spreadsheet.
 
         Raises:
