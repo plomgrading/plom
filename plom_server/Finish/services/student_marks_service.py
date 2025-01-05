@@ -409,10 +409,9 @@ class StudentMarkService:
         sms = StudentMarkService()
         student_marks = self.get_all_marking_info_faster()
 
-        keys = sms.get_csv_header(version_info, 
-                                  timing_info, 
-                                  warning_info, 
-                                  not privacy_mode)
+        keys = sms.get_csv_header(
+            version_info, timing_info, warning_info, not privacy_mode
+        )
 
         # Hash the StudentID if privacy mode is on
         if privacy_mode:
