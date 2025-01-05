@@ -20,23 +20,20 @@ import html
 import json
 import logging
 import sys
-from django.db.models.aggregates import Count
-import tomlkit
+from operator import itemgetter
 from typing import Any
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
-
-
-from operator import itemgetter
+import tomlkit
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
+from django.db.models.aggregates import Count
 from django.db.models import QuerySet
-
 from rest_framework.exceptions import ValidationError
 
 from plom.plom_exceptions import PlomConflict
