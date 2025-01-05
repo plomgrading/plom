@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Divy Patel
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
 
@@ -108,12 +108,16 @@ class RubricItemForm(forms.ModelForm):
         initial=Rubric.RubricKind.ABSOLUTE,
         widget=forms.Select(attrs={"onchange": "updateKind()"}),
     )
-    out_of = forms.IntegerField(required=False)
+    out_of = forms.IntegerField(
+        required=False,
+        widget=forms.NumberInput(attrs={"onchange": "updateValueConstraints()"}),
+    )
     versions = forms.MultipleChoiceField(required=False)
 
     class Meta:
         model = Rubric
         fields = [
+            "question",
             "text",
             "kind",
             "value",
@@ -125,7 +129,8 @@ class RubricItemForm(forms.ModelForm):
         ]
         widgets = {
             "text": forms.Textarea(attrs={"rows": 3}),
-            "meta": forms.Textarea(attrs={"rows": 3}),
+            "meta": forms.Textarea(attrs={"rows": 2}),
+            "parameters": forms.Textarea(attrs={"rows": 2}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -136,7 +141,6 @@ class RubricItemForm(forms.ModelForm):
         ]
 
         self.fields["question"].choices = question_choices
-        self.fields["out_of"].widget.attrs["readonly"] = True
 
         version_choices = [
             (str(v_idx), v_idx)

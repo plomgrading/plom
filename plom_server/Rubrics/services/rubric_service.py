@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2019-2024 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Nicholas J H Lai
@@ -20,23 +20,20 @@ import html
 import json
 import logging
 import sys
-from django.db.models.aggregates import Count
-import tomlkit
+from operator import itemgetter
 from typing import Any
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
-
-
-from operator import itemgetter
+import tomlkit
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
+from django.db.models.aggregates import Count
 from django.db.models import QuerySet
-
 from rest_framework.exceptions import ValidationError
 
 from plom.plom_exceptions import PlomConflict
@@ -127,7 +124,7 @@ class RubricService:
         if "kind" not in incoming_data.keys():
             raise ValidationError({"kind": "Kind is required."})
 
-        if incoming_data["kind"] not in ["absolute", "relative", "neutral"]:
+        if incoming_data["kind"] not in ("absolute", "relative", "neutral"):
             raise ValidationError({"kind": "Invalid kind."})
 
         # Check permissions
@@ -308,12 +305,15 @@ class RubricService:
         new_rubric_data["latest"] = True
         new_rubric_data["rid"] = old_rubric.rid
 
-        # TODO: Issue #3582: don't autogenerate if input has custom display delta
+        # TODO TODO: Issue #3582: don't autogenerate if input has custom display delta
         new_rubric_data["display_delta"] = self._generate_display_delta(
             new_rubric_data.get("value", 0),
             new_rubric_data["kind"],
             new_rubric_data.get("out_of", None),
         )
+
+        if new_rubric_data["kind"] in ("relative", "neutral"):
+            new_rubric_data["out_of"] = 0
 
         serializer = RubricSerializer(data=new_rubric_data)
 
