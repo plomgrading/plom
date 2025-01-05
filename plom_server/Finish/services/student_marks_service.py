@@ -397,14 +397,14 @@ class StudentMarkService:
         """Generates a csv in string format with the marks of all students.
 
         Args:
-            version_info (bool): Whether to include the version info.
-            timing_info (bool): Whether to include the timing info.
-            warning_info (bool): Whether to include the warning info.
-            privacy_mode (bool): Whether to hash the student ID.
-            privacy_salt (str): The salt to hash the student ID with.
+            version_info: Whether to include the version info.
+            timing_info: Whether to include the timing info.
+            warning_info: Whether to include the warning info.
+            privacy_mode: Whether to hash the student ID.
+            privacy_salt: The salt to hash the student ID with.
 
         Returns:
-            str: The csv in string format.
+            The csv in string format.
         """
         sms = StudentMarkService()
         student_marks = self.get_all_marking_info_faster()
