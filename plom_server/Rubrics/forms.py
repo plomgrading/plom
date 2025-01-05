@@ -129,7 +129,8 @@ class RubricItemForm(forms.ModelForm):
         ]
         widgets = {
             "text": forms.Textarea(attrs={"rows": 3}),
-            "meta": forms.Textarea(attrs={"rows": 3}),
+            "meta": forms.Textarea(attrs={"rows": 2}),
+            "parameters": forms.Textarea(attrs={"rows": 2}),
         }
 
     def __init__(self, *args, **kwargs):
