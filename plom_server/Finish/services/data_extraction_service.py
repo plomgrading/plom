@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2025 Aden Chan
@@ -33,9 +33,7 @@ class DataExtractionService:
         tms = TaMarkingService()
 
         student_dict = sms.get_all_marking_info_faster()
-        student_keys = sms.get_csv_header(
-            version_info=True, timing_info=False, warning_info=False, include_name=True
-        )
+        student_keys = sms._get_csv_header()
         self.student_df = pd.DataFrame(student_dict, columns=student_keys)
 
         ta_dict = tms.build_csv_data()

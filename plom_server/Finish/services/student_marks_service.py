@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
@@ -343,20 +343,21 @@ class StudentMarkService:
             .count()
         )
 
-    def get_csv_header(
+    def _get_csv_header(
         self,
-        version_info: bool,
-        timing_info: bool,
-        warning_info: bool,
+        *,
+        version_info: bool = True,
+        timing_info: bool = False,
+        warning_info: bool = False,
         include_name: bool = True,
     ) -> list[str]:
         """Get the header for the csv file.
 
-        Args:
+        Keyword Args:
             version_info: Whether to include the version info.
             timing_info: Whether to include the timing info.
             warning_info: Whether to include the warning info.
-            include_name: Whether to include the student names.
+            include_name: Whether to include the ``StudentName``.
 
         Returns:
             List holding the header for the csv file. Contains student info, marks,
@@ -391,8 +392,9 @@ class StudentMarkService:
         version_info: bool,
         timing_info: bool,
         warning_info: bool,
-        privacy_mode: bool,
-        privacy_salt: str,
+        *,
+        privacy_mode: bool = False,
+        privacy_salt: str = "",
     ) -> str:
         """Generates a csv in string format with the marks of all students.
 
@@ -400,6 +402,8 @@ class StudentMarkService:
             version_info: Whether to include the version info.
             timing_info: Whether to include the timing info.
             warning_info: Whether to include the warning info.
+
+        Keyword Args:
             privacy_mode: Whether to hash the student ID.
             privacy_salt: The salt to hash the student ID with.
 
@@ -409,8 +413,11 @@ class StudentMarkService:
         sms = StudentMarkService()
         student_marks = self.get_all_marking_info_faster()
 
-        keys = sms.get_csv_header(
-            version_info, timing_info, warning_info, not privacy_mode
+        keys = sms._get_csv_header(
+            version_info=version_info,
+            timing_info=timing_info,
+            warning_info=warning_info,
+            include_name=(not privacy_mode),
         )
 
         # Hash the StudentID if privacy mode is on

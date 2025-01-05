@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2025 Aden Chan
@@ -107,7 +107,11 @@ class MarkingInformationView(ManagerRequiredView):
         privacy_mode = request.POST.get("privacy_mode", "off") == "on"
         privacy_salt = request.POST.get("privacy_mode_salt", "")
         csv_as_string = StudentMarkService().build_marks_csv_as_string(
-            version_info, timing_info, warning_info, privacy_mode, privacy_salt
+            version_info,
+            timing_info,
+            warning_info,
+            privacy_mode=privacy_mode,
+            privacy_salt=privacy_salt,
         )
 
         filename = (
