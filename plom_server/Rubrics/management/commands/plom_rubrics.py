@@ -142,7 +142,7 @@ class Command(BaseCommand):
             if not rubrics:
                 self.stdout.write("No rubrics yet")
                 return
-            self.stdout.write(tabulate(rubrics))  # headers="keys"
+            self.stdout.write(tabulate(rubrics, headers="keys"))
             return
 
         filename = Path(filename)
