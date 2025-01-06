@@ -246,7 +246,6 @@ class RubricService:
 
         return self._create_rubric_lowlevel(incoming_data)
 
-    # less error checking, for internal use only
     def _create_rubric_lowlevel(
         self,
         data: dict[str, Any],
@@ -254,6 +253,11 @@ class RubricService:
         _bypass_serializer: bool = False,
         _bypass_user: User | None = None,
     ) -> Rubric:
+        """Create rubrics with less error checking, internal use only.
+
+        Careful with ``_pypass_serializer``.  I think this stuff was introduced
+        to decrease the number of database queries when making many rubrics.
+        """
         if data.get("display_delta", None) is None:
             # if we don't have a display_delta, we'll generate a default one
             data["display_delta"] = _generate_display_delta(
@@ -273,7 +277,7 @@ class RubricService:
                 kind=data["kind"],
                 value=data["value"],
                 out_of=data["out_of"],
-                display_delta=data.get("display_delta"),
+                display_delta=data["display_delta"],
                 meta=data.get("meta"),
                 user=_bypass_user,
                 modified_by_user=_bypass_user,
@@ -568,8 +572,7 @@ class RubricService:
             # make zero mark and full mark rubrics
             rubric = {
                 "kind": "absolute",
-                "display_delta": f"0 of {mx}",
-                "value": "0",
+                "value": 0,
                 "out_of": mx,
                 "text": "no answer given",
                 "question_index": q,
@@ -582,8 +585,7 @@ class RubricService:
 
             rubric = {
                 "kind": "absolute",
-                "display_delta": f"0 of {mx}",
-                "value": "0",
+                "value": 0,
                 "out_of": mx,
                 "text": "no marks",
                 "question_index": q,
@@ -595,41 +597,33 @@ class RubricService:
 
             rubric = {
                 "kind": "absolute",
-                "display_delta": f"{mx} of {mx}",
-                "value": f"{mx}",
+                "value": mx,
                 "out_of": mx,
                 "text": "full marks",
                 "question_index": q,
-                "meta": "",
                 "tags": "",
             }
             create_system_rubric(rubric)
             # log.info("Built full-marks-rubric Q%s: key %s", q, r.pk)
 
-            # now make delta-rubrics
+            # now make +/- delta-rubrics
             for m in range(1, int(mx) + 1):
-                # make positive delta
                 rubric = {
-                    "display_delta": "+{}".format(m),
                     "value": m,
                     "out_of": 0,
                     "text": ".",
                     "kind": "relative",
                     "question_index": q,
-                    "meta": "",
                     "tags": "",
                 }
                 create_system_rubric(rubric)
                 # log.info("Built delta-rubric +%d for Q%s: %s", m, q, r["rid"])
-                # make negative delta
                 rubric = {
-                    "display_delta": "-{}".format(m),
                     "value": -m,
                     "out_of": 0,
                     "text": ".",
                     "kind": "relative",
                     "question_index": q,
-                    "meta": "",
                     "tags": "",
                 }
                 create_system_rubric(rubric)
