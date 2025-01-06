@@ -49,6 +49,9 @@ class Command(BaseCommand):
 
         The demo data is a bit sparse: we fill in missing pieces and
         multiply over questions.
+
+        TODO: this is someone deprecated and might be drifting away
+        from the "other" demo rubric stuff in Launcher.
         """
         if _numquestions is None:
             question_indices = SpecificationService.get_question_indices()
