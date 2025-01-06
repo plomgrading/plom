@@ -96,8 +96,9 @@ class RubricService:
             The new rubric data, in dict key-value format.
 
         Raises:
-            KeyError: if rubric_data contains missing username or kind fields.
-            ValidationError: if rubric kind is not a valid option.
+            KeyError: if rubric_data contains missing username or user.
+            ValidationError: if rubric kind is not a valid option, or other
+                other errors.
             ValueError: if username does not exist in the DB.
             PermissionDenied: user are not allowed to create rubrics.
                 This could be "this user" or "all users".
@@ -113,7 +114,12 @@ class RubricService:
 
         # some mangling around user/username here
         if "user" not in incoming_data.keys():
-            username = incoming_data.pop("username")
+            username = incoming_data.pop("username", None)
+            if not username:
+                # TODO: revisit this in the context of uploading rubrics from files
+                raise KeyError(
+                    "user or username is required (for now, might change in future)"
+                )
             try:
                 user = User.objects.get(username=username)
                 incoming_data["user"] = user.pk
@@ -174,6 +180,7 @@ class RubricService:
             )
         data["latest"] = True
         if _bypass_serializer:
+            assert _bypass_user is not None
             new_rubric = Rubric.objects.create(
                 text=data["text"],
                 question_index=data["question_index"],
@@ -183,7 +190,7 @@ class RubricService:
                 out_of=data["out_of"],
                 display_delta=data.get("display_delta"),
                 meta=data.get("meta"),
-                user=_bypass_user,  # TODO: None seems just fine too (?)
+                user=_bypass_user,
                 modified_by_user=_bypass_user,
                 latest=data.get("latest"),
                 versions=data.get("versions"),
