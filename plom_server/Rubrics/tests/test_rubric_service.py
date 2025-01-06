@@ -41,7 +41,7 @@ class RubricServiceTests_exceptions(TestCase):
             "value": 0,
             "text": "qwerty",
             "username": "XXX_no_such_user_XXX",
-            "question": 1,
+            "question_index": 1,
         }
 
         with self.assertRaises(ValueError):
@@ -58,7 +58,7 @@ class RubricServiceTests_exceptions(TestCase):
             "kind": "neutral",
             "value": 0,
             "text": "qwerty",
-            "question": 1,
+            "question_index": 1,
         }
 
         with self.assertRaises(KeyError):
@@ -78,7 +78,7 @@ class RubricServiceTests_exceptions(TestCase):
             "value": 0,
             "text": "qwerty",
             "username": "Liam",
-            "question": 1,
+            "question_index": 1,
         }
 
         with self.assertRaises(ValidationError):
@@ -95,7 +95,7 @@ class RubricServiceTests_exceptions(TestCase):
             "value": 0,
             "text": "qwerty",
             "username": "Liam",
-            "question": 1,
+            "question_index": 1,
         }
 
         with self.assertRaises(ValidationError):
@@ -198,7 +198,7 @@ class RubricServiceTests(TestCase):
             "tags": "",
             "meta": "asdfg",
             "username": "Liam",
-            "question": 1,
+            "question_index": 1,
             "versions": [],
             "parameters": [],
         }
@@ -225,7 +225,7 @@ class RubricServiceTests(TestCase):
             "tags": "",
             "meta": "hjklz",
             "username": "Olivia",
-            "question": 1,
+            "question_index": 1,
             "versions": [],
             "parameters": [],
         }
@@ -252,7 +252,7 @@ class RubricServiceTests(TestCase):
             "tags": "",
             "meta": "lkjhg",
             "username": "Liam",
-            "question": 3,
+            "question_index": 3,
             "versions": [],
             "parameters": [],
         }
@@ -275,7 +275,7 @@ class RubricServiceTests(TestCase):
             "value": 0.0,
             "text": "qwerty",
             "username": "Olivia",
-            "question": 1,
+            "question_index": 1,
         }
         r = RubricService().create_rubric(simulated_client_data)
         assert isinstance(r, dict)
@@ -295,7 +295,7 @@ class RubricServiceTests(TestCase):
             "tags": "",
             "meta": "hjklz",
             "username": "Olivia",
-            "question": 1,
+            "question_index": 1,
             "versions": [],
             "parameters": [],
         }
@@ -320,7 +320,7 @@ class RubricServiceTests(TestCase):
             "tags": "",
             "meta": "hjklz",
             "username": "Olivia",
-            "question": 1,
+            "question_index": 1,
             "versions": [],
             "parameters": [],
         }
@@ -349,7 +349,7 @@ class RubricServiceTests(TestCase):
             "tags": "",
             "meta": "hjklz",
             "username": "Olivia",
-            "question": 1,
+            "question_index": 1,
             "versions": [],
             "parameters": [],
         }
@@ -498,7 +498,7 @@ class RubricServiceTests(TestCase):
             "kind": "neutral",
             "text": "qwerty",
             "username": "Liam",
-            "question": 1,
+            "question_index": 1,
             "revision": 10,
         }
         r = RubricService().create_rubric(rub)
