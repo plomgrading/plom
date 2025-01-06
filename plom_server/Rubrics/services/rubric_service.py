@@ -75,6 +75,91 @@ def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
     }
 
 
+_fraction_table = (
+    (1 / 2, "\N{Vulgar Fraction One Half}"),
+    (1 / 4, "\N{Vulgar Fraction One Quarter}"),
+    (3 / 4, "\N{Vulgar Fraction Three Quarters}"),
+    (1 / 3, "\N{Vulgar Fraction One Third}"),
+    (2 / 3, "\N{Vulgar Fraction Two Thirds}"),
+    (1 / 5, "\N{Vulgar Fraction One Fifth}"),
+    (2 / 5, "\N{Vulgar Fraction Two Fifths}"),
+    (3 / 5, "\N{Vulgar Fraction Three Fifths}"),
+    (4 / 5, "\N{Vulgar Fraction Four Fifths}"),
+    (1 / 8, "\N{Vulgar Fraction One Eighth}"),
+    (3 / 8, "\N{Vulgar Fraction Three Eighths}"),
+    (5 / 8, "\N{Vulgar Fraction Five Eighths}"),
+    (7 / 8, "\N{Vulgar Fraction Seven Eighths}"),
+    (1 / 10, "\N{Vulgar Fraction One Tenth}"),
+)
+
+
+def _generate_display_delta(
+    value: int | float | str,
+    kind: str,
+    out_of: int | float | str | None = None,
+) -> str:
+    """Generate the display delta for a rubric.
+
+    Args:
+        value: the value of the rubric.
+        kind: the kind of the rubric.
+        out_of: the maximum value of the rubric, required for
+            absolute rubrics, none for other rubrics
+
+    Returns:
+        The display delta as a string, which may include unicode
+        symbols for fractions.  When ``kinda`` is "neutral", the
+        reply will always be ``"."``, although this could change
+        in the future.
+
+    Raises:
+        ValueError: if the kind is not valid.
+        ValueError: if the kind is absolute and out_of is not provided.
+    """
+    value = float(value) if isinstance(value, str) else value
+    out_of = float(out_of) if isinstance(out_of, str) else out_of
+
+    tol = 1e-7
+
+    if kind == "absolute":
+        if out_of is None:
+            raise ValueError("out_of is required for absolute rubrics.")
+        value_str = None
+        if isinstance(value, int) or value.is_integer():
+            value_str = f"{value:g}"
+        for frac, frac_str in _fraction_table:
+            if frac - tol < value < frac + tol:
+                value_str = frac_str
+        if value_str is None:
+            value_str = f"{value}"
+
+        out_of_str = None
+        if isinstance(out_of, int) or out_of.is_integer():
+            out_of_str = f"{out_of:g}"
+        for frac, frac_str in _fraction_table:
+            if frac - tol < out_of < frac + tol:
+                out_of_str = frac_str
+        if out_of_str is None:
+            out_of_str = f"{out_of}"
+
+        return f"{value_str} of {out_of_str}"
+    elif kind == "relative":
+        for frac, frac_str in _fraction_table:
+            if frac - tol < value < frac + tol:
+                return f"+{frac_str}"
+            if -frac - tol < value < -frac + tol:
+                return f"-{frac_str}"
+        if value > 0:
+            return f"+{value:g}"
+        else:
+            # Negative sign applied automatically
+            return f"{value:g}"
+    elif kind == "neutral":
+        return "."
+    else:
+        raise ValueError(f"Invalid kind: {kind}.")
+
+
 class RubricService:
     """Class to encapsulate functions for creating and modifying rubrics."""
 
@@ -171,7 +256,7 @@ class RubricService:
     ) -> Rubric:
         if data.get("display_delta", None) is None:
             # if we don't have a display_delta, we'll generate a default one
-            data["display_delta"] = self._generate_display_delta(
+            data["display_delta"] = _generate_display_delta(
                 # if value is missing, can only be neutral
                 # missing value will be prohibited in a future MR
                 data.get("value", 0),
@@ -362,48 +447,6 @@ class RubricService:
 
         rubric_obj = serializer.instance
         return _Rubric_to_dict(rubric_obj)
-
-    def _generate_display_delta(
-        self,
-        value: int | float | str,
-        kind: str,
-        out_of: int | float | str | None = None,
-    ) -> str:
-        """Generate the display delta for a rubric.
-
-        Keyword Args:
-            value: the value of the rubric.
-            kind: the kind of the rubric.
-            out_of: the maximum value of the rubric, required for
-                absolute rubrics, none for other rubrics
-
-        Raises:
-            ValueError: if the kind is not valid.
-            ValueError: if the kind is absolute and out_of is not provided.
-        """
-        value = float(value) if isinstance(value, str) else value
-        out_of = float(out_of) if isinstance(out_of, str) else out_of
-
-        # TODO: we may want to special case vulgar fractions in the future
-
-        if kind == "absolute":
-            if out_of is None:
-                raise ValueError("out_of is required for absolute rubrics.")
-            else:
-                if isinstance(value, int) or value.is_integer():
-                    return f"{value:g} of {out_of:g}"
-                else:
-                    return f"{value} of {out_of}"
-        elif kind == "relative":
-            if value > 0:
-                return f"+{value:g}"
-            else:
-                # Negative sign gets applied automatically
-                return f"{value:g}"
-        elif kind == "neutral":
-            return "."
-        else:
-            raise ValueError(f"Invalid kind: {kind}.")
 
     @classmethod
     def get_rubrics_as_dicts(
@@ -603,7 +646,6 @@ class RubricService:
                         "question_index": q,
                     },
                     {
-                        "display_delta": "-\N{Vulgar Fraction One Half}",
                         "value": -0.5,
                         "text": "testing negative non-integer rubric",
                         "kind": "relative",

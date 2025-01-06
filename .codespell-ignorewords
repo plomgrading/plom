@@ -18,3 +18,5 @@ te
 unvalidate
 # Frobenius norm calculated in plom_server/Scan/tests/test_image_process.py
 fro
+# unit test framework
+assertIn
