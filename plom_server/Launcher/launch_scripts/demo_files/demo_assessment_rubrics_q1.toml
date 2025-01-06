@@ -8,7 +8,7 @@ value = 2
 text = "correct limit"
 tags = "demo"
 meta = "Student evaluated limit correctly"
-question = 1
+question_index = 1
 username = "manager"
 
 [[rubric]]
@@ -17,7 +17,7 @@ value = 1
 text = "right idea, but be careful"
 tags = "demo"
 meta = "Student made small arithmetic mistake when computing limit"
-question = 1
+question_index = 1
 username = "manager"
 
 [[rubric]]
@@ -26,7 +26,7 @@ value = -2
 text = "substantial error"
 tags = "demo"
 meta = "Student made substantial error when computing limit"
-question = 1
+question_index = 1
 username = "manager"
 
 [[rubric]]
@@ -35,7 +35,7 @@ value = -2
 text = "wrong limit at infinity"
 tags = "demo"
 meta = "Student did not rearrange correctly to compute infinite limit"
-question = 1
+question_index = 1
 username = "manager"
 
 [[rubric]]
@@ -44,7 +44,7 @@ value = -2
 text = "must simplify absolute value"
 tags = "demo"
 meta = "Student forgot to simplify abs value before taking limit"
-question = 1
+question_index = 1
 username = "manager"
 
 
@@ -54,7 +54,7 @@ value = -1
 text = "careful - minor error"
 tags = "demo"
 meta = "Student made small arithmetic mistake when computing limit"
-question = 1
+question_index = 1
 username = "manager"
 
 [[rubric]]
@@ -63,7 +63,7 @@ value = -1
 text = "this does not follow"
 tags = "demo"
 meta = "Student made logical error from one line to the next"
-question = 1
+question_index = 1
 username = "manager"
 
 [[rubric]]
@@ -71,7 +71,7 @@ kind = "neutral"
 text = "be careful"
 tags = "demo"
 meta = "Student made an inconsequential error."
-question = 1
+question_index = 1
 username = "manager"
 
 [[rubric]]
@@ -79,5 +79,5 @@ kind = "neutral"
 text = "hard to read"
 tags = "demo"
 meta = "Student handwriting is making marking hard"
-question = 1
+question_index = 1
 username = "manager"

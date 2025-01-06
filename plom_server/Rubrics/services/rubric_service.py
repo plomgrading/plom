@@ -62,7 +62,7 @@ def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
         "tags": r.tags,
         "meta": r.meta,
         "username": r.user.username,
-        "question": r.question,
+        "question_index": r.question_index,
         "versions": r.versions,
         "parameters": r.parameters,
         "system_rubric": r.system_rubric,
@@ -121,6 +121,10 @@ class RubricService:
             except ObjectDoesNotExist as e:
                 raise ValueError(f"User {username} does not exist.") from e
 
+        # some mangling because client still uses "question"
+        if "question_index" not in incoming_data.keys():
+            incoming_data["question_index"] = incoming_data.pop("question")
+
         if "kind" not in incoming_data.keys():
             raise ValidationError({"kind": "Kind is required."})
 
@@ -172,7 +176,7 @@ class RubricService:
         if _bypass_serializer:
             new_rubric = Rubric.objects.create(
                 text=data["text"],
-                question=data["question"],
+                question_index=data["question_index"],
                 system_rubric=data["system_rubric"],
                 kind=data["kind"],
                 value=data["value"],
@@ -262,6 +266,10 @@ class RubricService:
                 f"does not match database content (revision {old_rubric.revision}): "
                 f"most likely your edits have collided with those of someone else."
             )
+
+        # some mangling because client still uses "question"
+        if "question_index" not in new_rubric_data.keys():
+            new_rubric_data["question_index"] = new_rubric_data.pop("question")
 
         # Generally, omitting modifying_user bypasses checks
         if modifying_user is None:
@@ -403,7 +411,9 @@ class RubricService:
         """
         rubric_queryset = cls.get_all_rubrics()
         if question_idx is not None:
-            rubric_queryset = rubric_queryset.filter(question=question_idx, latest=True)
+            rubric_queryset = rubric_queryset.filter(
+                question_index=question_idx, latest=True
+            )
         rubric_data = []
 
         # see issue #3683 - need to prefetch these fields for
@@ -511,7 +521,7 @@ class RubricService:
                 "value": "0",
                 "out_of": mx,
                 "text": "no answer given",
-                "question": q,
+                "question_index": q,
                 "meta": "Is this answer blank or nearly blank?  Please do not use "
                 + "if there is any possibility of relevant writing on the page.",
                 "tags": "",
@@ -525,7 +535,7 @@ class RubricService:
                 "value": "0",
                 "out_of": mx,
                 "text": "no marks",
-                "question": q,
+                "question_index": q,
                 "meta": "There is writing here but its not sufficient for any points.",
                 "tags": "",
             }
@@ -538,7 +548,7 @@ class RubricService:
                 "value": f"{mx}",
                 "out_of": mx,
                 "text": "full marks",
-                "question": q,
+                "question_index": q,
                 "meta": "",
                 "tags": "",
             }
@@ -554,7 +564,7 @@ class RubricService:
                     "out_of": 0,
                     "text": ".",
                     "kind": "relative",
-                    "question": q,
+                    "question_index": q,
                     "meta": "",
                     "tags": "",
                 }
@@ -567,7 +577,7 @@ class RubricService:
                     "out_of": 0,
                     "text": ".",
                     "kind": "relative",
-                    "question": q,
+                    "question_index": q,
                     "meta": "",
                     "tags": "",
                 }
@@ -582,35 +592,35 @@ class RubricService:
                         "value": 1.5,
                         "text": "testing non-integer rubric",
                         "kind": "relative",
-                        "question": q,
+                        "question_index": q,
                     },
                     {
                         "display_delta": "-\N{Vulgar Fraction One Half}",
                         "value": -0.5,
                         "text": "testing negative non-integer rubric",
                         "kind": "relative",
-                        "question": q,
+                        "question_index": q,
                     },
                     {
                         "display_delta": "+a tenth",
                         "value": 1 / 10,
                         "text": "one tenth of one point",
                         "kind": "relative",
-                        "question": q,
+                        "question_index": q,
                     },
                     {
                         "display_delta": "+1/29",
                         "value": 1 / 29,
                         "text": "ADR will love co-prime pairs",
                         "kind": "relative",
-                        "question": q,
+                        "question_index": q,
                     },
                     {
                         "display_delta": "+1/31",
                         "value": 1 / 31,
                         "text": r"tex: Note that $31 \times 29 = 899$.",
                         "kind": "relative",
-                        "question": q,
+                        "question_index": q,
                     },
                     {
                         "display_delta": "1/49 of 1/7",
@@ -618,7 +628,7 @@ class RubricService:
                         "out_of": 1 / 7,
                         "text": "testing absolute rubric",
                         "kind": "absolute",
-                        "question": q,
+                        "question_index": q,
                     },
                 ]:
                     create_system_rubric(rubric)
@@ -664,7 +674,7 @@ class RubricService:
                 "value": 0.5,
                 "text": ".",
                 "kind": "relative",
-                "question": q,
+                "question_index": q,
                 "username": username,
                 "system_rubric": True,
             }
@@ -672,7 +682,7 @@ class RubricService:
             log.info(
                 "Built delta-rubric %s for Qidx %d: %s",
                 r["display_delta"],
-                r["question"],
+                r["question_index"],
                 r["rid"],
             )
 
@@ -681,7 +691,7 @@ class RubricService:
                 "value": -0.5,
                 "text": ".",
                 "kind": "relative",
-                "question": q,
+                "question_index": q,
                 "username": username,
                 "system_rubric": True,
             }
@@ -689,7 +699,7 @@ class RubricService:
             log.info(
                 "Built delta-rubric %s for Qidx %d: %s",
                 r["display_delta"],
-                r["question"],
+                r["question_index"],
                 r["rid"],
             )
 
@@ -864,7 +874,7 @@ class RubricService:
         """
         if filetype == "json":
             if question_idx is not None:
-                queryset = Rubric.objects.filter(question=question_idx)
+                queryset = Rubric.objects.filter(question_index=question_idx)
             else:
                 queryset = Rubric.objects.all()
             serializer = RubricSerializer(queryset, many=True)

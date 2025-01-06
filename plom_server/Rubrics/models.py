@@ -71,21 +71,15 @@ class Rubric(models.Model):
         out_of: the maximum possible value for this rubric. only
             for absolute rubrics and is 0 for other types
         text: the text of the rubric
-        question: the question this rubric is associated with.
+        question_index: the question this rubric is associated with.
         tags: a list of tags for this rubric.
         meta: text shown only to markers, not to students.
         parameters: a list of parameters for the rubric, used in
             parameterized rubrics.
         annotations: a mapping to Annotation objects.  Its many-to-many
             so that multiple rubrics can link to multiple Annotations.
-        out_of: the maximum ``value`` an "abs" ``kind`` rubric may hold, 0 otherwise.
-        text: a string to display to recipients, its format is not pre-defined.
-        question: the ``SpecQuestion`` this rubric is related to.
-        tags: TODO:
-        meta: TODO:
         versions: a JSON list containing the versions of ``question``
             this rubric is assigned to.
-        parameters: TODO:
         system_rubric: this Rubric was created by or is otherwise
             important to the functioning of the Plom system.  Probably
             readonly or at least extreme caution before poking at.
@@ -122,7 +116,7 @@ class Rubric(models.Model):
         null=False, blank=True, default=0, validators=[MinValueValidator(0.0)]
     )
     text = models.TextField(null=False)  # can be long
-    question = models.IntegerField(null=False, blank=True, default=0)
+    question_index = models.IntegerField(null=False, blank=False)
     tags = models.TextField(null=True, blank=True, default="")  # can be long
     meta = models.TextField(null=True, blank=True, default="")  # can be long
     versions = models.JSONField(null=True, blank=True, default=list)
@@ -229,7 +223,7 @@ class RubricTable(django_tables2.Table):
             "revision",
             "kind",
             "system_rubric",
-            "question",
+            "question_index",
             "text",
         )
         sequence = (
@@ -239,6 +233,6 @@ class RubricTable(django_tables2.Table):
             "revision",
             "kind",
             "system_rubric",
-            "question",
+            "question_index",
             "text",
         )

@@ -78,11 +78,15 @@ class Command(BaseCommand):
 
             rub["username"] = username
 
+            # some mangling because client still uses "question"
+            if "question_index" not in rub.keys():
+                rub["question_index"] = rub.pop("question")
+
             # Multiply rubrics w/o questions, avoids repetition in demo file
-            if rub.get("question") is None:
+            if rub.get("question_index") is None:
                 for q in question_indices:
                     r = rub.copy()
-                    r["question"] = q
+                    r["question_index"] = q
                     rubrics.append(r)
             else:
                 rubrics.append(rub)
@@ -108,7 +112,7 @@ class Command(BaseCommand):
         filename: None | str | pathlib.Path,
         *,
         verbose: bool = True,
-        question: int | None = None,
+        question_idx: int | None = None,
     ) -> None:
         """Download the rubrics from a server and save them to a file.
 
@@ -120,7 +124,7 @@ class Command(BaseCommand):
 
         Keyword Args:
             verbose: print stuff.
-            question: download for question index, or ``None`` for all.
+            question_idx: download for question index, or ``None`` for all.
 
         Returns:
             None: but saves a file as a side effect.
@@ -128,9 +132,9 @@ class Command(BaseCommand):
         service = RubricService()
 
         if not filename:
-            rubrics = service.get_rubrics_as_dicts(question_idx=question)
-            if not rubrics and question:
-                self.stdout.write(f"No rubrics for question index {question}")
+            rubrics = service.get_rubrics_as_dicts(question_idx=question_idx)
+            if not rubrics and question_idx:
+                self.stdout.write(f"No rubrics for question index {question_idx}")
                 return
             if not rubrics:
                 self.stdout.write("No rubrics yet")
@@ -147,7 +151,7 @@ class Command(BaseCommand):
             self.stdout.write(f'Saving server\'s current rubrics to "{filename}"')
 
         with open(filename, "w") as f:
-            data = service.get_rubric_data(suffix, question=question)
+            data = service.get_rubric_data(suffix, question_idx=question_idx)
             f.write(data)
 
     def upload_rubrics_from_file(self, filename):
@@ -264,7 +268,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f"Added {N} rubrics from {f}"))
 
         elif opt["command"] == "pull":
-            self.download_rubrics_to_file(opt["file"], question=opt["question"])
+            self.download_rubrics_to_file(opt["file"], question_idx=opt["question"])
 
         else:
             self.print_help("manage.py", "plom_rubrics")

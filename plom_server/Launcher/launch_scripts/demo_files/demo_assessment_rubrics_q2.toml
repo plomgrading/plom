@@ -8,7 +8,7 @@ value = 2
 text = "correct derivative"
 tags = "demo"
 meta = "Student evaluated derivative correctly"
-question = 2
+question_index = 2
 username = "manager"
 
 [[rubric]]
@@ -17,7 +17,7 @@ value = 1
 text = "right idea, but be careful"
 tags = "demo"
 meta = "Student made small arithmetic mistake when computing derivative"
-question = 2
+question_index = 2
 username = "manager"
 
 [[rubric]]
@@ -26,7 +26,7 @@ value = -2
 text = "substantial error"
 tags = "demo"
 meta = "Student made substantial error when computing derivative"
-question = 2
+question_index = 2
 username = "manager"
 
 [[rubric]]
@@ -35,7 +35,7 @@ value = -2
 text = "not the chain rule"
 tags = "demo"
 meta = "Student got chain rule wrong"
-question = 2
+question_index = 2
 username = "manager"
 
 [[rubric]]
@@ -44,7 +44,7 @@ value = -2
 text = "not the product rule"
 tags = "demo"
 meta = "Student got product rule wrong"
-question = 2
+question_index = 2
 username = "manager"
 
 [[rubric]]
@@ -53,7 +53,7 @@ value = -2
 text = "not the quotient rule"
 tags = "demo"
 meta = "Student got quotient rule wrong"
-question = 2
+question_index = 2
 username = "manager"
 
 
@@ -63,7 +63,7 @@ value = -1
 text = "minor error in derivative"
 tags = "demo"
 meta = "Student had right idea but made minor error differentiating component"
-question = 2
+question_index = 2
 username = "manager"
 
 [[rubric]]
@@ -72,7 +72,7 @@ value = -1
 text = "not derivative of log"
 tags = "demo"
 meta = "Student got derivative of log wrong"
-question = 2
+question_index = 2
 username = "manager"
 
 [[rubric]]
@@ -81,7 +81,7 @@ value = -1
 text = "incorrect trig derivative"
 tags = "demo"
 meta = "Student got derivative of trig function wrong"
-question = 2
+question_index = 2
 username = "manager"
 
 
@@ -91,7 +91,7 @@ value = -1
 text = "careful - minor error"
 tags = "demo"
 meta = "Student made small arithmetic mistake when computing derivative"
-question = 2
+question_index = 2
 username = "manager"
 
 [[rubric]]
@@ -100,7 +100,7 @@ value = -1
 text = "this does not follow"
 tags = "demo"
 meta = "Student made logical error from one line to the next"
-question = 2
+question_index = 2
 username = "manager"
 
 [[rubric]]
@@ -108,7 +108,7 @@ kind = "neutral"
 text = "be careful"
 tags = "demo"
 meta = "Student made an inconsequential error."
-question = 2
+question_index = 2
 username = "manager"
 
 [[rubric]]
@@ -116,5 +116,5 @@ kind = "neutral"
 text = "hard to read"
 tags = "demo"
 meta = "Student handwriting is making marking hard"
-question = 2
+question_index = 2
 username = "manager"

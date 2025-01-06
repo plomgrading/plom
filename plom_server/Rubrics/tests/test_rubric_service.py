@@ -116,7 +116,7 @@ class RubricServiceTests(TestCase):
             value=0.0,
             out_of=0.0,
             text="qwert",
-            question=1,
+            question_index=1,
             user=user1,
             tags="",
             meta="asdfg",
@@ -131,7 +131,7 @@ class RubricServiceTests(TestCase):
             value=0.0,
             out_of=0.0,
             text="yuiop",
-            question=1,
+            question_index=1,
             user=user2,
             tags="",
             meta="hjklz",
@@ -146,7 +146,7 @@ class RubricServiceTests(TestCase):
             value=2.5,
             out_of=0.0,
             text="yuiop",
-            question=1,
+            question_index=1,
             user=user2,
             tags="",
             meta="hjklz",
@@ -169,7 +169,7 @@ class RubricServiceTests(TestCase):
             value=1.5,
             out_of=5.0,
             text="mnbvc",
-            question=3,
+            question_index=3,
             user=user1,
             tags="",
             meta="lkjhg",
@@ -211,7 +211,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.meta, self.neutral_rubric.meta)
         self.assertEqual(r.user, self.neutral_rubric.user)
         self.assertIsNot(r.user, self.relative_rubric.user)
-        self.assertEqual(r.question, self.neutral_rubric.question)
+        self.assertEqual(r.question_index, self.neutral_rubric.question_index)
         self.assertEqual(r.versions, self.neutral_rubric.versions)
         self.assertEqual(r.parameters, self.neutral_rubric.parameters)
 
@@ -238,7 +238,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.meta, self.relative_rubric.meta)
         self.assertEqual(r.user, self.relative_rubric.user)
         self.assertIsNot(r.user, self.neutral_rubric.user)
-        self.assertEqual(r.question, self.relative_rubric.question)
+        self.assertEqual(r.question_index, self.relative_rubric.question_index)
         self.assertEqual(r.versions, self.relative_rubric.versions)
         self.assertEqual(r.parameters, self.relative_rubric.parameters)
 
@@ -265,7 +265,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.meta, self.absolute_rubric.meta)
         self.assertEqual(r.user, self.absolute_rubric.user)
         self.assertIsNot(r.user, self.relative_rubric.user)
-        self.assertEqual(r.question, self.absolute_rubric.question)
+        self.assertEqual(r.question_index, self.absolute_rubric.question_index)
         self.assertEqual(r.versions, self.absolute_rubric.versions)
         self.assertEqual(r.parameters, self.absolute_rubric.parameters)
 

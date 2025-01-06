@@ -189,7 +189,7 @@ class RubricLandingPageView(ManagerRequiredView):
             system_filter = filter_form.cleaned_data["system_filter"]
 
             if question_filter:
-                rubrics = rubrics.filter(question=question_filter, latest=True)
+                rubrics = rubrics.filter(question_index=question_filter, latest=True)
 
             if kind_filter:
                 rubrics = rubrics.filter(kind=kind_filter, latest=True)
@@ -436,7 +436,7 @@ class RubricCreateView(ManagerRequiredView):
                 "value": form.cleaned_data["value"],
                 "out_of": form.cleaned_data["out_of"],
                 "meta": form.cleaned_data["meta"],
-                "question": form.cleaned_data["question"],
+                "question_index": form.cleaned_data["question_index"],
                 "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
             }
             rs.create_rubric(rubric_data)
@@ -460,7 +460,7 @@ class RubricEditView(ManagerRequiredView):
                 "value": form.cleaned_data["value"],
                 "out_of": form.cleaned_data["out_of"],
                 "meta": form.cleaned_data["meta"],
-                "question": form.cleaned_data["question"],
+                "question_index": form.cleaned_data["question_index"],
                 "revision": rubric.revision,
                 "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
             }
