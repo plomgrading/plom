@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
@@ -1825,7 +1825,7 @@ class RubricWidget(QWidget):
                 InfoMsg(self, f"No permission to modify that rubric: {e}").exec()
                 return
             except PlomInconsistentRubric as e:
-                ErrorMsg(self, f"Inconsistent Rubric: {e}").exec()
+                WarnMsg(self, f"Inconsistent Rubric: {e}").exec()
                 return
             except PlomNoRubric as e:
                 ErrorMsg(self, f"{e}").exec()
@@ -1858,6 +1858,9 @@ class RubricWidget(QWidget):
                 new_rubric = self._parent.createNewRubric(new_rubric)
             except PlomNoPermission as e:
                 InfoMsg(self, f"No permission to create rubrics: {e}").exec()
+                return
+            except PlomInconsistentRubric as e:
+                WarnMsg(self, f"Inconsistent Rubric: {e}").exec()
                 return
             self.rubrics.append(new_rubric)
 
