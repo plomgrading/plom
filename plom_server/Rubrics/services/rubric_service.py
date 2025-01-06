@@ -320,12 +320,13 @@ class RubricService:
         new_rubric_data["latest"] = True
         new_rubric_data["rid"] = old_rubric.rid
 
-        # TODO TODO: Issue #3582: don't autogenerate if input has custom display delta
-        new_rubric_data["display_delta"] = self._generate_display_delta(
-            new_rubric_data.get("value", 0),
-            new_rubric_data["kind"],
-            new_rubric_data.get("out_of", None),
-        )
+        if new_rubric_data.get("display_delta", None) is None:
+            # if we don't have a display_delta, we'll generate a default one
+            new_rubric_data["display_delta"] = _generate_display_delta(
+                new_rubric_data.get("value", 0),
+                new_rubric_data["kind"],
+                new_rubric_data.get("out_of", None),
+            )
 
         if new_rubric_data["kind"] in ("relative", "neutral"):
             new_rubric_data["out_of"] = 0

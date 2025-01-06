@@ -364,6 +364,39 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r["out_of"], self.modified_absolute_rubric.out_of)
         self.assertEqual(r["username"], self.modified_absolute_rubric.user.username)
 
+    def test_modify_absolute_rubric_change_value_autogen_display(self) -> None:
+        service = RubricService()
+        rid = self.modified_absolute_rubric.rid
+
+        simulated_client_data = {
+            "rid": rid,
+            "kind": "absolute",
+            "value": 2.57,
+            "out_of": 3,
+            "text": "yuiop",
+            "username": "Olivia",
+            "question_index": 1,
+        }
+        r = service.modify_rubric(rid, simulated_client_data)
+        self.assertEqual(r["display_delta"], "2.57 of 3")
+
+    def test_modify_absolute_rubric_change_value_no_autogen_display(self) -> None:
+        service = RubricService()
+        rid = self.modified_absolute_rubric.rid
+
+        simulated_client_data = {
+            "rid": rid,
+            "kind": "absolute",
+            "value": 2.5,
+            "out_of": 3,
+            "display_delta": "2.50 of 3.00",
+            "text": "yuiop",
+            "username": "Olivia",
+            "question_index": 1,
+        }
+        r = service.modify_rubric(rid, simulated_client_data)
+        self.assertEqual(r["display_delta"], "2.50 of 3.00")
+
     def test_modify_rubric_change_kind(self) -> None:
         """Test RubricService.modify_rubric(), can change the "kind" of rubrics.
 
