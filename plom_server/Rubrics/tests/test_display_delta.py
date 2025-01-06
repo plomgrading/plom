@@ -2,6 +2,7 @@
 # Copyright (C) 2025 Colin B. Macdonald
 
 import unicodedata
+from fractions import Fraction
 
 from django.test import TestCase
 
@@ -12,8 +13,25 @@ from ..services.rubric_service import _generate_display_delta as gen_display
 class RubricServiceTests_display_delta(TestCase):
 
     def test_table_correctness(self) -> None:
+        # avoid typos in the fraction table by computing values
         for frac, s in _fraction_table:
-            self.assertAlmostEqual(unicodedata.numeric(s), frac)
+            assert isinstance(frac, float)
+            assert isinstance(s, str)
+            if len(s) == 1:
+                value: float | Fraction = unicodedata.numeric(s)
+                continue
+            try:
+                value = Fraction(s)
+            except ValueError:
+                # split on \N{Fraction Slash}, construct fraction
+                def c2n(d: str) -> int:
+                    return round(unicodedata.numeric(d))
+
+                num, den = s.split("\N{Fraction Slash}")
+                numint = sum([c2n(d) * 10**i for i, d in enumerate(num[::-1])])
+                denint = sum([c2n(d) * 10**i for i, d in enumerate(den[::-1])])
+                value = Fraction(numint, denint)
+            self.assertAlmostEqual(value, frac)
 
     def test_generate_display_errors(self) -> None:
         with self.assertRaisesRegex(ValueError, "Invalid kind"):

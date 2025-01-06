@@ -75,6 +75,9 @@ def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
     }
 
 
+# There are no single unicode chars for 3/10, 7/10, 9/10 but we can use multichar
+# strings which seem to render nicely both in web and Qt client (on GNU/Linux).
+# TODO: test on Windows/macOS: could instead fallback to ASCII "3/10".
 _fraction_table = (
     (1 / 2, "\N{Vulgar Fraction One Half}"),
     (1 / 4, "\N{Vulgar Fraction One Quarter}"),
@@ -90,6 +93,18 @@ _fraction_table = (
     (5 / 8, "\N{Vulgar Fraction Five Eighths}"),
     (7 / 8, "\N{Vulgar Fraction Seven Eighths}"),
     (1 / 10, "\N{Vulgar Fraction One Tenth}"),
+    (
+        3 / 10,
+        "\N{Superscript Three}\N{Fraction Slash}\N{Subscript One}\N{Subscript Zero}",
+    ),
+    (
+        7 / 10,
+        "\N{Superscript Seven}\N{Fraction Slash}\N{Subscript One}\N{Subscript Zero}",
+    ),
+    (
+        9 / 10,
+        "\N{Superscript Nine}\N{Fraction Slash}\N{Subscript One}\N{Subscript Zero}",
+    ),
 )
 
 
