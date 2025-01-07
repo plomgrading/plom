@@ -21,11 +21,16 @@ from PyQt6.QtWidgets import (
     QToolButton,
 )
 
-from plom.client.useful_classes import InfoMsg
-from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill, AttnColourHex
-from plom.client.tools import CommandTool, UndoStackMoveMixin
+from plom.client.tools import (
+    AttnColourHex,
+    CommandTool,
+    OutOfBoundsFill,
+    OutOfBoundsPen,
+    UndoStackMoveMixin,
+)
 from plom.client.tools.delta import DeltaItem, GhostDelta
 from plom.client.tools.text import GhostText, TextItem
+from plom.client.useful_classes import InfoMsg
 
 
 class CommandRubric(CommandTool):
@@ -84,12 +89,7 @@ class CommandRubric(CommandTool):
         if random.random() < 0.5:
             attn_msg = "This rubric has been updated from rev 5 to rev 17"
 
-        return cls(
-            scene,
-            QPointF(X[0], X[1]),
-            X[3],
-            attn_msg=attn_msg,
-        )
+        return cls(scene, QPointF(X[1], X[2]), X[3], attn_msg=attn_msg)
 
     def get_undo_redo_animation_shape(self):
         return self.gdt.shape()
@@ -111,7 +111,13 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
     """
 
     def __init__(
-        self, pt: QPointF, rubric: dict[str, Any], *, _scene, style: dict[str, Any], attn_msg: str = ""
+        self,
+        pt: QPointF,
+        rubric: dict[str, Any],
+        *,
+        _scene,
+        style: dict[str, Any],
+        attn_msg: str = "",
     ) -> None:
         """Constructor for this class.
 
