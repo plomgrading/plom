@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Bryan Tanady
 
+from __future__ import annotations
+
 from copy import deepcopy
-from typing import Any, Dict, List, Union
+from typing import Any
 
 from PyQt6.QtCore import QPointF, Qt
 from PyQt6.QtGui import QColor, QFont, QPen
@@ -29,18 +31,21 @@ class CommandRubric(CommandTool):
     "saved comment").
     """
 
-    def __init__(self, scene, pt, rubric):
+    def __init__(self, scene, pt: QPointF, rubric: dict[str, Any]) -> None:
         """Constructor for this class.
 
         Args:
             scene (PageScene): Plom's annotation scene.
-            pt (QPointF): where to place the rubric.
-            rubric (dict): must have at least these keys:
+            pt: where to place the rubric.
+            rubric: must have at least these keys:
                 "rid", "kind", "value", "out_of", "display_delta", "text".
                 Any other keys are probably ignored and will almost
                 certainly not survive being serialized.
                 We copy the data, so changes to the original will not
                 automatically update this object,
+
+        Returns:
+            None
         """
         super().__init__(scene)
         self.gdt = RubricItem(pt, rubric, _scene=scene, style=scene.style)
@@ -78,7 +83,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
     """
 
     def __init__(
-        self, pt: QPointF, rubric: Dict[str, Any], *, _scene, style: Dict[str, Any]
+        self, pt: QPointF, rubric: dict[str, Any], *, _scene, style: dict[str, Any]
     ) -> None:
         """Constructor for this class.
 
@@ -140,7 +145,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
 
-    def as_rubric(self) -> Dict[str, Any]:
+    def as_rubric(self) -> dict[str, Any]:
         """Return as a rubric dict."""
         # TODO: probably `return self._rubric`?  or is explicit is better than implicit?
         return {
@@ -181,7 +186,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
             self.di.moveBy(0, -cr.height() / 2)
             self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
 
-    def pickle(self) -> List[Any]:
+    def pickle(self) -> list[Any]:
         return [
             "Rubric",
             self.pt.x() + self.x(),
@@ -277,9 +282,7 @@ class GhostComment(QGraphicsItemGroup):
             self.blurb.setVisible(True)
             self.addToGroup(self.blurb)
 
-    def change_rubric_size(
-        self, fontsize: Union[int, None], annot_scale: float
-    ) -> None:
+    def change_rubric_size(self, fontsize: int | None, annot_scale: float) -> None:
         """Change comment size.
 
         Args:
