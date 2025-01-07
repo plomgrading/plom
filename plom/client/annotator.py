@@ -242,13 +242,22 @@ class Annotator(QWidget):
         self.setToolShortCuts()
         self.setMinorShortCuts()
 
-    def update_attn_bar(self, *, tags: list[str] = [], show: bool = False) -> None:
+    def update_attn_bar(
+        self, *, tags: list[str] = [], msg: str = "", show: bool = False
+    ) -> None:
         """Update the attention bar to show notifications to the user.
+
+        Note: calling this twice will hide the previous message, so you
+        cannot currently call attention to multiple situations automatically.
+        Perhaps a future revision would create new bars on each call, and
+        destroy them on dismiss.
 
         Keyword Args:
             show: force showing the notification (default: False).
             tags: a list of tags: if non-empty we'll generate appropriate
                 text and show the notification bar.
+            msg: a text message to show.  Can include html (so you may
+                need to html-escape it first).
         """
         # TODO: share with Identifier?
         warning_yellow_style = "background-color: #FFD700; color: #000"
@@ -257,9 +266,12 @@ class Annotator(QWidget):
         secondary_explanation = ""
         if tags:
             tagstr = ", ".join(f"&ldquo;{html.escape(t)}&rdquo;" for t in tags)
-            notification_str = f"<p>This task is tagged {tagstr}</p>"
+            notification_str += f"<p>This task is tagged {tagstr}</p>"
+        if msg:
+            notification_str += f"<p>{msg}</p>"
         self.ui.attnLeftLabel.setText(notification_str)
         self.ui.attnRightLabel.setText(secondary_explanation)
+        # self.ui.attnRightLabel.setVisible(False)  # not yet used
         self.ui.attnClearButton.setVisible(False)  # not yet used
         if show or notification_str:
             self.ui.attnFrame.setVisible(True)

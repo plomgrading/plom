@@ -737,6 +737,7 @@ class PageScene(QGraphicsScene):
         """
         log.info("Pagescene: reacting to a possible change in rubrics")
         rid_to_rub = {r["rid"]: r for r in rubric_list}
+        num_update = 0
         for X in self.items():
             # check if object has "saveable" attribute and it is set to true.
             if getattr(X, "saveable", False):
@@ -757,6 +758,13 @@ class PageScene(QGraphicsScene):
                     s = f"rubric rid {rid} rev {old_rev} needs update to rev {new_rev}"
                     log.info(s)
                     X.update_attn_button(s, self)
+                    num_update += 1
+        if num_update:
+            # TODO emit signal instead of assuming stuff about the parent
+            rubrics_have = "rubrics have" if num_update > 1 else "rubric has"
+            self.parent().update_attn_bar(
+                msg=f"Out-of-date rubrics detected: {num_update} {rubrics_have} changed and needs updating."
+            )
 
     def get_src_img_data(self, *, only_visible: bool = True) -> list[dict[str, Any]]:
         """Get the live source image data for this scene.
