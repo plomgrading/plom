@@ -757,7 +757,7 @@ class PageScene(QGraphicsScene):
                         continue
                     s = f"rubric rid {rid} rev {old_rev} needs update to rev {new_rev}"
                     log.info(s)
-                    X.update_attn_button(s, self)
+                    X.update_attn_state(s, self)
                     num_update += 1
         if num_update:
             # TODO emit signal instead of assuming stuff about the parent

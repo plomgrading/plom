@@ -10,7 +10,6 @@ log = logging.getLogger("tools")
 
 from PyQt6.QtGui import QBrush, QColor, QPen
 
-AttnColourHex = "#ffa500"
 OutOfBoundsPenColour = QColor(255, 165, 0)
 OutOfBoundsFillColour = QColor(255, 165, 0, 128)
 OutOfBoundsPen = QPen(OutOfBoundsPenColour, 8)

@@ -22,7 +22,6 @@ from PyQt6.QtWidgets import (
 )
 
 from plom.client.tools import (
-    AttnColourHex,
     CommandTool,
     OutOfBoundsFill,
     OutOfBoundsPen,
@@ -85,11 +84,11 @@ class CommandRubric(CommandTool):
         # knows to latex it if needed.
 
         # TODO: test if this is the latest, else set some attention stuff
-        attn_msg = ""
-        if random.random() < 0.5:
-            attn_msg = "This rubric has been updated from rev 5 to rev 17"
+        # attn_msg = ""
+        # if random.random() < 0.5:
+        #     attn_msg = "This rubric has been updated from rev 5 to rev 17"
 
-        return cls(scene, QPointF(X[1], X[2]), X[3], attn_msg=attn_msg)
+        return cls(scene, QPointF(X[1], X[2]), X[3])  # attn_msg=attn_msg)
 
     def get_undo_redo_animation_shape(self):
         return self.gdt.shape()
@@ -181,12 +180,16 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
             self.blurb.setVisible(True)
             self.addToGroup(self.blurb)
 
-        self.update_attn_button(attn_msg, _scene)
+        self.update_attn_state(attn_msg, _scene)
 
-    def update_attn_button(self, attn_msg: str, _scene) -> None:
+    def update_attn_state(self, attn_msg: str, _scene) -> None:
         # TODO: should an empty string CLEAR the button?
         if not attn_msg:
             return
+        self.setToolTip(attn_msg)
+        self._attn_msg = attn_msg
+        return
+        # TODO: this button stuff disabled for now
         if not self._attn_button:
             self._create_attn_button(attn_msg, _scene)
             self._attn_msg = attn_msg
@@ -200,15 +203,15 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
 
     def _create_attn_button(self, attn_msg: str, _scene) -> None:
         b = QToolButton(text="\N{Warning Sign}")  # type: ignore[call-arg]
-        b.setStyleSheet("QToolButton { background-color: " + AttnColourHex + "; }")
-        b.clicked.connect(self.dismiss_attn_button_interactively)
+        b.setStyleSheet("QToolButton { background-color: #0000ff; }")
+        b.clicked.connect(self._dismiss_attn_button_interactively)
         # parenting the menu inside the scene
         m = QMenu(b)
         m.addAction(
             "Show me the diff", lambda: print("Update rubric: not implemented yet")
         )
         m.addSeparator()
-        m.addAction("Dismiss", self.dismiss_attn_button)
+        m.addAction("Dismiss", self._dismiss_attn_button)
         b.setMenu(m)
         # b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         # TODO: "most common way is to pass a widget pointer to [Scene.addWidget()]"
@@ -283,7 +286,8 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         ]
 
     def paint(self, painter, option, widget):
-        if not self.scene().itemWithinBounds(self):
+        # TODO: for now, we reuse the out-of-bounds colouring for needs attn
+        if not self.scene().itemWithinBounds(self) or self._attn_msg:
             painter.setPen(OutOfBoundsPen)
             painter.setBrush(OutOfBoundsFill)
             painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
@@ -312,7 +316,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
     def get_delta_value(self) -> int:
         return int(self.di.value)
 
-    def dismiss_attn_button_interactively(self):
+    def _dismiss_attn_button_interactively(self):
         if not self.scene():
             # nothing to do if we're not in a scene any more
             return
@@ -329,9 +333,9 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
             """,
             info_pre=False,
         ).exec()
-        self.dismiss_attn_button()
+        self._dismiss_attn_button()
 
-    def dismiss_attn_button(self):
+    def _dismiss_attn_button(self):
         if not self.scene():
             # nothing to do if we're not in a scene any more
             return
