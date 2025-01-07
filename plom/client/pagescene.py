@@ -729,7 +729,7 @@ class PageScene(QGraphicsScene):
                     rubrics.append(X.as_rubric())
         return rubrics
 
-    def react_to_rubric_list_changes(self, rubric_list: list[str, Any]) -> None:
+    def react_to_rubric_list_changes(self, rubric_list: list[dict[str, Any]]) -> None:
         """Someone has possibly changed the rubric list, check if any of our's are out of date.
 
         Currently, this doesn't actually update them, just flags them
@@ -761,10 +761,15 @@ class PageScene(QGraphicsScene):
                     num_update += 1
         if num_update:
             # TODO emit signal instead of assuming stuff about the parent
+            msg = "Out-of-date rubrics detected: "
             rubrics_have = "rubrics have" if num_update > 1 else "rubric has"
-            self.parent().update_attn_bar(
-                msg=f"Out-of-date rubrics detected: {num_update} {rubrics_have} changed and needs updating."
-            )
+            msg += f"{num_update} {rubrics_have} changed and needs updating."
+            _parent = self.parent()
+            if _parent:
+                # MyPy is rightfully unsure parent is an Annotator:
+                # # assert isinstance(_parent, Annotator)
+                # but that's likely a circular import, so just add exception:
+                _parent.update_attn_bar(msg=msg)  # type: ignore[attr-defined]
 
     def get_src_img_data(self, *, only_visible: bool = True) -> list[dict[str, Any]]:
         """Get the live source image data for this scene.
