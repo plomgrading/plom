@@ -147,6 +147,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.style = style
         self._rubric = deepcopy(rubric)
         self._attn_msg = attn_msg
+        self._attn_button = None
         # TODO: replace each with @property?
         self.rubricID = rubric["rid"]
         self.kind = rubric["kind"]
@@ -180,38 +181,54 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
             self.blurb.setVisible(True)
             self.addToGroup(self.blurb)
 
-        if self._attn_msg:
-            b = QToolButton(text="\N{Warning Sign}")  # type: ignore[call-arg]
-            b.setStyleSheet("QToolButton { background-color: " + AttnColourHex + "; }")
-            b.clicked.connect(self.dismiss_attn_button_interactively)
-            # parenting the menu inside the scene
-            m = QMenu(b)
-            m.addAction(
-                "Show me the diff", lambda: print("Update rubric: not implemented yet")
-            )
-            m.addSeparator()
-            m.addAction("Dismiss", self.dismiss_attn_button)
-            b.setMenu(m)
-            # b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-            h = QGraphicsProxyWidget()
-            h.setWidget(b)
-            h.setOpacity(0.66)
-            # h.setPos(self.blurb.boundingRect().bottomRight())
-            # TODO: these magic numbers come from _tweakPositions
-            h.setPos(self.pt)
-            cr = self.di.boundingRect()
-            h.moveBy(cr.width() + 5, cr.height() / 2)
+        self.update_attn_button(attn_msg, _scene)
 
-            h.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
-            h.setFlag(
-                QGraphicsItem.GraphicsItemFlag.ItemDoesntPropagateOpacityToChildren
-            )
-            b.setToolTip(self._attn_msg)
-            # TODO: both of these allow it to move but not receive mouse events
-            # self.addToGroup(h)
-            # h.setParentItem(self)
-            _scene.addItem(h)
-            self._attn_button = h
+    def update_attn_button(self, attn_msg: str, _scene) -> None:
+        # TODO: should an empty string CLEAR the button?
+        if not attn_msg:
+            return
+        if not self._attn_button:
+            self._create_attn_button(attn_msg, _scene)
+            self._attn_msg = attn_msg
+            return
+        h = self._attn_button
+        b = h.widget()
+        b.setToolTip(attn_msg)
+        rand_colour = "#" + hex(random.randint(0, 256**3 - 1))[2:]
+        b.setStyleSheet("QToolButton { background-color: " + rand_colour + "; }")
+        self._attn_msg = attn_msg
+
+    def _create_attn_button(self, attn_msg: str, _scene) -> None:
+        b = QToolButton(text="\N{Warning Sign}")  # type: ignore[call-arg]
+        b.setStyleSheet("QToolButton { background-color: " + AttnColourHex + "; }")
+        b.clicked.connect(self.dismiss_attn_button_interactively)
+        # parenting the menu inside the scene
+        m = QMenu(b)
+        m.addAction(
+            "Show me the diff", lambda: print("Update rubric: not implemented yet")
+        )
+        m.addSeparator()
+        m.addAction("Dismiss", self.dismiss_attn_button)
+        b.setMenu(m)
+        # b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        # TODO: "most common way is to pass a widget pointer to [Scene.addWidget()]"
+        h = QGraphicsProxyWidget()
+        h.setWidget(b)
+        h.setOpacity(0.66)
+        # h.setPos(self.blurb.boundingRect().bottomRight())
+        # TODO: these magic numbers come from _tweakPositions
+        h.setPos(self.pt)
+        cr = self.di.boundingRect()
+        h.moveBy(cr.width() + 5, cr.height() / 2)
+
+        h.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
+        h.setFlag(QGraphicsItem.GraphicsItemFlag.ItemDoesntPropagateOpacityToChildren)
+        b.setToolTip(attn_msg)
+        # TODO: both of these allow it to move but not receive mouse events
+        # self.addToGroup(h)
+        # h.setParentItem(self)
+        _scene.addItem(h)
+        self._attn_button = h
 
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)

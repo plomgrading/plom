@@ -1176,7 +1176,11 @@ class RubricWidget(QWidget):
             self.syncB.setText("Sync")
 
     def refreshRubrics(self) -> None:
-        """Get rubrics from server and if non-trivial then repopulate."""
+        """Get rubrics from server and if non-trivial then repopulate.
+
+        TODO: consider splitting this in two: trigger a refresh elsewhere
+        and react to a refresh.
+        """
         old_rubrics = self.rubrics
         self.rubrics = self._parent.getRubricsFromServer()
         self.setRubricTabsFromState(self.get_tab_rubric_lists())
@@ -1238,6 +1242,9 @@ class RubricWidget(QWidget):
             BigMessageDialog(self, msg, details_html=d, show=False).exec()
         # diff_rubric is not precise, won't hurt to update display even if no changes
         self.updateLegalityOfRubrics()
+        # TODO: port to slots and signals instead
+        if self._parent.scene:
+            self._parent.scene.react_to_rubric_list_changes(self.rubrics)
 
     def wrangleRubricsInteractively(self) -> None:
         wr = RubricWrangler(

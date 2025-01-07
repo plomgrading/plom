@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2024 Aden Chan
@@ -728,6 +728,35 @@ class PageScene(QGraphicsScene):
                 if isinstance(X, RubricItem):
                     rubrics.append(X.as_rubric())
         return rubrics
+
+    def react_to_rubric_list_changes(self, rubric_list: list[str, Any]) -> None:
+        """Someone has possibly changed the rubric list, check if any of our's are out of date.
+
+        Currently, this doesn't actually update them, just flags them
+        visually as needing updates.
+        """
+        log.info("Pagescene: reacting to a possible change in rubrics")
+        rid_to_rub = {r["rid"]: r for r in rubric_list}
+        for X in self.items():
+            # check if object has "saveable" attribute and it is set to true.
+            if getattr(X, "saveable", False):
+                if isinstance(X, RubricItem):
+                    old_rub = X.as_rubric()
+                    rid = old_rub["rid"]
+                    old_rev = old_rub.get("revision", None)
+                    new_rev = rid_to_rub[rid].get("revision", None)
+                    if old_rev is None or new_rev is None:
+                        log.warn(
+                            f"[Is this legacy?] rubric rid={rid}"
+                            " w/o 'revision' cannot be checked for updates"
+                        )
+                        continue
+                    if old_rev == new_rev:
+                        log.debug(f"   rid {rid} rev {old_rev} already up-to-date")
+                        continue
+                    s = f"rubric rid {rid} rev {old_rev} needs update to rev {new_rev}"
+                    log.info(s)
+                    X.update_attn_button(s, self)
 
     def get_src_img_data(self, *, only_visible: bool = True) -> list[dict[str, Any]]:
         """Get the live source image data for this scene.
