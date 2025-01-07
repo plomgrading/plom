@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <author>
-  Copyright (C) 2018-2024 The Plom Project Developers
+  Copyright (C) 2018-2025 The Plom Project Developers
   SPDX-License-Identifier: AGPL-3.0-or-later
  </author>
  <class>annotator</class>
@@ -707,11 +707,20 @@
       </property>
       <item>
        <widget class="QFrame" name="attnFrame">
-        <layout class="QHBoxLayout" name="attnFrameLayout">
+        <layout class="QHBoxLayout" name="attnFrameLayout" stretch="1,0,0,0,0,0">
          <item>
           <widget class="QLabel" name="attnLeftLabel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string>msg goes here</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -720,9 +729,12 @@
            <property name="orientation">
             <enum>Qt::Orientation::Horizontal</enum>
            </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Policy::MinimumExpanding</enum>
+           </property>
            <property name="sizeHint" stdset="0">
             <size>
-             <width>40</width>
+             <width>16</width>
              <height>20</height>
             </size>
            </property>
@@ -730,8 +742,17 @@
          </item>
          <item>
           <widget class="QLabel" name="attnRightLabel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string>right-hand notes</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
