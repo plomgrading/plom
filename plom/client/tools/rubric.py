@@ -39,9 +39,7 @@ class CommandRubric(CommandTool):
     "saved comment").
     """
 
-    def __init__(
-        self, scene, pt: QPointF, rubric: dict[str, Any], *, attn_msg: str = ""
-    ) -> None:
+    def __init__(self, scene, pt: QPointF, rubric: dict[str, Any]) -> None:
         """Constructor for this class.
 
         Args:
@@ -54,22 +52,11 @@ class CommandRubric(CommandTool):
                 We copy the data, so changes to the original will not
                 automatically update this object,
 
-        Keyword Args:
-            attn_msg: if set, this rubric is notifying the user of something,
-                generally. we'll call attention to that and allow the user to
-                clear the setting.
-
         Returns:
             None
         """
         super().__init__(scene)
-        self.gdt = RubricItem(
-            pt,
-            rubric,
-            _scene=scene,
-            style=scene.style,
-            attn_msg=attn_msg,
-        )
+        self.gdt = RubricItem(pt, rubric, _scene=scene, style=scene.style)
         self.setText("Rubric")
 
     @classmethod
@@ -82,13 +69,7 @@ class CommandRubric(CommandTool):
         if len(X) != 4:
             raise ValueError("wrong length of pickle data")
         # knows to latex it if needed.
-
-        # TODO: test if this is the latest, else set some attention stuff
-        # attn_msg = ""
-        # if random.random() < 0.5:
-        #     attn_msg = "This rubric has been updated from rev 5 to rev 17"
-
-        return cls(scene, QPointF(X[1], X[2]), X[3])  # attn_msg=attn_msg)
+        return cls(scene, QPointF(X[1], X[2]), X[3])
 
     def get_undo_redo_animation_shape(self):
         return self.gdt.shape()
@@ -110,13 +91,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
     """
 
     def __init__(
-        self,
-        pt: QPointF,
-        rubric: dict[str, Any],
-        *,
-        _scene,
-        style: dict[str, Any],
-        attn_msg: str = "",
+        self, pt: QPointF, rubric: dict[str, Any], *, _scene, style: dict[str, Any]
     ) -> None:
         """Constructor for this class.
 
@@ -134,9 +109,6 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         Keyword Args:
             _scene (PageScene): Plom's annotation scene.
             style: various things effecting color, linewidths etc.
-            attn_msg: if set, this rubric is notifying the user of something,
-                generally. we'll call attention to that and allow the user to
-                clear the setting.
 
         Returns:
             None
@@ -145,7 +117,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.pt = pt
         self.style = style
         self._rubric = deepcopy(rubric)
-        self._attn_msg = attn_msg
+        self._attn_msg = ""
         self._attn_button = None
         # TODO: replace each with @property?
         self.rubricID = rubric["rid"]
@@ -180,7 +152,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
             self.blurb.setVisible(True)
             self.addToGroup(self.blurb)
 
-        self.update_attn_state(attn_msg, _scene)
+        # self.update_attn_state(attn_msg, _scene)
 
     def update_attn_state(self, attn_msg: str, _scene) -> None:
         # TODO: should an empty string CLEAR the button?
