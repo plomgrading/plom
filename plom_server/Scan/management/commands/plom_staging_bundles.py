@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 from datetime import datetime
@@ -9,7 +9,7 @@ import hashlib
 import pathlib
 from time import sleep
 
-import pymupdf as fitz
+import pymupdf
 from tabulate import tabulate
 
 from django.utils import timezone
@@ -51,9 +51,9 @@ class Command(BaseCommand):
         timestamp = datetime.timestamp(timezone.now())
         hashed = hashlib.sha256(file_bytes).hexdigest()
         try:
-            with fitz.open(stream=file_bytes) as pdf_doc:
+            with pymupdf.open(stream=file_bytes) as pdf_doc:
                 number_of_pages = pdf_doc.page_count
-        except fitz.FileDataError as err:
+        except pymupdf.FileDataError as err:
             raise CommandError(err)
 
         if scanner.check_for_duplicate_hash(hashed):

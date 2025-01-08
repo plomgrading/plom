@@ -79,7 +79,7 @@ class ScanService:
         *,
         force_render: bool = False,
         read_after: bool = False,
-    ) -> None:
+    ) -> int:
         """Upload a bundle PDF and store it in the filesystem + database.
 
         Also, split PDF into page images + store in filesystem and database.
@@ -102,7 +102,7 @@ class ScanService:
                 upload+splitting is finished.
 
         Returns:
-            None
+            The bundle id, the primary key of the newly-created bundle.
         """
         # Warning: Issue #2888, and https://gitlab.com/plom/plom/-/merge_requests/2361
         # strange behaviour can result from relaxing this durable=True
@@ -122,6 +122,7 @@ class ScanService:
                 bundle_obj.number_of_pages = number_of_pages
                 bundle_obj.save()
         self.split_and_save_bundle_images(bundle_obj.pk, read_after=read_after)
+        return bundle_obj.pk
 
     def upload_bundle_cmd(
         self,

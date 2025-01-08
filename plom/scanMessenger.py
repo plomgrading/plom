@@ -4,12 +4,15 @@
 
 import json
 import mimetypes
+from pathlib import Path
+from typing import Any
 
 import requests
 from requests_toolbelt import MultipartEncoder
 
 from plom.plom_exceptions import (
     PlomAuthenticationException,
+    PlomConflict,
     PlomRangeException,
     PlomSeriousException,
     PlomTakenException,
@@ -28,6 +31,29 @@ class ScanMessenger(BaseMessenger):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def new_server_upload_bundle(self, pdf: Path) -> dict[str, Any]:
+        """Upload a PDF file to the server as a new bundle.
+
+        Returns:
+            A dictionary, including the bundle_id and maybe other
+            information in the future.
+        """
+        with self.SRmutex:
+            try:
+                with pdf.open("rb") as f:
+                    files = {
+                        "pdf_file": f,
+                    }
+                    response = self.post_auth("/api/beta/scan/bundles", files=files)
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def new_server_list_bundles(self):
         with self.SRmutex:

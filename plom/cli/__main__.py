@@ -22,6 +22,7 @@ __license__ = "AGPL-3.0-or-later"
 
 import argparse
 import os
+from pathlib import Path
 
 from stdiomask import getpass
 
@@ -45,18 +46,15 @@ def get_parser():
     sub = parser.add_subparsers(dest="command")
 
     spU = sub.add_parser(
-        "bundle-upload",
+        "upload-bundle",
         help="Upload PDF file",
         description="Upload a bundle of page images in a PDF file.",
     )
+    spU.add_argument("pdf", help="a PDF file.")
     spS = sub.add_parser(
-        "status",
-        help="Get scanning status report from server",
-        description="""
-            Get scanning status report from server.
-        """,
+        "list-bundles",
+        help="List the scanned bundles on the server",
     )
-    spU.add_argument("bundleName", help="a PDF file.")
     spC = sub.add_parser(
         "clear",
         help='Clear "scanner" login',
@@ -157,11 +155,16 @@ def main():
     if hasattr(args, "password") and not args.password:
         args.password = getpass("password: ")
 
-    if args.command == "bundle-upload":
-        bundle_name = args.bundleName
+    if args.command == "upload-bundle":
+
+        @with_messenger
+        def upload(pdf, *, msgr):
+            r = msgr.new_server_upload_bundle(pdf)
+            print(r)
+
         print("TODO")
-        print(bundle_name)
-    elif args.command == "status":
+        upload(Path(args.pdf), msgr=(args.server, args.username, args.password))
+    elif args.command == "list-bundles":
         list_bundles(msgr=(args.server, args.username, args.password))
     elif args.command == "map":
 
