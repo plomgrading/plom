@@ -29,9 +29,16 @@ class ScanMapBundle(APIView):
         print(bundle_id)
         print(papernum)
         print(questions)
+        data = request.query_params
+        print(data)
+        question_idx_list = data.get("qidx")
+        print(question_idx_list)
+        papernum_qp = data.get("papernum")
+        print(papernum_qp)
         # if questions is None:
         #     questions = "all"
         # many types possible for ``questions`` but here we always get a str
+        return _error_response("WIP", status.HTTP_400_BAD_REQUEST)
         try:
             ScanService().map_bundle_pages_cmd(
                 bundle_id=bundle_id, papernum=papernum, question_map=questions

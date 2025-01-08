@@ -39,6 +39,25 @@ class ScanMessenger(BaseMessenger):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
+    def new_server_bundle_map_pages(self, bundle_id: int, papernum: int, questions):
+        papernum = 43
+        with self.SRmutex:
+            try:
+                # qall TODO?
+                # qdnm versus empty list?
+                p = (
+                    f"/api/beta/scan/bundle/{bundle_id}/map/{papernum}/todo?qall&papernum={papernum}"
+                    + "&".join(f"qidx={n}" for n in questions)
+                )
+                print(p)
+                response = self.post_auth(p)
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
     def doesBundleExist(self, bundle_name, md5sum):
         """Ask server if given bundle exists.
 

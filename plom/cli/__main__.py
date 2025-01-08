@@ -27,7 +27,7 @@ from stdiomask import getpass
 
 from plom.scan import __version__
 from plom import Default_Port
-from plom.cli import list_bundles
+from plom.cli import list_bundles, with_messenger
 
 # from plom.cli import clear_login
 
@@ -61,7 +61,52 @@ def get_parser():
         help='Clear "scanner" login',
         description='Clear "scanner" login after a crash or other expected event.',
     )
-    for x in (spU, spS, spC):
+    sp_map = sub.add_parser(
+        "map",
+        help="Assign pages of a bundle to particular questions.",
+        description="""
+            Assign pages of a bundle to particular question(s),
+            ignoring QR-codes etc.
+        """,
+    )
+    # TODO: might be convenient to work with stub/pdf name as well
+    sp_map.add_argument("bundle_id", help="Which bundle")
+
+    sp_map.add_argument(
+        "--papernum",
+        "-t",
+        metavar="T",
+        type=int,
+        help="""
+            Which paper number to upload to.
+            It must exist; you must create it first with appropriate
+            versions.  No mechanism exposed yet to do that...
+            TODO: argparse has this as optional but no default setting
+            for this yet: maybe it should assign to the next available
+            paper number or something like that?
+        """,
+    )
+    sp_map.add_argument(
+        "-q",
+        "--question",
+        metavar="N",
+        help="""
+            Which question(s) are answered in file.
+            You can pass a single integer, or a list like `-q [1,2,3]`
+            which updates each page to questions 1, 2 and 3.
+            You can also pass the special string `-q all` which uploads
+            each page to all questions (this is also the default).
+            If you need to specify questions per page, you can pass a list
+            of lists: each list gives the questions for each page.
+            For example, `-q [[1],[2],[2],[2],[3]]` would upload page 1 to
+            question 1, pages 2-4 to question 2 and page 5 to question 3.
+            A common case is `-q [[1],[2],[3]]` to upload one page per
+            question.
+            An empty list will "discard" that particular page.
+        """,
+    )
+
+    for x in (spU, spS, spC, sp_map):
         x.add_argument(
             "-s",
             "--server",
@@ -117,6 +162,21 @@ def main():
         print(bundle_name)
     elif args.command == "status":
         list_bundles(msgr=(args.server, args.username, args.password))
+    elif args.command == "map":
+
+        @with_messenger
+        def todo(bundle_id, *, papernum, questions, msgr):
+            print((bundle_id, papernum, questions))
+            r = msgr.new_server_bundle_map_pages(bundle_id, papernum, questions)
+            print(r)
+
+        todo(
+            args.bundle_id,
+            papernum=args.papernum,
+            questions=args.question,
+            msgr=(args.server, args.username, args.password),
+        )
+
     elif args.command == "clear":
         print("TODO: do we need this on new Plom?")
         # clear_login(args.server, args.password)
