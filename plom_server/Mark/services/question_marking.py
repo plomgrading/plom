@@ -163,6 +163,7 @@ class QuestionMarkingService:
         annotation_data: dict,
         annotation_image: InMemoryUploadedFile,
         annotation_image_md5sum: str,
+        require_uptodate_rubrics: bool = True,
     ) -> None:
         """Accept a marker's annotation and grade for a task, store them in the database.
 
@@ -174,6 +175,8 @@ class QuestionMarkingService:
                 for garbage or something has changed on the server.
             PlomConflict: fails "integrity check": client is trying
                 to submit to an out-of-date task.
+                Or client is trying submit out-of-date rubrics when
+                ``require_uptodate_rubrics`` is True.
         """
         try:
             papernum, question_idx = mark_task.unpack_code(code)
@@ -238,6 +241,7 @@ class QuestionMarkingService:
             annotation_image_md5sum,
             annotation_image,
             annotation_data,
+            require_uptodate_rubrics=require_uptodate_rubrics,
         )
         # Note the helper function above also performs `task.save`; that seems ok.
         # TODO: consider moving this into the helper in annotations.py
