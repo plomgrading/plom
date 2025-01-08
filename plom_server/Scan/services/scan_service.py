@@ -678,7 +678,7 @@ class ScanService:
         return bundle.stagingimage_set.filter(image_type=StagingImage.DISCARD).count()
 
     @transaction.atomic
-    def staging_bundle_status_cmd(
+    def staging_bundle_status(
         self,
     ) -> list[tuple[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]]:
         bundles = StagingBundle.objects.all().order_by("slug")
@@ -749,17 +749,18 @@ class ScanService:
     @transaction.atomic
     def map_bundle_pages_cmd(
         self,
-        bundle_name: str,
         *,
+        bundle_name: str | None = None,
+        bundle_id: int | None = None,
         papernum: int,
         question_map: str | list[int] | list[list[int]],
     ) -> None:
         """Maps an entire bundle's pages onto zero or more questions per page.
 
-        Args:
-            bundle_name: which bundle.
-
         Keyword Args:
+            bundle_name: which bundle by name.
+            bundle_id: which bundle by id; you must specify one but not both
+                of `bundle_name` or `bundle_id`.
             papernum: which paper.
             question_map: specifies how pages of this bundle should be mapped
                 onto questions.  In principle it can be many different things,
@@ -782,10 +783,20 @@ class ScanService:
         This is the command "front-end" to :method:`map_bundle_pages`,
         see also docs there.
         """
-        try:
-            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
-        except ObjectDoesNotExist as e:
-            raise ValueError(f"Bundle '{bundle_name}' does not exist!") from e
+        if bundle_id and bundle_name:
+            raise ValueError("You cannot specify both ID and name")
+        elif bundle_id:
+            try:
+                bundle_obj = StagingBundle.objects.get(pk=bundle_id)
+            except ObjectDoesNotExist as e:
+                raise ValueError(f"Bundle id {bundle_id} does not exist!") from e
+        elif bundle_name:
+            try:
+                bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+            except ObjectDoesNotExist as e:
+                raise ValueError(f"Bundle '{bundle_name}' does not exist!") from e
+        else:
+            raise ValueError("You must specify one of ID or name")
 
         if not bundle_obj.has_page_images:
             raise ValueError(f"Please wait for {bundle_name} to upload...")
