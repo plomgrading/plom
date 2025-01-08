@@ -55,12 +55,12 @@ urlpatterns = [
     path(AnnotationImagePatterns.prefix, include(AnnotationImagePatterns.patterns())),
     path(TagsURLPatterns.prefix, include(TagsURLPatterns.patterns())),
     path(
-        "scan/bundles",
+        "/api/beta/scan/bundles",
         ScanListBundles.as_view(),
         name="api_Scan_bundles",
     ),
     path(
-        "scan/bundle/<int:bundle_id>/map/<int:papernum>/<str:questions>",
+        "/api/beta/scan/bundle/<int:bundle_id>/map/<int:papernum>/<str:questions>",
         ScanMapBundle.as_view(),
         name="api_Scan_bundle_map",
     ),

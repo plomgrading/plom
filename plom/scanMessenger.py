@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 
 import json
 import mimetypes
@@ -27,6 +27,17 @@ class ScanMessenger(BaseMessenger):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def new_server_list_bundles(self):
+        with self.SRmutex:
+            try:
+                response = self.get_auth("/api/beta/scan/bundles")
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def doesBundleExist(self, bundle_name, md5sum):
         """Ask server if given bundle exists.
