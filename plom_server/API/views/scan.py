@@ -31,7 +31,7 @@ class ScanMapBundle(APIView):
         print(questions)
         data = request.query_params
         print(data)
-        question_idx_list = data.get("qidx")
+        question_idx_list = data.getlist("qidx")
         print(question_idx_list)
         papernum_qp = data.get("papernum")
         print(papernum_qp)

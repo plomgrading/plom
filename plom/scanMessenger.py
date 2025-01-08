@@ -45,9 +45,12 @@ class ScanMessenger(BaseMessenger):
             try:
                 # qall TODO?
                 # qdnm versus empty list?
+                query_args = ["qall", f"papernum={papernum}"]
+                print(questions)
+                query_args.extend([f"qidx={n}" for n in questions])
                 p = (
-                    f"/api/beta/scan/bundle/{bundle_id}/map/{papernum}/todo?qall&papernum={papernum}"
-                    + "&".join(f"qidx={n}" for n in questions)
+                    f"/api/beta/scan/bundle/{bundle_id}/map/{papernum}/todo?"
+                    + "&".join(query_args)
                 )
                 print(p)
                 response = self.post_auth(p)

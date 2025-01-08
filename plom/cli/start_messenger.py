@@ -13,8 +13,6 @@ def start_messenger(server=None, usr=None, pwd=None, verify_ssl=True):
     msgr.start()
 
     try:
-        print(usr)
-        print(pwd)
         msgr.requestAndSaveToken(usr, pwd)
     except PlomExistingLoginException:
         print(

@@ -28,6 +28,7 @@ from stdiomask import getpass
 from plom.scan import __version__
 from plom import Default_Port
 from plom.cli import list_bundles, with_messenger
+from plom.scan.question_list_utils import canonicalize_page_question_map
 
 # from plom.cli import clear_login
 
@@ -170,10 +171,16 @@ def main():
             r = msgr.new_server_bundle_map_pages(bundle_id, papernum, questions)
             print(r)
 
+        num_pages = 7  # TODO:
+        N = 4  # TODO:
+        questions = canonicalize_page_question_map(
+            args.question, pages=num_pages, numquestions=N
+        )
+
         todo(
             args.bundle_id,
             papernum=args.papernum,
-            questions=args.question,
+            questions=questions,
             msgr=(args.server, args.username, args.password),
         )
 
