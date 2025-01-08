@@ -59,8 +59,9 @@ urlpatterns = [
         ScanListBundles.as_view(),
         name="api_Scan_bundles",
     ),
+    # "api/beta/scan/bundle/<int:bundle_id>/map/<int:papernum>/<str:questions>",
     path(
-        "api/beta/scan/bundle/<int:bundle_id>/map/<int:papernum>/<str:questions>",
+        "api/beta/scan/bundle/<int:bundle_id>/<int:page>/map",
         ScanMapBundle.as_view(),
         name="api_Scan_bundle_map",
     ),

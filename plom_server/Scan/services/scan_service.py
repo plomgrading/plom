@@ -531,6 +531,63 @@ class ScanService:
         # print(f"Just enqueued Huey parent_read_qr_codes task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
+    def map_bundle_page(
+        self,
+        bundle_id: int,
+        page: int,
+        *,
+        papernum: int,
+        question_indices: list[int],
+    ) -> None:
+        """Maps one page of a bundle onto zero or more questions.
+
+        Args:
+            bundle_id: primary key of bundle DB object.
+            page: one-based (TODO: check) index of the pages in the bundle.
+
+        Keyword Args:
+            papernum: the number of the test-paper
+            question_indices: a variable-length list of which questions (by
+                one-based question index) to attach the page to.  If empty,
+                it means to drop (discard) the page.
+                TODO: no, it should attach it to the proto DNM group:
+                TODO: https://gitlab.com/plom/plom/-/merge_requests/2771
+
+        Raises:
+            ObjectDoesNotExist: no such BundleImage, e.g., invalid bundle id or page
+        """
+        root_folder = settings.MEDIA_ROOT / "page_images"
+        root_folder.mkdir(exist_ok=True)
+
+        # TODO: assert the length of question is same as pages in bundle
+
+        with transaction.atomic():
+            page_img = StagingImage.objects.get(bundle__pk=bundle_id, bundle_order=page)
+
+            if not question_indices:
+                # TODO: see MR !2771 for later improvements
+                page_img.image_type = StagingImage.DISCARD
+                page_img.save()
+                DiscardStagingImage.objects.create(
+                    staging_image=page_img, discard_reason="map said drop this page"
+                )
+            else:
+                page_img.image_type = StagingImage.EXTRA
+                # TODO = update the qr-code info in the underlying image
+                page_img.save()
+                ExtraStagingImage.objects.create(
+                    staging_image=page_img,
+                    paper_number=papernum,
+                    question_list=question_indices,
+                )
+            # TODO: Issue #3770.
+            # bundle_obj = (
+            #     StagingBundle.objects.filter(pk=bundle_pk).select_for_update().get()
+            # )
+            # finally - mark the bundle as having had its qr-codes read.
+            # bundle_obj.has_qr_codes = True
+            # bundle_obj.save()
+
     def map_bundle_pages(
         self,
         bundle_pk: int,
@@ -548,7 +605,7 @@ class ScanService:
             pages_to_question_indices: a list same length
                 as the bundle, each element is variable-length list
                 of which questions (by one-based question index)
-                to attach that page too.  If one of those inner
+                to attach that page to.  If one of those inner
                 lists is empty, it means to drop (discard) that
                 particular page.
 
@@ -585,6 +642,7 @@ class ScanService:
                     paper_number=papernum,
                     question_list=qlist,
                 )
+            # TODO: Issue #3770.
             # finally - mark the bundle as having had its qr-codes read.
             bundle_obj.has_qr_codes = True
             bundle_obj.save()

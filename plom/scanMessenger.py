@@ -10,6 +10,7 @@ from requests_toolbelt import MultipartEncoder
 
 from plom.plom_exceptions import (
     PlomAuthenticationException,
+    PlomRangeException,
     PlomSeriousException,
     PlomTakenException,
 )
@@ -39,8 +40,9 @@ class ScanMessenger(BaseMessenger):
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_bundle_map_pages(self, bundle_id: int, papernum: int, questions):
-        papernum = 43
+    def new_server_bundle_map_page(
+        self, bundle_id: int, page: int, papernum: int, questions: str | list
+    ):
         with self.SRmutex:
             try:
                 # qall TODO?
@@ -49,7 +51,8 @@ class ScanMessenger(BaseMessenger):
                 print(questions)
                 query_args.extend([f"qidx={n}" for n in questions])
                 p = (
-                    f"/api/beta/scan/bundle/{bundle_id}/map/{papernum}/todo?"
+                    f"/api/beta/scan/bundle/{bundle_id}/{page}/map"
+                    + "?"
                     + "&".join(query_args)
                 )
                 print(p)
@@ -57,9 +60,15 @@ class ScanMessenger(BaseMessenger):
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomSeriousException(response.reason) from None
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    # def new_server_bundle_map_finish(self, bundle_id: int):
 
     def doesBundleExist(self, bundle_name, md5sum):
         """Ask server if given bundle exists.

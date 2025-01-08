@@ -28,7 +28,7 @@ from stdiomask import getpass
 from plom.scan import __version__
 from plom import Default_Port
 from plom.cli import list_bundles, with_messenger
-from plom.scan.question_list_utils import canonicalize_page_question_map
+from plom.scan.question_list_utils import _parse_questions
 
 # from plom.cli import clear_login
 
@@ -72,7 +72,7 @@ def get_parser():
     )
     # TODO: might be convenient to work with stub/pdf name as well
     sp_map.add_argument("bundle_id", help="Which bundle")
-
+    sp_map.add_argument("bundle_page", help="Which page of the bundle")
     sp_map.add_argument(
         "--papernum",
         "-t",
@@ -81,7 +81,7 @@ def get_parser():
         help="""
             Which paper number to upload to.
             It must exist; you must create it first with appropriate
-            versions.  No mechanism exposed yet to do that...
+            versions.
             TODO: argparse has this as optional but no default setting
             for this yet: maybe it should assign to the next available
             paper number or something like that?
@@ -166,19 +166,21 @@ def main():
     elif args.command == "map":
 
         @with_messenger
-        def todo(bundle_id, *, papernum, questions, msgr):
+        def todo(bundle_id, page, *, papernum, questions, msgr):
             print((bundle_id, papernum, questions))
-            r = msgr.new_server_bundle_map_pages(bundle_id, papernum, questions)
+            r = msgr.new_server_bundle_map_page(bundle_id, page, papernum, questions)
             print(r)
 
-        num_pages = 7  # TODO:
-        N = 4  # TODO:
-        questions = canonicalize_page_question_map(
-            args.question, pages=num_pages, numquestions=N
-        )
+        # num_pages = 7  # TODO:
+        # N = 4  # TODO:
+        # questions = canonicalize_page_question_map(
+        #     args.question, pages=num_pages, numquestions=N
+        # )
+        questions = _parse_questions(args.question)
 
         todo(
             args.bundle_id,
+            args.bundle_page,
             papernum=args.papernum,
             questions=questions,
             msgr=(args.server, args.username, args.password),
