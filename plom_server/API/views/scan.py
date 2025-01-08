@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Colin B. Macdonald
 
-from django.http import HttpRequest, HttpResponse
 from rest_framework.views import APIView
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -11,15 +11,21 @@ from .utils import _error_response
 
 
 class ScanListBundles(APIView):
-    def get(self, request: HttpRequest) -> HttpResponse:
+    """API related to all bundles."""
+
+    def get(self, request: Request) -> Response:
+        """API to list all bundles."""
         bundle_status = ScanService().staging_bundle_status()
         return Response(bundle_status, status=status.HTTP_200_OK)
 
 
 class ScanMapBundle(APIView):
+    """API related to mapping a bundle."""
+
     def post(
-        self, request: HttpRequest, *, bundle_id: int, papernum: int, questions: str
-    ) -> HttpResponse:
+        self, request: Request, *, bundle_id: int, papernum: int, questions: str
+    ) -> Response:
+        """API to map the pages of a bundle onto questions."""
         print(bundle_id)
         print(papernum)
         print(questions)

@@ -12,7 +12,7 @@ __license__ = "AGPL-3.0-or-later"
 from plom import __version__
 
 from .start_messenger import start_messenger, with_messenger
-from .list_bundles import start_messenger, with_messenger
+from .list_bundles import list_bundles
 
 # from .clearScannerLogin import clear_login
 
