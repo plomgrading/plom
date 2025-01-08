@@ -85,7 +85,7 @@ class Command(BaseCommand):
         scanner = ScanService()
         try:
             scanner.map_bundle_pages_cmd(
-                bundle_name, papernum=papernum, question_map=questions
+                bundle_name=bundle_name, papernum=papernum, question_map=questions
             )
         except ValueError as err:
             raise CommandError(err)
