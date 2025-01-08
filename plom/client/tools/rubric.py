@@ -152,6 +152,8 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
             self.blurb.setVisible(True)
             self.addToGroup(self.blurb)
 
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
         # self.update_attn_state(attn_msg, _scene)
 
     def update_attn_state(self, attn_msg: str, _scene) -> None:
@@ -204,9 +206,6 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         # h.setParentItem(self)
         _scene.addItem(h)
         self._attn_button = h
-
-        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
-        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
 
     def as_rubric(self) -> dict[str, Any]:
         """Return as a rubric dict."""
