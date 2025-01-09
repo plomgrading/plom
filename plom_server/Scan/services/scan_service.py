@@ -132,7 +132,7 @@ class ScanService:
                 force_page_render=force_render,
             )
             with uploaded_pdf_file.open() as fh:
-                bundle_obj.pdf_file = File(fh, name=f"{timestamp}.pdf")
+                bundle_obj.pdf_file = File(fh, name=f"{slug}.pdf")
                 bundle_obj.pdf_hash = pdf_hash
                 bundle_obj.number_of_pages = number_of_pages
                 bundle_obj.save()
