@@ -76,7 +76,7 @@ def _get_parser():
         metavar="T",
         type=int,
         help="""
-            Which paper number to upload to.
+            Which paper number to attach the page to.
             It must exist; you must create it first with appropriate
             versions.
             TODO: argparse has this as optional but no default setting
@@ -89,18 +89,13 @@ def _get_parser():
         "--question",
         metavar="N",
         help="""
-            Which question(s) are answered in file.
+            Which question(s) are answered on the page.
             You can pass a single integer, or a list like `-q [1,2,3]`
-            which updates each page to questions 1, 2 and 3.
-            You can also pass the special string `-q all` which uploads
-            each page to all questions (this is also the default).
-            If you need to specify questions per page, you can pass a list
-            of lists: each list gives the questions for each page.
-            For example, `-q [[1],[2],[2],[2],[3]]` would upload page 1 to
-            question 1, pages 2-4 to question 2 and page 5 to question 3.
-            A common case is `-q [[1],[2],[3]]` to upload one page per
-            question.
+            which attaches the page to questions 1, 2 and 3.
+            You can also pass the special string `-q all` which attaches
+            the page to all questions (this is also the default).
             An empty list will "discard" that particular page.
+            TODO: discard, dnm and all are currently "in-flux".
         """,
     )
 
@@ -130,7 +125,7 @@ def _get_parser():
             type=str,
             help="""
                 Also checks the
-                environment variable PLOM_SCAN_PASSWORD.
+                environment variable PLOM_PASSWORD.
             """,
         )
     return parser
