@@ -27,6 +27,7 @@ import huey
 import huey.api
 import huey.exceptions
 
+from plom.plom_exceptions import PlomConflict
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap, try_to_extract_image
 from plom.scan.question_list_utils import canonicalize_page_question_map
@@ -82,9 +83,14 @@ class ScanService:
     ) -> int:
         """Upload a bundle PDF and store it in the filesystem + database.
 
-        Also, split PDF into page images + store in filesystem and database.
-        Currently if that fails for any reason, the StagingBundle is still
+        Also, trigger a background job to split PDF into page images and
+        store in filesystem and database.  Because that is a background
+        job, if it fails for any reason, the StagingBundle is still
         created.
+
+        Note: this does not check if the user has appropriate permissions.
+        You either need to do that yourself or consider calling
+        :meth:`upload_bundle_cmd`_ instead.
 
         Args:
             uploaded_pdf_file (Django File): File-object containing the pdf
@@ -103,10 +109,19 @@ class ScanService:
 
         Returns:
             The bundle id, the primary key of the newly-created bundle.
+
+        Raises:
+            PlomConflict: we already have a bundle which conflicts.
         """
         # Warning: Issue #2888, and https://gitlab.com/plom/plom/-/merge_requests/2361
         # strange behaviour can result from relaxing this durable=True
         with transaction.atomic(durable=True):
+            existing = StagingBundle.objects.filter(pdf_hash=pdf_hash)
+            if existing:
+                raise PlomConflict(
+                    f"Bundle(s) {[x.slug for x in existing]} with the"
+                    f" same file hash {pdf_hash} have already uploaded"
+                )
             # create the bundle first, so it has a pk and
             # then give it the file and resave it.
             bundle_obj = StagingBundle.objects.create(
@@ -150,6 +165,7 @@ class ScanService:
 
         Raises:
             ValueError: username invalid or not in scanner group.
+            PlomConflict: duplicate upload.
         """
         # username => user_object, if in scanner group, else exception raised.
         try:
