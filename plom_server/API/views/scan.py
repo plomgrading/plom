@@ -27,11 +27,29 @@ class ScanListBundles(APIView):
         return Response(bundle_status, status=status.HTTP_200_OK)
 
     def post(self, request: Request) -> Response:
-        """API to upload a new bundle."""
+        """API to upload a new bundle.
+
+        On success (200) you'll get a dictionary with the key
+        ``"bundle_id"`` giving the id of the newly-created bundle.
+
+        Only users in the "scanner" group can upload new bundles,
+        others will receive a 401.
+
+        The bundle filename cannot begin with an underscore, that
+        will result in a 400.
+
+        The bundle must have a distinct sha256 hash from existing
+        bundles, or you'll get a 409.
+        """
         print(request)
         print(request.data)
         user = request.user
-        print((user, type(user)))
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "scanner" not in group_list:
+            return _error_response(
+                'Only users in the "scanner" group can upload files',
+                status.HTTP_401_UNAUTHORIZED,
+            )
         pdf = request.FILES.get("pdf_file")
         print((pdf, type(pdf)))
         filename_stem = Path(pdf.name).stem
