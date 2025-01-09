@@ -8,10 +8,17 @@ from plom.messenger import ScanMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 
 
-def start_messenger(server=None, usr=None, pwd=None, verify_ssl=True):
+def start_messenger(
+    server: str | None = None,
+    usr: str | None = None,
+    pwd: str | None = None,
+    verify_ssl: bool = True,
+) -> ScanMessenger:
+    """Start and return a new messenger with a certain username and password."""
     msgr = ScanMessenger(server, verify_ssl=verify_ssl)
     msgr.start()
 
+    # TODO: we have no plom-cli clear yet
     try:
         msgr.requestAndSaveToken(usr, pwd)
     except PlomExistingLoginException:

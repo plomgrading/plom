@@ -28,13 +28,12 @@ from stdiomask import getpass
 
 from plom.scan import __version__
 from plom import Default_Port
-from plom.cli import list_bundles, with_messenger
-from plom.scan.question_list_utils import _parse_questions
+from plom.cli import list_bundles, bundle_map_page, upload_bundle
 
 # from plom.cli import clear_login
 
 
-def get_parser():
+def _get_parser():
     parser = argparse.ArgumentParser(
         description=__doc__.split("\n")[0],
         epilog="\n".join(__doc__.split("\n")[1:]),
@@ -138,7 +137,8 @@ def get_parser():
 
 
 def main():
-    parser = get_parser()
+    """The plom-cli command line tool."""
+    parser = _get_parser()
     args = parser.parse_args()
 
     if hasattr(args, "server"):
@@ -156,39 +156,20 @@ def main():
         args.password = getpass("password: ")
 
     if args.command == "upload-bundle":
-
-        @with_messenger
-        def upload(pdf, *, msgr):
-            r = msgr.new_server_upload_bundle(pdf)
-            print(r)
-
-        print("TODO")
-        upload(Path(args.pdf), msgr=(args.server, args.username, args.password))
+        r = upload_bundle(
+            Path(args.pdf), msgr=(args.server, args.username, args.password)
+        )
+        print(r)
     elif args.command == "list-bundles":
         list_bundles(msgr=(args.server, args.username, args.password))
     elif args.command == "map":
-
-        @with_messenger
-        def todo(bundle_id, page, *, papernum, questions, msgr):
-            print((bundle_id, papernum, questions))
-            r = msgr.new_server_bundle_map_page(bundle_id, page, papernum, questions)
-            print(r)
-
-        # num_pages = 7  # TODO:
-        # N = 4  # TODO:
-        # questions = canonicalize_page_question_map(
-        #     args.question, pages=num_pages, numquestions=N
-        # )
-        questions = _parse_questions(args.question)
-
-        todo(
+        bundle_map_page(
             args.bundle_id,
             args.bundle_page,
             papernum=args.papernum,
-            questions=questions,
+            questions=args.question,
             msgr=(args.server, args.username, args.password),
         )
-
     elif args.command == "clear":
         print("TODO: do we need this on new Plom?")
         # clear_login(args.server, args.password)

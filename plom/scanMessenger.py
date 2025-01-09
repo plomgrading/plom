@@ -55,7 +55,17 @@ class ScanMessenger(BaseMessenger):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_list_bundles(self):
+    def new_server_list_bundles(self) -> list[list[Any]]:
+        """Get a list of information about bundles on the server.
+
+        TODO: beta: rename to something reasonable in due time.
+
+        Returns:
+            A list of of lists, representing a table where the first row
+            is the column headers.
+            TODO: maybe a list of dicts would be a more general API; could
+            format as a table client-side.
+        """
         with self.SRmutex:
             try:
                 response = self.get_auth("/api/beta/scan/bundles")
@@ -68,7 +78,14 @@ class ScanMessenger(BaseMessenger):
 
     def new_server_bundle_map_page(
         self, bundle_id: int, page: int, papernum: int, questions: str | list
-    ):
+    ) -> Any:
+        """Map a page of a bundle to zero or more questions.
+
+        TODO: beta: rename to something reasonable in due time.
+
+        Returns:
+            TODO: nothing yet, still WIP?
+        """
         with self.SRmutex:
             try:
                 # qall TODO?
