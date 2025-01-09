@@ -132,7 +132,7 @@ class ScanService:
         timestamp: float,
         pdf_hash: str,
         number_of_pages: int,
-    ) -> None:
+    ) -> int:
         """Wrapper around upload_bundle for use by the commandline bundle upload command.
 
         Checks if the supplied username has permissions to access and upload scans.
@@ -146,7 +146,10 @@ class ScanService:
             number_of_pages (int): the number of pages in the pdf
 
         Returns:
-            None
+            The bundle id, the primary key of the newly-created bundle.
+
+        Raises:
+            ValueError: username invalid or not in scanner group.
         """
         # username => user_object, if in scanner group, else exception raised.
         try:
@@ -161,7 +164,7 @@ class ScanService:
         with open(pdf_file_path, "rb") as fh:
             pdf_file_object = File(fh)
 
-        self.upload_bundle(
+        return self.upload_bundle(
             pdf_file_object,
             slug,
             user_obj,

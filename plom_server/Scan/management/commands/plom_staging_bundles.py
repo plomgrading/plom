@@ -60,7 +60,7 @@ class Command(BaseCommand):
             raise CommandError("Upload failed - Bundle was already uploaded.")
 
         try:
-            scanner.upload_bundle_cmd(
+            bundle_id = scanner.upload_bundle_cmd(
                 source_pdf,
                 slug,
                 username,
@@ -68,11 +68,11 @@ class Command(BaseCommand):
                 hashed,
                 number_of_pages,
             )
-            self.stdout.write(
-                f"Uploaded {source_pdf} as user {username} - processing it in the background now."
-            )
         except ValueError as err:
             raise CommandError(err)
+        self.stdout.write(
+            f"Uploaded {source_pdf} as bundle {bundle_id}: background processing started."
+        )
 
     def staging_bundle_status(self, bundle_name=None):
         scanner = ScanService()

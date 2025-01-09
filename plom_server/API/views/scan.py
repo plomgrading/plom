@@ -70,7 +70,7 @@ class ScanListBundles(APIView):
         # force_render: bool = False,
         # read_after: bool = False,
 
-        return Response({"bundle_id", bundle_id}, status=status.HTTP_200_OK)
+        return Response({"bundle_id": bundle_id}, status=status.HTTP_200_OK)
 
 
 class ScanMapBundle(APIView):
