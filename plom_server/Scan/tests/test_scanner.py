@@ -47,14 +47,16 @@ class ScanServiceTests(TestCase):
 
     def test_upload_bundle(self) -> None:
         """Test ScanService.upload_bundle and assert uploaded PDF file saved to right place."""
-        scanner = ScanService()
         timestamp = timezone.now().timestamp()
         # open the pdf-file to create a file-object to pass to the upload command.
         with open(self.pdf_path, "rb") as fh:
             pdf_file_object = File(fh)
 
         slug = "_test_bundle"
-        scanner.upload_bundle(pdf_file_object, slug, self.user, timestamp, "abcde", 28)
+        fake_hash = "deadbeef"
+        ScanService.upload_bundle(
+            pdf_file_object, slug, self.user, timestamp, fake_hash
+        )
 
         the_bundle = StagingBundle.objects.get(user=self.user, slug=slug)
         bundle_path = pathlib.Path(the_bundle.pdf_file.path)

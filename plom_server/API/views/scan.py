@@ -12,7 +12,6 @@ from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
-import pymupdf
 
 from plom.plom_exceptions import PlomConflict
 from Scan.services import ScanService
@@ -50,20 +49,9 @@ class ScanListBundles(APIView):
 
         hashed = hashlib.sha256(file_bytes).hexdigest()
 
-        try:
-            # Issue #3771: why are we using pymupdf here?
-            with pymupdf.open(stream=file_bytes) as pdf_doc:
-                number_of_pages = pdf_doc.page_count
-        except pymupdf.FileDataError as err:
-            print(err)
-            # raise RuntimeError("dunno about this error handling")
-            raise
-
         # TODO: annoying we have to open it to read the md5sum
         try:
-            bundle_id = ScanService().upload_bundle(
-                pdf, slug, user, timestamp, hashed, number_of_pages
-            )
+            bundle_id = ScanService.upload_bundle(pdf, slug, user, timestamp, hashed)
         except PlomConflict as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
 

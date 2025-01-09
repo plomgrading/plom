@@ -69,15 +69,16 @@ log = logging.getLogger(__name__)
 class ScanService:
     """Functions for staging scanned test-papers."""
 
+    @classmethod
     def upload_bundle(
-        self,
+        cls,
         uploaded_pdf_file: File,
         slug: str,
         user: User,
         timestamp: float,
         pdf_hash: str,
-        number_of_pages: int,
         *,
+        number_of_pages: int | None = None,
         force_render: bool = False,
         read_after: bool = False,
     ) -> int:
@@ -136,7 +137,7 @@ class ScanService:
                 bundle_obj.pdf_hash = pdf_hash
                 bundle_obj.number_of_pages = number_of_pages
                 bundle_obj.save()
-        self.split_and_save_bundle_images(bundle_obj.pk, read_after=read_after)
+        cls.split_and_save_bundle_images(bundle_obj.pk, read_after=read_after)
         return bundle_obj.pk
 
     def upload_bundle_cmd(
@@ -186,11 +187,11 @@ class ScanService:
             user_obj,
             timestamp,
             pdf_hash,
-            number_of_pages,
+            number_of_pages=number_of_pages,
         )
 
+    @staticmethod
     def split_and_save_bundle_images(
-        self,
         bundle_pk: int,
         *,
         number_of_chunks: int = 16,
@@ -1566,6 +1567,8 @@ def huey_parent_split_bundle_chore(
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
+    import pymupdf
+
     assert task is not None
 
     start_time = time.time()
@@ -1573,9 +1576,25 @@ def huey_parent_split_bundle_chore(
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
+    try:
+        with pymupdf.open(bundle_obj.pdf_file.path) as pdf_doc:
+            bundle_length = pdf_doc.page_count
+    except pymupdf.FileDataError as err:
+        raise RuntimeError(
+            f"split chore: invalid pdf file? failed to determine number of pages: {err}"
+        ) from err
+    if bundle_obj.number_of_pages is not None:
+        # if we already knew the number of pages, it better match!
+        if bundle_obj.number_of_pages != bundle_length:
+            raise RuntimeError("number of pages does not match existing preset value!")
+
+    with transaction.atomic():
+        _write_bundle = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
+        _write_bundle.number_of_pages = bundle_length
+        _write_bundle.save()
+    bundle_obj.refresh_from_db()
+
     # cut the list of all indices into chunks
-    bundle_length = bundle_obj.number_of_pages
-    assert bundle_length is not None
     chunk_length = ceil(bundle_length / number_of_chunks)
     # be careful with 0/1 indexing here.
     # pymupdf (which we use to process pdfs) 0-indexes pages within
@@ -1784,7 +1803,7 @@ def huey_child_get_page_images(
         Information about the page image, including its file name,
         thumbnail, hash etc.
     """
-    import pymupdf as fitz
+    import pymupdf
     from plom.scan import rotate
     from PIL import Image
 
@@ -1796,7 +1815,7 @@ def huey_child_get_page_images(
 
     rendered_page_info = []
 
-    with fitz.open(bundle_obj.pdf_file.path) as pdf_doc:
+    with pymupdf.open(bundle_obj.pdf_file.path) as pdf_doc:
         for order in order_list:
             if _debug_be_flaky:
                 print(f"Huey debug, random sleep in task {task.id}")
@@ -1819,7 +1838,7 @@ def huey_child_get_page_images(
                     add_metadata=True,
                 )
             if save_path is None:
-                # log.info(f"{basename}: Fitz render. No extract b/c: " + "; ".join(msgs))
+                # log.info(f"{basename}: PyMuPDF render. No extract b/c: " + "; ".join(msgs))
                 # TODO: log and consider storing in the StagingImage as well
                 save_path = render_page_to_bitmap(
                     pdf_doc[order - 1],  # PyMuPDF is 0-indexed
