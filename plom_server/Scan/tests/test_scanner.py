@@ -65,7 +65,7 @@ class ScanServiceTests(TestCase):
             / "bundles"
             / self.user.username
             / str(the_bundle.pk)
-            / f"{timestamp}.pdf",
+            / f"{slug}.pdf",
         )
         self.assertTrue(bundle_path.exists())
         # TODO: is this an appropriate way to cleanup?
