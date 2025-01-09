@@ -9,9 +9,9 @@ from plom.plom_exceptions import PlomExistingLoginException
 
 
 def start_messenger(
-    server: str | None = None,
-    usr: str | None = None,
-    pwd: str | None = None,
+    server: str | None,
+    usr: str,
+    pwd: str,
     verify_ssl: bool = True,
 ) -> ScanMessenger:
     """Start and return a new messenger with a certain username and password."""

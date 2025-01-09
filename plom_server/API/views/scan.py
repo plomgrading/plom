@@ -45,7 +45,7 @@ class ScanListBundles(APIView):
             with pdf.open("rb") as f:
                 file_bytes = f.read()
         except OSError as err:
-            raise RuntimeError("dunno about this error handling: " + err)
+            raise RuntimeError(f"dunno about this error handling: {err}")
 
         hashed = hashlib.sha256(file_bytes).hexdigest()
         if ScanService().check_for_duplicate_hash(hashed):
