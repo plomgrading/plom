@@ -39,6 +39,9 @@ class ScanListBundles(APIView):
             s = "Bundle filenames cannot start with an underscore - we reserve those for internal use."
             return _error_response(s, status.HTTP_400_BAD_REQUEST)
 
+        # TODO: BundleUploadForm is not used in this API endpoint and that's
+        # unfortunate b/c it does some checks including a maximum upload size.
+
         slug = slugify(filename_stem)
         timestamp = datetime.timestamp(timezone.now())
         try:

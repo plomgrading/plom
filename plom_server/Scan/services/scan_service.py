@@ -1566,6 +1566,10 @@ def huey_parent_split_bundle_chore(
     Returns:
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
+
+    Raises:
+        ValueError: various error situations about the input.
+        RuntimeError: child chore failed.
     """
     import pymupdf
 
@@ -1576,17 +1580,31 @@ def huey_parent_split_bundle_chore(
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
+    # TODO: there is some duplication of code here with BundleUploadForm
     try:
         with pymupdf.open(bundle_obj.pdf_file.path) as pdf_doc:
             bundle_length = pdf_doc.page_count
+            if "PDF" not in pdf_doc.metadata["format"]:
+                raise ValueError("File is not a valid PDF")
     except pymupdf.FileDataError as err:
-        raise RuntimeError(
-            f"split chore: invalid pdf file? failed to determine number of pages: {err}"
+        raise ValueError(
+            f"Invalid pdf file? failed to determine number of pages: {err}"
         ) from err
+
+    # TODO: accessing `settings` here inside the huey job bothers me
+    if bundle_length > settings.MAX_BUNDLE_PAGES:
+        raise ValueError(
+            f"File of {bundle_length} pages "
+            f"exceeds {settings.MAX_BUNDLE_PAGES} page limit."
+        )
+
     if bundle_obj.number_of_pages is not None:
         # if we already knew the number of pages, it better match!
         if bundle_obj.number_of_pages != bundle_length:
-            raise RuntimeError("number of pages does not match existing preset value!")
+            raise ValueError(
+                f"number of pages {bundle_length} does not match "
+                f"existing preset value {bundle_obj.number_of_pages}"
+            )
 
     with transaction.atomic():
         _write_bundle = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
