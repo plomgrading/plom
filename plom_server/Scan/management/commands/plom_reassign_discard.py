@@ -27,7 +27,7 @@ class Command(BaseCommand):
         discard_pk: int,
         paper_number: int,
         *,
-        page_number: int | None = None,
+        page_number: int,
     ):
         try:
             ManageDiscardService().reassign_discard_page_to_fixed_page_cmd(
@@ -42,7 +42,7 @@ class Command(BaseCommand):
         discard_pk: int,
         paper_number: int,
         *,
-        question_idx_list: list | None = None,
+        question_idx_list: list,
     ):
         try:
             ManageDiscardService().reassign_discard_page_to_mobile_page_cmd(
