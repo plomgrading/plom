@@ -4,7 +4,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from __future__ import annotations
 
@@ -454,7 +454,7 @@ class ManageScanService:
         q_idx_list = [
             mp_obj.question_index
             for mp_obj in MobilePage.objects.filter(image=img)
-            if mp_obj.question_index and mp_obj.question_index > 0
+            if mp_obj.question_index != MobilePage.DNM_qidx
         ]
         _render = SpecificationService.render_html_flat_question_label_list
         return {
