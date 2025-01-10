@@ -213,13 +213,9 @@ class PageDataService:
             .prefetch_related("image")
         ):
             qidx = page.question_index
-            # no question index, add to DNM pile
-            if qidx is None or qidx <= 0:
-                # Currently, None/0 equivalent in paper_structure.py docs
-                qidx = 0
             question_mobile_page_count.setdefault(qidx, 0)
             question_mobile_page_count[qidx] += 1
-            if qidx == 0:
+            if qidx == MobilePage.DNM:
                 pagename = f"ednm.{question_mobile_page_count[qidx]}"
             else:
                 pagename = f"e{qidx}.{question_mobile_page_count[qidx]}"

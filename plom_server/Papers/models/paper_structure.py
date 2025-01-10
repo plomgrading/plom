@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 
 from django.db import models
@@ -41,9 +41,11 @@ class MobilePage(models.Model):
 
     paper: a link to a Paper object.
     image: a link to an Image object.  Multiple pages could share a common Image.
-    question_index: which question to associate this page too.  Can be zero
-        or None for pages that are not associated with a question.  These will
+    question_index: which question to associate this page to, indexed from 1.
+        Can also be a value of ``MobilePage.DNM`` for pages that are not
+        associated with a question.  These will
         join the "DNM" pool of pages that are not generally marked.
+        ``MobilePage.DNM`` is probably zero but you should not rely on this.
     version: if you know the version of this page, it can be set here.  It can
         be zero or None, although presumably only if question_index is also
         zero/None.
@@ -59,9 +61,12 @@ class MobilePage(models.Model):
     them in a particular order if you have one in mind.
     """
 
+    # symbolic constant to be used for question_index, instead of literal 0
+    DNM = 0
+
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)
-    question_index = models.IntegerField(null=True, default=None)
+    question_index = models.IntegerField(null=False, blank=False)
     version = models.IntegerField(null=True, default=None)
 
 

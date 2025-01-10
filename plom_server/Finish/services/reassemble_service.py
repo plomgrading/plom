@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from __future__ import annotations
@@ -194,9 +194,9 @@ class ReassembleService:
             giving the path to the image and the rotation angle of the
             image.
         """
-        # TODO: 0 vs None?  Both ok according to paper_structure.py
-        # TODO: need to sort this out as this decision in three places
-        nonmarked = MobilePage.objects.filter(paper=paper, question_index=0)
+        nonmarked = MobilePage.objects.filter(
+            paper=paper, question_index=MobilePage.DNM
+        )
         return [
             {"filename": img.image.image_file.path, "rotation": img.image.rotation}
             for img in nonmarked

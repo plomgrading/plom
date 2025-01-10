@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from __future__ import annotations
 
@@ -85,8 +85,8 @@ class Command(BaseCommand):
                 You can also pass the special string `all` which uploads
                 the page to all questions (this is also the default).
 
-                If you pass `dnm` or an empty list, the page will be attached
-                to the "do not mark" group, making it available to this paper
+                If you pass `dnm`, the page will be attached to the
+                "do not mark" group, making it available to this paper
                 but not generally marked.
             """,
         )

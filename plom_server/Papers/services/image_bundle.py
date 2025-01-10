@@ -4,7 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from __future__ import annotations
 
@@ -223,9 +223,11 @@ class ImageBundleService:
                     )
                 # otherwise, if question index list empty, make a non-marked MobilePage
                 if not extra.question_idx_list:
-                    # TODO: 0 vs None?  Both ok according to paper_structure.py
                     MobilePage.objects.create(
-                        paper=paper, image=image, question_index=0, version=0
+                        paper=paper,
+                        image=image,
+                        question_index=MobilePage.DNM,
+                        version=0,
                     )
             elif staged.image_type == StagingImage.DISCARD:
                 disc = staged.discardstagingimage
@@ -417,7 +419,7 @@ class ImageBundleService:
         result: dict[str, list[tuple[int, int]]] = {"ready": [], "not_ready": []}
 
         for paper_number, question_index in papers_questions_updated_by_bundle:
-            if question_index is None or question_index <= 0:
+            if question_index == MobilePage.DNM:
                 continue
             q_pages = QuestionPage.objects.filter(
                 paper__paper_number=paper_number, question_index=question_index
