@@ -123,10 +123,11 @@ class ManageScanTests(TestCase):
         mds.discard_pushed_image_from_pk(self.user0, img3.pk)
         # test when discard page (no action required)
         img4 = baker.make(Image)
+
         baker.make(DiscardPage, image=img4)
         mds.discard_pushed_image_from_pk(self.user0, img4.pk)
 
-    def test_reassign_discard_to_mobile(self) -> None:
+    def test_reassign_discard_page_to_mobile(self) -> None:
         mds = ManageDiscardService()
 
         img1 = baker.make(Image)
@@ -150,20 +151,18 @@ class ManageScanTests(TestCase):
         pk_not_there = DiscardPage.objects.latest("pk").pk + 1
         self.assertRaises(
             ValueError,
-            mds.assign_discard_page_to_mobile_page,
-            self.user0,
+            mds._assign_discard_page_to_mobile_page,
             pk_not_there,
             1,
             [1],
         )
-        mds.assign_discard_page_to_mobile_page(
-            self.user0,
+        mds._assign_discard_page_to_mobile_page(
             disc1.pk,
             1,
             [1, 2],
         )
 
-    def test_reassign_discard_to_mobile_dnm(self) -> None:
+    def test_reassign_discard_page_to_mobile_dnm(self) -> None:
         mds = ManageDiscardService()
 
         img1 = baker.make(Image)
@@ -177,8 +176,7 @@ class ManageScanTests(TestCase):
             image=None,
         )
         # [] means dnm
-        mds.assign_discard_page_to_mobile_page(
-            self.user0,
+        mds._assign_discard_page_to_mobile_page(
             disc1.pk,
             1,
             [],
@@ -283,8 +281,7 @@ class ManageScanTests(TestCase):
         )
         self.assertRaises(
             ValueError,
-            mds._assign_discard_to_mobile_page,
-            self.user0,
+            mds._assign_discard_page_to_mobile_page,
             pk_not_there,
             1,
             1,
@@ -302,8 +299,7 @@ class ManageScanTests(TestCase):
         )
         self.assertRaises(
             ValueError,
-            mds._assign_discard_to_mobile_page,
-            self.user0,
+            mds._assign_discard_page_to_mobile_page,
             dp1.pk,
             paper_not_there,
             1,

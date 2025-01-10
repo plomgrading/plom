@@ -65,7 +65,6 @@ class ScannerReassignView(ManagerRequiredView):
 
     def post(self, request: HttpRequest, *, page_pk: int) -> HttpResponse:
         reassignment_data = request.POST
-        mds = ManageDiscardService()
 
         if reassignment_data.get("assignment_type", "fixed") == "fixed":
             try:
@@ -77,7 +76,7 @@ class ScannerReassignView(ManagerRequiredView):
                     """<span class="alert alert-danger">Choose paper/page</span>"""
                 )
             try:
-                mds.assign_discard_page_to_fixed_page(
+                ManageDiscardService().assign_discard_page_to_fixed_page(
                     request.user, page_pk, paper_number, page_number
                 )
             except ValueError as e:
@@ -116,8 +115,8 @@ class ScannerReassignView(ManagerRequiredView):
                 )
 
             try:
-                mds.assign_discard_page_to_mobile_page(
-                    request.user, page_pk, paper_number, to_questions
+                ManageDiscardService()._assign_discard_page_to_mobile_page(
+                    page_pk, paper_number, to_questions
                 )
             except ValueError as e:
                 return HttpResponse(

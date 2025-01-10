@@ -323,19 +323,28 @@ class ManageDiscardService:
             )
 
     @transaction.atomic
-    def _assign_discard_to_mobile_page(
+    def _assign_discard_page_to_mobile_page(
         self,
-        user_obj: User,
         discard_pk: int,
         paper_number: int,
         assign_to_question_indices: list[int],
     ) -> None:
+        """Low-level routine to assign a discard image by attaching it to one or more questions in an ad hoc way.
+
+        Generally, this will be a page without QR codes such as a self-scanned
+        "homework" page or an "oops that wasn't scrap" or a sheet of plain paper.
+
+        Args:
+            user_obj: which user, as a database object.
+            discard_pk: which discarded page.
+            paper_number: which paper to assign it o.
+            assign_to_question_indices: which questions, by a list of
+                one-based indices, should we assign this discarded page to.
+        """
         try:
             discard_obj = DiscardPage.objects.get(pk=discard_pk)
         except ObjectDoesNotExist as e:
-            raise ValueError(
-                f"Cannot find a discard page with pk = {discard_pk}"
-            ) from e
+            raise ValueError(f"Cannot find discard page with pk = {discard_pk}") from e
 
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
@@ -388,39 +397,6 @@ class ManageDiscardService:
 
         self._assign_discard_to_fixed_page(user_obj, page_pk, paper_number, page_number)
 
-    def assign_discard_page_to_mobile_page(
-        self,
-        user_obj: User,
-        page_pk: int,
-        paper_number: int,
-        assign_to_question_indices: list[int],
-    ) -> None:
-        """Reassign a discard image by attaching it to one or more questions in an ad hoc way.
-
-        Generally, this will be a page without QR codes such as a self-scanned
-        "homework" page or an "oops that wasn't scrap" or a sheet of plain paper.
-
-        TODO: is this dead code?
-
-        Args:
-            user_obj: which user, as a database object.
-            page_pk: which discard page.
-            paper_number: which paper to assign it o.
-            assign_to_question_indices: which questions, by a list of
-                one-based indices, should we assign this discarded page to.
-        """
-        try:
-            _ = DiscardPage.objects.get(pk=page_pk)
-        except ObjectDoesNotExist as e:
-            raise ValueError(f"Cannot find discard page with pk = {page_pk}") from e
-
-        self._assign_discard_to_mobile_page(
-            user_obj,
-            page_pk,
-            paper_number,
-            assign_to_question_indices,
-        )
-
     def reassign_discard_page_to_fixed_page_cmd(
         self, username: str, discard_pk: int, paper_number: int, page_number: int
     ) -> None:
@@ -453,7 +429,10 @@ class ManageDiscardService:
         paper_number: int,
         assign_to_question_indices: list[int],
     ) -> None:
-        """A wrapper around the assign_discard_page_to_mobile_page command.
+        """Reassign a discard image by attaching it to one or more questions in an ad hoc way.
+
+        Generally, this will be a page without QR codes such as a self-scanned
+        "homework" page or an "oops that wasn't scrap" or a sheet of plain paper.
 
         Args:
             username: the name of the user who is doing the reassignment.
@@ -462,17 +441,15 @@ class ManageDiscardService:
             paper_number: the number of the paper containing the fixed page.
             assign_to_question_indices: a list of the questions on the
                 discard page. A mobile page is created for each.
-                TODO: what is supposed to happen if you pass an empty list?
+                An empty list creates a DNM mobile page.
         """
         try:
-            user_obj = User.objects.get(
-                username__iexact=username, groups__name="manager"
-            )
+            _ = User.objects.get(username__iexact=username, groups__name="manager")
         except ObjectDoesNotExist as e:
             raise ValueError(
                 f"User '{username}' does not exist or has wrong permissions."
             ) from e
 
-        self._assign_discard_to_mobile_page(
-            user_obj, discard_pk, paper_number, assign_to_question_indices
+        self._assign_discard_page_to_mobile_page(
+            discard_pk, paper_number, assign_to_question_indices
         )
