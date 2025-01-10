@@ -45,7 +45,7 @@ class Command(BaseCommand):
         question_idx_list: list | None = None,
     ):
         try:
-            ManageDiscardService.reassign_discard_page_to_mobile_page_cmd(
+            ManageDiscardService().reassign_discard_page_to_mobile_page_cmd(
                 username, discard_pk, paper_number, question_idx_list
             )
         except ValueError as e:
