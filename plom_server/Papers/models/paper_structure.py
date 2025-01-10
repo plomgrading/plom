@@ -42,10 +42,10 @@ class MobilePage(models.Model):
     paper: a link to a Paper object.
     image: a link to an Image object.  Multiple pages could share a common Image.
     question_index: which question to associate this page to, indexed from 1.
-        Can also be a value of ``MobilePage.DNM`` for pages that are not
+        Can also be a value of ``MobilePage.DNM_qidx`` for pages that are not
         associated with a question.  These will
         join the "DNM" pool of pages that are not generally marked.
-        ``MobilePage.DNM`` is probably -1 but you should not rely on this.
+        ``MobilePage.DNM_qidx`` is probably -1 but you should not rely on this.
     version: if you know the version of this page, it can be set here.  It can
         be zero or None, although presumably only if question_index is also
         zero/None.
@@ -61,8 +61,8 @@ class MobilePage(models.Model):
     them in a particular order if you have one in mind.
     """
 
-    # symbolic constant to be used for question_index, instead of literal 0
-    DNM = -1
+    # symbolic constant to be used for question_index, instead of literal -1
+    DNM_qidx = -1
 
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)

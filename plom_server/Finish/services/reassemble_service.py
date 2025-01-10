@@ -195,7 +195,7 @@ class ReassembleService:
             image.
         """
         nonmarked = MobilePage.objects.filter(
-            paper=paper, question_index=MobilePage.DNM
+            paper=paper, question_index=MobilePage.DNM_qidx
         )
         return [
             {"filename": img.image.image_file.path, "rotation": img.image.rotation}

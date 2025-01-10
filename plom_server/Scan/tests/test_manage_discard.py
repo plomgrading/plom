@@ -163,6 +163,30 @@ class ManageScanTests(TestCase):
             [1, 2],
         )
 
+    def test_reassign_discard_to_mobile_dnm(self) -> None:
+        mds = ManageDiscardService()
+
+        img1 = baker.make(Image)
+        disc1 = baker.make(DiscardPage, image=img1)
+
+        baker.make(
+            QuestionPage,
+            paper=self.paper1,
+            page_number=2,
+            question_index=1,
+            image=None,
+        )
+        # [] means dnm
+        mds.assign_discard_page_to_mobile_page(
+            self.user0,
+            disc1.pk,
+            1,
+            [],
+        )
+        # ensure it was set properly
+        mp = MobilePage.objects.filter(paper__paper_number=1).get()
+        self.assertEqual(mp.question_index, MobilePage.DNM_qidx)
+
     def test_reassign_discard_to_fixed(self) -> None:
         mds = ManageDiscardService()
 

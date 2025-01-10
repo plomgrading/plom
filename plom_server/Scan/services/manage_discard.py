@@ -357,9 +357,11 @@ class ManageDiscardService:
             )
         # otherwise, if question index list empty, make a non-marked MobilePage
         if not assign_to_question_indices:
-            # TODO: 0 vs None?  Both ok according to paper_structure.py
             MobilePage.objects.create(
-                paper=paper_obj, image=discard_obj.image, question_index=0, version=0
+                paper=paper_obj,
+                image=discard_obj.image,
+                question_index=MobilePage.DNM_qidx,
+                version=0,
             )
 
         # delete the discard page

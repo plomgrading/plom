@@ -215,7 +215,7 @@ class PageDataService:
             qidx = page.question_index
             question_mobile_page_count.setdefault(qidx, 0)
             question_mobile_page_count[qidx] += 1
-            if qidx == MobilePage.DNM:
+            if qidx == MobilePage.DNM_qidx:
                 pagename = f"ednm.{question_mobile_page_count[qidx]}"
             else:
                 pagename = f"e{qidx}.{question_mobile_page_count[qidx]}"
