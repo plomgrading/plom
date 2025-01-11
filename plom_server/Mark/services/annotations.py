@@ -87,7 +87,7 @@ def _create_new_annotation_in_database(
     annotation_image: AnnotationImage,
     data: dict[str, Any],
     *,
-    require_uptodate_rubrics: bool,
+    require_uptodate_rubrics: bool = True,
 ) -> Annotation:
     if task.latest_annotation:
         last_annotation_edition = task.latest_annotation.edition
