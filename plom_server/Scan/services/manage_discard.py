@@ -107,7 +107,8 @@ class ManageDiscardService:
         # outdate any associated marking tasks
         # this also makes new marking tasks if possible
         for qn in qn_to_outdate:
-            if qn is None or qn <= 0:
+            # the ones that do where DNM cannot effect tasks
+            if qn == MobilePage.DNM_qidx:
                 continue
             MarkingTaskService().set_paper_marking_task_outdated(paper_number, qn)
 
