@@ -29,8 +29,8 @@ class BundleThumbnailsView(ScannerRequiredView):
     ) -> list[dict[str, Any]]:
         def is_extra_without_info(page):
             if page["status"] == "extra":
-                # is an extra page with both page number and question list
-                if page["info"]["paper_number"] and page["info"]["question_list"]:
+                # is an extra page with page number
+                if page["info"]["paper_number"]:
                     return False
                 else:  # is an extra page without its info
                     return True

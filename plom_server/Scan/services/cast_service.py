@@ -415,6 +415,7 @@ class ScanCastService:
 
         Raises:
             ValueError: can't find things, or extra page already has information.
+            PlomBundleLockedException:
         """
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
@@ -424,6 +425,7 @@ class ScanCastService:
         except ObjectDoesNotExist:
             raise ValueError(f"Paper {paper_number} is not in the database.")
         # now check all the questions
+        # TODO: consider using question_list_utils.check_question_list: fewer DB hits?
         for qi in assign_to_question_indices:
             if not QuestionPage.objects.filter(paper=paper, question_index=qi).exists():
                 raise ValueError(f"No question index {qi} in database.")
@@ -445,14 +447,14 @@ class ScanCastService:
         eximg = img_locked.extrastagingimage
 
         # Throw value error if data has already been set.
-        if (eximg.paper_number is not None) or eximg.question_list:
+        if eximg.paper_number is not None:
             raise ValueError(
                 "Cannot overwrite existing extra-page info; "
                 "potentially another user has set data."
             )
 
         eximg.paper_number = paper_number
-        eximg.question_list = assign_to_question_indices
+        eximg.question_idx_list = assign_to_question_indices
         eximg.save()
 
     @transaction.atomic
@@ -561,7 +563,7 @@ class ScanCastService:
 
         eximg = img.extrastagingimage
         eximg.paper_number = None
-        eximg.question_list = None
+        eximg.question_idx_list = None
         eximg.save()
 
     @transaction.atomic

@@ -3,8 +3,11 @@
 # Copyright (C) 2019-2024 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
+from __future__ import annotations
+
 import tempfile
 from pathlib import Path
+from typing import Any
 
 import PIL.Image
 import pymupdf
@@ -19,7 +22,17 @@ papersize_landscape = (792, 612)
 margin = 10
 
 
-def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_images):
+def reassemble(
+    outname: str | Path,
+    shortName: str,
+    sid: str,
+    coverfile: str | Path,
+    id_images,
+    marked_pages,
+    dnm_images,
+    *,
+    nonmarked_images: list[dict[str, Any]] | None = None,
+):
     """Reassemble a pdf from the cover and question images.
 
     Args:
@@ -32,6 +45,10 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
             and "rotation" (`integer`).
         marked_pages (list): `pathlib.Path` for each image.
         dnm_images (list): as above ``id_images``.
+
+    Keyword Args:
+        nonmarked_images: optional list of images that were seen but not
+            marked.
 
     Returns:
         None
@@ -73,27 +90,53 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
         pg.insert_image(rec, filename=img_name, rotate=angle)
 
     # process DNM pages one at a time, putting at most three per page
+    _insert_img_list_at_3_per_page(
+        exam,
+        dnm_images,
+        'flagged "Do No Mark" by the instructor.  '
+        "In most cases nothing here was marked.",
+    )
+
+    # process nonmarked pages one at a time, putting at most three per page
+    _insert_img_list_at_3_per_page(
+        exam, nonmarked_images, "seen but deemed not relevant to any question."
+    )
+
+    exam.set_metadata(
+        {
+            "title": f"{shortName} {sid}",
+            "producer": f"Plom {__version__}",
+        }
+    )
+
+    exam.save(outname, deflate=True)
+    exam.close()
+
+
+def _insert_img_list_at_3_per_page(
+    doc: pymupdf.Document, imgs: list[dict[str, Any]] | None, explanation: str
+) -> None:
+    if not imgs:
+        return
     max_per_page = 3
     on_this_page = 0
     W = 0  # defined later, false positive from pylint
-    for idx, img in enumerate(dnm_images):
-        how_many_more = len(dnm_images) - idx
+    N = len(imgs)
+    for idx, img in enumerate(imgs):
+        how_many_more = N - idx
         if on_this_page == 0:
             if how_many_more > 1:
                 # two or more pages remain, do a landscape page
                 w, h = papersize_landscape
             else:
                 w, h = papersize_portrait
-            pg = exam.new_page(width=w, height=h)
+            pg = doc.new_page(width=w, height=h)
             # width of each image on the page
             W = (w - 2 * margin) // min(max_per_page, how_many_more)
             header_bottom = margin + h // 10
             offset = margin
-            if how_many_more > 1:
-                text = 'These pages were flagged "Do No Mark" by the instructor.'
-            else:
-                text = 'This page was flagged "Do No Mark" by the instructor.'
-            text += "  In most cases nothing here was marked."
+            text = "These pages were " if how_many_more > 1 else "This page was "
+            text += explanation
             r = pg.insert_textbox(
                 pymupdf.Rect(margin, margin, w - margin, header_bottom),
                 text,
@@ -112,16 +155,6 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
         on_this_page += 1
         if on_this_page == max_per_page:
             on_this_page = 0
-
-    exam.set_metadata(
-        {
-            "title": "{} {}".format(shortName, sid),
-            "producer": "Plom {}".format(__version__),
-        }
-    )
-
-    exam.save(outname, deflate=True)
-    exam.close()
 
 
 def _unused_in_memory_jpeg_conversion(img_name, pg, rec):
