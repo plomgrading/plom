@@ -2,19 +2,18 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
+
+import logging
 
 import huey
 import huey.api
 import huey.signals
-from django.db import models
-from django.db import transaction
 from django.contrib.auth.models import User
-from django_huey import get_queue
+from django.db import models, transaction
 from django.utils import timezone
-
-import logging
+from django_huey import get_queue
 
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 
@@ -251,7 +250,7 @@ class Tag(models.Model):
 
     This is an abstract class that should be extended in other apps.
 
-    user: reference to a User instance, the user who created the task
+    user: reference to a User instance, the user who created the tag
     time: when the tag was first created
     text: the text contents of the tag
     """
