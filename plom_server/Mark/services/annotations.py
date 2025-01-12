@@ -155,9 +155,9 @@ def _add_annotation_to_rubrics(
                     )
                 if require_uptodate_rubrics and not rubric.published:
                     raise PlomConflict(
-                        f"rubric rid {rid} revision {rev} is the latest but its "
-                        "currently not published.  Someone has taken it offline "
-                        "possible for editing.  Try again later, ask your marking "
+                        f"rubric rid {rid} revision {rev} is the latest but it is "
+                        "not currently published.  Someone has taken it offline, "
+                        "possibly for editing.  Try again later, ask your marking "
                         "team, or use a different rubric."
                     )
                 rubric.annotations.add(annotation)
