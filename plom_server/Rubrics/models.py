@@ -204,6 +204,9 @@ class RubricTable(django_tables2.Table):
     """
 
     rid = django_tables2.Column("rid", linkify=True)
+    # prevent newlines from rendering in json fields
+    versions = django_tables2.JSONColumn(json_dumps_kwargs={})
+    parameters = django_tables2.JSONColumn(json_dumps_kwargs={})
     # TODO: issue #3648, seeking a way to display how often they are used
     # times_used = django_tables2.Column(
     #     verbose_name="# Used",
@@ -216,6 +219,8 @@ class RubricTable(django_tables2.Table):
     class Meta:
         model = Rubric
 
+        # which fields to include in the table.  Or omit for all fields
+        # and use equence = (...) to control the order.
         fields = (
             "rid",
             "display_delta",
@@ -224,15 +229,7 @@ class RubricTable(django_tables2.Table):
             "kind",
             "system_rubric",
             "question_index",
+            "versions",
             "text",
-        )
-        sequence = (
-            "rid",
-            "display_delta",
-            "last_modified",
-            "revision",
-            "kind",
-            "system_rubric",
-            "question_index",
-            "text",
+            "parameters",
         )
