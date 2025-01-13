@@ -461,6 +461,8 @@ class RubricEditView(ManagerRequiredView):
                 "out_of": form.cleaned_data["out_of"],
                 "meta": form.cleaned_data["meta"],
                 "question_index": form.cleaned_data["question_index"],
+                "versions": form.cleaned_data["versions"],
+                "parameters": form.cleaned_data["parameters"],
                 "revision": rubric.revision,
                 "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
             }

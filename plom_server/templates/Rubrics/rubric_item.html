@@ -79,6 +79,14 @@
                                     <td>{{ latest_rubric.meta }}</td>
                                 </tr>
                                 <tr>
+                                    <th scope="row">Scope</th>
+                                    <td>
+                                        versions: {{ latest_rubric.versions }}
+                                        <br />
+                                        params: {{ latest_rubric.parameters }}
+                                    </td>
+                                </tr>
+                                <tr>
                                     <th scope="row">Tags</th>
                                     <td>
                                         {% for tag in latest_rubric.pedagogy_tags.all %}
