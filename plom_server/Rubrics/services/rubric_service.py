@@ -295,9 +295,7 @@ class RubricService:
                 )
             if not 0 <= _value <= _out_of:
                 raise ValidationError(
-                    {
-                        "value": f"out of range: {_value} is not in [0, out_of] = [0, {_out_of}]."
-                    }
+                    {"value": f"out of range: {_value} is not in [0, {_out_of}]."}
                 )
 
         data["latest"] = True
@@ -465,9 +463,7 @@ class RubricService:
                 )
             if not 0 <= _value <= _out_of:
                 raise ValidationError(
-                    {
-                        "value": f"out of range: {_value} is not in [0, out_of] = [0, {_out_of}]."
-                    }
+                    {"value": f"out of range: {_value} is not in [0, {_out_of}]."}
                 )
 
         serializer = RubricSerializer(data=new_rubric_data)
