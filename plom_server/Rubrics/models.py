@@ -152,11 +152,6 @@ class Rubric(models.Model):
     latest = models.BooleanField(null=False, blank=True, default=True)
     pedagogy_tags = models.ManyToManyField("QuestionTags.PedagogyTag", blank=True)
 
-    def save(self, *args, **kwargs):
-        # TODO: this still gets called even when we bypass the serializer: queries users
-        self.full_clean()
-        return super(Rubric, self).save(*args, **kwargs)
-
     # TODO: how to make this work?  never seems to be called...
     # def clean_versions(self):
     #     print(self.cleaned_data["versions"])
