@@ -1,12 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Aidan Murphy
 
 from django.db import models
-from django.conf import settings
 
 from Base.models import SingletonABCModel
 
@@ -15,10 +14,6 @@ class PaperSourcePDF(models.Model):
     version = models.PositiveIntegerField(unique=True)
     source_pdf = models.FileField(upload_to="sourceVersions/")
     hash = models.CharField(null=False, max_length=64)
-
-    @classmethod
-    def upload_to(cls):
-        return settings.MEDIA_ROOT / cls.source_pdf.field.upload_to
 
 
 class PrenamingSetting(SingletonABCModel):
