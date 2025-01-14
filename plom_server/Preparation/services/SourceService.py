@@ -45,12 +45,12 @@ def _get_source_file(source_version: int) -> File:
 
 
 def _get_source_files() -> list[File]:
-    """Return a list of Django-files for all current source versions.
+    """Return the ordered list of Django-files for all current source versions.
 
     Returns:
         Some sort of file abstraction, not for use outside Django.
     """
-    return [x.source_pdf for x in PaperSourcePDF.objects.all()]
+    return [x.source_pdf for x in PaperSourcePDF.objects.all().order_by("version")]
 
 
 @transaction.atomic
