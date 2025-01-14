@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2024 Aden Chan
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
 from io import StringIO
@@ -15,8 +15,8 @@ from django.shortcuts import render
 
 from plom.misc_utils import humanize_seconds
 from Base.base_group_views import AdminOrManagerRequiredView
-from ..services import AuthenticationServices
-from ..form.signupForm import CreateUserForm, CreateMultiUsersForm
+from .services import AuthenticationServices
+from .form.signupForm import CreateUserForm, CreateMultiUsersForm
 
 
 class SingleUserSignUp(AdminOrManagerRequiredView):
