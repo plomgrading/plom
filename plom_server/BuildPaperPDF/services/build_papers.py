@@ -3,7 +3,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Aidan Murphy
 
@@ -17,7 +17,6 @@ from typing import Any
 
 import zipfly
 
-from django.conf import settings
 from django.db.models import Q
 from django.db import transaction
 from django.core.files import File
@@ -129,9 +128,6 @@ def huey_build_single_paper(
 
 class BuildPapersService:
     """Generate and stamp test-paper PDFs."""
-
-    base_dir = settings.MEDIA_ROOT
-    papers_to_print = base_dir / "papersToPrint"
 
     def get_n_papers(self) -> int:
         """Get the number of Papers."""
