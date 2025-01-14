@@ -99,13 +99,14 @@ def delete_all_source_pdfs() -> None:
 
 @transaction.atomic()
 def get_source(version: int) -> dict[str, Any]:
-    """Return a dictionary with the source version.
+    """Return a dictionary with info about the source version.
 
     Args:
         version: which version, indexed from one.
 
     Returns:
-        A dictionary with the version and uploaded status.
+        A dictionary with the version, uploaded status, and file hash
+        if uploaded.
     """
     try:
         pdf_obj = PaperSourcePDF.objects.filter(version=version).get()
@@ -139,8 +140,8 @@ def store_source_pdf(version: int, source_pdf: pathlib.Path) -> None:
 
     Raises:
         ValueError: source already present for that version.
+        PlomDependencyException: sources cannot currently be modified.
     """
-    # raises a PlomDependencyException if cannot modify
     assert_can_modify_sources()
 
     try:
@@ -152,7 +153,7 @@ def store_source_pdf(version: int, source_pdf: pathlib.Path) -> None:
 
     with open(source_pdf, "rb") as fh:
         the_bytes = fh.read()  # read entire file as bytes
-        hashed = hashlib.sha256(the_bytes).hexdigest()
+    hashed = hashlib.sha256(the_bytes).hexdigest()
 
     with open(source_pdf, "rb") as fh:
         dj_file = File(fh, name=f"version{version}.pdf")
