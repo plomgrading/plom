@@ -18,6 +18,7 @@ from typing import Any
 import huey
 import huey.api
 import zipfly
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import transaction
@@ -288,9 +289,12 @@ class BuildPapersService:
                 )
             del paper
 
-        # I suppose in theory these could change during the lifetime of the chores
-        # but Plom presumably prevents users from changing sources during builds
-        source_versions = SourceService._get_source_files()
+        # TODO: this probably only works with the default FileSystemStorage
+        source_versions = [
+            settings.MEDIA_ROOT / x.path for x in SourceService._get_source_files()
+        ]
+        # (I suppose in theory the source versions could change during the lifetime
+        # of the chores but Plom presumably prevents changing sources during builds)
 
         # for each of the newly created chores, actually ask Huey to run them
         chore_pk_huey_id_list = []
