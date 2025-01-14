@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 import pathlib
 import sys
@@ -75,6 +75,8 @@ class SourceServiceTests(TestCase):
         assert r
         assert "uploaded" in msg
         assert "success" in msg
+        # TODO: does this make files or not?
+        # SourceService.delete_source_pdf(1)
 
     @config_test({"test_spec": "demo"})
     def test_store_source_pdfs_out_of_range(self) -> None:
@@ -117,6 +119,7 @@ class SourceServiceTests(TestCase):
         self.assertTrue(location_on_disc == pdf_source_path)
         # This test is sus: DB might store as version1_abc123.pdf
         # assert f.path == pdf_source_path / "version1.pdf"
+        SourceService.delete_source_pdf(1)
 
     @config_test({"test_spec": "demo"})
     def test_store_source_pdf_already_there(self) -> None:
@@ -129,6 +132,7 @@ class SourceServiceTests(TestCase):
             SourceService.store_source_pdf(1, upload_path)
         n_sources = SourceService.how_many_source_versions_uploaded()
         self.assertEqual(n_sources, 1)
+        SourceService.delete_source_pdf(1)
 
     # def test_delete_non_existing_source_pdf(self) -> None:
     #     # explicitly **unset** papers-printed for testing purposes
@@ -145,6 +149,7 @@ class SourceServiceTests(TestCase):
         SourceService.store_source_pdf(1, upload_path)
         d = SourceService.get_list_of_sources()
         assert len(d[0]["hash"]) > 50
+        SourceService.delete_source_pdf(1)
 
     @config_test({"test_spec": "demo"})
     def test_get_as_bytes(self) -> None:
@@ -158,6 +163,7 @@ class SourceServiceTests(TestCase):
         self.assertEqual(original_bytes, stored_bytes)
         with self.assertRaises(ValueError):
             SourceService.get_source_as_bytes(2)
+        SourceService.delete_source_pdf(1)
 
     def test_source_check_duplicates(self) -> None:
         duplicates = SourceService.check_pdf_duplication()
