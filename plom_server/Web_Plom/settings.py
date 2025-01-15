@@ -140,13 +140,13 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "Web_Plom.middleware.OnlineNowMiddleware",
+    "plom_server.Web_Plom.middleware.OnlineNowMiddleware",
     "django_session_timeout.middleware.SessionTimeoutMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
 ]
 
-ROOT_URLCONF = "Web_Plom.urls"
+ROOT_URLCONF = "plom_server.Web_Plom.urls"
 
 TEMPLATES = [
     {
@@ -160,14 +160,14 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 # add our own context processors
-                "Web_Plom.context_processors.user_group_information",
-                "Web_Plom.context_processors.plom_information",
+                "plom_server.Web_Plom.context_processors.user_group_information",
+                "plom_server.Web_Plom.context_processors.plom_information",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = "Web_Plom.wsgi.application"
+WSGI_APPLICATION = "plom_server.Web_Plom.wsgi.application"
 
 
 # Database
