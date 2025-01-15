@@ -22,8 +22,8 @@ from django.core.management import call_command
 from django.conf import settings
 
 from Identify.services import IDDirectService
-from Launcher.services import DemoBundleCreationService, DemoHWBundleCreationService
 from Scan.services import ScanService
+from ...services import DemoBundleCreationService, DemoHWBundleCreationService
 
 
 # dataclasses used for compatibility with older demo services.

@@ -3,8 +3,6 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
 
-from __future__ import annotations
-
 import hashlib
 import pathlib
 import tempfile
@@ -16,17 +14,13 @@ import pymupdf as fitz
 from django.core.files import File
 from django.db import transaction
 
+from plom.scan import QRextract
 from Papers.models import ReferenceImage
 from Papers.services import SpecificationService
-from Preparation.services.mocker import ExamMockerService
-from Preparation.services.preparation_dependency_service import (
-    assert_can_modify_sources,
-)
 from Scan.services import ScanService
-
-from plom.scan import QRextract
-
 from ..models import PaperSourcePDF
+from ..services.mocker import ExamMockerService
+from ..services.preparation_dependency_service import assert_can_modify_sources
 
 
 def _get_source_file(source_version: int) -> File:

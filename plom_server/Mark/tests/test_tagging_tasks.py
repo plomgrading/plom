@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
-from django.test import TestCase
 from django.contrib.auth.models import User
+from django.test import TestCase
 from model_bakery import baker
 from rest_framework.exceptions import ValidationError
 
-from Mark.services import MarkingTaskService
-from Mark.models import MarkingTask, MarkingTaskTag
+from ..models import MarkingTask, MarkingTaskTag
+from ..services import MarkingTaskService
 
 
 class MarkingTaskServiceTaggingTests(TestCase):
