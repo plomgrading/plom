@@ -162,7 +162,6 @@ packages = [
     "plom_server.Launcher",
     "plom_server.Launcher.management.commands",
     "plom_server.Mark",
-    "plom_server.MarkingInformation",
     "plom_server.Papers",
     "plom_server.Papers.models",
     "plom_server.Preparation",
