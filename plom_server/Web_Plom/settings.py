@@ -250,20 +250,38 @@ SESSION_COOKIE_AGE = 60 * 60 * 2
 SESSION_SAVE_EVERY_REQUEST = True
 
 
+# Media and user-uploaded files
+# If you specify your own it should be fully qualified
+_ = os.environ.get("PLOM_MEDIA_ROOT")
+if _:
+    MEDIA_ROOT = Path(_)
+else:
+    MEDIA_ROOT = BASE_DIR / "media"
+
+
 # Django Huey configuration
 # Huey handles background tasks.  PLOM_HUEY_PARENT_WORKERS controls how many
 # simultaneous bundle processing tasks can happen (additional bundles will queue).
 # PLOM_HUEY_WORKERS are lower-level jobs such as extracting several pages from
 # a bundle and reading the QR codes.
+# PLOM_HUEY_DB_LOCATION controls where Huey should store its database (note this
+# is nothing to do with Plom's database).  Defaults to "$MEDIA_ROOT/huey" which
+# might be a poor choice (TODO).
 _huey_workers = int(os.environ.get("PLOM_HUEY_WORKERS", 4))
 _huey_parent_workers = int(os.environ.get("PLOM_HUEY_PARENT_WORKERS", 2))
+_huey_db_dir = os.environ.get("PLOM_HUEY_DB_DIR")
+if not _huey_db_dir:
+    # yuck?
+    _huey_db_dir = MEDIA_ROOT / "huey"
+_huey_db_dir = Path(_huey_db_dir)
+_huey_db_dir.mkdir(exist_ok=True, parents=True)
 HUEY = {"immediate": False}
 DJANGO_HUEY = {
     "default": "tasks",
     "queues": {
         "tasks": {
             "huey_class": "huey.SqliteHuey",
-            "filename": BASE_DIR / "huey/hueydb.sqlite3",
+            "filename": _huey_db_dir / "hueydb.sqlite3",
             "results": True,
             "store_none": False,
             "immediate": False,
@@ -282,7 +300,7 @@ DJANGO_HUEY = {
         },
         "parentchores": {
             "huey_class": "huey.SqliteHuey",
-            "filename": BASE_DIR / "huey/hueydb-parentchores.sqlite3",
+            "filename": _huey_db_dir / "hueydb-parentchores.sqlite3",
             "results": True,
             "store_none": False,
             "immediate": False,
@@ -302,6 +320,7 @@ DJANGO_HUEY = {
     },
 }
 
+
 # DRF authentication and permissions
 # The default permission must be set, otherwise it's AllowAny!
 # see https://gitlab.com/plom/plom/-/issues/2904
@@ -315,23 +334,8 @@ REST_FRAMEWORK = {
     ],
 }
 
-# Media and user-uploaded files
-# If you specify your own it should be fully qualified
-_ = os.environ.get("PLOM_MEDIA_ROOT")
-if _:
-    MEDIA_ROOT = Path(_)
-else:
-    MEDIA_ROOT = BASE_DIR / "media"
-
 # List of test fixture directories
 FIXTURE_DIRS = [BASE_DIR / "fixtures"]
-
-
-# yuck?
-print(MEDIA_ROOT / "huey")
-MEDIA_ROOT.mkdir(exist_ok=True)
-(MEDIA_ROOT / "huey").mkdir(exist_ok=True)
-print(MEDIA_ROOT / "huey")
 
 
 # Configurable variables for Web Plom
