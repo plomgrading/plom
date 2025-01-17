@@ -127,6 +127,7 @@ Changelog = "https://gitlab.com/plom/plom/-/blob/main/CHANGELOG.md"
 [tool.setuptools]
 packages = [
     "plom",
+    "plom.cli",
     "plom.create",
     "plom.create.fonts",
     "plom.scan",
@@ -191,6 +192,7 @@ plom-hwscan = "plom.scripts.hwscan:main"
 plom-solutions = "plom.solutions.__main__:main"
 # TODO: move to plom_server.Launcher... waiting on Issue #3377.
 plom-new-server = "plom.scripts.newserver:main"
+plom-cli = "plom.cli.__main__:main"
 
 
 # Tooling configuration
