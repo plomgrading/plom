@@ -1,17 +1,18 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2020 Andrew Rechnitzer
-    Copyright (C) 2020-2023 Colin B. Macdonald
+    Copyright (C) 2020-2023, 2025 Colin B. Macdonald
     Copyright (C) 2020 Matthew Coles
     Copyright (C) 2022 Philip Loewen
     Copyright (C) 2022 Elizabeth Xiao
     Copyright (C) 2022 Tony Nguyen
     Copyright (C) 2022 Charlotte Dean
+    Copyright (C) 2024 Aidan Murphy
 -->
 
 # Courses that have used Plom
 
-These are as best we can recall.  Currently UBC Maths-centric.
+These are as best we can recall.  Currently UBC Maths-centric (interest from Biology as of May 2024).
 
 
 ## 2018-19
@@ -208,3 +209,82 @@ Approx: 7000 over 13 courses
 ## Totals up to Oct 2023
 
   * Approx 102000 papers in 82 courses.
+
+
+## 2023W2
+
+| Course   |  Tasks                           | # students |  Notes                             |
+|----------|----------------------------------|:----------:|------------------------------------|
+| Math100  | 2 tests, final                   | 224        |                                    |
+| Math101  | 2 tests, final                   | 3289       |                                    |
+| Math110  | midterm, final                   | 160        |                                    |
+| Math152  | midterm, final                   | 914        |                                    |
+| Math215  | midterm, 2 quizzes, final        | 205        |                                    |
+| Math220  | test, final                      | 282        |                                    |
+| Math221  | 2 midterms, final                | 561        |                                    |
+| Math257  | 2 tests, final                   | 140        |                                    |
+| Math300  | 2 midterms, final                | 82         |                                    |
+| Math302  | 2 quizzes, midterm               | 142        |                                    |
+| Math303  | final                            | 217        |                                    |
+| Math340  | final                            | 126        |                                    |
+| Math344  | midterm, final                   | 72         |                                    |
+| BIOL155  | group exam                       | 160        | 42 papers, approx 4 students each  |
+| BIOL201  | midterm                          | 343        |                                    |
+| BIOL260  | midterm section 201 and 202      | 437        |                                    |
+| ELEC211  | 2 midterms, final                | 175        |                                    |
+| BMEG220  | 4 tests, final                   | 97         |                                    |
+
+Approx: 7530 students over at least 18 courses in three depts.
+
+
+## 2024S1+S2
+
+| Course       |  Tasks                                 | # students |  Notes                        |
+|----------    |----------------------------------      |:----------:|-------------------------------|
+| Math100      | Midterm+Final                          | 200        |                               |
+| Math101      | Midterm+Final                          | 350        |                               |
+| Math200      | Final                                  | 150        |                               |
+| Math220      | Midterm+Final                          | 70         |                               |
+| Math221      | Midterm+Final                          | 140        |                               |
+| Math215/255  | Midterm+Final                          | 80         |                               |
+| Math253      | Midterm+Final                          | 130        |                               |
+| Math257/316  | Midterm+Final                          | 100        |                               |
+| Math302      | Midterm+Final                          | 100        |                               |
+
+Approx: 1320 students over 9 courses
+
+
+## 2024W1
+
+| Course       |  Tasks                                     | # students |  Notes                        |
+|----------    |----------------------------------          |:----------:|-------------------------------|
+| Math100      | Midterm(x2)+Final                          | 3300       |                               |
+| Math180      | Midterm(x2)+Final                          | 700        |                               |
+| Math200      | Midterm(x2)+Final                          | 920        |                               |
+| Math200 10M  | Midterm(x2)+Final                          | 60         |                               |
+| Math215/255  | Midterm(x2)+Final                          | 360        |                               |
+| Math220      | Midterm+Final                              | 380        |                               |
+| Math221      | Midterm(x2)+Final                          | 600        |                               |
+| Math221 10M  | Midterm(x2)+Final                          | 70         |                               |
+| Math223      | Midterm(x2)+Final                          | 80         |                               |
+| Math253      | Final                                      | 780        |                               |
+| Math257/316  | Midterm(x2)+Final                          | 90         |                               |
+| Math302      | Midterm+Final                              | 330        |                               |
+| Math317      | Midterm(x2)+Final                          | 150        |                               |
+| Math319      | Midterm(x2)+Final                          | 30         |                               |
+| Math340      | Midterm                                    | 99         |                               |
+| Math344      | Midterm+Final                              | 80         |                               |
+| Math405      | Midterm+Final                              | 30         |                               |
+| BIOL111      |                                            | 224        |                               |
+| BIOL112      |                                            | 949        |                               |
+| BIOL155      |                                            | 371        |                               |
+| BIOL200      |                                            | 1093       |                               |
+| BIOL323      |                                            | 43         |                               |
+| BIOL331      |                                            | 72         |                               |
+| BIOL371      |                                            | 220        |                               |
+| BIOL372      |                                            | 62         |                               |
+| PHYS117      | 2 sections, midterm, group midterm, final  | 450        |                               |
+| PHYS200      | final                                      | 340        |                               |
+| MICB302      | final                                      | 160        |                               |
+
+Approx: 12100 student in at least 28 courses in at least four depts.
