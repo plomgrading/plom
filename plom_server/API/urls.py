@@ -26,6 +26,7 @@ from .views import (
     # TODO: these are possibly temporary
     ScanListBundles,
     ScanMapBundle,
+    FinishReassembled,
     REPspreadsheet,
     REPidentified,
     REPcompletionStatus,
@@ -64,6 +65,11 @@ urlpatterns = [
         "api/beta/scan/bundle/<int:bundle_id>/<int:page>/map",
         ScanMapBundle.as_view(),
         name="api_Scan_bundle_map",
+    ),
+    path(
+        "api/beta/finish/reassembled/<int:papernum>",
+        FinishReassembled.as_view(),
+        name="api_Finish_reassembled",
     ),
     path(
         "REP/spreadsheet",

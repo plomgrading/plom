@@ -28,7 +28,7 @@ from stdiomask import getpass
 
 from plom.scan import __version__
 from plom import Default_Port
-from plom.cli import list_bundles, bundle_map_page, upload_bundle
+from plom.cli import list_bundles, bundle_map_page, upload_bundle, get_reassembled
 
 # from plom.cli import clear_login
 
@@ -43,6 +43,44 @@ def _get_parser():
         "--version", action="version", version="%(prog)s " + __version__
     )
     sub = parser.add_subparsers(dest="command")
+
+    def _add_server_args(x):
+        x.add_argument(
+            "-s",
+            "--server",
+            metavar="SERVER[:PORT]",
+            action="store",
+            help=f"""
+                Which server to contact, port defaults to {Default_Port}.
+                Also checks the environment variable PLOM_SERVER if omitted.
+            """,
+        )
+        x.add_argument(
+            "-u",
+            "--username",
+            type=str,
+            help="""
+                Also checks the
+                environment variable PLOM_USERNAME.
+            """,
+        )
+        x.add_argument(
+            "-w",
+            "--password",
+            type=str,
+            help="""
+                Also checks the
+                environment variable PLOM_PASSWORD.
+            """,
+        )
+
+    s = sub.add_parser(
+        "get-reassembled",
+        help="Get a reassembled paper.",
+        # description="Upload a bundle of page images in a PDF file.",
+    )
+    s.add_argument("papernum", type=int)
+    _add_server_args(s)
 
     spU = sub.add_parser(
         "upload-bundle",
@@ -100,34 +138,7 @@ def _get_parser():
     )
 
     for x in (spU, spS, spC, sp_map):
-        x.add_argument(
-            "-s",
-            "--server",
-            metavar="SERVER[:PORT]",
-            action="store",
-            help=f"""
-                Which server to contact, port defaults to {Default_Port}.
-                Also checks the environment variable PLOM_SERVER if omitted.
-            """,
-        )
-        x.add_argument(
-            "-u",
-            "--username",
-            type=str,
-            help="""
-                Also checks the
-                environment variable PLOM_USERNAME.
-            """,
-        )
-        x.add_argument(
-            "-w",
-            "--password",
-            type=str,
-            help="""
-                Also checks the
-                environment variable PLOM_PASSWORD.
-            """,
-        )
+        _add_server_args(x)
     return parser
 
 
@@ -165,6 +176,14 @@ def main():
             questions=args.question,
             msgr=(args.server, args.username, args.password),
         )
+    elif args.command == "get-reassembled":
+        b = get_reassembled(
+            args.papernum, msgr=(args.server, args.username, args.password)
+        )
+        fn = "meh.pdf"
+        with open(fn, "wb") as f:
+            f.write(b)
+        print(f"wrote reassembled paper number {args.papernum} to file {fn}")
     elif args.command == "clear":
         print("TODO: do we need this on new Plom?")
         # clear_login(args.server, args.password)

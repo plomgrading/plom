@@ -28,15 +28,16 @@ from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomConflict,
+    PlomNoPaper,
+    PlomNoPermission,
     PlomNoServerSupportException,
-    PlomTakenException,
+    PlomQuotaLimitExceeded,
     PlomRangeException,
-    PlomVersionMismatchException,
+    PlomTakenException,
     PlomTaskChangedError,
     PlomTaskDeletedError,
     PlomTimeoutError,
-    PlomQuotaLimitExceeded,
-    PlomNoPermission,
+    PlomVersionMismatchException,
 )
 
 
@@ -921,3 +922,22 @@ class Messenger(BaseMessenger):
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     # def new_server_bundle_map_finish(self, bundle_id: int):
+
+    def new_server_get_reassembled(self, papernum: int) -> bytes:
+        """Download a reassembled PDF file from the server.
+
+        Returns:
+            Raw bytes of a PDF.  Or we can get the filename and save it here into
+            a kwarg path defaulting to CWD.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get_auth(f"/api/beta/finish/reassembled/{papernum}")
+                response.raise_for_status()
+                return BytesIO(response.content).getvalue()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
