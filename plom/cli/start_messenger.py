@@ -4,18 +4,18 @@
 
 import functools
 
-from plom.messenger import ScanMessenger
+from plom.messenger import Messenger
 from plom.plom_exceptions import PlomExistingLoginException
 
 
-def start_messenger(
+def _start_messenger(
     server: str | None,
     usr: str,
     pwd: str,
     verify_ssl: bool = True,
-) -> ScanMessenger:
+) -> Messenger:
     """Start and return a new messenger with a certain username and password."""
-    msgr = ScanMessenger(server, verify_ssl=verify_ssl)
+    msgr = Messenger(server, verify_ssl=verify_ssl)
     msgr.start()
 
     # TODO: we have no plom-cli clear yet
@@ -47,12 +47,12 @@ def with_messenger(f):
     def wrapped(*args, **kwargs):
         # if we have a messenger, nothing special, just call function
         msgr = kwargs.get("msgr")
-        if isinstance(msgr, ScanMessenger):
+        if isinstance(msgr, Messenger):
             return f(*args, **kwargs)
 
         # if not, we assume its appropriate args to make a messenger
         credentials = kwargs.pop("msgr")
-        msgr = start_messenger(*credentials)
+        msgr = _start_messenger(*credentials)
         kwargs["msgr"] = msgr
         try:
             return f(*args, **kwargs)

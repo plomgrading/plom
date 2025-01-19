@@ -15,6 +15,7 @@ import logging
 import mimetypes
 import pathlib
 import tempfile
+from pathlib import Path
 from typing import Any
 
 import requests
@@ -839,3 +840,84 @@ class Messenger(BaseMessenger):
             ) from None
         finally:
             self.SRmutex.release()
+
+    def new_server_upload_bundle(self, pdf: Path) -> dict[str, Any]:
+        """Upload a PDF file to the server as a new bundle.
+
+        Returns:
+            A dictionary, including the bundle_id and maybe other
+            information in the future.
+        """
+        with self.SRmutex:
+            try:
+                with pdf.open("rb") as f:
+                    files = {
+                        "pdf_file": f,
+                    }
+                    response = self.post_auth("/api/beta/scan/bundles", files=files)
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def new_server_list_bundles(self) -> list[list[Any]]:
+        """Get a list of information about bundles on the server.
+
+        TODO: beta: rename to something reasonable in due time.
+
+        Returns:
+            A list of of lists, representing a table where the first row
+            is the column headers.
+            TODO: maybe a list of dicts would be a more general API; could
+            format as a table client-side.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get_auth("/api/beta/scan/bundles")
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def new_server_bundle_map_page(
+        self, bundle_id: int, page: int, papernum: int, questions: str | list
+    ) -> Any:
+        """Map a page of a bundle to zero or more questions.
+
+        TODO: beta: rename to something reasonable in due time.
+
+        Returns:
+            TODO: nothing yet, still WIP?
+        """
+        with self.SRmutex:
+            try:
+                # qall TODO?
+                # qdnm versus empty list?
+                query_args = ["qall", f"papernum={papernum}"]
+                print(questions)
+                query_args.extend([f"qidx={n}" for n in questions])
+                p = (
+                    f"/api/beta/scan/bundle/{bundle_id}/{page}/map"
+                    + "?"
+                    + "&".join(query_args)
+                )
+                print(p)
+                response = self.post_auth(p)
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomSeriousException(response.reason) from None
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomRangeException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    # def new_server_bundle_map_finish(self, bundle_id: int):
