@@ -187,8 +187,10 @@ def main():
         r = get_reassembled(
             args.papernum, msgr=(args.server, args.username, args.password)
         )
-        fn = r["filename"]
-        print(f"wrote reassembled paper number {args.papernum} to file {fn}")
+        print(
+            f"wrote reassembled paper number {args.papernum} to "
+            f'file {r["filename"]} [{r["content-length"]} bytes]'
+        )
     elif args.command == "clear":
         print("TODO: do we need this on new Plom?")
         # clear_login(args.server, args.password)

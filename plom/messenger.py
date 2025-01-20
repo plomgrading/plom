@@ -929,8 +929,8 @@ class Messenger(BaseMessenger):
         """Download a reassembled PDF file from the server.
 
         Returns:
-            A dict with the suggested filename (from the server) and the
-            bytes content of the PDF file.
+            A dict including key `"filename"` for the file that was written
+            and other information about the download.
         """
         with self.SRmutex:
             try:
@@ -942,14 +942,16 @@ class Messenger(BaseMessenger):
                 msg = EmailMessage()
                 msg["Content-Disposition"] = response.headers.get("Content-Disposition")
                 filename = msg.get_filename()
-
+                num_bytes = 0
                 # defaults to CWD: TODO: kwarg to change that?
                 with open(filename, "wb") as f:
                     for chunk in tqdm(response.iter_content(chunk_size=8192)):
+                        print((type(chunk), len(chunk)))
                         f.write(chunk)
+                        num_bytes += len(chunk)
                 r = {
                     "filename": filename,
-                    # "content_as_bytes": BytesIO(response.content).getvalue(),
+                    "content-length": num_bytes,
                 }
                 return r
             except requests.HTTPError as e:
