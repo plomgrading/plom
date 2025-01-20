@@ -349,6 +349,9 @@ class ReassembleService:
 
         Keyword Args:
             build_student_report: Whether or not build the student report along with reassembling the paper.
+
+        Raises:
+            ValueError: no paper with that number, or existing chore.
         """
         try:
             paper = Paper.objects.get(paper_number=paper_num)

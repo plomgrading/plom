@@ -28,7 +28,7 @@ from stdiomask import getpass
 
 from plom.scan import __version__
 from plom import Default_Port
-from plom.cli import list_bundles, bundle_map_page, upload_bundle
+from plom.cli import list_bundles, bundle_map_page, upload_bundle, get_reassembled
 
 # from plom.cli import clear_login
 
@@ -44,21 +44,68 @@ def _get_parser():
     )
     sub = parser.add_subparsers(dest="command")
 
-    spU = sub.add_parser(
+    def _add_server_args(x):
+        x.add_argument(
+            "-s",
+            "--server",
+            metavar="SERVER[:PORT]",
+            action="store",
+            help=f"""
+                Which server to contact, port defaults to {Default_Port}.
+                Also checks the environment variable PLOM_SERVER if omitted.
+            """,
+        )
+        x.add_argument(
+            "-u",
+            "--username",
+            type=str,
+            help="""
+                Also checks the
+                environment variable PLOM_USERNAME.
+            """,
+        )
+        x.add_argument(
+            "-w",
+            "--password",
+            type=str,
+            help="""
+                Also checks the
+                environment variable PLOM_PASSWORD.
+            """,
+        )
+
+    s = sub.add_parser(
+        "get-reassembled",
+        help="Get a reassembled paper.",
+        description="""
+            Download a reassembled paper as a PDF file from the server.
+            Will fail if the paper is not reassembled yet.
+        """,
+    )
+    s.add_argument("papernum", type=int)
+    _add_server_args(s)
+
+    s = sub.add_parser(
         "upload-bundle",
         help="Upload PDF file",
         description="Upload a bundle of page images in a PDF file.",
     )
-    spU.add_argument("pdf", help="a PDF file.")
-    spS = sub.add_parser(
+    s.add_argument("pdf", help="a PDF file.")
+    _add_server_args(s)
+
+    s = sub.add_parser(
         "list-bundles",
         help="List the scanned bundles on the server",
     )
-    spC = sub.add_parser(
+    _add_server_args(s)
+
+    s = sub.add_parser(
         "clear",
         help='Clear "scanner" login',
         description='Clear "scanner" login after a crash or other expected event.',
     )
+    _add_server_args(s)
+
     sp_map = sub.add_parser(
         "map",
         help="Assign pages of a bundle to particular questions.",
@@ -98,36 +145,7 @@ def _get_parser():
             TODO: discard, dnm and all are currently "in-flux".
         """,
     )
-
-    for x in (spU, spS, spC, sp_map):
-        x.add_argument(
-            "-s",
-            "--server",
-            metavar="SERVER[:PORT]",
-            action="store",
-            help=f"""
-                Which server to contact, port defaults to {Default_Port}.
-                Also checks the environment variable PLOM_SERVER if omitted.
-            """,
-        )
-        x.add_argument(
-            "-u",
-            "--username",
-            type=str,
-            help="""
-                Also checks the
-                environment variable PLOM_USERNAME.
-            """,
-        )
-        x.add_argument(
-            "-w",
-            "--password",
-            type=str,
-            help="""
-                Also checks the
-                environment variable PLOM_PASSWORD.
-            """,
-        )
+    _add_server_args(sp_map)
     return parser
 
 
@@ -164,6 +182,14 @@ def main():
             papernum=args.papernum,
             questions=args.question,
             msgr=(args.server, args.username, args.password),
+        )
+    elif args.command == "get-reassembled":
+        r = get_reassembled(
+            args.papernum, msgr=(args.server, args.username, args.password)
+        )
+        print(
+            f"wrote reassembled paper number {args.papernum} to "
+            f'file {r["filename"]} [{r["content-length"]} bytes]'
         )
     elif args.command == "clear":
         print("TODO: do we need this on new Plom?")

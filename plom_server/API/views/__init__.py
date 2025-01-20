@@ -42,6 +42,10 @@ from .scan import (
     ScanMapBundle,
 )
 
+from .finish import (
+    FinishReassembled,
+)
+
 from .report import (
     REPspreadsheet,
     REPidentified,

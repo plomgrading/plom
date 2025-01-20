@@ -21,11 +21,13 @@ from .utils import _error_response
 class ScanListBundles(APIView):
     """API related to bundles."""
 
+    # GET: /api/beta/scan/bundles
     def get(self, request: Request) -> Response:
         """API to list all bundles."""
         bundle_status = ScanService().staging_bundle_status()
         return Response(bundle_status, status=status.HTTP_200_OK)
 
+    # POST: /api/beta/scan/bundles
     def post(self, request: Request) -> Response:
         """API to upload a new bundle.
 
@@ -85,6 +87,7 @@ class ScanListBundles(APIView):
 class ScanMapBundle(APIView):
     """API related to mapping a bundle."""
 
+    # POST: /api/beta/scan/bundle/{bundle_id}/{page}/map
     def post(self, request: Request, *, bundle_id: int, page: int) -> Response:
         """API to map the pages of a bundle onto questions."""
         print(bundle_id)
