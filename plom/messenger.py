@@ -15,11 +15,13 @@ import logging
 import mimetypes
 import pathlib
 import tempfile
+from email.message import EmailMessage
 from pathlib import Path
 from typing import Any
 
 import requests
 from requests_toolbelt import MultipartEncoder
+from tqdm import tqdm
 
 from plom.baseMessenger import BaseMessenger
 from plom.scanMessenger import ScanMessenger
@@ -932,17 +934,22 @@ class Messenger(BaseMessenger):
         """
         with self.SRmutex:
             try:
-                response = self.get_auth(f"/api/beta/finish/reassembled/{papernum}")
+                response = self.get_auth(
+                    f"/api/beta/finish/reassembled/{papernum}", stream=True
+                )
                 response.raise_for_status()
                 # https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
-                from email.message import EmailMessage
-
                 msg = EmailMessage()
                 msg["Content-Disposition"] = response.headers.get("Content-Disposition")
                 filename = msg.get_filename()
+
+                # defaults to CWD: TODO: kwarg to change that?
+                with open(filename, "wb") as f:
+                    for chunk in tqdm(response.iter_content(chunk_size=8192)):
+                        f.write(chunk)
                 r = {
                     "filename": filename,
-                    "content_as_bytes": BytesIO(response.content).getvalue(),
+                    # "content_as_bytes": BytesIO(response.content).getvalue(),
                 }
                 return r
             except requests.HTTPError as e:

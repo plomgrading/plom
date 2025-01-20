@@ -188,8 +188,6 @@ def main():
             args.papernum, msgr=(args.server, args.username, args.password)
         )
         fn = r["filename"]
-        with open(fn, "wb") as f:
-            f.write(r["content_as_bytes"])
         print(f"wrote reassembled paper number {args.papernum} to file {fn}")
     elif args.command == "clear":
         print("TODO: do we need this on new Plom?")
