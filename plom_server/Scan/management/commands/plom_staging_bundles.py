@@ -16,6 +16,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 from django.core.management.base import BaseCommand, CommandError
 
+from plom.plom_exceptions import PlomConflict
 from ...services import ScanService
 
 
@@ -56,9 +57,6 @@ class Command(BaseCommand):
         except pymupdf.FileDataError as err:
             raise CommandError(err)
 
-        if scanner.check_for_duplicate_hash(hashed):
-            raise CommandError("Upload failed - Bundle was already uploaded.")
-
         try:
             bundle_id = scanner.upload_bundle_cmd(
                 source_pdf,
@@ -68,7 +66,7 @@ class Command(BaseCommand):
                 hashed,
                 number_of_pages,
             )
-        except ValueError as err:
+        except (ValueError, PlomConflict) as err:
             raise CommandError(err)
         self.stdout.write(
             f"Uploaded {source_pdf} as bundle {bundle_id}: background processing started."
