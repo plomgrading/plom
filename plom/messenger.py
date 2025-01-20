@@ -923,18 +923,28 @@ class Messenger(BaseMessenger):
 
     # def new_server_bundle_map_finish(self, bundle_id: int):
 
-    def new_server_get_reassembled(self, papernum: int) -> bytes:
+    def new_server_get_reassembled(self, papernum: int) -> dict[str, Any]:
         """Download a reassembled PDF file from the server.
 
         Returns:
-            Raw bytes of a PDF.  Or we can get the filename and save it here into
-            a kwarg path defaulting to CWD.
+            A dict with the suggested filename (from the server) and the
+            bytes content of the PDF file.
         """
         with self.SRmutex:
             try:
                 response = self.get_auth(f"/api/beta/finish/reassembled/{papernum}")
                 response.raise_for_status()
-                return BytesIO(response.content).getvalue()
+                # https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
+                from email.message import EmailMessage
+
+                msg = EmailMessage()
+                msg["Content-Disposition"] = response.headers.get("Content-Disposition")
+                filename = msg.get_filename()
+                r = {
+                    "filename": filename,
+                    "content_as_bytes": BytesIO(response.content).getvalue(),
+                }
+                return r
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None

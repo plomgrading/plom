@@ -80,7 +80,6 @@ def _get_parser():
         description="""
             Download a reassembled paper as a PDF file from the server.
             Will fail if the paper is not reassembled yet.
-            TODO: control the output filename or use the server one?
         """,
     )
     s.add_argument("papernum", type=int)
@@ -185,12 +184,12 @@ def main():
             msgr=(args.server, args.username, args.password),
         )
     elif args.command == "get-reassembled":
-        b = get_reassembled(
+        r = get_reassembled(
             args.papernum, msgr=(args.server, args.username, args.password)
         )
-        fn = "meh.pdf"
+        fn = r["filename"]
         with open(fn, "wb") as f:
-            f.write(b)
+            f.write(r["content_as_bytes"])
         print(f"wrote reassembled paper number {args.papernum} to file {fn}")
     elif args.command == "clear":
         print("TODO: do we need this on new Plom?")
