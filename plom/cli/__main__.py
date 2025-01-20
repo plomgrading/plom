@@ -82,21 +82,27 @@ def _get_parser():
     s.add_argument("papernum", type=int)
     _add_server_args(s)
 
-    spU = sub.add_parser(
+    s = sub.add_parser(
         "upload-bundle",
         help="Upload PDF file",
         description="Upload a bundle of page images in a PDF file.",
     )
-    spU.add_argument("pdf", help="a PDF file.")
-    spS = sub.add_parser(
+    s.add_argument("pdf", help="a PDF file.")
+    _add_server_args(s)
+
+    s = sub.add_parser(
         "list-bundles",
         help="List the scanned bundles on the server",
     )
-    spC = sub.add_parser(
+    _add_server_args(s)
+
+    s = sub.add_parser(
         "clear",
         help='Clear "scanner" login',
         description='Clear "scanner" login after a crash or other expected event.',
     )
+    _add_server_args(s)
+
     sp_map = sub.add_parser(
         "map",
         help="Assign pages of a bundle to particular questions.",
@@ -136,9 +142,7 @@ def _get_parser():
             TODO: discard, dnm and all are currently "in-flux".
         """,
     )
-
-    for x in (spU, spS, spC, sp_map):
-        _add_server_args(x)
+    _add_server_args(sp_map)
     return parser
 
 
