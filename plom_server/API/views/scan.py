@@ -12,7 +12,6 @@ from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
-import pymupdf
 
 from plom.plom_exceptions import PlomConflict
 from Scan.services import ScanService
@@ -28,17 +27,38 @@ class ScanListBundles(APIView):
         return Response(bundle_status, status=status.HTTP_200_OK)
 
     def post(self, request: Request) -> Response:
-        """API to upload a new bundle."""
+        """API to upload a new bundle.
+
+        On success (200) you'll get a dictionary with the key
+        ``"bundle_id"`` giving the id of the newly-created bundle.
+
+        Only users in the "scanner" group can upload new bundles,
+        others will receive a 401.
+
+        The bundle filename cannot begin with an underscore, that
+        will result in a 400.
+
+        The bundle must have a distinct sha256 hash from existing
+        bundles, or you'll get a 409.
+        """
         print(request)
         print(request.data)
         user = request.user
-        print((user, type(user)))
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "scanner" not in group_list:
+            return _error_response(
+                'Only users in the "scanner" group can upload files',
+                status.HTTP_401_UNAUTHORIZED,
+            )
         pdf = request.FILES.get("pdf_file")
         print((pdf, type(pdf)))
         filename_stem = Path(pdf.name).stem
         if filename_stem.startswith("_"):
             s = "Bundle filenames cannot start with an underscore - we reserve those for internal use."
             return _error_response(s, status.HTTP_400_BAD_REQUEST)
+
+        # TODO: BundleUploadForm is not used in this API endpoint and that's
+        # unfortunate b/c it does some checks including a maximum upload size.
 
         slug = slugify(filename_stem)
         timestamp = datetime.timestamp(timezone.now())
@@ -50,20 +70,9 @@ class ScanListBundles(APIView):
 
         hashed = hashlib.sha256(file_bytes).hexdigest()
 
-        try:
-            # Issue #3771: why are we using pymupdf here?
-            with pymupdf.open(stream=file_bytes) as pdf_doc:
-                number_of_pages = pdf_doc.page_count
-        except pymupdf.FileDataError as err:
-            print(err)
-            # raise RuntimeError("dunno about this error handling")
-            raise
-
         # TODO: annoying we have to open it to read the md5sum
         try:
-            bundle_id = ScanService().upload_bundle(
-                pdf, slug, user, timestamp, hashed, number_of_pages
-            )
+            bundle_id = ScanService.upload_bundle(pdf, slug, user, timestamp, hashed)
         except PlomConflict as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
 
