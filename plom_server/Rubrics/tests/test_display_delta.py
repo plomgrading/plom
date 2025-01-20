@@ -66,3 +66,12 @@ class RubricServiceTests_display_delta(TestCase):
     def test_generate_display_fractional_out_of(self) -> None:
         self.assertEqual(gen_display(0, "absolute", 0.5), "0 of ½")
         self.assertEqual(gen_display(0.25, "absolute", 0.5), "¼ of ½")
+
+    def test_generate_display_fraction_tolerance(self) -> None:
+        self.assertEqual(gen_display(2 / 3, "relative"), "+⅔")
+        self.assertEqual(gen_display(0.666666666667, "relative"), "+⅔")
+        self.assertEqual(gen_display(0.66666667, "relative"), "+⅔")
+        self.assertEqual(gen_display(0.333333333333, "relative"), "+⅓")
+        self.assertEqual(gen_display(0.33333333, "relative"), "+⅓")
+        self.assertEqual(gen_display(0.667, "relative"), "+0.667")
+        self.assertEqual(gen_display(0.333, "relative"), "+0.333")

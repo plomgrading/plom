@@ -130,6 +130,12 @@ def _generate_display_delta(
     Raises:
         ValueError: if the kind is not valid.
         ValueError: if the kind is absolute and out_of is not provided.
+
+    Note that certain fractions with small integer denominators will be
+    rendered as fractions.  Currently the detection of such relies on
+    a small internal tolerance of roughly sqrt machine epsilon.  This
+    means for example that `0.66666667` will convert into the fraction
+    two thirds.
     """
     value = float(value) if isinstance(value, str) else value
     out_of = float(out_of) if isinstance(out_of, str) else out_of
