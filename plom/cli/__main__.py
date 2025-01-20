@@ -77,7 +77,11 @@ def _get_parser():
     s = sub.add_parser(
         "get-reassembled",
         help="Get a reassembled paper.",
-        # description="Upload a bundle of page images in a PDF file.",
+        description="""
+            Download a reassembled paper as a PDF file from the server.
+            Will fail if the paper is not reassembled yet.
+            TODO: control the output filename or use the server one?
+        """,
     )
     s.add_argument("papernum", type=int)
     _add_server_args(s)
