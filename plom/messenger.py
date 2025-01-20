@@ -942,6 +942,7 @@ class Messenger(BaseMessenger):
                 msg = EmailMessage()
                 msg["Content-Disposition"] = response.headers.get("Content-Disposition")
                 filename = msg.get_filename()
+                assert filename is not None
                 num_bytes = 0
                 # defaults to CWD: TODO: kwarg to change that?
                 with open(filename, "wb") as f:
