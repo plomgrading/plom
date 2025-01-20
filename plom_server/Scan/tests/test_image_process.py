@@ -1,26 +1,21 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 import pathlib
-import sys
 import tempfile
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
+from importlib import resources
 
 import cv2 as cv
 import numpy as np
+from django.test import TestCase
 from PIL import Image
 
-from django.test import TestCase
-
 from plom.scan import QRextract
-from ..services import PageImageProcessor, ScanService
+
 from .. import tests as _Scan_tests
+from ..services import PageImageProcessor, ScanService
 
 
 class PageImageProcessorTests(TestCase):
@@ -140,7 +135,7 @@ class PageImageProcessorTests(TestCase):
     def test_affine_matrix_correct_5_deg_rot(self) -> None:
         """Test PageImageProcessor.create_affine_transformation_matrix() for an image with 5-degree rotation."""
         pipr = PageImageProcessor()
-        test_img = Image.open(resources.files(_Scan_tests) / "id_page_img.png")
+        test_img = Image.open(resources.files(_Scan_tests) / "id_page_img.png")  # type: ignore[arg-type]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             img_rot_path = pathlib.Path(tmpdir) / "rot_5_deg_img.png"
@@ -181,7 +176,8 @@ class PageImageProcessorTests(TestCase):
         in_left = 0.09
         in_right = 0.91
         pipr = PageImageProcessor()
-        test_img = Image.open(resources.files(_Scan_tests) / "id_page_img.png")
+        # mypy stumbling over Traversable
+        test_img = Image.open(resources.files(_Scan_tests) / "id_page_img.png")  # type: ignore[arg-type]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             img_rot_path = pathlib.Path(tmpdir) / "rotated_img.png"

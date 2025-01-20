@@ -1,26 +1,21 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import re
 import shutil
 import subprocess
+from importlib import resources
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-# need these imports to get idBox template from plom
+# we get the idBox template from Plom's resources
 import plom
-import sys
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
 
 
 def _actually_compile_tex(filepath: Path) -> None:

@@ -1,19 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 
-from io import BytesIO
 import subprocess
-import sys
 import tempfile
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
+from importlib import resources
+from io import BytesIO
 
 from PIL import Image
 
 import plom.server
+
 from .textools import texFragmentToPNG as processFragment
 
 # TODO: this too: pageNotSubmitted
@@ -39,7 +35,9 @@ def test_frag_broken_tex() -> None:
 
 
 def test_frag_image_size() -> None:
-    imgt = Image.open(resources.files(plom.server) / "target_Q_latex_plom.png")
+    res = resources.files(plom.server) / "target_Q_latex_plom.png"
+    # mypy stumbling over resource Traversables?
+    imgt = Image.open(res)  # type: ignore[arg-type]
     frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
     r, imgdata = processFragment(frag)
     assert r

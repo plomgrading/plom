@@ -1,15 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
-import sys
-
-if sys.version_info >= (3, 10):
-    from importlib import resources
-else:
-    import importlib_resources as resources
+from importlib import resources
 
 from django.test import TestCase, Client, RequestFactory
 from django.contrib.auth.models import User, Group

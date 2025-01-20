@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: FSFAP
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2022 Elizabeth Xiao
 # Copyright (C) 2022 Brennen Chiu
@@ -38,12 +38,11 @@ django-session-timeout==0.1.0
 djangorestframework==3.14.0
 django-tables2==2.7.0
 exif==1.2.2
-importlib_resources==5.0.7
 imutils==0.5.4
 matplotlib==3.5.3
 numpy==1.21.2
 opencv-python-headless==4.5.4.60
-Pillow==7.0.0
+Pillow==10.2.0
 pandas==1.5.0
 peewee==3.13.3
 platformdirs==3.0.0
@@ -51,8 +50,8 @@ pymupdf==1.24.6
 PyMySQL==1.0.2
 pyOpenSSL==23.2.0
 pyspellchecker==0.8.1
-pytest==6.0.0
-pytest-qt==4.1.0
+pytest==7.2.0
+pytest-qt==4.2.0
 psycopg2-binary==2.9.6
 random-username==1.0.2
 scikit-learn==1.0.2

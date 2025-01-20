@@ -1,19 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
 
-from __future__ import annotations
-
 import pathlib
-from pathlib import Path
 import sys
-
-if sys.version_info >= (3, 10):
-    from importlib import resources
-else:
-    import importlib_resources as resources
+from importlib import resources
+from pathlib import Path
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -61,8 +55,9 @@ class Command(BaseCommand):
         else:
             question_indices = list(range(1, _numquestions + 1))
 
-        with open(resources.files(plom) / "demo_rubrics.toml", "rb") as f:
-            rubrics_in = tomllib.load(f)["rubric"]
+        with (resources.files(plom) / "demo_rubrics.toml").open("rb") as f:
+            # MyPy complains incompatible type "IO[bytes]" expected "BinaryIO"
+            rubrics_in = tomllib.load(f)["rubric"]  # type: ignore[arg-type]
         rubrics = []
         for rub in rubrics_in:
             if not rub.get("kind"):

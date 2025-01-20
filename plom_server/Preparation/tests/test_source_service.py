@@ -1,14 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 import pathlib
-import sys
-
-if sys.version_info >= (3, 10):
-    from importlib import resources
-else:
-    import importlib_resources as resources
+from importlib import resources
 
 from django.test import TestCase
 from django.conf import settings
@@ -70,7 +65,7 @@ class SourceServiceTests(TestCase):
         PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
 
         pdf = resources.files(useful_files) / "test_version1.pdf"
-        with open(pdf, "rb") as f:
+        with pdf.open("rb") as f:
             r, msg = SourceService.take_source_from_upload(1, f)
         assert r
         assert "uploaded" in msg
@@ -82,11 +77,11 @@ class SourceServiceTests(TestCase):
         PapersPrinted.set_papers_printed(False, ignore_dependencies=True)
 
         pdf = resources.files(useful_files) / "test_version1.pdf"
-        with open(pdf, "rb") as f:
+        with pdf.open("rb") as f:
             r, msg = SourceService.take_source_from_upload(0, f)
             assert not r
             assert "range" in msg
-        with open(pdf, "rb") as f:
+        with pdf.open("rb") as f:
             r, msg = SourceService.take_source_from_upload(3, f)
             assert not r
             assert "range" in msg
@@ -98,7 +93,7 @@ class SourceServiceTests(TestCase):
 
         # tiny_spec has 3 pages but the pdf here has 6
         pdf = resources.files(useful_files) / "test_version1.pdf"
-        with open(pdf, "rb") as f:
+        with pdf.open("rb") as f:
             r, msg = SourceService.take_source_from_upload(1, f)
         assert not r
         assert "pages" in msg
