@@ -75,13 +75,33 @@
                 <div class="ms-4 my-2 w-75">
                     <div class="input-group my-1" x-on:input="first=Math.min(first,last);">
                         <span for="fpaper" class="input-group-text w-25">First paper</span>
-                        <input type="number" class="px-1 form-input form-control flex-grow-0 w-25" min={{ min_paper_number }} max={{ max_paper_number }} x-model="first">
-                        <input type="range" class="px-1 form-range form-control" style="height:auto;" min={{ min_paper_number }} max={{ max_paper_number }} x-model="first" id="fpaper">
+                        <input type="number"
+                               class="px-1 form-input form-control flex-grow-0 w-25"
+                               min="{{ min_paper_number }}"
+                               max="{{ max_paper_number }}"
+                               x-model="first">
+                        <input type="range"
+                               class="px-1 form-range form-control"
+                               style="height:auto"
+                               min="{{ min_paper_number }}"
+                               max="{{ max_paper_number }}"
+                               x-model="first"
+                               id="fpaper">
                     </div>
                     <div class="input-group my-1" x-on:input="last=Math.max(first,last);">
                         <span for="lpaper" class="input-group-text w-25">Last paper</span>
-                        <input type="number" class="px-1 form-input form-control flex-grow-0 w-25" min={{ min_paper_number }} max={{ max_paper_number }} x-model="last">
-                        <input type="range" class="px-1 form-range form-control" style="height:auto;" min={{ min_paper_number }} max={{ max_paper_number }} x-model="last" id="lpaper">
+                        <input type="number"
+                               class="px-1 form-input form-control flex-grow-0 w-25"
+                               min="{{ min_paper_number }}"
+                               max="{{ max_paper_number }}"
+                               x-model="last">
+                        <input type="range"
+                               class="px-1 form-range form-control"
+                               style="height:auto"
+                               min="{{ min_paper_number }}"
+                               max="{{ max_paper_number }}"
+                               x-model="last"
+                               id="lpaper">
                     </div>
                     <a x-bind:href="the_url + '?first_paper=' + first + '&last_paper='+last"
                        class="btn btn-warning">Download zip of reassembled papers from <span x-text="first"></span> to <span x-text="last"></span></a>

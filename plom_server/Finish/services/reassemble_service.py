@@ -685,7 +685,6 @@ class ReassembleService:
         Returns:
             A list of pairs [django-File, display filename] of the reassembled pdf.
         """
-
         query = ReassemblePaperChore.objects.filter(
             obsolete=False, status=HueyTaskTracker.COMPLETE
         )
