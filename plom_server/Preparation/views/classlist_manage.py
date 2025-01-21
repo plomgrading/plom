@@ -24,7 +24,8 @@ class ClasslistDownloadView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> FileResponse:
         """Get method to download the classlist as a csv file.
 
-        The file is utf-8 encoded.  TODO: is there same way to say that in the header?
+        The file is utf-8 encoded.  Note: The internet has many comments
+        about MS Excel and BOM.  Do we need to keep that software happy?
         """
         pss = PrenameSettingService()
         sss = StagingStudentService()
@@ -32,7 +33,7 @@ class ClasslistDownloadView(ManagerRequiredView):
         # Note: without BytesIO here it doesn't respect filename, get "download.csv"
         return FileResponse(
             BytesIO(csv_txt.encode("utf-8")),
-            content_type="text/csv",
+            content_type="text/csv; charset=UTF-8",
             filename="classlist.csv",
             as_attachment=True,
         )

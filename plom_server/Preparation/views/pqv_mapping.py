@@ -89,7 +89,7 @@ class PQVMappingDownloadView(ManagerRequiredView):
         # Note: without BytesIO here it doesn't respect filename, get "download.csv"
         return FileResponse(
             BytesIO(pqvs_csv_txt.encode("utf-8")),
-            content_type="text/csv",
+            content_type="text/csv; charset=UTF-8",
             filename=PQVMappingService.get_default_csv_filename(),
             as_attachment=True,
         )
