@@ -134,15 +134,14 @@ class Command(BaseCommand):
         if PaperInfoService().is_paper_database_being_updated_in_background():
             raise CommandError("Database is being updated - try again shortly.")
 
-        save_path = Path("question_version_map.csv")
+        save_path = Path(PQVMappingService.get_default_csv_filename())
         if save_path.exists():
             s = f"A file exists at {save_path} - overwrite it? [y/N] "
             choice = input(s).lower()
             if choice != "y":
                 self.stdout.write("Skipping.")
                 return
-            else:
-                self.stdout.write(f"Trying to overwrite {save_path}...")
+            self.stdout.write(f"Trying to overwrite {save_path}...")
         try:
             PQVMappingService.pqv_map_to_csv(save_path)
         except ValueError as e:

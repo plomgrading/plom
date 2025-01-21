@@ -24,6 +24,11 @@ class PQVMappingService:
     # It should now simply construct qvmaps in various forms
     # and know how to read the paper-database to get pqv info
 
+    # TODO: should we put the shortname at the front?
+    @staticmethod
+    def get_default_csv_filename():
+        return "question_version_map.csv"
+
     @staticmethod
     def get_pqv_map_dict() -> dict[int, dict[int, int]]:
         from Papers.services import PaperInfoService
@@ -74,13 +79,13 @@ class PQVMappingService:
         version_map_to_csv(pqvmap, f, _legacy=False)
 
     @classmethod
-    def get_pqv_map_as_csv_string(cls):
+    def get_pqv_map_as_csv_string(cls) -> str:
         # non-ideal implementation, but version_map_to_csv does not speak to a BytesIO
         with tempfile.TemporaryDirectory() as td:
             f = Path(td) / "file.csv"
             cls.pqv_map_to_csv(f)
             with open(f, "r") as fh:
-                txt = fh.readlines()
+                txt = fh.read()
             return txt
 
     def make_version_map(

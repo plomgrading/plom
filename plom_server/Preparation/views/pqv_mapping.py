@@ -5,12 +5,13 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import tempfile
+from io import BytesIO
+from pathlib import Path
 from typing import Any
 
 from django.shortcuts import render, redirect
-from django.http import HttpRequest, HttpResponseRedirect, HttpResponse
+from django.http import FileResponse, HttpRequest, HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect
 from django.contrib import messages
@@ -74,7 +75,10 @@ class PQVMappingUploadView(ManagerRequiredView):
 
 
 class PQVMappingDownloadView(ManagerRequiredView):
-    def get(self, request: HttpRequest) -> HttpResponse:
+    """Download the question-version map as a csv file."""
+
+    def get(self, request: HttpRequest) -> HttpResponse | FileResponse:
+        """Get method to download the question-version map as a csv file."""
         try:
             pqvs_csv_txt = PQVMappingService.get_pqv_map_as_csv_string()
         except ValueError as err:  # triggered by empty qv-map
@@ -82,7 +86,13 @@ class PQVMappingDownloadView(ManagerRequiredView):
             # redirect here (not htmx) since this is called by normal http
             return redirect(reverse("prep_conflict"))
 
-        return HttpResponse(pqvs_csv_txt, content_type="text/plain")
+        # Note: without BytesIO here it doesn't respect filename, get "download.csv"
+        return FileResponse(
+            BytesIO(pqvs_csv_txt.encode("utf-8")),
+            content_type="text/csv",
+            filename=PQVMappingService.get_default_csv_filename(),
+            as_attachment=True,
+        )
 
 
 class PQVMappingDeleteView(ManagerRequiredView):
