@@ -62,16 +62,7 @@ class ScanListBundles(APIView):
 
         slug = slugify(filename_stem)
         try:
-            with pdf.open("rb") as f:
-                file_bytes = f.read()
-        except OSError as err:
-            raise RuntimeError(f"dunno about this error handling: {err}")
-
-        hashed = hashlib.sha256(file_bytes).hexdigest()
-
-        # TODO: annoying we have to open it to read the md5sum
-        try:
-            bundle_id = ScanService.upload_bundle(pdf, slug, user, file_hash=hashed)
+            bundle_id = ScanService.upload_bundle(pdf, slug, user)
         except PlomConflict as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
 

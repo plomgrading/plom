@@ -122,13 +122,12 @@ class ScanService:
             timestamp = datetime.timestamp(timezone.now())
 
         if not file_hash:
-            raise NotImplementedError("service doing hash extract not implemented")
-            # try:
-            #     with pdf.open("rb") as f:
-            #         file_bytes = f.read()
-            # except OSError as err:
-            #     raise RuntimeError(f"dunno about this error handling: {err}")
-            # file_hash = hashlib.sha256(file_bytes).hexdigest()
+            try:
+                with uploaded_pdf_file.open("rb") as f:
+                    _file_bytes = f.read()
+            except OSError as err:
+                raise RuntimeError(f"TODO: dunno about this error handling: {err}")
+            file_hash = hashlib.sha256(_file_bytes).hexdigest()
 
         # Warning: Issue #2888, and https://gitlab.com/plom/plom/-/merge_requests/2361
         # strange behaviour can result from relaxing this durable=True
