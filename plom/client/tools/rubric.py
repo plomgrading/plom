@@ -175,6 +175,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         b.setStyleSheet("QToolButton { background-color: " + rand_colour + "; }")
         self._attn_msg = attn_msg
 
+    # WIP currently-unused code to draw action buttons near the rubric
     def _create_attn_button(self, attn_msg: str, _scene) -> None:
         b = QToolButton(text="\N{Warning Sign}")  # type: ignore[call-arg]
         b.setStyleSheet("QToolButton { background-color: #0000ff; }")
@@ -287,6 +288,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
     def get_delta_value(self) -> int:
         return int(self.di.value)
 
+    # WIP currently-unused code to draw action buttons near the rubric
     def _dismiss_attn_button_interactively(self):
         if not self.scene():
             # nothing to do if we're not in a scene any more
@@ -306,6 +308,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         ).exec()
         self._dismiss_attn_button()
 
+    # WIP currently-unused code to draw action buttons near the rubric
     def _dismiss_attn_button(self):
         if not self.scene():
             # nothing to do if we're not in a scene any more
