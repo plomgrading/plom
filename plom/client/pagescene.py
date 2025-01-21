@@ -2960,6 +2960,29 @@ class PageScene(QGraphicsScene):
                     out_objs.append(X)
         return out_objs
 
+    def check_all_saveable_objects_are_happy(self) -> list:
+        """Checks that all objects are "happy" and not in some error state.
+
+        TODO: a future refactor might subsume the function
+        :method:`check_all_saveable_objects_inside`.
+
+        Returns:
+            All annotation (saveable) objects that are unhappy.
+        """
+        unhappy_objs = []
+        print("ABC " * 80)
+        for X in self.items():
+            if getattr(X, "saveable", False):
+                print((X, type(X)))
+                # TODO: a future implementation should call X.is_happy()
+                # but for now we just hardcode some stuff
+                if isinstance(X, RubricItem):
+                    meh = getattr(X, "_attn_msg", "")
+                    print(f"  attn msg: {meh}")
+                    if meh:
+                        unhappy_objs.append(X)
+        return unhappy_objs
+
     def _updateGhost(self, rubric: dict[str, Any]) -> None:
         """Updates the ghost object based on the delta and text.
 

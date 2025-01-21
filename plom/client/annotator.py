@@ -1502,6 +1502,23 @@ class Annotator(QWidget):
             ).exec()
             return False
 
+        unhappy_objs = self.scene.check_all_saveable_objects_are_happy()
+        if unhappy_objs:
+            msg = f"{len(unhappy_objs)} annotations are unhappy."
+            msg += " Probably these are rubrics that have been updated on"
+            msg += " the server.."
+            info = "<p>The unhappy objects should be highlighted in orange."
+            info += " Please sync your rubrics and manually edit.  A future"
+            info += " update to Plom may make this process easier.</p>"
+            details = "## Unhappy objects\n\n  "
+            details += "\n".join(str(x) for x in unhappy_objs)
+            details += "\n\n## All objects\n\n  "
+            details += "\n".join(str(x) for x in self.scene.items())
+            details += "\n\n## Object serialization\n\n  "
+            details += "\n".join(str(x) for x in self.scene.pickleSceneItems())
+            WarnMsg(self, msg, info=info, info_pre=False, details=details).exec()
+            return False
+
         # check annotations are inside the margins
         out_objs = self.scene.check_all_saveable_objects_inside()
         if out_objs:
