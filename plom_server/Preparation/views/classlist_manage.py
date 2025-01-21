@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023, 2025 Colin B. Macdonald
 
-from django.http import HttpResponse
+from io import BytesIO
+
+from django.http import FileResponse, HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib import messages
@@ -17,11 +19,24 @@ from plom.plom_exceptions import PlomDependencyConflict
 
 
 class ClasslistDownloadView(ManagerRequiredView):
-    def get(self, request):
+    """Download the classlist."""
+
+    def get(self, request: HttpRequest) -> FileResponse:
+        """Get method to download the classlist as a csv file.
+
+        The file is utf-8 encoded.  TODO: is there same way to say that in the header?
+        """
         pss = PrenameSettingService()
         sss = StagingStudentService()
+        # TODO: Issue #3742 says this isn't valid csv
         csv_txt = sss.get_students_as_csv_string(prename=pss.get_prenaming_setting())
-        return HttpResponse(csv_txt, content_type="text/plain")
+        # Note: without BytesIO here it doesn't respect filename, get "download.csv"
+        return FileResponse(
+            BytesIO(csv_txt.encode("utf-8")),
+            content_type="text/csv",
+            filename="classlist.csv",
+            as_attachment=True,
+        )
 
 
 class ClasslistView(ManagerRequiredView):
