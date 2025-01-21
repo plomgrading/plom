@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from __future__ import annotations
 
@@ -24,11 +24,11 @@ class PQVMappingService:
     # It should now simply construct qvmaps in various forms
     # and know how to read the paper-database to get pqv info
 
-    @transaction.atomic()
-    def get_pqv_map_dict(self) -> dict[int, dict[int, int]]:
+    @staticmethod
+    def get_pqv_map_dict() -> dict[int, dict[int, int]]:
         from Papers.services import PaperInfoService
 
-        return PaperInfoService().get_pqv_map_dict()
+        return PaperInfoService.get_pqv_map_dict()
 
     def get_pqv_map_as_table(
         self, prenaming: bool = False
@@ -59,26 +59,26 @@ class PQVMappingService:
                     pass
         return pqv_table
 
-    @transaction.atomic()
-    def pqv_map_to_csv(self, f: Path) -> None:
+    @classmethod
+    def pqv_map_to_csv(cls, f: Path) -> None:
         """Write a non-empty version map to a CSV file.
 
         Raises:
             ValueError: map seems to be empty.
         """
-        pqvmap = self.get_pqv_map_dict()
+        pqvmap = cls.get_pqv_map_dict()
         if not pqvmap:
             raise ValueError(
                 "No version map: cowardly refusing to create an empty CSV file."
             )
         version_map_to_csv(pqvmap, f, _legacy=False)
 
-    @transaction.atomic()
-    def get_pqv_map_as_csv_string(self):
+    @classmethod
+    def get_pqv_map_as_csv_string(cls):
         # non-ideal implementation, but version_map_to_csv does not speak to a BytesIO
         with tempfile.TemporaryDirectory() as td:
             f = Path(td) / "file.csv"
-            self.pqv_map_to_csv(f)
+            cls.pqv_map_to_csv(f)
             with open(f, "r") as fh:
                 txt = fh.readlines()
             return txt

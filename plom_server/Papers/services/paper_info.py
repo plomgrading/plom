@@ -175,8 +175,8 @@ class PaperInfoService:
                 )
             )
 
-    @transaction.atomic()
-    def get_pqv_map_dict(self) -> dict[int, dict[int, int]]:
+    @staticmethod
+    def get_pqv_map_dict() -> dict[int, dict[int, int]]:
         """Get the paper-question-version mapping as a dict.
 
         Note if there is no version map (no papers) then this returns
@@ -184,18 +184,19 @@ class PaperInfoService:
         check for the empty return yourself.
         """
         pqvmapping: dict[int, dict[int, int]] = {}
-        # note that this gets all question pages, not just one for each question.
-        for qp_obj in (
-            QuestionPage.objects.all()
-            .prefetch_related("paper")
-            .order_by("paper__paper_number")
-        ):
-            pn = qp_obj.paper.paper_number
-            if pn in pqvmapping:
-                if qp_obj.question_index in pqvmapping[pn]:
-                    pass
+        with transaction.atomic():
+            # note that this gets all question pages, not just one for each question.
+            for qp_obj in (
+                QuestionPage.objects.all()
+                .prefetch_related("paper")
+                .order_by("paper__paper_number")
+            ):
+                pn = qp_obj.paper.paper_number
+                if pn in pqvmapping:
+                    if qp_obj.question_index in pqvmapping[pn]:
+                        pass
+                    else:
+                        pqvmapping[pn][qp_obj.question_index] = qp_obj.version
                 else:
-                    pqvmapping[pn][qp_obj.question_index] = qp_obj.version
-            else:
-                pqvmapping[pn] = {qp_obj.question_index: qp_obj.version}
-        return pqvmapping
+                    pqvmapping[pn] = {qp_obj.question_index: qp_obj.version}
+            return pqvmapping

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 from __future__ import annotations
@@ -144,7 +144,7 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(f"Trying to overwrite {save_path}...")
         try:
-            PQVMappingService().pqv_map_to_csv(save_path)
+            PQVMappingService.pqv_map_to_csv(save_path)
         except ValueError as e:
             raise CommandError(e) from e
         self.stdout.write(f"Wrote {save_path}")

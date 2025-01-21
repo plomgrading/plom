@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 
 from __future__ import annotations
 
@@ -76,7 +76,7 @@ class PQVMappingUploadView(ManagerRequiredView):
 class PQVMappingDownloadView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         try:
-            pqvs_csv_txt = PQVMappingService().get_pqv_map_as_csv_string()
+            pqvs_csv_txt = PQVMappingService.get_pqv_map_as_csv_string()
         except ValueError as err:  # triggered by empty qv-map
             messages.add_message(request, messages.ERROR, f"{err}")
             # redirect here (not htmx) since this is called by normal http
