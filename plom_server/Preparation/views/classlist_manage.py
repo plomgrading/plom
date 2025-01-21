@@ -40,7 +40,7 @@ class ClasslistDownloadView(ManagerRequiredView):
 
 
 class ClasslistView(ManagerRequiredView):
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponse:
         sss = StagingStudentService()
         pss = PrenameSettingService()
 
@@ -55,7 +55,7 @@ class ClasslistView(ManagerRequiredView):
         )
         return render(request, "Preparation/classlist_manage.html", context)
 
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         # NOTE - regular http post, not htmx
         context = self.build_context()
         ignore_warnings = request.POST.get("ignoreWarnings", False)
@@ -83,7 +83,7 @@ class ClasslistView(ManagerRequiredView):
             messages.add_message(request, messages.ERROR, f"{err}")
             return redirect("prep_conflict")
 
-    def delete(self, request):
+    def delete(self, request: HttpRequest) -> HttpResponseClientRedirect:
         # is htmx-delete, not http.
         try:
             StagingStudentService().remove_all_students()
