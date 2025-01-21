@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
@@ -9,9 +9,9 @@
 
 from __future__ import annotations
 
-import tempfile
 import math
 import pathlib
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -22,11 +22,10 @@ import segno
 from plom.create import paperdir
 from plom.specVerifier import (
     build_page_to_group_dict,
-    get_question_labels,
     build_page_to_version_dict,
+    get_question_labels,
 )
-from plom.tpv_utils import encodeTPV, encodeScrapPaperCode
-
+from plom.tpv_utils import encodeScrapPaperCode, encodeTPV
 
 # from plom.misc_utils import run_length_encoding
 
@@ -72,19 +71,17 @@ def create_QR_codes(
     return qr_file
 
 
-def _create_exam_and_insert_QR(
+def _create_QRcoded_pdf(
     spec: dict[str, Any],
     papernum: int,
     question_versions: dict[int, int],
     tmpdir: pathlib.Path,
+    source_versions: list[pathlib.Path],
     *,
     no_qr: bool = False,
-    source_versions_path: str | pathlib.Path | None = None,
 ) -> pymupdf.Document:
-    """Creates the exam objects and insert the QR codes.
+    """Creates a PDF document from versioned sources, stamps QR codes on the corners.
 
-    Creates the exams objects from the pdfs stored at sourceVersions.
-    Then adds the 3 QR codes for each page.
     (We create 4 QR codes but only add 3 of them because of the staple side, see below).
 
     Arguments:
@@ -92,12 +89,11 @@ def _create_exam_and_insert_QR(
         papernum (int): the paper/test number.
         question_versions (dict): version number for each question of this paper.
         tmpdir (pathlib.Path): a place where we can make temporary files.
+        source_versions: list of paths for the source versions.
 
     Keyword Arguments:
         no_qr (bool): whether to paste in QR-codes (default: False)
             Note backward logic: False means yes to QR-codes.
-        source_versions_path (str or Pathlib.Path): location of the source versions.
-            Defaults to "./sourceVersions"
 
     Returns:
         PDF document, apparently open, which seems to me a scary
@@ -111,14 +107,11 @@ def _create_exam_and_insert_QR(
     # also build page to version mapping from spec and the question-version dict
     page_to_version = build_page_to_version_dict(spec, question_versions)
 
-    if source_versions_path:
-        source = Path(source_versions_path)
-    else:
-        source = Path("sourceVersions")
+    assert len(source_versions) == spec["numberOfVersions"]
     # dict of version (int) -> source pdf (pymupdf.Document)
     pdf_version = {}
-    for ver in range(1, spec["numberOfVersions"] + 1):
-        pdf_version[ver] = pymupdf.open(source / f"version{ver}.pdf")
+    for i, pth in enumerate(source_versions):
+        pdf_version[i + 1] = pymupdf.open(pth)
 
     exam = pymupdf.open()
     # Insert the relevant page-versions into this pdf.
@@ -408,7 +401,8 @@ def make_PDF(
     fakepdf: bool = False,
     *,
     where=None,
-    source_versions_path=None,
+    source_versions_path: Path | str | None = None,
+    source_versions: list[Path] | None = None,
     font_subsetting: bool | None = None,
 ) -> pathlib.Path | None:
     """Make a PDF of particular versions, with QR codes, and optionally name stamped.
@@ -444,8 +438,11 @@ def make_PDF(
     Keyword Args:
         where (pathlib.Path/None): where to save the files, with some
             default if omitted.
-        source_versions_path (pathlib.Path/str/None): location of the
-            source versions directory.
+        source_versions: ordered list of locations of the source-version
+            files.  Mutually-exclusive with ``source_versions_path``.
+        source_versions_path: location of the source versions directory.
+            Defaults to "./sourceVersions" if this and ``source_versions``
+            are omitted.
         font_subsetting: if None/omitted, do a generally-sensible default
             of using subsetting only when *we* added non-ascii characters.
             True forces subsetting and False disables is.
@@ -477,15 +474,28 @@ def make_PDF(
         save_name.touch()
         return None
 
+    if source_versions is not None:
+        assert (
+            source_versions_path is None
+        ), "cannot specify both source_versions and source_versions_path"
+    else:
+        if source_versions_path:
+            _src = Path(source_versions_path)
+        else:
+            _src = Path("sourceVersions")
+        source_versions = [
+            _src / f"version{i + 1}.pdf" for i in range(spec["numberOfVersions"])
+        ]
+
     # Build all relevant pngs in a temp directory
     with tempfile.TemporaryDirectory() as tmp_dir:
-        exam = _create_exam_and_insert_QR(
+        exam = _create_QRcoded_pdf(
             spec,
             papernum,
             question_versions,
             Path(tmp_dir),
+            source_versions,
             no_qr=no_qr,
-            source_versions_path=source_versions_path,
         )
 
     # If provided with student name and id, preprint on cover
