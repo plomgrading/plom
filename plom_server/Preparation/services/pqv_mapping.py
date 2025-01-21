@@ -9,8 +9,6 @@ from pathlib import Path
 import tempfile
 from typing import Any
 
-from django.db import transaction
-
 from plom import SpecVerifier
 from plom.version_maps import version_map_to_csv
 
