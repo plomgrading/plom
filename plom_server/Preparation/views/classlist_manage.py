@@ -28,7 +28,6 @@ class ClasslistDownloadView(ManagerRequiredView):
         """
         pss = PrenameSettingService()
         sss = StagingStudentService()
-        # TODO: Issue #3742 says this isn't valid csv
         csv_txt = sss.get_students_as_csv_string(prename=pss.get_prenaming_setting())
         # Note: without BytesIO here it doesn't respect filename, get "download.csv"
         return FileResponse(

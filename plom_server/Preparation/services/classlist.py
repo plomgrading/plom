@@ -2,9 +2,7 @@
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2024 Colin B. Macdonald
-
-from __future__ import annotations
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 import csv
 import logging
@@ -67,17 +65,18 @@ class StagingStudentService:
             for s_obj in StagingStudent.objects.filter(paper_number__isnull=False)
         }
 
-    def get_students_as_csv_string(self, prename=False):
-        # Write the data from the staging-students table into a string in simple CSV format
-        # make sure header and name-column are quoted
-        # and make sure the paper_number column is -1 if not pre-naming.
-        txt = '"id", "name", "paper_number"\n'
+    def get_students_as_csv_string(self, *, prename: bool = False) -> str:
+        """Write the data from the classlist table into a string in CSV format.
+
+        The header and name-columns are quoted.
+        """
+        txt = '"id","name","paper_number"\n'
         for row in self.get_students():
             if prename and row["paper_number"]:
-                txt += f"{row['student_id']}, \"{row['student_name']}\", {row['paper_number']}\n"
+                txt += f"{row['student_id']},\"{row['student_name']}\",{row['paper_number']}\n"
             else:
                 # don't print the -1 for non-prename.
-                txt += f"{row['student_id']}, \"{row['student_name']}\", \n"
+                txt += f"{row['student_id']},\"{row['student_name']}\",\n"
         return txt
 
     @transaction.atomic()
