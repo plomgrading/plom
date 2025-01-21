@@ -112,6 +112,27 @@ class StartAllReassembly(ManagerRequiredView):
         return response
 
 
+class DownloadRangeOfReassembled(ManagerRequiredView):
+    def get(self, request):
+        last_paper = request.GET.get("last_paper", None)
+        first_paper = request.GET.get("first_paper", None)
+        # using zipfly python package.  see django example here
+        # https://github.com/sandes/zipfly/blob/master/examples/streaming_django.py
+        short_name = slugify(SpecificationService.get_shortname())
+        if first_paper:
+            short_name += f"_from_{first_paper}"
+        if last_paper:
+            short_name += f"_to_{last_paper}"
+        zgen = ReassembleService().get_zipfly_generator(
+            short_name, first_paper=first_paper, last_paper=last_paper
+        )
+        response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
+        response["Content-Disposition"] = (
+            f"attachment; filename={short_name}_reassembled.zip"
+        )
+        return response
+
+
 class CancelQueuedReassembly(ManagerRequiredView):
     def delete(self, request):
         ReassembleService().try_to_cancel_all_queued_chores()

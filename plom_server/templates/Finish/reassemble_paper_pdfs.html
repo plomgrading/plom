@@ -69,6 +69,8 @@
                 <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-warning">Download zip of reassembled papers</a>
                 warning - not all papers reassembled
             {% endif %}
+            <a href="{% url 'reassemble_all_pdfs' %}?first_paper=7&last_paper=39"
+               class="btn btn-danger">Download zip of reassembled papers</a>
         </div>
     </div>
     <div class="card">

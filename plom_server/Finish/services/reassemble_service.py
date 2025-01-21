@@ -673,41 +673,68 @@ class ReassembleService:
         )
 
     @transaction.atomic
-    def get_completed_pdf_files_and_names(self) -> list[Tuple[File, str]]:
+    def get_completed_pdf_files_and_names(
+        self, *, first_paper: int | None = None, last_paper: int | None = None
+    ) -> list[Tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of reassembled papers that are not obsolete.
+
+        Keyword Args:
+            first_paper: filter to get all papers with paper_number greater or equal to this.
+            last_paper: filter to get all papers with paper_number less or equal to this.
 
         Returns:
             A list of pairs [django-File, display filename] of the reassembled pdf.
         """
-        return [
-            (task.pdf_file, task.display_filename)
-            for task in ReassemblePaperChore.objects.filter(
-                obsolete=False, status=HueyTaskTracker.COMPLETE
-            )
-        ]
+
+        query = ReassemblePaperChore.objects.filter(
+            obsolete=False, status=HueyTaskTracker.COMPLETE
+        )
+        if first_paper:
+            query = query.filter(paper__paper_number__gte=first_paper)
+        if last_paper:
+            query = query.filter(paper__paper_number__lte=last_paper)
+        return [(task.pdf_file, task.display_filename) for task in query]
 
     @transaction.atomic
-    def get_completed_report_files_and_names(self) -> list[Tuple[File, str]]:
+    def get_completed_report_files_and_names(
+        self, *, first_paper: int | None = None, last_paper: int | None = None
+    ) -> list[Tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of student reports that are not obsolete.
+
+        Keyword Args:
+            first_paper: filter to get all papers with paper_number greater or equal to this.
+            last_paper: filter to get all papers with paper_number less or equal to this.
 
         Returns:
             A list of pairs [django-File, display filename] of the reports
         """
-        return [
-            (task.report_pdf_file, task.report_display_filename)
-            for task in ReassemblePaperChore.objects.filter(
-                obsolete=False, status=HueyTaskTracker.COMPLETE
-            )
-        ]
+        query = ReassemblePaperChore.objects.filter(
+            obsolete=False, status=HueyTaskTracker.COMPLETE
+        )
+        if first_paper:
+            query = query.filter(paper__paper_number__gte=first_paper)
+        if last_paper:
+            query = query.filter(paper__paper_number__lte=last_paper)
+
+        return [(task.report_pdf_file, task.report_display_filename) for task in query]
 
     @transaction.atomic
-    def get_zipfly_generator(self, short_name: str, *, chunksize: int = 1024 * 1024):
+    def get_zipfly_generator(
+        self,
+        short_name: str,
+        *,
+        first_paper: int | None = None,
+        last_paper: int | None = None,
+        chunksize: int = 1024 * 1024,
+    ):
         paths = [
             {
                 "fs": pdf_file.path,
                 "n": f"reassembled/{display_filename}",
             }
-            for pdf_file, display_filename in self.get_completed_pdf_files_and_names()
+            for pdf_file, display_filename in self.get_completed_pdf_files_and_names(
+                first_paper=first_paper, last_paper=last_paper
+            )
         ]
         # report_paths = [
         #     {
