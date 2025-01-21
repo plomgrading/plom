@@ -17,7 +17,17 @@ class FinishReassembled(APIView):
 
     # GET: /api/beta/finish/reassembled/{papernum}
     def get(self, request: Request, *, papernum: int) -> FileResponse:
-        """API to download one reassembled paper."""
+        """API to download one reassembled paper.
+
+        Only managers and lead_markers can access this, others will receive a 403.
+        """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if not ("manager" in group_list or "lead_marker" in group_list):
+            return _error_response(
+                'Only "manager" and "lead_marker" users can download reassembled papers',
+                status.HTTP_403_FORBIDDEN,
+            )
+
         try:
             pdf_file = ReassembleService().get_single_reassembled_file(papernum)
         except ObjectDoesNotExist as err:

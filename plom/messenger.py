@@ -863,6 +863,8 @@ class Messenger(BaseMessenger):
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
                 if response.status_code == 409:
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
@@ -919,6 +921,8 @@ class Messenger(BaseMessenger):
                     raise PlomSeriousException(response.reason) from None
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
                 if response.status_code == 404:
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
@@ -958,6 +962,8 @@ class Messenger(BaseMessenger):
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
                 if response.status_code == 404:
                     raise PlomNoPaper(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None

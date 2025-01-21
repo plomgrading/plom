@@ -32,7 +32,7 @@ class ScanListBundles(APIView):
         ``"bundle_id"`` giving the id of the newly-created bundle.
 
         Only users in the "scanner" group can upload new bundles,
-        others will receive a 401.
+        others will receive a 403.
 
         The bundle filename cannot begin with an underscore, that
         will result in a 400.
@@ -47,7 +47,7 @@ class ScanListBundles(APIView):
         if "scanner" not in group_list:
             return _error_response(
                 'Only users in the "scanner" group can upload files',
-                status.HTTP_401_UNAUTHORIZED,
+                status.HTTP_403_FORBIDDEN,
             )
         pdf = request.FILES.get("pdf_file")
         print((pdf, type(pdf)))
