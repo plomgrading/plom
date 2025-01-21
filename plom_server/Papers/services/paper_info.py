@@ -1,12 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
-
-from __future__ import annotations
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 import logging
-from typing import List
 
 from django.db import transaction
 
@@ -68,7 +65,7 @@ class PaperInfoService:
         return Paper.objects.filter(paper_number=paper_number).exists()
 
     @transaction.atomic
-    def which_papers_in_database(self) -> List:
+    def which_papers_in_database(self) -> list[int]:
         """List which papers have been created in the database."""
         return list(Paper.objects.values_list("paper_number", flat=True))
 
@@ -154,7 +151,7 @@ class PaperInfoService:
     @transaction.atomic
     def get_paper_numbers_containing_given_page_version(
         self, version, page_number, *, scanned=True
-    ) -> List[int]:
+    ) -> list[int]:
         """Given the version and page-number, return list of paper numbers that contain that page/version."""
         if scanned:
             return sorted(
