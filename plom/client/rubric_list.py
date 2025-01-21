@@ -1242,9 +1242,6 @@ class RubricWidget(QWidget):
             BigMessageDialog(self, msg, details_html=d, show=False).exec()
         # diff_rubric is not precise, won't hurt to update display even if no changes
         self.updateLegalityOfRubrics()
-        # TODO: port to slots and signals instead
-        if self._parent.scene:
-            self._parent.scene.react_to_rubric_list_changes(self.rubrics)
 
     def wrangleRubricsInteractively(self) -> None:
         wr = RubricWrangler(
@@ -1587,6 +1584,9 @@ class RubricWidget(QWidget):
             tab.updateLegality()
         self.tabDeltaP.updateLegality()
         self.tabDeltaN.updateLegality()
+        # TODO: port to slots and signals instead
+        if self._parent.scene:
+            self._parent.scene.react_to_rubric_list_changes(self.rubrics)
 
     def handleClick(self) -> None:
         self.RTW.currentWidget().handleClick()

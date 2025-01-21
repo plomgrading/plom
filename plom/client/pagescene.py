@@ -735,7 +735,10 @@ class PageScene(QGraphicsScene):
         Currently, this doesn't actually update them, just flags them
         visually as needing updates.
         """
-        log.info("Pagescene: reacting to a possible change in rubrics")
+        if not rubric_list:
+            log.info("Pagescene: reacting to rubric change: ignoring empty input")
+            return
+        log.info("Pagescene: reacting to rubric change...")
         rid_to_rub = {r["rid"]: r for r in rubric_list}
         num_update = 0
         for X in self.items():
@@ -745,7 +748,14 @@ class PageScene(QGraphicsScene):
                     old_rub = X.as_rubric()
                     rid = old_rub["rid"]
                     old_rev = old_rub.get("revision", None)
-                    new_rev = rid_to_rub[rid].get("revision", None)
+                    rub_lookup = rid_to_rub.get(rid, None)
+                    if not rub_lookup:
+                        log.error(
+                            f"cannot find rubric {rid} in input list of"
+                            f" length {len(rubric_list)}: maybe a bug?"
+                        )
+                        continue
+                    new_rev = rub_lookup.get("revision", None)
                     if old_rev is None or new_rev is None:
                         log.warn(
                             f"[Is this legacy?] rubric rid={rid}"
