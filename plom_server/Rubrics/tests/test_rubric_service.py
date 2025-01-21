@@ -101,6 +101,18 @@ class RubricServiceTests_exceptions(TestCase):
         with self.assertRaises(ValidationError):
             RubricService().create_rubric(rub)
 
+    def test_rubric_absolute_out_of_range(self) -> None:
+        rub = {
+            "value": 4,
+            "out_of": 3,
+            "kind": "absolute",
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 1,
+        }
+        with self.assertRaisesRegex(ValidationError, "out of range"):
+            RubricService().create_rubric(rub)
+
 
 class RubricServiceTests(TestCase):
     """Tests for `Rubric.service.RubricService()`."""
@@ -545,6 +557,22 @@ class RubricServiceTests(TestCase):
         rub.update({"revision": 0})
         with self.assertRaises(PlomConflict):
             RubricService().modify_rubric(rid, rub)
+
+    def test_modify_absolute_rubric_change_value_invalid(self) -> None:
+        service = RubricService()
+        rid = self.modified_absolute_rubric.rid
+
+        simulated_client_data = {
+            "rid": rid,
+            "kind": "absolute",
+            "value": 4,
+            "out_of": 3,
+            "text": "yuiop",
+            "username": "Olivia",
+            "question_index": 1,
+        }
+        with self.assertRaisesRegex(ValidationError, "out of range"):
+            service.modify_rubric(rid, simulated_client_data)
 
     def test_rubrics_get_as_dicts(self) -> None:
         rubrics = RubricService().get_rubrics_as_dicts()

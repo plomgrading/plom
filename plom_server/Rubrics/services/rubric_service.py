@@ -288,6 +288,18 @@ class RubricService:
                 data["kind"],
                 data.get("out_of", None),
             )
+
+        # TODO: Perhaps the serializer should do this
+        if data["kind"] == "absolute":
+            _value = data["value"]
+            _out_of = data["out_of"]
+            if not 0 <= _value <= _out_of:
+                raise ValidationError(
+                    {
+                        "value": f"out of range: {_value} is not in [0, out_of] = [0, {_out_of}]."
+                    }
+                )
+
         data["latest"] = True
         if _bypass_serializer:
             assert _bypass_user is not None
@@ -440,6 +452,17 @@ class RubricService:
 
         if new_rubric_data["kind"] in ("relative", "neutral"):
             new_rubric_data["out_of"] = 0
+
+        # TODO: Perhaps the serializer should do this
+        if new_rubric_data["kind"] == "absolute":
+            _value = new_rubric_data["value"]
+            _out_of = new_rubric_data["out_of"]
+            if not 0 <= _value <= _out_of:
+                raise ValidationError(
+                    {
+                        "value": f"out of range: {_value} is not in [0, out_of] = [0, {_out_of}]."
+                    }
+                )
 
         serializer = RubricSerializer(data=new_rubric_data)
 
