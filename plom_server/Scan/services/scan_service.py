@@ -14,6 +14,7 @@ import pathlib
 import random
 import tempfile
 import time
+from datetime import datetime
 from typing import Any
 
 from django.conf import settings
@@ -22,6 +23,7 @@ from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Q  # for queries involving "or", "and"
+from django.utils import timezone
 from django_huey import db_task
 import huey
 import huey.api
@@ -75,9 +77,9 @@ class ScanService:
         uploaded_pdf_file: File,
         slug: str,
         user: User,
-        timestamp: float,
-        pdf_hash: str,
         *,
+        timestamp: float | None = None,
+        file_hash: str = "",
         number_of_pages: int | None = None,
         force_render: bool = False,
         read_after: bool = False,
@@ -98,11 +100,13 @@ class ScanService:
                 (can also be a TemporaryUploadedFile or InMemoryUploadedFile).
             slug: Filename slug for the pdf.
             user (Django User): the user uploading the file
-            timestamp (float): the timestamp of the time at which the file was uploaded
-            pdf_hash: the sha256 of the pdf.
-            number_of_pages: the number of pages in the pdf.
 
         Keyword Args:
+            timestamp: the timestamp of the time at which the file was
+                uploaded.  If omitted, we'll use right now.
+            file_hash: the sha256 of the pdf file.  If omitted, we will
+                compute it.
+            number_of_pages: the number of pages in the pdf.
             force_render: Don't try to extract large bitmaps; always
                 render the page.
             read_after: Automatically read the qr codes from the bundle after
@@ -114,14 +118,26 @@ class ScanService:
         Raises:
             PlomConflict: we already have a bundle which conflicts.
         """
+        if not timestamp:
+            timestamp = datetime.timestamp(timezone.now())
+
+        if not file_hash:
+            raise NotImplementedError("service doing hash extract not implemented")
+            # try:
+            #     with pdf.open("rb") as f:
+            #         file_bytes = f.read()
+            # except OSError as err:
+            #     raise RuntimeError(f"dunno about this error handling: {err}")
+            # file_hash = hashlib.sha256(file_bytes).hexdigest()
+
         # Warning: Issue #2888, and https://gitlab.com/plom/plom/-/merge_requests/2361
         # strange behaviour can result from relaxing this durable=True
         with transaction.atomic(durable=True):
-            existing = StagingBundle.objects.filter(pdf_hash=pdf_hash)
+            existing = StagingBundle.objects.filter(pdf_hash=file_hash)
             if existing:
                 raise PlomConflict(
                     f"Bundle(s) {[x.slug for x in existing]} with the"
-                    f" same file hash {pdf_hash} have already uploaded"
+                    f" same file hash {file_hash} have already uploaded"
                 )
             # create the bundle first, so it has a pk and
             # then give it the file and resave it.
@@ -134,7 +150,7 @@ class ScanService:
             )
             with uploaded_pdf_file.open() as fh:
                 bundle_obj.pdf_file = File(fh, name=f"{slug}.pdf")
-                bundle_obj.pdf_hash = pdf_hash
+                bundle_obj.pdf_hash = file_hash
                 bundle_obj.number_of_pages = number_of_pages
                 bundle_obj.save()
         cls.split_and_save_bundle_images(bundle_obj.pk, read_after=read_after)
@@ -185,8 +201,8 @@ class ScanService:
             pdf_file_object,
             slug,
             user_obj,
-            timestamp,
-            pdf_hash,
+            timestamp=timestamp,
+            file_hash=pdf_hash,
             number_of_pages=number_of_pages,
         )
 

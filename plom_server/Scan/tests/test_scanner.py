@@ -55,7 +55,7 @@ class ScanServiceTests(TestCase):
         slug = "_test_bundle"
         fake_hash = "deadbeef"
         ScanService.upload_bundle(
-            pdf_file_object, slug, self.user, timestamp, fake_hash
+            pdf_file_object, slug, self.user, timestamp=timestamp, file_hash=fake_hash
         )
 
         the_bundle = StagingBundle.objects.get(user=self.user, slug=slug)

@@ -2,11 +2,9 @@
 # Copyright (C) 2025 Colin B. Macdonald
 
 import hashlib
-from datetime import datetime
 from pathlib import Path
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils import timezone
 from django.utils.text import slugify
 from rest_framework.views import APIView
 from rest_framework.request import Request
@@ -63,7 +61,6 @@ class ScanListBundles(APIView):
         # unfortunate b/c it does some checks including a maximum upload size.
 
         slug = slugify(filename_stem)
-        timestamp = datetime.timestamp(timezone.now())
         try:
             with pdf.open("rb") as f:
                 file_bytes = f.read()
@@ -74,7 +71,7 @@ class ScanListBundles(APIView):
 
         # TODO: annoying we have to open it to read the md5sum
         try:
-            bundle_id = ScanService.upload_bundle(pdf, slug, user, timestamp, hashed)
+            bundle_id = ScanService.upload_bundle(pdf, slug, user, file_hash=hashed)
         except PlomConflict as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
 
