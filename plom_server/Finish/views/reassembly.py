@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.shortcuts import render
@@ -56,6 +56,12 @@ class ReassemblePapersView(ManagerRequiredView):
         n_complete = sum(
             [1 for x in all_paper_status if x["reassembled_status"] == "Complete"]
         )
+        min_paper_number = min(
+            [X["paper_num"] for X in all_paper_status if X["scanned"]]
+        )
+        max_paper_number = max(
+            [X["paper_num"] for X in all_paper_status if X["scanned"]]
+        )
 
         context.update(
             {
@@ -67,6 +73,8 @@ class ReassemblePapersView(ManagerRequiredView):
                 "n_errors": n_errors,
                 "n_complete": n_complete,
                 "n_queued": n_queued,
+                "min_paper_number": min_paper_number,
+                "max_paper_number": max_paper_number,
             }
         )
         return render(request, "Finish/reassemble_paper_pdfs.html", context=context)

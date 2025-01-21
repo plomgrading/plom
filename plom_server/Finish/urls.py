@@ -53,7 +53,7 @@ urlpatterns = [
     path(
         "reassemble/range",
         DownloadRangeOfReassembled.as_view(),
-        name="reassemble_all_pdfs",
+        name="reassembled_range",
     ),
     path(
         "reassemble/queued",

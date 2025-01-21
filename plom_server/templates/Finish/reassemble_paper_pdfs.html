@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Edith Coates
     Copyright (C) 2022 Brennen Chiu
-    Copyright (C) 2023-2024 Andrew Rechnitzer
+    Copyright (C) 2023-2025 Andrew Rechnitzer
     Copyright (C) 2023 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
@@ -62,16 +62,32 @@
                 {% endif %}
             </ul>
             {% if n_outdated %}
-                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-danger">Download zip of reassembled papers</a> some papers outdated
+                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-danger">Download zip of all reassembled papers</a> some papers outdated
             {% elif n_complete == n_papers %}
-                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-success">Download zip of reassembled papers</a>
+                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-success">Download zip of all reassembled papers</a>
             {% elif n_complete %}
-                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-warning">Download zip of reassembled papers</a>
+                <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-warning">Download zip of all reassembled papers</a>
                 warning - not all papers reassembled
             {% endif %}
-            <a href="{% url 'reassemble_all_pdfs' %}?first_paper=7&last_paper=39"
-               class="btn btn-danger">Download zip of reassembled papers</a>
-        </div>
+            <details class="my-2"
+                     x-data="{first: {{ min_paper_number }}, last:{{ max_paper_number }}, the_url:'{% url "reassembled_range" %}' }">
+                <summary>Or select range of reassembled papers to download</summary>
+                <div class="ms-4 my-2 w-75">
+                    <div class="input-group my-1" x-on:input="first=Math.min(first,last);">
+                        <span for="fpaper" class="input-group-text w-25">First paper</span>
+                        <input type="number" class="px-1 form-input form-control flex-grow-0 w-25" min={{ min_paper_number }} max={{ max_paper_number }} x-model="first">
+                        <input type="range" class="px-1 form-range form-control" style="height:auto;" min={{ min_paper_number }} max={{ max_paper_number }} x-model="first" id="fpaper">
+                    </div>
+                    <div class="input-group my-1" x-on:input="last=Math.max(first,last);">
+                        <span for="lpaper" class="input-group-text w-25">Last paper</span>
+                        <input type="number" class="px-1 form-input form-control flex-grow-0 w-25" min={{ min_paper_number }} max={{ max_paper_number }} x-model="last">
+                        <input type="range" class="px-1 form-range form-control" style="height:auto;" min={{ min_paper_number }} max={{ max_paper_number }} x-model="last" id="lpaper">
+                    </div>
+                    <a x-bind:href="the_url + '?first_paper=' + first + '&last_paper='+last"
+                       class="btn btn-warning">Download zip of reassembled papers from <span x-text="first"></span> to <span x-text="last"></span></a>
+                </div>
+            </div>
+        </details>
     </div>
     <div class="card">
         <div class="card-body">
