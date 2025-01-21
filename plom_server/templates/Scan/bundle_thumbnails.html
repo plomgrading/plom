@@ -53,14 +53,14 @@
                         {% elif n_incomplete == 0 %}
                             <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
                             <!-- note that the midPush variable is defined in the parent html file which includes this html file -->
-                            &ensp; has no pages requiring attention -
+                            has no pages requiring attention -
                             <button class="btn btn-success"
                                     hx-confirm="Please confirm that you want to push this bundle."
                                     hx-post="{% url 'scan_push_all' bundle_id %}"
                                     x-bind:disabled="midPush"
                                     @htmx:before-send="midPush=true;">Push</button>
                         {% else %}
-                            &ensp; has no problems, but contains incomplete papers. You can
+                            has no problems, but contains incomplete papers. You can
                             <!-- Issue #3411: provide link to additional info -->
                             <button class="btn btn-danger"
                                     hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper{{ n_incomplete|pluralize }}. Pushing may create incomplete and unmarkable papers on your server so this isn't best practice. Are you sure you wish to push?"
@@ -70,7 +70,7 @@
                             but it is not recommended
                         {% endif %}
                     {% endif %}
-                    {% if not is_perfect %}&ensp; has pages that require your attention{% endif %}
+                    {% if not is_perfect %}has pages that require your attention{% endif %}
                 </h5>
                 {% if n_incomplete %}
                     <div class="alert alert-warning">
@@ -312,10 +312,9 @@
                                             <div class="card text-center bg-primary-subtle col p-1"
                                                  data-bs-toggle="tooltip"
                                                  data-bs-placement="top"
-                                                 data-bs-title="Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_list }}">
+                                                 data-bs-title="Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_idx_list }}">
                                                 {% include "Scan/fragments/bundle_thumbnail_container.html" %}
                                             </div>
-                                            <!-- above div should say question_index_list, Issue #2716, but I think it works for now -->
                                         </div>
                                     {% else %}
                                         <div class="col">

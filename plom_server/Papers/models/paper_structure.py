@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 
 from django.db import models
@@ -32,11 +32,42 @@ class Paper(models.Model):
 
 
 class MobilePage(models.Model):
+    """Mobile pages can represent pages in a paper that are "unexpected" in some way, say without QR codes.
+
+    The "fixed" or "expected" pages typically have QR codes on a hardcopy.
+    But for example, any scrap work or extra pages might be attached to the paper.
+    Or the paper might have no particular "fixed" structure ("homework" mode).
+    This table represents these extra pages.
+
+    paper: a link to a Paper object.
+    image: a link to an Image object.  Multiple pages could share a common Image.
+    question_index: which question to associate this page to, indexed from 1.
+        Can also be a value of ``MobilePage.DNM_qidx`` for pages that are not
+        associated with a question.  These will
+        join the "DNM" pool of pages that are not generally marked.
+        ``MobilePage.DNM_qidx`` is probably -1 but you should not rely on this.
+    version: if you know the version of this page, it can be set here.  It can
+        be zero or None, although presumably only if question_index is also
+        zero/None.
+
+    Its perfectly fine to create two MobilePages sharing a common Image to be
+    associated with different question indices.  Such a page would appear
+    in the work for both questions.  However, sharing an Image between the
+    DNM pool and a question is frowned upon and undefined: at best its
+    likely to confuse end-users.
+
+    Note there is no particular ordering to mobile pages.  Users of this table
+    might infer one from the ordering of the primary key (``.pk``), so create
+    them in a particular order if you have one in mind.
+    """
+
+    # symbolic constant to be used for question_index, instead of literal -1
+    DNM_qidx = -1
+
     paper = models.ForeignKey(Paper, null=False, on_delete=models.CASCADE)
     image = models.ForeignKey(Image, null=True, on_delete=models.SET_NULL)
-    question_index = models.PositiveIntegerField(null=False)
-    version = models.PositiveIntegerField(null=False)
-    # NOTE  - no ordering.
+    question_index = models.IntegerField(null=False, blank=False)
+    version = models.IntegerField(null=True, default=None)
 
 
 class FixedPage(PolymorphicModel):

@@ -176,12 +176,14 @@ class Command(BaseCommand):
                 dat.append(" - ")
             elif page["status"] == "known":
                 dat.append(
-                    f"paper {page['info']['paper_number']}: p.{page['info']['page_number']} v.{page['info']['version']}"
+                    f"paper {page['info']['paper_number']}: "
+                    f"p.{page['info']['page_number']} v.{page['info']['version']}"
                 )
             elif page["status"] == "extra":
-                if page["info"]["paper_number"] and page["info"]["question_list"]:
+                if page["info"]["paper_number"]:
                     dat.append(
-                        f"paper {page['info']['paper_number']}: q{page['info']['question_list']}"
+                        f"paper {page['info']['paper_number']}: "
+                        f"q{page['info']['question_idx_list']}"
                     )
                 else:
                     dat.append("extra page without data")

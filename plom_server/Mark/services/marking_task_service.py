@@ -59,7 +59,16 @@ class MarkingTaskService:
 
         Returns:
             The newly created marking task object.
+
+        Raises:
+            KeyError: cannot create tasks for non-positive question index,
+                as those are used as a DNM indicator.
+            RuntimeError: for "good" input data, this would indicate no
+                question-version map, although for nonsense input it could
+                also just mean invalid paper number or invalid question index.
         """
+        if question_index <= 0:
+            raise KeyError(f"Invalid question index: {question_index}")
         # get the version of the given paper/question
         try:
             question_version = PaperInfoService().get_version_from_paper_question(

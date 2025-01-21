@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aidan Murphy
@@ -41,7 +41,7 @@ class RubricServiceTests_exceptions(TestCase):
             "value": 0,
             "text": "qwerty",
             "username": "XXX_no_such_user_XXX",
-            "question": 1,
+            "question_index": 1,
         }
 
         with self.assertRaises(ValueError):
@@ -58,7 +58,7 @@ class RubricServiceTests_exceptions(TestCase):
             "kind": "neutral",
             "value": 0,
             "text": "qwerty",
-            "question": 1,
+            "question_index": 1,
         }
 
         with self.assertRaises(KeyError):
@@ -78,7 +78,7 @@ class RubricServiceTests_exceptions(TestCase):
             "value": 0,
             "text": "qwerty",
             "username": "Liam",
-            "question": 1,
+            "question_index": 1,
         }
 
         with self.assertRaises(ValidationError):
@@ -95,10 +95,22 @@ class RubricServiceTests_exceptions(TestCase):
             "value": 0,
             "text": "qwerty",
             "username": "Liam",
-            "question": 1,
+            "question_index": 1,
         }
 
         with self.assertRaises(ValidationError):
+            RubricService().create_rubric(rub)
+
+    def test_rubric_absolute_out_of_range(self) -> None:
+        rub = {
+            "value": 4,
+            "out_of": 3,
+            "kind": "absolute",
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 1,
+        }
+        with self.assertRaisesRegex(ValidationError, "out of range"):
             RubricService().create_rubric(rub)
 
 
@@ -116,7 +128,7 @@ class RubricServiceTests(TestCase):
             value=0.0,
             out_of=0.0,
             text="qwert",
-            question=1,
+            question_index=1,
             user=user1,
             tags="",
             meta="asdfg",
@@ -131,7 +143,7 @@ class RubricServiceTests(TestCase):
             value=0.0,
             out_of=0.0,
             text="yuiop",
-            question=1,
+            question_index=1,
             user=user2,
             tags="",
             meta="hjklz",
@@ -146,7 +158,7 @@ class RubricServiceTests(TestCase):
             value=2.5,
             out_of=0.0,
             text="yuiop",
-            question=1,
+            question_index=1,
             user=user2,
             tags="",
             meta="hjklz",
@@ -169,7 +181,7 @@ class RubricServiceTests(TestCase):
             value=1.5,
             out_of=5.0,
             text="mnbvc",
-            question=3,
+            question_index=3,
             user=user1,
             tags="",
             meta="lkjhg",
@@ -198,7 +210,7 @@ class RubricServiceTests(TestCase):
             "tags": "",
             "meta": "asdfg",
             "username": "Liam",
-            "question": 1,
+            "question_index": 1,
             "versions": [],
             "parameters": [],
         }
@@ -211,7 +223,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.meta, self.neutral_rubric.meta)
         self.assertEqual(r.user, self.neutral_rubric.user)
         self.assertIsNot(r.user, self.relative_rubric.user)
-        self.assertEqual(r.question, self.neutral_rubric.question)
+        self.assertEqual(r.question_index, self.neutral_rubric.question_index)
         self.assertEqual(r.versions, self.neutral_rubric.versions)
         self.assertEqual(r.parameters, self.neutral_rubric.parameters)
 
@@ -225,7 +237,7 @@ class RubricServiceTests(TestCase):
             "tags": "",
             "meta": "hjklz",
             "username": "Olivia",
-            "question": 1,
+            "question_index": 1,
             "versions": [],
             "parameters": [],
         }
@@ -238,7 +250,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.meta, self.relative_rubric.meta)
         self.assertEqual(r.user, self.relative_rubric.user)
         self.assertIsNot(r.user, self.neutral_rubric.user)
-        self.assertEqual(r.question, self.relative_rubric.question)
+        self.assertEqual(r.question_index, self.relative_rubric.question_index)
         self.assertEqual(r.versions, self.relative_rubric.versions)
         self.assertEqual(r.parameters, self.relative_rubric.parameters)
 
@@ -252,7 +264,7 @@ class RubricServiceTests(TestCase):
             "tags": "",
             "meta": "lkjhg",
             "username": "Liam",
-            "question": 3,
+            "question_index": 3,
             "versions": [],
             "parameters": [],
         }
@@ -265,7 +277,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.meta, self.absolute_rubric.meta)
         self.assertEqual(r.user, self.absolute_rubric.user)
         self.assertIsNot(r.user, self.relative_rubric.user)
-        self.assertEqual(r.question, self.absolute_rubric.question)
+        self.assertEqual(r.question_index, self.absolute_rubric.question_index)
         self.assertEqual(r.versions, self.absolute_rubric.versions)
         self.assertEqual(r.parameters, self.absolute_rubric.parameters)
 
@@ -275,7 +287,7 @@ class RubricServiceTests(TestCase):
             "value": 0.0,
             "text": "qwerty",
             "username": "Olivia",
-            "question": 1,
+            "question_index": 1,
         }
         r = RubricService().create_rubric(simulated_client_data)
         assert isinstance(r, dict)
@@ -295,7 +307,7 @@ class RubricServiceTests(TestCase):
             "tags": "",
             "meta": "hjklz",
             "username": "Olivia",
-            "question": 1,
+            "question_index": 1,
             "versions": [],
             "parameters": [],
         }
@@ -320,7 +332,7 @@ class RubricServiceTests(TestCase):
             "tags": "",
             "meta": "hjklz",
             "username": "Olivia",
-            "question": 1,
+            "question_index": 1,
             "versions": [],
             "parameters": [],
         }
@@ -349,7 +361,7 @@ class RubricServiceTests(TestCase):
             "tags": "",
             "meta": "hjklz",
             "username": "Olivia",
-            "question": 1,
+            "question_index": 1,
             "versions": [],
             "parameters": [],
         }
@@ -363,6 +375,39 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r["value"], self.modified_absolute_rubric.value)
         self.assertEqual(r["out_of"], self.modified_absolute_rubric.out_of)
         self.assertEqual(r["username"], self.modified_absolute_rubric.user.username)
+
+    def test_modify_absolute_rubric_change_value_autogen_display(self) -> None:
+        service = RubricService()
+        rid = self.modified_absolute_rubric.rid
+
+        simulated_client_data = {
+            "rid": rid,
+            "kind": "absolute",
+            "value": 2.57,
+            "out_of": 3,
+            "text": "yuiop",
+            "username": "Olivia",
+            "question_index": 1,
+        }
+        r = service.modify_rubric(rid, simulated_client_data)
+        self.assertEqual(r["display_delta"], "2.57 of 3")
+
+    def test_modify_absolute_rubric_change_value_no_autogen_display(self) -> None:
+        service = RubricService()
+        rid = self.modified_absolute_rubric.rid
+
+        simulated_client_data = {
+            "rid": rid,
+            "kind": "absolute",
+            "value": 2.5,
+            "out_of": 3,
+            "display_delta": "2.50 of 3.00",
+            "text": "yuiop",
+            "username": "Olivia",
+            "question_index": 1,
+        }
+        r = service.modify_rubric(rid, simulated_client_data)
+        self.assertEqual(r["display_delta"], "2.50 of 3.00")
 
     def test_modify_rubric_change_kind(self) -> None:
         """Test RubricService.modify_rubric(), can change the "kind" of rubrics.
@@ -498,7 +543,7 @@ class RubricServiceTests(TestCase):
             "kind": "neutral",
             "text": "qwerty",
             "username": "Liam",
-            "question": 1,
+            "question_index": 1,
             "revision": 10,
         }
         r = RubricService().create_rubric(rub)
@@ -512,6 +557,22 @@ class RubricServiceTests(TestCase):
         rub.update({"revision": 0})
         with self.assertRaises(PlomConflict):
             RubricService().modify_rubric(rid, rub)
+
+    def test_modify_absolute_rubric_change_value_invalid(self) -> None:
+        service = RubricService()
+        rid = self.modified_absolute_rubric.rid
+
+        simulated_client_data = {
+            "rid": rid,
+            "kind": "absolute",
+            "value": 4,
+            "out_of": 3,
+            "text": "yuiop",
+            "username": "Olivia",
+            "question_index": 1,
+        }
+        with self.assertRaisesRegex(ValidationError, "out of range"):
+            service.modify_rubric(rid, simulated_client_data)
 
     def test_rubrics_get_as_dicts(self) -> None:
         rubrics = RubricService().get_rubrics_as_dicts()

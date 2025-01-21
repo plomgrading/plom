@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2024 Andrew Rechnitzer
     Copyright (C) 2022 Edith Coates
-    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -89,9 +89,7 @@
                     {% if pqv_mapping_present %}
                         <div class="alert alert-primary">
                             <span>Question-version mapping present with {{ pqv_number_rows }} papers:</span>
-                            <a href="{% url 'prep_qvmapping_download' %}"
-                               download="qv_map.csv"
-                               class="btn btn-info">download</a>
+                            <a href="{% url 'prep_qvmapping_download' %}" class="btn btn-info">download</a>
                             <button class="btn btn-danger"
                                     hx-delete="{% url 'prep_qvmapping_delete' %}"
                                     hx-confirm="Are you sure you want to delete the question-version map and clean the database?"

@@ -22,7 +22,6 @@ from django.contrib.auth.models import User
 from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models import Q  # for queries involving "or", "and"
 from django.utils import timezone
 from django_huey import db_task
 import huey
@@ -676,7 +675,7 @@ class ScanService:
                 ExtraStagingImage.objects.create(
                     staging_image=page_img,
                     paper_number=papernum,
-                    question_list=qlist,
+                    question_idx_list=qlist,
                 )
             # TODO: Issue #3770.
             # finally - mark the bundle as having had its qr-codes read.
@@ -746,22 +745,17 @@ class ScanService:
 
     @transaction.atomic
     def get_n_extra_images_with_data(self, bundle: StagingBundle) -> int:
-        # note - we must check that we have set both questions and pages
         return bundle.stagingimage_set.filter(
             image_type=StagingImage.EXTRA,
             extrastagingimage__paper_number__isnull=False,
-            extrastagingimage__question_list__isnull=False,
         ).count()
 
     @transaction.atomic
     def do_all_extra_images_have_data(self, bundle: StagingBundle) -> int:
-        # Make sure all question pages have both paper-number and question-lists
+        # check whether all extra question pages have paper-numbers
         epages = bundle.stagingimage_set.filter(image_type=StagingImage.EXTRA)
-        return not epages.filter(
-            Q(extrastagingimage__paper_number__isnull=True)
-            | Q(extrastagingimage__question_list__isnull=True)
-        ).exists()
-        # if you can find an extra page with a null paper_number, or one with a null question-list then it is not ready.
+        return not epages.filter(extrastagingimage__paper_number__isnull=True).exists()
+        # if you can find an extra page with a null paper_number
 
     @transaction.atomic
     def get_n_error_images(self, bundle: StagingBundle) -> int:
@@ -928,14 +922,10 @@ class ScanService:
             ]
         ).exists():
             return False
-        # check for extra pages without data
+        # check for extra pages not assigned to paper numbers
         epages = bundle_obj.stagingimage_set.filter(image_type=StagingImage.EXTRA)
-        if epages.filter(
-            Q(extrastagingimage__paper_number__isnull=True)
-            | Q(extrastagingimage__question_list__isnull=True)
-        ).exists():
+        if epages.filter(extrastagingimage__paper_number__isnull=True).exists():
             return False
-
         return True
 
     def are_bundles_perfect(self) -> dict[str, bool]:
@@ -1165,7 +1155,7 @@ class ScanService:
             discard-pages, it contains the ``reason`` while for
             known-pages it contains ``paper_number``, ``page_number``
             and ``version``.  Finally for extra-pages, it contains
-            ``paper_number``, and ``question_list``.
+            ``paper_number``, and ``question_idx_list``.
         """
         # compute number of digits in longest page number to pad the page numbering
         n_digits = len(str(bundle_obj.number_of_pages))
@@ -1217,7 +1207,7 @@ class ScanService:
         ).prefetch_related("extrastagingimage"):
             pages[img.bundle_order]["info"] = {
                 "paper_number": img.extrastagingimage.paper_number,
-                "question_list": img.extrastagingimage.question_list,
+                "question_idx_list": img.extrastagingimage.question_idx_list,
             }
 
         # now build an ordered list by running the keys (which are bundle-order) of the pages-dict in order.
@@ -1252,15 +1242,15 @@ class ScanService:
         # Now loop over the extra pages
         for extra in (
             ExtraStagingImage.objects.filter(staging_image__bundle=bundle_obj)
-            .order_by("paper_number", "question_list")
+            .order_by("paper_number", "question_idx_list")
             .prefetch_related("staging_image")
         ):
             # we can skip those without data
-            if extra.paper_number and extra.question_list:
+            if extra.paper_number:
                 papers.setdefault(extra.paper_number, []).append(
                     {
                         "type": "extra",
-                        "question_list": extra.question_list,
+                        "question_idx_list": extra.question_idx_list,
                         "order": extra.staging_image.bundle_order,
                     }
                 )
@@ -1295,7 +1285,7 @@ class ScanService:
                 "status": img.image_type,
                 "info": {
                     "paper_number": img.extrastagingimage.paper_number,
-                    "question_list": img.extrastagingimage.question_list,
+                    "question_idx_list": img.extrastagingimage.question_idx_list,
                 },
                 "order": f"{img.bundle_order}".zfill(n_digits),
                 "rotation": img.rotation,
@@ -1341,8 +1331,8 @@ class ScanService:
             _render = SpecificationService.render_html_flat_question_label_list
             info = {
                 "paper_number": img.extrastagingimage.paper_number,
-                "question_index_list": img.extrastagingimage.question_list,
-                "question_list_html": _render(img.extrastagingimage.question_list),
+                "question_idx_list": img.extrastagingimage.question_idx_list,
+                "question_list_html": _render(img.extrastagingimage.question_idx_list),
             }
         else:
             info = {}
@@ -1362,10 +1352,7 @@ class ScanService:
         for img in bundle_obj.stagingimage_set.filter(
             image_type=StagingImage.EXTRA
         ).prefetch_related("extrastagingimage"):
-            if (
-                img.extrastagingimage.paper_number
-                and img.extrastagingimage.question_list
-            ):
+            if img.extrastagingimage.paper_number:
                 paper_list.append(img.extrastagingimage.paper_number)
         return sorted(list(set(paper_list)))
 

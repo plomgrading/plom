@@ -93,7 +93,7 @@ class RubricDiffForm(forms.Form):
 class RubricItemForm(forms.ModelForm):
     """Form for creating or updating a Rubric."""
 
-    question = forms.TypedChoiceField(
+    question_index = forms.TypedChoiceField(
         required=True,
         widget=forms.Select(attrs={"onchange": "updateQuestion()"}),
         empty_value="",
@@ -117,7 +117,7 @@ class RubricItemForm(forms.ModelForm):
     class Meta:
         model = Rubric
         fields = [
-            "question",
+            "question_index",
             "text",
             "kind",
             "value",
@@ -140,7 +140,7 @@ class RubricItemForm(forms.ModelForm):
             for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
         ]
 
-        self.fields["question"].choices = question_choices
+        self.fields["question_index"].choices = question_choices
 
         version_choices = [
             (str(v_idx), v_idx)

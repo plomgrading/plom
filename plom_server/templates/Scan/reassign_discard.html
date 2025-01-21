@@ -30,83 +30,111 @@
                 </div>
                 <div class="col p-2 border">
                     <h5>Reassign the image</h5>
-                    <div class="py-4" id="invalidmessage"></div>
                     <div>
                         <form hx-post="{% url 'reassign_discard' page_pk %}"
                               hx-target="#invalidmessage"
                               hx-swap="innerHTML">
                             <div x-data="{assignment_type: 'fixed'}">
                                 <div class="form-radio">
-                                    <p>
-                                        <input class="form-check-input"
-                                               type="radio"
-                                               id="fixed"
-                                               value="fixed"
-                                               x-model="assignment_type" />
-                                        <label class="form-check-label" for="fixed">missing fixed page from an incomplete paper</label>
-                                    </p>
-                                    <p>
-                                        <input class="form-check-input"
-                                               type="radio"
-                                               id="mobile"
-                                               value="mobile"
-                                               x-model="assignment_type" />
-                                        <label class="form-check-label" for="mobile">mobile page in any pushed paper</label>
-                                    </p>
-                                </div>
-                                <div class="container shadow-sm p-2">
-                                    <div x-show="assignment_type=='fixed'">
-                                        <p>Select a missing fixed page from an incomplete paper:</p>
-                                        <select name="missingPaperPage" class="form-select">
-                                            <option selected>Missing paper/page</option>
-                                            {% for pn, pg_list in papers_missing_fixed_pages %}
-                                                {% for pg in pg_list %}<option value="{{ pn }},{{ pg }}">paper {{ pn }} page {{ pg }}</option>{% endfor %}
-                                            {% endfor %}
-                                        </select>
-                                        {% if not papers_missing_fixed_pages %}
-                                            <div class="my-1">
-                                                <p class="alert alert-info">All pushed papers are complete</p>
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                    <div x-show="assignment_type=='mobile'">
-                                        Select a used paper:
-                                        <select name="usedPaper" class="form-select">
-                                            <option>---</option>
-                                            {% for pn in used_papers %}<option value="{{ pn }}">paper {{ pn }}</option>{% endfor %}
-                                        </select>
-                                        Select questions:
-                                        <div x-data="{allq: false}">
-                                            <div class="form-check">
-                                                <input name="questionAll"
-                                                       value="all"
-                                                       class="form-check-input"
-                                                       type="checkbox"
-                                                       id="questionall"
-                                                       x-model="allq" />
-                                                <label class="form-check-label" for="questionall">all questions</label>
-                                            </div>
-                                            <div x-show="!allq" x-transition>
-                                                {% for qidx, qstr, qlabel in question_html_labels %}
-                                                    <div class="form-check">
-                                                        <input name="questions"
-                                                               class="form-check-input"
-                                                               type="checkbox"
-                                                               value="{{ qidx }}"
-                                                               id="qidx{{ qidx }}" />
-                                                        <label class="form-check-label" for="qidx{{ qidx }}">{{ qlabel | safe }}</label>
-                                                    </div>
+                                    <input class="form-check-input"
+                                           type="radio"
+                                           id="fixed"
+                                           value="fixed"
+                                           x-model="assignment_type" />
+                                    <label class="form-check-label" for="fixed">Missing fixed page from an incomplete paper</label>
+                                    <div class="ms-4">
+                                        <!-- above div can be hidden with x-show but I found it jumpy, disable control instead -->
+                                        <div class="container shadow-sm p-2">
+                                            <select name="missingPaperPage"
+                                                    class="form-select"
+                                                    x-bind:disabled="assignment_type != 'fixed'">
+                                                <option selected>Choose from missing paper/page</option>
+                                                {% for pn, pg_list in papers_missing_fixed_pages %}
+                                                    {% for pg in pg_list %}<option value="{{ pn }},{{ pg }}">paper {{ pn }} page {{ pg }}</option>{% endfor %}
                                                 {% endfor %}
-                                            </div>
+                                            </select>
+                                            {% if not papers_missing_fixed_pages %}
+                                                <div class="my-1">
+                                                    <p class="alert alert-info">All pushed papers are complete</p>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <input class="form-check-input"
+                                           type="radio"
+                                           id="mobile"
+                                           value="mobile"
+                                           x-model="assignment_type" />
+                                    <label class="form-check-label" for="mobile">Mobile page in any pushed paper</label>
+                                    <div x-show="assignment_type=='mobile'" class="ms-4">
+                                        <div class="container shadow-sm p-2">
+                                            <select name="usedPaper" class="form-select">
+                                                <option>---</option>
+                                                {% for pn in used_papers %}<option value="{{ pn }}">paper {{ pn }}</option>{% endfor %}
+                                            </select>
+                                            <p class="mb-2">
+                                                <small>
+                                                    Mobile pages typically do not have an &ldquo;expected&rdquo; place in the paper.
+                                                    Instead they are attached to none, one, or more questions.
+                                                </small>
+                                            </p>
+                                            <fieldset x-data="{showq: 'choose_q'}">
+                                                <div class="form-check">
+                                                    <input name="question_all_dnm"
+                                                           value="choose_q"
+                                                           class="form-check-input"
+                                                           type="radio"
+                                                           id="question_all_dnm1"
+                                                           checked
+                                                           x-model="showq" />
+                                                    <label class="form-check-label" for="question_all_dnm1">Attach to specific question(s):</label>
+                                                </div>
+                                                <div class="ms-4">
+                                                    <fieldset>
+                                                        {% for qidx, qlabel, qlabel_html in question_labels_html %}
+                                                            <div class="form-check">
+                                                                <input name="questions"
+                                                                       class="form-check-input"
+                                                                       type="checkbox"
+                                                                       value="{{ qidx }}"
+                                                                       id="qidx{{ qidx }}"
+                                                                       x-bind:disabled="showq != 'choose_q'" />
+                                                                <label class="form-check-label" for="qidx{{ qidx }}">{{ qlabel_html | safe }}</label>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </fieldset>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input name="question_all_dnm"
+                                                           value="choose_all"
+                                                           class="form-check-input"
+                                                           type="radio"
+                                                           id="question_all_dnm2"
+                                                           x-model="showq" />
+                                                    <label class="form-check-label" for="question_all_dnm2">
+                                                        Attach to <em>all</em> questions
+                                                    </label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input name="question_all_dnm"
+                                                           value="choose_dnm"
+                                                           class="form-check-input"
+                                                           type="radio"
+                                                           id="question_all_dnm3"
+                                                           x-model="showq" />
+                                                    <label class="form-check-label" for="question_all_dnm3">
+                                                        Do not mark <small>(but keep with this paper)</small>
+                                                        <!-- TODO: a link or pop-up with more info would be nice here -->
+                                                    </label>
+                                                </div>
+                                            </fieldset>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <button class="btn btn-primary m-2" type="submit">Set data</button>
+                            <div class="py-4" id="invalidmessage"></div>
+                            <button class="btn btn-primary" type="submit">Reassign</button>
                         </form>
-                        <a href="{% url 'scan_list_discard' %}">
-                            <button class="btn btn-warning m-2">Go back</button>
-                        </a>
                     </div>
                 </div>
             </div>

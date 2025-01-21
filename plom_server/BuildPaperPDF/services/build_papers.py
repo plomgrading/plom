@@ -3,7 +3,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Aidan Murphy
 
@@ -252,8 +252,7 @@ class BuildPapersService:
 
         # get all the qvmap and student-id/name info
         spec = SpecificationService.get_the_spec()
-        pqv_service = PQVMappingService()
-        qvmap = pqv_service.get_pqv_map_dict()
+        qvmap = PQVMappingService.get_pqv_map_dict()
         prenamed = StagingStudentService().get_prenamed_papers()
         prename_config = PrenameSettingService().get_prenaming_config()
 
