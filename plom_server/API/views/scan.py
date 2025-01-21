@@ -76,7 +76,19 @@ class ScanMapBundle(APIView):
 
     # POST: /api/beta/scan/bundle/{bundle_id}/{page}/map
     def post(self, request: Request, *, bundle_id: int, page: int) -> Response:
-        """API to map the pages of a bundle onto questions."""
+        """API to map the pages of a bundle onto questions.
+
+        On success (200), the return will be TODO: still a WIP.
+
+        Only "scanner" users including managers can do this; others will
+        get a 403.
+        """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "scanner" not in group_list:
+            return _error_response(
+                'Only users in the "scanner" group can map pages via the API',
+                status.HTTP_403_FORBIDDEN,
+            )
         print(bundle_id)
         print(page)
         data = request.query_params
