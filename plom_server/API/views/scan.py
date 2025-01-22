@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 from pathlib import Path
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.forms import ValidationError
 from django.utils.text import slugify
 from rest_framework.views import APIView
 from rest_framework.request import Request
@@ -58,10 +60,13 @@ class ScanListBundles(APIView):
 
         # TODO: BundleUploadForm is not used in this API endpoint and that's
         # unfortunate b/c it does some checks including a maximum upload size.
+        # For now do some checks in the service, see :func:`upload_bundle`.
 
         slug = slugify(filename_stem)
         try:
             bundle_id = ScanService.upload_bundle(pdf, slug, user)
+        except ValidationError as e:
+            return _error_response(e, status.HTTP_400_BAD_REQUEST)
         except PlomConflict as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
 
