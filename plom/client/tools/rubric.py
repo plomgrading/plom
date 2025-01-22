@@ -1,16 +1,18 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Bryan Tanady
 
+from __future__ import annotations
+
 from copy import deepcopy
-from typing import Any, Dict, List, Union
+from typing import Any
 
 from PyQt6.QtCore import QPointF, Qt
 from PyQt6.QtGui import QColor, QFont, QPen
-from PyQt6.QtWidgets import QGraphicsItem, QGraphicsItemGroup
+from PyQt6.QtWidgets import QGraphicsItemGroup, QGraphicsItem
 
 from plom.client.tools import (
     CommandTool,
@@ -29,18 +31,21 @@ class CommandRubric(CommandTool):
     "saved comment").
     """
 
-    def __init__(self, scene, pt, rubric):
+    def __init__(self, scene, pt: QPointF, rubric: dict[str, Any]) -> None:
         """Constructor for this class.
 
         Args:
             scene (PageScene): Plom's annotation scene.
-            pt (QPointF): where to place the rubric.
-            rubric (dict): must have at least these keys:
+            pt: where to place the rubric.
+            rubric: must have at least these keys:
                 "rid", "kind", "value", "out_of", "display_delta", "text".
                 Any other keys are probably ignored and will almost
                 certainly not survive being serialized.
                 We copy the data, so changes to the original will not
                 automatically update this object,
+
+        Returns:
+            None
         """
         super().__init__(scene)
         self.gdt = RubricItem(pt, rubric, _scene=scene, style=scene.style)
@@ -78,7 +83,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
     """
 
     def __init__(
-        self, pt: QPointF, rubric: Dict[str, Any], *, _scene, style: Dict[str, Any]
+        self, pt: QPointF, rubric: dict[str, Any], *, _scene, style: dict[str, Any]
     ) -> None:
         """Constructor for this class.
 
@@ -104,6 +109,8 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.pt = pt
         self.style = style
         self._rubric = deepcopy(rubric)
+        self._attn_msg = ""
+        # self._attn_button = None
         # TODO: replace each with @property?
         self.rubricID = rubric["rid"]
         self.kind = rubric["kind"]
@@ -139,8 +146,65 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
 
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
+        # self.update_attn_state(attn_msg, _scene=_scene)
 
-    def as_rubric(self) -> Dict[str, Any]:
+    def update_attn_state(self, attn_msg: str, *, _scene=None) -> None:
+        """Update the "attention state" of this RubricItem.
+
+        Args:
+            attn_msg: a string indicating what the problem is, that
+                will be shown as a tooltip and perhaps in other ways.
+                You can pass the empty string to reset the state to
+                NOT needing attention.
+        """
+        self.setToolTip(attn_msg)
+        self._attn_msg = attn_msg
+        # # TODO: this button stuff disabled for now
+        # if not self._attn_button:
+        #     self._create_attn_button(attn_msg, _scene)
+        #     self._attn_msg = attn_msg
+        #     return
+        # h = self._attn_button
+        # b = h.widget()
+        # b.setToolTip(attn_msg)
+        # rand_colour = "#" + hex(random.randint(0, 256**3 - 1))[2:]
+        # b.setStyleSheet("QToolButton { background-color: " + rand_colour + "; }")
+        # self._attn_msg = attn_msg
+
+    # # WIP currently-unused code to draw action buttons near the rubric
+    # def _create_attn_button(self, attn_msg: str, _scene) -> None:
+    #     b = QToolButton(text="\N{Warning Sign}")  # type: ignore[call-arg]
+    #     b.setStyleSheet("QToolButton { background-color: #0000ff; }")
+    #     b.clicked.connect(self._dismiss_attn_button_interactively)
+    #     # parenting the menu inside the scene
+    #     m = QMenu(b)
+    #     m.addAction(
+    #         "Show me the diff", lambda: print("Update rubric: not implemented yet")
+    #     )
+    #     m.addSeparator()
+    #     m.addAction("Dismiss", self._dismiss_attn_button)
+    #     b.setMenu(m)
+    #     # b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+    #     # TODO: "most common way is to pass a widget pointer to [Scene.addWidget()]"
+    #     h = QGraphicsProxyWidget()
+    #     h.setWidget(b)
+    #     h.setOpacity(0.66)
+    #     # h.setPos(self.blurb.boundingRect().bottomRight())
+    #     # TODO: these magic numbers come from _tweakPositions
+    #     h.setPos(self.pt)
+    #     cr = self.di.boundingRect()
+    #     h.moveBy(cr.width() + 5, cr.height() / 2)
+
+    #     h.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
+    #     h.setFlag(QGraphicsItem.GraphicsItemFlag.ItemDoesntPropagateOpacityToChildren)
+    #     b.setToolTip(attn_msg)
+    #     # TODO: both of these allow it to move but not receive mouse events
+    #     # self.addToGroup(h)
+    #     # h.setParentItem(self)
+    #     _scene.addItem(h)
+    #     self._attn_button = h
+
+    def as_rubric(self) -> dict[str, Any]:
         """Return as a rubric dict."""
         # TODO: probably `return self._rubric`?  or is explicit is better than implicit?
         return {
@@ -181,7 +245,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
             self.di.moveBy(0, -cr.height() / 2)
             self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
 
-    def pickle(self) -> List[Any]:
+    def pickle(self) -> list[Any]:
         return [
             "Rubric",
             self.pt.x() + self.x(),
@@ -190,7 +254,8 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         ]
 
     def paint(self, painter, option, widget):
-        if not self.scene().itemWithinBounds(self):
+        # TODO: for now, we reuse the out-of-bounds colouring for needs attn
+        if not self.scene().itemWithinBounds(self) or self._attn_msg:
             painter.setPen(OutOfBoundsPen)
             painter.setBrush(OutOfBoundsFill)
             painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
@@ -218,6 +283,39 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
 
     def get_delta_value(self) -> int:
         return int(self.di.value)
+
+    # # WIP currently-unused code to draw action buttons near the rubric
+    # def _dismiss_attn_button_interactively(self):
+    #     if not self.scene():
+    #         # nothing to do if we're not in a scene any more
+    #         return
+    #     parent = self.scene().views()[0].parent()
+    #     # yuck, had to go way up the chain to find someone who can parent a dialog!
+    #     # maybe that means this code should NOT be opening dialogs
+    #     InfoMsg(
+    #         parent,
+    #         self._attn_msg,
+    #         info="""
+    #             Learn more about
+    #             <a href="https://plom.readthedocs.io/en/latest/rubrics.html">rubric
+    #             revisions</a>.
+    #         """,
+    #         info_pre=False,
+    #     ).exec()
+    #     self._dismiss_attn_button()
+
+    # # WIP currently-unused code to draw action buttons near the rubric
+    # def _dismiss_attn_button(self):
+    #     if not self.scene():
+    #         # nothing to do if we're not in a scene any more
+    #         return
+    #     if not self._attn_button:
+    #         # nothing to do b/c no more attn button
+    #         return
+    #     self.scene().removeItem(self._attn_button)
+    #     self._attn_button.deleteLater()
+    #     self._attn_button = None
+    #     self._attn_msg = ""
 
 
 class GhostComment(QGraphicsItemGroup):
@@ -277,9 +375,7 @@ class GhostComment(QGraphicsItemGroup):
             self.blurb.setVisible(True)
             self.addToGroup(self.blurb)
 
-    def change_rubric_size(
-        self, fontsize: Union[int, None], annot_scale: float
-    ) -> None:
+    def change_rubric_size(self, fontsize: int | None, annot_scale: float) -> None:
         """Change comment size.
 
         Args:
