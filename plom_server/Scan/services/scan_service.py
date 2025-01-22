@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2025 Aidan Murphy
 
 from __future__ import annotations
 
@@ -14,6 +15,7 @@ import pathlib
 import random
 import tempfile
 import time
+from io import BytesIO
 from datetime import datetime
 from typing import Any
 
@@ -22,11 +24,13 @@ from django.contrib.auth.models import User
 from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.forms import ValidationError
 from django.utils import timezone
 from django_huey import db_task
 import huey
 import huey.api
 import huey.exceptions
+import pymupdf
 
 from plom.plom_exceptions import PlomConflict
 from plom.scan import QRextract
@@ -73,7 +77,7 @@ class ScanService:
     @classmethod
     def upload_bundle(
         cls,
-        uploaded_pdf_file: File,
+        _uploaded_pdf_file: File,
         slug: str,
         user: User,
         *,
@@ -95,7 +99,7 @@ class ScanService:
         :meth:`upload_bundle_cmd`_ instead.
 
         Args:
-            uploaded_pdf_file (Django File): File-object containing the pdf
+            _uploaded_pdf_file (Django File): File-object containing the pdf
                 (can also be a TemporaryUploadedFile or InMemoryUploadedFile).
             slug: Filename slug for the pdf.
             user (Django User): the user uploading the file
@@ -105,7 +109,8 @@ class ScanService:
                 uploaded.  If omitted, we'll use right now.
             file_hash: the sha256 of the pdf file.  If omitted, we will
                 compute it.
-            number_of_pages: the number of pages in the pdf.
+            number_of_pages: the number of pages in the pdf, can be None
+                if we don't know yet.
             force_render: Don't try to extract large bitmaps; always
                 render the page.
             read_after: Automatically read the qr codes from the bundle after
@@ -115,18 +120,35 @@ class ScanService:
             The bundle id, the primary key of the newly-created bundle.
 
         Raises:
+            ValidationError: _uploaded_pdf_file isn't a valid pdf or
+                exceeds the page limit, or other error.
             PlomConflict: we already have a bundle which conflicts.
         """
         if not timestamp:
             timestamp = datetime.timestamp(timezone.now())
 
+        # Warning: Aidan saw errors if we open this more than once, during an API upload
+        # here get the bytes from the file and never use `_upload_pdf_file` again.
+        try:
+            with _uploaded_pdf_file.open("rb") as fh:
+                file_bytes = fh.read()
+        except OSError as err:
+            raise ValidationError(f"Unexpected error handling file: {err}") from err
+
         if not file_hash:
-            try:
-                with uploaded_pdf_file.open("rb") as f:
-                    _file_bytes = f.read()
-            except OSError as err:
-                raise RuntimeError(f"TODO: dunno about this error handling: {err}")
-            file_hash = hashlib.sha256(_file_bytes).hexdigest()
+            file_hash = hashlib.sha256(file_bytes).hexdigest()
+
+        try:
+            with pymupdf.open(stream=file_bytes) as pdf_doc:
+                if "PDF" not in pdf_doc.metadata["format"]:
+                    raise ValidationError("Uploaded file isn't a valid pdf")
+                if pdf_doc.page_count > settings.MAX_BUNDLE_PAGES:
+                    raise ValidationError(
+                        f"Uploaded pdf with {pdf_doc.page_count} pages"
+                        f" exceeds {settings.MAX_BUNDLE_PAGES} page limit"
+                    )
+        except pymupdf.FileDataError as err:
+            raise ValidationError(err) from err
 
         # Warning: Issue #2888, and https://gitlab.com/plom/plom/-/merge_requests/2361
         # strange behaviour can result from relaxing this durable=True
@@ -146,11 +168,10 @@ class ScanService:
                 pushed=False,
                 force_page_render=force_render,
             )
-            with uploaded_pdf_file.open() as fh:
-                bundle_obj.pdf_file = File(fh, name=f"{slug}.pdf")
-                bundle_obj.pdf_hash = file_hash
-                bundle_obj.number_of_pages = number_of_pages
-                bundle_obj.save()
+            bundle_obj.pdf_file = File(BytesIO(file_bytes), name=f"{slug}.pdf")
+            bundle_obj.pdf_hash = file_hash
+            bundle_obj.number_of_pages = number_of_pages
+            bundle_obj.save()
         cls.split_and_save_bundle_images(bundle_obj.pk, read_after=read_after)
         return bundle_obj.pk
 

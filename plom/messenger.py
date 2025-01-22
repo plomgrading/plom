@@ -861,6 +861,8 @@ class Messenger(BaseMessenger):
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomSeriousException(response.reason) from None
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 403:
