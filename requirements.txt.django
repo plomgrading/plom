@@ -40,7 +40,7 @@ gunicorn==23.0.0
 imutils==0.5.4
 matplotlib==3.8.4
 model-bakery==1.20.1
-numpy==2.2.2
+numpy==1.26.4
 opencv-python-headless==4.9.0.80  # hold back, type troubles
 packaging==24.2
 pandas==2.2.3
