@@ -19,6 +19,7 @@ from io import BytesIO
 from datetime import datetime
 from typing import Any
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
