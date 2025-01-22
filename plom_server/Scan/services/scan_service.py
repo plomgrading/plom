@@ -630,7 +630,7 @@ class ScanService:
                 ExtraStagingImage.objects.create(
                     staging_image=page_img,
                     paper_number=papernum,
-                    question_list=question_indices,
+                    question_idx_list=question_indices,
                 )
             # TODO: Issue #3770.
             # bundle_obj = (
