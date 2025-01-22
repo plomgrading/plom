@@ -19,7 +19,6 @@ from io import BytesIO
 from datetime import datetime
 from typing import Any
 
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
@@ -563,9 +562,6 @@ class ScanService:
         Args:
             bundle_pk: primary key of bundle DB object
         """
-        root_folder = settings.MEDIA_ROOT / "page_images"
-        root_folder.mkdir(exist_ok=True)
-
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         # check that the qr-codes have not been read already, or that a task has not been set
 
@@ -668,9 +664,6 @@ class ScanService:
         Returns:
             None
         """
-        root_folder = settings.MEDIA_ROOT / "page_images"
-        root_folder.mkdir(exist_ok=True)
-
         bundle_obj = (
             StagingBundle.objects.filter(pk=bundle_pk).select_for_update().get()
         )

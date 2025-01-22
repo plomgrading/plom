@@ -15,7 +15,6 @@ from typing import Any, Tuple
 import arrow
 import zipfly
 
-from django.conf import settings
 from django.core.files import File
 from django.db import transaction
 from django.db.models import Q
@@ -42,8 +41,6 @@ from .student_marks_service import StudentMarkService
 
 class ReassembleService:
     """Class that contains helper functions for sending data to plom-finish."""
-
-    reassemble_dir = settings.MEDIA_ROOT / "reassemble"
 
     def get_completion_status(self) -> dict[int, tuple[bool, bool, int, datetime]]:
         """Return a dictionary of overall marking completion progress."""

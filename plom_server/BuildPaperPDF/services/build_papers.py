@@ -11,20 +11,19 @@ from __future__ import annotations
 
 import pathlib
 import random
-from tempfile import TemporaryDirectory
 import time
+from tempfile import TemporaryDirectory
 from typing import Any
 
-import zipfly
-
-from django.conf import settings
-from django.db.models import Q
-from django.db import transaction
-from django.core.files import File
-from django.core.exceptions import ObjectDoesNotExist
-from django_huey import db_task, get_queue
 import huey
 import huey.api
+import zipfly
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.files import File
+from django.db import transaction
+from django.db.models import Q
+from django_huey import db_task, get_queue
 
 from plom.create.mergeAndCodePages import make_PDF
 
@@ -36,13 +35,13 @@ from Preparation.services import (
 )
 from Papers.services import SpecificationService
 from Papers.models import Paper
-from Preparation.models import PaperSourcePDF
+from Preparation.services import SourceService
 from Base.models import HueyTaskTracker
-from ..models import BuildPaperPDFChore
-
 from Preparation.services.preparation_dependency_service import (
     assert_can_rebuild_test_pdfs,
 )
+
+from ..models import BuildPaperPDFChore
 
 
 # The decorated function returns a ``huey.api.Result``
@@ -51,6 +50,7 @@ def huey_build_single_paper(
     papernum: int,
     spec: dict,
     question_versions: dict[int, int],
+    source_versions: list[pathlib.Path],
     *,
     student_info: dict[str, Any] | None = None,
     prename_config: dict[str, Any],
@@ -72,6 +72,7 @@ def huey_build_single_paper(
         spec: the specification of the assessment.
         question_versions: which version to use for each question.
             A row of the "qvmap".
+        source_versions: list of paths to the PDF files for each version.
 
     Keyword Args:
         student_info: None for a regular blank paper or a dict with
@@ -101,7 +102,7 @@ def huey_build_single_paper(
             xcoord=prename_config["xcoord"],
             ycoord=prename_config["ycoord"],
             where=pathlib.Path(tempdir),
-            source_versions_path=PaperSourcePDF.upload_to(),
+            source_versions=source_versions,
         )
         assert save_path is not None
 
@@ -129,9 +130,6 @@ def huey_build_single_paper(
 
 class BuildPapersService:
     """Generate and stamp test-paper PDFs."""
-
-    base_dir = settings.MEDIA_ROOT
-    papers_to_print = base_dir / "papersToPrint"
 
     def get_n_papers(self) -> int:
         """Get the number of Papers."""
@@ -290,6 +288,13 @@ class BuildPapersService:
                 )
             del paper
 
+        # TODO: this probably only works with the default FileSystemStorage
+        source_versions = [
+            settings.MEDIA_ROOT / x.path for x in SourceService._get_source_files()
+        ]
+        # (I suppose in theory the source versions could change during the lifetime
+        # of the chores but Plom presumably prevents changing sources during builds)
+
         # for each of the newly created chores, actually ask Huey to run them
         chore_pk_huey_id_list = []
         for chore in chore_list:
@@ -301,6 +306,7 @@ class BuildPapersService:
                 chore.paper.paper_number,
                 spec,
                 qvmap[chore.paper.paper_number],
+                source_versions,
                 student_info=student_info,
                 prename_config=prename_config,
                 tracker_pk=chore.pk,
