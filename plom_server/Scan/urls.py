@@ -18,6 +18,7 @@ from .views import (
     ScannerReassignView,
     ###
     PushedImageView,
+    DiscardWholePaperView,
     PushedImageRotatedView,
     PushedImageWrapView,
     ###
@@ -78,6 +79,11 @@ urlpatterns = [
         "pushed_img/<int:img_pk>",
         PushedImageView.as_view(),
         name="pushed_img",
+    ),
+    path(
+        "discard_whole/<int:paper_number>",
+        DiscardWholePaperView.as_view(),
+        name="scan_discard_whole_paper",
     ),
     path(
         "pushed_img_rot/<int:img_pk>",

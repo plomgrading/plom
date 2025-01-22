@@ -112,6 +112,43 @@ class ManageDiscardService:
                 continue
             MarkingTaskService().set_paper_marking_task_outdated(paper_number, qn)
 
+    def discard_whole_paper_by_number(
+        self, user_obj: User, paper_number: int, *, dry_run: bool = True
+    ):
+        """Discard all pushed images from the given paper.
+
+        Args:
+            user_obj (User): the User who is discarding
+            paper_number (int): the paper_number of the paper to be discarded
+
+        Keyword Args:
+            dry_run: really do it or just pretend?
+
+        Returns:
+            A status message about what happened (or, if ``dry_run`` is True,
+            what would be attempted).
+
+        Raises:
+            ValueError: no such page, no image attached to page, unexpectedly
+                unknown page type, maybe other cases.
+        """
+        try:
+            paper_obj = Paper.objects.get(paper_number=paper_number)
+        except ObjectDoesNotExist as e:
+            raise ValueError(
+                f"A paper with paper_number {paper_number} does not exist"
+            ) from e
+
+        msg = ""
+
+        for fp in paper_obj.fixedpage_set.all():
+            # check if that fixedpage has an image
+            if fp.image:
+                msg += self.discard_pushed_fixed_page(user_obj, fp.pk, dry_run=dry_run)
+        for mp in paper_obj.mobilepage_set.all():
+            msg += self.discard_pushed_mobile_page(user_obj, mp.pk, dry_run=dry_run)
+        return msg
+
     def discard_pushed_fixed_page(
         self, user_obj: User, fixedpage_pk: int, *, dry_run: bool = True
     ) -> str:
