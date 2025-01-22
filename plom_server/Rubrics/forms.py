@@ -112,7 +112,6 @@ class RubricItemForm(forms.ModelForm):
         required=False,
         widget=forms.NumberInput(attrs={"onchange": "updateValueConstraints()"}),
     )
-    versions = forms.MultipleChoiceField(required=False)
 
     class Meta:
         model = Rubric
@@ -130,6 +129,7 @@ class RubricItemForm(forms.ModelForm):
         widgets = {
             "text": forms.Textarea(attrs={"rows": 3}),
             "meta": forms.Textarea(attrs={"rows": 2}),
+            "versions": forms.TextInput(),  # default would be Textarea
             "parameters": forms.Textarea(attrs={"rows": 2}),
         }
 
@@ -141,12 +141,6 @@ class RubricItemForm(forms.ModelForm):
         ]
 
         self.fields["question_index"].choices = question_choices
-
-        version_choices = [
-            (str(v_idx), v_idx)
-            for v_idx in range(1, SpecificationService.get_n_versions() + 1)
-        ]
-        self.fields["versions"].choices = version_choices
 
         for field in self.fields:
             self.fields[field].widget.attrs["class"] = "form-control"

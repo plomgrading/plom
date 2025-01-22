@@ -287,11 +287,15 @@ class RubricService:
         if data["kind"] == "absolute":
             _value = data["value"]
             _out_of = data["out_of"]
+            try:
+                _out_of = float(_out_of)
+            except ValueError as e:
+                raise ValidationError(
+                    {"out_of": f"out of {_out_of} must be convertible to number: {e}"}
+                )
             if not 0 <= _value <= _out_of:
                 raise ValidationError(
-                    {
-                        "value": f"out of range: {_value} is not in [0, out_of] = [0, {_out_of}]."
-                    }
+                    {"value": f"out of range: {_value} is not in [0, {_out_of}]."}
                 )
 
         data["latest"] = True
@@ -451,11 +455,15 @@ class RubricService:
         if new_rubric_data["kind"] == "absolute":
             _value = new_rubric_data["value"]
             _out_of = new_rubric_data["out_of"]
+            try:
+                _out_of = float(_out_of)
+            except ValueError as e:
+                raise ValidationError(
+                    {"out_of": f"out of {_out_of} must be convertible to number: {e}"}
+                )
             if not 0 <= _value <= _out_of:
                 raise ValidationError(
-                    {
-                        "value": f"out of range: {_value} is not in [0, out_of] = [0, {_out_of}]."
-                    }
+                    {"value": f"out of range: {_value} is not in [0, {_out_of}]."}
                 )
 
         serializer = RubricSerializer(data=new_rubric_data)
