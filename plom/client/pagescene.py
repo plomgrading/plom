@@ -767,7 +767,10 @@ class PageScene(QGraphicsScene):
                         continue
                     s = f"rubric rid {rid} rev {old_rev} needs update to rev {new_rev}"
                     log.info(s)
-                    X.update_attn_state(s, self)
+                    # Change the visual appearance of the RubricItem
+                    X.update_attn_state(s)
+                    # TODO: future rubric button work might need the scene:
+                    # X.update_attn_state(s, _scene=self)
                     num_update += 1
         if num_update:
             # TODO emit signal instead of assuming stuff about the parent
@@ -2970,16 +2973,12 @@ class PageScene(QGraphicsScene):
             All annotation (saveable) objects that are unhappy.
         """
         unhappy_objs = []
-        print("ABC " * 80)
         for X in self.items():
             if getattr(X, "saveable", False):
-                print((X, type(X)))
                 # TODO: a future implementation should call X.is_happy()
                 # but for now we just hardcode some stuff
                 if isinstance(X, RubricItem):
-                    meh = getattr(X, "_attn_msg", "")
-                    print(f"  attn msg: {meh}")
-                    if meh:
+                    if getattr(X, "_attn_msg", ""):
                         unhappy_objs.append(X)
         return unhappy_objs
 

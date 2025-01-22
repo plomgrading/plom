@@ -1517,6 +1517,8 @@ class Annotator(QWidget):
             details += "\n\n## Object serialization\n\n  "
             details += "\n".join(str(x) for x in self.scene.pickleSceneItems())
             WarnMsg(self, msg, info=info, info_pre=False, details=details).exec()
+            # Note: we could ask a question here and let the user "submit anyway"
+            # and that might be a good idea if we find any bugs in this code...
             return False
 
         # check annotations are inside the margins
