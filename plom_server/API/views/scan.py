@@ -42,8 +42,6 @@ class ScanListBundles(APIView):
         The bundle must have a distinct sha256 hash from existing
         bundles, or you'll get a 409.
         """
-        print(request)
-        print(request.data)
         user = request.user
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "scanner" not in group_list:
@@ -52,7 +50,6 @@ class ScanListBundles(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
         pdf = request.FILES.get("pdf_file")
-        print((pdf, type(pdf)))
         filename_stem = Path(pdf.name).stem
         if filename_stem.startswith("_"):
             s = "Bundle filenames cannot start with an underscore - we reserve those for internal use."
@@ -94,8 +91,6 @@ class ScanMapBundle(APIView):
                 'Only users in the "scanner" group can map pages via the API',
                 status.HTTP_403_FORBIDDEN,
             )
-        print(bundle_id)
-        print(page)
         data = request.query_params
         print(data)
         question_idx_list = data.getlist("qidx")
@@ -108,7 +103,6 @@ class ScanMapBundle(APIView):
         print(question_idx_list)
         papernum = data.get("papernum")
         print(papernum)
-        print(type(papernum))
         # if questions is None:
         #     questions = "all"
         # many types possible for ``questions`` but here we always get a str
