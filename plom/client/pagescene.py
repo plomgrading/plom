@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2022 Andrew Rechnitzer
+# Copyright (C) 2018-2025 Andrew Rechnitzer
 # Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
@@ -97,7 +97,7 @@ from .elastics import (
     which_classic_shortest_corner_side,
     which_centre_to_centre,
 )
-from plom.client.rubrics import compute_score
+from plom.rubric_utils import compute_score
 from plom.client.useful_classes import SimpleQuestion
 
 

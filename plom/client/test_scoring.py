@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2025 Andrew Rechnitzer
 
 from __future__ import annotations
 
@@ -10,9 +11,9 @@ from typing import Any
 
 from pytest import raises
 
-from plom.client.rubrics import compute_score_legacy2022 as lg
-from plom.client.rubrics import compute_score_locabs as s
-from plom.client.rubrics import compute_score_naive as naive
+from plom.rubric_utils import compute_score_legacy2022 as lg
+from plom.rubric_utils import compute_score_locabs as s
+from plom.rubric_utils import compute_score_naive as naive
 from plom.plom_exceptions import PlomInconsistentRubric, PlomInvalidRubric
 
 
