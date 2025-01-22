@@ -57,10 +57,10 @@ class ReassemblePapersView(ManagerRequiredView):
             [1 for x in all_paper_status if x["reassembled_status"] == "Complete"]
         )
         min_paper_number = min(
-            [X["paper_num"] for X in all_paper_status if X["scanned"]]
+            [X["paper_num"] for X in all_paper_status if X["scanned"]], default=None
         )
         max_paper_number = max(
-            [X["paper_num"] for X in all_paper_status if X["scanned"]]
+            [X["paper_num"] for X in all_paper_status if X["scanned"]], default=None
         )
 
         context.update(

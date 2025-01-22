@@ -61,17 +61,24 @@
                     </li>
                 {% endif %}
             </ul>
-            {% if n_outdated %}
+            {% if n_papers == 0 %}
+                <a href="{% url 'reassemble_all_pdfs' %}"
+                   class="btn btn-danger-outline disabled">Download zip of all reassembled papers</a> no papers yet
+            {% elif n_outdated %}
                 <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-danger">Download zip of all reassembled papers</a> some papers outdated
             {% elif n_complete == n_papers %}
                 <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-success">Download zip of all reassembled papers</a>
             {% elif n_complete %}
                 <a href="{% url 'reassemble_all_pdfs' %}" class="btn btn-warning">Download zip of all reassembled papers</a>
                 warning - not all papers reassembled
+            {% else %}
+                <a href="{% url 'reassemble_all_pdfs' %}"
+                   class="btn btn-warning-outline disabled">Download zip of all reassembled papers</a>
+                warning - no papers reassembled
             {% endif %}
             <details class="my-2"
                      x-data="{first: {{ min_paper_number }}, last:{{ max_paper_number }}, the_url:'{% url "reassembled_range" %}' }">
-                <summary>Or select range of reassembled papers to download</summary>
+                <summary>Select range of reassembled papers to download</summary>
                 <div class="ms-4 my-2 w-75">
                     <div class="input-group my-1" x-on:input="first=Math.min(first,last);">
                         <span for="fpaper" class="input-group-text w-25">First paper</span>
@@ -103,8 +110,13 @@
                                x-model="last"
                                id="lpaper">
                     </div>
-                    <a x-bind:href="the_url + '?first_paper=' + first + '&last_paper='+last"
-                       class="btn btn-warning">Download zip of reassembled papers from <span x-text="first"></span> to <span x-text="last"></span></a>
+                    {% if n_complete %}
+                        <a x-bind:href="the_url + '?first_paper=' + first + '&last_paper='+last"
+                           class="btn btn-warning">Download zip of reassembled papers from <span x-text="first"></span> to <span x-text="last"></span></a>
+                    {% else %}
+                        <a x-bind:href="the_url + '?first_paper=' + first + '&last_paper='+last"
+                           class="btn btn-warning-outline disabled">Download zip of reassembled papers from <span x-text="first"></span> to <span x-text="last"></span></a> warning - no papers reassembled
+                    {% endif %}
                 </div>
             </div>
         </details>
