@@ -56,7 +56,7 @@ pandas==2.1.4
 passlib==1.7.4
 Pillow==11.1.0
 psycopg2-binary==2.9.10
-pydyf==0.9.0  # Issue #3589, hold back
+pydyf==0.11.0
 pymupdf==1.25.2
 PyMySQL==1.1.1
 random-username==1.0.2
@@ -72,7 +72,7 @@ tomli==2.2.1
 tomlkit==0.13.2
 tqdm==4.67.1
 urllib3==2.3.0
-weasyprint==60.2  # Issue #3589, hold back
+weasyprint==63.1
 whitenoise==6.8.2
 zipfly==6.0.5
 zxing-cpp==2.2.0
