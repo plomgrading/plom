@@ -105,11 +105,13 @@ def isLegalRubric(rubric: dict[str, Any], *, scene, version: int, max_mark: int)
 
 def render_params(
     template: str,
-    params: Sequence[tuple[str, Sequence[str]]],
+    params: Sequence[tuple[str, Sequence[str]]] | None,
     ver: int,
 ) -> str:
     """Perform version-dependent substitutions on a template text."""
     s = template
+    if not params:
+        return s
     for param, values in params:
         s = s.replace(param, values[ver - 1])
     return s
@@ -1242,9 +1244,6 @@ class RubricWidget(QWidget):
             BigMessageDialog(self, msg, details_html=d, show=False).exec()
         # diff_rubric is not precise, won't hurt to update display even if no changes
         self.updateLegalityOfRubrics()
-        # TODO: port to slots and signals instead
-        if self._parent.scene:
-            self._parent.scene.react_to_rubric_list_changes(self.rubrics)
 
     def wrangleRubricsInteractively(self) -> None:
         wr = RubricWrangler(
@@ -1587,6 +1586,9 @@ class RubricWidget(QWidget):
             tab.updateLegality()
         self.tabDeltaP.updateLegality()
         self.tabDeltaN.updateLegality()
+        # TODO: port to slots and signals instead
+        if self._parent.scene:
+            self._parent.scene.react_to_rubric_list_changes(self.rubrics)
 
     def handleClick(self) -> None:
         self.RTW.currentWidget().handleClick()

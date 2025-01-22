@@ -15,12 +15,13 @@ from ..services import RubricService
 
 
 def _make_ex():
+    """Simulate input e.g., from client."""
     return {
         "username": "xenia",
         "kind": "neutral",
         "display_delta": ".",
         "text": "ABC",
-        "question": 1,
+        "question_index": 1,
     }
 
 

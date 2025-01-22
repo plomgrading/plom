@@ -735,7 +735,10 @@ class PageScene(QGraphicsScene):
         Currently, this doesn't actually update them, just flags them
         visually as needing updates.
         """
-        log.info("Pagescene: reacting to a possible change in rubrics")
+        if not rubric_list:
+            log.info("Pagescene: reacting to rubric change: ignoring empty input")
+            return
+        log.info("Pagescene: reacting to rubric change...")
         rid_to_rub = {r["rid"]: r for r in rubric_list}
         num_update = 0
         for X in self.items():
@@ -745,7 +748,14 @@ class PageScene(QGraphicsScene):
                     old_rub = X.as_rubric()
                     rid = old_rub["rid"]
                     old_rev = old_rub.get("revision", None)
-                    new_rev = rid_to_rub[rid].get("revision", None)
+                    rub_lookup = rid_to_rub.get(rid, None)
+                    if not rub_lookup:
+                        log.error(
+                            f"cannot find rubric {rid} in input list of"
+                            f" length {len(rubric_list)}: maybe a bug?"
+                        )
+                        continue
+                    new_rev = rub_lookup.get("revision", None)
                     if old_rev is None or new_rev is None:
                         log.warn(
                             f"[Is this legacy?] rubric rid={rid}"
@@ -757,7 +767,10 @@ class PageScene(QGraphicsScene):
                         continue
                     s = f"rubric rid {rid} rev {old_rev} needs update to rev {new_rev}"
                     log.info(s)
-                    X.update_attn_state(s, self)
+                    # Change the visual appearance of the RubricItem
+                    X.update_attn_state(s)
+                    # TODO: future rubric button work might need the scene:
+                    # X.update_attn_state(s, _scene=self)
                     num_update += 1
         if num_update:
             # TODO emit signal instead of assuming stuff about the parent
@@ -2949,6 +2962,25 @@ class PageScene(QGraphicsScene):
                 if not self.itemWithinBounds(X):
                     out_objs.append(X)
         return out_objs
+
+    def check_all_saveable_objects_are_happy(self) -> list:
+        """Checks that all objects are "happy" and not in some error state.
+
+        TODO: a future refactor might subsume the function
+        :method:`check_all_saveable_objects_inside`.
+
+        Returns:
+            All annotation (saveable) objects that are unhappy.
+        """
+        unhappy_objs = []
+        for X in self.items():
+            if getattr(X, "saveable", False):
+                # TODO: a future implementation should call X.is_happy()
+                # but for now we just hardcode some stuff
+                if isinstance(X, RubricItem):
+                    if getattr(X, "_attn_msg", ""):
+                        unhappy_objs.append(X)
+        return unhappy_objs
 
     def _updateGhost(self, rubric: dict[str, Any]) -> None:
         """Updates the ghost object based on the delta and text.

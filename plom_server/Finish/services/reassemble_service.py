@@ -15,7 +15,6 @@ from typing import Any, Tuple
 import arrow
 import zipfly
 
-from django.conf import settings
 from django.core.files import File
 from django.db import transaction
 from django.db.models import Q
@@ -30,7 +29,7 @@ from plom.finish.examReassembler import reassemble
 from Identify.models import PaperIDTask
 from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
-from Papers.models import Paper, IDPage, DNMPage
+from Papers.models import Paper, IDPage, DNMPage, MobilePage
 from Papers.services import SpecificationService
 from Scan.services import ManageScanService
 
@@ -42,8 +41,6 @@ from .student_marks_service import StudentMarkService
 
 class ReassembleService:
     """Class that contains helper functions for sending data to plom-finish."""
-
-    reassemble_dir = settings.MEDIA_ROOT / "reassemble"
 
     def get_completion_status(self) -> dict[int, tuple[bool, bool, int, datetime]]:
         """Return a dictionary of overall marking completion progress."""
@@ -178,6 +175,29 @@ class ReassembleService:
             for img in dnm_images
         ]
 
+    def _get_seen_but_nonmarked_page_images(self, paper: Paper) -> list[dict[str, Any]]:
+        """Get the path and rotation for a paper's pages that weere seen but non-marked.
+
+        TODO: eventually this should look inside the annotations to decide if
+        a page was used or not.  For efficiency, perhaps this should should
+        be done in the same code that is getting the annotation images.
+
+        Args:
+            paper: a reference to a Paper instance.
+
+        Returns:
+            List of dicts, each having keys 'filename' and 'rotation'
+            giving the path to the image and the rotation angle of the
+            image.
+        """
+        nonmarked = MobilePage.objects.filter(
+            paper=paper, question_index=MobilePage.DNM_qidx
+        )
+        return [
+            {"filename": img.image.image_file.path, "rotation": img.image.rotation}
+            for img in nonmarked
+        ]
+
     def get_annotation_images(self, paper: Paper) -> list[dict[str, Any]]:
         """Get the paths for a paper's annotation images.
 
@@ -238,14 +258,21 @@ class ReassembleService:
             id_pages = self.get_id_page_image(paper)
             dnm_pages = self.get_dnm_page_images(paper)
             marked_pages = self.get_annotation_images(paper)
+            # Another category: pages seen but not marked.
+            # Quick-n-dirty: all those extra pages with empty question_idx
+            # later: any page from any other category that has not been included
+            # (for example, if Ctrl-R is used to discard a page from every question
+            # we could include it here).
+            nonmarked = self._get_seen_but_nonmarked_page_images(paper)
             reassemble(
                 outname,
                 shortname,
                 student_id,
-                cover_file,
-                id_pages,
-                marked_pages,
-                dnm_pages,
+                coverfile=cover_file,
+                id_images=id_pages,
+                marked_pages=marked_pages,
+                dnm_images=dnm_pages,
+                nonmarked_images=nonmarked,
             )
         return outname
 

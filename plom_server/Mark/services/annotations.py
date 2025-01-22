@@ -32,7 +32,7 @@ def create_new_annotation_in_database(
     annot_img_file: InMemoryUploadedFile,
     data: dict[str, Any],
     *,
-    require_uptodate_rubrics: bool = True,
+    require_latest_rubrics: bool = True,
 ) -> Annotation:
     """Save an annotation.
 
@@ -52,7 +52,7 @@ def create_new_annotation_in_database(
             string keys by the time we see it.
 
     Keyword Args:
-        require_uptodate_rubrics: if True (the default), we check if the
+        require_latest_rubrics: if True (the default), we check if the
             rubrics in-use are (a) the latest and (b) published and
             fail if those conditions are not satisfied.
 
@@ -76,7 +76,7 @@ def create_new_annotation_in_database(
         time,
         annotation_image,
         data,
-        require_uptodate_rubrics=require_uptodate_rubrics,
+        require_latest_rubrics=require_latest_rubrics,
     )
 
 
@@ -87,7 +87,7 @@ def _create_new_annotation_in_database(
     annotation_image: AnnotationImage,
     data: dict[str, Any],
     *,
-    require_uptodate_rubrics: bool = True,
+    require_latest_rubrics: bool = True,
 ) -> Annotation:
     if task.latest_annotation:
         last_annotation_edition = task.latest_annotation.edition
@@ -108,7 +108,7 @@ def _create_new_annotation_in_database(
     )
     new_annotation.save()
     _add_annotation_to_rubrics(
-        new_annotation, require_uptodate_rubrics=require_uptodate_rubrics
+        new_annotation, require_latest_rubrics=require_latest_rubrics
     )
 
     # caution: we are writing to an object given as an input
@@ -127,7 +127,7 @@ def _extract_rubric_rid_rev_pairs(raw_annot_data) -> list[tuple[int, int]]:
 
 
 def _add_annotation_to_rubrics(
-    annotation: Annotation, *, require_uptodate_rubrics: bool
+    annotation: Annotation, *, require_latest_rubrics: bool
 ) -> None:
     """Add a relation to this annotation for every rubric that this annotation uses.
 
@@ -148,12 +148,12 @@ def _add_annotation_to_rubrics(
         for rid, rev in rid_rev_pairs:
             if (rid, rev) == (rubric.rid, rubric.revision):
                 found[(rid, rev)] = True
-                if require_uptodate_rubrics and not rubric.latest:
+                if require_latest_rubrics and not rubric.latest:
                     raise PlomConflict(
                         f"rubric rid {rid} revision {rev} is not the latest revision: "
                         "refresh your rubrics and try again"
                     )
-                if require_uptodate_rubrics and not rubric.published:
+                if require_latest_rubrics and not rubric.published:
                     raise PlomConflict(
                         f"rubric rid {rid} revision {rev} is the latest but it is "
                         "not currently published.  Someone has taken it offline, "

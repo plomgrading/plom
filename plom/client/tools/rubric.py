@@ -7,19 +7,12 @@
 
 from __future__ import annotations
 
-import random
 from copy import deepcopy
 from typing import Any
 
 from PyQt6.QtCore import QPointF, Qt
 from PyQt6.QtGui import QColor, QFont, QPen
-from PyQt6.QtWidgets import (
-    QGraphicsItemGroup,
-    QGraphicsItem,
-    QMenu,
-    QGraphicsProxyWidget,
-    QToolButton,
-)
+from PyQt6.QtWidgets import QGraphicsItemGroup, QGraphicsItem
 
 from plom.client.tools import (
     CommandTool,
@@ -29,7 +22,6 @@ from plom.client.tools import (
 )
 from plom.client.tools.delta import DeltaItem, GhostDelta
 from plom.client.tools.text import GhostText, TextItem
-from plom.client.useful_classes import InfoMsg
 
 
 class CommandRubric(CommandTool):
@@ -118,7 +110,7 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
         self.style = style
         self._rubric = deepcopy(rubric)
         self._attn_msg = ""
-        self._attn_button = None
+        # self._attn_button = None
         # TODO: replace each with @property?
         self.rubricID = rubric["rid"]
         self.kind = rubric["kind"]
@@ -154,58 +146,63 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
 
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
-        # self.update_attn_state(attn_msg, _scene)
+        # self.update_attn_state(attn_msg, _scene=_scene)
 
-    def update_attn_state(self, attn_msg: str, _scene) -> None:
-        # TODO: should an empty string CLEAR the button?
-        if not attn_msg:
-            return
+    def update_attn_state(self, attn_msg: str, *, _scene=None) -> None:
+        """Update the "attention state" of this RubricItem.
+
+        Args:
+            attn_msg: a string indicating what the problem is, that
+                will be shown as a tooltip and perhaps in other ways.
+                You can pass the empty string to reset the state to
+                NOT needing attention.
+        """
         self.setToolTip(attn_msg)
         self._attn_msg = attn_msg
-        return
-        # TODO: this button stuff disabled for now
-        if not self._attn_button:
-            self._create_attn_button(attn_msg, _scene)
-            self._attn_msg = attn_msg
-            return
-        h = self._attn_button
-        b = h.widget()
-        b.setToolTip(attn_msg)
-        rand_colour = "#" + hex(random.randint(0, 256**3 - 1))[2:]
-        b.setStyleSheet("QToolButton { background-color: " + rand_colour + "; }")
-        self._attn_msg = attn_msg
+        # # TODO: this button stuff disabled for now
+        # if not self._attn_button:
+        #     self._create_attn_button(attn_msg, _scene)
+        #     self._attn_msg = attn_msg
+        #     return
+        # h = self._attn_button
+        # b = h.widget()
+        # b.setToolTip(attn_msg)
+        # rand_colour = "#" + hex(random.randint(0, 256**3 - 1))[2:]
+        # b.setStyleSheet("QToolButton { background-color: " + rand_colour + "; }")
+        # self._attn_msg = attn_msg
 
-    def _create_attn_button(self, attn_msg: str, _scene) -> None:
-        b = QToolButton(text="\N{Warning Sign}")  # type: ignore[call-arg]
-        b.setStyleSheet("QToolButton { background-color: #0000ff; }")
-        b.clicked.connect(self._dismiss_attn_button_interactively)
-        # parenting the menu inside the scene
-        m = QMenu(b)
-        m.addAction(
-            "Show me the diff", lambda: print("Update rubric: not implemented yet")
-        )
-        m.addSeparator()
-        m.addAction("Dismiss", self._dismiss_attn_button)
-        b.setMenu(m)
-        # b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        # TODO: "most common way is to pass a widget pointer to [Scene.addWidget()]"
-        h = QGraphicsProxyWidget()
-        h.setWidget(b)
-        h.setOpacity(0.66)
-        # h.setPos(self.blurb.boundingRect().bottomRight())
-        # TODO: these magic numbers come from _tweakPositions
-        h.setPos(self.pt)
-        cr = self.di.boundingRect()
-        h.moveBy(cr.width() + 5, cr.height() / 2)
+    # # WIP currently-unused code to draw action buttons near the rubric
+    # def _create_attn_button(self, attn_msg: str, _scene) -> None:
+    #     b = QToolButton(text="\N{Warning Sign}")  # type: ignore[call-arg]
+    #     b.setStyleSheet("QToolButton { background-color: #0000ff; }")
+    #     b.clicked.connect(self._dismiss_attn_button_interactively)
+    #     # parenting the menu inside the scene
+    #     m = QMenu(b)
+    #     m.addAction(
+    #         "Show me the diff", lambda: print("Update rubric: not implemented yet")
+    #     )
+    #     m.addSeparator()
+    #     m.addAction("Dismiss", self._dismiss_attn_button)
+    #     b.setMenu(m)
+    #     # b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+    #     # TODO: "most common way is to pass a widget pointer to [Scene.addWidget()]"
+    #     h = QGraphicsProxyWidget()
+    #     h.setWidget(b)
+    #     h.setOpacity(0.66)
+    #     # h.setPos(self.blurb.boundingRect().bottomRight())
+    #     # TODO: these magic numbers come from _tweakPositions
+    #     h.setPos(self.pt)
+    #     cr = self.di.boundingRect()
+    #     h.moveBy(cr.width() + 5, cr.height() / 2)
 
-        h.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
-        h.setFlag(QGraphicsItem.GraphicsItemFlag.ItemDoesntPropagateOpacityToChildren)
-        b.setToolTip(attn_msg)
-        # TODO: both of these allow it to move but not receive mouse events
-        # self.addToGroup(h)
-        # h.setParentItem(self)
-        _scene.addItem(h)
-        self._attn_button = h
+    #     h.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
+    #     h.setFlag(QGraphicsItem.GraphicsItemFlag.ItemDoesntPropagateOpacityToChildren)
+    #     b.setToolTip(attn_msg)
+    #     # TODO: both of these allow it to move but not receive mouse events
+    #     # self.addToGroup(h)
+    #     # h.setParentItem(self)
+    #     _scene.addItem(h)
+    #     self._attn_button = h
 
     def as_rubric(self) -> dict[str, Any]:
         """Return as a rubric dict."""
@@ -287,36 +284,38 @@ class RubricItem(UndoStackMoveMixin, QGraphicsItemGroup):
     def get_delta_value(self) -> int:
         return int(self.di.value)
 
-    def _dismiss_attn_button_interactively(self):
-        if not self.scene():
-            # nothing to do if we're not in a scene any more
-            return
-        parent = self.scene().views()[0].parent()
-        # yuck, had to go way up the chain to find someone who can parent a dialog!
-        # maybe that means this code should NOT be opening dialogs
-        InfoMsg(
-            parent,
-            self._attn_msg,
-            info="""
-                Learn more about
-                <a href="https://plom.readthedocs.io/en/latest/rubrics.html">rubric
-                revisions</a>.
-            """,
-            info_pre=False,
-        ).exec()
-        self._dismiss_attn_button()
+    # # WIP currently-unused code to draw action buttons near the rubric
+    # def _dismiss_attn_button_interactively(self):
+    #     if not self.scene():
+    #         # nothing to do if we're not in a scene any more
+    #         return
+    #     parent = self.scene().views()[0].parent()
+    #     # yuck, had to go way up the chain to find someone who can parent a dialog!
+    #     # maybe that means this code should NOT be opening dialogs
+    #     InfoMsg(
+    #         parent,
+    #         self._attn_msg,
+    #         info="""
+    #             Learn more about
+    #             <a href="https://plom.readthedocs.io/en/latest/rubrics.html">rubric
+    #             revisions</a>.
+    #         """,
+    #         info_pre=False,
+    #     ).exec()
+    #     self._dismiss_attn_button()
 
-    def _dismiss_attn_button(self):
-        if not self.scene():
-            # nothing to do if we're not in a scene any more
-            return
-        if not self._attn_button:
-            # nothing to do b/c no more attn button
-            return
-        self.scene().removeItem(self._attn_button)
-        self._attn_button.deleteLater()
-        self._attn_button = None
-        self._attn_msg = ""
+    # # WIP currently-unused code to draw action buttons near the rubric
+    # def _dismiss_attn_button(self):
+    #     if not self.scene():
+    #         # nothing to do if we're not in a scene any more
+    #         return
+    #     if not self._attn_button:
+    #         # nothing to do b/c no more attn button
+    #         return
+    #     self.scene().removeItem(self._attn_button)
+    #     self._attn_button.deleteLater()
+    #     self._attn_button = None
+    #     self._attn_msg = ""
 
 
 class GhostComment(QGraphicsItemGroup):

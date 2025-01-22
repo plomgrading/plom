@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ from typing import Any
 
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.files import File
 
 from Papers.services import SpecificationService
 from Papers.models import (
@@ -212,13 +213,18 @@ class PageDataService:
             .order_by("pk")
             .prefetch_related("image")
         ):
-            question_mobile_page_count.setdefault(page.question_index, 0)
-            question_mobile_page_count[page.question_index] += 1
+            qidx = page.question_index
+            question_mobile_page_count.setdefault(qidx, 0)
+            question_mobile_page_count[qidx] += 1
+            if qidx == MobilePage.DNM_qidx:
+                pagename = f"ednm.{question_mobile_page_count[qidx]}"
+            else:
+                pagename = f"e{qidx}.{question_mobile_page_count[qidx]}"
             pages_metadata.append(
                 {
-                    "pagename": f"e{page.question_index}.{question_mobile_page_count[page.question_index]}",
+                    "pagename": pagename,
                     "md5": page.image.hash,
-                    "included": page.question_index == question,
+                    "included": qidx == question,
                     # WARNING - HACKERY HERE vvvvvvvv
                     "order": len(pages_metadata) + 1,
                     # WARNING - HACKERY HERE ^^^^^^^^
@@ -231,12 +237,23 @@ class PageDataService:
         return pages_metadata
 
     @transaction.atomic
-    def get_image_path(self, pk, img_hash):
+    def get_page_image(self, pk: int, *, img_hash: str | None = None) -> File:
         """Return the path to a page-image from its public key and hash.
 
         Args:
-            pk (int): image's public key
-            img_hash (str): image's hash
+            pk: image's public key
+
+        Keyword Args:
+            img_hash: optionally the image's hash.
+
+        Returns:
+            A Django file object.
+
+        Raises:
+            ObjectDoesNotExist: no such page image or hash does not match.
         """
-        image = Image.objects.get(pk=pk, hash=img_hash)
-        return image.image_file.path
+        if img_hash:
+            image = Image.objects.get(pk=pk, hash=img_hash)
+        else:
+            image = Image.objects.get(pk=pk)
+        return image.image_file

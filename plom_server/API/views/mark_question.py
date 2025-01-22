@@ -186,7 +186,7 @@ class QuestionMarkingViewSet(ViewSet):
         img_md5sum = data["md5sum"]
 
         try:
-            # TODO: use query param, allow client to override require_uptodate_rubrics=True?
+            # TODO: use query param, allow client to override require_latest_rubrics=True?
             QuestionMarkingService.mark_task(
                 code,
                 user=request.user,

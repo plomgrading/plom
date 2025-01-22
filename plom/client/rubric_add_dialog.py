@@ -745,6 +745,9 @@ class AddRubricBox(QDialog):
                     ", ".join(str(x) for x in com["versions"])
                 )
             params = com.get("parameters", [])
+            if not params:
+                # in case it was empty string or None or ...
+                params = []
             tags = com.get("tags", "").split()
             # TODO: Python >= 3.9: t.removeprefix("exclusive:")
             exclusive_tags = [

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
@@ -273,17 +273,16 @@ class MgetPageDataQuestionInContext(APIView):
         return Response(page_metadata, status=status.HTTP_200_OK)
 
 
+# GET: /MK/images/{image_id}/{hash}
 class MgetOneImage(APIView):
     """Get a page image from the server."""
 
     def get(self, request: Request, *, pk: int, hash: str) -> Response:
         """Get a page image."""
         pds = PageDataService()
-        # TODO - replace this fileresponse(open(file)) with fileresponse(filefield)
-        # so that we don't have explicit file-path handling.
         try:
-            img_path = pds.get_image_path(pk, hash)
-            return FileResponse(open(img_path, "rb"), status=status.HTTP_200_OK)
+            img_django_file = pds.get_page_image(pk, img_hash=hash)
+            return FileResponse(img_django_file, status=status.HTTP_200_OK)
         except Image.DoesNotExist:
             return _error_response("Image does not exist.", status.HTTP_400_BAD_REQUEST)
 

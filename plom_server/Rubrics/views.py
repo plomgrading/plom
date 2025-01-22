@@ -426,20 +426,22 @@ class RubricCreateView(ManagerRequiredView):
     def post(self, request: HttpRequest) -> HttpResponse:
         """Posting from a form to the rubric creator makes a new rubric."""
         form = RubricItemForm(request.POST)
-        if form.is_valid():
-            rs = RubricService()
-            rubric_data = {
-                "user": request.user.pk,
-                "modified_by_user": request.user.pk,
-                "text": form.cleaned_data["text"],
-                "kind": form.cleaned_data["kind"],
-                "value": form.cleaned_data["value"],
-                "out_of": form.cleaned_data["out_of"],
-                "meta": form.cleaned_data["meta"],
-                "question_index": form.cleaned_data["question_index"],
-                "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
-            }
-            rs.create_rubric(rubric_data)
+        if not form.is_valid():
+            messages.error(request, f"invalid form data: {form.errors}")
+            return redirect("rubrics_landing")
+        rs = RubricService()
+        rubric_data = {
+            "user": request.user.pk,
+            "modified_by_user": request.user.pk,
+            "text": form.cleaned_data["text"],
+            "kind": form.cleaned_data["kind"],
+            "value": form.cleaned_data["value"],
+            "out_of": form.cleaned_data["out_of"],
+            "meta": form.cleaned_data["meta"],
+            "question_index": form.cleaned_data["question_index"],
+            "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
+        }
+        rs.create_rubric(rubric_data)
         messages.success(request, "Rubric created successfully.")
         return redirect("rubrics_landing")
 
@@ -450,25 +452,29 @@ class RubricEditView(ManagerRequiredView):
     def post(self, request: HttpRequest, *, rid: int) -> HttpResponse:
         """Posting from a form to to edit an existing rubric."""
         form = RubricItemForm(request.POST)
-        if form.is_valid():
-            rs = RubricService()
-            rubric = rs.get_rubric_by_rid(rid)
-            rubric_data = {
-                "username": request.user.username,
-                "text": form.cleaned_data["text"],
-                "kind": form.cleaned_data["kind"],
-                "value": form.cleaned_data["value"],
-                "out_of": form.cleaned_data["out_of"],
-                "meta": form.cleaned_data["meta"],
-                "question_index": form.cleaned_data["question_index"],
-                "revision": rubric.revision,
-                "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
-            }
-            rs.modify_rubric(
-                rid,
-                new_rubric_data=rubric_data,
-                modifying_user=User.objects.get(username=request.user.username),
-                tag_tasks=False,
-            )
+        if not form.is_valid():
+            messages.error(request, f"invalid form data: {form.errors}")
+            return redirect("rubric_item", rid)
+        rs = RubricService()
+        rubric = rs.get_rubric_by_rid(rid)
+        rubric_data = {
+            "username": request.user.username,
+            "text": form.cleaned_data["text"],
+            "kind": form.cleaned_data["kind"],
+            "value": form.cleaned_data["value"],
+            "out_of": form.cleaned_data["out_of"],
+            "meta": form.cleaned_data["meta"],
+            "question_index": form.cleaned_data["question_index"],
+            "versions": form.cleaned_data["versions"],
+            "parameters": form.cleaned_data["parameters"],
+            "revision": rubric.revision,
+            "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
+        }
+        rs.modify_rubric(
+            rid,
+            new_rubric_data=rubric_data,
+            modifying_user=User.objects.get(username=request.user.username),
+            tag_tasks=False,
+        )
         messages.success(request, "Rubric edited successfully.")
         return redirect("rubric_item", rid)
