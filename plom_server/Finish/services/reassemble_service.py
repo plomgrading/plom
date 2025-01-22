@@ -726,6 +726,24 @@ class ReassembleService:
         last_paper: int | None = None,
         chunksize: int = 1024 * 1024,
     ):
+        """Return a generator that can stream a zipfile of some papers without building in memory.
+
+        Args:
+            short_name: TODO: appears to be unused.
+
+        Keyword Args:
+            first_paper: optionally grab papers greater than or equal
+                to this paper number.  Omit or `None` for no restriction.
+            last_paper: optionally grab papers less than or equal to
+                this number.  Omit or `None` for no restriction.
+            chunksize: a parameter related to the building on fthe zipfile.
+
+        Returns:
+            Some sort of generator for the zipfile streamer.
+
+        Raises:
+            ValueError: if there are no reassembled papers in the requested range.
+        """
         paths = [
             {
                 "fs": pdf_file.path,
@@ -743,6 +761,11 @@ class ReassembleService:
         #     for report_pdf_file, report_display_filename in self.get_completed_report_files_and_names()
         # ]
 
+        if not paths:
+            # TODO: better None handling here
+            raise ValueError(
+                f"There are no reassembled papers in the range {first_paper}, {last_paper}"
+            )
         # zfly = zipfly.ZipFly(paths=paths + report_paths, chunksize=chunksize)
         zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)
         return zfly.generator()
