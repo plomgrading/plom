@@ -736,7 +736,7 @@ class ReassembleService:
                 to this paper number.  Omit or `None` for no restriction.
             last_paper: optionally grab papers less than or equal to
                 this number.  Omit or `None` for no restriction.
-            chunksize: a parameter related to the building on fthe zipfile.
+            chunksize: a parameter related to the building of the zipfile.
 
         Returns:
             Some sort of generator for the zipfile streamer.
@@ -762,10 +762,13 @@ class ReassembleService:
         # ]
 
         if not paths:
-            # TODO: better None handling here
-            raise ValueError(
-                f"There are no reassembled papers in the range {first_paper}, {last_paper}"
-            )
+            rng1 = f"{first_paper} <= " if first_paper is not None else ""
+            rng2 = f" <= {last_paper}" if last_paper is not None else ""
+            if rng1 or rng2:
+                rng_msg = " satisfying " + rng1 + "paper_number" + rng2
+            else:
+                rng_msg = ""
+            raise ValueError("There are no reassembled papers" + rng_msg)
         # zfly = zipfly.ZipFly(paths=paths + report_paths, chunksize=chunksize)
         zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)
         return zfly.generator()
