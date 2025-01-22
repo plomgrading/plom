@@ -141,7 +141,7 @@ class MiscIncomingAnnotationsTests(TestCase):
         }
         with self.assertRaisesRegex(PlomConflict, "not the latest revision"):
             _create_new_annotation_in_database(
-                task, 3.0, 21, img, data, require_uptodate_rubrics=True
+                task, 3.0, 21, img, data, require_latest_rubrics=True
             )
 
     def test_marking_submits_unpublished_rubric(self) -> None:
@@ -166,5 +166,5 @@ class MiscIncomingAnnotationsTests(TestCase):
         }
         with self.assertRaisesRegex(PlomConflict, "not currently published"):
             _create_new_annotation_in_database(
-                task, 3.0, 21, img, data, require_uptodate_rubrics=True
+                task, 3.0, 21, img, data, require_latest_rubrics=True
             )
