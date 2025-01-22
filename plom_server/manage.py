@@ -2,7 +2,7 @@
 
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023, 2025 Colin B. Macdonald
 
 """Django's command-line utility for administrative tasks."""
 
@@ -13,15 +13,6 @@ import sys
 def main():
     """Run administrative tasks."""
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Web_Plom.settings")
-
-    # For running in a VSC debugger: https://testdriven.io/blog/django-debugging-vs-code/
-    from django.conf import settings
-
-    if settings.DEBUG:
-        if os.environ.get("RUN_MAIN") or os.environ.get("WERKZEUG_RUN_MAIN"):
-            import debugpy
-
-            debugpy.listen(("0.0.0.0", 3000))
 
     try:
         from django.core.management import execute_from_command_line
