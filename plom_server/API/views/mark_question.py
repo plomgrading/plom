@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024 Bryan Tanady
@@ -186,6 +186,7 @@ class QuestionMarkingViewSet(ViewSet):
         img_md5sum = data["md5sum"]
 
         try:
+            # TODO: use query param, allow client to override require_latest_rubrics=True?
             QuestionMarkingService.mark_task(
                 code,
                 user=request.user,

@@ -105,11 +105,13 @@ def isLegalRubric(rubric: dict[str, Any], *, scene, version: int, max_mark: int)
 
 def render_params(
     template: str,
-    params: Sequence[tuple[str, Sequence[str]]],
+    params: Sequence[tuple[str, Sequence[str]]] | None,
     ver: int,
 ) -> str:
     """Perform version-dependent substitutions on a template text."""
     s = template
+    if not params:
+        return s
     for param, values in params:
         s = s.replace(param, values[ver - 1])
     return s
