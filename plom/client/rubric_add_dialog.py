@@ -57,7 +57,7 @@ from PyQt6.QtWidgets import (
 
 from plom.misc_utils import next_in_longest_subsequence
 from . import icons
-from .useful_classes import InfoMsg, SimpleQuestion, WarnMsg
+from .useful_classes import InfoMsg, WarnMsg, SimpleQuestion
 
 
 # TODO this object only allows int inputs, replace to allow float scores

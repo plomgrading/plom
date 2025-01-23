@@ -102,7 +102,7 @@ from .elastics import (
 from .useful_classes import SimpleQuestion
 
 
-log = logging.getLogger("pagescene")
+log = logging.getLogger("scene")
 
 
 class ScoreBox(QGraphicsTextItem):
