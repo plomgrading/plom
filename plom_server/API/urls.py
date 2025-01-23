@@ -55,6 +55,7 @@ urlpatterns = [
     path(AnnotationPatterns.prefix, include(AnnotationPatterns.patterns())),
     path(AnnotationImagePatterns.prefix, include(AnnotationImagePatterns.patterns())),
     path(TagsURLPatterns.prefix, include(TagsURLPatterns.patterns())),
+    # TODO: Issue #3786: eventually remove the "beta" from these provisional URLs
     path(
         "api/beta/scan/bundles",
         ScanListBundles.as_view(),
