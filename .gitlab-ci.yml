@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2019 John Hsu
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2022-2023 Edith Coates
@@ -391,13 +391,13 @@ mypy-type-checking:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - python3 -m pip install mypy~=1.14.0
+    - python3 -m pip install mypy~=1.14.1
   script:
     - mypy --version
-    - mypy plom --python-ver 3.8 --install-types --non-interactive || true
-    - mypy plom --python-ver 3.8
-    - mypy plom_server --python-ver 3.8 --install-types --non-interactive || true
-    - mypy plom_server --python-ver 3.8
+    - mypy plom --python-ver 3.10 --install-types --non-interactive || true
+    - mypy plom --python-ver 3.10
+    - mypy plom_server --python-ver 3.10 --install-types --non-interactive || true
+    - mypy plom_server --python-ver 3.10
   allow_failure: true
 
 
@@ -451,7 +451,7 @@ count-no-docstring:
     - ruff check --select $EXCEPTIONS --statistics --exit-zero
     - echo "Total $HOWMANY things without docstrings, please don't increase it"
     # Dear hackers: please try to decrease this number
-    - bash -c "[[ $HOWMANY -le 1515 ]]"
+    - bash -c "[[ $HOWMANY -le 1505 ]]"
   allow_failure: true
 
 
@@ -465,7 +465,7 @@ no-question-numbers:
     # For now, just ensure the total does not increase
     - echo $HOW_MANY
     # Future hackers: consider trying to decrease this number
-    - bash -c "[[ $HOW_MANY -le 30 ]]"
+    - bash -c "[[ $HOW_MANY -le 28 ]]"
   allow_failure: true
 
 
@@ -996,13 +996,13 @@ newOS_newdeps_webplom:
 
 
 # Ensure minimum listed dependency versions actually work on older system
-# 1. oldest reasonably supported popular OS
-# 2. take python deps from package manager
+# 1. oldest reasonably supported popular OS (Ubuntu 22.04)
+# 2. take python deps from package manager (22.04 has Python 3.10)
 # 3. force the minimum version from setup.py
 # Goal here is to catch changes that need newer features of a dependency.
 oldOS_mindeps:
   stage: alt_build
-  image: ubuntu:20.04
+  image: ubuntu:22.04
   before_script:
     - apt-get update
     - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
@@ -1070,14 +1070,13 @@ oldOS_mindeps:
 # Minimum Python, minimum deps
 minpy_mindeps:
   stage: alt_build
-  image: python:3.8
+  image: python:3.10
   before_script:
     - apt-get update
     - apt-get --no-install-recommends --yes install
       cmake make imagemagick dvipng g++
       texlive-latex-extra latexmk texlive-fonts-recommended
       libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
-    - pip install pytest
   script:
     - pip install -r requirements.txt.tempminima
     - pip install .
@@ -1096,7 +1095,7 @@ minpy_mindeps_webplom:
     POSTGRES_HOST_AUTH_METHOD: trust
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
-  image: python:3.8
+  image: python:3.10
   before_script:
     - apt-get update
     - apt-get --no-install-recommends --yes install
@@ -1124,13 +1123,13 @@ binary_upload:
    - if: $CI_COMMIT_TAG
   script:
     - ls
-    - md5sum PlomClient*
     - |
       tee release_desc.md <<EOF
       ## Installation instructions
 
       Please see [plomgrading.org](https://plomgrading.org).
-      If you're here looking for Clients, see "Plom Client" packages above.
+      If you're here looking for Clients, see the
+      "[Plom Client packages](https://gitlab.com/plom/plom-client)" instead.
 
 
       #### Changes in this release
@@ -1142,351 +1141,28 @@ binary_upload:
     # strip the leading v in v0.x.y: don't see how to do this without dotenv
     - export VER=${CI_COMMIT_TAG:1}
     - echo $VER
-    - export LINKNAME0="Plom Client for GNU/Linux (AppImage)"
-    - export LINKNAME1="Plom Client for Windows (Windows ≥ 10, x86-64)"
-    - export LINKNAME2="Plom Client for older Mac (x86_64, macOS ≥ 13)"
-    - export LINKNAME3="Plom Client for newer Mac (arm64, macOS ≥ 13)"
-    - export FILENAME0="PlomClient-$VER-x86_64.AppImage"
-    - export FILENAME1="PlomClient-$VER.exe"
-    - export FILENAME2="PlomClient-$VER-macos13-x86_64.zip"
-    - export FILENAME3="PlomClient-$VER-macos13-arm64.zip"
     - echo "#### artifact md5 hashes" >> "release_desc.md"
     - echo "" >> "release_desc.md"
     - md5sum dist/plom*.tar.gz | sed -e "s/^/    /" | sed -e "s/dist\///" >> "release_desc.md"
-    - md5sum $FILENAME0 | sed -e "s/^/    /" >> "release_desc.md"
-    - md5sum $FILENAME1 | sed -e "s/^/    /" >> "release_desc.md"
-    - md5sum $FILENAME2 | sed -e "s/^/    /" >> "release_desc.md"
-    - md5sum $FILENAME3 | sed -e "s/^/    /" >> "release_desc.md"
     - echo "" >> "release_desc.md"
     - echo "" >> "release_desc.md"
     - echo "#### artifact sha256 hashes" >> "release_desc.md"
     - echo "" >> "release_desc.md"
     - sha256sum dist/plom*.tar.gz | sed -e "s/^/    /" | sed -e "s/dist\///" >> "release_desc.md"
-    - sha256sum $FILENAME0 | sed -e "s/^/    /" >> "release_desc.md"
-    - sha256sum $FILENAME1 | sed -e "s/^/    /" >> "release_desc.md"
-    - sha256sum $FILENAME2 | sed -e "s/^/    /" >> "release_desc.md"
-    - sha256sum $FILENAME3 | sed -e "s/^/    /" >> "release_desc.md"
-    - export URL0="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME0"
-    - export URL1="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-windows/$VER/$FILENAME1"
-    - export URL2="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-macos/$VER/$FILENAME2"
-    - export URL3="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-macos/$VER/$FILENAME3"
     - export OTHER_URL1="https://pypi.org/project/plom"
-    - export OTHER_URL2="https://flathub.org/apps/details/org.plomgrading.PlomClient"
     - export OTHER_URL3="https://hub.docker.com/r/plomgrading/server"
     - export OTHER_LINKNAME1="Find Plom on PyPI"
-    - export OTHER_LINKNAME2="Install Plom Client from Flathub (GNU/Linux)"
     - export OTHER_LINKNAME3="Plom Server on DockerHub"
     - echo "OTHER_URL1=$OTHER_URL1" >> release_info.env
-    - echo "OTHER_URL2=$OTHER_URL2" >> release_info.env
     - echo "OTHER_URL3=$OTHER_URL3" >> release_info.env
     - echo "OTHER_LINKNAME1=$OTHER_LINKNAME1" >> release_info.env
-    - echo "OTHER_LINKNAME2=$OTHER_LINKNAME2" >> release_info.env
     - echo "OTHER_LINKNAME3=$OTHER_LINKNAME3" >> release_info.env
-    - echo "LINKNAME0=$LINKNAME0" >> release_info.env
-    - echo "LINKNAME1=$LINKNAME1" >> release_info.env
-    - echo "LINKNAME2=$LINKNAME2" >> release_info.env
-    - echo "LINKNAME3=$LINKNAME3" >> release_info.env
-    - echo "URL0=$URL0" >> release_info.env
-    - echo "URL1=$URL1" >> release_info.env
-    - echo "URL2=$URL2" >> release_info.env
-    - echo "URL3=$URL3" >> release_info.env
-    - echo "FILENAME0=$FILENAME0" >> release_info.env
-    - echo "FILENAME1=$FILENAME1" >> release_info.env
-    - echo "FILENAME2=$FILENAME2" >> release_info.env
-    - echo "FILENAME3=$FILENAME3" >> release_info.env
-    # actually do the uploads
-    - |
-      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME0 "$URL0"
-    - |
-      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME1 "$URL1"
-    - |
-      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME2 "$URL2"
-    - |
-      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME3 "$URL3"
     - cat release_desc.md
   artifacts:
     paths:
       - release_desc.md
     reports:
       dotenv: release_info.env
-    expire_in: 16 days
-
-
-# Build Client Binaries
-# These are run once tests pass: to change re-add `needs: []`
-linux_client_appimage:
-  stage: packaging
-  script:
-    - docker build --tag appimagebuilder_tmp -f AppImageBuilder.Containerfile .
-    - docker create -ti --name dummy appimagebuilder_tmp bash
-    - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
-    - export NAME=PlomClient-$VER-x86_64.AppImage
-    - docker cp dummy:/app/$NAME .
-    - docker rm -f dummy
-    - md5sum $NAME > md5sum
-    - ls $NAME
-    - cat md5sum
-  artifacts:
-    paths:
-    - PlomClient*.AppImage
-    - md5sum
-    expire_in: 16 days
-
-
-# TODO: broken by the upgrade to PyQt6, currently set to manual
-linuxbin_ubuntu2004:
-  stage: packaging
-  when: manual
-  allow_failure: true
-  image: ubuntu:20.04
-  before_script:
-    - apt-get update
-    - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
-    - apt-get --no-install-recommends --yes install iproute2 psmisc file binutils
-      python3 python3-dev python3-wheel python3-setuptools python3-pip
-    - apt-get install -y libglib2.0 libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3 libxcb-cursor0
-    - pip install --upgrade pip
-    - pip install pyinstaller
-  script:
-    - pip install -r requirements.txt.client
-    - pyinstaller client.linux.spec
-    - export VER=$(python3 -c "from plom import __version__; print(__version__)")
-    - echo "Extracted version string '$VER'"
-    - export NAME=PlomClient-$VER-linux-ubuntu2004.bin
-    - mv dist/PlomClient*.bin $NAME
-    - chmod 755 $NAME
-    - md5sum $NAME > md5sum
-    - ls $NAME
-    - cat md5sum
-  artifacts:
-    paths:
-    - PlomClient*.bin
-    - md5sum
-    expire_in: 16 days
-
-
-linuxbin_ubuntu2204:
-  stage: packaging
-  image: ubuntu:22.04
-  before_script:
-    - apt-get update
-    - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
-    - apt-get --no-install-recommends --yes install iproute2 psmisc file binutils
-      python3 python3-dev python3-wheel python3-setuptools python3-pip
-    - apt-get install -y libglib2.0 libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3 libxcb-cursor0
-    - pip install --upgrade pip
-    - pip install pyinstaller
-    - pip install . --no-deps  # pyinstaller spec needs version
-  script:
-    - pip install -r requirements.txt.client
-    - pyinstaller client.linux.spec
-    - export VER=$(python3 -c "from plom import __version__; print(__version__)")
-    - echo "Extracted version string '$VER'"
-    - export NAME=PlomClient-$VER-linux-ubuntu2204.bin
-    - mv dist/PlomClient*.bin $NAME
-    - chmod 755 $NAME
-    - md5sum $NAME > md5sum
-    - ls $NAME
-    - cat md5sum
-  artifacts:
-    paths:
-    - PlomClient*.bin
-    - md5sum
-    expire_in: 16 days
-
-
-# Notes on macOS client builds
-# - June 2023, we now have only M1 (arm64) runners:
-#     - goal remains universal2 binary: Issue #1655
-#     - for now, we use Rosetta2 to cross compile onto x86_64
-# - Aug 2021, based on https://github.com/danhper/asdf-python/issues/38 we used:
-#     - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python $MACBIN_PY_VER
-#   Not sure what this was for but it broke in 2023-Jan (Issue #2478).  I tried:
-#   "--enable-framework=/Users/gitlab/.asdf/installs/Library/Frameworks" asdf ...
-#   Also "--enable-shared", but it seems to work without any of these things?
-# - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
-# - to get hardcoded path: verbose `pip install -v -v pyinstaller`
-macos13_universal_client:
-  image: macos-13-xcode-14
-  tags:
-  - saas-macos-medium-m1
-  rules:
-  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    when: never
-  - if: $CI_PROJECT_PATH == "plom/plom"
-    when: manual
-  allow_failure: true
-  stage: alt_build
-  needs: []
-  variables:
-    HOMEBREW_NO_AUTO_UPDATE: 1
-    HOMEBREW_NO_INSTALL_CLEANUP: 1
-    HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
-  script:
-  - pwd
-  - sw_vers
-  - uname -a
-  - uname -m
-  - echo $SHELL
-  - which python
-  - python --version
-  - pip --version
-  - uname -m
-  - arch -x86_64 uname -m
-  - brew --version
-  - brew install ninja
-  - brew install cmake
-  - brew install numpy
-  # quite likely the built-in python would work...  but below we install latest
-  - arch -x86_64 /usr/bin/python3 --version
-  - arch -arm64 /usr/bin/python3 --version
-  - /usr/bin/python3 -m pip --version
-  # install specific python
-  - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
-  - sudo installer -pkg python.pkg -target /
-  - python3 --version
-  - /usr/bin/python3 --version
-  - /usr/local/bin/python3 --version
-  - arch -x86_64 /usr/local/bin/python3 --version
-  - /usr/local/bin/python3 -m pip install --upgrade pip
-  - which pip
-  - which pip3
-  - pip --version
-  # hacks for charset_normalizer, following https://github.com/machawk1/wail/pull/562/
-  - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
-  # /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
-  # arch -x86_64 /usr/local/bin/python3 -m pip install Pillow --no-binaries
-  # numpy fails complaining about blas, try from brew instead?
-  # /usr/local/bin/python3 -m pip install numpy --no-binary ":all:"
-  - /usr/local/bin/python3 -m pip install Pillow --no-binary ":all:"
-  - /usr/local/bin/python3 -m pip install -r requirements.txt.client
-  - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
-  - /usr/local/bin/python3 -m pip install pyinstaller~=6.11.1
-  - /usr/local/bin/python3 -m pip install . --no-deps  # pyinstaller spec needs version
-  - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-universal2.spec
-  - ls dist/
-  - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
-  - echo "Extracted version string '$VER'"
-  - export ZIPNAME=PlomClient-$VER-macos13.zip
-  - pushd dist
-  - ls
-  - ls -sklR PlomClient-$VER-universal2.app
-  - zip -r $ZIPNAME PlomClient-$VER.app
-  - popd
-  - mv dist/$ZIPNAME $ZIPNAME
-  - md5 $ZIPNAME > md5sum
-  - ls $ZIPNAME
-  - cat md5sum
-  artifacts:
-    paths:
-    - PlomClient*.zip
-    - md5sum
-    expire_in: 16 days
-
-
-macos13_arm64_client:
-  image: macos-13-xcode-14
-  tags:
-  - saas-macos-medium-m1
-  rules:
-  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    when: never
-  - if: $CI_PROJECT_PATH == "plom/plom"
-  stage: packaging
-  script:
-  - pwd
-  - sw_vers
-  - uname -a
-  - uname -m
-  - echo $SHELL
-  - which python
-  - python --version
-  - pip --version
-  - uname -m
-  - /usr/bin/python3 -m pip --version
-  - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
-  - sudo installer -pkg python.pkg -target /
-  - python3 --version
-  - /usr/bin/python3 --version
-  - /usr/local/bin/python3 --version
-  - /usr/local/bin/python3 -m pip install --upgrade pip
-  - /usr/local/bin/python3 -m pip install -r requirements.txt.client
-  - /usr/local/bin/python3 -m pip install pyinstaller~=6.11.1
-  - /usr/local/bin/python3 -m pip install . --no-deps  # pyinstaller spec needs version
-  - /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos.spec
-  - ls dist/
-  - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
-  - echo "Extracted version string '$VER'"
-  - export ZIPNAME=PlomClient-$VER-macos13-arm64.zip
-  - pushd dist
-  - ls
-  - ls -sklR PlomClient-$VER-arm64.app
-  - zip -r $ZIPNAME PlomClient-$VER-arm64.app
-  - popd
-  - mv dist/$ZIPNAME $ZIPNAME
-  - md5 $ZIPNAME > md5sum
-  - ls $ZIPNAME
-  - cat md5sum
-  artifacts:
-    paths:
-    - PlomClient*.zip
-    - md5sum
-    expire_in: 16 days
-
-
-macos13_x86_64_client:
-  image: macos-13-xcode-14
-  tags:
-  - saas-macos-medium-m1
-  rules:
-  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    when: never
-  - if: $CI_PROJECT_PATH == "plom/plom"
-  stage: packaging
-  script:
-  - pwd
-  - sw_vers
-  - uname -a
-  - uname -m
-  - echo $SHELL
-  - which python
-  - python --version
-  - pip --version
-  - uname -m
-  - arch -x86_64 uname -m
-  # quite likely the built-in python would work...  but below we install latest
-  - arch -x86_64 /usr/bin/python3 --version
-  # install specific python
-  - curl https://www.python.org/ftp/python/$MACBIN_PY_VER/python-$MACBIN_PY_VER-macos11.pkg --output python.pkg
-  - sudo installer -pkg python.pkg -target /
-  - python3 --version
-  - /usr/bin/python3 --version
-  - /usr/local/bin/python3 --version
-  - arch -x86_64 /usr/local/bin/python3 --version
-  - arch -x86_64 /usr/local/bin/python3 -m pip install --upgrade pip
-  # hacks for charset_normalizer, following https://github.com/machawk1/wail/pull/562/
-  - arch -x86_64 /usr/local/bin/python3 -m pip install "charset_normalizer<3.0"
-  - arch -x86_64 /usr/local/bin/python3 -m pip install -r requirements.txt.client
-  - arch -x86_64 /usr/local/bin/python3 -m pip install pyinstaller~=6.11.1
-  - arch -x86_64 /usr/local/bin/python3 -m pip install . --no-deps  # pyinstaller spec needs version
-  - arch -x86_64 /Library/Frameworks/Python.framework/Versions/${MACBIN_PY_MAJOR_MINOR_VER}/bin/pyinstaller client.macos-x86_64.spec
-  - ls dist/
-  - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
-  - echo "Extracted version string '$VER'"
-  - export ZIPNAME=PlomClient-$VER-macos13-x86_64.zip
-  - pushd dist
-  - ls
-  - ls -sklR PlomClient-$VER-x86_64.app
-  - zip -r $ZIPNAME PlomClient-$VER-x86_64.app
-  - popd
-  - mv dist/$ZIPNAME $ZIPNAME
-  - md5 $ZIPNAME > md5sum
-  - ls $ZIPNAME
-  - cat md5sum
-  artifacts:
-    paths:
-    - PlomClient*.zip
-    - md5sum
     expire_in: 16 days
 
 
@@ -1558,56 +1234,3 @@ macos_server_webplom:
   - export PLOM_DATABASE_BACKEND=sqlite
   - python manage.py test
   - popd
-
-
-# winmintest:
-#   tags:
-#   - saas-windows-medium-amd64
-#   stage: test
-#   needs: []
-#   script:
-#   - choco install -y python311
-#   - refreshenv
-#   - c:\Python311\Scripts\pip install -r requirements.txt.client
-#   - refreshenv
-#   - echo $Env:Path
-#   - c:\Python311\python -m plom.client -h
-
-
-# Build Windows client binaries
-# This section written in PowerShell
-winpyinst:
-  tags:
-  - saas-windows-medium-amd64
-  stage: packaging
-  before_script:
-  - choco install -y python311
-  - Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
-  - refreshenv
-  - c:\python311\python -m pip --version
-  - c:\python311\python -m pip install --user --upgrade pip
-  - c:\python311\python -m pip --version
-  - c:\python311\python -m pip install --user --upgrade setuptools packaging wheel
-  - refreshenv
-  script:
-  - c:\python311\python -m pip install -r requirements.txt.client
-  - refreshenv
-  # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
-  - c:\python311\python -m pip install pyinstaller~=6.11.1
-  - refreshenv
-  - c:\python311\python -m pip install . --no-deps  # pyinstaller spec needs version
-  - refreshenv
-  - c:\python311\python -m plom.client -h
-  - c:\python311\scripts\pyinstaller client.windows.spec
-  - $VER = &"c:\python311\python" -c "from plom import __version__; print(__version__)"
-  - echo "Extracted version string '$VER'"
-  - $NAME = "PlomClient-$VER.exe"
-  - move dist\PlomClient*.exe $NAME
-  - CertUtil -hashfile $NAME MD5 > md5sum.txt
-  - ls $NAME
-  - type md5sum.txt
-  artifacts:
-    paths:
-    - PlomClient*.exe
-    - md5sum.txt
-    expire_in: 16 days

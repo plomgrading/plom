@@ -2,23 +2,17 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 
 import csv
-import sys
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
+from importlib import resources
 
 import plom
 from plom.aliceBob import (
-    simple_password,
-    make_random_user_list,
     make_numbered_user_list,
+    make_random_user_list,
+    simple_password,
 )
-
 
 list_of_required_users = ["manager", "scanner", "reviewer"]
 minimum_number_of_required_users = 4

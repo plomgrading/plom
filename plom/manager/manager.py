@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
@@ -8,24 +8,18 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Natalie Balashov
 
-from collections import defaultdict
 import html
 import logging
 import os
-from pathlib import Path
-import sys
 import tempfile
+from collections import defaultdict
+from importlib import resources
+from pathlib import Path
 from time import time
 
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
-
 import arrow
-
 from PyQt6 import uic
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import (
     QBrush,
     QColor,
@@ -40,8 +34,8 @@ from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QFileDialog,
-    QGroupBox,
     QGridLayout,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -2173,7 +2167,7 @@ class Manager(QWidget):
         self.ui.reassembleFolderLineEdit.setText(str(dur))
 
     def reassemblePapers(self):
-        from plom.finish import reassemble_paper, reassemble_all_papers
+        from plom.finish import reassemble_all_papers, reassemble_paper
 
         # TODO: better to display progress bar, for now tqdm appears on stdout
         self.Qapp.setOverrideCursor(Qt.CursorShape.WaitCursor)

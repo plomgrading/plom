@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Divy Patel
-    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2024 Aidan Murphy
     Copyright (C) 2024 Aden Chan
 -->
@@ -24,9 +24,7 @@
                 <div class="card">
                     <h5 class="card-header d-flex justify-content-between align-items-center">
                         Rubric {{ latest_rubric.rid }}, revision {{ latest_rubric.revision }}
-                        <!-- Button semi-function but disabled pending Issue #3556 -->
-                        <a class="btn btn-outline-primary float-end disabled"
-                           disabled
+                        <a class="btn btn-outline-primary float-end"
                            data-bs-toggle="modal"
                            data-bs-target="#editModal"
                            onclick="populateFields()">
@@ -42,8 +40,8 @@
                                     <td>{{ latest_rubric.rid }}</td>
                                 </tr>
                                 <tr>
-                                    <th scope="row">Question</th>
-                                    <td>{{ latest_rubric.question }}</td>
+                                    <th scope="row">Question idx</th>
+                                    <td>{{ latest_rubric.question_index }}</td>
                                 </tr>
                                 <tr>
                                     <th scope="row">Kind</th>
@@ -79,6 +77,14 @@
                                 <tr>
                                     <th scope="row">Meta</th>
                                     <td>{{ latest_rubric.meta }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Scope</th>
+                                    <td>
+                                        versions: {{ latest_rubric.versions }}
+                                        <br />
+                                        params: {{ latest_rubric.parameters }}
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th scope="row">Tags</th>

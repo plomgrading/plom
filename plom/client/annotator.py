@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2024 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2022 Natalia Accomazzo Scotti
@@ -9,7 +9,7 @@
 
 from __future__ import annotations
 
-__copyright__ = "Copyright (C) 2018-2024 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2018-2025 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -18,15 +18,10 @@ import json
 import logging
 import os
 import re
-import sys
+from importlib import resources
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, Dict
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
 
 from PyQt6 import QtGui, uic
 from PyQt6.QtCore import (
@@ -247,13 +242,22 @@ class Annotator(QWidget):
         self.setToolShortCuts()
         self.setMinorShortCuts()
 
-    def update_attn_bar(self, *, tags: list[str] = [], show: bool = False) -> None:
+    def update_attn_bar(
+        self, *, tags: list[str] = [], msg: str = "", show: bool = False
+    ) -> None:
         """Update the attention bar to show notifications to the user.
+
+        Note: calling this twice will hide the previous message, so you
+        cannot currently call attention to multiple situations automatically.
+        Perhaps a future revision would create new bars on each call, and
+        destroy them on dismiss.
 
         Keyword Args:
             show: force showing the notification (default: False).
             tags: a list of tags: if non-empty we'll generate appropriate
                 text and show the notification bar.
+            msg: a text message to show.  Can include html (so you may
+                need to html-escape it first).
         """
         # TODO: share with Identifier?
         warning_yellow_style = "background-color: #FFD700; color: #000"
@@ -262,9 +266,12 @@ class Annotator(QWidget):
         secondary_explanation = ""
         if tags:
             tagstr = ", ".join(f"&ldquo;{html.escape(t)}&rdquo;" for t in tags)
-            notification_str = f"<p>This task is tagged {tagstr}</p>"
+            notification_str += f"<p>This task is tagged {tagstr}</p>"
+        if msg:
+            notification_str += f"<p>{msg}</p>"
         self.ui.attnLeftLabel.setText(notification_str)
         self.ui.attnRightLabel.setText(secondary_explanation)
+        # self.ui.attnRightLabel.setVisible(False)  # not yet used
         self.ui.attnClearButton.setVisible(False)  # not yet used
         if show or notification_str:
             self.ui.attnFrame.setVisible(True)
@@ -1493,6 +1500,25 @@ class Annotator(QWidget):
             InfoMsg(
                 self, "Please make an annotation, even if there is no answer."
             ).exec()
+            return False
+
+        unhappy_objs = self.scene.check_all_saveable_objects_are_happy()
+        if unhappy_objs:
+            msg = f"{len(unhappy_objs)} annotations are unhappy."
+            msg += " Probably these are rubrics that have been updated on"
+            msg += " the server.."
+            info = "<p>The unhappy objects should be highlighted in orange."
+            info += " Please sync your rubrics and manually edit.  A future"
+            info += " update to Plom may make this process easier.</p>"
+            details = "## Unhappy objects\n\n  "
+            details += "\n".join(str(x) for x in unhappy_objs)
+            details += "\n\n## All objects\n\n  "
+            details += "\n".join(str(x) for x in self.scene.items())
+            details += "\n\n## Object serialization\n\n  "
+            details += "\n".join(str(x) for x in self.scene.pickleSceneItems())
+            WarnMsg(self, msg, info=info, info_pre=False, details=details).exec()
+            # Note: we could ask a question here and let the user "submit anyway"
+            # and that might be a good idea if we find any bugs in this code...
             return False
 
         # check annotations are inside the margins

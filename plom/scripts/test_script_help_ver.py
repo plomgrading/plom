@@ -1,18 +1,19 @@
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020, 2025 Colin B. Macdonald
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import importlib.metadata
 import subprocess
-import pkg_resources
+
+
 from plom import __version__
 
 
 def find_my_console_scripts(package_name):
-    # Get list of console scripts
-    # https://stackoverflow.com/questions/35275787/create-a-list-of-console-scripts-defined-in-a-python-package
+    # Note I think this gets what is installed rather than the dev-tree
     entrypoints = (
         ep.name
-        for ep in pkg_resources.iter_entry_points("console_scripts")
-        if ep.module_name.startswith(package_name)
+        for ep in importlib.metadata.entry_points(group="console_scripts")
+        if ep.name.startswith(package_name)
     )
     return entrypoints
 

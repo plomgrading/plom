@@ -1,27 +1,32 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from __future__ import annotations
-from collections import defaultdict
+
 import hashlib
 import pathlib
-from pathlib import Path
 import tempfile
+from collections import defaultdict
+from pathlib import Path
 from typing import Any
+
 import pymupdf as fitz
 from django.core.files import File
 from django.db import transaction
+
+from Papers.models import ReferenceImage
 from Papers.services import SpecificationService
-from ..models import PaperSourcePDF
+from Preparation.services.mocker import ExamMockerService
 from Preparation.services.preparation_dependency_service import (
     assert_can_modify_sources,
 )
-from Preparation.services.mocker import ExamMockerService
-from plom.scan import QRextract
 from Scan.services import ScanService
-from Papers.models import ReferenceImage
+
+from plom.scan import QRextract
+
+from ..models import PaperSourcePDF
 
 
 def _get_source_file(source_version: int) -> File:
@@ -37,6 +42,15 @@ def _get_source_file(source_version: int) -> File:
         ObjectDoesNotExist: not yet uploaded or out of range.
     """
     return PaperSourcePDF.objects.get(version=source_version).source_pdf
+
+
+def _get_source_files() -> list[File]:
+    """Return the ordered list of Django-files for all current source versions.
+
+    Returns:
+        Some sort of file abstraction, not for use outside Django.
+    """
+    return [x.source_pdf for x in PaperSourcePDF.objects.all().order_by("version")]
 
 
 @transaction.atomic
@@ -85,13 +99,14 @@ def delete_all_source_pdfs() -> None:
 
 @transaction.atomic()
 def get_source(version: int) -> dict[str, Any]:
-    """Return a dictionary with the source version.
+    """Return a dictionary with info about the source version.
 
     Args:
         version: which version, indexed from one.
 
     Returns:
-        A dictionary with the version and uploaded status.
+        A dictionary with the version, uploaded status, and file hash
+        if uploaded.
     """
     try:
         pdf_obj = PaperSourcePDF.objects.filter(version=version).get()
@@ -125,8 +140,8 @@ def store_source_pdf(version: int, source_pdf: pathlib.Path) -> None:
 
     Raises:
         ValueError: source already present for that version.
+        PlomDependencyException: sources cannot currently be modified.
     """
-    # raises a PlomDependencyException if cannot modify
     assert_can_modify_sources()
 
     try:
@@ -138,7 +153,7 @@ def store_source_pdf(version: int, source_pdf: pathlib.Path) -> None:
 
     with open(source_pdf, "rb") as fh:
         the_bytes = fh.read()  # read entire file as bytes
-        hashed = hashlib.sha256(the_bytes).hexdigest()
+    hashed = hashlib.sha256(the_bytes).hexdigest()
 
     with open(source_pdf, "rb") as fh:
         dj_file = File(fh, name=f"version{version}.pdf")

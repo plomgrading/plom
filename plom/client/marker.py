@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Lior Silberman
@@ -11,28 +11,23 @@
 
 from __future__ import annotations
 
-__copyright__ = "Copyright (C) 2018-2024 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2018-2025 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-from collections import defaultdict
 import html
 import json
 import logging
+import platform
+import tempfile
+import threading
+import time
+from collections import defaultdict
+from importlib import resources
 from math import ceil
 from pathlib import Path
-import platform
-import sys
-import tempfile
 from textwrap import shorten
-import time
-import threading
 from typing import Any
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
 
 from packaging.version import Version
 from PyQt6 import QtGui, uic

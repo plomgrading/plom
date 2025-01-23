@@ -7,13 +7,9 @@
 """Build pdf files for a demo test and provide demo classlists."""
 
 import csv
-from pathlib import Path
 import sys
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
+from importlib import resources
+from pathlib import Path
 
 import plom
 from plom.textools import buildLaTeX

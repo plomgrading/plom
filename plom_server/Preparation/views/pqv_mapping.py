@@ -1,16 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 
 from __future__ import annotations
 
-from pathlib import Path
 import tempfile
+from io import BytesIO
+from pathlib import Path
 from typing import Any
 
 from django.shortcuts import render, redirect
-from django.http import HttpRequest, HttpResponseRedirect, HttpResponse
+from django.http import FileResponse, HttpRequest, HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect
 from django.contrib import messages
@@ -74,15 +75,24 @@ class PQVMappingUploadView(ManagerRequiredView):
 
 
 class PQVMappingDownloadView(ManagerRequiredView):
-    def get(self, request: HttpRequest) -> HttpResponse:
+    """Download the question-version map as a csv file."""
+
+    def get(self, request: HttpRequest) -> HttpResponse | FileResponse:
+        """Get method to download the question-version map as a csv file."""
         try:
-            pqvs_csv_txt = PQVMappingService().get_pqv_map_as_csv_string()
+            pqvs_csv_txt = PQVMappingService.get_pqv_map_as_csv_string()
         except ValueError as err:  # triggered by empty qv-map
             messages.add_message(request, messages.ERROR, f"{err}")
             # redirect here (not htmx) since this is called by normal http
             return redirect(reverse("prep_conflict"))
 
-        return HttpResponse(pqvs_csv_txt, content_type="text/plain")
+        # Note: without BytesIO here it doesn't respect filename, get "download.csv"
+        return FileResponse(
+            BytesIO(pqvs_csv_txt.encode("utf-8")),
+            content_type="text/csv; charset=UTF-8",
+            filename=PQVMappingService.get_default_csv_filename(),
+            as_attachment=True,
+        )
 
 
 class PQVMappingDeleteView(ManagerRequiredView):

@@ -1,31 +1,24 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 
 import csv
-from pathlib import Path
-import sys
 import tempfile
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
+from importlib import resources
+from pathlib import Path
 
 # try to avoid importing Pandas unless we use specific functions: Issue #2154
 # import pandas
-
 import plom
-from plom.finish.return_tools import import_canvas_csv
-
 from plom.create.classlistValidator import (
-    sid_field,
+    PlomClasslistValidator,
     fullname_field,
     papernumber_field,
-    PlomClasslistValidator,
+    sid_field,
 )
+from plom.finish.return_tools import import_canvas_csv
 
 # Note: file is full of pandas warnings, which I think are false positives
 # pylint: disable=unsubscriptable-object

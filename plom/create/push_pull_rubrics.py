@@ -1,15 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 
 """Tools for upload/downloading rubrics from Plom servers."""
 
 import json
 import sys
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
+from importlib import resources
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -19,7 +15,6 @@ import tomlkit
 
 # try to avoid importing Pandas unless we use specific functions: Issue #2154
 # import pandas
-
 from plom.create import with_manager_messenger
 
 
@@ -153,8 +148,9 @@ def upload_demo_rubrics(*, msgr, numquestions: int = 3) -> int:
     The demo data is a bit sparse: we fill in missing pieces and
     multiply over questions.
     """
-    with open(resources.files("plom") / "demo_rubrics.toml", "rb") as f:
-        _rubrics_in = tomllib.load(f)
+    with (resources.files("plom") / "demo_rubrics.toml").open("rb") as f:
+        # MyPy complains incompatible type "IO[bytes]" expected "BinaryIO"
+        _rubrics_in = tomllib.load(f)  # type: ignore[arg-type]
     rubrics_in = _rubrics_in["rubric"]
     rubrics = []
     for rub in rubrics_in:

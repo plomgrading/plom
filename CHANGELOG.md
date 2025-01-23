@@ -9,11 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Plom server's web UI now supports dark mode.
 
 ### Changed
+* Plom server now runs on Django 5 and has a minimum Python version of 3.10.
+* Plom server does not accept annotations using old revisions of rubrics.
+* Rubrics can now be edited within the web UI.
+
+### Removed
+* Plom Client is now developed separately at https://gitlab.com/plom/plom-client
 
 ### Fixed
-
+* Improved error checked around validity of rubrics.
+* Many minor fixes and database improvements.
 
 
 ## [0.16.11] - 2024-12-10

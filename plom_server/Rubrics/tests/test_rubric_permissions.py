@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 
@@ -15,11 +15,13 @@ from ..services import RubricService
 
 
 def _make_ex():
+    """Simulate input e.g., from client."""
     return {
         "username": "xenia",
         "kind": "neutral",
         "display_delta": ".",
         "text": "ABC",
+        "question_index": 1,
     }
 
 

@@ -33,16 +33,14 @@ classifiers=[
     "Development Status :: 3 - Alpha",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dynamic = ['version']
-requires-python = '>=3.8'
+requires-python = '>=3.10'
 # note aiohttp and peewee are legacy deps only
-# Note: importlib_resources for < 3.10 in plom_server, not sure why
 # pyopenssl is not a direct dependency but old versions caused trouble: Issue #3150
 dependencies = [
     "aiohttp>=3.7.2",
@@ -50,7 +48,6 @@ dependencies = [
     "canvasapi>=3.0.0",
     "cryptography>=41.0.3",
     "pyOpenSSL>=23.2.0",
-    "debugpy>=1.6.7",
     "django>=4.2.6",
     "django-braces>=1.15.0",
     "django-filter>=23.2",
@@ -64,7 +61,6 @@ dependencies = [
     "django-tables2>=2.7.0",
     "exif>=1.2.2",
     "gunicorn>=21.1.0",
-    'importlib_resources>=5.0.7 ; python_version<"3.9"',  # until we drop 3.8
     "imutils>=0.5.4",
     "matplotlib>=3.5.3",
     "model_bakery>=1.11.0",
@@ -74,13 +70,13 @@ dependencies = [
     "pandas>=1.5.0",
     "passlib",
     "peewee>=3.13.3",
-    "Pillow>=7.0.0",  # Consider >=10.2 for Issue #3216
+    "Pillow>=10.2",
     "platformdirs>=3.0.0",
     "pymupdf>=1.24.6",
     "PyMySQL>=1.0.2",
     "pyspellchecker>=0.8.1",
-    "pytest>=6.0.0",
-    "pytest-qt>=4.1.0",
+    "pytest>=7.2.0",
+    "pytest-qt>=4.2.0",
     "PyQt6>=6.2.0",
     "psycopg2-binary>=2.9.6",
     "random-username>=1.0.2",
@@ -243,14 +239,12 @@ module = [
     'api_secrets',
     'canvasapi',
     'exif',
-    'importlib_resources',
     'imutils.*',
     'requests_toolbelt',
     'sklearn.*',
     'stdiomask',
     'zxingcpp',
     'braces.*',
-    'debugpy',
     'django.*',
     'django_huey',
     'django_tables2',

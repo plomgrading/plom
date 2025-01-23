@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2024 Andrew Rechnitzer
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2022 Michael Deakin
 # Copyright (C) 2022-2023 Edith Coates
@@ -1103,6 +1103,8 @@ class BaseMessenger:
 
         Raises:
             PlomAuthenticationException: Authentication error.
+            PlomInconsistentRubric: proposed rubric data is invalid,
+                message should include details.
             PlomSeriousException: Other error types, possible needs fix or debugging.
 
         Returns:
@@ -1128,7 +1130,7 @@ class BaseMessenger:
                 elif response.status_code == 403:
                     raise PlomNoPermission(response.reason) from None
                 if response.status_code == 406:
-                    raise PlomSeriousException(response.reason) from None
+                    raise PlomInconsistentRubric(response.reason) from None
                 raise PlomSeriousException(
                     f"Error when creating new rubric: {e}"
                 ) from None
@@ -1275,7 +1277,8 @@ class BaseMessenger:
 
         Raises:
             PlomAuthenticationException: Authentication error.
-            PlomInconsistentRubric:
+            PlomInconsistentRubric: proposed rubric data is invalid,
+                message should include details.
             PlomNoRubric:
             PlomNoPermission: you are not allowed to modify the rubric.
             PlomConflict: two users try to modify the rubric.

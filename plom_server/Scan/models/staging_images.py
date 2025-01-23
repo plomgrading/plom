@@ -3,7 +3,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from django.db import models
 
@@ -22,6 +22,8 @@ class StagingImage(models.Model):
             fractional rotations are handled elsewhere,
     """
 
+    # some implicit ctor is generating pylint errors:
+    # pylint: disable=too-many-function-args
     ImageTypeChoices = models.TextChoices(
         "ImageType", "UNREAD KNOWN UNKNOWN EXTRA DISCARD ERROR"
     )
