@@ -56,7 +56,7 @@ from plom.plom_exceptions import (
     PlomNoServerSupportException,
 )
 from plom.messenger import Messenger, ManagerMessenger
-from plom.client import MarkerClient, IDClient
+from . import MarkerClient, IDClient
 from .downloader import Downloader
 from .about_dialog import show_about_dialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, WarningQuestion

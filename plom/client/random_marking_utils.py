@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2024 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024 Aden Chan
 
 import json
-from pathlib import Path
 import random
 import sys
 import tempfile
 import time
+from pathlib import Path
 from typing import Union, Iterable
 
 # Yuck, replace this below when we drop Python 3.8 support
@@ -20,11 +20,12 @@ from PyQt6.QtCore import QPointF, QRectF
 from PyQt6.QtGui import QColor, QPainterPath, QPen
 from PyQt6.QtWidgets import QApplication, QWidget
 
+from plom.messenger import Messenger
 from plom.plom_exceptions import PlomTakenException, PlomExistingLoginException
-from plom.client.pageview import PageView
-from plom.client.pagescene import PageScene
 
-from plom.client.tools import (
+from .pageview import PageView
+from .pagescene import PageScene
+from .tools import (
     CommandTick,
     CommandCross,
     CommandQMark,
@@ -39,8 +40,6 @@ from plom.client.tools import (
     CommandRubric,
     CommandText,
 )
-
-from plom.messenger import Messenger
 from .downloader import Downloader
 
 

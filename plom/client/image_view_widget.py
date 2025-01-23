@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2023 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 
 from pathlib import Path
 
@@ -26,7 +26,8 @@ from PyQt6.QtWidgets import (
 )
 
 from plom import ScenePixelHeight
-from plom.client.backGrid import BackGrid
+
+from .backGrid import BackGrid
 
 
 def mousewheel_delta_to_scale(d):
