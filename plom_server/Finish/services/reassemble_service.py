@@ -3,14 +3,12 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 
-from __future__ import annotations
-
 from datetime import datetime
 from pathlib import Path
 import random
 import tempfile
 import time
-from typing import Any, Tuple
+from typing import Any
 
 import arrow
 import zipfly
@@ -672,7 +670,7 @@ class ReassembleService:
     @transaction.atomic
     def get_completed_pdf_files_and_names(
         self, *, first_paper: int | None = None, last_paper: int | None = None
-    ) -> list[Tuple[File, str]]:
+    ) -> list[tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of reassembled papers that are not obsolete.
 
         Keyword Args:
@@ -694,7 +692,7 @@ class ReassembleService:
     @transaction.atomic
     def get_completed_report_files_and_names(
         self, *, first_paper: int | None = None, last_paper: int | None = None
-    ) -> list[Tuple[File, str]]:
+    ) -> list[tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of student reports that are not obsolete.
 
         Keyword Args:
