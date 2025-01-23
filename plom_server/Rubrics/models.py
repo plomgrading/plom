@@ -116,6 +116,8 @@ class Rubric(models.Model):
                 `exclusive:(a)`: at most one Rubric in group "(a)" can
                     be placed on the page.
             These tags can appears more than once.
+            Other experimental information can eppear here as well, e.g.,
+            in 2025-01, the demo tags its Rubrics as "demo".
         pedagogy_tags: an experimental feature, where Rubrics can be associated
             with, e.g., Learning Objectives for the purposes of generating
             reports for students or pedagogical statistics about the assessment.
