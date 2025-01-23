@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2025 Andrew Rechnitzer
 
 import re
 
 import arrow
 
-from plom.rubric_utils import diff_rubric, render_rubric_as_html
+from .rubric_utils import diff_rubric, render_rubric_as_html
 
 
 def _make_ex():

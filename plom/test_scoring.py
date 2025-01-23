@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2025 Andrew Rechnitzer
 
@@ -11,10 +11,10 @@ from typing import Any
 
 from pytest import raises
 
-from plom.rubric_utils import compute_score_legacy2022 as lg
-from plom.rubric_utils import compute_score_locabs as s
-from plom.rubric_utils import compute_score_naive as naive
-from plom.plom_exceptions import PlomInconsistentRubric, PlomInvalidRubric
+from .rubric_utils import compute_score_legacy2022 as lg
+from .rubric_utils import compute_score_locabs as s
+from .rubric_utils import compute_score_naive as naive
+from .plom_exceptions import PlomInconsistentRubric, PlomInvalidRubric
 
 
 def test_naive_score() -> None:
