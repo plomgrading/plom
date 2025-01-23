@@ -84,10 +84,12 @@
                                         versions: {{ latest_rubric.versions }}
                                         <br />
                                         params: {{ latest_rubric.parameters }}
+                                        <br />
+                                        org tags: {{ latest_rubric.tags }}
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th scope="row">Tags</th>
+                                    <th scope="row">Pedagogy Tags</th>
                                     <td>
                                         {% for tag in latest_rubric.pedagogy_tags.all %}
                                             <span class="badge bg-primary" title="{{ tag.text }}">{{ tag }}</span>

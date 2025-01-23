@@ -72,7 +72,6 @@ class Rubric(models.Model):
             for absolute rubrics and is 0 for other types
         text: the text of the rubric
         question_index: the question this rubric is associated with.
-        tags: a list of tags for this rubric.
         meta: text shown only to markers, not to students.
         parameters: a list of parameters for the rubric, used in
             parameterized rubrics.
@@ -108,6 +107,22 @@ class Rubric(models.Model):
             creative/hacky.
         latest: True when this is the latest version of the rubric and
             false otherwise. There will be only one latest rubric per rid.
+        tags: a list of meta tags for this rubric, these are currently used
+            for organizing rubrics into groups, although the precise format
+            is still in-flux.  Caution: this is not a free-form tagging system
+            such as in-use in Tasks.  Special tasks about special meaning to
+            the Client.  Currently these are::
+                `group:(a)`: indicates that this Rubric is in group "(a)".
+                `exclusive:(a)`: at most one Rubric in group "(a)" can
+                    be placed on the page.
+            These tags can appears more than once.
+            Other experimental information can eppear here as well, e.g.,
+            in 2025-01, the demo tags its Rubrics as "demo".
+        pedagogy_tags: an experimental feature, where Rubrics can be associated
+            with, e.g., Learning Objectives for the purposes of generating
+            reports for students or pedagogical statistics about the assessment.
+            See also "Question Tags": as of 2025-01, these are sometimes
+            labelled in this way.
     """
 
     class RubricKind(models.TextChoices):
@@ -244,7 +259,9 @@ class RubricTable(django_tables2.Table):
             "kind",
             "system_rubric",
             "question_index",
-            "versions",
             "text",
+            "versions",
             "parameters",
+            "tags",
+            "pedagogy_tags",
         )
