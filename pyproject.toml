@@ -177,7 +177,7 @@ packages = [
 version = {attr = 'plom.__version__'}
 
 [project.scripts]
-plom-client = "plom.client.__main__:main"
+# plom-client = "plom.client.__main__:main"
 plom-demo = "plom.demo.__main__:main"
 plom-hwdemo = "plom.scripts.hwdemo:main"
 plom-create = "plom.create.__main__:main"
