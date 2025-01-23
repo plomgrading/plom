@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2025 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
@@ -37,7 +37,7 @@ from plom.misc_utils import next_in_longest_subsequence
 from .useful_classes import SimpleQuestion, ErrorMsg, InfoMsg, WarnMsg
 from .useful_classes import BigMessageDialog
 from .rubric_wrangler import RubricWrangler
-from .rubrics import compute_score, diff_rubric, render_rubric_as_html
+from plom.rubric_utils import compute_score, diff_rubric, render_rubric_as_html
 from .rubric_add_dialog import AddRubricBox
 from .rubric_other_usage_dialog import RubricOtherUsageDialog
 

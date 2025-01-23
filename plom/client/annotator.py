@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2024 Andrew Rechnitzer
+# Copyright (C) 2018-2025 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
@@ -56,10 +56,10 @@ from PyQt6.QtWidgets import (
 )
 
 from plom.misc_utils import pprint_score
+from plom.rubric_utils import check_for_illadvised
 import plom.client.cursors
 import plom.client.icons
 from .rubric_list import RubricWidget
-from .rubrics import check_for_illadvised
 from .key_wrangler import get_key_bindings
 from .key_help import KeyHelp
 
