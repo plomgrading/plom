@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020, 2023-2024 Colin B. Macdonald
+# Copyright (C) 2020, 2023-2025 Colin B. Macdonald
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication
 from pytest import raises
 
-from plom.client.chooser import Chooser
-from plom.client.useful_classes import BigMessageDialog, BlankIDBox
+from .chooser import Chooser
+from .useful_classes import BigMessageDialog, BlankIDBox
 
 
 def test_BlankIDBoxDialog(qtbot) -> None:

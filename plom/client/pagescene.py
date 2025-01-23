@@ -56,10 +56,12 @@ from PyQt6.QtWidgets import (
 from plom import ScenePixelHeight
 from plom.plom_exceptions import PlomInconsistentRubric
 from plom.misc_utils import pprint_score
-from plom.client.image_view_widget import mousewheel_delta_to_scale
+from plom.rubric_utils import compute_score
+
+from .image_view_widget import mousewheel_delta_to_scale
 
 # in some places we make assumptions that our view is this subclass
-from plom.client.pageview import PageView
+from .pageview import PageView
 
 from .tools import DefaultTickRadius, DefaultPenWidth, AnnFontSizePts
 from .tools import (
@@ -97,11 +99,10 @@ from .elastics import (
     which_classic_shortest_corner_side,
     which_centre_to_centre,
 )
-from plom.rubric_utils import compute_score
-from plom.client.useful_classes import SimpleQuestion
+from .useful_classes import SimpleQuestion
 
 
-log = logging.getLogger("pagescene")
+log = logging.getLogger("scene")
 
 
 class ScoreBox(QGraphicsTextItem):
@@ -1903,20 +1904,17 @@ class PageScene(QGraphicsScene):
         Returns:
             True if this is a user-generated object, False if not.
         """
-        from plom.client.tools import (
-            CrossItem,
-            DeltaItem,
+        from .tools import (
             ImageItem,
-            TextItem,
-            TickItem,
+            EllipseItem,
+            HighlightItem,
+            LineItem,
+            ArrowItem,
+            ArrowDoubleItem,
+            PenItem,
+            PenArrowItem,
+            QMarkItem,
         )
-        from plom.client.tools.ellipse import EllipseItem
-        from plom.client.tools.highlight import HighlightItem
-        from plom.client.tools.line import LineItem
-        from plom.client.tools.arrow import ArrowItem, ArrowDoubleItem
-        from plom.client.tools.pen import PenItem
-        from plom.client.tools.penArrow import PenArrowItem
-        from plom.client.tools.questionMark import QMarkItem
 
         if getattr(item, "saveable", None):
             return True
@@ -1975,7 +1973,7 @@ class PageScene(QGraphicsScene):
         self.undoStack.endMacro()
 
     def _move_some_items(self, L: list, dx: float, dy: float) -> None:
-        from plom.client.tools import CommandMoveItem
+        from .tools import CommandMoveItem
 
         log.debug(f"Shifting {len(L)} objects by ({dx}, {dy})")
         for item in L:

@@ -55,10 +55,9 @@ from PyQt6.QtWidgets import (
     QSplitter,
 )
 
-import plom.client.icons
 from plom.misc_utils import next_in_longest_subsequence
-
-from .useful_classes import InfoMsg, SimpleQuestion, WarnMsg
+from . import icons
+from .useful_classes import InfoMsg, WarnMsg, SimpleQuestion
 
 
 # TODO this object only allows int inputs, replace to allow float scores
@@ -1060,7 +1059,7 @@ class AddRubricBox(QDialog):
             return
         if not txt.casefold().startswith("tex:") and txt.count("$") >= 2:
             # Image by krzysiu, CC-PDDC, https://openclipart.org/detail/213508/crazy-paperclip
-            res = resources.files(plom.client.icons) / "crazy_paperclip.svg"
+            res = resources.files(icons) / "crazy_paperclip.svg"
             pix = QPixmap()
             pix.loadFromData(res.read_bytes())
             pix = pix.scaledToHeight(150, Qt.TransformationMode.SmoothTransformation)

@@ -37,8 +37,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-import plom
-import plom.client.help_img
+from . import help_img
 
 from .key_wrangler import (
     KeyEditDialog,
@@ -411,7 +410,7 @@ class RubricNavDiagram(QFrame):
 
     def put_stuff(self, keydata):
         pix = QPixmap()
-        res = resources.files(plom.client.help_img) / "nav_rubric.png"
+        res = resources.files(help_img) / "nav_rubric.png"
         pix.loadFromData(res.read_bytes())
         self.scene.addPixmap(pix)  # is at position (0,0)
 
@@ -472,7 +471,7 @@ class ToolNavDiagram(QFrame):
 
     def put_stuff(self, keydata):
         pix = QPixmap()
-        res = resources.files(plom.client.help_img) / "nav_tools.png"
+        res = resources.files(help_img) / "nav_tools.png"
         pix.loadFromData(res.read_bytes())
         self.scene.addPixmap(pix)  # is at position (0,0)
 
@@ -505,7 +504,7 @@ class ClickDragPage(QWidget):
         grid = QVBoxLayout()
         # load the gif from resources - needs a little subterfuge
         # https://stackoverflow.com/questions/71072485/qmovie-from-qbuffer-from-qbytearray-not-displaying-gif
-        res = resources.files(plom.client.help_img) / "click_drag.gif"
+        res = resources.files(help_img) / "click_drag.gif"
         film_qbytesarray = QByteArray(res.read_bytes())
         film_qbuffer = QBuffer(film_qbytesarray)
         film = QMovie()

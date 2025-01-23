@@ -47,7 +47,6 @@ from PyQt6.QtWidgets import (
 )
 
 from plom import __version__
-import plom.client.ui_files
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomBadTagError,
@@ -83,7 +82,7 @@ from .tagging_range_dialog import TaggingAndRangeOptions
 from .quota_dialogs import ExplainQuotaDialog, ReachedQuotaLimitDialog
 from .task_model import MarkerExamModel, ProxyModel
 from .uploader import BackgroundUploader, synchronous_upload
-
+from . import ui_files
 
 if platform.system() == "Darwin":
     # apparently needed for shortcuts under macOS
@@ -146,7 +145,7 @@ class MarkerClient(QWidget):
         super().__init__()
         self.Qapp = Qapp
 
-        uic.loadUi(resources.files(plom.client.ui_files) / "marker.ui", self)
+        uic.loadUi(resources.files(ui_files) / "marker.ui", self)
         # TODO: temporary workaround
         self.ui = self
 

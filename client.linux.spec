@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 
 from pathlib import Path
@@ -14,9 +14,8 @@ a = Analysis(['plom/client/__main__.py'],
              pathex=['./'],
              binaries=[(dict_path, 'spellchecker/resources')],
              datas=[
-                 ('plom/client/*.svg', 'plom/client'),
-                 ('plom/client/*.png', 'plom/client'),
                  ('plom/client/icons/*.svg', 'plom/client/icons'),
+                 ('plom/client/icons/*.png', 'plom/client/icons'),
                  ('plom/client/cursors/*.png', 'plom/client/cursors'),
                  ('plom/client/ui_files/*.ui', 'plom/client/ui_files'),
                  ('plom/client/help_img/nav*.png', 'plom/client/help_img'),

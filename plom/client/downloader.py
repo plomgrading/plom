@@ -23,6 +23,8 @@ from plom.messenger import BaseMessenger, Messenger
 from plom.plom_exceptions import PlomConnectionError, PlomException
 
 from .pagecache import PageCache
+from . import icons
+
 
 log = logging.getLogger("Downloader")
 
@@ -152,10 +154,7 @@ class Downloader(QObject):
         self.simulate_failures = False
 
     def make_placeholder(self) -> None:
-        # Not imported earlier b/c of some circular import stuff (?)
-        import plom.client.icons
-
-        res = resources.files(plom.client.icons) / "manager_unknown.svg"
+        res = resources.files(icons) / "manager_unknown.svg"
         placeholder = self.basedir / "placeholder.svg"
         with res.open("rb") as fin, placeholder.open("wb") as fout:
             fout.write(fin.read())

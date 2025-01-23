@@ -1,13 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
-from PyQt6.QtCore import QObject
-from PyQt6.QtCore import QPropertyAnimation, QAbstractAnimation
 from PyQt6.QtCore import pyqtProperty  # type: ignore[attr-defined]
+from PyQt6.QtCore import QAbstractAnimation, QObject, QPropertyAnimation
 from PyQt6.QtGui import QBrush, QColor, QPen
 from PyQt6.QtWidgets import QGraphicsPathItem, QGraphicsRectItem
 
-from plom.client.tools import log
+from . import log
 
 # rough length of animations take in milliseconds: some might be shorter,
 # some longer but they will be scaled by this value.

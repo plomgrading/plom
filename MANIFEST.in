@@ -35,12 +35,11 @@ include plom/default_keys.toml
 include plom/wasd_keys.toml
 include plom/ijkl_keys.toml
 include plom/esdf_french_keys.toml
-include plom/client/backGrid1.svg
-include plom/client/backGrid2.png
 
 include plom/client/ui_files/*.ui
 include plom/client/cursors/*.png
 include plom/client/icons/*.svg
+include plom/client/icons/*.png
 include plom/client/help_img/nav*.png
 include plom/client/help_img/click_drag.gif
 
