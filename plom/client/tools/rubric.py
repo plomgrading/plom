@@ -14,14 +14,14 @@ from PyQt6.QtCore import QPointF, Qt
 from PyQt6.QtGui import QColor, QFont, QPen
 from PyQt6.QtWidgets import QGraphicsItemGroup, QGraphicsItem
 
-from plom.client.tools import (
+from . import (
     CommandTool,
     OutOfBoundsFill,
     OutOfBoundsPen,
     UndoStackMoveMixin,
 )
-from plom.client.tools.delta import DeltaItem, GhostDelta
-from plom.client.tools.text import GhostText, TextItem
+from .delta import DeltaItem, GhostDelta
+from .text import GhostText, TextItem
 
 
 class CommandRubric(CommandTool):

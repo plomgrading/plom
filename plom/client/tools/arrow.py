@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from math import sqrt
@@ -9,8 +9,8 @@ from PyQt6.QtCore import QPointF, Qt
 from PyQt6.QtGui import QBrush, QPainterPath, QPen
 from PyQt6.QtWidgets import QGraphicsItem, QGraphicsPathItem
 
-from plom.client.tools import OutOfBoundsFill, OutOfBoundsPen, UndoStackMoveMixin
-from plom.client.tools.line import CommandLine, LineItem
+from . import OutOfBoundsFill, OutOfBoundsPen, UndoStackMoveMixin
+from .line import CommandLine, LineItem
 
 
 class CommandArrow(CommandLine):

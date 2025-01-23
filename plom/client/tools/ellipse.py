@@ -1,18 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt6.QtCore import QRectF
 from PyQt6.QtGui import QBrush, QPen
 from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsItem
 
-from plom.client.tools import (
-    CommandTool,
-    OutOfBoundsFill,
-    OutOfBoundsPen,
-    UndoStackMoveMixin,
-)
+from . import CommandTool, OutOfBoundsFill, OutOfBoundsPen, UndoStackMoveMixin
 
 
 class CommandEllipse(CommandTool):
