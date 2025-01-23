@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright (C) 2023-2024 Colin B. Macdonald
+   Copyright (C) 2023-2025 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
@@ -112,7 +112,7 @@ Managing rubrics
 
 It also possible to populate the rubric database in bulk from external
 tools such as a spreadsheet.  For example, this could be done before
-marking begins or by re-using rubrics from a previous assessment.
+marking begins or by reusing rubrics from a previous assessment.
 This still needs to be implemented:
 see `Issue #3352 <https://gitlab.com/plom/plom/-/issues/3352>`_.
 

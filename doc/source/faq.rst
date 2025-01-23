@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright (C) 2019-2024 Colin B. Macdonald
+   Copyright (C) 2019-2025 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 Frequently Asked Questions
@@ -285,10 +285,10 @@ If the command line access is not feasible, another option is:
      and push those rubrics to Server 2.
 
 
-...I have many re-used the same paper _many_ times
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...I have many reused the same paper _many_ times
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Read the above answers.  Suppose Paper 20 has been re-used 100 times;
+Read the above answers.  Suppose Paper 20 has been reused 100 times;
 too many to contemplate manual work and you want to write a _script_
 to deal with the reassignment of these onto (newly created) Papers 400
 to 499.
