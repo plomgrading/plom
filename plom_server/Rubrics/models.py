@@ -121,6 +121,8 @@ class Rubric(models.Model):
         pedagogy_tags: an experimental feature, where Rubrics can be associated
             with, e.g., Learning Objectives for the purposes of generating
             reports for students or pedagogical statistics about the assessment.
+            See also "Question Tags": as of 2025-01, these are sometimes
+            labelled in this way.
     """
 
     class RubricKind(models.TextChoices):
