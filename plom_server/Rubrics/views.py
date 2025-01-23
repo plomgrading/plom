@@ -75,7 +75,7 @@ class RubricHalfMarksView(ManagerRequiredView):
         if not RubricService().build_half_mark_delta_rubrics(any_manager.username):
             messages.error(
                 request,
-                "\N{Vulgar Fraction One Half} mark rubrics could not be created.",
+                "\N{VULGAR FRACTION ONE HALF} mark rubrics could not be created.",
             )
         return redirect("rubrics_admin")
 

@@ -79,31 +79,31 @@ def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
 # strings which seem to render nicely both in web and Qt client (on GNU/Linux).
 # TODO: test on Windows/macOS: could instead fallback to ASCII "3/10".
 _fraction_table = (
-    (1 / 2, "\N{Vulgar Fraction One Half}"),
-    (1 / 4, "\N{Vulgar Fraction One Quarter}"),
-    (3 / 4, "\N{Vulgar Fraction Three Quarters}"),
-    (1 / 3, "\N{Vulgar Fraction One Third}"),
-    (2 / 3, "\N{Vulgar Fraction Two Thirds}"),
-    (1 / 5, "\N{Vulgar Fraction One Fifth}"),
-    (2 / 5, "\N{Vulgar Fraction Two Fifths}"),
-    (3 / 5, "\N{Vulgar Fraction Three Fifths}"),
-    (4 / 5, "\N{Vulgar Fraction Four Fifths}"),
-    (1 / 8, "\N{Vulgar Fraction One Eighth}"),
-    (3 / 8, "\N{Vulgar Fraction Three Eighths}"),
-    (5 / 8, "\N{Vulgar Fraction Five Eighths}"),
-    (7 / 8, "\N{Vulgar Fraction Seven Eighths}"),
-    (1 / 10, "\N{Vulgar Fraction One Tenth}"),
+    (1 / 2, "\N{VULGAR FRACTION ONE HALF}"),
+    (1 / 4, "\N{VULGAR FRACTION ONE QUARTER}"),
+    (3 / 4, "\N{VULGAR FRACTION THREE QUARTERS}"),
+    (1 / 3, "\N{VULGAR FRACTION ONE THIRD}"),
+    (2 / 3, "\N{VULGAR FRACTION TWO THIRDS}"),
+    (1 / 5, "\N{VULGAR FRACTION ONE FIFTH}"),
+    (2 / 5, "\N{VULGAR FRACTION TWO FIFTHS}"),
+    (3 / 5, "\N{VULGAR FRACTION THREE FIFTHS}"),
+    (4 / 5, "\N{VULGAR FRACTION FOUR FIFTHS}"),
+    (1 / 8, "\N{VULGAR FRACTION ONE EIGHTH}"),
+    (3 / 8, "\N{VULGAR FRACTION THREE EIGHTHS}"),
+    (5 / 8, "\N{VULGAR FRACTION FIVE EIGHTHS}"),
+    (7 / 8, "\N{VULGAR FRACTION SEVEN EIGHTHS}"),
+    (1 / 10, "\N{VULGAR FRACTION ONE TENTH}"),
     (
         3 / 10,
-        "\N{Superscript Three}\N{Fraction Slash}\N{Subscript One}\N{Subscript Zero}",
+        "\N{SUPERSCRIPT THREE}\N{FRACTION SLASH}\N{SUBSCRIPT ONE}\N{SUBSCRIPT ZERO}",
     ),
     (
         7 / 10,
-        "\N{Superscript Seven}\N{Fraction Slash}\N{Subscript One}\N{Subscript Zero}",
+        "\N{SUPERSCRIPT SEVEN}\N{FRACTION SLASH}\N{SUBSCRIPT ONE}\N{SUBSCRIPT ZERO}",
     ),
     (
         9 / 10,
-        "\N{Superscript Nine}\N{Fraction Slash}\N{Subscript One}\N{Subscript Zero}",
+        "\N{SUPERSCRIPT NINE}\N{FRACTION SLASH}\N{SUBSCRIPT ONE}\N{SUBSCRIPT ZERO}",
     ),
 )
 
@@ -685,7 +685,7 @@ class RubricService:
             if False:
                 for rubric in [
                     {
-                        "display_delta": "+1\N{Vulgar Fraction One Half}",
+                        "display_delta": "+1\N{VULGAR FRACTION ONE HALF}",
                         "value": 1.5,
                         "text": "testing non-integer rubric",
                         "kind": "relative",
@@ -766,7 +766,7 @@ class RubricService:
         log.info("Building half-mark delta rubrics")
         for q in SpecificationService.get_question_indices():
             rubric = {
-                "display_delta": "+\N{Vulgar Fraction One Half}",
+                "display_delta": "+\N{VULGAR FRACTION ONE HALF}",
                 "value": 0.5,
                 "text": ".",
                 "kind": "relative",
@@ -783,7 +783,7 @@ class RubricService:
             )
 
             rubric = {
-                "display_delta": "-\N{Vulgar Fraction One Half}",
+                "display_delta": "-\N{VULGAR FRACTION ONE HALF}",
                 "value": -0.5,
                 "text": ".",
                 "kind": "relative",

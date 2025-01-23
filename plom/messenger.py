@@ -709,9 +709,10 @@ class Messenger(BaseMessenger):
         """
         with self.SRmutex:
             try:
-                with open(annotated_img, "rb") as annot_img_file, open(
-                    plomfile, "rb"
-                ) as plom_data_file:
+                with (
+                    open(annotated_img, "rb") as annot_img_file,
+                    open(plomfile, "rb") as plom_data_file,
+                ):
                     data = {
                         "pg": str(pg),
                         "ver": str(ver),

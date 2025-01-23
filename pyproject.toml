@@ -196,10 +196,9 @@ plom-cli = "plom.cli.__main__:main"
 
 # Tooling configuration
 
-# You can run `black plom` or `black plom --verbose`
 [tool.black]
 line-length = 88
-target-version = ["py38"]
+target-version = ["py310"]
 
 [tool.pylint.main]
 extension-pkg-allow-list = ["PyQt6", "cv2", "zxingcpp"]
