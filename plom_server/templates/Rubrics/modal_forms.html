@@ -165,8 +165,15 @@
                                     </div>
                                     <div class="row form-group">
                                         <div class="col">
+                                            {{ edit_form.tags.errors }}
+                                            <label for="{{ edit_form.tags.id_for_label }}">Org tags:</label>
+                                            {{ edit_form.tags }}
+                                        </div>
+                                    </div>
+                                    <div class="row form-group">
+                                        <div class="col">
                                             {{ edit_form.pedagogy_tags.errors }}
-                                            <label for="{{ edit_form.pedagogy_tags.id_for_label }}">Tags:</label>
+                                            <label for="{{ edit_form.pedagogy_tags.id_for_label }}">Pedagogy Tags:</label>
                                             {{ edit_form.pedagogy_tags }}
                                         </div>
                                     </div>
