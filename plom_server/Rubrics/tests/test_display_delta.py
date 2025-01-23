@@ -27,7 +27,7 @@ class RubricServiceTests_display_delta(TestCase):
                 def c2n(d: str) -> int:
                     return round(unicodedata.numeric(d))
 
-                num, den = s.split("\N{Fraction Slash}")
+                num, den = s.split("\N{FRACTION SLASH}")
                 numint = sum([c2n(d) * 10**i for i, d in enumerate(num[::-1])])
                 denint = sum([c2n(d) * 10**i for i, d in enumerate(den[::-1])])
                 value = Fraction(numint, denint)

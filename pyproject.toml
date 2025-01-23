@@ -196,7 +196,6 @@ plom-cli = "plom.cli.__main__:main"
 
 # Tooling configuration
 
-# You can run `black plom` or `black plom --verbose`
 [tool.black]
 line-length = 88
 target-version = ["py38"]
