@@ -259,8 +259,9 @@ class RubricTable(django_tables2.Table):
             "kind",
             "system_rubric",
             "question_index",
-            "versions",
             "text",
+            "versions",
             "parameters",
             "tags",
+            "pedagogy_tags",
         )
