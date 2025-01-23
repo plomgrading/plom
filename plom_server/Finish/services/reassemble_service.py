@@ -1,16 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
-# Copyright (C) 2023-2024 Andrew Rechnitzer
-
-from __future__ import annotations
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 
 from datetime import datetime
 from pathlib import Path
 import random
 import tempfile
 import time
-from typing import Any, Tuple
+from typing import Any
 
 import arrow
 import zipfly
@@ -673,41 +671,85 @@ class ReassembleService:
         )
 
     @transaction.atomic
-    def get_completed_pdf_files_and_names(self) -> list[Tuple[File, str]]:
+    def get_completed_pdf_files_and_names(
+        self, *, first_paper: int | None = None, last_paper: int | None = None
+    ) -> list[tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of reassembled papers that are not obsolete.
+
+        Keyword Args:
+            first_paper: filter to get all papers with paper_number greater or equal to this.
+            last_paper: filter to get all papers with paper_number less or equal to this.
 
         Returns:
             A list of pairs [django-File, display filename] of the reassembled pdf.
         """
-        return [
-            (task.pdf_file, task.display_filename)
-            for task in ReassemblePaperChore.objects.filter(
-                obsolete=False, status=HueyTaskTracker.COMPLETE
-            )
-        ]
+        query = ReassemblePaperChore.objects.filter(
+            obsolete=False, status=HueyTaskTracker.COMPLETE
+        )
+        if first_paper:
+            query = query.filter(paper__paper_number__gte=first_paper)
+        if last_paper:
+            query = query.filter(paper__paper_number__lte=last_paper)
+        return [(task.pdf_file, task.display_filename) for task in query]
 
     @transaction.atomic
-    def get_completed_report_files_and_names(self) -> list[Tuple[File, str]]:
+    def get_completed_report_files_and_names(
+        self, *, first_paper: int | None = None, last_paper: int | None = None
+    ) -> list[tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of student reports that are not obsolete.
+
+        Keyword Args:
+            first_paper: filter to get all papers with paper_number greater or equal to this.
+            last_paper: filter to get all papers with paper_number less or equal to this.
 
         Returns:
             A list of pairs [django-File, display filename] of the reports
         """
-        return [
-            (task.report_pdf_file, task.report_display_filename)
-            for task in ReassemblePaperChore.objects.filter(
-                obsolete=False, status=HueyTaskTracker.COMPLETE
-            )
-        ]
+        query = ReassemblePaperChore.objects.filter(
+            obsolete=False, status=HueyTaskTracker.COMPLETE
+        )
+        if first_paper:
+            query = query.filter(paper__paper_number__gte=first_paper)
+        if last_paper:
+            query = query.filter(paper__paper_number__lte=last_paper)
+
+        return [(task.report_pdf_file, task.report_display_filename) for task in query]
 
     @transaction.atomic
-    def get_zipfly_generator(self, short_name: str, *, chunksize: int = 1024 * 1024):
+    def get_zipfly_generator(
+        self,
+        short_name: str,
+        *,
+        first_paper: int | None = None,
+        last_paper: int | None = None,
+        chunksize: int = 1024 * 1024,
+    ):
+        """Return a generator that can stream a zipfile of some papers without building in memory.
+
+        Args:
+            short_name: TODO: appears to be unused.
+
+        Keyword Args:
+            first_paper: optionally grab papers greater than or equal
+                to this paper number.  Omit or `None` for no restriction.
+            last_paper: optionally grab papers less than or equal to
+                this number.  Omit or `None` for no restriction.
+            chunksize: a parameter related to the building of the zipfile.
+
+        Returns:
+            Some sort of generator for the zipfile streamer.
+
+        Raises:
+            ValueError: if there are no reassembled papers in the requested range.
+        """
         paths = [
             {
                 "fs": pdf_file.path,
                 "n": f"reassembled/{display_filename}",
             }
-            for pdf_file, display_filename in self.get_completed_pdf_files_and_names()
+            for pdf_file, display_filename in self.get_completed_pdf_files_and_names(
+                first_paper=first_paper, last_paper=last_paper
+            )
         ]
         # report_paths = [
         #     {
@@ -717,6 +759,14 @@ class ReassembleService:
         #     for report_pdf_file, report_display_filename in self.get_completed_report_files_and_names()
         # ]
 
+        if not paths:
+            rng1 = f"{first_paper} <= " if first_paper is not None else ""
+            rng2 = f" <= {last_paper}" if last_paper is not None else ""
+            if rng1 or rng2:
+                rng_msg = " satisfying " + rng1 + "paper_number" + rng2
+            else:
+                rng_msg = ""
+            raise ValueError("There are no reassembled papers" + rng_msg)
         # zfly = zipfly.ZipFly(paths=paths + report_paths, chunksize=chunksize)
         zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)
         return zfly.generator()
