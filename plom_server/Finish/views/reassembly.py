@@ -144,6 +144,7 @@ class DownloadRangeOfReassembled(ManagerRequiredView):
         except ValueError as err:
             # TODO: how to do we do other errors other than 404?
             # return HttpResponse(err, status=400)
+            # return HttpResponseBadRequest(err)
             raise Http404(err)
 
         response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
