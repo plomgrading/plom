@@ -7,7 +7,7 @@ from time import localtime
 
 from PyQt6.QtGui import QBrush, QPixmap
 
-import plom.client
+from . import icons
 
 
 class BackGrid(QBrush):
@@ -17,10 +17,11 @@ class BackGrid(QBrush):
         # generally disabled as we just use the window background
         if localtime().tm_mon == 4 and localtime().tm_mday == 1:
             pm = QPixmap()
-            res = resources.files(plom.client) / "backGrid2.png"
+            res = resources.files(icons) / "backGrid2.png"
             pm.loadFromData(res.read_bytes())
             self.setTexture(pm)
         # else:
         #     pm = QPixmap()
-        #     pm.loadFromData(resources.read_binary(plom.client, "backGrid1.svg"))
+        #     res = resources.files(icons) / "backGrid1.svg"
+        #     pm.loadFromData(res.read_bytes())
         #     self.setTexture(pm)

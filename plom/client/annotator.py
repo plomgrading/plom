@@ -57,8 +57,7 @@ from PyQt6.QtWidgets import (
 
 from plom.misc_utils import pprint_score
 from plom.rubric_utils import check_for_illadvised
-import plom.client.cursors
-import plom.client.icons
+from . import cursors, icons, ui_files
 from .rubric_list import RubricWidget
 from .key_wrangler import get_key_bindings
 from .key_help import KeyHelp
@@ -159,7 +158,7 @@ class Annotator(QWidget):
         self.attnClearButton: QPushButton
         self.attnTagsButton: QPushButton
         self.attnDismissButton: QPushButton
-        uic.loadUi(resources.files(plom.client.ui_files) / "annotator.ui", self)
+        uic.loadUi(resources.files(ui_files) / "annotator.ui", self)
         # TODO: temporary workaround
         self.ui = self
 
@@ -326,7 +325,7 @@ class Annotator(QWidget):
             </ul>
         """
         # Image by liftarn, public domain, https://freesvg.org/put-your-fingers-in-the-gears
-        res = resources.files(plom.client.icons) / "fingers_in_gears.svg"
+        res = resources.files(icons) / "fingers_in_gears.svg"
         pix = QPixmap()
         pix.loadFromData(res.read_bytes())
         pix = pix.scaledToHeight(256, Qt.TransformationMode.SmoothTransformation)
@@ -690,7 +689,7 @@ class Annotator(QWidget):
 
         def _pixmap_from(f):
             pm = QPixmap()
-            res = resources.files(plom.client.cursors) / f
+            res = resources.files(cursors) / f
             pm.loadFromData(res.read_bytes())
             return pm
 
@@ -1079,14 +1078,13 @@ class Annotator(QWidget):
             self.ui.narrowModeLabel.setText(" {} ".format(mode))
             self.ui.wideModeLabel.setText(" {} ".format(mode))
 
-    def setIcon(self, toolButton, name, iconfile) -> None:
+    def setIcon(self, toolButton, name, iconfile: str) -> None:
         """Sets a name and svg icon for a given QToolButton.
 
         Args:
             toolButton (QToolButton): the ui Tool Button for a name and icon to be added to.
             name (str): a name defining toolButton.
-            iconfile (str): filename of .svg, must be in the resource
-                `plom.client.icons`.
+            iconfile: filename of .svg, local to the resource `icons`.
 
         Returns:
             None but alters toolButton.
@@ -1094,7 +1092,7 @@ class Annotator(QWidget):
         toolButton.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         toolButton.setToolTip("{}".format(tipText.get(name, name)))
         pm = QPixmap()
-        res = resources.files(plom.client.icons) / iconfile
+        res = resources.files(icons) / iconfile
         pm.loadFromData(res.read_bytes())
         toolButton.setIcon(QIcon(pm))
         # toolButton.setIconSize(QSize(40, 40))
