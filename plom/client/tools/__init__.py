@@ -33,13 +33,13 @@ from .box import CommandBox
 from .rubric import CommandRubric, RubricItem, GhostComment
 from .cross import CommandCross, CrossItem
 from .delta import GhostDelta, DeltaItem
-from .ellipse import CommandEllipse
-from .highlight import CommandHighlight
+from .ellipse import CommandEllipse, EllipseItem
+from .highlight import CommandHighlight, HighlightItem
 from .image import CommandImage, ImageItem
-from .line import CommandLine
-from .arrow import CommandArrow, CommandArrowDouble
-from .pen import CommandPen
-from .penArrow import CommandPenArrow
-from .questionMark import CommandQMark
+from .line import CommandLine, LineItem
+from .arrow import CommandArrow, CommandArrowDouble, ArrowItem, ArrowDoubleItem
+from .pen import CommandPen, PenItem
+from .penArrow import CommandPenArrow, PenArrowItem
+from .questionMark import CommandQMark, QMarkItem
 from .text import CommandText, TextItem, GhostText
 from .tick import CommandTick, TickItem
