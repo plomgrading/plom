@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 from datetime import datetime
@@ -9,13 +9,14 @@ import hashlib
 import pathlib
 from time import sleep
 
-import pymupdf as fitz
+import pymupdf
 from tabulate import tabulate
 
 from django.utils import timezone
 from django.utils.text import slugify
 from django.core.management.base import BaseCommand, CommandError
 
+from plom.plom_exceptions import PlomConflict
 from ...services import ScanService
 
 
@@ -51,16 +52,13 @@ class Command(BaseCommand):
         timestamp = datetime.timestamp(timezone.now())
         hashed = hashlib.sha256(file_bytes).hexdigest()
         try:
-            with fitz.open(stream=file_bytes) as pdf_doc:
+            with pymupdf.open(stream=file_bytes) as pdf_doc:
                 number_of_pages = pdf_doc.page_count
-        except fitz.FileDataError as err:
+        except pymupdf.FileDataError as err:
             raise CommandError(err)
 
-        if scanner.check_for_duplicate_hash(hashed):
-            raise CommandError("Upload failed - Bundle was already uploaded.")
-
         try:
-            scanner.upload_bundle_cmd(
+            bundle_id = scanner.upload_bundle_cmd(
                 source_pdf,
                 slug,
                 username,
@@ -68,11 +66,11 @@ class Command(BaseCommand):
                 hashed,
                 number_of_pages,
             )
-            self.stdout.write(
-                f"Uploaded {source_pdf} as user {username} - processing it in the background now."
-            )
-        except ValueError as err:
+        except (ValueError, PlomConflict) as err:
             raise CommandError(err)
+        self.stdout.write(
+            f"Uploaded {source_pdf} as bundle {bundle_id}: background processing started."
+        )
 
     def staging_bundle_status(self, bundle_name=None):
         scanner = ScanService()

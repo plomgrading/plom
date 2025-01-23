@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
 import hashlib
@@ -20,7 +20,12 @@ from .services import ScanService
 
 
 class BundleUploadForm(forms.Form):
-    """Django form for upload of a bundle PDF."""
+    """Django form for upload of a bundle PDF.
+
+    TODO: There is some duplicated code/effort with ScanListBundles API
+    endpoint which uses the DRF rather than Forms.  If one makes changes
+    here, look there as well.
+    """
 
     pdf = forms.FileField(
         allow_empty_file=False,
@@ -67,7 +72,8 @@ class BundleUploadForm(forms.Form):
                     raise ValidationError("File is not a valid PDF.")
                 if pdf_doc.page_count > settings.MAX_BUNDLE_PAGES:
                     raise ValidationError(
-                        f"File exceeds {settings.MAX_BUNDLE_PAGES} page limit."
+                        f"File of {pdf_doc.page_count} pages "
+                        f"exceeds {settings.MAX_BUNDLE_PAGES} page limit."
                     )
                 data.update(
                     {

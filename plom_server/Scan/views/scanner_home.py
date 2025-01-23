@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Aidan Murphy
 
@@ -175,13 +175,13 @@ class ScannerUploadView(ScannerRequiredView):
         pdf_hash = data["sha256"]
         number_of_pages = data["number_of_pages"]
         timestamp = datetime.timestamp(data["time_uploaded"])
-        ScanService().upload_bundle(
+        ScanService.upload_bundle(
             bundle_file,
             slug,
             user,
-            timestamp,
-            pdf_hash,
-            number_of_pages,
+            timestamp=timestamp,
+            file_hash=pdf_hash,
+            number_of_pages=number_of_pages,
             force_render=data["force_render"],
             read_after=data["read_after"],
         )
@@ -290,12 +290,13 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             "n_incomplete": n_incomplete,
             "cover_angle": cover_img_rotation,
         }
+        numpgs = context["number_of_pages"]
         if not context["has_been_processed"]:
             done = scanner.get_bundle_split_completions(bundle.pk)
             context.update(
                 {
                     "number_of_split_pages": done,
-                    "percent_split": (100 * done) // context["number_of_pages"],
+                    "percent_split": 0 if numpgs is None else (100 * done) // numpgs,
                 }
             )
         if context["is_mid_qr_read"]:
@@ -303,7 +304,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             context.update(
                 {
                     "number_of_read_pages": done,
-                    "percent_read": (100 * done) // context["number_of_pages"],
+                    "percent_read": 0 if numpgs is None else (100 * done) // numpgs,
                 }
             )
 

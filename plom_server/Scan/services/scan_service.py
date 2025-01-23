@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2025 Aidan Murphy
 
 from __future__ import annotations
 
@@ -14,17 +15,24 @@ import pathlib
 import random
 import tempfile
 import time
+from io import BytesIO
+from datetime import datetime
 from typing import Any
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.forms import ValidationError
+from django.utils import timezone
 from django_huey import db_task
 import huey
 import huey.api
 import huey.exceptions
+import pymupdf
 
+from plom.plom_exceptions import PlomConflict
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap, try_to_extract_image
 from plom.scan.question_list_utils import canonicalize_page_question_map
@@ -66,45 +74,91 @@ log = logging.getLogger(__name__)
 class ScanService:
     """Functions for staging scanned test-papers."""
 
+    @classmethod
     def upload_bundle(
-        self,
-        uploaded_pdf_file: File,
+        cls,
+        _uploaded_pdf_file: File,
         slug: str,
         user: User,
-        timestamp: float,
-        pdf_hash: str,
-        number_of_pages: int,
         *,
+        timestamp: float | None = None,
+        file_hash: str = "",
+        number_of_pages: int | None = None,
         force_render: bool = False,
         read_after: bool = False,
-    ) -> None:
+    ) -> int:
         """Upload a bundle PDF and store it in the filesystem + database.
 
-        Also, split PDF into page images + store in filesystem and database.
-        Currently if that fails for any reason, the StagingBundle is still
+        Also, trigger a background job to split PDF into page images and
+        store in filesystem and database.  Because that is a background
+        job, if it fails for any reason, the StagingBundle is still
         created.
 
+        Note: this does not check if the user has appropriate permissions.
+        You either need to do that yourself or consider calling
+        :meth:`upload_bundle_cmd`_ instead.
+
         Args:
-            uploaded_pdf_file (Django File): File-object containing the pdf
+            _uploaded_pdf_file (Django File): File-object containing the pdf
                 (can also be a TemporaryUploadedFile or InMemoryUploadedFile).
             slug: Filename slug for the pdf.
             user (Django User): the user uploading the file
-            timestamp (float): the timestamp of the time at which the file was uploaded
-            pdf_hash: the sha256 of the pdf.
-            number_of_pages: the number of pages in the pdf.
 
         Keyword Args:
+            timestamp: the timestamp of the time at which the file was
+                uploaded.  If omitted, we'll use right now.
+            file_hash: the sha256 of the pdf file.  If omitted, we will
+                compute it.
+            number_of_pages: the number of pages in the pdf, can be None
+                if we don't know yet.
             force_render: Don't try to extract large bitmaps; always
                 render the page.
             read_after: Automatically read the qr codes from the bundle after
                 upload+splitting is finished.
 
         Returns:
-            None
+            The bundle id, the primary key of the newly-created bundle.
+
+        Raises:
+            ValidationError: _uploaded_pdf_file isn't a valid pdf or
+                exceeds the page limit, or other error.
+            PlomConflict: we already have a bundle which conflicts.
         """
+        if not timestamp:
+            timestamp = datetime.timestamp(timezone.now())
+
+        # Warning: Aidan saw errors if we open this more than once, during an API upload
+        # here get the bytes from the file and never use `_upload_pdf_file` again.
+        try:
+            with _uploaded_pdf_file.open("rb") as fh:
+                file_bytes = fh.read()
+        except OSError as err:
+            raise ValidationError(f"Unexpected error handling file: {err}") from err
+
+        if not file_hash:
+            file_hash = hashlib.sha256(file_bytes).hexdigest()
+
+        try:
+            with pymupdf.open(stream=file_bytes) as pdf_doc:
+                if "PDF" not in pdf_doc.metadata["format"]:
+                    raise ValidationError("Uploaded file isn't a valid pdf")
+                if pdf_doc.page_count > settings.MAX_BUNDLE_PAGES:
+                    raise ValidationError(
+                        f"Uploaded pdf with {pdf_doc.page_count} pages"
+                        f" exceeds {settings.MAX_BUNDLE_PAGES} page limit"
+                    )
+        except pymupdf.FileDataError as err:
+            raise ValidationError(err) from err
+
         # Warning: Issue #2888, and https://gitlab.com/plom/plom/-/merge_requests/2361
         # strange behaviour can result from relaxing this durable=True
         with transaction.atomic(durable=True):
+            existing = StagingBundle.objects.filter(pdf_hash=file_hash)
+            if existing:
+                raise PlomConflict(
+                    f"Bundle(s) {[x.slug for x in existing]} with the"
+                    f" same file hash {file_hash} have already uploaded"
+                )
             # create the bundle first, so it has a pk and
             # then give it the file and resave it.
             bundle_obj = StagingBundle.objects.create(
@@ -114,12 +168,12 @@ class ScanService:
                 pushed=False,
                 force_page_render=force_render,
             )
-            with uploaded_pdf_file.open() as fh:
-                bundle_obj.pdf_file = File(fh, name=f"{timestamp}.pdf")
-                bundle_obj.pdf_hash = pdf_hash
-                bundle_obj.number_of_pages = number_of_pages
-                bundle_obj.save()
-        self.split_and_save_bundle_images(bundle_obj.pk, read_after=read_after)
+            bundle_obj.pdf_file = File(BytesIO(file_bytes), name=f"{slug}.pdf")
+            bundle_obj.pdf_hash = file_hash
+            bundle_obj.number_of_pages = number_of_pages
+            bundle_obj.save()
+        cls.split_and_save_bundle_images(bundle_obj.pk, read_after=read_after)
+        return bundle_obj.pk
 
     def upload_bundle_cmd(
         self,
@@ -129,7 +183,7 @@ class ScanService:
         timestamp: float,
         pdf_hash: str,
         number_of_pages: int,
-    ) -> None:
+    ) -> int:
         """Wrapper around upload_bundle for use by the commandline bundle upload command.
 
         Checks if the supplied username has permissions to access and upload scans.
@@ -143,7 +197,11 @@ class ScanService:
             number_of_pages (int): the number of pages in the pdf
 
         Returns:
-            None
+            The bundle id, the primary key of the newly-created bundle.
+
+        Raises:
+            ValueError: username invalid or not in scanner group.
+            PlomConflict: duplicate upload.
         """
         # username => user_object, if in scanner group, else exception raised.
         try:
@@ -158,17 +216,17 @@ class ScanService:
         with open(pdf_file_path, "rb") as fh:
             pdf_file_object = File(fh)
 
-        self.upload_bundle(
+        return self.upload_bundle(
             pdf_file_object,
             slug,
             user_obj,
-            timestamp,
-            pdf_hash,
-            number_of_pages,
+            timestamp=timestamp,
+            file_hash=pdf_hash,
+            number_of_pages=number_of_pages,
         )
 
+    @staticmethod
     def split_and_save_bundle_images(
-        self,
         bundle_pk: int,
         *,
         number_of_chunks: int = 16,
@@ -526,6 +584,63 @@ class ScanService:
         # print(f"Just enqueued Huey parent_read_qr_codes task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
+    def map_bundle_page(
+        self,
+        bundle_id: int,
+        page: int,
+        *,
+        papernum: int,
+        question_indices: list[int],
+    ) -> None:
+        """Maps one page of a bundle onto zero or more questions.
+
+        Args:
+            bundle_id: primary key of bundle DB object.
+            page: one-based (TODO: check) index of the pages in the bundle.
+
+        Keyword Args:
+            papernum: the number of the test-paper
+            question_indices: a variable-length list of which questions (by
+                one-based question index) to attach the page to.  If empty,
+                it means to drop (discard) the page.
+                TODO: no, it should attach it to the proto DNM group:
+                TODO: https://gitlab.com/plom/plom/-/merge_requests/2771
+
+        Raises:
+            ObjectDoesNotExist: no such BundleImage, e.g., invalid bundle id or page
+        """
+        root_folder = settings.MEDIA_ROOT / "page_images"
+        root_folder.mkdir(exist_ok=True)
+
+        # TODO: assert the length of question is same as pages in bundle
+
+        with transaction.atomic():
+            page_img = StagingImage.objects.get(bundle__pk=bundle_id, bundle_order=page)
+
+            if not question_indices:
+                # TODO: see MR !2771 for later improvements
+                page_img.image_type = StagingImage.DISCARD
+                page_img.save()
+                DiscardStagingImage.objects.create(
+                    staging_image=page_img, discard_reason="map said drop this page"
+                )
+            else:
+                page_img.image_type = StagingImage.EXTRA
+                # TODO = update the qr-code info in the underlying image
+                page_img.save()
+                ExtraStagingImage.objects.create(
+                    staging_image=page_img,
+                    paper_number=papernum,
+                    question_idx_list=question_indices,
+                )
+            # TODO: Issue #3770.
+            # bundle_obj = (
+            #     StagingBundle.objects.filter(pk=bundle_pk).select_for_update().get()
+            # )
+            # finally - mark the bundle as having had its qr-codes read.
+            # bundle_obj.has_qr_codes = True
+            # bundle_obj.save()
+
     def map_bundle_pages(
         self,
         bundle_pk: int,
@@ -543,7 +658,7 @@ class ScanService:
             pages_to_question_indices: a list same length
                 as the bundle, each element is variable-length list
                 of which questions (by one-based question index)
-                to attach that page too.  If one of those inner
+                to attach that page to.  If one of those inner
                 lists is empty, it means to drop (discard) that
                 particular page.
 
@@ -577,6 +692,7 @@ class ScanService:
                     paper_number=papernum,
                     question_idx_list=qlist,
                 )
+            # TODO: Issue #3770.
             # finally - mark the bundle as having had its qr-codes read.
             bundle_obj.has_qr_codes = True
             bundle_obj.save()
@@ -665,7 +781,7 @@ class ScanService:
         return bundle.stagingimage_set.filter(image_type=StagingImage.DISCARD).count()
 
     @transaction.atomic
-    def staging_bundle_status_cmd(
+    def staging_bundle_status(
         self,
     ) -> list[tuple[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]]:
         bundles = StagingBundle.objects.all().order_by("slug")
@@ -736,17 +852,18 @@ class ScanService:
     @transaction.atomic
     def map_bundle_pages_cmd(
         self,
-        bundle_name: str,
         *,
+        bundle_name: str | None = None,
+        bundle_id: int | None = None,
         papernum: int,
         question_map: str | list[int] | list[list[int]],
     ) -> None:
         """Maps an entire bundle's pages onto zero or more questions per page.
 
-        Args:
-            bundle_name: which bundle.
-
         Keyword Args:
+            bundle_name: which bundle by name.
+            bundle_id: which bundle by id; you must specify one but not both
+                of `bundle_name` or `bundle_id`.
             papernum: which paper.
             question_map: specifies how pages of this bundle should be mapped
                 onto questions.  In principle it can be many different things,
@@ -769,10 +886,20 @@ class ScanService:
         This is the command "front-end" to :method:`map_bundle_pages`,
         see also docs there.
         """
-        try:
-            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
-        except ObjectDoesNotExist as e:
-            raise ValueError(f"Bundle '{bundle_name}' does not exist!") from e
+        if bundle_id and bundle_name:
+            raise ValueError("You cannot specify both ID and name")
+        elif bundle_id:
+            try:
+                bundle_obj = StagingBundle.objects.get(pk=bundle_id)
+            except ObjectDoesNotExist as e:
+                raise ValueError(f"Bundle id {bundle_id} does not exist!") from e
+        elif bundle_name:
+            try:
+                bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+            except ObjectDoesNotExist as e:
+                raise ValueError(f"Bundle '{bundle_name}' does not exist!") from e
+        else:
+            raise ValueError("You must specify one of ID or name")
 
         if not bundle_obj.has_page_images:
             raise ValueError(f"Please wait for {bundle_name} to upload...")
@@ -1456,7 +1583,13 @@ def huey_parent_split_bundle_chore(
     Returns:
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
+
+    Raises:
+        ValueError: various error situations about the input.
+        RuntimeError: child chore failed.
     """
+    import pymupdf
+
     assert task is not None
 
     start_time = time.time()
@@ -1464,9 +1597,39 @@ def huey_parent_split_bundle_chore(
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
+    # TODO: there is some duplication of code here with BundleUploadForm
+    try:
+        with pymupdf.open(bundle_obj.pdf_file.path) as pdf_doc:
+            bundle_length = pdf_doc.page_count
+            if "PDF" not in pdf_doc.metadata["format"]:
+                raise ValueError("File is not a valid PDF")
+    except pymupdf.FileDataError as err:
+        raise ValueError(
+            f"Invalid pdf file? failed to determine number of pages: {err}"
+        ) from err
+
+    # TODO: accessing `settings` here inside the huey job bothers me
+    if bundle_length > settings.MAX_BUNDLE_PAGES:
+        raise ValueError(
+            f"File of {bundle_length} pages "
+            f"exceeds {settings.MAX_BUNDLE_PAGES} page limit."
+        )
+
+    if bundle_obj.number_of_pages is not None:
+        # if we already knew the number of pages, it better match!
+        if bundle_obj.number_of_pages != bundle_length:
+            raise ValueError(
+                f"number of pages {bundle_length} does not match "
+                f"existing preset value {bundle_obj.number_of_pages}"
+            )
+
+    with transaction.atomic():
+        _write_bundle = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
+        _write_bundle.number_of_pages = bundle_length
+        _write_bundle.save()
+    bundle_obj.refresh_from_db()
+
     # cut the list of all indices into chunks
-    bundle_length = bundle_obj.number_of_pages
-    assert bundle_length is not None
     chunk_length = ceil(bundle_length / number_of_chunks)
     # be careful with 0/1 indexing here.
     # pymupdf (which we use to process pdfs) 0-indexes pages within
@@ -1675,7 +1838,7 @@ def huey_child_get_page_images(
         Information about the page image, including its file name,
         thumbnail, hash etc.
     """
-    import pymupdf as fitz
+    import pymupdf
     from plom.scan import rotate
     from PIL import Image
 
@@ -1687,7 +1850,7 @@ def huey_child_get_page_images(
 
     rendered_page_info = []
 
-    with fitz.open(bundle_obj.pdf_file.path) as pdf_doc:
+    with pymupdf.open(bundle_obj.pdf_file.path) as pdf_doc:
         for order in order_list:
             if _debug_be_flaky:
                 print(f"Huey debug, random sleep in task {task.id}")
@@ -1710,7 +1873,7 @@ def huey_child_get_page_images(
                     add_metadata=True,
                 )
             if save_path is None:
-                # log.info(f"{basename}: Fitz render. No extract b/c: " + "; ".join(msgs))
+                # log.info(f"{basename}: PyMuPDF render. No extract b/c: " + "; ".join(msgs))
                 # TODO: log and consider storing in the StagingImage as well
                 save_path = render_page_to_bitmap(
                     pdf_doc[order - 1],  # PyMuPDF is 0-indexed

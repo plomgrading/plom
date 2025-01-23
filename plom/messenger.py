@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024 Bryan Tanady
 
@@ -15,10 +15,13 @@ import logging
 import mimetypes
 import pathlib
 import tempfile
+from email.message import EmailMessage
+from pathlib import Path
 from typing import Any
 
 import requests
 from requests_toolbelt import MultipartEncoder
+from tqdm import tqdm
 
 from plom.baseMessenger import BaseMessenger
 from plom.scanMessenger import ScanMessenger
@@ -27,15 +30,16 @@ from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomConflict,
+    PlomNoPaper,
+    PlomNoPermission,
     PlomNoServerSupportException,
-    PlomTakenException,
+    PlomQuotaLimitExceeded,
     PlomRangeException,
-    PlomVersionMismatchException,
+    PlomTakenException,
     PlomTaskChangedError,
     PlomTaskDeletedError,
     PlomTimeoutError,
-    PlomQuotaLimitExceeded,
-    PlomNoPermission,
+    PlomVersionMismatchException,
 )
 
 
@@ -839,3 +843,129 @@ class Messenger(BaseMessenger):
             ) from None
         finally:
             self.SRmutex.release()
+
+    def new_server_upload_bundle(self, pdf: Path) -> dict[str, Any]:
+        """Upload a PDF file to the server as a new bundle.
+
+        Returns:
+            A dictionary, including the bundle_id and maybe other
+            information in the future.
+        """
+        with self.SRmutex:
+            try:
+                with pdf.open("rb") as f:
+                    files = {
+                        "pdf_file": f,
+                    }
+                    response = self.post_auth("/api/beta/scan/bundles", files=files)
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomSeriousException(response.reason) from None
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def new_server_list_bundles(self) -> list[list[Any]]:
+        """Get a list of information about bundles on the server.
+
+        TODO: beta: rename to something reasonable in due time.
+
+        Returns:
+            A list of of lists, representing a table where the first row
+            is the column headers.
+            TODO: maybe a list of dicts would be a more general API; could
+            format as a table client-side.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get_auth("/api/beta/scan/bundles")
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def new_server_bundle_map_page(
+        self, bundle_id: int, page: int, papernum: int, questions: str | list
+    ) -> Any:
+        """Map a page of a bundle to zero or more questions.
+
+        TODO: beta: rename to something reasonable in due time.
+
+        Returns:
+            TODO: nothing yet, still WIP?
+        """
+        with self.SRmutex:
+            try:
+                # qall TODO?
+                # qdnm versus empty list?
+                query_args = ["qall", f"papernum={papernum}"]
+                print(questions)
+                query_args.extend([f"qidx={n}" for n in questions])
+                p = (
+                    f"/api/beta/scan/bundle/{bundle_id}/{page}/map"
+                    + "?"
+                    + "&".join(query_args)
+                )
+                print(p)
+                response = self.post_auth(p)
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomSeriousException(response.reason) from None
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomRangeException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    # def new_server_bundle_map_finish(self, bundle_id: int):
+
+    def new_server_get_reassembled(self, papernum: int) -> dict[str, Any]:
+        """Download a reassembled PDF file from the server.
+
+        Returns:
+            A dict including key `"filename"` for the file that was written
+            and other information about the download.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get_auth(
+                    f"/api/beta/finish/reassembled/{papernum}", stream=True
+                )
+                response.raise_for_status()
+                # https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
+                msg = EmailMessage()
+                msg["Content-Disposition"] = response.headers.get("Content-Disposition")
+                filename = msg.get_filename()
+                assert filename is not None
+                num_bytes = 0
+                # defaults to CWD: TODO: kwarg to change that?
+                with open(filename, "wb") as f:
+                    for chunk in tqdm(response.iter_content(chunk_size=8192)):
+                        print((type(chunk), len(chunk)))
+                        f.write(chunk)
+                        num_bytes += len(chunk)
+                r = {
+                    "filename": filename,
+                    "content-length": num_bytes,
+                }
+                return r
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None

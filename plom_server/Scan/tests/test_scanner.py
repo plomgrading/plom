@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2025 Aidan Murphy
 
 import pathlib
 import random
@@ -12,10 +13,11 @@ from importlib import resources
 from typing import Any
 
 import exif
-import pymupdf as fitz
+import pymupdf
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files import File
+from django.forms import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 from model_bakery import baker
@@ -47,14 +49,16 @@ class ScanServiceTests(TestCase):
 
     def test_upload_bundle(self) -> None:
         """Test ScanService.upload_bundle and assert uploaded PDF file saved to right place."""
-        scanner = ScanService()
         timestamp = timezone.now().timestamp()
         # open the pdf-file to create a file-object to pass to the upload command.
         with open(self.pdf_path, "rb") as fh:
             pdf_file_object = File(fh)
 
         slug = "_test_bundle"
-        scanner.upload_bundle(pdf_file_object, slug, self.user, timestamp, "abcde", 28)
+        fake_hash = "deadbeef"
+        ScanService.upload_bundle(
+            pdf_file_object, slug, self.user, timestamp=timestamp, file_hash=fake_hash
+        )
 
         the_bundle = StagingBundle.objects.get(user=self.user, slug=slug)
         bundle_path = pathlib.Path(the_bundle.pdf_file.path)
@@ -65,7 +69,7 @@ class ScanServiceTests(TestCase):
             / "bundles"
             / self.user.username
             / str(the_bundle.pk)
-            / f"{timestamp}.pdf",
+            / f"{slug}.pdf",
         )
         self.assertTrue(bundle_path.exists())
         # TODO: is this an appropriate way to cleanup?
@@ -73,12 +77,22 @@ class ScanServiceTests(TestCase):
         bundle_path.unlink()
         bundle_path.parent.rmdir()
 
+        # upload_bundle should fail for non-pdf bundles
+        img_path = str(resources.files(_Scan_tests) / "page_img_good.png")
+        with open(img_path, "rb") as fh:
+            fh.seek(0)
+            non_pdf_file_object = File(fh)
+
+        slug = "_test_bundle"
+        with self.assertRaises(ValidationError):
+            ScanService.upload_bundle(non_pdf_file_object, slug, self.user)
+
     def test_remove_bundle(self) -> None:
         """Test removing a bundle and assert uploaded PDF file removed from disk."""
         timestamp = timezone.now().timestamp()
         # make a pdf and save it to a tempfile
         with tempfile.NamedTemporaryFile() as ntf:
-            with fitz.Document(self.pdf_path) as pdf:
+            with pymupdf.Document(self.pdf_path) as pdf:
                 pdf.save(ntf.name)
 
             # open that file to get django to save it to disk as per the models File("upload_to")
