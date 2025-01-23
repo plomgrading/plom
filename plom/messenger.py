@@ -852,6 +852,11 @@ class Messenger(BaseMessenger):
             A dictionary, including the bundle_id and maybe other
             information in the future.
         """
+        if self.is_server_api_less_than(113):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support staging bundle upload"
+            )
+
         with self.SRmutex:
             try:
                 with pdf.open("rb") as f:
@@ -883,6 +888,11 @@ class Messenger(BaseMessenger):
             TODO: maybe a list of dicts would be a more general API; could
             format as a table client-side.
         """
+        if self.is_server_api_less_than(113):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support staging bundle list"
+            )
+
         with self.SRmutex:
             try:
                 response = self.get_auth("/api/beta/scan/bundles")
@@ -903,6 +913,11 @@ class Messenger(BaseMessenger):
         Returns:
             TODO: nothing yet, still WIP?
         """
+        if self.is_server_api_less_than(113):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support page mapping"
+            )
+
         with self.SRmutex:
             try:
                 # qall TODO?
@@ -939,6 +954,11 @@ class Messenger(BaseMessenger):
             A dict including key `"filename"` for the file that was written
             and other information about the download.
         """
+        if self.is_server_api_less_than(113):
+            raise PlomNoServerSupportException(
+                "Server too old: API does not support getting reassembled papers"
+            )
+
         with self.SRmutex:
             try:
                 response = self.get_auth(
