@@ -63,6 +63,8 @@ class ScanListBundles(APIView):
         # unfortunate b/c it does some checks including a maximum upload size.
         # For now do some checks in the service, see :func:`upload_bundle`.
 
+        # TODO: consider exposing force_render and read_after via query params
+
         slug = slugify(filename_stem)
         try:
             bundle_id = ScanService.upload_bundle(pdf, slug, user, read_after=True)
@@ -70,9 +72,6 @@ class ScanListBundles(APIView):
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
         except PlomConflict as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
-
-        # force_render: bool = False,
-        # read_after: bool = False,
 
         return Response({"bundle_id": bundle_id}, status=status.HTTP_200_OK)
 
