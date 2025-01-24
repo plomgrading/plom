@@ -128,7 +128,9 @@ class ScanBundleActions(APIView):
 
         # TODO: WIP
 
-        return Response({"bundle_id": bundle_id}, status=status.HTTP_501_NOT_IMPLEMENTED)
+        return Response(
+            {"bundle_id": bundle_id}, status=status.HTTP_501_NOT_IMPLEMENTED
+        )
 
 
 class ScanMapBundle(APIView):
