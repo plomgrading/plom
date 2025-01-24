@@ -30,6 +30,7 @@ from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomConflict,
+    PlomNoBundle,
     PlomNoPaper,
     PlomNoPermission,
     PlomNoServerSupportException,
@@ -945,7 +946,38 @@ class Messenger(BaseMessenger):
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    # def new_server_bundle_map_finish(self, bundle_id: int):
+    def new_server_push_bundle(self, bundle_id: int):
+        """Push a bundle from the staging area.
+
+        TODO: beta: rename to something reasonable in due time.
+
+        Returns:
+            TODO: WIP
+        """
+        if self.is_server_api_less_than(113):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support bundle push"
+            )
+
+        with self.SRmutex:
+            try:
+                response = self.patch_auth(f"/api/beta/scan/bundle/{bundle_id}")
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomSeriousException(response.reason) from None
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoBundle(response.reason) from None
+                if response.status_code == 406:
+                    raise PlomConflict(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def new_server_get_reassembled(self, papernum: int) -> dict[str, Any]:
         """Download a reassembled PDF file from the server.

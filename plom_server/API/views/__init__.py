@@ -39,6 +39,7 @@ from .mark import (
 
 from .scan import (
     ScanListBundles,
+    ScanBundleActions,
     ScanMapBundle,
 )
 

@@ -8,7 +8,7 @@ from plom.messenger import Messenger
 from plom.plom_exceptions import PlomExistingLoginException
 
 
-def _start_messenger(
+def start_messenger(
     server: str | None,
     usr: str,
     pwd: str,
@@ -52,7 +52,7 @@ def with_messenger(f):
 
         # if not, we assume its appropriate args to make a messenger
         credentials = kwargs.pop("msgr")
-        msgr = _start_messenger(*credentials)
+        msgr = start_messenger(*credentials)
         kwargs["msgr"] = msgr
         try:
             return f(*args, **kwargs)

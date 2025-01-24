@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2022 Michael Deakin
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Bryan Tanady
@@ -187,6 +187,10 @@ class PlomNoPermission(PlomBenignException):
 class PlomBundleLockedException(PlomBenignException):
     """For when a bundle is locked or pushed."""
 
+    pass
+
+
+class PlomNoBundle(PlomBenignException):
     pass
 
 
