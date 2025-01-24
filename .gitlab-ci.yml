@@ -249,19 +249,6 @@ release_job:
     - echo 'running release_job'
     - echo "Draft of release notes follows (newlines eaten)"
     - cat release_desc.md
-    - echo "Just debugging:"
-    - echo $LINKNAME0
-    - echo $URL0
-    - echo $FILENAME0
-    - echo $LINKNAME1
-    - echo $URL1
-    - echo $FILENAME1
-    - echo $LINKNAME2
-    - echo $URL2
-    - echo $FILENAME2
-    - echo $LINKNAME3
-    - echo $URL3
-    - echo $FILENAME4
   release:
     name: 'Release $CI_COMMIT_TAG'
     description: './release_desc.md'
@@ -272,27 +259,8 @@ release_job:
       - $CI_COMMIT_TAG
     assets:
       links:
-        - name: $LINKNAME0
-          filepath: "/$FILENAME0"
-          url: $URL0
-          link_type: "package"
-        - name: $LINKNAME1
-          filepath: "/$FILENAME1"
-          url: $URL1
-          link_type: "package"
-        - name: $LINKNAME2
-          filepath: "/$FILENAME2"
-          url: $URL2
-          link_type: "package"
-        - name: $LINKNAME3
-          filepath: "/$FILENAME3"
-          url: $URL3
-          link_type: "package"
         - name: $OTHER_LINKNAME1
           url: $OTHER_URL1
-          link_type: "other"
-        - name: $OTHER_LINKNAME2
-          url: $OTHER_URL2
           link_type: "other"
         - name: $OTHER_LINKNAME3
           url: $OTHER_URL3
