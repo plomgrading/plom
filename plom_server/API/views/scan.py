@@ -73,6 +73,52 @@ class ScanListBundles(APIView):
         return Response({"bundle_id": bundle_id}, status=status.HTTP_200_OK)
 
 
+class ScanBundleActions(APIView):
+    """API related bundles."""
+
+    # PATCH: /api/beta/scan/bundle/{bundle_id}
+    def patch(self, request: Request, *, bundle_id: int) -> Response:
+        """API to push a bundle.
+
+        On success (200), the return will be TODO: still a WIP.
+
+        Only "scanner" users including managers can do this; others will
+        get a 403.
+        """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "scanner" not in group_list:
+            return _error_response(
+                'Only users in the "scanner" group can push bundles',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        # TODO: WIP
+
+        return Response({"bundle_id": bundle_id}, status=status.HTTP_200_OK)
+
+    # DELETE: /api/beta/scan/bundle/{bundle_id}
+    def delete(self, request: Request, *, bundle_id: int) -> Response:
+        """API to delete a bundle.
+
+        On success (200), the return will be TODO: still a WIP.
+
+        Only "scanner" users including managers can do this; others will
+        get a 403.
+
+        TODO: check if regular views require a manager-level account to delete bundles.
+        """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "scanner" not in group_list:
+            return _error_response(
+                'Only users in the "scanner" group can delete bundles',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        # TODO: WIP
+
+        return Response({"bundle_id": bundle_id}, status=status.HTTP_200_OK)
+
+
 class ScanMapBundle(APIView):
     """API related to mapping a bundle."""
 

@@ -100,6 +100,33 @@ def _get_parser():
     _add_server_args(s)
 
     s = sub.add_parser(
+        "push-bundle",
+        help="Declare that a bundle is ready for marking",
+        description="""
+            A bundle that is ready to be marked (e.g., no unknown pages etc)
+            is ready for marking.  This command moves its pages from the staging
+            area and makes them available for marking.
+
+            Use the `list-bundles` command to check on the status of your bundle.
+        """,
+    )
+    _add_server_args(s)
+    s.add_argument("bundle_id", type=int)
+
+    s = sub.add_parser(
+        "delete-bundle",
+        help="Delete a bundle from the staging area, NOT IMPLEMENTED YET",
+    )
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "wait-bundle",
+        help="Wait for a bundle to finish processing, NOT IMPLEMENTED YET",
+    )
+    _add_server_args(s)
+
+    s.add_argument("bundle_id", type=int)
+    s = sub.add_parser(
         "clear",
         help='Clear "scanner" login',
         description='Clear "scanner" login after a crash or other expected event.',
@@ -175,6 +202,8 @@ def main():
         print(r)
     elif args.command == "list-bundles":
         list_bundles(msgr=(args.server, args.username, args.password))
+    elif args.command == "push-bundle":
+        raise NotImplementedError("TODO")
     elif args.command == "map":
         bundle_map_page(
             args.bundle_id,
