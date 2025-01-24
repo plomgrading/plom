@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 * Plom Client is now developed separately at https://gitlab.com/plom/plom-client
+* The `plom.client` code in this repo is deprecated but not yet removed.
 
 ### Fixed
 * Improved error checked around validity of rubrics.
