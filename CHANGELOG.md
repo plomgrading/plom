@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Plom server's web UI now supports dark mode.
+* All the pages of a paper can be discarded, rather than one page at a time.
 
 ### Changed
 * Plom server now runs on Django 5 and has a minimum Python version of 3.10.
