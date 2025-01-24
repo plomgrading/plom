@@ -26,9 +26,14 @@ from pathlib import Path
 
 from stdiomask import getpass
 
-from plom.scan import __version__
-from plom import Default_Port
-from plom.cli import list_bundles, bundle_map_page, upload_bundle, get_reassembled
+from plom import Default_Port, __version__
+from plom.cli import (
+    bundle_map_page,
+    get_reassembled,
+    list_bundles,
+    start_messenger,
+    upload_bundle,
+)
 
 # from plom.cli import clear_login
 
@@ -203,7 +208,14 @@ def main():
     elif args.command == "list-bundles":
         list_bundles(msgr=(args.server, args.username, args.password))
     elif args.command == "push-bundle":
-        raise NotImplementedError("TODO")
+        msgr = start_messenger(args.server, args.username, args.password)
+        try:
+            r = msgr.new_server_push_bundle(args.bundle_id)
+            print(r)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
+
     elif args.command == "map":
         bundle_map_page(
             args.bundle_id,

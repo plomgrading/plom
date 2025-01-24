@@ -25,6 +25,7 @@ from .views import (
     QuestionMarkingViewSet,
     # TODO: these are possibly temporary
     ScanListBundles,
+    ScanBundleActions,
     ScanMapBundle,
     FinishReassembled,
     REPspreadsheet,
@@ -60,6 +61,11 @@ urlpatterns = [
         "api/beta/scan/bundles",
         ScanListBundles.as_view(),
         name="api_Scan_bundles",
+    ),
+    path(
+        "api/beta/scan/bundle/<int:bundle_id>",
+        ScanBundleActions.as_view(),
+        name="api_can_bundle_actions",
     ),
     # "api/beta/scan/bundle/<int:bundle_id>/map/<int:papernum>/<str:questions>",
     path(

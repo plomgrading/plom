@@ -12,7 +12,11 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
 
-from plom.plom_exceptions import PlomConflict
+from plom.plom_exceptions import (
+    PlomConflict,
+    PlomPushCollisionException,
+    PlomBundleLockedException,
+)
 from Scan.services import ScanService
 from .utils import _error_response
 
@@ -74,7 +78,7 @@ class ScanListBundles(APIView):
 
 
 class ScanBundleActions(APIView):
-    """API related bundles."""
+    """API related to bundles."""
 
     # PATCH: /api/beta/scan/bundle/{bundle_id}
     def patch(self, request: Request, *, bundle_id: int) -> Response:
@@ -92,7 +96,16 @@ class ScanBundleActions(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
 
-        # TODO: WIP
+        try:
+            ScanService().push_bundle_to_server(bundle_id, request.user)
+        except ObjectDoesNotExist as e:
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
+        except ValueError as err:
+            return _error_response(err, status=status.HTTP_400_BAD_REQUEST)
+        except PlomPushCollisionException as err:
+            return _error_response(err, status=status.HTTP_409_CONFLICT)
+        except PlomBundleLockedException as err:
+            return _error_response(err, status=status.HTTP_406_NOT_ACCEPTABLE)
 
         return Response({"bundle_id": bundle_id}, status=status.HTTP_200_OK)
 

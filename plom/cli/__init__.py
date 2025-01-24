@@ -11,7 +11,7 @@ __license__ = "AGPL-3.0-or-later"
 
 from plom import __version__
 
-from .start_messenger import with_messenger
+from .start_messenger import with_messenger, start_messenger
 from .list_bundles import list_bundles
 from .bundle_tools import upload_bundle, bundle_map_page
 from .finish_tools import get_reassembled
