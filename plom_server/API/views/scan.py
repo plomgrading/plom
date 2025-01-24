@@ -61,7 +61,7 @@ class ScanListBundles(APIView):
 
         slug = slugify(filename_stem)
         try:
-            bundle_id = ScanService.upload_bundle(pdf, slug, user)
+            bundle_id = ScanService.upload_bundle(pdf, slug, user, read_after=True)
         except ValidationError as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
         except PlomConflict as e:
