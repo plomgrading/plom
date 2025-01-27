@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Brennen Chiu
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Forest Kobayashi
-
-from __future__ import annotations
 
 from typing import Any
 

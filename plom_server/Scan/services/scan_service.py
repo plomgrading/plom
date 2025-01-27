@@ -4,9 +4,8 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Forest Kobayashi
 # Copyright (C) 2025 Aidan Murphy
-
-from __future__ import annotations
 
 import hashlib
 import logging
