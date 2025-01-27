@@ -42,8 +42,6 @@ class QRErrorService:
         # * check all images have correct public-key
         # * check all distinct test/page/version
 
-        spec_dictionary = SpecificationService.get_the_spec()
-
         # lists of various image types
         no_qr_imgs = []  # no qr-codes could be read
         # indicative of a serious error (eg inconsistent qr-codes)
@@ -73,11 +71,10 @@ class QRErrorService:
                     continue
 
                 try:
-                    self.check_consistent_qr(img.parsed_qr)
-                    self.check_qr_against_spec_and_qvmap(
-                        img.parsed_qr, spec_dictionary["publicCode"]
-                    )
-                    tpv = self.get_tpv(img.parsed_qr)
+                    self._check_consistent_qrs(img.parsed_qr)
+                    self._check_qrs_against_spec_and_qvmap(img.parsed_qr)
+                    # we know the codes are consistent, sufficient to check just one.
+                    tpv = list(img.parsed_qr.values())[0]["tpv"]
                     if tpv == "plomX":  # is an extra page
                         extra_imgs.append(img.pk)
                     elif tpv == "plomS":  # is a scrap-paper page
@@ -169,7 +166,8 @@ class QRErrorService:
                     staging_image=img, error_reason=err_str
                 )
 
-    def check_consistent_qr(self, parsed_qr_dict: dict[str, dict[str, Any]]) -> None:
+    @staticmethod
+    def _check_consistent_qrs(parsed_qr_dict: dict[str, dict[str, Any]]) -> None:
         """Check the parsed qr-codes: confirm they are self-consistent and that the publicCode matches the test spec.
 
         Note that the parsed_qr_dict is of the form
@@ -201,7 +199,7 @@ class QRErrorService:
         if is_list_inconsistent(page_types):
             raise ValueError("Inconsistent qr-codes - check scan for folded pages")
         # if it is an extra page or scrap-paper, then no further consistency checks
-        if page_types[0] in ["plom_extra", "plom_scrap", "plom_bundle_separator"]:
+        if page_types[0] in ("plom_extra", "plom_scrap", "plom_bundle_separator"):
             return
         # must be a normal qr-coded plom-page - so make sure public-code is consistent
         # note - this does not check the code against that given by the spec.
@@ -232,37 +230,48 @@ class QRErrorService:
             raise ValueError("Inconsistent tpv - check scan for folded pages")
         # check that the version in the qr-code matches the question-version-map in the system.
 
-    def check_qr_against_spec_and_qvmap(
-        self, parsed_qr_dict: dict[str, dict[str, Any]], correct_public_code: str
+    @staticmethod
+    def _check_qrs_against_spec_and_qvmap(
+        parsed_qr_dict: dict[str, dict[str, Any]]
     ) -> bool:
         """Check the info in the qr-code against the spec and the qv-map in the database.
 
         More precisely, check that the
-        publc-code in the qr-code matches the public-code in the
+        public-code in the qr-codes matches the public-code in the
         test-specification. Then check that the (paper,page,version)
         triple in the qr-code matches a (paper,page,version) in the
         database - which was determined by the question-version map.
 
         Note that
            * this should only be called after qr-code consistency checks
+             because it assumes the multiple QR codes are already self-consistent
            * if the page is an extra, scrap or unknown page then this test simply returns "True".
 
-        Returns None if all good, else raises various ValueError describing the errors.
+        Returns:
+            True if the QR code is consistent with the spec.
+
+        Raises:
+            ValueError: describing the error if the QR code is inconsistent.
         """
         if len(parsed_qr_dict) == 0:
             return True
+        # we assume they are all consistent so just check one:
         qr_info = next(iter(parsed_qr_dict.values()))
-        if qr_info["page_type"] in [
+        if qr_info["page_type"] in (
             "plom_extra",
             "plom_scrap",
             "plom_bundle_separator",
-        ]:
+        ):
             return True
 
         # make sure the public code matches that given in the spec
-        if qr_info["page_info"]["public_code"] != correct_public_code:
+        spec_dictionary = SpecificationService.get_the_spec()
+        public_code = qr_info["page_info"]["public_code"]
+        correct_public_code = spec_dictionary["publicCode"]
+        if public_code != correct_public_code:
             raise ValueError(
-                "Public code does not match spec - was a page from a different assessment uploaded?"
+                f"Public code {public_code} does not match spec {correct_public_code}"
+                " - was a page from a different assessment uploaded?"
             )
 
         v_on_page = qr_info["page_info"]["version_num"]
@@ -275,7 +284,3 @@ class QRErrorService:
             )
 
         return True
-
-    def get_tpv(self, parsed_qr_dict: dict[str, dict[str, str]]) -> str:
-        # since we know the codes are consistent, it is sufficient to check just one.
-        return list(parsed_qr_dict.values())[0]["tpv"]
