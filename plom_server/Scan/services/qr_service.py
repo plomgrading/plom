@@ -23,8 +23,9 @@ from ..models import (
 )
 
 
-class QRErrorService:
-    def create_staging_images_based_on_QR_codes(self, bundle: StagingBundle) -> None:
+class QRService:
+    @classmethod
+    def create_staging_images_based_on_QR_codes(cls, bundle: StagingBundle) -> None:
         """Classify the StagingImages of a StagingBundle based on previously-read QR codes.
 
         Args:
@@ -71,8 +72,8 @@ class QRErrorService:
                     continue
 
                 try:
-                    self._check_consistent_qrs(img.parsed_qr)
-                    self._check_qrs_against_spec_and_qvmap(img.parsed_qr)
+                    cls._check_consistent_qrs(img.parsed_qr)
+                    cls._check_qrs_against_spec_and_qvmap(img.parsed_qr)
                     # we know the codes are consistent, sufficient to check just one.
                     tpv = list(img.parsed_qr.values())[0]["tpv"]
                     if tpv == "plomX":  # is an extra page
