@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020, 2023-2024 Colin B. Macdonald
+# Copyright (C) 2020, 2023-2025 Colin B. Macdonald
 
 from __future__ import annotations
 
-from pytest import raises
 from typing import Any
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMessageBox
+from pytest import raises
 
-from plom.client.rubric_list import AddRubricBox
-from plom.client.useful_classes import WarnMsg, SimpleQuestion
+from .rubric_list import AddRubricBox
+from .useful_classes import SimpleQuestion, WarnMsg
 
 
 def test_AddRubricBox_add_new(qtbot) -> None:

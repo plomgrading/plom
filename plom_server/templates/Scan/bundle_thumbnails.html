@@ -2,7 +2,8 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Brennen Chiu
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2024 Winnie Cheung
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -45,53 +46,93 @@
                             Staged bundle
                         {% endif %}
                     {% endif %}
-                    &ensp; <q>{{ slug }}</q>
+                    <q><tt>{{ slug }}</tt></q>
                     {% if has_page_images and finished_reading_qr and is_perfect and not is_pushed %}
                         {% if n_collisions %}
-                            &ensp; contains {{ n_collisions }} colliding page images
+                            contains {{ n_collisions }} colliding page image{{ n_collisions|pluralize }}
                         {% elif n_incomplete == 0 %}
                             <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
                             <!-- note that the midPush variable is defined in the parent html file which includes this html file -->
-                            &ensp; has no pages requiring attentions -
+                            has no pages requiring attention -
                             <button class="btn btn-success"
                                     hx-confirm="Please confirm that you want to push this bundle."
                                     hx-post="{% url 'scan_push_all' bundle_id %}"
                                     x-bind:disabled="midPush"
                                     @htmx:before-send="midPush=true;">Push</button>
                         {% else %}
-                            &ensp; has no problems, but contains incomplete papers. You can
+                            has no problems, but contains incomplete papers. You can
                             <!-- Issue #3411: provide link to additional info -->
                             <button class="btn btn-danger"
-                                    hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper(s). Pushing may create incomplete and unmarkable papers on your server so this isn't best practice. Are you sure you wish to push?"
+                                    hx-confirm="This bundle contains {{ n_incomplete }} incomplete paper{{ n_incomplete|pluralize }}. Pushing may create incomplete and unmarkable papers on your server so this isn't best practice. Are you sure you wish to push?"
                                     hx-post="{% url 'scan_push_all' bundle_id %}"
                                     x-bind:disabled="midPush"
                                     @htmx:before-send="midPush=true;">Push</button>
                             but it is not recommended
                         {% endif %}
                     {% endif %}
-                    {% if not is_perfect %}&ensp; has pages that require your attention{% endif %}
+                    {% if not is_perfect %}has pages that require your attention{% endif %}
                 </h5>
                 {% if n_incomplete %}
                     <div class="alert alert-warning">
                         <details>
-                            <summary>This bundle contains {{ n_incomplete }} incomplete paper(s)</summary>
-                            <ul>
-                                <li>Incomplete papers contain some, but not all their pages.</li>
-                                <li>
-                                    If you push the incomplete papers you can start marking them, but you cannot complete them until all their pages are pushed.
-                                </li>
-                                <li>
-                                    Incomplete papers often indicates some sort of problem with scanning &mdash; like some pages stuck together. It can also occur if a paper is split across two bundles.
-                                </li>
-                                <li>It may be better to delete this bundle and rescan the physical papers.</li>
-                            </ul>
+                            <summary>This bundle contains {{ n_incomplete }} incomplete paper{{ n_incomplete|pluralize }}</summary>
+                            {% if is_pushed %}
+                                <ul>
+                                    <li>Incomplete papers contain some, but not all their pages.</li>
+                                    <li>
+                                        Any question that is missing
+                                        pages <em>will not</em> be
+                                        sent out for marking.
+                                    </li>
+                                    <li>
+                                        Incomplete papers can indicate
+                                        problems with scanning such as two
+                                        pages stuck together.
+                                    </li>
+                                    <li>
+                                        Incomplete papers also occur if a paper is
+                                        split across two bundles.  In this
+                                        case, just keep pushing bundles and
+                                        Plom will automatically complete
+                                        these papers when the additional
+                                        pages become available.
+                                    </li>
+                                </ul>
+                            {% else %}
+                                <ul>
+                                    <li>Incomplete papers contain some, but not all their pages.</li>
+                                    <li>
+                                        If you push the incomplete
+                                        papers, you can start marking
+                                        any questions that have all
+                                        their pages.
+                                    </li>
+                                    <li>
+                                        Incomplete papers can indicate
+                                        problems with scanning such as two
+                                        pages stuck together.
+                                    </li>
+                                    <li>
+                                        Incomplete papers also occur if a paper is
+                                        split across two bundles.  In this
+                                        case, after you push both bundles the
+                                        paper will become complete automatically.
+                                    </li>
+                                    <li>
+                                        If you wish, you can always
+                                        decide to delete this bundle
+                                        and rescan the physical
+                                        papers.
+                                    </li>
+                                </ul>
+                            {% endif %}
                         </details>
                     </div>
                 {% endif %}
                 {% if error_pages %}
                     <div class="alert alert-danger">
                         <details>
-                            <summary>This bundle has {{ error_pages }} error page(s)</summary>
+                            <summary>This bundle contains {{ error_pages }} error page{{ error_pages|pluralize }}</summary>
                             <ul>
                                 <li>this typically indicates serious scanning problems</li>
                                 <li>while these can be repaired here, we recommend that you do not</li>
@@ -107,20 +148,55 @@
                 {% endif %}
                 {% if n_collisions %}
                     <div class="alert alert-danger">
-                        <h5>This bundle contains scans of pages that have already been pushed</h5>
-                        <p>Images: {{ colliding_images_nice_format }}</p>
+                        <h5>
+                            This bundle contains {{ n_collisions }} scan{{ n_collisions|pluralize }} of pages that have already been pushed
+                        </h5>
                         <p>
-                            Generally this indicates either
+                            Generally this indicates one of the following:
                             <ul>
+                                <li>You have scanned papers twice &mdash; this usually is not a big problem:</li>
+                                <ul>
+                                    <li>
+                                        You can delete this bundle
+                                        (e.g., if everything here
+                                        collides with pages you
+                                        already have, or if you want
+                                        to rescan part of it).
+                                    </li>
+                                    <li>
+                                        You can discard the pages of this
+                                        bundle that collide, and then push
+                                        the remaining pages.
+                                    </li>
+                                </ul>
+                                <li>You are midway through replacing some poorly-scanned papers:</li>
+                                <ul>
+                                    <li>
+                                        you may want to <q>discard</q> the
+                                        existing (pushed) poorly-scanned
+                                        pages and then return here,
+                                    </li>
+                                    <li>
+                                        or you can discard some of these
+                                        staged pages to resolve the
+                                        collision;
+                                    </li>
+                                    <li>
+                                        it just depends whether
+                                        you want to keep the staged image
+                                        or the previously-pushed image.
+                                    </li>
+                                </ul>
                                 <li>
-                                    You are midway through replacing some poorly scanned papers. You should <q>discard</q> the existing pushed poorly scanned pages and then return here.
-                                </li>
-                                <li>You have accidentally scanned papers twice &mdash; this is not a problem, simply delete this bundle</li>
-                                <li>
-                                    You have accidentally re-used papers &mdash; this is a <a href="https://plom.readthedocs.io/en/latest/faq.html#i-messed-up-by-double-printing-some-papers-now-i-have-collisions">substantial problem!</a>
+                                    You have accidentally reused
+                                    papers&mdash;different students have
+                                    written on the same paper&mdash;which
+                                    is a
+                                    <a href="https://plom.readthedocs.io/en/latest/faq.html#i-messed-up-by-double-printing-some-papers-now-i-have-collisions">substantial problem!</a>
                                 </li>
                             </ul>
                         </p>
+                        <p>The colliding image{{ n_collisions|pluralize }}: {{ colliding_images_nice_format }}</p>
                     </div>
                 {% endif %}
                 <p>
@@ -236,10 +312,9 @@
                                             <div class="card text-center bg-primary-subtle col p-1"
                                                  data-bs-toggle="tooltip"
                                                  data-bs-placement="top"
-                                                 data-bs-title="Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_list }}">
+                                                 data-bs-title="Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_idx_list }}">
                                                 {% include "Scan/fragments/bundle_thumbnail_container.html" %}
                                             </div>
-                                            <!-- above div should say question_index_list, Issue #2716, but I think it works for now -->
                                         </div>
                                     {% else %}
                                         <div class="col">

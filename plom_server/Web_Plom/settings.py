@@ -21,9 +21,7 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-
 from typing import Any
-
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -219,9 +217,8 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Password reset timeout in seconds
-# Default is 3 days
-# PASSWORD_RESET_TIMEOUT = 60
+# Password reset timeout in seconds. We suggest 14 days. If unspecified then system will use 3 days.
+PASSWORD_RESET_TIMEOUT = 60 * 60 * 24 * 14
 
 
 # Internationalization
@@ -255,7 +252,13 @@ SESSION_COOKIE_AGE = 60 * 60 * 2
 SESSION_SAVE_EVERY_REQUEST = True
 
 
-# Django huey configuration
+# Django Huey configuration
+# Huey handles background tasks.  PLOM_HUEY_PARENT_WORKERS controls how many
+# simultaneous bundle processing tasks can happen (additional bundles will queue).
+# PLOM_HUEY_WORKERS are lower-level jobs such as extracting several pages from
+# a bundle and reading the QR codes.
+_huey_workers = int(os.environ.get("PLOM_HUEY_WORKERS", 4))
+_huey_parent_workers = int(os.environ.get("PLOM_HUEY_PARENT_WORKERS", 2))
 HUEY = {"immediate": False}
 DJANGO_HUEY = {
     "default": "tasks",
@@ -268,7 +271,7 @@ DJANGO_HUEY = {
             "immediate": False,
             "utc": True,
             "consumer": {
-                "workers": 4,
+                "workers": _huey_workers,
                 "worker_type": "process",
                 "initial_delay": 0.1,
                 "backoff": 1.15,
@@ -287,7 +290,7 @@ DJANGO_HUEY = {
             "immediate": False,
             "utc": True,
             "consumer": {
-                "workers": 2,
+                "workers": _huey_parent_workers,
                 "worker_type": "process",
                 "initial_delay": 0.1,
                 "backoff": 1.15,
@@ -334,9 +337,12 @@ FIXTURE_DIRS = [BASE_DIR / "fixtures"]
 MAX_BUNDLE_SIZE = 536870912
 MAX_BUNDLE_PAGES = 2500
 
-# Max file size for a single file upload (1 MB for now)
-# MAX_FILE_SIZE = 1e6
-# TODO: this is (probably) UNUSED at the moment, possible for future use.
+# User uploaded (non-bundle) files are rejected if they exceed this byte size.
+# TODO: nginx also checks file size, does this serve a purpose?
+MAX_FILE_SIZE = 1024 * 1024
+MAX_FILE_SIZE_DISPLAY = "1 MiB"
+# User uploaded files are written to /tmp if they exceed this, default is 2.5e6.
+# FILE_UPLOAD_MAX_MEMORY_SIZE = 2.5e6
 
 LOGGING: dict[str, Any] = {
     "version": 1,
@@ -355,12 +361,17 @@ LOGGING: dict[str, Any] = {
     },
 }
 
+# When hunting down slow http request / db queries make use of the django-silk package
+# https://github.com/jazzband/django-silk
+PROFILER_SILK_ENABLED = False
+if PROFILER_SILK_ENABLED:
+    MIDDLEWARE.append("silk.middleware.SilkyMiddleware")
+    INSTALLED_APPS.append("silk")
+
 # When hunting down n-plus-1 query problems make use of the nplusone package
 # https://github.com/jmcarp/nplusone
-
-hunting_nplusone = False
-
-if hunting_nplusone:
+PROFILER_NPLUSONE_ENABLED = False
+if PROFILER_NPLUSONE_ENABLED:
     INSTALLED_APPS.append("nplusone.ext.django")
     MIDDLEWARE.append("nplusone.ext.django.NPlusOneMiddleware")
     LOGGING["loggers"].update(

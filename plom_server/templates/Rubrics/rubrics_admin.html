@@ -3,8 +3,9 @@
     Copyright (C) 2023 Edith Coates
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023 Divy Patel
-    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
+    Copyright (C) 2024 Andrew Rechnitzer
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -19,36 +20,19 @@
     {% endif %}
     <div class="card m-2">
         <div class="card-body">
-            <form method="post" name="system_rubrics" action="">
+            <form method="post" action="{% url 'rubric_half' %}">
                 {% csrf_token %}
-                <div class="form-group mr-2">{{ rubric_admin_form }}</div>
-                <button type="submit"
-                        class="btn btn-success"
-                        name="init_system_rubrics"
-                        {% if rubrics %}disabled{% endif %}>Create system rubrics</button>
-            </form>
-            <p>
-                These are basic rubrics that Plom needs to function.
-                {% if rubrics %}
-                    They have already been created.
-                {% else %}
-                    Marking cannot begin until these are created.
-                {% endif %}
-            </p>
-            <!--<p>(TODO: should this happen automatically when clients connect?)</p>-->
-            <form method="post" action="{% url 'rubric_demo' %}">
-                {% csrf_token %}
-                <div class="form-group mr-2">{{ rubric_demo_form }}</div>
+                <div class="form-group mr-2">{{ rubric_halfmark_form }}</div>
                 <button type="submit"
                         class="btn btn-danger"
                         name="init_system_rubrics"
                         {% if not rubrics %}disabled{% endif %}
-                        {% if demo_rubrics %}disabled{% endif %}>Create half mark rubrics (OPTIONAL)</button>
+                        {% if half_point_rubrics %}disabled{% endif %}>Create half mark rubrics (OPTIONAL)</button>
             </form>
             <p>
                 Introduce two additional rubrics to each question: +&#189; and -&#189;.
                 {% if not rubrics %}The system rubrics must be created before this button is enabled.{% endif %}
-                {% if demo_rubrics %}These rubrics have already been created.{% endif %}
+                {% if half_point_rubrics %}These rubrics have already been created.{% endif %}
             </p>
             <form method="get" action={% url 'rubric_download' %} class="form-inline">
                 {% csrf_token %}
@@ -68,9 +52,8 @@
                     {{ rubric_upload_form }}
                 </div>
             </form>
-            <p>Upload a rubric.</p>
-            <a class="btn btn-danger" href="{% url 'rubrics_wipe' %}">Wipe all rubrics&hellip;</a>
-            <p>(A destructive action; you'll need to confirm it on the next screen)</p>
+            <p>Upload rubrics from .csv, .toml, or .json file (beta!)</p>
+            <!-- TODO: Issue #3755: should we provide an example? -->
         </div>
     </div>
 {% endblock main_content %}

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright (C) 2020-2024 Colin B. Macdonald
+  Copyright (C) 2020-2025 Colin B. Macdonald
   Copyright (C) 2021 Óvári
 
   Copying and distribution of this file, with or without modification,
@@ -69,6 +69,15 @@
   </developer>
   <content_rating type="oars-1.0"/>
   <releases>
+    <release date="2025-01-24" version="0.17.0"/>
+    <release date="2024-12-10" version="0.16.11"/>
+    <release date="2024-11-06" version="0.16.10"/>
+    <release date="2024-10-23" version="0.16.9"/>
+    <release date="2024-10-15" version="0.16.8"/>
+    <release date="2024-10-14" version="0.16.7"/>
+    <release date="2024-10-10" version="0.16.6"/>
+    <release date="2024-10-08" version="0.16.5"/>
+    <release date="2024-10-02" version="0.16.4"/>
     <release date="2024-09-24" version="0.16.3"/>
     <release date="2024-09-17" version="0.16.2"/>
     <release date="2024-09-12" version="0.16.0"/>

@@ -20,7 +20,7 @@ a **Plom Client**.
 Fedora
 ------
 
-Tested on Fedora 39.  Some stuff from the package manager:
+Tested on Fedora 40.  Some stuff from the package manager:
 ```
   # sudo dnf install \
         ImageMagick gcc gcc-c++ cmake \
@@ -39,17 +39,15 @@ Tested on Fedora 39.  Some stuff from the package manager:
         python3-aiohttp python3-peewee python3-cryptography \
         python3-zxing-cpp \
         python3-gunicorn python3-whitenoise \
+        python3-weasyprint python3-pyqt6 \
         latexmk tex-dvipng texlive-scheme-basic \
         tex-preview tex-charter tex-exam tex-preprint \
         python3-myst-parser python3-sphinx python3-sphinx_rtd_theme \
         python3-sphinx-argparse
 ```
-At this point `pip install plom` (or `pip install --user .` from inside
+At this point `pip install plom` (or `pip install .` from inside
 the Plom source tree) should pull in the remaining dependencies.
-There are additional dependencies for the machine-learning-based ID Reader:
-```
-  # pip install --user imutils opencv-python-headless
-```
+
 If you're building a production server you may want to ignore some of the above
 and instead use pinned versions:
 ```
@@ -68,7 +66,8 @@ Some stuff from the package manager:
 ```
   # sudo apt install \
         cmake make imagemagick dvipng g++ \
-        python3-passlib python3-pandas python3-pyqt5 python3-pytest \
+        python3-passlib python3-pandas python3-pytest \
+        python3-pyqt6 python3-pyqt6.qtsvg pyqt6-dev-tools \
         python3-dev python3-pip python3-setuptools python3-wheel \
         python3-requests-toolbelt texlive-latex-extra \
         latexmk texlive-fonts-recommended python3-pillow \

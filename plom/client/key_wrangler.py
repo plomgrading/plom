@@ -1,15 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 
-from copy import deepcopy
 import logging
 import sys
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
+from copy import deepcopy
+from importlib import resources
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -27,8 +23,8 @@ from PyQt6.QtWidgets import (
 )
 
 import plom
-from .useful_classes import WarnMsg
 
+from .useful_classes import WarnMsg
 
 log = logging.getLogger("keybindings")
 

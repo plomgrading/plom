@@ -7,28 +7,28 @@
 from copy import deepcopy
 import logging
 
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QBrush, QColor, QIcon, QImageReader, QPixmap, QTransform
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QDialog,
     QFrame,
     QHBoxLayout,
+    QLabel,
     QListView,
     QListWidget,
     QListWidgetItem,
-    QLabel,
     QMessageBox,
     QPushButton,
     QScrollArea,
-    QSplitter,
-    QVBoxLayout,
-    QSpacerItem,
     QSizePolicy,
+    QSpacerItem,
+    QSplitter,
     QToolButton,
+    QVBoxLayout,
 )
 
-from .useful_classes import WarnMsg, SimpleQuestion
+from .useful_classes import SimpleQuestion, WarnMsg
 from .viewers import GroupView
 
 

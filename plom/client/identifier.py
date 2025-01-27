@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2023 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2022-2023 Natalie Balashov
 # Copyright (C) 2024 Aden Chan
 
@@ -13,22 +13,17 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import logging
-from pathlib import Path
-import sys
 import tempfile
+from importlib import resources
+from pathlib import Path
 from typing import Union
 
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
-
-from PyQt6 import uic, QtGui
+from PyQt6 import QtGui, uic
 from PyQt6.QtCore import (
-    Qt,
     QAbstractTableModel,
     QModelIndex,
     QStringListModel,
+    Qt,
     QTimer,
     QVariant,
     pyqtSignal,
@@ -36,11 +31,11 @@ from PyQt6.QtCore import (
 from PyQt6.QtWidgets import (
     QCompleter,
     QDialog,
-    QWidget,
     QMessageBox,
+    QWidget,
 )
 
-import plom.client.ui_files
+from plom import isValidStudentID
 from plom.plom_exceptions import (
     PlomBenignException,
     PlomConflict,
@@ -48,15 +43,19 @@ from plom.plom_exceptions import (
     PlomSeriousException,
     PlomTakenException,
 )
-from plom import isValidStudentID
-
-# from plom.rules import censorStudentID as censorID
 from plom.rules import censorStudentName as censorName
 
+from . import ui_files
 from .image_view_widget import ImageViewWidget
-from .useful_classes import ErrorMsg, WarnMsg, InfoMsg
-from .useful_classes import SimpleQuestion, WarningQuestion
-from .useful_classes import BlankIDBox, SNIDBox
+from .useful_classes import (
+    BlankIDBox,
+    ErrorMsg,
+    InfoMsg,
+    SimpleQuestion,
+    SNIDBox,
+    WarningQuestion,
+    WarnMsg,
+)
 from .viewers import WholeTestView
 
 
@@ -208,7 +207,7 @@ class IDClient(QWidget):
         super().__init__()
         self.Qapp = Qapp
 
-        uic.loadUi(resources.files(plom.client.ui_files) / "identifier.ui", self)
+        uic.loadUi(resources.files(ui_files) / "identifier.ui", self)
         # TODO: temporary workaround
         self.ui = self
         self.ui.explainButton0.setText("FAQ:\nwhy confirm\nprenames?")
@@ -624,7 +623,7 @@ class IDClient(QWidget):
             # ask server for ID of next task
             try:
                 test = self.msgr.IDaskNextTask()
-                if not test:  # no tasks left
+                if test is None:
                     InfoMsg(self, "No more tasks left on server.").exec()
                     return False
             except PlomSeriousException as err:

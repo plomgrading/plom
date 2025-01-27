@@ -2,9 +2,12 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2024 Andrew Rechnitzer
     Copyright (C) 2022 Edith Coates
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
+{% block title %}
+    Manage classlist
+{% endblock title %}
 {% block page_heading %}
     Manage classlist
 {% endblock page_heading %}
@@ -13,23 +16,25 @@
         <div>
             <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
-        {% if prenaming %}
-            <div class="alert alert-warning">
-                Prenaming is enabled, so a classlist is required
-                <a class="btn btn-danger" hx-delete="{% url 'prep_prename' %}">Disable</a>
-            </div>
+        {% if have_papers_been_printed %}
+            <div class="alert alert-info">Papers have been printed, but you can still change the classlist.</div>
         {% else %}
-            <div class="alert alert-primary">
-                Prenaming is not enabled, so a classlist is not required
-                <a class="btn btn-danger" hx-post="{% url 'prep_prename' %}">Enable</a>
-            </div>
+            {% if prenaming %}
+                <div class="alert alert-warning">
+                    Prenaming is enabled, so a classlist is required
+                    <a class="btn btn-danger" hx-delete="{% url 'prep_prename' %}">Disable</a>
+                </div>
+            {% else %}
+                <div class="alert alert-primary">
+                    Prenaming is not enabled, so a classlist is not required
+                    <a class="btn btn-danger" hx-post="{% url 'prep_prename' %}">Enable</a>
+                </div>
+            {% endif %}
         {% endif %}
         {% if student_list_present %}
             <div class="alert alert-primary">
                 <span>Classlist present with {{ student_list|length }} students:</span>
-                <a href="{% url 'prep_classlist_download' %}"
-                   target="_blank"
-                   class="btn btn-info">download</a>
+                <a href="{% url 'prep_classlist_download' %}" class="btn btn-info">download</a>
                 <button class="btn btn-danger"
                         hx-delete="."
                         hx-confirm="Are you sure you want to delete the classlist?"

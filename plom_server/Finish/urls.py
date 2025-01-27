@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 
 from django.urls import path
 
@@ -20,6 +20,7 @@ from .views import (
     TemplateSolnSpecView,
     BuildSolutionsView,
     StartAllBuildSoln,
+    DownloadRangeOfReassembled,
     StartOneBuildSoln,
     CancelQueuedBuildSoln,
 )
@@ -49,6 +50,11 @@ urlpatterns = [
         name="reassemble_one_paper",
     ),
     path("reassemble/all", StartAllReassembly.as_view(), name="reassemble_all_pdfs"),
+    path(
+        "reassemble/range",
+        DownloadRangeOfReassembled.as_view(),
+        name="reassembled_range",
+    ),
     path(
         "reassemble/queued",
         CancelQueuedReassembly.as_view(),

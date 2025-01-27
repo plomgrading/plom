@@ -1,0 +1,23 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Aidan Murphy
+-->
+{% extends "Authentication/signup_base.html" %}
+{% load static %}
+{% block card_content %}
+    <form id="myform"
+          method="post"
+          action="{% url 'signup_import' %}"
+          enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-2">
+            <input class="form-control form-control-lg"
+                   type="file"
+                   name=".csv"
+                   accept=".csv"
+                   required
+                   id="csv_file">
+        </div>
+        <button type="submit" class="btn btn-primary" id="upload_btn">Upload</button>
+    </form>
+{% endblock card_content %}

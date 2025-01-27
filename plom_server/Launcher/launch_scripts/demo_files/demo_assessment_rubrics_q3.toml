@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Andrew Rechntizer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 [[rubric]]
 kind = "relative"
@@ -8,7 +8,7 @@ value = 4
 text = "Correct taylor and approx"
 tags = "demo"
 meta = "Student computed taylor and got right approx"
-question = 3
+question_index = 3
 username = "manager"
 
 [[rubric]]
@@ -17,7 +17,7 @@ value = 3
 text = "Correct taylor polynomial"
 tags = "demo"
 meta = "Student computed taylor correctly"
-question = 3
+question_index = 3
 username = "manager"
 
 [[rubric]]
@@ -26,7 +26,7 @@ value = 1
 text = "correct approximation"
 tags = "demo"
 meta = "Student evaluated taylor to get right approximation"
-question = 3
+question_index = 3
 username = "manager"
 
 [[rubric]]
@@ -35,7 +35,7 @@ value = -4
 text = "this is not Taylor"
 tags = "demo"
 meta = "Student didn't know where to start."
-question = 3
+question_index = 3
 username = "manager"
 
 [[rubric]]
@@ -44,7 +44,7 @@ value = -3
 text = "major errors in\n derivatives and taylor"
 tags = "demo"
 meta = "Student did something wrong building derivatives and it followed into the approx"
-question = 3
+question_index = 3
 username = "manager"
 
 
@@ -54,7 +54,7 @@ value = -2
 text = "minor error in taylor and approx"
 tags = "demo"
 meta = "Student did something wrong building derivatives and it followed into the approx"
-question = 3
+question_index = 3
 username = "manager"
 
 [[rubric]]
@@ -63,7 +63,7 @@ value = -1
 text = "wrong way to get approximation"
 tags = "demo"
 meta = "Student did something weird while trying to get the approximation"
-question = 3
+question_index = 3
 username = "manager"
 
 [[rubric]]
@@ -72,7 +72,7 @@ value = -1
 text = "how does this follow"
 tags = "demo"
 meta = "It is hard to follow the students reasoning"
-question = 3
+question_index = 3
 username = "manager"
 
 
@@ -82,7 +82,7 @@ kind = "neutral"
 text = "be careful"
 tags = "demo"
 meta = "Student made an inconsequential error."
-question = 3
+question_index = 3
 username = "manager"
 
 [[rubric]]
@@ -90,7 +90,7 @@ kind = "neutral"
 text = "hard to read"
 tags = "demo"
 meta = "Student handwriting is making marking hard"
-question = 3
+question_index = 3
 username = "manager"
 
 [[rubric]]
@@ -98,5 +98,5 @@ kind = "neutral"
 text = "layout work more carefully"
 tags = "demo"
 meta = "Student needs to learn how to set out their work so someone else can follow."
-question = 3
+question_index = 3
 username = "manager"

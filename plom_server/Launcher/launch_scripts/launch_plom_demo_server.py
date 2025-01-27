@@ -11,14 +11,7 @@ import os
 from pathlib import Path
 from shlex import split
 import subprocess
-import sys
 import time
-
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
-
 
 # we specify this directory relative to the plom_server
 # root directory, rather than getting Django things up and
@@ -238,12 +231,31 @@ def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
     Note that for production, this should be used instead of Django's
     built-in development server.
 
+    If the WEB_CONCURRENCY environment variable is set, we use that many
+    worker processes.  Otherwise we use a default value (currently 2).
+
     Args:
         port: the port for the server.
+
+    Returns:
+        Open ``Popen`` on the gunicorn process.
     """
     print("Launching Gunicorn web-server.")
     # TODO - put in an 'are we in production' check.
-    cmd = f"gunicorn Web_Plom.wsgi --bind 0.0.0.0:{port}"
+    num_workers = int(os.environ.get("WEB_CONCURRENCY", 2))
+    cmd = f"gunicorn Web_Plom.wsgi --workers {num_workers}"
+
+    # TODO: temporary increase to 60s by default, Issue #3676
+    timeout = os.environ.get("PLOM_GUNICORN_TIMEOUT", 180)
+    cmd += f" --timeout {timeout}"
+
+    # TODO: long-term code here:
+    # timeout = os.environ.get("PLOM_GUNICORN_TIMEOUT", "")
+    # # just omit and use gunicorn's default if unspecified
+    # if timeout:
+    #     cmd += f" --timeout {timeout}"
+
+    cmd += f" --bind 0.0.0.0:{port}"
     return subprocess.Popen(split(cmd))
 
 
@@ -366,6 +378,8 @@ def run_demo_preparation_commands(
 
     # TODO = remove this demo-specific command
     run_django_manage_command("plom_create_demo_users")
+    run_django_manage_command("plom_leadmarker_membership --toggle demoMarker1")
+    run_django_manage_command("plom_leadmarker_membership --toggle demoMarker2")
     if stop_after == "users":
         print("Stopping after users created.")
         return False
@@ -397,26 +411,10 @@ def run_demo_preparation_commands(
     download_zip()
 
     # now set preparation status as done
+    # note that this also creates system rubrics
     run_django_manage_command("plom_preparation_status --set finished")
 
     return True
-
-
-def _read_bundle_config(length):
-    # read the config toml file
-    if length == "quick":
-        fname = "bundle_for_quick_demo.toml"
-    elif length == "long":
-        fname = "bundle_for_long_demo.toml"
-    elif length == "plaid":
-        fname = "bundle_for_plaid_demo.toml"
-    else:
-        fname = "bundle_for_demo.toml"
-    with open(demo_file_directory / fname, "rb") as fh:
-        try:
-            return tomllib.load(fh)
-        except tomllib.TOMLDecodeError as e:
-            raise RuntimeError(e)
 
 
 def build_the_bundles(length="normal"):
@@ -603,7 +601,6 @@ def run_marking_commands(*, port: int, stop_after=None) -> bool:
     """
     # add rubrics, question-tags and then run the randomaker.
     # add system rubrics first, then push the demo ones from toml
-    run_django_manage_command("plom_rubrics init manager")
     push_demo_rubrics()
     if stop_after == "rubrics":
         return False
@@ -685,7 +682,10 @@ if __name__ == "__main__":
     try:
         print("v" * 50)
         huey_processes = launch_huey_process()
-        server_process = launch_django_dev_server_process(port=args.port)
+        if args.development:
+            server_process = launch_django_dev_server_process(port=args.port)
+        else:
+            server_process = launch_gunicorn_production_server_process(port=args.port)
         # processes still running after small delay? probably working
         time.sleep(0.25)
         for hp in huey_processes:

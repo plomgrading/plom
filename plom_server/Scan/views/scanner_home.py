@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Aidan Murphy
 
@@ -14,6 +14,7 @@ from datetime import datetime
 from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
 from django.http import Http404, FileResponse
 from django.shortcuts import render
@@ -158,48 +159,46 @@ class ScannerUploadView(ScannerRequiredView):
         return render(request, "Scan/bundle_upload.html", context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        context = self.build_context()
         form = BundleUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            data = form.cleaned_data  # this checks the file really is a valid PDF
-
-            user = request.user
-            slug = data["slug"]
-            bundle_file = data["pdf"]
-            pdf_hash = data["sha256"]
-            number_of_pages = data["number_of_pages"]
-            timestamp = datetime.timestamp(data["time_uploaded"])
-
-            ScanService().upload_bundle(
-                bundle_file,
-                slug,
-                user,
-                timestamp,
-                pdf_hash,
-                number_of_pages,
-                force_render=data["force_render"],
-                read_after=data["read_after"],
-            )
-            if len(pdf_hash) >= (12 + 12 + 3):
-                brief_hash = pdf_hash[:12] + "..." + pdf_hash[-12:]
-            else:
-                brief_hash = pdf_hash
-            context.update(
-                {
-                    "success_msg": (
-                        f"Uploaded {slug} with {number_of_pages} pages "
-                        f"and hash {brief_hash}. "
-                        "Background processing started."
-                    )
-                }
-            )
-        else:
+        if not form.is_valid():
             # we can get the errors from the form and pass them into the context
             # unfortunately form.errors is a dict of lists, so lets flatten it a bit.
             # see = https://docs.djangoproject.com/en/5.0/ref/forms/api/#django.forms.Form.errors
             error_list: list[str] = sum(form.errors.values(), [])
-            context.update({"upload_errors": error_list})
-        return render(request, "Scan/bundle_upload.html", context)
+            messages.add_message(request, messages.ERROR, error_list)
+            return HttpResponseClientRefresh()
+
+        data = form.cleaned_data  # this checks the file really is a valid PDF
+        user = request.user
+        slug = data["slug"]
+        bundle_file = data["pdf"]
+        pdf_hash = data["sha256"]
+        number_of_pages = data["number_of_pages"]
+        timestamp = datetime.timestamp(data["time_uploaded"])
+        ScanService.upload_bundle(
+            bundle_file,
+            slug,
+            user,
+            timestamp=timestamp,
+            file_hash=pdf_hash,
+            number_of_pages=number_of_pages,
+            force_render=data["force_render"],
+            read_after=data["read_after"],
+        )
+        if len(pdf_hash) >= (12 + 12 + 3):
+            brief_hash = pdf_hash[:12] + "..." + pdf_hash[-12:]
+        else:
+            brief_hash = pdf_hash
+        messages.add_message(
+            request,
+            messages.INFO,
+            (
+                f"Uploaded {slug} with {number_of_pages} pages "
+                f"and hash {brief_hash}. "
+                "Background processing started."
+            ),
+        )
+        return HttpResponseClientRefresh()
 
 
 class GetBundleView(ScannerRequiredView):
@@ -215,10 +214,10 @@ class GetBundleView(ScannerRequiredView):
 
 
 class GetStagedBundleFragmentView(ScannerRequiredView):
-    """Return a user-uploaded bundle PDF."""
+    """Various http methods for a staged-but-not-pushed user-uploaded bundle PDF."""
 
     def get(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
-        """Rendered fragment of a staged but not pushed bundle.
+        """Rendered fragment for one row of a staged bundle.
 
         Args:
             request: the request.
@@ -228,7 +227,8 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
                 internally.
 
         Returns:
-            A rendered HTML page.
+            A rendered HTML fragment to be inserted into a complete
+            page using htmx.
         """
         scanner = ScanService()
 
@@ -246,15 +246,37 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         else:
             cover_img_rotation = 0
 
+        from ..models import PagesToImagesChore, ManageParseQRChore
+
+        try:
+            _proc = PagesToImagesChore.objects.get(bundle=bundle).get_status_display()
+        except PagesToImagesChore.DoesNotExist:
+            _proc = None
+        try:
+            _read = ManageParseQRChore.objects.get(bundle=bundle).get_status_display()
+        except ManageParseQRChore.DoesNotExist:
+            _read = None
+
+        is_waiting_or_processing = False
+        if _proc in ("Queued", "Starting", "Running"):
+            is_waiting_or_processing = True
+        if _read in ("Queued", "Starting", "Running"):
+            is_waiting_or_processing = True
+        is_error = _proc == "Error" or _read == "Error"
+
         context = {
             "bundle_id": bundle.pk,
             "timestamp": bundle.timestamp,
             "slug": bundle.slug,
             "when": arrow.get(bundle.timestamp).humanize(),
             "username": bundle.user.username,
+            "proc_chore_status": _proc,
+            "readQR_chore_status": _read,
             "number_of_pages": bundle.number_of_pages,
             "has_been_processed": bundle.has_page_images,
             "has_qr_codes": bundle.has_qr_codes,
+            "is_waiting_or_processing": is_waiting_or_processing,
+            "is_error": is_error,
             "is_mid_qr_read": scanner.is_bundle_mid_qr_read(bundle.pk),
             "is_push_locked": bundle.is_push_locked,
             "is_perfect": scanner.is_bundle_perfect(bundle.pk),
@@ -268,12 +290,13 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             "n_incomplete": n_incomplete,
             "cover_angle": cover_img_rotation,
         }
+        numpgs = context["number_of_pages"]
         if not context["has_been_processed"]:
             done = scanner.get_bundle_split_completions(bundle.pk)
             context.update(
                 {
                     "number_of_split_pages": done,
-                    "percent_split": (100 * done) // context["number_of_pages"],
+                    "percent_split": 0 if numpgs is None else (100 * done) // numpgs,
                 }
             )
         if context["is_mid_qr_read"]:
@@ -281,7 +304,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             context.update(
                 {
                     "number_of_read_pages": done,
-                    "percent_read": (100 * done) // context["number_of_pages"],
+                    "percent_read": 0 if numpgs is None else (100 * done) // numpgs,
                 }
             )
 
@@ -299,8 +322,9 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         """Triggers deletion of the bundle."""
         scanner = ScanService()
         try:
-            scanner._remove_bundle_by_pk(bundle_id)
-        except PlomBundleLockedException:
+            scanner.remove_bundle_by_pk(bundle_id)
+        except PlomBundleLockedException as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )

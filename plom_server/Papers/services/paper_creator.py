@@ -11,6 +11,8 @@ import logging
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django_huey import db_task
+import huey
+import huey.api
 
 from plom.plom_exceptions import PlomDatabaseCreationError
 from Preparation.services.preparation_dependency_service import (
@@ -29,10 +31,31 @@ from ..models import (
 log = logging.getLogger("PaperCreatorService")
 
 
+# The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks", context=True)
 def huey_populate_whole_db(
-    qv_map: dict[int, dict[int, int]], *, tracker_pk: int, task=None
+    qv_map: dict[int, dict[int, int]],
+    *,
+    tracker_pk: int,
+    task: huey.api.Task | None = None,
 ) -> bool:
+    """Populate the database in a background Huey chore.
+
+    Args:
+        qv_map: the question-version map.
+
+    Keyword Args:
+        tracker_pk: a key into the database for anyone interested in
+            our progress.
+        task: includes our ID in the Huey process queue.  This kwarg is
+            passed by `context=True` in decorator: callers should not
+            pass this in!
+
+    Returns:
+        True, no meaning, just as per the Huey docs: "if you need to
+        block or detect whether a task has finished".
+    """
+    assert task is not None
     PopulateEvacuateDBChore.transition_to_running(tracker_pk, task.id)
     N = len(qv_map)
 
@@ -66,8 +89,25 @@ def huey_populate_whole_db(
     return True
 
 
+# The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks", context=True)
-def huey_evacuate_whole_db(*, tracker_pk: int, task=None) -> bool:
+def huey_evacuate_whole_db(
+    *, tracker_pk: int, task: huey.api.Task | None = None
+) -> bool:
+    """Populate the database in a background Huey chore.
+
+    Keyword Args:
+        tracker_pk: a key into the database for anyone interested in
+            our progress.
+        task: includes our ID in the Huey process queue.  This kwarg is
+            passed by `context=True` in decorator: callers should not
+            pass this in!
+
+    Returns:
+        True, no meaning, just as per the Huey docs: "if you need to
+        block or detect whether a task has finished".
+    """
+    assert task is not None
     PopulateEvacuateDBChore.transition_to_running(tracker_pk, task.id)
     all_papers = Paper.objects.all().prefetch_related("fixedpage_set")
     N = all_papers.count()
@@ -106,13 +146,19 @@ class PaperCreatorService:
     """
 
     @staticmethod
-    def _set_number_to_produce(numberToProduce: int):
+    def _set_number_to_produce(numberToProduce: int) -> None:
         nop = NumberOfPapersToProduceSetting.load()
         nop.number_of_papers = numberToProduce
         nop.save()
 
+    @staticmethod
+    def _increment_number_to_produce() -> None:
+        nop = NumberOfPapersToProduceSetting.load()
+        nop.number_of_papers += 1
+        nop.save()
+
     @classmethod
-    def _reset_number_to_produce(cls):
+    def _reset_number_to_produce(cls) -> None:
         cls._set_number_to_produce(0)
 
     @staticmethod
@@ -261,6 +307,45 @@ class PaperCreatorService:
                     id_page_number=id_page_number,
                     dnm_page_numbers=dnm_page_numbers,
                     question_page_numbers=question_page_numbers,
+                )
+
+    @classmethod
+    def append_papers_to_qv_map(
+        cls,
+        qv_map: dict[int, dict[int, int]],
+        *,
+        force: bool = False,
+    ):
+        """Build all the Paper and associated tables from the qv-map, but not the PDF files.
+
+        Args:
+            qv_map: For each paper give the question-version map.
+                Of the form `{paper_number: {q: v}}`
+
+        Keyword Args:
+            force: if true, we don't check if we can modify the map, just try it.
+
+        Raises:
+            PlomDependencyConflict: if preparation dependencies are not met.
+            PlomDatabaseCreationError: if there are papers already in the database.
+            IntegrityError: already have that row.
+        """
+        if not force:
+            assert_can_modify_qv_mapping_database()
+            if Paper.objects.filter().exists():
+                raise PlomDatabaseCreationError("Already papers in the database.")
+
+        # even with force you don't get to bully; other people are playing here!
+        # check if there is an existing non-obsolete task
+        cls.assert_no_existing_chore()
+
+        for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
+            with transaction.atomic(durable=True):
+                # todo: is durable correct?  I want both to fail or both succeed
+                cls._increment_number_to_produce()
+                cls._create_single_paper_from_qvmapping_and_pages(
+                    paper_number,
+                    qv_row,
                 )
 
     @staticmethod

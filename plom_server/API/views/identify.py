@@ -102,9 +102,6 @@ class IDgetNextTask(APIView):
     no one else has claimed it
 
     Responds with status 200/204.
-
-    TODO: Not implemented, just lies that we are done.
-    TODO: see ``plom/db/db_identify:IDgetNextTask``
     """
 
     def get(self, request):

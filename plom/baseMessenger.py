@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2024 Andrew Rechnitzer
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2022 Michael Deakin
 # Copyright (C) 2022-2023 Edith Coates
@@ -51,6 +51,8 @@ from plom.plom_exceptions import (
 # define an allow-list of versions we support.
 Supported_Server_API_Versions = [
     int(Plom_Legacy_Server_API_Version),
+    112,
+    113,  # introduced /MK/tasks/{code}/reassign/{username}
     int(Plom_API_Version),
 ]
 
@@ -146,12 +148,19 @@ class BaseMessenger:
         self.user: str | None = None
         # on legacy, it is a string, modern server it is a dict
         self.token: str | dict[str, str] | None = None
-        self.default_timeout = (10, 60)
+        # first number: connection timeout for each API call, second number
+        # is read timeout: how long the server might spend executing the call
+        self.default_timeout = (15, 90)
+        # when requested by caller, use shorter timeout for increased interactivity
+        self._interactive_timeout = 3
         try:
             parsed_url = urllib3.util.parse_url(base)
         except urllib3.exceptions.LocationParseError as e:
             raise PlomConnectionError(f'Cannot parse the URL "{base}"') from e
         self.scheme = parsed_url.scheme
+        # remove any trailing slashes from the path, Issue #3649
+        while base.endswith("/"):
+            base = base[:-1]
         self.base = base
         self.SRmutex = threading.Lock()
         self.verify_ssl = verify_ssl
@@ -164,18 +173,18 @@ class BaseMessenger:
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     @classmethod
-    def clone(cls, m):
+    def clone(cls, m: BaseMessenger) -> BaseMessenger:
         """Clone an existing messenger, keeps token.
 
         In particular, we have our own mutex.
         """
-        log.debug("cloning a messeger, but building new session...")
+        log.debug("cloning a messenger, but building new session...")
         x = cls(
             m.base,
             verify_ssl=m.verify_ssl,
             _server_API_version=m._server_API_version,
         )
-        x.start()
+        x._start_session()
         log.debug("copying user/token into cloned messenger")
         x.user = m.user
         x.token = m.token
@@ -199,9 +208,28 @@ class BaseMessenger:
         return self.whoami()
 
     def is_legacy_server(self) -> bool | None:
+        """Check if the server is the older legacy server.
+
+        Returns:
+            True/False, or None if we're not connected.
+        """
         if self.get_server_API_version() is None:
             return None
         return self.get_server_API_version() == int(Plom_Legacy_Server_API_Version)
+
+    def is_server_api_less_than(self, api_number: int) -> bool | None:
+        """Check if the server API is strictly less than a value.
+
+        Args:
+            api_number: what value to compare to.
+
+        Returns:
+            True/False, or None if we're not connected.
+        """
+        ver = self.get_server_API_version()
+        if ver is None:
+            return None
+        return int(ver) < api_number
 
     @property
     def server(self) -> str:
@@ -354,12 +382,29 @@ class BaseMessenger:
         assert self.session
         return self.session.patch(self.base + url, *args, **kwargs)
 
-    def _start(self) -> str:
-        """Start the messenger session, low-level without compatibility checks.
+    def _start_session(self) -> None:
+        """Start the messenger session, low-level without any checks."""
+        self.session = requests.Session()
+        assert self.session
+        # TODO: not clear retries help: e.g., requests will not redo PUTs.
+        # More likely, just delays inevitable failures.
+        self.session.mount(
+            f"{self.scheme}://", requests.adapters.HTTPAdapter(max_retries=2)
+        )
+        self.session.verify = self.verify_ssl
+
+    def _start(self, *, interactive: bool = False) -> str:
+        """Start the messenger session, low-level with minimal compatibility checks.
 
         Caution: if you're using this, you'll need to check server versions yourself.
         The server itself will check if your client is too old, but not if its too
         new; you have to do that yourself, or see :meth:`start` instead.
+
+        Keyword Args:
+            interactive: if true, we shorten the timeout so the caller finds
+                out quicker if they cannot connect.  E.g., during interactive
+                login, we can shorten the timeout, compared to normal
+                operations such as image downloads.
 
         Returns:
             the version string of the server.
@@ -373,18 +418,14 @@ class BaseMessenger:
             log.debug("already have an requests-session")
         else:
             log.debug("starting a new requests-session")
-            self.session = requests.Session()
-            assert self.session
-            # TODO: not clear retries help: e.g., requests will not redo PUTs.
-            # More likely, just delays inevitable failures.
-            self.session.mount(
-                f"{self.scheme}://", requests.adapters.HTTPAdapter(max_retries=2)
-            )
-            self.session.verify = self.verify_ssl
+            self._start_session()
 
         try:
             try:
-                response = self.get("/Version", timeout=2)
+                if interactive:
+                    response = self.get("/Version", timeout=self._interactive_timeout)
+                else:
+                    response = self.get("/Version")
                 response.raise_for_status()
                 return response.text
             except requests.exceptions.SSLError as err:
@@ -397,13 +438,16 @@ class BaseMessenger:
                 else:
                     raise PlomSSLError(err) from None
                 self.force_ssl_unverified()
-                response = self.get("/Version", timeout=2)
+                if interactive:
+                    response = self.get("/Version", timeout=self._interactive_timeout)
+                else:
+                    response = self.get("/Version")
                 response.raise_for_status()
                 return response.text
-        except requests.ConnectionError as err:
-            raise PlomConnectionError(err) from None
         except requests.exceptions.InvalidURL as err:
             raise PlomConnectionError(f"Invalid URL: {err}") from None
+        except requests.RequestException as err:
+            raise PlomConnectionError(err) from None
 
     def start(self) -> str:
         """Start the messenger session, including compatibility checks and detecting legacy servers.
@@ -588,7 +632,6 @@ class BaseMessenger:
                     "api": Plom_API_Version,
                     "client_ver": __version__,
                 },
-                timeout=5,
             )
             try:
                 response.raise_for_status()
@@ -1060,6 +1103,8 @@ class BaseMessenger:
 
         Raises:
             PlomAuthenticationException: Authentication error.
+            PlomInconsistentRubric: proposed rubric data is invalid,
+                message should include details.
             PlomSeriousException: Other error types, possible needs fix or debugging.
 
         Returns:
@@ -1085,7 +1130,7 @@ class BaseMessenger:
                 elif response.status_code == 403:
                     raise PlomNoPermission(response.reason) from None
                 if response.status_code == 406:
-                    raise PlomSeriousException(response.reason) from None
+                    raise PlomInconsistentRubric(response.reason) from None
                 raise PlomSeriousException(
                     f"Error when creating new rubric: {e}"
                 ) from None
@@ -1232,7 +1277,8 @@ class BaseMessenger:
 
         Raises:
             PlomAuthenticationException: Authentication error.
-            PlomInconsistentRubric:
+            PlomInconsistentRubric: proposed rubric data is invalid,
+                message should include details.
             PlomNoRubric:
             PlomNoPermission: you are not allowed to modify the rubric.
             PlomConflict: two users try to modify the rubric.

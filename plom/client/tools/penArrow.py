@@ -1,21 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from math import sqrt
 
 from PyQt6.QtCore import QPointF
-from PyQt6.QtGui import QPen, QPainterPath, QBrush
-from PyQt6.QtWidgets import (
-    QGraphicsItemGroup,
-    QGraphicsPathItem,
-    QGraphicsItem,
-)
+from PyQt6.QtGui import QBrush, QPainterPath, QPen
+from PyQt6.QtWidgets import QGraphicsItem, QGraphicsItemGroup, QGraphicsPathItem
 
-from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
-from plom.client.tools import UndoStackMoveMixin
-from plom.client.tools.pen import CommandPen, PenItem
+from . import OutOfBoundsFill, OutOfBoundsPen, UndoStackMoveMixin
+from .pen import CommandPen, PenItem
 
 
 class CommandPenArrow(CommandPen):

@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2025 Andrew Rechnitzer
 
 from __future__ import annotations
 
-from pytest import raises
 from typing import Any
 
-from plom.client.rubrics import compute_score_locabs as score
-from plom.client.rubrics import check_for_illadvised
+from pytest import raises
+
+from .rubric_utils import check_for_illadvised
+from .rubric_utils import compute_score_locabs as score
 
 
 def test_ill_no_warnings() -> None:

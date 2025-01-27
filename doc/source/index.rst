@@ -44,7 +44,7 @@ Welcome to Plom's documentation!
 
    development
 
-   faq.md
+   faq
 
    changelog.md
 

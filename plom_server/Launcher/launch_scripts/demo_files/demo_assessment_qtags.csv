@@ -1,4 +1,4 @@
-Name,Description,Confidential_Info
-limits,Basic limits and arithmetic of limits,Hopefully most students will get these questions
-derivatives,"Basic derivatives, chain, product, quotient rules","Most students okay with this, but some will have trouble with algebraic manipulations"
-applications,"Taylor, estimates, exp growth/decay","Taylor might be tricky, but the exp growth should be pretty standard, expect some issues with logs"
+Name,Description,Confidential_Info, Help_Threshold, Help_Resources
+limits,Basic limits and arithmetic of limits,Hopefully most students will get these questions, 0.8, Review Lecture 1-3 and Problem Set 1
+derivatives,"Basic derivatives, chain, product, quotient rules","Most students okay with this, but some will have trouble with algebraic manipulations", 0.5, Review Lecture 4-6 and Problem Set 2
+applications,"Taylor, estimates, exp growth/decay","Taylor might be tricky, but the exp growth should be pretty standard, expect some issues with logs", 0.5, Review Lecture 7-9 and Problem Set 3

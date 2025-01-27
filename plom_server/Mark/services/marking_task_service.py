@@ -8,7 +8,6 @@
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Bryan Tanady
 
-
 from __future__ import annotations
 
 import json
@@ -26,7 +25,6 @@ from django.db import transaction
 from plom import is_valid_tag_text
 from Papers.services import ImageBundleService, PaperInfoService
 from Papers.models import Paper
-from Rubrics.models import Rubric
 
 from . import marking_priority, mark_task
 from ..models import (
@@ -61,7 +59,16 @@ class MarkingTaskService:
 
         Returns:
             The newly created marking task object.
+
+        Raises:
+            KeyError: cannot create tasks for non-positive question index,
+                as those are used as a DNM indicator.
+            RuntimeError: for "good" input data, this would indicate no
+                question-version map, although for nonsense input it could
+                also just mean invalid paper number or invalid question index.
         """
+        if question_index <= 0:
+            raise KeyError(f"Invalid question index: {question_index}")
         # get the version of the given paper/question
         try:
             question_version = PaperInfoService().get_version_from_paper_question(
@@ -274,8 +281,13 @@ class MarkingTaskService:
 
     def validate_and_clean_marking_data(
         self, code: str, data: dict[str, Any], plomfile: str
-    ) -> tuple[dict[str, Any], dict, list[Rubric]]:
+    ) -> tuple[dict[str, Any], dict]:
         """Validate the incoming marking data.
+
+        Note this doesn't actually touch the database.  Its more like type checking
+        of the inputs and in-expensive things like that.  There is one exception:
+        it confirms that all the underlying images actually exist on the server.
+        This is a file system (later object store) hit, which will have some IO cost.
 
         Args:
             code (str): key of the associated task.
@@ -283,11 +295,10 @@ class MarkingTaskService:
             plomfile (str): a JSON field representing annotation data.
 
         Returns:
-            tuple: three things in a tuple;
-            `cleaned_data (dict)`: cleaned request data.
-            `annot_data (dict)`: annotation-image data parsed from a JSON string.
-            `rubrics_used (list)`: a list of Rubric objects, extracted based on
-            keys found inside the `annot_data`.
+            Two things in a tuple;
+            `cleaned_data`: dict of the cleaned request data.
+            `annot_data`: dict of the annotation-image data parsed from
+            a JSON string.
 
         Raises:
             ValidationError
@@ -326,18 +337,9 @@ class MarkingTaskService:
         except (ValueError, TypeError) as e:
             raise ValidationError(f"Could not get 'integrity_check' as a int: {e}")
 
-        # unpack the rubrics, potentially record which ones were used
-        # TODO: similar code to this in annotations.py:_add_annotation_to_rubrics
-        annotations = annot_data["sceneItems"]
-        rubrics_used = []
-        for ann in annotations:
-            if ann[0] == "Rubric":
-                rid = ann[3]["rid"]
-                try:
-                    rubric = Rubric.objects.get(rid=rid, latest=True)
-                except ObjectDoesNotExist:
-                    raise ValidationError(f"Invalid rubric rid: {rid}")
-                rubrics_used.append(rubric)
+        # We used to unpack the rubrics and ensure they all exist in the DB.
+        # That will happen later when we try to save: I'm not sure its worth
+        # the overhead of checking twice: smells like asking permission...
 
         src_img_data = annot_data["base_images"]
         for image_data in src_img_data:
@@ -345,7 +347,7 @@ class MarkingTaskService:
             if not img_path.exists():
                 raise ValidationError("Invalid original-image in request.")
 
-        return cleaned_data, annot_data, rubrics_used
+        return cleaned_data, annot_data
 
     def get_latest_annotation(self, paper: int, question_idx: int) -> Annotation:
         """Get the latest annotation for a particular paper/question.
@@ -593,13 +595,29 @@ class MarkingTaskService:
 
     @transaction.atomic
     def remove_tag_from_task_via_pks(self, tag_pk: int, task_pk: int) -> None:
-        """Add existing tag with given pk to the marking task with given pk."""
+        """Remove tag with given pk from the marking task with given pk."""
         try:
             the_task = MarkingTask.objects.select_for_update().get(pk=task_pk)
             the_tag = MarkingTaskTag.objects.get(pk=tag_pk)
         except (MarkingTask.DoesNotExist, MarkingTaskTag.DoesNotExist):
             raise ValueError("Cannot find task or tag with given pk")
         self._remove_tag_from_task(the_tag, the_task)
+
+    @classmethod
+    def _tag_task_pk_for_user(
+        cls, task_pk: int, username: str, calling_user: User, unassign_others: bool
+    ) -> None:
+        """Tag a task for a user, removing other user tags."""
+        task = MarkingTask.objects.get(pk=task_pk)
+        # TODO: maybe these many-to-many things don't need select_for_update
+        # task = MarkingTask.objects.select_for_update().get(pk=task_pk)
+        if unassign_others:
+            for tag in task.markingtasktag_set.all():
+                if tag.text.startswith("@"):
+                    # TODO: colin doesn't understand this notation
+                    tag.task.remove(task)
+        attn_user_tag_text = f"@{username}"
+        cls().create_tag_and_attach_to_task(calling_user, task_pk, attn_user_tag_text)
 
     @transaction.atomic
     def set_paper_marking_task_outdated(
@@ -678,21 +696,14 @@ class MarkingTaskService:
         tag_obj = self.get_or_create_tag(user, tag_text)
         self.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
 
-    @transaction.atomic
     @staticmethod
-    def reassign_task_to_user(task_pk: int, username: str) -> None:
-        """Reassign a task to a different user.
+    def _reassign_task_to_user(task_pk: int, username: str) -> None:
+        """Reassign a task to a different user, low level routine.
 
         If tasks status is "COMPLETE" then the assigned_user will be updated,
         while if it is "OUT" or "TO_DO", then assigned user will be set to None.
         ie - this function assumes that the task will also be tagged with
         an appropriate @username tag (by the caller; we don't do it for you!)
-
-        Note: this looks superficially like :method:`assign_task_to_user` but
-        its used in a different way.  That method is about claiming tasks.
-        This current method is most useful for "unclaiming" tasks, and---with
-        extra tagging effort described above---pushing them toward a different
-        user.
 
         Args:
             task_pk: the primary key of a task.
@@ -734,3 +745,47 @@ class MarkingTaskService:
                 task_obj.save()
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find marking task {task_pk}")
+
+    @classmethod
+    def reassign_task_to_user(
+        cls,
+        task_pk: int,
+        *,
+        new_username: str,
+        calling_user: User,
+        unassign_others: bool = False,
+    ) -> None:
+        """Reassign a task to a different user.
+
+        If tasks status is "COMPLETE" then the assigned_user will be updated.
+        If it is "OUT" or "TO_DO", then assigned user will be set to None
+        and the task will be tagged with an appropriate @username tag.
+
+        Note: this looks superficially like :method:`assign_task_to_user` but
+        its used in a different way.  That method is about claiming tasks.
+        This current method is most useful for "unclaiming" tasks, and pushing
+        them toward a different user.
+
+        Args:
+            task_pk: the primary key of a task.
+
+        Keyword Args:
+            new_username: a string of a username to reassign to.
+            calling_user: the user who is doing the reassigning.
+            unassign_others: untag any other users assigned to this task,
+                defaults to False.
+
+        Returns:
+            None.
+
+        Raises:
+            ValueError: cannot find user, or cannot find marking task.
+            ValidationError: tag name failure, unexpected as we make the tag.
+        """
+        with transaction.atomic():
+            # first reassign the task - this checks if the username
+            # corresponds to an existing marker-user
+            cls._reassign_task_to_user(task_pk, new_username)
+            cls._tag_task_pk_for_user(
+                task_pk, new_username, calling_user, unassign_others
+            )

@@ -1,61 +1,42 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Aidan Murphy
 
 from __future__ import annotations
 
 from django.db import transaction
 from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
 
 from Progress.services import UserInfoServices
 from ..models import Quota
 
 
 @transaction.atomic
-def is_proposed_limit_valid(limit: int, user: User) -> bool:
-    """Check if the proposed limit would valid for the user.
+def can_set_quota(user: User, limit: int | None = None) -> bool:
+    """Check if a user can be set to a particular quota.
 
-    Current restriction:
-    1. New limit must be non-negative.
-    2. New limit must be greater or equal to the task claimed by the user.
+    A user can't be restricted to fewer questions than they've already marked.
 
     Args:
-        limit: the new quota limit to be applied.
-        user: user's username whose limit will be modified.
+        user: the user to query.
+
+    Keyword Args:
+        limit: the limit to check for the user, if omitted
+            or `None` then defaults to the current default
+            quota limit.
 
     Returns:
-        True if the new limit can be applied to the user.
+        True if the user can be set to the quota, otherwise false.
     """
-    complete_and_claimed_tasks_dict = (
-        UserInfoServices.get_total_annotated_and_claimed_count_by_user()
+    complete, claimed = UserInfoServices.get_total_annotated_and_claimed_count_by_user(
+        user.username
     )
-    complete, claimed = complete_and_claimed_tasks_dict[user.username]
+    if limit is None:
+        limit = Quota.default_limit
 
-    if (limit >= 0) & (limit >= complete):
-        return True
-    else:
-        return False
-
-
-@transaction.atomic
-def can_set_quota(user: User) -> bool:
-    """Check if a user (not currently with a quota) can be set to a quota.
-
-    A user can't be quota limited, if they have marked more questions than
-    the default quota limit.
-
-    Args:
-        user: the user in query.
-
-    Returns:
-        True if the user can be set to quota limited, otherwise false.
-    """
-    complete_and_claim_dict = (
-        UserInfoServices.get_total_annotated_and_claimed_count_by_user()
-    )
-    complete, claimed = complete_and_claim_dict[user.username]
-
-    if complete > Quota.default_limit:
+    if complete > limit or limit < 0:
         return False
     else:
         return True
@@ -67,3 +48,34 @@ def get_list_of_usernames_with_quotas() -> list[str]:
 
 def get_list_of_user_pks_with_quotas() -> list[int]:
     return Quota.objects.values_list("user_id", flat=True)
+
+
+@transaction.atomic
+def set_quotas_for_userlist(
+    user_ids: list[str], new_limit: int
+) -> tuple[list[str], list[str]]:
+    """Set quotas for multiple users.
+
+    If a user's limit can't be successfully updated, they will be skipped.
+
+    Args:
+        user_ids: a list of user ids.
+        new_limit: the new task limit for the users in `user_ids`.
+
+    Returns:
+        Two lists of usernames - the first is the list of users updated
+        successfully, the second is a list of users who couldn't be updated.
+    """
+    valid_markers = []
+    invalid_markers = []
+    for user_id in user_ids:
+        user = get_object_or_404(User, pk=user_id)
+        quota = Quota.objects.get(user=user)
+        if not can_set_quota(user=user, limit=new_limit):
+            invalid_markers.append(user.username)
+        else:
+            valid_markers.append(user.username)
+            quota.limit = new_limit
+            quota.save()
+
+    return valid_markers, invalid_markers

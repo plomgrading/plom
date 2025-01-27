@@ -1,0 +1,22 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    No specification
+{% endblock title %}
+{% block page_heading %}
+    No specification
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="alert alert-warning">
+        <p>
+            Papers have not yet been printed; this page will be accessible after you tell the system that papers have been printed.
+        </p>
+    </div>
+    <div>
+        <a class="btn btn-primary" href="{% url 'prep_landing' %}">Go to assessment preparation page</a>
+    </div>
+{% endblock main_content %}

@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
-# Copyright (C) 2021-2023 Colin B. Macdonald
+# Copyright (C) 2021-2024 Colin B. Macdonald
 # Copyright (C) 2022 Nicholas J H Lai
 
 """Upload reassembled Plom papers and grades to Canvas.
@@ -10,7 +10,8 @@
 Overview:
 
   1. Finish grading
-  2. Run `plom-finish csv` and `plom-finish reassemble`.
+  2. Download the `marks.csv`, the reassembled papers,
+     and the solutions from Plom.
   3. Copy this script into the current directory.
   4. Run this script and follow the interactive menus:
      ```
@@ -70,7 +71,7 @@ from plom.canvas import (
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.2.1"
+__script_version__ = "0.3.2"
 
 
 def sis_id_to_student_dict(student_list):
@@ -109,9 +110,23 @@ def get_sis_id_to_sub_and_name_table(subs):
 def get_sis_id_to_marks():
     """A dictionary of the Student Number ("sis id") to total mark."""
     df = pandas.read_csv("marks.csv", dtype="object")
-    return df.set_index("StudentID")["Total"].to_dict()
+    try:
+        d = df.set_index("StudentID")["Total"].to_dict()
+    except KeyError as e:
+        # Issue #3722, if something goes wrong give a very verbose error:
+        print(f'Pandas raised a KeyError reading "marks.csv":\n    {e}')
+        header_names = ", ".join(f'"{x}"' for x in df.columns)
+        print(f"We have headers:\n    {header_names}")
+        print(f'The first few lines of "marks.csv" looks like:\n{df.head()}')
+        raise KeyError(
+            'Something wrong with "StudentID" or "Total" columns?\n'
+            '  "marks.csv" contains headers:\n'
+            f"    {header_names}\n"
+            f"  KeyError was raised: {e}\n"
+        ) from e
     # TODO: if specific types are needed
     # return {str(k): int(v) for k,v in d.items()}
+    return d
 
 
 parser = argparse.ArgumentParser(
@@ -242,20 +257,32 @@ if __name__ == "__main__":
         print(f'Note: you can use "--assignment {assignment.id}" to reselect.\n')
     print(f"Ok uploading to Assignment: {assignment}")
 
-    print("\nChecking if you have run `plom-finish`...")
+    print(f"  * Assignment is published: {assignment.published}")
+    print(f'  * Assignment is "post_manually": {assignment.post_manually}')
+    if not assignment.published or not assignment.post_manually:
+        raise ValueError(
+            "Assignment must be published and set to manually release grades: see "
+            "https://plom.rtfd.io/en/latest/returning.html#return-via-canvas"
+        )
+
+    print("\nChecking if you have `marks.csv`...")
     print("  --------------------------------------------------------------------")
     if not Path("marks.csv").exists():
-        raise ValueError('Missing "marks.csv": run `plom-finish csv`')
+        raise ValueError('Missing "marks.csv": download it from Plom and try again')
     print('  Found "marks.csv" file.')
     if not Path("reassembled").exists():
-        raise ValueError('Missing "reassembled/": run `plom-finish reassemble`')
+        raise ValueError(
+            'Missing "reassembled/": '
+            "download the reassembled papers from Plom and try again"
+        )
     print('  Found "reassembled/" directory.')
 
     if args.solutions:
         soln_dir = Path("solutions")
         if not soln_dir.exists():
             raise ValueError(
-                f'Missing "{soln_dir}": run `plom-finish solutions` or pass `--no-solutions` to omit'
+                f'Missing "{soln_dir}": download solutions from Plom '
+                "or pass `--no-solutions` to omit"
             )
         print(f'  Found "{soln_dir}" directory.')
 
@@ -308,6 +335,12 @@ if __name__ == "__main__":
         sis_id = pdf.stem.split("_")[-1]
         # rebuild the stuff before the last underscore
         basename = "_".join(pdf.stem.split("_")[0:-1])
+        if sis_id == "None":
+            print(f"\nWARNING: PDF {pdf} has a 'None' ID")
+            print("  probably someone didn't fill in the front")
+            print("  (or possibly its a blank paper)")
+            print("Skipping for now; you will have to deal with this one manually")
+            continue
         assert len(sis_id) == 8, f"sis_id {sis_id} did not have 8 digits"
         assert set(sis_id) <= set(string.digits), f"sis_id {sis_id} had non-digit chars"
         try:
@@ -315,7 +348,7 @@ if __name__ == "__main__":
             student = sis_id_to_students[sis_id]
             mark = sis_id_to_marks[sis_id]
         except KeyError:
-            print(f"No student # {sis_id} in Canvas!")
+            print(f"\nWARNING: No student # {sis_id} in Canvas!")
             print("  Hopefully this is 1-1 w/ a prev canvas id error")
             print("  SKIPPING this paper and continuing")
             continue
@@ -324,6 +357,7 @@ if __name__ == "__main__":
             # stuff "solutions" into filename, b/w base and SID
             soln_pdf = soln_dir / f"{basename}_solutions_{sis_id}.pdf"
             if not soln_pdf.exists():
+                print()
                 print(f"WARNING: Student #{sis_id} has no solutions: {soln_pdf}")
                 soln_pdf = None
 

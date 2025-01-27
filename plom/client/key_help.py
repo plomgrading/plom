@@ -1,26 +1,20 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2022 Andrew Rechnitzer
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 
 from __future__ import annotations
 
-from copy import deepcopy
 import logging
-import sys
+from copy import deepcopy
+from importlib import resources
 
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
-
-from PyQt6.QtCore import Qt, QBuffer, QByteArray, QPointF
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import QBuffer, QByteArray, QPointF, Qt, pyqtSignal
 from PyQt6.QtGui import (
     QColor,
     QKeySequence,
+    QMovie,
     QPainter,
     QPainterPath,
-    QMovie,
     QPen,
     QPixmap,
 )
@@ -29,10 +23,10 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
     QFrame,
-    QHBoxLayout,
     QGraphicsPathItem,
     QGraphicsScene,
     QGraphicsView,
+    QHBoxLayout,
     QHeaderView,
     QLabel,
     QPushButton,
@@ -43,12 +37,16 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-import plom
-import plom.client.help_img
+from . import help_img
+
+from .key_wrangler import (
+    KeyEditDialog,
+    actions_with_changeable_keys,
+    get_key_bindings,
+    get_keybinding_overlay,
+    get_keybindings_list,
+)
 from .useful_classes import InfoMsg
-from .key_wrangler import KeyEditDialog
-from .key_wrangler import get_keybinding_overlay, get_key_bindings
-from .key_wrangler import get_keybindings_list, actions_with_changeable_keys
 
 
 log = logging.getLogger("keybindings")
@@ -412,7 +410,7 @@ class RubricNavDiagram(QFrame):
 
     def put_stuff(self, keydata):
         pix = QPixmap()
-        res = resources.files(plom.client.help_img) / "nav_rubric.png"
+        res = resources.files(help_img) / "nav_rubric.png"
         pix.loadFromData(res.read_bytes())
         self.scene.addPixmap(pix)  # is at position (0,0)
 
@@ -473,7 +471,7 @@ class ToolNavDiagram(QFrame):
 
     def put_stuff(self, keydata):
         pix = QPixmap()
-        res = resources.files(plom.client.help_img) / "nav_tools.png"
+        res = resources.files(help_img) / "nav_tools.png"
         pix.loadFromData(res.read_bytes())
         self.scene.addPixmap(pix)  # is at position (0,0)
 
@@ -506,7 +504,7 @@ class ClickDragPage(QWidget):
         grid = QVBoxLayout()
         # load the gif from resources - needs a little subterfuge
         # https://stackoverflow.com/questions/71072485/qmovie-from-qbuffer-from-qbytearray-not-displaying-gif
-        res = resources.files(plom.client.help_img) / "click_drag.gif"
+        res = resources.files(help_img) / "click_drag.gif"
         film_qbytesarray = QByteArray(res.read_bytes())
         film_qbuffer = QBuffer(film_qbytesarray)
         film = QMovie()

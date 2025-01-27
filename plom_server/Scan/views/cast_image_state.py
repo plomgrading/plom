@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023-2024 Andrew Rechntizer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from __future__ import annotations
 
@@ -269,17 +269,26 @@ class ExtraliseImageView(ScannerRequiredView):
                 """<span class="alert alert-danger">Invalid paper number</span>"""
             )
 
-        if extra_page_data.get("questionAll", "off") == "all":
+        choice = extra_page_data.get("question_all_dnm", "")
+        if choice == "choose_all":
             # set all the questions
             to_questions = SpecificationService.get_question_indices()
-        else:
-            if len(extra_page_data.get("questions", [])):
-                # NOTE - must use getlist here instead of a simple get so that return is a list
-                to_questions = [int(q) for q in extra_page_data.getlist("questions")]
-            else:
+        elif choice == "choose_dnm":
+            # TODO: or explicitly empty list or ...?
+            to_questions = []
+        elif choice == "choose_q":
+            # caution: `get` would return just the last entry
+            to_questions = [int(q) for q in extra_page_data.getlist("questions")]
+            if not to_questions:
                 return HttpResponse(
                     """<span class="alert alert-danger">At least one question</span>"""
                 )
+        else:
+            return HttpResponse(
+                """<span class="alert alert-danger">
+                    Unexpected radio choice: this is a bug; please file an issue!
+                </span>"""
+            )
 
         try:
             ScanCastService().assign_extra_page_from_bundle_pk_and_order(

@@ -2,20 +2,35 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024 Aidan Murphy
 
+from io import StringIO
+import csv
+
+from django.conf import settings
+from django.contrib import messages
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import IntegrityError
 from django.shortcuts import render
 
+from plom.misc_utils import humanize_seconds
+from Base.base_group_views import AdminOrManagerRequiredView
 from ..services import AuthenticationServices
 from ..form.signupForm import CreateUserForm, CreateMultiUsersForm
-from Base.base_group_views import AdminOrManagerRequiredView
 
 
 class SingleUserSignUp(AdminOrManagerRequiredView):
     template_name = "Authentication/signup_single_user.html"
+
+    link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
     form = CreateUserForm()
 
     def get(self, request):
-        context = {"form": self.form, "current_page": "single"}
+        context = {
+            "form": self.form,
+            "current_page": "single",
+            "link_expiry_period": self.link_expiry_period,
+        }
         return render(request, self.template_name, context)
 
     def post(self, request):
@@ -37,14 +52,15 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
             context = {
                 "form": self.form,
                 "current_page": "single",
+                "link_expiry_period": self.link_expiry_period,
                 "links": password_reset_links,
-                "created": True,
             }
         else:
             context = {
                 "form": form,
                 "current_page": "single",
-                "created": False,
+                "link_expiry_period": self.link_expiry_period,
+                # TODO: this looks overly specific: perhaps it could fail in many ways
                 "error": form.errors["username"][0],
             }
         return render(request, self.template_name, context)
@@ -53,9 +69,14 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
 class MultiUsersSignUp(AdminOrManagerRequiredView):
     template_name = "Authentication/signup_multiple_users.html"
     form = CreateMultiUsersForm()
+    link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
 
     def get(self, request):
-        context = {"form": self.form, "current_page": "multiple"}
+        context = {
+            "form": self.form,
+            "current_page": "multiple",
+            "link_expiry_period": self.link_expiry_period,
+        }
         return render(request, self.template_name, context)
 
     def post(self, request):
@@ -87,17 +108,113 @@ class MultiUsersSignUp(AdminOrManagerRequiredView):
                 )
             )
 
-            # Using tsv format for easy pasting into spreadsheet software
-            tsv = "Username\tReset Link\n".format()
-            for username, link in password_reset_links.items():
-                append = "{}{}{}{}".format(username, "\t", link, "\n")
-                tsv = tsv + append
+            # tsv's and csv's
+            with StringIO() as iostream:
+                writer = csv.writer(iostream, delimiter="\t")
+                writer.writerows(password_reset_links.items())
+                tsv_string = iostream.getvalue()
+
+            fields = ["Username", "Reset Link"]
+            with StringIO() as iostream:
+                writer = csv.writer(iostream, delimiter=",")
+                writer.writerow(fields)
+                writer.writerows(password_reset_links.items())
+                csv_string = iostream.getvalue()
 
             context = {
                 "form": self.form,
                 "current_page": "multiple",
+                "link_expiry_period": self.link_expiry_period,
                 "links": password_reset_links,
-                "tsv": tsv,
-                "created": True,
+                "tsv": tsv_string,
+                "csv": csv_string,
             }
             return render(request, self.template_name, context)
+
+
+class ImportUsers(AdminOrManagerRequiredView):
+    """Make many users from a formatted .csv file."""
+
+    template_name = "Authentication/signup_import_users.html"
+    link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
+    example_csv = (
+        "username,usergroup\n"
+        "ExampleName1,marker\n"
+        "ExampleName2,lead_marker\n"
+        "ExampleName14,scanner\n"
+        "exampleName37,manager"
+    )
+    # TODO: this bunch of strings should exist somewhere else
+    user_groups = ["marker", "lead_marker", "scanner", "manager"]
+
+    def get(self, request):
+        context = {
+            "current_page": "import",
+            "link_expiry_period": self.link_expiry_period,
+            "example_input_csv": self.example_csv,
+            "user_groups": self.user_groups,
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        context = {
+            "current_page": "import",
+            "link_expiry_period": self.link_expiry_period,
+            "example_input_csv": self.example_csv,
+            "user_groups": self.user_groups,
+        }
+
+        if request.FILES[".csv"].size > settings.MAX_FILE_SIZE:
+            messages.error(
+                request,
+                f"{request.FILES['.csv']} exceeds the "
+                f"{settings.MAX_FILE_SIZE_DISPLAY} file size limit",
+            )
+            return render(request, self.template_name, context)
+        csv_bytes = request.FILES[".csv"].file.getvalue()
+
+        user_list = {}
+        try:
+            AuS = AuthenticationServices()
+            user_list = AuS.create_users_from_csv(csv_bytes)
+        except (IntegrityError, KeyError, ValueError) as e:
+            messages.error(request, str(e))
+            return render(request, self.template_name, context)
+        except ObjectDoesNotExist:
+            messages.error(
+                request,
+                # TODO: find the offending row[s] and tell the user.
+                f"One or more rows in {request.FILES['.csv'].name} "
+                " references an invalid usergroup.\n"
+                f"The valid usergroups are: {', '.join(self.user_groups)}.",
+            )
+            return render(request, self.template_name, context)
+
+        users = {user["username"]: user["reset_link"] for user in user_list}
+        with StringIO() as iostream:
+            writer = csv.DictWriter(
+                iostream,
+                fieldnames=list(user_list[0].keys()),
+                delimiter="\t",
+            )
+            writer.writeheader()
+            writer.writerows(user_list)
+            tsv_string = iostream.getvalue()
+        with StringIO() as iostream:
+            writer = csv.DictWriter(
+                iostream,
+                fieldnames=list(user_list[0].keys()),
+            )
+            writer.writeheader()
+            writer.writerows(user_list)
+            csv_string = iostream.getvalue()
+
+        context.update(
+            {
+                "links": users,
+                "tsv": tsv_string,
+                "csv": csv_string,
+            }
+        )
+
+        return render(request, self.template_name, context)

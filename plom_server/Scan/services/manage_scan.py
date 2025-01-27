@@ -4,7 +4,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from __future__ import annotations
 
@@ -198,6 +198,9 @@ class ManageScanService:
                         "question_number": mp.question_index,
                         "img_pk": mp.image.pk,
                         "page_pk": mp.pk,
+                        "page_label": (
+                            f"qi.{mp.question_index}" if mp.question_index else "dnm"
+                        ),
                     }
                 )
         for paper in no_fixed_but_some_mobile:
@@ -278,6 +281,9 @@ class ManageScanService:
                         "question_number": mp.question_index,
                         "img_pk": mp.image.pk,
                         "page_pk": mp.pk,
+                        "page_label": (
+                            f"qi.{mp.question_index}" if mp.question_index else "dnm"
+                        ),
                     }
                 )
 
@@ -421,28 +427,40 @@ class ManageScanService:
         Args:
             page_pk: the pk of the mobile-page.
 
-        Returns: A dict with keys
-            * page_type: always "mobile"
-            * paper_number: the paper containing that fixed page.
-            * image_pk: the pk of the image in the fixed page.
-            * bundle_name: the name of the bundle containing the image.
-            * bundle_order: the order of the image inside the bundle.
-            * question_index_list: the list of question-indices which share the underlying image.
-                ie if a given image is used in two mobile pages with different question-indices,
-                both indices will be in this list.
-            * question_list_html: nice html rendering of the list of questions
+        Returns:
+            A dict with keys:
+                * page_type: always "mobile".
+                * paper_number: the paper containing that fixed page.
+                * image_pk: the pk of the image in the fixed page.
+                * bundle_name: the name of the bundle containing the image.
+                * bundle_order: the order of the image inside the bundle.
+                * question_idx_list: the list of positive question
+                  indices which share the underlying image.  If an
+                  image is used in two MobilePages with different
+                  question-indices, both indices will be in this list.
+                  Note the list can be empty, for example if this
+                  image is only in MobilePages that do not correspond
+                  to questions.  (these would be DNM in general).
+                * question_list_html: nice html rendering of the list
+                  of questions.  Will be the string "None" if the list
+                  is empty.
+
+        Raises:
+            None expected.
         """
         mp_obj = MobilePage.objects.get(pk=page_pk)
         img = mp_obj.image
         # same image might be used for multiple questions - get all those
         q_idx_list = [
-            mp_obj.question_index for mp_obj in MobilePage.objects.filter(image=img)
+            mp_obj.question_index
+            for mp_obj in MobilePage.objects.filter(image=img)
+            if mp_obj.question_index != MobilePage.DNM_qidx
         ]
         _render = SpecificationService.render_html_flat_question_label_list
         return {
             "page_type": "mobile",
             "paper_number": mp_obj.paper.paper_number,
-            "question_index_list": q_idx_list,
+            "question_idx_list": q_idx_list,
             "question_list_html": _render(q_idx_list),
             "image_pk": img.pk,
             "bundle_name": img.bundle.name,

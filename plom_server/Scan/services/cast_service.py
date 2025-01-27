@@ -23,6 +23,23 @@ from ..models import (
 from ..services.util import check_bundle_object_is_neither_locked_nor_pushed
 
 
+def _manager_or_scanner_user_from_username(username: str) -> User:
+    try:
+        # caution: result has duplicates until we call distinct (Issue #3727)
+        user_obj = (
+            User.objects.filter(
+                username__iexact=username, groups__name__in=["scanner", "manager"]
+            )
+            .distinct()
+            .get()
+        )
+    except ObjectDoesNotExist:
+        raise PermissionDenied(
+            f"User '{username}' does not exist or has wrong permissions!"
+        )
+    return user_obj
+
+
 class ScanCastService:
     """Functions for casting staging images to different types."""
 
@@ -173,15 +190,7 @@ class ScanCastService:
         *,
         image_type: str | None = None,
     ) -> None:
-        try:
-            user_obj = User.objects.get(
-                username__iexact=username, groups__name__in=["scanner", "manager"]
-            )
-        except ObjectDoesNotExist:
-            raise PermissionDenied(
-                f"User '{username}' does not exist or has wrong permissions!"
-            )
-
+        user_obj = _manager_or_scanner_user_from_username(username)
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist:
@@ -339,15 +348,7 @@ class ScanCastService:
         *,
         image_type: int | None = None,
     ) -> None:
-        try:
-            user_obj = User.objects.get(
-                username__iexact=username, groups__name__in=["scanner", "manager"]
-            )
-        except ObjectDoesNotExist:
-            raise PermissionDenied(
-                f"User '{username}' does not exist or has wrong permissions!"
-            )
-
+        user_obj = _manager_or_scanner_user_from_username(username)
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist:
@@ -414,6 +415,7 @@ class ScanCastService:
 
         Raises:
             ValueError: can't find things, or extra page already has information.
+            PlomBundleLockedException:
         """
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
@@ -423,6 +425,7 @@ class ScanCastService:
         except ObjectDoesNotExist:
             raise ValueError(f"Paper {paper_number} is not in the database.")
         # now check all the questions
+        # TODO: consider using question_list_utils.check_question_list: fewer DB hits?
         for qi in assign_to_question_indices:
             if not QuestionPage.objects.filter(paper=paper, question_index=qi).exists():
                 raise ValueError(f"No question index {qi} in database.")
@@ -444,14 +447,14 @@ class ScanCastService:
         eximg = img_locked.extrastagingimage
 
         # Throw value error if data has already been set.
-        if (eximg.paper_number is not None) or eximg.question_list:
+        if eximg.paper_number is not None:
             raise ValueError(
                 "Cannot overwrite existing extra-page info; "
                 "potentially another user has set data."
             )
 
         eximg.paper_number = paper_number
-        eximg.question_list = assign_to_question_indices
+        eximg.question_idx_list = assign_to_question_indices
         eximg.save()
 
     @transaction.atomic
@@ -503,15 +506,9 @@ class ScanCastService:
 
         Raises:
             ValueError: can't find things.
+            PermissionDenied: username does not exist or wrong group.
         """
-        try:
-            user_obj = User.objects.get(
-                username__iexact=username, groups__name__in=["scanner", "manager"]
-            )
-        except ObjectDoesNotExist:
-            raise PermissionDenied(
-                f"User '{username}' does not exist or has wrong permissions!"
-            )
+        user_obj = _manager_or_scanner_user_from_username(username)
 
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
@@ -566,21 +563,14 @@ class ScanCastService:
 
         eximg = img.extrastagingimage
         eximg.paper_number = None
-        eximg.question_list = None
+        eximg.question_idx_list = None
         eximg.save()
 
     @transaction.atomic
     def clear_extra_page_cmd(
         self, username: str, bundle_name: str, bundle_order: int
     ) -> None:
-        try:
-            user_obj = User.objects.get(
-                username__iexact=username, groups__name__in=["scanner", "manager"]
-            )
-        except ObjectDoesNotExist:
-            raise PermissionDenied(
-                f"User '{username}' does not exist or has wrong permissions!"
-            )
+        user_obj = _manager_or_scanner_user_from_username(username)
 
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
@@ -684,14 +674,7 @@ class ScanCastService:
         *,
         image_type: str | None = None,
     ) -> None:
-        try:
-            user_obj = User.objects.get(
-                username__iexact=username, groups__name__in=["scanner", "manager"]
-            )
-        except ObjectDoesNotExist:
-            raise PermissionDenied(
-                f"User '{username}' does not exist or has wrong permissions!"
-            )
+        user_obj = _manager_or_scanner_user_from_username(username)
 
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
@@ -805,14 +788,7 @@ class ScanCastService:
         paper_number: int,
         page_number: int,
     ) -> None:
-        try:
-            user_obj = User.objects.get(
-                username__iexact=username, groups__name__in=["scanner", "manager"]
-            )
-        except ObjectDoesNotExist:
-            raise PermissionDenied(
-                f"User '{username}' does not exist or has wrong permissions!"
-            )
+        user_obj = _manager_or_scanner_user_from_username(username)
 
         if page_number < 0 or page_number > SpecificationService.get_n_pages():
             raise ValueError("Page number out of range - check the specification")

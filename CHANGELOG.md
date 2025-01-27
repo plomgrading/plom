@@ -12,8 +12,130 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+### Removed
+
 ### Fixed
 
+
+
+
+## [0.17.0] - 2025-01-24
+
+### Added
+* Plom server's web UI now supports dark mode.
+* All the pages of a paper can be discarded, rather than one page at a time.
+* Beta version of command-line tool and API to support "Homework Mode".
+
+### Changed
+* Plom server now runs on Django 5 and has a minimum Python version of 3.10.
+* Plom server does not accept annotations using old revisions of rubrics.
+* Rubrics can now be edited within the web UI.
+
+### Removed
+* Plom Client is now developed separately at https://gitlab.com/plom/plom-client
+* The `plom.client` code in this repo is deprecated but not yet removed.
+
+### Fixed
+* Improved error checked around validity of rubrics.
+* Many minor fixes and database improvements.
+
+
+## [0.16.11] - 2024-12-10
+
+### Added
+* Server accepts upload of userlist in csv format.
+
+### Changed
+* Increase default password reset link expiry to 14 days.
+
+### Fixed
+* In some cases, discarding a pushed paper and re-uploading prevented the paper from being identified.
+* Client was not showing tags drawing attention to a particular user.
+* plom-push-to-canvas can handle blank-ID pages more gracefully by warning the user instead of crashing.
+* Fix command-line tools for manipulating staging bundles which were incorrectly complaining about multiple users.
+* Better (but not yet ideal) error handling during scan upload.
+* Reassigning a task to another user removes existing user tags from that task.
+* Misc fixes, cleanups and documentation improvements.
+
+
+## [0.16.10] - 2024-11-06
+
+### Added
+* Bundle upload displays a progress bar.
+
+### Changed
+* Improve error message when running the auto-ID reader without a classlist.
+* Improve UI when looking at out-of-date tasks by disabling irrelevant buttons such as "reset".
+
+### Fixed
+* Clarify on-screen help about collisions during scanning.
+* Use higher resolution for in-client solution images.
+* Improve error handling around annotation images.
+* Upload bundle and some other places have improved UI (for example disabling the form during a long upload).
+* Fixed errors related to users differing only in case.
+* Other tweaks and fixes.
+
+
+## [0.16.9] - 2024-10-23
+
+### Added
+* Server can now be run using the "Django-Silk" profiler, if enabled in `settings.py`.
+* Server respects additional environment variables `PLOM_HUEY_WORKERS` and `PLOM_HUEY_PARENT_WORKERS` to control how many background workers are used.  Current defaults (subject to change) are 4 and 2, and are set in `settings.py`.
+
+### Fixed
+* Many performance improvements to services that were using too manyi or inefficient database queries, based on real-life experiences at scale, and from using the "Django-Silk" profiler.
+* Client: fixed a crash when editing a copy of someone else's rubric.
+
+
+## [0.16.8] - 2024-10-15
+
+### Added
+* Respect the `WEB_CONCURRENCY` environment variable: it chooses how many `gunicorn` workers we use (but only if it is defined).
+* The `PLOM_GUNICORN_TIMEOUT` environment variable can be used to set the timeout of `gunicorn` workers.
+
+### Fixed
+* Temporarily increasing `gunicorn` timeouts, and decreasing default number of workers to 2.
+
+### Removed
+* Temporarily remove report building: it will return soon but is too slow in production for now.
+
+
+## [0.16.7] - 2024-10-14
+
+### Fixed
+* Fixed a crash when reassembling papers when non-unit starting or non-contiguous paper numbers are used.
+* Server now uses 4 workers in production mode by default.  This can be tuned live using SIGTTIN and SIGTTOU, search the gunicorn docs for more info.
+* Some paper views showed pages in the order they were scanned rather than their paper order.
+
+
+## [0.16.6] - 2024-10-10
+
+### Fixed
+* Temporary fix to hopefully reduce timeouts during client image gets in client background downloader threads.
+
+
+## [0.16.5] - 2024-10-08
+
+### Added
+* Using backend commandline its possible to retroactively add new rows to the paper database, to recover from various mistakes.
+
+### Changed
+* Client: the intention is that only lead markers can ID papers but this is, for now, just a warning.
+
+### Fixed
+* Server was recording rubric usage incorrectly: info about which tasks used which rubrics is likely incorrect in previous versions, even after server upgrade.  Nothing student-visible.
+* Server was rendering some rubric table headers incorrectly.
+* Improved client refresh, especially when other users tag your tasks.
+* Client: don't crash on URLs with trailing slash.
+* Client: can now ID paper number zero.
+* Misc bug fixes.
+* Documentation updates
+
+
+## [0.16.4] - 2024-10-02
+
+### Fixed
+* Misc bugs. Mostly minor annoying things. See gitlab milestone.
 
 
 ## [0.16.3] - 2024-09-24
@@ -1273,7 +1395,16 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.16.3...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.17.0...main
+[0.17.0]: https://gitlab.com/plom/plom/-/compare/v0.16.11...v0.17.0
+[0.16.11]: https://gitlab.com/plom/plom/-/compare/v0.16.10...v0.16.11
+[0.16.10]: https://gitlab.com/plom/plom/-/compare/v0.16.9...v0.16.10
+[0.16.9]: https://gitlab.com/plom/plom/-/compare/v0.16.8...v0.16.9
+[0.16.8]: https://gitlab.com/plom/plom/-/compare/v0.16.7...v0.16.8
+[0.16.7]: https://gitlab.com/plom/plom/-/compare/v0.16.6...v0.16.7
+[0.16.6]: https://gitlab.com/plom/plom/-/compare/v0.16.5...v0.16.6
+[0.16.5]: https://gitlab.com/plom/plom/-/compare/v0.16.4...v0.16.5
+[0.16.4]: https://gitlab.com/plom/plom/-/compare/v0.16.3...v0.16.4
 [0.16.3]: https://gitlab.com/plom/plom/-/compare/v0.16.2...v0.16.3
 [0.16.2]: https://gitlab.com/plom/plom/-/compare/v0.16.0...v0.16.2
 [0.16.0]: https://gitlab.com/plom/plom/-/compare/v0.15.7...v0.16.0

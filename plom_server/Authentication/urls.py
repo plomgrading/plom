@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2024 Aidan Murphy
 
 from django.urls import path
 
 from .signup_views.signup import (
     SingleUserSignUp,
     MultiUsersSignUp,
+    ImportUsers,
 )
 import Authentication.views
 
@@ -18,7 +20,6 @@ urlpatterns = [
     path(
         "maintenance/", Authentication.views.Maintenance.as_view(), name="maintenance"
     ),
-    # signup path
     path(
         "signup/single/",
         SingleUserSignUp.as_view(),
@@ -30,6 +31,11 @@ urlpatterns = [
         name="signup_multiple",
     ),
     path(
+        "signup/import/",
+        ImportUsers.as_view(),
+        name="signup_import",
+    ),
+    path(
         "reset/<slug:uidb64>/<slug:token>/",
         Authentication.views.SetPassword.as_view(),
         name="password_reset",
@@ -38,10 +44,5 @@ urlpatterns = [
         "reset/done/",
         Authentication.views.SetPasswordComplete.as_view(),
         name="password_reset_complete",
-    ),
-    path(
-        "passwordresetlinks/",
-        Authentication.views.PasswordResetLinks.as_view(),
-        name="password_reset",
     ),
 ]

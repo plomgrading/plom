@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Bryan Tanady
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
 from __future__ import annotations
@@ -27,8 +27,7 @@ class BuildStudentReportService:
         """
         paper = Paper.objects.get(paper_number=paper_number)
 
-        sms = StudentMarkService()
-        paper_info = sms.get_paper_id_or_none(paper)
+        paper_info = StudentMarkService.get_paper_id_or_none(paper)
         if paper_info:
             sid = paper_info[0]
         else:

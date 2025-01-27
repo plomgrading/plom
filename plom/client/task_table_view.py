@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QCursor, QContextMenuEvent
+from PyQt6.QtGui import QAction, QContextMenuEvent, QCursor
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QMenu,
@@ -29,6 +29,7 @@ class TaskTableView(QTableView):
     claimSignal = pyqtSignal()
     deferSignal = pyqtSignal()
     reassignSignal = pyqtSignal()
+    reassignToMeSignal = pyqtSignal()
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -67,8 +68,11 @@ class TaskTableView(QTableView):
         a = QAction("Defer this task", self)
         a.triggered.connect(self.deferSignal.emit)
         menu.addAction(a)
-        # a = QAction("Reassign task to...", self)
-        # a.triggered.connect(self.reassignSignal.emit)
-        # menu.addAction(a)
+        a = QAction("Reassign task...", self)
+        a.triggered.connect(self.reassignSignal.emit)
+        menu.addAction(a)
+        a = QAction("Reassign task to me", self)
+        a.triggered.connect(self.reassignToMeSignal.emit)
+        menu.addAction(a)
         menu.popup(QCursor.pos())
         event.accept()

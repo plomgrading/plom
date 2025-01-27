@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2019-2024 Colin B. Macdonald
-# Copyright (C) 2019-2023 Andrew Rechnitzer
+# Copyright (C) 2019-2025 Colin B. Macdonald
+# Copyright (C) 2019-2025 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2023 Julian Lapenna
@@ -20,23 +20,20 @@ import html
 import json
 import logging
 import sys
-from django.db.models.aggregates import Count
-import tomlkit
+from operator import itemgetter
 from typing import Any
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
-
-
-from operator import itemgetter
+import tomlkit
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
+from django.db.models.aggregates import Count
 from django.db.models import QuerySet
-
 from rest_framework.exceptions import ValidationError
 
 from plom.plom_exceptions import PlomConflict
@@ -65,7 +62,7 @@ def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
         "tags": r.tags,
         "meta": r.meta,
         "username": r.user.username,
-        "question": r.question,
+        "question_index": r.question_index,
         "versions": r.versions,
         "parameters": r.parameters,
         "system_rubric": r.system_rubric,
@@ -76,6 +73,112 @@ def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
         ),
         "revision": r.revision,
     }
+
+
+# There are no single unicode chars for 3/10, 7/10, 9/10 but we can use multichar
+# strings which seem to render nicely both in web and Qt client (on GNU/Linux).
+# TODO: test on Windows/macOS: could instead fallback to ASCII "3/10".
+_fraction_table = (
+    (1 / 2, "\N{VULGAR FRACTION ONE HALF}"),
+    (1 / 4, "\N{VULGAR FRACTION ONE QUARTER}"),
+    (3 / 4, "\N{VULGAR FRACTION THREE QUARTERS}"),
+    (1 / 3, "\N{VULGAR FRACTION ONE THIRD}"),
+    (2 / 3, "\N{VULGAR FRACTION TWO THIRDS}"),
+    (1 / 5, "\N{VULGAR FRACTION ONE FIFTH}"),
+    (2 / 5, "\N{VULGAR FRACTION TWO FIFTHS}"),
+    (3 / 5, "\N{VULGAR FRACTION THREE FIFTHS}"),
+    (4 / 5, "\N{VULGAR FRACTION FOUR FIFTHS}"),
+    (1 / 8, "\N{VULGAR FRACTION ONE EIGHTH}"),
+    (3 / 8, "\N{VULGAR FRACTION THREE EIGHTHS}"),
+    (5 / 8, "\N{VULGAR FRACTION FIVE EIGHTHS}"),
+    (7 / 8, "\N{VULGAR FRACTION SEVEN EIGHTHS}"),
+    (1 / 10, "\N{VULGAR FRACTION ONE TENTH}"),
+    (
+        3 / 10,
+        "\N{SUPERSCRIPT THREE}\N{FRACTION SLASH}\N{SUBSCRIPT ONE}\N{SUBSCRIPT ZERO}",
+    ),
+    (
+        7 / 10,
+        "\N{SUPERSCRIPT SEVEN}\N{FRACTION SLASH}\N{SUBSCRIPT ONE}\N{SUBSCRIPT ZERO}",
+    ),
+    (
+        9 / 10,
+        "\N{SUPERSCRIPT NINE}\N{FRACTION SLASH}\N{SUBSCRIPT ONE}\N{SUBSCRIPT ZERO}",
+    ),
+)
+
+
+def _generate_display_delta(
+    value: int | float | str,
+    kind: str,
+    out_of: int | float | str | None = None,
+) -> str:
+    """Generate the display delta for a rubric.
+
+    Args:
+        value: the value of the rubric.
+        kind: the kind of the rubric.
+        out_of: the maximum value of the rubric, required for
+            absolute rubrics, none for other rubrics
+
+    Returns:
+        The display delta as a string, which may include unicode
+        symbols for fractions.  When ``kinda`` is "neutral", the
+        reply will always be ``"."``, although this could change
+        in the future.
+
+    Raises:
+        ValueError: if the kind is not valid.
+        ValueError: if the kind is absolute and out_of is not provided.
+
+    Note that certain fractions with small integer denominators will be
+    rendered as fractions.  Currently the detection of such relies on
+    a small internal tolerance of roughly sqrt machine epsilon.  This
+    means for example that `0.66666667` will convert into the fraction
+    two thirds.
+    """
+    value = float(value) if isinstance(value, str) else value
+    out_of = float(out_of) if isinstance(out_of, str) else out_of
+
+    tol = 1e-7
+
+    if kind == "absolute":
+        if out_of is None:
+            raise ValueError("out_of is required for absolute rubrics.")
+        value_str = None
+        if isinstance(value, int) or value.is_integer():
+            value_str = f"{value:g}"
+        for frac, frac_str in _fraction_table:
+            if frac - tol < value < frac + tol:
+                value_str = frac_str
+        if value_str is None:
+            value_str = f"{value}"
+
+        out_of_str = None
+        if isinstance(out_of, int) or out_of.is_integer():
+            out_of_str = f"{out_of:g}"
+        for frac, frac_str in _fraction_table:
+            if frac - tol < out_of < frac + tol:
+                out_of_str = frac_str
+        if out_of_str is None:
+            out_of_str = f"{out_of}"
+
+        return f"{value_str} of {out_of_str}"
+    elif kind == "relative":
+        for frac, frac_str in _fraction_table:
+            if frac - tol < value < frac + tol:
+                return f"+{frac_str}"
+            if -frac - tol < value < -frac + tol:
+                return f"-{frac_str}"
+        if value > 0:
+            return f"+{value:g}"
+        else:
+            # Negative sign applied automatically
+            return f"{value:g}"
+    elif kind == "neutral":
+        return "."
+    else:
+        raise ValueError(f"Invalid kind: {kind}.")
 
 
 class RubricService:
@@ -99,8 +202,9 @@ class RubricService:
             The new rubric data, in dict key-value format.
 
         Raises:
-            KeyError: if rubric_data contains missing username or kind fields.
-            ValidationError: if rubric kind is not a valid option.
+            KeyError: if rubric_data contains missing username or user.
+            ValidationError: if rubric kind is not a valid option, or other
+                other errors.
             ValueError: if username does not exist in the DB.
             PermissionDenied: user are not allowed to create rubrics.
                 This could be "this user" or "all users".
@@ -116,7 +220,12 @@ class RubricService:
 
         # some mangling around user/username here
         if "user" not in incoming_data.keys():
-            username = incoming_data.pop("username")
+            username = incoming_data.pop("username", None)
+            if not username:
+                # TODO: revisit this in the context of uploading rubrics from files
+                raise KeyError(
+                    "user or username is required (for now, might change in future)"
+                )
             try:
                 user = User.objects.get(username=username)
                 incoming_data["user"] = user.pk
@@ -124,10 +233,14 @@ class RubricService:
             except ObjectDoesNotExist as e:
                 raise ValueError(f"User {username} does not exist.") from e
 
+        # some mangling because client still uses "question"
+        if "question_index" not in incoming_data.keys():
+            incoming_data["question_index"] = incoming_data.pop("question")
+
         if "kind" not in incoming_data.keys():
             raise ValidationError({"kind": "Kind is required."})
 
-        if incoming_data["kind"] not in ["absolute", "relative", "neutral"]:
+        if incoming_data["kind"] not in ("absolute", "relative", "neutral"):
             raise ValidationError({"kind": "Invalid kind."})
 
         # Check permissions
@@ -152,31 +265,76 @@ class RubricService:
                 )
             pass
 
-        # Now do actual stuff
+        return self._create_rubric_lowlevel(incoming_data)
 
-        if incoming_data.get("display_delta", None) is None:
+    def _create_rubric_lowlevel(
+        self,
+        data: dict[str, Any],
+        *,
+        _bypass_serializer: bool = False,
+        _bypass_user: User | None = None,
+    ) -> Rubric:
+        """Create rubrics with less error checking, internal use only.
+
+        Careful with ``_pypass_serializer``.  I think this stuff was introduced
+        to decrease the number of database queries when making many rubrics.
+        """
+        if data.get("display_delta", None) is None:
             # if we don't have a display_delta, we'll generate a default one
-            incoming_data["display_delta"] = self._generate_display_delta(
+            data["display_delta"] = _generate_display_delta(
                 # if value is missing, can only be neutral
                 # missing value will be prohibited in a future MR
-                incoming_data.get("value", 0),
-                incoming_data["kind"],
-                incoming_data.get("out_of", None),
+                data.get("value", 0),
+                data["kind"],
+                data.get("out_of", None),
             )
 
-        incoming_data["latest"] = True
-        serializer = RubricSerializer(data=incoming_data)
-        if serializer.is_valid():
-            new_rubric = serializer.save()
+        # TODO: Perhaps the serializer should do this
+        if data["kind"] == "absolute":
+            _value = data["value"]
+            _out_of = data["out_of"]
+            try:
+                _out_of = float(_out_of)
+            except ValueError as e:
+                raise ValidationError(
+                    {"out_of": f"out of {_out_of} must be convertible to number: {e}"}
+                )
+            if not 0 <= _value <= _out_of:
+                raise ValidationError(
+                    {"value": f"out of range: {_value} is not in [0, {_out_of}]."}
+                )
 
-            new_rubric.pedagogy_tags.clear()
-            for tag in incoming_data.get("pedagogy_tags", []):
+        data["latest"] = True
+        if _bypass_serializer:
+            assert _bypass_user is not None
+            new_rubric = Rubric.objects.create(
+                text=data["text"],
+                question_index=data["question_index"],
+                system_rubric=data["system_rubric"],
+                kind=data["kind"],
+                value=data["value"],
+                out_of=data["out_of"],
+                display_delta=data["display_delta"],
+                meta=data.get("meta"),
+                user=_bypass_user,
+                modified_by_user=_bypass_user,
+                latest=data.get("latest"),
+                versions=data.get("versions"),
+            )
+            for tag in data.get("pedagogy_tags", []):
                 new_rubric.pedagogy_tags.add(tag)
+            return new_rubric
 
-            rubric_obj = serializer.instance
-            return rubric_obj
-        else:
+        serializer = RubricSerializer(data=data)
+        if not serializer.is_valid():
             raise ValidationError(serializer.errors)
+        new_rubric = serializer.save()
+        # TODO: if its new why do we need to clear these?
+        # new_rubric.pedagogy_tags.clear()
+        for tag in data.get("pedagogy_tags", []):
+            new_rubric.pedagogy_tags.add(tag)
+        rubric_obj = serializer.instance
+        return rubric_obj
 
     @transaction.atomic
     def modify_rubric(
@@ -242,6 +400,10 @@ class RubricService:
                 f"most likely your edits have collided with those of someone else."
             )
 
+        # some mangling because client still uses "question"
+        if "question_index" not in new_rubric_data.keys():
+            new_rubric_data["question_index"] = new_rubric_data.pop("question")
+
         # Generally, omitting modifying_user bypasses checks
         if modifying_user is None:
             pass
@@ -284,12 +446,31 @@ class RubricService:
         new_rubric_data["latest"] = True
         new_rubric_data["rid"] = old_rubric.rid
 
-        # TODO: Issue #3582: don't autogenerate if input has custom display delta
-        new_rubric_data["display_delta"] = self._generate_display_delta(
-            new_rubric_data.get("value", 0),
-            new_rubric_data["kind"],
-            new_rubric_data.get("out_of", None),
-        )
+        if new_rubric_data.get("display_delta", None) is None:
+            # if we don't have a display_delta, we'll generate a default one
+            new_rubric_data["display_delta"] = _generate_display_delta(
+                new_rubric_data.get("value", 0),
+                new_rubric_data["kind"],
+                new_rubric_data.get("out_of", None),
+            )
+
+        if new_rubric_data["kind"] in ("relative", "neutral"):
+            new_rubric_data["out_of"] = 0
+
+        # TODO: Perhaps the serializer should do this
+        if new_rubric_data["kind"] == "absolute":
+            _value = new_rubric_data["value"]
+            _out_of = new_rubric_data["out_of"]
+            try:
+                _out_of = float(_out_of)
+            except ValueError as e:
+                raise ValidationError(
+                    {"out_of": f"out of {_out_of} must be convertible to number: {e}"}
+                )
+            if not 0 <= _value <= _out_of:
+                raise ValidationError(
+                    {"value": f"out of range: {_value} is not in [0, {_out_of}]."}
+                )
 
         serializer = RubricSerializer(data=new_rubric_data)
 
@@ -323,66 +504,28 @@ class RubricService:
         rubric_obj = serializer.instance
         return _Rubric_to_dict(rubric_obj)
 
-    def _generate_display_delta(
-        self,
-        value: int | float | str,
-        kind: str,
-        out_of: int | float | str | None = None,
-    ) -> str:
-        """Generate the display delta for a rubric.
-
-        Keyword Args:
-            value: the value of the rubric.
-            kind: the kind of the rubric.
-            out_of: the maximum value of the rubric, required for
-                absolute rubrics, none for other rubrics
-
-        Raises:
-            ValueError: if the kind is not valid.
-            ValueError: if the kind is absolute and out_of is not provided.
-        """
-        value = float(value) if isinstance(value, str) else value
-        out_of = float(out_of) if isinstance(out_of, str) else out_of
-
-        # TODO: we may want to special case vulgar fractions in the future
-
-        if kind == "absolute":
-            if out_of is None:
-                raise ValueError("out_of is required for absolute rubrics.")
-            else:
-                if isinstance(value, int) or value.is_integer():
-                    return f"{value:g} of {out_of:g}"
-                else:
-                    return f"{value} of {out_of}"
-        elif kind == "relative":
-            if value > 0:
-                return f"+{value:g}"
-            else:
-                # Negative sign gets applied automatically
-                return f"{value:g}"
-        elif kind == "neutral":
-            return "."
-        else:
-            raise ValueError(f"Invalid kind: {kind}.")
-
     @classmethod
     def get_rubrics_as_dicts(
-        cls, *, question: int | None = None
+        cls, *, question_idx: int | None = None
     ) -> list[dict[str, Any]]:
         """Get the rubrics, possibly filtered by question.
 
         Keyword Args:
-            question: question index or ``None`` for all.
+            question_idx: question index or ``None`` for all.
 
         Returns:
             Collection of dictionaries, one for each rubric.
         """
         rubric_queryset = cls.get_all_rubrics()
-        if question is not None:
-            rubric_queryset = rubric_queryset.filter(question=question, latest=True)
+        if question_idx is not None:
+            rubric_queryset = rubric_queryset.filter(
+                question_index=question_idx, latest=True
+            )
         rubric_data = []
 
-        for r in rubric_queryset.prefetch_related("user"):
+        # see issue #3683 - need to prefetch these fields for
+        # the _Rubric_to_dict function.
+        for r in rubric_queryset.prefetch_related("user", "modified_by_user"):
             rubric_data.append(_Rubric_to_dict(r))
 
         new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))
@@ -445,172 +588,135 @@ class RubricService:
             Rubric.objects.filter(rid=rid, latest=False).all().order_by("revision")
         )
 
-    def init_rubrics(self, username: str) -> bool:
+    def init_rubrics(self) -> bool:
         """Add special rubrics such as deltas and per-question specific.
-
-        Args:
-            username: which user to associate with the initialized rubrics.
 
         Returns:
             True if initialized or False if it was already initialized.
-
-        Exceptions:
-            ValueError: username does not exist or is not part of the manager group.
         """
-        try:
-            _ = User.objects.get(username__iexact=username, groups__name="manager")
-        except ObjectDoesNotExist as e:
-            raise ValueError(
-                f"User '{username}' does not exist or has wrong permissions!"
-            ) from e
-        # TODO: legacy checks for specific "no answer given" rubric, see `db_create.py`
-        existing_rubrics = Rubric.objects.all()
-        if existing_rubrics:
+        if Rubric.objects.exists():
             return False
-        self._build_system_rubrics(username)
+        self._build_system_rubrics()
         return True
 
-    def _build_system_rubrics(self, username: str) -> None:
+    def _build_system_rubrics(self) -> None:
         log.info("Building special manager-generated rubrics")
+
+        # get the first manager object
+        any_manager = User.objects.filter(groups__name="manager").first()
+        # raise an exception if there aren't any managers.
+        if any_manager is None:
+            raise ObjectDoesNotExist("No manager users have been created.")
+        # TODO: experimenting with passing in User object instead...
+        # any_manager_pk = any_manager.pk
+
+        def create_system_rubric(data):
+            # data["user"] = any_manager_pk
+            # data["modified_by_user"] = any_manager_pk
+            data["system_rubric"] = True
+            self._create_rubric_lowlevel(
+                data, _bypass_serializer=True, _bypass_user=any_manager
+            )
+
         # create standard manager delta-rubrics - but no 0, nor +/- max-mark
         for q in SpecificationService.get_question_indices():
             mx = SpecificationService.get_question_max_mark(q)
             # make zero mark and full mark rubrics
             rubric = {
                 "kind": "absolute",
-                "display_delta": f"0 of {mx}",
-                "value": "0",
+                "value": 0,
                 "out_of": mx,
                 "text": "no answer given",
-                "question": q,
+                "question_index": q,
                 "meta": "Is this answer blank or nearly blank?  Please do not use "
                 + "if there is any possibility of relevant writing on the page.",
                 "tags": "",
-                "username": username,
-                "system_rubric": True,
             }
-            try:
-                r = self.create_rubric(rubric)
-            except AssertionError:
-                print("Skipping absolute rubric, not implemented yet, Issue #2641")
+            create_system_rubric(rubric)
             # log.info("Built no-answer-rubric Q%s: key %s", q, r.pk)
 
             rubric = {
                 "kind": "absolute",
-                "display_delta": f"0 of {mx}",
-                "value": "0",
+                "value": 0,
                 "out_of": mx,
                 "text": "no marks",
-                "question": q,
+                "question_index": q,
                 "meta": "There is writing here but its not sufficient for any points.",
                 "tags": "",
-                "username": username,
-                "system_rubric": True,
             }
-            try:
-                r = self.create_rubric(rubric)
-            except AssertionError:
-                print("Skipping absolute rubric, not implemented yet, Issue #2641")
+            create_system_rubric(rubric)
             # log.info("Built no-marks-rubric Q%s: key %s", q, r.pk)
 
             rubric = {
                 "kind": "absolute",
-                "display_delta": f"{mx} of {mx}",
-                "value": f"{mx}",
+                "value": mx,
                 "out_of": mx,
                 "text": "full marks",
-                "question": q,
-                "meta": "",
+                "question_index": q,
                 "tags": "",
-                "username": username,
-                "system_rubric": True,
             }
-            try:
-                r = self.create_rubric(rubric)
-            except AssertionError:
-                print("Skipping absolute rubric, not implemented yet, Issue #2641")
+            create_system_rubric(rubric)
             # log.info("Built full-marks-rubric Q%s: key %s", q, r.pk)
 
-            # now make delta-rubrics
+            # now make +/- delta-rubrics
             for m in range(1, int(mx) + 1):
-                # make positive delta
                 rubric = {
-                    "display_delta": "+{}".format(m),
                     "value": m,
                     "out_of": 0,
                     "text": ".",
                     "kind": "relative",
-                    "question": q,
-                    "meta": "",
+                    "question_index": q,
                     "tags": "",
-                    "username": username,
-                    "system_rubric": True,
                 }
-                r = self.create_rubric(rubric)
-                log.info("Built delta-rubric +%d for Q%s: %s", m, q, r["rid"])
-                # make negative delta
+                create_system_rubric(rubric)
+                # log.info("Built delta-rubric +%d for Q%s: %s", m, q, r["rid"])
                 rubric = {
-                    "display_delta": "-{}".format(m),
                     "value": -m,
                     "out_of": 0,
                     "text": ".",
                     "kind": "relative",
-                    "question": q,
-                    "meta": "",
+                    "question_index": q,
                     "tags": "",
-                    "username": username,
-                    "system_rubric": True,
                 }
-                r = self.create_rubric(rubric)
-                log.info("Built delta-rubric -%d for Q%s: %s", m, q, r["rid"])
+                create_system_rubric(rubric)
+                # log.info("Built delta-rubric -%d for Q%s: %s", m, q, r["rid"])
 
             # TODO: testing non-integer rubrics in demo: change to True
             if False:
                 for rubric in [
                     {
-                        "display_delta": "+1\N{Vulgar Fraction One Half}",
+                        "display_delta": "+1\N{VULGAR FRACTION ONE HALF}",
                         "value": 1.5,
                         "text": "testing non-integer rubric",
                         "kind": "relative",
-                        "question": q,
-                        "username": username,
-                        "system_rubric": True,
+                        "question_index": q,
                     },
                     {
-                        "display_delta": "-\N{Vulgar Fraction One Half}",
                         "value": -0.5,
                         "text": "testing negative non-integer rubric",
                         "kind": "relative",
-                        "question": q,
-                        "username": username,
-                        "system_rubric": True,
+                        "question_index": q,
                     },
                     {
                         "display_delta": "+a tenth",
                         "value": 1 / 10,
                         "text": "one tenth of one point",
                         "kind": "relative",
-                        "question": q,
-                        "username": username,
-                        "system_rubric": True,
+                        "question_index": q,
                     },
                     {
                         "display_delta": "+1/29",
                         "value": 1 / 29,
                         "text": "ADR will love co-prime pairs",
                         "kind": "relative",
-                        "question": q,
-                        "username": username,
-                        "system_rubric": True,
+                        "question_index": q,
                     },
                     {
                         "display_delta": "+1/31",
                         "value": 1 / 31,
                         "text": r"tex: Note that $31 \times 29 = 899$.",
                         "kind": "relative",
-                        "question": q,
-                        "username": username,
-                        "system_rubric": True,
+                        "question_index": q,
                     },
                     {
                         "display_delta": "1/49 of 1/7",
@@ -618,19 +724,17 @@ class RubricService:
                         "out_of": 1 / 7,
                         "text": "testing absolute rubric",
                         "kind": "absolute",
-                        "question": q,
-                        "username": username,
-                        "system_rubric": True,
+                        "question_index": q,
                     },
                 ]:
-                    r = self.create_rubric(rubric)
-                    log.info(
-                        "Built %s rubric %s for Q%s: %s",
-                        r["kind"],
-                        r["display_delta"],
-                        q,
-                        r["rid"],
-                    )
+                    create_system_rubric(rubric)
+                    # log.info(
+                    #     "Built %s rubric %s for Q%s: %s",
+                    #     r["kind"],
+                    #     r["display_delta"],
+                    #     q,
+                    #     r["rid"],
+                    # )
 
     def build_half_mark_delta_rubrics(self, username: str) -> bool:
         """Create the plus and minus one-half delta rubrics that are optional.
@@ -662,11 +766,11 @@ class RubricService:
         log.info("Building half-mark delta rubrics")
         for q in SpecificationService.get_question_indices():
             rubric = {
-                "display_delta": "+\N{Vulgar Fraction One Half}",
+                "display_delta": "+\N{VULGAR FRACTION ONE HALF}",
                 "value": 0.5,
                 "text": ".",
                 "kind": "relative",
-                "question": q,
+                "question_index": q,
                 "username": username,
                 "system_rubric": True,
             }
@@ -674,16 +778,16 @@ class RubricService:
             log.info(
                 "Built delta-rubric %s for Qidx %d: %s",
                 r["display_delta"],
-                r["question"],
+                r["question_index"],
                 r["rid"],
             )
 
             rubric = {
-                "display_delta": "-\N{Vulgar Fraction One Half}",
+                "display_delta": "-\N{VULGAR FRACTION ONE HALF}",
                 "value": -0.5,
                 "text": ".",
                 "kind": "relative",
-                "question": q,
+                "question_index": q,
                 "username": username,
                 "system_rubric": True,
             }
@@ -691,47 +795,55 @@ class RubricService:
             log.info(
                 "Built delta-rubric %s for Qidx %d: %s",
                 r["display_delta"],
-                r["question"],
+                r["question_index"],
                 r["rid"],
             )
 
-    def erase_all_rubrics(self) -> int:
+    def _erase_all_rubrics(self) -> None:
         """Remove all rubrics, permanently deleting them.  BE CAREFUL.
 
-        Returns:
-            How many rubrics were removed.
-        """
-        n = 0
-        with transaction.atomic():
-            for r in Rubric.objects.all().select_for_update():
-                r.delete()
-                n += 1
-        return n
+        Warning - although this checks if any annotations have been produced
+        before deleting, it should only be called by the papers_are_printed
+        setter, and NO ONE ELSE.
 
-    def get_rubric_pane(self, user: User, question: int) -> dict:
+        Raises:
+            ValueError: when any annotations have been created.
+        """
+        if Annotation.objects.exists():
+            raise ValueError(
+                "Annotations have been created. You cannot delete rubrics."
+            )
+
+        Rubric.objects.all().select_for_update().delete()
+
+    def get_rubric_pane(self, user: User, question_idx: int) -> dict[str, Any]:
         """Gets a rubric pane for a user.
 
         Args:
             user: a User instance
-            question: which question index.
+            question_idx: which question by index.
 
         Returns:
-            dict: the JSON representation of the pane.
+            Rubric pane data as key-value pairs.
         """
-        pane, created = RubricPane.objects.get_or_create(user=user, question=question)
+        pane, created = RubricPane.objects.get_or_create(
+            user=user, question=question_idx
+        )
         if created:
             return {}
         return pane.data
 
-    def update_rubric_pane(self, user: User, question: int, data: dict) -> None:
+    def update_rubric_pane(
+        self, user: User, question_idx: int, data: dict[str, Any]
+    ) -> None:
         """Updates a rubric pane for a user.
 
         Args:
             user: a User instance
-            question: question index associated with the rubric pane.
-            data: dict representing the new pane
+            question_idx: question index associated with the rubric pane.
+            data: dict representing the pane.
         """
-        pane = RubricPane.objects.get(user=user, question=question)
+        pane = RubricPane.objects.get(user=user, question=question_idx)
         pane.data = data
         pane.save()
 
@@ -761,12 +873,22 @@ class RubricService:
         Returns:
             A query of MarkingTask instances.
         """
+        # Caution here: There is more than one rubric with a particular rid (b/c
+        # of rubric revisions).  There should be at most one of those used in the
+        # latest annotation but for awhile this was not true (Issue #3647) and we
+        # would get get multiple copies of the same task.  Using "distinct" filters
+        # out those duplicates:
+        # https://docs.djangoproject.com/en/5.1/ref/models/querysets/#distinct
+        # TODO: same docs say "if you are using distinct() be careful about ordering
+        # by related models": perhaps we should stop ordering this (?)
+        # Or rethink this whole query to be less flaky!
         return (
             MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE, latest_annotation__rubric__rid=rubric.rid
             )
             .order_by("paper__paper_number")
             .prefetch_related("paper", "assigned_user", "latest_annotation")
+            .distinct()
         )
 
     def get_rubrics_from_annotation(self, annotation: Annotation) -> QuerySet[Rubric]:
@@ -815,7 +937,7 @@ class RubricService:
         Returns:
             HTML representation of the rubric.
 
-        TODO: code duplication from plom.client.rubrics.py.
+        TODO: code duplication from plom.rubric_utils.py.
         """
         text = html.escape(rubric.text)
         display_delta = html.escape(rubric.display_delta)
@@ -832,12 +954,13 @@ class RubricService:
             </table>
         """
 
-    def get_rubric_data(self, filetype: str, question: int | None) -> str:
-        """Get the rubric data as a file.
+    def get_rubric_data(self, filetype: str, question_idx: int | None) -> str:
+        """Get the rubric data as the string contents of file of a specified type.
 
         Args:
             filetype: The type of file to generate. Supported file types are "json", "toml", and "csv".
-            question: The question ID to filter the rubric data. If None, all rubrics will be included.
+            question_idx: Filter the rubrics by those relevant to this
+                question, by index.  If None, all rubrics will be included.
 
         Returns:
             A string containing the rubric data from the specified file format.
@@ -845,22 +968,22 @@ class RubricService:
         Raises:
             ValueError: If the specified file type is not supported.
         """
-        rubrics = self.get_rubrics_as_dicts(question=question)
-
         if filetype == "json":
-            if question is not None:
-                queryset = Rubric.objects.filter(question=question)
+            if question_idx is not None:
+                queryset = Rubric.objects.filter(question_index=question_idx)
             else:
                 queryset = Rubric.objects.all()
             serializer = RubricSerializer(queryset, many=True)
             data_string = json.dumps(serializer.data, indent="  ")
         elif filetype == "toml":
+            rubrics = self.get_rubrics_as_dicts(question_idx=question_idx)
             for dictionary in rubrics:
                 filtered = {k: v for k, v in dictionary.items() if v is not None}
                 dictionary.clear()
                 dictionary.update(filtered)
             data_string = tomlkit.dumps({"rubric": rubrics})
         elif filetype == "csv":
+            rubrics = self.get_rubrics_as_dicts(question_idx=question_idx)
             f = io.StringIO()
             writer = csv.DictWriter(f, fieldnames=rubrics[0].keys())
             writer.writeheader()

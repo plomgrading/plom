@@ -2,15 +2,21 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2025 Aidan Murphy
 
 from __future__ import annotations
 
 import hashlib
+import logging
 from math import ceil
 import pathlib
+import random
 import tempfile
+import time
+from io import BytesIO
+from datetime import datetime
 from typing import Any
 
 from django.conf import settings
@@ -18,9 +24,15 @@ from django.contrib.auth.models import User
 from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models import Q  # for queries involving "or", "and"
+from django.forms import ValidationError
+from django.utils import timezone
 from django_huey import db_task
+import huey
+import huey.api
+import huey.exceptions
+import pymupdf
 
+from plom.plom_exceptions import PlomConflict
 from plom.scan import QRextract
 from plom.scan import render_page_to_bitmap, try_to_extract_image
 from plom.scan.question_list_utils import canonicalize_page_question_map
@@ -35,7 +47,7 @@ from plom.tpv_utils import (
 )
 
 from Papers.services import ImageBundleService, SpecificationService
-from Papers.models import Image
+from Papers.models import FixedPage
 from Base.models import HueyTaskTracker
 from ..models import (
     StagingBundle,
@@ -44,8 +56,8 @@ from ..models import (
     KnownStagingImage,
     ExtraStagingImage,
     DiscardStagingImage,
-    PagesToImagesHueyTask,
-    ManageParseQR,
+    PagesToImagesChore,
+    ManageParseQRChore,
 )
 from ..services.qr_validators import QRErrorService
 from .image_process import PageImageProcessor
@@ -57,48 +69,97 @@ from ..services.util import (
 from plom.plom_exceptions import PlomBundleLockedException, PlomPushCollisionException
 
 
+log = logging.getLogger(__name__)
+
+
 class ScanService:
     """Functions for staging scanned test-papers."""
 
+    @classmethod
     def upload_bundle(
-        self,
-        uploaded_pdf_file: File,
+        cls,
+        _uploaded_pdf_file: File,
         slug: str,
         user: User,
-        timestamp: float,
-        pdf_hash: str,
-        number_of_pages: int,
         *,
+        timestamp: float | None = None,
+        file_hash: str = "",
+        number_of_pages: int | None = None,
         force_render: bool = False,
         read_after: bool = False,
-    ) -> None:
+    ) -> int:
         """Upload a bundle PDF and store it in the filesystem + database.
 
-        Also, split PDF into page images + store in filesystem and database.
-        Currently if that fails for any reason, the StagingBundle is still
+        Also, trigger a background job to split PDF into page images and
+        store in filesystem and database.  Because that is a background
+        job, if it fails for any reason, the StagingBundle is still
         created.
 
+        Note: this does not check if the user has appropriate permissions.
+        You either need to do that yourself or consider calling
+        :meth:`upload_bundle_cmd`_ instead.
+
         Args:
-            uploaded_pdf_file (Django File): File-object containing the pdf
+            _uploaded_pdf_file (Django File): File-object containing the pdf
                 (can also be a TemporaryUploadedFile or InMemoryUploadedFile).
             slug: Filename slug for the pdf.
             user (Django User): the user uploading the file
-            timestamp (float): the timestamp of the time at which the file was uploaded
-            pdf_hash: the sha256 of the pdf.
-            number_of_pages: the number of pages in the pdf.
 
         Keyword Args:
+            timestamp: the timestamp of the time at which the file was
+                uploaded.  If omitted, we'll use right now.
+            file_hash: the sha256 of the pdf file.  If omitted, we will
+                compute it.
+            number_of_pages: the number of pages in the pdf, can be None
+                if we don't know yet.
             force_render: Don't try to extract large bitmaps; always
                 render the page.
             read_after: Automatically read the qr codes from the bundle after
                 upload+splitting is finished.
 
         Returns:
-            None
+            The bundle id, the primary key of the newly-created bundle.
+
+        Raises:
+            ValidationError: _uploaded_pdf_file isn't a valid pdf or
+                exceeds the page limit, or other error.
+            PlomConflict: we already have a bundle which conflicts.
         """
+        if not timestamp:
+            timestamp = datetime.timestamp(timezone.now())
+
+        # Warning: Aidan saw errors if we open this more than once, during an API upload
+        # here get the bytes from the file and never use `_upload_pdf_file` again.
+        try:
+            with _uploaded_pdf_file.open("rb") as fh:
+                file_bytes = fh.read()
+        except OSError as err:
+            raise ValidationError(f"Unexpected error handling file: {err}") from err
+
+        if not file_hash:
+            file_hash = hashlib.sha256(file_bytes).hexdigest()
+
+        try:
+            with pymupdf.open(stream=file_bytes) as pdf_doc:
+                if "PDF" not in pdf_doc.metadata["format"]:
+                    raise ValidationError("Uploaded file isn't a valid pdf")
+                if pdf_doc.page_count > settings.MAX_BUNDLE_PAGES:
+                    raise ValidationError(
+                        f"Uploaded pdf with {pdf_doc.page_count} pages"
+                        f" exceeds {settings.MAX_BUNDLE_PAGES} page limit"
+                    )
+        except pymupdf.FileDataError as err:
+            raise ValidationError(err) from err
+
         # Warning: Issue #2888, and https://gitlab.com/plom/plom/-/merge_requests/2361
         # strange behaviour can result from relaxing this durable=True
         with transaction.atomic(durable=True):
+            existing = StagingBundle.objects.filter(pdf_hash=file_hash)
+            if existing:
+                raise PlomConflict(
+                    f"Bundle(s) {[x.slug for x in existing]} with the"
+                    f" same file hash {file_hash} have already uploaded"
+                )
             # create the bundle first, so it has a pk and
             # then give it the file and resave it.
             bundle_obj = StagingBundle.objects.create(
@@ -108,12 +169,12 @@ class ScanService:
                 pushed=False,
                 force_page_render=force_render,
             )
-            with uploaded_pdf_file.open() as fh:
-                bundle_obj.pdf_file = File(fh, name=f"{timestamp}.pdf")
-                bundle_obj.pdf_hash = pdf_hash
-                bundle_obj.number_of_pages = number_of_pages
-                bundle_obj.save()
-        self.split_and_save_bundle_images(bundle_obj.pk, read_after=read_after)
+            bundle_obj.pdf_file = File(BytesIO(file_bytes), name=f"{slug}.pdf")
+            bundle_obj.pdf_hash = file_hash
+            bundle_obj.number_of_pages = number_of_pages
+            bundle_obj.save()
+        cls.split_and_save_bundle_images(bundle_obj.pk, read_after=read_after)
+        return bundle_obj.pk
 
     def upload_bundle_cmd(
         self,
@@ -123,7 +184,7 @@ class ScanService:
         timestamp: float,
         pdf_hash: str,
         number_of_pages: int,
-    ) -> None:
+    ) -> int:
         """Wrapper around upload_bundle for use by the commandline bundle upload command.
 
         Checks if the supplied username has permissions to access and upload scans.
@@ -137,7 +198,11 @@ class ScanService:
             number_of_pages (int): the number of pages in the pdf
 
         Returns:
-            None
+            The bundle id, the primary key of the newly-created bundle.
+
+        Raises:
+            ValueError: username invalid or not in scanner group.
+            PlomConflict: duplicate upload.
         """
         # username => user_object, if in scanner group, else exception raised.
         try:
@@ -152,17 +217,17 @@ class ScanService:
         with open(pdf_file_path, "rb") as fh:
             pdf_file_object = File(fh)
 
-        self.upload_bundle(
+        return self.upload_bundle(
             pdf_file_object,
             slug,
             user_obj,
-            timestamp,
-            pdf_hash,
-            number_of_pages,
+            timestamp=timestamp,
+            file_hash=pdf_hash,
+            number_of_pages=number_of_pages,
         )
 
+    @staticmethod
     def split_and_save_bundle_images(
-        self,
         bundle_pk: int,
         *,
         number_of_chunks: int = 16,
@@ -186,16 +251,17 @@ class ScanService:
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
         with transaction.atomic(durable=True):
-            x = PagesToImagesHueyTask.objects.create(
+            x = PagesToImagesChore.objects.create(
                 bundle=bundle_obj,
-                status=PagesToImagesHueyTask.STARTING,
+                status=HueyTaskTracker.STARTING,
             )
             tracker_pk = x.pk
-        res = huey_parent_split_bundle_task(
+        res = huey_parent_split_bundle_chore(
             bundle_pk,
             number_of_chunks,
             tracker_pk=tracker_pk,
             read_after=read_after,
+            _debug_be_flaky=False,
         )
         # print(f"Just enqueued Huey parent_split_and_save task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
@@ -203,24 +269,26 @@ class ScanService:
     @transaction.atomic
     def get_bundle_split_completions(self, bundle_pk: int) -> int:
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-        return PagesToImagesHueyTask.objects.get(bundle=bundle_obj).completed_pages
+        return PagesToImagesChore.objects.get(bundle=bundle_obj).completed_pages
 
-    @transaction.atomic
     def is_bundle_mid_splitting(self, bundle_pk: int) -> bool:
+        """Check if the bundle with this id is currently in the midst of splitting its pages."""
+        # TODO: use a prefetch to avoid two DB calls in this function
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         if bundle_obj.has_page_images:
             return False
-
-        query = PagesToImagesHueyTask.objects.filter(bundle=bundle_obj)
-        if query.exists():  # have run a bundle-split task previously
-            if query.exclude(
-                status=PagesToImagesHueyTask.COMPLETE
-            ).exists():  # one of these is not completed, so must be mid-run
-                return True
-            else:  # all have finished previously
-                return False
-        else:  # no such qr-reading tasks have been done
-            return False
+        # If there are only Error/Complete chores then we are not splitting
+        if PagesToImagesChore.objects.filter(
+            bundle=bundle_obj,
+            status__in=(
+                HueyTaskTracker.TO_DO,
+                HueyTaskTracker.STARTING,
+                HueyTaskTracker.QUEUED,
+                HueyTaskTracker.RUNNING,
+            ),
+        ).exists():
+            return True
+        return False
 
     def are_bundles_mid_splitting(self) -> dict[str, bool]:
         """Returns a dict of each staging bundle (slug) and whether it is still mid-split."""
@@ -229,35 +297,15 @@ class ScanService:
             for bundle_obj in StagingBundle.objects.all()
         }
 
-    @transaction.atomic
-    def remove_bundle(self, bundle_name: str, *, user: str | None = None) -> None:
-        """Remove a bundle PDF from the filesystem and database.
-
-        Args:
-            bundle_name (str): which bundle.
-
-        Keyword Args:
-            user (None/str): also filter by user. TODO: user is *not* for
-                permissions: looks like just a way to identify a bundle.
-
-        Returns:
-            None
-        """
-        # TODO - deprecate this function in place of the one that uses PK instead of name
-        if user:
-            bundle = StagingBundle.objects.get(
-                user=user,
-                slug=bundle_name,
-            )
-        else:
-            bundle = StagingBundle.objects.get(slug=bundle_name)
-        self._remove_bundle_by_pk(bundle.pk)
-
-    def _remove_bundle_by_pk(self, bundle_pk: int) -> None:
+    def remove_bundle_by_pk(self, bundle_pk: int) -> None:
         """Remove a bundle PDF from the filesystem + database.
 
         Args:
             bundle_pk: the primary key for a particular bundle.
+
+        Exceptions:
+            PlomBundleLockedException: bundle was splitting or reading QR
+                codes, or "push-locked", or already pushed.
         """
         with transaction.atomic():
             _bundle_obj = (
@@ -320,8 +368,10 @@ class ScanService:
 
         To uniquely identify an image, we need a bundle and a page index.
         """
-        bundle_obj = self.get_bundle_from_pk(bundle_pk)
-        img = StagingImage.objects.get(bundle=bundle_obj, bundle_order=index)
+        # try to do this in one query to reduce DB hits.
+        img = StagingImage.objects.select_related("stagingthumbnail").get(
+            bundle__pk=bundle_pk, bundle_order=index
+        )
         return img.stagingthumbnail
 
     @transaction.atomic
@@ -336,8 +386,16 @@ class ScanService:
 
     @transaction.atomic
     def get_all_staging_bundles(self) -> list[StagingBundle]:
-        """Return all of the staging bundles in reverse chronological order."""
-        return list(StagingBundle.objects.all().order_by("-timestamp"))
+        """Return all of the staging bundles in reverse chronological order.
+
+        Note - for each set we prefetch the associated user info and the
+            info about the associated staging images.
+        """
+        return list(
+            StagingBundle.objects.all()
+            .prefetch_related("stagingimage_set", "user")
+            .order_by("-timestamp")
+        )
 
     def get_most_recent_unpushed_bundle(self) -> StagingBundle | None:
         """Return all of the staging bundles in reverse chronological order."""
@@ -496,6 +554,14 @@ class ScanService:
                             "tpv": "plomB",
                         }
                     )
+                else:
+                    # it is not a valid qr-code
+                    qr_code_dict.update(
+                        {
+                            "page_type": "invalid_qr",
+                            "quadrant": "0",
+                        }
+                    )
                 groupings[quadrant] = qr_code_dict
         return groupings
 
@@ -515,25 +581,83 @@ class ScanService:
         Args:
             bundle_pk: primary key of bundle DB object
         """
-        root_folder = settings.MEDIA_ROOT / "page_images"
-        root_folder.mkdir(exist_ok=True)
-
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         # check that the qr-codes have not been read already, or that a task has not been set
 
-        if ManageParseQR.objects.filter(bundle=bundle_obj).exists():
+        # Currently, even a status Error chore would prevent it from being rerun
+        if ManageParseQRChore.objects.filter(bundle=bundle_obj).exists():
             return
 
         with transaction.atomic(durable=True):
-            x = ManageParseQR.objects.create(
+            x = ManageParseQRChore.objects.create(
                 bundle=bundle_obj,
-                status=ManageParseQR.STARTING,
+                status=HueyTaskTracker.STARTING,
             )
             tracker_pk = x.pk
 
-        res = huey_parent_read_qr_codes_task(bundle_pk, tracker_pk=tracker_pk)
+        log.info("starting the read_qr_codes_chore...")
+        res = huey_parent_read_qr_codes_chore(
+            bundle_pk, tracker_pk=tracker_pk, _debug_be_flaky=False
+        )
         # print(f"Just enqueued Huey parent_read_qr_codes task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
+
+    def map_bundle_page(
+        self,
+        bundle_id: int,
+        page: int,
+        *,
+        papernum: int,
+        question_indices: list[int],
+    ) -> None:
+        """Maps one page of a bundle onto zero or more questions.
+
+        Args:
+            bundle_id: primary key of bundle DB object.
+            page: one-based (TODO: check) index of the pages in the bundle.
+
+        Keyword Args:
+            papernum: the number of the test-paper
+            question_indices: a variable-length list of which questions (by
+                one-based question index) to attach the page to.  If empty,
+                it means to drop (discard) the page.
+                TODO: no, it should attach it to the proto DNM group:
+                TODO: https://gitlab.com/plom/plom/-/merge_requests/2771
+
+        Raises:
+            ObjectDoesNotExist: no such BundleImage, e.g., invalid bundle id or page
+        """
+        root_folder = settings.MEDIA_ROOT / "page_images"
+        root_folder.mkdir(exist_ok=True)
+
+        # TODO: assert the length of question is same as pages in bundle
+
+        with transaction.atomic():
+            page_img = StagingImage.objects.get(bundle__pk=bundle_id, bundle_order=page)
+
+            if not question_indices:
+                # TODO: see MR !2771 for later improvements
+                page_img.image_type = StagingImage.DISCARD
+                page_img.save()
+                DiscardStagingImage.objects.create(
+                    staging_image=page_img, discard_reason="map said drop this page"
+                )
+            else:
+                page_img.image_type = StagingImage.EXTRA
+                # TODO = update the qr-code info in the underlying image
+                page_img.save()
+                ExtraStagingImage.objects.create(
+                    staging_image=page_img,
+                    paper_number=papernum,
+                    question_idx_list=question_indices,
+                )
+            # TODO: Issue #3770.
+            # bundle_obj = (
+            #     StagingBundle.objects.filter(pk=bundle_pk).select_for_update().get()
+            # )
+            # finally - mark the bundle as having had its qr-codes read.
+            # bundle_obj.has_qr_codes = True
+            # bundle_obj.save()
 
     def map_bundle_pages(
         self,
@@ -552,16 +676,13 @@ class ScanService:
             pages_to_question_indices: a list same length
                 as the bundle, each element is variable-length list
                 of which questions (by one-based question index)
-                to attach that page too.  If one of those inner
+                to attach that page to.  If one of those inner
                 lists is empty, it means to drop (discard) that
                 particular page.
 
         Returns:
             None
         """
-        root_folder = settings.MEDIA_ROOT / "page_images"
-        root_folder.mkdir(exist_ok=True)
-
         bundle_obj = (
             StagingBundle.objects.filter(pk=bundle_pk).select_for_update().get()
         )
@@ -587,8 +708,9 @@ class ScanService:
                 ExtraStagingImage.objects.create(
                     staging_image=page_img,
                     paper_number=papernum,
-                    question_list=qlist,
+                    question_idx_list=qlist,
                 )
+            # TODO: Issue #3770.
             # finally - mark the bundle as having had its qr-codes read.
             bundle_obj.has_qr_codes = True
             bundle_obj.save()
@@ -596,24 +718,27 @@ class ScanService:
     @transaction.atomic
     def get_bundle_qr_completions(self, bundle_pk: int) -> int:
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
-        return ManageParseQR.objects.get(bundle=bundle_obj).completed_pages
+        return ManageParseQRChore.objects.get(bundle=bundle_obj).completed_pages
 
-    @transaction.atomic
-    def is_bundle_mid_qr_read(self, bundle_pk: int) -> int:
+    def is_bundle_mid_qr_read(self, bundle_pk: int) -> bool:
+        """Check if the bundle with this id is currently in the midst of reading QR codes."""
+        # TODO: use a prefetch to avoid two DB calls in this function
         bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
         if bundle_obj.has_qr_codes:
             return False
 
-        query = ManageParseQR.objects.filter(bundle=bundle_obj)
-        if query.exists():  # have run a qr-read task previously
-            if query.exclude(
-                status=ManageParseQR.COMPLETE
-            ).exists():  # one of these is not completed, so must be mid-run
-                return True
-            else:  # all have finished previously
-                return False
-        else:  # no such qr-reading tasks have been done
-            return False
+        # If there are only Error/Complete chores then we are not reading
+        if ManageParseQRChore.objects.filter(
+            bundle=bundle_obj,
+            status__in=(
+                HueyTaskTracker.TO_DO,
+                HueyTaskTracker.STARTING,
+                HueyTaskTracker.QUEUED,
+                HueyTaskTracker.RUNNING,
+            ),
+        ).exists():
+            return True
+        return False
 
     def are_bundles_mid_qr_read(self) -> dict[str, bool]:
         """Returns a dict of each staging bundle (slug) and whether it is still mid-qr-read."""
@@ -653,22 +778,17 @@ class ScanService:
 
     @transaction.atomic
     def get_n_extra_images_with_data(self, bundle: StagingBundle) -> int:
-        # note - we must check that we have set both questions and pages
         return bundle.stagingimage_set.filter(
             image_type=StagingImage.EXTRA,
             extrastagingimage__paper_number__isnull=False,
-            extrastagingimage__question_list__isnull=False,
         ).count()
 
     @transaction.atomic
     def do_all_extra_images_have_data(self, bundle: StagingBundle) -> int:
-        # Make sure all question pages have both paper-number and question-lists
+        # check whether all extra question pages have paper-numbers
         epages = bundle.stagingimage_set.filter(image_type=StagingImage.EXTRA)
-        return not epages.filter(
-            Q(extrastagingimage__paper_number__isnull=True)
-            | Q(extrastagingimage__question_list__isnull=True)
-        ).exists()
-        # if you can find an extra page with a null paper_number, or one with a null question-list then it is not ready.
+        return not epages.filter(extrastagingimage__paper_number__isnull=True).exists()
+        # if you can find an extra page with a null paper_number
 
     @transaction.atomic
     def get_n_error_images(self, bundle: StagingBundle) -> int:
@@ -679,7 +799,7 @@ class ScanService:
         return bundle.stagingimage_set.filter(image_type=StagingImage.DISCARD).count()
 
     @transaction.atomic
-    def staging_bundle_status_cmd(
+    def staging_bundle_status(
         self,
     ) -> list[tuple[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]]:
         bundles = StagingBundle.objects.all().order_by("slug")
@@ -708,14 +828,14 @@ class ScanService:
             n_errors = self.get_n_error_images(bundle)
 
             if self.is_bundle_mid_splitting(bundle.pk):
-                count = PagesToImagesHueyTask.objects.get(bundle=bundle).completed_pages
+                count = PagesToImagesChore.objects.get(bundle=bundle).completed_pages
                 total_pages = f"in progress: {count} of {bundle.number_of_pages}"
             else:
                 total_pages = images.count()
 
             bundle_qr_read = bundle.has_qr_codes
             if self.is_bundle_mid_qr_read(bundle.pk):
-                count = ManageParseQR.objects.get(bundle=bundle).completed_pages
+                count = ManageParseQRChore.objects.get(bundle=bundle).completed_pages
                 bundle_qr_read = f"in progress ({count})"
 
             bundle_data = (
@@ -750,17 +870,18 @@ class ScanService:
     @transaction.atomic
     def map_bundle_pages_cmd(
         self,
-        bundle_name: str,
         *,
+        bundle_name: str | None = None,
+        bundle_id: int | None = None,
         papernum: int,
         question_map: str | list[int] | list[list[int]],
     ) -> None:
         """Maps an entire bundle's pages onto zero or more questions per page.
 
-        Args:
-            bundle_name: which bundle.
-
         Keyword Args:
+            bundle_name: which bundle by name.
+            bundle_id: which bundle by id; you must specify one but not both
+                of `bundle_name` or `bundle_id`.
             papernum: which paper.
             question_map: specifies how pages of this bundle should be mapped
                 onto questions.  In principle it can be many different things,
@@ -783,10 +904,20 @@ class ScanService:
         This is the command "front-end" to :method:`map_bundle_pages`,
         see also docs there.
         """
-        try:
-            bundle_obj = StagingBundle.objects.get(slug=bundle_name)
-        except ObjectDoesNotExist as e:
-            raise ValueError(f"Bundle '{bundle_name}' does not exist!") from e
+        if bundle_id and bundle_name:
+            raise ValueError("You cannot specify both ID and name")
+        elif bundle_id:
+            try:
+                bundle_obj = StagingBundle.objects.get(pk=bundle_id)
+            except ObjectDoesNotExist as e:
+                raise ValueError(f"Bundle id {bundle_id} does not exist!") from e
+        elif bundle_name:
+            try:
+                bundle_obj = StagingBundle.objects.get(slug=bundle_name)
+            except ObjectDoesNotExist as e:
+                raise ValueError(f"Bundle '{bundle_name}' does not exist!") from e
+        else:
+            raise ValueError("You must specify one of ID or name")
 
         if not bundle_obj.has_page_images:
             raise ValueError(f"Please wait for {bundle_name} to upload...")
@@ -824,14 +955,10 @@ class ScanService:
             ]
         ).exists():
             return False
-        # check for extra pages without data
+        # check for extra pages not assigned to paper numbers
         epages = bundle_obj.stagingimage_set.filter(image_type=StagingImage.EXTRA)
-        if epages.filter(
-            Q(extrastagingimage__paper_number__isnull=True)
-            | Q(extrastagingimage__question_list__isnull=True)
-        ).exists():
+        if epages.filter(extrastagingimage__paper_number__isnull=True).exists():
             return False
-
         return True
 
     def are_bundles_perfect(self) -> dict[str, bool]:
@@ -938,9 +1065,10 @@ class ScanService:
             ValueError: When the bundle has already been pushed,
             ValueError: When the qr codes have not all been read,
             ValueError: When the bundle is not prefect (eg still has errors or unknowns),
-            RuntimeError: When something very strange happens!!
             PlomPushCollisionException: When images in the bundle collide with existing pushed images
             PlomBundleLockedException: When any bundle is push-locked, or the current one is locked/push-locked.
+            ObjectDoesNotExist: no such bundle.
+            RuntimeError: When something very strange happens!!
         """
         # raises exception if *any* bundle is push-locked
         # (only allow one bundle at a time to be pushed.)
@@ -1061,7 +1189,7 @@ class ScanService:
             discard-pages, it contains the ``reason`` while for
             known-pages it contains ``paper_number``, ``page_number``
             and ``version``.  Finally for extra-pages, it contains
-            ``paper_number``, and ``question_list``.
+            ``paper_number``, and ``question_idx_list``.
         """
         # compute number of digits in longest page number to pad the page numbering
         n_digits = len(str(bundle_obj.number_of_pages))
@@ -1113,7 +1241,7 @@ class ScanService:
         ).prefetch_related("extrastagingimage"):
             pages[img.bundle_order]["info"] = {
                 "paper_number": img.extrastagingimage.paper_number,
-                "question_list": img.extrastagingimage.question_list,
+                "question_idx_list": img.extrastagingimage.question_idx_list,
             }
 
         # now build an ordered list by running the keys (which are bundle-order) of the pages-dict in order.
@@ -1148,15 +1276,15 @@ class ScanService:
         # Now loop over the extra pages
         for extra in (
             ExtraStagingImage.objects.filter(staging_image__bundle=bundle_obj)
-            .order_by("paper_number", "question_list")
+            .order_by("paper_number", "question_idx_list")
             .prefetch_related("staging_image")
         ):
             # we can skip those without data
-            if extra.paper_number and extra.question_list:
+            if extra.paper_number:
                 papers.setdefault(extra.paper_number, []).append(
                     {
                         "type": "extra",
-                        "question_list": extra.question_list,
+                        "question_idx_list": extra.question_idx_list,
                         "order": extra.staging_image.bundle_order,
                     }
                 )
@@ -1191,7 +1319,7 @@ class ScanService:
                 "status": img.image_type,
                 "info": {
                     "paper_number": img.extrastagingimage.paper_number,
-                    "question_list": img.extrastagingimage.question_list,
+                    "question_idx_list": img.extrastagingimage.question_idx_list,
                 },
                 "order": f"{img.bundle_order}".zfill(n_digits),
                 "rotation": img.rotation,
@@ -1237,8 +1365,8 @@ class ScanService:
             _render = SpecificationService.render_html_flat_question_label_list
             info = {
                 "paper_number": img.extrastagingimage.paper_number,
-                "question_index_list": img.extrastagingimage.question_list,
-                "question_list_html": _render(img.extrastagingimage.question_list),
+                "question_idx_list": img.extrastagingimage.question_idx_list,
+                "question_list_html": _render(img.extrastagingimage.question_idx_list),
             }
         else:
             info = {}
@@ -1258,10 +1386,7 @@ class ScanService:
         for img in bundle_obj.stagingimage_set.filter(
             image_type=StagingImage.EXTRA
         ).prefetch_related("extrastagingimage"):
-            if (
-                img.extrastagingimage.paper_number
-                and img.extrastagingimage.question_list
-            ):
+            if img.extrastagingimage.paper_number:
                 paper_list.append(img.extrastagingimage.paper_number)
         return sorted(list(set(paper_list)))
 
@@ -1419,21 +1544,23 @@ class ScanService:
         # if it has been pushed then no collisions
         if bundle_obj.pushed:
             return []
-
-        # look at each known-image and see if it corresponds to a
-        # paper/page that already has an image
-        colliding_images = []
-        for img in (
-            bundle_obj.stagingimage_set.filter(image_type=StagingImage.KNOWN)
-            .prefetch_related("knownstagingimage")
-            .order_by("bundle_order")
-        ):
-            known = img.knownstagingimage
-            if Image.objects.filter(
-                fixedpage__paper__paper_number=known.paper_number,
-                fixedpage__page_number=known.page_number,
-            ).exists():
-                colliding_images.append(img.bundle_order)
+        # get all the known paper/pages in the bundle
+        bundle_ppbo_list = KnownStagingImage.objects.filter(
+            staging_image__bundle=bundle_obj
+        ).values_list("paper_number", "page_number", "staging_image__bundle_order")
+        bundle_papers_list = list(set([X[0] for X in bundle_ppbo_list]))
+        if not bundle_papers_list:
+            return []
+        # now get all paper/pages of any scanned fixed pages from these papers.
+        pushed_pp_list = FixedPage.objects.filter(
+            image__isnull=False, paper__paper_number__in=bundle_papers_list
+        ).values_list("paper__paper_number", "page_number")
+        # now compare the lists and return the bundle order of any
+        # colliding image (ie an image in this bundle that maps to a
+        # fixed page that already has been pushed)
+        colliding_images = [
+            X[2] for X in bundle_ppbo_list if (X[0], X[1]) in pushed_pp_list
+        ]
         return sorted(colliding_images)
 
 
@@ -1444,14 +1571,14 @@ class ScanService:
 
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="parentchores", context=True)
-def huey_parent_split_bundle_task(
+def huey_parent_split_bundle_chore(
     bundle_pk: int,
     number_of_chunks: int,
     *,
     tracker_pk: int,
     read_after: bool = False,
-    # TODO - CBM - what type should task have?
-    task=None,
+    _debug_be_flaky: bool = False,
+    task: huey.api.Task | None = None,
 ) -> bool:
     """Split a PDF document into individual page images.
 
@@ -1468,22 +1595,60 @@ def huey_parent_split_bundle_task(
         tracker_pk: a key into the database for anyone interested in
             our progress.
         read_after: automatically trigger a qr-code read after splitting finished.
-        task: includes our ID in the Huey process queue.
+        task: includes our ID in the Huey process queue.  This kwarg is
+            passed by `context=True` in decorator: callers should not
+            pass this in!
 
     Returns:
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
-    """
-    from time import sleep, time
 
-    start_time = time()
+    Raises:
+        ValueError: various error situations about the input.
+        RuntimeError: child chore failed.
+    """
+    import pymupdf
+
+    assert task is not None
+
+    start_time = time.time()
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
+    # TODO: there is some duplication of code here with BundleUploadForm
+    try:
+        with pymupdf.open(bundle_obj.pdf_file.path) as pdf_doc:
+            bundle_length = pdf_doc.page_count
+            if "PDF" not in pdf_doc.metadata["format"]:
+                raise ValueError("File is not a valid PDF")
+    except pymupdf.FileDataError as err:
+        raise ValueError(
+            f"Invalid pdf file? failed to determine number of pages: {err}"
+        ) from err
+
+    # TODO: accessing `settings` here inside the huey job bothers me
+    if bundle_length > settings.MAX_BUNDLE_PAGES:
+        raise ValueError(
+            f"File of {bundle_length} pages "
+            f"exceeds {settings.MAX_BUNDLE_PAGES} page limit."
+        )
+
+    if bundle_obj.number_of_pages is not None:
+        # if we already knew the number of pages, it better match!
+        if bundle_obj.number_of_pages != bundle_length:
+            raise ValueError(
+                f"number of pages {bundle_length} does not match "
+                f"existing preset value {bundle_obj.number_of_pages}"
+            )
+
+    with transaction.atomic():
+        _write_bundle = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
+        _write_bundle.number_of_pages = bundle_length
+        _write_bundle.save()
+    bundle_obj.refresh_from_db()
+
     # cut the list of all indices into chunks
-    bundle_length = bundle_obj.number_of_pages
-    assert bundle_length is not None
     chunk_length = ceil(bundle_length / number_of_chunks)
     # be careful with 0/1 indexing here.
     # pymupdf (which we use to process pdfs) 0-indexes pages within
@@ -1503,6 +1668,7 @@ def huey_parent_split_bundle_task(
                 bundle_pk,
                 ord_chnk,  # note pg is 1-indexed
                 pathlib.Path(tmpdir),
+                _debug_be_flaky=_debug_be_flaky,
             )
             for ord_chnk in order_chunks
         ]
@@ -1511,7 +1677,18 @@ def huey_parent_split_bundle_task(
         n_tasks = len(task_list)
         while True:
             # list items are None (if not completed) or list [dict of page info]
-            result_chunks = [X.get() for X in task_list]
+            try:
+                result_chunks = [X.get() for X in task_list]
+            except huey.exceptions.TaskException as e:
+                print(f"Parent: child image split chore failed with {e}")
+                log.error("Parent: child image split chore failed with %s", str(e))
+                # make an attempt to stop any remaining unqueued child tasks.
+                # note those already started probably will not stop.
+                for chore in task_list:
+                    log.info("Parent: trying to revoke child chore %s", chore)
+                    chore.revoke()
+                raise RuntimeError(f"child task failed QR read: {e}") from e
+
             # remove all the nones to get list of completed tasks
             not_none_result_chunks = [
                 chunk for chunk in result_chunks if chunk is not None
@@ -1521,10 +1698,8 @@ def huey_parent_split_bundle_task(
             results = [X for chunk in not_none_result_chunks for X in chunk]
             rendered_page_count = len(results)
 
-            # TODO - check for error status here.
-
             with transaction.atomic():
-                _task = PagesToImagesHueyTask.objects.select_for_update().get(
+                _task = PagesToImagesChore.objects.select_for_update().get(
                     bundle=bundle_obj
                 )
                 _task.completed_pages = rendered_page_count
@@ -1533,7 +1708,7 @@ def huey_parent_split_bundle_task(
             if completed_tasks == n_tasks:
                 break
             else:
-                sleep(1)
+                time.sleep(1)
 
         with transaction.atomic():
             for X in results:
@@ -1552,7 +1727,7 @@ def huey_parent_split_bundle_task(
             # get a new reference for updating the bundle itself
             _write_bundle = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
             _write_bundle.has_page_images = True
-            _write_bundle.time_to_make_page_images = time() - start_time
+            _write_bundle.time_to_make_page_images = time.time() - start_time
             _write_bundle.save()
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
@@ -1564,12 +1739,12 @@ def huey_parent_split_bundle_task(
 
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="parentchores", context=True)
-def huey_parent_read_qr_codes_task(
+def huey_parent_read_qr_codes_chore(
     bundle_pk: int,
     *,
     tracker_pk: int,
-    # TODO - CBM - what type should task have?
-    task=None,
+    _debug_be_flaky: bool = False,
+    task: huey.api.Task | None = None,
 ) -> bool:
     """Read the QR codes of a bunch of pages.
 
@@ -1582,40 +1757,52 @@ def huey_parent_read_qr_codes_task(
     Keyword Args:
         tracker_pk: a key into the database for anyone interested in
             our progress.
-        task: includes our ID in the Huey process queue.
+        task: includes our ID in the Huey process queue.  This kwarg is
+            passed by `context=True` in decorator: callers should not
+            pass this in!
 
     Returns:
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
-    from time import sleep, time
+    assert task is not None
 
-    start_time = time()
+    start_time = time.time()
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     task_list = [
-        huey_child_parse_qr_code(page.pk) for page in bundle_obj.stagingimage_set.all()
+        huey_child_parse_qr_code(page.pk, _debug_be_flaky=_debug_be_flaky)
+        for page in bundle_obj.stagingimage_set.all()
     ]
 
     # results = [X.get(blocking=True) for X in task_list]
 
     n_tasks = len(task_list)
     while True:
-        results = [X.get() for X in task_list]
+        try:
+            results = [X.get() for X in task_list]
+        except huey.exceptions.TaskException as e:
+            print(f"Parent: child QR read chore failed with {e}")
+            log.error("Parent: child QR read chore failed with %s", str(e))
+            # TODO: what about the child tasks still running?
+            raise RuntimeError(f"child task failed QR read: {e}") from e
+
         count = sum(1 for X in results if X is not None)
 
         with transaction.atomic():
-            _task = ManageParseQR.objects.select_for_update().get(bundle=bundle_obj)
+            _task = ManageParseQRChore.objects.select_for_update().get(
+                bundle=bundle_obj
+            )
             _task.completed_pages = count
             _task.save()
 
         if count == n_tasks:
             break
         else:
-            sleep(1)
+            time.sleep(1)
 
     with transaction.atomic():
         for X in results:
@@ -1631,7 +1818,7 @@ def huey_parent_read_qr_codes_task(
         # get a new reference for updating the bundle itself
         _write_bundle = StagingBundle.objects.select_for_update().get(pk=bundle_pk)
         _write_bundle.has_qr_codes = True
-        _write_bundle.time_to_read_qr = time() - start_time
+        _write_bundle.time_to_read_qr = time.time() - start_time
         _write_bundle.save()
 
     bundle_obj.refresh_from_db()
@@ -1642,11 +1829,14 @@ def huey_parent_read_qr_codes_task(
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks")
+@db_task(queue="tasks", context=True)
 def huey_child_get_page_images(
     bundle_pk: int,
     order_list: list[int],
     basedir: pathlib.Path,
+    *,
+    _debug_be_flaky: bool = False,
+    task: huey.api.Task | None = None,
 ) -> list[dict[str, Any]]:
     """Render page images and save to disk in the background.
 
@@ -1657,21 +1847,36 @@ def huey_child_get_page_images(
         bundle_pk: bundle DB object's primary key
         order_list: a list of bundle orders of pages to extract - 1-indexed
         basedir (pathlib.Path): were to put the image
+        _debug_be_flaky: for debugging, all take a while and some
+            percentage will fail.
+        task: includes our ID in the Huey process queue.  This is added
+            by the `context=True` in decorator: callers in our code should
+            not pass this in!
 
     Returns:
         Information about the page image, including its file name,
         thumbnail, hash etc.
     """
-    import pymupdf as fitz
+    import pymupdf
     from plom.scan import rotate
     from PIL import Image
+
+    assert task is not None
+    log.debug("Huey debug, we are task %s with id %s", task, task.id)
+    # HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
     bundle_obj = StagingBundle.objects.get(pk=bundle_pk)
 
     rendered_page_info = []
 
-    with fitz.open(bundle_obj.pdf_file.path) as pdf_doc:
+    with pymupdf.open(bundle_obj.pdf_file.path) as pdf_doc:
         for order in order_list:
+            if _debug_be_flaky:
+                print(f"Huey debug, random sleep in task {task.id}")
+                log.debug("Huey debug, random sleep in task %d", task.id)
+                time.sleep(random.random() * 4)
+                if random.random() < 0.04:
+                    raise RuntimeError("Flaky simulated image split failure")
             basename = f"page{order:05}"
             if bundle_obj.force_page_render:
                 save_path = None
@@ -1687,7 +1892,7 @@ def huey_child_get_page_images(
                     add_metadata=True,
                 )
             if save_path is None:
-                # log.info(f"{basename}: Fitz render. No extract b/c: " + "; ".join(msgs))
+                # log.info(f"{basename}: PyMuPDF render. No extract b/c: " + "; ".join(msgs))
                 # TODO: log and consider storing in the StagingImage as well
                 save_path = render_page_to_bitmap(
                     pdf_doc[order - 1],  # PyMuPDF is 0-indexed
@@ -1728,8 +1933,13 @@ def huey_child_get_page_images(
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks")
-def huey_child_parse_qr_code(image_pk: int) -> dict[str, Any]:
+@db_task(queue="tasks", context=True)
+def huey_child_parse_qr_code(
+    image_pk: int,
+    *,
+    _debug_be_flaky: bool = False,
+    task: huey.api.Task | None = None,
+) -> dict[str, Any]:
     """Huey task to parse QR codes, check QR errors, and save to database in the background.
 
     It is important to understand that running this function starts an
@@ -1738,18 +1948,36 @@ def huey_child_parse_qr_code(image_pk: int) -> dict[str, Any]:
     Args:
         image_pk: primary key of the image
 
+    Keyword Args:
+        _debug_be_flaky: for debugging, all take a while and some
+            percentage will fail.
+        task: includes our ID in the Huey process queue.  This is added
+            by the `context=True` in decorator: callers in our code should
+            not pass this in!
+
     Returns:
         Information about the QR codes.
     """
+    assert task is not None
+    log.debug("Huey debug, we are task %s with id %s", task, task.id)
+
     img = StagingImage.objects.get(pk=image_pk)
     image_path = img.image_file.path
 
     scanner = ScanService()
 
     code_dict = QRextract(image_path)
+
     page_data = scanner.parse_qr_code([code_dict])
 
     pipr = PageImageProcessor()
+
+    if _debug_be_flaky:
+        print(f"Huey debug, random sleep in task {task.id}")
+        log.debug("Huey debug, random sleep in task %d", task.id)
+        time.sleep(random.random() * 4)
+        if random.random() < 0.04:
+            raise RuntimeError("Flaky simulated QR read failure")
 
     rotation = pipr.get_rotation_angle_or_None_from_QRs(page_data)
 

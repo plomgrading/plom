@@ -69,9 +69,11 @@ def assert_can_modify_classlist():
     from . import PapersPrinted, PrenameSettingService
     from Papers.services import PaperInfoService
 
-    # cannot modify classlist if papers printed
+    # Issue = #3635
+    # if papers have been printed you are allowed to modify
+    # the classlist.
     if PapersPrinted.have_papers_been_printed():
-        raise PlomDependencyConflict("Papers have been printed.")
+        return
     # if db populated (or being populated) and prenaming is set, then cannot modify classlist
     if PrenameSettingService().get_prenaming_setting():
         if PaperInfoService().is_paper_database_populated():

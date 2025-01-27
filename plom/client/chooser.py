@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Forest Kobayashi
 # Copyright (C) 2021 Peter Lee
@@ -16,38 +16,32 @@ __copyright__ = "Copyright (C) 2018-2024 Andrew Rechnitzer, Colin B. Macdonald, 
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-from pathlib import Path
 import logging
 import shutil
 import sys
 import tempfile
 import time
+from importlib import resources
+from pathlib import Path
 from typing import Any
 
 import arrow
-from packaging.version import Version
 import platformdirs
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
+from packaging.version import Version
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
 import tomlkit
-
 import urllib3
-from PyQt6 import uic, QtGui
+from PyQt6 import QtGui, uic
 from PyQt6.QtCore import pyqtSlot
 from PyQt6.QtWidgets import QDialog, QMessageBox
 
 from plom import __version__
 from plom import Plom_API_Version
 from plom import Default_Port
-import plom.client.ui_files
 from plom import get_question_label
 from plom.plom_exceptions import (
     PlomException,
@@ -61,7 +55,8 @@ from plom.plom_exceptions import (
     PlomNoServerSupportException,
 )
 from plom.messenger import Messenger, ManagerMessenger
-from plom.client import MarkerClient, IDClient
+from . import MarkerClient, IDClient
+from . import ui_files
 from .downloader import Downloader
 from .about_dialog import show_about_dialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, WarningQuestion
@@ -97,7 +92,7 @@ class Chooser(QDialog):
     def __init__(self, Qapp):
         self.APIVersion = Plom_API_Version
         super().__init__()
-        uic.loadUi(resources.files(plom.client.ui_files) / "chooser.ui", self)
+        uic.loadUi(resources.files(ui_files) / "chooser.ui", self)
         self.Qapp = Qapp
         self.messenger = None
         self._old_client_note_seen = False
@@ -270,8 +265,15 @@ class Chooser(QDialog):
             self.Qapp.marker = markerwin
         elif which_subapp == "Identifier":
             if len(role) and role != "lead_marker":
-                WarnMsg(self, "Only lead marker can identify papers!").exec()
-                return
+                InfoMsg(
+                    self,
+                    "<p>Only lead marker should be identifying papers.</p>"
+                    "<p>You may want to ask your instructor/manager to"
+                    " promote your account.  (In the future this might be"
+                    " enforced, but isn't as of Oct 2024.)</p>",
+                ).exec()
+                # TODO: maybe this should be enforced serverside?
+                # return
             self.setEnabled(False)
             self.hide()
             idwin = IDClient(self.Qapp, tmpdir=self._workdir)
@@ -321,9 +323,14 @@ class Chooser(QDialog):
         self.saveDetails()
         dl = getattr(self.Qapp, "downloader", None)
         if dl:
-            # TODO: do we really just wait forever?
-            dl.stop(-1)
-            dl.basedir.rmdir()
+            while True:
+                if dl.stop(1):
+                    # basedir should be empty; sometimes it isn't (Issue #3644)
+                    # dl.basedir.rmdir()
+                    shutil.rmtree(dl.basedir)
+                    break
+                log.warning("still waiting for download to stop...")
+                time.sleep(0.25)
         log.info("Wiping temp directory %s", self._workdir)
         shutil.rmtree(self._workdir)
         self.logout()
@@ -388,7 +395,7 @@ class Chooser(QDialog):
         _ssl_excused = False
         try:
             try:
-                server_ver_str = msgr._start()
+                server_ver_str = msgr._start(interactive=True)
             except PlomSSLError as e:
                 msg = WarningQuestion(
                     self,
@@ -401,7 +408,7 @@ class Chooser(QDialog):
                     return False
                 _ssl_excused = True
                 msgr.force_ssl_unverified()
-                server_ver_str = msgr._start()
+                server_ver_str = msgr._start(interactive=True)
         except PlomBenignException as e:
             WarnMsg(
                 self,
@@ -438,7 +445,7 @@ class Chooser(QDialog):
         if Version(__version__) < Version(info["version"]):
             s = "\nWARNING: old client!"
             self.ui.infoLabel.setText(self.ui.infoLabel.text() + s)
-            msg = WarnMsg(
+            msg_ = WarnMsg(
                 self,
                 f"Your client version {__version__} is older than the "
                 f"server {info['version']}: you may want to consider upgrading.",
@@ -449,7 +456,7 @@ class Chooser(QDialog):
                 ),
             )
             if not self._old_client_note_seen:
-                msg.exec()
+                msg_.exec()
                 self._old_client_note_seen = True
         return True
 

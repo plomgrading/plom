@@ -3,7 +3,7 @@
     Copyright (C) 2023 Edith Coates
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023 Divy Patel
-    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
     Copyright (C) 2024 Aidan Murphy
 -->
@@ -13,34 +13,59 @@
         updateKind();
     }
 
-    function updateQuestion() {
+    function getMaximumMarks() {
         var question_dict = JSON.parse('{{ question_max_marks_dict|escapejs }}');
         var question_idx = document.getElementById("id_question").value;
-        var out_of = question_dict[question_idx];
-        document.getElementById("id_out_of").value = out_of;
-        updateConstraints(out_of);
+        return question_dict[question_idx];
+    }
+
+    function updateQuestion() {
+        updateKindConstraints();
     }
 
     function updateKind() {
-        var kind = document.getElementById("id_kind").value;
-        if (kind === "absolute") {
-            document.getElementById("id_out_of_label").innerHTML = "out of";
-        } else {
-            document.getElementById("id_out_of_label").innerHTML = "Max:";
-        }
-        updateConstraints(document.getElementById("id_out_of").value);
+        updateKindConstraints();
     }
 
-    function updateConstraints(out_of) {
+    function updateKindConstraints() {
+        var max_value = getMaximumMarks();
         var kind = document.getElementById("id_kind").value;
+        var valueField = document.getElementById("id_value");
+        var outOfField = document.getElementById("id_out_of");
         if (kind === "absolute") {
-            document.getElementById("id_value").min = 0;
-            document.getElementById("id_value").max = out_of;
+            valueField.readOnly = false;
+            valueField.disabled = false;
+            var out_of = outOfField.value;
+            valueField.min = 0;
+            valueField.max = out_of;
+            valueField.value = Math.max(0, valueField.value);
+            valueField.value = Math.min(out_of, valueField.value);
+
+            outOfField.readOnly = false;
+            outOfField.disabled = false;
+            outOfField.min = 0;
+            outOfField.max = max_value;
         } else if (kind === "relative") {
-            document.getElementById("id_value").min = -1 * out_of;
-            document.getElementById("id_value").max = out_of;
+            valueField.readOnly = false;
+            valueField.disabled = false;
+            valueField.min = -1 * max_value;
+            valueField.max = max_value;
+            outOfField.readOnly = true;
+            outOfField.disabled = true;
         } else {
-            document.getElementById("id_value").value = 0;
+            valueField.readOnly = true;
+            valueField.disabled = true;
+            outOfField.readOnly = true;
+            outOfField.disabled = true;
+        }
+    }
+
+    function updateValueConstraints() {
+        var valueField = document.getElementById("id_value");
+        var out_of = document.getElementById("id_out_of").value;
+        valueField.max = out_of;
+        if (valueField.value > out_of) {
+            valueField.value = out_of;
         }
     }
 </script>
@@ -74,9 +99,9 @@
                     {{ edit_form.non_field_errors }}
                     <div class="row form-group">
                         <div class="col">
-                            {{ edit_form.question.errors }}
+                            {{ edit_form.question_index.errors }}
                             <label for="{{ edit_form.question.id_for_label }}">Question:</label>
-                            {{ edit_form.question }}
+                            {{ edit_form.question_index }}
                         </div>
                     </div>
                     <div class="row form-group">
@@ -140,8 +165,15 @@
                                     </div>
                                     <div class="row form-group">
                                         <div class="col">
+                                            {{ edit_form.tags.errors }}
+                                            <label for="{{ edit_form.tags.id_for_label }}">Org tags:</label>
+                                            {{ edit_form.tags }}
+                                        </div>
+                                    </div>
+                                    <div class="row form-group">
+                                        <div class="col">
                                             {{ edit_form.pedagogy_tags.errors }}
-                                            <label for="{{ edit_form.pedagogy_tags.id_for_label }}">Tags:</label>
+                                            <label for="{{ edit_form.pedagogy_tags.id_for_label }}">Pedagogy Tags:</label>
                                             {{ edit_form.pedagogy_tags }}
                                         </div>
                                     </div>

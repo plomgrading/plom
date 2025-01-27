@@ -4,6 +4,7 @@
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024 Andrew Rechnitzer
 
 from django.urls import path
 
@@ -13,8 +14,7 @@ from . import views
 urlpatterns = [
     path("", views.RubricLandingPageView.as_view(), name="rubrics_landing"),
     path("admin/", views.RubricAdminPageView.as_view(), name="rubrics_admin"),
-    path("admin/demo/", views.RubricDemoView.as_view(), name="rubric_demo"),
-    path("admin/wipe/", views.RubricWipePageView.as_view(), name="rubrics_wipe"),
+    path("admin/half/", views.RubricHalfMarksView.as_view(), name="rubric_half"),
     path("admin/access/", views.RubricAccessPageView.as_view(), name="rubrics_access"),
     path(
         "admin/feedback_rules/",

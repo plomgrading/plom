@@ -194,10 +194,10 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for user, annotations in annotations_grouped_by_user.items %}
+                        {% for username, annotations in annotations_grouped_by_user.items %}
                             {% for question_data, annotation_data in annotations.items %}
                                 <tr>
-                                    <td>{{ user.username }}</td>
+                                    <td>{{ username }}</td>
                                     <td>{{ question_data.0 }}</td>
                                     <td>{{ question_data.1 }}</td>
                                     <td>{{ annotation_data.annotations_count }}</td>

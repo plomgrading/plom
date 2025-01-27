@@ -5,6 +5,7 @@
     Copyright (C) 2024 Aden Chan
 -->
 {% extends "base/base.html" %}
+{% load static %}
 {% block title %}
     Upload pdf bundle of scanned papers and pages
 {% endblock title %}
@@ -24,9 +25,11 @@
                 <div class="alert alert-warning">No bundles to upload - papers have not yet been printed.</div>
             {% else %}
                 <div class="m-3 p-3 border fs-5 w-50">
-                    <form enctype="multipart/form-data"
-                          method="post"
-                          action="{% url 'scan_upload' %}">
+                    <form id="myform"
+                          enctype="multipart/form-data"
+                          hx-post="{% url 'scan_upload' %}"
+                          hx-disabled-elt="#upload_btn, #pdf_file, #read_after, #force_render"
+                          hx-indicator="#myindicator">
                         {% csrf_token %}
                         <div class="mb-2">
                             <input class="form-control form-control-lg"
@@ -34,7 +37,7 @@
                                    name="pdf"
                                    accept="application/pdf"
                                    required
-                                   id="id_pdf">
+                                   id="pdf_file">
                         </div>
                         <div class="form-check mb-2">
                             <input class="form-check-input"
@@ -53,22 +56,19 @@
                                 use <q>safe mode rendering</q> of each page
                             </label>
                         </div>
-                        <input type="submit" class="btn btn-secondary" value="Upload">
+                        <!-- hx-disabled-elt="self" on this button doesn't work b/c this button doesn't have hx-post -->
+                        <!-- https://stackoverflow.com/questions/78888026/setting-hx-disabled-elt-not-disabling-my-button -->
+                        <button type="submit" class="btn btn-primary" id="upload_btn">Upload</button>
+                        <span id="myindicator" class="htmx-indicator">
+                            <img src="{% static 'ball_triangle.svg' %}" />
+                            upload in progress
+                            <progress id="progress" value="0" max="100"></progress>
+                        </span>
                     </form>
                 </div>
-                {% if success_msg %}
-                    <div class="alert alert-success my-2">
-                        <p>Success: {{ success_msg }}</p>
-                        <a class="btn btn-primary" href="{% url 'scan_list_staged' %}">Staged bundles</a>
-                    </div>
-                {% endif %}
-                {% if upload_errors %}
-                    <div class="alert alert-warning my-2">
-                        Upload problems:
-                        <ul>
-                            {% for v in upload_errors %}<li>{{ v }}</li>{% endfor %}
-                        </ul>
-                    </div>
+                <!-- https://gitlab.com/plom/plom/-/issues/3705 -->
+                {% if messages %}
+                    {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
                 {% endif %}
             {% endif %}
         </div>
@@ -85,10 +85,12 @@
                     <li>Filename cannot start with an underscore &mdash; those names are reserved for internal use.</li>
                 </ul>
             </details>
+            <!--
             <details class="w-50">
                 <summary>Recommended best practices</summary>
-                <!-- <p>TODO issue #3519 </p> -->
+                <p>TODO issue #3519 </p>
             </details>
+	    -->
             <details class="w-50">
                 <summary>
                     What is <q>safe mode rendering</q>?
@@ -175,4 +177,10 @@
             <a class="btn btn-primary" href="{% url 'scan_list_pushed' %}">Pushed bundles</a>
         </div>
     </div>
+    <!-- javascript for progress-bar updates, from https://htmx.org/examples/file-upload/ -->
+    <script>
+        htmx.on('#form', 'htmx:xhr:progress', function(evt) {
+          htmx.find('#progress').setAttribute('value', evt.detail.loaded/evt.detail.total * 100)
+        });
+    </script>
 {% endblock main_content %}

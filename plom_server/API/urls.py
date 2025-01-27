@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter, SimpleRouter
@@ -24,6 +24,10 @@ from .routes import (
 from .views import (
     QuestionMarkingViewSet,
     # TODO: these are possibly temporary
+    ScanListBundles,
+    ScanBundleActions,
+    ScanMapBundle,
+    FinishReassembled,
     REPspreadsheet,
     REPidentified,
     REPcompletionStatus,
@@ -52,6 +56,28 @@ urlpatterns = [
     path(AnnotationPatterns.prefix, include(AnnotationPatterns.patterns())),
     path(AnnotationImagePatterns.prefix, include(AnnotationImagePatterns.patterns())),
     path(TagsURLPatterns.prefix, include(TagsURLPatterns.patterns())),
+    # TODO: Issue #3786: eventually remove the "beta" from these provisional URLs
+    path(
+        "api/beta/scan/bundles",
+        ScanListBundles.as_view(),
+        name="api_Scan_bundles",
+    ),
+    path(
+        "api/beta/scan/bundle/<int:bundle_id>",
+        ScanBundleActions.as_view(),
+        name="api_can_bundle_actions",
+    ),
+    # "api/beta/scan/bundle/<int:bundle_id>/map/<int:papernum>/<str:questions>",
+    path(
+        "api/beta/scan/bundle/<int:bundle_id>/<int:page>/map",
+        ScanMapBundle.as_view(),
+        name="api_Scan_bundle_map",
+    ),
+    path(
+        "api/beta/finish/reassembled/<int:papernum>",
+        FinishReassembled.as_view(),
+        name="api_Finish_reassembled",
+    ),
     path(
         "REP/spreadsheet",
         REPspreadsheet.as_view(),

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2020-2023 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2022 Elizabeth Xiao
 # Copyright (C) 2022 Natalia Accomazzo Scotti
@@ -33,25 +33,21 @@ classifiers=[
     "Development Status :: 3 - Alpha",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dynamic = ['version']
-requires-python = '>=3.8'
+requires-python = '>=3.10'
 # note aiohttp and peewee are legacy deps only
-# Note: importlib_resources for < 3.10 in plom_server, not sure why
 # pyopenssl is not a direct dependency but old versions caused trouble: Issue #3150
 dependencies = [
     "aiohttp>=3.7.2",
     "arrow>=1.1.1",
-    "beautifulsoup4>=4.12.2",
     "canvasapi>=3.0.0",
     "cryptography>=41.0.3",
     "pyOpenSSL>=23.2.0",
-    "debugpy>=1.6.7",
     "django>=4.2.6",
     "django-braces>=1.15.0",
     "django-filter>=23.2",
@@ -65,7 +61,6 @@ dependencies = [
     "django-tables2>=2.7.0",
     "exif>=1.2.2",
     "gunicorn>=21.1.0",
-    'importlib_resources>=5.0.7 ; python_version<"3.9"',  # until we drop 3.8
     "imutils>=0.5.4",
     "matplotlib>=3.5.3",
     "model_bakery>=1.11.0",
@@ -75,13 +70,13 @@ dependencies = [
     "pandas>=1.5.0",
     "passlib",
     "peewee>=3.13.3",
-    "Pillow>=7.0.0",  # Consider >=10.2 for Issue #3216
+    "Pillow>=10.2",
     "platformdirs>=3.0.0",
     "pymupdf>=1.24.6",
     "PyMySQL>=1.0.2",
     "pyspellchecker>=0.8.1",
-    "pytest>=6.0.0",
-    "pytest-qt>=4.1.0",
+    "pytest>=7.2.0",
+    "pytest-qt>=4.2.0",
     "PyQt6>=6.2.0",
     "psycopg2-binary>=2.9.6",
     "random-username>=1.0.2",
@@ -100,6 +95,8 @@ dependencies = [
     "whitenoise>=6.4.0",
     "zipfly>=6.0.1",
     "zxing-cpp>=1.4.0",
+    # "nplusone>=1.0.0",
+    # "django-silk>=5.2.0",
 ]
 # TODO: how to get "or"?: https://gitlab.com/plom/plom/-/issues/1570
 #   "file-magic || python-magic>=0.4.20",
@@ -118,7 +115,7 @@ readme = {file = 'README.md', content-type = 'text/markdown'}
 Homepage = "https://plomgrading.org"
 Repository = "https://gitlab.com/plom/plom"
 'Bug Tracker' = "https://gitlab.com/plom/plom/-/issues"
-Documentation = "https://plom.readthedocs.org'"
+Documentation = "https://plom.readthedocs.org"
 Changelog = "https://gitlab.com/plom/plom/-/blob/main/CHANGELOG.md"
 
 # [project.optional-dependencies]
@@ -129,6 +126,7 @@ Changelog = "https://gitlab.com/plom/plom/-/blob/main/CHANGELOG.md"
 [tool.setuptools]
 packages = [
     "plom",
+    "plom.cli",
     "plom.create",
     "plom.create.fonts",
     "plom.scan",
@@ -180,7 +178,7 @@ packages = [
 version = {attr = 'plom.__version__'}
 
 [project.scripts]
-plom-client = "plom.client.__main__:main"
+# plom-client = "plom.client.__main__:main"
 plom-demo = "plom.demo.__main__:main"
 plom-hwdemo = "plom.scripts.hwdemo:main"
 plom-create = "plom.create.__main__:main"
@@ -194,14 +192,14 @@ plom-hwscan = "plom.scripts.hwscan:main"
 plom-solutions = "plom.solutions.__main__:main"
 # TODO: move to plom_server.Launcher... waiting on Issue #3377.
 plom-new-server = "plom.scripts.newserver:main"
+plom-cli = "plom.cli.__main__:main"
 
 
 # Tooling configuration
 
-# You can run `black plom` or `black plom --verbose`
 [tool.black]
 line-length = 88
-target-version = ["py38"]
+target-version = ["py310"]
 
 [tool.pylint.main]
 extension-pkg-allow-list = ["PyQt6", "cv2", "zxingcpp"]
@@ -243,14 +241,12 @@ module = [
     'api_secrets',
     'canvasapi',
     'exif',
-    'importlib_resources',
     'imutils.*',
     'requests_toolbelt',
     'sklearn.*',
     'stdiomask',
     'zxingcpp',
     'braces.*',
-    'debugpy',
     'django.*',
     'django_huey',
     'django_tables2',
@@ -298,7 +294,8 @@ ignore-words = ".codespell-ignorewords"
 exclude-file = ".codespell-ignorelines"
 
 [tool.ruff.lint]
-# enable docstring
+# enable docstring checking and import reordering
+# select = ["D", "I"]  # TODO: later?
 select = ["D"]
 # D107: perhaps init methods don't need docstrings
 # D100: public module docstrings: seem to get a lot of false positives
@@ -312,7 +309,7 @@ convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 # F401: defining __all__ might be right fix
-# E402: re-ordering causes circular imports
-'__init__.py' = ['F401', 'E402']
+# E402, I001: re-ordering causes circular imports
+'__init__.py' = ['F401', 'E402', 'I001']
 # tests don't need docstrings
 'plom*/**/test*.py' = ['D100', 'D101', 'D102', 'D103', 'D104']

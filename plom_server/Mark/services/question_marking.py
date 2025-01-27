@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
@@ -163,6 +163,7 @@ class QuestionMarkingService:
         annotation_data: dict,
         annotation_image: InMemoryUploadedFile,
         annotation_image_md5sum: str,
+        require_latest_rubrics: bool = True,
     ) -> None:
         """Accept a marker's annotation and grade for a task, store them in the database.
 
@@ -174,6 +175,8 @@ class QuestionMarkingService:
                 for garbage or something has changed on the server.
             PlomConflict: fails "integrity check": client is trying
                 to submit to an out-of-date task.
+                Or client is trying submit out-of-date rubrics when
+                ``require_latest_rubrics`` is True.
         """
         try:
             papernum, question_idx = mark_task.unpack_code(code)
@@ -202,7 +205,11 @@ class QuestionMarkingService:
             )
 
         # regrab it, selected-for-update, b/c we're going to write to it
-        task = MarkingTask.objects.select_for_update().get(pk=task.pk)
+        task = (
+            MarkingTask.objects.select_for_update()
+            .prefetch_related("assigned_user")
+            .get(pk=task.pk)
+        )
         tag_marked_during_quota = "during_quota"
 
         # Check if the user has quota limits
@@ -234,7 +241,9 @@ class QuestionMarkingService:
             annotation_image_md5sum,
             annotation_image,
             annotation_data,
+            require_latest_rubrics=require_latest_rubrics,
         )
         # Note the helper function above also performs `task.save`; that seems ok.
+        # TODO: consider moving this into the helper in annotations.py
         task.status = MarkingTask.COMPLETE
         task.save()

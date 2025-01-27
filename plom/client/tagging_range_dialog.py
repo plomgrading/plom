@@ -9,10 +9,10 @@ from PyQt6.QtWidgets import (
     QDialogButtonBox,
     QFrame,
     QHBoxLayout,
-    QVBoxLayout,
     QLabel,
     QLineEdit,
     QRadioButton,
+    QVBoxLayout,
 )
 
 

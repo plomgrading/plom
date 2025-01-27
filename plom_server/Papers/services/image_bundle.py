@@ -4,7 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from __future__ import annotations
 
@@ -159,8 +159,11 @@ class ImageBundleService:
             elif staged.image_type == StagingImage.EXTRA:
                 extra = staged.extrastagingimage
                 prefix = f"extra_{extra.paper_number}_"
-                for q in extra.question_list:
+                for q in extra.question_idx_list:
                     prefix += f"{q}_"
+                # otherwise if no question index use dnm
+                if not extra.question_idx_list:
+                    prefix += "dnm_"
             elif staged.image_type == StagingImage.DISCARD:
                 prefix = "discard_"
             else:
@@ -210,13 +213,21 @@ class ImageBundleService:
                 # need to make one mobile page for each question in the question-list
                 extra = staged.extrastagingimage
                 paper = Paper.objects.get(paper_number=extra.paper_number)
-                for q in extra.question_list:
+                for q in extra.question_idx_list:
                     # get the version from the paper/question info
                     v = pi_service.get_version_from_paper_question(
                         extra.paper_number, q
                     )
                     MobilePage.objects.create(
                         paper=paper, image=image, question_index=q, version=v
+                    )
+                # otherwise, if question index list empty, make a non-marked MobilePage
+                if not extra.question_idx_list:
+                    MobilePage.objects.create(
+                        paper=paper,
+                        image=image,
+                        question_index=MobilePage.DNM_qidx,
+                        version=0,
                     )
             elif staged.image_type == StagingImage.DISCARD:
                 disc = staged.discardstagingimage
@@ -408,6 +419,8 @@ class ImageBundleService:
         result: dict[str, list[tuple[int, int]]] = {"ready": [], "not_ready": []}
 
         for paper_number, question_index in papers_questions_updated_by_bundle:
+            if question_index == MobilePage.DNM_qidx:
+                continue
             q_pages = QuestionPage.objects.filter(
                 paper__paper_number=paper_number, question_index=question_index
             )
@@ -487,7 +500,7 @@ class ImageBundleService:
         if not q_pages.exists():
             raise ValueError(
                 f"There are no question_pages at all for paper {paper_obj.paper_number}"
-                f"question index {question_index}"
+                f" question index {question_index}"
             )
 
         qp_no_img = q_pages.filter(image__isnull=True).exists()

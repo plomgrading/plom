@@ -13,19 +13,18 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
-import signal
 import os
 import platform
+import signal
 import sys
-from textwrap import shorten
 import traceback as tblib
 from multiprocessing import freeze_support
+from textwrap import shorten
 
-from PyQt6.QtCore import QTimer, PYQT_VERSION_STR, QT_VERSION_STR
-from PyQt6.QtWidgets import QApplication, QStyleFactory, QMessageBox
+from PyQt6.QtCore import PYQT_VERSION_STR, QT_VERSION_STR, QTimer
+from PyQt6.QtWidgets import QApplication, QMessageBox, QStyleFactory
 
-from plom import __version__
-from plom import Default_Port
+from plom import Default_Port, __version__
 from plom.client import Chooser
 from plom.client.useful_classes import ErrorMsg, WarningQuestion
 from plom.misc_utils import utc_now_to_string

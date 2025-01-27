@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
@@ -13,11 +13,6 @@ from .choices import (
     USER_TYPE_WITH_MANAGER_CHOICES,
     USER_TYPE_WITHOUT_MANAGER_CHOICES,
 )
-
-"""
-This is the collection of forms to be use in a website.
-Also can customize the default form that django gives us.
-"""
 
 
 class CreateUserForm(UserCreationForm):
@@ -38,7 +33,7 @@ class CreateUserForm(UserCreationForm):
     )
 
     def __init__(self, *args, **kwargs):
-        super(CreateUserForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields["password1"].required = False
         self.fields["password2"].required = False
         self.fields["password1"].widget.attrs["autocomplete"] = "off"

@@ -3,7 +3,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from django.db import models
 
@@ -22,6 +22,8 @@ class StagingImage(models.Model):
             fractional rotations are handled elsewhere,
     """
 
+    # some implicit ctor is generating pylint errors:
+    # pylint: disable=too-many-function-args
     ImageTypeChoices = models.TextChoices(
         "ImageType", "UNREAD KNOWN UNKNOWN EXTRA DISCARD ERROR"
     )
@@ -75,16 +77,12 @@ class KnownStagingImage(models.Model):
 
 
 class ExtraStagingImage(models.Model):
-    # NOTE - we must have that paper_number and question_list are **both** null or both filled.
-
     staging_image = models.OneToOneField(
         StagingImage, primary_key=True, on_delete=models.CASCADE
     )
     paper_number = models.PositiveIntegerField(null=True, default=None)
     # https://docs.djangoproject.com/en/4.1/topics/db/queries/#storing-and-querying-for-none
-    question_list = models.JSONField(default=None, null=True)
-    # by default we store a null json field - this makes it easier to query
-    # whether the extra page has data or not.
+    question_idx_list = models.JSONField(default=None, null=True)
 
 
 class UnknownStagingImage(models.Model):

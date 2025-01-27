@@ -1,30 +1,29 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020-2021 Andrew Rechnitzer
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 
 from __future__ import annotations
 
 from typing import Any
 
-from PyQt6.QtCore import QIODevice, QPointF, QBuffer, QByteArray
-from PyQt6.QtGui import QColor, QImage, QPixmap, QPen
+from PyQt6.QtCore import QBuffer, QByteArray, QIODevice, QPointF
+from PyQt6.QtGui import QColor, QImage, QPen, QPixmap
 from PyQt6.QtWidgets import (
+    QCheckBox,
+    QDialog,
+    QDialogButtonBox,
+    QFormLayout,
     QGraphicsItem,
     QGraphicsPixmapItem,
     QGraphicsSceneMouseEvent,
-    QDialog,
-    QSpinBox,
-    QCheckBox,
-    QVBoxLayout,
-    QLabel,
-    QDialogButtonBox,
     QGroupBox,
-    QFormLayout,
+    QLabel,
+    QSpinBox,
+    QVBoxLayout,
 )
 
-from plom.client.tools import OutOfBoundsPen, OutOfBoundsFill
-from plom.client.tools import CommandTool, UndoStackMoveMixin
+from . import CommandTool, OutOfBoundsFill, OutOfBoundsPen, UndoStackMoveMixin
 
 
 class CommandImage(CommandTool):

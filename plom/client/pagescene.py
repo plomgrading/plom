@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2018-2025 Andrew Rechnitzer
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Joey Shi
 # Copyright (C) 2024 Aden Chan
@@ -18,16 +18,15 @@ from time import sleep
 from typing import Any
 
 import PIL.Image
-
-from PyQt6.QtCore import Qt, QEvent, QRectF, QLineF, QPointF
+from PyQt6.QtCore import QEvent, QLineF, QPointF, QRectF, Qt
 from PyQt6.QtGui import (
     QBrush,
     QColor,
     QCursor,
-    QImage,
-    QImageReader,
     QFont,
     QGuiApplication,
+    QImage,
+    QImageReader,
     QPainter,
     QPainterPath,
     QPen,
@@ -36,8 +35,12 @@ from PyQt6.QtGui import (
     QUndoStack,
 )
 from PyQt6.QtWidgets import (
+    QGraphicsColorizeEffect,
     QGraphicsEllipseItem,
+    QGraphicsItem,
+    QGraphicsItemGroup,
     QGraphicsLineItem,
+    QGraphicsOpacityEffect,
     QGraphicsPathItem,
     QGraphicsPixmapItem,
     QGraphicsRectItem,
@@ -45,22 +48,20 @@ from PyQt6.QtWidgets import (
     QGraphicsSceneDragDropEvent,
     QGraphicsTextItem,
     QGraphicsView,
-    QGraphicsItem,
-    QGraphicsItemGroup,
-    QGraphicsColorizeEffect,
-    QGraphicsOpacityEffect,
+    QMenu,
     QMessageBox,
     QToolButton,
-    QMenu,
 )
 
 from plom import ScenePixelHeight
 from plom.plom_exceptions import PlomInconsistentRubric
 from plom.misc_utils import pprint_score
-from plom.client.image_view_widget import mousewheel_delta_to_scale
+from plom.rubric_utils import compute_score
+
+from .image_view_widget import mousewheel_delta_to_scale
 
 # in some places we make assumptions that our view is this subclass
-from plom.client.pageview import PageView
+from .pageview import PageView
 
 from .tools import DefaultTickRadius, DefaultPenWidth, AnnFontSizePts
 from .tools import (
@@ -98,11 +99,10 @@ from .elastics import (
     which_classic_shortest_corner_side,
     which_centre_to_centre,
 )
-from plom.client.rubrics import compute_score
-from plom.client.useful_classes import SimpleQuestion
+from .useful_classes import SimpleQuestion
 
 
-log = logging.getLogger("pagescene")
+log = logging.getLogger("scene")
 
 
 class ScoreBox(QGraphicsTextItem):
@@ -729,6 +729,61 @@ class PageScene(QGraphicsScene):
                 if isinstance(X, RubricItem):
                     rubrics.append(X.as_rubric())
         return rubrics
+
+    def react_to_rubric_list_changes(self, rubric_list: list[dict[str, Any]]) -> None:
+        """Someone has possibly changed the rubric list, check if any of our's are out of date.
+
+        Currently, this doesn't actually update them, just flags them
+        visually as needing updates.
+        """
+        if not rubric_list:
+            log.info("Pagescene: reacting to rubric change: ignoring empty input")
+            return
+        log.info("Pagescene: reacting to rubric change...")
+        rid_to_rub = {r["rid"]: r for r in rubric_list}
+        num_update = 0
+        for X in self.items():
+            # check if object has "saveable" attribute and it is set to true.
+            if getattr(X, "saveable", False):
+                if isinstance(X, RubricItem):
+                    old_rub = X.as_rubric()
+                    rid = old_rub["rid"]
+                    old_rev = old_rub.get("revision", None)
+                    rub_lookup = rid_to_rub.get(rid, None)
+                    if not rub_lookup:
+                        log.error(
+                            f"cannot find rubric {rid} in input list of"
+                            f" length {len(rubric_list)}: maybe a bug?"
+                        )
+                        continue
+                    new_rev = rub_lookup.get("revision", None)
+                    if old_rev is None or new_rev is None:
+                        log.warn(
+                            f"[Is this legacy?] rubric rid={rid}"
+                            " w/o 'revision' cannot be checked for updates"
+                        )
+                        continue
+                    if old_rev == new_rev:
+                        log.debug(f"   rid {rid} rev {old_rev} already up-to-date")
+                        continue
+                    s = f"rubric rid {rid} rev {old_rev} needs update to rev {new_rev}"
+                    log.info(s)
+                    # Change the visual appearance of the RubricItem
+                    X.update_attn_state(s)
+                    # TODO: future rubric button work might need the scene:
+                    # X.update_attn_state(s, _scene=self)
+                    num_update += 1
+        if num_update:
+            # TODO emit signal instead of assuming stuff about the parent
+            msg = "Out-of-date rubrics detected: "
+            rubrics_have = "rubrics have" if num_update > 1 else "rubric has"
+            msg += f"{num_update} {rubrics_have} changed and needs updating."
+            _parent = self.parent()
+            if _parent:
+                # MyPy is rightfully unsure parent is an Annotator:
+                # # assert isinstance(_parent, Annotator)
+                # but that's likely a circular import, so just add exception:
+                _parent.update_attn_bar(msg=msg)  # type: ignore[attr-defined]
 
     def get_src_img_data(self, *, only_visible: bool = True) -> list[dict[str, Any]]:
         """Get the live source image data for this scene.
@@ -1849,20 +1904,17 @@ class PageScene(QGraphicsScene):
         Returns:
             True if this is a user-generated object, False if not.
         """
-        from plom.client.tools import (
-            CrossItem,
-            DeltaItem,
+        from .tools import (
             ImageItem,
-            TextItem,
-            TickItem,
+            EllipseItem,
+            HighlightItem,
+            LineItem,
+            ArrowItem,
+            ArrowDoubleItem,
+            PenItem,
+            PenArrowItem,
+            QMarkItem,
         )
-        from plom.client.tools.ellipse import EllipseItem
-        from plom.client.tools.highlight import HighlightItem
-        from plom.client.tools.line import LineItem
-        from plom.client.tools.arrow import ArrowItem, ArrowDoubleItem
-        from plom.client.tools.pen import PenItem
-        from plom.client.tools.penArrow import PenArrowItem
-        from plom.client.tools.questionMark import QMarkItem
 
         if getattr(item, "saveable", None):
             return True
@@ -1921,7 +1973,7 @@ class PageScene(QGraphicsScene):
         self.undoStack.endMacro()
 
     def _move_some_items(self, L: list, dx: float, dy: float) -> None:
-        from plom.client.tools import CommandMoveItem
+        from .tools import CommandMoveItem
 
         log.debug(f"Shifting {len(L)} objects by ({dx}, {dy})")
         for item in L:
@@ -2908,6 +2960,25 @@ class PageScene(QGraphicsScene):
                 if not self.itemWithinBounds(X):
                     out_objs.append(X)
         return out_objs
+
+    def check_all_saveable_objects_are_happy(self) -> list:
+        """Checks that all objects are "happy" and not in some error state.
+
+        TODO: a future refactor might subsume the function
+        :method:`check_all_saveable_objects_inside`.
+
+        Returns:
+            All annotation (saveable) objects that are unhappy.
+        """
+        unhappy_objs = []
+        for X in self.items():
+            if getattr(X, "saveable", False):
+                # TODO: a future implementation should call X.is_happy()
+                # but for now we just hardcode some stuff
+                if isinstance(X, RubricItem):
+                    if getattr(X, "_attn_msg", ""):
+                        unhappy_objs.append(X)
+        return unhappy_objs
 
     def _updateGhost(self, rubric: dict[str, Any]) -> None:
         """Updates the ghost object based on the delta and text.

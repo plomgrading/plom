@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: FSFAP
-# Copyright (C) 2020-2023 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 #
@@ -12,7 +12,7 @@
 #   - Why do we need to list files accessed with importlib.resources, seems WET
 #   - If you change things here, you may need to add them to client.*.spec
 
-include CONTRIBUTORS CHANGELOG.md Dockerfile LICENSE.md doc
+include CONTRIBUTORS CHANGELOG.md Containerfile.bulk LICENSE.md doc
 include requirements.txt requirements.txt.client
 
 include plom/templateTestSpec.toml
@@ -35,12 +35,11 @@ include plom/default_keys.toml
 include plom/wasd_keys.toml
 include plom/ijkl_keys.toml
 include plom/esdf_french_keys.toml
-include plom/client/backGrid1.svg
-include plom/client/backGrid2.png
 
 include plom/client/ui_files/*.ui
 include plom/client/cursors/*.png
 include plom/client/icons/*.svg
+include plom/client/icons/*.png
 include plom/client/help_img/nav*.png
 include plom/client/help_img/click_drag.gif
 

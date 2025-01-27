@@ -54,7 +54,7 @@ class Command(BaseCommand):
                 try:
                     QuestionTagService.create_tag(
                         tag_name=row["Name"],
-                        text=row["Description"],
+                        description=row["Description"],
                         user=user_obj,
                         confidential_info=row["Confidential_Info"],
                     )

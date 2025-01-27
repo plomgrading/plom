@@ -1,13 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
-import sys
-
-if sys.version_info >= (3, 10):
-    from importlib import resources
-else:
-    import importlib_resources as resources
+from importlib import resources
 
 from Base.tests import ConfigTestCase
 from Papers.models import Paper
@@ -22,7 +17,8 @@ from . import config_files
 class MarkingTaskPriorityTests(ConfigTestCase):
     """Tests for marking task priority."""
 
-    config_file = resources.files(config_files) / "priority_tests.toml"
+    # mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
+    config_file = resources.files(config_files) / "priority_tests.toml"  # type: ignore[assignment]
 
     def test_taskorder_update(self) -> None:
         """Assert that TaskOrderService.update_priority_ordering() updates MarkingTaskPriority."""

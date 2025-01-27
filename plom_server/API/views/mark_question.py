@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024 Bryan Tanady
@@ -152,7 +152,7 @@ class QuestionMarkingViewSet(ViewSet):
             tags = MarkingTaskService().get_tags_for_task_pk(task.pk)
             return Response([question_data, tags, task.pk])
 
-    def mark_task(self, request: Request, code: str) -> Response:
+    def mark_task(self, request: Request, *, code: str) -> Response:
         """Accept a marker's grade and annotation for a task.
 
         Returns:
@@ -173,7 +173,7 @@ class QuestionMarkingViewSet(ViewSet):
         plomfile_data = plomfile.read().decode("utf-8")
 
         try:
-            mark_data, annot_data, rubrics_used = mts.validate_and_clean_marking_data(
+            mark_data, annot_data = mts.validate_and_clean_marking_data(
                 code, data, plomfile_data
             )
         except ObjectDoesNotExist as e:
@@ -186,6 +186,7 @@ class QuestionMarkingViewSet(ViewSet):
         img_md5sum = data["md5sum"]
 
         try:
+            # TODO: use query param, allow client to override require_latest_rubrics=True?
             QuestionMarkingService.mark_task(
                 code,
                 user=request.user,
@@ -195,6 +196,8 @@ class QuestionMarkingViewSet(ViewSet):
                 annotation_image_md5sum=img_md5sum,
             )
         except ValueError as e:
+            return _error_response(e, status.HTTP_400_BAD_REQUEST)
+        except KeyError as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
         except PlomTaskChangedError as e:
             return _error_response(e, status.HTTP_409_CONFLICT)

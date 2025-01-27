@@ -7,7 +7,8 @@
 Identifying papers
 ==================
 
-At some point the Plom system needs to know which paper belongs to which student and this can be done in several ways:
+At some point the Plom system needs to know which paper belongs to
+which student.  This can be done in several ways:
 
 1. Prenamed papers: Plom can produce papers with student names and IDs
    already printed on them.
@@ -48,19 +49,6 @@ machine-read predictions.
    some of the IDs manually.
 
 
-Running the auto-identifier (legacy server)
--------------------------------------------
-
-1. Open the :doc:`Legacy Manager tool <manage>`, then "Progress" → "ID progress".
-2. Optionally, adjust the top/bottom crop values, either manually or by
-   clicking "Select interactively".  Only the vertical coordinate are used.
-   The defaults probably work in most cases.
-3. Click "Recognize digits in IDs" which starts a background job.
-   Click "Refresh" to update the output window.
-4. Click "Run matching tools".  This currently blocks and might take a
-   few seconds (say 3 seconds for 1000 papers).
-5. Click "Refresh prediction list" to update the table view.
-
 .. caution::
 
    You should manually and carefully check the results (the Identifier client
@@ -69,10 +57,12 @@ Running the auto-identifier (legacy server)
    write the test.
 
 
-Manually identifying
---------------------
+Confirming and/or manually identifying
+--------------------------------------
 
-This is typically quite quick compared to marking and you will not need
+This is currently done using :ref:`the desktop client <plom-client>`.
+
+Identifying is typically quick compared to marking and you will not need
 to assign much person-time.
 Since it does not require any heavy thinking it can be a good task for:
 
@@ -80,4 +70,50 @@ Since it does not require any heavy thinking it can be a good task for:
 - a (reliable) marker who finishes their other tasks early, or
 - the scanner once they have finished scanning and uploading papers.
 
-For now see https://plomgrading.org/docs/clientUse/identifying.html
+
+What to do if an ID page looks blank or is missing information?
+---------------------------------------------------------------
+
+If there is insufficient information on the page, you
+can click ``View whole paper``: perhaps the ID can be found on
+another page, or maybe the entire paper is blank (i.e., unused).
+Clicking ``Blank page...`` will ask you to confirm the situation.
+
+
+I made a mistake identifying: how can I revert an ID?
+-----------------------------------------------------
+
+Login to the web interface as either a manager or
+:ref:`lead marker <lead-markers>` account.
+Go to "Identifying Progress" and click on ``clear`` by the paper you
+wish to reset.
+
+On legacy servers, The UnID operation is exposed in the
+beta Manager Tool -> ID Progress tab.
+
+
+What is the purpose of confirming prenamed papers?
+--------------------------------------------------
+
+1. Students might sit at the wrong seat, scratch out the name and
+   write their own.
+
+2. Despite your best efforts in careful paper handling, you might
+   accidentally scan a blank paper with Manji's name and ID prenamed
+   on the front.  In the worst case, that could result in you
+   (incorrectly) assigning a grade of zero to Manji, instead of
+   recording that they Did Not Write.
+
+All of these things and more have happened to us; its worth the time
+to check.
+
+
+
+A student wrote a different paper than what was prenamed for them
+-----------------------------------------------------------------
+
+For example suppose Isla's name was prenamed on paper 0120 but they
+wrote blank paper 1280 instead.  Plom's "prenaming" is a "prediction"
+because of exactly this situation.  Simply ID 1280 as normal.
+(If 0120 was *also* scanned and is blank, and unsigned, then the  Identifier
+interface will you confirm).

@@ -9,29 +9,28 @@
 
 from __future__ import annotations
 
-import pathlib
 import logging
+import pathlib
 import queue
 import random
-import time
 import threading
+import time
 
 from PyQt6.QtCore import (
-    QTimer,
     QThread,
+    QTimer,
     pyqtSignal,
 )
 
+from plom.messenger import Messenger
 from plom.plom_exceptions import (
-    PlomSeriousException,
-    PlomTaskChangedError,
-    PlomTaskDeletedError,
     PlomConflict,
     PlomException,
     PlomQuotaLimitExceeded,
+    PlomSeriousException,
+    PlomTaskChangedError,
+    PlomTaskDeletedError,
 )
-from plom.messenger import Messenger
-
 
 log = logging.getLogger("marker")
 

@@ -9,14 +9,11 @@
 
 from __future__ import annotations
 
-from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 
-from Papers.models import Paper
 from ..models import MarkingTask
 
 
-@transaction.atomic
 def get_latest_task(
     paper_number: int, question_idx: int, *, question_version: int | None = None
 ) -> MarkingTask:
@@ -25,6 +22,8 @@ def get_latest_task(
     No locks are held or atomic operations made, nor select for update:
     this is a low-level routine.  Apply whatever safeguards you need in
     the caller.
+
+    We prefetch the ``assigned_user`` fields as some callers want that.
 
     Args:
         paper_number: which paper.
@@ -42,21 +41,18 @@ def get_latest_task(
         ValueError: that paper/question pair does exist but not with the
             specified version.
     """
-    try:
-        paper = Paper.objects.get(paper_number=paper_number)
-    except ObjectDoesNotExist as e:
-        # reraise with a more detailed error message
-        raise ObjectDoesNotExist(f"Task for paper {paper_number} does not exist") from e
     r = (
-        MarkingTask.objects.filter(paper=paper, question_index=question_idx)
+        MarkingTask.objects.filter(
+            paper__paper_number=paper_number, question_index=question_idx
+        )
+        .prefetch_related("assigned_user")
         .order_by("-time")
         .first()
     )
-    # Issue #2851, special handling of the None return
     if r is None:
         raise ObjectDoesNotExist(
-            f"Task does not exist: we have paper {paper_number} but "
-            f"not question index {question_idx}"
+            f"Task for paper number {paper_number}"
+            f" question index {question_idx} does not exist"
         )
     if question_version is not None:
         if r.question_version != question_version:
@@ -68,7 +64,6 @@ def get_latest_task(
     return r
 
 
-@transaction.atomic
 def unpack_code(code: str) -> tuple[int, int]:
     """Return a tuple of (paper_number, question_index) from a task code string.
 

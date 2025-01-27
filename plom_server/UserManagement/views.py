@@ -9,20 +9,25 @@
 
 import json
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.contrib.sites.shortcuts import get_current_site
+from django.core.cache import cache
 from django.http import HttpRequest, HttpResponse, Http404
 from django_htmx.http import HttpResponseClientRefresh
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
+from plom.misc_utils import humanize_seconds
 from Authentication.services import AuthenticationServices
 from Base.base_group_views import ManagerRequiredView
 from Progress.services.userinfo_service import UserInfoServices
 from .services import PermissionChanger
 from .services import QuotaService
+from .services.UsersService import get_user_info
 from .models import Quota
 
 
@@ -38,25 +43,27 @@ class UserPage(ManagerRequiredView):
     set_quota_confirmation: the tag for the confirmation dialog interaction.
     """
 
-    def get(self, request):
-        managers = User.objects.filter(groups__name="manager")
-        scanners = User.objects.filter(groups__name="scanner").exclude(
-            groups__name="manager"
-        )
-        lead_markers = User.objects.filter(groups__name="lead_marker")
-        markers = User.objects.filter(groups__name="marker").prefetch_related(
-            "auth_token"
-        )
+    def get(self, request: HttpRequest) -> HttpResponse:
+        users = get_user_info()
+        # fetch these so that we don't loop over this in the template
+        # remove db hits in loops.
+        uids = cache.get("online-now", [])
+
+        online_keys = ["online-%s" % (u,) for u in uids]
+        fresh = cache.get_many(online_keys).keys()
+        online_now_ids = [int(k.replace("online-", "")) for k in fresh]
+
         context = {
-            "scanners": scanners,
-            "markers": markers,
-            "lead_markers": lead_markers,
-            "managers": managers,
+            "online_now_ids": online_now_ids,
+            "scanners": users["scanners"],
+            "markers": users["markers"],
+            "lead_markers": users["lead_markers"],
+            "managers": users["managers"],
             "users_with_quota_by_pk": QuotaService.get_list_of_user_pks_with_quotas(),
         }
         return render(request, "UserManagement/users.html", context)
 
-    def post(self, request, username):
+    def post(self, request: HttpRequest, username: str) -> HttpResponse:
         PermissionChanger.toggle_user_active(username)
 
         return HttpResponseClientRefresh()
@@ -88,11 +95,15 @@ class UserPage(ManagerRequiredView):
 
 
 class PasswordResetPage(ManagerRequiredView):
-    def get(self, request, username):
+    def get(self, request: HttpRequest, *, username: str) -> HttpResponse:
         user_obj = User.objects.get(username=username)
-        link = AuthenticationServices().generate_link(request, user_obj)
-
-        context = {"username": username, "link": link}
+        request_domain = get_current_site(request).domain
+        link = AuthenticationServices().generate_link(user_obj, request_domain)
+        context = {
+            "username": username,
+            "link": link,
+            "link_expiry_period": humanize_seconds(settings.PASSWORD_RESET_TIMEOUT),
+        }
         return render(request, "UserManagement/password_reset_page.html", context)
 
 
@@ -127,10 +138,9 @@ class SetQuotaView(ManagerRequiredView):
 
         # Special flag received when user confirms to force setting, ignoring limit restriction.
         if "force_set_quota" in request.POST:
-            complete_and_claimed_tasks = (
-                UserInfoServices.get_total_annotated_and_claimed_count_by_user()
+            complete, claimed = (
+                UserInfoServices.get_total_annotated_and_claimed_count_by_user(username)
             )
-            complete, claimed = complete_and_claimed_tasks[username]
             quota, created = Quota.objects.get_or_create(user=user, limit=complete)
 
         # No special flag received, proceed to check whether the marker fulfills the restriction.
@@ -178,7 +188,7 @@ class EditQuotaLimitView(ManagerRequiredView):
         new_limit = int(request.POST.get("limit"))
         user = get_object_or_404(User, username=username)
 
-        if QuotaService.is_proposed_limit_valid(new_limit, user):
+        if QuotaService.can_set_quota(user, limit=new_limit):
             quota = Quota.objects.filter(user=user).first()
             quota.limit = new_limit
             quota.save()
@@ -201,22 +211,9 @@ class ModifyQuotaView(ManagerRequiredView):
         """Handle the POST request to update the quota limits for the specified users."""
         user_ids = request.POST.getlist("users")
         new_limit = int(request.POST.get("limit"))
-        valid_markers = []
-        invalid_markers = []
-
-        if not user_ids:
-            messages.error(request, "No users selected.")
-            return redirect(reverse("progress_user_info_home"))
-
-        for user_id in user_ids:
-            user = get_object_or_404(User, pk=user_id)
-            quota = Quota.objects.get(user=user)
-            if not QuotaService.is_proposed_limit_valid(limit=new_limit, user=user):
-                invalid_markers.append(user.username)
-            else:
-                valid_markers.append(user.username)
-                quota.limit = new_limit
-                quota.save()
+        valid_markers, invalid_markers = QuotaService.set_quotas_for_userlist(
+            user_ids, new_limit
+        )
 
         if len(invalid_markers) > 0:
             messages.success(

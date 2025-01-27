@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2024 Andrew Rechnitzer
     Copyright (C) 2022 Edith Coates
-    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -26,22 +26,16 @@
                 <p>
                     Assessment specification indicates:
                     <ul>
-                        {% if fix_questions %}
+                        {% if question_labels_html_fix %}
                             <li>
                                 The following questions will all be taken from source-version 1:
-                                {% for ql in fix_questions %}
-                                    {{ ql|safe }}
-                                    {% if not forloop.last %},{% endif %}
-                                {% endfor %}
+                                {{ question_labels_html_fix|safe }}
                             </li>
                         {% endif %}
-                        {% if shuffle_questions %}
+                        {% if question_labels_html_shuffle %}
                             <li>
                                 The following questions will be selected randomly from all source-versions:
-                                {% for ql in shuffle_questions %}
-                                    {{ ql|safe }}
-                                    {% if not forloop.last %},{% endif %}
-                                {% endfor %}
+                                {{ question_labels_html_shuffle|safe }}
                             </li>
                         {% endif %}
                     </ul>
@@ -95,9 +89,7 @@
                     {% if pqv_mapping_present %}
                         <div class="alert alert-primary">
                             <span>Question-version mapping present with {{ pqv_number_rows }} papers:</span>
-                            <a href="{% url 'prep_qvmapping_download' %}"
-                               download="qv_map.csv"
-                               class="btn btn-info">download</a>
+                            <a href="{% url 'prep_qvmapping_download' %}" class="btn btn-info">download</a>
                             <button class="btn btn-danger"
                                     hx-delete="{% url 'prep_qvmapping_delete' %}"
                                     hx-confirm="Are you sure you want to delete the question-version map and clean the database?"
@@ -182,7 +174,7 @@
                                                 <li>
                                                     You do not have to print all of the resulting
                                                     papers. Rather, this ensures that you will have plenty
-                                                    of spare papers <em>if you need them</em>
+                                                    of spare papers <em>if you need them</em>.
                                                 </li>
                                             </ul>
                                         </details>
@@ -199,7 +191,7 @@
                                                class="form-input"
                                                type="number"
                                                name="number_to_produce"
-                                               min="{{ min_number_to_produce }}"
+                                               min="1"
                                                value="{{ min_number_to_produce }}"
                                                max="9999"
                                                required />
@@ -266,7 +258,7 @@
                                                         a <tt>paper_number</tt> column
                                                     </li>
                                                     <li>
-                                                        {{ number_of_questions }} columns with headers
+                                                        {{ question_indices|length }} columns with headers
                                                         <tt>q{{ question_indices|first }}.version</tt>
                                                         up to
                                                         <tt>q{{ question_indices|last }}.version</tt>
@@ -309,7 +301,7 @@
     {% if populate_in_progress or evacuate_in_progress %}
         <script>
   // reload page after 2 sec
-setTimeout(function () { window.location.reload(1); }, 5000); 
+setTimeout(function () { window.location.reload(1); }, 5000);
         </script>
     {% endif %}
 {% endblock main_content %}

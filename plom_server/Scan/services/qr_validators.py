@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Forest Kobayashi
 
 from __future__ import annotations
@@ -180,6 +180,12 @@ class QRErrorService:
 
         # check all page-types are the same
         page_types = [parsed_qr_dict[x]["page_type"] for x in parsed_qr_dict]
+        # check if there is an invalid qr code on the page
+        if "invalid_qr" in page_types:
+            raise ValueError(
+                "Invalid qr-code on page - please check if valid plom page."
+            )
+
         if is_list_inconsistent(page_types):
             raise ValueError("Inconsistent qr-codes - check scan for folded pages")
         # if it is an extra page or scrap-paper, then no further consistency checks

@@ -2,9 +2,7 @@
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2024 Colin B. Macdonald
-
-from __future__ import annotations
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 import csv
 import logging
@@ -46,7 +44,11 @@ class StagingStudentService:
         )
 
     @transaction.atomic()
-    def get_first_last_prenamed_paper(self):
+    def get_first_last_prenamed_paper(self) -> tuple[int, int] | tuple[None, None]:
+        """Return the lowest and highest paper_number allocated to a prenamed paper.
+
+        This appropriately returns (None, None) if there are no prenamed papers.
+        """
         query = StagingStudent.objects.filter(paper_number__isnull=False).order_by(
             "paper_number"
         )
@@ -63,17 +65,18 @@ class StagingStudentService:
             for s_obj in StagingStudent.objects.filter(paper_number__isnull=False)
         }
 
-    def get_students_as_csv_string(self, prename=False):
-        # Write the data from the staging-students table into a string in simple CSV format
-        # make sure header and name-column are quoted
-        # and make sure the paper_number column is -1 if not pre-naming.
-        txt = '"id", "name", "paper_number"\n'
+    def get_students_as_csv_string(self, *, prename: bool = False) -> str:
+        """Write the data from the classlist table into a string in CSV format.
+
+        The header and name-columns are quoted.
+        """
+        txt = '"id","name","paper_number"\n'
         for row in self.get_students():
             if prename and row["paper_number"]:
-                txt += f"{row['student_id']}, \"{row['student_name']}\", {row['paper_number']}\n"
+                txt += f"{row['student_id']},\"{row['student_name']}\",{row['paper_number']}\n"
             else:
                 # don't print the -1 for non-prename.
-                txt += f"{row['student_id']}, \"{row['student_name']}\", \n"
+                txt += f"{row['student_id']},\"{row['student_name']}\",\n"
         return txt
 
     @transaction.atomic()
@@ -204,26 +207,46 @@ class StagingStudentService:
 
     @transaction.atomic()
     def get_minimum_number_to_produce(self) -> int:
-        # if no students then return 20
-        # N = number of students in classlist
-        # L = last prenamed paper in classlist
-        # else compute max of { 1.1*N, N+20, L+10 } - make sure integer.
+        """Gets a suggestion for the minimum number of papers a server should produce.
+
+        The return value depends on the current server state.
+        """
+        # how_many_students doesn't behave well if an empty classlist is uploaded
         if not self.are_there_students():
-            return 20
-
-        N = self.how_many_students()
-        N1 = -(
-            (-N * 11) // 10
-        )  # simple fiddle to get ceiling of 1.1*N using python floor-div //
-        N2 = N + 20
-
-        pss = PrenameSettingService()
-        if pss.get_prenaming_setting():
-            first_prename, last_prename = self.get_first_last_prenamed_paper()
-            N3 = last_prename + 10
-            return max(N1, N2, N3)
+            num_students = 0
         else:
-            return max(N1, N2)
+            num_students = self.how_many_students()
+        _, last_prename = self.get_first_last_prenamed_paper()
+        prenaming_enabled = PrenameSettingService().get_prenaming_setting()
+
+        return self._minimum_number_to_produce(
+            num_students, last_prename, prenaming_enabled
+        )
+
+    def _minimum_number_to_produce(
+        self,
+        num_students: int,
+        highest_prenamed_paper: int | None,
+        prenaming_enabled: bool,
+    ) -> int:
+        """Suggests a minimum number of papers to produce in various situations.
+
+        Args:
+            num_students: the maximum number of students expected to
+                attempt the assessment.
+            highest_prenamed_paper: the highest paper number allocated
+                to a prenamed paper. Can be None, indicating no prenamed
+                papers.
+            prenaming_enabled: whether prenaming is currently enabled on
+                the server.
+        """
+        extra_20 = num_students + 20
+        # simple fiddle to get ceiling of 1.1*N using python floor-div //
+        extra_10percent = -((-num_students * 11) // 10)
+        prenamed_extra_10 = (highest_prenamed_paper or 0) + 10
+        if prenaming_enabled:
+            return max(extra_20, extra_10percent, prenamed_extra_10)
+        return max(extra_20, extra_10percent)
 
     def get_prename_for_paper(self, paper_number) -> str | None:
         """Return student ID for prenamed paper or None if paper is not prenamed."""

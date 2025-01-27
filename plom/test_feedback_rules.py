@@ -10,7 +10,8 @@ def test_codes_are_strings() -> None:
 
 
 def test_homogeneous_keys() -> None:
-    keys = set(("explanation", "allowed", "warn", "dama_allowed"))
+    # this test will need to change if the format of the rules changes
+    keys = set(("explanation", "allowed", "warn", "dama_allowed", "override_allowed"))
     for code, data in feedback_rules.items():
         assert set(data.keys()) == keys
 

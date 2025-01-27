@@ -1,18 +1,20 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2025 Andrew Rechnitzer
 
 from __future__ import annotations
 
-from pytest import raises
-from typing import Any
 import math
 from math import isclose
+from typing import Any
 
-from plom.plom_exceptions import PlomInconsistentRubric, PlomInvalidRubric
-from plom.client.rubrics import compute_score_naive as naive
-from plom.client.rubrics import compute_score_legacy2022 as lg
-from plom.client.rubrics import compute_score_locabs as s
+from pytest import raises
+
+from .rubric_utils import compute_score_legacy2022 as lg
+from .rubric_utils import compute_score_locabs as s
+from .rubric_utils import compute_score_naive as naive
+from .plom_exceptions import PlomInconsistentRubric, PlomInvalidRubric
 
 
 def test_naive_score() -> None:

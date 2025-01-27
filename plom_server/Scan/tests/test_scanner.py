@@ -2,38 +2,32 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
-
-from __future__ import annotations
+# Copyright (C) 2025 Aidan Murphy
 
 import pathlib
 import random
-import sys
 import tempfile
+from importlib import resources
 from typing import Any
 
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
-
 import exif
-import pymupdf as fitz
+import pymupdf
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.files import File
+from django.forms import ValidationError
+from django.test import TestCase
+from django.utils import timezone
+from model_bakery import baker
 from PIL import Image
 
-from django.utils import timezone
-from django.test import TestCase
-from django.contrib.auth.models import User
-from django.conf import settings
-from django.core.files import File
-from model_bakery import baker
+from plom.scan import QRextract, pdfmucker, rotate
 
-from plom.scan import QRextract, rotate, pdfmucker
-
-from ..services import ScanService, PageImageProcessor
-from ..models import StagingBundle, StagingImage
 from .. import tests as _Scan_tests
+from ..models import StagingBundle, StagingImage
+from ..services import PageImageProcessor, ScanService
 
 
 class ScanServiceTests(TestCase):
@@ -55,14 +49,16 @@ class ScanServiceTests(TestCase):
 
     def test_upload_bundle(self) -> None:
         """Test ScanService.upload_bundle and assert uploaded PDF file saved to right place."""
-        scanner = ScanService()
         timestamp = timezone.now().timestamp()
         # open the pdf-file to create a file-object to pass to the upload command.
         with open(self.pdf_path, "rb") as fh:
             pdf_file_object = File(fh)
 
         slug = "_test_bundle"
-        scanner.upload_bundle(pdf_file_object, slug, self.user, timestamp, "abcde", 28)
+        fake_hash = "deadbeef"
+        ScanService.upload_bundle(
+            pdf_file_object, slug, self.user, timestamp=timestamp, file_hash=fake_hash
+        )
 
         the_bundle = StagingBundle.objects.get(user=self.user, slug=slug)
         bundle_path = pathlib.Path(the_bundle.pdf_file.path)
@@ -73,7 +69,7 @@ class ScanServiceTests(TestCase):
             / "bundles"
             / self.user.username
             / str(the_bundle.pk)
-            / f"{timestamp}.pdf",
+            / f"{slug}.pdf",
         )
         self.assertTrue(bundle_path.exists())
         # TODO: is this an appropriate way to cleanup?
@@ -81,12 +77,22 @@ class ScanServiceTests(TestCase):
         bundle_path.unlink()
         bundle_path.parent.rmdir()
 
+        # upload_bundle should fail for non-pdf bundles
+        img_path = str(resources.files(_Scan_tests) / "page_img_good.png")
+        with open(img_path, "rb") as fh:
+            fh.seek(0)
+            non_pdf_file_object = File(fh)
+
+        slug = "_test_bundle"
+        with self.assertRaises(ValidationError):
+            ScanService.upload_bundle(non_pdf_file_object, slug, self.user)
+
     def test_remove_bundle(self) -> None:
-        """Test ScanService.remove_bundle() and assert uploaded PDF file removed from disk."""
+        """Test removing a bundle and assert uploaded PDF file removed from disk."""
         timestamp = timezone.now().timestamp()
         # make a pdf and save it to a tempfile
         with tempfile.NamedTemporaryFile() as ntf:
-            with fitz.Document(self.pdf_path) as pdf:
+            with pymupdf.Document(self.pdf_path) as pdf:
                 pdf.save(ntf.name)
 
             # open that file to get django to save it to disk as per the models File("upload_to")
@@ -105,7 +111,7 @@ class ScanServiceTests(TestCase):
         self.assertTrue(bundle_path.exists())
         # now remove it using the scan services
         scanner = ScanService()
-        scanner.remove_bundle("_test_bundle", user=self.user)
+        scanner.remove_bundle_by_pk(bundle.pk)
         # that path should no longer exist, nor should the bundle
         self.assertFalse(bundle_path.exists())
         self.assertFalse(StagingBundle.objects.exists())
@@ -202,11 +208,11 @@ class MoreScanServiceTests(TestCase):
         scanner = ScanService()
 
         image_upright_path = resources.files(_Scan_tests) / "page_img_good.png"
-
         qrs_upright = QRextract(image_upright_path)
         codes_upright = scanner.parse_qr_code([qrs_upright])
-
-        image_upright = Image.open(image_upright_path)
+        # mypy complains about Traversable
+        # assert isinstance(image_upright_path, (Path, resources.abc.Traversable))
+        image_upright = Image.open(image_upright_path)  # type: ignore[arg-type]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_flipped_path = pathlib.Path(tmpdir) / "flipped.png"
@@ -246,8 +252,8 @@ class MoreScanServiceTests(TestCase):
         image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
         qrs_original = QRextract(image_original_path)
         codes_original = scanner.parse_qr_code([qrs_original])
-
-        image_original = Image.open(image_original_path)
+        # mypy complains about Traversable
+        image_original = Image.open(image_original_path)  # type: ignore[arg-type]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_flipped_path = pathlib.Path(tmpdir) / "flipped_no_exif.jpeg"
@@ -292,8 +298,8 @@ class MoreScanServiceTests(TestCase):
         scanner = ScanService()
 
         image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
-
-        image_original = Image.open(image_original_path)
+        # mypy complains about Traversable
+        image_original = Image.open(image_original_path)  # type: ignore[arg-type]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_exif_180_path = pathlib.Path(tmpdir) / "upright_exif_180.jpeg"
@@ -321,8 +327,8 @@ class MoreScanServiceTests(TestCase):
         image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
         qrs_original = QRextract(image_original_path)
         codes_original = scanner.parse_qr_code([qrs_original])
-
-        image_original = Image.open(image_original_path)
+        # mypy complains about Traversable
+        image_original = Image.open(image_original_path)  # type: ignore[arg-type]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_flipped_path = pathlib.Path(tmpdir) / "flipped_exif_180.jpeg"
@@ -366,8 +372,8 @@ class MoreScanServiceTests(TestCase):
         image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
         qrs_original = QRextract(image_original_path)
         codes_original = scanner.parse_qr_code([qrs_original])
-
-        image_original = Image.open(image_original_path)
+        # mypy complains about Traversable
+        image_original = Image.open(image_original_path)  # type: ignore[arg-type]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_exif_90_path = pathlib.Path(tmpdir) / "rot_exif_90.jpeg"

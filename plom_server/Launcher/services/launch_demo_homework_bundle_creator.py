@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
@@ -16,18 +16,21 @@ class DemoHWBundleCreationService:
     def make_hw_bundle(self, bundle: dict):
         """Construct a hw bundle pdf for use with demo."""
         paper_number = bundle["paper_number"]
-        question_list = bundle["pages"]
+
+        # Perhaps "pages" is not a very semantic name but this data is a list
+        # of lists eg [[1], [1,2], [], [2,3]] representing an implicit mapping
+        # from page (outer list index + 1) to a list of question indices
+        question_idx_lists = bundle["pages"]
 
         print(
-            f"Making a homework bundle as paper {paper_number} with question-page mapping {question_list}"
+            f"Making a homework bundle as paper {paper_number}"
+            f" with question-page mapping {question_idx_lists}"
         )
 
-        # question_list should be a list of lists eg [[1], [1,2], [], [2,3]]
         out_file = Path(f"fake_hw_bundle_{paper_number}.pdf")
         doc = fitz.Document()
-        pg = 0
-        for ql in question_list:
-            pg += 1
+        for i, ql in enumerate(question_idx_lists):
+            pg = i + 1
             doc.new_page(-1)
             if ql:
                 txt = f"Paper.page {paper_number}.{pg}: contains info for question(s) {ql}"
@@ -47,11 +50,12 @@ class DemoHWBundleCreationService:
         print("Mapping homework pages to questions")
         for bundle in homework_bundles:
             paper_number = bundle["paper_number"]
-            question_list = bundle["pages"]
+            question_idx_lists = bundle["pages"]
 
             bundle_name = f"fake_hw_bundle_{paper_number}"
             print(
-                f"Assigning pages in {bundle_name} to paper {paper_number} questions {question_list}"
+                f"Assigning pages in {bundle_name} to paper {paper_number}"
+                f"via the mapping {question_idx_lists}"
             )
             call_command(
                 "plom_paper_scan",
@@ -60,6 +64,6 @@ class DemoHWBundleCreationService:
                 "-t",
                 paper_number,
                 "-q",
-                str(question_list),
+                str(question_idx_lists),
             )
             sleep(0.5)

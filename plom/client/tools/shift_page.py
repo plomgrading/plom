@@ -6,7 +6,6 @@ from PyQt6.QtGui import QUndoCommand
 
 from .animations import AnimatingTempRectItemABC, AnimationDuration
 
-
 # this is a large-scale animation: slow it down a bit
 Duration = 3 * AnimationDuration // 2
 

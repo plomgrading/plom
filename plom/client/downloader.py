@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 """The background downloader downloads images using threads."""
@@ -8,26 +8,22 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 import random
-import sys
 import tempfile
 import threading
+from importlib import resources
+from pathlib import Path
 from time import sleep, time
 from typing import Any
 
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
-
 # from PyQt6.QtCore import QThread
-from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot
-from PyQt6.QtCore import QThreadPool, QRunnable
+from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal, pyqtSlot
 
-from plom.messenger import Messenger
-from plom.plom_exceptions import PlomException
+from plom.messenger import BaseMessenger, Messenger
+from plom.plom_exceptions import PlomConnectionError, PlomException
+
 from .pagecache import PageCache
+from . import icons
 
 
 log = logging.getLogger("Downloader")
@@ -56,7 +52,7 @@ class Downloader(QObject):
 
     The current queue can be cleared with :meth:`clear_queue`.
     For shutting down the queue, see :meth:`stop`.
-    The Downlaoder keeps a clone of the messenger: if you logout
+    The Downloader keeps a clone of the messenger: if you logout
     (revoke the token) in another msgr while this is downloading,
     you'll get a crash.
 
@@ -85,7 +81,9 @@ class Downloader(QObject):
     # emitted when queue lengths change (i.e., things enqueued)
     download_queue_changed = pyqtSignal(dict)
 
-    def __init__(self, basedir: str | Path, *, msgr: Messenger | None = None) -> None:
+    def __init__(
+        self, basedir: str | Path, *, msgr: BaseMessenger | None = None
+    ) -> None:
         """Initialize a new Downloader.
 
         Args:
@@ -103,10 +101,9 @@ class Downloader(QObject):
         """
         super().__init__()
         # self.is_download_in_progress = False
+        self.msgr: None | BaseMessenger = None
         if msgr:
             self.msgr = Messenger.clone(msgr)
-        else:
-            self.msgr = None
         self.basedir = Path(basedir)
         self.write_lock = threading.Lock()
         self.pagecache = PageCache(basedir)
@@ -130,7 +127,7 @@ class Downloader(QObject):
         # delay in seconds in a range (both are i.i.d. per retry).
         # These are ignored unless simulate_failures is True.
         self._simulate_failure_rate = 33.0
-        self._simulate_slow_net = (0.5, 3)
+        self._simulate_slow_net = (0.5, 3.0)
 
     def attach_messenger(self, msgr: Messenger) -> None:
         """Add/replace the current messenger."""
@@ -157,12 +154,8 @@ class Downloader(QObject):
         self.simulate_failures = False
 
     def make_placeholder(self) -> None:
-        # Not imported earlier b/c of some circular import stuff (?)
-        import plom.client.icons
-
-        res = resources.files(plom.client.icons) / "manager_unknown.svg"
-        placeholder = self.basedir / "placeholder"
-        placeholder = placeholder.with_suffix(res.suffix)
+        res = resources.files(icons) / "manager_unknown.svg"
+        placeholder = self.basedir / "placeholder.svg"
         with res.open("rb") as fin, placeholder.open("wb") as fout:
             fout.write(fin.read())
         self._placeholder_image = placeholder
@@ -260,6 +253,10 @@ class Downloader(QObject):
         Returns:
             None
 
+        Raises:
+            RuntimeError: something unexpected happened.
+            PlomConnectionError: we do not have a valid Messenger.
+
         Does not start a new download if the Page Cache already has that image.
         It also tries to avoid enquing another request for the same image.
         """
@@ -271,6 +268,7 @@ class Downloader(QObject):
 
         if self.pagecache.has_page_image(row["id"]):
             return
+
         if not _is_retry and self._in_progress.get(row["id"]):
             # return early if this image id is already in queue
             # TODO but we should reset retries?
@@ -290,6 +288,11 @@ class Downloader(QObject):
             )
         target_name = self.basedir / (Path(target_name).name)
 
+        if not self.msgr:
+            raise PlomConnectionError(
+                "Cannot download as we don't have an active Messenger"
+            )
+        assert self.msgr is not None
         worker = DownloadWorker(
             self.msgr,
             row["id"],
@@ -505,7 +508,14 @@ class WorkerSignals(QObject):
 
 class DownloadWorker(QRunnable):
     def __init__(
-        self, msgr, img_id, md5, target_name, *, basedir, simulate_failures=False
+        self,
+        msgr: BaseMessenger,
+        img_id: int,
+        md5: str,
+        target_name: Path,
+        *,
+        basedir: Path,
+        simulate_failures: bool | tuple[float, tuple[float, float]] = False,
     ):
         super().__init__()
         self._msgr = Messenger.clone(msgr)
@@ -515,6 +525,7 @@ class DownloadWorker(QRunnable):
         self.basedir = Path(basedir)
         self.signals = WorkerSignals()
         if simulate_failures:
+            assert isinstance(simulate_failures, tuple)
             self._simulate_failure_rate = simulate_failures[0]
             self._simulate_slow_net = simulate_failures[1]
             self.simulate_failures = True

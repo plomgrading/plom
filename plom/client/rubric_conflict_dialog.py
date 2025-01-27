@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2025 Andrew Rechnitzer
 
 from __future__ import annotations
 
@@ -9,8 +10,8 @@ from typing import Any
 import arrow
 from PyQt6.QtWidgets import QWidget
 
+from plom.rubric_utils import diff_rubric, render_rubric_as_html
 from .useful_classes import InfoMsg
-from .rubrics import diff_rubric, render_rubric_as_html
 
 
 class RubricConflictDialog(InfoMsg):

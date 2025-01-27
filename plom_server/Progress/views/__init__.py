@@ -2,9 +2,9 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2024 Colin B. Macdonald
 
-
-from .overview_landing import OverviewLandingView
+from .overview_landing import OverviewLandingView, ToolsLandingView
 
 from .progress_identify import (
     ProgressIdentifyHome,
