@@ -1821,7 +1821,7 @@ def huey_parent_read_qr_codes_chore(
         _write_bundle.save()
 
     bundle_obj.refresh_from_db()
-    QRErrorService().check_read_qr_codes(bundle_obj)
+    QRErrorService().create_staging_images_based_on_QR_codes(bundle_obj)
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
     return True

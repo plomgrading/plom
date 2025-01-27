@@ -19,6 +19,10 @@ class StagingBundle(models.Model):
             processing the bundle, it will be set.  Optionally, if
             you know this initially you can set it *before* the
             processing has started.  TODO: I might remove that!
+        has_page_images: this bundle has been processed to create
+            StagingImages.
+        has_qr_codes: the StagingImages of this bundle have been
+            processed to read QR codes.
         time_to_make_page_images: overall seconds to convert from
             PDF to images, including IO overhead (wall-clock time).
         time_to_read_qr: seconds of wall-clock to read all QR codes.

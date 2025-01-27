@@ -24,7 +24,18 @@ from ..models import (
 
 
 class QRErrorService:
-    def check_read_qr_codes(self, bundle: StagingBundle) -> None:
+    def create_staging_images_based_on_QR_codes(self, bundle: StagingBundle) -> None:
+        """Classify the StagingImages of a StagingBundle based on previously-read QR codes.
+
+        Args:
+            bundle: a staging bundle, which has been processed to read its QR codes.
+
+        Returns:
+            None.
+
+        Raises:
+            ValueError: invalid or unexpected QR codes, or other errors.
+        """
         # Steps
         # * flag images with no qr-codes
         # * check all images have consistent qr-codes
@@ -49,6 +60,9 @@ class QRErrorService:
         # for each known image, also keep its bundle-order - we use that to create useful
         # error messages in case of internal collisions.
         img_bundle_order = {}
+
+        if not bundle.has_qr_codes:
+            raise ValueError("This bundle has not had its QR-codes read")
 
         with transaction.atomic():
             images = bundle.stagingimage_set.all()
