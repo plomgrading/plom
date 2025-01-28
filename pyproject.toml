@@ -175,13 +175,14 @@ packages = [
     "plom_server.Scan",
     "plom_server.Scan.models",
     "plom_server.SpecCreator",
+    "plom_server.static",
     "plom_server.Tags",
     "plom_server.templates",
     "plom_server.UserManagement",
     "plom_server.Visualization",
     "plom_server.Web_Plom",
 ]
-# TODO: fixtures?  huey?  media?  static?
+# TODO: fixtures?  huey?  media?
 
 # somewhat deprecated?  not supposed to package things into share?
 # https://blog.raek.se/2022/10/31/os-integration-files-in-python-packages/u

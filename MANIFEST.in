@@ -45,4 +45,9 @@ include plom/client/help_img/click_drag.gif
 
 include plom/create/fonts/*.ttf
 
+include plom_server/static/*.png
+include plom_server/static/*.svg
+include plom_server/static/css/*.css
+include plom_server/static/js/*.js
+
 # TODO: docs?

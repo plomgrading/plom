@@ -1,6 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Divy Patel
+    Copyright (C) 2025 Colin B. Macdonald
 -->
 {% load static %}
 {% block main_content %}
@@ -9,6 +10,6 @@
         <div id="cell_popup" class="col"></div>
     </div>
     <script src="https://d3js.org/d3.v6.min.js"></script>
-    <script src="{% static 'js/heatmap/heatmap.js' %}"></script>
+    <script src="{% static 'js/heatmap.js' %}"></script>
     <script>renderHeatMap({{ data|safe }}, "heatmap");</script>
 {% endblock main_content %}
