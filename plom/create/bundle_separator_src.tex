@@ -1,24 +1,19 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% SPDX-License-Identifier: AGPL-3.0-or-later
 %% Copyright (C) 2023 Andrew Rechnitzer
-%% Copyright (C) 2023 Colin B. Macdonald
+%% Copyright (C) 2023, 2025 Colin B. Macdonald
 %% Copyright (C) 2024-2025 Forest Kobayashi
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\documentclass{memoir}
-\usepackage{graphicx}
+\documentclass[12pt,letterpaper]{article}
+
 \usepackage[letterpaper,left=29mm,right=29mm,top=10mm,bottom=4mm]{geometry}
-\usepackage{booktabs}
+\usepackage{graphicx}
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{tikz}
 \usetikzlibrary{calc}
-\usepackage{enumitem}
-\usepackage{mdframed}
 \usepackage{ifthen}
-
-\usepackage[letterpaper]{geometry}
-
 
 
 \setlength{\parindent}{0em}
@@ -30,9 +25,10 @@
 
 \newcommand{\thingandexample}[2]{
   {
-    \def\arraystretch{.5}
-    \begin{tabular}[x]{@{}r@{}}
-      {\huge #1} \\ \normalsize #2
+    \def\arraystretch{.8}
+    % negative space on right to align with columns not using this cmd
+    \begin{tabular}[x]{@{}r@{\!\!\!}}
+      #1 \\ {\footnotesize #2}
     \end{tabular}
   }
 }
@@ -119,7 +115,7 @@
   \pgfmathsetmacro{\halfboxw}{7}
   \pgfmathsetmacro{\halfboxh}{\halfboxw * \hwratio}
   \pgfmathsetmacro{\topy}{\halfboxh - 4} % Need extra room at top
-  \pgfmathsetmacro{\boty}{-\halfboxh - 1} % Need extra room at top
+  \pgfmathsetmacro{\boty}{-\halfboxh - 0.5} % Need extra room at top
 
 
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -127,8 +123,8 @@
   \node[anchor=north west, xshift=4mm, yshift=-4mm] at (current page.north west) {
     \begin{tikzpicture}
       \coordinate (a) at (0,0);
-      \coordinate (b) at (2.5,0);
-      \coordinate (c) at (0,-2.5);
+      \coordinate (b) at (2.75,0);
+      \coordinate (c) at (0,-2.75);
 
       \filldraw[draw=black, fill=gray!30] (a)--(b)--(c)--(a);
 
@@ -136,7 +132,7 @@
 
       \node () at (-.625, .625) {\rotatebox{45}{
           \begin{tabular}{c}
-            \bfseries Align \\ \bfseries with staples
+             Align \\ with staples
           \end{tabular}
         }};
 
@@ -146,16 +142,15 @@
 
 
 
-  \node () at (0, \halfboxh+2.5) {\bfseries \HUGE Plom Bundle Separator Sheet};
+  \node () at (0, \halfboxh+2.5) {\bfseries \huge Plom Bundle Separator Sheet};
 
   \node () at (.25, \halfboxh+1) {
     % A (brittle) self-rolled `\begin{itemize}[...] \end{itemize}'
     % equivalent that (unlike itemize) works inside tikz nodes.
-    \begin{tabular}{>{\Large \textbullet\ } l}
-      Default to 20 exams per bundle \\[.5em]
-      Align labeled corner with bundle exams' staples and place on top
-      \\[.5em]
-
+    \begin{tabular}{l}
+      % -2.5ex experimentally chosen for hanging indent (in case of multiline bullet point)
+      \hspace*{-2.5ex}\textbullet\; Default to 20 exams per bundle \\[.5em]
+      \hspace*{-2.5ex}\textbullet\; Align labeled corner with bundle exams' staples and place on top\\[.5em]
     \end{tabular}
   };
 
@@ -169,8 +164,7 @@
 
     \drawcappedbox{\invignotew}{\invigtopy}{\invigboty}
 
-    \node () at  (0, \invigtopy-.5) {Invigilator Notes
-      (optional)};
+    \node () at  (0, \invigtopy-0.4) {Invigilator notes (optional)};
 
   \end{scope}
 
@@ -179,13 +173,12 @@
     %% Draw in outer box
     \drawcappedbox{\halfboxw}{\topy}{\boty}
 
-    \node () at (0, \topy-.75) {\LARGE To be filled out by scanning
-      team (not invigilators)};
+    \node () at (0, \topy-0.4) {To be filled out by scanning team (not invigilators)};
 
     \newcommand{\infobox}{
       \raisebox{-.6cm}{
         \begin{tikzpicture}
-          \draw (0, 0) rectangle (5, 1.5);
+          \draw (0, 0) rectangle (6, 1.5);
         \end{tikzpicture}
       }
     }
@@ -199,24 +192,22 @@
     }
 
 
-    \node () at (0, \topy-5.5) {
-      \def\arraystretch{5.5}
-      \begin{tabular}{>{\huge}rl}
-        \thingandexample{Exam shortcode:}{(e.g.\
-        \texttt{24-w1-m100-mt1})}
-        & \infobox \\
-        \thingandexample{Exam subunit:}{(e.g.\ room \# or section \#)}
-        & \infobox \\
-        \thingandexample{Scanner ID:}{(if not solo-scanning)} &  \infobox \\[-2em]
-        Tick after scanning & \checkbox \\[-4em]
-        Tick if rescan & \checkbox
+    \node () at (0, \topy-5.0) {
+      \begin{tabular}{rl}
+        \thingandexample{Exam shortcode:}{(e.g.~\texttt{24-w1-m100-mt1})}
+        & \infobox \\[6ex]
+        \thingandexample{Exam subunit:}{(e.g.~room or section \#)}
+        & \infobox \\[6ex]
+        \thingandexample{Which scanner:}{(if relevant)} &  \infobox \\[5ex]
+        Tick after scanning: & \checkbox \\[2ex]
+        Tick if rescanning: & \checkbox
       \end{tabular}
     };
 
 
     \pgfmathsetmacro{\noteboxw}{6}
-    \draw (-\noteboxw, \boty+4.5) rectangle (\noteboxw, \boty+1);
-    \node[right] () at (-\noteboxw+.1, \boty+4.5-.3) {\textbf{Other scanner notes:}};
+    \draw (-\noteboxw, \boty+5.0) rectangle (\noteboxw, \boty+1);
+    \node[right] () at (-\noteboxw+.1, \boty+5.0-.3) {Other scanner notes:};
   \end{scope}
 
 
@@ -228,7 +219,7 @@
 
 \vfill
 \begin{center}
-  {\HUGE \bfseries \texttt{Plom} Bundle Separator (Back)}
+  {\bfseries \huge Plom Bundle Separator (back)}
 \end{center}
 \vfill
 
