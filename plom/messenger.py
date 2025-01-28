@@ -1022,3 +1022,53 @@ class Messenger(BaseMessenger):
                 if response.status_code == 404:
                     raise PlomNoPaper(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def beta_id_paper(
+        self, paper_number: int, student_id: str, student_name: str
+    ) -> None:
+        """Identify a paper directly, not as part of a IDing task.
+
+        Exceptions:
+            PlomConflict: `studentID` already used on a different paper.
+            PlomAuthenticationException: login problems.
+            PlomSeriousException: other errors.
+            PlomNoServerSupportException: old server
+        """
+        if self.is_server_api_less_than(113):
+            raise PlomNoServerSupportException(
+                "Server too old: API does not support direct IDing of papers."
+            )
+        with self.SRmutex:
+            try:
+                url = f"/ID/{paper_number}"
+                url += f"?student_id={student_id}&student_name={student_name}"
+                response = self.put_auth(url)
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def beta_un_id_paper(self, paper_number: int) -> None:
+        """Remove the identify of a paper directly.
+
+        Exceptions:
+            PlomAuthenticationException: login problems.
+            PlomSeriousException: other errors.
+        """
+        with self.SRmutex:
+            try:
+                response = self.delete_auth(f"/ID/{paper_number}")
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code in (401, 403):
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
+                if response.status_code == 406:
+                    raise PlomSeriousException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None

@@ -197,7 +197,7 @@ class Command(BaseCommand):
                     f"Direct ID of homework paper {paper_number} as student {sid} {sname}"
                 )
                 # use the _cmd here so that it looks up the username for us.
-                IDDirectService().identify_direct_cmd(
+                IDDirectService.identify_direct_cmd(
                     manager_user, paper_number, sid, sname
                 )
         pass

@@ -325,6 +325,42 @@ class BaseMessenger:
         assert self.session
         return self.session.put(self.base + url, *args, **kwargs)
 
+    def put_auth(self, url: str, *args, **kwargs) -> requests.Response:
+        """Perform a PUT method on a URL, with a token for authorization."""
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
+
+        if not self.token:
+            raise PlomAuthenticationException("Trying auth'd operation w/o token")
+
+        assert not self.is_legacy_server()
+
+        assert isinstance(self.token, dict)
+        # Django-based servers pass token in the header
+        token_str = self.token["token"]
+        kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+
+        assert self.session
+        return self.session.put(self.base + url, *args, **kwargs)
+
+    def delete_auth(self, url: str, *args, **kwargs) -> requests.Response:
+        """Perform a DELETE method on a URL with a token for authorization."""
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
+
+        if not self.token:
+            raise PlomAuthenticationException("Trying auth'd operation w/o token")
+
+        assert not self.is_legacy_server()
+
+        assert isinstance(self.token, dict)
+        # Django-based servers pass token in the header
+        token_str = self.token["token"]
+        kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+
+        assert self.session
+        return self.session.delete(self.base + url, *args, **kwargs)
+
     def delete(self, url: str, *args, **kwargs) -> requests.Response:
         """Perform a DELETE method on a URL."""
         if "timeout" not in kwargs:

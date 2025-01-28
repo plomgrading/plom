@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from django.core.management.base import BaseCommand
 
@@ -17,7 +17,7 @@ class Command(BaseCommand):
         student_id: str,
         student_name: str,
     ):
-        IDDirectService().identify_direct_cmd(
+        IDDirectService.identify_direct_cmd(
             username, paper_number, student_id, student_name
         )
 

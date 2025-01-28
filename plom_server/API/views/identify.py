@@ -12,7 +12,11 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from Identify.services import ClasslistService
-from Identify.services import IdentifyTaskService, IDReaderService
+from Identify.services import (
+    IDDirectService,
+    IdentifyTaskService,
+    IDReaderService,
+)
 
 from .utils import _error_response
 
@@ -154,3 +158,77 @@ class IDclaimThisTask(APIView):
             return _error_response(err, status.HTTP_409_CONFLICT)
 
         return Response(status=status.HTTP_200_OK)
+
+
+class IDdirect(APIView):
+    """TODO WIP, beta etc etc."""
+
+    def put(self, request: Request, *, papernum: int) -> Response:
+        """Put a particular student number in place as the identify a paper.
+
+        You must pass both `sid=` and `sname=` in query parameters.
+
+        Response is 200 when it succeeds, currently with no content.  409 if that
+        student id is in-use for another paper, 404 for no such paper.  403 if you
+        do not have permissions to ID papers.  400 for invalid name / sid.
+        """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list and "lead_marker" not in group_list:
+            return _error_response(
+                'Only "lead markers" and "managers" can ID papers',
+                status.HTTP_403_FORBIDDEN,
+            )
+        student_id = request.query_params.get("student_id")
+        student_name = request.query_params.get("student_name")
+        if not student_id:
+            return _error_response(
+                'You must provide a "student_id=" query parameter',
+                status.HTTP_400_BAD_REQUEST,
+            )
+        if not student_name:
+            return _error_response(
+                'You must provide a "student_name=" query parameter',
+                status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # TODO: papernum and paper_id same?
+            IDDirectService.identify_direct(
+                request.user, papernum, student_id, student_name
+            )
+            return Response(status=status.HTTP_200_OK)
+        except ValueError as e:
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
+        except RuntimeError as e:
+            # TODO: check legacy server, maybe it and client all conflate various errors to 409
+            return _error_response(e, status.HTTP_409_CONFLICT)
+
+    def delete(self, request: Request, *, papernum: int) -> Response:
+        """Unidenfies a paper number.
+
+        Raises:
+            HTTP_403_FORBIDDEN: user is not the assigned user for the id-ing task for that paper
+            HTTP_404_NOT_FOUND: there is no valid id-ing task for that paper
+            HTTP_409_CONFLICT: the student_id has already been assigned to another paper  (not yet implemented)
+        """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list and "lead_marker" not in group_list:
+            return _error_response(
+                'Only "lead markers" and "managers" can ID papers',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        # TODO: document places where paper_id assumed to be paper_num
+        data = request.data
+        user = request.user
+        # its = IdentifyTaskService()
+        # try:
+        #     its.identify_paper(user, paper_id, data["sid"], data["sname"])
+        # except PermissionDenied as err:  # task not assigned to that user
+        #     return _error_response(err, status=status.HTTP_403_FORBIDDEN)
+        # except ObjectDoesNotExist as err:  # no valid task for that paper_id
+        #     return _error_response(err, status=status.HTTP_404_NOT_FOUND)
+        # except IntegrityError as err:  # attempt to assign SID already used
+        #     return _error_response(err, status.HTTP_409_CONFLICT)
+
+        return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
