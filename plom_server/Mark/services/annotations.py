@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aden Chan
@@ -18,9 +18,12 @@ import pathlib
 from django.db import transaction
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
+from Papers.services.SpecificationService import get_question_max_mark
 from Rubrics.models import Rubric
+from Rubric.services.rubric_service import list_of_rubrics_to_dict_of_dict
 from ..models import Annotation, AnnotationImage, MarkingTask
-from plom.plom_exceptions import PlomConflict
+from plom.plom_exceptions import PlomConflict, PlomInconsistentRubric
+from plom.rubric_utils import compute_score
 
 
 @transaction.atomic
@@ -89,6 +92,9 @@ def _create_new_annotation_in_database(
     *,
     require_latest_rubrics: bool = True,
 ) -> Annotation:
+    # first check the rubric use is consistent and valid
+    _validate_rubric_use_and_score(task.question_index, score, data)
+
     if task.latest_annotation:
         last_annotation_edition = task.latest_annotation.edition
         old_time = task.latest_annotation.marking_time
@@ -124,6 +130,64 @@ def _extract_rubric_rid_rev_pairs(raw_annot_data) -> list[tuple[int, int]]:
         (x[3]["rid"], x[3]["revision"]) for x in scene_items if x[0] == "Rubric"
     ]
     return rubric_rid_rev_pairs
+
+
+def _validate_rubric_use_and_score(
+    question_index,
+    client_score: float,
+    data: dict[str, Any],
+    *,
+    tolerance: float = 1e-9,
+    require_latest_rubrics: bool,
+):
+    question_max_mark = get_question_max_mark(question_index)
+    # get the rubrics used in this annotation
+    rid_rev_pairs = _extract_rubric_rid_rev_pairs(data)
+    rids = list(set([rid for rid, rev in rid_rev_pairs]))  # remove repeats
+    # dict of rid to rubric data
+    rubric_data = list_of_rubrics_to_dict_of_dict(
+        [r for r in Rubric.objects.filter(rid__in=rids)]
+    )
+    # check if any rid is not in the rubric-data
+    # that is - any unknown rids being used.
+    for rid in rids:
+        if rid not in rubric_data:
+            raise KeyError(
+                "Unexpectedly, some non-existent Rubrics were used.  "
+                f"Please report the following rid/rev: {rid}/{rev}"
+            )
+    # check each rubric belongs to this question
+    for rid, rub in rubric_data.items():
+        if rub.question_index != question_index:
+            raise PlomConflict(
+                f"rubric rid {rid} revision {rev} does not belong to question index {question_index}."
+            )
+    # check we are using latest rubric and they are published
+    if require_latest_rubrics:
+        for rid, rev in rid_rev_pairs:
+            # check revision against
+            if rubric_data[rid].revision != rev:
+                raise PlomConflict(
+                    f"rubric rid {rid} revision {rev} is not the latest revision: "
+                    "refresh your rubrics and try again"
+                )
+            if not rubric_data[rid].published:
+                raise PlomConflict(
+                    f"rubric rid {rid} revision {rev} is the latest but it is "
+                    "not currently published.  Someone has taken it offline, "
+                    "possibly for editing.  Try again later, ask your marking "
+                    "team, or use a different rubric."
+                )
+    # Check client-computed score against server-computed score
+    used_rubric_list = [rubric_data[rid] for rid in rids]
+    # recompute score on server
+    server_score = compute_score(used_rubric_list, max_score)
+    delta_score = client_score - server_score
+
+    if (delta_score > tolerance) or (delta_score < -tolerance):
+        raise PlomConflict(
+            "Conflict between score computed by client and score recomputed by server"
+        )
 
 
 def _add_annotation_to_rubrics(

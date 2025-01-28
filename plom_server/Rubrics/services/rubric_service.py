@@ -75,6 +75,32 @@ def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
     }
 
 
+def list_of_rubric_to_dict_of_dict(rlist: list[Rubric]) -> dict[int, dict[str, Any]]:
+    """Return dict of rubrics as dict with rid as key."""
+    # don't track usernames - reduce DB calls.
+    return {
+        r.rid: {
+            "rid": r.rid,
+            "kind": r.kind,
+            "display_delta": r.display_delta,
+            "value": r.value,
+            "out_of": r.out_of,
+            "text": r.text,
+            "tags": r.tags,
+            "meta": r.meta,
+            "question_index": r.question_index,
+            "versions": r.versions,
+            "parameters": r.parameters,
+            "system_rubric": r.system_rubric,
+            "published": r.published,
+            "last_modified": r.last_modified,
+            "revision": r.revision,
+            "latest": r.latest,
+        }
+        for r in rlist
+    }
+
+
 # There are no single unicode chars for 3/10, 7/10, 9/10 but we can use multichar
 # strings which seem to render nicely both in web and Qt client (on GNU/Linux).
 # TODO: test on Windows/macOS: could instead fallback to ASCII "3/10".
