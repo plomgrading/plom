@@ -2,7 +2,7 @@
 %% SPDX-License-Identifier: AGPL-3.0-or-later
 %% Copyright (C) 2023 Andrew Rechnitzer
 %% Copyright (C) 2023 Colin B. Macdonald
-%% Copyright (C) 2024 Forest Kobayashi
+%% Copyright (C) 2024-2025 Forest Kobayashi
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass{memoir}
@@ -26,249 +26,216 @@
 
 \pagestyle{empty}
 
+
+\newcommand{\thingandexample}[2]{
+  {
+    \def\arraystretch{.5}
+    \begin{tabular}[x]{@{}r@{}}
+      {\huge #1} \\ \normalsize #2
+    \end{tabular}
+  }
+}
+
+% QR additions
 \newcommand{\bundleseparatorbundleseparator}[4]{
   \begin{tikzpicture}[
     remember picture,
-    overlay,
-    xshift=.5\linewidth, % ??? why does using \paperwidth not place it
-                         % correctly??
-    yshift=.5\paperheight
+    overlay
     ]
 
-    % QR additions
-    % \node[anchor=north east, xshift=-8mm, yshift=-8mm, line width=0.25pt, draw=black, inner sep=1pt] (qrne) at (current page.north east) {\includegraphics[angle= 90, origin=c, height=15mm]{#1}};
-    % \node[anchor=north west, xshift= 8mm, yshift=-8mm, line width=0.25pt, draw=black, inner sep=1pt] (qrnw) at (current page.north west) {\includegraphics[angle=180, origin=c, height=15mm]{#2}};
-    % \node[anchor=south west, xshift= 8mm, yshift= 8mm, line width=0.25pt, draw=black, inner sep=1pt] (qrsw) at (current page.south west) {\includegraphics[angle=-90, origin=c, height=15mm]{#3}};
-    % \node[anchor=south east, xshift=-8mm, yshift= 8mm, line width=0.25pt, draw=black, inner sep=1pt] (qrse) at (current page.south east) {\includegraphics[angle=  0, origin=c, height=15mm]{#4}};
 
-    % Box bounding info section
-    \pgfmathsetmacro{\cornerlen}{.5}
-    \pgfmathsetmacro{\cornerwidth}{2pt}
-
-    % Hard code letter paper ratio...
-    \pgfmathsetmacro{\hwratio}{11/8.5}
-    \pgfmathsetmacro{\halfboxw}{7}
-    \pgfmathsetmacro{\halfboxh}{\halfboxw * \hwratio}
-    \pgfmathsetmacro{\topy}{\halfboxh - 2} % Need extra room at top
-
-
-    %% Draw in outer box
-    % Define corner coords
-    \coordinate (nw) at (-\halfboxw,  \topy);
-    \coordinate (ne) at ( \halfboxw,  \topy);
-    \coordinate (se) at ( \halfboxw, -\halfboxh);
-    \coordinate (sw) at (-\halfboxw, -\halfboxh);
-
-    % Overdraw coords for making the corner ``caps''
-    \coordinate (nwe) at ($(nw) + (\cornerlen, 0cm)$);
-    \coordinate (nws) at ($(nw) + (0, -\cornerlen)$);
-
-    \coordinate (swe) at ($(sw) + (\cornerlen, 0cm)$);
-    \coordinate (swn) at ($(sw) + (0, \cornerlen)$);
-
-    \coordinate (new) at ($(ne) + (-\cornerlen, 0cm)$);
-    \coordinate (nes) at ($(ne) + (0, -\cornerlen)$);
-
-    \coordinate (sew) at ($(se) + (-\cornerlen, 0cm)$);
-    \coordinate (sen) at ($(se) + (0, \cornerlen)$);
-
-    \draw[line width=\cornerwidth/2, gray!50!white, densely dotted] (nw) rectangle (se);
-
-    \draw[line width=\cornerwidth] (nwe) -- (nw) -- (nws);
-    \draw[line width=\cornerwidth] (new) -- (ne) -- (nes);
-    \draw[line width=\cornerwidth] (swn) -- (sw) -- (swe);
-    \draw[line width=\cornerwidth] (sew) -- (se) -- (sen);
-
-    % Staple alignment corner
-    \node[anchor=north west, xshift=4mm, yshift=-4mm] at (current page.north west) {
-      \begin{tikzpicture}
-        \coordinate (a) at (0,0);
-        \coordinate (b) at (2.5,0);
-        \coordinate (c) at (0,-2.5);
-
-        \filldraw[draw=black, fill=gray!30] (a)--(b)--(c)--(a);
-
-        \clip (a)--(b)--(c)--(a);
-
-        \node () at (-.625, .625) {\rotatebox{45}{
-            \begin{tabular}{c}
-              \bfseries Align \\ \bfseries with staples
-            \end{tabular}
-          }};
-
-    \end{tikzpicture}
-  };
-
-
-
-  \node () at (0, \halfboxh+2) {\bfseries \HUGE Plom Bundle Separator Sheet};
-
-  \pgfmathsetmacro{\papernumboxw}{1}
-  \pgfmathsetmacro{\papernumboxh}{.625}
-  \node () at (0, \halfboxh+.25) {
-    \begin{tabular}{cc}
-      \begin{tabular}{r}
-        \Large \itshape Default 20 exams per bundle. \\
-        \Large \itshape If different, record total here.
-      \end{tabular}
-      &
-        \raisebox{-.5cm}{
-        \begin{tikzpicture}
-          \draw (-\papernumboxw, \papernumboxh) rectangle (\papernumboxw, -\papernumboxh);
-        \end{tikzpicture}} \\[.125cm]
-      & \# exams
-    \end{tabular}
-  };
-
-  \node () at (0, \topy-1) {\ttfamily \huge (To be filled out by
-    PLOM team)};
-
-
+    \node[anchor=north east, xshift=-8mm, yshift=-8mm, line width=0.25pt, draw=black, inner sep=1pt] (qrne) at (current page.north east) {\includegraphics[angle= 90, origin=c, height=15mm]{#1}};
+    \node[anchor=north west, xshift= 8mm, yshift=-8mm, line width=0.25pt, draw=black, inner sep=1pt] (qrnw) at (current page.north west) {\includegraphics[angle=180, origin=c, height=15mm]{#2}};
+    \node[anchor=south west, xshift= 8mm, yshift= 8mm, line width=0.25pt, draw=black, inner sep=1pt] (qrsw) at (current page.south west) {\includegraphics[angle=-90, origin=c, height=15mm]{#3}};
+    \node[anchor=south east, xshift=-8mm, yshift= 8mm, line
+    width=0.25pt, draw=black, inner sep=1pt] (qrse) at (current
+    page.south east) {\includegraphics[angle=  0, origin=c,
+      height=15mm]{#4}};
   \end{tikzpicture}
 }
 
+%%% \drawcappedbox assumes you're in a tikzpicture.
+% Arguments:
+% #1 -> half of width of box
+% #2 -> top coordinate for box
+% #3 -> bottom coordinate for box
+\newcommand{\drawcappedbox}[3]{
+  % For the corner caps
+  \pgfmathsetmacro{\cornerlen}{.5}
+  \pgfmathsetmacro{\cornerwidth}{2pt}
 
+
+  \coordinate (nw) at (-#1, #2);
+  \coordinate (ne) at ( #1, #2);
+  \coordinate (se) at ( #1, #3);
+  \coordinate (sw) at (-#1, #3);
+
+  % Overdraw coords for making the corner ``caps''
+  \coordinate (nwe) at ($(nw) + (\cornerlen, 0cm)$);
+  \coordinate (nws) at ($(nw) + (0, -\cornerlen)$);
+
+  \coordinate (swe) at ($(sw) + (\cornerlen, 0cm)$);
+  \coordinate (swn) at ($(sw) + (0, \cornerlen)$);
+
+  \coordinate (new) at ($(ne) + (-\cornerlen, 0cm)$);
+  \coordinate (nes) at ($(ne) + (0, -\cornerlen)$);
+
+  \coordinate (sew) at ($(se) + (-\cornerlen, 0cm)$);
+  \coordinate (sen) at ($(se) + (0, \cornerlen)$);
+
+  \draw[line width=\cornerwidth/2, gray!50!white, densely dotted] (nw) rectangle (se);
+
+  \draw[line width=\cornerwidth] (nwe) -- (nw) -- (nws);
+  \draw[line width=\cornerwidth] (new) -- (ne) -- (nes);
+  \draw[line width=\cornerwidth] (swn) -- (sw) -- (swe);
+  \draw[line width=\cornerwidth] (sew) -- (se) -- (sen);
+}
 
 \begin{document}
-% Adding a space character like this (or something) seems to be
-% necessary to get the vertical positioning right.
+% In a previous version, these spacing things were necessary. I forgot
+% about them until I'd finished tuning all of the spacing parameters
+% above. Somebody else should probably figure out what needs to change
+% to get rid of them.
 \,
 
 \vfill
 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bundleseparatorbundleseparator{qr_crn_1}{qr_crn_2}{qr_crn_3}{qr_crn_4}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% \begin{center}
+\begin{tikzpicture}[
+  remember picture,
+  overlay,
+  xshift=.5\linewidth, % ??? why does using \paperwidth not place it
+  % correctly??
+  yshift=.5\paperheight
+  ]
 
-%   \begin{minipage}{.7\linewidth}
-%     \begin{pagebox}
-%       \centering
+  % Hard code letter paper ratio...someone else can adjust this later
+  \pgfmathsetmacro{\hwratio}{11/8.5}
+  \pgfmathsetmacro{\halfboxw}{7}
+  \pgfmathsetmacro{\halfboxh}{\halfboxw * \hwratio}
+  \pgfmathsetmacro{\topy}{\halfboxh - 4} % Need extra room at top
+  \pgfmathsetmacro{\boty}{-\halfboxh - 1} % Need extra room at top
 
-%       {\HUGE \bfseries \texttt{Plom} Bundle Separator}
-%       \vspace{1cm}
 
-%       \newcommand{\infobox}[1]{\raisebox{-1.1em}{\framebox(#1,32){}}}
-%       \begin{tabular}{cccccc}
-%         \Large Course && \Large Section && \Large Year \\
-%         \infobox{50} && \infobox{50} && \infobox{50}
-%       \end{tabular}
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  % Staple alignment corner
+  \node[anchor=north west, xshift=4mm, yshift=-4mm] at (current page.north west) {
+    \begin{tikzpicture}
+      \coordinate (a) at (0,0);
+      \coordinate (b) at (2.5,0);
+      \coordinate (c) at (0,-2.5);
 
-%       \vspace{1cm}
+      \filldraw[draw=black, fill=gray!30] (a)--(b)--(c)--(a);
 
-%       \newcommand{\newinfobox}[1]{\raisebox{-.7em}{\framebox(#1,32){}}}
-%       \newenvironment{notebox}{\begin{minipage}{.7\linewidth}}{\end{minipage}}
-%       \setlength{\arrayrulewidth}{1pt}
-%       \begin{tabular}{cc}
-%         \Huge Bundle Prefix
-%         & \Huge Bundle Suffix \\[.5em]
-%         \newinfobox{150} & \newinfobox{100} \\[.5em]
-%         (E.g.\ \texttt{BUCH-A101})
-%         & (E.g.\ \texttt{batch-1})
-%       \end{tabular}
+      \clip (a)--(b)--(c)--(a);
 
-%       \vspace{1cm}
+      \node () at (-.625, .625) {\rotatebox{45}{
+          \begin{tabular}{c}
+            \bfseries Align \\ \bfseries with staples
+          \end{tabular}
+        }};
 
-%       \begin{mdframed}
-%         \Large Notes: \hfill
+    \end{tikzpicture}
+  };
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%         \vspace{3cm}
-%       \end{mdframed}
 
-%     \end{pagebox}
-%   \end{minipage}
-% \end{center}
+
+  \node () at (0, \halfboxh+2.5) {\bfseries \HUGE Plom Bundle Separator Sheet};
+
+  \node () at (.25, \halfboxh+1) {
+    % A (brittle) self-rolled `\begin{itemize}[...] \end{itemize}'
+    % equivalent that (unlike itemize) works inside tikz nodes.
+    \begin{tabular}{>{\Large \textbullet\ } l}
+      Default to 20 exams per bundle \\[.5em]
+      Align labeled corner with bundle exams' staples and place on top
+      \\[.5em]
+
+    \end{tabular}
+  };
+
+  \begin{scope}
+    % These are only separately defined as a holdover from how stuff
+    % was written previously. But, I think it makes it a little easier
+    % to understand what's going on, so I've kept it.
+    \pgfmathsetmacro{\invignotew}{7}
+    \pgfmathsetmacro{\invigtopy}{\topy+3.5}
+    \pgfmathsetmacro{\invigboty}{\topy-.5}
+
+    \drawcappedbox{\invignotew}{\invigtopy}{\invigboty}
+
+    \node () at  (0, \invigtopy-.5) {Invigilator Notes
+      (optional)};
+
+  \end{scope}
+
+  \begin{scope}[yshift=-2cm]
+
+    %% Draw in outer box
+    \drawcappedbox{\halfboxw}{\topy}{\boty}
+
+    \node () at (0, \topy-.75) {\LARGE To be filled out by scanning
+      team (not invigilators)};
+
+    \newcommand{\infobox}{
+      \raisebox{-.6cm}{
+        \begin{tikzpicture}
+          \draw (0, 0) rectangle (5, 1.5);
+        \end{tikzpicture}
+      }
+    }
+
+    \newcommand{\checkbox}{
+      \raisebox{-.1cm}{
+        \begin{tikzpicture}
+          \draw (0, 0) rectangle (.5, .5);
+        \end{tikzpicture}
+      }
+    }
+
+
+    \node () at (0, \topy-5.5) {
+      \def\arraystretch{5.5}
+      \begin{tabular}{>{\huge}rl}
+        \thingandexample{Exam shortcode:}{(e.g.\
+        \texttt{24-w1-m100-mt1})}
+        & \infobox \\
+        \thingandexample{Exam subunit:}{(e.g.\ room \# or section \#)}
+        & \infobox \\
+        \thingandexample{Scanner ID:}{(if not solo-scanning)} &  \infobox \\[-2em]
+        Tick after scanning & \checkbox \\[-4em]
+        Tick if rescan & \checkbox
+      \end{tabular}
+    };
+
+
+    \pgfmathsetmacro{\noteboxw}{6}
+    \draw (-\noteboxw, \boty+4.5) rectangle (\noteboxw, \boty+1);
+    \node[right] () at (-\noteboxw+.1, \boty+4.5-.3) {\textbf{Other scanner notes:}};
+  \end{scope}
+
+
+\end{tikzpicture}
+
+\clearpage
+
+\,
 
 \vfill
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-{
-  \bundleseparatorbundleseparator{}{}{}{}
-}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% \clearpage
-
-% \,
-
-% \vfill
-% \begin{center}
-%   {\HUGE \bfseries \texttt{Plom} Bundle Separator (Back)}
-% \end{center}
-% \vfill
+\begin{center}
+  {\HUGE \bfseries \texttt{Plom} Bundle Separator (Back)}
+\end{center}
+\vfill
 
 % % Ensure QR codes appear on back as well
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% % \bundleseparatorbundleseparator{qr_crn_5}{qr_crn_6}{qr_crn_7}{qr_crn_8}
-% \bundleseparatorbundleseparator{}{}{}{}
+\bundleseparatorbundleseparator{qr_crn_5}{qr_crn_6}{qr_crn_7}{qr_crn_8}
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-% \clearpage
-
-% % Adding a space character like this (or something) seems to be
-% % necessary to get the vertical positioning right.
-% \,
-
-% \vfill
-
-
-% \begin{center}
-
-%   \begin{minipage}{.7\linewidth}
-%       \centering
-
-%       {\HUGE \bfseries \texttt{Plom} Bundle Separator}
-%       \vspace{1cm}
-
-%       \newcommand{\infobox}[1]{\raisebox{-1.1em}{\framebox(#1,32){}}}
-%       \begin{tabular}{cccccc}
-%         \Large Course && \Large Section && \Large Year \\
-%         \infobox{50} && \infobox{50} && \infobox{50}
-%       \end{tabular}
-
-%       \vspace{1cm}
-
-%       \newcommand{\newinfobox}[1]{\raisebox{-.7em}{\framebox(#1,32){}}}
-%       \newenvironment{notebox}{\begin{minipage}{.7\linewidth}}{\end{minipage}}
-%       \setlength{\arrayrulewidth}{1pt}
-%       \begin{tabular}{cc}
-%         \Huge Bundle Prefix
-%         & \Huge Bundle Suffix \\[.5em]
-%         \newinfobox{150} & \newinfobox{100} \\[.5em]
-%         (E.g.\ \texttt{BUCH-A101})
-%         & (E.g.\ \texttt{batch-1})
-%       \end{tabular}
-
-%       \vspace{1cm}
-
-%       \begin{mdframed}
-%         \Large Notes: \hfill
-
-%         \vspace{3cm}
-%       \end{mdframed}
-
-%   \end{minipage}
-% \end{center}
-
-
-
-% \vfill
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% \bundleseparatorbundleseparator{qr_crn_1}{qr_crn_2}{qr_crn_3}{qr_crn_4}
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% \clearpage
-
-% \,
-
-% \vfill
-% \begin{center}
-%   {\HUGE \bfseries \texttt{Plom} Bundle Separator (Back)}
-% \end{center}
-% \vfill
-
-% % Ensure QR codes appear on back as well
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% \bundleseparatorbundleseparator{qr_crn_5}{qr_crn_6}{qr_crn_7}{qr_crn_8}
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 \end{document}
