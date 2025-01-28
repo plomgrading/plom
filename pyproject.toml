@@ -175,7 +175,6 @@ packages = [
     "plom_server.Scan",
     "plom_server.Scan.models",
     "plom_server.SpecCreator",
-    "plom_server.StudentMarks",
     "plom_server.Tags",
     "plom_server.templates",
     "plom_server.UserManagement",
