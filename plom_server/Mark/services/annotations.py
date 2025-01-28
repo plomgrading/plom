@@ -20,7 +20,6 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from Papers.services.SpecificationService import get_question_max_mark
 from Rubrics.models import Rubric
-from Rubrics.services.rubric_service import list_of_rubrics_to_dict_of_dict
 from ..models import Annotation, AnnotationImage, MarkingTask
 from plom.plom_exceptions import PlomConflict, PlomInconsistentRubric
 from plom.rubric_utils import compute_score
@@ -131,6 +130,32 @@ def _extract_rubric_rid_rev_pairs(raw_annot_data) -> list[tuple[int, int]]:
     return rubric_rid_rev_pairs
 
 
+def _list_of_rubric_to_dict_of_dict(rlist: list[Rubric]) -> dict[int, dict[str, Any]]:
+    """Return dict of rubrics as dict with rid as key."""
+    # don't track usernames - reduce DB calls.
+    return {
+        r.rid: {
+            "rid": r.rid,
+            "kind": r.kind,
+            "display_delta": r.display_delta,
+            "value": r.value,
+            "out_of": r.out_of,
+            "text": r.text,
+            "tags": r.tags,
+            "meta": r.meta,
+            "question_index": r.question_index,
+            "versions": r.versions,
+            "parameters": r.parameters,
+            "system_rubric": r.system_rubric,
+            "published": r.published,
+            "last_modified": r.last_modified,
+            "revision": r.revision,
+            "latest": r.latest,
+        }
+        for r in rlist
+    }
+
+
 def _validate_rubric_use_and_score(
     question_index: int,
     client_score: float,
@@ -170,7 +195,7 @@ def _validate_rubric_use_and_score(
     rids = list(set([rid for rid, rev in rid_rev_pairs]))  # remove repeats
     # dict of rid to rubric data
     # only get the latest edit of each rid.
-    rubric_data = list_of_rubrics_to_dict_of_dict(
+    rubric_data = _list_of_rubrics_to_dict_of_dict(
         [r for r in Rubric.objects.filter(rid__in=rids, latest=True)]
     )
     # check if any rid is not in the rubric-data
