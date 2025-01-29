@@ -208,10 +208,10 @@ def _validate_rubric_use_and_score(
     used_rubric_list = [rubric_data[rid] for rid, _ in rid_rev_pairs]
     # recompute score on server
     server_score = compute_score(used_rubric_list, question_max_mark)
-    # TODO - if no rubrics used then compute_score returns a None
-    # this should likely throw an exception rather than an assert.
-    # TODO: or maybe it is ok if they are both None?
-    assert server_score is not None, "Unexpectedly computed a 'None' score"
+    if server_score is None:
+        raise PlomInconsistentRubric(
+            "Server computed score is None - were any mark-changing rubrics used?"
+        )
 
     if not isclose(client_score, server_score, abs_tol=tolerance):
         raise PlomConflict(

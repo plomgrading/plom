@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Aidan Murphy
 
 from django.test import TestCase
@@ -13,7 +13,7 @@ from model_bakery import baker
 from Papers.models import Paper, QuestionPage, SpecQuestion
 from Rubrics.models import Rubric
 
-from plom.plom_exceptions import PlomConflict
+from plom.plom_exceptions import PlomConflict, PlomInconsistentRubric
 from ..services import MarkingTaskService
 from ..models import MarkingTask, AnnotationImage
 from ..services.annotations import _create_new_annotation_in_database
@@ -22,6 +22,44 @@ from ..services.annotations import _create_new_annotation_in_database
 class MiscIncomingAnnotationsTests(TestCase):
     def setUp(self) -> None:
         baker.make(SpecQuestion, question_index=1, mark=5)
+        baker.make(SpecQuestion, question_index=2, mark=5)
+        user1 = baker.make(User, username="User1")
+        self.rubric1_on_3 = baker.make(
+            Rubric,
+            kind="relative",
+            display_delta="+1/3",
+            value=1 / 3,
+            text="test +1/3",
+            question_index=1,
+            user=user1,
+        )
+        self.rubric1_on_3_poor_rounding = baker.make(
+            Rubric,
+            kind="relative",
+            display_delta="+1/3",
+            value=0.33,
+            text="test +1/3",
+            question_index=1,
+            user=user1,
+        )
+        self.rubric3 = baker.make(
+            Rubric,
+            kind="relative",
+            display_delta="+3",
+            value=3.0,
+            text="test +3",
+            question_index=1,
+            user=user1,
+        )
+        self.rubric_q2 = baker.make(
+            Rubric,
+            kind="relative",
+            display_delta="+1",
+            value=1.0,
+            text="test +1 wrong question",
+            question_index=2,
+            user=user1,
+        )
         return super().setUp()
 
     # some existing rests imported here and split into multiple parts
@@ -89,11 +127,29 @@ class MiscIncomingAnnotationsTests(TestCase):
         MarkingTaskService.assign_task_to_user(task.pk, user0)
         img1 = baker.make(AnnotationImage)
         a1 = _create_new_annotation_in_database(
-            task, 1 / 3, 17, img1, {"sceneItems": []}
+            task,
+            1 / 3,
+            17,
+            img1,
+            {
+                "sceneItems": [
+                    ["Rubric", 0, 0, {"rid": self.rubric1_on_3.rid, "revision": 0}],
+                ]
+            },
         )
         task.latest_annotation == a1
         img2 = baker.make(AnnotationImage)
-        a2 = _create_new_annotation_in_database(task, 3.0, 21, img2, {"sceneItems": []})
+        a2 = _create_new_annotation_in_database(
+            task,
+            3.0,
+            21,
+            img2,
+            {
+                "sceneItems": [
+                    ["Rubric", 0, 0, {"rid": self.rubric3.rid, "revision": 0}]
+                ]
+            },
+        )
         task.latest_annotation != a1
         task.latest_annotation == a2
 
@@ -172,3 +228,100 @@ class MiscIncomingAnnotationsTests(TestCase):
             _create_new_annotation_in_database(
                 task, 3.0, 21, img, data, require_latest_rubrics=True
             )
+
+    def test_marking_rubric_from_wrong_question(self) -> None:
+        user0: User = baker.make(User)
+        paper2 = baker.make(Paper, paper_number=2)
+        # make a question-page for this so that the 'is question ready' checker can verify that the question actually exists.
+        # todo - this should likely be replaced with a spec check
+        baker.make(QuestionPage, paper=paper2, page_number=3, question_index=1)
+
+        task = baker.make(
+            MarkingTask,
+            code="q0002g1",
+            status=MarkingTask.TO_DO,
+            assigned_user=user0,
+            paper=paper2,
+            question_index=1,
+        )
+        MarkingTaskService.assign_task_to_user(task.pk, user0)
+        img1 = baker.make(AnnotationImage)
+        with self.assertRaisesRegex(PlomInconsistentRubric, "does not belong to"):
+            _create_new_annotation_in_database(
+                task,
+                1,
+                17,
+                img1,
+                {
+                    "sceneItems": [
+                        ["Rubric", 0, 0, {"rid": self.rubric_q2.rid, "revision": 0}],
+                    ]
+                },
+            )
+
+    def test_marking_rubric_wrong_scores(self) -> None:
+        user0: User = baker.make(User)
+        paper2 = baker.make(Paper, paper_number=2)
+        # make a question-page for this so that the 'is question ready' checker can verify that the question actually exists.
+        # todo - this should likely be replaced with a spec check
+        baker.make(QuestionPage, paper=paper2, page_number=3, question_index=1)
+
+        task = baker.make(
+            MarkingTask,
+            code="q0002g1",
+            status=MarkingTask.TO_DO,
+            assigned_user=user0,
+            paper=paper2,
+            question_index=1,
+        )
+        MarkingTaskService.assign_task_to_user(task.pk, user0)
+        img1 = baker.make(AnnotationImage)
+        with self.assertRaisesRegex(PlomConflict, "Conflict between"):
+            _create_new_annotation_in_database(
+                task,
+                1 / 3,
+                17,
+                img1,
+                {
+                    "sceneItems": [
+                        [
+                            "Rubric",
+                            0,
+                            0,
+                            {"rid": self.rubric1_on_3_poor_rounding.rid, "revision": 0},
+                        ],
+                    ]
+                },
+            )
+        with self.assertRaisesRegex(PlomConflict, "Conflict between"):
+            _create_new_annotation_in_database(
+                task,
+                1,
+                17,
+                img1,
+                {
+                    "sceneItems": [
+                        ["Rubric", 0, 0, {"rid": self.rubric3.rid, "revision": 0}],
+                    ]
+                },
+            )
+
+    def test_marking_rubric_no_rubrics_used(self) -> None:
+        user0: User = baker.make(User)
+        paper2 = baker.make(Paper, paper_number=2)
+        # make a question-page for this so that the 'is question ready' checker can verify that the question actually exists.
+        # todo - this should likely be replaced with a spec check
+        baker.make(QuestionPage, paper=paper2, page_number=3, question_index=1)
+
+        task = baker.make(
+            MarkingTask,
+            code="q0002g1",
+            status=MarkingTask.TO_DO,
+            assigned_user=user0,
+            paper=paper2,
+            question_index=1,
+        )
+        MarkingTaskService.assign_task_to_user(task.pk, user0)
+        img1 = baker.make(AnnotationImage)
+        with self.assertRaisesRegex(PlomInconsistentRubric, "computed score is None"):
+            _create_new_annotation_in_database(task, 0, 17, img1, {"sceneItems": []})
