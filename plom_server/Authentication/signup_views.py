@@ -3,6 +3,7 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2025 Andrew Rechnitzer
 
 from io import StringIO
 import csv
@@ -16,14 +17,13 @@ from django.shortcuts import render
 from plom.misc_utils import humanize_seconds
 from Base.base_group_views import AdminOrManagerRequiredView
 from .services import AuthenticationServices
-from .form.signupForm import CreateUserForm, CreateMultiUsersForm
+from .form.signupForm import CreateSingleUserForm, CreateMultiUsersForm
 
 
 class SingleUserSignUp(AdminOrManagerRequiredView):
     template_name = "Authentication/signup_single_user.html"
-
+    form = CreateSingleUserForm()
     link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
-    form = CreateUserForm()
 
     def get(self, request):
         context = {
@@ -34,7 +34,7 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
         return render(request, self.template_name, context)
 
     def post(self, request):
-        form = CreateUserForm(request.POST)
+        form = CreateSingleUserForm(request.POST)
         if form.is_valid():
             username = form.cleaned_data.get("username")
             user_email = form.cleaned_data.get("email")
@@ -50,7 +50,7 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
                 )
             )
             context = {
-                "form": self.form,
+                "form": form,
                 "current_page": "single",
                 "link_expiry_period": self.link_expiry_period,
                 "links": password_reset_links,
@@ -60,8 +60,7 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
                 "form": form,
                 "current_page": "single",
                 "link_expiry_period": self.link_expiry_period,
-                # TODO: this looks overly specific: perhaps it could fail in many ways
-                "error": form.errors["username"][0],
+                "error": form.errors,
             }
         return render(request, self.template_name, context)
 
