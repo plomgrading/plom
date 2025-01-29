@@ -130,7 +130,7 @@ def _extract_rubric_rid_rev_pairs(raw_annot_data) -> list[tuple[int, int]]:
     return rubric_rid_rev_pairs
 
 
-def _list_of_rubric_to_dict_of_dict(rlist: list[Rubric]) -> dict[int, dict[str, Any]]:
+def _list_of_rubrics_to_dict_of_dict(rlist: list[Rubric]) -> dict[int, dict[str, Any]]:
     """Return dict of rubrics as dict with rid as key."""
     # don't track usernames - reduce DB calls.
     return {
@@ -180,7 +180,7 @@ def _validate_rubric_use_and_score(
         tolerance: the max floating point error to allow when comparing the
             score uploaded by the client to the score computed by the server.
         require_latest_rubrics: when set true, the function checks that
-            the rubrics used are the latest revisions and also publised.
+            the rubrics used are the latest revisions and also published.
 
     Raises:
         PlomConflict: if an older or unpublished rubric is used
