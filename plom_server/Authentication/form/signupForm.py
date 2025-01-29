@@ -61,8 +61,7 @@ class CreateSingleUserForm(forms.ModelForm):
                     }
                 )
             )
-        else:
-            return username
+        return username
 
 
 class CreateMultiUsersForm(forms.Form):
