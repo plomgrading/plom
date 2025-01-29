@@ -21,6 +21,7 @@ from .identify import (
     IDgetNextTask,
     IDprogressCount,
     IDclaimThisTask,
+    IDdirect,
 )
 
 from .mark import (

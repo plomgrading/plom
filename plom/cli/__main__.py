@@ -30,6 +30,8 @@ from plom import Default_Port, __version__
 from plom.cli import (
     bundle_map_page,
     get_reassembled,
+    id_paper,
+    un_id_paper,
     list_bundles,
     start_messenger,
     upload_bundle,
@@ -123,14 +125,39 @@ def _get_parser():
         help="Delete a bundle from the staging area, NOT IMPLEMENTED YET",
     )
     _add_server_args(s)
+    s.add_argument("bundle_id", type=int)
 
     s = sub.add_parser(
         "wait-bundle",
         help="Wait for a bundle to finish processing, NOT IMPLEMENTED YET",
     )
     _add_server_args(s)
-
     s.add_argument("bundle_id", type=int)
+
+    s = sub.add_parser(
+        "id-paper",
+        help="Identify a paper by associating it with a particular student",
+        description="""
+            Identify a paper by associating it with a particular student id
+            (and name).  The id must be unique and not in use.  The name is
+            essentially arbitrary (as lots of people have the same name).
+            This tool doesn't care about mundane things like classlists.
+            Its your responsibility to send reasonable data that has meaning
+            to you.
+        """,
+    )
+    _add_server_args(s)
+    s.add_argument("papernum", type=int, help="Which paper number to identify")
+    s.add_argument("--sid", type=str)
+    s.add_argument("--name", type=str)
+
+    s = sub.add_parser(
+        "un-id-paper",
+        help="Unidentify a paper, removing the association with a student",
+    )
+    _add_server_args(s)
+    s.add_argument("papernum", type=int, help="Which paper number to identify")
+
     s = sub.add_parser(
         "clear",
         help='Clear "scanner" login',
@@ -224,6 +251,18 @@ def main():
             questions=args.question,
             msgr=(args.server, args.username, args.password),
         )
+
+    elif args.command == "id-paper":
+        id_paper(
+            args.papernum,
+            args.sid,
+            args.name,
+            msgr=(args.server, args.username, args.password),
+        )
+
+    elif args.command == "un-id-paper":
+        un_id_paper(args.papernum, msgr=(args.server, args.username, args.password))
+
     elif args.command == "get-reassembled":
         r = get_reassembled(
             args.papernum, msgr=(args.server, args.username, args.password)
