@@ -23,7 +23,7 @@ class MiscIncomingAnnotationsTests(TestCase):
     def setUp(self) -> None:
         baker.make(SpecQuestion, question_index=1, mark=5)
         baker.make(SpecQuestion, question_index=2, mark=5)
-        user1 = baker.make(User, username="User1")
+        user1: User = baker.make(User, username="User1")
         self.rubric1_on_3 = baker.make(
             Rubric,
             kind="relative",
