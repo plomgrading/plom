@@ -166,7 +166,7 @@ class IDdirect(APIView):
 
     # PUT: /ID/beta/{papernum}&student_id=...
     def put(self, request: Request, *, papernum: int) -> Response:
-        """Put a particular student number in place as the identify a paper.
+        """Put a particular student number in place as the identity of a paper.
 
         You must pass both `sid=` and `sname=` in query parameters.
 
