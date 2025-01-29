@@ -56,7 +56,9 @@ class IDDirectService:
     def identify_direct_cmd(
         cls, username: str, paper_number: int, student_id: str, student_name: str
     ):
+        """This function backs the command-line utility."""
         try:
+            # TODO: the other Views check for manager OR lead_marker
             user_obj = User.objects.get(
                 username__iexact=username, groups__name="manager"
             )

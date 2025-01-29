@@ -28,7 +28,10 @@ class Command(BaseCommand):
         parser.add_argument(
             "paper",
             type=int,
-            help="The paper number to which the pdf has been uploaded and to which we assign the ID.",
+            help="""
+                The paper number to which the pdf has been uploaded
+                and to which we assign the ID.
+            """,
         )
         parser.add_argument(
             "student_id",
