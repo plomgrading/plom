@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from math import isclose
 import pathlib
 
 from django.db import transaction
@@ -207,13 +208,12 @@ def _validate_rubric_use_and_score(
     used_rubric_list = [rubric_data[rid] for rid in rids]
     # recompute score on server
     server_score = compute_score(used_rubric_list, question_max_mark)
-
+    # TODO - if no rubrics used then compute_score returns a None
+    # this should likely throw an exception rather than an assert.
     # TODO: or maybe it is ok if they are both None?
     assert server_score is not None, "Unexpectedly computed a 'None' score"
 
-    delta_score = client_score - server_score
-
-    if (delta_score > tolerance) or (delta_score < -tolerance):
+    if not isclose(client_score, server_score, abs_tol=tolerance):
         raise PlomConflict(
             "Conflict between score computed by client and score recomputed by server"
         )
