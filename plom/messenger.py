@@ -1045,8 +1045,10 @@ class Messenger(BaseMessenger):
                 response = self.put_auth(url)
                 response.raise_for_status()
             except requests.HTTPError as e:
-                if response.status_code in (401, 403):
+                if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
                 if response.status_code == 404:
                     raise PlomNoPaper(response.reason) from None
                 if response.status_code == 409:
@@ -1065,8 +1067,10 @@ class Messenger(BaseMessenger):
                 response = self.delete_auth(f"/ID/{paper_number}")
                 response.raise_for_status()
             except requests.HTTPError as e:
-                if response.status_code in (401, 403):
+                if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
                 if response.status_code == 404:
                     raise PlomNoPaper(response.reason) from None
                 if response.status_code == 406:

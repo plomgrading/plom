@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 
@@ -168,9 +168,12 @@ class IDdirect(APIView):
 
         You must pass both `sid=` and `sname=` in query parameters.
 
-        Response is 200 when it succeeds, currently with no content.  409 if that
-        student id is in-use for another paper, 404 for no such paper.  403 if you
-        do not have permissions to ID papers.  400 for invalid name / sid.
+        Responses:
+            200 when it succeeds, currently with no content.
+            400 for invalid name / sid.
+            403 if you do not have permissions to ID papers.
+            404 for no such paper.
+            409 if that student id is in-use for another paper.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list and "lead_marker" not in group_list:
@@ -178,6 +181,7 @@ class IDdirect(APIView):
                 'Only "lead markers" and "managers" can ID papers',
                 status.HTTP_403_FORBIDDEN,
             )
+
         student_id = request.query_params.get("student_id")
         student_name = request.query_params.get("student_name")
         if not student_id:
@@ -199,8 +203,10 @@ class IDdirect(APIView):
             return Response(status=status.HTTP_200_OK)
         except ValueError as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
+        except IntegrityError as e:
+            return _error_response(e, status.HTTP_409_CONFLICT)
         except RuntimeError as e:
-            # TODO: check legacy server, maybe it and client all conflate various errors to 409
+            # thought to be impossible, but if it happens its a conflict
             return _error_response(e, status.HTTP_409_CONFLICT)
 
     def delete(self, request: Request, *, papernum: int) -> Response:
@@ -219,8 +225,8 @@ class IDdirect(APIView):
             )
 
         # TODO: document places where paper_id assumed to be paper_num
-        data = request.data
-        user = request.user
+        # data = request.data
+        # user = request.user
         # its = IdentifyTaskService()
         # try:
         #     its.identify_paper(user, paper_id, data["sid"], data["sname"])
