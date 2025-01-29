@@ -205,7 +205,7 @@ def _validate_rubric_use_and_score(
                     "team, or use a different rubric."
                 )
     # Check client-computed score against server-computed score
-    used_rubric_list = [rubric_data[rid] for rid in rids]
+    used_rubric_list = [rubric_data[rid] for rid, _ in rid_rev_pairs]
     # recompute score on server
     server_score = compute_score(used_rubric_list, question_max_mark)
     # TODO - if no rubrics used then compute_score returns a None
@@ -215,7 +215,7 @@ def _validate_rubric_use_and_score(
 
     if not isclose(client_score, server_score, abs_tol=tolerance):
         raise PlomConflict(
-            "Conflict between score computed by client and score recomputed by server"
+            f"Conflict between score computed by client, {client_score}, and score recomputed by server, {server_score}"
         )
 
 
@@ -229,7 +229,7 @@ def _add_annotation_to_rubrics(annotation: Annotation) -> None:
     rubric_data = {r.rid: r for r in Rubric.objects.filter(rid__in=rids, latest=True)}
     # now attach the annotation to each used rubric
     # with multiplicity - so iterate over list.
-    for rid, _ in rids:
+    for rid in rids:
         rubric_data[rid].annotations.add(annotation)
 
 
