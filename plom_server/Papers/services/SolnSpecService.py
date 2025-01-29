@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
-
-from __future__ import annotations
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 import sys
 from typing import Any
@@ -45,7 +43,7 @@ def load_soln_spec_from_dict(
     if "solution" in soln_spec_dict.keys():
         soln_spec_dict["solution"] = soln_list_to_dict(soln_spec_dict["solution"])
     serializer = SolnSpecSerializer(data=soln_spec_dict)
-    serializer.is_valid()
+    assert serializer.is_valid(), "Unexpectedly invalid serializer"
 
     return serializer.create(serializer.validated_data)
 
