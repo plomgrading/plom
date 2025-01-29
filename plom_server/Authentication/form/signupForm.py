@@ -16,18 +16,13 @@ from .choices import (
 
 
 class CreateSingleUserForm(forms.ModelForm):
-    username = forms.CharField(max_length=150, help_text="Username")
-    # we set max length here because by default CharField is length unlimited, but
-    # in the User object from django-auth, the field is limited to 150
-    # https://docs.djangoproject.com/en/5.0/ref/contrib/auth/#django.contrib.auth.models.User.username
-    # see above - default max length of username in django is 150.
+    # also validated by User model, e.g., restricting the length to some max
+    username = forms.CharField(help_text="Username")
     email = forms.EmailField(
         help_text="Email",
         required=False,
         widget=forms.EmailInput(attrs={"placeholder": "Optional"}),
     )
-    # do not set length on emailfield - django default is 254.
-    # https://docs.djangoproject.com/en/5.0/ref/models/fields/#django.db.models.CharField
 
     user_types = forms.CharField(
         label="What user type would you like to create?",
