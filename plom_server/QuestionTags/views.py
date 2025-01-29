@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2025 Aden Chan
 
 import csv
@@ -73,6 +73,7 @@ class QTagsLandingView(ListView, ManagerRequiredView):
                     QuestionTagService.delete_question_tag_link(question_tag_id)
                 except ValueError as err:
                     return JsonResponse({"error": f"{err}"})
+        # TODO: if the forms are invalid, we also redirect: is that intended?
         return redirect(reverse("qtags_landing"))
 
 

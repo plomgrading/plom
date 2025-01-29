@@ -57,15 +57,16 @@ class ProfileView(LoginRequiredMixin, View):
         except IndexError:
             group = None
         form = EditProfileForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            context = {
-                "form": form,
-                "user_group": group,
-                "email": request.user.email,
-            }
-            return render(request, self.profile_page, context)
-        # TODO: what if its not valid?
+        if not form.is_valid():
+            messages.error(request, f"Unexpectedly invalid form: {form}")
+            return redirect("home")
+        form.save()
+        context = {
+            "form": form,
+            "user_group": group,
+            "email": request.user.email,
+        }
+        return render(request, self.profile_page, context)
 
 
 def password_change_redirect(request):
