@@ -1,0 +1,234 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% SPDX-License-Identifier: AGPL-3.0-or-later
+%% Copyright (C) 2023 Andrew Rechnitzer
+%% Copyright (C) 2023, 2025 Colin B. Macdonald
+%% Copyright (C) 2024-2025 Forest Kobayashi
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[12pt,letterpaper]{article}
+
+\usepackage[letterpaper,left=29mm,right=29mm,top=10mm,bottom=4mm]{geometry}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{ifthen}
+
+
+\setlength{\parindent}{0em}
+
+%%%%%%%%%%%%%
+
+\pagestyle{empty}
+
+
+\newcommand{\thingandexample}[2]{
+  {
+    \def\arraystretch{.8}
+    % negative space on right to align with columns not using this cmd
+    \begin{tabular}[x]{@{}r@{\!\!\!}}
+      #1 \\ {\footnotesize #2}
+    \end{tabular}
+  }
+}
+
+% QR additions
+\newcommand{\placeQRcodes}[4]{
+  \begin{tikzpicture}[remember picture,overlay]
+
+    \ifthenelse{\equal{#1}{}}{}{
+      \node[anchor=north east, xshift=-8mm, yshift=-8mm, line width=0.25pt, draw=black, inner sep=1pt] (qrne) at (current page.north east) {\includegraphics[angle= 90, origin=c, height=15mm]{#1}};
+    }
+    \ifthenelse{\equal{#2}{}}{}{
+      \node[anchor=north west, xshift= 8mm, yshift=-8mm, line width=0.25pt, draw=black, inner sep=1pt] (qrnw) at (current page.north west) {\includegraphics[angle=180, origin=c, height=15mm]{#2}};
+    }
+    \ifthenelse{\equal{#3}{}}{}{
+      \node[anchor=south west, xshift= 8mm, yshift= 8mm, line width=0.25pt, draw=black, inner sep=1pt] (qrsw) at (current page.south west) {\includegraphics[angle=-90, origin=c, height=15mm]{#3}};
+    }
+    \ifthenelse{\equal{#4}{}}{}{
+      \node[anchor=south east, xshift=-8mm, yshift= 8mm, line width=0.25pt, draw=black, inner sep=1pt] (qrse) at (current page.south east) {\includegraphics[angle=  0, origin=c, height=15mm]{#4}};
+    }
+  \end{tikzpicture}
+}
+
+%%% \drawcappedbox assumes you're in a tikzpicture.
+% Arguments:
+% #1 -> half of width of box
+% #2 -> top coordinate for box
+% #3 -> bottom coordinate for box
+\newcommand{\drawcappedbox}[3]{
+  % For the corner caps
+  \pgfmathsetmacro{\cornerlen}{.5}
+  \pgfmathsetmacro{\cornerwidth}{2pt}
+
+
+  \coordinate (nw) at (-#1, #2);
+  \coordinate (ne) at ( #1, #2);
+  \coordinate (se) at ( #1, #3);
+  \coordinate (sw) at (-#1, #3);
+
+  % Overdraw coords for making the corner ``caps''
+  \coordinate (nwe) at ($(nw) + (\cornerlen, 0cm)$);
+  \coordinate (nws) at ($(nw) + (0, -\cornerlen)$);
+
+  \coordinate (swe) at ($(sw) + (\cornerlen, 0cm)$);
+  \coordinate (swn) at ($(sw) + (0, \cornerlen)$);
+
+  \coordinate (new) at ($(ne) + (-\cornerlen, 0cm)$);
+  \coordinate (nes) at ($(ne) + (0, -\cornerlen)$);
+
+  \coordinate (sew) at ($(se) + (-\cornerlen, 0cm)$);
+  \coordinate (sen) at ($(se) + (0, \cornerlen)$);
+
+  \draw[line width=\cornerwidth/2, gray!50!white, densely dotted] (nw) rectangle (se);
+
+  \draw[line width=\cornerwidth] (nwe) -- (nw) -- (nws);
+  \draw[line width=\cornerwidth] (new) -- (ne) -- (nes);
+  \draw[line width=\cornerwidth] (swn) -- (sw) -- (swe);
+  \draw[line width=\cornerwidth] (sew) -- (se) -- (sen);
+}
+
+\begin{document}
+% In a previous version, these spacing things were necessary. I forgot
+% about them until I'd finished tuning all of the spacing parameters
+% above. Somebody else should probably figure out what needs to change
+% to get rid of them.
+\,
+
+\vfill
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\placeQRcodes{qr_crn_1}{}{qr_crn_3}{qr_crn_4}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{tikzpicture}[
+  remember picture,
+  overlay,
+  xshift=.5\linewidth, % ??? why does using \paperwidth not place it
+  % correctly??
+  yshift=.5\paperheight
+  ]
+
+  % Hard code letter paper ratio...someone else can adjust this later
+  \pgfmathsetmacro{\hwratio}{11/8.5}
+  \pgfmathsetmacro{\halfboxw}{7}
+  \pgfmathsetmacro{\halfboxh}{\halfboxw * \hwratio}
+  \pgfmathsetmacro{\topy}{\halfboxh - 4} % Need extra room at top
+  \pgfmathsetmacro{\boty}{-\halfboxh - 0.5} % Need extra room at top
+
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  % Staple alignment corner
+  \node[anchor=north west, xshift=4mm, yshift=-4mm] at (current page.north west) {
+    \begin{tikzpicture}
+      \coordinate (a) at (0,0);
+      \coordinate (b) at (2.75,0);
+      \coordinate (c) at (0,-2.75);
+
+      \filldraw[draw=black, fill=gray!30] (a)--(b)--(c)--(a);
+
+      \clip (a)--(b)--(c)--(a);
+
+      \node () at (-.625, .625) {\rotatebox{45}{
+          \begin{tabular}{c}
+             Align \\ with staples
+          \end{tabular}
+        }};
+
+    \end{tikzpicture}
+  };
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+  \node () at (0, \halfboxh+2.5) {\bfseries \huge Plom Bundle Separator Sheet};
+
+  \node () at (.25, \halfboxh+1) {
+    % A (brittle) self-rolled `\begin{itemize}[...] \end{itemize}'
+    % equivalent that (unlike itemize) works inside tikz nodes.
+    \begin{tabular}{l}
+      % -2.5ex experimentally chosen for hanging indent (in case of multiline bullet point)
+      \hspace*{-2.5ex}\textbullet\; Default to 20 exams per bundle \\[.5em]
+      \hspace*{-2.5ex}\textbullet\; Align labeled corner with bundle exams' staples and place on top\\[.5em]
+    \end{tabular}
+  };
+
+  \begin{scope}
+    % These are only separately defined as a holdover from how stuff
+    % was written previously. But, I think it makes it a little easier
+    % to understand what's going on, so I've kept it.
+    \pgfmathsetmacro{\invignotew}{7}
+    \pgfmathsetmacro{\invigtopy}{\topy+3.5}
+    \pgfmathsetmacro{\invigboty}{\topy-.5}
+
+    \drawcappedbox{\invignotew}{\invigtopy}{\invigboty}
+
+    \node () at  (0, \invigtopy-0.4) {Invigilator notes (optional)};
+
+  \end{scope}
+
+  \begin{scope}[yshift=-2cm]
+
+    %% Draw in outer box
+    \drawcappedbox{\halfboxw}{\topy}{\boty}
+
+    \node () at (0, \topy-0.4) {To be filled out by scanning team (not invigilators)};
+
+    \newcommand{\infobox}{
+      \raisebox{-.6cm}{
+        \begin{tikzpicture}
+          \draw (0, 0) rectangle (6, 1.5);
+        \end{tikzpicture}
+      }
+    }
+
+    \newcommand{\checkbox}{
+      \raisebox{-.1cm}{
+        \begin{tikzpicture}
+          \draw (0, 0) rectangle (.5, .5);
+        \end{tikzpicture}
+      }
+    }
+
+
+    \node () at (0, \topy-5.0) {
+      \begin{tabular}{rl}
+        \thingandexample{Exam shortcode:}{(e.g.~\texttt{24-w1-m100-mt1})}
+        & \infobox \\[6ex]
+        \thingandexample{Exam subunit:}{(e.g.~room or section \#)}
+        & \infobox \\[6ex]
+        \thingandexample{Which scanner:}{(if relevant)} &  \infobox \\[5ex]
+        Tick after scanning: & \checkbox \\[2ex]
+        Tick if rescanning: & \checkbox
+      \end{tabular}
+    };
+
+
+    \pgfmathsetmacro{\noteboxw}{6}
+    \draw (-\noteboxw, \boty+5.0) rectangle (\noteboxw, \boty+1);
+    \node[right] () at (-\noteboxw+.1, \boty+5.0-.3) {Other scanner notes:};
+  \end{scope}
+
+
+\end{tikzpicture}
+
+\clearpage
+
+\,
+
+\vfill
+\begin{center}
+  {\bfseries \huge Plom Bundle Separator (back)}
+\end{center}
+\vfill
+
+% % Ensure QR codes appear on back as well
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\placeQRcodes{qr_crn_5}{qr_crn_6}{qr_crn_7}{qr_crn_8}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+\end{document}

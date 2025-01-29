@@ -23,6 +23,7 @@ from .buildDatabaseAndPapers import build_database, build_papers
 from .mergeAndCodePages import make_PDF
 from .build_extra_page_with_qrcodes import build_extra_page_pdf
 from .build_scrap_paper_with_qrcodes import build_scrap_paper_pdf
+from .build_bundle_separators_with_qrcodes import build_bundle_separator_paper_pdf
 
 from .classlistValidator import (
     sid_field,

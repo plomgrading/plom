@@ -64,6 +64,22 @@ with the orientation code being similar to that used for the TPV
   * 2,6 NW
   * 3,7 SW
   * 4,8 SE
+
+Also handles Plom bundle-separator-paper codes. These are alphanumeric stored in
+micro-qr codes and are of the form
+
+  sssssO
+  012345
+
+where
+  * 01234 = "plomB"
+  * 5 = orientation
+with the orientation code being similar to that used for the TPV
+  * 1,5 NE
+  * 2,6 NW
+  * 3,7 SW
+  * 4,8 SE
+
 """
 
 from __future__ import annotations
@@ -143,7 +159,7 @@ def parseExtraPageCode(expc: str) -> str:
 
 
 def parseScrapPaperCode(scpc: str) -> str:
-    """Parse an scrap-paper code string (typically from a QR-code).
+    """Parse a scrap-paper code string (typically from a QR-code).
 
     Args:
         scpc: a scrap-paper code string of the form "plomSO",
@@ -155,6 +171,25 @@ def parseScrapPaperCode(scpc: str) -> str:
     # strip prefix is needed for pyzbar but not zxingcpp
     scpc = scpc.lstrip("QR-Code:")  # todo = remove in future.
     o = int(scpc[5])
+    if o > 4:
+        return str(o - 4)  # todo - keep the 5-8 possibilities
+    else:
+        return str(o)
+
+
+def parseBundleSeparatorPaperCode(bspc: str) -> str:
+    """Parse a bundle-separator-paper code string (typically from a QR-code).
+
+    Args:
+        bspc: a bundle-separator-paper code string of the form "plomBO",
+            typically from a QR-code, possibly with the prefix "QR-Code:".
+
+    Returns:
+        o: the orientation code, TODO
+    """
+    # strip prefix is needed for pyzbar but not zxingcpp
+    bspc = bspc.lstrip("QR-Code:")  # todo = remove in future.
+    o = int(bspc[5])
     if o > 4:
         return str(o - 4)  # todo - keep the 5-8 possibilities
     else:
@@ -328,6 +363,25 @@ def isValidScrapPaperCode(code: str) -> bool:
     return False
 
 
+def isValidBundleSeparatorPaperCode(code: str) -> bool:
+    """Is this a valid Plom-bundle-separator-paper code?
+
+    Args:
+        code: a string to check.
+
+    Returns:
+        The validity of the bundle separator page code.
+    """
+    code = code.lstrip("plomB")
+    if len(code) != len("O"):
+        return False
+    # now check that remaining letter is a digit in 1,2,..,8.
+    if code.isnumeric():
+        if 1 <= int(code) <= 8:
+            return True
+    return False
+
+
 def encodeExtraPageCode(orientation: str | int) -> str:
     """Take an orientation (1 <= orientation <= 8) and turn it into a plom extra page code."""
     assert int(orientation) >= 1 and int(orientation) <= 8
@@ -335,9 +389,15 @@ def encodeExtraPageCode(orientation: str | int) -> str:
 
 
 def encodeScrapPaperCode(orientation: str | int) -> str:
-    """Take an orientation (1 <= orientation <= 8) and turn it into a plom extra page code."""
+    """Take an orientation (1 <= orientation <= 8) and turn it into a plom scrap page code."""
     assert int(orientation) >= 1 and int(orientation) <= 8
     return f"plomS{orientation}"
+
+
+def encodeBundleSeparatorPaperCode(orientation: str | int) -> str:
+    """Take an orientation (1 <= orientation <= 8) and turn it into a plom bundle separator page code."""
+    assert int(orientation) >= 1 and int(orientation) <= 8
+    return f"plomB{orientation}"
 
 
 def getExtraPageOrientation(code: str) -> int:
@@ -357,6 +417,18 @@ def getScrapPaperOrientation(code: str) -> int:
 
     Args:
         code: a Plom scrap-paper code.
+
+    Returns:
+        The orientation as a small integer.
+    """
+    return int(code[5])
+
+
+def getBundleSeparatorPaperOrientation(code: str) -> int:
+    """Extra the orientation digit from a valid Plom bundle-separator-paper code.
+
+    Args:
+        code: a Plom bundle-separator-paper code.
 
     Returns:
         The orientation as a small integer.
