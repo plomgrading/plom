@@ -10,7 +10,7 @@ from django.core.exceptions import MultipleObjectsReturned
 from django.contrib.auth.models import User
 from model_bakery import baker
 
-from Papers.models import Paper, QuestionPage
+from Papers.models import Paper, QuestionPage, SpecQuestion
 from Rubrics.models import Rubric
 
 from plom.plom_exceptions import PlomConflict
@@ -20,6 +20,10 @@ from ..services.annotations import _create_new_annotation_in_database
 
 
 class MiscIncomingAnnotationsTests(TestCase):
+    def setUp(self) -> None:
+        baker.make(SpecQuestion, question_index=1, mark=5)
+        return super().setUp()
+
     # some existing rests imported here and split into multiple parts
     def test_marking_outdated(self) -> None:
         mts = MarkingTaskService()
