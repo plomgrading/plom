@@ -84,11 +84,10 @@ class IdURLPatterns:
         ]
         id_patterns += classlist
 
-        # WIP, beta support for "direct IDing", bypassing tasks etc
-        # no "beta" in these URLs b/c legacy server already had these
+        # beta support for "direct IDing", bypassing tasks (legacy had these without "beta")
         id_patterns += [
-            # /id/<papernum>/...
-            path("<int:papernum>", IDdirect.as_view(), name="api_ID_beta_direct"),
+            # /ID/beta/<papernum>/...
+            path("beta/<int:papernum>", IDdirect.as_view(), name="api_ID_beta_direct"),
         ]
 
         return id_patterns

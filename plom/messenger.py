@@ -1040,7 +1040,7 @@ class Messenger(BaseMessenger):
             )
         with self.SRmutex:
             try:
-                url = f"/ID/{paper_number}"
+                url = f"/ID/beta/{paper_number}"
                 url += f"?student_id={student_id}&student_name={student_name}"
                 response = self.put_auth(url)
                 response.raise_for_status()
@@ -1062,9 +1062,13 @@ class Messenger(BaseMessenger):
             PlomAuthenticationException: login problems.
             PlomSeriousException: other errors.
         """
+        if self.is_server_api_less_than(113):
+            raise PlomNoServerSupportException(
+                "Server too old: API does not support direct IDing of papers."
+            )
         with self.SRmutex:
             try:
-                response = self.delete_auth(f"/ID/{paper_number}")
+                response = self.delete_auth(f"/ID/beta/{paper_number}")
                 response.raise_for_status()
             except requests.HTTPError as e:
                 if response.status_code == 401:

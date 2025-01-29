@@ -89,7 +89,18 @@ class IDProgressService:
         return PaperIDTask.objects.filter(status=PaperIDTask.COMPLETE).count()
 
     @transaction.atomic
-    def clear_id_from_paper(self, paper_number: int):
+    def clear_id_from_paper(self, paper_number: int) -> None:
+        """Clear an existing identification from a paper.
+
+        Args:
+            paper_number: which paper.
+
+        Raises:
+            ValueError: if the paper does not have a completed ID Task,
+                for example b/c that paper number does not exist or
+                because the Task -> claim -> return pattern isn't
+                being respected.
+        """
         # only clear the id from a paper that has actually been ID'd
         try:
             pidt = PaperIDTask.objects.filter(
@@ -97,7 +108,8 @@ class IDProgressService:
             ).get()
         except PaperIDTask.DoesNotExist:
             raise ValueError(f"Paper {paper_number} does not have a completed id-task")
-        # reset the task associated with that paper.
+        # reset the task associated with that paper by creating a new one
+        # (which will out-of-date any existing ones)
         IdentifyTaskService().create_task(pidt.paper)
 
     @transaction.atomic

@@ -15,6 +15,7 @@ from Identify.services import ClasslistService
 from Identify.services import (
     IDDirectService,
     IdentifyTaskService,
+    IDProgressService,
     IDReaderService,
 )
 
@@ -163,6 +164,7 @@ class IDclaimThisTask(APIView):
 class IDdirect(APIView):
     """TODO WIP, beta etc etc."""
 
+    # PUT: /ID/beta/{papernum}&student_id=...
     def put(self, request: Request, *, papernum: int) -> Response:
         """Put a particular student number in place as the identify a paper.
 
@@ -209,13 +211,14 @@ class IDdirect(APIView):
             # thought to be impossible, but if it happens its a conflict
             return _error_response(e, status.HTTP_409_CONFLICT)
 
+    # DELETE: /ID/beta/{papernum}
     def delete(self, request: Request, *, papernum: int) -> Response:
         """Unidenfies a paper number.
 
-        Raises:
-            HTTP_403_FORBIDDEN: user is not the assigned user for the id-ing task for that paper
-            HTTP_404_NOT_FOUND: there is no valid id-ing task for that paper
-            HTTP_409_CONFLICT: the student_id has already been assigned to another paper  (not yet implemented)
+        Response:
+            200: success.
+            403: no permission.
+            404: no paper.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list and "lead_marker" not in group_list:
@@ -223,18 +226,8 @@ class IDdirect(APIView):
                 'Only "lead markers" and "managers" can ID papers',
                 status.HTTP_403_FORBIDDEN,
             )
-
-        # TODO: document places where paper_id assumed to be paper_num
-        # data = request.data
-        # user = request.user
-        # its = IdentifyTaskService()
-        # try:
-        #     its.identify_paper(user, paper_id, data["sid"], data["sname"])
-        # except PermissionDenied as err:  # task not assigned to that user
-        #     return _error_response(err, status=status.HTTP_403_FORBIDDEN)
-        # except ObjectDoesNotExist as err:  # no valid task for that paper_id
-        #     return _error_response(err, status=status.HTTP_404_NOT_FOUND)
-        # except IntegrityError as err:  # attempt to assign SID already used
-        #     return _error_response(err, status.HTTP_409_CONFLICT)
-
-        return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
+        try:
+            IDProgressService().clear_id_from_paper(papernum)
+        except ValueError as e:
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_200_OK)
