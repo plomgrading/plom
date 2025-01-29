@@ -226,7 +226,7 @@ def _add_annotation_to_rubrics(annotation: Annotation) -> None:
     rids = [
         rid for (rid, _) in _extract_rubric_rid_rev_pairs(annotation.annotation_data)
     ]
-    rubric_data = {r.rid for r in Rubric.objects.filter(rid__in=rids, latest=True)}
+    rubric_data = {r.rid: r for r in Rubric.objects.filter(rid__in=rids, latest=True)}
     # now attach the annotation to each used rubric
     # with multiplicity - so iterate over list.
     for rid, _ in rids:
