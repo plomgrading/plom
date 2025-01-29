@@ -16,13 +16,18 @@ from .choices import (
 
 
 class CreateSingleUserForm(forms.ModelForm):
-    username = forms.CharField(max_length=40, help_text="Username")
+    username = forms.CharField(max_length=150, help_text="Username")
+    # we set max length here because by default CharField is length unlimited, but
+    # in the User object from django-auth, the field is limited to 150
+    # https://docs.djangoproject.com/en/5.0/ref/contrib/auth/#django.contrib.auth.models.User.username
+    # see above - default max length of username in django is 150.
     email = forms.EmailField(
-        max_length=100,
         help_text="Email",
         required=False,
         widget=forms.EmailInput(attrs={"placeholder": "Optional"}),
     )
+    # do not set length on emailfield - django default is 254.
+    # https://docs.djangoproject.com/en/5.0/ref/models/fields/#django.db.models.CharField
 
     user_types = forms.CharField(
         label="What user type would you like to create?",
@@ -38,7 +43,8 @@ class CreateSingleUserForm(forms.ModelForm):
 
     def clean_username(self):
         """Reject usernames that differ only in case."""
-        # taken from the source code for django's UserCreationForm
+        # we no longer subclass UserCreationForm (Issue #3798) so instead we implement username
+        # cleaning following Django's UserCreationForm
         # https://github.com/django/django/blob/stable/5.1.x/django/contrib/auth/forms.py#L221
         username = self.cleaned_data.get("username")
         # TODO - do we want other username checks? they should prolly go here.
