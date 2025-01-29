@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Brennen Chiu
     Copyright (C) 2024 Andrew Rechnitzer
+    Copyright (C) 2024 Colin Macdonald
 -->
 {% extends "Authentication/signup_base.html" %}
 {% load static %}
@@ -24,6 +25,6 @@
             <input class="btn btn-primary" type="submit" value="Create User">
         </p>
     </form>
-    <p class="text-danger">{{ error }}</p>
+    {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
     <script type="module" src="{% static '/js/frontend_utils.js' %}"></script>
 {% endblock card_content %}
