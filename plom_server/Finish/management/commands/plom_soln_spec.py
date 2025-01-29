@@ -1,21 +1,21 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2025 Colin B. Macdonald
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
 
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 from rest_framework.serializers import ValidationError
 
-from Finish.services import TemplateSolnSpecService
 from Papers.services import SolnSpecService
+from ...services import TemplateSolnSpecService
 
 
 class Command(BaseCommand):

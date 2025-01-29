@@ -7,7 +7,7 @@
 
 from django.urls import path, re_path
 
-from API.views import (
+from ..views import (
     GetTasks,
     MarkingProgress,
     ReassignTask,

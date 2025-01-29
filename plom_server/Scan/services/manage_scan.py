@@ -6,8 +6,6 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024-2025 Colin B. Macdonald
 
-from __future__ import annotations
-
 from typing import Any
 
 from django.db import transaction
@@ -24,7 +22,7 @@ from Papers.models import (
     DNMPage,
 )
 from Papers.services import SpecificationService
-from Scan.models import StagingBundle
+from ..models import StagingBundle
 
 
 class ManageScanService:

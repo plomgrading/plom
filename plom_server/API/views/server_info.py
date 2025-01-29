@@ -1,17 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
-
-from __future__ import annotations
 
 from typing import Any
 
 from django.contrib.auth.models import update_last_login, User
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
-
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
@@ -21,13 +18,11 @@ from rest_framework import status
 
 from plom import __version__
 from plom import Plom_API_Version
-
-from API.permissions import AllowAnyReadOnly
 from Base.models import SettingsModel
 from Mark.services import MarkingTaskService
 from Identify.services import IdentifyTaskService
 from Papers.services import SpecificationService
-
+from ..permissions import AllowAnyReadOnly
 from .utils import _error_response
 
 
