@@ -4,8 +4,9 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2025 Colin B. Macdonald
 
-from typing import Dict, Union
+from typing import Any
 
 from django.db import transaction
 
@@ -18,7 +19,7 @@ class IDProgressService:
     """Functions for Identify Progress HTML page."""
 
     @transaction.atomic
-    def get_id_image_object(self, image_pk: int) -> Union[Image, None]:
+    def get_id_image_object(self, image_pk: int) -> Image | None:
         """Get the ID page image based on the image's pk value.
 
         Args:
@@ -38,7 +39,7 @@ class IDProgressService:
             return None
 
     @transaction.atomic
-    def get_all_id_task_info(self) -> Dict:
+    def get_all_id_task_info(self) -> dict[dict[int, Any]]:
         id_info = {}
         students_from_classlist = ClasslistService.get_students()
         registered_sid = {student["student_id"] for student in students_from_classlist}
