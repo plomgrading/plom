@@ -200,6 +200,8 @@ class RubricLandingPageView(ManagerRequiredView):
                 elif system_filter == "User":
                     rubrics = rubrics.filter(system_rubric=False, latest=True)
 
+        # if the form is invalid, we default to showing all rubrics (?)
+
         for index, r in enumerate(rubrics):
             r.value_str = f"{r.value:.3g}"
             r.out_of_str = f"{r.out_of:.3g}"

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 
 import csv
@@ -19,6 +19,7 @@ class TaskOrderPageView(ManagerRequiredView):
     """A page for setting the task marking priorities."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """Get the main page for task ordering."""
         template_name = "TaskOrder/task_order_landing.html"
         tos = TaskOrderService()
 
@@ -54,14 +55,12 @@ class TaskOrderPageView(ManagerRequiredView):
             custom_order = {}
             if order_by == "custom":
                 form = UploadFileForm(request.POST, request.FILES)
-                if request.FILES:
-                    if form.is_valid():
-                        file = form.cleaned_data["file"]
-                        custom_order = tos.handle_file_upload(file)
-                    else:
-                        return HttpResponse("Invalid form: " + form.errors.as_text())
-                else:
+                if not request.FILES:
                     return HttpResponse("No file uploaded")
+                if not form.is_valid():
+                    return HttpResponse("Invalid form: " + form.errors.as_text())
+                file = form.cleaned_data["file"]
+                custom_order = tos.handle_file_upload(file)
 
             tos.update_priority_ordering(order_by, custom_order=custom_order)
 

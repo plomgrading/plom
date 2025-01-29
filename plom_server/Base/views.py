@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
 
@@ -94,31 +94,36 @@ class ResetConfirmView(ManagerRequiredView):
         """Handles the POST request for the reset confirmation view.
 
         Args:
-            request (HttpRequest): The HTTP request object.
+            request: The HTTP request object.
 
         Returns:
-            HttpResponse: The HTTP response object.
+            A HTTP response object.
         """
         context = self.build_context()
         form = CompleteWipeForm(request.POST)
+        # TODO: one might expect the validator should checks if this matches
         reset_phrase = SpecificationService.get_shortname()
         _confirm_field = "confirmation_field"
-        if form.is_valid():
-            if form.cleaned_data[_confirm_field] == reset_phrase:
-                try:
-                    big_red_button.reset_assessment_preparation_database()
-                except (PlomDependencyConflict, PlomDatabaseCreationError) as err:
-                    messages.add_message(request, messages.ERROR, f"{err}")
-                    return redirect(reverse("prep_conflict"))
+        if not form.is_valid():
+            # not sure this can happen, or what to do if it does; for now
+            # display poorly formatted error message on the home screen
+            messages.error(request, f"Something expected happened: {form}")
+            return redirect("home")
+        if form.cleaned_data[_confirm_field] == reset_phrase:
+            try:
+                big_red_button.reset_assessment_preparation_database()
+            except (PlomDependencyConflict, PlomDatabaseCreationError) as err:
+                messages.add_message(request, messages.ERROR, f"{err}")
+                return redirect(reverse("prep_conflict"))
 
-                messages.success(request, "Plom instance successfully wiped.")
-                return redirect("home")
-            else:
-                form.add_error(_confirm_field, "Phrase is incorrect")
-                context.update(
-                    {
-                        "bundles_staged": ScanService().staging_bundles_exist(),
-                        "wipe_form": form,
-                    }
-                )
-                return render(request, "base/reset_confirm.html", context=context)
+            messages.success(request, "Plom instance successfully wiped.")
+            return redirect("home")
+        else:
+            form.add_error(_confirm_field, "Phrase is incorrect")
+            context.update(
+                {
+                    "bundles_staged": ScanService().staging_bundles_exist(),
+                    "wipe_form": form,
+                }
+            )
+            return render(request, "base/reset_confirm.html", context=context)

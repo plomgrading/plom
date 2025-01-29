@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2024 Aden Chan
-
-from __future__ import annotations
 
 from copy import deepcopy
 import html
@@ -87,7 +85,7 @@ def load_spec_from_dict(
     if "question" in spec_dict.keys():
         spec_dict["question"] = question_list_to_dict(spec_dict["question"])
     serializer = SpecSerializer(data=spec_dict)
-    serializer.is_valid()
+    assert serializer.is_valid(), "Unexpectedly invalid serializer"
     valid_data = serializer.validated_data
 
     if public_code:

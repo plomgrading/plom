@@ -71,13 +71,7 @@ class SetPassword(View):
 
         reset_form = SetPasswordForm(user, request.POST)
 
-        if reset_form.is_valid():
-            user = reset_form.save()
-            user.is_active = True
-            user.profile.signup_confirmation = True
-            user.save()
-            return render(request, self.set_password_complete)
-        else:
+        if not reset_form.is_valid():
             error_dict = dict(reset_form.errors)
             context = {
                 "username": user.username,
@@ -86,6 +80,11 @@ class SetPassword(View):
                 "error_dict": error_dict,
             }
             return render(request, self.template_name, context)
+        user = reset_form.save()
+        user.is_active = True
+        user.profile.signup_confirmation = True
+        user.save()
+        return render(request, self.set_password_complete)
 
 
 class SetPasswordComplete(LoginRequiredMixin, GroupRequiredMixin, View):
