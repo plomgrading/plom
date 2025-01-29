@@ -39,7 +39,7 @@ class IDProgressService:
             return None
 
     @transaction.atomic
-    def get_all_id_task_info(self) -> dict[dict[int, Any]]:
+    def get_all_id_task_info(self) -> dict[int, dict[str, Any]]:
         id_info = {}
         students_from_classlist = ClasslistService.get_students()
         registered_sid = {student["student_id"] for student in students_from_classlist}
