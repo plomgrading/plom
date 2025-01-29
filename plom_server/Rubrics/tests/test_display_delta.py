@@ -6,8 +6,8 @@ from fractions import Fraction
 
 from django.test import TestCase
 
-from ..services.rubric_service import _fraction_table
-from ..services.rubric_service import _generate_display_delta as gen_display
+from ..services.utils import _fraction_table
+from ..services.utils import _generate_display_delta as gen_display
 
 
 class RubricServiceTests_display_delta(TestCase):

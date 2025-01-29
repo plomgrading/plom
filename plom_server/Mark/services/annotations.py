@@ -183,7 +183,7 @@ def _validate_rubric_use_and_score(
             )
     # check each rubric belongs to this question
     for rid, rub in rubric_data.items():
-        if rub.question_index != question_index:
+        if rub["question_index"] != question_index:
             raise PlomInconsistentRubric(
                 f"rubric rid {rid} does not belong to question index {question_index}."
             )
@@ -191,12 +191,12 @@ def _validate_rubric_use_and_score(
     if require_latest_rubrics:
         for rid, rev in rid_rev_pairs:
             # check revision against
-            if rubric_data[rid].revision != rev:
+            if rubric_data[rid]["revision"] != rev:
                 raise PlomConflict(
                     f"rubric rid {rid} revision {rev} is not the latest revision: "
                     "refresh your rubrics and try again"
                 )
-            if not rubric_data[rid].published:
+            if not rubric_data[rid]["published"]:
                 raise PlomConflict(
                     f"rubric rid {rid} revision {rev} is the latest but it is "
                     "not currently published.  Someone has taken it offline, "
