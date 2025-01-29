@@ -20,6 +20,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from Papers.services.SpecificationService import get_question_max_mark
 from Rubrics.models import Rubric
+from Rubrics.services import _list_of_rubrics_to_dict_of_dict
 from ..models import Annotation, AnnotationImage, MarkingTask
 from plom.plom_exceptions import PlomConflict, PlomInconsistentRubric
 from plom.rubric_utils import compute_score
@@ -128,32 +129,6 @@ def _extract_rubric_rid_rev_pairs(raw_annot_data) -> list[tuple[int, int]]:
         (x[3]["rid"], x[3]["revision"]) for x in scene_items if x[0] == "Rubric"
     ]
     return rubric_rid_rev_pairs
-
-
-def _list_of_rubrics_to_dict_of_dict(rlist: list[Rubric]) -> dict[int, dict[str, Any]]:
-    """Return dict of rubrics as dict with rid as key."""
-    # don't track usernames - reduce DB calls.
-    return {
-        r.rid: {
-            "rid": r.rid,
-            "kind": r.kind,
-            "display_delta": r.display_delta,
-            "value": r.value,
-            "out_of": r.out_of,
-            "text": r.text,
-            "tags": r.tags,
-            "meta": r.meta,
-            "question_index": r.question_index,
-            "versions": r.versions,
-            "parameters": r.parameters,
-            "system_rubric": r.system_rubric,
-            "published": r.published,
-            "last_modified": r.last_modified,
-            "revision": r.revision,
-            "latest": r.latest,
-        }
-        for r in rlist
-    }
 
 
 def _validate_rubric_use_and_score(
