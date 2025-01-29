@@ -81,54 +81,53 @@ class MultiUsersSignUp(AdminOrManagerRequiredView):
     def post(self, request):
         form = CreateMultiUsersForm(request.POST)
 
-        if form.is_valid():
-            num_users = form.cleaned_data.get("num_users")
-            username_choices = form.cleaned_data.get("basic_or_funky_username")
-            user_type = form.cleaned_data.get("user_types")
+        if not form.is_valid():
+            # yellow screen of death on dev, not sure on production
+            raise RuntimeError("Unexpectedly invalid form")
 
-            if username_choices == "basic":
-                usernames_list = (
-                    AuthenticationServices().generate_list_of_basic_usernames(
-                        group_name=user_type, num_users=num_users
-                    )
-                )
-            elif username_choices == "funky":
-                usernames_list = (
-                    AuthenticationServices().generate_list_of_funky_usernames(
-                        group_name=user_type, num_users=num_users
-                    )
-                )
-            else:
-                raise RuntimeError("Tertium non datur: unexpected third choice!")
+        num_users = form.cleaned_data.get("num_users")
+        username_choices = form.cleaned_data.get("basic_or_funky_username")
+        user_type = form.cleaned_data.get("user_types")
 
-            password_reset_links = (
-                AuthenticationServices().generate_password_reset_links_dict(
-                    request=request, username_list=usernames_list
-                )
+        if username_choices == "basic":
+            usernames_list = AuthenticationServices().generate_list_of_basic_usernames(
+                group_name=user_type, num_users=num_users
             )
+        elif username_choices == "funky":
+            usernames_list = AuthenticationServices().generate_list_of_funky_usernames(
+                group_name=user_type, num_users=num_users
+            )
+        else:
+            raise RuntimeError("Tertium non datur: unexpected third choice!")
 
-            # tsv's and csv's
-            with StringIO() as iostream:
-                writer = csv.writer(iostream, delimiter="\t")
-                writer.writerows(password_reset_links.items())
-                tsv_string = iostream.getvalue()
+        password_reset_links = (
+            AuthenticationServices().generate_password_reset_links_dict(
+                request=request, username_list=usernames_list
+            )
+        )
 
-            fields = ["Username", "Reset Link"]
-            with StringIO() as iostream:
-                writer = csv.writer(iostream, delimiter=",")
-                writer.writerow(fields)
-                writer.writerows(password_reset_links.items())
-                csv_string = iostream.getvalue()
+        # tsv's and csv's
+        with StringIO() as iostream:
+            writer = csv.writer(iostream, delimiter="\t")
+            writer.writerows(password_reset_links.items())
+            tsv_string = iostream.getvalue()
 
-            context = {
-                "form": self.form,
-                "current_page": "multiple",
-                "link_expiry_period": self.link_expiry_period,
-                "links": password_reset_links,
-                "tsv": tsv_string,
-                "csv": csv_string,
-            }
-            return render(request, self.template_name, context)
+        fields = ["Username", "Reset Link"]
+        with StringIO() as iostream:
+            writer = csv.writer(iostream, delimiter=",")
+            writer.writerow(fields)
+            writer.writerows(password_reset_links.items())
+            csv_string = iostream.getvalue()
+
+        context = {
+            "form": self.form,
+            "current_page": "multiple",
+            "link_expiry_period": self.link_expiry_period,
+            "links": password_reset_links,
+            "tsv": tsv_string,
+            "csv": csv_string,
+        }
+        return render(request, self.template_name, context)
 
 
 class ImportUsers(AdminOrManagerRequiredView):
