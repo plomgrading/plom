@@ -72,6 +72,7 @@ def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
             None if not r.modified_by_user else r.modified_by_user.username
         ),
         "revision": r.revision,
+        "pedagogy_tags": [tag.tag_name for tag in r.pedagogy_tags.all()],
     }
 
 
