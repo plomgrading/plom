@@ -36,7 +36,7 @@ class AnnotationDataService:
         """Get a list of all annotations in the database.
 
         Returns:
-            List of dictonaries containing the annotation data for each annotation in the database.
+            List of dictionaries containing the annotation data for each annotation in the database.
         """
         annotations = Annotation.objects.all()
         data = []

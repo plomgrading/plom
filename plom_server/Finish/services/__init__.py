@@ -4,6 +4,7 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Elisa Pan
+# Copyright (C) 2025 Aden Chan
 
 from .student_marks_service import StudentMarkService
 from .ta_marking_service import TaMarkingService
