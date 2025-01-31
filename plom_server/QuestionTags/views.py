@@ -122,8 +122,9 @@ class CreateTagView(CreateView, ManagerRequiredView):
         help_resources = request.POST.get("help_resources")
         try:
             QuestionTagService.create_tag(
-                tag_name, text, 
-                user=request.user, 
+                tag_name,
+                text,
+                user=request.user,
                 confidential_info=confidential_info,
                 help_threshold=help_threshold,
                 help_text=help_resources,
