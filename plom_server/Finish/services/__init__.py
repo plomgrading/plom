@@ -7,6 +7,7 @@
 
 from .student_marks_service import StudentMarkService
 from .ta_marking_service import TaMarkingService
+from .annotation_data_service import AnnotationDataService
 from .reassemble_service import ReassembleService
 from .data_extraction_service import DataExtractionService
 from .matplotlib_service import MatplotlibService

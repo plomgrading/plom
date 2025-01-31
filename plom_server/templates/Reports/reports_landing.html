@@ -108,6 +108,27 @@
     </div>
     <div class="card m-2">
         <div class="card-body">
+            <h5 class="card-title">Download a .csv of annotation information.</h5>
+            <form method="post" action="{% url 'annotation_info_download' %}">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-auto">
+                        <button type="submit"
+                                class="btn {% if all_marked %}btn-primary{% else %}btn-warning{% endif %}">
+                            Download annotation information
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <p>
+                <ul>
+                    <li>Produces a csv of what comments were left on each paper</li>
+                </ul>
+            </p>
+        </div>
+    </div>
+    <div class="card m-2">
+        <div class="card-body">
             <h5 class="card-title">Student Reports</h5>
             <p>
                 In near future, student reports will produced when papers are reassembled.
