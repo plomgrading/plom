@@ -1,7 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Aden Chan
-from __future__ import annotations
-
 import csv
 import io
 from typing import List
@@ -12,7 +10,7 @@ from Mark.models.annotations import Annotation
 class AnnotationDataService:
     """Service for the grabbing the full list of annotation data."""
 
-    def get_csv_header(self) -> List:
+    def get_csv_header(self) -> list[str]:
         """Get the header for the csv file.
 
         Returns:
@@ -32,7 +30,7 @@ class AnnotationDataService:
 
         return keys
 
-    def build_csv_data(self) -> List:
+    def build_csv_data(self) -> list[dict[str, Any]]:
         """Get a list of all annotations in the database.
 
         Returns:
