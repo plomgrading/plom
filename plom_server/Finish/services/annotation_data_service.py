@@ -39,7 +39,7 @@ class AnnotationDataService:
         annotations = Annotation.objects.all()
         data = []
 
-        annotations = annotations.prefetch_related('rubric_set', 'task__paper')
+        annotations = annotations.prefetch_related("rubric_set", "task__paper")
 
         for annotation in annotations:
             data.append(
