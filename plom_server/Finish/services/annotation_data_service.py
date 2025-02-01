@@ -2,7 +2,7 @@
 # Copyright (C) 2025 Aden Chan
 import csv
 import io
-from typing import List
+from typing import Any
 
 from Mark.models.annotations import Annotation
 
@@ -38,6 +38,8 @@ class AnnotationDataService:
         """
         annotations = Annotation.objects.all()
         data = []
+
+        annotations = annotations.prefetch_related('rubric_set', 'task__paper')
 
         for annotation in annotations:
             data.append(
