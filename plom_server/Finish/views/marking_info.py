@@ -16,7 +16,7 @@ from django.shortcuts import render
 from Base.base_group_views import ManagerRequiredView
 from Mark.services import MarkingTaskService
 from Papers.services import SpecificationService
-from ..services import StudentMarkService, TaMarkingService
+from ..services import StudentMarkService, TaMarkingService, AnnotationDataService
 from ..services import DataExtractionService, D3Service
 from ..forms import StudentMarksFilterForm
 
@@ -137,6 +137,28 @@ class MarkingInformationView(ManagerRequiredView):
 
         filename = (
             "TA--"
+            + SpecificationService.get_short_name_slug()
+            + "--"
+            + arrow.utcnow().format("YYYY-MM-DD--HH-mm-ss")
+            + "--UTC"
+            + ".csv"
+        )
+
+        response = HttpResponse(csv_as_string, content_type="text/csv")
+        response["Content-Disposition"] = "attachment; filename={filename}".format(
+            filename=filename
+        )
+
+        return response
+
+    @staticmethod
+    def annotation_info_download(request: HttpRequest) -> HttpResponse:
+        """Download annotation information as a csv file."""
+        ads = AnnotationDataService()
+        csv_as_string = ads.get_csv_data_as_string()
+
+        filename = (
+            "annotations--"
             + SpecificationService.get_short_name_slug()
             + "--"
             + arrow.utcnow().format("YYYY-MM-DD--HH-mm-ss")

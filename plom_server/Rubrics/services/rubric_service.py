@@ -8,7 +8,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2024 Aden Chan
+# Copyright (C) 2025 Aden Chan
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aidan Murphy
 
@@ -43,6 +43,7 @@ from Mark.models.tasks import MarkingTask
 from Mark.services import MarkingTaskService
 from Papers.models import Paper
 from Papers.services import SpecificationService
+from QuestionTags.models import PedagogyTag
 from ..serializers import RubricSerializer
 from ..models import Rubric
 from ..models import RubricPane
@@ -72,6 +73,7 @@ def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
             None if not r.modified_by_user else r.modified_by_user.username
         ),
         "revision": r.revision,
+        "pedagogy_tags": [tag.tag_name for tag in r.pedagogy_tags.all()],
     }
 
 
@@ -482,9 +484,11 @@ class RubricService:
 
         new_rubric = serializer.save()
 
-        new_rubric.pedagogy_tags.clear()
-        for tag in new_rubric_data.get("pedagogy_tags", []):
-            new_rubric.pedagogy_tags.add(tag)
+        if isinstance(new_rubric_data.get("pedagogy_tags"), list):
+            new_rubric_data["pedagogy_tags"] = PedagogyTag.objects.filter(
+                tag_name__in=new_rubric_data["pedagogy_tags"]
+            ).values_list("pk", flat=True)
+        new_rubric.pedagogy_tags.set(new_rubric_data.get("pedagogy_tags", []))
 
         if tag_tasks:
             # TODO: or do we need some "system tags" that definitely already exist?
