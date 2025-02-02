@@ -78,7 +78,7 @@ Then we install some of the dependencies manually in the terminal::
 
   apt install python3-pyqt6 python3-pyqt6.qtsvg pyqt6-dev-tools \
       python3-platformdirs python3-packaging python3-requests-toolbelt \
-      python3-tomlkit python3-tqdm python3-arrow
+      python3-tomlkit python3-tqdm python3-arrow python3-pillow
 
 
 .. note::
