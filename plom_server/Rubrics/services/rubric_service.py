@@ -488,7 +488,7 @@ class RubricService:
             new_rubric_data["pedagogy_tags"] = PedagogyTag.objects.filter(
                 tag_name__in=new_rubric_data["pedagogy_tags"]
             ).values_list("pk", flat=True)
-        new_rubric.pedagogy_tags.set(new_rubric_data.get("pedagogy_tags", None))
+        new_rubric.pedagogy_tags.set(new_rubric_data.get("pedagogy_tags", []))
 
         if tag_tasks:
             # TODO: or do we need some "system tags" that definitely already exist?
