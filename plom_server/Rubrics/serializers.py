@@ -13,7 +13,9 @@ from QuestionTags.serializers import PedagogyTagSerializer
 
 class RubricSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
-    pedagogy_tags = PedagogyTagSerializer(many=True, read_only=True, required=False)
+    pedagogy_tags = PedagogyTagSerializer(many=True, 
+                                          read_only=True, 
+                                          required=False)
 
     class Meta:
         model = Rubric
