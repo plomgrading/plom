@@ -86,10 +86,18 @@ def _client_reject_list() -> list[dict[str, Any]]:
     #    "action": "warn",
     # },
 
-    reject_list = [
-        # insert dict[str, Any] here
+    return [
+        {
+            "client-id": "org.plomgrading.PlomClient",
+            "version": "0.16.7",
+            "operator": "==",
+            "reason": (
+                "This is just an example; 0.16.x will be blocked by API anyway."
+                "Please upgrade (or downgrade)."
+            ),
+            "action": "warn",
+        },
     ]
-    return reject_list
 
 
 class ServerVersion(APIView):
