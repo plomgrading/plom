@@ -485,7 +485,9 @@ class RubricService:
         new_rubric = serializer.save()
 
         if isinstance(new_rubric_data.get("pedagogy_tags"), list):
-            new_rubric_data["pedagogy_tags"] = PedagogyTag.objects.filter(tag_name__in=new_rubric_data["pedagogy_tags"]).values_list('pk', flat=True)
+            new_rubric_data["pedagogy_tags"] = PedagogyTag.objects.filter(
+                tag_name__in=new_rubric_data["pedagogy_tags"]
+            ).values_list("pk", flat=True)
         new_rubric.pedagogy_tags.set(new_rubric_data.get("pedagogy_tags", None))
 
         if tag_tasks:
