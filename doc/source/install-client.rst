@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright (C) 2021-2023 Colin B. Macdonald
+   Copyright (C) 2021-2023, 2025 Colin B. Macdonald
    Copyright (C) 2024 Bryan
    SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -14,7 +14,7 @@ This can be obtained in several ways:
 * Install from source or using `pip`.
 
 .. _from Flathub: https://flathub.org/apps/org.plomgrading.PlomClient
-.. _releases page: https://gitlab.com/plom/plom/-/releases/
+.. _releases page: https://gitlab.com/plom/plom-client/-/releases/
 
 
 For macOS
@@ -94,10 +94,7 @@ using the terminal:
 ``pip --break-system-packages install pyspellchecker``
 (yes that looks scary: feel free to learn about ``venv`` instead if you wish).
 
-Finally you can type ``pip install --no-deps --break-system-packages
-plom``.  The reason for ``--no-deps`` is because we want to avoid
-installing all the dependencies for the Plom Server.  In the future,
-we intend to decouple the client and server packages.
+Finally you can type ``pip install --break-system-packages plom-client``.
 
 To launch Plom Client, open the terminal and type::
 
@@ -105,4 +102,4 @@ To launch Plom Client, open the terminal and type::
 
 or::
 
-  python3 -m plom.client
+  python3 -m plomclient.client
