@@ -3,7 +3,7 @@
     Copyright (C) 2023 Edith Coates
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023 Divy Patel
-    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2023-2024 Aden Chan
     Copyright (C) 2024 Aidan Murphy
 -->
@@ -18,7 +18,15 @@
 {% endblock page_heading %}
 {% block main_content %}
     {% if messages %}
-        {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
+        {% for message in messages %}
+            {% if message.tags == "error" %}
+                <div class="alert alert-danger">{{ message }}</div>
+            {% elif message.tags == "debug" %}
+                <div class="alert alert-secondary }}">{{ message }}</div>
+            {% else %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endif %}
+        {% endfor %}
     {% endif %}
     <div>
         <a class="btn btn-primary dinline-block"
