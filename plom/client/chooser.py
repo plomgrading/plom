@@ -123,6 +123,7 @@ class Chooser(QDialog):
             __version__, self.APIVersion
         )
         log.info(s)
+        log.warning("Deprecation notice: please use standalone Plom Client")
 
         self._workdir = Path(tempfile.mkdtemp(prefix="plom_"))
         log.info("Using newly created temp directory %s", self._workdir)
