@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Ability to download Annotations `.csv` for analysis in external tools.
+* Server can transmit a reject-list of known-bad clients.
 
 ### Changed
 
