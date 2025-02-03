@@ -115,7 +115,7 @@ def _create_new_annotation_in_database(
         user=task.assigned_user,
     )
     new_annotation.save()
-    _add_annotation_to_rubrics(new_annotation)
+    _add_annotation_to_rubrics(new_annotation, require_latest_rubrics)
 
     # caution: we are writing to an object given as an input
     task.latest_annotation = new_annotation
