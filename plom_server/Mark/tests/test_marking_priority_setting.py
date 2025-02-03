@@ -6,11 +6,10 @@ from importlib import resources
 
 from Base.tests import ConfigTestCase
 from Papers.models import Paper
-from Mark.models import MarkingTaskPriority, MarkingTask
-from Mark.services import marking_priority
-from Mark.services import QuestionMarkingService
 from TaskOrder.services.task_ordering_service import TaskOrderService
 
+from ..models import MarkingTask, MarkingTaskPriority
+from ..services import QuestionMarkingService, marking_priority
 from . import config_files
 
 

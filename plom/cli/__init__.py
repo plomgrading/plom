@@ -14,6 +14,7 @@ from plom import __version__
 from .start_messenger import with_messenger, start_messenger
 from .list_bundles import list_bundles
 from .bundle_tools import upload_bundle, bundle_map_page
+from .identify_tools import id_paper, un_id_paper
 from .finish_tools import get_reassembled
 
 # TODO: see also start_messenger error message
@@ -22,6 +23,8 @@ from .finish_tools import get_reassembled
 # what you get from "from plom.cli import *"
 __all__ = [
     "bundle_map_page",
+    "id_paper",
+    "un_id_paper",
     "list_bundles",
     "upload_bundle",
     "get_reassembled",

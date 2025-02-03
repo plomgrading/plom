@@ -4,9 +4,8 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2024 Forest Kobayashi
 # Copyright (C) 2025 Aidan Murphy
-
-from __future__ import annotations
 
 import hashlib
 import logging
@@ -43,6 +42,7 @@ from plom.tpv_utils import (
     isValidTPV,
     isValidExtraPageCode,
     isValidScrapPaperCode,
+    isValidBundleSeparatorPaperCode,
 )
 
 from Papers.services import ImageBundleService, SpecificationService
@@ -58,7 +58,7 @@ from ..models import (
     PagesToImagesChore,
     ManageParseQRChore,
 )
-from ..services.qr_validators import QRErrorService
+from .qr_service import QRService
 from .image_process import PageImageProcessor
 from ..services.util import (
     update_thumbnail_after_rotation,
@@ -465,11 +465,19 @@ class ScanService:
                     'x_coord': 2203,
                     'y_coord': 2906.5
                 }
-            Similarly,, if the page is a scrap-paper page, then returns
+            Similarly, if the page is a scrap-paper page, then returns
                     'SE': {
                     'page_type': 'plom_scrap',
                     'quadrant': '4',
                     'tpv': 'plomS',
+                    'x_coord': 2203,
+                    'y_coord': 2906.5
+                }
+            Similarly, if the page is a bundle-separator-paper page, then returns
+                    'SE': {
+                    'page_type': 'plom_bundle_separator',
+                    'quadrant': '4',
+                    'tpv': 'plomB',
                     'x_coord': 2203,
                     'y_coord': 2906.5
                 }
@@ -534,6 +542,15 @@ class ScanService:
                             "page_type": "plom_scrap",
                             "quadrant": corner,
                             "tpv": "plomS",
+                        }
+                    )
+                elif isValidBundleSeparatorPaperCode(raw_qr_string):
+                    corner = parseExtraPageCode(raw_qr_string)
+                    qr_code_dict.update(
+                        {
+                            "page_type": "plom_bundle_separator",
+                            "quadrant": corner,
+                            "tpv": "plomB",
                         }
                     )
                 else:
@@ -1804,7 +1821,8 @@ def huey_parent_read_qr_codes_chore(
         _write_bundle.save()
 
     bundle_obj.refresh_from_db()
-    QRErrorService().check_read_qr_codes(bundle_obj)
+    # TODO: does this need error handling?
+    QRService.create_staging_images_based_on_QR_codes(bundle_obj)
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
     return True

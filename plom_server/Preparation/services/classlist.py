@@ -15,9 +15,7 @@ from django.core.files import File
 from django.db import transaction, IntegrityError
 
 from plom.create import PlomClasslistValidator
-from Preparation.services.preparation_dependency_service import (
-    assert_can_modify_classlist,
-)
+from .preparation_dependency_service import assert_can_modify_classlist
 from ..models import StagingStudent
 from ..services import PrenameSettingService
 

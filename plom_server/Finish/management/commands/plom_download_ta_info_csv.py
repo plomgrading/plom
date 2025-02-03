@@ -3,7 +3,7 @@
 
 from django.core.management.base import BaseCommand
 
-from Finish.services import TaMarkingService
+from ...services import TaMarkingService
 
 
 class Command(BaseCommand):

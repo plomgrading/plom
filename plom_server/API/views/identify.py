@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 
@@ -12,7 +12,12 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from Identify.services import ClasslistService
-from Identify.services import IdentifyTaskService, IDReaderService
+from Identify.services import (
+    IDDirectService,
+    IdentifyTaskService,
+    IDProgressService,
+    IDReaderService,
+)
 
 from .utils import _error_response
 
@@ -153,4 +158,76 @@ class IDclaimThisTask(APIView):
         except IntegrityError as err:  # attempt to assign SID already used
             return _error_response(err, status.HTTP_409_CONFLICT)
 
+        return Response(status=status.HTTP_200_OK)
+
+
+class IDdirect(APIView):
+    """TODO WIP, beta etc etc."""
+
+    # PUT: /ID/beta/{papernum}&student_id=...
+    def put(self, request: Request, *, papernum: int) -> Response:
+        """Put a particular student number in place as the identity of a paper.
+
+        You must pass both `sid=` and `sname=` in query parameters.
+
+        Responses:
+            200 when it succeeds, currently with no content.
+            400 for invalid name / sid.
+            403 if you do not have permissions to ID papers.
+            404 for no such paper.
+            409 if that student id is in-use for another paper.
+        """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list and "lead_marker" not in group_list:
+            return _error_response(
+                'Only "lead markers" and "managers" can ID papers',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        student_id = request.query_params.get("student_id")
+        student_name = request.query_params.get("student_name")
+        if not student_id:
+            return _error_response(
+                'You must provide a "student_id=" query parameter',
+                status.HTTP_400_BAD_REQUEST,
+            )
+        if not student_name:
+            return _error_response(
+                'You must provide a "student_name=" query parameter',
+                status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # TODO: papernum and paper_id same?
+            IDDirectService.identify_direct(
+                request.user, papernum, student_id, student_name
+            )
+            return Response(status=status.HTTP_200_OK)
+        except ValueError as e:
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
+        except IntegrityError as e:
+            return _error_response(e, status.HTTP_409_CONFLICT)
+        except RuntimeError as e:
+            # thought to be impossible, but if it happens its a conflict
+            return _error_response(e, status.HTTP_409_CONFLICT)
+
+    # DELETE: /ID/beta/{papernum}
+    def delete(self, request: Request, *, papernum: int) -> Response:
+        """Unidenfies a paper number.
+
+        Response:
+            200: success.
+            403: no permission.
+            404: no paper.
+        """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list and "lead_marker" not in group_list:
+            return _error_response(
+                'Only "lead markers" and "managers" can ID papers',
+                status.HTTP_403_FORBIDDEN,
+            )
+        try:
+            IDProgressService().clear_id_from_paper(papernum)
+        except ValueError as e:
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
         return Response(status=status.HTTP_200_OK)

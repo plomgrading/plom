@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2024 Aden Chan
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2025 Andrew Rechnitzer
 
 from io import StringIO
 import csv
@@ -15,15 +16,14 @@ from django.shortcuts import render
 
 from plom.misc_utils import humanize_seconds
 from Base.base_group_views import AdminOrManagerRequiredView
-from ..services import AuthenticationServices
-from ..form.signupForm import CreateUserForm, CreateMultiUsersForm
+from .services import AuthenticationServices
+from .form.signupForm import CreateSingleUserForm, CreateMultiUsersForm
 
 
 class SingleUserSignUp(AdminOrManagerRequiredView):
     template_name = "Authentication/signup_single_user.html"
-
+    form = CreateSingleUserForm()
     link_expiry_period = humanize_seconds(settings.PASSWORD_RESET_TIMEOUT)
-    form = CreateUserForm()
 
     def get(self, request):
         context = {
@@ -34,7 +34,7 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
         return render(request, self.template_name, context)
 
     def post(self, request):
-        form = CreateUserForm(request.POST)
+        form = CreateSingleUserForm(request.POST)
         if form.is_valid():
             username = form.cleaned_data.get("username")
             user_email = form.cleaned_data.get("email")
@@ -50,7 +50,7 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
                 )
             )
             context = {
-                "form": self.form,
+                "form": form,
                 "current_page": "single",
                 "link_expiry_period": self.link_expiry_period,
                 "links": password_reset_links,
@@ -60,8 +60,7 @@ class SingleUserSignUp(AdminOrManagerRequiredView):
                 "form": form,
                 "current_page": "single",
                 "link_expiry_period": self.link_expiry_period,
-                # TODO: this looks overly specific: perhaps it could fail in many ways
-                "error": form.errors["username"][0],
+                "error": form.errors,
             }
         return render(request, self.template_name, context)
 
@@ -82,54 +81,53 @@ class MultiUsersSignUp(AdminOrManagerRequiredView):
     def post(self, request):
         form = CreateMultiUsersForm(request.POST)
 
-        if form.is_valid():
-            num_users = form.cleaned_data.get("num_users")
-            username_choices = form.cleaned_data.get("basic_or_funky_username")
-            user_type = form.cleaned_data.get("user_types")
+        if not form.is_valid():
+            # yellow screen of death on dev, not sure on production
+            raise RuntimeError("Unexpectedly invalid form")
 
-            if username_choices == "basic":
-                usernames_list = (
-                    AuthenticationServices().generate_list_of_basic_usernames(
-                        group_name=user_type, num_users=num_users
-                    )
-                )
-            elif username_choices == "funky":
-                usernames_list = (
-                    AuthenticationServices().generate_list_of_funky_usernames(
-                        group_name=user_type, num_users=num_users
-                    )
-                )
-            else:
-                raise RuntimeError("Tertium non datur: unexpected third choice!")
+        num_users = form.cleaned_data.get("num_users")
+        username_choices = form.cleaned_data.get("basic_or_funky_username")
+        user_type = form.cleaned_data.get("user_types")
 
-            password_reset_links = (
-                AuthenticationServices().generate_password_reset_links_dict(
-                    request=request, username_list=usernames_list
-                )
+        if username_choices == "basic":
+            usernames_list = AuthenticationServices().generate_list_of_basic_usernames(
+                group_name=user_type, num_users=num_users
             )
+        elif username_choices == "funky":
+            usernames_list = AuthenticationServices().generate_list_of_funky_usernames(
+                group_name=user_type, num_users=num_users
+            )
+        else:
+            raise RuntimeError("Tertium non datur: unexpected third choice!")
 
-            # tsv's and csv's
-            with StringIO() as iostream:
-                writer = csv.writer(iostream, delimiter="\t")
-                writer.writerows(password_reset_links.items())
-                tsv_string = iostream.getvalue()
+        password_reset_links = (
+            AuthenticationServices().generate_password_reset_links_dict(
+                request=request, username_list=usernames_list
+            )
+        )
 
-            fields = ["Username", "Reset Link"]
-            with StringIO() as iostream:
-                writer = csv.writer(iostream, delimiter=",")
-                writer.writerow(fields)
-                writer.writerows(password_reset_links.items())
-                csv_string = iostream.getvalue()
+        # tsv's and csv's
+        with StringIO() as iostream:
+            writer = csv.writer(iostream, delimiter="\t")
+            writer.writerows(password_reset_links.items())
+            tsv_string = iostream.getvalue()
 
-            context = {
-                "form": self.form,
-                "current_page": "multiple",
-                "link_expiry_period": self.link_expiry_period,
-                "links": password_reset_links,
-                "tsv": tsv_string,
-                "csv": csv_string,
-            }
-            return render(request, self.template_name, context)
+        fields = ["Username", "Reset Link"]
+        with StringIO() as iostream:
+            writer = csv.writer(iostream, delimiter=",")
+            writer.writerow(fields)
+            writer.writerows(password_reset_links.items())
+            csv_string = iostream.getvalue()
+
+        context = {
+            "form": self.form,
+            "current_page": "multiple",
+            "link_expiry_period": self.link_expiry_period,
+            "links": password_reset_links,
+            "tsv": tsv_string,
+            "csv": csv_string,
+        }
+        return render(request, self.template_name, context)
 
 
 class ImportUsers(AdminOrManagerRequiredView):

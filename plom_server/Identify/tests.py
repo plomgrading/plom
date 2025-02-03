@@ -3,7 +3,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 
 from datetime import timedelta
@@ -331,13 +331,12 @@ class IdentifyTaskTests(TestCase):
     def test_id_hw(self) -> None:
         its = IdentifyTaskService()
         ids = IDProgressService()
-        idirs = IDDirectService()
 
         for n in range(1, 3):
             paper = baker.make(Paper, paper_number=n)
             its.create_task(paper)
         for n in range(1, 3):
-            idirs.identify_direct(self.marker0, n, f"99{n}", f"AB{n}")
+            IDDirectService.identify_direct(self.marker0, n, f"99{n}", f"AB{n}")
         info_dict = {
             1: {
                 "idpageimage_pk": None,

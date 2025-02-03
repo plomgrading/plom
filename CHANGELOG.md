@@ -9,14 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Ability to download Annotations `.csv` for analysis in external tools.
 
 ### Changed
 
-### Removed
+### Fixed
+* Fixes about PedagogyTags in Rubrics.
+
+
+
+## [0.17.1] - 2025-01-29
+
+### Added
+* New experimental "bundle separator" sheets for organizing scanning in very large courses.
+
+### Changed
+* The experimental `plom-cli` tool can identify papers.
 
 ### Fixed
-
-
+* Fixed a bug where users could not be created.
+* Improved overall error handling.
 
 
 ## [0.17.0] - 2025-01-24
@@ -1395,7 +1407,8 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.17.0...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.17.1...main
+[0.17.1]: https://gitlab.com/plom/plom/-/compare/v0.17.0...v0.17.1
 [0.17.0]: https://gitlab.com/plom/plom/-/compare/v0.16.11...v0.17.0
 [0.16.11]: https://gitlab.com/plom/plom/-/compare/v0.16.10...v0.16.11
 [0.16.10]: https://gitlab.com/plom/plom/-/compare/v0.16.9...v0.16.10

@@ -1,5 +1,5 @@
 <!--
-__copyright__ = "Copyright (C) 2021-2024 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2021-2025 Colin B. Macdonald"
 __copyright__ = "Copyright (C) 2021 Jalal Khouhak"
 __license__ = "AGPL-3.0-or-later"
  -->
@@ -46,7 +46,7 @@ and were last tested in March 2023.
     you may not be able to run `plom-client`.
       - You can try `~/.local/bin/plom-client` to see if things are working
         without messing around with such config files.
-      - You can use `python3 -m plom.client` instead.
+      - You can use `python3 -m plomclient.client` instead.
       - Or you can modify the `PATH` environment variable in a
         `bash` startup file... something like adding
         `export PATH=$PATH:~/.local/bin` to the file `.bash_profile`,

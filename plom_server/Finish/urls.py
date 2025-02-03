@@ -43,6 +43,11 @@ urlpatterns = [
         MarkingInformationView.ta_info_download,
         name="ta_info_download",
     ),
+    path(
+        "marking_info/annotation_info_download/",
+        MarkingInformationView.annotation_info_download,
+        name="annotation_info_download",
+    ),
     path("reassemble/", ReassemblePapersView.as_view(), name="reassemble_pdfs"),
     path(
         "reassemble/<int:paper_number>",

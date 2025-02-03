@@ -7,7 +7,7 @@
 
 from django.urls import path
 
-from UserManagement import views
+from . import views
 
 
 urlpatterns = [

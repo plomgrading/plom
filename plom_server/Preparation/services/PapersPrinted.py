@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2025 Colin B. Macdonald
 
 from django.db import transaction
 
 from ..models import PapersPrintedSettingModel
-
-from Preparation.services.preparation_dependency_service import (
+from ..services.preparation_dependency_service import (
     assert_can_set_papers_printed,
     assert_can_unset_papers_printed,
 )

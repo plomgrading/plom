@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2025 Colin B. Macdonald
 
 import csv
 from io import StringIO
@@ -18,7 +19,7 @@ def validate_file_size(value):
 
     if filesize > settings.MAX_FILE_SIZE:
         raise ValidationError(
-            "The maximum file size that can be uploaded is {settings.MAX_FILE_SIZE_DISPLAY}"
+            f"The maximum file size that can be uploaded is {settings.MAX_FILE_SIZE_DISPLAY}"
         )
     return value
 
@@ -52,11 +53,12 @@ class UploadFileForm(forms.Form):
             data = csv.reader(StringIO(file), delimiter=",")
             # check that the header is correct
             header = next(data)
-            if header != ["Paper Number", "Question Number", "Priority Value"]:
+            expected_header = ["Paper Number", "Question Number", "Priority Value"]
+            if header != expected_header:
                 raise ValidationError(
                     "Invalid csv header. Please use the following headers: "
-                    + "'Paper Number', 'Question Number', 'Priority Value'."
+                    f"Expecting {expected_header} but got {header}"
                 )
-        except csv.Error:
-            raise ValidationError("Invalid csv file")
+        except csv.Error as e:
+            raise ValidationError(f"Invalid csv file: {e}")
         return data

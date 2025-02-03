@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <author>
-  Copyright (C) 2018-2024 The Plom Project Developers
+  Copyright (C) 2018-2025 The Plom Project Developers
   SPDX-License-Identifier: AGPL-3.0-or-later
  </author>
  <class>Chooser</class>
@@ -10,14 +10,37 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>540</width>
-    <height>572</height>
+    <width>558</width>
+    <height>588</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Plom Client</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QGroupBox" name="depGroupBox">
+     <property name="title">
+      <string/>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <item>
+       <widget class="QLabel" name="depLabel">
+        <property name="text">
+         <string>&lt;strong&gt;Warning&lt;/strong&gt;: Plom Client has been split out to a stand-alone project.
+This &amp;ldquo;in-tree&amp;rdquo;  copy is deprecated; it may not receive updates, and may be removed without notice.</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+        <property name="margin">
+         <number>12</number>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
    <item>
     <widget class="QGroupBox" name="serverGBox">
      <property name="enabled">

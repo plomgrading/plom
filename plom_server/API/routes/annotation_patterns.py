@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2024 Colin B. Macdonald
 
 from django.urls import path
 
-from API.views import (
+from ..views import (
     MgetPageDataQuestionInContext,
     MgetAnnotations,
     MgetAnnotationImage,

@@ -1,14 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
-from __future__ import annotations
-
 import io
-from pathlib import Path
 import random
 import tempfile
 import time
+from pathlib import Path
 from typing import Any, Optional, Tuple
 
 import arrow
@@ -23,10 +21,7 @@ from django_huey import db_task, get_queue
 import huey
 import huey.api
 
-from .soln_source import SolnSourceService
-from .reassemble_service import ReassembleService
 from Scan.services import ManageScanService
-
 from Base.models import HueyTaskTracker
 from Identify.models import PaperIDTask
 from Papers.models import (
@@ -35,8 +30,10 @@ from Papers.models import (
     QuestionPage,
 )
 from Papers.services import SpecificationService
-from Finish.models import SolutionSourcePDF, BuildSolutionPDFChore
+from ..models import SolutionSourcePDF, BuildSolutionPDFChore
 from .student_marks_service import StudentMarkService
+from .soln_source import SolnSourceService
+from .reassemble_service import ReassembleService
 
 
 class BuildSolutionService:

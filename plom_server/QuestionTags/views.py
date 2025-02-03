@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2025 Aden Chan
 
 import csv
@@ -73,6 +73,7 @@ class QTagsLandingView(ListView, ManagerRequiredView):
                     QuestionTagService.delete_question_tag_link(question_tag_id)
                 except ValueError as err:
                     return JsonResponse({"error": f"{err}"})
+        # TODO: if the forms are invalid, we also redirect: is that intended?
         return redirect(reverse("qtags_landing"))
 
 
@@ -113,9 +114,20 @@ class CreateTagView(CreateView, ManagerRequiredView):
         tag_name = request.POST.get("tagName").strip()
         text = request.POST.get("text").strip()
         confidential_info = request.POST.get("confidential_info").strip()
+        help_threshold = request.POST.get("help_threshold")
+        try:
+            help_threshold = float(help_threshold)
+        except ValueError:
+            return JsonResponse({"error": "Help threshold must be a number"})
+        help_resources = request.POST.get("help_resources")
         try:
             QuestionTagService.create_tag(
-                tag_name, text, user=request.user, confidential_info=confidential_info
+                tag_name,
+                text,
+                user=request.user,
+                confidential_info=confidential_info,
+                help_threshold=help_threshold,
+                help_text=help_resources,
             )
         except (IntegrityError, ValueError) as err:
             return JsonResponse({"error": f"{err}"})

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2025 Colin B. Macdonald
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -21,8 +22,8 @@ from django.core.management import call_command
 from django.conf import settings
 
 from Identify.services import IDDirectService
-from Launcher.services import DemoBundleCreationService, DemoHWBundleCreationService
 from Scan.services import ScanService
+from ...services import DemoBundleCreationService, DemoHWBundleCreationService
 
 
 # dataclasses used for compatibility with older demo services.
@@ -197,7 +198,7 @@ class Command(BaseCommand):
                     f"Direct ID of homework paper {paper_number} as student {sid} {sname}"
                 )
                 # use the _cmd here so that it looks up the username for us.
-                IDDirectService().identify_direct_cmd(
+                IDDirectService.identify_direct_cmd(
                     manager_user, paper_number, sid, sname
                 )
         pass

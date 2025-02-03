@@ -1,26 +1,24 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2022 Natalie Balashov
 # Copyright (C) 2024 Aidan Murphy
 
-from __future__ import annotations
-
 from typing import Any
 
-from django.contrib.auth.models import User
-from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.tokens import default_token_generator
-from django.contrib.auth.forms import SetPasswordForm
-from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpRequest, HttpResponse
-from django.utils.http import urlsafe_base64_decode
-from django.utils.encoding import force_str
-from django.views.generic import View
 from braces.views import GroupRequiredMixin
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import redirect, render
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
+from django.views.generic import View
 
 from Base.base_group_views import RoleRequiredView
 
@@ -73,13 +71,7 @@ class SetPassword(View):
 
         reset_form = SetPasswordForm(user, request.POST)
 
-        if reset_form.is_valid():
-            user = reset_form.save()
-            user.is_active = True
-            user.profile.signup_confirmation = True
-            user.save()
-            return render(request, self.set_password_complete)
-        else:
+        if not reset_form.is_valid():
             error_dict = dict(reset_form.errors)
             context = {
                 "username": user.username,
@@ -88,6 +80,11 @@ class SetPassword(View):
                 "error_dict": error_dict,
             }
             return render(request, self.template_name, context)
+        user = reset_form.save()
+        user.is_active = True
+        user.profile.signup_confirmation = True
+        user.save()
+        return render(request, self.set_password_complete)
 
 
 class SetPasswordComplete(LoginRequiredMixin, GroupRequiredMixin, View):

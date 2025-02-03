@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 from django.views.generic import View
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.shortcuts import get_current_site
 from .edit_profile_form import EditProfileForm
@@ -56,15 +57,16 @@ class ProfileView(LoginRequiredMixin, View):
         except IndexError:
             group = None
         form = EditProfileForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            context = {
-                "form": form,
-                "user_group": group,
-                "email": request.user.email,
-            }
-            return render(request, self.profile_page, context)
-        # TODO: what if its not valid?
+        if not form.is_valid():
+            messages.error(request, f"Unexpectedly invalid form: {form}")
+            return redirect("home")
+        form.save()
+        context = {
+            "form": form,
+            "user_group": group,
+            "email": request.user.email,
+        }
+        return render(request, self.profile_page, context)
 
 
 def password_change_redirect(request):

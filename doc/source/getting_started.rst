@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright (C) 2021-2024 Colin B. Macdonald
+   Copyright (C) 2021-2025 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 .. _plom-client:
@@ -16,7 +16,7 @@ obtained in several ways:
 * Install from source or using `pip`.
 
 .. _from Flathub: https://flathub.org/apps/org.plomgrading.PlomClient
-.. _releases page: https://gitlab.com/plom/plom/-/releases/
+.. _releases page: https://gitlab.com/plom/plom-client/-/releases/
 
 See :doc:`install-client` for more details, including a few caveats
 and "gotchas".
