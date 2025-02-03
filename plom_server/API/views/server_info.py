@@ -50,6 +50,56 @@ def _version_string() -> str:
     return f"Plom server version {__version__} with API {Plom_API_Version}"
 
 
+def _client_reject_list() -> list[dict[str, Any]]:
+    # Explanation of fields
+    # ---------------------
+    # "client-id": something unique to tell different clients apart,
+    #     currently there is only "org.plomgrading.PlomClient".
+    # "operator" defaults to "==" if omitted, can also be "<",
+    #     ">", "<=" or ">=".
+    # "version" must be something parsable by `Version` from
+    #     `packaging.version`.
+    # "action", can be "warn" or "block".  Should be assumed to be
+    #     "block" if omitted.
+    # "reason": optional but recommended explanation, it should
+    #     be polite and end with something like "please upgrade".
+    #     It might be rendered in HTML, so avoid `<`, `>`, `&`.
+    #
+    # This is not the only mechanism to keep out old clients: there
+    # also an "API version" that clients must match.
+    #
+    # Examples
+    # --------
+    #
+    # {
+    #    "client-id": "org.plomgrading.PlomClient",
+    #    "version": "0.16.3",
+    #    "operator": "<",
+    #    "reason": "0.16.4 fixed important bugs; older clients not recommended, please upgrade.",
+    #    "action": "warn",
+    # },
+    # {
+    #    "client-id": "org.plomgrading.PlomClient",
+    #    "version": "0.16.7",
+    #    "operator": "==",
+    #    "reason": "0.16.7 has a show-stopper bug; please upgrade (or downgrade).",
+    #    "action": "warn",
+    # },
+
+    return [
+        {
+            "client-id": "org.plomgrading.PlomClient",
+            "version": "0.16.7",
+            "operator": "==",
+            "reason": (
+                "This is just an example; 0.16.x will be blocked by API anyway."
+                "Please upgrade (or downgrade)."
+            ),
+            "action": "warn",
+        },
+    ]
+
+
 class ServerVersion(APIView):
     """Get the server version.
 
@@ -78,7 +128,7 @@ class ServerInfo(APIView):
             "version": __version__,
             "API_version": Plom_API_Version,
             "version_string": _version_string(),
-            # TODO: "acceptable_client_API": [100, 101, 107],
+            "client-reject-list": _client_reject_list(),
         }
         return Response(info)
 
