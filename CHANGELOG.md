@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [0.17.2] - 2025-02-03
 
 ### Added
 * Ability to download Annotations `.csv` for analysis in external tools.
@@ -16,7 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Fixes about PedagogyTags in Rubrics.
-
 
 
 ## [0.17.1] - 2025-01-29
@@ -1408,7 +1407,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.17.1...main
+[0.17.2]: https://gitlab.com/plom/plom/-/compare/v0.17.1...v0.17.2
 [0.17.1]: https://gitlab.com/plom/plom/-/compare/v0.17.0...v0.17.1
 [0.17.0]: https://gitlab.com/plom/plom/-/compare/v0.16.11...v0.17.0
 [0.16.11]: https://gitlab.com/plom/plom/-/compare/v0.16.10...v0.16.11
