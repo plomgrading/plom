@@ -96,6 +96,7 @@ def _create_new_annotation_in_database(
 ) -> Annotation:
     # first check the rubric use is consistent and valid
     _validate_rubric_use_and_score(task.question_index, score, data)
+    # at this point no exceptions raised, so go ahead and wire things up.
 
     if task.latest_annotation:
         last_annotation_edition = task.latest_annotation.edition
@@ -115,7 +116,7 @@ def _create_new_annotation_in_database(
         user=task.assigned_user,
     )
     new_annotation.save()
-    _add_annotation_to_rubrics(new_annotation, require_latest_rubrics)
+    _add_annotation_to_rubrics(new_annotation)
 
     # caution: we are writing to an object given as an input
     task.latest_annotation = new_annotation
