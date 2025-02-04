@@ -162,9 +162,6 @@ packages = [
     "plom/create/bundle_separator_src.tex"
 ]
 "share/plom/testTemplates" = ["testTemplates/*"]
-"share/applications" = ["org.plomgrading.PlomClient.desktop"]
-"share/metainfo" = ["org.plomgrading.PlomClient.metainfo.xml"]
-"share/icons/hicolor/128x128/apps" = ["org.plomgrading.PlomClient.png"]
 # "share/plom/contrib", ["contrib/**/*"]
 "share/plom/contrib" = [
             "contrib/README.txt",
