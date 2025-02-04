@@ -2,15 +2,14 @@
 /* Copyright (C) 2022 Edith Coates */
 /* Copyright (C) 2022-2023 Brennen Chiu */
 /* Copyright (C) 2023 Andrew Rechnitzer */
-/* Copyright (C) 2024 Colin B. Macdonald */
+/* Copyright (C) 2024-2025 Colin B. Macdonald */
 
 /* Bootstrap classes should be used instead of custom CSS
  *
  * TODO: each thing here should come with a brief comment about why its
  * here.
  *
- * TODO: hardcoded colours here should be removed or at least avoided
- * and commented carefully why they are here.
+ * Avoid hardcoded colours; exceptions should be carefully commented.
  */
 
 /* prevents flicker during page load of some pages using Alpine */
@@ -28,20 +27,6 @@ div.is_pdf_thumbnail:hover {
 /* Customization of the left-hand/popup menu bar */
 .nav-link:hover {
     text-decoration: underline;
-}
-
-/* TODO: remove? */
-a.btn.btn-primary.btn-lg {
-    color: black;
-}
-
-/* TODO: remove? */
-.btn-primary:focus {
-    box-shadow: 0 0 0 .2rem #282828 !important;
-}
-
-.form-control:focus {
-    box-shadow: 0 0 0 .2rem #AD9CFF !important;
 }
 
 /* TODO: document what this is for */
