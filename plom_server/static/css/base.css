@@ -26,22 +26,8 @@ div.is_pdf_thumbnail:hover {
 }
 
 /* Customization of the left-hand/popup menu bar */
-/* TODO: remove? */
-.nav-link {
-    color: black;
-}
-
 .nav-link:hover {
     text-decoration: underline;
-}
-
-.is_sidebar_link {
-    text-align: center;
-}
-
-p.is_test_spec_nav_text {
-    margin: 0;
-    margin-right: 20px;
 }
 
 /* TODO: remove? */
