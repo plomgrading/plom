@@ -114,7 +114,7 @@ wet_no_drift:
     - echo "If version info duplicated, ensure same (currently none)"
     - export VER0=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
     - echo $VER0
-    - # bash -c "[[ x$VER0 == x$VER1 ]]"
+    # bash -c "[[ x$VER0 == x$VER1 ]]"
 
 
 copyright_year:
