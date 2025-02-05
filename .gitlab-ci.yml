@@ -111,12 +111,10 @@ wet_no_drift:
     - 'echo "Issue #2402: ensure two identical copies of the latex template"'
     - diff -s plom/latexTemplate.tex testTemplates/latexTemplate.tex
     - diff -s plom/latexTemplatev2.tex testTemplates/latexTemplatev2.tex
-    - echo "Version info duplicated in two places, ensure same"
+    - echo "If version info duplicated, ensure same (currently none)"
     - export VER0=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
-    - export VER1=`sed -nr 's/^\s+version. (.+)/\1/p' AppImageBuilder.yml`
     - echo $VER0
-    - echo $VER1
-    - bash -c "[[ x$VER0 == x$VER1 ]]"
+    # bash -c "[[ x$VER0 == x$VER1 ]]"
 
 
 copyright_year:
@@ -689,20 +687,6 @@ fullworkflow:
     - echo "Should be no jobs and this should succeed"
     - jobs -l
     - popd
-
-
-appstream-valid:
-  stage: static_analysis
-  image: alpine
-  before_script:
-    - apk add appstream
-    - apk add appstream-glib
-  script:
-    - appstream-util --version || true
-    - appstream-util validate org.plomgrading.PlomClient.metainfo.xml
-    - appstreamcli --version
-    # TODO: consider adding --strict on 0.16.4 which supports <developer> tag
-    - appstreamcli validate --pedantic --explain org.plomgrading.PlomClient.metainfo.xml
 
 
 # TODO: perhaps all deps should be in the docker image?
