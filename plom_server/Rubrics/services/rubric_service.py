@@ -34,6 +34,9 @@ from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.db.models.aggregates import Count
 from django.db.models import QuerySet
+
+# TODO: Issue #3808
+# from django.core.exceptions import ValidationError
 from rest_framework.exceptions import ValidationError
 
 from plom.plom_exceptions import PlomConflict
@@ -881,7 +884,12 @@ class RubricService:
             A list of the rubrics created.
 
         Raises:
-            ValueError: If the file type is not supported.
+            ValueError: If the file type is not supported.  Also if
+                username does not exist.
+            PermissionDenied: username not allowed to make rubrics.
+            ValidationError: rubric data is invalid.
+            KeyError: TODO, what should happen if no user specified?
+                See also TODO in the create code.
         """
         if filetype == "json":
             rubrics = json.loads(data)
@@ -894,4 +902,20 @@ class RubricService:
         else:
             raise ValueError(f"Unsupported file type: {filetype}")
 
+        # This smells like ask-permission: maybe better to just let them fail on create
+        # else we're just duplicating logic here...
+        for r in rubrics:
+            if r.get("rid"):
+                # TODO: or do we just ignore it?
+                raise ValidationError(
+                    f'Proposed rubric must not have existing "rid" value: {r}'
+                )
+            # Fixes for Issue #3807
+            if r.get("pedagogy_tags") == "[]":
+                r["pedagogy_tags"] = ""
+            if r.get("parameters") == "[]":
+                r["parameters"] = ""
+            if r.get("versions") == "[]":
+                r["versions"] = ""
+        # TODO: make this atomic?
         return [self.create_rubric(r) for r in rubrics]
