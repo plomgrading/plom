@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import ast
 import csv
 import io
 import html
@@ -190,6 +191,24 @@ class RubricService:
                 raise ValidationError(
                     {"value": f"out of range: {_value} is not in [0, {_out_of}]."}
                 )
+
+        # TODO: more validation of JSONFields that the model/form/serializer should
+        # be doing (see `clean_versions` commented out in Rubrics/models.py)
+        if data.get("versions"):
+            _vers = data["versions"]
+            try:
+                _vers = ast.literal_eval(_vers)
+            except (SyntaxError, ValueError) as e:
+                raise ValidationError(f'Invalid "versions" field: {e}')
+            if not isinstance(_vers, list):
+                raise ValidationError(
+                    f'nonempty "versions" must be a list of ints but got "{_vers}"'
+                )
+            for _v in _vers:
+                if not isinstance(_v, int):
+                    raise ValidationError(
+                        f'nonempty "versions" must be a list of ints but got "{_vers}"'
+                    )
 
         data["latest"] = True
         if _bypass_serializer:

@@ -115,15 +115,28 @@ class RubricServiceTests_exceptions(TestCase):
 
     def test_create_rubric_should_not_have_existing_rid(self) -> None:
         rub = {
-            "rid": 42,
             "kind": "neutral",
             "value": 0,
             "text": "qwerty",
             "username": "Liam",
             "question_index": 1,
+            "rid": 42,
         }
         with self.assertRaises(ValidationError):
             RubricService().create_rubric(rub)
+
+    def test_create_rubric_invalid_versions(self) -> None:
+        for bad_versions in ("[1, 1.2]", "[1, sth]", "{1, 2}"):
+            rub = {
+                "kind": "neutral",
+                "value": 0,
+                "text": "qwerty",
+                "username": "Liam",
+                "question_index": 1,
+                "versions": bad_versions,
+            }
+            with self.assertRaises(ValidationError):
+                RubricService().create_rubric(rub)
 
 
 class RubricServiceTests(TestCase):
