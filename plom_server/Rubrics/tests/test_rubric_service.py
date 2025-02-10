@@ -113,6 +113,18 @@ class RubricServiceTests_exceptions(TestCase):
         with self.assertRaisesRegex(ValidationError, "out of range"):
             RubricService().create_rubric(rub)
 
+    def test_create_rubric_should_not_have_existing_rid(self) -> None:
+        rub = {
+            "rid": 42,
+            "kind": "neutral",
+            "value": 0,
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 1,
+        }
+        with self.assertRaises(ValidationError):
+            RubricService().create_rubric(rub)
+
 
 class RubricServiceTests(TestCase):
     """Tests for `Rubric.service.RubricService()`."""

@@ -107,6 +107,13 @@ class RubricService:
             except ObjectDoesNotExist as e:
                 raise ValueError(f"User {username} does not exist.") from e
 
+        if "rid" in incoming_data.keys():
+            # could potentially allow blank rid...
+            raise ValidationError(
+                'Data for creating a new rubric must not already have a "rid" column,'
+                f' but this has {incoming_data.get("rid")}'
+            )
+
         # some mangling because client still uses "question"
         if "question_index" not in incoming_data.keys():
             incoming_data["question_index"] = incoming_data.pop("question")
@@ -914,20 +921,17 @@ class RubricService:
         else:
             raise ValueError(f"Unsupported file type: {filetype}")
 
-        # This smells like ask-permission: maybe better to just let them fail on create
-        # else we're just duplicating logic here...
+        # This smells like ask-permission: try to avoid too much "pre-validation"
+        # and instead leave that for the rubric creation code.  Try to keep this
+        # code specific to file uploads, e.g., csv ambiguities.
         for r in rubrics:
-            if r.get("rid"):
-                # TODO: or do we just ignore it?
-                raise ValidationError(
-                    f'Proposed rubric must not have existing "rid" value: {r}'
-                )
-            # Fixes for Issue #3807
+            # Fixes for Issue #3807: csv might scramble empty lists
             if r.get("pedagogy_tags") == "[]":
                 r["pedagogy_tags"] = ""
             if r.get("parameters") == "[]":
                 r["parameters"] = ""
             if r.get("versions") == "[]":
                 r["versions"] = ""
+
         # TODO: make this atomic?
         return [self.create_rubric(r) for r in rubrics]
