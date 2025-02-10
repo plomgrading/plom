@@ -173,6 +173,12 @@ class RubricService:
                 raise ValidationError(
                     {"out_of": f"out of {_out_of} must be convertible to number: {e}"}
                 )
+            try:
+                _value = float(_value)
+            except ValueError as e:
+                raise ValidationError(
+                    {"value": f"value {_value} must be convertible to number: {e}"}
+                )
             if not 0 <= _value <= _out_of:
                 raise ValidationError(
                     {"value": f"out of range: {_value} is not in [0, {_out_of}]."}
@@ -343,6 +349,12 @@ class RubricService:
             except ValueError as e:
                 raise ValidationError(
                     {"out_of": f"out of {_out_of} must be convertible to number: {e}"}
+                )
+            try:
+                _value = float(_value)
+            except ValueError as e:
+                raise ValidationError(
+                    {"value": f"value {_value} must be convertible to number: {e}"}
                 )
             if not 0 <= _value <= _out_of:
                 raise ValidationError(
