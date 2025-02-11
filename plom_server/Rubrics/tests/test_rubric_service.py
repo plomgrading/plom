@@ -641,6 +641,40 @@ class RubricServiceTests(TestCase):
         with self.assertRaisesRegex(ValidationError, "out of range"):
             service.modify_rubric(rid, simulated_client_data)
 
+    def test_modify_absolute_rubric_change_value_nonnumeric(self) -> None:
+        service = RubricService()
+        rid = self.modified_absolute_rubric.rid
+
+        simulated_client_data = {
+            "rid": rid,
+            "kind": "absolute",
+            "value": "forty two",
+            "display_delta": "forty two",
+            "out_of": 3,
+            "text": "yuiop",
+            "username": "Olivia",
+            "question_index": 1,
+        }
+        with self.assertRaisesRegex(ValidationError, "value.*convertible"):
+            service.modify_rubric(rid, simulated_client_data)
+
+    def test_modify_absolute_rubric_change_out_of_nonnumeric(self) -> None:
+        service = RubricService()
+        rid = self.modified_absolute_rubric.rid
+
+        simulated_client_data = {
+            "rid": rid,
+            "kind": "absolute",
+            "value": 3,
+            "display_delta": "3",
+            "out_of": "four",
+            "text": "yuiop",
+            "username": "Olivia",
+            "question_index": 1,
+        }
+        with self.assertRaisesRegex(ValidationError, "out of.*convertible"):
+            service.modify_rubric(rid, simulated_client_data)
+
     def test_rubrics_get_as_dicts(self) -> None:
         rubrics = RubricService().get_rubrics_as_dicts()
         self.assertEqual(len(rubrics), RubricService().get_rubric_count())
