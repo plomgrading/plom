@@ -56,6 +56,48 @@ from .utils import _generate_display_delta, _Rubric_to_dict
 log = logging.getLogger("RubricServer")
 
 
+# TODO: more validation of JSONFields that the model/form/serializer should
+# be doing (see `clean_versions` commented out in Rubrics/models.py)
+def _validate_versions(vers: None | list | str) -> None:
+    if vers is None:
+        return
+    if isinstance(vers, str):
+        try:
+            vers = ast.literal_eval(vers)
+        except (SyntaxError, ValueError) as e:
+            raise ValidationError(f'Invalid "versions" field: {e}')
+
+    if not isinstance(vers, list):
+        raise ValidationError(
+            f'nonempty "versions" must be a list of ints but got "{vers}"'
+        )
+    for v in vers:
+        if not isinstance(v, int):
+            raise ValidationError(
+                f'nonempty "versions" must be a list of ints but got "{vers}"'
+            )
+
+
+# TODO: this code belongs in model/serializer
+def _validate_value_out_of(value, out_of) -> None:
+    try:
+        out_of = float(out_of)
+    except ValueError as e:
+        raise ValidationError(
+            {"out_of": f"out of {out_of} must be convertible to number: {e}"}
+        )
+    try:
+        value = float(value)
+    except ValueError as e:
+        raise ValidationError(
+            {"value": f"value {value} must be convertible to number: {e}"}
+        )
+    if not 0 <= value <= out_of:
+        raise ValidationError(
+            {"value": f"out of range: {value} is not in [0, {out_of}]."}
+        )
+
+
 class RubricService:
     """Class to encapsulate functions for creating and modifying rubrics."""
 
@@ -173,42 +215,11 @@ class RubricService:
 
         # TODO: Perhaps the serializer should do this
         if data["kind"] == "absolute":
-            _value = data["value"]
-            _out_of = data["out_of"]
-            try:
-                _out_of = float(_out_of)
-            except ValueError as e:
-                raise ValidationError(
-                    {"out_of": f"out of {_out_of} must be convertible to number: {e}"}
-                )
-            try:
-                _value = float(_value)
-            except ValueError as e:
-                raise ValidationError(
-                    {"value": f"value {_value} must be convertible to number: {e}"}
-                )
-            if not 0 <= _value <= _out_of:
-                raise ValidationError(
-                    {"value": f"out of range: {_value} is not in [0, {_out_of}]."}
-                )
+            _validate_value_out_of(data["value"], data["out_of"])
 
         # TODO: more validation of JSONFields that the model/form/serializer should
         # be doing (see `clean_versions` commented out in Rubrics/models.py)
-        if data.get("versions"):
-            _vers = data["versions"]
-            try:
-                _vers = ast.literal_eval(_vers)
-            except (SyntaxError, ValueError) as e:
-                raise ValidationError(f'Invalid "versions" field: {e}')
-            if not isinstance(_vers, list):
-                raise ValidationError(
-                    f'nonempty "versions" must be a list of ints but got "{_vers}"'
-                )
-            for _v in _vers:
-                if not isinstance(_v, int):
-                    raise ValidationError(
-                        f'nonempty "versions" must be a list of ints but got "{_vers}"'
-                    )
+        _validate_versions(data.get("versions"))
 
         data["latest"] = True
         if _bypass_serializer:
@@ -368,24 +379,9 @@ class RubricService:
 
         # TODO: Perhaps the serializer should do this
         if new_rubric_data["kind"] == "absolute":
-            _value = new_rubric_data["value"]
-            _out_of = new_rubric_data["out_of"]
-            try:
-                _out_of = float(_out_of)
-            except ValueError as e:
-                raise ValidationError(
-                    {"out_of": f"out of {_out_of} must be convertible to number: {e}"}
-                )
-            try:
-                _value = float(_value)
-            except ValueError as e:
-                raise ValidationError(
-                    {"value": f"value {_value} must be convertible to number: {e}"}
-                )
-            if not 0 <= _value <= _out_of:
-                raise ValidationError(
-                    {"value": f"out of range: {_value} is not in [0, {_out_of}]."}
-                )
+            _validate_value_out_of(new_rubric_data["value"], new_rubric_data["out_of"])
+
+        _validate_versions(new_rubric_data.get("versions"))
 
         serializer = RubricSerializer(data=new_rubric_data)
 
