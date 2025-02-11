@@ -61,13 +61,9 @@ log = logging.getLogger("RubricServer")
 # These `_validate_...` functions are written somelike like `clean_<field>`
 # in Django's model/form.
 def _validate_versions(vers: None | list | str) -> None:
-    if vers is None:
+    if not vers:
+        # empty string is ok for versions
         return
-    if isinstance(vers, str):
-        try:
-            vers = ast.literal_eval(vers)
-        except (SyntaxError, ValueError) as e:
-            raise ValidationError(f'Invalid "versions" field: {e}')
 
     if not isinstance(vers, list):
         raise ValidationError(
@@ -80,18 +76,14 @@ def _validate_versions(vers: None | list | str) -> None:
             )
 
 
-def _validate_parameters(parameters: None | list | str) -> None:
-    if parameters is None:
+def _validate_parameters(parameters: None | list) -> None:
+    if not parameters:
         return
-    if isinstance(parameters, str):
-        try:
-            parameters = ast.literal_eval(parameters)
-        except (SyntaxError, ValueError) as e:
-            raise ValidationError(f'Invalid "parameters" field: {e}') from e
 
     if not isinstance(parameters, list):
         raise ValidationError(
-            f'nonempty "parameters" must be a list but got "{parameters}"'
+            'nonempty "parameters" must be a list but got'
+            f' type {type(parameters)}: "{parameters}"'
         )
     for row in parameters:
         try:
@@ -987,11 +979,32 @@ class RubricService:
         for r in rubrics:
             # Fixes for Issue #3807: csv might scramble empty lists
             if r.get("pedagogy_tags") == "[]":
-                r["pedagogy_tags"] = ""
-            if r.get("parameters") == "[]":
-                r["parameters"] = ""
+                r["pedagogy_tags"] = []
             if r.get("versions") == "[]":
-                r["versions"] = ""
+                r["versions"] = []
+            if isinstance(r.get("versions"), str) and r.get("versions") != "":
+                versions = r["versions"]
+                try:
+                    versions = ast.literal_eval(versions)
+                except (SyntaxError, ValueError) as e:
+                    raise ValidationError(
+                        f'Invalid "versions" field type {type(versions)}'
+                        f' "{versions}"; {e}'
+                    ) from e
+                r["versions"] = versions
+
+            if r.get("parameters") in ("[]", ""):
+                r["parameters"] = []
+            if isinstance(r.get("parameters"), str):
+                parameters = r["parameters"]
+                log.debug('evaluating string "parameters" input')
+                try:
+                    parameters = ast.literal_eval(parameters)
+                except (SyntaxError, ValueError) as e:
+                    raise ValidationError(
+                        f'Invalid "parameters" field of type {type(parameters)}: {e}'
+                    ) from e
+                r["parameters"] = parameters
 
         # ensure either all rubrics succeed or all fail
         with transaction.atomic():

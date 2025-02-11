@@ -148,7 +148,6 @@ class RubricServiceTests_extra_validation(TestCase):
     def test_create_rubric_valid_parameters(self) -> None:
         for good_params in (
             [],
-            "[]",
             [["{param1}", ["bar", "baz"]]],
             [("{param1}", ["bar", "baz"]), ("<param2>", ("foo", "foz"))],
         ):
@@ -164,6 +163,7 @@ class RubricServiceTests_extra_validation(TestCase):
 
     def test_create_rubric_invalid_parameters(self) -> None:
         for bad_params in (
+            "[]",
             [["foo", "bar", "baz"]],
             [["foo", "bar"]],
             [["foo", [1, 2]]],
