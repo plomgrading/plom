@@ -993,5 +993,6 @@ class RubricService:
             if r.get("versions") == "[]":
                 r["versions"] = ""
 
-        # TODO: make this atomic?
-        return [self.create_rubric(r) for r in rubrics]
+        # ensure either all rubrics succeed or all fail
+        with transaction.atomic():
+            return [self.create_rubric(r) for r in rubrics]
