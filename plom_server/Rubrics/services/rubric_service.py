@@ -58,6 +58,8 @@ log = logging.getLogger("RubricServer")
 
 # TODO: more validation of JSONFields that the model/form/serializer should
 # be doing (see `clean_versions` commented out in Rubrics/models.py)
+# These `_validate_...` functions are written somelike like `clean_<field>`
+# in Django's model/form.
 def _validate_versions(vers: None | list | str) -> None:
     if vers is None:
         return
@@ -78,20 +80,61 @@ def _validate_versions(vers: None | list | str) -> None:
             )
 
 
-# TODO: this code belongs in model/serializer
+def _validate_parameters(parameters: None | list | str) -> None:
+    if parameters is None:
+        return
+    if isinstance(parameters, str):
+        try:
+            parameters = ast.literal_eval(parameters)
+        except (SyntaxError, ValueError) as e:
+            raise ValidationError(f'Invalid "parameters" field: {e}') from e
+
+    if not isinstance(parameters, list):
+        raise ValidationError(
+            f'nonempty "parameters" must be a list but got "{parameters}"'
+        )
+    for row in parameters:
+        try:
+            param, values = row
+        except ValueError as e:
+            raise ValidationError(f'Invalid row in "parameters": {e}') from e
+
+        if not isinstance(param, str):
+            raise ValidationError(
+                'Invalid row in "parameters": first row entry "param" should be str'
+                f' but has type "{type(param)}"; row: "{row}"'
+            )
+
+        if not (isinstance(values, tuple) or isinstance(values, list)):
+            raise ValidationError(
+                'Invalid row in "parameters": expected list of substitution values;'
+                f' got type "{type(values)}"; row: "{row}"'
+            )
+
+        # TODO: could also assert len(values) matches number of versions
+
+        for v in values:
+            if not isinstance(v, str):
+                raise ValidationError(
+                    'Invalid row in "parameters": expected list of str substitutions;'
+                    f' value "{v}" has "{type(v)}"; row: "{row}"'
+                )
+
+
+# TODO: this code belongs in model/serializer?
 def _validate_value_out_of(value, out_of) -> None:
     try:
         out_of = float(out_of)
     except ValueError as e:
         raise ValidationError(
             {"out_of": f"out of {out_of} must be convertible to number: {e}"}
-        )
+        ) from e
     try:
         value = float(value)
     except ValueError as e:
         raise ValidationError(
             {"value": f"value {value} must be convertible to number: {e}"}
-        )
+        ) from e
     if not 0 <= value <= out_of:
         raise ValidationError(
             {"value": f"out of range: {value} is not in [0, {out_of}]."}
@@ -220,6 +263,7 @@ class RubricService:
         # TODO: more validation of JSONFields that the model/form/serializer should
         # be doing (see `clean_versions` commented out in Rubrics/models.py)
         _validate_versions(data.get("versions"))
+        _validate_parameters(data.get("parameters"))
 
         data["latest"] = True
         if _bypass_serializer:
@@ -382,6 +426,7 @@ class RubricService:
             _validate_value_out_of(new_rubric_data["value"], new_rubric_data["out_of"])
 
         _validate_versions(new_rubric_data.get("versions"))
+        _validate_parameters(new_rubric_data.get("parameters"))
 
         serializer = RubricSerializer(data=new_rubric_data)
 

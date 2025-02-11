@@ -125,8 +125,15 @@ class RubricServiceTests_exceptions(TestCase):
         with self.assertRaises(ValidationError):
             RubricService().create_rubric(rub)
 
+
+class RubricServiceTests_extra_validation(TestCase):
+    """Tests for various validation routines, currently those not model-integrated."""
+
+    def setUp(self) -> None:
+        baker.make(User, username="Liam")
+
     def test_create_rubric_invalid_versions(self) -> None:
-        for bad_versions in ("[1, 1.2]", "[1, sth]", "{1, 2}"):
+        for bad_versions in ("[1, 1.2]", "[1, sth]", "{1, 2}", [1, 1.2], [1, "abc"]):
             rub = {
                 "kind": "neutral",
                 "value": 0,
@@ -134,6 +141,41 @@ class RubricServiceTests_exceptions(TestCase):
                 "username": "Liam",
                 "question_index": 1,
                 "versions": bad_versions,
+            }
+            with self.assertRaises(ValidationError):
+                RubricService().create_rubric(rub)
+
+    def test_create_rubric_valid_parameters(self) -> None:
+        for good_params in (
+            [],
+            "[]",
+            [["{param1}", ["bar", "baz"]]],
+            [("{param1}", ["bar", "baz"]), ("<param2>", ("foo", "foz"))],
+        ):
+            rub = {
+                "kind": "neutral",
+                "value": 0,
+                "text": "qwerty",
+                "username": "Liam",
+                "question_index": 1,
+                "parameters": good_params,
+            }
+            RubricService().create_rubric(rub)
+
+    def test_create_rubric_invalid_parameters(self) -> None:
+        for bad_params in (
+            [["foo", "bar", "baz"]],
+            [["foo", "bar"]],
+            [["foo", [1, 2]]],
+            [[42, ["bar", "baz"]]],
+        ):
+            rub = {
+                "kind": "neutral",
+                "value": 0,
+                "text": "qwerty",
+                "username": "Liam",
+                "question_index": 1,
+                "parameters": bad_params,
             }
             with self.assertRaises(ValidationError):
                 RubricService().create_rubric(rub)
