@@ -10,6 +10,7 @@ from pathlib import Path
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction, IntegrityError
 from django.http import HttpRequest
 from django.utils.encoding import force_bytes
@@ -149,9 +150,10 @@ class AuthenticationServices:
             manager.groups.add(manager_group, scanner_group)
             manager.save()
 
-    @transaction.atomic
     def create_users_from_csv(self, f: Path | str | bytes) -> list[dict[str, str]]:
         """Creates multiple users from a .csv file.
+
+        This is an atomic operation: either all users are created or all fail.
 
         Args:
             f: a path to the .csv file, or the bytes of a .csv file.
@@ -179,13 +181,18 @@ class AuthenticationServices:
                 f" it must contain: {required_fields}"
             )
 
-        # TODO: batch user creation?
-        for index, user_dict in enumerate(new_user_list):
-            self.create_user_and_add_to_group(
-                user_dict["username"], user_dict["usergroup"]
-            )
-            user = User.objects.get(username=user_dict["username"])
-            user_dict["reset_link"] = self.generate_link(user)
+        # either all succeed or all fail
+        with transaction.atomic():
+            for index, user_dict in enumerate(new_user_list):
+                group = user_dict["usergroup"]
+                try:
+                    self.create_user_and_add_to_group(user_dict["username"], group)
+                except Group.DoesNotExist as e:
+                    raise ObjectDoesNotExist(
+                        f'Group "{group}" does not exist? {e}'
+                    ) from e
+                user = User.objects.get(username=user_dict["username"])
+                user_dict["reset_link"] = self.generate_link(user)
 
         return new_user_list
 
