@@ -168,7 +168,9 @@ class BuildSolutionService:
                 for qi, v in sorted(qv_map.items()):
                     pg_list = SolnSpecQuestion.objects.get(solution_number=qi).pages
                     # minus one b/c pg_list is 1-indexed but pymupdf pages 0-indexed
-                    dest_doc.insert_pdf(soln_doc[v], pg_list[0] - 1, pg_list[-1] - 1)
+                    dest_doc.insert_pdf(
+                        soln_doc[v], from_page=pg_list[0] - 1, to_page=pg_list[-1] - 1
+                    )
 
                 shortname = SpecificationService.get_shortname()
                 sid_sname_pair = StudentMarkService.get_paper_id_or_none(paper_obj)
