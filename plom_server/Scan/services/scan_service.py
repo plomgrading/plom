@@ -147,8 +147,18 @@ class ScanService:
                         f"Uploaded pdf with {pdf_doc.page_count} pages"
                         f" exceeds {settings.MAX_BUNDLE_PAGES} page limit"
                     )
-        except pymupdf.FileDataError as err:
-            raise ValidationError(err) from err
+        # PyMuPDF docs says its exceptions will be caught by RuntimeError
+        except RuntimeError as e:
+            raise ValidationError(
+                f"PyMuPDF library {pymupdf.__version__} could not open file,"
+                f" perhaps not a PDF? {type(e).__name__}: {e} "
+            ) from e
+        except pymupdf.mupdf.FzErrorBase as e:
+            # https://github.com/pymupdf/PyMuPDF/issues/3905
+            # Drop this case once our minimum PyMuPDF >= 1.24.11
+            raise ValidationError(
+                f"Perhaps not a pdf file?  Unexpected error: {e}"
+            ) from e
 
         # Warning: Issue #2888, and https://gitlab.com/plom/plom/-/merge_requests/2361
         # strange behaviour can result from relaxing this durable=True

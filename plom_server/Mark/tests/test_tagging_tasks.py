@@ -5,7 +5,7 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
 from model_bakery import baker
-from rest_framework.exceptions import ValidationError
+from rest_framework import serializers
 
 from ..models import MarkingTask, MarkingTaskTag
 from ..services import MarkingTaskService
@@ -28,9 +28,9 @@ class MarkingTaskServiceTaggingTests(TestCase):
         # note validity is mostly tested elsewhere
         s = MarkingTaskService()
         user: User = baker.make(User)
-        with self.assertRaisesMessage(ValidationError, "disallowed char"):
+        with self.assertRaisesMessage(serializers.ValidationError, "disallowed char"):
             s.get_or_create_tag(user, "  spaces ")
-        with self.assertRaisesMessage(ValidationError, "disallowed char"):
+        with self.assertRaisesMessage(serializers.ValidationError, "disallowed char"):
             s.get_or_create_tag(user, "symbols_$&<b>")
 
     def test_tag_create_duplicate_tag_issue3580(self) -> None:
@@ -66,7 +66,7 @@ class MarkingTaskServiceTaggingTests(TestCase):
         task = baker.make(
             MarkingTask, question_index=1, paper__paper_number=2, code="q0002g1"
         )
-        with self.assertRaisesMessage(ValidationError, "disallowed char"):
+        with self.assertRaisesMessage(serializers.ValidationError, "disallowed char"):
             tag_text = "  spaces and symbols $&<b> "
             s.add_tag_text_from_task_code(tag_text, task.code, user)
 

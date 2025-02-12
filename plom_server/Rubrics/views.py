@@ -20,10 +20,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.views.generic.edit import UpdateView
-
-# TODO: Issue #3808
-# from django.core.exceptions import ValidationError
-from rest_framework.exceptions import ValidationError
+from rest_framework import serializers
 
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 from plom.misc_utils import pprint_score
@@ -423,8 +420,17 @@ class UploadRubricView(ManagerRequiredView):
 
         try:
             service.update_rubric_data(data_string, suffix)
-        except (ValidationError, ValueError) as e:
+        except ValueError as e:
             messages.error(request, f"Error: {e}")
+        except serializers.ValidationError as e:
+            # Not sure the "right way" to render a ValidationError:
+            # If we use {e} like for ValueError above, it renders like this:
+            #    Error: [ErrorDetails(string='invalid row in "parameters"...', code='invalid')]
+            # which is messy for end-users.  This args hack makes it render like:
+            #    Error: invalid row in "parameters"...
+            # See also API/views/utils.py which does a similar hack.
+            (nicer_error_msg,) = e.args
+            messages.error(request, f"Error: {nicer_error_msg}")
         else:
             messages.success(request, "Rubric file uploaded successfully.")
         return redirect("rubrics_admin")

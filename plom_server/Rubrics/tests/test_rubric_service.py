@@ -10,7 +10,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 
 from model_bakery import baker
-from rest_framework.exceptions import ValidationError
+from rest_framework import serializers
 
 from plom.plom_exceptions import PlomConflict
 from Mark.models.annotations import Annotation
@@ -68,7 +68,7 @@ class RubricServiceTests_exceptions(TestCase):
         """Test for the RubricService.create_rubric() method when 'kind' is invalid.
 
         This test case checks if the RubricService.create_rubric()
-        method raises a ValidationError when attempting to create
+        method raises a serializers.ValidationError when attempting to create
         a rubric with an invalid 'kind' value. The 'kind' value
         is expected to be one of the following: "absolute", "neutral",
         or "relative".
@@ -81,14 +81,14 @@ class RubricServiceTests_exceptions(TestCase):
             "question_index": 1,
         }
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(serializers.ValidationError):
             RubricService().create_rubric(rub)
 
     def test_no_kind_KeyValidationError(self) -> None:
         """Test ValidationError in RubricService.create_rubric().
 
         This test case checks if the RubricService.create_rubric()
-        method raises a ValidationError when attempting to create a rubric
+        method raises a serializers.ValidationError when attempting to create a rubric
         without providing the 'kind' key in the rubric dictionary.
         """
         rub = {
@@ -98,7 +98,7 @@ class RubricServiceTests_exceptions(TestCase):
             "question_index": 1,
         }
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(serializers.ValidationError):
             RubricService().create_rubric(rub)
 
     def test_rubric_absolute_out_of_range(self) -> None:
@@ -110,7 +110,7 @@ class RubricServiceTests_exceptions(TestCase):
             "username": "Liam",
             "question_index": 1,
         }
-        with self.assertRaisesRegex(ValidationError, "out of range"):
+        with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
             RubricService().create_rubric(rub)
 
     def test_create_rubric_should_not_have_existing_rid(self) -> None:
@@ -122,7 +122,7 @@ class RubricServiceTests_exceptions(TestCase):
             "question_index": 1,
             "rid": 42,
         }
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(serializers.ValidationError):
             RubricService().create_rubric(rub)
 
 
@@ -142,7 +142,7 @@ class RubricServiceTests_extra_validation(TestCase):
                 "question_index": 1,
                 "versions": bad_versions,
             }
-            with self.assertRaises(ValidationError):
+            with self.assertRaises(serializers.ValidationError):
                 RubricService().create_rubric(rub)
 
     def test_create_rubric_valid_parameters(self) -> None:
@@ -177,7 +177,7 @@ class RubricServiceTests_extra_validation(TestCase):
                 "question_index": 1,
                 "parameters": bad_params,
             }
-            with self.assertRaises(ValidationError):
+            with self.assertRaises(serializers.ValidationError):
                 RubricService().create_rubric(rub)
 
 
@@ -638,7 +638,7 @@ class RubricServiceTests(TestCase):
             "username": "Olivia",
             "question_index": 1,
         }
-        with self.assertRaisesRegex(ValidationError, "out of range"):
+        with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
             service.modify_rubric(rid, simulated_client_data)
 
     def test_modify_absolute_rubric_change_value_nonnumeric(self) -> None:
@@ -655,7 +655,7 @@ class RubricServiceTests(TestCase):
             "username": "Olivia",
             "question_index": 1,
         }
-        with self.assertRaisesRegex(ValidationError, "value.*convertible"):
+        with self.assertRaisesRegex(serializers.ValidationError, "value.*convertible"):
             service.modify_rubric(rid, simulated_client_data)
 
     def test_modify_absolute_rubric_change_out_of_nonnumeric(self) -> None:
@@ -672,7 +672,7 @@ class RubricServiceTests(TestCase):
             "username": "Olivia",
             "question_index": 1,
         }
-        with self.assertRaisesRegex(ValidationError, "out of.*convertible"):
+        with self.assertRaisesRegex(serializers.ValidationError, "out of.*convertible"):
             service.modify_rubric(rid, simulated_client_data)
 
     def test_rubrics_get_as_dicts(self) -> None:

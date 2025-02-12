@@ -18,7 +18,7 @@ else:
 # import pandas
 
 from django.core.management.base import BaseCommand, CommandError
-from rest_framework.exceptions import ValidationError
+from rest_framework import serializers
 from tabulate import tabulate
 
 import plom
@@ -100,7 +100,7 @@ class Command(BaseCommand):
                 service.create_rubric(rubric)
             except KeyError as e:
                 raise CommandError(f"{e} field(s) missing from rubrics file.")
-            except ValidationError as e:
+            except serializers.ValidationError as e:
                 raise CommandError(e.args[0])
             except ValueError as e:
                 raise CommandError(e)

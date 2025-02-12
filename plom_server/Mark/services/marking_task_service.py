@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
@@ -8,19 +8,16 @@
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Bryan Tanady
 
-from __future__ import annotations
-
 import json
 import pathlib
 import random
 from typing import Any
 
-from rest_framework.exceptions import ValidationError
-
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import QuerySet
 from django.db import transaction
+from rest_framework import serializers
 
 from plom import is_valid_tag_text
 from Papers.services import ImageBundleService, PaperInfoService
@@ -301,41 +298,57 @@ class MarkingTaskService:
             a JSON string.
 
         Raises:
-            ValidationError
+            serializers.ValidationError
         """
         annot_data = json.loads(plomfile)
         cleaned_data: dict[str, Any] = {}
 
         try:
             cleaned_data["pg"] = int(data["pg"])
-        except IndexError:
-            raise ValidationError('Multiple values for "pg", expected 1.')
-        except (ValueError, TypeError):
-            raise ValidationError(f'Could not cast "pg" as int: {data["pg"]}')
+        except IndexError as e:
+            raise serializers.ValidationError(
+                'Multiple values for "pg", expected 1.'
+            ) from e
+        except (ValueError, TypeError) as e:
+            raise serializers.ValidationError(
+                f'Could not cast "pg" as int: {data["pg"]}'
+            ) from e
 
         try:
             cleaned_data["ver"] = int(data["ver"])
-        except IndexError:
-            raise ValidationError('Multiple values for "ver", expected 1.')
-        except (ValueError, TypeError):
-            raise ValidationError(f'Could not cast "ver" as int: {data["ver"]}')
+        except IndexError as e:
+            raise serializers.ValidationError(
+                'Multiple values for "ver", expected 1.'
+            ) from e
+        except (ValueError, TypeError) as e:
+            raise serializers.ValidationError(
+                f'Could not cast "ver" as int: {data["ver"]}'
+            ) from e
 
         try:
             cleaned_data["score"] = float(data["score"])
-        except IndexError:
-            raise ValidationError('Multiple values for "score", expected 1.')
-        except (ValueError, TypeError):
-            raise ValidationError(f'Could not cast "score" as float: {data["score"]}')
+        except IndexError as e:
+            raise serializers.ValidationError(
+                'Multiple values for "score", expected 1.'
+            ) from e
+        except (ValueError, TypeError) as e:
+            raise serializers.ValidationError(
+                f'Could not cast "score" as float: {data["score"]}'
+            ) from e
 
         try:
             cleaned_data["marking_time"] = float(data["marking_time"])
         except (ValueError, TypeError) as e:
-            raise ValidationError(f"Could not cast 'marking_time' as float: {e}")
+            raise serializers.ValidationError(
+                f"Could not cast 'marking_time' as float: {e}"
+            ) from e
 
         try:
             cleaned_data["integrity_check"] = int(data["integrity_check"])
         except (ValueError, TypeError) as e:
-            raise ValidationError(f"Could not get 'integrity_check' as a int: {e}")
+            raise serializers.ValidationError(
+                f"Could not get 'integrity_check' as a int: {e}"
+            ) from e
 
         # We used to unpack the rubrics and ensure they all exist in the DB.
         # That will happen later when we try to save: I'm not sure its worth
@@ -345,7 +358,7 @@ class MarkingTaskService:
         for image_data in src_img_data:
             img_path = pathlib.Path(image_data["server_path"])
             if not img_path.exists():
-                raise ValidationError("Invalid original-image in request.")
+                raise serializers.ValidationError("Invalid original-image in request.")
 
         return cleaned_data, annot_data
 
@@ -466,10 +479,10 @@ class MarkingTaskService:
             MarkingTaskTag: reference to the tag
 
         Raises:
-            ValidationError: if the tag text is not legal.
+            serializers.ValidationError: if the tag text is not legal.
         """
         if not is_valid_tag_text(tag_text):
-            raise ValidationError(
+            raise serializers.ValidationError(
                 f'Invalid tag text: "{tag_text}"; contains disallowed characters'
             )
         try:
@@ -546,7 +559,7 @@ class MarkingTaskService:
         Raises:
             ValueError: invalid task code
             RuntimeError: task not found
-            ValidationError: invalid tag text
+            serializers.ValidationError: invalid tag text
         """
         the_task = self.get_task_from_code(code)
         the_tag = self.get_or_create_tag(user, tag_text)
@@ -691,7 +704,7 @@ class MarkingTaskService:
             None
 
         Raises:
-            ValidationError: if the tag text is not legal.
+            serializers.ValidationError: if the tag text is not legal.
         """
         tag_obj = self.get_or_create_tag(user, tag_text)
         self.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
@@ -780,7 +793,8 @@ class MarkingTaskService:
 
         Raises:
             ValueError: cannot find user, or cannot find marking task.
-            ValidationError: tag name failure, unexpected as we make the tag.
+            serializers.ValidationError: tag name failure, unexpected as
+                we make the tag.
         """
         with transaction.atomic():
             # first reassign the task - this checks if the username

@@ -4,13 +4,10 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
-from __future__ import annotations
-
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
-from rest_framework import status
+from rest_framework import serializers, status
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse
@@ -482,7 +479,7 @@ class TagsFromCodeView(APIView):
             return _error_response(e, status.HTTP_410_GONE)
         except RuntimeError as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
-        except ValidationError as e:
+        except serializers.ValidationError as e:
             return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
         return Response(status=status.HTTP_200_OK)
 

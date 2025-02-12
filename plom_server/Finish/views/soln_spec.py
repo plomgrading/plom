@@ -1,16 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
-from typing import Any, Dict
+from typing import Any
 
 from django.shortcuts import render
 from django.urls import reverse
 from django.http import HttpRequest, HttpResponse
-
 from django_htmx.http import HttpResponseClientRedirect
-
-from rest_framework.serializers import ValidationError
+from rest_framework import serializers
 
 from Base.base_group_views import ManagerRequiredView
 from Papers.services import SolnSpecService
@@ -45,7 +43,7 @@ class SolnSpecView(ManagerRequiredView):
     def patch(self, request: HttpRequest) -> HttpResponse:
         spec = TemplateSolnSpecService().build_soln_toml_from_test_spec()
 
-        context: Dict[str, Any] = {
+        context: dict[str, Any] = {
             "just_submitted": True,
             "action": "validate",
             "is_there_a_soln_spec": False,
@@ -62,7 +60,7 @@ class SolnSpecView(ManagerRequiredView):
         spec = data.get("spec")
         action = data.get("which_action", "submit")
 
-        context: Dict[str, Any] = {
+        context: dict[str, Any] = {
             "just_submitted": True,
             "action": action,
             "is_there_a_soln_spec": False,
@@ -89,7 +87,7 @@ class SolnSpecView(ManagerRequiredView):
                 )
             except ValueError as e:
                 context["error_list"].append(f"{e}")
-            except ValidationError as errs:
+            except serializers.ValidationError as errs:
                 for k, v in errs.detail.items():
                     if isinstance(v, list) and len(v) == 1:
                         context["error_list"].append(f"{k}: {v[0]}")

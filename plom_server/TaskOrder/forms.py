@@ -10,7 +10,7 @@ from io import StringIO
 from django import forms
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
-from django.core.exceptions import ValidationError
+from django.forms import ValidationError
 
 
 def validate_file_size(value):
