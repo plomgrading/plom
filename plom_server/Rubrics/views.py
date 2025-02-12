@@ -423,9 +423,14 @@ class UploadRubricView(ManagerRequiredView):
         except ValueError as e:
             messages.error(request, f"Error: {e}")
         except serializers.ValidationError as e:
-            # TODO: what is the "right way" to render one of these?
-            (errmsg,) = e.args
-            messages.error(request, f"Error: {errmsg}")
+            # Not sure the "right way" to render a ValidationError:
+            # If we use {e} like for ValueError above, it renders like this:
+            #    Error: [ErrorDetails(string='invalid row in "parameters"...', code='invalid')]
+            # which is messy for end-users.  This args hack makes it render like:
+            #    Error: invalid row in "parameters"...
+            # See also API/views/utils.py which does a similar hack.
+            (nicer_error_msg,) = e.args
+            messages.error(request, f"Error: {nicer_error_msg}")
         else:
             messages.success(request, "Rubric file uploaded successfully.")
         return redirect("rubrics_admin")

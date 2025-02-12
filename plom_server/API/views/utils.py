@@ -10,8 +10,14 @@ def _error_response(e: Exception | str, status) -> Response:
     # I think those are int but not sure that's the right type
     r = Response(status=status)
     if isinstance(e, serializers.ValidationError):
-        # special case: looks better than str(e)
-        # Note this is not used for forms.ValidationError
+        # Special case: this "args" hack looks better than str(e)
+        # but not sure what is the "right way" to render a ValidationError
+        # See also Rubrics/views.py which does a similar hack and includes
+        # a more detailed example of what it looks like without this.
+        #
+        # Note this special case is used for `serializers.ValidationError`
+        # but should *not* be used for `django.forms.ValidationError`.
+        # (see Issue #3808 which discusses the two kinds)
         (r.reason_phrase,) = e.args
         return r
     r.reason_phrase = str(e)
