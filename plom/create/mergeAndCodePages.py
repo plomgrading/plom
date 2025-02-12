@@ -139,8 +139,6 @@ def _create_QRcoded_pdf(
     #     )
 
     for p in range(1, spec["numberOfPages"] + 1):
-        # Workaround Issue #1347: unnecessary for pymupdf>=1.18.7
-        exam[p - 1].clean_contents()
         # name of the group to which page belongs
         group = page_to_group[p]
         text = f"Test {papernum:04} {group:5} p. {p}"
