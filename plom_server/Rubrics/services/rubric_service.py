@@ -188,7 +188,7 @@ class RubricService:
         if "rid" in incoming_data.keys():
             # could potentially allow blank rid...
             raise ValidationError(
-                'Data for creating a new rubric must not already have a "rid" column,'
+                'Data for creating a new rubric must not have a "rid" column,'
                 f' but this has {incoming_data.get("rid")}'
             )
 
@@ -977,7 +977,7 @@ class RubricService:
         # and instead leave that for the rubric creation code.  Try to keep this
         # code specific to file uploads, e.g., csv ambiguities.
         for r in rubrics:
-            # Fixes for Issue #3807: csv might scramble empty lists
+            # Fixes for Issue #3807: csv often scramble empty lists or otherwise makes strings
             if r.get("pedagogy_tags") == "[]":
                 r["pedagogy_tags"] = []
             if r.get("versions") == "[]":
