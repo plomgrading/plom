@@ -7,7 +7,7 @@ import random
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any
 
 import arrow
 import pymupdf as fitz
@@ -122,7 +122,7 @@ class BuildSolutionService:
             pg.draw_rect(wm_rect, color=[0, 0, 0], stroke_opacity=0.25)
 
     def assemble_solution_for_paper(
-        self, paper_number: int, *, watermark: Optional[bool] = False
+        self, paper_number: int, *, watermark: bool = False
     ) -> tuple[bytes, str]:
         """Reassemble the solutions for a particular question into a PDF file, returning bytes.
 
@@ -131,6 +131,7 @@ class BuildSolutionService:
 
         Keyword Args:
             watermark: whether to paint watermarked student numbers.
+                Defaults to False.
 
         Returns:
             A tuple of the bytes for a PDF file and a suggested filename.
@@ -166,8 +167,11 @@ class BuildSolutionService:
                 # see issue #3689
                 for qi, v in sorted(qv_map.items()):
                     pg_list = SolnSpecQuestion.objects.get(solution_number=qi).pages
+                    # pg_list can be "[3]" or "[3, 4, 5]".
                     # minus one b/c pg_list is 1-indexed but pymupdf pages 0-indexed
-                    dest_doc.insert_pdf(soln_doc[v], pg_list[0] - 1, pg_list[-1] - 1)
+                    dest_doc.insert_pdf(
+                        soln_doc[v], from_page=pg_list[0] - 1, to_page=pg_list[-1] - 1
+                    )
 
                 shortname = SpecificationService.get_shortname()
                 sid_sname_pair = StudentMarkService.get_paper_id_or_none(paper_obj)
@@ -185,7 +189,7 @@ class BuildSolutionService:
                 return (dest_doc.tobytes(), fname)
 
     def reset_single_solution_build(
-        self, paper_num: int, *, wait: Optional[int] = None
+        self, paper_num: int, *, wait: int | None = None
     ) -> None:
         """Obsolete the solution build of a paper.
 
@@ -382,7 +386,7 @@ class BuildSolutionService:
         return N
 
     @transaction.atomic
-    def get_completed_pdf_files_and_names(self) -> list[Tuple[File, str]]:
+    def get_completed_pdf_files_and_names(self) -> list[tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of solutions.
 
         Returns:
