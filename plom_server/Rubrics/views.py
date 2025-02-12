@@ -423,8 +423,12 @@ class UploadRubricView(ManagerRequiredView):
 
         try:
             service.update_rubric_data(data_string, suffix)
-        except (ValidationError, ValueError) as e:
+        except ValueError as e:
             messages.error(request, f"Error: {e}")
+        except ValidationError as e:
+            # TODO: what is the "right way" to render one of these?
+            (errmsg,) = e.args
+            messages.error(request, f"Error: {errmsg}")
         else:
             messages.success(request, "Rubric file uploaded successfully.")
         return redirect("rubrics_admin")
