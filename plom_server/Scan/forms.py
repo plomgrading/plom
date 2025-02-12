@@ -88,6 +88,7 @@ class BundleUploadForm(forms.Form):
             raise ValidationError(f"Unable to open file: {e}") from e
         except pymupdf.mupdf.FzErrorBase as e:
             # https://github.com/pymupdf/PyMuPDF/issues/3905
+            # Drop this case once our minimum PyMuPDF >= 1.24.11
             raise ValidationError(
                 f"Perhaps not a pdf file?  Unexpected error: {e}"
             ) from e
