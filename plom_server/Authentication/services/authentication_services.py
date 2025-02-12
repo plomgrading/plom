@@ -189,7 +189,7 @@ class AuthenticationServices:
                     self.create_user_and_add_to_group(user_dict["username"], group)
                 except Group.DoesNotExist as e:
                     raise ObjectDoesNotExist(
-                        f'Group "{group}" does not exist? {e}'
+                        f'Error in row {index+1}: Group "{group}" does not exist? {e}'
                     ) from e
                 user = User.objects.get(username=user_dict["username"])
                 user_dict["reset_link"] = self.generate_link(user)
