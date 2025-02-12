@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 
 import html
@@ -10,7 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse, FileResponse, Http404
 from django.shortcuts import render, reverse, redirect
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
-from rest_framework.exceptions import ValidationError
+from rest_framework import serializers
 
 from plom import plom_valid_tag_text_pattern, plom_valid_tag_text_description
 from plom.misc_utils import pprint_score
@@ -305,7 +305,7 @@ class MarkingTaskTagView(LeadMarkerOrManagerView):
             MarkingTaskService().create_tag_and_attach_to_task(
                 request.user, task_pk, tagtext
             )
-        except ValidationError:
+        except serializers.ValidationError:
             # the form *should* catch validation errors.
             # we don't throw an explicit error here instead just refresh the page.
             return HttpResponseClientRefresh()

@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
-from rest_framework.exceptions import ValidationError
+from rest_framework import serializers
 
 # from django.http import HttpResponseBadRequest
 
@@ -96,7 +96,7 @@ class SpecEditorView(ManagerRequiredView):
             context["error_list"] = [str(e)]
         except (ValueError, RuntimeError) as e:
             context["error_list"] = [f"Cannot modify specification - {e}"]
-        except ValidationError as errs:
+        except serializers.ValidationError as errs:
             for k, v in errs.detail.items():
                 if isinstance(v, list) and len(v) == 1:
                     context["error_list"].append(f"{k}: {v[0]}")

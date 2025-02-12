@@ -12,7 +12,7 @@ else:
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
-from rest_framework.serializers import ValidationError
+from rest_framework import serializers
 
 from Papers.services import SolnSpecService
 from ...services import TemplateSolnSpecService
@@ -62,7 +62,7 @@ class Command(BaseCommand):
             SolnSpecService.load_soln_spec_from_dict(spec_dict)
         except ValueError as err:
             raise CommandError(err)
-        except ValidationError as err:
+        except serializers.ValidationError as err:
             raise CommandError(err)
 
         unused_pages = SolnSpecService.get_unused_pages()

@@ -42,8 +42,8 @@ def validate_spec_from_dict(spec_dict: dict[str, Any]) -> bool:
 
     Raises:
         ValueError: explaining what is invalid.
-        ValidationError: in this case the ``.detail`` field will contain
-            a list of what is wrong.
+        serializers.ValidationError: in this case the ``.detail`` field
+            will contain a list of what is wrong.
     """
     # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
     # Also, this function does not care if there are no questions in the spec dictionary. It assumes
