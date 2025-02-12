@@ -7,7 +7,7 @@ import random
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any
 
 import arrow
 import pymupdf as fitz
@@ -122,7 +122,7 @@ class BuildSolutionService:
             pg.draw_rect(wm_rect, color=[0, 0, 0], stroke_opacity=0.25)
 
     def assemble_solution_for_paper(
-        self, paper_number: int, *, watermark: Optional[bool] = False
+        self, paper_number: int, *, watermark: bool = False
     ) -> tuple[bytes, str]:
         """Reassemble the solutions for a particular question into a PDF file, returning bytes.
 
@@ -131,6 +131,7 @@ class BuildSolutionService:
 
         Keyword Args:
             watermark: whether to paint watermarked student numbers.
+                Defaults to False.
 
         Returns:
             A tuple of the bytes for a PDF file and a suggested filename.
@@ -185,7 +186,7 @@ class BuildSolutionService:
                 return (dest_doc.tobytes(), fname)
 
     def reset_single_solution_build(
-        self, paper_num: int, *, wait: Optional[int] = None
+        self, paper_num: int, *, wait: int | None = None
     ) -> None:
         """Obsolete the solution build of a paper.
 
@@ -382,7 +383,7 @@ class BuildSolutionService:
         return N
 
     @transaction.atomic
-    def get_completed_pdf_files_and_names(self) -> list[Tuple[File, str]]:
+    def get_completed_pdf_files_and_names(self) -> list[tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of solutions.
 
         Returns:
