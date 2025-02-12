@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2025 Andrew Rechnitzer
 
 from django import forms
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from django.forms import ValidationError
 
 from .choices import (
     USERNAME_CHOICES,
