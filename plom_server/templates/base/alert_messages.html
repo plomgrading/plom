@@ -1,0 +1,10 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Bryan Tanady
+    Copyright (C) 2025 Colin B. Macdonald
+  -->
+{% if messages %}
+    {% for message in messages %}
+        {% include "./alert_message.html" with message=message %}
+    {% endfor %}
+{% endif %}

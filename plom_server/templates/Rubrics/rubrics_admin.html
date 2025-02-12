@@ -15,9 +15,7 @@
     Rubrics - Admin
 {% endblock page_heading %}
 {% block main_content %}
-    {% if messages %}
-        {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
-    {% endif %}
+    {% include "../base/alert_messages.html" with messages=messages %}
     <div class="card m-2">
         <div class="card-body">
             <form method="post" action="{% url 'rubric_half' %}">
