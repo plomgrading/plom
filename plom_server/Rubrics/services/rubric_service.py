@@ -35,10 +35,7 @@ from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.db.models.aggregates import Count
 from django.db.models import QuerySet
-
-# TODO: Issue #3808
-# from django.core.exceptions import ValidationError
-from rest_framework.exceptions import ValidationError
+from rest_framework import serializers
 
 from plom.plom_exceptions import PlomConflict
 from Base.models import SettingsModel
@@ -66,12 +63,12 @@ def _validate_versions(vers: None | list | str) -> None:
         return
 
     if not isinstance(vers, list):
-        raise ValidationError(
+        raise serializers.ValidationError(
             f'nonempty "versions" must be a list of ints but got "{vers}"'
         )
     for v in vers:
         if not isinstance(v, int):
-            raise ValidationError(
+            raise serializers.ValidationError(
                 f'nonempty "versions" must be a list of ints but got "{vers}"'
             )
 
@@ -81,7 +78,7 @@ def _validate_parameters(parameters: None | list) -> None:
         return
 
     if not isinstance(parameters, list):
-        raise ValidationError(
+        raise serializers.ValidationError(
             'nonempty "parameters" must be a list but got'
             f' type {type(parameters)}: "{parameters}"'
         )
@@ -89,16 +86,18 @@ def _validate_parameters(parameters: None | list) -> None:
         try:
             param, values = row
         except ValueError as e:
-            raise ValidationError(f'Invalid row in "parameters": {e}') from e
+            raise serializers.ValidationError(
+                f'Invalid row in "parameters": {e}'
+            ) from e
 
         if not isinstance(param, str):
-            raise ValidationError(
+            raise serializers.ValidationError(
                 'Invalid row in "parameters": first row entry "param" should be str'
                 f' but has type "{type(param)}"; row: "{row}"'
             )
 
         if not (isinstance(values, tuple) or isinstance(values, list)):
-            raise ValidationError(
+            raise serializers.ValidationError(
                 'Invalid row in "parameters": expected list of substitution values;'
                 f' got type "{type(values)}"; row: "{row}"'
             )
@@ -107,7 +106,7 @@ def _validate_parameters(parameters: None | list) -> None:
 
         for v in values:
             if not isinstance(v, str):
-                raise ValidationError(
+                raise serializers.ValidationError(
                     'Invalid row in "parameters": expected list of str substitutions;'
                     f' value "{v}" has "{type(v)}"; row: "{row}"'
                 )
@@ -118,17 +117,17 @@ def _validate_value_out_of(value, out_of) -> None:
     try:
         out_of = float(out_of)
     except ValueError as e:
-        raise ValidationError(
+        raise serializers.ValidationError(
             {"out_of": f"out of {out_of} must be convertible to number: {e}"}
         ) from e
     try:
         value = float(value)
     except ValueError as e:
-        raise ValidationError(
+        raise serializers.ValidationError(
             {"value": f"value {value} must be convertible to number: {e}"}
         ) from e
     if not 0 <= value <= out_of:
-        raise ValidationError(
+        raise serializers.ValidationError(
             {"value": f"out of range: {value} is not in [0, {out_of}]."}
         )
 
@@ -155,8 +154,8 @@ class RubricService:
 
         Raises:
             KeyError: if rubric_data contains missing username or user.
-            ValidationError: if rubric kind is not a valid option, or other
-                other errors.
+            serializers.ValidationError: if rubric kind is not a valid
+                option, or other errors.
             ValueError: if username does not exist in the DB.
             PermissionDenied: user are not allowed to create rubrics.
                 This could be "this user" or "all users".
@@ -187,7 +186,7 @@ class RubricService:
 
         if "rid" in incoming_data.keys():
             # could potentially allow blank rid...
-            raise ValidationError(
+            raise serializers.ValidationError(
                 'Data for creating a new rubric must not already have a "rid" column,'
                 f' but this has {incoming_data.get("rid")}'
             )
@@ -197,10 +196,10 @@ class RubricService:
             incoming_data["question_index"] = incoming_data.pop("question")
 
         if "kind" not in incoming_data.keys():
-            raise ValidationError({"kind": "Kind is required."})
+            raise serializers.ValidationError({"kind": "Kind is required."})
 
         if incoming_data["kind"] not in ("absolute", "relative", "neutral"):
-            raise ValidationError({"kind": "Invalid kind."})
+            raise serializers.ValidationError({"kind": "Invalid kind."})
 
         # Check permissions
         s = SettingsModel.load()
@@ -280,7 +279,7 @@ class RubricService:
 
         serializer = RubricSerializer(data=data)
         if not serializer.is_valid():
-            raise ValidationError(serializer.errors)
+            raise serializers.ValidationError(serializer.errors)
         new_rubric = serializer.save()
         # TODO: if its new why do we need to clear these?
         # new_rubric.pedagogy_tags.clear()
@@ -322,7 +321,7 @@ class RubricService:
             ValueError: wrong "kind" or invalid rubric data.
             PermissionDenied: user does not have permission to modify.
                 This could be "this user" or "all users".
-            ValidationError: invalid kind, maybe other invalidity.
+            serializers.ValidationError: invalid kind, maybe other invalidity.
             PlomConflict: the new data is too old; someone else modified.
         """
         # addresses a circular import?
@@ -423,7 +422,7 @@ class RubricService:
         serializer = RubricSerializer(data=new_rubric_data)
 
         if not serializer.is_valid():
-            raise ValidationError(serializer.errors)
+            raise serializers.ValidationError(serializer.errors)
 
         old_rubric.latest = False
         old_rubric.save()
@@ -958,7 +957,7 @@ class RubricService:
             ValueError: If the file type is not supported.  Also if
                 username does not exist.
             PermissionDenied: username not allowed to make rubrics.
-            ValidationError: rubric data is invalid.
+            serializers.ValidationError: rubric data is invalid.
             KeyError: TODO, what should happen if no user specified?
                 See also TODO in the create code.
         """
@@ -987,7 +986,7 @@ class RubricService:
                 try:
                     versions = ast.literal_eval(versions)
                 except (SyntaxError, ValueError) as e:
-                    raise ValidationError(
+                    raise serializers.ValidationError(
                         f'Invalid "versions" field type {type(versions)}'
                         f' "{versions}"; {e}'
                     ) from e
@@ -1001,7 +1000,7 @@ class RubricService:
                 try:
                     parameters = ast.literal_eval(parameters)
                 except (SyntaxError, ValueError) as e:
-                    raise ValidationError(
+                    raise serializers.ValidationError(
                         f'Invalid "parameters" field of type {type(parameters)}: {e}'
                     ) from e
                 r["parameters"] = parameters

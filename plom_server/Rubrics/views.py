@@ -20,10 +20,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.views.generic.edit import UpdateView
-
-# TODO: Issue #3808
-# from django.core.exceptions import ValidationError
-from rest_framework.exceptions import ValidationError
+from rest_framework import serializers
 
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 from plom.misc_utils import pprint_score
@@ -425,7 +422,7 @@ class UploadRubricView(ManagerRequiredView):
             service.update_rubric_data(data_string, suffix)
         except ValueError as e:
             messages.error(request, f"Error: {e}")
-        except ValidationError as e:
+        except serializers.ValidationError as e:
             # TODO: what is the "right way" to render one of these?
             (errmsg,) = e.args
             messages.error(request, f"Error: {errmsg}")
