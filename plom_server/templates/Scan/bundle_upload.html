@@ -66,17 +66,7 @@
                         </span>
                     </form>
                 </div>
-                {% if messages %}
-                    {% for message in messages %}
-                        {% if message.tags == "error" %}
-                            <div class="alert alert-danger">{{ message }}</div>
-                        {% elif message.tags == "debug" %}
-                            <div class="alert alert-secondary }}">{{ message }}</div>
-                        {% else %}
-                            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
+                {% include "../base/alert_messages.html" with messages=messages %}
             {% endif %}
         </div>
     </div>

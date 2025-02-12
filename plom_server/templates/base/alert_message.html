@@ -1,0 +1,16 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Bryan Tanady
+    Copyright (C) 2025 Colin B. Macdonald
+-->
+{% if 'success' in message.tags %}
+    <div class="alert alert-success">{{ message }}</div>
+{% elif 'warning' in message.tags %}
+    <div class="alert alert-warning">{{ message }}</div>
+{% elif 'error' in message.tags %}
+    <div class="alert alert-danger">{{ message }}</div>
+{% elif 'info' in message.tags %}
+    <div class="alert alert-info">{{ message }}</div>
+{% else %}
+    <div class="alert alert-secondary">{{ message }}</div>
+{% endif %}

@@ -24,7 +24,7 @@
                 <div>
                     {% for message in messages %}
                         {% if 'modify_default_limit' in message.tags %}
-                            {% include "./alert_message.html" with message=message %}
+                            {% include "../../base/alert_message.html" with message=message %}
                         {% endif %}
                     {% endfor %}
                 </div>
@@ -60,7 +60,7 @@
                 <div>
                     {% for message in messages %}
                         {% if 'modify_quota' in message.tags %}
-                            {% include "./alert_message.html" with message=message %}
+                            {% include "../../base/alert_message.html" with message=message %}
                         {% endif %}
                     {% endfor %}
                 </div>
