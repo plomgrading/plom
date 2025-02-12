@@ -143,6 +143,7 @@ class Rubric(models.Model):
     meta = models.TextField(null=True, blank=True, default="")  # can be long
     versions = models.JSONField(null=True, blank=True, default=list)
     # TODO: might be simpler to validate:
+    # but is DB change so careful when doing this, and must be "1, 2" not "[1, 2]"
     # versions = models.CharField(
     #     null=False,
     #     blank=True,

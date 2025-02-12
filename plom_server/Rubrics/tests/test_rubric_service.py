@@ -113,6 +113,73 @@ class RubricServiceTests_exceptions(TestCase):
         with self.assertRaisesRegex(ValidationError, "out of range"):
             RubricService().create_rubric(rub)
 
+    def test_create_rubric_should_not_have_existing_rid(self) -> None:
+        rub = {
+            "kind": "neutral",
+            "value": 0,
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 1,
+            "rid": 42,
+        }
+        with self.assertRaises(ValidationError):
+            RubricService().create_rubric(rub)
+
+
+class RubricServiceTests_extra_validation(TestCase):
+    """Tests for various validation routines, currently those not model-integrated."""
+
+    def setUp(self) -> None:
+        baker.make(User, username="Liam")
+
+    def test_create_rubric_invalid_versions(self) -> None:
+        for bad_versions in ("[1, 1.2]", "[1, sth]", "{1, 2}", [1, 1.2], [1, "abc"]):
+            rub = {
+                "kind": "neutral",
+                "value": 0,
+                "text": "qwerty",
+                "username": "Liam",
+                "question_index": 1,
+                "versions": bad_versions,
+            }
+            with self.assertRaises(ValidationError):
+                RubricService().create_rubric(rub)
+
+    def test_create_rubric_valid_parameters(self) -> None:
+        for good_params in (
+            [],
+            [["{param1}", ["bar", "baz"]]],
+            [("{param1}", ["bar", "baz"]), ("<param2>", ("foo", "foz"))],
+        ):
+            rub = {
+                "kind": "neutral",
+                "value": 0,
+                "text": "qwerty",
+                "username": "Liam",
+                "question_index": 1,
+                "parameters": good_params,
+            }
+            RubricService().create_rubric(rub)
+
+    def test_create_rubric_invalid_parameters(self) -> None:
+        for bad_params in (
+            "[]",
+            [["foo", "bar", "baz"]],
+            [["foo", "bar"]],
+            [["foo", [1, 2]]],
+            [[42, ["bar", "baz"]]],
+        ):
+            rub = {
+                "kind": "neutral",
+                "value": 0,
+                "text": "qwerty",
+                "username": "Liam",
+                "question_index": 1,
+                "parameters": bad_params,
+            }
+            with self.assertRaises(ValidationError):
+                RubricService().create_rubric(rub)
+
 
 class RubricServiceTests(TestCase):
     """Tests for `Rubric.service.RubricService()`."""
@@ -572,6 +639,40 @@ class RubricServiceTests(TestCase):
             "question_index": 1,
         }
         with self.assertRaisesRegex(ValidationError, "out of range"):
+            service.modify_rubric(rid, simulated_client_data)
+
+    def test_modify_absolute_rubric_change_value_nonnumeric(self) -> None:
+        service = RubricService()
+        rid = self.modified_absolute_rubric.rid
+
+        simulated_client_data = {
+            "rid": rid,
+            "kind": "absolute",
+            "value": "forty two",
+            "display_delta": "forty two",
+            "out_of": 3,
+            "text": "yuiop",
+            "username": "Olivia",
+            "question_index": 1,
+        }
+        with self.assertRaisesRegex(ValidationError, "value.*convertible"):
+            service.modify_rubric(rid, simulated_client_data)
+
+    def test_modify_absolute_rubric_change_out_of_nonnumeric(self) -> None:
+        service = RubricService()
+        rid = self.modified_absolute_rubric.rid
+
+        simulated_client_data = {
+            "rid": rid,
+            "kind": "absolute",
+            "value": 3,
+            "display_delta": "3",
+            "out_of": "four",
+            "text": "yuiop",
+            "username": "Olivia",
+            "question_index": 1,
+        }
+        with self.assertRaisesRegex(ValidationError, "out of.*convertible"):
             service.modify_rubric(rid, simulated_client_data)
 
     def test_rubrics_get_as_dicts(self) -> None:

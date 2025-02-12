@@ -21,6 +21,10 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.views.generic.edit import UpdateView
 
+# TODO: Issue #3808
+# from django.core.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError
+
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 from plom.misc_utils import pprint_score
 
@@ -417,8 +421,12 @@ class UploadRubricView(ManagerRequiredView):
             messages.error(request, "Invalid rubric file format")
             return redirect("rubrics_admin")
 
-        service.update_rubric_data(data_string, suffix)
-        messages.success(request, "Rubric file uploaded successfully.")
+        try:
+            service.update_rubric_data(data_string, suffix)
+        except (ValidationError, ValueError) as e:
+            messages.error(request, f"Error: {e}")
+        else:
+            messages.success(request, "Rubric file uploaded successfully.")
         return redirect("rubrics_admin")
 
 

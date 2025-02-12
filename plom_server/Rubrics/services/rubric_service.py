@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import ast
 import csv
 import io
 import html
@@ -34,6 +35,9 @@ from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.db.models.aggregates import Count
 from django.db.models import QuerySet
+
+# TODO: Issue #3808
+# from django.core.exceptions import ValidationError
 from rest_framework.exceptions import ValidationError
 
 from plom.plom_exceptions import PlomConflict
@@ -50,6 +54,83 @@ from .utils import _generate_display_delta, _Rubric_to_dict
 
 
 log = logging.getLogger("RubricServer")
+
+
+# TODO: more validation of JSONFields that the model/form/serializer should
+# be doing (see `clean_versions` commented out in Rubrics/models.py)
+# These `_validate_...` functions are written somelike like `clean_<field>`
+# in Django's model/form.
+def _validate_versions(vers: None | list | str) -> None:
+    if not vers:
+        # empty string is ok for versions
+        return
+
+    if not isinstance(vers, list):
+        raise ValidationError(
+            f'nonempty "versions" must be a list of ints but got "{vers}"'
+        )
+    for v in vers:
+        if not isinstance(v, int):
+            raise ValidationError(
+                f'nonempty "versions" must be a list of ints but got "{vers}"'
+            )
+
+
+def _validate_parameters(parameters: None | list) -> None:
+    if not parameters:
+        return
+
+    if not isinstance(parameters, list):
+        raise ValidationError(
+            'nonempty "parameters" must be a list but got'
+            f' type {type(parameters)}: "{parameters}"'
+        )
+    for row in parameters:
+        try:
+            param, values = row
+        except ValueError as e:
+            raise ValidationError(f'Invalid row in "parameters": {e}') from e
+
+        if not isinstance(param, str):
+            raise ValidationError(
+                'Invalid row in "parameters": first row entry "param" should be str'
+                f' but has type "{type(param)}"; row: "{row}"'
+            )
+
+        if not (isinstance(values, tuple) or isinstance(values, list)):
+            raise ValidationError(
+                'Invalid row in "parameters": expected list of substitution values;'
+                f' got type "{type(values)}"; row: "{row}"'
+            )
+
+        # TODO: could also assert len(values) matches number of versions
+
+        for v in values:
+            if not isinstance(v, str):
+                raise ValidationError(
+                    'Invalid row in "parameters": expected list of str substitutions;'
+                    f' value "{v}" has "{type(v)}"; row: "{row}"'
+                )
+
+
+# TODO: this code belongs in model/serializer?
+def _validate_value_out_of(value, out_of) -> None:
+    try:
+        out_of = float(out_of)
+    except ValueError as e:
+        raise ValidationError(
+            {"out_of": f"out of {out_of} must be convertible to number: {e}"}
+        ) from e
+    try:
+        value = float(value)
+    except ValueError as e:
+        raise ValidationError(
+            {"value": f"value {value} must be convertible to number: {e}"}
+        ) from e
+    if not 0 <= value <= out_of:
+        raise ValidationError(
+            {"value": f"out of range: {value} is not in [0, {out_of}]."}
+        )
 
 
 class RubricService:
@@ -103,6 +184,13 @@ class RubricService:
                 incoming_data["modified_by_user"] = user.pk
             except ObjectDoesNotExist as e:
                 raise ValueError(f"User {username} does not exist.") from e
+
+        if "rid" in incoming_data.keys():
+            # could potentially allow blank rid...
+            raise ValidationError(
+                'Data for creating a new rubric must not have a "rid" column,'
+                f' but this has {incoming_data.get("rid")}'
+            )
 
         # some mangling because client still uses "question"
         if "question_index" not in incoming_data.keys():
@@ -162,18 +250,12 @@ class RubricService:
 
         # TODO: Perhaps the serializer should do this
         if data["kind"] == "absolute":
-            _value = data["value"]
-            _out_of = data["out_of"]
-            try:
-                _out_of = float(_out_of)
-            except ValueError as e:
-                raise ValidationError(
-                    {"out_of": f"out of {_out_of} must be convertible to number: {e}"}
-                )
-            if not 0 <= _value <= _out_of:
-                raise ValidationError(
-                    {"value": f"out of range: {_value} is not in [0, {_out_of}]."}
-                )
+            _validate_value_out_of(data["value"], data["out_of"])
+
+        # TODO: more validation of JSONFields that the model/form/serializer should
+        # be doing (see `clean_versions` commented out in Rubrics/models.py)
+        _validate_versions(data.get("versions"))
+        _validate_parameters(data.get("parameters"))
 
         data["latest"] = True
         if _bypass_serializer:
@@ -333,18 +415,10 @@ class RubricService:
 
         # TODO: Perhaps the serializer should do this
         if new_rubric_data["kind"] == "absolute":
-            _value = new_rubric_data["value"]
-            _out_of = new_rubric_data["out_of"]
-            try:
-                _out_of = float(_out_of)
-            except ValueError as e:
-                raise ValidationError(
-                    {"out_of": f"out of {_out_of} must be convertible to number: {e}"}
-                )
-            if not 0 <= _value <= _out_of:
-                raise ValidationError(
-                    {"value": f"out of range: {_value} is not in [0, {_out_of}]."}
-                )
+            _validate_value_out_of(new_rubric_data["value"], new_rubric_data["out_of"])
+
+        _validate_versions(new_rubric_data.get("versions"))
+        _validate_parameters(new_rubric_data.get("parameters"))
 
         serializer = RubricSerializer(data=new_rubric_data)
 
@@ -881,7 +955,12 @@ class RubricService:
             A list of the rubrics created.
 
         Raises:
-            ValueError: If the file type is not supported.
+            ValueError: If the file type is not supported.  Also if
+                username does not exist.
+            PermissionDenied: username not allowed to make rubrics.
+            ValidationError: rubric data is invalid.
+            KeyError: TODO, what should happen if no user specified?
+                See also TODO in the create code.
         """
         if filetype == "json":
             rubrics = json.loads(data)
@@ -894,4 +973,39 @@ class RubricService:
         else:
             raise ValueError(f"Unsupported file type: {filetype}")
 
-        return [self.create_rubric(r) for r in rubrics]
+        # This smells like ask-permission: try to avoid too much "pre-validation"
+        # and instead leave that for the rubric creation code.  Try to keep this
+        # code specific to file uploads, e.g., csv ambiguities.
+        for r in rubrics:
+            # Fixes for Issue #3807: csv often scramble empty lists or otherwise makes strings
+            if r.get("pedagogy_tags") == "[]":
+                r["pedagogy_tags"] = []
+            if r.get("versions") == "[]":
+                r["versions"] = []
+            if isinstance(r.get("versions"), str) and r.get("versions") != "":
+                versions = r["versions"]
+                try:
+                    versions = ast.literal_eval(versions)
+                except (SyntaxError, ValueError) as e:
+                    raise ValidationError(
+                        f'Invalid "versions" field type {type(versions)}'
+                        f' "{versions}"; {e}'
+                    ) from e
+                r["versions"] = versions
+
+            if r.get("parameters") in ("[]", ""):
+                r["parameters"] = []
+            if isinstance(r.get("parameters"), str):
+                parameters = r["parameters"]
+                log.debug('evaluating string "parameters" input')
+                try:
+                    parameters = ast.literal_eval(parameters)
+                except (SyntaxError, ValueError) as e:
+                    raise ValidationError(
+                        f'Invalid "parameters" field of type {type(parameters)}: {e}'
+                    ) from e
+                r["parameters"] = parameters
+
+        # ensure either all rubrics succeed or all fail
+        with transaction.atomic():
+            return [self.create_rubric(r) for r in rubrics]
