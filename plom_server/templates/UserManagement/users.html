@@ -42,6 +42,9 @@
                         <th>Enable</th>
                         <th>Password</th>
                         <th>Quota</th>
+                        <th>
+                            <!-- delete users -->
+                        </th>
                     </thead>
                     {% for user in markers %}
                         <tr>
@@ -78,10 +81,10 @@
                             <td>
                                 {% if user.has_usable_password %}
                                     {% if user.is_active %}
-                                        <button hx-post="{% url 'change_user_status' user.username %}"
+                                        <button hx-post="{% url 'modify_user' user.username %}"
                                                 class="btn btn-danger">disable</button>
                                     {% else %}
-                                        <button hx-post="{% url 'change_user_status' user.username %}"
+                                        <button hx-post="{% url 'modify_user' user.username %}"
                                                 class="btn btn-success">enable</button>
                                     {% endif %}
                                 {% else %}
@@ -103,6 +106,13 @@
                                     {% else %}
                                         <button type="submit" class="btn btn-warning">Set Quota</button>
                                     {% endif %}
+                                </form>
+                            </td>
+                            <td>
+                                <form action="{% url 'set_quota' user.username %}" method="post">
+                                    {% csrf_token %}
+                                    <button hx-delete="{% url 'modify_user' user.username %}"
+                                            class="btn btn-danger">delete user</button>
                                 </form>
                             </td>
                         </tr>
@@ -141,6 +151,9 @@
                         <th>Last login</th>
                         <th>Enable</th>
                         <th>Password</th>
+                        <th>
+                            <!-- delete users -->
+                        </th>
                     </thead>
                     {% for user in scanners %}
                         <tr>
@@ -154,10 +167,10 @@
                             <td>
                                 {% if user.has_usable_password %}
                                     {% if user.is_active %}
-                                        <button hx-post="{% url 'change_user_status' user.username %}"
+                                        <button hx-post="{% url 'modify_user' user.username %}"
                                                 class="btn btn-danger">disable</button>
                                     {% else %}
-                                        <button hx-post="{% url 'change_user_status' user.username %}"
+                                        <button hx-post="{% url 'modify_user' user.username %}"
                                                 class="btn btn-success">enable</button>
                                     {% endif %}
                                 {% else %}
@@ -167,6 +180,13 @@
                             <td>
                                 <a href="{% url 'reset_user_password' user.username %}"
                                    class="btn btn-danger">reset</a>
+                            </td>
+                            <td>
+                                <form action="{% url 'set_quota' user.username %}" method="post">
+                                    {% csrf_token %}
+                                    <button hx-delete="{% url 'modify_user' user.username %}"
+                                            class="btn btn-danger">delete user</button>
+                                </form>
                             </td>
                         </tr>
                     {% endfor %}

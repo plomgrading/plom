@@ -44,6 +44,7 @@ class UserPage(ManagerRequiredView):
     """
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """Fetch user management page."""
         users = get_user_info()
         # fetch these so that we don't loop over this in the template
         # remove db hits in loops.
@@ -64,8 +65,13 @@ class UserPage(ManagerRequiredView):
         return render(request, "UserManagement/users.html", context)
 
     def post(self, request: HttpRequest, username: str) -> HttpResponse:
+        """Set user to active or inactive."""
         PermissionChanger.toggle_user_active(username)
 
+        return HttpResponseClientRefresh()
+
+    def delete(self, request: HttpRequest, username: str) -> HttpResponse:
+        """Delete user."""
         return HttpResponseClientRefresh()
 
     @login_required
