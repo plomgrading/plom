@@ -27,7 +27,7 @@ from Base.base_group_views import ManagerRequiredView
 from Progress.services.userinfo_service import UserInfoServices
 from .services import PermissionChanger
 from .services import QuotaService
-from .services.UsersService import get_user_info
+from .services.UsersService import get_user_info, delete_user
 from .models import Quota
 
 
@@ -72,6 +72,8 @@ class UserPage(ManagerRequiredView):
 
     def delete(self, request: HttpRequest, username: str) -> HttpResponse:
         """Delete user."""
+        # confirm manager
+        delete_user(username, request.user.id)
         return HttpResponseClientRefresh()
 
     @login_required

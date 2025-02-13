@@ -204,6 +204,9 @@
                         <th>Online</th>
                         <th>Last login</th>
                         <th>Password</th>
+                        <th>
+                            <!-- delete users -->
+                        </th>
                     </thead>
                     {% for user in managers %}
                         <tr>
@@ -219,6 +222,13 @@
                                 <a href="{% url 'reset_user_password' user.username %}"
                                    class="btn btn-danger"
                                    onclick="return confirm('This is a manager account - are you sure you wish to reset the password?')">reset</a>
+                            </td>
+                            <td>
+                                <form action="{% url 'set_quota' user.username %}" method="post">
+                                    {% csrf_token %}
+                                    <button hx-delete="{% url 'modify_user' user.username %}"
+                                            class="btn btn-danger">delete user</button>
+                                </form>
                             </td>
                         </tr>
                     {% endfor %}
