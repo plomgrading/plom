@@ -28,6 +28,7 @@ class PaperInfoService:
         """Returns true when the paper-db is being updated via background tasks.
 
         Note that this function is the same as PaperCreatorService.is_chore_in_progress
+        TODO: disambig?  see comments there, what about error handling?
         """
         return PopulateEvacuateDBChore.objects.filter(obsolete=False).exists()
 

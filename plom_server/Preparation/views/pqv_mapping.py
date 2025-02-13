@@ -137,7 +137,7 @@ class PQVMappingView(ManagerRequiredView):
             "number_times_1dot1": (num_students * 11) // 10,
             "student_list_present": StagingStudentService().are_there_students(),
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
-            "chore_in_progress": PaperCreatorService.is_chore_in_progress(),
+            "chore_status": PaperCreatorService.get_chore_status(),
             "chore_message": PaperCreatorService.get_chore_message(),
             "populate_in_progress": PaperCreatorService.is_populate_in_progress(),
             "evacuate_in_progress": PaperCreatorService.is_evacuate_in_progress(),

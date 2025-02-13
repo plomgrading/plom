@@ -50,7 +50,12 @@
                         {% endif %}
                     {% endif %}
                 </div>
-                {% if chore_in_progress %}
+                {% if chore_status == "Error" %}
+                    <div class="alert alert-danger">
+                        <p>Chore status: {{ chore_status }}</p>
+                        <p>message: {{ chore_message }}</p>
+                    </div>
+                {% else %}
                     {% if populate_in_progress %}
                         <div class="alert alert-info">
                             <p>
@@ -85,7 +90,8 @@
                             </p>
                         </div>
                     {% endif %}
-                {% else %}
+                {% endif %}
+                {% if True %}
                     {% if pqv_mapping_present %}
                         <div class="alert alert-primary">
                             <span>Question-version mapping present with {{ pqv_number_rows }} papers:</span>

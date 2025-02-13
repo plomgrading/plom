@@ -192,6 +192,7 @@ class PaperCreatorService:
         Raises:
             ObjectDoesNotExist: no spec.
             IntegrityError: that paper number already exists.
+            KeyError: problem with qvmap input.
         """
         if id_page_number is None:
             id_page_number = SpecificationService.get_id_page_number()
@@ -223,24 +224,36 @@ class PaperCreatorService:
                 )
 
     @staticmethod
-    def assert_no_existing_chore():
-        """Check that there is no existing (non-obsolate) populate / evacuate database chore.
+    def assert_no_running_chore():
+        """Check for currently-running populate / evacuate database chores.
 
         Raises:
             PlomDatabaseCreationError: when there is a chore already underway.
         """
-        try:
-            chore = PopulateEvacuateDBChore.objects.get(obsolete=False)
-            if chore.action == PopulateEvacuateDBChore.POPULATE:
-                raise PlomDatabaseCreationError("Papers are being populated.")
-            else:
-                raise PlomDatabaseCreationError("Papers are being deleted.")
-        except ObjectDoesNotExist:
-            pass
-            # not currently being populated/evacuated.
+        for chore in PopulateEvacuateDBChore.objects.all():
+            print(f"**** Existing chore has status: {chore.get_status_display()}")
+            if chore.status in (
+                PopulateEvacuateDBChore.TO_DO,
+                PopulateEvacuateDBChore.STARTING,
+                PopulateEvacuateDBChore.QUEUED,
+                PopulateEvacuateDBChore.RUNNING,
+            ):
+                if chore.action == PopulateEvacuateDBChore.POPULATE:
+                    raise PlomDatabaseCreationError("Papers are being populated.")
+                else:
+                    raise PlomDatabaseCreationError("Papers are being deleted.")
+            print("***** we're ok (?) not raising")
+
+    @staticmethod
+    def obselete_all_existing_chores():
+        PopulateEvacuateDBChore.objects.filter(obsolete=False).update(obsolete=True)
+        # TODO: check that this doesn't do superclass as well!
+        # TODO: can probably verify by `print(cls)` in the superclass code
+        # PopulateEvacuateDBChore.set_every_task_obsolete()
 
     @staticmethod
     def is_chore_in_progress():
+        # TODO: This returns "True" for an Error'd chore, UI spins forever...
         return PopulateEvacuateDBChore.objects.filter(obsolete=False).exists()
 
     @staticmethod
@@ -256,11 +269,24 @@ class PaperCreatorService:
         ).exists()
 
     @staticmethod
-    def get_chore_message():
+    def get_chore_message() -> str | None:
+        """Return the current message or None if there are no non-obsolete chores."""
         try:
             return PopulateEvacuateDBChore.objects.get(obsolete=False).message
         except ObjectDoesNotExist:
             return None
+
+    @staticmethod
+    def get_chore_status() -> str | None:
+        """Get the chore status string, or None if there are no non-obsolete chores.
+
+        The chore status is autorendered from IntegerChoices in the parent model.
+        """
+        try:
+            the_chore = PopulateEvacuateDBChore.objects.filter(obsolete=False).get()
+        except PopulateEvacuateDBChore.DoesNotExist:
+            return None
+        return the_chore.get_status_display()
 
     @classmethod
     def add_all_papers_in_qv_map(
@@ -284,13 +310,15 @@ class PaperCreatorService:
 
         Raises:
             PlomDependencyConflict: if preparation dependencies are not met.
-            PlomDatabaseCreationError: if there are papers already in the database.
+            PlomDatabaseCreationError: if there are papers already in the database
+                or a task is in an error state.
         """
         assert_can_modify_qv_mapping_database()
         if Paper.objects.filter().exists():
             raise PlomDatabaseCreationError("Already papers in the database.")
         # check if there is an existing non-obsolete task
-        cls.assert_no_existing_chore()
+        cls.assert_no_running_chore()
+        cls.obselete_all_existing_chores()
         cls._set_number_to_produce(len(qv_map))
 
         if not _testing:
@@ -336,8 +364,8 @@ class PaperCreatorService:
                 raise PlomDatabaseCreationError("Already papers in the database.")
 
         # even with force you don't get to bully; other people are playing here!
-        # check if there is an existing non-obsolete task
-        cls.assert_no_existing_chore()
+        cls.assert_no_running_chore()
+        cls.obselete_all_existing_chores()
 
         for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
             with transaction.atomic(durable=True):
@@ -386,8 +414,8 @@ class PaperCreatorService:
             PlomDatabaseCreationError: if a database populate/evacuate chore already underway.
         """
         assert_can_modify_qv_mapping_database()
-        # check if there is an existing non-obsolete task
-        cls.assert_no_existing_chore()
+        cls.assert_no_running_chore()
+        cls.obselete_all_existing_chores()
         cls._reset_number_to_produce()
 
         if not _testing:
