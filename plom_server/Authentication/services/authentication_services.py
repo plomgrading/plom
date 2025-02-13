@@ -183,13 +183,13 @@ class AuthenticationServices:
 
         # either all succeed or all fail
         with transaction.atomic():
-            for index, user_dict in enumerate(new_user_list):
+            for idx, user_dict in enumerate(new_user_list):
                 group = user_dict["usergroup"]
                 try:
                     self.create_user_and_add_to_group(user_dict["username"], group)
                 except Group.DoesNotExist as e:
                     raise ObjectDoesNotExist(
-                        f'Error in row {index+1}: Group "{group}" does not exist? {e}'
+                        f'Error near row {idx + 1}: Group "{group}" does not exist? {e}'
                     ) from e
                 user = User.objects.get(username=user_dict["username"])
                 user_dict["reset_link"] = self.generate_link(user)
