@@ -173,18 +173,15 @@ class ImportUsers(AdminOrManagerRequiredView):
 
         user_list = {}
         try:
-            AuS = AuthenticationServices()
-            user_list = AuS.create_users_from_csv(csv_bytes)
+            user_list = AuthenticationServices().create_users_from_csv(csv_bytes)
         except (IntegrityError, KeyError, ValueError) as e:
             messages.error(request, str(e))
             return render(request, self.template_name, context)
-        except ObjectDoesNotExist:
+        except ObjectDoesNotExist as e:
             messages.error(
                 request,
-                # TODO: find the offending row[s] and tell the user.
-                f"One or more rows in {request.FILES['.csv'].name} "
-                " references an invalid usergroup.\n"
-                f"The valid usergroups are: {', '.join(self.user_groups)}.",
+                f"Problem with one or more rows in {request.FILES['.csv'].name}:\n"
+                f"{e}\n The valid usergroups are: {', '.join(self.user_groups)}.",
             )
             return render(request, self.template_name, context)
 
