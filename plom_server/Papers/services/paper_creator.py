@@ -65,19 +65,34 @@ def huey_populate_whole_db(
 
     # TODO - move much of this loop back into paper-creator.
     for idx, (paper_number, qv_row) in enumerate(qv_map.items()):
-        PaperCreatorService._create_single_paper_from_qvmapping_and_pages(
-            paper_number,
-            qv_row,
-            id_page_number=id_page_number,
-            dnm_page_numbers=dnm_page_numbers,
-            question_page_numbers=question_page_numbers,
-        )
+        try:
+            PaperCreatorService._create_single_paper_from_qvmapping_and_pages(
+                paper_number,
+                qv_row,
+                id_page_number=id_page_number,
+                dnm_page_numbers=dnm_page_numbers,
+                question_page_numbers=question_page_numbers,
+            )
+        except KeyError as e:
+            # increase verbosity, else it just prints like "4"
+            raise KeyError(
+                f"KeyError {e}: perhaps not enough columns in your upload?"
+            ) from e
 
         if idx % 16 == 0:
             PopulateEvacuateDBChore.set_message_to_user(
                 tracker_pk, f"Populated {idx} of {N} papers in database"
             )
             print(f"Populated {idx} of {N} papers in database")
+
+    # TODO: currently we let the catch-all in Base/models.py handle exceptions but
+    # we could do so here, avoiding errors in Huey logs... Which is better?
+    # except Exception as e:
+    #     PopulateEvacuateDBChore.transition_chore_to_error(
+    #          tracker_pk,
+    #          f"Something went wrong building database: {e}",
+    #     )
+    #     return True
 
     PopulateEvacuateDBChore.set_message_to_user(
         tracker_pk, f"Populated all {N} papers in database"
