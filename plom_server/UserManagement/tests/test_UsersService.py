@@ -2,7 +2,6 @@
 # Copyright (C) 2025 Aidan Murphy
 
 from django.contrib.auth.models import User
-from django.core.cache import cache
 from django.test import TestCase
 from model_bakery import baker
 from ..services.UsersService import delete_user
@@ -50,7 +49,7 @@ class UsersService_delete_user(TestCase):
             username="dummyMarker1",
             email="dummyMarker1@gmail.com",
             password="password123",
-        )
+        )  # type: User
         with self.assertRaisesRegex(ValueError, "themselves"):
             # delete_user(user_to_delete, user_making_request)
             delete_user(some_user.username, some_user.id)

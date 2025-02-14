@@ -45,8 +45,6 @@ class UserPage(ManagerRequiredView):
     set_quota_confirmation: the tag for the confirmation dialog interaction.
     """
 
-    url_name = "modify_user"
-
     def get(self, request: HttpRequest) -> HttpResponse:
         """Fetch user management page."""
         users = get_user_info()
@@ -76,7 +74,6 @@ class UserPage(ManagerRequiredView):
 
     def delete(self, request: HttpRequest, username: str) -> HttpResponse:
         """Delete user."""
-        # confirm manager
         try:
             delete_user(username, request.user.id)
         except (ValueError, ObjectDoesNotExist) as e:

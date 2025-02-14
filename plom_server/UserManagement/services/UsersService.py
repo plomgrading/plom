@@ -50,8 +50,6 @@ def delete_user(username: str, requester_id: int | None = None) -> str:
         raise ValueError(f"User: {username} is an admin and cannot be deleted.")
 
     online_user_ids = cache.get("online-now", [])
-    print(online_user_ids)
-    print(user_to_delete.id in online_user_ids)
     # don't let users submit annotations in between checking and deletion
     with transaction.atomic():
         num_annotations, _ = (
