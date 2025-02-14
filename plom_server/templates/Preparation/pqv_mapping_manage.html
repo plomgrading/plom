@@ -86,8 +86,7 @@
                                 </button>
                             </p>
                         </div>
-                    {% endif %}
-                    {% if evacuate_in_progress %}
+                    {% elif evacuate_in_progress %}
                         <div class="alert alert-warning">
                             <p>
                                 {% if chore_message %}
@@ -103,8 +102,7 @@
                                 </button>
                             </p>
                         </div>
-                    {% endif %}
-                    {% if pqv_mapping_present %}
+                    {% elif pqv_mapping_present %}
                         <div class="alert alert-primary">
                             <span>Question-version mapping present with {{ pqv_number_rows }} papers:</span>
                             <a href="{% url 'prep_qvmapping_download' %}" class="btn btn-info">download</a>
