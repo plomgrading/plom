@@ -36,7 +36,7 @@ class CreateSingleUserForm(forms.ModelForm):
         model = User
         fields = ["username", "email"]
 
-    def clean_username(self):
+    def clean_username(self) -> str:
         """Reject usernames that differ only in case."""
         # we no longer subclass UserCreationForm (Issue #3798) so instead we implement username
         # cleaning following Django's UserCreationForm
@@ -87,7 +87,7 @@ class CreateMultiUsersForm(forms.Form):
         initial="marker",
     )
 
-    def clean(self):
+    def clean(self) -> dict:
         data = self.cleaned_data
         if data["num_users"] < 1:
             raise ValidationError("Cannot create fewer than 1 users!")
