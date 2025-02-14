@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Aidan Murphy
 
@@ -29,7 +29,7 @@ from plom.plom_exceptions import PlomDependencyConflict
 
 
 def _task_context_and_status() -> tuple[dict[str, Any], int]:
-    db_initialised = PaperInfoService().is_paper_database_populated()
+    db_initialised = PaperInfoService.is_paper_database_populated()
     bps = BuildPapersService()
     n_complete = bps.get_n_complete_tasks()
     n_papers = bps.get_n_papers()

@@ -42,7 +42,7 @@ class PQVMappingUploadView(ManagerRequiredView):
             return redirect("prep_qvmapping")
 
         # if database is populated then redirect
-        if PaperInfoService().is_paper_database_populated():
+        if PaperInfoService.is_paper_database_populated():
             return redirect("prep_qvmapping")
 
         prenamed_papers = list(StagingStudentService().get_prenamed_papers().keys())
@@ -131,7 +131,7 @@ class PQVMappingView(ManagerRequiredView):
             "question_labels_html_fix": labels_fix,
             "question_labels_html_shuffle": labels_shf,
             "prenaming": PrenameSettingService().get_prenaming_setting(),
-            "pqv_mapping_present": PaperInfoService().is_paper_database_fully_populated(),
+            "pqv_mapping_present": PaperInfoService.is_paper_database_fully_populated(),
             "number_of_students": num_students,
             "number_plus_twenty": num_students + 20,
             "number_times_1dot1": (num_students * 11) // 10,

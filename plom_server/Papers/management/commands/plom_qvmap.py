@@ -82,10 +82,9 @@ class Command(BaseCommand):
 
     def papers_status(self) -> None:
         """Get the status of test-papers in the database."""
-        paper_info = PaperInfoService()
-        n_papers = paper_info.how_many_papers_in_database()
+        n_papers = PaperInfoService().how_many_papers_in_database()
         self.stdout.write(f"{n_papers} test-papers saved to the database.")
-        if PaperInfoService().is_paper_database_fully_populated():
+        if PaperInfoService.is_paper_database_fully_populated():
             self.stdout.write("Database is ready")
         else:
             self.stdout.write("Database is not yet ready")
@@ -94,8 +93,7 @@ class Command(BaseCommand):
         self, *, number_to_produce: int | None = None, first: int | None = 1
     ) -> None:
         """Create a version map and use it to populate the database with papers."""
-        paper_info = PaperInfoService()
-        if paper_info.is_paper_database_populated():
+        if PaperInfoService.is_paper_database_populated():
             raise CommandError("Test-papers already saved to database - stopping.")
 
         self.stdout.write("Creating test-papers...")
@@ -131,7 +129,7 @@ class Command(BaseCommand):
 
     def download_pqv_map(self) -> None:
         # check if a populate/evacuate running
-        if PaperInfoService().is_paper_database_being_updated_in_background():
+        if PaperCreatorService.is_background_chore_in_progress():
             raise CommandError("Database is being updated - try again shortly.")
 
         save_path = Path(PQVMappingService.get_default_csv_filename())

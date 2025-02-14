@@ -266,12 +266,21 @@ class PaperCreatorService:
         # PopulateEvacuateDBChore.set_every_task_obsolete()
 
     @staticmethod
-    def is_chore_in_progress():
-        # TODO: This returns "True" for an Error'd chore, UI spins forever...
-        return PopulateEvacuateDBChore.objects.filter(obsolete=False).exists()
+    def is_background_chore_in_progress() -> bool:
+        """Are any populate/evacuate chores currently running in the background?"""
+        return PopulateEvacuateDBChore.objects.filter(
+            obsolete=False,
+            status__in=(
+                PopulateEvacuateDBChore.TO_DO,
+                PopulateEvacuateDBChore.STARTING,
+                PopulateEvacuateDBChore.QUEUED,
+                PopulateEvacuateDBChore.RUNNING,
+            ),
+        ).exists()
 
     @staticmethod
-    def is_populate_in_progress():
+    def is_populate_in_progress() -> bool:
+        """Are any populate chores currently running?"""
         return PopulateEvacuateDBChore.objects.filter(
             obsolete=False,
             action=PopulateEvacuateDBChore.POPULATE,
@@ -284,7 +293,8 @@ class PaperCreatorService:
         ).exists()
 
     @staticmethod
-    def is_evacuate_in_progress():
+    def is_evacuate_in_progress() -> bool:
+        """Are any evacuate chores currently running?"""
         return PopulateEvacuateDBChore.objects.filter(
             obsolete=False,
             action=PopulateEvacuateDBChore.EVACUATE,
