@@ -3,8 +3,6 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2025 Colin B. Macdonald
 
-from __future__ import annotations
-
 import tempfile
 from io import BytesIO
 from pathlib import Path
