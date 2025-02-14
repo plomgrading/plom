@@ -6,6 +6,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2025 Aidan Murphy
 
 import json
 
@@ -77,7 +78,7 @@ class UserPage(ManagerRequiredView):
         """Delete user."""
         # confirm manager
         try:
-            deleted_username = delete_user(username, request.user.id)
+            delete_user(username, request.user.id)
         except (ValueError, ObjectDoesNotExist) as e:
             messages.error(request, e, extra_tags="danger")
         return HttpResponseClientRefresh()

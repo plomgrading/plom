@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Elisa Pan
+# Copyright (C) 2025 Aidan Murphy
 
 from django.urls import path
 
