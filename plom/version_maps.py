@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2024 Andrew Rechnitzer
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 
 """Tools for manipulating version maps."""
 
@@ -22,6 +22,7 @@ def check_version_map(
     *,
     legacy: bool = False,
     required_papers: list[int] | None = None,
+    num_questions: int | None = None,
 ) -> None:
     """Correctness checks of a version maps.
 
@@ -35,23 +36,35 @@ def check_version_map(
         legacy: True if this version map is for a legacy server, which
             is more strict about contiguous range of papers for example.
         required_papers: A list of paper_numbers that the qv map must have.
+        num_questions: if specified, we'll ensure each row has versions
+            for each.
 
     Returns:
         None
 
     Raises:
-        ValueError
+        ValueError: with a message about what is wrong.
     """
+    if spec:
+        if num_questions is None:
+            num_questions = spec["numberOfQuestions"]
+        else:
+            if spec["numberOfQuestions"] != num_questions:
+                raise ValueError(
+                    f"spec and num_questions={num_questions} do not match, spec: {spec}"
+                )
+
     rowlens = set()
     for t, qd in vm.items():
         if not isinstance(t, int):
             raise ValueError(f'test number key "{t}" ({type(t)}) is not an integer')
         if not isinstance(qd, dict):
             raise ValueError(f'row "{qd}" of version map should be a dict')
-        if spec and not len(qd) == spec["numberOfQuestions"]:
-            raise ValueError(
-                f"length of row {qd}  does not match numberOfQuestion in spec {spec}"
-            )
+        if num_questions is not None:
+            if len(qd) != num_questions:
+                raise ValueError(
+                    f"length of row {qd} does not match num questions {num_questions}"
+                )
         # even if no spec we can ensure all rows the same
         rowlens.add(len(qd))
         for q, v in qd.items():
@@ -193,17 +206,25 @@ def undo_json_packing_of_version_map(
 
 
 def _version_map_from_json(
-    f: Path, *, required_papers: list[int] | None = None
+    f: Path,
+    *,
+    required_papers: list[int] | None = None,
+    num_questions: int | None = None,
 ) -> dict:
     with open(f, "r") as fh:
         qvmap = json.load(fh)
     qvmap = undo_json_packing_of_version_map(qvmap)
-    check_version_map(qvmap, required_papers=required_papers)
+    check_version_map(
+        qvmap, required_papers=required_papers, num_questions=num_questions
+    )
     return qvmap
 
 
 def _version_map_from_csv(
-    f: Path, *, required_papers: list[int] | None = None
+    f: Path,
+    *,
+    required_papers: list[int] | None = None,
+    num_questions: int | None = None,
 ) -> dict[int, dict[int, int]]:
     """Extract the version map from a csv file.
 
@@ -215,6 +236,8 @@ def _version_map_from_csv(
 
     Keyword Args:
         required_papers: A list of paper_numbers that the qv map must have.
+        num_questions: how many questions we expect.  If specified, we'll
+            check the data from the file against this value.
 
     Returns:
         dict: keys are the paper numbers (`int`) and each value is a row
@@ -256,12 +279,17 @@ def _version_map_from_csv(
             except ValueError as err:
                 raise ValueError(f"In line {line}: {err}")
 
-    check_version_map(qvmap, required_papers=required_papers)
+    check_version_map(
+        qvmap, required_papers=required_papers, num_questions=num_questions
+    )
     return qvmap
 
 
 def version_map_from_file(
-    f: Path | str, *, required_papers: list[int] | None = None
+    f: Path | str,
+    *,
+    required_papers: list[int] | None = None,
+    num_questions: int | None = None,
 ) -> dict[int, dict[int, int]]:
     """Extract the version map from a csv or json file.
 
@@ -274,6 +302,8 @@ def version_map_from_file(
 
     Keyword Args:
         required_papers: A list of paper_numbers that the qv map must have.
+        num_questions: how many questions we expect.  If specified, we'll
+            check the data from the file against this value.
 
     Returns:
         keys are the paper numbers (`int`) and each value is a row
@@ -291,9 +321,13 @@ def version_map_from_file(
     suffix = f.suffix
 
     if suffix.casefold() == ".json":
-        return _version_map_from_json(f, required_papers=required_papers)
+        return _version_map_from_json(
+            f, required_papers=required_papers, num_questions=num_questions
+        )
     elif suffix.casefold() == ".csv":
-        return _version_map_from_csv(f, required_papers=required_papers)
+        return _version_map_from_csv(
+            f, required_papers=required_papers, num_questions=num_questions
+        )
     else:
         raise NotImplementedError(f'Don\'t know how to import from "{f}"')
 
