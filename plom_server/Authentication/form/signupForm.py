@@ -91,4 +91,4 @@ class CreateMultiUsersForm(forms.Form):
         data = self.cleaned_data
         if data["num_users"] < 1:
             raise ValidationError("Cannot create fewer than 1 users!")
-        return self.super().clean()
+        return super().clean()
