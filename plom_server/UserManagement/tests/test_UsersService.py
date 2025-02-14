@@ -1,16 +1,24 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Aidan Murphy
 
-from django.test import TestCase
 from django.contrib.auth.models import User
+from django.core.cache import cache
+from django.test import TestCase
 from model_bakery import baker
 from ..services.UsersService import delete_user
 
 
 class UsersService_delete_user(TestCase):
-
     def setUp(self) -> None:
-        pass
+        # Aidan thinks the CI runner acts as user with id 1 when making requests to the demo server,
+        # the middleware tracking who is online will then cache user id 1 as being online.
+        # This is a buffer user representing the CI runner (id=1) so it doesn't interfere with unit tests
+        baker.make(
+            User,
+            username="CI_runner",
+            email="self_user@gmail.com",
+            password="password123",
+        )
 
     def test_delete_unused_user(self) -> None:
         """Check users can be deleted as intended."""
