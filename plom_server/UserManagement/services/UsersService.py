@@ -4,7 +4,7 @@
 
 from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.http import HttpRequest
 
@@ -38,15 +38,15 @@ def delete_user(username: str, requester_id: int | None = None) -> str:
 
     Raises:
         ObjectDoesNotExist: no such user.
-        PermissionDenied: requesting user tried to delete themselves.
         ValueError: user couldn't be deleted because: they're an admin;
-            they're logged in; they've completed marking tasks.
+            they're logged in; they've completed marking tasks;
+            they've requested self-deletion.
     """
     user_to_delete = User.objects.get_by_natural_key(username)
 
     # prevent soft lock
     if user_to_delete.id == requester_id:
-        raise PermissionDenied("Users may not delete themselves.")
+        raise ValueError("Users may not delete themselves.")
 
     if user_to_delete.is_superuser:
         raise ValueError(f"User: {username} is an admin and cannot be deleted.")

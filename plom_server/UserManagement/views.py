@@ -15,6 +15,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse, Http404
 from django_htmx.http import HttpResponseClientRefresh
 from django.shortcuts import get_object_or_404
@@ -42,6 +43,8 @@ class UserPage(ManagerRequiredView):
     modify_default_limit: when one interacts with "Change Default Limit" button".
     set_quota_confirmation: the tag for the confirmation dialog interaction.
     """
+
+    url_name = "modify_user"
 
     def get(self, request: HttpRequest) -> HttpResponse:
         """Fetch user management page."""
@@ -73,7 +76,10 @@ class UserPage(ManagerRequiredView):
     def delete(self, request: HttpRequest, username: str) -> HttpResponse:
         """Delete user."""
         # confirm manager
-        delete_user(username, request.user.id)
+        try:
+            deleted_username = delete_user(username, request.user.id)
+        except (ValueError, ObjectDoesNotExist) as e:
+            messages.error(request, e, extra_tags="danger")
         return HttpResponseClientRefresh()
 
     @login_required

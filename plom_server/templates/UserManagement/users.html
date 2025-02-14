@@ -22,6 +22,7 @@
             <!--     <button class="btn btn-warning" hx-get="{% url 'htmx_explode' %}">Raise an exception with htmx-get</button> -->
         </div>
     </div>
+    {% include "../base/alert_messages.html" with messages=messages %}
     <div class="card my-2">
         <div class="card-body">
             <h4 class="card-title">Markers</h4>
