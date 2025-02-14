@@ -238,22 +238,25 @@ class PaperCreatorService:
     def assert_no_running_chore():
         """Check for currently-running populate / evacuate database chores.
 
+        Note, even if the chores are obsolete we still say chores are underway.
+        This is b/c they would finish and change the database.
+
         Raises:
             PlomDatabaseCreationError: when there is a chore already underway.
         """
-        for chore in PopulateEvacuateDBChore.objects.all():
-            print(f"**** Existing chore has status: {chore.get_status_display()}")
-            if chore.status in (
+        # Error or Complete are not running: all other states could soon be running
+        for chore in PopulateEvacuateDBChore.objects.filter(
+            status__in=(
                 PopulateEvacuateDBChore.TO_DO,
                 PopulateEvacuateDBChore.STARTING,
                 PopulateEvacuateDBChore.QUEUED,
                 PopulateEvacuateDBChore.RUNNING,
-            ):
-                if chore.action == PopulateEvacuateDBChore.POPULATE:
-                    raise PlomDatabaseCreationError("Papers are being populated.")
-                else:
-                    raise PlomDatabaseCreationError("Papers are being deleted.")
-            print("***** we're ok (?) not raising")
+            )
+        ):
+            if chore.action == PopulateEvacuateDBChore.POPULATE:
+                raise PlomDatabaseCreationError("Papers are being populated.")
+            else:
+                raise PlomDatabaseCreationError("Papers are being deleted.")
 
     @staticmethod
     def obselete_all_existing_chores():
