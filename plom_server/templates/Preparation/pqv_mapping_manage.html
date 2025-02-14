@@ -55,6 +55,11 @@
                         <p>Chore status: {{ chore_status }}</p>
                         <p>message: {{ chore_message }}</p>
                     </div>
+                {% elif chore_status == "Complete" %}
+                    <div class="alert alert-success">
+                        <p>Chore status: {{ chore_status }}</p>
+                        <p>message: {{ chore_message }}</p>
+                    </div>
                 {% else %}
                     {% if populate_in_progress %}
                         <div class="alert alert-info">

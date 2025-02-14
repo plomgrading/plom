@@ -84,8 +84,6 @@ def huey_populate_whole_db(
     )
     print(f"Populated all {N} papers in database")
     PopulateEvacuateDBChore.transition_to_complete(tracker_pk)
-    # when chore is done it should be set to "obsolete"
-    PopulateEvacuateDBChore.objects.filter(pk=tracker_pk).update(obsolete=True)
     return True
 
 
@@ -134,8 +132,6 @@ def huey_evacuate_whole_db(
     )
     print(f"Deleted all {N} papers from database")
     PopulateEvacuateDBChore.transition_to_complete(tracker_pk)
-    # when chore is done it should be set to "obsolete"
-    PopulateEvacuateDBChore.objects.filter(pk=tracker_pk).update(obsolete=True)
     return True
 
 
@@ -259,13 +255,27 @@ class PaperCreatorService:
     @staticmethod
     def is_populate_in_progress():
         return PopulateEvacuateDBChore.objects.filter(
-            obsolete=False, action=PopulateEvacuateDBChore.POPULATE
+            obsolete=False,
+            action=PopulateEvacuateDBChore.POPULATE,
+            status__in=(
+                PopulateEvacuateDBChore.TO_DO,
+                PopulateEvacuateDBChore.STARTING,
+                PopulateEvacuateDBChore.QUEUED,
+                PopulateEvacuateDBChore.RUNNING,
+            ),
         ).exists()
 
     @staticmethod
     def is_evacuate_in_progress():
         return PopulateEvacuateDBChore.objects.filter(
-            obsolete=False, action=PopulateEvacuateDBChore.EVACUATE
+            obsolete=False,
+            action=PopulateEvacuateDBChore.EVACUATE,
+            status__in=(
+                PopulateEvacuateDBChore.TO_DO,
+                PopulateEvacuateDBChore.STARTING,
+                PopulateEvacuateDBChore.QUEUED,
+                PopulateEvacuateDBChore.RUNNING,
+            ),
         ).exists()
 
     @staticmethod
