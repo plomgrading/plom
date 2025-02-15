@@ -49,6 +49,8 @@ def check_version_map(
         ValueError: with a message about what is wrong.
     """
     if spec:
+        # if both spec and the kwargs are passed, ensure they are consistent,
+        # although callers will probably user one or the other.
         if num_questions is None:
             num_questions = spec["numberOfQuestions"]
         else:
