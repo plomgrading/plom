@@ -44,12 +44,11 @@ class UsersService_delete_user(TestCase):
 
     def test_delete_self_user_fails(self) -> None:
         """Check a user can't delete themselves."""
-        some_user = baker.make(
+        requesting_user = baker.make(
             User,
             username="dummyMarker1",
             email="dummyMarker1@gmail.com",
             password="password123",
         )  # type: User
         with self.assertRaisesRegex(ValueError, "themselves"):
-            # delete_user(user_to_delete, user_making_request)
-            delete_user(some_user.username, some_user.id)
+            delete_user(requesting_user.username, requesting_user.id)
