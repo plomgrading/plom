@@ -68,7 +68,7 @@ def delete_user(username: str, requester_id: int | None = None) -> str:
                 f"User: {username} is currently logged in and cannot be deleted."
             )
 
-        # Delete the user
+        deleted_username = user_to_delete.username
         user_to_delete.delete()
 
-    return user_to_delete.username
+    return deleted_username
