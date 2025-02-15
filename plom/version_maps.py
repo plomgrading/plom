@@ -67,7 +67,7 @@ def check_version_map(
     rowlens = set()
     for t, qd in vm.items():
         if not isinstance(t, int):
-            raise ValueError(f'test number key "{t}" ({type(t)}) is not an integer')
+            raise ValueError(f'paper number key "{t}" ({type(t)}) is not an integer')
         if not isinstance(qd, dict):
             raise ValueError(f'row "{qd}" of version map should be a dict')
         if num_questions is not None:

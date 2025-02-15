@@ -53,7 +53,7 @@ def test_ver_map_types() -> None:
     spec.verify()
     vm = make_random_version_map(spec)
     vm["1"] = vm.pop(1)  # type: ignore
-    with raises(ValueError, match="test number.*integer"):
+    with raises(ValueError, match="paper number.*integer"):
         check_version_map(vm)
 
 
