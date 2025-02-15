@@ -29,7 +29,9 @@ def delete_user(username: str, requester_id: int | None = None) -> str:
 
     Args:
         username: The username of the user to delete.
-        requester_id: The db id of the user making this request.
+        requester_id: The db id of the user making this request.  This is
+            optional: if `None` than fewer checks will be performed, for
+            example this is used to prevent users from deleting themselves.
 
     Returns:
         The username of the deleted user.
@@ -56,6 +58,7 @@ def delete_user(username: str, requester_id: int | None = None) -> str:
             UserInfoServices().get_total_annotated_and_claimed_count_by_user(username)
         )
         if num_annotations > 0:
+            # TODO: would be nice to have a unit test here
             raise ValueError(
                 f"User: {username} has started marking, they cannot be deleted."
             )
