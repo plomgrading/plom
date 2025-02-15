@@ -66,6 +66,7 @@ def delete_user(username: str, requester_id: int | None = None) -> str:
         if user_to_delete.id in online_user_ids:
             raise ValueError(
                 f"User: {username} is currently logged in and cannot be deleted."
+                "Hint: disabling a user will force a logout."
             )
 
         deleted_username = user_to_delete.username
