@@ -9,6 +9,7 @@ from ..services.UsersService import delete_user
 
 class UsersService_delete_user(TestCase):
     def setUp(self) -> None:
+        # documented under #3817
         # Aidan thinks the CI runner acts as user with id 1 when making requests to the demo server,
         # the middleware tracking who is online will then cache user id 1 as being online.
         # This is a buffer user representing the CI runner (id=1) so it doesn't interfere with unit tests
