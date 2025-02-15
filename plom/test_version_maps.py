@@ -96,6 +96,27 @@ def test_ver_map_verions_in_range() -> None:
         check_version_map(vm, spec)
 
 
+def test_ver_map_id_verions() -> None:
+    spec = SpecVerifier.demo()
+    spec.verify()
+    vm = make_random_version_map(spec)
+    for t, row in vm.items():
+        row["id"] = (t % 2) + 1
+    check_version_map(vm)
+
+
+def test_ver_map_id_verions_in_range() -> None:
+    spec = SpecVerifier.demo()
+    spec.verify()
+    vm = make_random_version_map(spec)
+    vm[1]["id"] = -1
+    with raises(ValueError, match="positive"):
+        check_version_map(vm)
+    vm[1]["id"] = spec["numberOfVersions"] + 1
+    with raises(ValueError, match="number of versions"):
+        check_version_map(vm, spec)
+
+
 def test_ver_map_fix_has_ver1_only() -> None:
     # assumes version 2 is fixed in demo: test will need adjusting if that changes
     spec = SpecVerifier.demo()
@@ -141,7 +162,6 @@ def test_ver_map_reproducible() -> None:
     spec_dict["numberOfVersions"] = 5
     spec_dict["numberToProduce"] = 6
     vm = make_random_version_map(spec_dict, seed="plom")
-    print(vm)
     saved_vm = {
         1: {1: 1, 2: 1, 3: 5},
         2: {1: 1, 2: 1, 3: 2},
