@@ -296,9 +296,9 @@ def _version_map_from_csv(
                     n: int(row[f"q{n}.version"]) for n in range(1, N + 1)
                 }
             except KeyError as err:
-                raise KeyError(f"Missing column header {err}")
+                raise KeyError(f"Missing column header {err}") from err
             except ValueError as err:
-                raise ValueError(f"In line {line}: {err}")
+                raise ValueError(f"In line {line}: {err}") from err
 
     check_version_map(
         qvmap,
