@@ -3,11 +3,7 @@
 # Copyright (C) 2024-2025 Aidan Murphy
 
 from django.contrib.auth.models import User
-from django.core.cache import cache
 from django.db import transaction
-
-from Progress.services import UserInfoServices
-from Identify.services import IdentifyTaskService
 
 
 # TODO: can probably do this in one call
@@ -40,7 +36,7 @@ def delete_user(username: str, requester_id: int | None = None) -> str:
     Raises:
         ObjectDoesNotExist: no such user.
         ValueError: user couldn't be deleted because: they're an admin;
-            they're logged in; they've completed marking tasks;
+            they've already logged in;
             they've requested self-deletion.
     """
     user_to_delete = User.objects.get_by_natural_key(username)
@@ -52,27 +48,12 @@ def delete_user(username: str, requester_id: int | None = None) -> str:
     if user_to_delete.is_superuser:
         raise ValueError(f"User: {username} is an admin and cannot be deleted.")
 
-    online_user_ids = cache.get("online-now", [])
-    # don't let users submit annotations in between checking and deletion
+    # don't let users login in between checking and deletion
     with transaction.atomic():
-        num_annotations, _ = (
-            UserInfoServices().get_total_annotated_and_claimed_count_by_user(username)
-        )
-        if num_annotations > 0:
-            # TODO: would be nice to have a unit test here
+        if user_to_delete.last_login:
             raise ValueError(
-                f"User: {username} has started marking, they cannot be deleted."
-            )
-        # TODO: should cascade and delete their IDing progress instead?
-        if IdentifyTaskService().get_done_tasks(user_to_delete):
-            raise ValueError(
-                f"User: {username} has identified papers, they cannot be deleted."
-            )
-
-        if user_to_delete.id in online_user_ids:
-            raise ValueError(
-                f"User: {username} is currently logged in and cannot be deleted."
-                "Hint: disabling a user will force a logout."
+                f"User: {username} has at least 1 successful login,"
+                "they can no longer be deleted."
             )
 
         deleted_username = user_to_delete.username

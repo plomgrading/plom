@@ -2,7 +2,7 @@
 # Copyright (C) 2025 Aidan Murphy
 
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, Client
 from model_bakery import baker
 from ..services.UsersService import delete_user
 
@@ -53,3 +53,22 @@ class UsersService_delete_user(TestCase):
         )  # type: User
         with self.assertRaisesRegex(ValueError, "themselves"):
             delete_user(requesting_user.username, requesting_user.id)
+
+    def test_delete_user_post_login_fails(self) -> None:
+        """Check users can't be deleted after they've logged in."""
+        user_in_use = baker.make(
+            User,
+            username="dummyMarker1",
+            email="dummyMarker1@example.com",
+            password="password123",
+        )  # type: User
+        user_in_use.set_password("password123")  # baker doesn't hash the password
+        user_in_use.save()
+
+        auth_client = Client()
+        auth_client.login(username=user_in_use.username, password="password123")
+        user_in_use.refresh_from_db()
+
+        self.assertIsNotNone(user_in_use.last_login)
+        with self.assertRaisesRegex(ValueError, "login"):
+            delete_user("dummyMarker1")
