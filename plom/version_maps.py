@@ -4,20 +4,17 @@
 
 """Tools for manipulating version maps."""
 
-from __future__ import annotations
-
 import csv
 import json
-from pathlib import Path
 import random
-from typing import Any
+from pathlib import Path
 
 # TODO: go through and fix all the places with str(q+1)
 # TODO: there is some documentation of "param" below that should move elsewhere
 
 
 def check_version_map(
-    vm: dict[Any, Any],
+    vm: dict[int, dict[int, int]],
     spec=None,
     *,
     legacy: bool = False,
@@ -28,7 +25,7 @@ def check_version_map(
     """Correctness checks of a version maps.
 
     Args:
-        vm (dict): a dict-of-dicts describing versions.  See the output
+        vm: a dict-of-dicts describing versions.  See the output
             of :func:`plom.make_random_version_map`.
         spec (plom.SpecVerifier/dict): a plom spec or the underlying
             dict, see :func:`plom.SpecVerifier`.
@@ -146,9 +143,9 @@ def make_random_version_map(
             is between Python versions or OSes.
 
     Returns:
-        dict: a dict-of-dicts keyed by paper number (int) and then
-            question number (int, but indexed from 1 not 0).  Values are
-            integers.
+        A dict-of-dicts keyed by paper number (int) and then
+        question number (int, but indexed from 1 not 0).  Values are
+        integers.
 
     Raises:
         KeyError: invalid question selection scheme in spec.
