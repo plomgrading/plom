@@ -274,7 +274,10 @@ def _version_map_from_csv(
         reader = csv.DictReader(csvfile)
         if not reader.fieldnames:
             raise ValueError("csv must have column names")
-        N = len(reader.fieldnames) - 1
+        if num_questions is None:
+            N = len(reader.fieldnames) - 1
+        else:
+            N = num_questions
         for line, row in enumerate(reader):
             # Its called "test_number" on legacy and "paper_number" on webplom
             # raise a value error if you cannot find either.
