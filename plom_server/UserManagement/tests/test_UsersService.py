@@ -15,7 +15,7 @@ class UsersService_delete_user(TestCase):
         baker.make(
             User,
             username="CI_runner",
-            email="self_user@gmail.com",
+            email="self_user@example.com",
             password="password123",
         )
 
@@ -24,7 +24,7 @@ class UsersService_delete_user(TestCase):
         baker.make(
             User,
             username="dummyMarker1",
-            email="dummyMarker1@gmail.com",
+            email="dummyMarker1@example.com",
             password="password123",
         )
         delete_user("dummyMarker1")
@@ -35,7 +35,7 @@ class UsersService_delete_user(TestCase):
         baker.make(
             User,
             username="dummyAdmin1",
-            email="dummyAdmin1@gmail.com",
+            email="dummyAdmin1@example.com",
             password="password123",
             is_superuser=True,
         )
@@ -47,7 +47,7 @@ class UsersService_delete_user(TestCase):
         requesting_user = baker.make(
             User,
             username="dummyMarker1",
-            email="dummyMarker1@gmail.com",
+            email="dummyMarker1@example.com",
             password="password123",
         )  # type: User
         with self.assertRaisesRegex(ValueError, "themselves"):
