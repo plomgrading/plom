@@ -8,14 +8,13 @@ import csv
 import json
 import random
 from pathlib import Path
-from typing import Any
 
 # TODO: go through and fix all the places with str(q+1)
 # TODO: there is some documentation of "param" below that should move elsewhere
 
 
 def check_version_map(
-    vm: dict[int, dict[Any, int]],
+    vm: dict[int, dict[int | str, int]],
     spec=None,
     *,
     legacy: bool = False,
@@ -138,7 +137,7 @@ def check_version_map(
 
 def make_random_version_map(
     spec, *, seed: str | None = None
-) -> dict[int, dict[int, int]]:
+) -> dict[int, dict[int | str, int]]:
     """Build a random version map.
 
     Args:
@@ -172,7 +171,7 @@ def make_random_version_map(
     ]
     # we use the above when a question is shuffled, else we just use v=1.
 
-    vmap: dict[int, dict[int, int]] = {}
+    vmap: dict[int, dict[int | str, int]] = {}
     for t in range(1, spec["numberToProduce"] + 1):
         vmap[t] = {}
         for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
@@ -253,7 +252,7 @@ def _version_map_from_csv(
     required_papers: list[int] | None = None,
     num_questions: int | None = None,
     num_versions: int | None = None,
-) -> dict[int, dict[Any, int]]:
+) -> dict[int, dict[int | str, int]]:
     """Extract the version map from a csv file.
 
     Args:
@@ -282,7 +281,7 @@ def _version_map_from_csv(
             other errors in the version map.
         KeyError: wrong column header names.
     """
-    qvmap: dict[int, dict[Any, int]] = {}
+    qvmap: dict[int, dict[int | str, int]] = {}
 
     with open(f, "r") as csvfile:
         reader = csv.DictReader(csvfile)
@@ -338,7 +337,7 @@ def version_map_from_file(
     required_papers: list[int] | None = None,
     num_questions: int | None = None,
     num_versions: int | None = None,
-) -> dict[int, dict[Any, int]]:
+) -> dict[int, dict[int | str, int]]:
     """Extract the version map from a csv or json file.
 
     Args:
@@ -389,7 +388,7 @@ def version_map_from_file(
 
 
 def version_map_to_csv(
-    qvmap: dict[int, dict[int, int]], filename: Path, *, _legacy: bool = True
+    qvmap: dict[int, dict[int | str, int]], filename: Path, *, _legacy: bool = True
 ) -> None:
     """Output a csv of the question-version map.
 

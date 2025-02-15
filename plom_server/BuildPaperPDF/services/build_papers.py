@@ -49,7 +49,7 @@ from ..models import BuildPaperPDFChore
 def huey_build_single_paper(
     papernum: int,
     spec: dict,
-    question_versions: dict[int, int],
+    qvmap_row: dict[int | str, int],
     source_versions: list[pathlib.Path],
     *,
     student_info: dict[str, Any] | None = None,
@@ -70,7 +70,7 @@ def huey_build_single_paper(
     Args:
         papernum: which paper to assemble
         spec: the specification of the assessment.
-        question_versions: which version to use for each question.
+        qvmap_row: which version to use for each question and id page.
             A row of the "qvmap".
         source_versions: list of paths to the PDF files for each version.
 
@@ -97,7 +97,7 @@ def huey_build_single_paper(
         save_path = make_PDF(
             spec=spec,
             papernum=papernum,
-            question_versions=question_versions,
+            question_versions=qvmap_row,
             extra=student_info,
             xcoord=prename_config["xcoord"],
             ycoord=prename_config["ycoord"],

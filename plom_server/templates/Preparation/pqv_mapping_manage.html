@@ -109,6 +109,7 @@
                     <table class="table table-striped border">
                         <thead>
                             <th>Paper number</th>
+                            <th>Id page</th>
                             {% if prenaming %}<th>Prename ID (if assigned)</th>{% endif %}
                             {% for qi, qstr, qlabel in question_labels_html %}<th>{{ qlabel|safe }}</th>{% endfor %}
                         </thead>
@@ -116,6 +117,7 @@
                             {% for paper_number, info in pqv_table.items %}
                                 <tr>
                                     <td>{{ paper_number }}</td>
+                                    <td>{{ info.id_ver }}</td>
                                     {% if prenaming %}
                                         <td>
                                             {% if info.prename %}

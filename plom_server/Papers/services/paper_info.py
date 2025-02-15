@@ -10,6 +10,7 @@ from django.db import transaction
 from ..models import (
     Paper,
     FixedPage,
+    IDPage,
     QuestionPage,
     NumberOfPapersToProduceSetting,
 )
@@ -171,14 +172,14 @@ class PaperInfoService:
             )
 
     @staticmethod
-    def get_pqv_map_dict() -> dict[int, dict[int, int]]:
+    def get_pqv_map_dict() -> dict[int, dict[int | str, int]]:
         """Get the paper-question-version mapping as a dict.
 
         Note if there is no version map (no papers) then this returns
         an empty dict.  If you'd prefer an error message you have to
         check for the empty return yourself.
         """
-        pqvmapping: dict[int, dict[int, int]] = {}
+        pqvmapping: dict[int, dict[int | str, int]] = {}
         with transaction.atomic():
             # note that this gets all question pages, not just one for each question.
             for qp_obj in (
@@ -194,4 +195,11 @@ class PaperInfoService:
                         pqvmapping[pn][qp_obj.question_index] = qp_obj.version
                 else:
                     pqvmapping[pn] = {qp_obj.question_index: qp_obj.version}
+            for idpage_obj in (
+                IDPage.objects.all()
+                .prefetch_related("paper")
+                .order_by("paper__paper_number")
+            ):
+                pn = idpage_obj.paper.paper_number
+                pqvmapping[pn]["id"] = idpage_obj.version
             return pqvmapping

@@ -1,6 +1,6 @@
 % SPDX-License-Identifier: AGPL-3.0-or-later
 % Copyright (C) 2019-2024 Andrew Rechnitzer
-% Copyright (C) 2022-2024 Colin B. Macdonald
+% Copyright (C) 2022-2025 Colin B. Macdonald
 
 \documentclass[12pt]{exam}
 
@@ -92,7 +92,7 @@
 \usepackage{tikz}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Use tikz to put a big "Solutions" watermark on the first page 
+% Use tikz to put a big "Solutions" watermark on the first page
 % if compiled with solutions
 \newcommand{\watermarkPageIfSolutions}[1][\empty]{
 \ifprintanswers%
@@ -103,7 +103,7 @@
 \end{tikzpicture}%
 \fi%
 }
-% for demo purposes, we put a small watermark on each page using tikz 
+% for demo purposes, we put a small watermark on each page using tikz
 \AddToHook{shipout/background}[demoversion] {
 \begin{tikzpicture}[remember picture, overlay]
   \node [below, text=teal, rotate=90, scale=3, opacity=.25] at (current page.west) {\textsf{demo version~1}};
@@ -141,6 +141,10 @@
 
 \begin{center}
   \includegraphics{idBox4}
+\end{center}
+
+\begin{center}
+  \emph{This is the id page of ``version 1'' of the midterm.}
 \end{center}
 
 
@@ -183,7 +187,7 @@ You may find the following formulas useful in the questions that follow.
 
 
 \begin{questions}
-  \question[6] 
+  \question[6]
   Compute the following limits.
   \begin{parts}
     \part\(\displaystyle \lim_{x \to 3} \dfrac{x^2-9}{x-3} \)
