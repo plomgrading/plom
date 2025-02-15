@@ -392,8 +392,6 @@ def version_map_to_csv(
 ) -> None:
     """Output a csv of the question-version map.
 
-    TODO: does not support id-page versions yet.
-
     Arguments:
         qvmap: the question-version map, documented elsewhere.
         filename: where to save.
@@ -412,11 +410,24 @@ def version_map_to_csv(
         header = ["test_number"]
     else:
         header = ["paper_number"]
+
+    has_id_versions = False
+    # do rows generally have "id" is in the keys?
+    if any("id" in row for row in qvmap.values()):
+        has_id_versions = True
+    if has_id_versions:
+        N -= 1
+        header.append("id.version")
+
     for q in range(1, N + 1):
         header.append(f"q{q}.version")
     with open(filename, "w") as csvfile:
         csv_writer = csv.writer(csvfile)
         csv_writer.writerow(header)
-        # make sure the rows are ordered = #3597
-        for k, v in sorted(qvmap.items()):
-            csv_writer.writerow([k, *[v[q] for q in range(1, N + 1)]])
+        # make sure the rows are ordered by paper num (Issue #3597)
+        for t, row in sorted(qvmap.items()):
+            output_row = [t]
+            if has_id_versions:
+                output_row.append(row["id"])
+            output_row.extend([row[q] for q in range(1, N + 1)])
+            csv_writer.writerow(output_row)
