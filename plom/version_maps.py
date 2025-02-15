@@ -209,7 +209,7 @@ def make_random_version_map(
 
 def undo_json_packing_of_version_map(
     vermap_in: dict[str, dict[str, int]],
-) -> dict[int, dict[int, int]]:
+) -> dict[int, dict[int | str, int]]:
     """JSON must have string keys; undo such to int keys for version map.
 
     Both the test number and the question number have likely been
@@ -223,7 +223,14 @@ def undo_json_packing_of_version_map(
     for t, vers in vermap_in.items():
         # TODO: how to do this dict comp?
         # vmap[int(t)] = {int(q): v if q != "id" else q: v for q, v in vers.items()}
-        vmap[int(t)] = {int(q): v for q, v in vers.items()}
+        # vmap[int(t)] = {int(q): v for q, v in vers.items()}
+        row = {}
+        for k, v in vers.items():
+            if k == "id":
+                row[k] = v
+            else:
+                row[int(k)] = v
+        vmap[int(t)] = row
     return vmap
 
 
