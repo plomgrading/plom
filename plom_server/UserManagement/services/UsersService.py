@@ -7,6 +7,7 @@ from django.core.cache import cache
 from django.db import transaction
 
 from Progress.services import UserInfoServices
+from Identify.services import IdentifyTaskService
 
 
 # TODO: can probably do this in one call
@@ -61,6 +62,11 @@ def delete_user(username: str, requester_id: int | None = None) -> str:
             # TODO: would be nice to have a unit test here
             raise ValueError(
                 f"User: {username} has started marking, they cannot be deleted."
+            )
+        # TODO: should cascade and delete their IDing progress instead?
+        if IdentifyTaskService().get_done_tasks(user_to_delete):
+            raise ValueError(
+                f"User: {username} has identified papers, they cannot be deleted."
             )
 
         if user_to_delete.id in online_user_ids:
