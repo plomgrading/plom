@@ -44,6 +44,8 @@ class PQVMappingUploadView(ManagerRequiredView):
             return redirect("prep_qvmapping")
 
         prenamed_papers = list(StagingStudentService().get_prenamed_papers().keys())
+        num_questions = SpecificationService.get_n_questions()
+        num_versions = SpecificationService.get_n_versions()
 
         context: dict[str, Any] = {"errors": []}
         # far from ideal, but the csv module doesn't like bytes.
@@ -53,7 +55,12 @@ class PQVMappingUploadView(ManagerRequiredView):
                 with f.open("wb") as fh:
                     fh.write(request.FILES["pqvmap_csv"].read())
                 # this function also validates the version map
-                vm = version_map_from_file(f, required_papers=prenamed_papers)
+                vm = version_map_from_file(
+                    f,
+                    required_papers=prenamed_papers,
+                    num_questions=num_questions,
+                    num_versions=num_versions,
+                )
         except ValueError as e:
             context["errors"].append({"kind": "ValueError", "err_text": f"{e}"})
         except KeyError as e:
