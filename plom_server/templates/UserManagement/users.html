@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Brennen Chiu
     Copyright (C) 2022 Edith Coates
-    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2024 Bryan Tanady
     Copyright (C) 2024 Elisa Pan
@@ -114,7 +114,7 @@
                                 <form action="{% url 'set_quota' user.username %}" method="post">
                                     {% csrf_token %}
                                     <button hx-delete="{% url 'modify_user' user.username %}"
-                                            class="btn btn-danger"
+                                            class="btn"
                                             {% if user.last_login %}disabled{% endif %}>delete user</button>
                                 </form>
                             </td>
@@ -135,6 +135,7 @@
                     <li>
                         Setting a marker quota limits the amount of questions they can grade. The exact limit can be changed in User Info page.
                     </li>
+                    <li>Currently, you cannot delete a user who has ever logged in.</li>
                 </ul>
             </p>
         </div>
@@ -188,7 +189,7 @@
                                 <form action="{% url 'set_quota' user.username %}" method="post">
                                     {% csrf_token %}
                                     <button hx-delete="{% url 'modify_user' user.username %}"
-                                            class="btn btn-danger"
+                                            class="btn"
                                             {% if user.last_login %}disabled{% endif %}>delete user</button>
                                 </form>
                             </td>
@@ -231,7 +232,7 @@
                                 <form action="{% url 'set_quota' user.username %}" method="post">
                                     {% csrf_token %}
                                     <button hx-delete="{% url 'modify_user' user.username %}"
-                                            class="btn btn-danger"
+                                            class="btn"
                                             {% if user.last_login %}disabled{% endif %}>delete user</button>
                                 </form>
                             </td>
