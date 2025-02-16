@@ -221,16 +221,7 @@ def undo_json_packing_of_version_map(
     """
     vmap = {}
     for t, vers in vermap_in.items():
-        # TODO: how to do this dict comp?
-        # vmap[int(t)] = {int(q): v if q != "id" else q: v for q, v in vers.items()}
-        # vmap[int(t)] = {int(q): v for q, v in vers.items()}
-        row = {}
-        for k, v in vers.items():
-            if k == "id":
-                row[k] = v
-            else:
-                row[int(k)] = v
-        vmap[int(t)] = row
+        vmap[int(t)] = {(int(q) if q != "id" else q): v for q, v in vers.items()}
     return vmap
 
 
