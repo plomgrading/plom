@@ -92,7 +92,7 @@
 \usepackage{tikz}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Use tikz to put a big "Solutions" watermark on the first page 
+% Use tikz to put a big "Solutions" watermark on the first page
 % if compiled with solutions
 \newcommand{\watermarkPageIfSolutions}[1][\empty]{
 \ifprintanswers%
@@ -103,7 +103,7 @@
 \end{tikzpicture}%
 \fi%
 }
-% for demo purposes, we put a small watermark on each page using tikz 
+% for demo purposes, we put a small watermark on each page using tikz
 \AddToHook{shipout/background}[demoversion] {
 \begin{tikzpicture}[remember picture, overlay]
   \node [below, text=teal, rotate=90, scale=3, opacity=.25] at (current page.west) {\textsf{demo version~2}};
@@ -130,7 +130,7 @@
 
 \watermarkPageIfSolutions[2]%
 
-\section*{Mathematics 418 --- Midterm --- 45 minutes --- \emph{version 2 id page}}
+\section*{Mathematics 418 --- Midterm --- 45 minutes}
 \subsection*{3rd September 1752}
 \begin{itemize}
   \item The test consists of \numpages\ pages and \numquestions\ questions worth a total of \numpoints\ marks.
@@ -141,6 +141,10 @@
 
 \begin{center}
   \includegraphics{idBox4}
+\end{center}
+
+\begin{center}
+  \emph{This is the id page of ``version 2'' of the midterm, often but necessarily unused.}
 \end{center}
 
 
@@ -183,17 +187,17 @@ You may find the following formulas useful in the questions that follow.
 
 
 \begin{questions}
-  \question[6] 
+  \question[6]
   Compute the following limits.
   \begin{parts}
     \part\(\displaystyle \lim_{x \to 2} \dfrac{x^2-4}{x-2} \)
     \answerbox{4}
     \blank%
     \begin{solution}
-      Notice that \( x^2-4 = (x-2)(x+2)\) and so 
+      Notice that \( x^2-4 = (x-2)(x+2)\) and so
       \[
-        \lim_{x \to 2} \dfrac{x^2-4}{x-2} 
-        = \lim_{x \to 2} \dfrac{(x-2)(x+2)}{x-2} 
+        \lim_{x \to 2} \dfrac{x^2-4}{x-2}
+        = \lim_{x \to 2} \dfrac{(x-2)(x+2)}{x-2}
         = \lim_{x \to 2} (x+2)
         = 4
       \]
@@ -202,36 +206,36 @@ You may find the following formulas useful in the questions that follow.
     \answerbox{1/2}
     \blank%
     \begin{solution}
-      First rewrite 
+      First rewrite
       \[
         \dfrac{\sqrt{x^2+2x+3}}{2x-7}
         = \dfrac{|x|\sqrt{1 + 2/x +3/x^2}}{x(2-7/x)}
       \]
-      Now since we take the limit to \(+\infty\) we can simplify this further 
+      Now since we take the limit to \(+\infty\) we can simplify this further
       \[
         \dfrac{\sqrt{x^2+2x+3}}{2x-7}
         = \dfrac{\sqrt{1 + 2/x +3/x^2}}{2-7/x}
       \]
-      Hence 
+      Hence
       \[
         \lim_{x \to +\infty} \dfrac{\sqrt{x^2+2x+3}}{2x-7}
       = \lim_{x \to +\infty} \dfrac{\sqrt{1+2/x+3/x^2}}{2-7/x}
-      = 1/2 
+      = 1/2
       \]
     \end{solution}
     \part\(\displaystyle \lim_{x \to 0^-} \dfrac{|x|}{x} \)
     \answerbox{-1}
     \blank%
     \begin{solution}
-      Since we take the limit as \(x \to 0\) from below, we can simplify \(|x|=-x\), and hence 
+      Since we take the limit as \(x \to 0\) from below, we can simplify \(|x|=-x\), and hence
       \[
-        \lim_{x \to 0^-} \dfrac{|x|}{x} 
+        \lim_{x \to 0^-} \dfrac{|x|}{x}
         = \lim_{x \to 0^-} \dfrac{-x}{x}
         = -1
       \]
     \end{solution}
   \end{parts}
-\newpage 
+\newpage
   % for demo we label this question as Q(2)
   \renewcommand{\questionlabel}{Q(\thequestion)}
   \question[8] Compute the following derivatives:
@@ -240,14 +244,14 @@ You may find the following formulas useful in the questions that follow.
     \blank%
     \begin{solution}
       \begin{align*}
-        \diff{}{x} \left(x^3 + 2x -\log(x) + 7 - \frac{1}{x}\right)  
+        \diff{}{x} \left(x^3 + 2x -\log(x) + 7 - \frac{1}{x}\right)
         & = 3x^2 + 2 - \frac{1}{x} + 0 + \frac{1}{x^2}
       \end{align*}
     \end{solution}
     \part\(\displaystyle \diff{}{x} \left(x \sin(x)\right) \)
     \blank%
     \begin{solution}
-      Using the product rule 
+      Using the product rule
       \begin{align*}
         \diff{}{x} x\sin(x) &= x \diff{}{x} \sin(x) + \sin(x) \diff{}{x}x  \\
         & = x\cos(x) + \sin(x)
@@ -255,17 +259,17 @@ You may find the following formulas useful in the questions that follow.
     \end{solution}
     \newpage
     \part\(\displaystyle \diff{}{x} e^{x^2} \)
-    \blank% 
+    \blank%
     \begin{solution}
-      Using the chain rule 
+      Using the chain rule
       \begin{align*}
-        \diff{}{x} e^{x^2} &= 2x e^{x^2} 
+        \diff{}{x} e^{x^2} &= 2x e^{x^2}
       \end{align*}
     \end{solution}
     \part\(\displaystyle \diff{}{x} \left(\frac{x+2}{x-3}\right) \)
-    \blank% 
+    \blank%
     \begin{solution}
-      Using the quotient rule 
+      Using the quotient rule
       \begin{align*}
         \diff{}{x} \frac{x+2}{x-3} &= \frac{(x-3)\cdot \diff{}{x}(x+2) - (x+2)\diff{}{x}(x-3)}{(x-3)^2} \\
         &= \frac{x-3 - (x+2)}{(x-3)^2} \\
@@ -273,23 +277,23 @@ You may find the following formulas useful in the questions that follow.
       \end{align*}
     \end{solution}
   \end{parts}
-  \newpage 
+  \newpage
 
-  % for demo we label this question as Ex.3 
+  % for demo we label this question as Ex.3
   \renewcommand{\questionlabel}{Ex.\thequestion}
-  \question[4] 
+  \question[4]
   \begin{parts}
     \part\ Compute the cubic Taylor approximation of \(f(x)= \log(1+x) \) about \(x=0\).
     \blank\blank\blank%
     \begin{solution}
-      We start by computing derivatives 
+      We start by computing derivatives
       \begin{align*}
         f(x) &= \log(1+x) & f(0) &= \log(1)= 0 \\
         f'(x) &= \frac{1}{1+x} & f'(0) &= 1 \\
         f''(x) &= -\frac{1}{(1+x)^2} & f''(0) &= -1 \\
-        f'''(x) &= \frac{2}{(1+x)^3} & f'''(0) &= 2 
+        f'''(x) &= \frac{2}{(1+x)^3} & f'''(0) &= 2
       \end{align*}
-      Then 
+      Then
       \[
         T_3(x) = 0 + x - \frac{x^2}{2} + \frac{x^3}{3}
       \]
@@ -307,7 +311,7 @@ You may find the following formulas useful in the questions that follow.
   \newpage
   % for demo we label this question as LastQ
   \renewcommand{\questionlabel}{LastQ}
-  \question[7] The mass of a sample of Polonium-210, initially 6 grams, decreases at a rate proportional to the mass. After one year, 1 gram remains. 
+  \question[7] The mass of a sample of Polonium-210, initially 6 grams, decreases at a rate proportional to the mass. After one year, 1 gram remains.
 
   What is the half-life (the time it takes for the sample to decay to half its original mass)?
   \begin{solution}
@@ -317,7 +321,7 @@ You may find the following formulas useful in the questions that follow.
     \[
       Q(0)=6 \qquad Q(1)=1 \qquad \diff{Q}{t}=-kQ
     \]
-    for some constant \(k>0\). Since this is a standard exponential growth/decay DE we know that 
+    for some constant \(k>0\). Since this is a standard exponential growth/decay DE we know that
     \[
       Q(t) = C e^{-kt}
     \]
@@ -326,7 +330,7 @@ You may find the following formulas useful in the questions that follow.
       1&=Q(1)=6e^{-k(1)} &\text{ so} \\
     e^{-k}=1/6
     \end{align*}
-    Putting everything together we get 
+    Putting everything together we get
     \[
       Q(t)=6(e^{-k})^t = 6^1 \cdot 6^{-t} = 6^{1-t}
     \]
