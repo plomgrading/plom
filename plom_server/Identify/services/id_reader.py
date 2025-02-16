@@ -337,7 +337,7 @@ class IDBoxProcessorService:
         self,
         box: tuple[float, float, float, float],
         *,
-        exlude_prenamed_papers: bool | None = True,
+        exclude_prenamed_papers: bool = True,
         save_dir: Path | None = None,
     ) -> dict[int, Path]:
         """Extract the id box, or really any rectangular part of the id page.
@@ -351,7 +351,8 @@ class IDBoxProcessorService:
                 much of the page as a float ``[0.0, 1.0]``.
 
         Keyword Args:
-            exlude_prenamed_papers: by default we don't extract the id box from prenamed papers.
+            exclude_prenamed_papers: by default we don't extract the id
+                box from prenamed papers.
             save_dir: what directory to save to, or a default if omitted.
 
         Returns:
@@ -365,16 +366,16 @@ class IDBoxProcessorService:
         # get the ID page-number and the papers which have it scanned.
         id_page_number = SpecificationService.get_id_page_number()
         # but exclude any prenamed papers
-        if exlude_prenamed_papers:
-            prenamed_papers = IDReaderService().get_prenamed_paper_numbers()
+        if exclude_prenamed_papers:
+            exclude_papers = IDReaderService().get_prenamed_paper_numbers()
         else:
-            prenamed_papers = []
+            exclude_papers = []
         paper_numbers = [
             pn
             for pn in PaperInfoService().get_paper_numbers_containing_given_page_version(
                 1, id_page_number, scanned=True
             )
-            if pn not in prenamed_papers
+            if pn not in exclude_papers
         ]
 
         # use the rectangle extractor to then get all the rectangles from those pages and save them
