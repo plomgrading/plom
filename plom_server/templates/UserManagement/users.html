@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Brennen Chiu
     Copyright (C) 2022 Edith Coates
-    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2024 Bryan Tanady
     Copyright (C) 2024 Elisa Pan
@@ -41,7 +41,9 @@
                         <th>Last login</th>
                         <th>Progress</th>
                         <th>Lead Marker</th>
-                        <th>Enable</th>
+                        <th>
+                            <!-- column for enable/disable user buttons-->
+                        </th>
                         <th>Password</th>
                         <th>Quota</th>
                         <th>
@@ -84,10 +86,10 @@
                                 {% if user.has_usable_password %}
                                     {% if user.is_active %}
                                         <button hx-post="{% url 'modify_user' user.username %}"
-                                                class="btn btn-danger">disable</button>
+                                                class="btn btn-outline-secondary">disable</button>
                                     {% else %}
                                         <button hx-post="{% url 'modify_user' user.username %}"
-                                                class="btn btn-success">enable</button>
+                                                class="btn btn-outline-success">enable</button>
                                     {% endif %}
                                 {% else %}
                                     <button class="btn btn-warning disabled">no password set</button>
@@ -114,7 +116,7 @@
                                 <form action="{% url 'set_quota' user.username %}" method="post">
                                     {% csrf_token %}
                                     <button hx-delete="{% url 'modify_user' user.username %}"
-                                            class="btn btn-danger"
+                                            class="btn btn-outline-danger"
                                             {% if user.last_login %}disabled{% endif %}>delete user</button>
                                 </form>
                             </td>
@@ -135,6 +137,7 @@
                     <li>
                         Setting a marker quota limits the amount of questions they can grade. The exact limit can be changed in User Info page.
                     </li>
+                    <li>Currently, you cannot delete a user who has ever logged in.</li>
                 </ul>
             </p>
         </div>
@@ -152,7 +155,9 @@
                         <th>Name</th>
                         <th>Online</th>
                         <th>Last login</th>
-                        <th>Enable</th>
+                        <th>
+                            <!-- column for enable/disable user buttons-->
+                        </th>
                         <th>Password</th>
                         <th>
                             <!-- column for delete users buttons-->
@@ -171,10 +176,10 @@
                                 {% if user.has_usable_password %}
                                     {% if user.is_active %}
                                         <button hx-post="{% url 'modify_user' user.username %}"
-                                                class="btn btn-danger">disable</button>
+                                                class="btn btn-outline-secondary">disable</button>
                                     {% else %}
                                         <button hx-post="{% url 'modify_user' user.username %}"
-                                                class="btn btn-success">enable</button>
+                                                class="btn btn-outline-success">enable</button>
                                     {% endif %}
                                 {% else %}
                                     <button class="btn btn-warning disabled">no password set</button>
@@ -188,7 +193,7 @@
                                 <form action="{% url 'set_quota' user.username %}" method="post">
                                     {% csrf_token %}
                                     <button hx-delete="{% url 'modify_user' user.username %}"
-                                            class="btn btn-danger"
+                                            class="btn btn-outline-danger"
                                             {% if user.last_login %}disabled{% endif %}>delete user</button>
                                 </form>
                             </td>
@@ -231,7 +236,7 @@
                                 <form action="{% url 'set_quota' user.username %}" method="post">
                                     {% csrf_token %}
                                     <button hx-delete="{% url 'modify_user' user.username %}"
-                                            class="btn btn-danger"
+                                            class="btn btn-outline-danger"
                                             {% if user.last_login %}disabled{% endif %}>delete user</button>
                                 </form>
                             </td>
