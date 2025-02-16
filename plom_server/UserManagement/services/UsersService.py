@@ -53,7 +53,7 @@ def delete_user(username: str, requester_id: int | None = None) -> str:
         if user_to_delete.last_login:
             raise ValueError(
                 f"User: {username} has at least 1 successful login,"
-                "they can no longer be deleted."
+                " they can no longer be deleted."
             )
 
         deleted_username = user_to_delete.username
