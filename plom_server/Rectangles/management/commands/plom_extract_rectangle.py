@@ -25,10 +25,8 @@ class Command(BaseCommand):
         er_dir = Path("./extracted")
         er_dir.mkdir(exist_ok=True)
 
-        paper_numbers = (
-            PaperInfoService.get_paper_numbers_containing_given_page_version(
-                page, version=version, scanned=True
-            )
+        paper_numbers = PaperInfoService.get_paper_numbers_containing_page(
+            page, version=version, scanned=True
         )
         self.stdout.write(
             f"Extracting version {version} page {page} from papers {paper_numbers}"

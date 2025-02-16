@@ -193,7 +193,7 @@ def build_page_to_version_dict(spec, qvmap_row: dict[int | str, int]) -> dict[in
     Args:
         spec (dict): A validated test spec
         qvmap_row: A dict mapping question numbers to version numbers.
-            Note that typically each paperhas a different qv-map.
+            Note that typically each paper has a different qv-map.
 
     Returns:
         dict: A mapping of page numbers to versions. Note that DNM
