@@ -3,18 +3,17 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
-from __future__ import annotations
+import json
+from pathlib import Path
+from typing import Any
 
 import cv2 as cv
-import json
 import numpy as np
-from pathlib import Path
 from scipy.optimize import linear_sum_assignment
 from sklearn.ensemble import RandomForestClassifier
-from typing import Any
 
 from django.conf import settings
 from django.contrib.auth.models import User

@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
-
-from __future__ import annotations
 
 from warnings import warn
 from typing import Any
@@ -230,7 +228,7 @@ class PageImageProcessor:
 
     def create_affine_transformation_matrix(
         self, qr_dict: dict[str, dict[str, Any]]
-    ) -> np.ndarray[Any, Any]:
+    ) -> np.ndarray:
         """Given QR data for an image, determine the affine transformation needed to correct the image's orientation.
 
         Args:
