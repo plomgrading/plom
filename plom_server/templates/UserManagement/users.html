@@ -39,12 +39,12 @@
                         <th>Online (web)</th>
                         <th>Online (client)</th>
                         <th>Last login</th>
-                        <th>Progress</th>
                         <th>Lead Marker</th>
                         <th>
                             <!-- column for enable/disable user buttons-->
+                        <!-- https://gitbrent.github.io/bootstrap4-toggle/
+			https://github.com/Bttstrp/bootstrap-switch -->
                         </th>
-                        <th>Password</th>
                         <th>Quota</th>
                         <th>
                             <!-- column for delete users buttons-->
@@ -53,8 +53,13 @@
                     {% for user in markers %}
                         <tr>
                             <td>
-                                {{ user.username }}
+                                <!-- TODO: this should link to a profile page, then that links to marking progress -->
+                                <a href="{% url 'progress_marking_task_filter' %}?username={{ user.username }}">{{ user.username }}</a>
                                 {% if user in lead_markers %}<i class="bi bi-bookmark-star text-primary"></i>{% endif %}
+                                <br />
+                                <a href="{% url 'reset_user_password' user.username %}"
+                                   class=" link-underline link-underline-opacity-0"
+                                   style="font-size: 80%">change password</a>
                             </td>
                             {% if user in online_now_ids %}
                                 <td class="bg-success-subtle">Online</td>
@@ -67,12 +72,6 @@
                                 <td>Offline</td>
                             {% endif %}
                             <td>{{ user.last_login|naturaltime }}</td>
-                            <td>
-                                <a class="btn btn-info"
-                                   href="{% url 'progress_marking_task_filter' %}?username={{ user.username }}">
-                                    view
-                                </a>
-                            </td>
                             <td>
                                 {% if user in lead_markers %}
                                     <a class="btn btn-info"
@@ -94,10 +93,6 @@
                                 {% else %}
                                     <button class="btn btn-warning disabled">no password set</button>
                                 {% endif %}
-                            </td>
-                            <td>
-                                <a href="{% url 'reset_user_password' user.username %}"
-                                   class="btn btn-danger">reset</a>
                             </td>
                             <!-- Quota limited button -->
                             <td>
@@ -158,14 +153,19 @@
                         <th>
                             <!-- column for enable/disable user buttons-->
                         </th>
-                        <th>Password</th>
                         <th>
                             <!-- column for delete users buttons-->
                         </th>
                     </thead>
                     {% for user in scanners %}
                         <tr>
-                            <td>{{ user.username }}</td>
+                            <td>
+                                {{ user.username }}
+                                <br />
+                                <a href="{% url 'reset_user_password' user.username %}"
+                                   class=" link-underline link-underline-opacity-0"
+                                   style="font-size: 80%">change password</a>
+                            </td>
                             {% if user in online_now_ids %}
                                 <td class="bg-success-subtle">Online</td>
                             {% else %}
@@ -184,10 +184,6 @@
                                 {% else %}
                                     <button class="btn btn-warning disabled">no password set</button>
                                 {% endif %}
-                            </td>
-                            <td>
-                                <a href="{% url 'reset_user_password' user.username %}"
-                                   class="btn btn-danger">reset</a>
                             </td>
                             <td>
                                 <form action="{% url 'set_quota' user.username %}" method="post">
@@ -212,26 +208,26 @@
                         <th>Name</th>
                         <th>Online</th>
                         <th>Last login</th>
-                        <th>Password</th>
                         <th>
                             <!-- column for delete users buttons-->
                         </th>
                     </thead>
                     {% for user in managers %}
                         <tr>
-                            <td>{{ user.username }}</td>
+                            <td>
+                                {{ user.username }}
+                                <br />
+                                <a href="{% url 'reset_user_password' user.username %}"
+                                   class=" link-underline link-underline-opacity-0"
+                                   style="font-size: 80%"
+                                   onclick="return confirm('This is a manager account - are you sure you wish to reset the password?')">change password</a>
+                            </td>
                             {% if user in online_now_ids %}
                                 <td class="bg-success-subtle">Online</td>
                             {% else %}
                                 <td>Offline</td>
                             {% endif %}
                             <td>{{ user.last_login|naturaltime }}</td>
-                            <td>
-                                <!-- since this allows reset of manager - ask for confirmation -->
-                                <a href="{% url 'reset_user_password' user.username %}"
-                                   class="btn btn-danger"
-                                   onclick="return confirm('This is a manager account - are you sure you wish to reset the password?')">reset</a>
-                            </td>
                             <td>
                                 <form action="{% url 'set_quota' user.username %}" method="post">
                                     {% csrf_token %}
