@@ -370,11 +370,11 @@ class IDBoxProcessorService:
             exclude_papers = IDReaderService().get_prenamed_paper_numbers()
         else:
             exclude_papers = []
-        # TODO: Issue #3390: this code hardcodes that all ID pages are version 1
+        # Note this gets all id pages regardless of version
         paper_numbers = [
             pn
-            for pn in PaperInfoService.get_paper_numbers_containing_given_page_version(
-                1, id_page_number, scanned=True
+            for pn in PaperInfoService.get_paper_numbers_containing_page(
+                id_page_number, scanned=True
             )
             if pn not in exclude_papers
         ]

@@ -18,14 +18,16 @@ class Command(BaseCommand):
 
     help = "Extract the rectangle from the given page/version of each paper."
 
-    def extract_rectangle(self, version: int, page: int, rectangle: dict[str, float]):
+    def extract_rectangle(
+        self, version: int, page: int, rectangle: dict[str, float]
+    ) -> None:
         # make a directory into which we extract stuff
         er_dir = Path("./extracted")
         er_dir.mkdir(exist_ok=True)
 
         paper_numbers = (
             PaperInfoService.get_paper_numbers_containing_given_page_version(
-                version, page, scanned=True
+                page, version=version, scanned=True
             )
         )
         self.stdout.write(

@@ -262,10 +262,8 @@ class RectangleExtractor:
         zipfile on disc. This could cause problems if large rectangles
         are selected from many pages.
         """
-        paper_numbers = (
-            PaperInfoService.get_paper_numbers_containing_given_page_version(
-                self.version, self.page_number, scanned=True
-            )
+        paper_numbers = PaperInfoService.get_paper_numbers_containing_page(
+            self.page_number, version=self.version, scanned=True
         )
 
         with zipfile.ZipFile(dest_filename, mode="w") as archive:

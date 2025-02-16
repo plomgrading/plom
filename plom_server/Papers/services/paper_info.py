@@ -148,16 +148,17 @@ class PaperInfoService:
         return page.version
 
     @staticmethod
-    def get_paper_numbers_containing_given_page_version(
-        version: int, page_number: int, *, scanned: bool = True
+    def get_paper_numbers_containing_page(
+        page_number: int, *, version: int | None = None, scanned: bool = True
     ) -> list[int]:
-        """Return a sorted list of paper numbers that contain a particular page number / version.
+        """Return a sorted list of paper numbers that contain a particular page number and optionally, version.
 
         Args:
-            version: which version.
             page_number: which page number.
 
         Keyword Args:
+            version: which version, if omitted (or None) then return paper numbers
+                independent of version.
             scanned: By default, we only return paper numbers based on FixedPage
                 objects that have actually been scanned.  If False, then return
                 more results (TODO: presumably from all rows of the paper database).
@@ -165,23 +166,21 @@ class PaperInfoService:
                 not all all scanned.
         """
         if scanned:
-            return sorted(
-                list(
-                    FixedPage.objects.filter(
-                        page_number=page_number, version=version, image__isnull=False
-                    )
-                    .prefetch_related("paper")
-                    .values_list("paper__paper_number", flat=True)
-                )
+            query = FixedPage.objects.filter(
+                page_number=page_number, image__isnull=False
             )
         else:
-            return sorted(
-                list(
-                    FixedPage.objects.filter(page_number=page_number, version=version)
-                    .prefetch_related("paper")
-                    .values_list("paper__paper_number", flat=True)
+            query = FixedPage.objects.filter(page_number=page_number)
+        if version is not None:
+            query = query.filter(version=version)
+        # Note lazy evaluation: no query should be actually performed until now
+        return sorted(
+            list(
+                query.prefetch_related("paper").values_list(
+                    "paper__paper_number", flat=True
                 )
             )
+        )
 
     @staticmethod
     def get_pqv_map_dict() -> dict[int, dict[int | str, int]]:
