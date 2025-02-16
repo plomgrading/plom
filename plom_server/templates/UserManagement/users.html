@@ -42,7 +42,7 @@
                         <th>Lead Marker</th>
                         <th>
                             <!-- column for enable/disable user buttons-->
-                        <!-- https://gitbrent.github.io/bootstrap4-toggle/
+                            <!-- https://gitbrent.github.io/bootstrap4-toggle/
 			https://github.com/Bttstrp/bootstrap-switch -->
                         </th>
                         <th>Quota</th>
@@ -108,12 +108,10 @@
                                 </form>
                             </td>
                             <td>
-                                <form action="{% url 'set_quota' user.username %}" method="post">
-                                    {% csrf_token %}
-                                    <button hx-delete="{% url 'modify_user' user.username %}"
-                                            class="btn btn-outline-danger"
-                                            {% if user.last_login %}disabled{% endif %}>delete user</button>
-                                </form>
+                                {% csrf_token %}
+                                <button hx-delete="{% url 'modify_user' user.username %}"
+                                        class="btn btn-outline-danger"
+                                        {% if user.last_login %}disabled{% endif %}>delete user</button>
                             </td>
                         </tr>
                     {% endfor %}
@@ -186,12 +184,10 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <form action="{% url 'set_quota' user.username %}" method="post">
-                                    {% csrf_token %}
-                                    <button hx-delete="{% url 'modify_user' user.username %}"
-                                            class="btn btn-outline-danger"
-                                            {% if user.last_login %}disabled{% endif %}>delete user</button>
-                                </form>
+                                {% csrf_token %}
+                                <button hx-delete="{% url 'modify_user' user.username %}"
+                                        class="btn btn-outline-danger"
+                                        {% if user.last_login %}disabled{% endif %}>delete user</button>
                             </td>
                         </tr>
                     {% endfor %}
@@ -229,12 +225,10 @@
                             {% endif %}
                             <td>{{ user.last_login|naturaltime }}</td>
                             <td>
-                                <form action="{% url 'set_quota' user.username %}" method="post">
-                                    {% csrf_token %}
-                                    <button hx-delete="{% url 'modify_user' user.username %}"
-                                            class="btn btn-outline-danger"
-                                            {% if user.last_login %}disabled{% endif %}>delete user</button>
-                                </form>
+                                {% csrf_token %}
+                                <button hx-delete="{% url 'modify_user' user.username %}"
+                                        class="btn btn-outline-danger"
+                                        {% if user.last_login %}disabled{% endif %}>delete user</button>
                             </td>
                         </tr>
                     {% endfor %}
