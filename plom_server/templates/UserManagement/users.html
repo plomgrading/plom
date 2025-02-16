@@ -86,10 +86,10 @@
                                 {% if user.has_usable_password %}
                                     {% if user.is_active %}
                                         <button hx-post="{% url 'modify_user' user.username %}"
-                                                class="btn btn-danger">disable</button>
+                                                class="btn btn-outline-secondary">disable</button>
                                     {% else %}
                                         <button hx-post="{% url 'modify_user' user.username %}"
-                                                class="btn btn-success">enable</button>
+                                                class="btn btn-outline-success">enable</button>
                                     {% endif %}
                                 {% else %}
                                     <button class="btn btn-warning disabled">no password set</button>
@@ -116,7 +116,7 @@
                                 <form action="{% url 'set_quota' user.username %}" method="post">
                                     {% csrf_token %}
                                     <button hx-delete="{% url 'modify_user' user.username %}"
-                                            class="btn"
+                                            class="btn btn-outline-danger"
                                             {% if user.last_login %}disabled{% endif %}>delete user</button>
                                 </form>
                             </td>
@@ -155,7 +155,9 @@
                         <th>Name</th>
                         <th>Online</th>
                         <th>Last login</th>
-                        <th>Enable</th>
+                        <th>
+                            <!-- column for enable/disable user buttons-->
+                        </th>
                         <th>Password</th>
                         <th>
                             <!-- column for delete users buttons-->
@@ -174,10 +176,10 @@
                                 {% if user.has_usable_password %}
                                     {% if user.is_active %}
                                         <button hx-post="{% url 'modify_user' user.username %}"
-                                                class="btn btn-danger">disable</button>
+                                                class="btn btn-outline-secondary">disable</button>
                                     {% else %}
                                         <button hx-post="{% url 'modify_user' user.username %}"
-                                                class="btn btn-success">enable</button>
+                                                class="btn btn-outline-success">enable</button>
                                     {% endif %}
                                 {% else %}
                                     <button class="btn btn-warning disabled">no password set</button>
@@ -191,7 +193,7 @@
                                 <form action="{% url 'set_quota' user.username %}" method="post">
                                     {% csrf_token %}
                                     <button hx-delete="{% url 'modify_user' user.username %}"
-                                            class="btn"
+                                            class="btn btn-outline-danger"
                                             {% if user.last_login %}disabled{% endif %}>delete user</button>
                                 </form>
                             </td>
@@ -234,7 +236,7 @@
                                 <form action="{% url 'set_quota' user.username %}" method="post">
                                     {% csrf_token %}
                                     <button hx-delete="{% url 'modify_user' user.username %}"
-                                            class="btn"
+                                            class="btn btn-outline-danger"
                                             {% if user.last_login %}disabled{% endif %}>delete user</button>
                                 </form>
                             </td>
