@@ -91,7 +91,8 @@ def check_version_map(
                     )
             if spec:
                 # TODO: unsure about this: maybe we should doc that we ignore "select"
-                # when custom version maps are used
+                # when custom version maps are used.
+                # TODO: revisit this when working on Issue #2261.
                 if spec["question"][str(q)]["select"] == "fix":
                     if not v == 1:
                         raise ValueError(
