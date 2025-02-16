@@ -6,6 +6,7 @@
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2024 Bryan Tanady
     Copyright (C) 2024 Elisa Pan
+    Copyright (C) 2025 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% load humanize %}
@@ -22,6 +23,7 @@
             <!--     <button class="btn btn-warning" hx-get="{% url 'htmx_explode' %}">Raise an exception with htmx-get</button> -->
         </div>
     </div>
+    {% include "../base/alert_messages.html" with messages=messages %}
     <div class="card my-2">
         <div class="card-body">
             <h4 class="card-title">Markers</h4>
@@ -42,6 +44,9 @@
                         <th>Enable</th>
                         <th>Password</th>
                         <th>Quota</th>
+                        <th>
+                            <!-- column for delete users buttons-->
+                        </th>
                     </thead>
                     {% for user in markers %}
                         <tr>
@@ -78,10 +83,10 @@
                             <td>
                                 {% if user.has_usable_password %}
                                     {% if user.is_active %}
-                                        <button hx-post="{% url 'change_user_status' user.username %}"
+                                        <button hx-post="{% url 'modify_user' user.username %}"
                                                 class="btn btn-danger">disable</button>
                                     {% else %}
-                                        <button hx-post="{% url 'change_user_status' user.username %}"
+                                        <button hx-post="{% url 'modify_user' user.username %}"
                                                 class="btn btn-success">enable</button>
                                     {% endif %}
                                 {% else %}
@@ -103,6 +108,14 @@
                                     {% else %}
                                         <button type="submit" class="btn btn-warning">Set Quota</button>
                                     {% endif %}
+                                </form>
+                            </td>
+                            <td>
+                                <form action="{% url 'set_quota' user.username %}" method="post">
+                                    {% csrf_token %}
+                                    <button hx-delete="{% url 'modify_user' user.username %}"
+                                            class="btn btn-danger"
+                                            {% if user.last_login %}disabled{% endif %}>delete user</button>
                                 </form>
                             </td>
                         </tr>
@@ -141,6 +154,9 @@
                         <th>Last login</th>
                         <th>Enable</th>
                         <th>Password</th>
+                        <th>
+                            <!-- column for delete users buttons-->
+                        </th>
                     </thead>
                     {% for user in scanners %}
                         <tr>
@@ -154,10 +170,10 @@
                             <td>
                                 {% if user.has_usable_password %}
                                     {% if user.is_active %}
-                                        <button hx-post="{% url 'change_user_status' user.username %}"
+                                        <button hx-post="{% url 'modify_user' user.username %}"
                                                 class="btn btn-danger">disable</button>
                                     {% else %}
-                                        <button hx-post="{% url 'change_user_status' user.username %}"
+                                        <button hx-post="{% url 'modify_user' user.username %}"
                                                 class="btn btn-success">enable</button>
                                     {% endif %}
                                 {% else %}
@@ -167,6 +183,14 @@
                             <td>
                                 <a href="{% url 'reset_user_password' user.username %}"
                                    class="btn btn-danger">reset</a>
+                            </td>
+                            <td>
+                                <form action="{% url 'set_quota' user.username %}" method="post">
+                                    {% csrf_token %}
+                                    <button hx-delete="{% url 'modify_user' user.username %}"
+                                            class="btn btn-danger"
+                                            {% if user.last_login %}disabled{% endif %}>delete user</button>
+                                </form>
                             </td>
                         </tr>
                     {% endfor %}
@@ -184,6 +208,9 @@
                         <th>Online</th>
                         <th>Last login</th>
                         <th>Password</th>
+                        <th>
+                            <!-- column for delete users buttons-->
+                        </th>
                     </thead>
                     {% for user in managers %}
                         <tr>
@@ -199,6 +226,14 @@
                                 <a href="{% url 'reset_user_password' user.username %}"
                                    class="btn btn-danger"
                                    onclick="return confirm('This is a manager account - are you sure you wish to reset the password?')">reset</a>
+                            </td>
+                            <td>
+                                <form action="{% url 'set_quota' user.username %}" method="post">
+                                    {% csrf_token %}
+                                    <button hx-delete="{% url 'modify_user' user.username %}"
+                                            class="btn btn-danger"
+                                            {% if user.last_login %}disabled{% endif %}>delete user</button>
+                                </form>
                             </td>
                         </tr>
                     {% endfor %}

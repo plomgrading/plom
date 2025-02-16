@@ -6,6 +6,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2025 Aidan Murphy
 
 import json
 
@@ -15,6 +16,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse, Http404
 from django_htmx.http import HttpResponseClientRefresh
 from django.shortcuts import get_object_or_404
@@ -27,7 +29,7 @@ from Base.base_group_views import ManagerRequiredView
 from Progress.services.userinfo_service import UserInfoServices
 from .services import PermissionChanger
 from .services import QuotaService
-from .services.UsersService import get_user_info
+from .services.UsersService import get_user_info, delete_user
 from .models import Quota
 
 
@@ -44,6 +46,7 @@ class UserPage(ManagerRequiredView):
     """
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """Fetch user management page."""
         users = get_user_info()
         # fetch these so that we don't loop over this in the template
         # remove db hits in loops.
@@ -64,8 +67,17 @@ class UserPage(ManagerRequiredView):
         return render(request, "UserManagement/users.html", context)
 
     def post(self, request: HttpRequest, username: str) -> HttpResponse:
+        """Set user to active or inactive."""
         PermissionChanger.toggle_user_active(username)
 
+        return HttpResponseClientRefresh()
+
+    def delete(self, request: HttpRequest, username: str) -> HttpResponse:
+        """Delete user."""
+        try:
+            delete_user(username, request.user.id)
+        except (ValueError, ObjectDoesNotExist) as e:
+            messages.error(request, e, extra_tags="danger")
         return HttpResponseClientRefresh()
 
     @login_required
