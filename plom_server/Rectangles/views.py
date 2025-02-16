@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
-
-from __future__ import annotations
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -70,7 +68,7 @@ class SelectRectangleView(ManagerRequiredView):
         bottom = round(float(request.POST.get("plom_bottom")), 6)
         # get all scanned papers with that page,version
         paper_numbers = (
-            PaperInfoService().get_paper_numbers_containing_given_page_version(
+            PaperInfoService.get_paper_numbers_containing_given_page_version(
                 version, page, scanned=True
             )
         )

@@ -263,7 +263,7 @@ class RectangleExtractor:
         are selected from many pages.
         """
         paper_numbers = (
-            PaperInfoService().get_paper_numbers_containing_given_page_version(
+            PaperInfoService.get_paper_numbers_containing_given_page_version(
                 self.version, self.page_number, scanned=True
             )
         )

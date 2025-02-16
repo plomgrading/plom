@@ -373,7 +373,7 @@ class IDBoxProcessorService:
         # TODO: Issue #3390: this code hardcodes that all ID pages are version 1
         paper_numbers = [
             pn
-            for pn in PaperInfoService().get_paper_numbers_containing_given_page_version(
+            for pn in PaperInfoService.get_paper_numbers_containing_given_page_version(
                 1, id_page_number, scanned=True
             )
             if pn not in exclude_papers

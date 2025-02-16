@@ -147,11 +147,23 @@ class PaperInfoService:
             )
         return page.version
 
-    @transaction.atomic
+    @staticmethod
     def get_paper_numbers_containing_given_page_version(
-        self, version, page_number, *, scanned=True
+        version: int, page_number: int, *, scanned: bool = True
     ) -> list[int]:
-        """Given the version and page-number, return list of paper numbers that contain that page/version."""
+        """Return a sorted list of paper numbers that contain a particular page number / version.
+
+        Args:
+            version: which version.
+            page_number: which page number.
+
+        Keyword Args:
+            scanned: By default, we only return paper numbers based on FixedPage
+                objects that have actually been scanned.  If False, then return
+                more results (TODO: presumably from all rows of the paper database).
+                but be aware that these papers might be partially (or perhaps, TODO)
+                not all all scanned.
+        """
         if scanned:
             return sorted(
                 list(

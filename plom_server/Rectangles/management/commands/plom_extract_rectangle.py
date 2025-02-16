@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
-
-from __future__ import annotations
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from pathlib import Path
 
@@ -26,7 +24,7 @@ class Command(BaseCommand):
         er_dir.mkdir(exist_ok=True)
 
         paper_numbers = (
-            PaperInfoService().get_paper_numbers_containing_given_page_version(
+            PaperInfoService.get_paper_numbers_containing_given_page_version(
                 version, page, scanned=True
             )
         )
