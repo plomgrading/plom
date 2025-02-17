@@ -368,7 +368,7 @@ class DataExtractionService:
 
     def get_tas_that_marked_this_question(
         self, question_index: int, *, ta_df: Optional[pd.DataFrame] = None
-    ) -> List[str]:
+    ) -> list[str]:
         """Get the TAs that marked a specific question.
 
         Args:
