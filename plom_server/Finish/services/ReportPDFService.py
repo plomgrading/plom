@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Elisa Pan
 
 from datetime import datetime
@@ -49,7 +49,7 @@ def pdf_builder(
     _use_tqdm: bool = False,
     brief: bool = False,
     selected_graphs: Optional[Dict[str, bool]] = None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Build a PDF file report and return it as bytes.
 
     Args:

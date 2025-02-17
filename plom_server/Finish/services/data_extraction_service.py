@@ -383,9 +383,14 @@ class DataExtractionService:
             ta_df = self.ta_df
         assert isinstance(ta_df, pd.DataFrame)
 
-        return (
-            ta_df[ta_df["question_number"] == question_index]["user"].unique().tolist()
-        )
+        users = ta_df[ta_df["question_number"] == question_index]["user"]
+        print(users)
+        print(type(users))
+        r = users.unique().tolist()
+        print(r)
+        print(type(r))
+        assert isinstance(r, list)
+        return r
 
     def get_scores_for_question(
         self, question_index: int, *, ta_df: pd.DataFrame | None = None
