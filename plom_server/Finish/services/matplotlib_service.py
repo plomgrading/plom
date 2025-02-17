@@ -93,7 +93,7 @@ class MatplotlibService:
 
         ax.hist(
             self.des.get_totals(),
-            bins=np.arange(paper_total_marks + RANGE_BIN_OFFSET) - 0.5,
+            bins=np.arange(paper_total_marks + RANGE_BIN_OFFSET) - 0.5,  # type: ignore[arg-type]
             ec="black",
             alpha=0.5,
             width=0.8,
@@ -183,7 +183,13 @@ class MatplotlibService:
         maxmark = SpecificationService.get_question_mark(question_idx)
         bins = np.arange(maxmark + RANGE_BIN_OFFSET) - 0.5
 
-        ax.hist(plot_series, bins=bins, ec="black", alpha=0.5, density=True)
+        ax.hist(
+            plot_series,
+            bins=bins,  # type: ignore[arg-type]
+            ec="black",
+            alpha=0.5,
+            density=True,
+        )
         ax.set_title(f"Histogram of {qlabel} marks")
         ax.set_xlabel(f"{qlabel} mark")
         ax.set_ylabel("Proportion of students")
@@ -432,7 +438,7 @@ class MatplotlibService:
 
         ax.hist(
             plot_series,
-            bins=bins,
+            bins=bins,  # type: ignore[arg-type]
             ec="black",
             alpha=0.5,
         )
@@ -530,7 +536,7 @@ class MatplotlibService:
 
         ax.hist(
             plot_series,
-            bins=bins,
+            bins=bins,  # type: ignore[arg-type]
             ec="black",
             alpha=0.5,
         )
