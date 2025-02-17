@@ -91,7 +91,7 @@ codespell:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install codespell~=2.4.0
+    - python3 -m pip install codespell~=2.4.1
   script:
     - echo "Need an exception?  See the .codespell-ignore* files"
     - codespell
@@ -286,7 +286,7 @@ black:
   stage: static_analysis
   image: python:3.12
   before_script:
-    - pip3 install "black~=24.10.0"
+    - pip3 install "black~=25.1.0"
   script:
     - black --check --diff .
   allow_failure: true
@@ -396,7 +396,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.9.2
+    - python3 -m pip install ruff~=0.9.6
   script:
     - ruff check .
     # ruff format .
@@ -407,7 +407,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.9.2
+    - python3 -m pip install ruff~=0.9.6
   script:
     # run once just for log out but don't fail
     - EXCEPTIONS="D101,D102,D103,D104,D106"
