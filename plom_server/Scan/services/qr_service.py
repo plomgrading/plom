@@ -233,7 +233,7 @@ class QRService:
 
     @staticmethod
     def _check_qrs_against_spec_and_qvmap(
-        parsed_qr_dict: dict[str, dict[str, Any]]
+        parsed_qr_dict: dict[str, dict[str, Any]],
     ) -> bool:
         """Check the info in the qr-code against the spec and the qv-map in the database.
 
