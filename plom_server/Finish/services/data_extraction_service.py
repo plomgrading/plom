@@ -5,8 +5,6 @@
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2025 Aden Chan
 
-from typing import Dict, List, Optional, Tuple
-
 import pandas as pd
 
 from . import StudentMarkService, TaMarkingService
@@ -59,7 +57,7 @@ class DataExtractionService:
         """
         return self.student_df.copy()
 
-    def get_descriptive_statistics_of_total(self) -> Dict[str, float]:
+    def get_descriptive_statistics_of_total(self) -> dict[str, float]:
         """Return descriptive statistics about the totals for the assessment.
 
         Gives dict of count, max, min, median, mean, mode, stddev, percentile25, percentile75.
@@ -78,7 +76,7 @@ class DataExtractionService:
 
     def get_descriptive_statistics_of_question(
         self, question_index: int
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Return descriptive statistics about the totals for the assessment.
 
         Gives dict of count, max, min, median, mean, mode, stddev, percentile25, percentile75.
@@ -108,7 +106,7 @@ class DataExtractionService:
         """Return the standard deviation of the total mark over all students as a float."""
         return self.student_df["Total"].std()
 
-    def get_totals(self) -> List[int]:
+    def get_totals(self) -> list[int]:
         """Return the total mark for each student as a list.
 
         No particular order is promised: useful for statistics for example.
@@ -137,7 +135,7 @@ class DataExtractionService:
             / SpecificationService.get_question_max_mark(question_index)
         )
 
-    def get_averages_on_all_questions_as_percentage(self) -> List[float]:
+    def get_averages_on_all_questions_as_percentage(self) -> list[float]:
         """Return the average mark on each question as a percentage."""
         averages = []
         for q in SpecificationService.get_question_indices():
@@ -146,7 +144,7 @@ class DataExtractionService:
 
     def get_averages_on_all_questions_versions_as_percentage(
         self, *, overall: bool = False
-    ) -> List[List[float]]:
+    ) -> list[list[float]]:
         """Return the average mark on each question as a percentage.
 
         Keyword Args:
@@ -184,7 +182,7 @@ class DataExtractionService:
         """
         return self.student_df[f"q{question_index}_mark"].mean()
 
-    def get_average_grade_on_all_questions(self) -> List[Tuple[int, str, float]]:
+    def get_average_grade_on_all_questions(self) -> list[tuple[int, str, float]]:
         """Return the average grade on each question (not percentage).
 
         Returns:
@@ -196,7 +194,7 @@ class DataExtractionService:
         return averages
 
     def _get_marks_for_all_questions(
-        self, *, student_df: Optional[pd.DataFrame] = None
+        self, *, student_df: pd.DataFrame | None = None
     ) -> pd.DataFrame:
         """Get the marks for each question as a dataframe.
 
@@ -217,7 +215,7 @@ class DataExtractionService:
         return student_df.filter(regex="q[0-9]*_mark")
 
     def _get_question_correlation_heatmap_data(
-        self, *, student_df: Optional[pd.DataFrame] = None
+        self, *, student_df: pd.DataFrame | None = None
     ) -> pd.DataFrame:
         """Get the correlation heatmap data for the questions.
 
@@ -248,7 +246,7 @@ class DataExtractionService:
         return marks_corr
 
     def _get_ta_data_for_ta(
-        self, ta_name: str, *, ta_df: Optional[pd.DataFrame] = None
+        self, ta_name: str, *, ta_df: pd.DataFrame | None = None
     ) -> pd.DataFrame:
         """Get the dataframe of TA marking data for a specific TA.
 
@@ -270,7 +268,7 @@ class DataExtractionService:
         marks = ta_df[ta_df["user"] == ta_name]
         return marks
 
-    def _get_all_ta_data_by_ta(self) -> Dict[str, pd.DataFrame]:
+    def _get_all_ta_data_by_ta(self) -> dict[str, pd.DataFrame]:
         """Get TA marking data for all TAs.
 
         Warning: caller will need pandas installed as this method returns a dataframe.
@@ -285,7 +283,7 @@ class DataExtractionService:
         return marks_by_ta
 
     def _get_ta_data_for_question(
-        self, question_index: int, *, ta_df: Optional[pd.DataFrame] = None
+        self, question_index: int, *, ta_df: pd.DataFrame | None = None
     ) -> pd.DataFrame:
         """Get the dataframe of TA marking data for a specific question.
 
@@ -308,7 +306,7 @@ class DataExtractionService:
         question_df = ta_df[ta_df["question_number"] == question_index]
         return question_df
 
-    def _get_all_ta_data_by_question(self) -> Dict[int, pd.DataFrame]:
+    def _get_all_ta_data_by_question(self) -> dict[int, pd.DataFrame]:
         """Get TA marking data for all questions as a dict.
 
         Warning: caller will need pandas installed as this method returns a dataframe.
@@ -324,7 +322,7 @@ class DataExtractionService:
             )
         return marks_by_question
 
-    def _get_times_for_all_questions(self) -> Dict[int, pd.Series]:
+    def _get_times_for_all_questions(self) -> dict[int, pd.Series]:
         """Get the marking times for all questions.
 
         Warning: caller will need pandas installed as this method returns a pandas series.
@@ -341,8 +339,8 @@ class DataExtractionService:
         return times_by_question
 
     def get_questions_marked_by_this_ta(
-        self, ta_name: str, *, ta_df: Optional[pd.DataFrame] = None
-    ) -> List[int]:
+        self, ta_name: str, *, ta_df: pd.DataFrame | None = None
+    ) -> list[int]:
         """Get the questions that were marked by a specific TA.
 
         Args:
@@ -367,7 +365,7 @@ class DataExtractionService:
         )
 
     def get_tas_that_marked_this_question(
-        self, question_index: int, *, ta_df: Optional[pd.DataFrame] = None
+        self, question_index: int, *, ta_df: pd.DataFrame | None = None
     ) -> list[str]:
         """Get the TAs that marked a specific question.
 
@@ -390,8 +388,8 @@ class DataExtractionService:
         )
 
     def get_scores_for_question(
-        self, question_index: int, *, ta_df: Optional[pd.DataFrame] = None
-    ) -> List[int]:
+        self, question_index: int, *, ta_df: pd.DataFrame | None = None
+    ) -> list[int]:
         """Get the marks assigned for a specific question.
 
         Args:
@@ -411,8 +409,8 @@ class DataExtractionService:
         return ta_df[ta_df["question_number"] == question_index]["score_given"].tolist()
 
     def get_scores_for_ta(
-        self, ta_name: str, *, ta_df: Optional[pd.DataFrame] = None
-    ) -> List[int]:
+        self, ta_name: str, *, ta_df: pd.DataFrame | None = None
+    ) -> list[int]:
         """Get the marks assigned for by a specific TA.
 
         Args:
