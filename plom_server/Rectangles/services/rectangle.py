@@ -3,6 +3,8 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Andrew Rechnitzer
 
+from __future__ import annotations
+
 from io import BytesIO
 from pathlib import Path
 from typing import Any
