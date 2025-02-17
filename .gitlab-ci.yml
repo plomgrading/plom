@@ -719,7 +719,7 @@ docs_sphinx:
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
 fedora_legacy:
   stage: alt_build
-  image: fedora:41
+  image: fedora:42
   when: manual
   allow_failure: true
   before_script:
@@ -804,7 +804,7 @@ fedora_webplom:
     PLOM_DATABASE_HOSTNAME: "postgres"
   stage: alt_build
   needs: []
-  image: fedora:41
+  image: fedora:42
   when: manual
   allow_failure: true
   before_script:
