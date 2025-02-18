@@ -505,7 +505,7 @@ class MatplotlibService:
         assert isinstance(df, pd.DataFrame)
 
         if max_time == 0:
-            max_time = round(max(df["seconds_spent_marking"].div(60)))
+            max_time = np.ceil(max(df["seconds_spent_marking"].div(60)))
 
         assert max_time > 0
         assert format in self.formats
