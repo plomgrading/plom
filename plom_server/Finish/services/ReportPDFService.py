@@ -7,7 +7,6 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from textwrap import dedent
 
-import numpy as np
 from tqdm import tqdm as _tqdm
 from weasyprint import HTML, CSS
 
