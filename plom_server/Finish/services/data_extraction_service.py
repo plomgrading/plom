@@ -392,12 +392,11 @@ class DataExtractionService:
             assert isinstance(x, str)
         return user_list
 
-    def get_scores_for_question(
+    def _get_scores_for_qidx(
         self,
         qidx: int,
         *,
         ver: int | None = None,
-        ta_df: pd.DataFrame | None = None,
     ) -> list[float]:
         """Get the marks assigned for a specific question.
 
@@ -406,23 +405,44 @@ class DataExtractionService:
 
         Keyword Args:
             ver: which version, or if omitted/None then report for all.
-            ta_df: Optional dataframe containing the TA data. Should be a copy or
-                filtered version of self.ta_df. If omitted, self.ta_df is used.
 
         Returns:
             A list of marks assigned for the specified question / version.
         """
-        if ta_df is None:
-            ta_df = self.ta_df
-        assert isinstance(ta_df, pd.DataFrame)
+        df = self.ta_df
+        assert isinstance(df, pd.DataFrame)
 
         if ver is not None:
-            tmp = ta_df[
-                (ta_df["question_number"] == qidx) & (ta_df["question_version"] == ver)
-            ]
+            tmp = df[(df["question_number"] == qidx) & (df["question_version"] == ver)]
         else:
-            tmp = ta_df[ta_df["question_number"] == qidx]
+            tmp = df[df["question_number"] == qidx]
         return tmp["score_given"].tolist()
+
+    def _get_marking_times_for_qidx(
+        self,
+        qidx: int,
+        *,
+        ver: int | None = None,
+    ) -> list[float]:
+        """Get the marking times for a specific question.
+
+        Args:
+            qidx: The question to get the data for.
+
+        Keyword Args:
+            ver: which version, or if omitted/None then report for all.
+
+        Returns:
+            A list of marks assigned for the specified question / version.
+        """
+        df = self.ta_df
+        assert isinstance(df, pd.DataFrame)
+
+        if ver is not None:
+            tmp = df[(df["question_number"] == qidx) & (df["question_version"] == ver)]
+        else:
+            tmp = df[df["question_number"] == qidx]
+        return tmp["seconds_spent_marking"].tolist()
 
     def get_scores_for_ta(
         self, ta_name: str, *, ta_df: pd.DataFrame | None = None

@@ -177,32 +177,25 @@ def pdf_builder(
         ]
 
     if not brief or selected_graphs.get("graph6"):
+        # Note: the marking_times_df seems to be used only to get the list
+        # of versions involved in each question: the "des" helper functions
+        # are re-filtering by qidx.
         graphs["graph6"] = [
             mpls.scatter_time_spent_vs_mark_given(
                 qidx,
                 times_spent_minutes=(
-                    [
-                        np.array(marking_times_df["seconds_spent_marking"].div(60))
-                        .astype(float)
-                        .tolist()
-                    ]
+                    [des._get_marking_times_for_qidx(qidx)]
                     if not versions
                     else [
-                        np.array(
-                            marking_times_df[marking_times_df["question_version"] == v][
-                                "seconds_spent_marking"
-                            ].div(60)
-                        )
-                        .astype(float)
-                        .tolist()
+                        des._get_marking_times_for_qidx(qidx, ver=v)
                         for v in sorted(marking_times_df["question_version"].unique())
                     ]
                 ),
                 marks_given=(
-                    [des.get_scores_for_question(qidx)]
+                    [des._get_scores_for_qidx(qidx)]
                     if not versions
                     else [
-                        des.get_scores_for_question(qidx, ver=v)
+                        des._get_scores_for_qidx(qidx, ver=v)
                         for v in sorted(marking_times_df["question_version"].unique())
                     ]
                 ),
@@ -217,7 +210,7 @@ def pdf_builder(
     if not brief or selected_graphs.get("graph7"):
         graphs["graph7"] = [
             mpls.boxplot_of_marks_given_by_ta(
-                [des.get_scores_for_question(qidx)]
+                [des._get_scores_for_qidx(qidx)]
                 + [
                     des.get_scores_for_ta(ta_name=marker_name, ta_df=question_df)
                     for marker_name in des.get_tas_that_marked_this_question(
