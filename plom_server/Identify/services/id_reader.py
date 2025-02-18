@@ -6,6 +6,9 @@
 # Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
+# need this until newer minimum version of opencv
+from __future__ import annotations
+
 import json
 from pathlib import Path
 from typing import Any
