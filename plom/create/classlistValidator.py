@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2024 Andrew Rechnitzer
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2024 Aden Chan
-
-from __future__ import annotations
 
 from collections import defaultdict
 import csv
@@ -130,6 +128,11 @@ class PlomClasslistValidator:
             # Issue #2273
             # err.append("Missing paper number column")
             papernumber_keys = [None]
+
+        if id_keys != [sid_field]:
+            err.append(f"'id' present but incorrect case; header: {headers}")
+        if fullname_keys != [fullname_field]:
+            err.append(f"'name' present but incorrect case; header: {headers}")
 
         if err:
             return {"success": False, "errors": err}
