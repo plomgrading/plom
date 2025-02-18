@@ -384,10 +384,13 @@ class DataExtractionService:
             ta_df = self.ta_df
         assert isinstance(ta_df, pd.DataFrame)
 
-        users = ta_df[ta_df["question_number"] == question_index]["user"]
-        r = users.unique().tolist()
-        # assert isinstance(r, list)
-        return r
+        users = ta_df[(ta_df["question_number"] == question_index)]["user"]
+        user_list = users.unique().tolist()
+        # MyPy complains about types (on CI, not locally) unsure why so assert
+        assert isinstance(user_list, list)
+        for x in user_list:
+            assert isinstance(x, str)
+        return user_list
 
     def get_scores_for_question(
         self,
