@@ -155,7 +155,9 @@ class StagingStudentService:
         assert_can_modify_classlist()
 
         # now save the in-memory file to a tempfile and validate
+        # Note: we must be careful to unlike this file ourselves
         tmp_csv = Path(NamedTemporaryFile(delete=False).name)
+
         with open(tmp_csv, "wb") as fh:
             for chunk in in_memory_csv_file:
                 fh.write(chunk)
@@ -167,39 +169,31 @@ class StagingStudentService:
 
         if (not success) or (werr and not ignore_warnings):
             # errors, or non-ignorable warnings.
-            pass
-        else:
-            # either no warnings, or warnings but ignore them - so read the csv
-            with open(tmp_csv) as fh:
-                csv_reader = csv.DictReader(fh, skipinitialspace=True)
-                # make sure headers are lowercase
-                old_headers = csv_reader.fieldnames
-                # since this has been validated we know it has 'id', 'name', 'paper_number'
-                assert old_headers is not None
-                csv_reader.fieldnames = [x.lower() for x in old_headers]
-                # now we have lower case field names
-                # Note that the paper_number field is optional, so we
-                # need to get that value or stick in a None.
-                # related to #2274 and MR <<TODO>>
-                try:
-                    for row in csv_reader:
-                        self._add_student(
-                            row["id"],
-                            row["name"],
-                            paper_number=row.get("paper_number", None),
-                        )
-                except (IntegrityError, ValueError) as e:
-                    # in theory, we "asked permission" using vlad the validator
-                    # so the input must be perfect and this can never fail---haha.
-                    success = False
-                    errmsg = "Unexpected error, "
-                    errmsg += f"likely a bug in Plom's classlist validator: {str(e)}"
-                    # see :method:`PlomClasslistValidator.validate_csv` for this format
-                    werr.append(
-                        {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
-                    )
+            tmp_csv.unlink()
+            return (success, werr)
 
-        # don't forget to unlink the temp file
+        # either no warnings, or warnings but ignore them - so read the csv
+        with open(tmp_csv) as fh:
+            csv_reader = csv.DictReader(fh, skipinitialspace=True)
+            # Note the paper_number field is optional, so use `get`
+            try:
+                for row in csv_reader:
+                    self._add_student(
+                        row["id"],
+                        row["name"],
+                        paper_number=row.get("paper_number", None),
+                    )
+            except (IntegrityError, ValueError, KeyError) as e:
+                # in theory, we "asked permission" using vlad the validator
+                # so the input must be perfect and this can never fail---haha!
+                success = False
+                errmsg = "Unexpected error, "
+                errmsg += f"likely a bug in Plom's classlist validator: {str(e)}"
+                # see :method:`PlomClasslistValidator.validate_csv` for this format
+                werr.append(
+                    {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
+                )
+
         tmp_csv.unlink()
         return (success, werr)
 
