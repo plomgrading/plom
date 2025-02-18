@@ -427,7 +427,7 @@ class DataExtractionService:
 
     def get_scores_for_ta(
         self, ta_name: str, *, ta_df: pd.DataFrame | None = None
-    ) -> list[int]:
+    ) -> list[float]:
         """Get the marks assigned for by a specific TA.
 
         Args:

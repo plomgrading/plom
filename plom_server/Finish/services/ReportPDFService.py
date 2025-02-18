@@ -217,13 +217,9 @@ def pdf_builder(
     if not brief or selected_graphs.get("graph7"):
         graphs["graph7"] = [
             mpls.boxplot_of_marks_given_by_ta(
-                [np.array(des.get_scores_for_question(qidx)).astype(float).tolist()]
+                [des.get_scores_for_question(qidx)]
                 + [
-                    np.array(
-                        des.get_scores_for_ta(ta_name=marker_name, ta_df=question_df)
-                    )
-                    .astype(float)
-                    .tolist()
+                    des.get_scores_for_ta(ta_name=marker_name, ta_df=question_df)
                     for marker_name in des.get_tas_that_marked_this_question(
                         qidx, ta_df=question_df
                     )
