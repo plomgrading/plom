@@ -306,20 +306,21 @@ class DataExtractionService:
         question_df = ta_df[ta_df["question_number"] == question_index]
         return question_df
 
-    def _get_all_ta_data_by_question(self) -> dict[int, pd.DataFrame]:
+    def _get_all_ta_data_by_qidx(self) -> dict[int, pd.DataFrame]:
         """Get TA marking data for all questions as a dict.
 
         Warning: caller will need pandas installed as this method returns a dataframe.
 
         Returns:
             A dictionary keyed by the question index, containing the
-            marking data for each question.
+            marking data for each question.  The keys in the results are
+            sorted by question index (that is, iterating on the return
+            value will be sorted by question index b/c Python 3 preserves
+            insertion order).
         """
         marks_by_question = {}
-        for question_idx in self.ta_df["question_number"].unique():
-            marks_by_question[question_idx] = self._get_ta_data_for_question(
-                question_idx
-            )
+        for qidx in sorted(self.ta_df["question_number"].unique()):
+            marks_by_question[qidx] = self._get_ta_data_for_question(qidx)
         return marks_by_question
 
     def _get_times_for_all_questions(self) -> dict[int, pd.Series]:

@@ -164,14 +164,14 @@ def pdf_builder(
         bin_width = 15
         graphs["graph5"] = [
             mpls.histogram_of_time_spent_marking_each_question(
-                question,
+                qidx,
                 marking_times_df=marking_times_df,
                 versions=versions,
                 max_time=max_time,
                 bin_width=bin_width,
             )
-            for question, marking_times_df in tqdm(
-                des._get_all_ta_data_by_question().items(),
+            for qidx, marking_times_df in tqdm(
+                des._get_all_ta_data_by_qidx().items(),
                 desc="Histograms of time spent marking each question",
             )
         ]
@@ -209,7 +209,7 @@ def pdf_builder(
                 versions=versions,
             )
             for qidx, marking_times_df in tqdm(
-                des._get_all_ta_data_by_question().items(),
+                des._get_all_ta_data_by_qidx().items(),
                 desc="Scatter plots of time spent marking vs mark given",
             )
         ]
@@ -217,11 +217,7 @@ def pdf_builder(
     if not brief or selected_graphs.get("graph7"):
         graphs["graph7"] = [
             mpls.boxplot_of_marks_given_by_ta(
-                [
-                    np.array(des.get_scores_for_question(question_index))
-                    .astype(float)
-                    .tolist()
-                ]
+                [np.array(des.get_scores_for_question(qidx)).astype(float).tolist()]
                 + [
                     np.array(
                         des.get_scores_for_ta(ta_name=marker_name, ta_df=question_df)
@@ -229,17 +225,15 @@ def pdf_builder(
                     .astype(float)
                     .tolist()
                     for marker_name in des.get_tas_that_marked_this_question(
-                        question_index, ta_df=question_df
+                        qidx, ta_df=question_df
                     )
                 ],
                 ["Overall"]
-                + des.get_tas_that_marked_this_question(
-                    question_index, ta_df=question_df
-                ),
-                question_index,
+                + des.get_tas_that_marked_this_question(qidx, ta_df=question_df),
+                qidx,
             )
-            for question_index, question_df in tqdm(
-                des._get_all_ta_data_by_question().items(),
+            for qidx, question_df in tqdm(
+                des._get_all_ta_data_by_qidx().items(),
                 desc="Box plots of marks given by marker by question",
             )
         ]
