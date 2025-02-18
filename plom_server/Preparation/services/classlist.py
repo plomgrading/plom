@@ -175,8 +175,8 @@ class StagingStudentService:
         # either no warnings, or warnings but ignore them - so read the csv
         with open(tmp_csv) as fh:
             csv_reader = csv.DictReader(fh, skipinitialspace=True)
-            # Note the paper_number field is optional, so use `get`
             try:
+                # We accept "id", "ID", "Id", but code is messy #3822 #1140
                 headers = csv_reader.fieldnames
                 (id_key,) = [x for x in headers if x.casefold() == "id"]
                 (name_key,) = [x for x in headers if x.casefold() == "name"]
