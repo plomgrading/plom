@@ -177,11 +177,19 @@ class StagingStudentService:
             csv_reader = csv.DictReader(fh, skipinitialspace=True)
             # Note the paper_number field is optional, so use `get`
             try:
+                headers = csv_reader.fieldnames
+                (id_key,) = [x for x in headers if x.casefold() == "id"]
+                (name_key,) = [x for x in headers if x.casefold() == "name"]
+                # paper_number is a bit harder b/c it might not be present
+                papernum_key = "paper_number"
+                _tmp = [x for x in headers if x.casefold() == papernum_key]
+                if len(_tmp) == 1:
+                    papernum_key = _tmp[0]
                 for row in csv_reader:
                     self._add_student(
-                        row["id"],
-                        row["name"],
-                        paper_number=row.get("paper_number", None),
+                        row[id_key],
+                        row[name_key],
+                        paper_number=row.get(papernum_key, None),
                     )
             except (IntegrityError, ValueError, KeyError) as e:
                 # in theory, we "asked permission" using vlad the validator

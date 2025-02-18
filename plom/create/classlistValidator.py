@@ -129,10 +129,12 @@ class PlomClasslistValidator:
             # err.append("Missing paper number column")
             papernumber_keys = [None]
 
-        if id_keys != [sid_field]:
-            err.append(f"'id' present but incorrect case; header: {headers}")
-        if fullname_keys != [fullname_field]:
-            err.append(f"'name' present but incorrect case; header: {headers}")
+        # We explicitly allow casefolding (but could change our minds?)
+        # See #3822 and #1140.
+        # if id_keys != [sid_field]:
+        #     err.append(f"'id' present but incorrect case; header: {headers}")
+        # if fullname_keys != [fullname_field]:
+        #     err.append(f"'name' present but incorrect case; header: {headers}")
 
         if err:
             return {"success": False, "errors": err}
