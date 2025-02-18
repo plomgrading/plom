@@ -2,9 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
-
-from __future__ import annotations
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from typing import Any
 

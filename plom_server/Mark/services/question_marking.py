@@ -5,8 +5,6 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
-from __future__ import annotations
-
 from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist

@@ -3,8 +3,6 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
 
-from __future__ import annotations
-
 from tabulate import tabulate
 
 from django.core.management.base import BaseCommand, CommandError

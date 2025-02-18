@@ -8,8 +8,6 @@
 # Copyright (C) 2024 Andreas Buttenschoen
 # Copyright (C) 2025 Aden Chan
 
-from __future__ import annotations
-
 import csv
 from io import StringIO
 from typing import Any
