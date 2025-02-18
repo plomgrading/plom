@@ -178,6 +178,7 @@ class StagingStudentService:
             try:
                 # We accept "id", "ID", "Id", but code is messy #3822 #1140
                 headers = csv_reader.fieldnames
+                assert headers, "Expectedly empty csv header"
                 (id_key,) = [x for x in headers if x.casefold() == "id"]
                 (name_key,) = [x for x in headers if x.casefold() == "name"]
                 # paper_number is a bit harder b/c it might not be present
@@ -191,7 +192,7 @@ class StagingStudentService:
                         row[name_key],
                         paper_number=row.get(papernum_key, None),
                     )
-            except (IntegrityError, ValueError, KeyError) as e:
+            except (IntegrityError, ValueError, KeyError, AssertionError) as e:
                 # in theory, we "asked permission" using vlad the validator
                 # so the input must be perfect and this can never fail---haha!
                 success = False
