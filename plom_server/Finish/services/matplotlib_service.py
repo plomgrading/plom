@@ -519,20 +519,12 @@ class MatplotlibService:
                 1, round(marking_times_df["question_version"].max()) + 1
             ):
                 plot_series.append(
-                    marking_times_df[
-                        (marking_times_df["question_number"] == question_idx)
-                    ][(marking_times_df["question_version"] == version)][
+                    marking_times_df[marking_times_df["question_version"] == version][
                         "seconds_spent_marking"
-                    ].div(
-                        60
-                    )
+                    ].div(60)
                 )
         else:
-            plot_series.append(
-                marking_times_df[(marking_times_df["question_number"] == question_idx)][
-                    "seconds_spent_marking"
-                ].div(60)
-            )
+            plot_series.append(marking_times_df["seconds_spent_marking"].div(60))
 
         ax.hist(
             plot_series,
