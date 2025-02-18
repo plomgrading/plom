@@ -393,7 +393,11 @@ class DataExtractionService:
         return r
 
     def get_scores_for_question(
-        self, question_index: int, *, ta_df: pd.DataFrame | None = None
+        self,
+        question_index: int,
+        *,
+        ta_df: pd.DataFrame | None = None,
+        version: int | None = None,
     ) -> list[int]:
         """Get the marks assigned for a specific question.
 
@@ -403,6 +407,8 @@ class DataExtractionService:
         Keyword Args:
             ta_df: Optional dataframe containing the TA data. Should be a copy or
                 filtered version of self.ta_df. If omitted, self.ta_df is used.
+            version: which version, or if omitted (or None) then report
+                for all versions.
 
         Returns:
             A list of marks assigned for the specified question.
@@ -411,6 +417,10 @@ class DataExtractionService:
             ta_df = self.ta_df
         assert isinstance(ta_df, pd.DataFrame)
 
+        if version is not None:
+            return ta_df[ta_df["question_number"] == question_index][
+                ta_df["question_version"] == version
+            ]["score_given"].tolist()
         return ta_df[ta_df["question_number"] == question_index]["score_given"].tolist()
 
     def get_scores_for_ta(

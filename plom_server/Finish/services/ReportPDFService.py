@@ -188,7 +188,11 @@ def pdf_builder(
                     ]
                     if not versions
                     else [
-                        np.array(marking_times_df["seconds_spent_marking"].div(60))
+                        np.array(
+                            marking_times_df[
+                                marking_times_df["question_version"] == version
+                            ]["seconds_spent_marking"].div(60)
+                        )
                         .astype(float)
                         .tolist()
                         for version in marking_times_df["question_version"].unique()
@@ -202,7 +206,7 @@ def pdf_builder(
                     ]
                     if not versions
                     else [
-                        np.array(des.get_scores_for_question(question))
+                        np.array(des.get_scores_for_question(question, version=version))
                         .astype(float)
                         .tolist()
                         for version in marking_times_df["question_version"].unique()
