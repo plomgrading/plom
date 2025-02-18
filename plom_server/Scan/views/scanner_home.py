@@ -6,12 +6,10 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Aidan Murphy
 
-
-from __future__ import annotations
-
-import arrow
 from datetime import datetime
 from typing import Any
+
+import arrow
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib import messages

@@ -7,8 +7,6 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Aidan Murphy
 
-from __future__ import annotations
-
 """Services for annotations and annotation images."""
 
 from typing import Any

@@ -2,8 +2,6 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
 
-from __future__ import annotations
-
 from django.core.management.base import BaseCommand, CommandError
 
 from plom.scan.question_list_utils import check_question_list

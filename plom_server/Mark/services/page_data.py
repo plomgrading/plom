@@ -3,8 +3,6 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
 
-from __future__ import annotations
-
 from typing import Any
 
 from django.db import transaction
