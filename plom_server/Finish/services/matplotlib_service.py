@@ -565,8 +565,8 @@ class MatplotlibService:
     def scatter_time_spent_vs_mark_given(
         self,
         question_idx: int,
-        times_spent_minutes: list[float] | list[list[float]],
-        marks_given: list[float] | list[list[float]],
+        times_spent_minutes: list[list[float]],
+        marks_given: list[list[float]],
         *,
         versions: bool = False,
         format: str = "base64",
@@ -575,11 +575,10 @@ class MatplotlibService:
 
         Args:
             question_idx: The question index to generate the scatter plot for.
-            times_spent_minutes: Listlike containing the marking times in minutes or
-                a list of listlikes containing the marking times in minutes for each
-                version.
-            marks_given: Listlike containing the marks given or a list of listlikes
-                containing the marks given for each version.
+            times_spent_minutes: A list of list-like containing the marking times
+                in minutes for each version.
+            marks_given: A list of list-likes containing the marks given
+                for each version.
 
         Keyword Args:
             versions: Whether to split the scatter plot into versions. If omitted,
@@ -596,7 +595,7 @@ class MatplotlibService:
 
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
-        if versions is True:
+        if versions:
             for i in range(len(times_spent_minutes)):
                 ax.scatter(
                     marks_given[i],
@@ -607,8 +606,8 @@ class MatplotlibService:
                 )
         else:
             ax.scatter(
-                marks_given,
-                times_spent_minutes,
+                marks_given[0],
+                times_spent_minutes[0],
                 ec="black",
                 alpha=0.5,
                 label="All versions",

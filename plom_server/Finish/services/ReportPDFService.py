@@ -181,9 +181,11 @@ def pdf_builder(
             mpls.scatter_time_spent_vs_mark_given(
                 question,
                 times_spent_minutes=(
-                    np.array(marking_times_df["seconds_spent_marking"].div(60))
-                    .astype(float)
-                    .tolist()
+                    [
+                        np.array(marking_times_df["seconds_spent_marking"].div(60))
+                        .astype(float)
+                        .tolist()
+                    ]
                     if not versions
                     else [
                         np.array(marking_times_df["seconds_spent_marking"].div(60))
@@ -193,9 +195,11 @@ def pdf_builder(
                     ]
                 ),
                 marks_given=(
-                    np.array(des.get_scores_for_question(question))
-                    .astype(float)
-                    .tolist()
+                    [
+                        np.array(des.get_scores_for_question(question))
+                        .astype(float)
+                        .tolist()
+                    ]
                     if not versions
                     else [
                         np.array(des.get_scores_for_question(question))
