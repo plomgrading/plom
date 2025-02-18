@@ -172,9 +172,9 @@ class MatplotlibService:
                 maxver = 0
             else:
                 maxver = round(student_df[ver_column].max())
-            for version in range(1, maxver + 1):
+            for v in range(1, maxver + 1):
                 plot_series.append(
-                    student_df[(student_df[ver_column] == version)][mark_column]
+                    student_df[(student_df[ver_column] == v)][mark_column]
                 )
         else:
             plot_series.append(student_df[mark_column])
@@ -429,9 +429,9 @@ class MatplotlibService:
 
         plot_series = []
         if versions:
-            for version in range(1, round(ta_df["question_version"].max()) + 1):
+            for v in range(1, round(ta_df["question_version"].max()) + 1):
                 plot_series.append(
-                    ta_df[(ta_df["question_version"] == version)]["score_given"]
+                    ta_df[(ta_df["question_version"] == v)]["score_given"]
                 )
         else:
             plot_series.append(ta_df["score_given"])
@@ -499,12 +499,13 @@ class MatplotlibService:
         """
         qlabel = SpecificationService.get_question_label(question_idx)
         if marking_times_df is None:
-            marking_times_df = self.ta_df
-
-        assert isinstance(marking_times_df, pd.DataFrame)
+            df = self.ta_df
+        else:
+            df = marking_times_df
+        assert isinstance(df, pd.DataFrame)
 
         if max_time == 0:
-            max_time = round(max(marking_times_df["seconds_spent_marking"].div(60)))
+            max_time = round(max(df["seconds_spent_marking"].div(60)))
 
         assert max_time > 0
         assert format in self.formats
@@ -515,16 +516,12 @@ class MatplotlibService:
 
         plot_series = []
         if versions:
-            for version in range(
-                1, round(marking_times_df["question_version"].max()) + 1
-            ):
+            for v in range(1, round(df["question_version"].max()) + 1):
                 plot_series.append(
-                    marking_times_df[marking_times_df["question_version"] == version][
-                        "seconds_spent_marking"
-                    ].div(60)
+                    df[(df["question_version"] == v)]["seconds_spent_marking"].div(60)
                 )
         else:
-            plot_series.append(marking_times_df["seconds_spent_marking"].div(60))
+            plot_series.append(df["seconds_spent_marking"].div(60))
 
         ax.hist(
             plot_series,
