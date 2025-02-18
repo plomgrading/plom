@@ -15,8 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Fix hard-to-debug errors about casing of headers in classlist.
-
-
+* Fix versioned scatterplots in reports.
 
 
 ## [0.17.2] - 2025-02-03
