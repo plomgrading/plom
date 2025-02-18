@@ -385,12 +385,8 @@ class DataExtractionService:
         assert isinstance(ta_df, pd.DataFrame)
 
         users = ta_df[ta_df["question_number"] == question_index]["user"]
-        print(users)
-        print(type(users))
         r = users.unique().tolist()
-        print(r)
-        print(type(r))
-        assert isinstance(r, list)
+        # assert isinstance(r, list)
         return r
 
     def get_scores_for_question(
