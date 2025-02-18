@@ -145,7 +145,7 @@ class StagingStudentService:
 
         Returns:
             2-tuple, the first entry is a bool indicating success.  In case of
-            success the 2nd entry is an empty list (TODO: or maybe contains
+            success the 2nd entry is an empty list (or might contain
             ignored warnings).  In case of errors the second list contains dicts
             which elaborate on errors or warnings.
 
@@ -155,7 +155,7 @@ class StagingStudentService:
         assert_can_modify_classlist()
 
         # now save the in-memory file to a tempfile and validate
-        # Note: we must be careful to unlike this file ourselves
+        # Note: we must be careful to unlink this file ourselves
         tmp_csv = Path(NamedTemporaryFile(delete=False).name)
 
         with open(tmp_csv, "wb") as fh:

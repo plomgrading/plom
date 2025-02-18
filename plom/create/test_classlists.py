@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 
 from pytest import raises
@@ -318,7 +318,7 @@ def test_short_name_warning1(tmpdir) -> None:
     with working_directory(tmpdir):
         foo = tmpdir / "foo.csv"
         with open(foo, "w") as f:
-            f.write('"ID","name","paper_number"\n')
+            f.write('"id","name","paper_number"\n')
             f.write('12345677,"D",1\n')
             f.write('12345678,"",2\n')
         success, warn_err = vlad.validate_csv(foo)
@@ -463,7 +463,7 @@ def test_leading_zero_sid(tmp_path) -> None:
     vlad = PlomClasslistValidator()
     foo = tmp_path / "foo.csv"
     with open(foo, "w") as f:
-        f.write('"ID","name","paper_number"\n')
+        f.write('"id","name","paper_number"\n')
         f.write('12345677,"Doe, Ursula",\n')
         f.write('00123400,"Doe, Carol",\n')
         f.write('12345678,"Doe, Max",\n')
