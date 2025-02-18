@@ -394,34 +394,35 @@ class DataExtractionService:
 
     def get_scores_for_question(
         self,
-        question_index: int,
+        qidx: int,
         *,
+        ver: int | None = None,
         ta_df: pd.DataFrame | None = None,
-        version: int | None = None,
-    ) -> list[int]:
+    ) -> list[float]:
         """Get the marks assigned for a specific question.
 
         Args:
-            question_index: The question to get the data for.
+            qidx: The question to get the data for.
 
         Keyword Args:
+            ver: which version, or if omitted/None then report for all.
             ta_df: Optional dataframe containing the TA data. Should be a copy or
                 filtered version of self.ta_df. If omitted, self.ta_df is used.
-            version: which version, or if omitted (or None) then report
-                for all versions.
 
         Returns:
-            A list of marks assigned for the specified question.
+            A list of marks assigned for the specified question / version.
         """
         if ta_df is None:
             ta_df = self.ta_df
         assert isinstance(ta_df, pd.DataFrame)
 
-        if version is not None:
-            return ta_df[ta_df["question_number"] == question_index][
-                ta_df["question_version"] == version
-            ]["score_given"].tolist()
-        return ta_df[ta_df["question_number"] == question_index]["score_given"].tolist()
+        if ver is not None:
+            tmp = ta_df[
+                (ta_df["question_number"] == qidx) & (ta_df["question_version"] == ver)
+            ]
+        else:
+            tmp = ta_df[ta_df["question_number"] == qidx]
+        return tmp["score_given"].tolist()
 
     def get_scores_for_ta(
         self, ta_name: str, *, ta_df: pd.DataFrame | None = None

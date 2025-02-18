@@ -179,7 +179,7 @@ def pdf_builder(
     if not brief or selected_graphs.get("graph6"):
         graphs["graph6"] = [
             mpls.scatter_time_spent_vs_mark_given(
-                question,
+                qidx,
                 times_spent_minutes=(
                     [
                         np.array(marking_times_df["seconds_spent_marking"].div(60))
@@ -189,32 +189,26 @@ def pdf_builder(
                     if not versions
                     else [
                         np.array(
-                            marking_times_df[
-                                marking_times_df["question_version"] == version
-                            ]["seconds_spent_marking"].div(60)
+                            marking_times_df[marking_times_df["question_version"] == v][
+                                "seconds_spent_marking"
+                            ].div(60)
                         )
                         .astype(float)
                         .tolist()
-                        for version in marking_times_df["question_version"].unique()
+                        for v in sorted(marking_times_df["question_version"].unique())
                     ]
                 ),
                 marks_given=(
-                    [
-                        np.array(des.get_scores_for_question(question))
-                        .astype(float)
-                        .tolist()
-                    ]
+                    [des.get_scores_for_question(qidx)]
                     if not versions
                     else [
-                        np.array(des.get_scores_for_question(question, version=version))
-                        .astype(float)
-                        .tolist()
-                        for version in marking_times_df["question_version"].unique()
+                        des.get_scores_for_question(qidx, ver=v)
+                        for v in sorted(marking_times_df["question_version"].unique())
                     ]
                 ),
                 versions=versions,
             )
-            for question, marking_times_df in tqdm(
+            for qidx, marking_times_df in tqdm(
                 des._get_all_ta_data_by_question().items(),
                 desc="Scatter plots of time spent marking vs mark given",
             )
