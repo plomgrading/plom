@@ -28,9 +28,9 @@
         <div class="card-body">
             <h4 class="card-title">Markers</h4>
             <p>
-                <a class="btn btn-success" href="{% url 'enableMarkers' %}">Enable Markers</a>
-                <a class="btn btn-danger" href="{% url 'disableMarkers' %}">Disable Markers</a>
-                <a class="btn btn-info" href="{% url 'progress_user_info_home' %}">User Info</a>
+                <a class="btn btn-secondary" href="{% url 'enableMarkers' %}">Enable Markers</a>
+                <a class="btn btn-success" href="{% url 'disableMarkers' %}">Disable Markers</a>
+                <a class="btn btn-link" href="{% url 'progress_user_info_home' %}">User Info</a>
             </p>
             <div class="table-responsive">
                 <table class="table table-striped">
@@ -75,10 +75,10 @@
                             <td>{{ user.last_login|naturaltime }}</td>
                             <td>
                                 {% if user in lead_markers %}
-                                    <a class="btn btn-info"
+                                    <a class="btn btn-success"
                                        href="{% url 'toggleLeadMarker' user.username %}">demote</a>
                                 {% else %}
-                                    <a class="btn btn-warning"
+                                    <a class="btn btn-secondary"
                                        href="{% url 'toggleLeadMarker' user.username %}">promote</a>
                                 {% endif %}
                             </td>
@@ -86,10 +86,10 @@
                                 {% if user.has_usable_password %}
                                     {% if user.is_active %}
                                         <button hx-post="{% url 'modify_user' user.username %}"
-                                                class="btn btn-outline-secondary">disable</button>
+                                                class="btn btn-success">disable</button>
                                     {% else %}
                                         <button hx-post="{% url 'modify_user' user.username %}"
-                                                class="btn btn-outline-success">enable</button>
+                                                class="btn btn-secondary">enable</button>
                                     {% endif %}
                                 {% else %}
                                     <button class="btn btn-warning disabled">no password set</button>
@@ -98,7 +98,7 @@
                             <td>
                                 {% csrf_token %}
                                 <button hx-delete="{% url 'modify_user' user.username %}"
-                                        class="btn btn-outline-danger"
+                                        class="btn btn-danger"
                                         {% if user.last_login %}disabled{% endif %}>delete user</button>
                             </td>
                         </tr>
@@ -124,8 +124,8 @@
         <div class="card-body">
             <h4 class="card-title">Scanners</h4>
             <p>
-                <a class="btn btn-success" href="{% url 'enableScanners' %}">Enable Scanners</a>
-                <a class="btn btn-danger" href="{% url 'disableScanners' %}">Disable Scanners</a>
+                <a class="btn btn-secondary" href="{% url 'enableScanners' %}">Enable Scanners</a>
+                <a class="btn btn-success" href="{% url 'disableScanners' %}">Disable Scanners</a>
             </p>
             <div class="table-responsive">
                 <table class="table table-striped">
@@ -159,10 +159,10 @@
                                 {% if user.has_usable_password %}
                                     {% if user.is_active %}
                                         <button hx-post="{% url 'modify_user' user.username %}"
-                                                class="btn btn-outline-secondary">disable</button>
+                                                class="btn btn-success">disable</button>
                                     {% else %}
                                         <button hx-post="{% url 'modify_user' user.username %}"
-                                                class="btn btn-outline-success">enable</button>
+                                                class="btn btn-secondary">enable</button>
                                     {% endif %}
                                 {% else %}
                                     <button class="btn btn-warning disabled">no password set</button>
@@ -171,7 +171,7 @@
                             <td>
                                 {% csrf_token %}
                                 <button hx-delete="{% url 'modify_user' user.username %}"
-                                        class="btn btn-outline-danger"
+                                        class="btn btn-danger"
                                         {% if user.last_login %}disabled{% endif %}>delete user</button>
                             </td>
                         </tr>
@@ -212,7 +212,7 @@
                             <td>
                                 {% csrf_token %}
                                 <button hx-delete="{% url 'modify_user' user.username %}"
-                                        class="btn btn-outline-danger"
+                                        class="btn btn-danger"
                                         {% if user.last_login %}disabled{% endif %}>delete user</button>
                             </td>
                         </tr>
