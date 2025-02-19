@@ -34,10 +34,7 @@ class PaperInfoService:
         """Returns true when number of papers in the database equals the number to produce."""
         nop = NumberOfPapersToProduceSetting.load().number_of_papers
         db_count = Paper.objects.count()
-        if db_count > 0 and db_count == nop:
-            return True
-        else:
-            return False
+        return db_count > 0 and db_count == nop
 
     @staticmethod
     def is_paper_database_partially_but_not_fully_populated() -> bool:
