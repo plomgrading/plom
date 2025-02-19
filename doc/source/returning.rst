@@ -1,6 +1,6 @@
 .. Plom documentation
    Copyright (C) 2020 Andrew Rechnitzer
-   Copyright (C) 2020-2024 Colin B. Macdonald
+   Copyright (C) 2020-2025 Colin B. Macdonald
    Copyright (C) 2023 Philip D. Loewen
    SPDX-License-Identifier: AGPL-3.0-or-later
 
