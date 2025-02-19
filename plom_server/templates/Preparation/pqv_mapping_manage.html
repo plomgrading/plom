@@ -17,11 +17,6 @@
         <div>
             <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
-        {% if no_spec %}
-            <div class="alert alert-warning">
-                <p>There is no assessment specification.</p>
-            </div>
-        {% else %}
             <div class="alert alert-primary pb-0">
                 <p>
                     Assessment specification indicates:
@@ -312,7 +307,6 @@
                     </div>
                 {% endif %}
             {% endif %}
-        {% endif %}
     </div>
     {% if populate_in_progress or evacuate_in_progress %}
         <script>
