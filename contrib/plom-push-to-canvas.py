@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 # Copyright (C) 2022 Nicholas J H Lai
 
 """Upload reassembled Plom papers and grades to Canvas.
@@ -71,7 +71,7 @@ from plom.canvas import (
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.3.2"
+__script_version__ = "0.4.0"
 
 
 def sis_id_to_student_dict(student_list):
@@ -220,6 +220,14 @@ parser.add_argument(
     dest="solutions",
     action="store_false",
 )
+parser.add_argument(
+    "--reports",
+    action="store_true",
+    help="""
+        Upload individualized student reports, in addition to reassembled papers
+        (default: off).
+    """,
+)
 
 
 if __name__ == "__main__":
@@ -285,6 +293,12 @@ if __name__ == "__main__":
                 "or pass `--no-solutions` to omit"
             )
         print(f'  Found "{soln_dir}" directory.')
+
+    if args.reports:
+        report_dir = Path("Student_Reports")
+        if not report_dir.exists():
+            raise ValueError(f'Cannot upload reports b/c of missing "{report_dir}"')
+        print(f'  Found "{report_dir}" directory.')
 
     print("\nFetching data from canvas now...")
     print("  --------------------------------------------------------------------")
@@ -360,6 +374,12 @@ if __name__ == "__main__":
                 print()
                 print(f"WARNING: Student #{sis_id} has no solutions: {soln_pdf}")
                 soln_pdf = None
+        if args.reports:
+            report_pdf = report_dir / f"{sis_id}.pdf"
+            if not report_pdf.exists():
+                print()
+                print(f"WARNING: Student #{sis_id} has no report: {report_pdf}")
+                report_pdf = None
 
         # try:
         #     if sub.submission_comments:
@@ -373,6 +393,8 @@ if __name__ == "__main__":
             timeouts.append((pdf.name, sis_id, name))
             if args.solutions and soln_pdf:
                 timeouts.append((soln_pdf.name, sis_id, name))
+            if args.reports and report_pdf:
+                timeouts.append((report_pdf.name, sis_id, name))
             timeouts.append((mark, sis_id, name))
             continue
 
@@ -390,6 +412,13 @@ if __name__ == "__main__":
             except CanvasException as e:
                 print(e)
                 timeouts.append((soln_pdf.name, sis_id, name))
+            time.sleep(random.uniform(0.1, 0.2))
+        if args.reports and report_pdf:
+            try:
+                sub.upload_comment(report_pdf)
+            except CanvasException as e:
+                print(e)
+                timeouts.append((report_pdf.name, sis_id, name))
             time.sleep(random.uniform(0.1, 0.2))
         try:
             sub.edit(submission={"posted_grade": mark})
