@@ -211,7 +211,7 @@ parser.add_argument(
     action="store_true",
     default=True,
     help="""
-        Upload individualized solutions as well as reassembled papers
+        Upload individualized solutions, in addition to reassembled papers
         (default: on).
     """,
 )
