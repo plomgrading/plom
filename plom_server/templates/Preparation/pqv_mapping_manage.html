@@ -22,7 +22,7 @@
                 <p>There is no assessment specification.</p>
             </div>
         {% else %}
-            <div class="alert alert-primary">
+            <div class="alert alert-primary pb-0">
                 <p>
                     Assessment specification indicates:
                     <ul>
@@ -316,8 +316,8 @@
     </div>
     {% if populate_in_progress or evacuate_in_progress %}
         <script>
-  // reload page after 2 sec
-setTimeout(function () { window.location.reload(1); }, 5000);
+            // reload page after 2 sec
+            setTimeout(function () { window.location.reload(1); }, 5000);
         </script>
     {% endif %}
 {% endblock main_content %}

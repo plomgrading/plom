@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021, 2023-2024 Colin B. Macdonald
+# Copyright (C) 2021, 2023-2025 Colin B. Macdonald
 
 import json
 
@@ -53,7 +53,7 @@ def test_ver_map_types() -> None:
     spec.verify()
     vm = make_random_version_map(spec)
     vm["1"] = vm.pop(1)  # type: ignore
-    with raises(ValueError, match="test number.*integer"):
+    with raises(ValueError, match="paper number.*integer"):
         check_version_map(vm)
 
 
@@ -92,7 +92,7 @@ def test_ver_map_verions_in_range() -> None:
     with raises(ValueError, match="positive"):
         check_version_map(vm)
     vm[1][1] = spec["numberOfVersions"] + 1
-    with raises(ValueError, match="numberOfVersions"):
+    with raises(ValueError, match="number of versions"):
         check_version_map(vm, spec)
 
 
