@@ -153,49 +153,6 @@ assessment, optionally upload a classlist, build a database of papers
 and create the actual QR-coded PDF files to print for you assessment.
 
 
-The question-version mapping
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. tip::
-   The first time you use Plom, we recommend using just a single
-   version of your assessment (and skipping this section!)
-
-When creating a multi-versioned assessment, a critically-important
-step is the creation of the "QV map" or the "question-version
-mapping", which tells Plom what versions to expect for each question
-and for each paper.
-
-You can have Plom create this mapping automatically, or specify your
-own via a spreadsheet if you have additional requirements.
-
-.. caution::
-   Its a good idea to download and backup a copy of your QV-map.  If
-   something goes catastrophically wrong, it (and the specification)
-   are crucial components to recreate your assessment elsewhere.
-
-
-I want to use different versions of my ID page
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-For example, maybe you want to use versions 1 and 2 for section 101
-and version 3 for section 102.
-In this case you might want to write "Section 101" on the front (ID)
-page of some papers and "Section 102" on others.
-This can be done by adding a ``id.version`` column to your custom "QV
-map" ``.csv`` file.
-
-.. danger::
-   Versioned ID-pages is a new feature, without much (any?) real-world
-   testing.  Use at your own risk.  If you've tested it, please get in
-   touch so we can remove this message following your act of bravery.
-
-.. tip::
-   The "IDBox" template must be in the exact same location on
-   different versions of your ID page.
-   If this is not so, the auto-ID reader may fail.
-
-
-
 Technical docs
 --------------
 
