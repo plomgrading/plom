@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright (C) 2022-2024 Colin B. Macdonald
+   Copyright (C) 2022-2025 Colin B. Macdonald
    Copyright (C) 2018 Andrew Rechnitzer
    SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -172,6 +172,27 @@ own via a spreadsheet if you have additional requirements.
    Its a good idea to download and backup a copy of your QV-map.  If
    something goes catastrophically wrong, it (and the specification)
    are crucial components to recreate your assessment elsewhere.
+
+
+I want to use different versions of my ID page
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For example, maybe you want to use versions 1 and 2 for section 101
+and version 3 for section 102.
+In this case you might want to write "Section 101" on the front (ID)
+page of some papers and "Section 102" on others.
+This can be done by adding a ``id.version`` column to your custom "QV
+map" ``.csv`` file.
+
+.. danger::
+   Versioned ID-pages is a new feature, without much (any?) real-world
+   testing.  Use at your own risk.  If you've tested it, please get in
+   touch so we can remove this message following your act of bravery.
+
+.. tip::
+   The "IDBox" template must be in the exact same location on
+   different versions of your ID page.
+   If this is not so, the auto-ID reader may fail.
 
 
 
