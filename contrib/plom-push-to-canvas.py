@@ -71,7 +71,7 @@ from plom.canvas import (
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.4.0"
+__script_version__ = "0.5.0"
 
 
 def sis_id_to_student_dict(student_list):
@@ -205,6 +205,20 @@ parser.add_argument(
         Specify a Canvas Assignment ID (an integer M).
         Interactively prompt from a list if omitted.
     """,
+)
+parser.add_argument(
+    "--post-grades",
+    action="store_true",
+    default=True,
+    help="""
+        By default, we post grades for each student (as well as uploading
+        the reassembled papers (default: on).
+    """,
+)
+parser.add_argument(
+    "--no-post-grades",
+    dest="post_grades",
+    action="store_false",
 )
 parser.add_argument(
     "--solutions",
@@ -420,12 +434,13 @@ if __name__ == "__main__":
                 print(e)
                 timeouts.append((report_pdf.name, sis_id, name))
             time.sleep(random.uniform(0.1, 0.2))
-        try:
-            sub.edit(submission={"posted_grade": mark})
-        except CanvasException as e:
-            print(e)
-            timeouts.append((mark, sis_id, name))
-        time.sleep(random.uniform(0.1, 0.2))
+        if args.post_grades:
+            try:
+                sub.edit(submission={"posted_grade": mark})
+            except CanvasException as e:
+                print(e)
+                timeouts.append((mark, sis_id, name))
+            time.sleep(random.uniform(0.1, 0.2))
 
     print(
         dedent(
