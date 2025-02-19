@@ -286,7 +286,10 @@ def _version_map_from_csv(
         if not reader.fieldnames:
             raise ValueError("csv must have column names")
         if num_questions is None:
+            # in this case we have to autodetect...
             N = len(reader.fieldnames) - 1
+            if "id.version" in reader.fieldnames:
+                N -= 1
         else:
             N = num_questions
         for line, row in enumerate(reader):
