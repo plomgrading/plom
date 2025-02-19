@@ -1,6 +1,6 @@
 .. Plom documentation
    Copyright (C) 2020 Andrew Rechnitzer
-   Copyright (C) 2022-2024 Colin B. Macdonald
+   Copyright (C) 2022-2025 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
@@ -115,5 +115,5 @@ A student wrote a different paper than what was prenamed for them
 For example suppose Isla's name was prenamed on paper 0120 but they
 wrote blank paper 1280 instead.  Plom's "prenaming" is a "prediction"
 because of exactly this situation.  Simply ID 1280 as normal.
-(If 0120 was *also* scanned and is blank, and unsigned, then the  Identifier
-interface will you confirm).
+(If 0120 was *also* scanned and is blank, and unsigned, then the Identifier
+interface will have you confirm).
