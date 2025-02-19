@@ -81,20 +81,11 @@ Webpage return has not been used recently; it will probably move to
 `contrib/` scripts or otherwise be deprecated.
 
 
-Return via Canvas
-~~~~~~~~~~~~~~~~~
+Return via Canvas: instructor first steps
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. caution::
-
-    This feature is still being "beta" tested and is not yet
-    integrated into Plom.  Proceed with caution.
-
-Get the script called ``plom-push-to-canvas.py``.
-You might find it in a directory like ``/home/<user>/.local/share/plom/contrib``
-or you can get it from the Plom source code.
-Copy it to your working directory (where the ``reassembled/`` directory and
-``marks.csv`` are).
-Make the script executable, e.g., `chmod a+x plom-push-to-canvas.py`.
+Finish marking all papers.  Finish IDing all papers.  Reassembly all papers.
+If using solutions and/or reports, generate those as well.
 
 Make an "API key" for your Canvas account:
 
@@ -111,6 +102,36 @@ Make an "API key" for your Canvas account:
 Also in Canvas, create an Assignment "Midterm 1" (or whatever) in Canvas with the
 correct number of points.  **Publish the Assignment** but set to manual release.
 
+For the next steps you will also need some numbers corresponding to your
+Canvas Course and Assignment, which can be extracted from the URL::
+
+    https://canvas.example.com/courses/112233/assignments/1234123
+
+
+
+Return via Canvas: scripting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. tip::
+
+    This feature is still being "beta" tested and is not yet
+    integrated into Plom.  There is no UI; only a command-line
+    script.  Perhaps someone will do this part for you.  If
+    so, that person will need:
+
+      * A manager-level account on your Plom server, and
+	the address of your Plom server.
+      * Your Canvas API key from above.
+      * The Canvas Course and Assignment numbers,
+        112233 and 1234123 above.
+
+Get the script called ``plom-push-to-canvas.py``.
+You might find it in a directory like ``/home/<user>/.local/share/plom/contrib``
+or you can get it from the Plom source code.
+Copy it to your working directory (where the ``reassembled/`` directory and
+``marks.csv`` are).
+Make the script executable, e.g., `chmod a+x plom-push-to-canvas.py`.
+
 Run ``./plom-push-to-canvas.py --help`` for instructions.
 Use the ``--dry-run`` mode first!
 You almost certainly want ``--no-section`` unless you are doing something
@@ -124,6 +145,10 @@ An example invocation looks something like::
         --no-section \
         --no-solutions \
         2>&1 | tee push.log
+
+
+Return via Canvas: instructor final steps
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Go back to Canvas and examine a few papers: double check the scores.
 Double check some of the PDF files.  Unfortunately, you'll probably hit
