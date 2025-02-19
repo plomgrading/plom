@@ -50,7 +50,26 @@
                         {% endif %}
                     {% endif %}
                 </div>
-                {% if chore_in_progress %}
+                {% if chore_status == "Error" %}
+                    <div class="alert alert-danger pb-0">
+                        <p>
+                            Background chore: {{ chore_status }}
+                            &nbsp;&mdash;&nbsp;
+                            {{ chore_message }}
+                        </p>
+                    </div>
+                {% elif chore_status == "Complete" %}
+                    <div class="alert alert-success pb-0">
+                        <p>
+                            Background chore: {{ chore_status }}
+                            &nbsp;&mdash;&nbsp;
+                            {{ chore_message }}
+                        </p>
+                    </div>
+                {% endif %}
+                <!-- all other statuses should be encapsulated by the *_in_progress -->
+                <!-- This if True made for a shorter diff, maybe its a bit silly -->
+                {% if True %}
                     {% if populate_in_progress %}
                         <div class="alert alert-info">
                             <p>
@@ -67,8 +86,7 @@
                                 </button>
                             </p>
                         </div>
-                    {% endif %}
-                    {% if evacuate_in_progress %}
+                    {% elif evacuate_in_progress %}
                         <div class="alert alert-warning">
                             <p>
                                 {% if chore_message %}
@@ -84,9 +102,7 @@
                                 </button>
                             </p>
                         </div>
-                    {% endif %}
-                {% else %}
-                    {% if pqv_mapping_present %}
+                    {% elif pqv_mapping_present %}
                         <div class="alert alert-primary">
                             <span>Question-version mapping present with {{ pqv_number_rows }} papers:</span>
                             <a href="{% url 'prep_qvmapping_download' %}" class="btn btn-info">download</a>

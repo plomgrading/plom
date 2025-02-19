@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
 from django.core.management.base import BaseCommand, CommandError
@@ -49,7 +49,7 @@ class Command(BaseCommand):
             prename_status = PrenameSettingService().get_prenaming_setting()
             self.stdout.write(f"Prenaming enabled: {prename_status}")
 
-            papers_status = PaperInfoService().is_paper_database_populated()
+            papers_status = PaperInfoService.is_paper_database_populated()
             self.stdout.write(f"Paper QV map saved to database: {papers_status}")
 
             prep_setting = PapersPrinted.have_papers_been_printed()

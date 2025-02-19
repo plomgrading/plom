@@ -3,8 +3,6 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2025 Colin B. Macdonald
 
-from __future__ import annotations
-
 import tempfile
 from io import BytesIO
 from pathlib import Path
@@ -42,7 +40,7 @@ class PQVMappingUploadView(ManagerRequiredView):
             return redirect("prep_qvmapping")
 
         # if database is populated then redirect
-        if PaperInfoService().is_paper_database_populated():
+        if PaperInfoService.is_paper_database_populated():
             return redirect("prep_qvmapping")
 
         prenamed_papers = list(StagingStudentService().get_prenamed_papers().keys())
@@ -131,13 +129,13 @@ class PQVMappingView(ManagerRequiredView):
             "question_labels_html_fix": labels_fix,
             "question_labels_html_shuffle": labels_shf,
             "prenaming": PrenameSettingService().get_prenaming_setting(),
-            "pqv_mapping_present": PaperInfoService().is_paper_database_fully_populated(),
+            "pqv_mapping_present": PaperInfoService.is_paper_database_fully_populated(),
             "number_of_students": num_students,
             "number_plus_twenty": num_students + 20,
             "number_times_1dot1": (num_students * 11) // 10,
             "student_list_present": StagingStudentService().are_there_students(),
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
-            "chore_in_progress": PaperCreatorService.is_chore_in_progress(),
+            "chore_status": PaperCreatorService.get_chore_status(),
             "chore_message": PaperCreatorService.get_chore_message(),
             "populate_in_progress": PaperCreatorService.is_populate_in_progress(),
             "evacuate_in_progress": PaperCreatorService.is_evacuate_in_progress(),

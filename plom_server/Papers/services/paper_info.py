@@ -11,9 +11,9 @@ from ..models import (
     Paper,
     FixedPage,
     QuestionPage,
-    PopulateEvacuateDBChore,
     NumberOfPapersToProduceSetting,
 )
+from .paper_creator import PaperCreatorService
 
 log = logging.getLogger("PaperInfoService")
 
@@ -24,39 +24,37 @@ class PaperInfoService:
         """How many papers have been created in the database."""
         return Paper.objects.count()
 
-    def is_paper_database_being_updated_in_background(self):
-        """Returns true when the paper-db is being updated via background tasks.
+    @staticmethod
+    def is_paper_database_being_updated_in_background() -> bool:
+        """Returns true when the paper-db is being updated via background tasks."""
+        return PaperCreatorService.is_background_chore_in_progress()
 
-        Note that this function is the same as PaperCreatorService.is_chore_in_progress
-        """
-        return PopulateEvacuateDBChore.objects.filter(obsolete=False).exists()
-
-    def is_paper_database_partially_populated(self):
-        """Returns true when at least one paper exists in the DB."""
-        return Paper.objects.filter().exists()
-
-    def is_paper_database_fully_populated(self):
+    @staticmethod
+    def is_paper_database_fully_populated() -> bool:
         """Returns true when number of papers in the database equals the number to produce."""
         nop = NumberOfPapersToProduceSetting.load().number_of_papers
         db_count = Paper.objects.count()
-        if db_count > 0 and db_count == nop:
-            return True
-        else:
-            return False
+        return db_count > 0 and db_count == nop
 
-    def is_paper_database_partially_but_not_fully_populated(self):
-        """Returns true when number of papers in the database is positive but strictly less than the number to produce."""
+    @staticmethod
+    def is_paper_database_partially_but_not_fully_populated() -> bool:
+        """Returns true when number of papers in the database is positive but strictly less than the number to produce.
+
+        TODO: currently I think this is unused.
+        """
         nop = NumberOfPapersToProduceSetting.load().number_of_papers
         db_count = Paper.objects.count()
         return db_count > 0 and db_count < nop
 
-    @transaction.atomic
-    def is_paper_database_populated(self):
+    @staticmethod
+    def is_paper_database_populated() -> bool:
         """True if any papers have been created in the DB.
 
         The database is initially created with empty tables.  Users get added.
         This function still returns False.  Eventually Tests (i.e., "papers")
         get created.  Then this function returns True.
+
+        See also :method:`is_paper_database_fully_populated`.
         """
         return Paper.objects.filter().exists()
 

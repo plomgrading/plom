@@ -27,7 +27,7 @@ from plom.plom_exceptions import PlomDependencyConflict
 
 
 def _task_context_and_status() -> tuple[dict[str, Any], int]:
-    db_initialised = PaperInfoService().is_paper_database_populated()
+    db_initialised = PaperInfoService.is_paper_database_populated()
     bps = BuildPapersService()
     n_complete = bps.get_n_complete_tasks()
     n_papers = bps.get_n_papers()
