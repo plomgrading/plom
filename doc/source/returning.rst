@@ -120,10 +120,12 @@ Return via Canvas: scripting
     so, that person will need:
 
       * A manager-level account on your Plom server, and
-	the address of your Plom server.
+        the address of your Plom server.
       * Your Canvas API key from above.
       * The Canvas Course and Assignment numbers,
         112233 and 1234123 above.
+      * Whether you are returning solutions (and/or reports)
+        in addition to the papers and grades.
 
 Get the script called ``plom-push-to-canvas.py``.
 You might find it in a directory like ``/home/<user>/.local/share/plom/contrib``
