@@ -63,8 +63,6 @@
                     </div>
                 {% endif %}
                 <!-- all other statuses should be encapsulated by the *_in_progress -->
-                <!-- This if True made for a shorter diff, maybe its a bit silly -->
-                {% if True %}
                     {% if populate_in_progress %}
                         <div class="alert alert-info">
                             <p>
@@ -305,7 +303,6 @@
                             </div>
                         </div>
                     </div>
-                {% endif %}
             {% endif %}
     </div>
     {% if populate_in_progress or evacuate_in_progress %}
