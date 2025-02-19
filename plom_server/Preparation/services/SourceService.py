@@ -88,16 +88,16 @@ def delete_source_pdf(source_version: int) -> None:
             return
 
 
-@transaction.atomic()
 def delete_all_source_pdfs() -> None:
-    """Delete all versions of the source PDF files."""
-    # raises a PlomDependencyException if cannot modify
+    """Delete all versions of the source PDF files.
+
+    Raises:
+        PlomDependencyException: sources cannot be modified.
+    """
     assert_can_modify_sources()
 
-    # delete the DB entry and the file
     for pdf_obj in PaperSourcePDF.objects.all():
-        Path(pdf_obj.source_pdf.path).unlink()
-        pdf_obj.delete()
+        delete_source_pdf(pdf_obj.version)
 
 
 @transaction.atomic()
