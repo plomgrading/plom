@@ -76,6 +76,7 @@ def delete_source_pdf(source_version: int) -> None:
         # b/c the atomic operation can undo the DB operation but not the
         # file unlinking!
         # TODO: Colin thinks this important juggling should be in the model
+        # TODO: see for example Paper/models/reference_image.py
         try:
             pdf_obj = PaperSourcePDF.objects.filter(version=source_version).get()
             path = Path(pdf_obj.source_pdf.path)
