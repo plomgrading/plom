@@ -56,8 +56,8 @@ class RectangleExtractor:
     scanned image based on locations chosen from the reference image.
 
     If you construct a RectangleExtractor for version 1 and use it on
-    version 2, you are playing with fire a bit (b/c maybe Version 1 is
-    on A4 Paper but Version 2 is on Letter Paper).  More likely, perhaps
+    version 2, you are playing with fire a bit (b/c maybe version 1 is
+    on A4 paper but version 2 is on Letter paper).  More likely, perhaps
     the boxes you're looking to get are not in *precisely* the same place.
     In practice, you're welcome to try anyway..., for example in the case
     of versioned-ID pages, we construct this object for Version 1 but
@@ -213,9 +213,14 @@ class RectangleExtractor:
                 to a version provided at time of construction.  If you like
                 living somewhat dangerously (and/or have knowledge that your
                 version layouts are identical), then you can bypass this...
+                TODO: note underscore: used for internal hackery, may not last.
 
         Returns:
             The bytes of the image in png format, or none if errors.
+
+        Raises:
+            ObjectDoesNotExist: if that paper number does not have our page
+                and our version.
         """
         # start by getting the scanned image
         paper_obj = Paper.objects.get(paper_number=paper_number)
