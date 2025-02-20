@@ -55,9 +55,11 @@
                         <tr>
                             <td>
                                 <!-- TODO: this should link to a profile page, then that links to marking progress -->
-                                <a href="{% url 'progress_marking_task_filter' %}?username={{ user.username }}">{{ user.username }}</a>
-                                {% if user in lead_markers %}<i class="bi bi-bookmark-star text-primary"></i>{% endif %}
-                                <br />
+                                <div>
+                                    <a href="{% url 'progress_marking_task_filter' %}?username={{ user.username }}"
+                                       class>{{ user.username }}</a>
+                                    {% if user in lead_markers %}<i class="bi bi-bookmark-star text-primary"></i>{% endif %}
+                                </div>
                                 <a href="{% url 'reset_user_password' user.username %}"
                                    class=" link-underline link-underline-opacity-0"
                                    style="font-size: 80%">change password</a>
@@ -75,11 +77,11 @@
                             <td>{{ user.last_login|naturaltime }}</td>
                             <td>
                                 {% if user in lead_markers %}
-                                    <a class="btn btn-success"
-                                       href="{% url 'toggleLeadMarker' user.username %}">demote</a>
+                                    <button hx-post="{% url 'toggleLeadMarker' user.username %}"
+                                            class="btn btn-success">demote</button>
                                 {% else %}
-                                    <a class="btn btn-secondary"
-                                       href="{% url 'toggleLeadMarker' user.username %}">promote</a>
+                                    <button hx-post="{% url 'toggleLeadMarker' user.username %}"
+                                            class="btn btn-secondary">promote</button>
                                 {% endif %}
                             </td>
                             <td>
@@ -143,8 +145,7 @@
                     {% for user in scanners %}
                         <tr>
                             <td>
-                                {{ user.username }}
-                                <br />
+                                <div>{{ user.username }}</div>
                                 <a href="{% url 'reset_user_password' user.username %}"
                                    class=" link-underline link-underline-opacity-0"
                                    style="font-size: 80%">change password</a>
