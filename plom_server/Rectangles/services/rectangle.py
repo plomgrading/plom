@@ -3,8 +3,6 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Andrew Rechnitzer
 
-from __future__ import annotations
-
 from io import BytesIO
 from pathlib import Path
 from typing import Any
@@ -279,7 +277,7 @@ class RectangleExtractor:
         top_f: float,
         right_f: float,
         bottom_f: float,
-    ):
+    ) -> None:
         """Construct a zipfile of the extracted rectangular regions and save in dest_filename.
 
         Warning: This constructs the pngs for each extracted region in
@@ -316,15 +314,18 @@ class RectangleExtractor:
             encoded as {'left_f':blah, 'top_f':blah} etc or `None` if an error occurred. The coordinates
             are relative to positions of the qr-codes, and so values in the interval [0,1] (plus
             some overhang for the margins).
+
+        Raises:
+            ValueError: missing or incomplete reference images.
         """
         try:
             rimg_obj = ReferenceImage.objects.get(
                 version=self.version, page_number=self.page_number
             )
-        except ReferenceImage.DoesNotExist:
+        except ReferenceImage.DoesNotExist as e:
             raise ValueError(
                 f"There is no reference image for v{self.version} pg{self.page_number}."
-            )
+            ) from e
         # ref-image into cv image: cannot just use imread b/c of DB abstraction
         img_bytes = rimg_obj.image_file.read()
         raw_bytes_as_1d_array: Any = np.frombuffer(img_bytes, np.uint8)
@@ -372,29 +373,28 @@ class RectangleExtractor:
             if len(third_order_moment) == 4:
                 box_contour = third_order_moment
                 break
-        if box_contour is not None:
-            corners_as_array = box_contour.reshape(4, 2)
-            # the box contour will be 4 points - take min/max of x and y to get the corners.
-            # this is in image pixels
-            left = min([X[0] for X in corners_as_array]) + img_left
-            right = max([X[0] for X in corners_as_array]) + img_left
-            top = min([X[1] for X in corners_as_array]) + img_top
-            bottom = max([X[1] for X in corners_as_array]) + img_top
-            # make sure the box is not too small
-            if (right - left) < 16 or (bottom - top) < 16:
-                return None
+        if box_contour is None:
+            return None
+        corners_as_array = box_contour.reshape(4, 2)
+        # the box contour will be 4 points - take min/max of x and y to get the corners.
+        # this is in image pixels
+        left = min([X[0] for X in corners_as_array]) + img_left
+        right = max([X[0] for X in corners_as_array]) + img_left
+        top = min([X[1] for X in corners_as_array]) + img_top
+        bottom = max([X[1] for X in corners_as_array]) + img_top
+        # make sure the box is not too small
+        if (right - left) < 16 or (bottom - top) < 16:
+            return None
 
-            # convert to [0,1] ranges relative to qr code positions
-            left_f = (left - self.LEFT) / self.WIDTH
-            right_f = (right - self.LEFT) / self.WIDTH
-            top_f = (top - self.TOP) / self.HEIGHT
-            bottom_f = (bottom - self.TOP) / self.HEIGHT
+        # convert to [0,1] ranges relative to qr code positions
+        left_f = (left - self.LEFT) / self.WIDTH
+        right_f = (right - self.LEFT) / self.WIDTH
+        top_f = (top - self.TOP) / self.HEIGHT
+        bottom_f = (bottom - self.TOP) / self.HEIGHT
 
-            return {
-                "left_f": left_f,
-                "top_f": top_f,
-                "right_f": right_f,
-                "bottom_f": bottom_f,
-            }
-
-        return None
+        return {
+            "left_f": left_f,
+            "top_f": top_f,
+            "right_f": right_f,
+            "bottom_f": bottom_f,
+        }
