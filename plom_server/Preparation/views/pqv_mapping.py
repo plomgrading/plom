@@ -119,8 +119,11 @@ class PQVMappingDeleteView(ManagerRequiredView):
 
 class PQVMappingView(ManagerRequiredView):
     def build_context(self) -> dict[str, Any]:
+        """Retrieve various information related to papers in DB."""
         if not SpecificationService.is_there_a_spec():
-            return {"no_spec": True}
+            raise PlomDependencyConflict(
+                "DB papers cannot be created before the assessment specification."
+            )
 
         triples = SpecificationService.get_question_html_label_triples()
         question_indices = [t[0] for t in triples]
@@ -181,10 +184,17 @@ class PQVMappingView(ManagerRequiredView):
         return context
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        context = self.build_context()
+        """Render page for paper DB and qvmap management."""
+        try:
+            context = self.build_context()
+        except PlomDependencyConflict as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
+            return redirect(reverse("prep_conflict"))
+
         return render(request, "Preparation/pqv_mapping_manage.html", context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        """Populate DB with papers."""
         ntp = request.POST.get("number_to_produce", None)
         first = request.POST.get("first_paper_num", None)
         if not ntp:

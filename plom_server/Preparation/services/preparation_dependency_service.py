@@ -145,6 +145,7 @@ def assert_can_modify_prenaming_config():
         raise PlomDependencyConflict("There is no specification.")
 
 
+# 4 - qvmap depends on the spec, build papers depends on the qvmap
 def assert_can_modify_qv_mapping_database():
     from . import PapersPrinted, PrenameSettingService, StagingStudentService
     from Papers.services import SpecificationService
