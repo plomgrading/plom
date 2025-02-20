@@ -191,7 +191,8 @@ class RectangleExtractor:
         """Given an image, get a particular sub-rectangle, after applying an affine transformation to correct it.
 
         Args:
-            paper_number (int): the number of the paper from which to extract the rectangle of the given version, page
+            paper_number: the number of the paper from which to extract
+                the rectangle of the given version, page.
             top_f (float): fractional value in roughly in ``[0, 1]``
                 which define the top boundary of the desired subsection of
                 the image.  Measured relative to the centres of the QR codes.
@@ -200,7 +201,7 @@ class RectangleExtractor:
             right_f (float): same as top, defining the right boundary.
 
         Returns:
-            the bytes of the image in png format, or none if errors
+            The bytes of the image in png format, or none if errors.
         """
         # start by getting the scanned image
         paper_obj = Paper.objects.get(paper_number=paper_number)
