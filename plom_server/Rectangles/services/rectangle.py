@@ -56,9 +56,17 @@ class RectangleExtractor:
     stores information and cached calculations about a coordinate system
     in the QR-code locations, enabling information to be looked up in a
     scanned image based on locations chosen from the reference image.
+
+    If you construct a RectangleExtractor for version 1 and use it on
+    version 2, you are playing with fire a bit (b/c maybe Version 1 is
+    on A4 Paper but Version 2 is on Letter Paper).  More likely, perhaps
+    the boxes you're looking to get are not in *precisely* the same place.
+    In practice, you're welcome to try anyway..., for example in the case
+    of versioned-ID pages, we construct this object for Version 1 but
+    use it on others.
     """
 
-    def __init__(self, version: int, page: int):
+    def __init__(self, version: int, page: int) -> None:
         self.page_number = page
         self.version = version
         try:
@@ -187,6 +195,8 @@ class RectangleExtractor:
         top_f: float,
         right_f: float,
         bottom_f: float,
+        *,
+        _version_ignore: bool = False,
     ) -> None | bytes:
         """Given an image, get a particular sub-rectangle, after applying an affine transformation to correct it.
 
@@ -200,14 +210,26 @@ class RectangleExtractor:
             bottom_f (float): same as top, defining the bottom boundary.
             right_f (float): same as top, defining the right boundary.
 
+        Keyword Args:
+            _version_override: RectangleExtractor is designed to be specific
+                to a version provided at time of construction.  If you like
+                living somewhat dangerously (and/or have knowledge that your
+                version layouts are identical), then you can bypass this...
+
         Returns:
             The bytes of the image in png format, or none if errors.
         """
         # start by getting the scanned image
         paper_obj = Paper.objects.get(paper_number=paper_number)
-        img_obj = FixedPage.objects.get(
-            version=self.version, page_number=self.page_number, paper=paper_obj
-        ).image
+        if _version_ignore:
+            print("recklessly ignoring the version...")
+            img_obj = FixedPage.objects.get(
+                page_number=self.page_number, paper=paper_obj
+            ).image
+        else:
+            img_obj = FixedPage.objects.get(
+                version=self.version, page_number=self.page_number, paper=paper_obj
+            ).image
 
         # rectangle to extract in ref-image-coords
         top = round(self.TOP + top_f * self.HEIGHT)

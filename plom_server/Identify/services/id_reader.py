@@ -384,7 +384,7 @@ class IDBoxProcessorService:
         img_file_dict = {}
         for pn in paper_numbers:
             id_box_filename = id_box_folder / f"id_box_{pn:04}.png"
-            id_box_bytes = rex.extract_rect_region(pn, *box)
+            id_box_bytes = rex.extract_rect_region(pn, *box, _version_ignore=True)
             if id_box_bytes is None:
                 # just leave them out when rex cannot compute appropriate transforms
                 continue
