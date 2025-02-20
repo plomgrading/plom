@@ -119,7 +119,7 @@ class PQVMappingDeleteView(ManagerRequiredView):
 
 class PQVMappingView(ManagerRequiredView):
     def build_context(self) -> dict[str, Any]:
-        """Retreive various information related to papers in DB."""
+        """Retrieve various information related to papers in DB."""
         if not SpecificationService.is_there_a_spec():
             raise PlomDependencyConflict(
                 "DB papers cannot be created before the assessment specification."
