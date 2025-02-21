@@ -45,4 +45,19 @@
             </div>
         </div>
     </div>
+    <div class="card m-2">
+        <div class="card-body">
+            <h4 class="card-title">Debugging</h4>
+            <div class="card-text">
+                <p>
+                    <button class="btn btn-warning" hx-get="{% url 'htmx_explode' %}">Raise exception with htmx-get</button>
+                    &nbsp;
+                    (1/3 of the time, this button fail with a 404
+                    error, 1/3 of the time with a 500 error (div by
+                    zero), and 1/3 it will succeed and change the
+                    button text to "button pushed")
+                </p>
+            </div>
+        </div>
+    </div>
 {% endblock main_content %}
