@@ -21,6 +21,8 @@ from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationErr
 
 
 class TroublesAfootGenericErrorView(View):
+    """View class for some kludgey error handling, hopefully not used much."""
+
     def get(self, request: HttpRequest, *, hint: str) -> HttpResponse:
         """Render an unexpected or semi-expected "error page" using kludges.
 
