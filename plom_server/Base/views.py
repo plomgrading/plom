@@ -3,6 +3,9 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
 
+from huey import __version__ as huey_version
+from django import __version__ as django_version
+from pymupdf import __version__ as pymupdf_version
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
@@ -65,6 +68,10 @@ class ServerStatusView(ManagerRequiredView):
 
         context.update(
             {
+                "django_version": django_version,
+                "huey_version": huey_version,
+                "pymupdf_version": pymupdf_version,
+                "zxingcpp_version": importlib.metadata.version("zxing-cpp"),
                 "queue_length": len(queue),
             }
         )
