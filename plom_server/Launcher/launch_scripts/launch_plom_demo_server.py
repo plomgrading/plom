@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
-
-from __future__ import annotations
 
 import argparse
 import csv
 import os
-from pathlib import Path
-from shlex import split
 import subprocess
 import time
+from pathlib import Path
+from shlex import split
 from tempfile import TemporaryDirectory
 
 # we specify this directory relative to the plom_server
@@ -246,7 +244,7 @@ def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
     print("Launching Gunicorn web-server.")
     # TODO - put in an 'are we in production' check.
     num_workers = int(os.environ.get("WEB_CONCURRENCY", 2))
-    cmd = f"gunicorn Web_Plom.wsgi --workers {num_workers}"
+    cmd = f"gunicorn wsgi --workers {num_workers}"
 
     # TODO: temporary increase to 60s by default, Issue #3676
     timeout = os.environ.get("PLOM_GUNICORN_TIMEOUT", 180)

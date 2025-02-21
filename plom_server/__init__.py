@@ -14,12 +14,9 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 # Also hardcoded in AppImageBuilder.yml and deprecated in plom/version.py
-__version__ = "0.17.0.dev0"
-
-# import Web_Plom
+__version__ = "0.17.3.dev0"
 
 __all__ = [
-    "Web_Plom",
     "Preparation",
     "BuildPaperPDF",
     "Papers",

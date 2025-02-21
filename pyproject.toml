@@ -180,7 +180,6 @@ packages = [
     "plom_server.templates",
     "plom_server.UserManagement",
     "plom_server.Visualization",
-    "plom_server.Web_Plom",
 ]
 # TODO: fixtures?  huey?  media?
 

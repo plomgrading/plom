@@ -2,16 +2,14 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
-
-from __future__ import annotations
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 import argparse
 import os
-from pathlib import Path
-from shlex import split
 import subprocess
 import time
+from pathlib import Path
+from shlex import split
 
 
 def run_django_manage_command(cmd: str) -> None:
@@ -114,7 +112,7 @@ def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
     print("Launching Gunicorn web-server.")
     # TODO - put in an 'are we in production' check.
     num_workers = int(os.environ.get("WEB_CONCURRENCY", 2))
-    cmd = f"gunicorn Web_Plom.wsgi --workers {num_workers}"
+    cmd = f"gunicorn wsgi --workers {num_workers}"
 
     # TODO: temporary increase to 60s by default, Issue #3676
     timeout = os.environ.get("PLOM_GUNICORN_TIMEOUT", 180)
