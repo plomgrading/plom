@@ -26,10 +26,11 @@ BASE_DIR = Path(__file__).resolve().parent
 # working directory.  In many cases, other variables can override this
 # choice (e.g., PLOM_MEDIA_ROOT) but this allows single place for all
 # non-database "state"
-PLOM_BASE_DIR = os.environ.get("PLOM_BASE_DIR")
-if not PLOM_BASE_DIR:
+_ = os.environ.get("PLOM_BASE_DIR")
+if not _:
     PLOM_BASE_DIR = Path(".")
-PLOM_BASE_DIR = Path(PLOM_BASE_DIR)
+else:
+    PLOM_BASE_DIR = Path(_)
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -256,10 +257,11 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 # Media and user-uploaded files
 # If you specify your own it should be fully qualified
-MEDIA_ROOT = os.environ.get("PLOM_MEDIA_ROOT")
-if not MEDIA_ROOT:
+_ = os.environ.get("PLOM_MEDIA_ROOT")
+if not _:
     MEDIA_ROOT = PLOM_BASE_DIR / "media"
-MEDIA_ROOT = Path(MEDIA_ROOT)
+else:
+    MEDIA_ROOT = Path(_)
 
 
 # Django Huey configuration
