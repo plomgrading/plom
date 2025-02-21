@@ -3,6 +3,8 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
 
+import importlib
+
 from huey import __version__ as huey_version
 from django import __version__ as django_version
 from pymupdf import __version__ as pymupdf_version
