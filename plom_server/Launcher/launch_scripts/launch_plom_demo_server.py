@@ -733,7 +733,8 @@ if __name__ == "__main__":
         print("You must supply a port for the production server.")
 
     # make sure we are in the correct directory to run things.
-    confirm_run_from_correct_directory()
+    # TODO: disabled?
+    # confirm_run_from_correct_directory()
 
     # clean out old db and misc files, then rebuild blank db
     run_django_manage_command("plom_clean_all_and_build_db")

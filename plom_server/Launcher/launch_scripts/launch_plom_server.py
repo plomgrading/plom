@@ -165,7 +165,9 @@ if __name__ == "__main__":
         print("You must supply a port for the production server.")
 
     # make sure we are in the correct directory to run things.
-    confirm_run_from_correct_directory()
+    # TODO: disabled?
+    # confirm_run_from_correct_directory()
+
     # clean up and rebuild things before launching.
     if args.hot_start:
         print("Attempting a hot-start of the server and Huey.")
