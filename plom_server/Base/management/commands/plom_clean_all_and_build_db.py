@@ -28,6 +28,7 @@ class Command(BaseCommand):
     def remove_old_migration_files(self):
         """Remove old db migration files from the source tree."""
         print("Avoid perplexing errors by removing autogen migration droppings")
+        print("TODO: questionable local file access!")
         for path in Path(".").glob("*/migrations/*.py"):
             if path.name == "__init__.py":
                 continue
@@ -50,8 +51,9 @@ class Command(BaseCommand):
 
         self.stdout.write("Rebuilding database and migrations.")
         database_service.create_database()
+        self.stdout.write("Database build was run.")
         call_command("makemigrations")
         call_command("migrate")
-        self.stdout.write("Database build and migrations have been run.")
+        self.stdout.write("migrations have been run.")
         self.stdout.write("Note: neither server nor huey are running yet.")
         self.stdout.write("Note: no groups or users have been created yet.")
