@@ -103,7 +103,6 @@ class UserPage(ManagerRequiredView):
     @login_required
     def toggleLeadMarker(self, username):
         PermissionChanger.toggle_lead_marker_group_membership(username)
-        # return redirect("/users")
         return HttpResponseClientRefresh()
 
 
