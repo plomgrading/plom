@@ -492,6 +492,30 @@ webplom_demo:
     - popd
 
 
+# ensure we can run the code some other than inside itself!
+out-of-tree:
+  stage: test
+  needs: ["container-image"]
+  image: $IM
+  script:
+    # important: we must have the migration 00001 files in place
+    - pwd
+    - ls
+    - pushd plom_server
+    - python3 manage.py makemigrations
+    - popd
+    - pip install .
+    - pwd
+    - cd ${HOME}
+    - mkdir somewhere
+    - pushd somewhere
+    - DJANGO_SETTINGS_MODULE=plom_server.settings
+    - django-admin -h
+    - django-admin test plom_server
+    - popd
+  allow_failure: true
+
+
 # a legacy-only job
 demoserver:
   stage: test
