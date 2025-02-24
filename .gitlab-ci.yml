@@ -502,7 +502,8 @@ out-of-tree:
     - cd ${HOME}
     - mkdir somewhere
     - pushd somewhere
-    - DJANGO_SETTINGS_MODULE=plom_server.settings
+    - export DJANGO_SETTINGS_MODULE=plom_server.settings
+    - django-admin --version
     - django-admin -h
     - django-admin test plom_server
     - popd
@@ -559,7 +560,9 @@ out-of-tree-scratch:
     - cd ${HOME}
     - mkdir somewhere
     - pushd somewhere
+    - python3 -c "import plom_server; print(plom_server.__version__); print(plom_server.__path__))"
     - export DJANGO_SETTINGS_MODULE=plom_server.settings
+    - django-admin --version
     - django-admin -h
     - django-admin test plom_server
     - popd
