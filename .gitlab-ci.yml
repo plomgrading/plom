@@ -447,7 +447,7 @@ no-question-numbers:
   allow_failure: true
 
 
-# TODO: why do we need to run makemigrations/migrate before tests?
+# TODO: why do we need to run makemigrations/migrate before tests? (Issue #3826)
 webplom_test:
   stage: test
   needs: ["container-image"]
@@ -498,7 +498,53 @@ out-of-tree:
   needs: ["container-image"]
   image: $IM
   script:
-    # important: we must have the migration 00001 files in place
+    - cd ${HOME}
+    - mkdir somewhere
+    - pushd somewhere
+    - DJANGO_SETTINGS_MODULE=plom_server.settings
+    - django-admin -h
+    - django-admin test plom_server
+    - popd
+  allow_failure: true
+
+
+# ensure we can run the code some other than inside itself!
+out-of-tree-scratch:
+  services:
+    - postgres
+  variables:
+    POSTGRES_DB: "plom_db"
+    POSTGRES_USER: "postgres"
+    POSTGRES_PASSWORD: "postgres"
+    POSTGRES_HOST_AUTH_METHOD: trust
+    PLOM_DATABASE_HOSTNAME: "postgres"
+  stage: alt_build
+  needs: []
+  image: fedora:42
+  # when: manual
+  before_script:
+    - dnf install -y ImageMagick gcc gcc-c++ cmake
+          latexmk tex-dvipng texlive-scheme-basic
+          tex-preview tex-charter tex-exam tex-preprint
+          python3-passlib python3-pyqt6
+          python3-jsmin python3-defusedxml python3-yaml
+          python3-urllib3 python3-more-itertools
+          python3-seaborn python3-pandas python3-requests-toolbelt
+          python3-pip python3-wheel python3-setuptools
+          python3-tomlkit python3-pillow python3-tqdm
+          python3-appdirs python3-arrow
+          python3-aiohttp python3-peewee python3-cryptography
+          python3-zxing-cpp
+          python3-pytest
+          python3-PyMuPDF python3-scikit-learn python3-PyMySQL
+          file python3-file-magic
+          iproute
+          python3-django
+    - pip --version
+  script:
+    # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
+    - pip install -U pytest
+    # important: we must have the migration 00001 files in place (Issue #3826)
     - pwd
     - ls
     - pushd plom_server
