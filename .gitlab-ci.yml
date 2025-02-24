@@ -538,9 +538,9 @@ out-of-tree-scratch:
           python3-zxing-cpp
           python3-pytest
           python3-PyMuPDF python3-scikit-learn python3-PyMySQL
+          python3-weasyprint python3-whitenoise python3-django
           file python3-file-magic
           iproute
-          python3-django
     - pip --version
   script:
     # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
@@ -908,9 +908,9 @@ fedora_webplom:
           python3-zxing-cpp
           python3-pytest
           python3-PyMuPDF python3-scikit-learn python3-PyMySQL
+          python3-weasyprint python3-whitenoise python3-django
           file python3-file-magic
           iproute
-          python3-django
     - pip --version
   script:
     # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
