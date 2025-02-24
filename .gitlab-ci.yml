@@ -559,7 +559,7 @@ out-of-tree-scratch:
     - cd ${HOME}
     - mkdir somewhere
     - pushd somewhere
-    - DJANGO_SETTINGS_MODULE=plom_server.settings
+    - export DJANGO_SETTINGS_MODULE=plom_server.settings
     - django-admin -h
     - django-admin test plom_server
     - popd
