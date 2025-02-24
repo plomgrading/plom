@@ -209,6 +209,7 @@ push-to-docker-io:
 
 # to ensure the pypi job works, make sure we can package
 # TODO: we make these again during pypi push: better to use these artifacts?
+# TODO: Do we need to makemigrations here? (Issue #3826)
 make_package:
   image: python:3.12
   stage: build
@@ -547,9 +548,12 @@ out-of-tree-scratch:
     # important: we must have the migration 00001 files in place (Issue #3826)
     - pwd
     - ls
+    # install twice, first for dependencies
+    - pip install .
     - pushd plom_server
     - python3 manage.py makemigrations
     - popd
+    # now that we have migration files, install again
     - pip install .
     - pwd
     - cd ${HOME}
