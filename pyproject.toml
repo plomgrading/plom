@@ -158,6 +158,7 @@ packages = [
     "plom_server.Base.management.commands",
     "plom_server.BuildPaperPDF",
     "plom_server.BuildPaperPDF.services",
+    "plom_server.Contrib",
     "plom_server.Demo",
     "plom_server.Demo.services",
     "plom_server.Finish",
