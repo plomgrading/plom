@@ -548,12 +548,9 @@ out-of-tree-scratch:
     # important: we must have the migration 00001 files in place (Issue #3826)
     - pwd
     - ls
-    # install twice, first for dependencies
-    - pip install .
     - pushd plom_server
-    - python3 manage.py makemigrations
+    - PYTHONPATH=".." python3 manage.py makemigrations
     - popd
-    # now that we have migration files, install again
     - pip install .
     - pwd
     - cd ${HOME}
