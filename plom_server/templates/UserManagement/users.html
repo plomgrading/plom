@@ -81,24 +81,14 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% if user.has_usable_password %}
-                                    {% if user.is_active %}
-                                        <div class="form-check form-switch"
-                                             hx-post="{% url 'modify_user' user.username %}">
-                                            <input class="form-check-input" type="checkbox" role="switch" checked />
-                                        </div>
-                                    {% else %}
-                                        <div class="form-check form-switch"
-                                             hx-post="{% url 'modify_user' user.username %}">
-                                            <input class="form-check-input" type="checkbox" role="switch" />
-                                        </div>
-                                    {% endif %}
-                                {% else %}
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" role="switch" disabled />
-                                    </div>
-                                    (no password set)
-                                {% endif %}
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           role="switch"
+                                           {% if user.is_active %}checked{% endif %}
+                                           hx-post="{% url 'modify_user' user.username %}" />
+                                </div>
+                                {% if not user.has_usable_password %}(no password set){% endif %}
                             </td>
                             <td>
                                 {% csrf_token %}
