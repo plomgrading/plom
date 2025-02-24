@@ -194,6 +194,8 @@ packages = [
     "plom_server.static",
     "plom_server.Tags",
     "plom_server.Tags.services",
+    "plom_server.TaskOrder",
+    "plom_server.TaskOrder.services",
     "plom_server.templates",
     "plom_server.UserManagement",
     "plom_server.UserManagement.services",
