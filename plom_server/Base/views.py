@@ -62,7 +62,6 @@ class ServerStatusView(ManagerRequiredView):
             An HTTP response object.
         """
         # importing at the top seems wasteful
-        from huey import __version__ as huey_version
         from django import __version__ as django_version
         from pymupdf import __version__ as pymupdf_version
 
@@ -73,7 +72,7 @@ class ServerStatusView(ManagerRequiredView):
         context.update(
             {
                 "django_version": django_version,
-                "huey_version": huey_version,
+                "huey_version": importlib.metadata.version("huey"),
                 "pymupdf_version": pymupdf_version,
                 "zxingcpp_version": importlib.metadata.version("zxing-cpp"),
                 "queue_length": len(queue),
