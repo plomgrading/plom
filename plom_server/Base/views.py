@@ -3,7 +3,7 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
 
-import importlib
+import importlib.metadata
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse
