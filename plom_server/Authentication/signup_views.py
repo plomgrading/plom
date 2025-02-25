@@ -5,8 +5,8 @@
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2025 Andrew Rechnitzer
 
-from io import StringIO
 import csv
+from io import StringIO
 
 from django.conf import settings
 from django.contrib import messages
@@ -17,7 +17,7 @@ from django.shortcuts import render
 from plom.misc_utils import humanize_seconds
 from plom_server.Base.base_group_views import AdminOrManagerRequiredView
 from .services import AuthenticationServices
-from .form.signupForm import CreateSingleUserForm, CreateMultiUsersForm
+from .forms.signupForm import CreateSingleUserForm, CreateMultiUsersForm
 
 
 class SingleUserSignUp(AdminOrManagerRequiredView):
