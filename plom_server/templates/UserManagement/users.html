@@ -81,11 +81,14 @@
                                 {% endif %}
                             </td>
                             <td>
+                                <!-- autocomplete is Firefox-specific fix:
+                                     https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->
                                 <div class="form-check form-switch">
                                     <input class="form-check-input"
                                            type="checkbox"
                                            role="switch"
                                            {% if user.is_active %}checked{% endif %}
+                                           autocomplete="off"
                                            hx-post="{% url 'modify_user' user.username %}" />
                                 </div>
                                 {% if not user.has_usable_password %}(no password set){% endif %}
@@ -148,11 +151,14 @@
                             {% endif %}
                             <td>{{ user.last_login|naturaltime }}</td>
                             <td>
+                                <!-- autocomplete is Firefox-specific fix:
+                                     https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->
                                 <div class="form-check form-switch">
                                     <input class="form-check-input"
                                            type="checkbox"
                                            role="switch"
                                            {% if user.is_active %}checked{% endif %}
+                                           autocomplete="off"
                                            hx-post="{% url 'modify_user' user.username %}" />
                                 </div>
                                 {% if not user.has_usable_password %}(no password set){% endif %}
