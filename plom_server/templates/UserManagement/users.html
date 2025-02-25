@@ -57,7 +57,7 @@
                                     {% if user in lead_markers %}<i class="bi bi-bookmark-star text-primary"></i>{% endif %}
                                 </div>
                                 <a href="{% url 'reset_user_password' user.username %}"
-                                   class=" link-underline link-underline-opacity-0"
+                                   class=" link-underline link-underline-opacity-25"
                                    style="font-size: 80%">change password</a>
                             </td>
                             {% if user in online_now_ids %}
@@ -141,7 +141,7 @@
                             <td>
                                 <div>{{ user.username }}</div>
                                 <a href="{% url 'reset_user_password' user.username %}"
-                                   class=" link-underline link-underline-opacity-0"
+                                   class=" link-underline link-underline-opacity-25"
                                    style="font-size: 80%">change password</a>
                             </td>
                             {% if user in online_now_ids %}
@@ -194,7 +194,7 @@
                                 {{ user.username }}
                                 <br />
                                 <a href="{% url 'reset_user_password' user.username %}"
-                                   class=" link-underline link-underline-opacity-0"
+                                   class=" link-underline link-underline-opacity-25"
                                    style="font-size: 80%"
                                    onclick="return confirm('This is a manager account - are you sure you wish to reset the password?')">change password</a>
                             </td>
