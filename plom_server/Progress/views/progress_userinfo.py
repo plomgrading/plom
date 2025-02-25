@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Elisa Pan
+# Copyright (C) 2025 Aidan Murphy
 
 from django.contrib.auth.models import User
 from django.shortcuts import render
@@ -52,9 +53,9 @@ class ProgressUserInfoHome(ManagerRequiredView):
         usernames_with_quota = QuotaService.get_list_of_usernames_with_quotas()
 
         # Fetch user objects
-        users_with_quota_as_objects = User.objects.filter(
+        users_with_quota_count = User.objects.filter(
             username__in=usernames_with_quota
-        ).order_by("id")
+        ).count()
 
         default_quota_limit = Quota.default_limit
 
@@ -65,7 +66,7 @@ class ProgressUserInfoHome(ManagerRequiredView):
                 "annotation_filter_form": filter_form,
                 "latest_updated_annotation_human_time": latest_annotation_human_time,
                 "default_quota_limit": default_quota_limit,
-                "users_with_quota_as_objects": users_with_quota_as_objects,
+                "users_with_quota_count": users_with_quota_count,
                 "users_progress": UserInfoServices.get_all_user_progress(),
             }
         )
