@@ -128,9 +128,7 @@
                         <th>Name</th>
                         <th>Online</th>
                         <th>Last login</th>
-                        <th>
-                            <!-- column for enable/disable user buttons-->
-                        </th>
+                        <th>Enabled</th>
                         <th>
                             <!-- column for delete users buttons-->
                         </th>
@@ -150,17 +148,14 @@
                             {% endif %}
                             <td>{{ user.last_login|naturaltime }}</td>
                             <td>
-                                {% if user.has_usable_password %}
-                                    {% if user.is_active %}
-                                        <button hx-post="{% url 'modify_user' user.username %}"
-                                                class="btn btn-success">disable</button>
-                                    {% else %}
-                                        <button hx-post="{% url 'modify_user' user.username %}"
-                                                class="btn btn-secondary">enable</button>
-                                    {% endif %}
-                                {% else %}
-                                    <button class="btn btn-warning disabled">no password set</button>
-                                {% endif %}
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           role="switch"
+                                           {% if user.is_active %}checked{% endif %}
+                                           hx-post="{% url 'modify_user' user.username %}" />
+                                </div>
+                                {% if not user.has_usable_password %}(no password set){% endif %}
                             </td>
                             <td>
                                 {% csrf_token %}
