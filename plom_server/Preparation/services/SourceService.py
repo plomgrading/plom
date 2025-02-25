@@ -84,6 +84,10 @@ def delete_source_pdf(source_version: int) -> None:
             # if the file fails to delete for some reason, the object delete
             # will also be rewound by the atomic context
             path.unlink()
+            # Ignoring a missing file could mask an bug, so I think we'd want to
+            # know... but we could revisit in the future:
+            # path.unlink(missing_ok=True)
+
         except PaperSourcePDF.DoesNotExist:
             return
 

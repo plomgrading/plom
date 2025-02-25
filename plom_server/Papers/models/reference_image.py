@@ -33,4 +33,5 @@ def auto_delete_file_on_delete(sender, instance, **kwargs):
         path = Path(instance.image_file.path)
         if path.is_file():
             # unclear what happens if this fails: object is already deleted
-            path.unlink()
+            # for now, its ok if the file as already been erased
+            path.unlink(missing_ok=True)
