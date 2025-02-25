@@ -1,0 +1,71 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024-2025 Colin B. Macdonald
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    Server status
+{% endblock title %}
+{% block page_heading %}
+    Server status
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="card m-2">
+        <div class="card-body">
+            <h4 class="card-title">Plom server v{{ plom_version }}</h4>
+            <div class="card-text">
+                <p>
+                    Django v{{ django_version }}
+                    <br />
+                    Huey v{{ huey_version }}
+                    <br />
+                    PyMuPDF v{{ pymupdf_version }}
+                    <br />
+                    ZXing-C++ v{{ zxingcpp_version }}
+                </p>
+                <!-- <p>TODO: load levels available?</p> -->
+            </div>
+        </div>
+    </div>
+    <div class="card m-2">
+        <div class="card-body">
+            <h4 class="card-title">Huey queue</h4>
+            <div class="card-text">
+                <p>Current queue length: {{ queue_length }}</p>
+                <p>Plom's background processes are managed by Huey.</p>
+            </div>
+        </div>
+    </div>
+    <div class="card m-2">
+        <div class="card-body">
+            <h4 class="card-title">Database</h4>
+            <div class="card-text">
+                <p>The database must be working on you couldn't be here.</p>
+                <p>Almost all data and settings are stored in the database.</p>
+            </div>
+        </div>
+    </div>
+    <div class="card m-2">
+        <div class="card-body">
+            <h4 class="card-title">Debugging</h4>
+            <div class="card-text">
+                <div class="float-start">
+                    <img style="width: 20ex" src="{% static 'fingers_in_gears.svg' %}" />
+                </div>
+                <div>
+                    <p>
+                        <button class="btn btn-warning" hx-get="{% url 'htmx_explode' %}">Raise exception with htmx-get</button>
+                        &nbsp;
+                        <small>
+                            (1/3 of the time, this button fail with a 404
+                            error, 1/3 of the time with a 500 error (div by
+                            zero), and 1/3 it will succeed and change the
+                            button text to "button pushed")
+                        </small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}
