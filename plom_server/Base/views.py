@@ -5,9 +5,6 @@
 
 import importlib
 
-from huey import __version__ as huey_version
-from django import __version__ as django_version
-from pymupdf import __version__ as pymupdf_version
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
@@ -64,6 +61,11 @@ class ServerStatusView(ManagerRequiredView):
         Returns:
             An HTTP response object.
         """
+        # importing at the top seems wasteful
+        from huey import __version__ as huey_version
+        from django import __version__ as django_version
+        from pymupdf import __version__ as pymupdf_version
+
         context = self.build_context()
         # TODO: need a service?
         queue = get_queue("tasks")
