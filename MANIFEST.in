@@ -54,6 +54,8 @@ include plom_server/templates/**/*.html
 include plom_server/**/migrations/*.py
 include plom_server/**/models.py
 include plom_server/**/models/*.py
+include plom_server/**/forms.py
+include plom_server/**/forms/*.py
 include plom_server/**/tests/*.py
 include plom_server/**/tests/*.png
 include plom_server/Mark/tests/config_files/*.toml

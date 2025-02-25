@@ -513,6 +513,8 @@ out-of-tree:
     - export DJANGO_SETTINGS_MODULE=plom_server.settings
     - django-admin --version
     - django-admin -h
+    - django-admin -h | grep plom
+    - django-admin plom_demo_spec -h
     - django-admin test plom_server
     - popd
   allow_failure: true
