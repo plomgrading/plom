@@ -55,7 +55,7 @@
         <div class="card-body">
             <div>
                 <i class="bi bi-exclamation-diamond-fill text-info"></i>
-                {{ users_with_quota|length }} markers have quotas.
+                {{ users_with_quota_count }} markers have quotas.
             </div>
             {% if messages %}
                 <div>
@@ -68,6 +68,7 @@
             {% endif %}
         </div>
     </div>
+    <!-- TODO: make this table sortable -->
     <div class="table-responsive">
         <table class="table text-center align-middle">
             <tr>
