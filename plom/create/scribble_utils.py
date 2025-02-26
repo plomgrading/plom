@@ -285,8 +285,8 @@ def scribble_name_and_id(
         seed (None/int): seed the random number generator with this value.
             Default of None means don't.  This can be used to ensure the
             same digit images are chosen each time, useful for testing.
-        y_offset (int): how far to offset the scribbles from their 
-            'default' position in the version-1 assessment paper. 
+        y_offset (int): how far to offset the scribbles from their
+            'default' position in the version-1 assessment paper.
 
     Returns:
         None: but modifies the open document as a side effect.
