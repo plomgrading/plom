@@ -61,5 +61,6 @@ include plom_server/**/tests/*.png
 include plom_server/Mark/tests/config_files/*.toml
 include plom_server/Preparation/tests/config_files/*.toml
 include plom_server/Preparation/useful_files_for_testing/*.pdf
+include plom_server/**/management/commands/*.py
 
 # TODO: docs?
