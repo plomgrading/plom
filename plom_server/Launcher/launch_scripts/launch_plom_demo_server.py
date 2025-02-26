@@ -340,11 +340,11 @@ def depopulate_the_database():
     Note - runs in foreground; blocks until completed.
     """
     print("Clearing the database and qv-map")
-    run_django_manage_command(f"plom_qvmap clear")
+    run_django_manage_command("plom_qvmap clear")
 
 
 def read_hack_and_resave_qvmap(filename):
-    "Read qvmap file, set odd rows id.version to 2, resave."
+    """Read qvmap file, set odd rows id.version to 2, resave."""
     with open(filename) as fh:
         reader = csv.DictReader(fh)
         qvmap_rows = [row for row in reader]
