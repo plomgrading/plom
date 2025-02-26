@@ -13,6 +13,7 @@ from pathlib import Path
 from shlex import split
 import subprocess
 import time
+from tempfile import TemporaryDirectory
 
 # we specify this directory relative to the plom_server
 # root directory, rather than getting Django things up and
@@ -78,7 +79,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         help="Prename papers as determined by the demo classlist",
     )
     parser.add_argument("--no-prename", dest="prename", action="store_false")
-    parser.add_argument("--versioned-id", dest="vid", action="store_true")
+    parser.add_argument("--versioned-id", dest="versioned_id", action="store_true")
     parser.add_argument(
         "--muck",
         default=True,
@@ -328,10 +329,10 @@ def populate_the_database(length="normal"):
     print("Paper database is now populated")
 
 
-def download_the_qvmap(filename):
+def download_the_qvmap(filepath: Path):
     """Use 'plom_qvmap' to download the qv-map."""
     print("Downloading the question-version map")
-    run_django_manage_command(f"plom_qvmap download {filename}")
+    run_django_manage_command(f"plom_qvmap download {filepath}")
 
 
 def depopulate_the_database():
@@ -343,9 +344,9 @@ def depopulate_the_database():
     run_django_manage_command("plom_qvmap clear")
 
 
-def read_hack_and_resave_qvmap(filename):
+def read_hack_and_resave_qvmap(filepath: Path):
     """Read qvmap file, set odd rows id.version to 2, resave."""
-    with open(filename) as fh:
+    with open(filepath) as fh:
         reader = csv.DictReader(fh)
         qvmap_rows = [row for row in reader]
     # switch have the rows to have id-version 2
@@ -353,17 +354,17 @@ def read_hack_and_resave_qvmap(filename):
         if n % 2 == 1:
             qvmap_rows[n]["id.version"] = 2
     headers = list(qvmap_rows[0].keys())
-    with open(filename, "w") as fh:
+    with open(filepath, "w") as fh:
         writer = csv.DictWriter(fh, fieldnames=headers)
         writer.writeheader()
         for row in qvmap_rows:
             writer.writerow(row)
 
 
-def upload_the_qvmap(filename):
+def upload_the_qvmap(filepath: Path):
     """Use 'plom_qvmap' to upload the qv-map."""
     print("Uploading the question-version map")
-    run_django_manage_command(f"plom_qvmap upload {filename}")
+    run_django_manage_command(f"plom_qvmap upload {filepath}")
 
 
 def build_all_papers_and_wait():
@@ -392,7 +393,12 @@ def download_zip() -> None:
 
 
 def run_demo_preparation_commands(
-    *, length="normal", stop_after=None, solutions=True, prename=True, vid=False
+    *,
+    length="normal",
+    stop_after=None,
+    solutions=True,
+    prename=True,
+    versioned_id=False,
 ) -> bool:
     """Run commands to prepare a demo assessment.
 
@@ -411,7 +417,7 @@ def run_demo_preparation_commands(
         stop_after = after which step should the demo be stopped, see list above.
         solutions = whether or not to upload solutions as part of the demo.
         prename = whether or not to prename some papers in the demo.
-        vid = whether or not to use multiple versions of the id pages.
+        versioned_id = whether or not to use multiple versions of the id pages.
 
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
@@ -443,14 +449,13 @@ def run_demo_preparation_commands(
     # if using multiple versions of the id page, then
     # after populating, download the qvmap, clear the db,
     # hack the qvmap and then upload the new qvmap.
-    if vid:
-        tmp_qv_filename = "tmp_qv_filename.csv"
-        tmp_qv_path = Path(tmp_qv_filename)
-        download_the_qvmap(tmp_qv_filename)
-        depopulate_the_database()
-        read_hack_and_resave_qvmap(tmp_qv_filename)
-        upload_the_qvmap(tmp_qv_filename)
-        tmp_qv_path.unlink()
+    if versioned_id:
+        with TemporaryDirectory() as tdir:
+            tmp_qv_path = Path(tdir) / "tmp_qv_filename.csv"
+            download_the_qvmap(tmp_qv_path)
+            depopulate_the_database()
+            read_hack_and_resave_qvmap(tmp_qv_path)
+            upload_the_qvmap(tmp_qv_path)
 
     if stop_after == "populate":
         print("Stopping after paper-database populated.")
@@ -759,7 +764,7 @@ if __name__ == "__main__":
                 stop_after=stop_after,
                 solutions=args.solutions,
                 prename=args.prename,
-                vid=args.vid,
+                versioned_id=args.versioned_id,
             ):
                 break
 
