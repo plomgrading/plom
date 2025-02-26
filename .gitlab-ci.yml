@@ -549,13 +549,15 @@ out-of-tree-scratch:
           python3-zxing-cpp
           python3-pytest
           python3-PyMuPDF python3-scikit-learn python3-PyMySQL
-          python3-weasyprint python3-whitenoise python3-django
+          python3-weasyprint python3-whitenoise
           file python3-file-magic
           iproute
     - pip --version
   script:
     # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
     - pip install -U pytest
+    # TODO: python3-django doesn't work, unsure why, instead get from pip
+    - pip install django
     # important: we must have the migration 00001 files in place (Issue #3826)
     - pwd
     - ls
@@ -574,6 +576,8 @@ out-of-tree-scratch:
     - export DJANGO_SETTINGS_MODULE=plom_server.settings
     - django-admin --version
     - django-admin -h
+    - django-admin -h | grep plom
+    - django-admin plom_demo_spec -h
     - django-admin test plom_server
     - popd
   allow_failure: true
