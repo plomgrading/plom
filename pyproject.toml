@@ -168,6 +168,7 @@ packages = [
     "plom_server.QuestionTags",
     "plom_server.QuestionTags.services",
     "plom_server.Launcher",
+    "plom_server.Launcher.services",
     "plom_server.Launcher.management.commands",
     "plom_server.Mark",
     "plom_server.Mark.services",

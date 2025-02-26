@@ -66,6 +66,14 @@ include plom_server/**/tests/*.png
 include plom_server/Mark/tests/config_files/*.toml
 include plom_server/Preparation/tests/config_files/*.toml
 include plom_server/Preparation/useful_files_for_testing/*.pdf
+include plom_server/Preparation/useful_files_for_testing/*.toml
+include plom_server/Finish/useful_files_for_testing/*.toml
+include plom_server/Demo/config_files/*.toml
+include plom_server/Launcher/launch_scripts/*.py
+include plom_server/Launcher/launch_scripts/demo_files/*.py
+include plom_server/Launcher/launch_scripts/demo_files/*.toml
+include plom_server/Launcher/launch_scripts/demo_files/*.tex
+include plom_server/Launcher/launch_scripts/demo_files/*.csv
 include plom_server/**/management/commands/*.py
 
 # TODO: docs?
