@@ -2,11 +2,12 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Colin B. Macdonald
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 
 from __future__ import annotations
 
 import argparse
+import csv
 import os
 from pathlib import Path
 from shlex import split
@@ -77,6 +78,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         help="Prename papers as determined by the demo classlist",
     )
     parser.add_argument("--no-prename", dest="prename", action="store_false")
+    parser.add_argument("--versioned-id", dest="vid", action="store_true")
     parser.add_argument(
         "--muck",
         default=True,
@@ -326,6 +328,44 @@ def populate_the_database(length="normal"):
     print("Paper database is now populated")
 
 
+def download_the_qvmap(filename):
+    """Use 'plom_qvmap' to download the qv-map."""
+    print("Downloading the question-version map")
+    run_django_manage_command(f"plom_qvmap download {filename}")
+
+
+def depopulate_the_database():
+    """Use 'plom_qvmap' to clear the qv-map and database.
+
+    Note - runs in foreground; blocks until completed.
+    """
+    print("Clearing the database and qv-map")
+    run_django_manage_command(f"plom_qvmap clear")
+
+
+def read_hack_and_resave_qvmap(filename):
+    "Read qvmap file, set odd rows id.version to 2, resave."
+    with open(filename) as fh:
+        reader = csv.DictReader(fh)
+        qvmap_rows = [row for row in reader]
+    # switch have the rows to have id-version 2
+    for n in range(len(qvmap_rows)):
+        if n % 2 == 1:
+            qvmap_rows[n]["id.version"] = 2
+    headers = list(qvmap_rows[0].keys())
+    with open(filename, "w") as fh:
+        writer = csv.DictWriter(fh, fieldnames=headers)
+        writer.writeheader()
+        for row in qvmap_rows:
+            writer.writerow(row)
+
+
+def upload_the_qvmap(filename):
+    """Use 'plom_qvmap' to upload the qv-map."""
+    print("Uploading the question-version map")
+    run_django_manage_command(f"plom_qvmap upload {filename}")
+
+
 def build_all_papers_and_wait():
     """Trigger build all the printable paper pdfs and wait for completion."""
     from time import sleep
@@ -352,7 +392,7 @@ def download_zip() -> None:
 
 
 def run_demo_preparation_commands(
-    *, length="normal", stop_after=None, solutions=True, prename=True
+    *, length="normal", stop_after=None, solutions=True, prename=True, vid=False
 ) -> bool:
     """Run commands to prepare a demo assessment.
 
@@ -371,6 +411,7 @@ def run_demo_preparation_commands(
         stop_after = after which step should the demo be stopped, see list above.
         solutions = whether or not to upload solutions as part of the demo.
         prename = whether or not to prename some papers in the demo.
+        vid = whether or not to use multiple versions of the id pages.
 
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
@@ -399,6 +440,18 @@ def run_demo_preparation_commands(
         return False
 
     populate_the_database(length)
+    # if using multiple versions of the id page, then
+    # after populating, download the qvmap, clear the db,
+    # hack the qvmap and then upload the new qvmap.
+    if vid:
+        tmp_qv_filename = "tmp_qv_filename.csv"
+        tmp_qv_path = Path(tmp_qv_filename)
+        download_the_qvmap(tmp_qv_filename)
+        depopulate_the_database()
+        read_hack_and_resave_qvmap(tmp_qv_filename)
+        upload_the_qvmap(tmp_qv_filename)
+        tmp_qv_path.unlink()
+
     if stop_after == "populate":
         print("Stopping after paper-database populated.")
         return False
@@ -706,6 +759,7 @@ if __name__ == "__main__":
                 stop_after=stop_after,
                 solutions=args.solutions,
                 prename=args.prename,
+                vid=args.vid,
             ):
                 break
 
