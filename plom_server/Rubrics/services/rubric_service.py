@@ -12,8 +12,6 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aidan Murphy
 
-from __future__ import annotations
-
 import ast
 import csv
 import io
@@ -316,6 +314,7 @@ class RubricService:
         *,
         modifying_user: User | None = None,
         tag_tasks: bool = False,
+        is_minor_change: bool | None = None,
     ) -> dict[str, Any]:
         """Modify a rubric.
 
@@ -333,6 +332,17 @@ class RubricService:
                 no checking will be done (probably for internal use).
             tag_tasks: whether to tag all tasks whose latest annotation uses
                 this rubric with ``"rubric_changed"``.
+            is_minor_change: by default (passing None) the code will decide
+                itself whether this is a minor change.  Callers can force
+                one way or the other by passing True or False.
+                A minor change is one where you would NOT expect to update
+                any existing Annotations that use the Rubric.  For example,
+                changing the score is probably NOT a minor change.  Changing
+                the text to fix a minor typo might or might not be a minor
+                change.  Changing the text drastically should be a major
+                change.  Internally, a minor change is one that does not
+                bump the revision (and does not create a new rubric) but
+                instead modifies the rubric "in-place".
 
         Returns:
             The modified rubric data, in dict key-value format.
@@ -346,6 +356,11 @@ class RubricService:
         """
         # addresses a circular import?
         from Mark.services import MarkingTaskService
+
+        if is_minor_change:
+            raise NotImplementedError(
+                "Currently *all* changes are major changes that bump the revision number"
+            )
 
         new_rubric_data = new_rubric_data.copy()
         username = new_rubric_data.pop("username")
