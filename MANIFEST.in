@@ -57,6 +57,7 @@ include plom_server/**/models/*.py
 include plom_server/**/forms.py
 include plom_server/**/forms/*.py
 include plom_server/**/views/*.py
+include plom_server/**/serializers/*.py
 include plom_server/API/permissions/*.py
 include plom_server/**/tests/*.py
 include plom_server/**/tests/*.png
