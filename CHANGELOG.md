@@ -10,12 +10,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Users who have not logged in can now be deleted.
+* Server is less-trusting of the client-supplied annotations, with additional server-side validation of rubric use.
 
 ### Changed
+* Improvements in the push-to-canvas contrib script.
+* Documentation improvements.
+
+### Removed
+* Support code for Plom Client, which is now developed in a separate repo.
 
 ### Fixed
 * Fix hard-to-debug errors about casing of headers in classlist.
+* Better debugging of custom version maps.
 * Fix versioned scatterplots in reports.
+* Fix errors removing source PDF files.
+* Fix creating multiple users.
+* Better error handling in paper generation background chores; future unexpected errors should be explicitly shown to users.
+* Minor UI fixes and cleanups, such as improved contrast of the sidebar when the OS is in dark mode.
+* Code cleanups and maintenance.
 
 
 ## [0.17.2] - 2025-02-03
@@ -23,8 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Ability to download Annotations `.csv` for analysis in external tools.
 * Server can transmit a reject-list of known-bad clients.
-
-### Changed
 
 ### Fixed
 * Fixes about PedagogyTags in Rubrics.
