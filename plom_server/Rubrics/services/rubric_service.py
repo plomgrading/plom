@@ -148,6 +148,39 @@ def _validate_value_out_of(value, out_of, max_mark) -> None:
         )
 
 
+# TODO: consider refactoring to wherever we compute diffs
+def _is_rubric_change_considered_minor(
+    old: Rubric, new_data: dict[str, Any]
+) -> tuple[bool, str]:
+    """Implements a reject list of non-minor changes.
+
+    Args:
+        old: a Rubric object.
+        new_data: dict data for the proposed new rubric.
+
+    Returns:
+        Tuple of True/False and a string displaying the reason.  Reason
+        will be empty when the boolean is True.
+    """
+    if new_data["rid"] != old.rid:
+        return (False, "Changed rid")
+    if new_data["revision"] != old.revision:
+        return (False, "Changed revision")
+    if new_data["kind"] != old.kind:
+        return (False, "Changed kind")
+    if new_data["value"] != old.value:
+        return (False, "Changed value")
+    if new_data["out_of"] != old.out_of:
+        return (False, "Changed out_of")
+    if new_data["question_index"] != old.question_index:
+        return (False, "Changed question_index")
+
+    # text is a grey area!  For now, leave minor: users can force a major change
+    # TODO: or maybe we could refuse to decide and FORCE user to make a choice
+
+    return (True, "")
+
+
 def _modify_rubric_in_place(old_rubric: Rubric, serializer: RubricSerializer) -> Rubric:
     log.info(f"Modifying rubric {old_rubric.rid} rev {old_rubric.revision} in-place")
     serializer.validated_data["latest"] = True
@@ -487,6 +520,14 @@ class RubricService:
 
         if not serializer.is_valid():
             raise serializers.ValidationError(serializer.errors)
+
+        # autodetect based on a reject list of major change fields
+        if is_minor_change is None:
+            is_minor_change, reason = _is_rubric_change_considered_minor(
+                old_rubric, serializer.validated_data
+            )
+            if not is_minor_change:
+                log.info("autodetected rubric major change: %s", reason)
 
         if is_minor_change:
             new_rubric = _modify_rubric_in_place(old_rubric, serializer)
