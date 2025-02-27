@@ -148,6 +148,29 @@ def _validate_value_out_of(value, out_of, max_mark) -> None:
         )
 
 
+def _modify_rubric_in_place(old_rubric: Rubric, serializer: RubricSerializer) -> Rubric:
+    log.info(f"Modifying rubric {old_rubric.rid} rev {old_rubric.revision} in-place")
+    serializer.validated_data["latest"] = True
+    serializer.update(old_rubric, serializer.validated_data)
+    old_rubric.save()
+    return old_rubric
+
+
+def _modify_rubric_by_making_new_one(
+    old_rubric: Rubric, serializer: RubricSerializer
+) -> Rubric:
+    log.info(
+        f"Modifying rubric {old_rubric.rid} rev {old_rubric.revision} by"
+        " making a new rubric with bumped revision"
+    )
+    old_rubric.latest = False
+    old_rubric.save()
+    serializer.validated_data["revision"] += 1
+    serializer.validated_data["latest"] = True
+    new_rubric = serializer.save()
+    return new_rubric
+
+
 class RubricService:
     """Class to encapsulate functions for creating and modifying rubrics."""
 
@@ -332,6 +355,9 @@ class RubricService:
                 no checking will be done (probably for internal use).
             tag_tasks: whether to tag all tasks whose latest annotation uses
                 this rubric with ``"rubric_changed"``.
+                Currently this only works for major changes, or more precisely
+                its not yet well-defined what happens if you ask to tag tasks
+                for minor changes.
             is_minor_change: by default (passing None) the code will decide
                 itself whether this is a minor change.  Callers can force
                 one way or the other by passing True or False.
@@ -357,11 +383,6 @@ class RubricService:
         # addresses a circular import?
         from Mark.services import MarkingTaskService
 
-        if is_minor_change:
-            raise NotImplementedError(
-                "Currently *all* changes are major changes that bump the revision number"
-            )
-
         new_rubric_data = new_rubric_data.copy()
         username = new_rubric_data.pop("username")
 
@@ -380,8 +401,8 @@ class RubricService:
         # default revision if missing from incoming data
         new_rubric_data.setdefault("revision", 0)
 
-        # incoming revision is not incremented to check if what the
-        # revision was based on is outdated
+        # Mid-air collision detection
+        # TODO: warning: minor edits don't have this check
         if not new_rubric_data["revision"] == old_rubric.revision:
             # TODO: record who last modified and when
             raise PlomConflict(
@@ -432,8 +453,7 @@ class RubricService:
 
         # To be changed by future MR  (TODO: what does this comment mean?)
         new_rubric_data["user"] = old_rubric.user.pk
-        new_rubric_data["revision"] += 1
-        new_rubric_data["latest"] = True
+
         new_rubric_data["rid"] = old_rubric.rid
 
         if new_rubric_data.get("display_delta", None) is None:
@@ -465,10 +485,10 @@ class RubricService:
         if not serializer.is_valid():
             raise serializers.ValidationError(serializer.errors)
 
-        old_rubric.latest = False
-        old_rubric.save()
-
-        new_rubric = serializer.save()
+        if is_minor_change:
+            new_rubric = _modify_rubric_in_place(old_rubric, serializer)
+        else:
+            new_rubric = _modify_rubric_by_making_new_one(old_rubric, serializer)
 
         if isinstance(new_rubric_data.get("pedagogy_tags"), list):
             new_rubric_data["pedagogy_tags"] = PedagogyTag.objects.filter(
@@ -476,7 +496,7 @@ class RubricService:
             ).values_list("pk", flat=True)
         new_rubric.pedagogy_tags.set(new_rubric_data.get("pedagogy_tags", []))
 
-        if tag_tasks:
+        if not is_minor_change and tag_tasks:
             # TODO: or do we need some "system tags" that definitely already exist?
             any_manager = User.objects.filter(groups__name="manager").first()
             tag = MarkingTaskService().get_or_create_tag(any_manager, "rubric_changed")
@@ -491,8 +511,7 @@ class RubricService:
             for task in tasks:
                 MarkingTaskService()._add_tag(tag, task)
 
-        rubric_obj = serializer.instance
-        return _Rubric_to_dict(rubric_obj)
+        return _Rubric_to_dict(new_rubric)
 
     @classmethod
     def get_rubrics_as_dicts(
