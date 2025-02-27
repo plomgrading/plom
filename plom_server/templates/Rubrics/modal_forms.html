@@ -181,6 +181,48 @@
                             </div>
                         </div>
                     </div>
+                    <hr />
+                    <h5>Existing annotations</h5>
+                    <p class="mb-0">Should existing annotations be updated because of this change?</p>
+                    <!-- TODO: would like some tooltips or popovers to help explain all this -->
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input"
+                               type="radio"
+                               id="minorRadio1"
+                               name="minor_change"
+                               value="yes">
+                        <label class="form-check-label" for="minorRadio1">Minor edit</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input"
+                               type="radio"
+                               id="minorRadio2"
+                               name="minor_change"
+                               value="no">
+                        <label class="form-check-label" for="minorRadio2">Major edit</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input"
+                               type="radio"
+                               id="minorRadio3"
+                               name="minor_change"
+                               value="auto"
+                               checked>
+                        <label class="form-check-label" for="minorRadio3">Autodetect</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               id="tagTasksCheckBox"
+                               name="tag_tasks">
+                        <label class="form-check-label" for="tagTasksCheckBox">
+                            Tag existing
+                            <a href=""
+                               class="link-secondary link-underline-info link-underline-opacity-50"
+                               title="all tasks effected by this change will be tagged &ldquo;rubric_changed&rdquo;">tasks</a>.
+                        </label>
+                        <!-- TODO: in-principle, could have custom tag chosen here -->
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

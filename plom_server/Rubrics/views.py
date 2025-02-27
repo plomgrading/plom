@@ -463,7 +463,20 @@ class RubricEditView(ManagerRequiredView):
     """Handles the editing of existing rubrices."""
 
     def post(self, request: HttpRequest, *, rid: int) -> HttpResponse:
-        """Posting from a form to to edit an existing rubric."""
+        """Posting from a form to edit an existing rubric."""
+        # TODO: am I supposed to do this through the form?
+        tag_tasks = request.POST.get("tag_tasks") == "on"
+        minor_change = request.POST.get("minor_change")
+        if minor_change is None or minor_change == "auto":
+            is_minor_change = None
+        elif minor_change == "yes":
+            is_minor_change = True
+        elif minor_change == "no":
+            is_minor_change = False
+        else:
+            messages.error(request, "invalid form choices for minor radios")
+            return redirect("rubric_item", rid)
+
         form = RubricItemForm(request.POST)
         if not form.is_valid():
             messages.error(request, f"invalid form data: {form.errors}")
@@ -487,7 +500,8 @@ class RubricEditView(ManagerRequiredView):
             rid,
             new_rubric_data=rubric_data,
             modifying_user=User.objects.get(username=request.user.username),
-            tag_tasks=False,
+            tag_tasks=tag_tasks,
+            is_minor_change=is_minor_change,
         )
         messages.success(request, "Rubric edited successfully.")
         return redirect("rubric_item", rid)
