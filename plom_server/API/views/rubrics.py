@@ -73,7 +73,7 @@ class McreateRubric(APIView):
             not allowed to create new rubrics.
         """
         try:
-            rubric_as_dict = RubricService().create_rubric(
+            rubric_as_dict = RubricService.create_rubric(
                 request.data["rubric"], creating_user=request.user
             )
             return Response(rubric_as_dict, status=status.HTTP_200_OK)
@@ -111,7 +111,7 @@ class MmodifyRubric(APIView):
             (e.g., two users have both modified the same rubric).
         """
         try:
-            rubric_as_dict = RubricService().modify_rubric(
+            rubric_as_dict = RubricService.modify_rubric(
                 rid,
                 request.data["rubric"],
                 modifying_user=request.user,

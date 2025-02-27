@@ -174,8 +174,9 @@ def _modify_rubric_by_making_new_one(
 class RubricService:
     """Class to encapsulate functions for creating and modifying rubrics."""
 
+    @classmethod
     def create_rubric(
-        self, rubric_data: dict[str, Any], *, creating_user: User | None = None
+        cls, rubric_data: dict[str, Any], *, creating_user: User | None = None
     ) -> dict[str, Any]:
         """Create a rubric using data submitted by a marker.
 
@@ -199,12 +200,13 @@ class RubricService:
             PermissionDenied: user are not allowed to create rubrics.
                 This could be "this user" or "all users".
         """
-        rubric_obj = self._create_rubric(rubric_data, creating_user=creating_user)
+        rubric_obj = cls._create_rubric(rubric_data, creating_user=creating_user)
         return _Rubric_to_dict(rubric_obj)
 
     # implementation detail of the above, independently testable
+    @classmethod
     def _create_rubric(
-        self, incoming_data: dict[str, Any], *, creating_user: User | None = None
+        cls, incoming_data: dict[str, Any], *, creating_user: User | None = None
     ) -> Rubric:
         incoming_data = incoming_data.copy()
 
@@ -262,10 +264,10 @@ class RubricService:
                 )
             pass
 
-        return self._create_rubric_lowlevel(incoming_data)
+        return cls._create_rubric_lowlevel(incoming_data)
 
+    @staticmethod
     def _create_rubric_lowlevel(
-        self,
         data: dict[str, Any],
         *,
         _bypass_serializer: bool = False,
@@ -329,9 +331,10 @@ class RubricService:
         rubric_obj = serializer.instance
         return rubric_obj
 
+    @classmethod
     @transaction.atomic
     def modify_rubric(
-        self,
+        cls,
         rid: int,
         new_rubric_data: dict[str, Any],
         *,

@@ -94,10 +94,9 @@ class Command(BaseCommand):
             else:
                 rubrics.append(rub)
 
-        service = RubricService()
         for rubric in rubrics:
             try:
-                service.create_rubric(rubric)
+                RubricService.create_rubric(rubric)
             except KeyError as e:
                 raise CommandError(f"{e} field(s) missing from rubrics file.")
             except serializers.ValidationError as e:
