@@ -569,6 +569,9 @@ class DemoBundleCreationService:
                             scribble_name_and_id(
                                 pdf_document, paper["id"], paper["name"], y_offset=77
                             )
+                            # TODO = when we stop supporting legacy plom this
+                            # y_offset should become y_pos for each version
+                            # of the id page in the demo.
                         else:
                             scribble_name_and_id(
                                 pdf_document, paper["id"], paper["name"]
