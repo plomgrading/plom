@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Colin B. Macdonald
 
 from dataclasses import dataclass
@@ -106,8 +106,11 @@ class Command(BaseCommand):
             (push) processed bundles from staging,
             (id_hw) ID pushed demo homework bundles.""",
         )
+        parser.add_argument("--versioned-id", dest="versioned_id", action="store_true")
 
-    def build_the_bundles(self, demo_config: DemoAllBundlesConfig) -> None:
+    def build_the_bundles(
+        self, demo_config: DemoAllBundlesConfig, *, versioned_id=False
+    ) -> None:
         """Build demo bundles as per the chosen demo-config."""
         # at present the bundle-creator assumes that the
         # scrap-paper and extra-page pdfs are in media/papersToPrint
@@ -119,7 +122,9 @@ class Command(BaseCommand):
         # TODO - get bundle-creator to take from static.
 
         if demo_config.bundles:
-            DemoBundleCreationService().scribble_on_exams(demo_config)
+            DemoBundleCreationService().scribble_on_exams(
+                demo_config, versioned_id=versioned_id
+            )
 
         if demo_config.hw_bundles is not None:
             for bundle in demo_config.hw_bundles:
@@ -208,7 +213,7 @@ class Command(BaseCommand):
         demo_config = _read_bundle_config(options["length"])
 
         if options["action"] == "build":
-            self.build_the_bundles(demo_config)
+            self.build_the_bundles(demo_config, versioned_id=options["versioned_id"])
         elif options["action"] == "upload":
             self.upload_the_bundles(demo_config)
         elif options["action"] == "read":

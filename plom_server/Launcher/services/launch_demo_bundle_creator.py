@@ -2,7 +2,7 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
@@ -520,6 +520,7 @@ class DemoBundleCreationService:
         obscure_qr_papers: list = [],
         invalid_qr_papers: list = [],
         mucking_operation: list[str] = [],
+        versioned_id: bool = False,
     ) -> None:
         """Scribble on some of the papers to create a bundle, along with various others inclusions.
 
@@ -549,6 +550,7 @@ class DemoBundleCreationService:
                 page with a blank but wrong version number.
             wrong_assessment: list of paper numbers to which we append a
                 page from a different assessment.
+            versioned_id: whether or not using different versions of the id-page
 
         Returns:
             None.
@@ -560,7 +562,20 @@ class DemoBundleCreationService:
                     paper_number = int(paper["paper_number"])
 
                     if not paper["prenamed"]:
-                        scribble_name_and_id(pdf_document, paper["id"], paper["name"])
+                        # if using versioned id pages and paper_number is even, then
+                        # we need to put the name/ID in non-standard position.
+                        if versioned_id and (paper_number % 2 == 0):
+                            # warning: magic number for position of ID box in version 2.
+                            scribble_name_and_id(
+                                pdf_document, paper["id"], paper["name"], y_offset=77
+                            )
+                            # TODO = when we stop supporting legacy plom this
+                            # y_offset should become y_pos for each version
+                            # of the id page in the demo.
+                        else:
+                            scribble_name_and_id(
+                                pdf_document, paper["id"], paper["name"]
+                            )
 
                     if paper_number in wrong_version:
                         self.make_last_page_with_wrong_version(
@@ -629,7 +644,7 @@ class DemoBundleCreationService:
         filtered = filter(lambda bundle: key in bundle.keys(), bundles)
         return self._flatten([bundle[key] for bundle in filtered])
 
-    def scribble_on_exams(self, config):
+    def scribble_on_exams(self, config, *, versioned_id=False):
         """Add simulated student-annotations to the pages of papers.
 
         Note: Also, if dictated by the demo config, simulates poor
@@ -684,6 +699,7 @@ class DemoBundleCreationService:
                 obscure_qr_papers=bundle["obscure_qr_papers"],
                 invalid_qr_papers=bundle["invalid_qr_papers"],
                 mucking_operation=bundle["operations"],
+                versioned_id=versioned_id,
             )
 
         for i in range(min(2, n_bundles)):

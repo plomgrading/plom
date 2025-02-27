@@ -349,9 +349,9 @@ def read_hack_and_resave_qvmap(filepath: Path):
     with open(filepath) as fh:
         reader = csv.DictReader(fh)
         qvmap_rows = [row for row in reader]
-    # switch have the rows to have id-version 2
-    for n in range(len(qvmap_rows)):
-        if n % 2 == 1:
+    # even paper numbers should get id-version 2
+    for n, row in enumerate(qvmap_rows):
+        if int(row["paper_number"]) % 2 == 0:
             qvmap_rows[n]["id.version"] = 2
     headers = list(qvmap_rows[0].keys())
     with open(filepath, "w") as fh:
@@ -475,7 +475,7 @@ def run_demo_preparation_commands(
     return True
 
 
-def build_the_bundles(length="normal"):
+def build_the_bundles(length="normal", versioned_id=False):
     """Create bundles of papers to simulate scanned student papers.
 
     Note: takes the pdf of each paper directly from the file
@@ -484,8 +484,14 @@ def build_the_bundles(length="normal"):
 
     KWargs:
         length = the length of the demo.
+        versioned_id = whether using multiple versions of id-page
     """
-    run_django_manage_command(f"plom_demo_bundles --length {length} --action build")
+    if versioned_id:
+        run_django_manage_command(
+            f"plom_demo_bundles --length {length} --action build --versioned-id"
+        )
+    else:
+        run_django_manage_command(f"plom_demo_bundles --length {length} --action build")
 
 
 def upload_the_bundles(length="normal"):
@@ -514,7 +520,11 @@ def push_the_bundles(length):
 
 
 def run_demo_bundle_scan_commands(
-    *, stop_after=None, length="normal", muck=False
+    *,
+    stop_after=None,
+    length="normal",
+    muck=False,
+    versioned_id=False,
 ) -> bool:
     """Run commands to step through the scanning process in the demo.
 
@@ -530,7 +540,7 @@ def run_demo_bundle_scan_commands(
 
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
-    build_the_bundles(length)
+    build_the_bundles(length, versioned_id=versioned_id)
     if stop_after == "bundles-created":
         return False
 
@@ -770,7 +780,10 @@ if __name__ == "__main__":
 
             print(">> Scanning of papers")
             if not run_demo_bundle_scan_commands(
-                length=args.length, stop_after=stop_after, muck=args.muck
+                length=args.length,
+                stop_after=stop_after,
+                muck=args.muck,
+                versioned_id=args.versioned_id,
             ):
                 break
 
