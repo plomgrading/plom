@@ -29,7 +29,7 @@
                 {% for dat in idpage_list %}
                     <div class="col-3">
                         <div class="card">
-                            <div {% if dat.rectangle %} class="card-body p-4 bg-success" {% else %} class="card p-4 bg-warning" {% endif %}>
+                            <div class="card-body p-4 {% if dat.rectangle %} bg-success {% else %} bg-warning {% endif %}">
                                 <img id="idpage{{ dat.version }}"
                                      class="border w-100"
                                      src="{% url 'reference_image' dat.version page_number %}" />
