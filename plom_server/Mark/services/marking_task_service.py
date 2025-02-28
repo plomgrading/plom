@@ -636,7 +636,7 @@ class MarkingTaskService:
     def set_paper_marking_task_outdated(
         self, paper_number: int, question_index: int
     ) -> None:
-        """Set the marking task for the given paper/question as OUT_OF_DATE.
+        """Set the marking tasks for the given paper/question as OUT_OF_DATE.
 
         When a page-image is removed or added to a paper/question, any
         existing annotations are now out of date (since the underlying
