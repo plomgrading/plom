@@ -102,9 +102,9 @@ class ScannerPushedView(ScannerRequiredView):
             else:
                 cover_img_rotation = 0
             n_pages = scanner.get_n_images(bundle)
-            paper_list = format_int_list_with_runs(
-                scanner.get_bundle_paper_numbers(bundle)
-            )
+            _papers = scanner.get_bundle_paper_numbers(bundle)
+            pretty_print_paper_list = format_int_list_with_runs(_papers)
+            n_papers = len(_papers)
             pushed_bundles.append(
                 {
                     "id": bundle.pk,
@@ -113,7 +113,8 @@ class ScannerPushedView(ScannerRequiredView):
                     "time_uploaded": arrow.get(date_time).humanize(),
                     "username": bundle.user.username,
                     "n_pages": n_pages,
-                    "paper_list": paper_list,
+                    "n_papers": n_papers,
+                    "pretty_print_paper_list": pretty_print_paper_list,
                     "cover_angle": cover_img_rotation,
                 }
             )
@@ -231,7 +232,9 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         scanner = ScanService()
 
         bundle = scanner.get_bundle_from_pk(bundle_id)
-        paper_list = format_int_list_with_runs(scanner.get_bundle_paper_numbers(bundle))
+        _papers = scanner.get_bundle_paper_numbers(bundle)
+        pretty_print_paper_list = format_int_list_with_runs(_papers)
+        n_papers = len(_papers)
         n_known = scanner.get_n_known_images(bundle)
         n_unknown = scanner.get_n_unknown_images(bundle)
         n_extra = scanner.get_n_extra_images(bundle)
@@ -278,7 +281,8 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             "is_mid_qr_read": scanner.is_bundle_mid_qr_read(bundle.pk),
             "is_push_locked": bundle.is_push_locked,
             "is_perfect": scanner.is_bundle_perfect(bundle.pk),
-            "paper_list": paper_list,
+            "n_papers": n_papers,
+            "pretty_print_paper_list": pretty_print_paper_list,
             "n_known": n_known,
             "n_unknown": n_unknown,
             "n_extra": n_extra,

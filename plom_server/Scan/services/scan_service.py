@@ -9,13 +9,13 @@
 
 import hashlib
 import logging
-from math import ceil
 import pathlib
 import random
 import tempfile
 import time
-from io import BytesIO
 from datetime import datetime
+from io import BytesIO
+from math import ceil
 from typing import Any
 
 from django.conf import settings
@@ -1383,8 +1383,8 @@ class ScanService:
         current_page.update({"info": info})
         return current_page
 
-    @transaction.atomic
-    def get_bundle_paper_numbers(self, bundle_obj: StagingBundle) -> list[int]:
+    @staticmethod
+    def get_bundle_paper_numbers(bundle_obj: StagingBundle) -> list[int]:
         """Return a sorted list of paper-numbers in the given bundle as determined by known and extra pages."""
         paper_list = []
         for img in bundle_obj.stagingimage_set.filter(
