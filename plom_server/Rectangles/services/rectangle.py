@@ -20,7 +20,7 @@ from Identify.models import IDRectangle
 from plom.scan import rotate
 
 
-def get_reference_rectangle(version: int, page: int) -> dict[str, list[float]]:
+def get_reference_qr_coords(version: int, page: int) -> dict[str, list[float]]:
     """Given the version and page number, return the x/y coords of the qr codes on the reference image.
 
     Those coords are used to build a reference rectangle, given by the max/min x/y, which, in turn defines a coordinate system on the page.
@@ -46,6 +46,16 @@ def get_reference_rectangle(version: int, page: int) -> dict[str, list[float]]:
             corner_dat[cnr] = [val["x_coord"], val["y_coord"]]
 
     return corner_dat
+
+
+def get_reference_rectangle(version: int, page: int) -> dict[str, float]:
+    corner_dat = get_reference_qr_coords(version, page)
+    return {
+        "left": min([X[0] for X in corner_dat.values()]),
+        "right": max([X[0] for X in corner_dat.values()]),
+        "top": min([X[1] for X in corner_dat.values()]),
+        "bottom": max([X[1] for X in corner_dat.values()]),
+    }
 
 
 def set_idbox_rectangle(

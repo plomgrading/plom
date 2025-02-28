@@ -4,6 +4,7 @@
 
 from .rectangle import (
     RectangleExtractor,
+    get_reference_qr_coords,
     get_reference_rectangle,
     get_idbox_rectangle,
     set_idbox_rectangle,

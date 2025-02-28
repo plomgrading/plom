@@ -352,10 +352,10 @@ def read_hack_and_resave_qvmap(filepath: Path):
     with open(filepath) as fh:
         reader = csv.DictReader(fh)
         qvmap_rows = [row for row in reader]
-    # even paper numbers should get id-version 2
+    # even paper numbers should get id-version 3
     for n, row in enumerate(qvmap_rows):
         if int(row["paper_number"]) % 2 == 0:
-            qvmap_rows[n]["id.version"] = 2
+            qvmap_rows[n]["id.version"] = 3
     headers = list(qvmap_rows[0].keys())
     with open(filepath, "w") as fh:
         writer = csv.DictWriter(fh, fieldnames=headers)

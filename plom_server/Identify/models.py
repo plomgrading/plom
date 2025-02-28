@@ -126,7 +126,7 @@ class IDRectangle(models.Model):
     """A model to store the location of the ID box on a version of the paper."""
 
     version = models.IntegerField(null=False, default=None, unique=True)
-    top = models.FloatField(null=True)
-    left = models.FloatField(null=True)
-    bottom = models.FloatField(null=True)
-    right = models.FloatField(null=True)
+    top = models.FloatField(null=False)
+    left = models.FloatField(null=False)
+    bottom = models.FloatField(null=False)
+    right = models.FloatField(null=False)

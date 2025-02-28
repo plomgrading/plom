@@ -6,7 +6,6 @@ from .views import (
     IDPredictionView,
     IDPredictionHXDeleteView,
     IDBoxParentView,
-    GetIDBoxRectangleView,
     GetVIDBoxRectangleView,
 )
 
@@ -17,7 +16,6 @@ urlpatterns = [
         name="id_prediction_delete",
     ),
     path("id_predictions", IDPredictionView.as_view(), name="id_prediction_home"),
-    path("id_rectangle", GetIDBoxRectangleView.as_view(), name="get_id_box_rectangle"),
     path(
         "vid_rectangle_parent",
         IDBoxParentView.as_view(),

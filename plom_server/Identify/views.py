@@ -14,9 +14,10 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect, HttpResponseClientRefresh
 
-from Papers.services import SpecificationService
+from Papers.services import SpecificationService, fixedpage_version_count
 from Base.base_group_views import ManagerRequiredView
 from Rectangles.services import (
+    get_reference_qr_coords,
     get_reference_rectangle,
     get_idbox_rectangle,
     set_idbox_rectangle,
@@ -72,80 +73,6 @@ class IDPredictionHXDeleteView(ManagerRequiredView):
         return HttpResponseClientRedirect(reverse("id_prediction_home"))
 
 
-class GetIDBoxRectangleView(ManagerRequiredView):
-    def get_id_box_context(self, region: None | dict[str, float]) -> dict:
-        context = self.build_context()
-        id_page_number = SpecificationService.get_id_page_number()
-        context.update({"page_number": id_page_number})
-
-        try:
-            qr_info = get_reference_rectangle(1, id_page_number)
-        except ValueError as err:
-            raise Http404(err)
-        x_coords = [X[0] for X in qr_info.values()]
-        y_coords = [X[1] for X in qr_info.values()]
-        rect_top_left = [min(x_coords), min(y_coords)]
-        rect_bottom_right = [max(x_coords), max(y_coords)]
-        context.update(
-            {
-                "qr_info": qr_info,
-                "top_left": rect_top_left,
-                "bottom_right": rect_bottom_right,
-            }
-        )
-        rex = RectangleExtractor(1, id_page_number)
-        # note that this rectangle is stated [0,1] coords relative to qr-code positions
-        initial_rectangle = rex.get_largest_rectangle_contour(region)
-        if initial_rectangle:
-            context.update(
-                {
-                    "initial_rectangle": [
-                        initial_rectangle["left_f"],
-                        initial_rectangle["top_f"],
-                        initial_rectangle["right_f"],
-                        initial_rectangle["bottom_f"],
-                    ]
-                }
-            )
-        return context
-
-    def get(self, request: HttpRequest) -> HttpResponse:
-        context = self.get_id_box_context(region=None)
-        return render(request, "Identify/find_id_rect.html", context)
-
-    def post(self, request: HttpRequest) -> HttpResponse:
-        # get the rectangle coordinates
-        left_f = round(float(request.POST.get("plom_left")), 6)
-        top_f = round(float(request.POST.get("plom_top")), 6)
-        right_f = round(float(request.POST.get("plom_right")), 6)
-        bottom_f = round(float(request.POST.get("plom_bottom")), 6)
-        # either find a rectangle within those coords or process.
-        if "find_rect" in request.POST:
-            context = self.get_id_box_context(
-                {
-                    "left_f": left_f,
-                    "right_f": right_f,
-                    "top_f": top_f,
-                    "bottom_f": bottom_f,
-                }
-            )
-            return render(request, "Identify/find_id_rect.html", context)
-        elif "submit" in request.POST:
-            try:
-                IDReaderService().run_the_id_reader_in_background_via_huey(
-                    request.user,
-                    (left_f, top_f, right_f, bottom_f),
-                    recompute_heatmap=True,
-                )
-                return redirect("id_prediction_home")
-            except MultipleObjectsReturned:
-                # this means a ID predictor task was already running, so
-                # we also redirect back to the prediction home
-                return redirect("id_prediction_home")
-        else:
-            return redirect("get_id_box_rectangle")
-
-
 class GetVIDBoxRectangleView(ManagerRequiredView):
     def delete(self, request: HttpRequest, version: int) -> HttpResponse:
         clear_idbox_rectangle(version)
@@ -154,14 +81,13 @@ class GetVIDBoxRectangleView(ManagerRequiredView):
     def get(self, request: HttpRequest, version: int) -> HttpResponse:
         id_page_number = SpecificationService.get_id_page_number()
         try:
-            qr_info = get_reference_rectangle(version, id_page_number)
+            qr_info = get_reference_qr_coords(version, id_page_number)
         except ValueError as err:
             raise Http404(err)
 
-        x_coords = [X[0] for X in qr_info.values()]
-        y_coords = [X[1] for X in qr_info.values()]
-        rect_top_left = [min(x_coords), min(y_coords)]
-        rect_bottom_right = [max(x_coords), max(y_coords)]
+        ref_rect = get_reference_rectangle(version, id_page_number)
+        rect_top_left = [ref_rect["left"], ref_rect["top"]]
+        rect_bottom_right = [ref_rect["right"], ref_rect["bottom"]]
         context = {
             "page_number": id_page_number,
             "version": version,
@@ -203,10 +129,10 @@ class GetVIDBoxRectangleView(ManagerRequiredView):
 
     def post(self, request: HttpRequest, version: int) -> HttpResponse:
         # get the rectangle coordinates
-        left_f = round(float(request.POST.get("plom_left")), 6)
-        top_f = round(float(request.POST.get("plom_top")), 6)
-        right_f = round(float(request.POST.get("plom_right")), 6)
-        bottom_f = round(float(request.POST.get("plom_bottom")), 6)
+        left_f = float(request.POST.get("plom_left"))
+        top_f = float(request.POST.get("plom_top"))
+        right_f = float(request.POST.get("plom_right"))
+        bottom_f = float(request.POST.get("plom_bottom"))
         region = {
             "left_f": left_f,
             "right_f": right_f,
@@ -243,29 +169,32 @@ class GetVIDBoxRectangleView(ManagerRequiredView):
 class IDBoxParentView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         id_page_number = SpecificationService.get_id_page_number()
+        id_version_counts = fixedpage_version_count(id_page_number)
         tl = {}
         br = {}
+        unused_id_versions = []
+        the_idpages = []
         for n in range(SpecificationService.get_n_versions()):
-            qr_info = get_reference_rectangle(n + 1, id_page_number)
-            x_coords = [X[0] for X in qr_info.values()]
-            y_coords = [X[1] for X in qr_info.values()]
-            tl[n + 1] = [min(x_coords), min(y_coords)]
-            br[n + 1] = [max(x_coords), max(y_coords)]
-
-        the_idpages = [
-            {
-                "version": n + 1,
-                "rectangle": get_idbox_rectangle(n + 1),
-                "top_left": tl[n + 1],
-                "bottom_right": br[n + 1],
-            }
-            for n in range(SpecificationService.get_n_versions())
-        ]
+            if n + 1 in id_version_counts:
+                ref_rect = get_reference_rectangle(n + 1, id_page_number)
+                tl[n + 1] = [ref_rect["left"], ref_rect["top"]]
+                br[n + 1] = [ref_rect["right"], ref_rect["bottom"]]
+                the_idpages.append(
+                    {
+                        "version": n + 1,
+                        "rectangle": get_idbox_rectangle(n + 1),
+                        "top_left": tl[n + 1],
+                        "bottom_right": br[n + 1],
+                    }
+                )
+            else:
+                unused_id_versions.append(n + 1)
 
         left_to_set = [X["version"] for X in the_idpages if X["rectangle"] is None]
         context = {
             "page_number": id_page_number,
             "idpage_list": the_idpages,
             "left_to_set": left_to_set,
+            "unused_id_versions": unused_id_versions,
         }
         return render(request, "Identify/parent_idbox_rect.html", context)
