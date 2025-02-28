@@ -111,10 +111,12 @@ wet_no_drift:
     - 'echo "Issue #2402: ensure two identical copies of the latex template"'
     - diff -s plom/latexTemplate.tex testTemplates/latexTemplate.tex
     - diff -s plom/latexTemplatev2.tex testTemplates/latexTemplatev2.tex
-    - echo "If version info duplicated, ensure same (currently none)"
+    - echo "If version info duplicated, ensure same"
     - export VER0=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
     - echo $VER0
-    # bash -c "[[ x$VER0 == x$VER1 ]]"
+    - export VER1=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom_server/__init__.py`
+    - echo $VER1
+    - bash -c "[[ x$VER0 == x$VER1 ]]"
 
 # we don't yet manage our CSS/JS libraries very well (Issue #2763)
 wet_css_js_3rd_party:
