@@ -168,8 +168,10 @@ def _is_rubric_change_considered_minor(
         return (False, "Changed revision")
     if new_data["kind"] != old.kind:
         return (False, "Changed kind")
-    if new_data["value"] != old.value:
-        return (False, "Changed value")
+    if new_data["kind"] != "neutral":
+        # neutral rubrics might not have "value"
+        if new_data["value"] != old.value:
+            return (False, "Changed value")
     if new_data["out_of"] != old.out_of:
         return (False, "Changed out_of")
     if new_data["question_index"] != old.question_index:
