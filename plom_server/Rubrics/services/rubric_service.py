@@ -186,9 +186,7 @@ def _is_rubric_change_considered_minor(
 def _modify_rubric_in_place(old_rubric: Rubric, serializer: RubricSerializer) -> Rubric:
     log.info(f"Modifying rubric {old_rubric.rid} rev {old_rubric.revision} in-place")
     serializer.validated_data["latest"] = True
-    serializer.update(old_rubric, serializer.validated_data)
-    old_rubric.save()
-    return old_rubric
+    return serializer.update(old_rubric, serializer.validated_data)
 
 
 def _modify_rubric_by_making_new_one(
@@ -202,8 +200,7 @@ def _modify_rubric_by_making_new_one(
     old_rubric.save()
     serializer.validated_data["revision"] += 1
     serializer.validated_data["latest"] = True
-    new_rubric = serializer.save()
-    return new_rubric
+    return serializer.save()
 
 
 class RubricService:
