@@ -71,7 +71,7 @@ from plom.canvas import (
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.5.1"
+__script_version__ = "0.6.0"
 
 
 def sis_id_to_student_dict(student_list):
@@ -219,6 +219,19 @@ parser.add_argument(
     "--no-post-grades",
     dest="post_grades",
     action="store_false",
+)
+parser.add_argument(
+    "--no-papers",
+    dest="papers",
+    action="store_false",
+    help="""
+        Don't push the reassembled papers.
+        CAUTION: in this case, this script still uses the pdf files in
+        "reassembled/" directory to decide who to upload to.  This is
+        a bit counter-intuitive b/c those files themselves are not uploaded.
+        The intended use of this option is for ADDING additional files
+        (see `--solutions, `--reports`).
+    """,
 )
 parser.add_argument(
     "--solutions",
@@ -404,7 +417,8 @@ if __name__ == "__main__":
         #     print("no")
         #     pass
         if args.dry_run:
-            timeouts.append((pdf.name, sis_id, name))
+            if args.papers:
+                timeouts.append((pdf.name, sis_id, name))
             if args.solutions and soln_pdf:
                 timeouts.append((soln_pdf.name, sis_id, name))
             if args.reports and report_pdf:
@@ -415,12 +429,13 @@ if __name__ == "__main__":
 
         # TODO: should look at the return values
         # TODO: back off on canvasapi.exception.RateLimitExceeded?
-        try:
-            sub.upload_comment(pdf)
-        except CanvasException as e:
-            print(e)
-            timeouts.append((pdf.name, sis_id, name))
-        time.sleep(random.uniform(0.1, 0.2))
+        if args.papers:
+            try:
+                sub.upload_comment(pdf)
+            except CanvasException as e:
+                print(e)
+                timeouts.append((pdf.name, sis_id, name))
+            time.sleep(random.uniform(0.1, 0.2))
         if args.solutions and soln_pdf:
             try:
                 sub.upload_comment(soln_pdf)
