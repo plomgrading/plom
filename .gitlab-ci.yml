@@ -307,7 +307,7 @@ coverage:
   needs: ["container-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.6.10
+    - pip install pytest pytest-cov coverage[toml]~=7.6.12
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -340,7 +340,7 @@ pylint:
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
     - python3 -m pip install astroid~=3.3.8  # codespell:ignore astroid
-    - python3 -m pip install pylint~=3.3.3
+    - python3 -m pip install pylint~=3.3.4
   script:
     - pylint plom
     - pylint plom_server
@@ -372,7 +372,7 @@ pyright:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - python3 -m pip install pyright~=1.1.391
+    - python3 -m pip install pyright~=1.1.394
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -383,7 +383,7 @@ flake8:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install flake8~=7.1.1
+    - python3 -m pip install flake8~=7.1.2
   script:
     # first show all errors and warnings but don't fail
     - flake8 --exit-zero
@@ -396,7 +396,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.9.6
+    - python3 -m pip install ruff~=0.9.7
   script:
     - ruff check .
     # ruff format .
@@ -407,7 +407,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.9.6
+    - python3 -m pip install ruff~=0.9.7
   script:
     # run once just for log out but don't fail
     - EXCEPTIONS="D101,D102,D103,D104,D106"
@@ -442,7 +442,7 @@ webplom_test:
   image: $IM
   script:
     - export PYTHONPATH=$PWD
-    - python3 -m pip install coverage~=7.6.10
+    - python3 -m pip install coverage~=7.6.12
     - pushd plom_server
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py makemigrations
