@@ -64,7 +64,7 @@ def set_idbox_rectangle(
         )
 
 
-def get_idbox_rectangle(version: int) -> None:
+def get_idbox_rectangle(version: int) -> dict[str, float] | None:
     try:
         idr = IDRectangle.objects.get(version=version)
         return {
@@ -82,7 +82,7 @@ def clear_idbox_rectangle(version: int) -> None:
         idr = IDRectangle.objects.get(version=version)
         idr.delete()
     except IDRectangle.DoesNotExist:
-        return None
+        pass
 
 
 class RectangleExtractor:

@@ -76,6 +76,6 @@ def build_with_without_soln(filename_without_suffix: str) -> None:
 
 
 if __name__ == "__main__":
-    sources = ["assessment_v1", "assessment_v2"]
+    sources = ["assessment_v1", "assessment_v2", "assessment_v3"]
     for filename in sources:
         build_with_without_soln(filename)

@@ -282,7 +282,7 @@ def build_demo_test_source_pdfs() -> None:
 def upload_demo_test_source_files():
     """Use 'plom_preparation_source' to upload a demo assessment source pdfs."""
     print("Uploading demo assessment source pdfs")
-    for v in (1, 2):
+    for v in (1, 2, 3):
         source_pdf = demo_file_directory / f"assessment_v{v}.pdf"
         run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
 
@@ -293,7 +293,7 @@ def upload_demo_solution_files():
     soln_spec_path = demo_file_directory / "demo_solution_spec.toml"
     print("Uploading demo solution pdfs")
     run_django_manage_command(f"plom_soln_spec upload {soln_spec_path}")
-    for v in [1, 2]:
+    for v in [1, 2, 3]:
         soln_pdf_path = demo_file_directory / f"assessment_v{v}_solutions.pdf"
         run_django_manage_command(f"plom_soln_sources upload -v {v} {soln_pdf_path}")
 
@@ -345,7 +345,10 @@ def depopulate_the_database():
 
 
 def read_hack_and_resave_qvmap(filepath: Path):
-    """Read qvmap file, set odd rows id.version to 2, resave."""
+    """Read qvmap file, set odd rows id.version to 2, resave.
+
+    Note - we do not use version 3 id page at all.
+    """
     with open(filepath) as fh:
         reader = csv.DictReader(fh)
         qvmap_rows = [row for row in reader]
