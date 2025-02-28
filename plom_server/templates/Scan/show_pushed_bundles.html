@@ -51,7 +51,10 @@
                                 <td class="text-start">
                                     <ul>
                                         <li>{{ bundle.n_pages }} pages</li>
-                                        <li>{{ bundle.n_papers }} papers: {{ bundle.pretty_print_paper_list }}</li>
+                                        <li>
+                                            {{ bundle.n_papers }} paper{{ bundle.n_papers|pluralize }}:
+                                            {{ bundle.pretty_print_paper_list }}
+                                        </li>
                                     </ul>
                                 </td>
                                 <td>
