@@ -243,13 +243,25 @@ class GetVIDBoxRectangleView(ManagerRequiredView):
 class IDBoxParentView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         id_page_number = SpecificationService.get_id_page_number()
+        tl = {}
+        br = {}
+        for n in range(SpecificationService.get_n_versions()):
+            qr_info = get_reference_rectangle(n + 1, id_page_number)
+            x_coords = [X[0] for X in qr_info.values()]
+            y_coords = [X[1] for X in qr_info.values()]
+            tl[n + 1] = [min(x_coords), min(y_coords)]
+            br[n + 1] = [max(x_coords), max(y_coords)]
+
         the_idpages = [
             {
                 "version": n + 1,
                 "rectangle": get_idbox_rectangle(n + 1),
+                "top_left": tl[n + 1],
+                "bottom_right": br[n + 1],
             }
             for n in range(SpecificationService.get_n_versions())
         ]
+
         left_to_set = [X["version"] for X in the_idpages if X["rectangle"] is None]
         context = {
             "page_number": id_page_number,

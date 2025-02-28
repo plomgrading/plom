@@ -30,24 +30,86 @@
                     <div class="col-3">
                         <div class="card">
                             <div {% if dat.rectangle %} class="card-body p-4 bg-success" {% else %} class="card p-4 bg-warning" {% endif %}>
-                                <img id="reference_image"
+                                <img id="idpage{{ dat.version }}"
                                      class="border w-100"
-                                     src="{% url 'reference_image' dat.version page_number %}">
-                            </img>
-                        </div>
-                        <div class="card-footer">
-                            {% if dat.rectangle %}
-                                <a class="btn btn-warning"
-                                   href="{% url 'get_vid_box_rectangle' dat.version %}">edit/clear rectangle</a>
-                            {% else %}
-                                <a class="btn btn-success"
-                                   href="{% url 'get_vid_box_rectangle' dat.version %}">set rectangle</a>
-                            {% endif %}
+                                     src="{% url 'reference_image' dat.version page_number %}" />
+                                <canvas id="canvas{{ dat.version }}"
+                                        style="position:absolute;
+                                               left: 0px;
+                                               top: 0px"></canvas>
+                            </div>
+                            <div class="card-footer">
+                                {% if dat.rectangle %}
+                                    <a class="btn btn-warning"
+                                       href="{% url 'get_vid_box_rectangle' dat.version %}">edit/clear id-box selection</a>
+                                {% else %}
+                                    <a class="btn btn-success"
+                                       href="{% url 'get_vid_box_rectangle' dat.version %}">select id-box</a>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
-                </div>
-            {% endfor %}
+                {% endfor %}
+            </div>
         </div>
     </div>
-</div>
+    <script>
+{% for dat in idpage_list %}
+var image{{dat.version}} = document.getElementById('idpage{{dat.version}}');
+var canvas{{dat.version}} = document.getElementById('canvas{{dat.version}}');
+{% endfor %}
+
+function drawBits(canvas, image, plom_tl, plom_br, sel_rect){
+  var ctx = canvas.getContext("2d");
+  canvas.style.top = image.offsetTop + 1 + "px";
+  canvas.style.left = image.offsetLeft + 1 + "px";
+  canvas.width=image.width;
+  canvas.height=image.height;
+
+  var ratio_w = image.width / image.naturalWidth;
+  var ratio_h = image.height / image.naturalHeight;
+
+  var plom_left = plom_tl[0]*ratio_w;
+  var plom_top = plom_tl[1]*ratio_h;
+  var plom_right = plom_br[0]*ratio_w;
+  var plom_bottom = plom_br[1]*ratio_h;
+  var plom_w = plom_right-plom_left;
+  var plom_h = plom_bottom-plom_top;
+
+  if (sel_rect != null) {
+    var sel_left = plom_left + sel_rect['left_f']*plom_w;
+    var sel_top = plom_top + sel_rect['top_f']*plom_h;
+    var sel_right = plom_left + sel_rect['right_f']*plom_w;
+    var sel_bottom = plom_top + sel_rect['bottom_f']*plom_h;
+
+    ctx.beginPath();
+    ctx.lineWidth = "2";
+    ctx.fillStyle = "#00808050";
+    ctx.strokeStyle = "#008080";
+    ctx.rect( sel_left, sel_top, sel_right-sel_left, sel_bottom-sel_top);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  <!--draw plom coord-system-->
+  ctx.beginPath();
+  ctx.strokeStyle = "#ff8000";
+  ctx.setLineDash([2,4]);
+  ctx.rect( plom_left, plom_top, plom_w, plom_h);
+  ctx.stroke();
+}
+
+function init(){
+  {% for dat in idpage_list %}
+  {% if dat.rectangle %}
+  drawBits(canvas{{dat.version}}, image{{dat.version}}, {{dat.top_left}}, {{dat.bottom_right}}, {{dat.rectangle|safe}});
+  {% else %}
+  drawBits(canvas{{dat.version}}, image{{dat.version}}, {{dat.top_left}}, {{dat.bottom_right}}, null);
+  {% endif %}
+  {% endfor %}
+}
+
+window.addEventListener('load',init)
+window.addEventListener('resize',init)
+    </script>
 {% endblock main_content %}
