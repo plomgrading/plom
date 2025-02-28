@@ -253,6 +253,8 @@ parser.add_argument(
     help="""
         Upload individualized student reports, in addition to reassembled papers
         (default: off).
+        The reports must be PDF files of the form "Student_Reports/12345678.pdf".
+        There must be one such file for each PDF file in "reassembled/".
     """,
 )
 
