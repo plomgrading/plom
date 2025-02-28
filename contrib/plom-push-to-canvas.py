@@ -71,7 +71,7 @@ from plom.canvas import (
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.5.0"
+__script_version__ = "0.5.1"
 
 
 def sis_id_to_student_dict(student_list):
@@ -353,9 +353,9 @@ if __name__ == "__main__":
     print("    done.")
 
     if args.dry_run:
-        print("\n\nPushing grades and marked papers to Canvas [DRY-RUN]...")
+        print("\n\nPushing to Canvas [DRY-RUN]...")
     else:
-        print("\n\nPushing grades and marked papers to Canvas...")
+        print("\n\nPushing to Canvas...")
     print("  --------------------------------------------------------------------")
     timeouts = []
     for pdf in tqdm(Path("reassembled").glob("*.pdf")):
