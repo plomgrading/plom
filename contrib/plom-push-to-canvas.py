@@ -409,7 +409,8 @@ if __name__ == "__main__":
                 timeouts.append((soln_pdf.name, sis_id, name))
             if args.reports and report_pdf:
                 timeouts.append((report_pdf.name, sis_id, name))
-            timeouts.append((mark, sis_id, name))
+            if args.post_grades:
+                timeouts.append((mark, sis_id, name))
             continue
 
         # TODO: should look at the return values
