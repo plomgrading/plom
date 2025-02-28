@@ -16,6 +16,7 @@ import zipfile
 from Papers.models import ReferenceImage
 from Papers.models import Paper, FixedPage
 from Papers.services import PaperInfoService
+from Identify.models import IDRectangle
 from plom.scan import rotate
 
 
@@ -45,6 +46,43 @@ def get_reference_rectangle(version: int, page: int) -> dict[str, list[float]]:
             corner_dat[cnr] = [val["x_coord"], val["y_coord"]]
 
     return corner_dat
+
+
+def set_idbox_rectangle(
+    version: int, left: float, top: float, right: float, bottom: float
+) -> None:
+    try:
+        idr = IDRectangle.objects.get(version=version)
+        idr.top = top
+        idr.left = left
+        idr.bottom = bottom
+        idr.right = right
+        idr.save()
+    except IDRectangle.DoesNotExist:
+        IDRectangle.objects.create(
+            version=version, left=left, top=top, right=right, bottom=bottom
+        )
+
+
+def get_idbox_rectangle(version: int) -> None:
+    try:
+        idr = IDRectangle.objects.get(version=version)
+        return {
+            "top_f": idr.top,
+            "left_f": idr.left,
+            "bottom_f": idr.bottom,
+            "right_f": idr.right,
+        }
+    except IDRectangle.DoesNotExist:
+        return None
+
+
+def clear_idbox_rectangle(version: int) -> None:
+    try:
+        idr = IDRectangle.objects.get(version=version)
+        idr.delete()
+    except IDRectangle.DoesNotExist:
+        return None
 
 
 class RectangleExtractor:

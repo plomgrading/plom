@@ -2,4 +2,10 @@
 # Copyright (C) 2024 Andrew Rechnitzer
 
 
-from .rectangle import RectangleExtractor, get_reference_rectangle
+from .rectangle import (
+    RectangleExtractor,
+    get_reference_rectangle,
+    get_idbox_rectangle,
+    set_idbox_rectangle,
+    clear_idbox_rectangle,
+)

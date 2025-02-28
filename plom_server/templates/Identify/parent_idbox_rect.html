@@ -1,0 +1,53 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2025 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    Select ID box rectangles
+{% endblock title %}
+{% block page_heading %}
+    Select ID box rectangles
+{% endblock page_heading %}
+{% block main_content %}
+    <div>
+        <a class="btn btn-success" href="{% url 'id_prediction_home' %}">
+            <i class="bi bi-chevron-left"></i>
+            Return to ID predictions
+        </a>
+    </div>
+    <div class="card m-2">
+        <div class="card-body">
+            <h5 class="card-title">ID Pages</h5>
+            {% if left_to_set %}
+                <div class="alert alert-info w-50">Not all ID-box rectangles are set: see below.</div>
+            {% else %}
+                <div class="alert alert-success w-50">All ID-box rectangles are set: CLICK TO RUN IDREADER (todo)</div>
+            {% endif %}
+            <div class="row mb-4">
+                {% for dat in idpage_list %}
+                    <div class="col-3">
+                        <div class="card">
+                            <div {% if dat.rectangle %} class="card-body p-4 bg-success" {% else %} class="card p-4 bg-warning" {% endif %}>
+                                <img id="reference_image"
+                                     class="border w-100"
+                                     src="{% url 'reference_image' dat.version page_number %}">
+                            </img>
+                        </div>
+                        <div class="card-footer">
+                            {% if dat.rectangle %}
+                                <a class="btn btn-warning"
+                                   href="{% url 'get_vid_box_rectangle' dat.version %}">edit/clear rectangle</a>
+                            {% else %}
+                                <a class="btn btn-success"
+                                   href="{% url 'get_vid_box_rectangle' dat.version %}">set rectangle</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock main_content %}

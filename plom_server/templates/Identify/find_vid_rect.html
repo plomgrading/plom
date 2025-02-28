@@ -1,0 +1,115 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2025 Andrew Rechnitzer
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    Extract ID box rectangle.
+{% endblock title %}
+{% block page_heading %}
+    Extract ID box rectangle
+{% endblock page_heading %}
+{% block main_content %}
+    <div>
+        <a class="btn btn-success" href="{% url 'get_vid_box_parent' %}">
+            <i class="bi bi-chevron-left"></i>
+            Return to ID pages
+        </a>
+    </div>
+    <div class="card m-2">
+        <div class="card-body">
+            <h5 class="card-title">ID Page from Version {{ version }}</h5>
+            <div class="row mb-4">
+                <div class="col-6">
+                    <img id="reference_image"
+                         class="border w-100"
+                         src="{% url 'reference_image' version page_number %}">
+                </img>
+                <canvas id="canvas" style="position:absolute; left: 0px; top: 0px"></canvas>
+            </div>
+            <div class="col-6">
+                <p hidden>
+                    The absolute coordinates of the selection.
+                    <ul hidden>
+                        <li>
+                            Top-left (
+                            <input id="thb_left" readonly />
+                            ,
+                            <input id="thb_top" readonly />
+                            )
+                        </li>
+                        <li>
+                            Bottom-right (
+                            <input id="thb_right" readonly />
+                            ,
+                            <input id="thb_bottom" readonly />
+                            )
+                        </li>
+                    </ul>
+                </p>
+                <form method="post" class="form my-2">
+                    {% csrf_token %}
+                    <ul hidden>
+                        <li>
+                            Top-left (
+                            <input id="plom_left" name="plom_left" readonly />
+                            ,
+                            <input id="plom_top" name="plom_top" readonly />
+                            )
+                        </li>
+                        <li>
+                            Bottom-right (
+                            <input id="plom_right" name="plom_right" readonly />
+                            ,
+                            <input id="plom_bottom" name="plom_bottom" readonly />
+                            )
+                        </li>
+                    </ul>
+                    <p>
+                        Instructions:
+                        <ul>
+                            <li>Select a rectangle that completely covers the ID box - with some margin.</li>
+                            <li>
+                                Then click the <q>Find Rectangle</q> button
+                                - this will then select the largest rectangle within that region.
+                            </li>
+                            <li>Make sure the resulting rectangle is now tight around the ID box.</li>
+                            <li>
+                                When you are satisfied click the <q>submit</q> button
+                                - and plom will start the student-ID prediction.
+                            </li>
+                        </ul>
+                    </p>
+                    <input class="btn btn-primary"
+                           type="submit"
+                           name="find_rect"
+                           value="Find Rectangle">
+                    <input class="btn btn-warning"
+                           onclick="return confirm('Are you sure?')"
+                           type="submit"
+                           name="submit"
+                           value="Set Rectangle">
+                    <button hx-delete="" class="btn btn-danger">Clear</button>
+                </form>
+                {% if initial_rectangle %}
+                    {% if best_guess %}
+                        <div class="alert alert-info">No pre-existing rectangle, making a reasonable guess (we hope)</div>
+                    {% else %}
+                        <div class="alert alert-success">Found rectangle</div>
+                    {% endif %}
+                {% else %}
+                    <div class="alert alert-warning">Could not find rectangle</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+  var corner_dat = {{qr_info|safe}};
+  var top_left_coord = {{top_left|safe}};
+  var bottom_right_coord = {{bottom_right|safe}};
+</script>
+<script src="{% static '/js/rectangle_select.js' %}"></script>
+{% if initial_rectangle %}<script>setInitialIDBoxRectangle({{initial_rectangle}});</script>{% endif %}
+{% endblock main_content %}
