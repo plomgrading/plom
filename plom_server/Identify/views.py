@@ -73,6 +73,25 @@ class IDPredictionHXDeleteView(ManagerRequiredView):
         return HttpResponseClientRedirect(reverse("id_prediction_home"))
 
 
+class IDPredictionLaunchHXPutView(ManagerRequiredView):
+    def put(self, request: HttpRequest) -> HttpResponse:
+        # make sure all required rectangles set
+        id_page_number = SpecificationService.get_id_page_number()
+        id_version_counts = fixedpage_version_count(id_page_number)
+        id_version_rectangles = {v: get_idbox_rectangle(v) for v in id_version_counts}
+        try:
+            IDReaderService().run_the_id_reader_in_background_via_huey(
+                request.user,
+                id_version_rectangles,
+                recompute_heatmap=True,
+            )
+        except MultipleObjectsReturned:
+            # this means a ID predictor task was already running, so
+            # we also redirect back to the prediction home
+            pass
+        return HttpResponseClientRedirect(reverse("id_prediction_home"))
+
+
 class GetVIDBoxRectangleView(ManagerRequiredView):
     def delete(self, request: HttpRequest, version: int) -> HttpResponse:
         clear_idbox_rectangle(version)

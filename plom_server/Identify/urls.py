@@ -5,6 +5,7 @@ from django.urls import path
 from .views import (
     IDPredictionView,
     IDPredictionHXDeleteView,
+    IDPredictionLaunchHXPutView,
     IDBoxParentView,
     GetVIDBoxRectangleView,
 )
@@ -16,6 +17,11 @@ urlpatterns = [
         name="id_prediction_delete",
     ),
     path("id_predictions", IDPredictionView.as_view(), name="id_prediction_home"),
+    path(
+        "id_predictions_launch",
+        IDPredictionLaunchHXPutView.as_view(),
+        name="id_prediction_launch",
+    ),
     path(
         "vid_rectangle_parent",
         IDBoxParentView.as_view(),
