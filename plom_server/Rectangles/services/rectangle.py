@@ -107,9 +107,8 @@ class RectangleExtractor:
     version 2, you are playing with fire a bit (b/c maybe version 1 is
     on A4 paper but version 2 is on Letter paper).  More likely, perhaps
     the boxes you're looking to get are not in *precisely* the same place.
-    In practice, you're welcome to try anyway..., for example in the case
-    of versioned-ID pages, we construct this object for Version 1 but
-    use it on others.
+    If you really want to do this, look for underscore kwargs like
+    `_version_ignore`.  This is unsupported.
     """
 
     def __init__(self, version: int, page: int) -> None:

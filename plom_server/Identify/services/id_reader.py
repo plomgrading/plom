@@ -398,7 +398,7 @@ class IDBoxProcessorService:
             rex = RectangleExtractor(v, id_page_number)
             for pn in paper_numbers:
                 id_box_filename = id_box_folder / f"id_box_{pn:04}.png"
-                id_box_bytes = rex.extract_rect_region(pn, *box, _version_ignore=True)
+                id_box_bytes = rex.extract_rect_region(pn, *box)
                 if id_box_bytes is None:
                     # just leave them out when rex cannot compute appropriate transforms
                     continue
