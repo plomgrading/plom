@@ -257,7 +257,7 @@ class RectangleExtractor:
             right_f (float): same as top, defining the right boundary.
 
         Keyword Args:
-            _version_override: RectangleExtractor is designed to be specific
+            _version_ignore: RectangleExtractor is designed to be specific
                 to a version provided at time of construction.  If you like
                 living somewhat dangerously (and/or have knowledge that your
                 version layouts are identical), then you can bypass this...
