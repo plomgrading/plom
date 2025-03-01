@@ -48,9 +48,7 @@
             <span class="alert alert-info my-4">Reader not yet run.</span>
         {% else %}
             <p class="my-4">
-                <button disabled
-                        class="btn btn-primary"
-                        href="{% url 'get_id_box_parent' %}">Run ID auto-reader tool</button>
+                <button disabled class="btn btn-primary" href="{% url 'get_id_box_parent' %}">Run ID auto-reader tool</button>
                 <button class="btn btn-warning" disabled>Delete LAP predictions</button>
                 <button class="btn btn-warning" disabled>Delete Greedy predictions</button>
                 <a class="btn btn-primary" href="{% url 'id_prediction_home' %}"><i class="bi bi-arrow-clockwise"></i></a>
