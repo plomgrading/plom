@@ -92,7 +92,7 @@ class IDPredictionLaunchHXPutView(ManagerRequiredView):
         return HttpResponseClientRedirect(reverse("id_prediction_home"))
 
 
-class GetVIDBoxRectangleView(ManagerRequiredView):
+class GetIDBoxesRectangleView(ManagerRequiredView):
     def delete(self, request: HttpRequest, version: int) -> HttpResponse:
         clear_idbox_rectangle(version)
         return HttpResponseClientRefresh()
@@ -144,7 +144,7 @@ class GetVIDBoxRectangleView(ManagerRequiredView):
             else:
                 # could not make a decent guess
                 pass
-        return render(request, "Identify/find_vid_rect.html", context)
+        return render(request, "Identify/find_id_rect.html", context)
 
     def post(self, request: HttpRequest, version: int) -> HttpResponse:
         # get the rectangle coordinates
@@ -179,10 +179,10 @@ class GetVIDBoxRectangleView(ManagerRequiredView):
                 right=region["right_f"],
                 bottom=region["bottom_f"],
             )
-            return redirect("get_vid_box_parent")
+            return redirect("get_id_box_parent")
         else:
             pass
-        return redirect("get_vid_box_rectangle", version)
+        return redirect("get_id_box_rectangle", version)
 
 
 class IDBoxParentView(ManagerRequiredView):

@@ -283,7 +283,7 @@ def huey_id_reading_task(
 
     Args:
         user: the user who triggered this process and so who will be associated with the predictions.
-        box: the coordinates of the ID box to extract.
+        box_versions: a dict keyed by version of the coordinates of the ID box to extract.
         recompute_heatmap: whether or not to recompute the digit probability heatmap.
 
     Keyword Args:

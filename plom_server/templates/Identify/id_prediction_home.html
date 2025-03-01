@@ -1,6 +1,6 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2024 Andrew Rechnitzer
+    Copyright (C) 2024-2025 Andrew Rechnitzer
     Copyright (C) 2024 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
@@ -15,7 +15,7 @@
     <div>
         {% if id_reader_task_status.status == "Complete" %}
             <p class="my-4">
-                <a class="btn btn-primary" href="{% url 'get_vid_box_parent' %}">Re-run ID auto-reader tool</a>
+                <a class="btn btn-primary" href="{% url 'get_id_box_parent' %}">Re-run ID auto-reader tool</a>
                 <button class="btn btn-warning"
                         hx-confirm="Are you sure?"
                         hx-delete="{% url 'id_prediction_delete' "MLLAP" %}">Delete LAP predictions</button>
@@ -26,7 +26,7 @@
             <span class="alert alert-success my-4">{{ id_reader_task_status.message }}</span>
         {% elif id_reader_task_status.status == "Error" %}
             <p class="my-4">
-                <a class="btn btn-primary" href="{% url 'get_vid_box_parent' %}">Re-run ID auto-reader tool</a>
+                <a class="btn btn-primary" href="{% url 'get_id_box_parent' %}">Re-run ID auto-reader tool</a>
                 <button class="btn btn-warning"
                         hx-confirm="Are you sure?"
                         hx-delete="{% url 'id_prediction_delete' "MLLAP" %}">Delete LAP predictions</button>
@@ -37,7 +37,7 @@
             <span class="alert alert-warning my-4">{{ id_reader_task_status.message }}</span>
         {% elif id_reader_task_status.status == "To Do" %}
             <p class="my-4">
-                <a class="btn btn-primary" href="{% url 'get_vid_box_parent' %}">Run ID auto-reader tool</a>
+                <a class="btn btn-primary" href="{% url 'get_id_box_parent' %}">Run ID auto-reader tool</a>
                 <button class="btn btn-warning"
                         hx-confirm="Are you sure?"
                         hx-delete="{% url 'id_prediction_delete' "MLLAP" %}">Delete LAP predictions</button>
@@ -50,7 +50,7 @@
             <p class="my-4">
                 <button disabled
                         class="btn btn-primary"
-                        href="{% url 'get_vid_box_parent' %}">Run ID auto-reader tool</button>
+                        href="{% url 'get_id_box_parent' %}">Run ID auto-reader tool</button>
                 <button class="btn btn-warning" disabled>Delete LAP predictions</button>
                 <button class="btn btn-warning" disabled>Delete Greedy predictions</button>
                 <a class="btn btn-primary" href="{% url 'id_prediction_home' %}"><i class="bi bi-arrow-clockwise"></i></a>

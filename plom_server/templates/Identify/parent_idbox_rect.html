@@ -47,10 +47,10 @@
                             <div class="card-footer">
                                 {% if dat.rectangle %}
                                     <a class="btn btn-warning"
-                                       href="{% url 'get_vid_box_rectangle' dat.version %}">edit/clear id-box selection</a>
+                                       href="{% url 'get_id_box_rectangle' dat.version %}">edit/clear id-box selection</a>
                                 {% else %}
                                     <a class="btn btn-success"
-                                       href="{% url 'get_vid_box_rectangle' dat.version %}">select id-box</a>
+                                       href="{% url 'get_id_box_rectangle' dat.version %}">select id-box</a>
                                 {% endif %}
                             </div>
                         </div>
@@ -58,7 +58,7 @@
                 {% endfor %}
             </div>
         </div>
-        <div class="card-footer">Note: No papers used ID page verions: {{ unused_id_versions }}</div>
+        <div class="card-footer">Note: No papers used ID page versions: {{ unused_id_versions }}</div>
     </div>
     <script>
 {% for dat in idpage_list %}

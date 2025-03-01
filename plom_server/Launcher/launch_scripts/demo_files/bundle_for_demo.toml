@@ -40,13 +40,13 @@ operations = ["darken", "jam", "stretch", "hide", "corrupt", "obscure"]
 [[bundles]]
 first_paper = 31
 last_paper = 40
-extra_page_papers = [31, 32]
 
 
 # bundle 5
 [[bundles]]
 first_paper = 41
 last_paper = 50
+extra_page_papers = [41, 42]
 wrong_assessment_papers = [49, 50]
 out_of_range_papers = [45]
 
