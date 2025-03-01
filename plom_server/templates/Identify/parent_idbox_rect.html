@@ -1,6 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2025 Andrew Rechnitzer
+    Copyright (C) 2025 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -12,7 +13,7 @@
 {% endblock page_heading %}
 {% block main_content %}
     <div>
-        <a class="btn btn-success" href="{% url 'id_prediction_home' %}">
+        <a class="btn btn-secondary" href="{% url 'id_prediction_home' %}">
             <i class="bi bi-chevron-left"></i>
             Return to ID predictions
         </a>
