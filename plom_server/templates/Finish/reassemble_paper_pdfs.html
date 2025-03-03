@@ -80,7 +80,8 @@
                      x-data="{first: {{ min_paper_number }}, last:{{ max_paper_number }}, the_url:'{% url "reassembled_range" %}' }">
                 <summary>Select range of reassembled papers to download</summary>
                 <div class="ms-4 my-2 w-75">
-                    <div class="input-group my-1" x-on:input="first=Math.min(first,last);">
+                    <div class="input-group my-1"
+                         x-on:input.debounce="first=Math.min(first,last);">
                         <span for="fpaper" class="input-group-text w-25">First paper</span>
                         <input type="number"
                                class="px-1 form-input form-control flex-grow-0 w-25"
@@ -95,7 +96,8 @@
                                x-model="first"
                                id="fpaper">
                     </div>
-                    <div class="input-group my-1" x-on:input="last=Math.max(first,last);">
+                    <div class="input-group my-1"
+                         x-on:input.debounce="last=Math.max(first,last);">
                         <span for="lpaper" class="input-group-text w-25">Last paper</span>
                         <input type="number"
                                class="px-1 form-input form-control flex-grow-0 w-25"
