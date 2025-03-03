@@ -106,6 +106,7 @@ class GetIDBoxesRectangleView(ManagerRequiredView):
         except ValueError as err:
             raise Http404(err)
 
+        # the plom-coord system defined by the location of the qr-codes
         ref_rect = get_reference_rectangle(version, id_page_number)
         rect_top_left = [ref_rect["left"], ref_rect["top"]]
         rect_bottom_right = [ref_rect["right"], ref_rect["bottom"]]
@@ -115,43 +116,28 @@ class GetIDBoxesRectangleView(ManagerRequiredView):
             "qr_info": qr_info,
             "top_left": rect_top_left,
             "bottom_right": rect_bottom_right,
+            "initial_rectangle": None,  # the selected rectangle
+            "best_guess": False,
         }
         rex = RectangleExtractor(version, id_page_number)
+        # have we found the idbox region before?
         region = get_idbox_rectangle(version)
-        if region:
-            context.update(
-                {
-                    "initial_rectangle": [
-                        region["left_f"],
-                        region["top_f"],
-                        region["right_f"],
-                        region["bottom_f"],
-                    ]
-                }
-            )
-        else:
+        if not region:  # if not try to get the biggest contour
             region = rex.get_largest_rectangle_contour(None)
             if region:
-                context.update(
-                    {
-                        "initial_rectangle": [
-                            region["left_f"],
-                            region["top_f"],
-                            region["right_f"],
-                            region["bottom_f"],
-                        ],
-                        "best_guess": True,
-                    }
-                )
-            else:
-                context.update(
-                    {
-                        "initial_rectangle": None,
-                        "best_guess": False,
-                    }
-                )
-                # could not make a decent guess
-                pass
+                # we have managed to guess one
+                context["best_guess"] = True
+        # at this point we have a region to display or not
+        if region:
+            context["initial_rectangle"] = [
+                region["left_f"],
+                region["top_f"],
+                region["right_f"],
+                region["bottom_f"],
+            ]
+        else:
+            # leave the initial rectangle context false.
+            pass
         return render(request, "Identify/find_id_rect.html", context)
 
     def post(self, request: HttpRequest, version: int) -> HttpResponse:
