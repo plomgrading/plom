@@ -353,7 +353,7 @@ class IDBoxProcessorService:
         Args:
             box_versions: A dict keyed by version of dict giving coords
                 of the box to extract. Dict of coords has keys 'left_f', 'right_f',
-                'top_f', 'bottom_f', with float values in [0,1].
+                'top_f', 'bottom_f', with float values.
 
         Keyword Args:
             exclude_prenamed_papers: by default we don't extract the id

@@ -144,6 +144,12 @@ class GetIDBoxesRectangleView(ManagerRequiredView):
                     }
                 )
             else:
+                context.update(
+                    {
+                        "initial_rectangle": None,
+                        "best_guess": False,
+                    }
+                )
                 # could not make a decent guess
                 pass
         return render(request, "Identify/find_id_rect.html", context)
@@ -191,27 +197,27 @@ class IDBoxParentView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         id_page_number = SpecificationService.get_id_page_number()
         id_version_counts = fixedpage_version_count(id_page_number)
-        tl = {}
-        br = {}
+        ref_tl = {}
+        ref_br = {}
         unused_id_versions = []
         the_idpages = []
         for n in range(SpecificationService.get_n_versions()):
             if n + 1 in id_version_counts:
                 ref_rect = get_reference_rectangle(n + 1, id_page_number)
-                tl[n + 1] = [ref_rect["left"], ref_rect["top"]]
-                br[n + 1] = [ref_rect["right"], ref_rect["bottom"]]
+                ref_tl[n + 1] = [ref_rect["left"], ref_rect["top"]]
+                ref_br[n + 1] = [ref_rect["right"], ref_rect["bottom"]]
                 the_idpages.append(
                     {
                         "version": n + 1,
-                        "rectangle": get_idbox_rectangle(n + 1),
-                        "top_left": tl[n + 1],
-                        "bottom_right": br[n + 1],
+                        "sel_rectangle": get_idbox_rectangle(n + 1),
+                        "ref_top_left": ref_tl[n + 1],
+                        "ref_bottom_right": ref_br[n + 1],
                     }
                 )
             else:
                 unused_id_versions.append(n + 1)
 
-        left_to_set = [X["version"] for X in the_idpages if X["rectangle"] is None]
+        left_to_set = [X["version"] for X in the_idpages if X["sel_rectangle"] is None]
         context = {
             "page_number": id_page_number,
             "idpage_list": the_idpages,

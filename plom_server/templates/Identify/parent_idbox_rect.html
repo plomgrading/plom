@@ -32,26 +32,26 @@
                 </div>
             {% endif %}
             <div class="row mb-4">
-                {% for dat in idpage_list %}
+                {% for data in idpage_list %}
                     <div class="col-3">
                         <div class="card">
-                            <div class="card-header">Version {{ dat.version }}</div>
-                            <div class="card-body p-4 {% if dat.rectangle %} bg-success {% else %} bg-warning {% endif %}">
-                                <img id="idpage{{ dat.version }}"
+                            <div class="card-header">Version {{ data.version }}</div>
+                            <div class="card-body p-4 {% if data.sel_rectangle %} bg-success {% else %} bg-warning {% endif %}">
+                                <img id="idpage{{ data.version }}"
                                      class="border w-100"
-                                     src="{% url 'reference_image' dat.version page_number %}" />
-                                <canvas id="canvas{{ dat.version }}"
+                                     src="{% url 'reference_image' data.version page_number %}" />
+                                <canvas id="canvas{{ data.version }}"
                                         style="position:absolute;
                                                left: 0px;
                                                top: 0px"></canvas>
                             </div>
                             <div class="card-footer">
-                                {% if dat.rectangle %}
+                                {% if data.sel_rectangle %}
                                     <a class="btn btn-warning"
-                                       href="{% url 'get_id_box_rectangle' dat.version %}">edit/clear id-box selection</a>
+                                       href="{% url 'get_id_box_rectangle' data.version %}">edit/clear id-box selection</a>
                                 {% else %}
                                     <a class="btn btn-success"
-                                       href="{% url 'get_id_box_rectangle' dat.version %}">select id-box</a>
+                                       href="{% url 'get_id_box_rectangle' data.version %}">select id-box</a>
                                 {% endif %}
                             </div>
                         </div>
@@ -62,12 +62,16 @@
         <div class="card-footer">Note: No papers used ID page versions: {{ unused_id_versions }}</div>
     </div>
     <script>
-{% for dat in idpage_list %}
-var image{{dat.version}} = document.getElementById('idpage{{dat.version}}');
-var canvas{{dat.version}} = document.getElementById('canvas{{dat.version}}');
+{% for data in idpage_list %}
+var image{{data.version}} = document.getElementById('idpage{{data.version}}');
+var canvas{{data.version}} = document.getElementById('canvas{{data.version}}');
 {% endfor %}
 
-function drawBits(canvas, image, plom_tl, plom_br, sel_rect){
+function drawBits(canvas, image, plom_tl, plom_br, sel_tl_f, sel_br_f){
+  <!--plom_tl,plom_br = top/left bottom/rigth of the plom coord system in -->
+  <!--  pixels. while -->
+  <!--sel_tl_f, sel_br_f are the selection rectangle except measured in the -->
+  <!--  [0,1] coord system.-->
   var ctx = canvas.getContext("2d");
   canvas.style.top = image.offsetTop + 1 + "px";
   canvas.style.left = image.offsetLeft + 1 + "px";
@@ -84,11 +88,12 @@ function drawBits(canvas, image, plom_tl, plom_br, sel_rect){
   var plom_w = plom_right-plom_left;
   var plom_h = plom_bottom-plom_top;
 
-  if (sel_rect != null) {
-    var sel_left = plom_left + sel_rect['left_f']*plom_w;
-    var sel_top = plom_top + sel_rect['top_f']*plom_h;
-    var sel_right = plom_left + sel_rect['right_f']*plom_w;
-    var sel_bottom = plom_top + sel_rect['bottom_f']*plom_h;
+  if ( (sel_tl_f != null) && (sel_br_f != null)) {
+    <!--convert select rectangle from [0,1] coords to pixels-->
+    var sel_left = plom_left + sel_tl_f[0]*plom_w;
+    var sel_top = plom_top + sel_tl_f[1]*plom_h;
+    var sel_right = plom_left + sel_br_f[0]*plom_w;
+    var sel_bottom = plom_top + sel_br_f[1]*plom_h;
 
     ctx.beginPath();
     ctx.lineWidth = "2";
@@ -108,11 +113,14 @@ function drawBits(canvas, image, plom_tl, plom_br, sel_rect){
 }
 
 function init(){
-  {% for dat in idpage_list %}
-  {% if dat.rectangle %}
-  drawBits(canvas{{dat.version}}, image{{dat.version}}, {{dat.top_left}}, {{dat.bottom_right}}, {{dat.rectangle|safe}});
+  {% for data in idpage_list %}
+  {% if data.sel_rectangle %}
+  drawBits(canvas{{data.version}}, image{{data.version}}, {{data.ref_top_left}}, {{data.ref_bottom_right}}, 
+    [{{data.sel_rectangle.left_f}}, {{data.sel_rectangle.top_f}}],
+    [{{data.sel_rectangle.right_f}}, {{data.sel_rectangle.bottom_f}}]
+    );
   {% else %}
-  drawBits(canvas{{dat.version}}, image{{dat.version}}, {{dat.top_left}}, {{dat.bottom_right}}, null);
+  drawBits(canvas{{data.version}}, image{{data.version}}, {{data.ref_top_left}}, {{data.ref_bottom_right}}, null, null);
   {% endif %}
   {% endfor %}
 }
