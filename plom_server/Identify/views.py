@@ -78,7 +78,9 @@ class IDPredictionLaunchHXPutView(ManagerRequiredView):
         # make sure all required rectangles set
         id_page_number = SpecificationService.get_id_page_number()
         id_version_counts = fixedpage_version_count(id_page_number)
-        id_version_rectangles = {v: get_idbox_rectangle(v) for v in id_version_counts}
+        id_version_rectangles: dict[int, dict[str, float] | None] = {
+            v: get_idbox_rectangle(v) for v in id_version_counts
+        }
         try:
             IDReaderService().run_the_id_reader_in_background_via_huey(
                 request.user,

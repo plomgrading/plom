@@ -82,7 +82,9 @@ class IDReaderService:
         """
         predictions = {}
         if predictor:
-            pred_query = IDPrediction.objects.filter(predictor=predictor)
+            pred_query = IDPrediction.objects.filter(predictor=predictor).order_by(
+                "paper__paper_number"
+            )
             for pred in pred_query:
                 predictions[pred.paper.paper_number] = {
                     "student_id": pred.student_id,
@@ -93,7 +95,7 @@ class IDReaderService:
 
         # else we want all predictors
         allpred: dict[int, list[dict[str, Any]]] = {}
-        pred_query = IDPrediction.objects.all()
+        pred_query = IDPrediction.objects.all().order_by("paper__paper_number")
         for pred in pred_query:
             if allpred.get(pred.paper.paper_number) is None:
                 allpred[pred.paper.paper_number] = []
@@ -197,7 +199,7 @@ class IDReaderService:
     def run_the_id_reader_in_foreground(
         self,
         user: User,
-        box_versions: dict[int, tuple[float, float, float, float] | None],
+        box_versions: dict[int, dict[str, float] | None],
         *,
         recompute_heatmap: bool = True,
     ):
@@ -217,7 +219,7 @@ class IDReaderService:
     def run_the_id_reader_in_background_via_huey(
         self,
         user: User,
-        box_versions: dict[int, tuple[float, float, float, float] | None],
+        box_versions: dict[int, dict[str, float] | None],
         recompute_heatmap: bool | None = True,
     ):
         """Run the ID reading process in the background.
@@ -270,7 +272,7 @@ class IDReaderService:
 @db_task(queue="tasks", context=True)
 def huey_id_reading_task(
     user: User,
-    box_versions: dict[int : tuple[float, float, float, float] | None],
+    box_versions: dict[int, tuple[float, float, float, float] | None],
     recompute_heatmap: bool,
     *,
     tracker_pk: int,
@@ -338,7 +340,7 @@ class IDBoxProcessorService:
     @transaction.atomic
     def save_all_id_boxes(
         self,
-        box_versions: dict[int, tuple[float, float, float, float] | None],
+        box_versions: dict[int, dict[str, float] | None],
         *,
         exclude_prenamed_papers: bool = True,
         save_dir: Path | None = None,
@@ -349,10 +351,9 @@ class IDBoxProcessorService:
         and so uses qr-code positions to rotate and find the given rectangle.
 
         Args:
-            box_versions: A dict keyed by version of list of the box to
-                extract or a default if ``None``. This is of the form
-                "top bottom left right", each how much of the page as
-                a float ``[0.0, 1.0]``.
+            box_versions: A dict keyed by version of dict giving coords
+                of the box to extract. Dict of coords has keys 'left_f', 'right_f',
+                'top_f', 'bottom_f', with float values in [0,1].
 
         Keyword Args:
             exclude_prenamed_papers: by default we don't extract the id
