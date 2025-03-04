@@ -113,7 +113,21 @@ def _validate_parameters(parameters: None | list) -> None:
 
 
 # TODO: this code belongs in model/serializer?
-def _validate_value_out_of(value, out_of) -> None:
+def _validate_value(value, max_mark) -> None:
+    # check that the "value" lies in [-max_mark, max_mark]
+    try:
+        value = float(value)
+    except ValueError as e:
+        raise serializers.ValidationError(
+            {"value": f"value {value} must be convertible to number: {e}"}
+        ) from e
+    if not -max_mark <= value <= max_mark:
+        raise serializers.ValidationError(
+            {"value": f"Value out of range: must lie in [-{max_mark}, {max_mark}]"}
+        )
+
+
+def _validate_value_out_of(value, out_of, max_mark) -> None:
     try:
         out_of = float(out_of)
     except ValueError as e:
@@ -129,6 +143,10 @@ def _validate_value_out_of(value, out_of) -> None:
     if not 0 <= value <= out_of:
         raise serializers.ValidationError(
             {"value": f"out of range: {value} is not in [0, {out_of}]."}
+        )
+    if not 0 < out_of <= max_mark:
+        raise serializers.ValidationError(
+            {"out_of": f"out of range: {out_of} is not in (0, {max_mark}]"}
         )
 
 
@@ -248,18 +266,10 @@ class RubricService:
             )
         # check that the "value" lies in [-max_mark, max_mark]
         max_mark = SpecificationService.get_question_max_mark(data["question_index"])
-        if not -max_mark <= data.get("value", 0) <= max_mark:
-            raise serializers.ValidationError(
-                "Value out of range: must lie in [-max_mark, max_mark]"
-            )
-
+        _validate_value(data.get("value", 0), max_mark)
         # TODO: Perhaps the serializer should do this
         if data["kind"] == "absolute":
-            _validate_value_out_of(data["value"], data["out_of"])
-            if data["out_of"] > max_mark:
-                raise serializers.ValidationError(
-                    "'Out_of' out of range: must be less that max-mark"
-                )
+            _validate_value_out_of(data["value"], data["out_of"], max_mark)
 
         # TODO: more validation of JSONFields that the model/form/serializer should
         # be doing (see `clean_versions` commented out in Rubrics/models.py)
@@ -426,16 +436,10 @@ class RubricService:
         max_mark = SpecificationService.get_question_max_mark(
             new_rubric_data["question_index"]
         )
+        _validate_value(new_rubric_data.get("value", 0), max_mark)
         if new_rubric_data["kind"] == "absolute":
-            _validate_value_out_of(new_rubric_data["value"], new_rubric_data["out_of"])
-            if new_rubric_data["out_of"] > max_mark:
-                raise serializers.ValidationError(
-                    "'Out_of' out of range: must be less that max-mark"
-                )
-        # check that the "value" lies in [-max_mark, max_mark]
-        if not -max_mark <= new_rubric_data.get("value", 0) <= max_mark:
-            raise serializers.ValidationError(
-                "Value out of range: must lie in [-max_mark, max_mark]"
+            _validate_value_out_of(
+                new_rubric_data["value"], new_rubric_data["out_of"], max_mark
             )
 
         _validate_versions(new_rubric_data.get("versions"))

@@ -147,7 +147,7 @@ class RubricServiceTests_extra_validation(TestCase):
 
     def test_create_rubric_invalid_value(self) -> None:
         rub = {
-            "kind": "neutral",
+            "kind": "relative",
             "value": -999,
             "text": "qwerty",
             "username": "Liam",
