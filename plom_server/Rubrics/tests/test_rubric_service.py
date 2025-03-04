@@ -711,3 +711,62 @@ class RubricServiceTests(TestCase):
         self.assertEqual(len(rubrics), RubricService().get_rubric_count())
         for r in rubrics:
             assert isinstance(r, dict)
+
+    def test_modify_autodetect_major_edit_on_value_change(self) -> None:
+        data = _Rubric_to_dict(self.absolute_rubric)
+        rid = data["rid"]
+        data["value"] += 1
+        new = RubricService.modify_rubric(rid, data, is_minor_change=None)
+        self.assertEqual(new["revision"], data["revision"] + 1)
+
+    def test_modify_autodetect_major_edit_on_kind_change(self) -> None:
+        data = _Rubric_to_dict(self.neutral_rubric)
+        rid = data["rid"]
+        data["value"] = 1
+        data["kind"] = "relative"
+        data.pop("out_of")
+        new = RubricService.modify_rubric(rid, data, is_minor_change=None)
+        self.assertEqual(new["revision"], data["revision"] + 1)
+
+    def test_modify_autodetect_major_edit_on_out_of_change(self) -> None:
+        data = _Rubric_to_dict(self.absolute_rubric)
+        rid = data["rid"]
+        data["out_of"] += 1
+        new = RubricService.modify_rubric(rid, data, is_minor_change=None)
+        self.assertEqual(new["revision"], data["revision"] + 1)
+
+    def test_modify_autodetect_major_edit_on_change_question(self) -> None:
+        data = _Rubric_to_dict(self.absolute_rubric)
+        rid = data["rid"]
+        current_qidx = data["question_index"]
+        assert current_qidx != 2, "test invalid unless we change the question index"
+        data["question_index"] = 2
+        new = RubricService.modify_rubric(rid, data, is_minor_change=None)
+        self.assertEqual(new["revision"], data["revision"] + 1)
+
+    def test_modify_autodetect_minor_edit_on_tag_change(self) -> None:
+        data = _Rubric_to_dict(self.absolute_rubric)
+        rid = data["rid"]
+        data["tags"] = "new_tag"
+        new = RubricService.modify_rubric(rid, data, is_minor_change=None)
+        self.assertEqual(new["revision"], data["revision"])
+
+    def test_modify_force_major_minor_change_text(self) -> None:
+        data = _Rubric_to_dict(self.absolute_rubric)
+        rid = data["rid"]
+        data["text"] = "some brand new text"
+        new1 = RubricService.modify_rubric(rid, data, is_minor_change=True)
+        self.assertEqual(new1["revision"], data["revision"])
+        new2 = RubricService.modify_rubric(rid, data, is_minor_change=False)
+        self.assertEqual(new2["revision"], data["revision"] + 1)
+        # Perhaps we'd like to also test that new1 is not a new DB record
+        # and that new2 *is* a different DB record
+
+    def test_modify_force_minor_change_value(self) -> None:
+        data = _Rubric_to_dict(self.absolute_rubric)
+        rid = data["rid"]
+        data["value"] += 1
+        new1 = RubricService.modify_rubric(rid, data, is_minor_change=True)
+        self.assertEqual(new1["revision"], data["revision"])
+        new2 = RubricService.modify_rubric(rid, data, is_minor_change=False)
+        self.assertEqual(new2["revision"], data["revision"] + 1)
