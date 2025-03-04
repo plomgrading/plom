@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2025 Andrew Rechnitzer
 
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
@@ -12,6 +13,7 @@ from model_bakery import baker
 
 from Base.models import SettingsModel
 from ..services import RubricService
+from Papers.models import SpecQuestion
 
 
 def _make_ex():
@@ -31,6 +33,8 @@ class RubricServiceTests_permissions(TestCase):
     def setUp(self) -> None:
         baker.make(User, username="xenia")
         baker.make(User, username="yvonne")
+        baker.make(SpecQuestion, question_index=1, mark=5)
+        baker.make(SpecQuestion, question_index=2, mark=5)
 
     def test_rubrics_None_user_can_modify_when_locked(self) -> None:
         s = SettingsModel.load()
