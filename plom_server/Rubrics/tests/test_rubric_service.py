@@ -119,6 +119,11 @@ class RubricServiceTests_exceptions(TestCase):
         rub["value"] = -2
         with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
             RubricService().create_rubric(rub)
+        # check if out_of > max_mark
+        rub["value"] = 3
+        rub["out_of"] = 99
+        with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
+            RubricService().create_rubric(rub)
 
     def test_create_rubric_should_not_have_existing_rid(self) -> None:
         rub = {
@@ -668,6 +673,10 @@ class RubricServiceTests(TestCase):
         with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
             service.modify_rubric(rid, simulated_client_data)
         simulated_client_data["value"] = 99
+        with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
+            service.modify_rubric(rid, simulated_client_data)
+        simulated_client_data["value"] = 4
+        simulated_client_data["out_of"] = 99
         with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
             service.modify_rubric(rid, simulated_client_data)
 
