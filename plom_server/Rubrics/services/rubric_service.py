@@ -246,6 +246,12 @@ class RubricService:
                 data["kind"],
                 data.get("out_of", None),
             )
+        # check that the "value" lies in [-max_mark, max_mark]
+        max_mark = SpecificationService.get_question_max_mark(data["question_index"])
+        if not -max_mark <= data.get("value", 0) <= max_mark:
+            raise serializers.ValidationError(
+                "Value out of range: must lie in [-max_mark, max_mark]"
+            )
 
         # TODO: Perhaps the serializer should do this
         if data["kind"] == "absolute":
@@ -415,6 +421,15 @@ class RubricService:
         # TODO: Perhaps the serializer should do this
         if new_rubric_data["kind"] == "absolute":
             _validate_value_out_of(new_rubric_data["value"], new_rubric_data["out_of"])
+
+        # check that the "value" lies in [-max_mark, max_mark]
+        max_mark = SpecificationService.get_question_max_mark(
+            new_rubric_data["question_index"]
+        )
+        if not -max_mark <= new_rubric_data.get("value", 0) <= max_mark:
+            raise serializers.ValidationError(
+                "Value out of range: must lie in [-max_mark, max_mark]"
+            )
 
         _validate_versions(new_rubric_data.get("versions"))
         _validate_parameters(new_rubric_data.get("parameters"))

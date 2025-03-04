@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2025 Andrew Rechnitzer
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -15,7 +16,7 @@ from rest_framework import serializers
 from plom.plom_exceptions import PlomConflict
 from Mark.models.annotations import Annotation
 from Mark.models.tasks import MarkingTask
-from Papers.models.paper_structure import Paper
+from Papers.models import Paper, SpecQuestion
 from ..models import Rubric
 from ..services import RubricService
 
@@ -28,6 +29,7 @@ class RubricServiceTests_exceptions(TestCase):
 
     def setUp(self) -> None:
         baker.make(User, username="Liam")
+        baker.make(SpecQuestion, question_index=1, mark=5)
 
     def test_no_user_ValueError(self) -> None:
         """Test ValueError in RubricService.create_rubric().
@@ -110,6 +112,11 @@ class RubricServiceTests_exceptions(TestCase):
             "username": "Liam",
             "question_index": 1,
         }
+        # check error thrown when value > out_of
+        with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
+            RubricService().create_rubric(rub)
+        # check if value < 0
+        rub["value"] = -2
         with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
             RubricService().create_rubric(rub)
 
@@ -131,6 +138,18 @@ class RubricServiceTests_extra_validation(TestCase):
 
     def setUp(self) -> None:
         baker.make(User, username="Liam")
+        baker.make(SpecQuestion, question_index=1, mark=5)
+
+    def test_create_rubric_invalid_value(self) -> None:
+        rub = {
+            "kind": "neutral",
+            "value": -999,
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 1,
+        }
+        with self.assertRaises(serializers.ValidationError):
+            RubricService().create_rubric(rub)
 
     def test_create_rubric_invalid_versions(self) -> None:
         for bad_versions in ("[1, 1.2]", "[1, sth]", "{1, 2}", [1, 1.2], [1, "abc"]):
@@ -187,6 +206,9 @@ class RubricServiceTests(TestCase):
     def setUp(self) -> None:
         user1: User = baker.make(User, username="Liam")
         user2: User = baker.make(User, username="Olivia")
+        baker.make(SpecQuestion, question_index=1, mark=5)
+        baker.make(SpecQuestion, question_index=2, mark=5)
+        baker.make(SpecQuestion, question_index=3, mark=5)
 
         self.neutral_rubric = baker.make(
             Rubric,
@@ -486,7 +508,9 @@ class RubricServiceTests(TestCase):
         username = user.username
 
         for kind in ("absolute", "relative", "neutral"):
-            rubric = baker.make(Rubric, user=user, kind=kind, latest=True)
+            rubric = baker.make(
+                Rubric, user=user, kind=kind, latest=True, question_index=1
+            )
             rid = rubric.rid
             d = _Rubric_to_dict(rubric)
 
@@ -638,6 +662,12 @@ class RubricServiceTests(TestCase):
             "username": "Olivia",
             "question_index": 1,
         }
+        with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
+            service.modify_rubric(rid, simulated_client_data)
+        simulated_client_data["value"] = -2
+        with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
+            service.modify_rubric(rid, simulated_client_data)
+        simulated_client_data["value"] = 99
         with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
             service.modify_rubric(rid, simulated_client_data)
 
