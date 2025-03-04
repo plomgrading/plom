@@ -110,12 +110,15 @@ class MmodifyRubric(APIView):
             Responds with 409 if your modifications conflict with others'
             (e.g., two users have both modified the same rubric).
         """
+        # TODO: change is_minor_change default to `None`, add API extension
+        # (maybe a "&" param) to support client-selection.
         try:
             rubric_as_dict = RubricService.modify_rubric(
                 rid,
                 request.data["rubric"],
                 modifying_user=request.user,
                 tag_tasks=False,
+                is_minor_change=True,
             )
             # TODO: use a serializer to get automatic conversion from Rubric object?
             return Response(rubric_as_dict, status=status.HTTP_200_OK)
