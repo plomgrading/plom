@@ -474,7 +474,10 @@ class RubricService:
 
         # see issue #3683 - need to prefetch these fields for
         # the _Rubric_to_dict function.
-        for r in rubric_queryset.prefetch_related("user", "modified_by_user"):
+        # similarly we need to pedagogy tags prefetch 
+        for r in rubric_queryset.prefetch_related(
+            "user", "modified_by_user", "pedagogy_tags"
+        ):
             rubric_data.append(_Rubric_to_dict(r))
 
         new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))

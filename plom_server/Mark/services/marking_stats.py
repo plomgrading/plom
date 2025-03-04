@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Bryan Tanady
@@ -359,7 +359,7 @@ class MarkingStatsService:
             task_set = task_set.filter(status=status)
         task_info = []
         for task in task_set.prefetch_related(
-            "latest_annotation", "paper", "assigned_user"
+            "latest_annotation", "paper", "assigned_user", "markingtasktag_set"
         ).order_by("paper__paper_number"):
             dat = {
                 "paper_number": task.paper.paper_number,
