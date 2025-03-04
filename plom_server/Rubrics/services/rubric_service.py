@@ -172,8 +172,10 @@ def _is_rubric_change_considered_minor(
         # neutral rubrics might not have "value"
         if new_data["value"] != old.value:
             return (False, "Changed value")
-    if new_data["out_of"] != old.out_of:
-        return (False, "Changed out_of")
+    if new_data["kind"] == "absolute":
+        # non-absolute rubrics might not have "out_of"
+        if new_data["out_of"] != old.out_of:
+            return (False, "Changed out_of")
     if new_data["question_index"] != old.question_index:
         return (False, "Changed question_index")
 
