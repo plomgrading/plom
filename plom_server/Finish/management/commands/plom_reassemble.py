@@ -9,9 +9,8 @@ from time import sleep
 
 from tabulate import tabulate
 from django.core.management.base import BaseCommand, CommandError
-from django.utils.text import slugify
 
-from Papers.services import PaperInfoService, SpecificationService
+from Papers.services import PaperInfoService
 
 from ...services import ReassembleService
 
