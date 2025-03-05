@@ -53,7 +53,11 @@
                                 <div>
                                     <a href="{% url 'progress_marking_task_filter' %}?username={{ user.username }}"
                                        class>{{ user.username }}</a>
-                                    {% if user in lead_markers %}<i class="bi bi-bookmark-star text-primary"></i>{% endif %}
+                                    {% if user in lead_markers %}
+                                        <i class="bi bi-bookmark-star text-primary"
+                                           data-bs-toggle="tooltip"
+                                           title="lead marker"></i>
+                                    {% endif %}
                                 </div>
                                 <a href="{% url 'reset_user_password' user.username %}"
                                    class=" link-underline link-underline-opacity-25"
