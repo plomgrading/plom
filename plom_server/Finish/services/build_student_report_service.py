@@ -4,9 +4,10 @@
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 
 from datetime import datetime
-from pathlib import Path
 from statistics import mean, median, mode, stdev, quantiles
 from typing import Any
+
+from django.conf import settings
 
 from Papers.models import Paper
 from Papers.services import SpecificationService
@@ -131,7 +132,7 @@ class BuildStudentReportService:
         else:
             sid = None
 
-        outdir = Path("student_report")
+        outdir = settings.MEDIA_ROOT / "student_report"
         outdir.mkdir(exist_ok=True)
 
         report = pdf_builder(versions=True, sid=sid)
@@ -157,7 +158,7 @@ class BuildStudentReportService:
         Returns:
             A dictionary with student report PDF file in bytes.
         """
-        outdir = Path("student_report")
+        outdir = settings.MEDIA_ROOT / "student_report"
         outdir.mkdir(exist_ok=True)
 
         return brief_report_pdf_builder(
