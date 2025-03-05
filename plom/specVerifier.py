@@ -187,26 +187,44 @@ def build_page_to_group_dict(spec) -> dict[int, str]:
     return page_to_group
 
 
-def build_page_to_version_dict(spec, question_versions):
+def build_page_to_version_dict(spec, question_versions: dict[int, int]):
     """Given the spec and the question-version dict, produce a dict that maps pages to versions.
 
     Args:
         spec (dict): A validated test spec
-        question_versions (dict): A dict mapping question numbers to version numbers.
+        question_versions: A dict mapping question numbers to version numbers.
         Note that typically each exam has a different qv-map.
 
     Returns:
         dict: A mapping of page numbers to versions. Note idpages and
         dnm pages have version 1.
+
+    Raises:
+        NotImplementedError: a page has multiple versions, that is b/c two
+            or more questions that share a page but have different versions.
+            See also
+            :method:`plom_server.Papers.service.paper_info.get_version_from_paper_page`.
     """
     # idpage and dnm pages always from version 1
-    page_to_version = {spec["idPage"]: 1}
+    page_to_versions = {spec["idPage"]: [1]}
     for pg in spec["doNotMarkPages"]:
-        page_to_version[pg] = 1
+        page_to_versions[pg] = [1]
     for q in spec["question"]:
         for pg in spec["question"][q]["pages"]:
+            verlist = page_to_versions.get(pg, [])
             # be careful, the qv-map keys are ints, while those in the spec are strings
-            page_to_version[pg] = question_versions[int(q)]
+            verlist.append(question_versions[int(q)])
+            page_to_versions[pg] = verlist
+    page_to_version = {}
+    for pg, vers in page_to_versions.items():
+        verset = set(vers)
+        if len(verset) != 1:
+            raise NotImplementedError(
+                "This code requires pages be uniquely versioned, "
+                f"but page {pg} has versions {verlist}"
+            )
+        (ver,) = verset
+        page_to_version[pg] = ver
     return page_to_version
 
 
