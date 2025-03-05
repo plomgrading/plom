@@ -23,6 +23,15 @@ RANGE_BIN_OFFSET = 2
 HIGHLIGHT_COLOR = "orange"
 
 
+def _ensure_all_figures_closed() -> None:
+    """Ensure that all matplotlib figures are closed.
+
+    Raises:
+        AssertionError: If not all figures are closed.
+    """
+    assert plt.get_fignums() == [], "Not all matplotlib figures were closed."
+
+
 def get_graph_as_BytesIO(fig: matplotlib.figure.Figure) -> BytesIO:
     """Return the graph as a BytesIO.
 
@@ -66,12 +75,8 @@ class MatplotlibService:
 
     @staticmethod
     def ensure_all_figures_closed() -> None:
-        """Ensure that all matplotlib figures are closed.
-
-        Raises:
-            AssertionError: If not all figures are closed.
-        """
-        assert plt.get_fignums() == [], "Not all matplotlib figures were closed."
+        """Assert that all Matplotlib figures are closed."""
+        _ensure_all_figures_closed()
 
     def histogram_of_total_marks(
         self, *, highlighted_sid: str | None = None, format: str = "base64"
@@ -848,12 +853,8 @@ class MinimalPlotService:
 
     @staticmethod
     def ensure_all_figures_closed() -> None:
-        """Ensure that all matplotlib figures are closed.
-
-        Raises:
-            AssertionError: If not all figures are closed.
-        """
-        assert plt.get_fignums() == [], "Not all matplotlib figures were closed."
+        """Assert that all Matplotlib figures are closed."""
+        _ensure_all_figures_closed()
 
     def kde_plot_of_total_marks(
         self,
@@ -877,7 +878,7 @@ class MinimalPlotService:
             Base64 encoded string or bytes containing the plot.
         """
         assert format in self.formats
-        self.ensure_all_figures_closed()
+        _ensure_all_figures_closed()
         sns.set_theme()
         sns.kdeplot(data=np.array(total_score_list), fill=True)
         # Overlay the student's score by highlighting the bar
@@ -887,7 +888,7 @@ class MinimalPlotService:
 
         plt.ylabel("Proportion of students")
         graph_bytes = get_graph_as_BytesIO(plt.gcf())
-        self.ensure_all_figures_closed()
+        _ensure_all_figures_closed()
         if format == "bytes":
             return graph_bytes
         else:
@@ -917,7 +918,7 @@ class MinimalPlotService:
             Base64 encoded string or bytes containing the plot.
         """
         assert format in self.formats
-        self.ensure_all_figures_closed()
+        _ensure_all_figures_closed()
 
         maxmark = SpecificationService.get_question_mark(question_idx)
         qlabel = SpecificationService.get_question_label(question_idx)
@@ -953,7 +954,7 @@ class MinimalPlotService:
         ax.set_xticks(range(0, maxmark + 1))
 
         graph_bytes = get_graph_as_BytesIO(fig)
-        self.ensure_all_figures_closed()
+        _ensure_all_figures_closed()
 
         if format == "bytes":
             return graph_bytes
@@ -977,7 +978,7 @@ class MinimalPlotService:
             Base64 encoded string or bytes containing the plot.
         """
         assert format in self.formats
-        self.ensure_all_figures_closed()
+        _ensure_all_figures_closed()
 
         tag_to_question = QuestionTagService.get_tag_to_question_links()
         n_tags = len(tag_to_question)
@@ -1008,7 +1009,7 @@ class MinimalPlotService:
         plt.xticks([0.1, 0.3, 0.5, 0.7, 0.9], ["low", "", "", "", "high"])
 
         graph_bytes = get_graph_as_BytesIO(plt.gcf())
-        self.ensure_all_figures_closed()
+        _ensure_all_figures_closed()
 
         if format == "bytes":
             return graph_bytes
