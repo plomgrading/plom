@@ -187,6 +187,23 @@ def build_page_to_group_dict(spec) -> dict[int, str]:
     return page_to_group
 
 
+def _build_page_to_versions_dict(
+    spec, question_versions: dict[int, int]
+) -> dict[int, list[int]]:
+    # idpage and dnm pages always from version 1
+    page_to_versions = {spec["idPage"]: [1]}
+    for pg in spec["doNotMarkPages"]:
+        page_to_versions[pg] = [1]
+    for q in spec["question"]:
+        for pg in spec["question"][q]["pages"]:
+            # Issue #3838: do this carefully in case there are multiple conflicting versions
+            verlist = page_to_versions.get(pg, [])
+            # be careful, the qv-map keys are ints, while those in the spec are strings
+            verlist.append(question_versions[int(q)])
+            page_to_versions[pg] = verlist
+    return page_to_versions
+
+
 def build_page_to_version_dict(
     spec, question_versions: dict[int, int]
 ) -> dict[int, int]:
@@ -207,17 +224,7 @@ def build_page_to_version_dict(
             See also
             :method:`plom_server.Papers.service.paper_info.get_version_from_paper_page`.
     """
-    # idpage and dnm pages always from version 1
-    page_to_versions = {spec["idPage"]: [1]}
-    for pg in spec["doNotMarkPages"]:
-        page_to_versions[pg] = [1]
-    for q in spec["question"]:
-        for pg in spec["question"][q]["pages"]:
-            # Issue #3838: do this carefully in case there are multiple conflicting versions
-            verlist = page_to_versions.get(pg, [])
-            # be careful, the qv-map keys are ints, while those in the spec are strings
-            verlist.append(question_versions[int(q)])
-            page_to_versions[pg] = verlist
+    page_to_versions = _build_page_to_versions_dict(spec, question_versions)
     page_to_version = {}
     for pg, vers in page_to_versions.items():
         verset = set(vers)
