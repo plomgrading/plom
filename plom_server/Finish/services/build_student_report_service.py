@@ -75,7 +75,7 @@ def brief_report_pdf_builder(
         "sid": paper_info["sid"],
         "grade": paper_info["total"],
         "total_stats": _get_descriptive_statistics_from_score_list(total_score_list),
-        "kde_graph": MinimalPlotService().kde_plot_of_total_marks(
+        "kde_graph": MinimalPlotService.kde_plot_of_total_marks(
             total_score_list, highlighted_score=paper_info["total"]
         ),
         "boxplots": [

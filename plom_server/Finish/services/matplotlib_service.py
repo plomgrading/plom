@@ -21,6 +21,7 @@ from QuestionTags.services import QuestionTagService
 
 RANGE_BIN_OFFSET = 2
 HIGHLIGHT_COLOR = "orange"
+_acceptable_formats = ("base64", "bytes")
 
 
 def _ensure_all_figures_closed() -> None:
@@ -71,7 +72,7 @@ class MatplotlibService:
 
         self.student_df = self.des._get_student_data()
         self.ta_df = self.des._get_ta_data()
-        self.formats = ["base64", "bytes"]
+        self.formats = _acceptable_formats
 
     @staticmethod
     def ensure_all_figures_closed() -> None:
@@ -253,25 +254,16 @@ class MatplotlibService:
         Returns:
             Base64 encoded string or bytes containing the plot.
         """
-        assert format in self.formats
-        self.ensure_all_figures_closed()
-        sns.set_theme()
-        sns.kdeplot(data=self.des.get_totals(), fill=True)
-        # Overlay the student's score by highlighting the bar
+        highlighted_score = None
         if highlighted_sid:
             df = self.des.get_student_data()
             student = df[df["StudentID"] == highlighted_sid]
             student_score = student["Total"].values[0]
-            # this gives x-coord of bar, we get the y-coord from the ylim of the plot
-            plt.bar(student_score, plt.ylim()[1], color=HIGHLIGHT_COLOR, alpha=0.5)
+            highlighted_score = student_score
 
-        plt.ylabel("Proportion of students")
-        graph_bytes = get_graph_as_BytesIO(plt.gcf())
-        self.ensure_all_figures_closed()
-        if format == "bytes":
-            return graph_bytes
-        else:
-            return get_graph_as_base64(graph_bytes)
+        MinimalPlotService.kde_plot_of_total_marks(
+            self.des.get_totals(), highlighted_score=highlighted_score
+        )
 
     def boxplot_of_grades_on_question_version(
         self,
@@ -849,15 +841,15 @@ class MinimalPlotService:
     """Minimal service for generating matplotlib plots from data."""
 
     matplotlib.use("Agg")
-    formats = ["base64", "bytes"]
+    formats = _acceptable_formats
 
     @staticmethod
     def ensure_all_figures_closed() -> None:
         """Assert that all Matplotlib figures are closed."""
         _ensure_all_figures_closed()
 
+    @staticmethod
     def kde_plot_of_total_marks(
-        self,
         total_score_list,
         *,
         highlighted_score: float | None = None,
@@ -877,7 +869,7 @@ class MinimalPlotService:
         Returns:
             Base64 encoded string or bytes containing the plot.
         """
-        assert format in self.formats
+        assert format in _acceptable_formats
         _ensure_all_figures_closed()
         sns.set_theme()
         sns.kdeplot(data=np.array(total_score_list), fill=True)
