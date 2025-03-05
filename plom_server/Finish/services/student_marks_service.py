@@ -616,7 +616,7 @@ class StudentMarkService:
         ).prefetch_related("latest_annotation"):
             paper_info[task.question_index] = task.latest_annotation.score
             scores.append(task.latest_annotation.score)
-        # comute the total if all marked
+        # compute the total if all marked
         if len(scores) == len(question_indices):
             paper_info["total"] = sum(scores)
 

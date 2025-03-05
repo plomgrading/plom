@@ -889,10 +889,13 @@ class MinimalPlotService:
 
         Args:
             question_idx: The question index number, one-based.
+            question_score_list: List of scores of marked questions of this question index.
 
         Keyword Args:
             format: The format to return the graph in. Should be either "base64"
                 or "bytes". If omitted, defaults to "base64".
+            highlighted_score: If not none then places dot at that score. Use for
+                highlighting the mark the student got for this question.
 
         Returns:
             Base64 encoded string or bytes containing the histogram.

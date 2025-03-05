@@ -379,6 +379,8 @@ class ReassembleService:
 
         Keyword Args:
             build_student_report: Whether or not build the student report along with reassembling the paper.
+            total_score_list: a list of total scores of all completely marked papers.
+            question_score_lists: a dict (keyed by question index) of lists of scores of all marked questions.
 
         Raises:
             ValueError: no paper with that number, or existing chore.
@@ -820,6 +822,8 @@ def huey_reassemble_paper(
         tracker_pk: a key into the database for anyone interested in
             our progress.
         build_student_report: whether or not to build the student report at the same time.
+        total_score_list: a list of total scores of all completely marked papers.
+        question_score_lists: a dict (keyed by question index) of lists of scores of all marked questions.
         _debug_be_flaky: for debugging, all take a while and some
             percentage will fail.
         task: includes our ID in the Huey process queue.  This kwarg is

@@ -18,7 +18,7 @@ from QuestionTags.services import QuestionTagService
 def _get_descriptive_statistics_from_score_list(
     scores: list[float],
 ) -> dict[str, float]:
-    """Return descriptive statistics from a list of scores
+    """Return descriptive statistics from a list of scores.
 
     Gives dict of count, max, min, median, mean, mode, stddev, percentile25, percentile75.
     """
@@ -45,6 +45,9 @@ def brief_report_pdf_builder(
 
     Args:
         paper_number: the number of the paper
+        total_score_list: a list of total scores of all completely marked papers.
+        question_score_lists: a dict (keyed by question index) of lists of scores of all marked questions.
+
 
     Returns:
         A dictionary with the bytes of a PDF file, a suggested
