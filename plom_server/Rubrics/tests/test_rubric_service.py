@@ -551,22 +551,21 @@ class RubricServiceTests(TestCase):
             self.assertEqual(r["value"], d["value"])
             self.assertEqual(r["out_of"], d["out_of"])
 
-    def test_rubrics_from_user(self) -> None:
-        service = RubricService()
+    def test_rubrics_created_by_user(self) -> None:
         user: User = baker.make(User)
-        rubrics = service.get_rubrics_from_user(user)
+        rubrics = RubricService.get_rubrics_created_by_user(user)
         self.assertEqual(rubrics.count(), 0)
 
         baker.make(Rubric, user=user)
-        rubrics = service.get_rubrics_from_user(user)
+        rubrics = RubricService.get_rubrics_created_by_user(user)
         self.assertEqual(rubrics.count(), 1)
 
         baker.make(Rubric, user=user)
-        rubrics = service.get_rubrics_from_user(user)
+        rubrics = RubricService.get_rubrics_created_by_user(user)
         self.assertEqual(rubrics.count(), 2)
 
         baker.make(Rubric, user=user)
-        rubrics = service.get_rubrics_from_user(user)
+        rubrics = RubricService.get_rubrics_created_by_user(user)
         self.assertEqual(rubrics.count(), 3)
 
     def test_rubrics_from_annotation(self) -> None:

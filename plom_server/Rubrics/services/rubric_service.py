@@ -973,8 +973,13 @@ class RubricService:
         rubrics = Rubric.objects.filter(annotations__in=annotations)
         return rubrics
 
-    def get_rubrics_from_user(self, username: str) -> QuerySet[Rubric]:
-        """Get the queryset of rubrics used by this user.
+    @staticmethod
+    def get_rubrics_created_by_user(username: str) -> QuerySet[Rubric]:
+        """Get the queryset of rubrics created by this user.
+
+        TODO: the interplay b/w created by, owned by, modified by, is a bit
+        "up in the air".  Currently this method is unused (although somewhat
+        strangely, it is unit-tested).  See discussions in ``models.py``.
 
         Args:
             username: username of the user
