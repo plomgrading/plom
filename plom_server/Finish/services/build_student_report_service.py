@@ -9,10 +9,8 @@ from typing import Any
 
 from django.conf import settings
 
-from Papers.models import Paper
 from Papers.services import SpecificationService
 from ..services import StudentMarkService
-from .StudentReportPDFService import pdf_builder
 from QuestionTags.services import QuestionTagService
 
 
@@ -114,30 +112,6 @@ def brief_report_pdf_builder(
 
 class BuildStudentReportService:
     """Class that contains helper functions for building student report pdf."""
-
-    def build_one_report(self, paper_number: int) -> dict[str, Any]:
-        """Build student report for the given paper number.
-
-        Args:
-            paper_number: the paper_number to be built a report.
-
-        Returns:
-            A dictionary with student report PDF file in bytes.
-        """
-        paper = Paper.objects.get(paper_number=paper_number)
-
-        paper_info = StudentMarkService.get_paper_id_or_none(paper)
-        if paper_info:
-            sid = paper_info[0]
-        else:
-            sid = None
-
-        # TODO: why we making this ourselves?  Should be a model problem
-        outdir = settings.MEDIA_ROOT / "student_report"
-        outdir.mkdir(exist_ok=True)
-
-        report = pdf_builder(versions=True, sid=sid)
-        return report
 
     def build_brief_report(
         self,
