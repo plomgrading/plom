@@ -98,8 +98,8 @@ def download_file(url: str, save_to: Path, *, filename: str | None = None) -> No
 
 
 if __name__ == "__main__":
-    static_js = Path("static/3rdpartyjs")
-    static_css = Path("static/3rdpartycss")
+    static_js = Path("plom_server/static/3rdpartyjs")
+    static_css = Path("plom_server/static/3rdpartycss")
     static_js.mkdir(exist_ok=True)
     static_css.mkdir(exist_ok=True)
     for row in table:
