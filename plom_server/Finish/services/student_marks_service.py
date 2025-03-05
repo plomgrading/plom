@@ -588,13 +588,15 @@ class StudentMarkService:
     @staticmethod
     def get_paper_id_and_marks(paper_number: int) -> dict[any, any]:
         paper = Paper.objects.get(paper_number=paper_number)
+        question_max_marks = SpecificationService.get_questions_max_marks()
         paper_info = {
             "paper_number": paper_number,
             "sid": None,
             "name": None,
             "total": None,
+            "question_max_marks": question_max_marks,
         }
-        question_indices = SpecificationService.get_question_indices()
+        question_indices = question_max_marks.keys()
         paper_info.update({qi: None for qi in question_indices})
         # get ID info if there
         try:

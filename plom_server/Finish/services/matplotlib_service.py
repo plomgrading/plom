@@ -876,3 +876,109 @@ class MinimalPlotService:
             return graph_bytes
         else:
             return self.get_graph_as_base64(graph_bytes)
+
+    def boxplot_of_grades_on_question(
+        self,
+        question_idx: int,
+        question_score_list,
+        *,
+        highlighted_score: float | None = None,
+        format: str = "base64",
+    ) -> BytesIO | str:
+        """Generate a boxplot of the grades on a specific question.
+
+        Args:
+            question_idx: The question index number, one-based.
+
+        Keyword Args:
+            format: The format to return the graph in. Should be either "base64"
+                or "bytes". If omitted, defaults to "base64".
+
+        Returns:
+            Base64 encoded string or bytes containing the histogram.
+        """
+        assert format in self.formats
+        self.ensure_all_figures_closed()
+
+        maxmark = SpecificationService.get_question_mark(question_idx)
+        qlabel = SpecificationService.get_question_label(question_idx)
+        fig, ax = plt.subplots(figsize=(6.8, 1.5), tight_layout=True)
+        sns.set_theme()
+
+        sns.boxplot(
+            np.array(question_score_list),
+            orient="h",
+            medianprops={"linewidth": 4, "color": "blue"},
+            boxprops={"alpha": 0.5},
+            capprops={"linewidth": 4, "color": "red"},
+            widths=[0.25],
+            zorder=2.0,
+        )
+        if highlighted_score:
+            # Overlay the student's score by highlighting the bar
+            ax.plot(
+                highlighted_score,
+                0,
+                marker="o",
+                markersize=16,
+                color=HIGHLIGHT_COLOR,
+                zorder=3.0,
+            )
+
+        ax.set_xlabel(f"{qlabel} mark")
+        ax.set_yticks([])
+        # pad the left-right extremes so that things look nice.
+        ax.set_xlim(left=-maxmark * 0.05, right=maxmark * 1.05)
+        for side in ["top", "right", "left"]:
+            ax.spines[side].set_visible(False)
+        ax.set_xticks(range(0, maxmark + 1))
+
+        graph_bytes = self.get_graph_as_BytesIO(fig)
+        self.ensure_all_figures_closed()
+
+        if format == "bytes":
+            return graph_bytes
+        else:
+            return self.get_graph_as_base64(graph_bytes)
+
+    def lollypop_of_pedagogy_tags(
+        self, question_idx_score_dict, question_idx_max_dict, *, format: str = "base64"
+    ) -> BytesIO | str:
+        assert format in self.formats
+        self.ensure_all_figures_closed()
+
+        tag_to_question = QuestionTagService.get_tag_to_question_links()
+        n_tags = len(tag_to_question)
+        tag_names = sorted(list(tag_to_question.keys()))
+        pedagogy_values = []
+        # for each tag, compute % student got on each question
+        # combine those to get a 'pedagogy value'
+        for name in tag_names:
+            values = [
+                question_idx_score_dict[qi] / question_idx_max_dict[qi]
+                for qi in tag_to_question[name]
+            ]
+            pedagogy_values.append(sum(values) / len(values))
+
+        plt.figure(figsize=(6.8, n_tags * 0.3 + 0.6), tight_layout=True)
+        plt.margins(y=0.3)
+        sns.set_theme()
+
+        y_range = list(range(1, len(tag_names) + 1))
+        x_min_data = np.array([0 for x in y_range])
+        x_max_data = np.array(pedagogy_values)
+        plt.hlines(y=y_range, xmin=x_min_data, xmax=x_max_data, linewidth=8)
+        plt.plot(x_max_data, y_range, "o", markersize=16)
+        # note mypy gets grumpy with many matplotlib functions, so
+        # convert the pandas series to a list to keep it happy
+        plt.yticks(y_range, tag_names)
+        plt.xlim(0, 1)
+        plt.xticks([0.1, 0.3, 0.5, 0.7, 0.9], ["low", "", "", "", "high"])
+
+        graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
+        self.ensure_all_figures_closed()
+
+        if format == "bytes":
+            return graph_bytes
+        else:
+            return self.get_graph_as_base64(graph_bytes)

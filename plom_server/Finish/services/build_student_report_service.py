@@ -12,6 +12,7 @@ from Papers.models import Paper
 from Papers.services import SpecificationService
 from ..services import StudentMarkService
 from .StudentReportPDFService import pdf_builder
+from QuestionTags.services import QuestionTagService
 
 
 def _get_descriptive_statistics_from_score_list(
@@ -73,7 +74,25 @@ def brief_report_pdf_builder(
         "kde_graph": MinimalPlotService().kde_plot_of_total_marks(
             total_score_list, highlighted_score=paper_info["total"]
         ),
+        "boxplots": [
+            MinimalPlotService().boxplot_of_grades_on_question(
+                qi, score_list, highlighted_score=paper_info[qi]
+            )
+            for qi, score_list in question_score_lists.items()
+        ],
+        "pedagogy_tags_graph": None,
+        "pedagogy_tags_descriptions": None,
     }
+    # don't generate the lollypop graph is there are no pedagogy tags
+    if QuestionTagService.are_there_question_tag_links():
+        context["pedagogy_tags_descriptions"] = (
+            QuestionTagService.get_pedagogy_tag_descriptions()
+        )
+        context["pedagogy_tags_graph"] = MinimalPlotService().lollypop_of_pedagogy_tags(
+            {qi: paper_info[qi] for qi in question_score_lists},
+            paper_info["question_max_marks"],
+        )
+
     report_template = get_template("Finish/Reports/brief_student_report.html")
     rendered_html = report_template.render(context)
     pdf_data = HTML(string=rendered_html, base_url="").write_pdf(
