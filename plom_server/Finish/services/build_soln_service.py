@@ -102,6 +102,7 @@ class BuildSolutionService:
         return list(status.values())
 
     def watermark_pages(self, doc: fitz.Document, watermark_text: str) -> None:
+        """Watermark the pages of the given document with the given text."""
         margin = 10
         for pg in doc:
             h = pg.rect.height
@@ -335,15 +336,15 @@ class BuildSolutionService:
         """Mark a soln pdf build chore as obsolete and try to cancel it if queued in Huey.
 
         Args:
-            paper_num: The paper number of the chore to cancel.
+                    paper_num: The paper number of the chore to cancel.
 
         Raises:
-            ObjectDoesNotExist: no such paper number or not chore for paper.
+                    ObjectDoesNotExist: no such paper number or not chore for paper.
 
         This is a "best-attempt" at catching soln-build chores while they
-        are queued.  It might be possible for a Chore to sneak past from the
-        "Starting" state.  Already "Running" chores are not effected, although
-        they ARE marked as obsolete.
+                are queued.  It might be possible for a Chore to sneak past from the
+                "Starting" state.  Already "Running" chores are not effected, although
+                they ARE marked as obsolete.
         """
         chore = BuildSolutionPDFChore.objects.get(
             obsolete=False, paper__paper_number=paper_num
@@ -400,7 +401,18 @@ class BuildSolutionService:
         ]
 
     @transaction.atomic
-    def get_zipfly_generator(self, short_name: str, *, chunksize: int = 1024 * 1024):
+    def get_zipfly_generator(
+        self, *, chunksize: int = 1024 * 1024
+    ) -> zipfly.zipfly.Zipfly:
+        """Return a streaminmg zipfile generator for archive of the solution pdfs.
+
+        Keyword Args:
+            chunksize: the size of chunks for the stream.
+
+        Returns:
+            the streaming zipfile generator.
+
+        """
         paths = [
             {
                 "fs": pdf_file.path,

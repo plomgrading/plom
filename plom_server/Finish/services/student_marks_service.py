@@ -586,7 +586,17 @@ class StudentMarkService:
         return [all_papers[k] for k in sorted(all_papers.keys())]
 
     @staticmethod
-    def get_paper_id_and_marks(paper_number: int) -> dict[any, any]:
+    def get_paper_id_and_marks(paper_number: int) -> dict[Any, Any]:
+        """Returns information about the given paper as a dict.
+
+        Dict contains keys/values:
+           * 'paper_number'
+           * 'sid' = student ID if paper ID'd else None
+           * 'name' = student name if paper ID'd else None.
+           * 'total' = total score for assessment if all questions marked else None
+           * 'question_max_marks' = dict of the max marks for each question keyed by question index
+           * then for each question the key/value pair question_index: score for that question (else None)
+        """
         paper = Paper.objects.get(paper_number=paper_number)
         question_max_marks = SpecificationService.get_questions_max_marks()
         paper_info = {

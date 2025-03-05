@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
 
 import hashlib
@@ -19,21 +19,26 @@ from ..models import SolutionSourcePDF, SolutionImage
 
 class SolnSourceService:
     def is_there_a_solution_pdf(self, version: int) -> bool:
+        """Returns true if a solution pdf of given version has been uploaded."""
         return SolutionSourcePDF.objects.filter(version=version).exists()
 
     def are_there_any_solution_pdf(self) -> bool:
+        """Returns true if any solution pdf have been uploaded."""
         return SolutionSourcePDF.objects.exists()
 
     def get_number_of_solution_pdf(self) -> int:
+        """Returns number of uploaded solution pdf."""
         return SolutionSourcePDF.objects.count()
 
     def are_all_solution_pdf_present(self) -> bool:
+        """Returns true if all required solution pdf have been uploaded."""
         return (
             SolutionSourcePDF.objects.all().count()
             == SpecificationService.get_n_versions()
         )
 
     def get_solution_pdf_hashes(self) -> dict[int, None | str]:
+        """Returns dict of hash of each uploaded solution pdf, or Nones if pdf missing."""
         soln_pdfs: dict[int, None | str] = {
             v: None for v in SpecificationService.get_list_of_versions()
         }
@@ -56,6 +61,7 @@ class SolnSourceService:
 
     @transaction.atomic
     def remove_solution_pdf(self, version: int):
+        """Remove solution pdf and associated images for the given version."""
         # remove the PDF if it is there
         try:
             soln_source_obj = SolutionSourcePDF.objects.get(version=version)
@@ -72,6 +78,7 @@ class SolnSourceService:
 
     @transaction.atomic
     def remove_all_solution_pdf(self):
+        """Remove all solution pdfs and associated images."""
         for sspdf_obj in SolutionSourcePDF.objects.all():
             if sspdf_obj.source_pdf:
                 sspdf_obj.source_pdf.delete()
@@ -82,6 +89,7 @@ class SolnSourceService:
             si_obj.delete()
 
     def get_soln_pdf_for_download(self, version: int) -> io.BytesIO:
+        """Return bytes of solution pdf for given version."""
         if version not in SpecificationService.get_list_of_versions():
             raise ValueError(f"Version {version} is out of range")
         try:

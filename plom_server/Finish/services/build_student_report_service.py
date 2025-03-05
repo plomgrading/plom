@@ -144,7 +144,20 @@ class BuildStudentReportService:
         total_score_list: list[float],
         question_score_lists: dict[int, list[float]],
     ) -> dict[str, Any]:
+        """Build brief student report for the given paper number.
 
+        Note - in future will use this to replace the 'build_one_report'
+        function.
+
+        Args:
+            paper_number: the paper_number to be built a report.
+            total_score_list: list of scores of all marked assessments.
+            question_score_lists: dict, keyed by question index, of
+                lists of scores for each question.
+
+        Returns:
+            A dictionary with student report PDF file in bytes.
+        """
         outdir = Path("student_report")
         outdir.mkdir(exist_ok=True)
 

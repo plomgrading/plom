@@ -12,5 +12,6 @@ from ..services import ReassembleService
 
 class StudentReportView(ManagerRequiredView):
     def get(self, request, paper_number):
+        """Return the student report pdf of the given paper."""
         pdf_file = ReassembleService().get_single_student_report(paper_number)
         return FileResponse(pdf_file)

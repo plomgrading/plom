@@ -233,6 +233,18 @@ class MatplotlibService:
         highlighted_sid: str | None = None,
         format: str = "base64",
     ) -> BytesIO | str:
+        """Generate a KDE plot of the distribution of total marks for assessment for all students.
+
+        Keyword Args:
+            format: The format to return the graph in. Should be either "base64"
+                or "bytes". If omitted, defaults to "base64".
+            highlighted_sid: If not none then draws a bar at the score of the
+                student with given student-id. Use for highlighting the total
+                mark that student got.
+
+        Returns:
+            Base64 encoded string or bytes containing the plot.
+        """
         assert format in self.formats
         self.ensure_all_figures_closed()
         sns.set_theme()
@@ -769,6 +781,19 @@ class MatplotlibService:
     def lollypop_of_pedagogy_tags(
         self, paper_number: int, student_id: str, *, format: str = "base64"
     ) -> BytesIO | str:
+        """Generate a lollypop graph of pedagogy tag scores.
+
+        Args:
+           paper_number: for which paper is this graph being produced.
+           student_id: the ID of the student who wrote that paper.
+
+        Keyword Args:
+            format: The format to return the graph in. Should be either "base64"
+                or "bytes". If omitted, defaults to "base64".
+
+        Returns:
+            Base64 encoded string or bytes containing the graph.
+        """
         assert format in self.formats
         self.ensure_all_figures_closed()
 
@@ -860,6 +885,20 @@ class MinimalPlotService:
         highlighted_score: float | None = None,
         format: str = "base64",
     ) -> BytesIO | str:
+        """Generate a KDE plot of the distribution of total marks for assessment for all students.
+
+        Args:
+            total_score_list: list of total scores for all marked assessments
+
+        Keyword Args:
+            format: The format to return the graph in. Should be either "base64"
+                or "bytes". If omitted, defaults to "base64".
+            highlighted_score: If not none then draws a bar at that score. Use for
+                highlighting the total mark the student got.
+
+        Returns:
+            Base64 encoded string or bytes containing the plot.
+        """
         assert format in self.formats
         self.ensure_all_figures_closed()
         sns.set_theme()
@@ -898,7 +937,7 @@ class MinimalPlotService:
                 highlighting the mark the student got for this question.
 
         Returns:
-            Base64 encoded string or bytes containing the histogram.
+            Base64 encoded string or bytes containing the plot.
         """
         assert format in self.formats
         self.ensure_all_figures_closed()
@@ -947,6 +986,19 @@ class MinimalPlotService:
     def lollypop_of_pedagogy_tags(
         self, question_idx_score_dict, question_idx_max_dict, *, format: str = "base64"
     ) -> BytesIO | str:
+        """Generate a lollypop graph of pedagogy tag scores.
+
+        Args:
+            question_idx_score_dict: the student's scores for each question
+            question_idx_max_dict: the max score for each question
+
+        Keyword Args:
+            format: The format to return the graph in. Should be either "base64"
+                or "bytes". If omitted, defaults to "base64".
+
+        Returns:
+            Base64 encoded string or bytes containing the plot.
+        """
         assert format in self.formats
         self.ensure_all_figures_closed()
 
