@@ -456,7 +456,6 @@ webplom_test:
   script:
     - export PYTHONPATH=$PWD
     - python3 -m pip install coverage~=7.6.12
-    - pushd plom_server
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py makemigrations
     - python3 manage.py migrate
@@ -464,13 +463,12 @@ webplom_test:
     # -i ignores an error caused by openCV's config-3.py file
     - coverage report -i --precision=2
     - coverage xml -i -o django_coverage.xml
-    - popd
   coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
   artifacts:
     reports:
       coverage_report:
         coverage_format: cobertura
-        path: plom_server/django_coverage.xml
+        path: django_coverage.xml
 
 
 webplom_demo:
@@ -488,9 +486,7 @@ webplom_demo:
   script:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
-    - pushd plom_server
-    - ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after reports
-    - popd
+    - ./plom_server/Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after reports
 
 
 # ensure we can run the code some other than inside itself!
@@ -563,9 +559,7 @@ out-of-tree-scratch:
     - ls
     # install twice, first for dependencies
     - pip install .
-    - pushd plom_server
-    - PYTHONPATH=".." python3 manage.py makemigrations
-    - popd
+    - python3 manage.py makemigrations
     # now install with migrations
     - pip install .
     - pwd
@@ -933,13 +927,9 @@ fedora_webplom:
     # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
     - pip install -U pytest
     - pip install .
-    - export PYTHONPATH=$PWD
-    - echo $PYTHONPATH
-    - pushd plom_server
-    - ./Launcher/launch_scripts/launch_plom_demo_server.py --stop-after reports
+    - ./plom_server/Launcher/launch_scripts/launch_plom_demo_server.py --stop-after reports
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
-    - popd
 
 
 # get latest pip deps, doesn't use docker, closer to user install
@@ -1041,13 +1031,9 @@ newOS_newdeps_webplom:
     - pip --version
   script:
     - pip install .
-    - export PYTHONPATH=$PWD
-    - echo $PYTHONPATH
-    - pushd plom_server
-    - ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
+    - ./plom_server/Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
-    - popd
 
 
 # Ensure minimum listed dependency versions actually work on older system
@@ -1161,13 +1147,9 @@ minpy_mindeps_webplom:
   script:
     - pip install -r requirements.txt.tempminima
     - pip install .
-    - export PYTHONPATH=$PWD
-    - echo $PYTHONPATH
-    - pushd plom_server
-    - ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
+    - ./plom_server/Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
-    - popd
 
 
 # upload binaries are generic gitlab packages
@@ -1281,11 +1263,7 @@ macos_server_webplom:
   # TODO this fails b/c it runs python3, which is not the right Python
   # python -m pytest -l --pyargs plom
   # Instead test webplom
-  - export PYTHONPATH=$PWD
-  - echo $PYTHONPATH
-  - pushd plom_server
   # no postgres yet
   # ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
   - export PLOM_DATABASE_BACKEND=sqlite
   - python manage.py test
-  - popd
