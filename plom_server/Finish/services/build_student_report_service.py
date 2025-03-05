@@ -4,9 +4,10 @@
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 
 from datetime import datetime
-from pathlib import Path
 from statistics import mean, median, mode, stdev, quantiles
 from typing import Any
+
+from django.conf import settings
 
 from Papers.services import SpecificationService
 from ..services import StudentMarkService
@@ -72,7 +73,7 @@ def brief_report_pdf_builder(
         "sid": paper_info["sid"],
         "grade": paper_info["total"],
         "total_stats": _get_descriptive_statistics_from_score_list(total_score_list),
-        "kde_graph": MinimalPlotService().kde_plot_of_total_marks(
+        "kde_graph": MinimalPlotService.kde_plot_of_total_marks(
             total_score_list, highlighted_score=paper_info["total"]
         ),
         "boxplots": [
@@ -132,7 +133,8 @@ class BuildStudentReportService:
         Returns:
             A dictionary with student report PDF file in bytes.
         """
-        outdir = Path("student_report")
+        # TODO: why we making this ourselves?  Should be a model problem
+        outdir = settings.MEDIA_ROOT / "student_report"
         outdir.mkdir(exist_ok=True)
 
         return brief_report_pdf_builder(

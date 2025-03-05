@@ -767,6 +767,8 @@ class ReassembleService:
         Raises:
             ValueError: if there are no reassembled papers in the requested range.
         """
+        # Note "n" here is "name", it is the name inside the zip file (i.e.,
+        # what users see when they download the zip file).
         paths = [
             {
                 "fs": pdf_file.path,

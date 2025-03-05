@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2025 Colin B. Macdonald
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 
 import io
 import random
@@ -333,18 +333,18 @@ class BuildSolutionService:
         return chore.pdf_file
 
     def try_to_cancel_single_queued_chore(self, paper_num: int) -> None:
-        """Mark a soln pdf build chore as obsolete and try to cancel it if queued in Huey.
+        """Mark a solution pdf build chore as obsolete and try to cancel it if queued in Huey.
 
         Args:
-                    paper_num: The paper number of the chore to cancel.
+            paper_num: The paper number of the chore to cancel.
 
         Raises:
-                    ObjectDoesNotExist: no such paper number or not chore for paper.
+            ObjectDoesNotExist: no such paper number or not chore for paper.
 
         This is a "best-attempt" at catching soln-build chores while they
-                are queued.  It might be possible for a Chore to sneak past from the
-                "Starting" state.  Already "Running" chores are not effected, although
-                they ARE marked as obsolete.
+        are queued.  It might be possible for a Chore to sneak past from the
+        "Starting" state.  Already "Running" chores are not effected, although
+        they ARE marked as obsolete.
         """
         chore = BuildSolutionPDFChore.objects.get(
             obsolete=False, paper__paper_number=paper_num
@@ -408,8 +408,7 @@ class BuildSolutionService:
             chunksize: the size of chunks for the stream.
 
         Returns:
-            the streaming zipfile generator.
-
+            The streaming zipfile generator.
         """
         paths = [
             {
