@@ -187,7 +187,9 @@ def build_page_to_group_dict(spec) -> dict[int, str]:
     return page_to_group
 
 
-def build_page_to_version_dict(spec, question_versions: dict[int, int]):
+def build_page_to_version_dict(
+    spec, question_versions: dict[int, int]
+) -> dict[int, int]:
     """Given the spec and the question-version dict, produce a dict that maps pages to versions.
 
     Args:
@@ -197,7 +199,7 @@ def build_page_to_version_dict(spec, question_versions: dict[int, int]):
 
     Returns:
         dict: A mapping of page numbers to versions. Note idpages and
-        dnm pages have version 1.
+        dnm pages have version 1 FOR NOW.
 
     Raises:
         NotImplementedError: a page has multiple versions, that is b/c two
@@ -211,6 +213,7 @@ def build_page_to_version_dict(spec, question_versions: dict[int, int]):
         page_to_versions[pg] = [1]
     for q in spec["question"]:
         for pg in spec["question"][q]["pages"]:
+            # Issue #3838: do this carefully in case there are multiple conflicting versions
             verlist = page_to_versions.get(pg, [])
             # be careful, the qv-map keys are ints, while those in the spec are strings
             verlist.append(question_versions[int(q)])
