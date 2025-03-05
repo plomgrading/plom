@@ -28,8 +28,7 @@ class Command(BaseCommand):
     def remove_old_migration_files(self):
         """Remove old db migration files from the source tree."""
         print("Avoid perplexing errors by removing autogen migration droppings")
-        print("TODO: questionable local file access!")
-        for path in Path(".").glob("*/migrations/*.py"):
+        for path in settings.BASE_DIR.glob("*/migrations/*.py"):
             if path.name == "__init__.py":
                 continue
             else:
