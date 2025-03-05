@@ -22,7 +22,7 @@ import plom
 # root directory, rather than getting Django things up and
 # running, just to get at these useful files.
 # TODO: we'll set this later but we want it to be a global variable for some reason
-demo_file_directory = None
+demo_file_directory = Path("./Launcher/launch_scripts/demo_files/")
 
 
 def wait_for_user_to_type_quit() -> None:
@@ -750,12 +750,9 @@ if __name__ == "__main__":
     # confirm_run_from_correct_directory()
 
     # TODO: we currently need direct file access to this path
-    demo_file_directory = Path("plom_server/Launcher/launch_scripts/demo_files/")
     if not demo_file_directory.exists():
-        demo_file_directory = Path("Launcher/launch_scripts/demo_files/")
-    assert (
-        demo_file_directory.exists()
-    ), "We're in trouble if we cannot find the demo files"
+        demo_file_directory = Path("plom_server/Launcher/launch_scripts/demo_files/")
+    assert demo_file_directory.exists(), "cannot continue w/o demo files"
 
     # clean out old db and misc files, then rebuild blank db
     run_django_manage_command("plom_clean_all_and_build_db")
