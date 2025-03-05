@@ -777,13 +777,13 @@ class ReassembleService:
                 first_paper=first_paper, last_paper=last_paper
             )
         ]
-        report_paths = [
-            {
-                "fs": report_pdf_file.path,
-                "n": f"student_reports/{report_display_filename}",
-            }
-            for report_pdf_file, report_display_filename in self.get_completed_report_files_and_names()
-        ]
+        # report_paths = [
+        #     {
+        #         "fs": report_pdf_file.path,
+        #         "n": f"student_reports/{report_display_filename}",
+        #     }
+        #     for report_pdf_file, report_display_filename in self.get_completed_report_files_and_names()
+        # ]
 
         if not paths:
             rng1 = f"{first_paper} <= " if first_paper is not None else ""

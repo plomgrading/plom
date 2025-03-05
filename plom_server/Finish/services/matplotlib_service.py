@@ -3,7 +3,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Elisa Pan
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 
 import base64
 from io import BytesIO
@@ -806,6 +806,72 @@ class MatplotlibService:
         graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
         self.ensure_all_figures_closed()
 
+        if format == "bytes":
+            return graph_bytes
+        else:
+            return self.get_graph_as_base64(graph_bytes)
+
+
+class MinimalPlotService:
+    """Minimal service for generating matplotlib plots from data."""
+
+    matplotlib.use("Agg")
+    formats = ["base64", "bytes"]
+
+    def ensure_all_figures_closed(self) -> None:
+        """Ensure that all matplotlib figures are closed.
+
+        Raises:
+            AssertionError: If not all figures are closed.
+        """
+        assert plt.get_fignums() == [], "Not all matplotlib figures were closed."
+
+    def get_graph_as_BytesIO(self, fig: matplotlib.figure.Figure) -> BytesIO:
+        """Return the graph as a BytesIO.
+
+        Args:
+            fig: The figure to save.
+
+        Returns:
+            The BytesIO object.
+        """
+        png_bytes = BytesIO()
+        fig.savefig(png_bytes, format="png")
+        png_bytes.seek(0)
+        plt.close(fig)  # Ensure the figure is closed after saving
+
+        return png_bytes
+
+    def get_graph_as_base64(self, bytes: BytesIO) -> str:
+        """Return the graph as a base64 encoded string.
+
+        Args:
+            bytes: The bytes to encode.
+
+        Returns:
+            The base64 encoded string.
+        """
+        return base64.b64encode(bytes.read()).decode()
+
+    def kde_plot_of_total_marks(
+        self,
+        total_score_list,
+        *,
+        highlighted_score: float | None = None,
+        format: str = "base64",
+    ) -> BytesIO | str:
+        assert format in self.formats
+        self.ensure_all_figures_closed()
+        sns.set_theme()
+        sns.kdeplot(data=np.array(total_score_list), fill=True)
+        # Overlay the student's score by highlighting the bar
+        if highlighted_score:
+            # this gives x-coord of bar, we get the y-coord from the ylim of the plot
+            plt.bar(highlighted_score, plt.ylim()[1], color=HIGHLIGHT_COLOR, alpha=0.5)
+
+        plt.ylabel("Proportion of students")
+        graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
+        self.ensure_all_figures_closed()
         if format == "bytes":
             return graph_bytes
         else:

@@ -56,10 +56,12 @@ def brief_report_pdf_builder(
     """
     from django.template.loader import get_template
     from weasyprint import HTML, CSS
+    from . import MinimalPlotService
 
     paper_info = StudentMarkService.get_paper_id_and_marks(paper_number)
     timestamp = datetime.now()
     timestamp_str = timestamp.strftime("%d/%m/%Y %H:%M:%S+00:00")
+
     context = {
         "longname": SpecificationService.get_longname(),
         "timestamp_str": timestamp_str,
@@ -68,6 +70,9 @@ def brief_report_pdf_builder(
         "sid": paper_info["sid"],
         "grade": paper_info["total"],
         "total_stats": _get_descriptive_statistics_from_score_list(total_score_list),
+        "kde_graph": MinimalPlotService().kde_plot_of_total_marks(
+            total_score_list, highlighted_score=paper_info["total"]
+        ),
     }
     report_template = get_template("Finish/Reports/brief_student_report.html")
     rendered_html = report_template.render(context)
