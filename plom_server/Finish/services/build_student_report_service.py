@@ -132,6 +132,7 @@ class BuildStudentReportService:
         else:
             sid = None
 
+        # TODO: why we making this ourselves?  Should be a model problem
         outdir = settings.MEDIA_ROOT / "student_report"
         outdir.mkdir(exist_ok=True)
 
@@ -158,6 +159,7 @@ class BuildStudentReportService:
         Returns:
             A dictionary with student report PDF file in bytes.
         """
+        # TODO: why we making this ourselves?  Should be a model problem
         outdir = settings.MEDIA_ROOT / "student_report"
         outdir.mkdir(exist_ok=True)
 
