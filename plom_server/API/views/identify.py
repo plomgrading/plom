@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2025 Colin B. Macdonald
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
@@ -166,7 +166,7 @@ class IDdirect(APIView):
 
     # PUT: /ID/beta/{papernum}&student_id=...
     def put(self, request: Request, *, papernum: int) -> Response:
-        """Put a particular student number in place as the identity of a paper.
+        """Put a particular student id in place as the identity of a paper.
 
         You must pass both `sid=` and `sname=` in query parameters.
 

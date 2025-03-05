@@ -84,7 +84,7 @@ class Command(BaseCommand):
         )
         # now extract the digits from those boxes.
 
-        student_number_length = 8
+        student_id_length = 8
         count = 0
 
         dir = Path(settings.MEDIA_ROOT / "digit_images")
@@ -101,9 +101,9 @@ class Command(BaseCommand):
                 self.stdout.write(f"Trouble finding the ID box on paper {paper_num}")
                 continue
             digit_images = IDBoxProcessorService().get_digit_images(
-                ID_box, student_number_length
+                ID_box, student_id_length
             )
-            if len(digit_images) != student_number_length:
+            if len(digit_images) != student_id_length:
                 self.stdout.write(
                     f"Trouble finding digits inside the ID box on paper {paper_num}"
                 )
