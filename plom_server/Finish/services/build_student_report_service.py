@@ -101,10 +101,9 @@ def brief_report_pdf_builder(
     pdf_data = HTML(string=rendered_html, base_url="").write_pdf(
         stylesheets=[CSS("./static/css/generate_report.css")]
     )
-    shortname = (SpecificationService.get_shortname(),)
-    sname = paper_info["name"]
+    shortname = SpecificationService.get_shortname()
     sid = paper_info["sid"]
-    filename = f"Student_Report-{shortname}--{sname}--{sid}.pdf"
+    filename = f"{shortname}_report_{sid}.pdf"
     return {
         "bytes": pdf_data,
         "filename": filename,

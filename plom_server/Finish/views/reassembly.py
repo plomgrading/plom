@@ -114,7 +114,7 @@ class StartAllReassembly(ManagerRequiredView):
         # using zipfly python package.  see django example here
         # https://github.com/sandes/zipfly/blob/master/examples/streaming_django.py
         short_name = slugify(SpecificationService.get_shortname())
-        zgen = ReassembleService().get_zipfly_generator(short_name)
+        zgen = ReassembleService().get_zipfly_generator()
         response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
         response["Content-Disposition"] = (
             f"attachment; filename={short_name}_reassembled.zip"
@@ -141,7 +141,7 @@ class DownloadRangeOfReassembled(ManagerRequiredView):
             short_name += f"_to_{last_paper}"
         try:
             zgen = ReassembleService().get_zipfly_generator(
-                short_name, first_paper=first_paper, last_paper=last_paper
+                first_paper=first_paper, last_paper=last_paper
             )
         except ValueError as err:
             # TODO: how to do we do other errors other than 404?

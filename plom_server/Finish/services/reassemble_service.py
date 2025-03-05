@@ -747,16 +747,12 @@ class ReassembleService:
     @transaction.atomic
     def get_zipfly_generator(
         self,
-        short_name: str,
         *,
         first_paper: int | None = None,
         last_paper: int | None = None,
         chunksize: int = 1024 * 1024,
     ):
         """Return a generator that can stream a zipfile of some papers without building in memory.
-
-        Args:
-            short_name: TODO: appears to be unused.
 
         Keyword Args:
             first_paper: optionally grab papers greater than or equal
@@ -780,13 +776,15 @@ class ReassembleService:
                 first_paper=first_paper, last_paper=last_paper
             )
         ]
-        # report_paths = [
-        #     {
-        #         "fs": report_pdf_file.path,
-        #         "n": f"student_reports/{report_display_filename}",
-        #     }
-        #     for report_pdf_file, report_display_filename in self.get_completed_report_files_and_names()
-        # ]
+        report_paths = [
+            {
+                "fs": report_pdf_file.path,
+                "n": f"student_reports/{report_display_filename}",
+            }
+            for report_pdf_file, report_display_filename in self.get_completed_report_files_and_names(
+                first_paper=first_paper, last_paper=last_paper
+            )
+        ]
 
         if not paths:
             rng1 = f"{first_paper} <= " if first_paper is not None else ""
@@ -796,8 +794,7 @@ class ReassembleService:
             else:
                 rng_msg = ""
             raise ValueError("There are no reassembled papers" + rng_msg)
-        # zfly = zipfly.ZipFly(paths=paths + report_paths, chunksize=chunksize)
-        zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)
+        zfly = zipfly.ZipFly(paths=paths + report_paths, chunksize=chunksize)
         return zfly.generator()
 
 
