@@ -4,26 +4,14 @@
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
-from __future__ import annotations
-
 import re
 import shutil
 import subprocess
-from importlib import resources
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-# need these imports to get idBox template from plom
-import plom
-
 
 def compile_tex(filepath: Path) -> None:
-    # make sure the idbox file is in place
-    idbox_filepath = filepath.parent / "idBox4.pdf"
-    if not idbox_filepath.exists():
-        idbox_bytes = (resources.files(plom) / "idBox4.pdf").read_bytes()
-        with idbox_filepath.open("wb") as fh:
-            fh.write(idbox_bytes)
     # now get on with building the .tex
     filestem = filepath.stem
     # use latexmk to build, continue past errors, and then
@@ -33,8 +21,6 @@ def compile_tex(filepath: Path) -> None:
         check=True,
     )
     subprocess.run(["latexmk", "-silent", "-c", f"{filestem}"], check=True)
-    # finally, remove the idbox
-    idbox_filepath.unlink(missing_ok=True)
 
 
 def compile_tex_str_to_filepath(tex_as_str: str, pdf_filepath: Path) -> None:

@@ -12,6 +12,10 @@ from pathlib import Path
 from shlex import split
 from tempfile import TemporaryDirectory
 from time import sleep
+from importlib import resources
+
+# need this to get the idbox binary
+import plom
 
 
 # we specify this directory relative to the plom_server
@@ -271,11 +275,22 @@ def upload_demo_assessment_spec_file():
 def build_demo_test_source_pdfs() -> None:
     print("Building assessment / solution source pdfs from tex")
     # assumes that everything needed is in the demo_file_directory
+
+    # make sure the idbox file is in place
+    idbox_filepath = demo_file_directory / "idBox4.pdf"
+    if not idbox_filepath.exists():
+        idbox_bytes = (resources.files(plom) / "idBox4.pdf").read_bytes()
+        with idbox_filepath.open("wb") as fh:
+            fh.write(idbox_bytes)
+
     subprocess.run(
         ["python3", "build_plom_assessment_pdfs.py"],
         cwd=demo_file_directory,
         check=True,
     )
+
+    # finally, remove the idbox
+    idbox_filepath.unlink(missing_ok=True)
 
 
 def upload_demo_test_source_files():
