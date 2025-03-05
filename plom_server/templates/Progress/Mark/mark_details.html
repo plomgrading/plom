@@ -125,7 +125,8 @@
       const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
       const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.js" integrity="sha256-5M9NFEsiJjTy5k/3B81XuVP43ktlsjHNWsa94RRkjk0=" crossorigin="anonymous">
+    </script>
     <script>
   var ctx_all = document.getElementById('hist_all');
     new Chart(ctx_all, {
