@@ -403,7 +403,7 @@ class BuildSolutionService:
     @transaction.atomic
     def get_zipfly_generator(
         self, *, chunksize: int = 1024 * 1024
-    ) -> zipfly.zipfly.Zipfly:
+    ) -> zipfly.ZipFly:
         """Return a streaminmg zipfile generator for archive of the solution pdfs.
 
         Keyword Args:
