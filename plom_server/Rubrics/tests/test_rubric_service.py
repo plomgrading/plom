@@ -727,7 +727,7 @@ class RubricServiceTests(TestCase):
     def test_modify_autodetect_major_edit_on_out_of_change(self) -> None:
         data = _Rubric_to_dict(self.absolute_rubric)
         rid = data["rid"]
-        data["out_of"] += 1
+        data["out_of"] -= 1
         new = RubricService.modify_rubric(rid, data, is_minor_change=None)
         self.assertEqual(new["revision"], data["revision"] + 1)
 
