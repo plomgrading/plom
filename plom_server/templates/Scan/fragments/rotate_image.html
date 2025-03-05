@@ -8,21 +8,18 @@
     <div class="d-flex mb-3">
         <a class="btn btn-secondary w-75"
            data-bs-toggle="tooltip"
-           data-bs-placement="top"
            title="Rotate counter-clockwise"
            hx-post="{% url 'rotate_img_ccw' the_filter bundle_id index %}">
             <i class="bi-arrow-counterclockwise fs-5"></i>
         </a>
         <a class="btn btn-secondary mx-2 w-100"
            data-bs-toggle="tooltip"
-           data-bs-placement="top"
            title="Rotate 180"
            hx-post="{% url 'rotate_img_one_eighty' the_filter bundle_id index %}">
             <i class="bi-arrow-repeat fs-5"></i>
         </a>
         <a class="btn btn-secondary w-75"
            data-bs-toggle="tooltip"
-           data-bs-placement="top"
            title="Rotate clockwise"
            hx-post="{% url 'rotate_img_cw' the_filter bundle_id index %}">
             <i class="bi-arrow-clockwise fs-5"></i>
