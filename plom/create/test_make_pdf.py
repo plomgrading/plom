@@ -1,12 +1,43 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022, 2024 Colin B. Macdonald
+# Copyright (C) 2022, 2024-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
-import pymupdf as fitz
+from pytest import raises
+
+import pymupdf
 
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.mergeAndCodePages import make_PDF
 from plom import SpecVerifier
+
+
+def test_make_pdf_shared_pages(tmp_path) -> None:
+    assert buildDemoSourceFiles(basedir=tmp_path)
+    r = SpecVerifier.demo().spec
+    r["question"]["2"]["pages"] = [4, 5]
+    pages_q2 = r["question"]["2"]["pages"]
+    pages_q3 = r["question"]["3"]["pages"]
+    common_page = 5
+    assert common_page in pages_q2
+    assert common_page in pages_q3
+    r["allowSharedPages"] = True
+    spec = SpecVerifier(r)
+    spec.checkCodes()
+    with raises(NotImplementedError, match=r"page 5 has versions \[1, 2\]"):
+        _ = make_PDF(
+            spec,
+            4,
+            {1: 1, 2: 1, 3: 2},
+            where=tmp_path,
+            source_versions_path=(tmp_path / "sourceVersions"),
+        )
+    _ = make_PDF(
+        spec,
+        4,
+        {1: 1, 2: 1, 3: 1},
+        where=tmp_path,
+        source_versions_path=(tmp_path / "sourceVersions"),
+    )
 
 
 def test_make_pdf_non_ascii_stuff(tmp_path) -> None:
@@ -24,7 +55,7 @@ def test_make_pdf_non_ascii_stuff(tmp_path) -> None:
         where=tmp_path,
         source_versions_path=(tmp_path / "sourceVersions"),
     )
-    with fitz.open(pdf_path) as doc:
+    with pymupdf.open(pdf_path) as doc:
         assert len(doc) == spec["numberOfPages"]
 
 

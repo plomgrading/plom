@@ -221,7 +221,7 @@ def build_page_to_version_dict(spec, question_versions: dict[int, int]):
         if len(verset) != 1:
             raise NotImplementedError(
                 "This code requires pages be uniquely versioned, "
-                f"but page {pg} has versions {verlist}"
+                f"but page {pg} has versions {sorted(vers)}"
             )
         (ver,) = verset
         page_to_version[pg] = ver
