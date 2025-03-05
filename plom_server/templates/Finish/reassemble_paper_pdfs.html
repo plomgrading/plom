@@ -193,7 +193,7 @@
                                            class="btn btn-warning"><i class="bi bi-exclamation-diamond-fill">view</i></a>
                                         <a href="{% url 'get_student_report' row.paper_num %}"
                                            target="_blank"
-                                           class="btn btn-warning disabled"><i class="bi bi-exclamation-diamond-fill">view report</i></a>
+                                           class="btn btn-warning"><i class="bi bi-exclamation-diamond-fill">view report</i></a>
                                         <button hx-put="{% url 'reassemble_one_paper' row.paper_num %}"
                                                 class="btn btn-warning">
                                             <i class="bi bi-exclamation-diamond-fill">
@@ -208,7 +208,7 @@
                                            class="btn btn-success">view</a>
                                         <a href="{% url 'get_student_report' row.paper_num %}"
                                            target="_blank"
-                                           class="btn btn-info disabled">view report</a>
+                                           class="btn btn-info">view report</a>
                                         <button hx-delete="{% url 'reassemble_one_paper' row.paper_num %}"
                                                 class="btn btn-warning">delete</button>
                                     {% endif %}

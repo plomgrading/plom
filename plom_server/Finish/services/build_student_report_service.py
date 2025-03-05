@@ -1,14 +1,92 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024-2025 Colin B. Macdonald
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 
+from datetime import datetime
 from pathlib import Path
+from statistics import mean, median, mode, stdev, quantiles
 from typing import Any
 
 from Papers.models import Paper
+from Papers.services import SpecificationService
 from ..services import StudentMarkService
 from .StudentReportPDFService import pdf_builder
+
+
+def _get_descriptive_statistics_from_histogram(
+    histogram: dict[int, int]
+) -> dict[str, float]:
+    """Return descriptive statistics from histogram of scores.
+
+    Gives dict of count, max, min, median, mean, mode, stddev, percentile25, percentile75.
+    """
+    # turn histogram into list of scores
+    scores = [s for s, c in histogram.items() for j in range(c)]
+    quants = quantiles(scores)
+    return {
+        "count": len(scores),
+        "max": max(scores),
+        "min": min(scores),
+        "median": median(scores),
+        "mean": mean(scores),
+        "mode": mode(scores),
+        "stddev": stdev(scores),
+        "percentile25": quants[0],
+        "percentile75": quants[1],
+    }
+
+
+def brief_report_pdf_builder(
+    paper_number,
+    total_histogram: dict[int, int],
+    question_histograms: dict[int, dict[int, int]],
+) -> dict[str, Any]:
+    """Build a Student Report PDF file report and return it as bytes.
+
+    Args:
+        paper_number: the number of the paper
+        total_histogram: a histogram of the total marks for all marked papers
+        question_histograms: dict, keyed by question_index, of histograms of marks for all marked questions
+
+    Returns:
+        A dictionary with the bytes of a PDF file, a suggested
+        filename, and the export timestamp.
+
+    Raises:
+        ValueError: lots of cases with NaN, usually indicating marking
+            is incomplete, because the pandas library uses NaN for
+            missing data.
+    """
+    from django.template.loader import get_template
+    from weasyprint import HTML, CSS
+
+    paper_info = StudentMarkService.get_paper_id_and_marks(paper_number)
+    timestamp = datetime.now()
+    timestamp_str = timestamp.strftime("%d/%m/%Y %H:%M:%S+00:00")
+    context = {
+        "longname": SpecificationService.get_longname(),
+        "timestamp_str": timestamp_str,
+        "totalMarks": SpecificationService.get_total_marks(),
+        "name": paper_info["name"],
+        "sid": paper_info["sid"],
+        "grade": paper_info["total"],
+        "total_stats": _get_descriptive_statistics_from_histogram(total_histogram),
+    }
+    report_template = get_template("Finish/Reports/brief_student_report.html")
+    rendered_html = report_template.render(context)
+    pdf_data = HTML(string=rendered_html, base_url="").write_pdf(
+        stylesheets=[CSS("./static/css/generate_report.css")]
+    )
+    shortname = (SpecificationService.get_shortname(),)
+    sname = paper_info["name"]
+    sid = paper_info["sid"]
+    filename = f"Student_Report-{shortname}--{sname}--{sid}.pdf"
+    return {
+        "bytes": pdf_data,
+        "filename": filename,
+        "timestamp": timestamp,
+    }
 
 
 class BuildStudentReportService:
@@ -36,3 +114,17 @@ class BuildStudentReportService:
 
         report = pdf_builder(versions=True, sid=sid)
         return report
+
+    def build_brief_report(
+        self,
+        paper_number: int,
+        total_histogram: dict[int, int],
+        question_histograms: dict[int, dict[int, int]],
+    ) -> dict[str, Any]:
+
+        outdir = Path("student_report")
+        outdir.mkdir(exist_ok=True)
+
+        return brief_report_pdf_builder(
+            paper_number, total_histogram, question_histograms
+        )

@@ -584,3 +584,38 @@ class StudentMarkService:
         # we return a list of dicts - these will be the rows
         # of our marks.csv spreadsheet.
         return [all_papers[k] for k in sorted(all_papers.keys())]
+
+    @staticmethod
+    def get_paper_id_and_marks(paper_number: int) -> dict[any, any]:
+        paper = Paper.objects.get(paper_number=paper_number)
+        paper_info = {
+            "paper_number": paper_number,
+            "sid": None,
+            "name": None,
+            "total": None,
+        }
+        question_indices = SpecificationService.get_question_indices()
+        paper_info.update({qi: None for qi in question_indices})
+        # get ID info if there
+        try:
+            action = (
+                PaperIDTask.objects.filter(paper=paper, status=PaperIDTask.COMPLETE)
+                .get()
+                .latest_action
+            )
+
+            paper_info.update({"sid": action.student_id, "name": action.student_name})
+        except PaperIDTask.DoesNotExist:
+            pass
+        # now get marks if there
+        scores = []
+        for task in MarkingTask.objects.filter(
+            paper=paper, status=MarkingTask.COMPLETE
+        ).prefetch_related("latest_annotation"):
+            paper_info[task.question_index] = task.latest_annotation.score
+            scores.append(task.latest_annotation.score)
+        # comute the total if all marked
+        if len(scores) == len(question_indices):
+            paper_info["total"] = sum(scores)
+
+        return paper_info

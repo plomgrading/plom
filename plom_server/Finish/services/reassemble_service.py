@@ -26,7 +26,7 @@ from plom.finish.examReassembler import reassemble
 
 from Identify.models import PaperIDTask
 from Mark.models import MarkingTask
-from Mark.services import MarkingTaskService
+from Mark.services import MarkingTaskService, MarkingStatsService
 from Papers.models import Paper, IDPage, DNMPage, MobilePage
 from Papers.services import SpecificationService
 from Scan.services import ManageScanService
@@ -363,7 +363,12 @@ class ReassembleService:
         return list(status.values())
 
     def queue_single_paper_reassembly(
-        self, paper_num: int, *, build_student_report: bool = True
+        self,
+        paper_num: int,
+        *,
+        build_student_report: bool = True,
+        total_histogram: None | dict[int, int] = None,
+        question_histograms: None | dict[int, dict[int, int]] = None,
     ) -> None:
         """Create and queue a huey task to reassemble the given paper.
 
@@ -389,6 +394,14 @@ class ReassembleService:
         except ObjectDoesNotExist:
             pass
 
+        # if build_student_report is true, but we dont have the
+        # histogram data, then build it here
+        if build_student_report:
+            if (total_histogram is None) or (question_histograms is None):
+                total_histogram, question_histograms = (
+                    MarkingStatsService().build_report_histograms()
+                )
+
         with transaction.atomic(durable=True):
             if ReassemblePaperChore.objects.filter(
                 paper=paper, obsolete=False
@@ -409,6 +422,8 @@ class ReassembleService:
             paper_num,
             tracker_pk=tracker_pk,
             build_student_report=build_student_report,
+            total_histogram=total_histogram,
+            question_histograms=question_histograms,
             _debug_be_flaky=False,
         )
         print(f"Just enqueued Huey reassembly task id={res.id}")
@@ -639,6 +654,11 @@ class ReassembleService:
         Keyword Args:
             build_student_report: whether or not to build the student reports at same time.
         """
+        if build_student_report:
+            total_histogram, question_histograms = (
+                MarkingStatsService().build_report_histograms()
+            )
+
         # first work out which papers are ready
         for data in self.get_all_paper_status_for_reassembly():
             # check if both id'd and marked
@@ -652,9 +672,15 @@ class ReassembleService:
             if data["reassembled_status"] == "Complete" and not data["outdated"]:
                 # is complete and not outdated
                 continue
-            self.queue_single_paper_reassembly(
-                data["paper_num"], build_student_report=build_student_report
-            )
+            if build_student_report:
+                self.queue_single_paper_reassembly(
+                    data["paper_num"],
+                    build_student_report=True,
+                    total_histogram=total_histogram,
+                    question_histograms=question_histograms,
+                )
+            else:
+                self.queue_single_paper_reassembly(data["paper_num"])
 
     def how_many_papers_are_mid_reassembly(self) -> int:
         # any chores that are not complete
@@ -780,6 +806,8 @@ def huey_reassemble_paper(
     *,
     tracker_pk: int,
     build_student_report: bool = True,
+    total_histogram: None | dict[int, int] = None,
+    question_histograms: None | dict[int, dict[int, int]] = None,
     _debug_be_flaky: bool = False,
     task: huey.api.Task | None = None,
 ) -> bool:
@@ -810,17 +838,19 @@ def huey_reassemble_paper(
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
-    # from .build_student_report_service import BuildStudentReportService
+    from .build_student_report_service import BuildStudentReportService
 
     with tempfile.TemporaryDirectory() as tempdir:
         save_path = ReassembleService().reassemble_paper(
             paper_obj, outdir=Path(tempdir)
         )
-        # report_data = BuildStudentReportService().build_one_report(paper_number)
-        # # save the report data to file in tempdir - TODO can we do this all in memory?
-        # report_path = Path(tempdir) / report_data["filename"]
-        # with report_path.open("wb") as fh:
-        #     fh.write(report_data["bytes"])
+        report_data = BuildStudentReportService().build_brief_report(
+            paper_number, total_histogram, question_histograms
+        )
+        # save the report data to file in tempdir - TODO can we do this all in memory?
+        report_path = Path(tempdir) / report_data["filename"]
+        with report_path.open("wb") as fh:
+            fh.write(report_data["bytes"])
 
         if _debug_be_flaky:
             for i in range(5):
@@ -839,10 +869,10 @@ def huey_reassemble_paper(
                     chore.pdf_file = File(f, name=save_path.name)
                     chore.display_filename = save_path.name
                     chore.save()
-                # with report_path.open("rb") as f2:
-                #     chore.report_pdf_file = File(f2, name=report_path.name)
-                #     chore.report_display_filename = report_path.name
-                #     chore.save()
+                with report_path.open("rb") as f2:
+                    chore.report_pdf_file = File(f2, name=report_path.name)
+                    chore.report_display_filename = report_path.name
+                    chore.save()
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
     return True
