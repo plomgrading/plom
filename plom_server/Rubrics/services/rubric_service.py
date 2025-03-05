@@ -904,7 +904,8 @@ class RubricService:
         pane.data = data
         pane.save()
 
-    def get_annotation_from_rubric(self, rubric: Rubric) -> QuerySet[Annotation]:
+    @staticmethod
+    def get_annotations_from_rubric(rubric: Rubric) -> QuerySet[Annotation]:
         """Get the QuerySet of Annotations that use this Rubric.
 
         Args:
@@ -948,8 +949,9 @@ class RubricService:
             .distinct()
         )
 
-    def get_rubrics_from_annotation(self, annotation: Annotation) -> QuerySet[Rubric]:
-        """Get the queryset of rubrics that are used by this annotation.
+    @staticmethod
+    def get_rubrics_from_annotation(annotation: Annotation) -> QuerySet[Rubric]:
+        """Get a QuerySet of Rubrics that are used by a particular Annotation.
 
         Args:
             annotation: Annotation instance
@@ -959,8 +961,9 @@ class RubricService:
         """
         return Rubric.objects.filter(annotations=annotation)
 
-    def get_rubrics_from_paper(self, paper_obj: Paper) -> QuerySet[Rubric]:
-        """Get the queryset of rubrics that are used by this paper.
+    @staticmethod
+    def get_rubrics_from_paper(paper_obj: Paper) -> QuerySet[Rubric]:
+        """Get a QuerySet of Rubrics that are used by a particular Paper.
 
         Args:
             paper_obj: Paper instance

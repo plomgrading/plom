@@ -569,43 +569,40 @@ class RubricServiceTests(TestCase):
         self.assertEqual(rubrics.count(), 3)
 
     def test_rubrics_from_annotation(self) -> None:
-        service = RubricService()
         annotation1 = baker.make(Annotation)
 
-        rubrics = service.get_rubrics_from_annotation(annotation1)
+        rubrics = RubricService.get_rubrics_from_annotation(annotation1)
         self.assertEqual(rubrics.count(), 0)
 
         b = baker.make(Rubric)
         b.annotations.add(annotation1)
         b.save()
-        rubrics = service.get_rubrics_from_annotation(annotation1)
+        rubrics = RubricService.get_rubrics_from_annotation(annotation1)
         self.assertEqual(rubrics.count(), 1)
 
         b = baker.make(Rubric)
         b.annotations.add(annotation1)
         b.save()
-        rubrics = service.get_rubrics_from_annotation(annotation1)
+        rubrics = RubricService.get_rubrics_from_annotation(annotation1)
         self.assertEqual(rubrics.count(), 2)
 
     def test_annotations_from_rubric(self) -> None:
-        service = RubricService()
         rubric1 = baker.make(Rubric)
 
-        annotations = service.get_annotation_from_rubric(rubric1)
+        annotations = RubricService.get_annotations_from_rubric(rubric1)
         self.assertEqual(annotations.count(), 0)
 
         annot1 = baker.make(Annotation, rubric=rubric1)
         rubric1.annotations.add(annot1)
-        annotations = service.get_annotation_from_rubric(rubric1)
+        annotations = RubricService.get_annotations_from_rubric(rubric1)
         self.assertEqual(annotations.count(), 1)
 
         annot2 = baker.make(Annotation, rubric=rubric1)
         rubric1.annotations.add(annot2)
-        annotations = service.get_annotation_from_rubric(rubric1)
+        annotations = RubricService.get_annotations_from_rubric(rubric1)
         self.assertEqual(annotations.count(), 2)
 
     def test_rubrics_from_paper(self) -> None:
-        service = RubricService()
         paper1 = baker.make(Paper, paper_number=1)
         marking_task1 = baker.make(MarkingTask, paper=paper1)
         marking_task2 = baker.make(MarkingTask, paper=paper1)
@@ -614,18 +611,18 @@ class RubricServiceTests(TestCase):
         annotation3 = baker.make(Annotation, task=marking_task1)
         annotation4 = baker.make(Annotation, task=marking_task2)
 
-        rubrics = service.get_rubrics_from_paper(paper1)
+        rubrics = RubricService.get_rubrics_from_paper(paper1)
         self.assertEqual(rubrics.count(), 0)
 
         rubric1 = baker.make(Rubric)
         rubric1.annotations.add(annotation1)
         rubric1.annotations.add(annotation2)
-        rubrics = service.get_rubrics_from_paper(paper1)
+        rubrics = RubricService.get_rubrics_from_paper(paper1)
         self.assertEqual(rubrics.count(), 2)
 
         rubric1.annotations.add(annotation3)
         rubric1.annotations.add(annotation4)
-        rubrics = service.get_rubrics_from_paper(paper1)
+        rubrics = RubricService.get_rubrics_from_paper(paper1)
         self.assertEqual(rubrics.count(), 4)
 
     def test_modify_rubric_wrong_revision(self) -> None:

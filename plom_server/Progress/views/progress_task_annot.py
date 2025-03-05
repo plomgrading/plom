@@ -222,7 +222,7 @@ class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
                     "edition": task_obj.latest_annotation.edition,
                     "last_update": task_obj.latest_annotation.time_of_last_update,
                     "marking_time": task_obj.latest_annotation.marking_time,
-                    "rubrics": RubricService().get_rubrics_from_annotation(
+                    "rubrics": RubricService.get_rubrics_from_annotation(
                         task_obj.latest_annotation
                     ),
                 }
