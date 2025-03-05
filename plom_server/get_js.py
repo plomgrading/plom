@@ -84,14 +84,13 @@ table = [
 
 
 def download_file(url: str, save_to: Path, *, filename: str | None = None) -> None:
+    """Download a file from a URL."""
     r = requests.get(url)
-
     if filename is None:
         if "Content-Disposition" in r.headers.keys():
             filename = re.findall("filename=(.+)", r.headers["Content-Disposition"])[0]
         else:
             filename = url.split("/")[-1]
-
     with open(save_to / filename, "wb") as f:
         for chunk in r.iter_content(chunk_size=1024):
             f.write(chunk)
