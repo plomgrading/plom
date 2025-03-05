@@ -422,9 +422,9 @@ class MarkingStatsService:
             ] = task.latest_annotation.score
         return paper_question_score
 
-    def build_report_histograms(
+    def build_report_score_lists(
         self,
-    ) -> Tuple[dict[int, int], dict[int, dict[int, int]]]:
+    ) -> Tuple[list[float], dict[int, list[float]]]:
         # get (effectively) all the marks for everything
         # so that we can form all histograms and also
         # a histogram for total marks only for those papers that
@@ -432,22 +432,15 @@ class MarkingStatsService:
         score_data = self._get_paper_question_score_data()
         question_indices = SpecificationService.get_question_indices()
         n_questions = len(question_indices)
-        scores_by_question: dict[int, list[int]] = {qi: [] for qi in question_indices}
-        scores_for_totals = []
+        question_score_lists: dict[int, list[float]] = {
+            qi: [] for qi in question_indices
+        }
+        total_score_list = []
         for pn, data in score_data.items():
             for qi, v in data.items():
-                scores_by_question[qi].append(v)
+                question_score_lists[qi].append(v)
             # only append total if all questions marked
             if len(data) == n_questions:
-                scores_for_totals.append(sum(data.values()))
-        # turn the scores into histograms
-        question_histograms = {}
-        for qi in question_indices:
-            question_histograms[qi] = score_histogram(
-                scores_by_question[qi], SpecificationService.get_question_mark(qi)
-            )
-        total_histogram = score_histogram(
-            scores_for_totals, SpecificationService.get_total_marks()
-        )
+                total_score_list.append(sum(data.values()))
 
-        return (total_histogram, question_histograms)
+        return (total_score_list, question_score_lists)

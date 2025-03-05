@@ -367,8 +367,8 @@ class ReassembleService:
         paper_num: int,
         *,
         build_student_report: bool = True,
-        total_histogram: None | dict[int, int] = None,
-        question_histograms: None | dict[int, dict[int, int]] = None,
+        total_score_list: None | list[float] = None,
+        question_score_lists: None | dict[int, list[float]] = None,
     ) -> None:
         """Create and queue a huey task to reassemble the given paper.
 
@@ -395,11 +395,11 @@ class ReassembleService:
             pass
 
         # if build_student_report is true, but we dont have the
-        # histogram data, then build it here
+        # score_list data, then build it here
         if build_student_report:
-            if (total_histogram is None) or (question_histograms is None):
-                total_histogram, question_histograms = (
-                    MarkingStatsService().build_report_histograms()
+            if (total_score_list is None) or (question_score_lists is None):
+                total_score_list, question_score_lists = (
+                    MarkingStatsService().build_report_score_lists()
                 )
 
         with transaction.atomic(durable=True):
@@ -422,8 +422,8 @@ class ReassembleService:
             paper_num,
             tracker_pk=tracker_pk,
             build_student_report=build_student_report,
-            total_histogram=total_histogram,
-            question_histograms=question_histograms,
+            total_score_list=total_score_list,
+            question_score_lists=question_score_lists,
             _debug_be_flaky=False,
         )
         print(f"Just enqueued Huey reassembly task id={res.id}")
@@ -655,8 +655,8 @@ class ReassembleService:
             build_student_report: whether or not to build the student reports at same time.
         """
         if build_student_report:
-            total_histogram, question_histograms = (
-                MarkingStatsService().build_report_histograms()
+            total_score_list, question_score_lists = (
+                MarkingStatsService().build_report_score_lists()
             )
 
         # first work out which papers are ready
@@ -676,8 +676,8 @@ class ReassembleService:
                 self.queue_single_paper_reassembly(
                     data["paper_num"],
                     build_student_report=True,
-                    total_histogram=total_histogram,
-                    question_histograms=question_histograms,
+                    total_score_list=total_score_list,
+                    question_score_lists=question_score_lists,
                 )
             else:
                 self.queue_single_paper_reassembly(data["paper_num"])
@@ -777,13 +777,13 @@ class ReassembleService:
                 first_paper=first_paper, last_paper=last_paper
             )
         ]
-        # report_paths = [
-        #     {
-        #         "fs": report_pdf_file.path,
-        #         "n": f"student_reports/{report_display_filename}",
-        #     }
-        #     for report_pdf_file, report_display_filename in self.get_completed_report_files_and_names()
-        # ]
+        report_paths = [
+            {
+                "fs": report_pdf_file.path,
+                "n": f"student_reports/{report_display_filename}",
+            }
+            for report_pdf_file, report_display_filename in self.get_completed_report_files_and_names()
+        ]
 
         if not paths:
             rng1 = f"{first_paper} <= " if first_paper is not None else ""
@@ -806,8 +806,8 @@ def huey_reassemble_paper(
     *,
     tracker_pk: int,
     build_student_report: bool = True,
-    total_histogram: None | dict[int, int] = None,
-    question_histograms: None | dict[int, dict[int, int]] = None,
+    total_score_list: None | list[float] = None,
+    question_score_lists: None | dict[int, list[float]] = None,
     _debug_be_flaky: bool = False,
     task: huey.api.Task | None = None,
 ) -> bool:
@@ -845,7 +845,7 @@ def huey_reassemble_paper(
             paper_obj, outdir=Path(tempdir)
         )
         report_data = BuildStudentReportService().build_brief_report(
-            paper_number, total_histogram, question_histograms
+            paper_number, total_score_list, question_score_lists
         )
         # save the report data to file in tempdir - TODO can we do this all in memory?
         report_path = Path(tempdir) / report_data["filename"]

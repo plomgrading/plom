@@ -14,15 +14,13 @@ from ..services import StudentMarkService
 from .StudentReportPDFService import pdf_builder
 
 
-def _get_descriptive_statistics_from_histogram(
-    histogram: dict[int, int]
+def _get_descriptive_statistics_from_score_list(
+    scores: list[float],
 ) -> dict[str, float]:
-    """Return descriptive statistics from histogram of scores.
+    """Return descriptive statistics from a list of scores
 
     Gives dict of count, max, min, median, mean, mode, stddev, percentile25, percentile75.
     """
-    # turn histogram into list of scores
-    scores = [s for s, c in histogram.items() for j in range(c)]
     quants = quantiles(scores)
     return {
         "count": len(scores),
@@ -39,15 +37,13 @@ def _get_descriptive_statistics_from_histogram(
 
 def brief_report_pdf_builder(
     paper_number,
-    total_histogram: dict[int, int],
-    question_histograms: dict[int, dict[int, int]],
+    total_score_list: list[float],
+    question_score_lists: dict[int, list[float]],
 ) -> dict[str, Any]:
     """Build a Student Report PDF file report and return it as bytes.
 
     Args:
         paper_number: the number of the paper
-        total_histogram: a histogram of the total marks for all marked papers
-        question_histograms: dict, keyed by question_index, of histograms of marks for all marked questions
 
     Returns:
         A dictionary with the bytes of a PDF file, a suggested
@@ -71,7 +67,7 @@ def brief_report_pdf_builder(
         "name": paper_info["name"],
         "sid": paper_info["sid"],
         "grade": paper_info["total"],
-        "total_stats": _get_descriptive_statistics_from_histogram(total_histogram),
+        "total_stats": _get_descriptive_statistics_from_score_list(total_score_list),
     }
     report_template = get_template("Finish/Reports/brief_student_report.html")
     rendered_html = report_template.render(context)
@@ -118,13 +114,13 @@ class BuildStudentReportService:
     def build_brief_report(
         self,
         paper_number: int,
-        total_histogram: dict[int, int],
-        question_histograms: dict[int, dict[int, int]],
+        total_score_list: list[float],
+        question_score_lists: dict[int, list[float]],
     ) -> dict[str, Any]:
 
         outdir = Path("student_report")
         outdir.mkdir(exist_ok=True)
 
         return brief_report_pdf_builder(
-            paper_number, total_histogram, question_histograms
+            paper_number, total_score_list, question_score_lists
         )

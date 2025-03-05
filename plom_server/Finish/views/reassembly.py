@@ -103,7 +103,7 @@ class StartOneReassembly(ManagerRequiredView):
 
 class StartAllReassembly(ManagerRequiredView):
     def post(self, request):
-        ReassembleService().queue_all_paper_reassembly()
+        ReassembleService().queue_all_paper_reassembly(build_student_report=True)
         return HttpResponseClientRedirect(reverse("reassemble_pdfs"))
 
     def delete(self, request):
