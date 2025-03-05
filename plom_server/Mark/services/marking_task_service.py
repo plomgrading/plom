@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aden Chan
@@ -77,9 +77,10 @@ class MarkingTaskService:
         task_code = f"q{paper.paper_number:04}g{question_index}"
 
         # other tasks with this code are now 'out of date'
+        # as per #3220 do not erase assigned user.
         MarkingTask.objects.filter(code=task_code).exclude(
             status=MarkingTask.OUT_OF_DATE
-        ).update(status=MarkingTask.OUT_OF_DATE, assigned_user=None)
+        ).update(status=MarkingTask.OUT_OF_DATE)
 
         # get priority of latest old task to assign to new task, but
         # if no previous priority exists, set a new value based on the current strategy
