@@ -114,11 +114,11 @@ class RubricServiceTests_exceptions(TestCase):
         }
         # check error thrown when value > out_of
         with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
-            RubricService().create_rubric(rub)
+            RubricService.create_rubric(rub)
         # check if value < 0
         rub["value"] = -2
         with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
-            RubricService().create_rubric(rub)
+            RubricService.create_rubric(rub)
         # check if out_of > max_mark
         rub["value"] = 3
         rub["out_of"] = 99
@@ -154,7 +154,7 @@ class RubricServiceTests_extra_validation(TestCase):
             "question_index": 1,
         }
         with self.assertRaises(serializers.ValidationError):
-            RubricService().create_rubric(rub)
+            RubricService.create_rubric(rub)
 
     def test_create_rubric_invalid_versions(self) -> None:
         for bad_versions in ("[1, 1.2]", "[1, sth]", "{1, 2}", [1, 1.2], [1, "abc"]):
