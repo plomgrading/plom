@@ -8,10 +8,11 @@ import argparse
 import csv
 import os
 import subprocess
-import time
 from pathlib import Path
 from shlex import split
 from tempfile import TemporaryDirectory
+from time import sleep
+
 
 # we specify this directory relative to the plom_server
 # root directory, rather than getting Django things up and
@@ -370,8 +371,6 @@ def upload_the_qvmap(filepath: Path):
 
 def build_all_papers_and_wait():
     """Trigger build all the printable paper pdfs and wait for completion."""
-    from time import sleep
-
     run_django_manage_command("plom_build_paper_pdfs --start-all")
     # since this is a background Huey job, we need to
     # wait until all those pdfs are actually built -
@@ -583,8 +582,6 @@ def run_the_randomarker(*, port):
 
     All papers will be marked after this call.
     """
-    from time import sleep
-
     # TODO: hardcoded http://
     srv = f"http://localhost:{port}"
     # list of markers and their passwords and percentage to mark
@@ -757,7 +754,7 @@ if __name__ == "__main__":
         else:
             server_process = launch_gunicorn_production_server_process(port=args.port)
         # processes still running after small delay? probably working
-        time.sleep(0.25)
+        sleep(0.25)
         for hp in huey_processes:
             r = hp.poll()
             if r is not None:
