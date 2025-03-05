@@ -2,7 +2,6 @@
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
 
-from pathlib import Path
 import shutil
 
 from django.conf import settings
@@ -26,7 +25,10 @@ class Command(BaseCommand):
         shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
 
     def remove_old_migration_files(self):
-        """Remove old db migration files from the source tree."""
+        """Remove old db migration files from the source tree.
+
+        Caution: this assumes we have read-write access to the source code!
+        """
         print("Avoid perplexing errors by removing autogen migration droppings")
         for path in settings.BASE_DIR.glob("*/migrations/*.py"):
             if path.name == "__init__.py":
@@ -36,8 +38,9 @@ class Command(BaseCommand):
                 path.unlink(missing_ok=True)
 
     def huey_cleanup(self):
-        """Remove any existing huey db - at present is hardcoded."""
-        for path in Path("huey").glob("hueydb*.sqlite*"):
+        """Remove any existing huey db."""
+        for path in settings.PLOM_BASE_DIR.glob("hueydb*.sqlite*"):
+            print(f"Removing {path}")
             path.unlink(missing_ok=True)
 
     def handle(self, *args, **options):
