@@ -15,7 +15,7 @@ from django.db import IntegrityError
 from django.shortcuts import render
 
 from plom.misc_utils import humanize_seconds
-from Base.base_group_views import AdminOrManagerRequiredView
+from plom_server.Base.base_group_views import AdminOrManagerRequiredView
 from .services import AuthenticationServices
 from .form.signupForm import CreateSingleUserForm, CreateMultiUsersForm
 

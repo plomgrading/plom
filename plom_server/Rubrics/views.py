@@ -23,10 +23,10 @@ from rest_framework import serializers
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 from plom.misc_utils import pprint_score
 
-from Base.base_group_views import ManagerRequiredView
-from Base.models import SettingsModel
-from Papers.services import SpecificationService
-from Preparation.services import PapersPrinted
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Base.models import SettingsModel
+from plom_server.Papers.services import SpecificationService
+from plom_server.Preparation.services import PapersPrinted
 from .services import RubricService
 from .forms import (
     RubricHalfMarkForm,

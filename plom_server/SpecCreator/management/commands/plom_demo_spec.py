@@ -8,8 +8,8 @@ from importlib import resources
 
 from django.core.management.base import BaseCommand, CommandError
 
-from Papers.services import SpecificationService
-from Preparation import useful_files_for_testing as useful_files
+from plom_server.Papers.services import SpecificationService
+from plom_server.Preparation import useful_files_for_testing as useful_files
 
 
 class Command(BaseCommand):

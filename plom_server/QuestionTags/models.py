@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 
-from Base.models import Tag
+from plom_server.Base.models import Tag
 
 """
 Abstract model for associating multiple tags with a question index.

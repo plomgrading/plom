@@ -10,7 +10,7 @@ from typing import Any
 
 from django.db import transaction
 
-from Papers.models import IDPage, Image, Paper
+from plom_server.Papers.models import IDPage, Image, Paper
 from ..services import IdentifyTaskService, ClasslistService
 from ..models import PaperIDTask
 

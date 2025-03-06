@@ -11,7 +11,7 @@ from django.db import transaction
 
 from plom.tpv_utils import parse_paper_page_version
 
-from Papers.services import SpecificationService, PaperInfoService
+from plom_server.Papers.services import SpecificationService, PaperInfoService
 from ..models import (
     StagingImage,
     StagingBundle,

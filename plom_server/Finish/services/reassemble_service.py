@@ -24,15 +24,15 @@ import huey.api
 from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
 
-from Identify.models import PaperIDTask
-from Mark.models import MarkingTask
-from Mark.services import MarkingTaskService, MarkingStatsService
-from Papers.models import Paper, IDPage, DNMPage, MobilePage
-from Papers.services import SpecificationService
-from Scan.services import ManageScanService
+from plom_server.Identify.models import PaperIDTask
+from plom_server.Mark.models import MarkingTask
+from plom_server.Mark.services import MarkingTaskService, MarkingStatsService
+from plom_server.Papers.models import Paper, IDPage, DNMPage, MobilePage
+from plom_server.Papers.services import SpecificationService
+from plom_server.Scan.services import ManageScanService
 
 from ..models import ReassemblePaperChore
-from Base.models import HueyTaskTracker
+from plom_server.Base.models import HueyTaskTracker
 
 from .student_marks_service import StudentMarkService
 

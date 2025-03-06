@@ -10,7 +10,7 @@ from typing import Any
 from plom import SpecVerifier
 from plom.version_maps import version_map_to_csv
 
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 
 from ..services import StagingStudentService
 
@@ -27,7 +27,7 @@ class PQVMappingService:
 
     @staticmethod
     def get_pqv_map_dict() -> dict[int, dict[int | str, int]]:
-        from Papers.services import PaperInfoService
+        from plom_server.Papers.services import PaperInfoService
 
         return PaperInfoService.get_pqv_map_dict()
 

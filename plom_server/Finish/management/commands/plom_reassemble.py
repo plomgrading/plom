@@ -10,7 +10,7 @@ from time import sleep
 from tabulate import tabulate
 from django.core.management.base import BaseCommand, CommandError
 
-from Papers.services import PaperInfoService
+from plom_server.Papers.services import PaperInfoService
 
 from ...services import ReassembleService
 

@@ -15,12 +15,12 @@ from typing import Any
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 
-from Identify.models import PaperIDTask
-from Mark.services import MarkingTaskService
-from Mark.models import MarkingTask
-from Papers.models.paper_structure import Paper
-from Papers.services import SpecificationService, PaperInfoService
-from Scan.services import ManageScanService
+from plom_server.Identify.models import PaperIDTask
+from plom_server.Mark.services import MarkingTaskService
+from plom_server.Mark.models import MarkingTask
+from plom_server.Papers.models.paper_structure import Paper
+from plom_server.Papers.services import SpecificationService, PaperInfoService
+from plom_server.Scan.services import ManageScanService
 import hashlib
 
 

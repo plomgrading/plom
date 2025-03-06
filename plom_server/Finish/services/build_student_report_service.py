@@ -9,9 +9,9 @@ from typing import Any
 
 from django.conf import settings
 
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 from ..services import StudentMarkService
-from QuestionTags.services import QuestionTagService
+from plom_server.QuestionTags.services import QuestionTagService
 
 
 def _get_descriptive_statistics_from_score_list(

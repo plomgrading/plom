@@ -14,8 +14,8 @@ from rest_framework import serializers
 from plom.plom_exceptions import PlomDependencyConflict
 from django_htmx.http import HttpResponseClientRedirect
 
-from Base.base_group_views import ManagerRequiredView
-from Papers.services import SpecificationService
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Papers.services import SpecificationService
 
 from ..services import SpecificationUploadService
 

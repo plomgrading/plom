@@ -17,9 +17,9 @@ if sys.version_info < (3, 11):
 else:
     import tomllib
 
-from Papers.services import PaperCreatorService, SpecificationService
-from Preparation import useful_files_for_testing as useful_files
-from Preparation.services import (
+from plom_server.Papers.services import PaperCreatorService, SpecificationService
+from plom_server.Preparation import useful_files_for_testing as useful_files
+from plom_server.Preparation.services import (
     PapersPrinted,
     PQVMappingService,
     PrenameSettingService,

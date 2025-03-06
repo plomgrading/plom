@@ -13,10 +13,10 @@ import numpy as np
 from PIL import Image
 import zipfile
 
-from Papers.models import ReferenceImage
-from Papers.models import Paper, FixedPage
-from Papers.services import PaperInfoService
-from Identify.models import IDRectangle
+from plom_server.Papers.models import ReferenceImage
+from plom_server.Papers.models import Paper, FixedPage
+from plom_server.Papers.services import PaperInfoService
+from plom_server.Identify.models import IDRectangle
 from plom.scan import rotate
 
 

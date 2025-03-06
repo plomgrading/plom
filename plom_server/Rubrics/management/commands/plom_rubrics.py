@@ -23,7 +23,7 @@ from tabulate import tabulate
 
 import plom
 
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 from ...services import RubricService
 
 

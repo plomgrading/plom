@@ -9,11 +9,11 @@ Assumes that the config describes a valid server state, and that
 the functions in ConfigPreparationService have already been called.
 """
 
-from Preparation.services import PapersPrinted
-from Papers.models import Paper
-from Papers.services import SpecificationService
-from Mark.services import MarkingTaskService
-from Identify.services import IdentifyTaskService
+from plom_server.Preparation.services import PapersPrinted
+from plom_server.Papers.models import Paper
+from plom_server.Papers.services import SpecificationService
+from plom_server.Mark.services import MarkingTaskService
+from plom_server.Identify.services import IdentifyTaskService
 
 from . import PlomServerConfig
 

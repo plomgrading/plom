@@ -21,8 +21,8 @@ from django.core.management.base import BaseCommand
 from django.core.management import call_command
 from django.conf import settings
 
-from Identify.services import IDDirectService
-from Scan.services import ScanService
+from plom_server.Identify.services import IDDirectService
+from plom_server.Scan.services import ScanService
 from ...services import DemoBundleCreationService, DemoHWBundleCreationService
 
 

@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.http import HttpResponse, HttpRequest, Http404
 from django_htmx.http import HttpResponseClientRedirect
 
-from Base.base_group_views import ScannerRequiredView
+from plom_server.Base.base_group_views import ScannerRequiredView
 
 from ..services import (
     ImageRotateService,

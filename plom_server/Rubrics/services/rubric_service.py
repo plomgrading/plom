@@ -36,12 +36,12 @@ from django.db.models import QuerySet
 from rest_framework import serializers
 
 from plom.plom_exceptions import PlomConflict
-from Base.models import SettingsModel
-from Mark.models import Annotation
-from Mark.models.tasks import MarkingTask
-from Papers.models import Paper
-from Papers.services import SpecificationService
-from QuestionTags.models import PedagogyTag
+from plom_server.Base.models import SettingsModel
+from plom_server.Mark.models import Annotation
+from plom_server.Mark.models.tasks import MarkingTask
+from plom_server.Papers.models import Paper
+from plom_server.Papers.services import SpecificationService
+from plom_server.QuestionTags.models import PedagogyTag
 from ..serializers import RubricSerializer
 from ..models import Rubric
 from ..models import RubricPane
@@ -418,7 +418,7 @@ class RubricService:
             PlomConflict: the new data is too old; someone else modified.
         """
         # addresses a circular import?
-        from Mark.services import MarkingTaskService
+        from plom_server.Mark.services import MarkingTaskService
 
         new_rubric_data = new_rubric_data.copy()
         username = new_rubric_data.pop("username")

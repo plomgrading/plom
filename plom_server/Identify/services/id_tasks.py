@@ -14,8 +14,8 @@ from django.core.exceptions import (
 )
 from django.db import transaction, IntegrityError
 
-from Papers.models import IDPage, Paper, Image
-from Papers.services import ImageBundleService
+from plom_server.Papers.models import IDPage, Paper, Image
+from plom_server.Papers.services import ImageBundleService
 from ..models import PaperIDTask, PaperIDAction, IDPrediction
 
 

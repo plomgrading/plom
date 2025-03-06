@@ -5,8 +5,8 @@
 
 from django.db import models, transaction
 
-from Base.models import HueyTaskTracker
-from Scan.models import StagingImage
+from plom_server.Base.models import HueyTaskTracker
+from plom_server.Scan.models import StagingImage
 
 
 class CreateImageHueyTask(HueyTaskTracker):

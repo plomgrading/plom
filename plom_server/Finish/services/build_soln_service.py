@@ -21,15 +21,15 @@ from django_huey import db_task, get_queue
 import huey
 import huey.api
 
-from Scan.services import ManageScanService
-from Base.models import HueyTaskTracker
-from Identify.models import PaperIDTask
-from Papers.models import (
+from plom_server.Scan.services import ManageScanService
+from plom_server.Base.models import HueyTaskTracker
+from plom_server.Identify.models import PaperIDTask
+from plom_server.Papers.models import (
     SolnSpecQuestion,
     Paper,
     QuestionPage,
 )
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 from ..models import SolutionSourcePDF, BuildSolutionPDFChore
 from .student_marks_service import StudentMarkService
 from .soln_source import SolnSourceService

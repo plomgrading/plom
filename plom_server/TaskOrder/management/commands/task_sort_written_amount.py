@@ -11,8 +11,8 @@ from tqdm import tqdm
 from django.core.management.base import BaseCommand, CommandError
 
 # TODO: why model here?  Maybe there is some service to talk to instead?
-from Papers.models import QuestionPage
-from Papers.services import SpecificationService
+from plom_server.Papers.models import QuestionPage
+from plom_server.Papers.services import SpecificationService
 
 
 class Command(BaseCommand):

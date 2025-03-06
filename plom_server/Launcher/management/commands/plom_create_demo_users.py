@@ -12,7 +12,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User, Group
 from django.db import IntegrityError
 
-from Authentication.services import AuthenticationServices
+from plom_server.Authentication.services import AuthenticationServices
 
 
 # -m to get number of scanners and markers

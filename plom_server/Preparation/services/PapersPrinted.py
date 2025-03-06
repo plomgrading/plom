@@ -50,7 +50,7 @@ def set_papers_printed(status: bool, *, ignore_dependencies: bool = False):
     if ignore_dependencies:
         return
 
-    from Rubrics.services import RubricService
+    from plom_server.Rubrics.services import RubricService
 
     if status:
         RubricService().init_rubrics()
