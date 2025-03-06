@@ -4,6 +4,7 @@
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 
 from datetime import datetime
+from pathlib import Path
 from statistics import mean, median, mode, stdev, quantiles
 from typing import Any
 
@@ -44,9 +45,10 @@ def brief_report_pdf_builder(
 
     Args:
         paper_number: the number of the paper
-        total_score_list: a list of total scores of all completely marked papers.
-        question_score_lists: a dict (keyed by question index) of lists of scores of all marked questions.
-
+        total_score_list: a list of total scores of all completely
+            marked papers.
+        question_score_lists: a dict (keyed by question index) of lists
+            of scores of all marked questions.
 
     Returns:
         A dictionary with the bytes of a PDF file, a suggested
@@ -56,6 +58,10 @@ def brief_report_pdf_builder(
         ValueError: lots of cases with NaN, usually indicating marking
             is incomplete, because the pandas library uses NaN for
             missing data.
+
+    This method uses a slightly strange mix of Django internals to use
+    the Django-templating system.  The rendered html (string) is then
+    fed to WEasyPrint to make a PDF.
     """
     from django.template.loader import get_template
     from weasyprint import HTML, CSS
@@ -95,11 +101,32 @@ def brief_report_pdf_builder(
             paper_info["question_max_marks"],
         )
 
+    # TODO: suspicious if this will always work, out-of-tree
     report_template = get_template("Finish/Reports/brief_student_report.html")
+    # print(f"DEBUG: the report template is: {report_template}")
     rendered_html = report_template.render(context)
-    pdf_data = HTML(string=rendered_html, base_url="").write_pdf(
-        stylesheets=[CSS("./static/css/generate_report.css")]
-    )
+
+    # We want this, but done "properly":
+    # # css = CSS("static/css/generate_report.css")
+
+    # TODO: is this really static access?  this CSS is not used by the outside world
+    # # from django.templatetags.static import static
+    # # static("css/generate_report.css")
+    # produces `s/tatic/css/generate_report.css`, like part of a URL
+
+    # TODO: would this need static.css to be a python module?
+    # from importlib import resources
+    # css_filelike = resources.files("plom_server.static.css") / "generate_report.css"
+
+    # TODO: for now, just grab the file with direct access (which might not work if
+    # we're installed inside a .zip file or something esoteric like that).
+    import plom_server
+
+    path = Path(plom_server.__path__[0]) / "static/css/generate_report.css"
+    # print(f"DEBUG: getting CSS directly from {path}")
+    css = CSS(path)
+
+    pdf_data = HTML(string=rendered_html, base_url="").write_pdf(stylesheets=[css])
     shortname = SpecificationService.get_shortname()
     sid = paper_info["sid"]
     filename = f"{shortname}_report_{sid}.pdf"
