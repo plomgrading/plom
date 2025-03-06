@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2025 Colin B. Macdonald
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 
 import io
 import random
@@ -130,7 +130,7 @@ class BuildSolutionService:
             paper_number: which paper to build solutions for.
 
         Keyword Args:
-            watermark: whether to paint watermarked student numbers.
+            watermark: whether to paint watermarked student ids.
                 Defaults to False.
 
         Returns:

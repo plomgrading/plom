@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Divy Patel
-# Copyright (C) 2023 Colin B. Macdonald
-# Copyright (C) 2024 Andrew Rechnitzer
-
-from __future__ import annotations
+# Copyright (C) 2023, 2025 Colin B. Macdonald
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 
 import json
 from pathlib import Path
@@ -84,7 +82,7 @@ class Command(BaseCommand):
         )
         # now extract the digits from those boxes.
 
-        student_number_length = 8
+        student_id_length = 8
         count = 0
 
         dir = Path(settings.MEDIA_ROOT / "digit_images")
@@ -101,9 +99,9 @@ class Command(BaseCommand):
                 self.stdout.write(f"Trouble finding the ID box on paper {paper_num}")
                 continue
             digit_images = IDBoxProcessorService().get_digit_images(
-                ID_box, student_number_length
+                ID_box, student_id_length
             )
-            if len(digit_images) != student_number_length:
+            if len(digit_images) != student_id_length:
                 self.stdout.write(
                     f"Trouble finding digits inside the ID box on paper {paper_num}"
                 )

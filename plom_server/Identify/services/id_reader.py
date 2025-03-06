@@ -604,9 +604,9 @@ class IDBoxProcessorService:
         """
         if not is_model_present():
             download_model()
-        student_number_length = 8
+        student_id_length = 8
         heatmap = self.compute_probability_heatmap_for_idbox_images(
-            id_box_files, student_number_length
+            id_box_files, student_id_length
         )
 
         probs_as_list = {k: [x.tolist() for x in v] for k, v in heatmap.items()}
