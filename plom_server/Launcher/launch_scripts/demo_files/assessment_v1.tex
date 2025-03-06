@@ -1,6 +1,6 @@
 % SPDX-License-Identifier: AGPL-3.0-or-later
 % Copyright (C) 2019-2024 Andrew Rechnitzer
-% Copyright (C) 2022-2024 Colin B. Macdonald
+% Copyright (C) 2022-2025 Colin B. Macdonald
 
 \documentclass[12pt]{exam}
 
@@ -92,7 +92,7 @@
 \usepackage{tikz}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Use tikz to put a big "Solutions" watermark on the first page 
+% Use tikz to put a big "Solutions" watermark on the first page
 % if compiled with solutions
 \newcommand{\watermarkPageIfSolutions}[1][\empty]{
 \ifprintanswers%
@@ -103,7 +103,7 @@
 \end{tikzpicture}%
 \fi%
 }
-% for demo purposes, we put a small watermark on each page using tikz 
+% for demo purposes, we put a small watermark on each page using tikz
 \AddToHook{shipout/background}[demoversion] {
 \begin{tikzpicture}[remember picture, overlay]
   \node [below, text=teal, rotate=90, scale=3, opacity=.25] at (current page.west) {\textsf{demo version~1}};
@@ -183,17 +183,17 @@ You may find the following formulas useful in the questions that follow.
 
 
 \begin{questions}
-  \question[6] 
+  \question[6]
   Compute the following limits.
   \begin{parts}
     \part\(\displaystyle \lim_{x \to 3} \dfrac{x^2-9}{x-3} \)
     \answerbox{6}
     \blank%
     \begin{solution}
-      Notice that \( x^2-9 = (x-3)(x+3)\) and so 
+      Notice that \( x^2-9 = (x-3)(x+3)\) and so
       \[
-        \lim_{x \to 3} \dfrac{x^2-9}{x-3} 
-        = \lim_{x \to 3} \dfrac{(x-3)(x+3)}{x-3} 
+        \lim_{x \to 3} \dfrac{x^2-9}{x-3}
+        = \lim_{x \to 3} \dfrac{(x-3)(x+3)}{x-3}
         = \lim_{x \to 3} (x+3)
         = 6
       \]
@@ -202,19 +202,19 @@ You may find the following formulas useful in the questions that follow.
     \answerbox{3}
     \blank%
     \begin{solution}
-      First rewrite 
+      First rewrite
       \[
-        \dfrac{3x+2}{\sqrt{x^2+4x-7}} 
+        \dfrac{3x+2}{\sqrt{x^2+4x-7}}
         = \dfrac{x(3+2/x)}{|x|\sqrt{1 + 4/x - 7/x^2}}
       \]
-      Now since we take the limit to \(+\infty\) we can simplify this further 
+      Now since we take the limit to \(+\infty\) we can simplify this further
       \[
-        \dfrac{3x+2}{\sqrt{x^2+4x-7}} 
+        \dfrac{3x+2}{\sqrt{x^2+4x-7}}
         = \dfrac{(3+2/x)}{\sqrt{1 + 4/x - 7/x^2}}
       \]
-      Hence 
+      Hence
       \[
-      \lim_{x \to +\infty} \dfrac{3x+2}{\sqrt{x^2+4x-7}}         
+      \lim_{x \to +\infty} \dfrac{3x+2}{\sqrt{x^2+4x-7}}
       = \lim_{x \to +\infty} \dfrac{3+2/x}{\sqrt{1+4/x-7/x^2}}
       = 3
       \]
@@ -223,15 +223,15 @@ You may find the following formulas useful in the questions that follow.
     \answerbox{1}
     \blank%
     \begin{solution}
-      Since we take the limit as \(x \to 0\) from above, we can simplify \(|x|=x\), and hence 
+      Since we take the limit as \(x \to 0\) from above, we can simplify \(|x|=x\), and hence
       \[
-        \lim_{x \to 0^+} \dfrac{x}{|x|} 
+        \lim_{x \to 0^+} \dfrac{x}{|x|}
         = \lim_{x \to 0^+} \dfrac{x}{x}
         = 1
       \]
     \end{solution}
   \end{parts}
-\newpage 
+\newpage
   % for demo we label this question as Q(2)
   \renewcommand{\questionlabel}{Q(\thequestion)}
   \question[8] Compute the following derivatives:
@@ -240,14 +240,14 @@ You may find the following formulas useful in the questions that follow.
     \blank%
     \begin{solution}
       \begin{align*}
-        \diff{}{x} \left(x^2 + 3x -\log(x) + 7 - \frac{1}{\sqrt{x}}\right)  
+        \diff{}{x} \left(x^2 + 3x -\log(x) + 7 - \frac{1}{\sqrt{x}}\right)
         & = 2x + 3 - \frac{1}{x} + 0 + \frac{1}{2 x^{3/2}}
       \end{align*}
     \end{solution}
     \part\(\displaystyle \diff{}{x} \left(x e^x\right) \)
     \blank%
     \begin{solution}
-      Using the product rule 
+      Using the product rule
       \begin{align*}
         \diff{}{x} xe^x &= x \diff{}{x} e^x + e^x \diff{}{x}x  \\
         & = xe^x + e^x = (x+1)e^x
@@ -255,17 +255,17 @@ You may find the following formulas useful in the questions that follow.
     \end{solution}
     \newpage
     \part\(\displaystyle \diff{}{x} \sin(x^2) \)
-    \blank% 
+    \blank%
     \begin{solution}
-      Using the chain rule 
+      Using the chain rule
       \begin{align*}
         \diff{}{x} \sin(x^2) &= 2x  \cos(x^2)
       \end{align*}
     \end{solution}
     \part\(\displaystyle \diff{}{x} \left(\frac{x-3}{x+2}\right) \)
-    \blank% 
+    \blank%
     \begin{solution}
-      Using the quotient rule 
+      Using the quotient rule
       \begin{align*}
         \diff{}{x} \frac{x-3}{x+2} &= \frac{(x+2)\cdot \diff{}{x}(x-3) - (x-3)\diff{}{x}(x+2)}{(x+2)^2} \\
         &= \frac{x+2 - (x-3)}{(x+2)^2} \\
@@ -273,23 +273,23 @@ You may find the following formulas useful in the questions that follow.
       \end{align*}
     \end{solution}
   \end{parts}
-  \newpage 
+  \newpage
 
-  % for demo we label this question as Ex.3 
+  % for demo we label this question as Ex.3
   \renewcommand{\questionlabel}{Ex.\thequestion}
-  \question[4] 
+  \question[4]
   \begin{parts}
     \part\ Compute the cubic Taylor approximation of \(f(x)= \sqrt{1+x} \) about \(x=0\).
     \blank\blank\blank%
     \begin{solution}
-      We start by computing derivatives 
+      We start by computing derivatives
       \begin{align*}
         f(x) &= (1+x)^{1/2} & f(0) = 1 \\
         f'(x) &= \frac{1}{2}(1+x)^{-1/2} & f'(0) &= 1/2 \\
         f''(x) &= \frac{-1}{4} (1+x)^{-3/2} & f''(0) &= -1/4 \\
         f'''(x) &= \frac{3}{8}(1+x)^{-5/2} & f'''(0) &= 3/8
       \end{align*}
-      Then 
+      Then
       \[
         T_3(x) = 1 + \frac{x}{2} - \frac{x^2}{8} + \frac{x^3}{16}
       \]
@@ -307,7 +307,7 @@ You may find the following formulas useful in the questions that follow.
   \newpage
   % for demo we label this question as LastQ
   \renewcommand{\questionlabel}{LastQ}
-  \question[7] A piece of copper at room temperature (ie \(20^\circ \)) is placed in a pot of boiling water. After 10 seconds it has warmed to \(90^\circ\). 
+  \question[7] A piece of copper at room temperature (ie \(20^\circ \)) is placed in a pot of boiling water. After 10 seconds it has warmed to \(90^\circ\).
 
   When will the copper reach \( 99.9^\circ \)?
   \begin{solution}
@@ -321,9 +321,9 @@ You may find the following formulas useful in the questions that follow.
     \]
     where \(A\) is the ambient temperature --- that of the boiling water, \(100\).
 
-    Hence 
+    Hence
     \[
-      T(t) = 100-80 e^{Kt} 
+      T(t) = 100-80 e^{Kt}
     \]
     We are told that \(T(10)=90\), so
     \begin{align*}
@@ -331,12 +331,12 @@ You may find the following formulas useful in the questions that follow.
       e^{10K} &= \frac{1}{8}  \\
       e^{K} &= 8^{-1/10}
     \end{align*}
-    Hence we have 
+    Hence we have
     \[
       T(t) = 100-80 \cdot 8^{-t/10}
     \]
 
-    So to find \(t\) so that \(T(t)=99.9\) we solve 
+    So to find \(t\) so that \(T(t)=99.9\) we solve
     \begin{align*}
       99.9 &= 100 - 80 \cdot 8^{-t/10}  \\
       0.1 &= 80 \cdot 8^{-t/10} \\

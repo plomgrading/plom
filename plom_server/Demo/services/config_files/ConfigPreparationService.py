@@ -94,7 +94,7 @@ def create_qv_map_and_papers(config: PlomServerConfig):
 
     Either generated from a number-to-produce value or a link to a QVmap CSV.
     """
-    qvmap: dict[int, dict[int, int]] = {}
+    qvmap: dict[int, dict[int | str, int]] = {}
     if config.num_to_produce:
         qvmap = PQVMappingService().make_version_map(config.num_to_produce)
     else:

@@ -54,9 +54,17 @@ class RectangleExtractor:
     stores information and cached calculations about a coordinate system
     in the QR-code locations, enabling information to be looked up in a
     scanned image based on locations chosen from the reference image.
+
+    If you construct a RectangleExtractor for version 1 and use it on
+    version 2, you are playing with fire a bit (b/c maybe version 1 is
+    on A4 paper but version 2 is on Letter paper).  More likely, perhaps
+    the boxes you're looking to get are not in *precisely* the same place.
+    In practice, you're welcome to try anyway..., for example in the case
+    of versioned-ID pages, we construct this object for Version 1 but
+    use it on others.
     """
 
-    def __init__(self, version: int, page: int):
+    def __init__(self, version: int, page: int) -> None:
         self.page_number = page
         self.version = version
         try:
@@ -185,11 +193,14 @@ class RectangleExtractor:
         top_f: float,
         right_f: float,
         bottom_f: float,
+        *,
+        _version_ignore: bool = False,
     ) -> None | bytes:
         """Given an image, get a particular sub-rectangle, after applying an affine transformation to correct it.
 
         Args:
-            paper_number (int): the number of the paper from which to extract the rectangle of the given version, page
+            paper_number: the number of the paper from which to extract
+                the rectangle of the given version, page.
             top_f (float): fractional value in roughly in ``[0, 1]``
                 which define the top boundary of the desired subsection of
                 the image.  Measured relative to the centres of the QR codes.
@@ -197,14 +208,31 @@ class RectangleExtractor:
             bottom_f (float): same as top, defining the bottom boundary.
             right_f (float): same as top, defining the right boundary.
 
+        Keyword Args:
+            _version_override: RectangleExtractor is designed to be specific
+                to a version provided at time of construction.  If you like
+                living somewhat dangerously (and/or have knowledge that your
+                version layouts are identical), then you can bypass this...
+                TODO: note underscore: used for internal hackery, may not last.
+
         Returns:
-            the bytes of the image in png format, or none if errors
+            The bytes of the image in png format, or none if errors.
+
+        Raises:
+            ObjectDoesNotExist: if that paper number does not have our page
+                and our version.
         """
         # start by getting the scanned image
         paper_obj = Paper.objects.get(paper_number=paper_number)
-        img_obj = FixedPage.objects.get(
-            version=self.version, page_number=self.page_number, paper=paper_obj
-        ).image
+        if _version_ignore:
+            print("recklessly ignoring the version...")
+            img_obj = FixedPage.objects.get(
+                page_number=self.page_number, paper=paper_obj
+            ).image
+        else:
+            img_obj = FixedPage.objects.get(
+                version=self.version, page_number=self.page_number, paper=paper_obj
+            ).image
 
         # rectangle to extract in ref-image-coords
         top = round(self.TOP + top_f * self.HEIGHT)
@@ -254,7 +282,7 @@ class RectangleExtractor:
         top_f: float,
         right_f: float,
         bottom_f: float,
-    ):
+    ) -> None:
         """Construct a zipfile of the extracted rectangular regions and save in dest_filename.
 
         Warning: This constructs the pngs for each extracted region in
@@ -262,10 +290,8 @@ class RectangleExtractor:
         zipfile on disc. This could cause problems if large rectangles
         are selected from many pages.
         """
-        paper_numbers = (
-            PaperInfoService().get_paper_numbers_containing_given_page_version(
-                self.version, self.page_number, scanned=True
-            )
+        paper_numbers = PaperInfoService.get_paper_numbers_containing_page(
+            self.page_number, version=self.version, scanned=True
         )
 
         with zipfile.ZipFile(dest_filename, mode="w") as archive:
@@ -293,15 +319,18 @@ class RectangleExtractor:
             encoded as {'left_f':blah, 'top_f':blah} etc or `None` if an error occurred. The coordinates
             are relative to positions of the qr-codes, and so values in the interval [0,1] (plus
             some overhang for the margins).
+
+        Raises:
+            ValueError: missing or incomplete reference images.
         """
         try:
             rimg_obj = ReferenceImage.objects.get(
                 version=self.version, page_number=self.page_number
             )
-        except ReferenceImage.DoesNotExist:
+        except ReferenceImage.DoesNotExist as e:
             raise ValueError(
                 f"There is no reference image for v{self.version} pg{self.page_number}."
-            )
+            ) from e
         # ref-image into cv image: cannot just use imread b/c of DB abstraction
         img_bytes = rimg_obj.image_file.read()
         raw_bytes_as_1d_array: Any = np.frombuffer(img_bytes, np.uint8)
@@ -349,29 +378,28 @@ class RectangleExtractor:
             if len(third_order_moment) == 4:
                 box_contour = third_order_moment
                 break
-        if box_contour is not None:
-            corners_as_array = box_contour.reshape(4, 2)
-            # the box contour will be 4 points - take min/max of x and y to get the corners.
-            # this is in image pixels
-            left = min([X[0] for X in corners_as_array]) + img_left
-            right = max([X[0] for X in corners_as_array]) + img_left
-            top = min([X[1] for X in corners_as_array]) + img_top
-            bottom = max([X[1] for X in corners_as_array]) + img_top
-            # make sure the box is not too small
-            if (right - left) < 16 or (bottom - top) < 16:
-                return None
+        if box_contour is None:
+            return None
+        corners_as_array = box_contour.reshape(4, 2)
+        # the box contour will be 4 points - take min/max of x and y to get the corners.
+        # this is in image pixels
+        left = min([X[0] for X in corners_as_array]) + img_left
+        right = max([X[0] for X in corners_as_array]) + img_left
+        top = min([X[1] for X in corners_as_array]) + img_top
+        bottom = max([X[1] for X in corners_as_array]) + img_top
+        # make sure the box is not too small
+        if (right - left) < 16 or (bottom - top) < 16:
+            return None
 
-            # convert to [0,1] ranges relative to qr code positions
-            left_f = (left - self.LEFT) / self.WIDTH
-            right_f = (right - self.LEFT) / self.WIDTH
-            top_f = (top - self.TOP) / self.HEIGHT
-            bottom_f = (bottom - self.TOP) / self.HEIGHT
+        # convert to [0,1] ranges relative to qr code positions
+        left_f = (left - self.LEFT) / self.WIDTH
+        right_f = (right - self.LEFT) / self.WIDTH
+        top_f = (top - self.TOP) / self.HEIGHT
+        bottom_f = (bottom - self.TOP) / self.HEIGHT
 
-            return {
-                "left_f": left_f,
-                "top_f": top_f,
-                "right_f": right_f,
-                "bottom_f": bottom_f,
-            }
-
-        return None
+        return {
+            "left_f": left_f,
+            "top_f": top_f,
+            "right_f": right_f,
+            "bottom_f": bottom_f,
+        }

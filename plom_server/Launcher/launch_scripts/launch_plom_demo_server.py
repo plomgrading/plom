@@ -2,16 +2,18 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Colin B. Macdonald
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 
 from __future__ import annotations
 
 import argparse
+import csv
 import os
 from pathlib import Path
 from shlex import split
 import subprocess
 import time
+from tempfile import TemporaryDirectory
 
 # we specify this directory relative to the plom_server
 # root directory, rather than getting Django things up and
@@ -77,6 +79,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         help="Prename papers as determined by the demo classlist",
     )
     parser.add_argument("--no-prename", dest="prename", action="store_false")
+    parser.add_argument("--versioned-id", dest="versioned_id", action="store_true")
     parser.add_argument(
         "--muck",
         default=True,
@@ -326,6 +329,44 @@ def populate_the_database(length="normal"):
     print("Paper database is now populated")
 
 
+def download_the_qvmap(filepath: Path):
+    """Use 'plom_qvmap' to download the qv-map."""
+    print("Downloading the question-version map")
+    run_django_manage_command(f"plom_qvmap download {filepath}")
+
+
+def depopulate_the_database():
+    """Use 'plom_qvmap' to clear the qv-map and database.
+
+    Note - runs in foreground; blocks until completed.
+    """
+    print("Clearing the database and qv-map")
+    run_django_manage_command("plom_qvmap clear")
+
+
+def read_hack_and_resave_qvmap(filepath: Path):
+    """Read qvmap file, set odd rows id.version to 2, resave."""
+    with open(filepath) as fh:
+        reader = csv.DictReader(fh)
+        qvmap_rows = [row for row in reader]
+    # even paper numbers should get id-version 2
+    for n, row in enumerate(qvmap_rows):
+        if int(row["paper_number"]) % 2 == 0:
+            qvmap_rows[n]["id.version"] = 2
+    headers = list(qvmap_rows[0].keys())
+    with open(filepath, "w") as fh:
+        writer = csv.DictWriter(fh, fieldnames=headers)
+        writer.writeheader()
+        for row in qvmap_rows:
+            writer.writerow(row)
+
+
+def upload_the_qvmap(filepath: Path):
+    """Use 'plom_qvmap' to upload the qv-map."""
+    print("Uploading the question-version map")
+    run_django_manage_command(f"plom_qvmap upload {filepath}")
+
+
 def build_all_papers_and_wait():
     """Trigger build all the printable paper pdfs and wait for completion."""
     from time import sleep
@@ -352,7 +393,12 @@ def download_zip() -> None:
 
 
 def run_demo_preparation_commands(
-    *, length="normal", stop_after=None, solutions=True, prename=True
+    *,
+    length="normal",
+    stop_after=None,
+    solutions=True,
+    prename=True,
+    versioned_id=False,
 ) -> bool:
     """Run commands to prepare a demo assessment.
 
@@ -371,6 +417,7 @@ def run_demo_preparation_commands(
         stop_after = after which step should the demo be stopped, see list above.
         solutions = whether or not to upload solutions as part of the demo.
         prename = whether or not to prename some papers in the demo.
+        versioned_id = whether or not to use multiple versions of the id pages.
 
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
@@ -399,6 +446,17 @@ def run_demo_preparation_commands(
         return False
 
     populate_the_database(length)
+    # if using multiple versions of the id page, then
+    # after populating, download the qvmap, clear the db,
+    # hack the qvmap and then upload the new qvmap.
+    if versioned_id:
+        with TemporaryDirectory() as tdir:
+            tmp_qv_path = Path(tdir) / "tmp_qv_filename.csv"
+            download_the_qvmap(tmp_qv_path)
+            depopulate_the_database()
+            read_hack_and_resave_qvmap(tmp_qv_path)
+            upload_the_qvmap(tmp_qv_path)
+
     if stop_after == "populate":
         print("Stopping after paper-database populated.")
         return False
@@ -417,7 +475,7 @@ def run_demo_preparation_commands(
     return True
 
 
-def build_the_bundles(length="normal"):
+def build_the_bundles(length="normal", versioned_id=False):
     """Create bundles of papers to simulate scanned student papers.
 
     Note: takes the pdf of each paper directly from the file
@@ -426,8 +484,14 @@ def build_the_bundles(length="normal"):
 
     KWargs:
         length = the length of the demo.
+        versioned_id = whether using multiple versions of id-page
     """
-    run_django_manage_command(f"plom_demo_bundles --length {length} --action build")
+    if versioned_id:
+        run_django_manage_command(
+            f"plom_demo_bundles --length {length} --action build --versioned-id"
+        )
+    else:
+        run_django_manage_command(f"plom_demo_bundles --length {length} --action build")
 
 
 def upload_the_bundles(length="normal"):
@@ -456,7 +520,11 @@ def push_the_bundles(length):
 
 
 def run_demo_bundle_scan_commands(
-    *, stop_after=None, length="normal", muck=False
+    *,
+    stop_after=None,
+    length="normal",
+    muck=False,
+    versioned_id=False,
 ) -> bool:
     """Run commands to step through the scanning process in the demo.
 
@@ -472,7 +540,7 @@ def run_demo_bundle_scan_commands(
 
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
-    build_the_bundles(length)
+    build_the_bundles(length, versioned_id=versioned_id)
     if stop_after == "bundles-created":
         return False
 
@@ -706,12 +774,16 @@ if __name__ == "__main__":
                 stop_after=stop_after,
                 solutions=args.solutions,
                 prename=args.prename,
+                versioned_id=args.versioned_id,
             ):
                 break
 
             print(">> Scanning of papers")
             if not run_demo_bundle_scan_commands(
-                length=args.length, stop_after=stop_after, muck=args.muck
+                length=args.length,
+                stop_after=stop_after,
+                muck=args.muck,
+                versioned_id=args.versioned_id,
             ):
                 break
 
