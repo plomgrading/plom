@@ -72,11 +72,6 @@ map" ``.csv`` file.
    testing.  Use at your own risk.  If you've tested it, please get in
    touch so we can remove this message following your act of bravery.
 
-.. tip::
-   The "IDBox" template must be in the exact same location on
-   different versions of your ID page.
-   If this is not so, the auto-ID reader may fail.
-
 
 Can I create my own per-student PDFs and use multiversioning?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
