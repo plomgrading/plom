@@ -286,27 +286,34 @@ def _build_with_and_without_soln(filename_without_suffix: str) -> None:
     no_soln_data = re.sub(r"\\printanswers", r"% \\printanswers", original_data)
     # just the filename, in the CWD
     no_soln_pdf_filename = Path(source_path.stem + ".pdf")
-    with open(no_soln_pdf_filename, "wb") as f:
-        (r, stdouterr) = buildLaTeX(no_soln_data, f)
-    if r != 0:
-        print(stdouterr)
-        raise RuntimeError(
-            f"LaTeX build {no_soln_pdf_filename} failed with exit code {r}: "
-            "stdout/stderr shown above"
-        )
+    if no_soln_pdf_filename.exists():
+        print(f"  - skipping build of {no_soln_pdf_filename} b/c it already exists")
+    else:
+        with open(no_soln_pdf_filename, "wb") as f:
+            (r, stdouterr) = buildLaTeX(no_soln_data, f)
+        if r != 0:
+            print(stdouterr)
+            raise RuntimeError(
+                f"LaTeX build {no_soln_pdf_filename} failed with exit code {r}: "
+                "stdout/stderr shown above"
+            )
+        print(f"  - successfully built {no_soln_pdf_filename}")
 
     # remove any %-comments on line with '\printanswers'
     yes_soln_data = re.sub(r"%\s+\\printanswers", r"\\printanswers", original_data)
     yes_soln_pdf_filename = Path(source_path.stem + "_solutions.pdf")
-    with open(yes_soln_pdf_filename, "wb") as f:
-        (r, stdouterr) = buildLaTeX(yes_soln_data, f)
-    if r != 0:
-        print(stdouterr)
-        raise RuntimeError(
-            f"LaTeX build {yes_soln_pdf_filename} failed with exit code {r}: "
-            "stdout/stderr shown above"
-        )
-    print(f"Successfully built {no_soln_pdf_filename} and {yes_soln_pdf_filename}")
+    if yes_soln_pdf_filename.exists():
+        print(f"  - skipping build of {yes_soln_pdf_filename} b/c it already exists")
+    else:
+        with open(yes_soln_pdf_filename, "wb") as f:
+            (r, stdouterr) = buildLaTeX(yes_soln_data, f)
+        if r != 0:
+            print(stdouterr)
+            raise RuntimeError(
+                f"LaTeX build {yes_soln_pdf_filename} failed with exit code {r}: "
+                "stdout/stderr shown above"
+            )
+        print(f"  - successfully built {yes_soln_pdf_filename}")
 
 
 def build_demo_test_source_pdfs() -> None:
