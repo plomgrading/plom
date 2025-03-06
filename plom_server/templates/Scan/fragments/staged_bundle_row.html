@@ -108,6 +108,7 @@
         Debug: image extract chore: {{ proc_chore_status }};
         read QR chore: {{ readQR_chore_status }}
     </p>
+    {% if is_error %}<p class="alert alert-danger p-1 mb-0">{{ error_msg }}</p>{% endif %}
 </td>
 <td>
     <div class="d-flex justify-content-evenly my-2">

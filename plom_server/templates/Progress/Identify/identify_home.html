@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Brennen Chiu
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023, 2025 Colin B. Macdonald
     Copyright (C) 2024 Bryan Tanady
 -->
 {% extends "base/base.html" %}
@@ -103,10 +103,9 @@
         </div>
     </div>
     <!-- include this for tool-tips on the progress bar -->
+    <!-- https://getbootstrap.com/docs/5.3/components/tooltips -->
     <script>
-  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl, {trigger : 'hover'})
-  })
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+      const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
     </script>
 {% endblock main_content %}

@@ -116,6 +116,16 @@ wet_no_drift:
     - echo $VER0
     # bash -c "[[ x$VER0 == x$VER1 ]]"
 
+# we don't yet manage our CSS/JS libraries very well (Issue #2763)
+wet_css_js_3rd_party:
+  stage: static_analysis
+  image: python:3
+  before_script:
+    - pip install requests
+  script:
+    - python3 plom_server/get_js.py
+    - ls plom_server/static/3rdpartyjs/
+    - ls plom_server/static/3rdpartycss/
 
 copyright_year:
   image: python:3
