@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2024 Andrew Rechnitzer
+# Copyright (C) 2020-2025 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2021 Elizabeth Xiao

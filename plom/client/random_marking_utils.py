@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2024 Andrew Rechnitzer
+# Copyright (C) 2020-2025 Andrew Rechnitzer
 # Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2023 Julian Lapenna
@@ -339,8 +339,7 @@ def build_rubrics_from_server_info(
     for rubric in rubric_dat:
         # avoid using rubrics with no feedback
         if rubric["text"] == ".":
-            # half-marks allow and value = +/-0.5 then keep going
-            # else skip this rubric.
+            # skip rubrics with no text except +/- 0.5 rubrics
             if allow_half and rubric["value"] in [-0.5, 0.5]:
                 pass
             else:
