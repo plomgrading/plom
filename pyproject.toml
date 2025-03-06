@@ -102,8 +102,6 @@ dependencies = [
 #   "file-magic || python-magic>=0.4.20",
 
 # Non-Python deps for server
-#   - imagemagick (legacy)
-#   - ghostscript (optional, legacy)
 #   - latex installation including (Debian/Ubuntu pkg names):
 #       texlive-latex-extra dvipng latexmk texlive-fonts-recommended
 #   - latex installation including (Fedora pkg names):
@@ -140,10 +138,6 @@ packages = [
     "plom.client.icons",
     "plom.client.cursors",
     "plom.client.help_img",
-    "plom.manager",
-    "plom.server",
-    "plom.server.plomServer",
-    "plom.db",
     "plom.demo",
     "plom.idreader",
     "plom.solutions",
@@ -233,14 +227,9 @@ version = {attr = 'plom.__version__'}
 
 [project.scripts]
 # plom-client = "plom.client.__main__:main"
-plom-demo = "plom.demo.__main__:main"
-plom-hwdemo = "plom.scripts.hwdemo:main"
+# plom-demo = "plom.demo.__main__:main"
 plom-create = "plom.create.__main__:main"
-plom-server = "plom.server.__main__:main"
-plom-legacy-server = "plom.server.__main__:main"
 plom-scan = "plom.scan.__main__:main"
-plom-manager = "plom.manager.__main__:main"
-plom-legacy-manager = "plom.manager.__main__:main"
 plom-finish = "plom.finish.__main__:main"
 plom-hwscan = "plom.scripts.hwscan:main"
 plom-solutions = "plom.solutions.__main__:main"
