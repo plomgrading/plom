@@ -10,7 +10,7 @@ import tempfile
 from importlib import resources
 from pathlib import Path
 from textwrap import dedent
-from typing import BinaryIO
+from typing import IO
 
 import plom
 
@@ -143,7 +143,7 @@ def texFragmentToPNG(fragment: str, *, dpi: int = 225) -> tuple[bool, bytes | st
             return (True, f.read())
 
 
-def buildLaTeX(src: str, out: BinaryIO) -> tuple[int, str]:
+def buildLaTeX(src: str, out: IO[bytes]) -> tuple[int, str]:
     """Compile a string presentation of a latex file, with the idbox template available.
 
     Args:
