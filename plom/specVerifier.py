@@ -188,7 +188,7 @@ def build_page_to_group_dict(spec) -> dict[int, str]:
 
 
 def _build_page_to_versions_dict(
-    spec, qvmap_row: dict[int, int]
+    spec, qvmap_row: dict[int | str, int]
 ) -> dict[int, list[int]]:
     page_to_versions = {spec["idPage"]: [qvmap_row.get("id", 1)]}
     # dnm pages always from version 1
@@ -204,7 +204,7 @@ def _build_page_to_versions_dict(
     return page_to_versions
 
 
-def build_page_to_version_dict(spec, qvmap_row: dict[int, int]) -> dict[int, int]:
+def build_page_to_version_dict(spec, qvmap_row: dict[int | str, int]) -> dict[int, int]:
     """Given the spec and the question-version dict, produce a dict that maps pages to versions.
 
     Args:
