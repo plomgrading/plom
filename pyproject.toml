@@ -138,7 +138,6 @@ packages = [
     "plom.client.icons",
     "plom.client.cursors",
     "plom.client.help_img",
-    "plom.demo",
     "plom.idreader",
     "plom.solutions",
     "plom.canvas",
