@@ -442,7 +442,7 @@ class MatplotlibService:
             ec="black",
             alpha=0.5,
         )
-        ax.set_title(f"Grades for {qlabel} (by {ta_name})")
+        ax.set_title(f"Marks for {qlabel} (by {ta_name})")
         ax.set_xlabel("Mark given")
         ax.set_ylabel("# of times assigned")
         if versions:
@@ -667,7 +667,7 @@ class MatplotlibService:
         ax.set_yticks(range(len(marker_names)))
         ax.set_yticklabels(marker_names)
 
-        ax.set_title(f"{qlabel} boxplot by marker")
+        ax.set_title(f"{qlabel} marks boxplot by marker")
         ax.set_xlabel(f"{qlabel} mark")
         ax.tick_params(
             axis="y",
