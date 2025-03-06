@@ -691,11 +691,11 @@ def run_marking_commands(*, port: int, stop_after=None, half_marks=False) -> boo
     if stop_after == "auto-id":
         return False
 
-    run_the_randoider(port=args.port, half_marks=half_marks)
+    run_the_randoider(port=args.port)
     if stop_after == "randoiding":
         return False
 
-    run_the_randomarker(port=args.port)
+    run_the_randomarker(port=args.port, half_marks=half_marks)
     if stop_after == "randomarking":
         return False
 
