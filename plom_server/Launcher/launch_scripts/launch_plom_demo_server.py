@@ -11,6 +11,7 @@ import re
 import subprocess
 from pathlib import Path
 from shlex import split
+from tempfile import TemporaryDirectory
 from time import sleep
 
 from plom.textools import buildLaTeX
