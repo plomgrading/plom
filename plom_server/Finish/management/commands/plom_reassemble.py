@@ -70,7 +70,7 @@ class Command(BaseCommand):
             ReassembleService().queue_single_paper_reassembly(paper_num)
         except ValueError as e:
             raise CommandError(e)
-        self.stdout.write("Queued reassembly of paper num {paper_num}")
+        self.stdout.write(f"Queued reassembly of paper num {paper_num}")
 
     def reassemble_all_papers(self) -> None:
         paper_service = PaperInfoService()

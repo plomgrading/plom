@@ -209,6 +209,7 @@ push-to-docker-io:
 
 # to ensure the pypi job works, make sure we can package
 # TODO: we make these again during pypi push: better to use these artifacts?
+# TODO: Do we need to makemigrations here? (Issue #3826)
 make_package:
   image: python:3.12
   stage: build
@@ -447,7 +448,7 @@ no-question-numbers:
   allow_failure: true
 
 
-# TODO: why do we need to run makemigrations/migrate before tests?
+# TODO: why do we need to run makemigrations/migrate before tests? (Issue #3826)
 webplom_test:
   stage: test
   needs: ["container-image"]
@@ -455,7 +456,6 @@ webplom_test:
   script:
     - export PYTHONPATH=$PWD
     - python3 -m pip install coverage~=7.6.12
-    - pushd plom_server
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py makemigrations
     - python3 manage.py migrate
@@ -463,13 +463,12 @@ webplom_test:
     # -i ignores an error caused by openCV's config-3.py file
     - coverage report -i --precision=2
     - coverage xml -i -o django_coverage.xml
-    - popd
   coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
   artifacts:
     reports:
       coverage_report:
         coverage_format: cobertura
-        path: plom_server/django_coverage.xml
+        path: django_coverage.xml
 
 
 webplom_demo:
@@ -487,9 +486,95 @@ webplom_demo:
   script:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
-    - pushd plom_server
-    - ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after reports
+    - ./plom_server/Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after reports
+
+
+# ensure we can run the code some other than inside itself!
+out-of-tree:
+  services:
+    - postgres
+  variables:
+    POSTGRES_DB: "plom_db"
+    POSTGRES_USER: "postgres"
+    POSTGRES_PASSWORD: "postgres"
+    POSTGRES_HOST_AUTH_METHOD: trust
+    PLOM_DATABASE_HOSTNAME: "postgres"
+  stage: test
+  needs: ["container-image"]
+  image: $IM
+  script:
+    - cd ${HOME}
+    - mkdir somewhere
+    - pushd somewhere
+    - export DJANGO_SETTINGS_MODULE=plom_server.settings
+    - django-admin --version
+    - django-admin -h
+    - django-admin -h | grep plom
+    - django-admin plom_demo_spec -h
+    - django-admin test plom_server
     - popd
+  allow_failure: true
+
+
+# ensure we can run the code some other than inside itself!
+out-of-tree-scratch:
+  services:
+    - postgres
+  variables:
+    POSTGRES_DB: "plom_db"
+    POSTGRES_USER: "postgres"
+    POSTGRES_PASSWORD: "postgres"
+    POSTGRES_HOST_AUTH_METHOD: trust
+    PLOM_DATABASE_HOSTNAME: "postgres"
+  stage: alt_build
+  needs: []
+  image: fedora:42
+  # when: manual
+  before_script:
+    - dnf install -y ImageMagick gcc gcc-c++ cmake
+          latexmk tex-dvipng texlive-scheme-basic
+          tex-preview tex-charter tex-exam tex-preprint
+          python3-passlib python3-pyqt6
+          python3-jsmin python3-defusedxml python3-yaml
+          python3-urllib3 python3-more-itertools
+          python3-seaborn python3-pandas python3-requests-toolbelt
+          python3-pip python3-wheel python3-setuptools
+          python3-tomlkit python3-pillow python3-tqdm
+          python3-appdirs python3-arrow
+          python3-aiohttp python3-peewee python3-cryptography
+          python3-zxing-cpp
+          python3-pytest
+          python3-PyMuPDF python3-scikit-learn python3-PyMySQL
+          python3-weasyprint python3-whitenoise
+          file python3-file-magic
+          iproute
+    - pip --version
+  script:
+    # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
+    - pip install -U pytest
+    # TODO: python3-django doesn't work, unsure why, instead get from pip (Issue #3830)
+    - pip install django
+    # important: we must have the migration 00001 files in place (Issue #3826)
+    - pwd
+    - ls
+    # install twice, first for dependencies
+    - pip install .
+    - python3 manage.py makemigrations
+    # now install with migrations
+    - pip install .
+    - pwd
+    - cd ${HOME}
+    - mkdir somewhere
+    - pushd somewhere
+    - python3 -c "import plom_server; print(plom_server.__version__); print(plom_server.__path__)"
+    - export DJANGO_SETTINGS_MODULE=plom_server.settings
+    - django-admin --version
+    - django-admin -h
+    - django-admin -h | grep plom
+    - django-admin plom_demo_spec -h
+    - django-admin test plom_server
+    - popd
+  allow_failure: true
 
 
 # a legacy-only job
@@ -834,21 +919,17 @@ fedora_webplom:
           python3-zxing-cpp
           python3-pytest
           python3-PyMuPDF python3-scikit-learn python3-PyMySQL
+          python3-weasyprint python3-whitenoise python3-django
           file python3-file-magic
           iproute
-          python3-django
     - pip --version
   script:
     # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
     - pip install -U pytest
     - pip install .
-    - export PYTHONPATH=$PWD
-    - echo $PYTHONPATH
-    - pushd plom_server
-    - ./Launcher/launch_scripts/launch_plom_demo_server.py --stop-after reports
+    - ./plom_server/Launcher/launch_scripts/launch_plom_demo_server.py --stop-after reports
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
-    - popd
 
 
 # get latest pip deps, doesn't use docker, closer to user install
@@ -950,13 +1031,9 @@ newOS_newdeps_webplom:
     - pip --version
   script:
     - pip install .
-    - export PYTHONPATH=$PWD
-    - echo $PYTHONPATH
-    - pushd plom_server
-    - ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
+    - ./plom_server/Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
-    - popd
 
 
 # Ensure minimum listed dependency versions actually work on older system
@@ -1070,13 +1147,9 @@ minpy_mindeps_webplom:
   script:
     - pip install -r requirements.txt.tempminima
     - pip install .
-    - export PYTHONPATH=$PWD
-    - echo $PYTHONPATH
-    - pushd plom_server
-    - ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
+    - ./plom_server/Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
-    - popd
 
 
 # upload binaries are generic gitlab packages
@@ -1190,11 +1263,7 @@ macos_server_webplom:
   # TODO this fails b/c it runs python3, which is not the right Python
   # python -m pytest -l --pyargs plom
   # Instead test webplom
-  - export PYTHONPATH=$PWD
-  - echo $PYTHONPATH
-  - pushd plom_server
   # no postgres yet
   # ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
   - export PLOM_DATABASE_BACKEND=sqlite
   - python manage.py test
-  - popd

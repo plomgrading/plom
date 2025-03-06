@@ -49,5 +49,32 @@ include plom_server/static/*.png
 include plom_server/static/*.svg
 include plom_server/static/css/*.css
 include plom_server/static/js/*.js
+include plom_server/templates/*.html
+include plom_server/templates/**/*.html
+include plom_server/templates/**/**/*.html
+include plom_server/**/migrations/*.py
+include plom_server/**/models.py
+include plom_server/**/models/*.py
+include plom_server/**/forms.py
+include plom_server/**/forms/*.py
+include plom_server/**/views/*.py
+include plom_server/**/serializers/*.py
+include plom_server/API/permissions/*.py
+include plom_server/API/routes/*.py
+include plom_server/API/views/experimental/*.py
+include plom_server/**/tests/*.py
+include plom_server/**/tests/*.png
+include plom_server/Mark/tests/config_files/*.toml
+include plom_server/Preparation/tests/config_files/*.toml
+include plom_server/Preparation/useful_files_for_testing/*.pdf
+include plom_server/Preparation/useful_files_for_testing/*.toml
+include plom_server/Finish/useful_files_for_testing/*.toml
+include plom_server/Demo/config_files/*.toml
+include plom_server/Launcher/launch_scripts/*.py
+include plom_server/Launcher/launch_scripts/demo_files/*.py
+include plom_server/Launcher/launch_scripts/demo_files/*.toml
+include plom_server/Launcher/launch_scripts/demo_files/*.tex
+include plom_server/Launcher/launch_scripts/demo_files/*.csv
+include plom_server/**/management/commands/*.py
 
 # TODO: docs?

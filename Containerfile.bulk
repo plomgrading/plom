@@ -45,6 +45,8 @@ RUN apt-get -y update && \
 
 COPY . /src
 WORKDIR /src
+# TODO: Issue #3826, we either need these in-tree or built before install
+RUN PYTHONPATH="." python3 manage.py makemigrations
 RUN pip install --no-cache-dir .
 
 EXPOSE 41984
