@@ -382,7 +382,7 @@ pyright:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - python3 -m pip install pyright~=1.1.394
+    - python3 -m pip install pyright~=1.1.396
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
