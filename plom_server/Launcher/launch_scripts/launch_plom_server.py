@@ -49,17 +49,6 @@ def popen_django_manage_command(cmd: str) -> subprocess.Popen:
     return subprocess.Popen(split(full_cmd))
 
 
-def confirm_run_from_correct_directory() -> None:
-    """Confirm appropriate env vars are set or the current directory contains Django's manage.py."""
-    # Perhaps later, things will work from other locations
-    # if os.environ.get("DJANGO_SETTINGS_MODULE"):
-    #     return None
-    if not Path("./manage.py").exists():
-        raise RuntimeError(
-            "This script needs to be run from the same directory as Django's manage.py script."
-        )
-
-
 def get_django_cmd_prefix() -> str:
     """Return the basic command to be used to run Django commands."""
     if os.environ.get("DJANGO_SETTINGS_MODULE"):
@@ -163,10 +152,6 @@ if __name__ == "__main__":
 
     if not args.development and not args.port:
         print("You must supply a port for the production server.")
-
-    # make sure we are in the correct directory to run things.
-    # TODO: disabled?
-    # confirm_run_from_correct_directory()
 
     # clean up and rebuild things before launching.
     if args.hot_start:
