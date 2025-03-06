@@ -272,6 +272,7 @@ def upload_demo_assessment_spec_file():
 
 
 def _build_with_and_without_soln(filename_without_suffix: str) -> None:
+    """Build soln and non-soln form of the assessment, writing PDF files into the CWD."""
     source_path = Path(filename_without_suffix)
     source_path_tex = source_path.with_suffix(".tex")
     if not source_path_tex.exists():
@@ -283,28 +284,29 @@ def _build_with_and_without_soln(filename_without_suffix: str) -> None:
 
     # comment out the '\printanswers' line
     no_soln_data = re.sub(r"\\printanswers", r"% \\printanswers", original_data)
-    no_soln_pdf_filepath = source_path.with_suffix(".pdf")
-    print(no_soln_pdf_filepath)
-    with open(no_soln_pdf_filepath, "wb") as f:
+    # just the filename, in the CWD
+    no_soln_pdf_filename = Path(source_path.stem + ".pdf")
+    with open(no_soln_pdf_filename, "wb") as f:
         (r, stdouterr) = buildLaTeX(no_soln_data, f)
     if r != 0:
         print(stdouterr)
         raise RuntimeError(
-            f"LaTeX build {no_soln_pdf_filepath} failed with exit code {r}: "
+            f"LaTeX build {no_soln_pdf_filename} failed with exit code {r}: "
             "stdout/stderr shown above"
         )
 
     # remove any %-comments on line with '\printanswers'
     yes_soln_data = re.sub(r"%\s+\\printanswers", r"\\printanswers", original_data)
-    yes_soln_pdf_filepath = source_path.parent / (source_path.stem + "_solutions.pdf")
-    with open(yes_soln_pdf_filepath, "wb") as f:
+    yes_soln_pdf_filename = Path(source_path.stem + "_solutions.pdf")
+    with open(yes_soln_pdf_filename, "wb") as f:
         (r, stdouterr) = buildLaTeX(yes_soln_data, f)
     if r != 0:
         print(stdouterr)
         raise RuntimeError(
-            f"LaTeX build {yes_soln_pdf_filepath} failed with exit code {r}: "
+            f"LaTeX build {yes_soln_pdf_filename} failed with exit code {r}: "
             "stdout/stderr shown above"
         )
+    print(f"Successfully built {no_soln_pdf_filename} and {yes_soln_pdf_filename}")
 
 
 def build_demo_test_source_pdfs() -> None:
