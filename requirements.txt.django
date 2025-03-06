@@ -37,8 +37,8 @@ exif==1.6.1
 file-magic==0.4.1
 gunicorn==23.0.0
 imutils==0.5.4
-matplotlib==3.10.0
-model-bakery==1.20.3
+matplotlib==3.10.1
+model-bakery==1.20.4
 numpy==2.2.3
 opencv-python-headless==4.11.0.86
 packaging==24.2

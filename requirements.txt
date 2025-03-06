@@ -20,7 +20,7 @@ platformdirs==4.3.6
 PyQt6==6.7.1
 PyQt6-Qt6==6.7.3
 PyQt6-sip==13.8.0
-pyspellchecker==0.8.1
+pyspellchecker==0.8.2
 pytest-qt==4.4.0
 
 # Legacy-server only deps
@@ -46,8 +46,8 @@ exif==1.6.1
 file-magic==0.4.1
 gunicorn==23.0.0
 imutils==0.5.4
-matplotlib==3.10.0
-model-bakery==1.20.3
+matplotlib==3.10.1
+model-bakery==1.20.4
 numpy==2.2.3
 opencv-python-headless==4.11.0.86
 packaging==24.2
