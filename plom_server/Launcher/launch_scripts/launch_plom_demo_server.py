@@ -7,15 +7,13 @@
 import argparse
 import csv
 import os
+import re
 import subprocess
 from pathlib import Path
 from shlex import split
-from tempfile import TemporaryDirectory
 from time import sleep
-from importlib import resources
 
-# need this to get the idbox binary
-import plom
+from plom.textools import buildLaTeX
 
 
 # we specify this directory relative to the plom_server
@@ -273,25 +271,47 @@ def upload_demo_assessment_spec_file():
     run_django_manage_command(f"plom_preparation_test_spec upload {spec_file}")
 
 
+def _build_with_and_without_soln(filename_without_suffix: str) -> None:
+    source_path = Path(filename_without_suffix)
+    source_path_tex = source_path.with_suffix(".tex")
+    if not source_path_tex.exists():
+        raise ValueError(f"Cannot open file {source_path_tex}")
+
+    # read in the .tex as a big string
+    with source_path_tex.open("r") as fh:
+        original_data = fh.read()
+
+    # comment out the '\printanswers' line
+    no_soln_data = re.sub(r"\\printanswers", r"% \\printanswers", original_data)
+    no_soln_pdf_filepath = source_path.with_suffix(".pdf")
+    print(no_soln_pdf_filepath)
+    with open(no_soln_pdf_filepath, "wb") as f:
+        (r, stdouterr) = buildLaTeX(no_soln_data, f)
+    if r != 0:
+        print(stdouterr)
+        raise RuntimeError(
+            f"LaTeX build {no_soln_pdf_filepath} failed with exit code {r}: "
+            "stdout/stderr shown above"
+        )
+
+    # remove any %-comments on line with '\printanswers'
+    yes_soln_data = re.sub(r"%\s+\\printanswers", r"\\printanswers", original_data)
+    yes_soln_pdf_filepath = source_path.parent / (source_path.stem + "_solutions.pdf")
+    with open(yes_soln_pdf_filepath, "wb") as f:
+        (r, stdouterr) = buildLaTeX(yes_soln_data, f)
+    if r != 0:
+        print(stdouterr)
+        raise RuntimeError(
+            f"LaTeX build {yes_soln_pdf_filepath} failed with exit code {r}: "
+            "stdout/stderr shown above"
+        )
+
+
 def build_demo_test_source_pdfs() -> None:
-    print("Building assessment / solution source pdfs from tex")
-    # assumes that everything needed is in the demo_file_directory
+    print("Building assessment / solution source pdfs from tex in temp dirs")
 
-    # make sure the idbox file is in place
-    idbox_filepath = demo_file_directory / "idBox4.pdf"
-    if not idbox_filepath.exists():
-        idbox_bytes = (resources.files(plom) / "idBox4.pdf").read_bytes()
-        with idbox_filepath.open("wb") as fh:
-            fh.write(idbox_bytes)
-
-    subprocess.run(
-        ["python3", "build_plom_assessment_pdfs.py"],
-        cwd=demo_file_directory,
-        check=True,
-    )
-
-    # finally, remove the idbox
-    idbox_filepath.unlink(missing_ok=True)
+    for filename in ("assessment_v1", "assessment_v2", "assessment_v3"):
+        _build_with_and_without_soln(demo_file_directory / filename)
 
 
 def upload_demo_test_source_files():
