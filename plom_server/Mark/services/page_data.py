@@ -9,8 +9,8 @@ from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 
-from Papers.services import SpecificationService
-from Papers.models import (
+from plom_server.Papers.services import SpecificationService
+from plom_server.Papers.models import (
     Paper,
     FixedPage,
     IDPage,

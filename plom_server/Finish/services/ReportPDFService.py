@@ -11,9 +11,9 @@ from textwrap import dedent
 from tqdm import tqdm as _tqdm
 from weasyprint import HTML, CSS
 
-from Mark.models import MarkingTask
-from Mark.services import MarkingTaskService
-from Papers.services import SpecificationService
+from plom_server.Mark.models import MarkingTask
+from plom_server.Mark.services import MarkingTaskService
+from plom_server.Papers.services import SpecificationService
 from . import DataExtractionService, MatplotlibService
 
 

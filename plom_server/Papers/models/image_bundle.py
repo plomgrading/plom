@@ -9,7 +9,7 @@ from django.db import models
 from django.db.models.query_utils import Q
 from django.contrib.auth.models import User
 
-from Scan.models import StagingBundle
+from plom_server.Scan.models import StagingBundle
 
 
 class Bundle(models.Model):

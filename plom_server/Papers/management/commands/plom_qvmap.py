@@ -13,7 +13,7 @@ from django.db.utils import IntegrityError
 
 from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 from plom.version_maps import version_map_from_file
-from Preparation.services import PQVMappingService
+from plom_server.Preparation.services import PQVMappingService
 from ...services import PaperCreatorService, PaperInfoService
 
 

@@ -16,7 +16,7 @@ import pandas as pd
 import seaborn as sns
 
 from . import DataExtractionService
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 
 RANGE_BIN_OFFSET = 2
 HIGHLIGHT_COLOR = "orange"

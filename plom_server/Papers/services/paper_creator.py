@@ -14,7 +14,7 @@ import huey
 import huey.api
 
 from plom.plom_exceptions import PlomDatabaseCreationError
-from Preparation.services.preparation_dependency_service import (
+from plom_server.Preparation.services.preparation_dependency_service import (
     assert_can_modify_qv_mapping_database,
 )
 from ..services import SpecificationService

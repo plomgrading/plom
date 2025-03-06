@@ -17,10 +17,12 @@ from django.db.models import Max
 
 from plom import SpecVerifier
 
-from Base.compat import load_toml_from_path
+from plom_server.Base.compat import load_toml_from_path
 from ..models import Specification, SpecQuestion
 from ..serializers import SpecSerializer
-from Preparation.services.preparation_dependency_service import assert_can_modify_spec
+from plom_server.Preparation.services.preparation_dependency_service import (
+    assert_can_modify_spec,
+)
 
 # TODO - build similar for solution specs
 # NOTE - this does not **validate** test specs, it assumes the spec is valid

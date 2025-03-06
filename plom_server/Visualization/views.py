@@ -3,7 +3,7 @@
 
 from django.shortcuts import render
 
-from Base.base_group_views import ManagerRequiredView
+from plom_server.Base.base_group_views import ManagerRequiredView
 
 
 class HistogramView(ManagerRequiredView):

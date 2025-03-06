@@ -10,8 +10,8 @@ from django.core.exceptions import MultipleObjectsReturned
 from django.contrib.auth.models import User
 from model_bakery import baker
 
-from Papers.models import Paper, QuestionPage, SpecQuestion
-from Rubrics.models import Rubric
+from plom_server.Papers.models import Paper, QuestionPage, SpecQuestion
+from plom_server.Rubrics.models import Rubric
 
 from plom.plom_exceptions import PlomConflict, PlomInconsistentRubric
 from ..services import MarkingTaskService

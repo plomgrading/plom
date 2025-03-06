@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from model_bakery import baker
 
-from Papers.models import Bundle
+from plom_server.Papers.models import Bundle
 from ..services import ForgiveMissingService
 
 

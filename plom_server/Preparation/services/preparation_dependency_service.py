@@ -21,7 +21,7 @@ from plom.plom_exceptions import PlomDependencyConflict
 
 # 1 the spec depends on nothing, but sources and QVMap depend on the spec
 def assert_can_modify_spec():
-    from Papers.services import PaperInfoService
+    from plom_server.Papers.services import PaperInfoService
     from . import PapersPrinted, SourceService
 
     # cannot modify spec if papers printed
@@ -47,8 +47,8 @@ def assert_can_modify_spec():
 # 2 = the sources depend on the spec, and built-papers depend on the sources
 def assert_can_modify_sources():
     from . import PapersPrinted
-    from Papers.services import SpecificationService
-    from BuildPaperPDF.services import BuildPapersService
+    from plom_server.Papers.services import SpecificationService
+    from plom_server.BuildPaperPDF.services import BuildPapersService
 
     # cannot modify sources if papers printed
     if PapersPrinted.have_papers_been_printed():
@@ -67,7 +67,7 @@ def assert_can_modify_sources():
 # 3a = classlist - does not depend on spec, but the database depends on prenaming and classlist.
 def assert_can_modify_classlist():
     from . import PapersPrinted, PrenameSettingService
-    from Papers.services import PaperInfoService
+    from plom_server.Papers.services import PaperInfoService
 
     # Issue = #3635
     # if papers have been printed you are allowed to modify
@@ -97,7 +97,7 @@ def assert_can_enable_disable_prenaming():
         PlomDependencyConflict
     """
     from . import PapersPrinted
-    from Papers.services import PaperInfoService
+    from plom_server.Papers.services import PaperInfoService
 
     # cannot modify prenaming if papers printed
     if PapersPrinted.have_papers_been_printed():
@@ -124,8 +124,8 @@ def assert_can_modify_prenaming_config():
         PlomDependencyConflict
     """
     from . import PapersPrinted, SourceService
-    from Papers.services import SpecificationService
-    from BuildPaperPDF.services import BuildPapersService
+    from plom_server.Papers.services import SpecificationService
+    from plom_server.BuildPaperPDF.services import BuildPapersService
 
     # cannot configure prenaming if papers printed
     if PapersPrinted.have_papers_been_printed():
@@ -149,8 +149,8 @@ def assert_can_modify_prenaming_config():
 # 4 - qvmap depends on the spec, build papers depends on the qvmap
 def assert_can_modify_qv_mapping_database():
     from . import PapersPrinted, PrenameSettingService, StagingStudentService
-    from Papers.services import SpecificationService
-    from BuildPaperPDF.services import BuildPapersService
+    from plom_server.Papers.services import SpecificationService
+    from plom_server.BuildPaperPDF.services import BuildPapersService
 
     # cannot modify qv mapping / database if papers printed
     if PapersPrinted.have_papers_been_printed():
@@ -179,7 +179,7 @@ def assert_can_modify_qv_mapping_database():
 # 5 - the paper pdfs depend on the qv-map/db and source pdfs. Nothing depends on the paper-pdfs
 def assert_can_rebuild_test_pdfs():
     from . import PapersPrinted, SourceService
-    from Papers.services import PaperInfoService
+    from plom_server.Papers.services import PaperInfoService
 
     # cannot rebuild paper pdfs if papers printed
     if PapersPrinted.have_papers_been_printed():
@@ -270,7 +270,7 @@ def can_rebuild_test_pdfs():
 
 def assert_can_set_papers_printed():
     # can set papers_printed once all PDFs are built.
-    from BuildPaperPDF.services import BuildPapersService
+    from plom_server.BuildPaperPDF.services import BuildPapersService
 
     if not BuildPapersService().are_all_papers_built():
         raise PlomDependencyConflict(
@@ -280,8 +280,8 @@ def assert_can_set_papers_printed():
 
 def assert_can_unset_papers_printed():
     # can unset papers_printed provided no bundles have neen scanned.
-    from Papers.models import Bundle
-    from Scan.models import StagingBundle
+    from plom_server.Papers.models import Bundle
+    from plom_server.Scan.models import StagingBundle
 
     # if any bundles uploaded then raise an exception
     # remember to exclude system bundles

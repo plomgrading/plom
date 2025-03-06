@@ -8,11 +8,17 @@ from typing import Any
 
 from django.db import transaction
 
-from Base.compat import load_toml_from_path, load_toml_from_string, TOMLDecodeError
+from plom_server.Base.compat import (
+    load_toml_from_path,
+    load_toml_from_string,
+    TOMLDecodeError,
+)
 
-from Preparation.services.preparation_dependency_service import assert_can_modify_spec
+from plom_server.Preparation.services.preparation_dependency_service import (
+    assert_can_modify_spec,
+)
 
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 
 
 class SpecExistsException(Exception):

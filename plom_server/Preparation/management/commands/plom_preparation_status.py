@@ -5,7 +5,7 @@
 
 from django.core.management.base import BaseCommand, CommandError
 
-from Papers.services import PaperInfoService, SpecificationService
+from plom_server.Papers.services import PaperInfoService, SpecificationService
 from ...services import (
     SourceService,
     PrenameSettingService,

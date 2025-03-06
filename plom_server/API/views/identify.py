@@ -11,8 +11,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
 
-from Identify.services import ClasslistService
-from Identify.services import (
+from plom_server.Identify.services import ClasslistService
+from plom_server.Identify.services import (
     IDDirectService,
     IdentifyTaskService,
     IDProgressService,

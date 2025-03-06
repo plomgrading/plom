@@ -24,9 +24,9 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 
 from plom.misc_utils import humanize_seconds
-from Authentication.services import AuthenticationServices
-from Base.base_group_views import ManagerRequiredView
-from Progress.services.userinfo_service import UserInfoServices
+from plom_server.Authentication.services import AuthenticationServices
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Progress.services.userinfo_service import UserInfoServices
 from .services import PermissionChanger
 from .services import QuotaService
 from .services.UsersService import get_user_info, delete_user

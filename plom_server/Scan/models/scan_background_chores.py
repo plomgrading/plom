@@ -6,7 +6,7 @@
 
 from django.db import models
 
-from Base.models import HueyTaskTracker
+from plom_server.Base.models import HueyTaskTracker
 from ..models import StagingBundle
 
 

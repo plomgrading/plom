@@ -13,8 +13,8 @@ from django.db.models import Sum, Avg, StdDev
 from django.utils import timezone
 
 from ..services import StudentMarkService
-from Mark.models import MarkingTask
-from Mark.services import MarkingTaskService
+from plom_server.Mark.models import MarkingTask
+from plom_server.Mark.services import MarkingTaskService
 
 
 class TaMarkingService:

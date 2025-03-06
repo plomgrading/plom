@@ -7,14 +7,14 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
-from Base.base_group_views import (
+from plom_server.Base.base_group_views import (
     MarkerLeadMarkerOrManagerView,
     LeadMarkerOrManagerView,
 )
 
-from Authentication.services import AuthenticationServices
-from Papers.services import SpecificationService
-from Mark.services import MarkingStatsService
+from plom_server.Authentication.services import AuthenticationServices
+from plom_server.Papers.services import SpecificationService
+from plom_server.Mark.services import MarkingStatsService
 from ..services import ProgressOverviewService
 
 

@@ -14,10 +14,10 @@ from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
 from django.conf import settings
 
-from Identify.services import IDBoxProcessorService
-from Mark.services import MarkingTaskService
-from Papers.services import SpecificationService
-from Rectangles.services import RectangleExtractor
+from plom_server.Identify.services import IDBoxProcessorService
+from plom_server.Mark.services import MarkingTaskService
+from plom_server.Papers.services import SpecificationService
+from plom_server.Rectangles.services import RectangleExtractor
 
 
 class Command(BaseCommand):

@@ -11,8 +11,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import transaction
 
-from Papers.services import SpecificationService, SolnSpecService
-from Papers.models import SolnSpecQuestion
+from plom_server.Papers.services import SpecificationService, SolnSpecService
+from plom_server.Papers.models import SolnSpecQuestion
 
 from ..models import SolutionSourcePDF, SolutionImage
 

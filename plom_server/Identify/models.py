@@ -8,8 +8,8 @@ from django.db import models, transaction
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-from Base.models import HueyTaskTracker
-from Papers.models import Paper
+from plom_server.Base.models import HueyTaskTracker
+from plom_server.Papers.models import Paper
 
 
 class PaperIDTask(models.Model):

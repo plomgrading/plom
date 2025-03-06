@@ -14,7 +14,7 @@ else:
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
-from Base.compat import load_toml_from_path
+from plom_server.Base.compat import load_toml_from_path
 from ..models import (
     Specification,
     SolnSpecification,

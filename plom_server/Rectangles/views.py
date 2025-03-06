@@ -14,9 +14,9 @@ from django.http import (
 from django.core.files.base import ContentFile
 from django.shortcuts import render
 
-from Papers.services import SpecificationService, PaperInfoService
-from Preparation.services import SourceService
-from Base.base_group_views import ManagerRequiredView
+from plom_server.Papers.services import SpecificationService, PaperInfoService
+from plom_server.Preparation.services import SourceService
+from plom_server.Base.base_group_views import ManagerRequiredView
 from .services import get_reference_qr_coords, RectangleExtractor
 
 

@@ -17,7 +17,7 @@ from plom.plom_exceptions import (
     PlomPushCollisionException,
     PlomBundleLockedException,
 )
-from Scan.services import ScanService
+from plom_server.Scan.services import ScanService
 from .utils import _error_response
 
 

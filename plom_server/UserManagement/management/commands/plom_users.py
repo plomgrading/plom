@@ -11,7 +11,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 from django.db import IntegrityError
 
-from Authentication.services import AuthenticationServices
+from plom_server.Authentication.services import AuthenticationServices
 from ...services import UsersService
 
 

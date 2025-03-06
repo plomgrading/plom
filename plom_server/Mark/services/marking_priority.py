@@ -12,7 +12,7 @@ import random
 from django.db import transaction
 from django.db.models import QuerySet
 
-from Papers.models import Paper
+from plom_server.Papers.models import Paper
 from ..models import MarkingTask, MarkingTaskPriority
 
 

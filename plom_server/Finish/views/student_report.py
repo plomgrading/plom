@@ -5,7 +5,7 @@
 
 from django.http import FileResponse
 
-from Base.base_group_views import ManagerRequiredView
+from plom_server.Base.base_group_views import ManagerRequiredView
 
 from ..services import ReassembleService
 

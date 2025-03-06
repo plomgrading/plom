@@ -14,7 +14,7 @@ from django.db import transaction
 
 from plom.misc_utils import pprint_score
 
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 from ..models import MarkingTask, MarkingTaskTag
 
 
