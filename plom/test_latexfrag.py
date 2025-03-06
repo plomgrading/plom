@@ -8,7 +8,7 @@ from io import BytesIO
 
 from PIL import Image
 
-import plom.server
+import plom
 
 from .textools import texFragmentToPNG as processFragment
 
@@ -35,7 +35,7 @@ def test_frag_broken_tex() -> None:
 
 
 def test_frag_image_size() -> None:
-    res = resources.files(plom.server) / "target_Q_latex_plom.png"
+    res = resources.files(plom) / "target_Q_latex_plom.png"
     # mypy stumbling over resource Traversables?
     imgt = Image.open(res)  # type: ignore[arg-type]
     frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
@@ -68,9 +68,7 @@ def test_frag_image_size() -> None:
 def test_frag_image() -> None:
     with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as target:
         with open(target.name, "wb") as fh:
-            fh.write(
-                (resources.files(plom.server) / "target_Q_latex_plom.png").read_bytes()
-            )
+            fh.write((resources.files(plom) / "target_Q_latex_plom.png").read_bytes())
 
         valid, imgdata = processFragment(r"$\mathbb{Q}$ \LaTeX\ Plom")
         assert valid
