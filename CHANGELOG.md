@@ -11,13 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* More flexible options for `plom-push-to-canvas.py` contrib script.
 
 ### Removed
 
 ### Fixed
 * More error checking and unit tests concerning rubric validity.
-* Minor fixes and performance improvements.
 * Refuse to build papers with inconsistent versions maps---there must be at most one version per page.
+* Show errors to end users in some cases that previously just said "error".
+* Minor fixes and performance improvements.
 
 
 
