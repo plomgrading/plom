@@ -53,6 +53,7 @@ Supported_Server_API_Versions = [
     int(Plom_Legacy_Server_API_Version),
     112,
     113,  # introduced /MK/tasks/{code}/reassign/{username}
+    114,  # introduced /MK/tasks/{code}/reset/
     int(Plom_API_Version),
 ]
 

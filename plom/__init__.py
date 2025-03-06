@@ -23,7 +23,7 @@ if sys.version_info[0] == 2:
 
 from .specVerifier import SpecVerifier, specdir, get_question_label
 
-Plom_API_Version = "113"
+Plom_API_Version = "114"
 Plom_Legacy_Server_API_Version = "60"
 Default_Port = 41984
 

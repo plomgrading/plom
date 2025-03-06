@@ -493,6 +493,40 @@ class Messenger(BaseMessenger):
                     raise PlomNoPermission(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
+    def reset_task(self, code: str) -> None:
+        """Reset a task, outdating all annotations.
+
+        Args:
+            code: a task code such as `"q0123g2"`.
+
+        Returns:
+            None.
+
+        Raises:
+            PlomRangeException: no such task
+            PlomNoPermission: you don't have permission to reset tasks.
+            PlomNoServerSupportException: server too old, does not support.
+            PlomAuthenticationException: no logged in.
+            PlomSeriousException: generic unexpected error.
+        """
+        if self.is_server_api_less_than(114):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support task reset"
+            )
+
+        with self.SRmutex:
+            try:
+                response = self.patch_auth(f"/MK/tasks/{code}/reset")
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 404:
+                    raise PlomRangeException(response.reason) from None
+                if response.status_code == 406:
+                    raise PlomNoPermission(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
     def MlatexFragment(self, latex: str) -> tuple[bool, bytes | str]:
         """Give some text to the server, it comes back as a PNG image processed via TeX.
 
