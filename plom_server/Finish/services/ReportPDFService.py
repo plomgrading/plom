@@ -4,8 +4,9 @@
 # Copyright (C) 2024 Elisa Pan
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from pathlib import Path
 from textwrap import dedent
+from typing import Any, Dict, List, Optional
 
 from tqdm import tqdm as _tqdm
 from weasyprint import HTML, CSS
@@ -372,9 +373,15 @@ def pdf_builder(
                 <img src="data:image/png;base64,{graphs["graph8"][0]}" />
                 """
 
-    pdf_data = HTML(string=html, base_url="").write_pdf(
-        stylesheets=[CSS("./static/css/generate_report.css")]
-    )
+    # We want this, but done "properly":
+    # # css = CSS("./static/css/generate_report.css")
+    # see also discussion in build_student_report_service.py
+    import plom_server
+
+    path = Path(plom_server.__path__[0]) / "static/css/generate_report.css"
+    css = CSS(path)
+
+    pdf_data = HTML(string=html, base_url="").write_pdf(stylesheets=[css])
     timestamp_file = timestamp.strftime("%Y-%m-%d--%H-%M-%S+00-00")
     filename = f"Report-{shortname}--{timestamp_file}.pdf"
     return {

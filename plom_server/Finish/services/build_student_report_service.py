@@ -107,7 +107,8 @@ def brief_report_pdf_builder(
     rendered_html = report_template.render(context)
 
     # We want this, but done "properly":
-    # # css = CSS("static/css/generate_report.css")
+    # # css = CSS("./static/css/generate_report.css")
+    # see also ReportPDFService.py
 
     # TODO: is this really static access?  this CSS is not used by the outside world
     # # from django.templatetags.static import static
