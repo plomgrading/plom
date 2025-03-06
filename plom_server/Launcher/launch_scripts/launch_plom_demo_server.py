@@ -677,7 +677,8 @@ def run_marking_commands(*, port: int, stop_after=None, half_marks=False) -> boo
     # add rubrics, question-tags and then run the randomaker.
     # add system rubrics first, then push the demo ones from toml
     if half_marks:
-        run_django_manage_command(f"plom_rubrics half manager")
+        print("Using +/- 0.5 rubrics")
+        run_django_manage_command("plom_rubrics half manager")
     push_demo_rubrics()
     if stop_after == "rubrics":
         return False
