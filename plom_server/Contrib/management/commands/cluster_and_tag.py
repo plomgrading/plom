@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Divy Patel
-# Copyright (C) 2023 Colin B. Macdonald
-# Copyright (C) 2024 Andrew Rechnitzer
-
-from __future__ import annotations
+# Copyright (C) 2023, 2025 Colin B. Macdonald
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 
 import json
 from pathlib import Path
