@@ -3,7 +3,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Elisa Pan
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 
 import base64
 from io import BytesIO
@@ -679,10 +679,11 @@ class MatplotlibService:
 
         plt.xlim(
             [
-                0,
+                -0.5,
                 self.des._get_ta_data_for_question(question_index=question_idx)[
                     "max_score"
-                ].max(),
+                ].max()
+                + 0.5,
             ]
         )
 
