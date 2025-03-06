@@ -81,6 +81,7 @@ class TaMarkingService:
         return csv_data
 
     def build_ta_info_csv_as_string(self) -> str:
+        """Constructs TA info csv and casts it to a string."""
         ta_info = self.build_csv_data()
         keys = self.get_csv_header()
         csv_io = StringIO()

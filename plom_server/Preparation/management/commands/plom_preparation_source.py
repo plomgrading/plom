@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
-
-from __future__ import annotations
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from pathlib import Path
 
@@ -98,6 +96,7 @@ class Command(BaseCommand):
             SourceService.delete_all_source_pdfs()
             return
         if version in [x["version"] for x in up_list]:
+            assert isinstance(version, int)  # MyPy was worried
             SourceService.delete_source_pdf(version)
             self.stdout.write(f"Removed source PDF version {version} from server.")
         else:

@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Elisa Pan
     Copyright (C) 2024-2025 Aden Chan
+    Copyright (C) 2025 Andrew Rechnitzer
 -->
 <!-- Modal for Creating Tag -->
 <div class="modal fade"
@@ -117,7 +118,7 @@
                             <option value="" disabled selected>Select a tag</option>
                             {% for tag in tags %}
                                 <option value="{{ tag.id }}"
-                                        data-description="{{ tag.text }}"
+                                        data-description="{{ tag.description }}"
                                         data-confidential_info="{{ tag.confidential_info }}"
                                         data-help_threshold="{{ tag.help_threshold }}"
                                         data-help_resources="{{ tag.help_resources }}">{{ tag.tag_name }}</option>

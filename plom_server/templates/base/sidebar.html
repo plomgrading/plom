@@ -5,6 +5,7 @@
     Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023-2024 Andrew Rechnitzer
+    Copyright (C) 2025 Aidan Murphy
 -->
 {% load static %}
 <ul class="nav flex-column mt-2">
@@ -44,7 +45,7 @@
         </li>
         <li class="nav-item">
             <a class="nav-link link-secondary"
-               href="{% url 'progress_user_info_home' %}">User progress</a>
+               href="{% url 'progress_user_info_home' %}">Marker Progress</a>
         </li>
         <li class="nav-item">
             <a class="nav-link link-secondary" href="{% url 'tools_landing' %}">Tools</a>
@@ -67,6 +68,9 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link link-secondary" href="{% url 'qtags_landing' %}">Question Tags</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link link-secondary" href="{% url 'server_status' %}">Server status</a>
                     </li>
                 </ul>
             </div>

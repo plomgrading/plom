@@ -3,12 +3,15 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
 
+import importlib.metadata
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib import messages
 from django.views.generic import View
+from django_huey import get_queue
 
 from .base_group_views import ManagerRequiredView
 from .forms import CompleteWipeForm
@@ -21,6 +24,8 @@ from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationErr
 
 
 class TroublesAfootGenericErrorView(View):
+    """View class for some kludgey error handling, hopefully not used much."""
+
     def get(self, request: HttpRequest, *, hint: str) -> HttpResponse:
         """Render an unexpected or semi-expected "error page" using kludges.
 
@@ -42,6 +47,38 @@ class TroublesAfootGenericErrorView(View):
         """
         context = {"hint": hint}
         return render(request, "base/troubles_afoot.html", context)
+
+
+class ServerStatusView(ManagerRequiredView):
+    """View class for displaying server status."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        """Handles the GET request for the server status.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            An HTTP response object.
+        """
+        # importing at the top seems wasteful
+        from django import __version__ as django_version
+        from pymupdf import __version__ as pymupdf_version
+
+        context = self.build_context()
+        # TODO: need a service?
+        queue = get_queue("tasks")
+
+        context.update(
+            {
+                "django_version": django_version,
+                "huey_version": importlib.metadata.version("huey"),
+                "pymupdf_version": pymupdf_version,
+                "zxingcpp_version": importlib.metadata.version("zxing-cpp"),
+                "queue_length": len(queue),
+            }
+        )
+        return render(request, "base/server_status.html", context)
 
 
 class ResetView(ManagerRequiredView):

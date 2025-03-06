@@ -4,19 +4,20 @@
     Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2024 Bryan Tanady
     Copyright (C) 2024 Elisa Pan
+    Copyright (C) 2025 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    User progress
+    Marker progress and quotas
 {% endblock title %}
 {% block page_heading %}
-    User progress
+    Marker progress and quotas
 {% endblock page_heading %}
 {% block main_content %}
     <div class="card my-2">
         <div class="card-body">
             <h5>Default quota limit: {{ default_quota_limit }}</h5>
-            <button class="btn btn-success m-2"
+            <button class="btn btn-primary m-2"
                     type="button"
                     data-bs-toggle="modal"
                     data-bs-target="#modifyDefaultLimit">Change default limit</button>
@@ -33,28 +34,28 @@
     </div>
     <div class="card w-100">
         <div class="card-body d-flex flex-wrap gap-2">
-            <button class="btn btn-success"
+            <button class="btn btn-primary"
                     type="button"
                     data-bs-toggle="modal"
                     data-bs-target="#modifyQuotaModal">Modify quota limit</button>
-            <a class="btn btn-primary" href="{% url 'users' %}">User List</a>
             <form action="{% url 'bulk_set_quota' %}"
                   method="post"
                   style="display:inline">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-warning">Set Quota for All Markers</button>
+                <button type="submit" class="btn btn-primary">Set Quota for All Markers</button>
             </form>
             <form action="{% url 'bulk_unset_quota' %}"
                   method="post"
                   style="display:inline">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-info">Unset Quota for All Markers</button>
+                <button type="submit" class="btn btn-secondary">Unset Quota for All Markers</button>
             </form>
+            <a class="btn btn-link" href="{% url 'users' %}">User account management</a>
         </div>
         <div class="card-body">
             <div>
                 <i class="bi bi-exclamation-diamond-fill text-info"></i>
-                {{ users_with_quota|length }} markers have quotas.
+                {{ users_with_quota_count }} markers have quotas.
             </div>
             {% if messages %}
                 <div>
@@ -67,6 +68,7 @@
             {% endif %}
         </div>
     </div>
+    <!-- TODO: make this table sortable -->
     <div class="table-responsive">
         <table class="table text-center align-middle">
             <tr>
@@ -128,7 +130,7 @@
                     </td>
                     <td>
                         <!-- TODO: hardcoded tag here, must match question_marking.py -->
-                        <a class="btn btn-info"
+                        <a class="btn btn-primary"
                            href="{% url 'progress_marking_task_filter' %}?username={{ username }}&the_tag=during_quota">
                             view
                         </a>

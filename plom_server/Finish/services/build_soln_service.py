@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2025 Colin B. Macdonald
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 
 import io
 import random
@@ -102,6 +102,7 @@ class BuildSolutionService:
         return list(status.values())
 
     def watermark_pages(self, doc: fitz.Document, watermark_text: str) -> None:
+        """Watermark the pages of the given document with the given text."""
         margin = 10
         for pg in doc:
             h = pg.rect.height
@@ -332,7 +333,7 @@ class BuildSolutionService:
         return chore.pdf_file
 
     def try_to_cancel_single_queued_chore(self, paper_num: int) -> None:
-        """Mark a soln pdf build chore as obsolete and try to cancel it if queued in Huey.
+        """Mark a solution pdf build chore as obsolete and try to cancel it if queued in Huey.
 
         Args:
             paper_num: The paper number of the chore to cancel.
@@ -400,7 +401,15 @@ class BuildSolutionService:
         ]
 
     @transaction.atomic
-    def get_zipfly_generator(self, short_name: str, *, chunksize: int = 1024 * 1024):
+    def get_zipfly_generator(self, *, chunksize: int = 1024 * 1024) -> zipfly.ZipFly:
+        """Return a streaminmg zipfile generator for archive of the solution pdfs.
+
+        Keyword Args:
+            chunksize: the size of chunks for the stream.
+
+        Returns:
+            The streaming zipfile generator.
+        """
         paths = [
             {
                 "fs": pdf_file.path,

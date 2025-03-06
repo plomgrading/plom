@@ -20,7 +20,6 @@
     <div class="card my-2">
         <div class="card-body">
             <a class="btn btn-success" href="{% url 'signup_single' %}">Create new users</a>
-            <!--     <button class="btn btn-warning" hx-get="{% url 'htmx_explode' %}">Raise an exception with htmx-get</button> -->
         </div>
     </div>
     {% include "../base/alert_messages.html" with messages=messages %}
@@ -28,9 +27,9 @@
         <div class="card-body">
             <h4 class="card-title">Markers</h4>
             <p>
-                <a class="btn btn-success" href="{% url 'enableMarkers' %}">Enable Markers</a>
-                <a class="btn btn-danger" href="{% url 'disableMarkers' %}">Disable Markers</a>
-                <a class="btn btn-info" href="{% url 'progress_user_info_home' %}">User Info</a>
+                <a class="btn btn-outline-success" href="{% url 'enableMarkers' %}">Enable all markers</a>
+                <a class="btn btn-outline-secondary" href="{% url 'disableMarkers' %}">Disable all markers</a>
+                <a class="btn btn-link" href="{% url 'progress_user_info_home' %}">Marker Quotas</a>
             </p>
             <div class="table-responsive">
                 <table class="table table-striped">
@@ -39,13 +38,10 @@
                         <th>Online (web)</th>
                         <th>Online (client)</th>
                         <th>Last login</th>
-                        <th>Progress</th>
-                        <th>Lead Marker</th>
                         <th>
-                            <!-- column for enable/disable user buttons-->
+                            <!-- column for marker promotion/demotion -->
                         </th>
-                        <th>Password</th>
-                        <th>Quota</th>
+                        <th>Enabled</th>
                         <th>
                             <!-- column for delete users buttons-->
                         </th>
@@ -53,8 +49,19 @@
                     {% for user in markers %}
                         <tr>
                             <td>
-                                {{ user.username }}
-                                {% if user in lead_markers %}<i class="bi bi-bookmark-star text-primary"></i>{% endif %}
+                                <!-- TODO: this should link to a profile page, then that links to marking progress -->
+                                <div>
+                                    <a href="{% url 'progress_marking_task_filter' %}?username={{ user.username }}"
+                                       class>{{ user.username }}</a>
+                                    {% if user in lead_markers %}
+                                        <i class="bi bi-bookmark-star text-primary"
+                                           data-bs-toggle="tooltip"
+                                           title="lead marker"></i>
+                                    {% endif %}
+                                </div>
+                                <a href="{% url 'reset_user_password' user.username %}"
+                                   class=" link-underline link-underline-opacity-25"
+                                   style="font-size: 80%">change password</a>
                             </td>
                             {% if user in online_now_ids %}
                                 <td class="bg-success-subtle">Online</td>
@@ -68,57 +75,32 @@
                             {% endif %}
                             <td>{{ user.last_login|naturaltime }}</td>
                             <td>
-                                <a class="btn btn-info"
-                                   href="{% url 'progress_marking_task_filter' %}?username={{ user.username }}">
-                                    view
-                                </a>
-                            </td>
-                            <td>
                                 {% if user in lead_markers %}
-                                    <a class="btn btn-info"
-                                       href="{% url 'toggleLeadMarker' user.username %}">demote</a>
+                                    <button hx-post="{% url 'toggleLeadMarker' user.username %}"
+                                            class="btn btn-success">demote</button>
                                 {% else %}
-                                    <a class="btn btn-warning"
-                                       href="{% url 'toggleLeadMarker' user.username %}">promote</a>
+                                    <button hx-post="{% url 'toggleLeadMarker' user.username %}"
+                                            class="btn btn-secondary">promote</button>
                                 {% endif %}
                             </td>
                             <td>
-                                {% if user.has_usable_password %}
-                                    {% if user.is_active %}
-                                        <button hx-post="{% url 'modify_user' user.username %}"
-                                                class="btn btn-outline-secondary">disable</button>
-                                    {% else %}
-                                        <button hx-post="{% url 'modify_user' user.username %}"
-                                                class="btn btn-outline-success">enable</button>
-                                    {% endif %}
-                                {% else %}
-                                    <button class="btn btn-warning disabled">no password set</button>
-                                {% endif %}
+                                <!-- autocomplete is Firefox-specific fix:
+                                     https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           role="switch"
+                                           {% if user.is_active %}checked{% endif %}
+                                           autocomplete="off"
+                                           hx-post="{% url 'modify_user' user.username %}" />
+                                </div>
+                                {% if not user.has_usable_password %}(no password set){% endif %}
                             </td>
                             <td>
-                                <a href="{% url 'reset_user_password' user.username %}"
-                                   class="btn btn-danger">reset</a>
-                            </td>
-                            <!-- Quota limited button -->
-                            <td>
-                                <form action="{% url 'set_quota' user.username %}" method="post">
-                                    {% csrf_token %}
-                                    {% if user.pk in users_with_quota_by_pk %}
-                                        <button formaction="{% url 'unset_quota' user.username %}"
-                                                type="submit"
-                                                class="btn btn-info">Unset Quota</button>
-                                    {% else %}
-                                        <button type="submit" class="btn btn-warning">Set Quota</button>
-                                    {% endif %}
-                                </form>
-                            </td>
-                            <td>
-                                <form action="{% url 'set_quota' user.username %}" method="post">
-                                    {% csrf_token %}
-                                    <button hx-delete="{% url 'modify_user' user.username %}"
-                                            class="btn btn-outline-danger"
-                                            {% if user.last_login %}disabled{% endif %}>delete user</button>
-                                </form>
+                                {% csrf_token %}
+                                <button hx-delete="{% url 'modify_user' user.username %}"
+                                        class="btn btn-danger"
+                                        {% if user.last_login %}disabled{% endif %}>delete user</button>
                             </td>
                         </tr>
                     {% endfor %}
@@ -134,9 +116,6 @@
                     <li>
                         If you wish to <q>force-logout</q> a user then click disable/enable twice in a row.
                     </li>
-                    <li>
-                        Setting a marker quota limits the amount of questions they can grade. The exact limit can be changed in User Info page.
-                    </li>
                     <li>Currently, you cannot delete a user who has ever logged in.</li>
                 </ul>
             </p>
@@ -146,8 +125,8 @@
         <div class="card-body">
             <h4 class="card-title">Scanners</h4>
             <p>
-                <a class="btn btn-success" href="{% url 'enableScanners' %}">Enable Scanners</a>
-                <a class="btn btn-danger" href="{% url 'disableScanners' %}">Disable Scanners</a>
+                <a class="btn btn-outline-success" href="{% url 'enableScanners' %}">Enable all scanners</a>
+                <a class="btn btn-outline-secondary" href="{% url 'disableScanners' %}">Disable all scanners</a>
             </p>
             <div class="table-responsive">
                 <table class="table table-striped">
@@ -155,17 +134,19 @@
                         <th>Name</th>
                         <th>Online</th>
                         <th>Last login</th>
-                        <th>
-                            <!-- column for enable/disable user buttons-->
-                        </th>
-                        <th>Password</th>
+                        <th>Enabled</th>
                         <th>
                             <!-- column for delete users buttons-->
                         </th>
                     </thead>
                     {% for user in scanners %}
                         <tr>
-                            <td>{{ user.username }}</td>
+                            <td>
+                                <div>{{ user.username }}</div>
+                                <a href="{% url 'reset_user_password' user.username %}"
+                                   class=" link-underline link-underline-opacity-25"
+                                   style="font-size: 80%">change password</a>
+                            </td>
                             {% if user in online_now_ids %}
                                 <td class="bg-success-subtle">Online</td>
                             {% else %}
@@ -173,29 +154,23 @@
                             {% endif %}
                             <td>{{ user.last_login|naturaltime }}</td>
                             <td>
-                                {% if user.has_usable_password %}
-                                    {% if user.is_active %}
-                                        <button hx-post="{% url 'modify_user' user.username %}"
-                                                class="btn btn-outline-secondary">disable</button>
-                                    {% else %}
-                                        <button hx-post="{% url 'modify_user' user.username %}"
-                                                class="btn btn-outline-success">enable</button>
-                                    {% endif %}
-                                {% else %}
-                                    <button class="btn btn-warning disabled">no password set</button>
-                                {% endif %}
+                                <!-- autocomplete is Firefox-specific fix:
+                                     https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           role="switch"
+                                           {% if user.is_active %}checked{% endif %}
+                                           autocomplete="off"
+                                           hx-post="{% url 'modify_user' user.username %}" />
+                                </div>
+                                {% if not user.has_usable_password %}(no password set){% endif %}
                             </td>
                             <td>
-                                <a href="{% url 'reset_user_password' user.username %}"
-                                   class="btn btn-danger">reset</a>
-                            </td>
-                            <td>
-                                <form action="{% url 'set_quota' user.username %}" method="post">
-                                    {% csrf_token %}
-                                    <button hx-delete="{% url 'modify_user' user.username %}"
-                                            class="btn btn-outline-danger"
-                                            {% if user.last_login %}disabled{% endif %}>delete user</button>
-                                </form>
+                                {% csrf_token %}
+                                <button hx-delete="{% url 'modify_user' user.username %}"
+                                        class="btn btn-danger"
+                                        {% if user.last_login %}disabled{% endif %}>delete user</button>
                             </td>
                         </tr>
                     {% endfor %}
@@ -212,14 +187,20 @@
                         <th>Name</th>
                         <th>Online</th>
                         <th>Last login</th>
-                        <th>Password</th>
                         <th>
                             <!-- column for delete users buttons-->
                         </th>
                     </thead>
                     {% for user in managers %}
                         <tr>
-                            <td>{{ user.username }}</td>
+                            <td>
+                                {{ user.username }}
+                                <br />
+                                <a href="{% url 'reset_user_password' user.username %}"
+                                   class=" link-underline link-underline-opacity-25"
+                                   style="font-size: 80%"
+                                   onclick="return confirm('This is a manager account - are you sure you wish to reset the password?')">change password</a>
+                            </td>
                             {% if user in online_now_ids %}
                                 <td class="bg-success-subtle">Online</td>
                             {% else %}
@@ -227,18 +208,10 @@
                             {% endif %}
                             <td>{{ user.last_login|naturaltime }}</td>
                             <td>
-                                <!-- since this allows reset of manager - ask for confirmation -->
-                                <a href="{% url 'reset_user_password' user.username %}"
-                                   class="btn btn-danger"
-                                   onclick="return confirm('This is a manager account - are you sure you wish to reset the password?')">reset</a>
-                            </td>
-                            <td>
-                                <form action="{% url 'set_quota' user.username %}" method="post">
-                                    {% csrf_token %}
-                                    <button hx-delete="{% url 'modify_user' user.username %}"
-                                            class="btn btn-outline-danger"
-                                            {% if user.last_login %}disabled{% endif %}>delete user</button>
-                                </form>
+                                {% csrf_token %}
+                                <button hx-delete="{% url 'modify_user' user.username %}"
+                                        class="btn btn-danger"
+                                        {% if user.last_login %}disabled{% endif %}>delete user</button>
                             </td>
                         </tr>
                     {% endfor %}
@@ -246,48 +219,4 @@
             </div>
         </div>
     </div>
-    <!-- Hidden element to pass message data and username -->
-    <div id="messages"
-         data-message-type="{% if messages %}{% for message in messages %}{{ message.tags }}{% endfor %}{% endif %}"
-         data-message-text="{% if messages %}{% for message in messages %}{{ message.message }}{% endfor %}{% endif %}"
-         data-username="{{ username }}"></div>
-    {% include "../Progress/User_Info/modal_forms.html" %}
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
-          rel="stylesheet" />
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Function to show the modal and set the form action URL
-      function showModalWithUsername(username) {
-        var form = document.getElementById('confirmSetQuotaForm');
-        var actionUrl = "{% url 'set_quota' 'username_placeholder' %}".replace('username_placeholder', username);
-        console.log(actionUrl)
-        form.action = actionUrl;
-        $('#confirmSetQuota').modal('show');
-      }
-
-      // Check for messages and handle the modal
-      var messages = document.getElementById('messages');
-      if (messages) {
-
-        var messageType = messages.getAttribute('data-message-type');
-        var messageText = messages.getAttribute('data-message-text');
-
-        var details = JSON.parse(messageText);
-        var username = details.username;
-        console.log(username)
-        var modalMessage = details.message;
-        console.log(messageType)
-
-        if (messageType.includes('set_quota_confirmation')) {
-            showModalWithUsername(username);
-        }
-        else{
-            console.log("bye")
-        }
-      }
-    });
-
-    </script>
 {% endblock main_content %}

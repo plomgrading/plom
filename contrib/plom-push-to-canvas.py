@@ -71,7 +71,7 @@ from plom.canvas import (
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.5.0"
+__script_version__ = "0.6.0"
 
 
 def sis_id_to_student_dict(student_list):
@@ -221,6 +221,19 @@ parser.add_argument(
     action="store_false",
 )
 parser.add_argument(
+    "--no-papers",
+    dest="papers",
+    action="store_false",
+    help="""
+        Don't push the reassembled papers.
+        CAUTION: in this case, this script still uses the pdf files in
+        "reassembled/" directory to decide who to upload to.  This is
+        a bit counter-intuitive b/c those files themselves are not uploaded.
+        The intended use of this option is for ADDING additional files
+        (see `--solutions, `--reports`).
+    """,
+)
+parser.add_argument(
     "--solutions",
     action="store_true",
     default=True,
@@ -240,6 +253,8 @@ parser.add_argument(
     help="""
         Upload individualized student reports, in addition to reassembled papers
         (default: off).
+        The reports must be PDF files of the form "Student_Reports/12345678.pdf".
+        There must be one such file for each PDF file in "reassembled/".
     """,
 )
 
@@ -353,9 +368,9 @@ if __name__ == "__main__":
     print("    done.")
 
     if args.dry_run:
-        print("\n\nPushing grades and marked papers to Canvas [DRY-RUN]...")
+        print("\n\nPushing to Canvas [DRY-RUN]...")
     else:
-        print("\n\nPushing grades and marked papers to Canvas...")
+        print("\n\nPushing to Canvas...")
     print("  --------------------------------------------------------------------")
     timeouts = []
     for pdf in tqdm(Path("reassembled").glob("*.pdf")):
@@ -404,22 +419,25 @@ if __name__ == "__main__":
         #     print("no")
         #     pass
         if args.dry_run:
-            timeouts.append((pdf.name, sis_id, name))
+            if args.papers:
+                timeouts.append((pdf.name, sis_id, name))
             if args.solutions and soln_pdf:
                 timeouts.append((soln_pdf.name, sis_id, name))
             if args.reports and report_pdf:
                 timeouts.append((report_pdf.name, sis_id, name))
-            timeouts.append((mark, sis_id, name))
+            if args.post_grades:
+                timeouts.append((mark, sis_id, name))
             continue
 
         # TODO: should look at the return values
         # TODO: back off on canvasapi.exception.RateLimitExceeded?
-        try:
-            sub.upload_comment(pdf)
-        except CanvasException as e:
-            print(e)
-            timeouts.append((pdf.name, sis_id, name))
-        time.sleep(random.uniform(0.1, 0.2))
+        if args.papers:
+            try:
+                sub.upload_comment(pdf)
+            except CanvasException as e:
+                print(e)
+                timeouts.append((pdf.name, sis_id, name))
+            time.sleep(random.uniform(0.1, 0.2))
         if args.solutions and soln_pdf:
             try:
                 sub.upload_comment(soln_pdf)

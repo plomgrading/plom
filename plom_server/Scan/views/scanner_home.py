@@ -102,9 +102,9 @@ class ScannerPushedView(ScannerRequiredView):
             else:
                 cover_img_rotation = 0
             n_pages = scanner.get_n_images(bundle)
-            paper_list = format_int_list_with_runs(
-                scanner.get_bundle_paper_numbers(bundle)
-            )
+            _papers = scanner.get_bundle_paper_numbers(bundle)
+            pretty_print_paper_list = format_int_list_with_runs(_papers)
+            n_papers = len(_papers)
             pushed_bundles.append(
                 {
                     "id": bundle.pk,
@@ -113,7 +113,8 @@ class ScannerPushedView(ScannerRequiredView):
                     "time_uploaded": arrow.get(date_time).humanize(),
                     "username": bundle.user.username,
                     "n_pages": n_pages,
-                    "paper_list": paper_list,
+                    "n_papers": n_papers,
+                    "pretty_print_paper_list": pretty_print_paper_list,
                     "cover_angle": cover_img_rotation,
                 }
             )
@@ -231,7 +232,9 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         scanner = ScanService()
 
         bundle = scanner.get_bundle_from_pk(bundle_id)
-        paper_list = format_int_list_with_runs(scanner.get_bundle_paper_numbers(bundle))
+        _papers = scanner.get_bundle_paper_numbers(bundle)
+        pretty_print_paper_list = format_int_list_with_runs(_papers)
+        n_papers = len(_papers)
         n_known = scanner.get_n_known_images(bundle)
         n_unknown = scanner.get_n_unknown_images(bundle)
         n_extra = scanner.get_n_extra_images(bundle)
@@ -247,20 +250,27 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         from ..models import PagesToImagesChore, ManageParseQRChore
 
         try:
-            _proc = PagesToImagesChore.objects.get(bundle=bundle).get_status_display()
+            _ = PagesToImagesChore.objects.get(bundle=bundle)
+            _proc_status = _.get_status_display()
+            _proc_msg = _.message
         except PagesToImagesChore.DoesNotExist:
-            _proc = None
+            _proc_status = None
+            _proc_msg = ""
         try:
-            _read = ManageParseQRChore.objects.get(bundle=bundle).get_status_display()
+            _ = ManageParseQRChore.objects.get(bundle=bundle)
+            _read_status = _.get_status_display()
+            _read_msg = _.message
         except ManageParseQRChore.DoesNotExist:
-            _read = None
+            _read_status = None
+            _read_msg = ""
 
         is_waiting_or_processing = False
-        if _proc in ("Queued", "Starting", "Running"):
+        if _proc_status in ("Queued", "Starting", "Running"):
             is_waiting_or_processing = True
-        if _read in ("Queued", "Starting", "Running"):
+        if _read_status in ("Queued", "Starting", "Running"):
             is_waiting_or_processing = True
-        is_error = _proc == "Error" or _read == "Error"
+        is_error = _proc_status == "Error" or _read_status == "Error"
+        error_msg = _proc_msg + _read_msg
 
         context = {
             "bundle_id": bundle.pk,
@@ -268,17 +278,19 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             "slug": bundle.slug,
             "when": arrow.get(bundle.timestamp).humanize(),
             "username": bundle.user.username,
-            "proc_chore_status": _proc,
-            "readQR_chore_status": _read,
+            "proc_chore_status": _proc_status,
+            "readQR_chore_status": _read_status,
             "number_of_pages": bundle.number_of_pages,
             "has_been_processed": bundle.has_page_images,
             "has_qr_codes": bundle.has_qr_codes,
             "is_waiting_or_processing": is_waiting_or_processing,
             "is_error": is_error,
+            "error_msg": error_msg,
             "is_mid_qr_read": scanner.is_bundle_mid_qr_read(bundle.pk),
             "is_push_locked": bundle.is_push_locked,
             "is_perfect": scanner.is_bundle_perfect(bundle.pk),
-            "paper_list": paper_list,
+            "n_papers": n_papers,
+            "pretty_print_paper_list": pretty_print_paper_list,
             "n_known": n_known,
             "n_unknown": n_unknown,
             "n_extra": n_extra,

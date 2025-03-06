@@ -71,10 +71,10 @@ tomli==2.2.1
 tomlkit==0.13.2
 tqdm==4.67.1
 urllib3==2.3.0
-weasyprint==63.1
-whitenoise==6.8.2
+weasyprint==64.1
+whitenoise==6.9.0
 zipfly==6.0.5
-zxing-cpp==2.2.0
+zxing-cpp==2.3.0
 
 #---------- for dev / debug work - comment out unless using it.
 # nplusone==1.0.0  # for hunting down potential n+1 query problems

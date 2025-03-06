@@ -371,10 +371,9 @@
             <!-- HTMX will fill this in -->
         </div>
     </div>
+    <!-- https://getbootstrap.com/docs/5.3/components/tooltips -->
     <script>
-      var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-      var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-          return new bootstrap.Tooltip(tooltipTriggerEl, {trigger : 'hover'})
-      })
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+      const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
     </script>
 {% endblock main_content %}

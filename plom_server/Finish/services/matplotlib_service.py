@@ -3,7 +3,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Elisa Pan
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 
 import base64
 from io import BytesIO
@@ -15,12 +15,51 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from . import DataExtractionService, StudentMarkService
+from . import DataExtractionService
 from Papers.services import SpecificationService
 from QuestionTags.services import QuestionTagService
 
 RANGE_BIN_OFFSET = 2
 HIGHLIGHT_COLOR = "orange"
+_acceptable_formats = ("base64", "bytes")
+
+
+def _ensure_all_figures_closed() -> None:
+    """Ensure that all matplotlib figures are closed.
+
+    Raises:
+        AssertionError: If not all figures are closed.
+    """
+    assert plt.get_fignums() == [], "Not all matplotlib figures were closed."
+
+
+def get_graph_as_BytesIO(fig: matplotlib.figure.Figure) -> BytesIO:
+    """Return the graph as a BytesIO.
+
+    Args:
+        fig: The figure to save.
+
+    Returns:
+        The BytesIO object.
+    """
+    png_bytes = BytesIO()
+    fig.savefig(png_bytes, format="png")
+    png_bytes.seek(0)
+    plt.close(fig)  # Ensure the figure is closed after saving
+
+    return png_bytes
+
+
+def get_graph_as_base64(bytes: BytesIO) -> str:
+    """Return the graph as a base64 encoded string.
+
+    Args:
+        bytes: The bytes to encode.
+
+    Returns:
+        The base64 encoded string.
+    """
+    return base64.b64encode(bytes.read()).decode()
 
 
 class MatplotlibService:
@@ -33,42 +72,12 @@ class MatplotlibService:
 
         self.student_df = self.des._get_student_data()
         self.ta_df = self.des._get_ta_data()
-        self.formats = ["base64", "bytes"]
+        self.formats = _acceptable_formats
 
-    def ensure_all_figures_closed(self) -> None:
-        """Ensure that all matplotlib figures are closed.
-
-        Raises:
-            AssertionError: If not all figures are closed.
-        """
-        assert plt.get_fignums() == [], "Not all matplotlib figures were closed."
-
-    def get_graph_as_BytesIO(self, fig: matplotlib.figure.Figure) -> BytesIO:
-        """Return the graph as a BytesIO.
-
-        Args:
-            fig: The figure to save.
-
-        Returns:
-            The BytesIO object.
-        """
-        png_bytes = BytesIO()
-        fig.savefig(png_bytes, format="png")
-        png_bytes.seek(0)
-        plt.close(fig)  # Ensure the figure is closed after saving
-
-        return png_bytes
-
-    def get_graph_as_base64(self, bytes: BytesIO) -> str:
-        """Return the graph as a base64 encoded string.
-
-        Args:
-            bytes: The bytes to encode.
-
-        Returns:
-            The base64 encoded string.
-        """
-        return base64.b64encode(bytes.read()).decode()
+    @staticmethod
+    def ensure_all_figures_closed() -> None:
+        """Assert that all Matplotlib figures are closed."""
+        _ensure_all_figures_closed()
 
     def histogram_of_total_marks(
         self, *, highlighted_sid: str | None = None, format: str = "base64"
@@ -120,13 +129,13 @@ class MatplotlibService:
         ax.set_ylabel("Proportion of students")
         plt.grid(True, alpha=0.5)
 
-        graph_bytes = self.get_graph_as_BytesIO(fig)
+        graph_bytes = get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
 
         if format == "bytes":
             return graph_bytes
         else:
-            return self.get_graph_as_base64(graph_bytes)
+            return get_graph_as_base64(graph_bytes)
 
     def histogram_of_grades_on_question_version(
         self,
@@ -219,120 +228,13 @@ class MatplotlibService:
             )
         plt.grid(True, alpha=0.5)
 
-        graph_bytes = self.get_graph_as_BytesIO(fig)
+        graph_bytes = get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
 
         if format == "bytes":
             return graph_bytes
         else:
-            return self.get_graph_as_base64(graph_bytes)
-
-    def kde_plot_of_total_marks(
-        self,
-        *,
-        highlighted_sid: str | None = None,
-        format: str = "base64",
-    ) -> BytesIO | str:
-        assert format in self.formats
-        self.ensure_all_figures_closed()
-        sns.set_theme()
-        sns.kdeplot(data=self.des.get_totals(), fill=True)
-        # Overlay the student's score by highlighting the bar
-        if highlighted_sid:
-            df = self.des.get_student_data()
-            student = df[df["StudentID"] == highlighted_sid]
-            student_score = student["Total"].values[0]
-            # this gives x-coord of bar, we get the y-coord from the ylim of the plot
-            plt.bar(student_score, plt.ylim()[1], color=HIGHLIGHT_COLOR, alpha=0.5)
-
-        plt.ylabel("Proportion of students")
-        graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
-        self.ensure_all_figures_closed()
-        if format == "bytes":
-            return graph_bytes
-        else:
-            return self.get_graph_as_base64(graph_bytes)
-
-    def boxplot_of_grades_on_question_version(
-        self,
-        question_idx: int,
-        *,
-        student_df: pd.DataFrame | None = None,
-        highlighted_sid: str | None = None,
-        format: str = "base64",
-    ) -> BytesIO | str:
-        """Generate a boxplot of the grades on a specific question.
-
-        Args:
-            question_idx: The question index number, one-based.
-
-        Keyword Args:
-            student_df: Optional dataframe containing the student data. Should be
-                a copy or filtered version of self.student_df. If omitted, defaults
-                to None and self.student_df is used.
-            highlighted_sid: Optional student ID, to show the student's standing
-                on the chart.
-            format: The format to return the graph in. Should be either "base64"
-                or "bytes". If omitted, defaults to "base64".
-
-        Returns:
-            Base64 encoded string or bytes containing the histogram.
-        """
-        if student_df is None:
-            student_df = self.student_df
-
-        assert isinstance(student_df, pd.DataFrame)
-        assert format in self.formats
-        self.ensure_all_figures_closed()
-
-        maxmark = SpecificationService.get_question_mark(question_idx)
-        qlabel = SpecificationService.get_question_label(question_idx)
-        mark_column = "q" + str(question_idx) + "_mark"
-        plot_series = [student_df[mark_column]]
-        fig, ax = plt.subplots(figsize=(6.8, 1.5), tight_layout=True)
-        sns.set_theme()
-
-        maxmark = SpecificationService.get_question_mark(question_idx)
-
-        sns.boxplot(
-            plot_series,
-            orient="h",
-            medianprops={"linewidth": 4, "color": "blue"},
-            boxprops={"alpha": 0.5},
-            capprops={"linewidth": 4, "color": "red"},
-            widths=[0.25],
-            zorder=2.0,
-        )
-        if highlighted_sid:
-            # Overlay the student's score by highlighting the bar
-            df = self.des.get_student_data()
-            student_score = df[df["StudentID"] == highlighted_sid][mark_column].values[
-                0
-            ]
-            ax.plot(
-                student_score,
-                0,
-                marker="o",
-                markersize=16,
-                color=HIGHLIGHT_COLOR,
-                zorder=3.0,
-            )
-
-        ax.set_xlabel(f"{qlabel} mark")
-        ax.set_yticks([])
-        # pad the left-right extremes so that things look nice.
-        ax.set_xlim(left=-maxmark * 0.05, right=maxmark * 1.05)
-        for side in ["top", "right", "left"]:
-            ax.spines[side].set_visible(False)
-        ax.set_xticks(range(0, maxmark + 1))
-
-        graph_bytes = self.get_graph_as_BytesIO(fig)
-        self.ensure_all_figures_closed()
-
-        if format == "bytes":
-            return graph_bytes
-        else:
-            return self.get_graph_as_base64(graph_bytes)
+            return get_graph_as_base64(graph_bytes)
 
     def correlation_heatmap_of_questions(
         self, *, corr_df: pd.DataFrame | None = None, format: str = "base64"
@@ -378,13 +280,13 @@ class MatplotlibService:
         plt.xlabel("Question")
         plt.ylabel("Question")
 
-        graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
+        graph_bytes = get_graph_as_BytesIO(plt.gcf())
         self.ensure_all_figures_closed()
 
         if format == "bytes":
             return graph_bytes
         else:
-            return self.get_graph_as_base64(graph_bytes)
+            return get_graph_as_base64(graph_bytes)
 
     def histogram_of_grades_on_question_by_ta(
         self,
@@ -457,13 +359,13 @@ class MatplotlibService:
 
         plt.grid(True, alpha=0.5)
 
-        graph_bytes = self.get_graph_as_BytesIO(fig)
+        graph_bytes = get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
 
         if format == "bytes":
             return graph_bytes
         else:
-            return self.get_graph_as_base64(graph_bytes)
+            return get_graph_as_base64(graph_bytes)
 
     def histogram_of_time_spent_marking_each_question(
         self,
@@ -543,13 +445,13 @@ class MatplotlibService:
             )
         plt.grid(True, alpha=0.5)
 
-        graph_bytes = self.get_graph_as_BytesIO(fig)
+        graph_bytes = get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
 
         if format == "bytes":
             return graph_bytes
         else:
-            return self.get_graph_as_base64(graph_bytes)
+            return get_graph_as_base64(graph_bytes)
 
     def scatter_time_spent_vs_mark_given(
         self,
@@ -613,13 +515,13 @@ class MatplotlibService:
         plt.xlim(left=-0.5, right=maxmark + 0.5)
         plt.ylim(bottom=-0.2)
 
-        graph_bytes = self.get_graph_as_BytesIO(fig)
+        graph_bytes = get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
 
         if format == "bytes":
             return graph_bytes
         else:
-            return self.get_graph_as_base64(graph_bytes)
+            return get_graph_as_base64(graph_bytes)
 
     def boxplot_of_marks_given_by_ta(
         self,
@@ -687,13 +589,13 @@ class MatplotlibService:
         )
 
         sns.despine()
-        graph_bytes = self.get_graph_as_BytesIO(fig)
+        graph_bytes = get_graph_as_BytesIO(fig)
         self.ensure_all_figures_closed()
 
         if format == "bytes":
             return graph_bytes
         else:
-            return self.get_graph_as_base64(graph_bytes)
+            return get_graph_as_base64(graph_bytes)
 
     def line_graph_of_avg_marks_by_question(
         self, *, versions: bool = False, format: str = "base64"
@@ -758,23 +660,150 @@ class MatplotlibService:
             labels=SpecificationService.get_question_labels(),
         )
 
-        graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
+        graph_bytes = get_graph_as_BytesIO(plt.gcf())
         self.ensure_all_figures_closed()
 
         if format == "bytes":
             return graph_bytes
         else:
-            return self.get_graph_as_base64(graph_bytes)
+            return get_graph_as_base64(graph_bytes)
+
+
+class MinimalPlotService:
+    """Minimal service for generating matplotlib plots from data."""
+
+    matplotlib.use("Agg")
+    formats = _acceptable_formats
+
+    @staticmethod
+    def ensure_all_figures_closed() -> None:
+        """Assert that all Matplotlib figures are closed."""
+        _ensure_all_figures_closed()
+
+    @staticmethod
+    def kde_plot_of_total_marks(
+        total_score_list,
+        *,
+        highlighted_score: float | None = None,
+        format: str = "base64",
+    ) -> BytesIO | str:
+        """Generate a KDE plot of the distribution of total marks for assessment for all students.
+
+        Args:
+            total_score_list: list of total scores for all marked assessments
+
+        Keyword Args:
+            format: The format to return the graph in. Should be either "base64"
+                or "bytes". If omitted, defaults to "base64".
+            highlighted_score: If not none then draws a bar at that score. Use for
+                highlighting the total mark the student got.
+
+        Returns:
+            Base64 encoded string or bytes containing the plot.
+        """
+        assert format in _acceptable_formats
+        _ensure_all_figures_closed()
+        sns.set_theme()
+        sns.kdeplot(data=np.array(total_score_list), fill=True)
+        # Overlay the student's score by highlighting the bar
+        if highlighted_score:
+            # this gives x-coord of bar, we get the y-coord from the ylim of the plot
+            plt.bar(highlighted_score, plt.ylim()[1], color=HIGHLIGHT_COLOR, alpha=0.5)
+
+        plt.ylabel("Proportion of students")
+        graph_bytes = get_graph_as_BytesIO(plt.gcf())
+        _ensure_all_figures_closed()
+        if format == "bytes":
+            return graph_bytes
+        else:
+            return get_graph_as_base64(graph_bytes)
+
+    def boxplot_of_grades_on_question(
+        self,
+        question_idx: int,
+        question_score_list,
+        *,
+        highlighted_score: float | None = None,
+        format: str = "base64",
+    ) -> BytesIO | str:
+        """Generate a boxplot of the grades on a specific question.
+
+        Args:
+            question_idx: The question index number, one-based.
+            question_score_list: List of scores of marked questions of this question index.
+
+        Keyword Args:
+            format: The format to return the graph in. Should be either "base64"
+                or "bytes". If omitted, defaults to "base64".
+            highlighted_score: If not none then places dot at that score. Use for
+                highlighting the mark the student got for this question.
+
+        Returns:
+            Base64 encoded string or bytes containing the plot.
+        """
+        assert format in self.formats
+        _ensure_all_figures_closed()
+
+        maxmark = SpecificationService.get_question_mark(question_idx)
+        qlabel = SpecificationService.get_question_label(question_idx)
+        fig, ax = plt.subplots(figsize=(6.8, 1.5), tight_layout=True)
+        sns.set_theme()
+
+        sns.boxplot(
+            np.array(question_score_list),
+            orient="h",
+            medianprops={"linewidth": 4, "color": "blue"},
+            boxprops={"alpha": 0.5},
+            capprops={"linewidth": 4, "color": "red"},
+            widths=[0.25],
+            zorder=2.0,
+        )
+        if highlighted_score:
+            # Overlay the student's score by highlighting the bar
+            ax.plot(
+                highlighted_score,
+                0,
+                marker="o",
+                markersize=16,
+                color=HIGHLIGHT_COLOR,
+                zorder=3.0,
+            )
+
+        ax.set_xlabel(f"{qlabel} mark")
+        ax.set_yticks([])
+        # pad the left-right extremes so that things look nice.
+        ax.set_xlim(left=-maxmark * 0.05, right=maxmark * 1.05)
+        for side in ["top", "right", "left"]:
+            ax.spines[side].set_visible(False)
+        ax.set_xticks(range(0, maxmark + 1))
+
+        graph_bytes = get_graph_as_BytesIO(fig)
+        _ensure_all_figures_closed()
+
+        if format == "bytes":
+            return graph_bytes
+        else:
+            return get_graph_as_base64(graph_bytes)
 
     def lollypop_of_pedagogy_tags(
-        self, paper_number: int, student_id: str, *, format: str = "base64"
+        self, question_idx_score_dict, question_idx_max_dict, *, format: str = "base64"
     ) -> BytesIO | str:
-        assert format in self.formats
-        self.ensure_all_figures_closed()
+        """Generate a lollypop graph of pedagogy tag scores.
 
-        student_scores = StudentMarkService().get_marks_from_paper(paper_number)[
-            paper_number
-        ]
+        Args:
+            question_idx_score_dict: the student's scores for each question
+            question_idx_max_dict: the max score for each question
+
+        Keyword Args:
+            format: The format to return the graph in. Should be either "base64"
+                or "bytes". If omitted, defaults to "base64".
+
+        Returns:
+            Base64 encoded string or bytes containing the plot.
+        """
+        assert format in self.formats
+        _ensure_all_figures_closed()
+
         tag_to_question = QuestionTagService.get_tag_to_question_links()
         n_tags = len(tag_to_question)
         tag_names = sorted(list(tag_to_question.keys()))
@@ -783,7 +812,7 @@ class MatplotlibService:
         # combine those to get a 'pedagogy value'
         for name in tag_names:
             values = [
-                student_scores[qi]["student_mark"] / student_scores[qi]["out_of"]
+                question_idx_score_dict[qi] / question_idx_max_dict[qi]
                 for qi in tag_to_question[name]
             ]
             pedagogy_values.append(sum(values) / len(values))
@@ -792,21 +821,21 @@ class MatplotlibService:
         plt.margins(y=0.3)
         sns.set_theme()
 
-        df = pd.DataFrame({"tag": tag_names, "values": pedagogy_values})
-        ordered_df = df.sort_values(by="tag")
-        my_range = range(1, len(df.index) + 1)
-        plt.hlines(y=my_range, xmin=0, xmax=df["values"], linewidth=8)
-        plt.plot(ordered_df["values"], my_range, "o", markersize=16)
+        y_range = list(range(1, len(tag_names) + 1))
+        x_min_data = np.array([0 for x in y_range])
+        x_max_data = np.array(pedagogy_values)
+        plt.hlines(y=y_range, xmin=x_min_data, xmax=x_max_data, linewidth=8)
+        plt.plot(x_max_data, y_range, "o", markersize=16)
         # note mypy gets grumpy with many matplotlib functions, so
         # convert the pandas series to a list to keep it happy
-        plt.yticks(my_range, ordered_df["tag"].to_list())
+        plt.yticks(y_range, tag_names)
         plt.xlim(0, 1)
         plt.xticks([0.1, 0.3, 0.5, 0.7, 0.9], ["low", "", "", "", "high"])
 
-        graph_bytes = self.get_graph_as_BytesIO(plt.gcf())
-        self.ensure_all_figures_closed()
+        graph_bytes = get_graph_as_BytesIO(plt.gcf())
+        _ensure_all_figures_closed()
 
         if format == "bytes":
             return graph_bytes
         else:
-            return self.get_graph_as_base64(graph_bytes)
+            return get_graph_as_base64(graph_bytes)
