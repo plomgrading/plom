@@ -7,15 +7,20 @@
 import argparse
 import csv
 import os
+import re
 import subprocess
-import time
 from pathlib import Path
 from shlex import split
 from tempfile import TemporaryDirectory
+from time import sleep
+
+from plom.textools import buildLaTeX
+
 
 # we specify this directory relative to the plom_server
 # root directory, rather than getting Django things up and
 # running, just to get at these useful files.
+# TODO: we'll set this later but we want it to be a global variable for some reason
 demo_file_directory = Path("./Launcher/launch_scripts/demo_files/")
 
 
@@ -267,21 +272,62 @@ def upload_demo_assessment_spec_file():
     run_django_manage_command(f"plom_preparation_test_spec upload {spec_file}")
 
 
+def _build_with_and_without_soln(source_path: Path) -> None:
+    """Build soln and non-soln form of the assessment, writing PDF files into the CWD."""
+    source_path_tex = source_path.with_suffix(".tex")
+    if not source_path_tex.exists():
+        raise ValueError(f"Cannot open file {source_path_tex}")
+
+    # read in the .tex as a big string
+    with source_path_tex.open("r") as fh:
+        original_data = fh.read()
+
+    # comment out the '\printanswers' line
+    no_soln_data = re.sub(r"\\printanswers", r"% \\printanswers", original_data)
+    # just the filename, in the CWD
+    no_soln_pdf_filename = Path(source_path.stem + ".pdf")
+    if no_soln_pdf_filename.exists():
+        print(f"  - skipping build of {no_soln_pdf_filename} b/c it already exists")
+    else:
+        with open(no_soln_pdf_filename, "wb") as f:
+            (r, stdouterr) = buildLaTeX(no_soln_data, f)
+        if r != 0:
+            print(stdouterr)
+            raise RuntimeError(
+                f"LaTeX build {no_soln_pdf_filename} failed with exit code {r}: "
+                "stdout/stderr shown above"
+            )
+        print(f"  - successfully built {no_soln_pdf_filename}")
+
+    # remove any %-comments on line with '\printanswers'
+    yes_soln_data = re.sub(r"%\s+\\printanswers", r"\\printanswers", original_data)
+    yes_soln_pdf_filename = Path(source_path.stem + "_solutions.pdf")
+    if yes_soln_pdf_filename.exists():
+        print(f"  - skipping build of {yes_soln_pdf_filename} b/c it already exists")
+    else:
+        with open(yes_soln_pdf_filename, "wb") as f:
+            (r, stdouterr) = buildLaTeX(yes_soln_data, f)
+        if r != 0:
+            print(stdouterr)
+            raise RuntimeError(
+                f"LaTeX build {yes_soln_pdf_filename} failed with exit code {r}: "
+                "stdout/stderr shown above"
+            )
+        print(f"  - successfully built {yes_soln_pdf_filename}")
+
+
 def build_demo_test_source_pdfs() -> None:
-    print("Building assessment / solution source pdfs from tex")
-    # assumes that everything needed is in the demo_file_directory
-    subprocess.run(
-        ["python3", "build_plom_assessment_pdfs.py"],
-        cwd=demo_file_directory,
-        check=True,
-    )
+    print("Building assessment / solution source pdfs from tex in temp dirs")
+
+    for filename in ("assessment_v1", "assessment_v2", "assessment_v3"):
+        _build_with_and_without_soln(demo_file_directory / filename)
 
 
 def upload_demo_test_source_files():
     """Use 'plom_preparation_source' to upload a demo assessment source pdfs."""
     print("Uploading demo assessment source pdfs")
     for v in (1, 2, 3):
-        source_pdf = demo_file_directory / f"assessment_v{v}.pdf"
+        source_pdf = f"assessment_v{v}.pdf"
         run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
 
 
@@ -292,7 +338,7 @@ def upload_demo_solution_files():
     print("Uploading demo solution pdfs")
     run_django_manage_command(f"plom_soln_spec upload {soln_spec_path}")
     for v in [1, 2, 3]:
-        soln_pdf_path = demo_file_directory / f"assessment_v{v}_solutions.pdf"
+        soln_pdf_path = f"assessment_v{v}_solutions.pdf"
         run_django_manage_command(f"plom_soln_sources upload -v {v} {soln_pdf_path}")
 
 
@@ -370,8 +416,6 @@ def upload_the_qvmap(filepath: Path):
 
 def build_all_papers_and_wait():
     """Trigger build all the printable paper pdfs and wait for completion."""
-    from time import sleep
-
     run_django_manage_command("plom_build_paper_pdfs --start-all")
     # since this is a background Huey job, we need to
     # wait until all those pdfs are actually built -
@@ -583,8 +627,6 @@ def run_the_randomarker(*, port):
 
     All papers will be marked after this call.
     """
-    from time import sleep
-
     # TODO: hardcoded http://
     srv = f"http://localhost:{port}"
     # list of markers and their passwords and percentage to mark
@@ -736,6 +778,23 @@ if __name__ == "__main__":
     # TODO: disabled?
     # confirm_run_from_correct_directory()
 
+    # TODO: we currently need direct file access to this path, try a few places
+    if not demo_file_directory.exists():
+        demo_file_directory = Path("plom_server/Launcher/launch_scripts/demo_files/")
+    if not demo_file_directory.exists():
+        demo_file_directory = Path("Launcher/launch_scripts/demo_files/")
+    if not demo_file_directory.exists():
+        demo_file_directory = Path("demo_files/")
+    if not demo_file_directory.exists():
+        # try to get it from the module path
+        # TODO: better to just port all of this to importlib.resources
+        import plom_server
+
+        (_path,) = plom_server.__path__
+        demo_file_directory = Path(_path) / "Launcher/launch_scripts/demo_files/"
+
+    assert demo_file_directory.exists(), "cannot continue w/o demo files"
+
     # clean out old db and misc files, then rebuild blank db
     run_django_manage_command("plom_clean_all_and_build_db")
     # build the user-groups and the admin and manager users
@@ -757,7 +816,7 @@ if __name__ == "__main__":
         else:
             server_process = launch_gunicorn_production_server_process(port=args.port)
         # processes still running after small delay? probably working
-        time.sleep(0.25)
+        sleep(0.25)
         for hp in huey_processes:
             r = hp.poll()
             if r is not None:

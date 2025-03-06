@@ -51,6 +51,7 @@ include plom_server/static/css/*.css
 include plom_server/static/js/*.js
 include plom_server/templates/*.html
 include plom_server/templates/**/*.html
+include plom_server/templates/**/**/*.html
 include plom_server/**/migrations/*.py
 include plom_server/**/models.py
 include plom_server/**/models/*.py
