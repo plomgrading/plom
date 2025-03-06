@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Rubric edits can be indicated as "minor edits", generally meaning the Annotations using them do not need to be updated.
 
 ### Removed
 

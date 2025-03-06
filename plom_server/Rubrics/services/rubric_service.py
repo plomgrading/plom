@@ -12,8 +12,6 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aidan Murphy
 
-from __future__ import annotations
-
 import ast
 import csv
 import io
@@ -150,11 +148,69 @@ def _validate_value_out_of(value, out_of, max_mark) -> None:
         )
 
 
+# TODO: consider refactoring to wherever we compute diffs
+def _is_rubric_change_considered_minor(
+    old: Rubric, new_data: dict[str, Any]
+) -> tuple[bool, str]:
+    """Implements a reject list of non-minor changes.
+
+    Args:
+        old: a Rubric object.
+        new_data: dict data for the proposed new rubric.
+
+    Returns:
+        Tuple of True/False and a string displaying the reason.  Reason
+        will be empty when the boolean is True.
+    """
+    if new_data["rid"] != old.rid:
+        return (False, "Changed rid")
+    if new_data["revision"] != old.revision:
+        return (False, "Changed revision")
+    if new_data["kind"] != old.kind:
+        return (False, "Changed kind")
+    if new_data["kind"] != "neutral":
+        # neutral rubrics might not have "value"
+        if new_data["value"] != old.value:
+            return (False, "Changed value")
+    if new_data["kind"] == "absolute":
+        # non-absolute rubrics might not have "out_of"
+        if new_data["out_of"] != old.out_of:
+            return (False, "Changed out_of")
+    if new_data["question_index"] != old.question_index:
+        return (False, "Changed question_index")
+
+    # text is a grey area!  For now, leave minor: users can force a major change
+    # TODO: or maybe we could refuse to decide and FORCE user to make a choice
+
+    return (True, "")
+
+
+def _modify_rubric_in_place(old_rubric: Rubric, serializer: RubricSerializer) -> Rubric:
+    log.info(f"Modifying rubric {old_rubric.rid} rev {old_rubric.revision} in-place")
+    serializer.validated_data["latest"] = True
+    return serializer.update(old_rubric, serializer.validated_data)
+
+
+def _modify_rubric_by_making_new_one(
+    old_rubric: Rubric, serializer: RubricSerializer
+) -> Rubric:
+    log.info(
+        f"Modifying rubric {old_rubric.rid} rev {old_rubric.revision} by"
+        " making a new rubric with bumped revision"
+    )
+    old_rubric.latest = False
+    old_rubric.save()
+    serializer.validated_data["revision"] += 1
+    serializer.validated_data["latest"] = True
+    return serializer.save()
+
+
 class RubricService:
     """Class to encapsulate functions for creating and modifying rubrics."""
 
+    @classmethod
     def create_rubric(
-        self, rubric_data: dict[str, Any], *, creating_user: User | None = None
+        cls, rubric_data: dict[str, Any], *, creating_user: User | None = None
     ) -> dict[str, Any]:
         """Create a rubric using data submitted by a marker.
 
@@ -178,12 +234,13 @@ class RubricService:
             PermissionDenied: user are not allowed to create rubrics.
                 This could be "this user" or "all users".
         """
-        rubric_obj = self._create_rubric(rubric_data, creating_user=creating_user)
+        rubric_obj = cls._create_rubric(rubric_data, creating_user=creating_user)
         return _Rubric_to_dict(rubric_obj)
 
     # implementation detail of the above, independently testable
+    @classmethod
     def _create_rubric(
-        self, incoming_data: dict[str, Any], *, creating_user: User | None = None
+        cls, incoming_data: dict[str, Any], *, creating_user: User | None = None
     ) -> Rubric:
         incoming_data = incoming_data.copy()
 
@@ -241,10 +298,10 @@ class RubricService:
                 )
             pass
 
-        return self._create_rubric_lowlevel(incoming_data)
+        return cls._create_rubric_lowlevel(incoming_data)
 
+    @staticmethod
     def _create_rubric_lowlevel(
-        self,
         data: dict[str, Any],
         *,
         _bypass_serializer: bool = False,
@@ -308,14 +365,16 @@ class RubricService:
         rubric_obj = serializer.instance
         return rubric_obj
 
+    @classmethod
     @transaction.atomic
     def modify_rubric(
-        self,
+        cls,
         rid: int,
         new_rubric_data: dict[str, Any],
         *,
         modifying_user: User | None = None,
         tag_tasks: bool = False,
+        is_minor_change: bool | None = None,
     ) -> dict[str, Any]:
         """Modify a rubric.
 
@@ -333,6 +392,20 @@ class RubricService:
                 no checking will be done (probably for internal use).
             tag_tasks: whether to tag all tasks whose latest annotation uses
                 this rubric with ``"rubric_changed"``.
+                Currently this only works for major changes, or more precisely
+                its not yet well-defined what happens if you ask to tag tasks
+                for minor changes.
+            is_minor_change: by default (passing None) the code will decide
+                itself whether this is a minor change.  Callers can force
+                one way or the other by passing True or False.
+                A minor change is one where you would NOT expect to update
+                any existing Annotations that use the Rubric.  For example,
+                changing the score is probably NOT a minor change.  Changing
+                the text to fix a minor typo might or might not be a minor
+                change.  Changing the text drastically should be a major
+                change.  Internally, a minor change is one that does not
+                bump the revision (and does not create a new rubric) but
+                instead modifies the rubric "in-place".
 
         Returns:
             The modified rubric data, in dict key-value format.
@@ -365,8 +438,8 @@ class RubricService:
         # default revision if missing from incoming data
         new_rubric_data.setdefault("revision", 0)
 
-        # incoming revision is not incremented to check if what the
-        # revision was based on is outdated
+        # Mid-air collision detection
+        # TODO: warning: minor edits don't have this check
         if not new_rubric_data["revision"] == old_rubric.revision:
             # TODO: record who last modified and when
             raise PlomConflict(
@@ -417,8 +490,7 @@ class RubricService:
 
         # To be changed by future MR  (TODO: what does this comment mean?)
         new_rubric_data["user"] = old_rubric.user.pk
-        new_rubric_data["revision"] += 1
-        new_rubric_data["latest"] = True
+
         new_rubric_data["rid"] = old_rubric.rid
 
         if new_rubric_data.get("display_delta", None) is None:
@@ -450,10 +522,18 @@ class RubricService:
         if not serializer.is_valid():
             raise serializers.ValidationError(serializer.errors)
 
-        old_rubric.latest = False
-        old_rubric.save()
+        # autodetect based on a reject list of major change fields
+        if is_minor_change is None:
+            is_minor_change, reason = _is_rubric_change_considered_minor(
+                old_rubric, serializer.validated_data
+            )
+            if not is_minor_change:
+                log.info("autodetected rubric major change: %s", reason)
 
-        new_rubric = serializer.save()
+        if is_minor_change:
+            new_rubric = _modify_rubric_in_place(old_rubric, serializer)
+        else:
+            new_rubric = _modify_rubric_by_making_new_one(old_rubric, serializer)
 
         if isinstance(new_rubric_data.get("pedagogy_tags"), list):
             new_rubric_data["pedagogy_tags"] = PedagogyTag.objects.filter(
@@ -461,7 +541,7 @@ class RubricService:
             ).values_list("pk", flat=True)
         new_rubric.pedagogy_tags.set(new_rubric_data.get("pedagogy_tags", []))
 
-        if tag_tasks:
+        if not is_minor_change and tag_tasks:
             # TODO: or do we need some "system tags" that definitely already exist?
             any_manager = User.objects.filter(groups__name="manager").first()
             tag = MarkingTaskService().get_or_create_tag(any_manager, "rubric_changed")
@@ -476,8 +556,7 @@ class RubricService:
             for task in tasks:
                 MarkingTaskService()._add_tag(tag, task)
 
-        rubric_obj = serializer.instance
-        return _Rubric_to_dict(rubric_obj)
+        return _Rubric_to_dict(new_rubric)
 
     @classmethod
     def get_rubrics_as_dicts(
@@ -825,7 +904,8 @@ class RubricService:
         pane.data = data
         pane.save()
 
-    def get_annotation_from_rubric(self, rubric: Rubric) -> QuerySet[Annotation]:
+    @staticmethod
+    def get_annotations_from_rubric(rubric: Rubric) -> QuerySet[Annotation]:
         """Get the QuerySet of Annotations that use this Rubric.
 
         Args:
@@ -869,8 +949,9 @@ class RubricService:
             .distinct()
         )
 
-    def get_rubrics_from_annotation(self, annotation: Annotation) -> QuerySet[Rubric]:
-        """Get the queryset of rubrics that are used by this annotation.
+    @staticmethod
+    def get_rubrics_from_annotation(annotation: Annotation) -> QuerySet[Rubric]:
+        """Get a QuerySet of Rubrics that are used by a particular Annotation.
 
         Args:
             annotation: Annotation instance
@@ -880,8 +961,9 @@ class RubricService:
         """
         return Rubric.objects.filter(annotations=annotation)
 
-    def get_rubrics_from_paper(self, paper_obj: Paper) -> QuerySet[Rubric]:
-        """Get the queryset of rubrics that are used by this paper.
+    @staticmethod
+    def get_rubrics_from_paper(paper_obj: Paper) -> QuerySet[Rubric]:
+        """Get a QuerySet of Rubrics that are used by a particular Paper.
 
         Args:
             paper_obj: Paper instance
@@ -894,8 +976,13 @@ class RubricService:
         rubrics = Rubric.objects.filter(annotations__in=annotations)
         return rubrics
 
-    def get_rubrics_from_user(self, username: str) -> QuerySet[Rubric]:
-        """Get the queryset of rubrics used by this user.
+    @staticmethod
+    def get_rubrics_created_by_user(username: str) -> QuerySet[Rubric]:
+        """Get the queryset of rubrics created by this user.
+
+        TODO: the interplay b/w created by, owned by, modified by, is a bit
+        "up in the air".  Currently this method is unused (although somewhat
+        strangely, it is unit-tested).  See discussions in ``models.py``.
 
         Args:
             username: username of the user

@@ -7,8 +7,6 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
 
-from __future__ import annotations
-
 import difflib
 import json
 from copy import deepcopy
@@ -445,7 +443,6 @@ class RubricCreateView(ManagerRequiredView):
         if not form.is_valid():
             messages.error(request, f"invalid form data: {form.errors}")
             return redirect("rubrics_landing")
-        rs = RubricService()
         rubric_data = {
             "user": request.user.pk,
             "modified_by_user": request.user.pk,
@@ -457,7 +454,7 @@ class RubricCreateView(ManagerRequiredView):
             "question_index": form.cleaned_data["question_index"],
             "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
         }
-        rs.create_rubric(rubric_data)
+        RubricService.create_rubric(rubric_data)
         messages.success(request, "Rubric created successfully.")
         return redirect("rubrics_landing")
 
@@ -466,13 +463,25 @@ class RubricEditView(ManagerRequiredView):
     """Handles the editing of existing rubrices."""
 
     def post(self, request: HttpRequest, *, rid: int) -> HttpResponse:
-        """Posting from a form to to edit an existing rubric."""
+        """Posting from a form to edit an existing rubric."""
+        # TODO: am I supposed to do this through the form?
+        tag_tasks = request.POST.get("tag_tasks") == "on"
+        minor_change = request.POST.get("minor_change")
+        if minor_change is None or minor_change == "auto":
+            is_minor_change = None
+        elif minor_change == "yes":
+            is_minor_change = True
+        elif minor_change == "no":
+            is_minor_change = False
+        else:
+            messages.error(request, "invalid form choices for minor radios")
+            return redirect("rubric_item", rid)
+
         form = RubricItemForm(request.POST)
         if not form.is_valid():
             messages.error(request, f"invalid form data: {form.errors}")
             return redirect("rubric_item", rid)
-        rs = RubricService()
-        rubric = rs.get_rubric_by_rid(rid)
+        rubric = RubricService().get_rubric_by_rid(rid)
         rubric_data = {
             "username": request.user.username,
             "text": form.cleaned_data["text"],
@@ -487,11 +496,12 @@ class RubricEditView(ManagerRequiredView):
             "tags": form.cleaned_data["tags"],
             "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
         }
-        rs.modify_rubric(
+        RubricService.modify_rubric(
             rid,
             new_rubric_data=rubric_data,
             modifying_user=User.objects.get(username=request.user.username),
-            tag_tasks=False,
+            tag_tasks=tag_tasks,
+            is_minor_change=is_minor_change,
         )
         messages.success(request, "Rubric edited successfully.")
         return redirect("rubric_item", rid)
