@@ -16,10 +16,11 @@ import zipfile
 from Papers.models import ReferenceImage
 from Papers.models import Paper, FixedPage
 from Papers.services import PaperInfoService
+from Identify.models import IDRectangle
 from plom.scan import rotate
 
 
-def get_reference_rectangle(version: int, page: int) -> dict[str, list[float]]:
+def get_reference_qr_coords(version: int, page: int) -> dict[str, list[float]]:
     """Given the version and page number, return the x/y coords of the qr codes on the reference image.
 
     Those coords are used to build a reference rectangle, given by the max/min x/y, which, in turn defines a coordinate system on the page.
@@ -47,6 +48,53 @@ def get_reference_rectangle(version: int, page: int) -> dict[str, list[float]]:
     return corner_dat
 
 
+def get_reference_rectangle(version: int, page: int) -> dict[str, float]:
+    corner_dat = get_reference_qr_coords(version, page)
+    return {
+        "left": min([X[0] for X in corner_dat.values()]),
+        "right": max([X[0] for X in corner_dat.values()]),
+        "top": min([X[1] for X in corner_dat.values()]),
+        "bottom": max([X[1] for X in corner_dat.values()]),
+    }
+
+
+def set_idbox_rectangle(
+    version: int, left: float, top: float, right: float, bottom: float
+) -> None:
+    try:
+        idr = IDRectangle.objects.get(version=version)
+        idr.top = top
+        idr.left = left
+        idr.bottom = bottom
+        idr.right = right
+        idr.save()
+    except IDRectangle.DoesNotExist:
+        IDRectangle.objects.create(
+            version=version, left=left, top=top, right=right, bottom=bottom
+        )
+
+
+def get_idbox_rectangle(version: int) -> dict[str, float] | None:
+    try:
+        idr = IDRectangle.objects.get(version=version)
+        return {
+            "top_f": idr.top,
+            "left_f": idr.left,
+            "bottom_f": idr.bottom,
+            "right_f": idr.right,
+        }
+    except IDRectangle.DoesNotExist:
+        return None
+
+
+def clear_idbox_rectangle(version: int) -> None:
+    try:
+        idr = IDRectangle.objects.get(version=version)
+        idr.delete()
+    except IDRectangle.DoesNotExist:
+        pass
+
+
 class RectangleExtractor:
     """Provides operations on scanned images based on a reference image.
 
@@ -59,9 +107,8 @@ class RectangleExtractor:
     version 2, you are playing with fire a bit (b/c maybe version 1 is
     on A4 paper but version 2 is on Letter paper).  More likely, perhaps
     the boxes you're looking to get are not in *precisely* the same place.
-    In practice, you're welcome to try anyway..., for example in the case
-    of versioned-ID pages, we construct this object for Version 1 but
-    use it on others.
+    If you really want to do this, look for underscore kwargs like
+    `_version_ignore`.  This is unsupported.
     """
 
     def __init__(self, version: int, page: int) -> None:
@@ -209,7 +256,7 @@ class RectangleExtractor:
             right_f (float): same as top, defining the right boundary.
 
         Keyword Args:
-            _version_override: RectangleExtractor is designed to be specific
+            _version_ignore: RectangleExtractor is designed to be specific
                 to a version provided at time of construction.  If you like
                 living somewhat dangerously (and/or have knowledge that your
                 version layouts are identical), then you can bypass this...

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Colin B. Macdonald
 
 from tabulate import tabulate
@@ -15,7 +15,10 @@ from ...services import IDReaderService
 
 
 class Command(BaseCommand):
-    """Commandline tool for running and managing the results of the ID-reader."""
+    """Commandline tool for running and managing the results of the ID-reader.
+
+    Note --- at present only works for ID page version 1.
+    """
 
     def get_the_rectangle(self) -> dict[str, float]:
         id_page_number = SpecificationService.get_id_page_number()
@@ -34,12 +37,7 @@ class Command(BaseCommand):
             self.stdout.write("Running the ID reader")
             IDReaderService().run_the_id_reader_in_background_via_huey(
                 user_obj,
-                (
-                    rectangle["left_f"],
-                    rectangle["top_f"],
-                    rectangle["right_f"],
-                    rectangle["bottom_f"],
-                ),
+                {1: rectangle},
                 recompute_heatmap=True,
             )
         except MultipleObjectsReturned:

@@ -4,7 +4,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2020-2025 Colin B. Macdonald
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 
 # need this until newer minimum version of opencv
 from __future__ import annotations
@@ -82,7 +82,9 @@ class IDReaderService:
         """
         predictions = {}
         if predictor:
-            pred_query = IDPrediction.objects.filter(predictor=predictor)
+            pred_query = IDPrediction.objects.filter(predictor=predictor).order_by(
+                "paper__paper_number"
+            )
             for pred in pred_query:
                 predictions[pred.paper.paper_number] = {
                     "student_id": pred.student_id,
@@ -93,7 +95,7 @@ class IDReaderService:
 
         # else we want all predictors
         allpred: dict[int, list[dict[str, Any]]] = {}
-        pred_query = IDPrediction.objects.all()
+        pred_query = IDPrediction.objects.all().order_by("paper__paper_number")
         for pred in pred_query:
             if allpred.get(pred.paper.paper_number) is None:
                 allpred[pred.paper.paper_number] = []
@@ -197,11 +199,11 @@ class IDReaderService:
     def run_the_id_reader_in_foreground(
         self,
         user: User,
-        box: tuple[float, float, float, float],
+        box_versions: dict[int, dict[str, float] | None],
         *,
         recompute_heatmap: bool = True,
     ):
-        id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(box)
+        id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(box_versions)
         IDBoxProcessorService().make_id_predictions(
             user, id_box_image_dict, recompute_heatmap=recompute_heatmap
         )
@@ -217,7 +219,7 @@ class IDReaderService:
     def run_the_id_reader_in_background_via_huey(
         self,
         user: User,
-        box: tuple[float, float, float, float],
+        box_versions: dict[int, dict[str, float] | None],
         recompute_heatmap: bool | None = True,
     ):
         """Run the ID reading process in the background.
@@ -257,7 +259,10 @@ class IDReaderService:
         tracker_pk = new_idht.pk
         # now build the actual huey task
         res = huey_id_reading_task(
-            user, box, recompute_heatmap=recompute_heatmap, tracker_pk=tracker_pk
+            user,
+            box_versions,
+            recompute_heatmap=recompute_heatmap,
+            tracker_pk=tracker_pk,
         )
         # and update the status
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
@@ -267,7 +272,7 @@ class IDReaderService:
 @db_task(queue="tasks", context=True)
 def huey_id_reading_task(
     user: User,
-    box: tuple[float, float, float, float],
+    box_versions: dict[int, tuple[float, float, float, float] | None],
     recompute_heatmap: bool,
     *,
     tracker_pk: int,
@@ -280,7 +285,7 @@ def huey_id_reading_task(
 
     Args:
         user: the user who triggered this process and so who will be associated with the predictions.
-        box: the coordinates of the ID box to extract.
+        box_versions: a dict keyed by version of the coordinates of the ID box to extract.
         recompute_heatmap: whether or not to recompute the digit probability heatmap.
 
     Keyword Args:
@@ -300,7 +305,7 @@ def huey_id_reading_task(
         tracker_pk, "ID Reading task has started. Getting ID boxes."
     )
 
-    id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(box)
+    id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(box_versions)
     # check if we got any ID boxes (eg no scanned papers, or all prenamed)
     if len(id_box_image_dict) == 0:
         IDReadingHueyTaskTracker.set_message_to_user(
@@ -335,7 +340,7 @@ class IDBoxProcessorService:
     @transaction.atomic
     def save_all_id_boxes(
         self,
-        box: tuple[float, float, float, float],
+        box_versions: dict[int, dict[str, float] | None],
         *,
         exclude_prenamed_papers: bool = True,
         save_dir: Path | None = None,
@@ -346,9 +351,9 @@ class IDBoxProcessorService:
         and so uses qr-code positions to rotate and find the given rectangle.
 
         Args:
-            box: A list of the box to extract or a default if ``None``.
-                This is of the form "top bottom left right", each how
-                much of the page as a float ``[0.0, 1.0]``.
+            box_versions: A dict keyed by version of dict giving coords
+                of the box to extract. Dict of coords has keys 'left_f', 'right_f',
+                'top_f', 'bottom_f', with float values.
 
         Keyword Args:
             exclude_prenamed_papers: by default we don't extract the id
@@ -371,25 +376,35 @@ class IDBoxProcessorService:
         else:
             exclude_papers = []
         # Note this gets all id pages regardless of version
-        paper_numbers = [
-            pn
-            for pn in PaperInfoService.get_paper_numbers_containing_page(
-                id_page_number, scanned=True
-            )
-            if pn not in exclude_papers
-        ]
-
-        # use the rectangle extractor to then get all the rectangles from those pages and save them
-        rex = RectangleExtractor(1, id_page_number)
         img_file_dict = {}
-        for pn in paper_numbers:
-            id_box_filename = id_box_folder / f"id_box_{pn:04}.png"
-            id_box_bytes = rex.extract_rect_region(pn, *box, _version_ignore=True)
-            if id_box_bytes is None:
-                # just leave them out when rex cannot compute appropriate transforms
+        for v, box_as_dict in box_versions.items():
+            # do each id page version separately
+            if box_as_dict is None:
+                # if no box for that version then skip it.
                 continue
-            id_box_filename.write_bytes(id_box_bytes)
-            img_file_dict[pn] = id_box_filename
+            box = [
+                box_as_dict["left_f"],
+                box_as_dict["top_f"],
+                box_as_dict["right_f"],
+                box_as_dict["bottom_f"],
+            ]
+            paper_numbers = [
+                pn
+                for pn in PaperInfoService.get_paper_numbers_containing_page(
+                    id_page_number, version=v, scanned=True
+                )
+                if pn not in exclude_papers
+            ]
+            # use the rectangle extractor to then get all the rectangles from those pages and save them
+            rex = RectangleExtractor(v, id_page_number)
+            for pn in paper_numbers:
+                id_box_filename = id_box_folder / f"id_box_{pn:04}.png"
+                id_box_bytes = rex.extract_rect_region(pn, *box)
+                if id_box_bytes is None:
+                    # just leave them out when rex cannot compute appropriate transforms
+                    continue
+                id_box_filename.write_bytes(id_box_bytes)
+                img_file_dict[pn] = id_box_filename
 
         return img_file_dict
 

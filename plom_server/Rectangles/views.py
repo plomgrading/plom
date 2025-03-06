@@ -17,7 +17,7 @@ from django.shortcuts import render
 from Papers.services import SpecificationService, PaperInfoService
 from Preparation.services import SourceService
 from Base.base_group_views import ManagerRequiredView
-from .services import get_reference_rectangle, RectangleExtractor
+from .services import get_reference_qr_coords, RectangleExtractor
 
 
 class RectangleHomeView(ManagerRequiredView):
@@ -41,7 +41,7 @@ class SelectRectangleView(ManagerRequiredView):
     def get(self, request: HttpRequest, version: int, page: int) -> HttpResponse:
         context = self.build_context()
         try:
-            qr_info = get_reference_rectangle(version, page)
+            qr_info = get_reference_qr_coords(version, page)
         except ValueError as err:
             raise Http404(err)
         x_coords = [X[0] for X in qr_info.values()]

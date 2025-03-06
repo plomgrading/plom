@@ -6,6 +6,7 @@
 import logging
 
 from django.db import transaction
+from django.db.models import Count
 
 from ..models import (
     Paper,
@@ -17,6 +18,16 @@ from ..models import (
 from .paper_creator import PaperCreatorService
 
 log = logging.getLogger("PaperInfoService")
+
+
+def fixedpage_version_count(page_number: int) -> dict[int, int]:
+    """Get the number of papers using each version of the given page number."""
+    return {
+        dat["version"]: dat["count"]
+        for dat in FixedPage.objects.filter(page_number=page_number)
+        .values("version")
+        .annotate(count=Count("version"))
+    }
 
 
 class PaperInfoService:
