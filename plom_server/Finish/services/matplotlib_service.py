@@ -3,7 +3,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Elisa Pan
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 
 import base64
 from io import BytesIO
@@ -442,7 +442,7 @@ class MatplotlibService:
             ec="black",
             alpha=0.5,
         )
-        ax.set_title(f"Grades for {qlabel} (by {ta_name})")
+        ax.set_title(f"Marks for {qlabel} (by {ta_name})")
         ax.set_xlabel("Mark given")
         ax.set_ylabel("# of times assigned")
         if versions:
@@ -667,7 +667,7 @@ class MatplotlibService:
         ax.set_yticks(range(len(marker_names)))
         ax.set_yticklabels(marker_names)
 
-        ax.set_title(f"{qlabel} boxplot by marker")
+        ax.set_title(f"{qlabel} marks boxplot by marker")
         ax.set_xlabel(f"{qlabel} mark")
         ax.tick_params(
             axis="y",
@@ -679,10 +679,11 @@ class MatplotlibService:
 
         plt.xlim(
             [
-                0,
+                -0.5,
                 self.des._get_ta_data_for_question(question_index=question_idx)[
                     "max_score"
-                ].max(),
+                ].max()
+                + 0.5,
             ]
         )
 
