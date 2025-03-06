@@ -778,9 +778,21 @@ if __name__ == "__main__":
     # TODO: disabled?
     # confirm_run_from_correct_directory()
 
-    # TODO: we currently need direct file access to this path
+    # TODO: we currently need direct file access to this path, try a few places
     if not demo_file_directory.exists():
         demo_file_directory = Path("plom_server/Launcher/launch_scripts/demo_files/")
+    if not demo_file_directory.exists():
+        demo_file_directory = Path("Launcher/launch_scripts/demo_files/")
+    if not demo_file_directory.exists():
+        demo_file_directory = Path("demo_files/")
+    if not demo_file_directory.exists():
+        # try to get it from the module path
+        # TODO: better to just port all of this to importlib.resources
+        import plom_server
+
+        (_path,) = plom_server.__path__
+        demo_file_directory = Path(_path) / "Launcher/launch_scripts/demo_files/"
+
     assert demo_file_directory.exists(), "cannot continue w/o demo files"
 
     # clean out old db and misc files, then rebuild blank db
