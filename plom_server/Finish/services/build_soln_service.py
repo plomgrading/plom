@@ -131,7 +131,7 @@ class BuildSolutionService:
             paper_number: which paper to build solutions for.
 
         Keyword Args:
-            watermark: whether to paint watermarked student numbers.
+            watermark: whether to paint watermarked student ids.
                 Defaults to False.
 
         Returns:

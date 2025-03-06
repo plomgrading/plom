@@ -265,7 +265,7 @@ answer_font_size = 18
 
 def scribble_name_and_id(
     pdf_doc,
-    student_number,
+    student_id,
     student_name,
     *,
     pagenum=0,
@@ -277,7 +277,7 @@ def scribble_name_and_id(
     Args:
         pdf_doc (fitz.Document): an open pdf file, we'll modify it
             implicitly but not close it.
-        student_number (str): student number to write on page.
+        student_id (str): student id number to write on page.
         student_name (str): student name to write on page.
 
     Keyword Args:
@@ -305,7 +305,7 @@ def scribble_name_and_id(
     id_page = pdf_doc[pagenum]
     width = 28
     border = 8
-    for n, digit in enumerate(student_number):
+    for n, digit in enumerate(student_id):
         rect1 = fitz.Rect(
             220 + border * n + width * n,
             265 + y_offset,
@@ -387,7 +387,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, *, which=None):
     Arguments:
         paper_dir (str/pathlib.Path): Directory containing the blank exams.
         classlist (list): list of dicts with keys `id` and `name`.
-            See also Issue #1646: maybe will use `student_number` someday.
+            See also Issue #1646: deprecate student_number by id
         outfile (str/pathlib.Path): write results into this concatenated PDF file.
 
     Keyword Arguments:
@@ -421,7 +421,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, *, which=None):
 
         # those with an ID number
         named_papers_paths = list(paper_dir.glob("exam_*_*.pdf"))
-        # extract student numbers used in prenaming
+        # extract student ids used in prenaming
         used_ids = [f.stem.split("_")[-1] for f in named_papers_paths]
         # get those students not used in the the prename
         available_classlist = [x for x in classlist if x["id"] not in used_ids]
@@ -466,15 +466,15 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, *, which=None):
                     print(f"{f.name} - prenamed paper - scribbled")
                 else:
                     x = use_these_students.pop()
-                    # TODO: Issue #1646: check for "student_number" fallback to id
-                    student_number = x["id"]
+                    # Issue #1646: deprecate "student_number" in favour of id
+                    student_id = x["id"]
                     student_name = x["name"]
-                    print(f"{f.name} - scribbled using {student_number} {student_name}")
+                    print(f"{f.name} - scribbled using {student_id} {student_name}")
 
                 with fitz.open(f) as pdf_document:
                     if f not in named_papers_paths:
                         # TODO: use spec.IDpage
-                        scribble_name_and_id(pdf_document, student_number, student_name)
+                        scribble_name_and_id(pdf_document, student_id, student_name)
 
                     # TODO: should match the ID page and DNM pages from spec settings
                     scribble_pages(pdf_document)
@@ -493,10 +493,10 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, *, which=None):
                     test_number = f.stem.split("_")[1]
                     if f in named_papers_paths:
                         # exam_XXXX_YYYYYYY.pdf
-                        student_number = f.stem.split("_")[2]
+                        student_id = f.stem.split("_")[2]
 
                     print(
-                        f"  making an extra page for test {test_number} and id {student_number}"
+                        f"  making an extra page for test {test_number} and id {student_id}"
                     )
 
                     # insert a copy of the extra page from the extra page pdf
@@ -514,7 +514,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, *, which=None):
                     # page.draw_rect(maxbox, color=(1, 0, 0))
                     excess = tw.fill_textbox(
                         maxbox,
-                        f"EXTRA PAGE - t{test_number} Q1 - {student_number}",
+                        f"EXTRA PAGE - t{test_number} Q1 - {student_id}",
                         align=fitz.TEXT_ALIGN_LEFT,
                         fontsize=extra_page_font_size,
                         font=fitz.Font("helv"),
@@ -524,7 +524,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, *, which=None):
 
                     # all_pdf_documents.insert_page(
                     #     -1,
-                    #     text=f"EXTRA PAGE - t{test_number} Q1 - {student_number}",
+                    #     text=f"EXTRA PAGE - t{test_number} Q1 - {student_id}",
                     #     fontsize=extra_page_font_size,
                     #     color=blue,
                     # )
