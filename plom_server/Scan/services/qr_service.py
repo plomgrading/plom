@@ -37,6 +37,10 @@ class QRService:
         Raises:
             ValueError: invalid or unexpected QR codes, or other errors.
         """
+        import random
+
+        if random.random() < 0.1:
+            raise ValueError("simulated random failure")
         # Steps
         # * flag images with no qr-codes
         # * check all images have consistent qr-codes
