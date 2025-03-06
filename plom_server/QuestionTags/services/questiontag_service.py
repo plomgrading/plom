@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Elisa Pan
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 
@@ -165,7 +165,7 @@ class QuestionTagService:
                 raise ValueError(f"Tag with pk '{tag_pk}' does not exist.")
 
             tag.tag_name = tag_name
-            tag.text = text
+            tag.description = text
             tag.confidential_info = confidential_info
             tag.help_threshold = help_threshold
             tag.help_resources = help_text
@@ -210,4 +210,4 @@ class QuestionTagService:
     @staticmethod
     def get_pedagogy_tag_descriptions() -> Dict[str, str]:
         """Return a dict of {tag_name: tag_description}."""
-        return {ptag.tag_name: ptag.text for ptag in PedagogyTag.objects.all()}
+        return {ptag.tag_name: ptag.description for ptag in PedagogyTag.objects.all()}

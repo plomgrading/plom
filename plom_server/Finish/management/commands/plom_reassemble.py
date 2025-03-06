@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 
 import sys
 from pathlib import Path
@@ -9,9 +9,8 @@ from time import sleep
 
 from tabulate import tabulate
 from django.core.management.base import BaseCommand, CommandError
-from django.utils.text import slugify
 
-from Papers.services import PaperInfoService, SpecificationService
+from Papers.services import PaperInfoService
 
 from ...services import ReassembleService
 
@@ -81,8 +80,7 @@ class Command(BaseCommand):
         self.stdout.write("Queued reassembly of all papers and reports")
 
     def download_zip(self, zip_path):
-        short_name = slugify(SpecificationService.get_shortname())
-        zipper = ReassembleService().get_zipfly_generator(short_name)
+        zipper = ReassembleService().get_zipfly_generator()
         if zip_path.exists():
             raise CommandError(f"File '{zip_path}' already exists.")
         with zip_path.open("wb") as fh:
