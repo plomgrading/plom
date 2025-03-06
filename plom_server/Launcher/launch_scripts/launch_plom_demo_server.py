@@ -272,9 +272,8 @@ def upload_demo_assessment_spec_file():
     run_django_manage_command(f"plom_preparation_test_spec upload {spec_file}")
 
 
-def _build_with_and_without_soln(filename_without_suffix: str) -> None:
+def _build_with_and_without_soln(source_path: Path) -> None:
     """Build soln and non-soln form of the assessment, writing PDF files into the CWD."""
-    source_path = Path(filename_without_suffix)
     source_path_tex = source_path.with_suffix(".tex")
     if not source_path_tex.exists():
         raise ValueError(f"Cannot open file {source_path_tex}")
