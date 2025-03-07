@@ -12,7 +12,7 @@
 #   - Why do we need to list files accessed with importlib.resources, seems WET
 #   - If you change things here, you may need to add them to client.*.spec
 
-include CONTRIBUTORS CHANGELOG.md Containerfile.bulk LICENSE.md doc
+include CONTRIBUTORS CHANGELOG.md Containerfile LICENSE.md doc
 include requirements.txt requirements.txt.client
 
 include plom/templateTestSpec.toml

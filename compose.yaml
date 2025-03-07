@@ -23,7 +23,7 @@ services:
     # Use in-tree code by replacing image: with build:
     # build:
     #   context: .
-    #   dockerfile: Containerfile.bulk
+    #   dockerfile: Containerfile
 
     # Optionally, expose django server directly, e.g., for dev work
     # ports:
