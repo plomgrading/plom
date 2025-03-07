@@ -41,22 +41,22 @@
                             {% if n_queued %}&mdash; and {{ n_queued }} queued for reassembly{% endif %}
                         </li>
                     {% elif not n_queued %}
-                    <li>
-                        {% if n_complete %}
-                            <i class="bi bi-check-circle-fill text-success"></i> All papers that can be reassembled have been reassembled
-                        {% else %}
-                            No papers are ready for reassembly
-                        {% endif %}
+                        <li>
+                            {% if n_complete %}
+                                <i class="bi bi-check-circle-fill text-success"></i> All papers that can be reassembled have been reassembled
+                            {% else %}
+                                No papers are ready for reassembly
+                            {% endif %}
                         </li>
                     {% else %}
                     {% endif %}
                     {% if n_complete %}
                         <li>
-                    {% if n_complete == n_papers %}
-                    <i class="bi bi-check-circle-fill text-success"></i> All {{ n_complete }} papers reassembled
-                        {% else %}
-                            <i class="bi bi-circle-half text-info"></i> Papers reassembled: {{ n_complete }}
-                        {% endif %}
+                            {% if n_complete == n_papers %}
+                                <i class="bi bi-check-circle-fill text-success"></i> All {{ n_complete }} papers reassembled
+                            {% else %}
+                                <i class="bi bi-circle-half text-info"></i> Papers reassembled: {{ n_complete }}
+                            {% endif %}
                         </li>
                     {% else %}
                         <li>

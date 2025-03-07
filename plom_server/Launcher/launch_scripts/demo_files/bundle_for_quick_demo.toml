@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 
 # bundle 1
 [[bundles]]
 first_paper = 1
 last_paper = 10
-invalid_qr_papers = [10]
 
 
 # HW bundle 1
