@@ -26,34 +26,46 @@
         </div>
         <div class="card-body">
             <ul>
-                <li>{{ n_papers }} scanned papers</li>
-                {% if n_not_ready %}
-                    <li>
-                        <i class="bi bi-exclamation-diamond-fill text-warning"></i>{{ n_not_ready }} scanned papers not yet ready for reassembly
-                    </li>
-                {% endif %}
-                <li>{{ n_ready }} papers ready for reassembly (identified and marked but not yet reassembled)</li>
-                {% if n_complete == n_papers %}
-                    <li>
-                        <i class="bi bi-check-circle text-success"></i> all papers reassembled
-                    </li>
+                {% if n_papers == 0 %}
+                    <li>There are no scanned papers</li>
                 {% else %}
-                    <li>{{ n_complete }} papers reassembled</li>
-                {% endif %}
-                {% if n_outdated %}
-                    <li>
-                        <i class="bi bi-exclamation-diamond-fill text-danger"></i>
-                        {{ n_outdated }} reassembled papers are out of date (paper modified since reassembly)
-                    </li>
-                {% endif %}
-                {% if n_queued %}
-                    <li>
-                        <i class="bi bi-clock-history text-info"></i>{{ n_queued }} papers queued for reassembly
-                        <a href="{% url 'reassemble_pdfs' %}"
-                           class="btn btn-info m-4"
-                           id="reload_button">reload page</a>
-                        (page will auto-reload after 30s)
-                    </li>
+                    <li>Scanned papers: {{ n_papers }}</li>
+                    {% if n_not_ready %}
+                        <li>
+                            <i class="bi bi-exclamation-diamond-fill text-warning"></i> Not yet ready for reassembly: {{ n_not_ready }}  &mdash; papers that still require marking and/or id-ing
+                        </li>
+                    {% endif %}
+                    {% if n_complete %}
+                        <li>
+                            <i class="bi bi-check text-info"></i> Papers reassembled: {{ n_complete }}
+                        </li>
+                    {% else %}
+                        <li>
+                            <i class="bi bi-exclamation-diamond-fill text-warning"></i>No papers reassembled
+                        </li>
+                    {% endif %}
+                    {% if n_ready %}
+                        <li>
+                            <i class="bi bi-play-circle text-info"></i> Ready for reassembly: {{ n_ready }} &mdash; papers that are marked and id-ed but not yet reassembled
+                        </li>
+                    {% else %}
+                        <li>
+                            {% if n_complete %}
+                                <i class="bi bi-check-circle-fill text-success"></i> All papers that can be reassembled have been reassembled
+                            {% else %}
+                                No papers are ready for reassembly
+                            {% endif %}
+                        </li>
+                    {% endif %}
+                    {% if n_queued %}
+                        <li>
+                            <i class="bi bi-clock-history text-info"></i>{{ n_queued }} paper(s) queued for reassembly
+                            <a href="{% url 'reassemble_pdfs' %}"
+                               class="btn btn-info m-4"
+                               id="reload_button">reload page</a>
+                            (page will auto-reload after 30s)
+                        </li>
+                    {% endif %}
                 {% endif %}
                 {% if n_errors %}
                     <li>
@@ -168,16 +180,18 @@
                                         <i class="bi bi-exclamation-diamond-fill text-danger"></i>
                                     {% elif row.reassembled_status == "Complete" %}
                                         <i class="bi bi-check-circle text-success"></i>
+                                    {% else %}
+                                        <i class="bi bi-dot"></i>
                                     {% endif %}
                                     {{ row.reassembled_status }}
                                 {% else %}
-                                    <i class="bi bi-exclamation-diamond-fill text-warning"></i> not ready
+                                    <i class="bi bi-exclamation-diamond-fill text-warning"></i> Not ready
                                 {% endif %}
                             </td>
                             <td>
                                 {% if row.reassembled_time %}
                                     {% if row.outdated %}
-                                        <i class="bi bi-exclamation-diamond-fill text-danger"> outdated </i>
+                                        <i class="bi bi-exclamation-diamond-fill text-danger"> Outdated </i>
                                     {% else %}
                                         {{ row.reassembled_time_humanised }}
                                     {% endif %}
