@@ -192,6 +192,7 @@ packages = [
     "plom_server.Scan.services",
     "plom_server.SpecCreator",
     "plom_server.SpecCreator.services",
+    "plom_server.scripts",
     "plom_server.static",
     "plom_server.Tags",
     "plom_server.Tags.services",

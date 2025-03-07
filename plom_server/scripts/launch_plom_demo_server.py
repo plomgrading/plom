@@ -16,12 +16,7 @@ from time import sleep
 
 from plom.textools import buildLaTeX
 
-
-# we specify this directory relative to the plom_server
-# root directory, rather than getting Django things up and
-# running, just to get at these useful files.
-# TODO: we'll set this later but we want it to be a global variable for some reason
-demo_file_directory = Path("./Launcher/launch_scripts/demo_files/")
+global demo_file_directory
 
 
 def wait_for_user_to_type_quit() -> None:
@@ -254,7 +249,7 @@ def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
     return subprocess.Popen(split(cmd))
 
 
-def upload_demo_assessment_spec_file():
+def upload_demo_assessment_spec_file() -> None:
     """Use 'plom_preparation_test_spec' to upload a demo assessment spec."""
     print("Uploading demo assessment spec")
     spec_file = demo_file_directory / "demo_assessment_spec.toml"
@@ -763,6 +758,11 @@ def main():
     if not args.development and not args.port:
         print("You must supply a port for the production server.")
 
+    # we specify this directory relative to the plom_server
+    # root directory, rather than getting Django things up and
+    # running, just to get at these useful files.
+    global demo_file_directory
+    demo_file_directory = Path("./Launcher/launch_scripts/demo_files/")
     # TODO: we currently need direct file access to this path, try a few places
     if not demo_file_directory.exists():
         demo_file_directory = Path("plom_server/Launcher/launch_scripts/demo_files/")
