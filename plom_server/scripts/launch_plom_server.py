@@ -124,7 +124,7 @@ def wait_for_user_to_type_quit() -> None:
             break
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--hot-start",
@@ -203,3 +203,7 @@ if __name__ == "__main__":
         if server_process:
             server_process.terminate()
         print("^" * 50)
+
+
+if __name__ == "__main__":
+    main()
