@@ -747,7 +747,7 @@ def run_finishing_commands(*, stop_after=None, solutions=True) -> bool:
     return True
 
 
-if __name__ == "__main__":
+def main():
     args = set_argparse_and_get_args()
     # cast stop-after, wait-after from list of options to a singleton or None
     if args.stop_after:
@@ -859,3 +859,7 @@ if __name__ == "__main__":
         if server_process:
             server_process.terminate()
         print("^" * 50)
+
+
+if __name__ == "__main__":
+    main()
