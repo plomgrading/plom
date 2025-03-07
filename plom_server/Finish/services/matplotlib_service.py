@@ -17,7 +17,6 @@ import seaborn as sns
 
 from . import DataExtractionService
 from Papers.services import SpecificationService
-from QuestionTags.services import QuestionTagService
 
 RANGE_BIN_OFFSET = 2
 HIGHLIGHT_COLOR = "orange"
@@ -787,11 +786,17 @@ class MinimalPlotService:
             return get_graph_as_base64(graph_bytes)
 
     def lollypop_of_pedagogy_tags(
-        self, question_idx_score_dict, question_idx_max_dict, *, format: str = "base64"
+        self,
+        tag_to_questions,
+        question_idx_score_dict,
+        question_idx_max_dict,
+        *,
+        format: str = "base64",
     ) -> BytesIO | str:
         """Generate a lollypop graph of pedagogy tag scores.
 
         Args:
+            tag_to_questions: dict mapping tag-name to list of questions with that tag.
             question_idx_score_dict: the student's scores for each question
             question_idx_max_dict: the max score for each question
 
@@ -805,16 +810,15 @@ class MinimalPlotService:
         assert format in self.formats
         _ensure_all_figures_closed()
 
-        tag_to_question = QuestionTagService.get_tag_to_question_links()
-        n_tags = len(tag_to_question)
-        tag_names = sorted(list(tag_to_question.keys()))
+        n_tags = len(tag_to_questions)
+        tag_names = sorted(list(tag_to_questions.keys()))
         pedagogy_values = []
         # for each tag, compute % student got on each question
         # combine those to get a 'pedagogy value'
         for name in tag_names:
             values = [
                 question_idx_score_dict[qi] / question_idx_max_dict[qi]
-                for qi in tag_to_question[name]
+                for qi in tag_to_questions[name]
             ]
             pedagogy_values.append(sum(values) / len(values))
 
