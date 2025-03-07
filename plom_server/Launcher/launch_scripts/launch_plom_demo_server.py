@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
-
-from __future__ import annotations
 
 import argparse
 import csv
@@ -714,7 +712,7 @@ def run_finishing_commands(*, stop_after=None, solutions=True) -> bool:
         return False
 
     print(">> Future plom dev will include instructor-report download here.")
-    print(">> Future plom dev will include strudent-reports download here.")
+    print(">> Future plom dev will include student-reports download here.")
     return True
 
 
