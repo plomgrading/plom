@@ -35,33 +35,39 @@
                             <i class="bi bi-exclamation-diamond-fill text-warning"></i> Not yet ready for reassembly: {{ n_not_ready }}  &mdash; papers that still require marking and/or id-ing
                         </li>
                     {% endif %}
-                    {% if n_complete %}
-                        <li>
-                            <i class="bi bi-check text-info"></i> Papers reassembled: {{ n_complete }}
-                        </li>
-                    {% else %}
-                        <li>
-                            <i class="bi bi-exclamation-diamond-fill text-warning"></i>No papers reassembled
-                        </li>
-                    {% endif %}
                     {% if n_ready %}
                         <li>
-                            <i class="bi bi-play-circle text-info"></i> Ready for reassembly: {{ n_ready }} &mdash; papers that are marked and id-ed but not yet reassembled
+                            <i class="bi bi-play-circle text-success"></i> Ready for reassembly: {{ n_ready }} &mdash; papers that are marked and id-ed but not yet reassembled
+                            {% if n_queued %}&mdash; and {{ n_queued }} queued for reassembly{% endif %}
+                        </li>
+                    {% elif not n_queued %}
+                    <li>
+                        {% if n_complete %}
+                            <i class="bi bi-check-circle-fill text-success"></i> All papers that can be reassembled have been reassembled
+                        {% else %}
+                            No papers are ready for reassembly
+                        {% endif %}
+                        </li>
+                    {% else %}
+                    {% endif %}
+                    {% if n_complete %}
+                        <li>
+                    {% if n_complete == n_papers %}
+                    <i class="bi bi-check-circle-fill text-success"></i> All {{ n_complete }} papers reassembled
+                        {% else %}
+                            <i class="bi bi-circle-half text-info"></i> Papers reassembled: {{ n_complete }}
+                        {% endif %}
                         </li>
                     {% else %}
                         <li>
-                            {% if n_complete %}
-                                <i class="bi bi-check-circle-fill text-success"></i> All papers that can be reassembled have been reassembled
-                            {% else %}
-                                No papers are ready for reassembly
-                            {% endif %}
+                            <i class="bi bi-exclamation-diamond-fill text-warning"></i> No papers reassembled (yet)
                         </li>
                     {% endif %}
                     {% if n_queued %}
                         <li>
                             <i class="bi bi-clock-history text-info"></i>{{ n_queued }} paper(s) queued for reassembly
                             <a href="{% url 'reassemble_pdfs' %}"
-                               class="btn btn-info m-4"
+                               class="btn btn-info"
                                id="reload_button">reload page</a>
                             (page will auto-reload after 30s)
                         </li>
