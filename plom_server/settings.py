@@ -335,8 +335,8 @@ REST_FRAMEWORK = {
 FIXTURE_DIRS = [BASE_DIR / "fixtures"]
 
 
-# Configurable variables for Web Plom
-# ----------------------------------------------
+# Configurable variables for Plom
+# -------------------------------
 
 # Max file size for bundle uploads in bytes (currently 512MiB), and other restrictions
 # Note if Nginx or another tool is proxying, its limit will apply too.
