@@ -708,11 +708,11 @@ def run_marking_commands(*, port: int, stop_after=None) -> bool:
     if stop_after == "auto-id":
         return False
 
-    run_the_randoider(port=args.port)
+    run_the_randoider(port=port)
     if stop_after == "randoiding":
         return False
 
-    run_the_randomarker(port=args.port)
+    run_the_randomarker(port=port)
     if stop_after == "randomarking":
         return False
 
