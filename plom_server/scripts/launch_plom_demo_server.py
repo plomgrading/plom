@@ -743,6 +743,9 @@ def run_finishing_commands(*, stop_after=None, solutions=True) -> bool:
 
 
 def main():
+    # I guess?
+    os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
+
     args = set_argparse_and_get_args()
     # cast stop-after, wait-after from list of options to a singleton or None
     if args.stop_after:
