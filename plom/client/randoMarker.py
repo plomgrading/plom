@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2024 Andrew Rechnitzer
+# Copyright (C) 2020-2025 Andrew Rechnitzer
 # Copyright (C) 2020-2023 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2021 Elizabeth Xiao
@@ -98,6 +98,12 @@ def get_parser():
         default=False,
         help="Download rubrics from the server rather than creating own.",
     )
+    parser.add_argument(
+        "--allow-half",
+        action="store_true",
+        default=False,
+        help="Make use of half-mark rubrics if present",
+    )
     return parser
 
 
@@ -125,5 +131,6 @@ if __name__ == "__main__":
             question=args.question,
             version=args.version,
             download_rubrics=args.download_rubrics,
+            allow_half=args.allow_half,
         )
     )
