@@ -5,6 +5,7 @@
 # Copyright (C) 2020-2023, 2025 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2025 Aidan Murphy
 
 """Plom tools for pushing and manipulating bundles from the command line.
 
@@ -122,7 +123,13 @@ def _get_parser():
 
     s = sub.add_parser(
         "delete-bundle",
-        help="Delete a bundle from the staging area, NOT IMPLEMENTED YET",
+        help="Delete a bundle from the staging area",
+        description="""
+            A bundle that is in staging (a.k.a. not pushed), and isn't being processed may be
+            deleted.
+
+            Use the `list-bundles` command to check on the status of your bundle.
+        """,
     )
     _add_server_args(s)
     s.add_argument("bundle_id", type=int)
@@ -271,6 +278,13 @@ def main():
             f"wrote reassembled paper number {args.papernum} to "
             f'file {r["filename"]} [{r["content-length"]} bytes]'
         )
+    elif args.command == "delete-bundle":
+        msgr = start_messenger(args.server, args.username, args.password)
+        try:
+            r = msgr.new_server_delete_bundle(args.bundle_id)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
     elif args.command == "clear":
         print("TODO: do we need this on new Plom?")
         # clear_login(args.server, args.password)
