@@ -486,7 +486,7 @@ webplom_demo:
   script:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
-    - ./plom_server/Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after reports
+    - ./plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after reports
 
 
 # ensure we can run the code some other than inside itself!
@@ -927,7 +927,7 @@ fedora_webplom:
     # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
     - pip install -U pytest
     - pip install .
-    - ./plom_server/Launcher/launch_scripts/launch_plom_demo_server.py --stop-after reports
+    - ./plom_server/scripts/launch_plom_demo_server.py --stop-after reports
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
 
@@ -1031,7 +1031,7 @@ newOS_newdeps_webplom:
     - pip --version
   script:
     - pip install .
-    - ./plom_server/Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
+    - ./plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
 
@@ -1147,7 +1147,7 @@ minpy_mindeps_webplom:
   script:
     - pip install -r requirements.txt.tempminima
     - pip install .
-    - ./plom_server/Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
+    - ./plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
 
@@ -1264,6 +1264,6 @@ macos_server_webplom:
   # python -m pytest -l --pyargs plom
   # Instead test webplom
   # no postgres yet
-  # ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
+  # ./Launcher/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
   - export PLOM_DATABASE_BACKEND=sqlite
   - python manage.py test
