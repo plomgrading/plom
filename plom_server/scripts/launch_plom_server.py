@@ -10,6 +10,8 @@ import subprocess
 import time
 from shlex import split
 
+from plom_server import __version__
+
 
 def run_django_manage_command(cmd: str) -> None:
     """Run the given Django command and wait for return.
@@ -126,6 +128,9 @@ def wait_for_user_to_type_quit() -> None:
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__
+    )
     parser.add_argument(
         "--hot-start",
         action="store_true",

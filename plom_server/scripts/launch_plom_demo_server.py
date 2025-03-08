@@ -15,6 +15,7 @@ from tempfile import TemporaryDirectory
 from time import sleep
 
 from plom.textools import buildLaTeX
+from plom_server import __version__
 
 # TODO: not a fan of global variables, and mypy needs this to be defined
 global demo_files
@@ -55,6 +56,9 @@ def set_argparse_and_get_args() -> argparse.Namespace:
     * reassembly = marked papers are reassembled (along, optionally, with solutions).
     * reports = (future/not-yet-implemented) = instructor and student reports are built.
     """,
+    )
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__
     )
     parser.add_argument(
         "--port", type=int, default=8000, help="Port number on which to launch server"
