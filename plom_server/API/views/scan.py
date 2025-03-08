@@ -116,6 +116,9 @@ class ScanBundleActions(APIView):
 
         Only "scanner" users including managers can do this; others will
         get a 403.
+
+        Deletion will fail if the bundle is 'locked' (being processed or
+        already pushed) and a 406 will be returned.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "scanner" not in group_list:
@@ -123,7 +126,6 @@ class ScanBundleActions(APIView):
                 'Only users in the "scanner" group can delete bundles',
                 status.HTTP_403_FORBIDDEN,
             )
-
         try:
             ScanService().remove_bundle_by_pk(bundle_id)
         except ObjectDoesNotExist:

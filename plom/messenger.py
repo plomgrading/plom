@@ -1024,7 +1024,7 @@ class Messenger(BaseMessenger):
         """
         if self.is_server_api_less_than(114):
             raise PlomNoServerSupportException(
-                "Server too old: does not support bundle delete"
+                "Server too old: does not support bundle deletion"
             )
 
         with self.SRmutex:
@@ -1041,6 +1041,8 @@ class Messenger(BaseMessenger):
                     raise PlomNoPermission(response.reason) from None
                 if response.status_code == 404:
                     raise PlomNoBundle(response.reason) from None
+                if response.status_code == 406:
+                    raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def new_server_get_reassembled(self, papernum: int) -> dict[str, Any]:
