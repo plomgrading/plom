@@ -112,12 +112,10 @@ class ScanBundleActions(APIView):
     def delete(self, request: Request, *, bundle_id: int) -> Response:
         """API to delete a bundle.
 
-        On success (200), the return will be TODO: still a WIP.
+        On success (200), the return will be the id of the bundle deleted
 
         Only "scanner" users including managers can do this; others will
         get a 403.
-
-        TODO: check if regular views require a manager-level account to delete bundles.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "scanner" not in group_list:
@@ -126,11 +124,17 @@ class ScanBundleActions(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
 
-        # TODO: WIP
+        try:
+            ScanService().remove_bundle_by_pk(bundle_id)
+        except ObjectDoesNotExist as e:
+            return _error_response(
+                f"No bundle id {bundle_id}",
+                status.HTTP_404_NOT_FOUND,
+            )
+        except PlomBundleLockedException as err:
+            return _error_response(err, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-        return Response(
-            {"bundle_id": bundle_id}, status=status.HTTP_501_NOT_IMPLEMENTED
-        )
+        return Response({"bundle_id": bundle_id}, status=status.HTTP_200_OK)
 
 
 class ScanMapBundle(APIView):
