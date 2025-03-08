@@ -16,7 +16,7 @@ from time import sleep
 
 from plom.textools import buildLaTeX
 
-global demo_file_directory
+global demo_files
 
 
 def wait_for_user_to_type_quit() -> None:
@@ -252,7 +252,7 @@ def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
 def upload_demo_assessment_spec_file() -> None:
     """Use 'plom_preparation_test_spec' to upload a demo assessment spec."""
     print("Uploading demo assessment spec")
-    spec_file = demo_file_directory / "demo_assessment_spec.toml"
+    spec_file = demo_files / "demo_assessment_spec.toml"
     run_django_manage_command(f"plom_preparation_test_spec upload {spec_file}")
 
 
@@ -304,7 +304,7 @@ def build_demo_test_source_pdfs() -> None:
     print("Building assessment / solution source pdfs from tex in temp dirs")
 
     for filename in ("assessment_v1", "assessment_v2", "assessment_v3"):
-        _build_with_and_without_soln(demo_file_directory / filename)
+        _build_with_and_without_soln(demo_files / filename)
 
 
 def upload_demo_test_source_files():
@@ -318,7 +318,7 @@ def upload_demo_test_source_files():
 def upload_demo_solution_files():
     """Use 'plom_solution_spec' to upload demo solution spec and source pdfs."""
     print("Uploading demo solution spec")
-    soln_spec_path = demo_file_directory / "demo_solution_spec.toml"
+    soln_spec_path = demo_files / "demo_solution_spec.toml"
     print("Uploading demo solution pdfs")
     run_django_manage_command(f"plom_soln_spec upload {soln_spec_path}")
     for v in [1, 2, 3]:
@@ -329,13 +329,13 @@ def upload_demo_solution_files():
 def upload_demo_classlist(length="normal", prename=True):
     """Use 'plom_preparation_classlist' to the appropriate classlist for the demo."""
     if length == "long":
-        cl_path = demo_file_directory / "cl_for_long_demo.csv"
+        cl_path = demo_files / "cl_for_long_demo.csv"
     elif length == "plaid":
-        cl_path = demo_file_directory / "cl_for_plaid_demo.csv"
+        cl_path = demo_files / "cl_for_plaid_demo.csv"
     elif length == "quick":
-        cl_path = demo_file_directory / "cl_for_quick_demo.csv"
+        cl_path = demo_files / "cl_for_quick_demo.csv"
     else:  # for normal
-        cl_path = demo_file_directory / "cl_for_demo.csv"
+        cl_path = demo_files / "cl_for_demo.csv"
 
     run_django_manage_command(f"plom_preparation_classlist upload {cl_path}")
 
@@ -654,14 +654,12 @@ def push_demo_rubrics():
     # push demo rubrics from toml
     # note - hard coded question range here.
     for question_idx in (1, 2, 3, 4):
-        rubric_toml = (
-            demo_file_directory / f"demo_assessment_rubrics_q{question_idx}.toml"
-        )
+        rubric_toml = demo_files / f"demo_assessment_rubrics_q{question_idx}.toml"
         run_django_manage_command(f"plom_rubrics push manager {rubric_toml}")
 
 
 def create_and_link_question_tags():
-    qtags_csv = demo_file_directory / "demo_assessment_qtags.csv"
+    qtags_csv = demo_files / "demo_assessment_qtags.csv"
     # upload question-tags as user "manager"
     run_django_manage_command(f"upload_qtags_csv {qtags_csv} manager")
     # link questions to tags as user "manager"
@@ -764,24 +762,22 @@ def main():
     # we specify this directory relative to the plom_server
     # root directory, rather than getting Django things up and
     # running, just to get at these useful files.
-    global demo_file_directory
-    demo_file_directory = Path("./Launcher/launch_scripts/demo_files/")
+    global demo_files
+    demo_files = Path("./plom_server/demo_files/")
     # TODO: we currently need direct file access to this path, try a few places
-    if not demo_file_directory.exists():
-        demo_file_directory = Path("plom_server/Launcher/launch_scripts/demo_files/")
-    if not demo_file_directory.exists():
-        demo_file_directory = Path("Launcher/launch_scripts/demo_files/")
-    if not demo_file_directory.exists():
-        demo_file_directory = Path("demo_files/")
-    if not demo_file_directory.exists():
+    if not demo_files.exists():
+        demo_files = Path("plom_server/demo_files/")
+    if not demo_files.exists():
+        demo_files = Path("demo_files/")
+    if not demo_files.exists():
         # try to get it from the module path
         # TODO: better to just port all of this to importlib.resources
         import plom_server
 
         (_path,) = plom_server.__path__
-        demo_file_directory = Path(_path) / "Launcher/launch_scripts/demo_files/"
+        demo_files = Path(_path) / "demo_files/"
 
-    assert demo_file_directory.exists(), "cannot continue w/o demo files"
+    assert demo_files.exists(), "cannot continue w/o demo files"
 
     # clean out old db and misc files, then rebuild blank db
     run_django_manage_command("plom_clean_all_and_build_db")

@@ -1264,6 +1264,6 @@ macos_server_webplom:
   # python -m pytest -l --pyargs plom
   # Instead test webplom
   # no postgres yet
-  # ./Launcher/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
+  # ./plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
   - export PLOM_DATABASE_BACKEND=sqlite
   - python manage.py test
