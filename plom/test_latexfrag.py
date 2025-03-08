@@ -36,7 +36,7 @@ def test_frag_broken_tex() -> None:
 
 
 def test_frag_image_size() -> None:
-    res = resources.files(plom) / "target_Q_latex_plom.png"
+    res = resources.files(plom) / "test_target_latex_white.png"
     # mypy stumbling over resource Traversables?
     imgt = Image.open(res)  # type: ignore[arg-type]
     frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
@@ -86,7 +86,9 @@ def test_frag_image() -> None:
         # TODO: target is antialiased with white rather than transparent;
         # consider replacing it and tightening the tolerance below.
         with open(target.name, "wb") as fh:
-            fh.write((resources.files(plom) / "target_Q_latex_plom.png").read_bytes())
+            fh.write(
+                (resources.files(plom) / "test_target_latex_white.png").read_bytes()
+            )
 
         valid, imgdata = processFragment(r"$\mathbb{Q}$ \LaTeX\ Plom")
         assert valid
