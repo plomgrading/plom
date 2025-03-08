@@ -36,7 +36,7 @@ def test_frag_broken_tex() -> None:
 
 
 def test_frag_image_size() -> None:
-    res = resources.files(plom) / "test_target_latex_white.png"
+    res = resources.files(plom) / "test_target_latex.png"
     # mypy stumbling over resource Traversables?
     imgt = Image.open(res)  # type: ignore[arg-type]
     frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
@@ -82,18 +82,24 @@ def abs_error_between_images(img1: Path, img2: Path) -> float:
 
 
 def test_frag_image() -> None:
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as target:
-        # TODO: target is antialiased with white rather than transparent;
-        # consider replacing it and tightening the tolerance below.
-        with open(target.name, "wb") as fh:
-            fh.write(
-                (resources.files(plom) / "test_target_latex_white.png").read_bytes()
-            )
+    valid, imgdata = processFragment(r"$\mathbb{Q}$ \LaTeX\ Plom")
+    assert valid
+    assert isinstance(imgdata, bytes)
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as img:
+        with open(img.name, "wb") as f:
+            f.write(imgdata)
 
-        valid, imgdata = processFragment(r"$\mathbb{Q}$ \LaTeX\ Plom")
-        assert valid
-        assert isinstance(imgdata, bytes)
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as img:
-            with open(img.name, "wb") as f:
-                f.write(imgdata)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as target:
+            with open(target.name, "wb") as fh:
+                fh.write((resources.files(plom) / "test_target_latex.png").read_bytes())
+            assert abs_error_between_images(img, target) < 100
+
+            # older image with poor quality white-tinged antialiasing
+            with open(target.name, "wb") as fh:
+                fh.write(
+                    (resources.files(plom) / "test_target_latex_white.png").read_bytes()
+                )
+            # somewhat close
             assert abs_error_between_images(img, target) < 3000
+            # but not too close
+            assert abs_error_between_images(img, target) > 500
