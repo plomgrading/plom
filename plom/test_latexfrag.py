@@ -77,9 +77,9 @@ def test_frag_image() -> None:
             with open(img.name, "wb") as f:
                 f.write(imgdata)
             r = subprocess.run(
-                ["compare", "-metric", "AE", img.name, target.name, "null"],
-                stdout=subprocess.DEVNULL,
+                ["compare", "-metric", "AE", img.name, target.name, "null:"],
                 stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE,
             )
             # Note "AE" not "rmse" with transparency www.imagemagick.org/Usage/compare/
             s = r.stderr.decode()
