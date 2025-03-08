@@ -309,7 +309,6 @@ def _build_with_and_without_soln(source_path: Path) -> None:
 
 def build_demo_test_source_pdfs() -> None:
     print("Building assessment / solution source pdfs from tex in temp dirs")
-
     for filename in ("assessment_v1", "assessment_v2", "assessment_v3"):
         _build_with_and_without_soln(demo_files / filename)
 
@@ -748,7 +747,8 @@ def run_finishing_commands(*, stop_after=None, solutions=True) -> bool:
 
 
 def main():
-    # I guess?
+    """The Plom demo script."""
+    # TODO: I guess?
     os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
 
     args = set_argparse_and_get_args()
@@ -767,22 +767,12 @@ def main():
         print("You must supply a port for the production server.")
 
     # we specify this directory relative to the plom_server
-    # root directory, rather than getting Django things up and
-    # running, just to get at these useful files.
     global demo_files
-    demo_files = Path("./plom_server/demo_files/")
-    # TODO: we currently need direct file access to this path, try a few places
-    if not demo_files.exists():
-        demo_files = Path("plom_server/demo_files/")
-    if not demo_files.exists():
-        demo_files = Path("demo_files/")
-    if not demo_files.exists():
-        # try to get it from the module path
-        # TODO: better to just port all of this to importlib.resources
-        import plom_server
+    # TODO: better to just port all of this to importlib.resources
+    import plom_server
 
-        (_path,) = plom_server.__path__
-        demo_files = Path(_path) / "demo_files/"
+    (_path,) = plom_server.__path__
+    demo_files = Path(_path) / "demo_files/"
 
     assert demo_files.exists(), "cannot continue w/o demo files"
 
