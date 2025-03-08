@@ -282,6 +282,7 @@ def main():
         msgr = start_messenger(args.server, args.username, args.password)
         try:
             r = msgr.new_server_delete_bundle(args.bundle_id)
+            print(r)
         finally:
             msgr.closeUser()
             msgr.stop()
