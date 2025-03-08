@@ -5,6 +5,7 @@ import subprocess
 import tempfile
 from importlib import resources
 from io import BytesIO
+from pathlib import Path
 
 from PIL import Image
 
@@ -65,6 +66,21 @@ def test_frag_image_size() -> None:
     assert img.width > 2 * imgt.width
 
 
+def abs_error_between_images(img1: Path, img2: Path) -> float:
+    """The number of pixels that differ between two images: "AE" error from ImageMagick."""
+    r = subprocess.run(
+        ["compare", "-metric", "AE", img1.name, img2.name, "null:"],
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+    )
+    # Note "AE" not "rmse" with transparency www.imagemagick.org/Usage/compare/
+    s = r.stderr.decode()
+    if "(" in s:
+        # Fedora 42, Issue #3851, looks like `<float> (<AE>)`
+        return float(s.split()[1].strip("()"))
+    return float(s)
+
+
 def test_frag_image() -> None:
     with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as target:
         # TODO: target is antialiased with white rather than transparent;
@@ -78,16 +94,4 @@ def test_frag_image() -> None:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as img:
             with open(img.name, "wb") as f:
                 f.write(imgdata)
-            r = subprocess.run(
-                ["compare", "-metric", "AE", img.name, target.name, "null:"],
-                stderr=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-            )
-            # Note "AE" not "rmse" with transparency www.imagemagick.org/Usage/compare/
-            s = r.stderr.decode()
-            if "(" in s:
-                # Fedora 42, Issue #3851, looks like `<float> (<AE>)`
-                _ = float(s.split()[1].strip("()"))
-                assert _ < 3000
-            else:
-                assert float(s) < 3000
+            assert abs_error_between_images(img, target) < 3000
