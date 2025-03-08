@@ -67,6 +67,8 @@ def test_frag_image_size() -> None:
 
 def test_frag_image() -> None:
     with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as target:
+        # TODO: target is antialiased with white rather than transparent;
+        # consider replacing it and tightening the tolerance below.
         with open(target.name, "wb") as fh:
             fh.write((resources.files(plom) / "target_Q_latex_plom.png").read_bytes())
 
