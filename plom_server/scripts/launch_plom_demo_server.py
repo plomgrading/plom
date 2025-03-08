@@ -186,7 +186,7 @@ def get_django_cmd_prefix() -> str:
     return "python3 manage.py"
 
 
-def launch_huey_process() -> list[subprocess.Popen]:
+def launch_huey_processes() -> list[subprocess.Popen]:
     """Launch the Huey-consumer for processing background tasks."""
     print("Launching Huey queues as background jobs.")
     return [
@@ -795,10 +795,10 @@ def main():
 
     # now put main things inside a try/finally so that we
     # can clean up the Huey/server processes on exit.
-    huey_process, server_process = None, None
+    huey_processes, server_process = None, None
     try:
         print("v" * 50)
-        huey_processes = launch_huey_process()
+        huey_processes = launch_huey_processes()
         if args.development:
             server_process = launch_django_dev_server_process(port=args.port)
         else:
