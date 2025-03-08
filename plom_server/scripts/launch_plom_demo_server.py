@@ -16,7 +16,10 @@ from time import sleep
 
 from plom.textools import buildLaTeX
 
+# TODO: not a fan of global variables, and mypy needs this to be defined
 global demo_files
+# so temporarily set to "."; we've fix it in main()
+demo_files = Path(".")
 
 
 def wait_for_user_to_type_quit() -> None:
