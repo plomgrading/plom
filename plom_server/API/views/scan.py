@@ -126,7 +126,7 @@ class ScanBundleActions(APIView):
 
         try:
             ScanService().remove_bundle_by_pk(bundle_id)
-        except ObjectDoesNotExist as e:
+        except ObjectDoesNotExist:
             return _error_response(
                 f"No bundle id {bundle_id}",
                 status.HTTP_404_NOT_FOUND,
