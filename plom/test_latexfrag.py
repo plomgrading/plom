@@ -83,4 +83,9 @@ def test_frag_image() -> None:
             )
             # Note "AE" not "rmse" with transparency www.imagemagick.org/Usage/compare/
             s = r.stderr.decode()
-            assert float(s) < 3000
+            if "(" in s:
+                # Fedora 42, Issue #3851, looks like `<float> (<AE>)`
+                _ = float(s.split()[1].strip("()"))
+                assert _ < 3000
+            else:
+                assert float(s) < 3000
