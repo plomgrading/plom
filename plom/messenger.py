@@ -1020,7 +1020,7 @@ class Messenger(BaseMessenger):
         TODO: beta: rename to something reasonable in due time.
 
         Returns:
-            TODO: WIP
+            The id of the bundle that was deleted.
         """
         if self.is_server_api_less_than(114):
             raise PlomNoServerSupportException(
