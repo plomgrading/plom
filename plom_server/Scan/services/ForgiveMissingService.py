@@ -10,7 +10,7 @@ import pymupdf as fitz
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.contrib.auth.models import User
 
 from Papers.models import (
@@ -40,23 +40,25 @@ def _get_or_create_substitute_pages_bundle() -> Bundle:
     Warning: rather slow, and currently (2025-03) this is called in an async way.
     So we make it durable to prevent more than one from running.
     """
-    with transaction.atomic(durable=True):
-        try:
-            print("trying to get the bundle")
-            bundle_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
-            print(f"got the bundle: {bundle_obj}")
-        except ObjectDoesNotExist:
-            print("no bundle yet, let's make one")
+    try:
+        with transaction.atomic(durable=True):
+            print("trying to make the subs bundle...")
             bundle_obj = Bundle.objects.create(
                 name=system_substitute_images_bundle_name,
                 hash="bundle_for_substitute_pages",
+                _is_singleton=True,
             )
-            print(f"made one: {bundle_obj}")
+            # ok, so we're making it, do all the images next
+            print(f"Starting a new subs bundle: {bundle_obj}")
             assert bundle_obj.image_set.count() == 0
             _create_bundle_of_substitute_pages(bundle_obj)
-
-        print(f"returning bundle obj: {bundle_obj}")
-        return bundle_obj
+            print(f"returning bundle obj: {bundle_obj}")
+            return bundle_obj
+    except IntegrityError:
+        # someone made one before us!
+        existing_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
+        print(f"returning bundle obj: {existing_obj}")
+        return existing_obj
 
 
 def _create_substitute_page_images_for_forgiveness_bundle() -> list[dict[str, Any]]:

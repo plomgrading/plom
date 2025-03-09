@@ -6,6 +6,7 @@
 # Copyright (C) 2023 Julian Lapenna
 
 from django.db import models
+from django.db.models.query_utils import Q
 from django.contrib.auth.models import User
 
 from Scan.models import StagingBundle
@@ -23,6 +24,9 @@ class Bundle(models.Model):
     hash (str): Generally the sha256 of the bundle/pdf file, although
         special cases it could be something else (e.g., there is special
         bundle for substitute pages in ForgiveMissingService.py)
+    _is_singleton: only allow one bundle with this precise name and hash.
+        This is used internally, but not currently used to prevent
+        duplicate uploads.
     user: The user who pushed the bundle.
     time_of_last_update (datetime): The time of last change to the bundle.
     staging_bundle: a key to the staging bundle from which this bundle was created by a push
@@ -30,11 +34,22 @@ class Bundle(models.Model):
 
     name = models.TextField(null=False)
     hash = models.CharField(null=False, max_length=64)
+    _is_singleton = models.BooleanField(default=False)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     time_of_last_update = models.DateTimeField(auto_now=True)
     staging_bundle = models.ForeignKey(
         StagingBundle, null=True, on_delete=models.SET_NULL
     )
+
+    class Meta:
+        constraints = [
+            # This constraint checks that each name-hash pair is unique, when is_singleton is set
+            models.UniqueConstraint(
+                fields=["name", "hash"],
+                condition=Q(_is_singleton=True),
+                name="unique_singleton",
+            ),
+        ]
 
 
 class Image(models.Model):
