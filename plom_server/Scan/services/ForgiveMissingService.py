@@ -293,10 +293,10 @@ def get_substitute_page_info(paper_number: int, page_number: int) -> dict[str, A
         fixedpage_obj = FixedPage.objects.get(
             paper__paper_number=paper_number, page_number=page_number
         )
-    except ObjectDoesNotExist:
+    except ObjectDoesNotExist as e:
         raise ValueError(
             f"Cannot find the fixed page of paper {paper_number} page {page_number}"
-        )
+        ) from e
     version = fixedpage_obj.version
     substitute_image_pk = get_substitute_image(page_number, version).pk
 

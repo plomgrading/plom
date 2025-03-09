@@ -74,7 +74,7 @@ class Command(BaseCommand):
 
     def staging_bundle_status(self, bundle_name=None):
         scanner = ScanService()
-        bundle_status = scanner.staging_bundle_status_cmd()
+        bundle_status = scanner.staging_bundle_status()
         if bundle_name is None:
             self.stdout.write(
                 tabulate(bundle_status, headers="firstrow", tablefmt="simple_outline")
