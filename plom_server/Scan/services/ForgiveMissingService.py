@@ -35,13 +35,14 @@ font_size_for_forgiven_blurb = 36
 page_not_submitted_text = "Page Not Submitted"
 
 
-def create_system_bundle_of_substitute_pages() -> Bundle:
+def create_system_bundle_of_substitute_pages():
     """Create the system substitute pages and bundle database object.
 
     Warning: rather slow, and currently (2025-03) this is called in an async way.
-    So we make it durable to prevent more than one from running.
+    The parent function (set papers are printed) is set as durable so that
+    we dont call two of these things.
     """
-    with transaction.atomic(durable=True):
+    with transaction.atomic():
         try:
             bundle_obj = Bundle.objects.create(
                 name=system_substitute_images_bundle_name,
@@ -213,7 +214,7 @@ def get_substitute_image_from_pk(image_pk: int) -> Image:
     return Image.objects.get(pk=image_pk)
 
 
-def erase_all_substitute_pages(*, delete_system_bundle_too: bool = False) -> None:
+def erase_all_substitute_images(*, delete_system_bundle_too: bool = False) -> None:
     """Delete all the images from the system substitute image bundle."""
     with transaction.atomic(durable=True):
         try:
