@@ -55,7 +55,7 @@ def set_papers_printed(status: bool, *, ignore_dependencies: bool = False):
 
     if status:
         RubricService().init_rubrics()
-        ForgiveMissingService().create_system_bundle_of_substitute_page()
+        ForgiveMissingService.create_system_bundle_of_substitute_pages()
     else:
         RubricService()._erase_all_rubrics()
-        ForgiveMissingService().erase_all_substitute_images()
+        ForgiveMissingService.erase_all_substitute_images()
