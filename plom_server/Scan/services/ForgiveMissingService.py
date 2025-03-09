@@ -221,7 +221,7 @@ def erase_all_substitute_images_and_their_bundle() -> None:
             sys_sub_bundle_obj = Bundle.objects.get(
                 name=system_substitute_images_bundle_name
             )
-        except ObjectDoesNotExist:
+        except Bundle.DoesNotExist:
             # nothing needs done if no bundle
             return
         for X in sys_sub_bundle_obj.image_set.all():
@@ -240,21 +240,22 @@ def forgive_missing_fixed_page(
         page_number: the page from the paper that is missing.
 
     Raises:
-        ObjectDoesNotExist: If the fixed-page of the given paper/page does not exist.
-        ValueError: If the paper/page has actually been scanned and the corresponding fixed-page object has an image.
-
+        ValueError: If the fixed-page of the given paper/page does not exist.
+        ValueError: If the paper/page does exist (has actually been scanned)
+            but the corresponding fixed-page object has an image.
     """
     try:
         fixedpage_obj = FixedPage.objects.get(
             paper__paper_number=paper_number, page_number=page_number
         )
-    except ObjectDoesNotExist:
+    except FixedPage.DoesNotExist as e:
         raise ValueError(
-            f"Cannot find the fixed page of paper {paper_number} page {page_number}"
-        )
+            f"Cannot find FixedPage of paper {paper_number} page {page_number}: {e}"
+        ) from e
     if fixedpage_obj.image:
         raise ValueError(
-            f"Paper {paper_number} page {page_number} already has an image - there is nothing to forgive!"
+            f"Paper {paper_number} page {page_number} already has an image"
+            " - there is nothing to forgive!"
         )
     image_obj = get_substitute_image(page_number, fixedpage_obj.version)
     # create a discard page and then move it into place via assign_discard_page_to_fixed_page.
@@ -273,7 +274,8 @@ def forgive_missing_fixed_page_cmd(
     """Simple wrapper around forgive_missing_fixed_page.
 
     Raises:
-        ObjectDoesNotExist: when the given username does not exist or has wrong permissions.
+        ValueError: when the given username does not exist or has wrong
+            permissions.
     """
     try:
         user_obj = User.objects.get(username__iexact=username, groups__name="manager")
@@ -292,15 +294,15 @@ def get_substitute_page_info(paper_number: int, page_number: int) -> dict[str, A
         "substitute_image_pk" and "kind". "Kind" is one of "IDPage", "QuestionPage", or "DNMPage"
 
     Raises:
-        ObjectDoesNotExist: When no fixed page at the given paper/page exists.
+        ValueError: When no fixed page at the given paper/page exists.
     """
     try:
         fixedpage_obj = FixedPage.objects.get(
             paper__paper_number=paper_number, page_number=page_number
         )
-    except ObjectDoesNotExist as e:
+    except FixedPage.DoesNotExist as e:
         raise ValueError(
-            f"Cannot find the fixed page of paper {paper_number} page {page_number}"
+            f"Cannot find FixedPage of paper {paper_number} page {page_number}: {e}"
         ) from e
     version = fixedpage_obj.version
     substitute_image_pk = get_substitute_image(page_number, version).pk
