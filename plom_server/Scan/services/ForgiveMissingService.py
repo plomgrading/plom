@@ -56,6 +56,8 @@ def _get_or_create_substitute_pages_bundle() -> Bundle:
             print(f"Starting a new subs bundle: {bundle_obj}")
             assert bundle_obj.image_set.count() == 0
             _create_bundle_of_substitute_pages(bundle_obj)
+        # if we're *not* making a bundle (b/c it already exists) then no
+        # action is required; let the transaction expire.
 
     # either it exists or we just made it, either way get it again and return it
     existing_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
