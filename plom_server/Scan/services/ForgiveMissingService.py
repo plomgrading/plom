@@ -47,15 +47,15 @@ def create_system_bundle_of_substitute_pages():
             bundle_obj = Bundle.objects.create(
                 name=system_substitute_images_bundle_name,
                 hash=system_substitute_images_bundle_hash,
-                _is_singleton=True,
+                _is_system=True,
             )
             make_substitute_pages = True
         except IntegrityError:
             # we must have made it previously
-            assert bundle_obj.image_set.count() == 0
             make_substitute_pages = False
         if make_substitute_pages:
             # ok, so we're making it, do all the images
+            assert bundle_obj.image_set.count() == 0
             _create_all_substitute_pages(bundle_obj)
         # if we're *not* making a bundle (b/c it already exists) then no
         # action is required; let the transaction expire.
@@ -214,9 +214,11 @@ def get_substitute_image_from_pk(image_pk: int) -> Image:
     return Image.objects.get(pk=image_pk)
 
 
-def erase_all_substitute_images(*, delete_system_bundle_too: bool = False) -> None:
+def erase_all_substitute_images(*, delete_system_bundle_too: bool = True) -> None:
     """Delete all the images from the system substitute image bundle."""
-    with transaction.atomic(durable=True):
+    # note that the parent caller (set papers printed) is a durable
+    # transaction, so this does not have to be.
+    with transaction.atomic():
         try:
             sys_sub_bundle_obj = Bundle.objects.get(
                 name=system_substitute_images_bundle_name
