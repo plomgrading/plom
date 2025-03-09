@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Colin B. Macdonald
 
 from django.db import transaction
@@ -51,8 +51,11 @@ def set_papers_printed(status: bool, *, ignore_dependencies: bool = False):
         return
 
     from Rubrics.services import RubricService
+    from Scan.services import ForgiveMissingService
 
     if status:
         RubricService().init_rubrics()
+        ForgiveMissingService().create_system_bundle_of_substitute_page()
     else:
         RubricService()._erase_all_rubrics()
+        ForgiveMissingService().erase_all_substitute_images()
