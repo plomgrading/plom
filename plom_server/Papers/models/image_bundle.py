@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 
 from django.db import models
@@ -20,7 +20,9 @@ class Bundle(models.Model):
 
     name (str): The name of the pdf/bundle (ie just the stem of the
         bundle's path)
-    hash (str): The sha256 of the bundle/pdf file.
+    hash (str): Generally the sha256 of the bundle/pdf file, although
+        special cases it could be something else (e.g., there is special
+        bundle for substitute pages in ForgiveMissingService.py)
     user: The user who pushed the bundle.
     time_of_last_update (datetime): The time of last change to the bundle.
     staging_bundle: a key to the staging bundle from which this bundle was created by a push
