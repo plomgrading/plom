@@ -548,11 +548,8 @@ def run_demo_bundle_scan_commands(
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
     build_the_bundles(length, versioned_id=versioned_id)
-    print("HERE ", stop_after)
     if stop_after == "bundles-created":
         return False
-    print("THERE ", stop_after)
-    print("#" * 50)
 
     upload_the_bundles(length)
     if stop_after == "bundles-uploaded":
