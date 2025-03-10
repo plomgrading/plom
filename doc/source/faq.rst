@@ -326,12 +326,9 @@ organized by term and port number, for example
 
 Using the name of the container, you can run commands directly::
 
-    docker exec -it plom2024w141234_plom_1 bash -c "cd /src/plom_server; python3 manage.py plom_download_marks_csv; ls"
+    docker exec -it plom2024w141234_plom_1 bash -c "DJANGO_SETTINGS_MODULE=plom_server.settings django-admin plom_download_marks_csv; ls"
 
-    docker cp plom2024w141234_plom_1:/src/plom_server/marks.csv .
-
-Note that because of a `long-standing issue <https://gitlab.com/plom/plom/-/issues/2759>`_,
-you must run the command from the directory ``src/plom_server``.
+    docker cp plom2024w141234_plom_1:/exam/marks.csv .
 
 You can also get an interactive ``bash`` prompt::
 
