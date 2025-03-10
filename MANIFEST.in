@@ -26,7 +26,7 @@ include plom/create/extra_pages_src.tex
 include plom/create/scrap_paper_src.tex
 include plom/scan/test_zbar_fails.png
 include plom/scan/test_rgb.png
-include plom/target_Q_latex_plom.png
+include plom/test*.png
 include plom/latexTemplate.tex
 include plom/latexTemplatev2.tex
 include plom/idBox2.pdf
