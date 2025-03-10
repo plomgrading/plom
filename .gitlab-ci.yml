@@ -817,9 +817,9 @@ docs_sphinx:
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
 fedora_legacy:
   stage: alt_build
+  needs: []
   image: fedora:42
   when: manual
-  allow_failure: true
   before_script:
     - dnf install -y ImageMagick gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
@@ -904,7 +904,6 @@ fedora_django_tests:
   needs: []
   image: fedora:42
   when: manual
-  allow_failure: true
   before_script:
     - dnf install -y ImageMagick gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
