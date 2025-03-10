@@ -18,6 +18,7 @@ import seaborn as sns
 from . import DataExtractionService
 from plom_server.Papers.services import SpecificationService
 
+
 RANGE_BIN_OFFSET = 2
 HIGHLIGHT_COLOR = "orange"
 _acceptable_formats = ("base64", "bytes")

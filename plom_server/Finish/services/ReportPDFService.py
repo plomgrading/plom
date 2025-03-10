@@ -5,8 +5,9 @@
 # Copyright (C) 2025 Andrew Rechnitzer
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from pathlib import Path
 from textwrap import dedent
+from typing import Any
 
 from tqdm import tqdm as _tqdm
 from weasyprint import HTML, CSS
@@ -45,10 +46,10 @@ GRAPH_DETAILS = {
 def pdf_builder(
     versions: bool,
     *,
-    verbose: Optional[bool] = None,
+    verbose: bool = False,
     _use_tqdm: bool = False,
     brief: bool = False,
-    selected_graphs: Optional[Dict[str, bool]] = None,
+    selected_graphs: dict[str, bool] | None = None,
 ) -> dict[str, Any]:
     """Build a PDF file report and return it as bytes.
 
@@ -117,7 +118,7 @@ def pdf_builder(
     mpls.ensure_all_figures_closed()
 
     # Initialize the graphs dictionary
-    graphs: Dict[str, List[Any]] = {key: [] for key in GRAPH_DETAILS}
+    graphs: dict[str, list[Any]] = {key: [] for key in GRAPH_DETAILS}
     selected_graphs = selected_graphs or {}
 
     if verbose:
@@ -243,7 +244,7 @@ def pdf_builder(
         <h3>{str(title)}</h3>
         """
 
-    def _html_for_graphs(list_of_graphs: List[Any]) -> str:
+    def _html_for_graphs(list_of_graphs: list[Any]) -> str:
         """Generate HTML for a list of graphs."""
         out = ""
         odd = 0
@@ -268,7 +269,7 @@ def pdf_builder(
             """
         return out
 
-    def _html_for_big_graphs(list_of_graphs: List[Any]) -> str:
+    def _html_for_big_graphs(list_of_graphs: list[Any]) -> str:
         """Generate HTML for a list of large graphs."""
         return "".join(
             [
@@ -373,9 +374,15 @@ def pdf_builder(
                 <img src="data:image/png;base64,{graphs["graph8"][0]}" />
                 """
 
-    pdf_data = HTML(string=html, base_url="").write_pdf(
-        stylesheets=[CSS("./static/css/generate_report.css")]
-    )
+    # We want this, but done "properly":
+    # # css = CSS("./static/css/generate_report.css")
+    # see also discussion in build_student_report_service.py
+    import plom_server
+
+    path = Path(plom_server.__path__[0]) / "static/css/generate_report.css"
+    css = CSS(path)
+
+    pdf_data = HTML(string=html, base_url="").write_pdf(stylesheets=[css])
     timestamp_file = timestamp.strftime("%Y-%m-%d--%H-%M-%S+00-00")
     filename = f"Report-{shortname}--{timestamp_file}.pdf"
     return {

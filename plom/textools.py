@@ -10,14 +10,12 @@ import tempfile
 from importlib import resources
 from pathlib import Path
 from textwrap import dedent
-from typing import Tuple, Union
+from typing import IO
 
 import plom
 
 
-def texFragmentToPNG(
-    fragment: str, *, dpi: int = 225
-) -> Tuple[bool, Union[bytes, str]]:
+def texFragmentToPNG(fragment: str, *, dpi: int = 225) -> tuple[bool, bytes | str]:
     """Process a fragment of latex and produce a png image.
 
     Args:
@@ -145,20 +143,19 @@ def texFragmentToPNG(
             return (True, f.read())
 
 
-def buildLaTeX(src: str, out):
-    """Compile a string of latex.
+def buildLaTeX(src: str, out: IO[bytes]) -> tuple[int, str]:
+    """Compile a string presentation of a latex file, with the idbox template available.
 
     Args:
         src: a string of LaTeX code to compile.
-        out (file-like): the binary pdf file will be written into this.
+        out: a file-like object for writing binary data (such as the result of
+            ``open("foo.pdf", "wb") as f:``.  The PDF data will be written into
+            this.
 
     Returns:
-        tuple containing
-
-        - (`int`): exit value from the subprocess call (zero good, non-zero bad)
-        - (`str`): stdout/stderr from the subprocess call
-
-    TODO: this is more generally useful but how to generalize/handle the idBox?
+        Tuple containing an integer exit value from the subprocess call
+        (zero good, non-zero bad), and a string of the combined stdout/stderr
+        from the subprocess call.
     """
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(Path(tmpdir) / "idBox4.pdf", "wb") as fh:

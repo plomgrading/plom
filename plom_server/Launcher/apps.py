@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2025 Colin B. Macdonald
 
 from django.apps import AppConfig
 
 
-class LaunchConfig(AppConfig):
-    name = "Launcher"
+class LauncherConfig(AppConfig):
+    name = "plom_server.Launcher"
     verbose_name = "A launcher app for where start-up things should go"
 
     # This function is called on django startup, including
