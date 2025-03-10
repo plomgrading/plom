@@ -1145,7 +1145,7 @@ minpy_mindeps_webplom:
     - pip install pytest
   script:
     - pip install -r requirements.txt.tempminima
-    - ./plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
+    - PYTHONPATH="." plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
     - pip install .
     - python3 manage.py test
 
