@@ -12,8 +12,8 @@ from sklearn.decomposition import PCA
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
-# from Finish.services import StudentMarkService
-# from Papers.models import Specification
+# from plom_server.Finish.services import StudentMarkService
+# from plom_server.Papers.models import Specification
 
 
 HELP_TEXT = """

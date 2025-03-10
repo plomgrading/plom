@@ -28,16 +28,16 @@ from django_huey import db_task, get_queue
 from plom.create.mergeAndCodePages import make_PDF
 
 # TODO: why "staging"? We should talk to the "real" student service
-from Preparation.services import (
+from plom_server.Preparation.services import (
     StagingStudentService,
     PQVMappingService,
     PrenameSettingService,
 )
-from Papers.services import SpecificationService
-from Papers.models import Paper
-from Preparation.services import SourceService
-from Base.models import HueyTaskTracker
-from Preparation.services.preparation_dependency_service import (
+from plom_server.Papers.services import SpecificationService
+from plom_server.Papers.models import Paper
+from plom_server.Preparation.services import SourceService
+from plom_server.Base.models import HueyTaskTracker
+from plom_server.Preparation.services.preparation_dependency_service import (
     assert_can_rebuild_test_pdfs,
 )
 

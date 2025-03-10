@@ -11,7 +11,7 @@ from typing import Any
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Prefetch
 
-from Papers.models import (
+from plom_server.Papers.models import (
     FixedPage,
     MobilePage,
     DiscardPage,
@@ -21,7 +21,7 @@ from Papers.models import (
     IDPage,
     DNMPage,
 )
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 from ..models import StagingBundle
 
 

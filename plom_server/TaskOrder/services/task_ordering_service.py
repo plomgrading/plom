@@ -4,9 +4,9 @@
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 
-from Mark.models import MarkingTask
-from Mark.services import marking_priority
-from Papers.services import SpecificationService
+from plom_server.Mark.models import MarkingTask
+from plom_server.Mark.services import marking_priority
+from plom_server.Papers.services import SpecificationService
 
 
 class TaskOrderService:

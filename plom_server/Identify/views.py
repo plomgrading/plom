@@ -14,9 +14,9 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect, HttpResponseClientRefresh
 
-from Papers.services import SpecificationService, fixedpage_version_count
-from Base.base_group_views import ManagerRequiredView
-from Rectangles.services import (
+from plom_server.Papers.services import SpecificationService, fixedpage_version_count
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Rectangles.services import (
     get_reference_qr_coords,
     get_reference_rectangle,
     get_idbox_rectangle,

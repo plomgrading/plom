@@ -3,7 +3,7 @@
 # Copyright (C) 2024 Colin B. Macdonald
 
 from plom import __version__ as plom_version
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 
 
 def user_group_information(request):

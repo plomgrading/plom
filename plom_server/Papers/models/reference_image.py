@@ -7,7 +7,7 @@ from pathlib import Path
 
 from django.db import models
 from django.dispatch import receiver
-from Preparation.models import PaperSourcePDF
+from plom_server.Preparation.models import PaperSourcePDF
 
 
 class ReferenceImage(models.Model):

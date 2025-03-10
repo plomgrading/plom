@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023, 2025 Colin B. Macdonald
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -19,7 +19,7 @@ class Profile(models.Model):
 
 
 @receiver(post_save, sender=User)
-def update_profile_signal(sender, instance, created, **kwargs):
+def update_profile_signal(sender, instance: User, created: bool, **kwargs):
     if created:
         Profile.objects.create(user=instance)
     instance.profile.save()

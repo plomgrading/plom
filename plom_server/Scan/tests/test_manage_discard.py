@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from model_bakery import baker
 
-from Papers.models import (
+from plom_server.Papers.models import (
     Image,
     FixedPage,
     MobilePage,

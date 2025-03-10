@@ -19,7 +19,7 @@ import django_tables2
 # from django.db.models import Max
 # from django.db.models.query_utils import Q
 
-from Mark.models.annotations import Annotation
+from plom_server.Mark.models.annotations import Annotation
 
 
 def generate_rid():

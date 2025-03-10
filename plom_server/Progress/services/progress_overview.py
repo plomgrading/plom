@@ -12,9 +12,9 @@ from django.db.models import Count, Min, Max
 
 from plom.misc_utils import pprint_score
 
-from Identify.models import PaperIDTask
-from Mark.models import MarkingTask
-from Papers.services import SpecificationService
+from plom_server.Identify.models import PaperIDTask
+from plom_server.Mark.models import MarkingTask
+from plom_server.Papers.services import SpecificationService
 
 
 class ProgressOverviewService:

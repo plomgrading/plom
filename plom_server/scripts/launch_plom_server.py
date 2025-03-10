@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
-from __future__ import annotations
+"""Command line tool to start a Plom server."""
+
+__copyright__ = "Copyright (C) 2018-2025 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__credits__ = "The Plom Project Developers"
+__license__ = "AGPL-3.0-or-later"
 
 import argparse
 import os
-from pathlib import Path
-from shlex import split
 import subprocess
 import time
+from shlex import split
+
+from plom_server import __version__
 
 
 def run_django_manage_command(cmd: str) -> None:
@@ -51,17 +56,6 @@ def popen_django_manage_command(cmd: str) -> subprocess.Popen:
     return subprocess.Popen(split(full_cmd))
 
 
-def confirm_run_from_correct_directory() -> None:
-    """Confirm appropriate env vars are set or the current directory contains Django's manage.py."""
-    # Perhaps later, things will work from other locations
-    # if os.environ.get("DJANGO_SETTINGS_MODULE"):
-    #     return None
-    if not Path("./manage.py").exists():
-        raise RuntimeError(
-            "This script needs to be run from the same directory as Django's manage.py script."
-        )
-
-
 def get_django_cmd_prefix() -> str:
     """Return the basic command to be used to run Django commands."""
     if os.environ.get("DJANGO_SETTINGS_MODULE"):
@@ -69,7 +63,7 @@ def get_django_cmd_prefix() -> str:
     return "python3 manage.py"
 
 
-def launch_huey_process() -> list[subprocess.Popen]:
+def launch_huey_processes() -> list[subprocess.Popen]:
     """Launch the Huey-consumer for processing background tasks."""
     print("Launching Huey queues as background jobs.")
     return [
@@ -114,7 +108,7 @@ def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
     print("Launching Gunicorn web-server.")
     # TODO - put in an 'are we in production' check.
     num_workers = int(os.environ.get("WEB_CONCURRENCY", 2))
-    cmd = f"gunicorn Web_Plom.wsgi --workers {num_workers}"
+    cmd = f"gunicorn wsgi --workers {num_workers}"
 
     # TODO: temporary increase to 60s by default, Issue #3676
     timeout = os.environ.get("PLOM_GUNICORN_TIMEOUT", 180)
@@ -138,8 +132,11 @@ def wait_for_user_to_type_quit() -> None:
             break
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__
+    )
     parser.add_argument(
         "--hot-start",
         action="store_true",
@@ -166,8 +163,6 @@ if __name__ == "__main__":
     if not args.development and not args.port:
         print("You must supply a port for the production server.")
 
-    # make sure we are in the correct directory to run things.
-    confirm_run_from_correct_directory()
     # clean up and rebuild things before launching.
     if args.hot_start:
         print("Attempting a hot-start of the server and Huey.")
@@ -186,10 +181,10 @@ if __name__ == "__main__":
 
     # now put main things inside a try/finally so that we
     # can clean up the Huey/server processes on exit.
-    huey_process, server_process = None, None
+    huey_processes, server_process = None, None
     try:
         print("v" * 50)
-        huey_processes = launch_huey_process()
+        huey_processes = launch_huey_processes()
         if args.development:
             server_process = launch_django_dev_server_process(port=args.port)
         else:
@@ -219,3 +214,7 @@ if __name__ == "__main__":
         if server_process:
             server_process.terminate()
         print("^" * 50)
+
+
+if __name__ == "__main__":
+    main()

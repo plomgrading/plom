@@ -10,8 +10,8 @@ from pathlib import Path
 from django.http import HttpRequest, HttpResponse, FileResponse
 from django.core.files import File
 
-from Base.base_group_views import ManagerRequiredView
-from Papers.services import SpecificationService
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Papers.services import SpecificationService
 
 from ..services import ExamMockerService, SourceService
 

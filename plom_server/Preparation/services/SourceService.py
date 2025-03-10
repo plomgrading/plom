@@ -15,9 +15,9 @@ from django.core.files import File
 from django.db import transaction
 
 from plom.scan import QRextract
-from Papers.models import ReferenceImage
-from Papers.services import SpecificationService
-from Scan.services import ScanService
+from plom_server.Papers.models import ReferenceImage
+from plom_server.Papers.services import SpecificationService
+from plom_server.Scan.services import ScanService
 from ..models import PaperSourcePDF
 from ..services.mocker import ExamMockerService
 from ..services.preparation_dependency_service import assert_can_modify_sources

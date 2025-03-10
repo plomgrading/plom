@@ -20,8 +20,8 @@ from django.db import transaction
 from rest_framework import serializers
 
 from plom import is_valid_tag_text
-from Papers.services import ImageBundleService, PaperInfoService
-from Papers.models import Paper
+from plom_server.Papers.services import ImageBundleService, PaperInfoService
+from plom_server.Papers.models import Paper
 
 from . import marking_priority, mark_task
 from ..models import (

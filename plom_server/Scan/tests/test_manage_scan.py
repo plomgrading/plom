@@ -7,7 +7,7 @@
 from django.test import TestCase
 from model_bakery import baker
 
-from Papers.models import Image, FixedPage, MobilePage, Bundle, Paper
+from plom_server.Papers.models import Image, FixedPage, MobilePage, Bundle, Paper
 from ..services import ManageScanService
 
 

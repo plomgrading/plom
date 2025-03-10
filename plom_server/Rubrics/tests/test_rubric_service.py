@@ -14,9 +14,9 @@ from model_bakery import baker
 from rest_framework import serializers
 
 from plom.plom_exceptions import PlomConflict
-from Mark.models.annotations import Annotation
-from Mark.models.tasks import MarkingTask
-from Papers.models import Paper, SpecQuestion
+from plom_server.Mark.models.annotations import Annotation
+from plom_server.Mark.models.tasks import MarkingTask
+from plom_server.Papers.models import Paper, SpecQuestion
 from ..models import Rubric
 from ..services import RubricService
 

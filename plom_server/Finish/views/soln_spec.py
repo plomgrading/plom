@@ -10,8 +10,8 @@ from django.http import HttpRequest, HttpResponse
 from django_htmx.http import HttpResponseClientRedirect
 from rest_framework import serializers
 
-from Base.base_group_views import ManagerRequiredView
-from Papers.services import SolnSpecService
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Papers.services import SolnSpecService
 from ..services import TemplateSolnSpecService, BuildSolutionService, SolnSourceService
 
 

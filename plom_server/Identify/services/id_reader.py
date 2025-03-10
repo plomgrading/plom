@@ -27,10 +27,10 @@ import huey
 import huey.api
 
 from plom.idreader.model_utils import load_model, download_model, is_model_present
-from Base.models import HueyTaskTracker
-from Papers.models import Paper
-from Papers.services import SpecificationService, PaperInfoService
-from Rectangles.services import RectangleExtractor
+from plom_server.Base.models import HueyTaskTracker
+from plom_server.Papers.models import Paper
+from plom_server.Papers.services import SpecificationService, PaperInfoService
+from plom_server.Rectangles.services import RectangleExtractor
 from ..models import PaperIDTask, IDPrediction, IDReadingHueyTaskTracker
 from ..services import IdentifyTaskService, ClasslistService
 

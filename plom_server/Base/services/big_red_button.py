@@ -5,14 +5,14 @@
 
 from django.core.exceptions import ObjectDoesNotExist
 
-from Preparation.services import (
+from plom_server.Preparation.services import (
     PapersPrinted,
     StagingStudentService,
     PrenameSettingService,
     SourceService,
 )
-from BuildPaperPDF.services import BuildPapersService
-from Papers.services import PaperCreatorService, SpecificationService
+from plom_server.BuildPaperPDF.services import BuildPapersService
+from plom_server.Papers.services import PaperCreatorService, SpecificationService
 
 
 def reset_assessment_preparation_database():

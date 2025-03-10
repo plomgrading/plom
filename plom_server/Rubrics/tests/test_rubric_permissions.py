@@ -11,9 +11,9 @@ from django.test import TestCase
 
 from model_bakery import baker
 
-from Base.models import SettingsModel
+from plom_server.Base.models import SettingsModel
 from ..services import RubricService
-from Papers.models import SpecQuestion
+from plom_server.Papers.models import SpecQuestion
 
 
 def _make_ex():

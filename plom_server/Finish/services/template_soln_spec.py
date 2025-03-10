@@ -2,7 +2,7 @@
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 
 
 class TemplateSolnSpecService:

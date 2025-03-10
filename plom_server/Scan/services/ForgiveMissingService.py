@@ -13,7 +13,7 @@ from django.core.files import File
 from django.db import transaction, IntegrityError
 from django.contrib.auth.models import User
 
-from Papers.models import (
+from plom_server.Papers.models import (
     Bundle,
     Image,
     FixedPage,
@@ -21,8 +21,8 @@ from Papers.models import (
     IDPage,
     DNMPage,
 )
-from Papers.services import SpecificationService
-from Preparation.services import SourceService
+from plom_server.Papers.services import SpecificationService
+from plom_server.Preparation.services import SourceService
 from ..services import ManageDiscardService, ManageScanService
 
 # Info about the system bundle of substitute pages to use when a paper

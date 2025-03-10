@@ -4,7 +4,7 @@ import csv
 import io
 from typing import Any
 
-from Mark.models.annotations import Annotation
+from plom_server.Mark.models.annotations import Annotation
 
 
 class AnnotationDataService:

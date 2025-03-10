@@ -20,7 +20,7 @@ from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 from django.views.generic import View
 
-from Base.base_group_views import RoleRequiredView
+from plom_server.Base.base_group_views import RoleRequiredView
 
 
 class SetPassword(View):

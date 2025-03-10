@@ -10,8 +10,8 @@ from pathlib import Path
 
 # from django.db.models.signals import pre_delete
 
-from Base.models import HueyTaskTracker
-from Papers.models import Paper
+from plom_server.Base.models import HueyTaskTracker
+from plom_server.Papers.models import Paper
 
 
 class BuildPaperPDFChore(HueyTaskTracker):

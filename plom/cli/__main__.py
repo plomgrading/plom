@@ -36,6 +36,7 @@ from plom.cli import (
     list_bundles,
     start_messenger,
     upload_bundle,
+    reset_task,
 )
 
 # from plom.cli import clear_login
@@ -166,6 +167,19 @@ def _get_parser():
     s.add_argument("papernum", type=int, help="Which paper number to identify")
 
     s = sub.add_parser(
+        "reset-task",
+        help="Reset the task, making annotations out-of-date",
+        description="""
+            Reset the task, making annotations out-of-date.
+            The task will need to be marked again.
+        """,
+    )
+    _add_server_args(s)
+    s.add_argument("papernum", type=int, help="Which paper to reset")
+    s.add_argument("question_idx", type=int, help="Which question to reset")
+
+    # TODO: perhaps unnecessary for modern Plom
+    s = sub.add_parser(
         "clear",
         help='Clear "scanner" login',
         description='Clear "scanner" login after a crash or other expected event.',
@@ -234,13 +248,12 @@ def main():
     if hasattr(args, "password") and not args.password:
         args.password = getpass("password: ")
 
+    m = (args.server, args.username, args.password)
     if args.command == "upload-bundle":
-        r = upload_bundle(
-            Path(args.pdf), msgr=(args.server, args.username, args.password)
-        )
+        r = upload_bundle(Path(args.pdf), msgr=m)
         print(r)
     elif args.command == "list-bundles":
-        list_bundles(msgr=(args.server, args.username, args.password))
+        list_bundles(msgr=m)
     elif args.command == "push-bundle":
         msgr = start_messenger(args.server, args.username, args.password)
         try:
@@ -256,7 +269,7 @@ def main():
             args.bundle_page,
             papernum=args.papernum,
             questions=args.question,
-            msgr=(args.server, args.username, args.password),
+            msgr=m,
         )
 
     elif args.command == "id-paper":
@@ -264,16 +277,18 @@ def main():
             args.papernum,
             args.sid,
             args.name,
-            msgr=(args.server, args.username, args.password),
+            msgr=m,
         )
 
     elif args.command == "un-id-paper":
-        un_id_paper(args.papernum, msgr=(args.server, args.username, args.password))
+        un_id_paper(args.papernum, msgr=m)
+
+    elif args.command == "reset-task":
+        r = reset_task(args.papernum, args.question_idx, msgr=m)
+        print(r)
 
     elif args.command == "get-reassembled":
-        r = get_reassembled(
-            args.papernum, msgr=(args.server, args.username, args.password)
-        )
+        r = get_reassembled(args.papernum, msgr=m)
         print(
             f"wrote reassembled paper number {args.papernum} to "
             f'file {r["filename"]} [{r["content-length"]} bytes]'

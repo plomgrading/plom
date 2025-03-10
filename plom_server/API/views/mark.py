@@ -12,17 +12,17 @@ from rest_framework import serializers, status
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse
 
-from Finish.services import SolnImageService
-from Mark.services import (
+from plom_server.Finish.services import SolnImageService
+from plom_server.Mark.services import (
     mark_task,
     MarkingTaskService,
     PageDataService,
     MarkingStatsService,
 )
-from Papers.services import SpecificationService
-from Papers.models import Image
+from plom_server.Papers.services import SpecificationService
+from plom_server.Papers.models import Image
 
-from Progress.services import UserInfoServices
+from plom_server.Progress.services import UserInfoServices
 
 from .utils import _error_response
 

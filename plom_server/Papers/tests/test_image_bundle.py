@@ -9,9 +9,9 @@ from model_bakery import baker
 
 from django.contrib.auth.models import User
 
-from Scan.models import StagingImage, StagingBundle, KnownStagingImage
-from Preparation.services import PapersPrinted
-from Preparation.models import StagingPQVMapping
+from plom_server.Scan.models import StagingImage, StagingBundle, KnownStagingImage
+from plom_server.Preparation.services import PapersPrinted
+from plom_server.Preparation.models import StagingPQVMapping
 from ..services import ImageBundleService, SpecificationService
 from ..models import (
     Bundle,

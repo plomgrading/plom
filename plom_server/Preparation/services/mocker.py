@@ -18,7 +18,7 @@ from plom.create.mergeAndCodePages import (
     pdf_page_add_name_id_box,
 )
 
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 from .preparation_dependency_service import assert_can_modify_prenaming_config
 
 

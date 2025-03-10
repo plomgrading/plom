@@ -10,7 +10,7 @@ from time import sleep
 from tabulate import tabulate
 from django.core.management.base import BaseCommand, CommandError
 
-from Papers.services import PaperInfoService
+from plom_server.Papers.services import PaperInfoService
 
 from ...services import ReassembleService
 
@@ -70,7 +70,7 @@ class Command(BaseCommand):
             ReassembleService().queue_single_paper_reassembly(paper_num)
         except ValueError as e:
             raise CommandError(e)
-        self.stdout.write("Queued reassembly of paper num {paper_num}")
+        self.stdout.write(f"Queued reassembly of paper num {paper_num}")
 
     def reassemble_all_papers(self) -> None:
         paper_service = PaperInfoService()

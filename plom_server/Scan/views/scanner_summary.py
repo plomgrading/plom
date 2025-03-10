@@ -8,7 +8,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.contrib import messages
 
-from Base.base_group_views import ScannerRequiredView
+from plom_server.Base.base_group_views import ScannerRequiredView
 from ..services import ManageScanService
 
 

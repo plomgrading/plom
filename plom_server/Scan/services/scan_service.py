@@ -45,9 +45,9 @@ from plom.tpv_utils import (
     isValidBundleSeparatorPaperCode,
 )
 
-from Papers.services import ImageBundleService, SpecificationService
-from Papers.models import FixedPage
-from Base.models import HueyTaskTracker
+from plom_server.Papers.services import ImageBundleService, SpecificationService
+from plom_server.Papers.models import FixedPage
+from plom_server.Base.models import HueyTaskTracker
 from ..models import (
     StagingBundle,
     StagingImage,

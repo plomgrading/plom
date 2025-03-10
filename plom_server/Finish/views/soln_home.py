@@ -5,8 +5,8 @@
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
-from Base.base_group_views import ManagerRequiredView
-from Papers.services import SolnSpecService, SpecificationService
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Papers.services import SolnSpecService, SpecificationService
 from ..services import SolnSourceService, BuildSolutionService
 
 

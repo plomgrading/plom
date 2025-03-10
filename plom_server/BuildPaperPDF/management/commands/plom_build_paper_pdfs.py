@@ -11,7 +11,7 @@ from tabulate import tabulate
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 from plom.misc_utils import format_int_list_with_runs
 from ...services import BuildPapersService
 
