@@ -5,10 +5,11 @@ import subprocess
 import tempfile
 from importlib import resources
 from io import BytesIO
+from pathlib import Path
 
 from PIL import Image
 
-import plom.server
+import plom
 
 from .textools import texFragmentToPNG as processFragment
 
@@ -35,7 +36,7 @@ def test_frag_broken_tex() -> None:
 
 
 def test_frag_image_size() -> None:
-    res = resources.files(plom.server) / "target_Q_latex_plom.png"
+    res = resources.files(plom) / "test_target_latex.png"
     # mypy stumbling over resource Traversables?
     imgt = Image.open(res)  # type: ignore[arg-type]
     frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
@@ -65,24 +66,41 @@ def test_frag_image_size() -> None:
     assert img.width > 2 * imgt.width
 
 
-def test_frag_image() -> None:
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as target:
-        with open(target.name, "wb") as fh:
-            fh.write(
-                (resources.files(plom.server) / "target_Q_latex_plom.png").read_bytes()
-            )
+def abs_error_between_images(img1: Path, img2: Path) -> float:
+    """The number of pixels that differ between two images: "AE" error from ImageMagick."""
+    r = subprocess.run(
+        ["compare", "-metric", "AE", img1, img2, "null:"],
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+    )
+    # Note "AE" not "rmse" with transparency www.imagemagick.org/Usage/compare/
+    s = r.stderr.decode()
+    if "(" in s:
+        # Fedora 42, Issue #3851, looks like `<float> (<AE>)`
+        return float(s.split()[1].strip("()"))
+    return float(s)
 
-        valid, imgdata = processFragment(r"$\mathbb{Q}$ \LaTeX\ Plom")
-        assert valid
-        assert isinstance(imgdata, bytes)
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as img:
-            with open(img.name, "wb") as f:
-                f.write(imgdata)
-            r = subprocess.run(
-                ["compare", "-metric", "AE", img.name, target.name, "null"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
-            )
-            # Note "AE" not "rmse" with transparency www.imagemagick.org/Usage/compare/
-            s = r.stderr.decode()
-            assert float(s) < 3000
+
+def test_frag_image() -> None:
+    valid, imgdata = processFragment(r"$\mathbb{Q}$ \LaTeX\ Plom")
+    assert valid
+    assert isinstance(imgdata, bytes)
+    with tempfile.TemporaryDirectory() as td:
+        img = Path(td) / "new_image.png"
+        with img.open("wb") as f:
+            f.write(imgdata)
+
+        target_img = Path(td) / "target.png"
+        with target_img.open("wb") as f:
+            f.write((resources.files(plom) / "test_target_latex.png").read_bytes())
+
+        assert abs_error_between_images(img, target_img) < 100
+
+        # older image with poor quality white-tinged antialiasing
+        target_old = Path(td) / "target_old.png"
+        with target_old.open("wb") as f:
+            f.write((resources.files(plom) / "test_target_latex_old.png").read_bytes())
+        # somewhat close
+        assert abs_error_between_images(img, target_old) < 3000
+        # but not too close
+        assert abs_error_between_images(img, target_old) > 500
