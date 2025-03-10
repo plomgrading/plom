@@ -38,9 +38,7 @@ page_not_submitted_text = "Page Not Submitted"
 def create_system_bundle_of_substitute_pages():
     """Create the system substitute pages and bundle database object.
 
-    Warning: rather slow, and currently (2025-03) this is called in an async way.
-    The parent function (set papers are printed) is set as durable so that
-    we dont call two of these things.
+    Warning: this can be rather slow for large number of pages / versions.
     """
     with transaction.atomic():
         try:
