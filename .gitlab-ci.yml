@@ -815,7 +815,7 @@ docs_sphinx:
 # get latest pip deps, doesn't use docker, closer to user install
 # allowed to fail (some pip stuff might be new) but we want to know
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
-fedora_legacy:
+fedora-legacy:
   stage: alt_build
   needs: []
   image: fedora:42
@@ -891,7 +891,7 @@ fedora_legacy:
 # get latest pip deps, doesn't use docker, closer to user install
 # allowed to fail (some pip stuff might be new) but we want to know
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
-fedora_django_tests:
+fedora-django-tests:
   services:
     - postgres
   variables:
@@ -1218,7 +1218,8 @@ binary_upload:
 #   asdf install imagemagick 7.0.11-5
 # Runs Python 3.10 as of 2023-10
 # As of 2023-10, we only try to run webplom tests, see TODO about legacy
-macos_server_webplom:
+# TODO: as of 2025-03, no way to build migrations without demo and without postgres
+macos-server-django-tests:
   variables:
     HOMEBREW_NO_AUTO_UPDATE: 1
     HOMEBREW_NO_INSTALL_CLEANUP: 1
@@ -1275,5 +1276,5 @@ macos_server_webplom:
   # Instead test webplom
   # no postgres yet
   # ./plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
-  - export PLOM_DATABASE_BACKEND=sqlite
-  - python manage.py test
+  # export PLOM_DATABASE_BACKEND=sqlite
+  # python manage.py test
