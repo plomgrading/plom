@@ -1,10 +1,10 @@
 .. Plom documentation
-   Copyright (C) 2020-2023 Colin B. Macdonald
+   Copyright (C) 2020-2023, 2025 Colin B. Macdonald
    Copyright (C) 2020 Andrew Rechnitzer
    SPDX-License-Identifier: AGPL-3.0-or-later
 
-Installing the Plom Legacy Server
-=================================
+Installing the Plom Server
+==========================
 
 The instructions here are for the installation of a Plom server.
 This **not** required by your markers; they only need to
@@ -16,20 +16,25 @@ You can either use containers to run a server or install Plom from source.
 Container images
 ----------------
 
-Use either `Podman` or `Docker` to download the latest container image and
+Use `Podman` or `Docker` to download the latest container image and
 launch it::
 
     docker pull plomgrading/server
     docker run -it --rm -p 41984:41984 plomgrading/server
 
-By default, this will launch the demo server.
+By default, this will launch the legacy demo server.
 
 .. TODO
-   document the demo?
+   document the demo?  and update for non-legacy!
+
+.. Note::
+   You will need to give the container access to a PostgreSQL database.
+   TODO: update these instructions, for now look our ``compose.yaml``
+   file.
 
 
-The data for the test is in `/exam` inside the Docker image.  You can use your
-own local directory with `-v`::
+The data for the test is in `/exam` inside the container image.
+You can use your own local directory with `-v`::
 
     mkdir my_test
     docker run -it --rm -P -v $PWD/my_test:/exam plomgrading/server
@@ -38,10 +43,7 @@ own local directory with `-v`::
 
 You can override the default command, for example::
 
-    docker run -it --rm -v $PWD/my_test:/exam plomgrading/server plom-create new --demo
-    docker run -it --rm -v $PWD/my_test:/exam plomgrading/server plom-legacy-server init
-    docker run -it --rm -v $PWD/my_test:/exam plomgrading/server plom-legacy-server users --demo
-    docker run -it --rm -P -v $PWD/my_test:/exam plomgrading/server plom-legacy-server launch
+    docker run -it --rm -v $PWD/my_test:/exam plomgrading/server plom-new-sever --version
 
 Alternatively you can get a shell and work inside the image::
 
@@ -76,11 +78,11 @@ but in practice, there are some caveats:
    **TODO**: it would be good to document this better!
    For now, see :doc:`install-from-source`.
    It may also be useful to `examine the Containerfile in the source
-   code <https://gitlab.com/plom/plom/-/blob/main/Containerfile.legacy>`_.
+   code <https://gitlab.com/plom/plom/-/blob/main/Containerfile>`_.
 
 
 After installing, you should be able to run the various Plom commands.
-Try running `plom-legacy-server` and you should see something like::
+Try running `plom-new-server` and you should see something like::
 
-    $ plom-legacy-server --version
-    plom-legacy-server 0.14.0
+    $ plom-new-server --version
+    plom-new-server 0.18.0

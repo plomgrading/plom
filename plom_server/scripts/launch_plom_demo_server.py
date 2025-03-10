@@ -4,6 +4,12 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 
+"""Command line tool to start a Plom demonstration server."""
+
+__copyright__ = "Copyright (C) 2018-2025 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__credits__ = "The Plom Project Developers"
+__license__ = "AGPL-3.0-or-later"
+
 import argparse
 import csv
 import os
@@ -15,13 +21,12 @@ from tempfile import TemporaryDirectory
 from time import sleep
 
 from plom.textools import buildLaTeX
+from plom_server import __version__
 
-
-# we specify this directory relative to the plom_server
-# root directory, rather than getting Django things up and
-# running, just to get at these useful files.
-# TODO: we'll set this later but we want it to be a global variable for some reason
-demo_file_directory = Path("./Launcher/launch_scripts/demo_files/")
+# TODO: not a fan of global variables, and mypy needs this to be defined
+global demo_files
+# so temporarily set to "."; we've fix it in main()
+demo_files = Path(".")
 
 
 def wait_for_user_to_type_quit() -> None:
@@ -57,6 +62,9 @@ def set_argparse_and_get_args() -> argparse.Namespace:
     * reassembly = marked papers are reassembled (along, optionally, with solutions).
     * reports = (future/not-yet-implemented) = instructor and student reports are built.
     """,
+    )
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__
     )
     parser.add_argument(
         "--port", type=int, default=8000, help="Port number on which to launch server"
@@ -191,7 +199,7 @@ def get_django_cmd_prefix() -> str:
     return "python3 manage.py"
 
 
-def launch_huey_process() -> list[subprocess.Popen]:
+def launch_huey_processes() -> list[subprocess.Popen]:
     """Launch the Huey-consumer for processing background tasks."""
     print("Launching Huey queues as background jobs.")
     return [
@@ -254,10 +262,10 @@ def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
     return subprocess.Popen(split(cmd))
 
 
-def upload_demo_assessment_spec_file():
+def upload_demo_assessment_spec_file() -> None:
     """Use 'plom_preparation_test_spec' to upload a demo assessment spec."""
     print("Uploading demo assessment spec")
-    spec_file = demo_file_directory / "demo_assessment_spec.toml"
+    spec_file = demo_files / "demo_assessment_spec.toml"
     run_django_manage_command(f"plom_preparation_test_spec upload {spec_file}")
 
 
@@ -307,9 +315,8 @@ def _build_with_and_without_soln(source_path: Path) -> None:
 
 def build_demo_test_source_pdfs() -> None:
     print("Building assessment / solution source pdfs from tex in temp dirs")
-
     for filename in ("assessment_v1", "assessment_v2", "assessment_v3"):
-        _build_with_and_without_soln(demo_file_directory / filename)
+        _build_with_and_without_soln(demo_files / filename)
 
 
 def upload_demo_test_source_files():
@@ -323,7 +330,7 @@ def upload_demo_test_source_files():
 def upload_demo_solution_files():
     """Use 'plom_solution_spec' to upload demo solution spec and source pdfs."""
     print("Uploading demo solution spec")
-    soln_spec_path = demo_file_directory / "demo_solution_spec.toml"
+    soln_spec_path = demo_files / "demo_solution_spec.toml"
     print("Uploading demo solution pdfs")
     run_django_manage_command(f"plom_soln_spec upload {soln_spec_path}")
     for v in [1, 2, 3]:
@@ -334,13 +341,13 @@ def upload_demo_solution_files():
 def upload_demo_classlist(length="normal", prename=True):
     """Use 'plom_preparation_classlist' to the appropriate classlist for the demo."""
     if length == "long":
-        cl_path = demo_file_directory / "cl_for_long_demo.csv"
+        cl_path = demo_files / "cl_for_long_demo.csv"
     elif length == "plaid":
-        cl_path = demo_file_directory / "cl_for_plaid_demo.csv"
+        cl_path = demo_files / "cl_for_plaid_demo.csv"
     elif length == "quick":
-        cl_path = demo_file_directory / "cl_for_quick_demo.csv"
+        cl_path = demo_files / "cl_for_quick_demo.csv"
     else:  # for normal
-        cl_path = demo_file_directory / "cl_for_demo.csv"
+        cl_path = demo_files / "cl_for_demo.csv"
 
     run_django_manage_command(f"plom_preparation_classlist upload {cl_path}")
 
@@ -659,14 +666,12 @@ def push_demo_rubrics():
     # push demo rubrics from toml
     # note - hard coded question range here.
     for question_idx in (1, 2, 3, 4):
-        rubric_toml = (
-            demo_file_directory / f"demo_assessment_rubrics_q{question_idx}.toml"
-        )
+        rubric_toml = demo_files / f"demo_assessment_rubrics_q{question_idx}.toml"
         run_django_manage_command(f"plom_rubrics push manager {rubric_toml}")
 
 
 def create_and_link_question_tags():
-    qtags_csv = demo_file_directory / "demo_assessment_qtags.csv"
+    qtags_csv = demo_files / "demo_assessment_qtags.csv"
     # upload question-tags as user "manager"
     run_django_manage_command(f"upload_qtags_csv {qtags_csv} manager")
     # link questions to tags as user "manager"
@@ -713,11 +718,11 @@ def run_marking_commands(*, port: int, stop_after=None) -> bool:
     if stop_after == "auto-id":
         return False
 
-    run_the_randoider(port=args.port)
+    run_the_randoider(port=port)
     if stop_after == "randoiding":
         return False
 
-    run_the_randomarker(port=args.port)
+    run_the_randomarker(port=port)
     if stop_after == "randomarking":
         return False
 
@@ -747,7 +752,11 @@ def run_finishing_commands(*, stop_after=None, solutions=True) -> bool:
     return True
 
 
-if __name__ == "__main__":
+def main():
+    """The Plom demo script."""
+    # TODO: I guess?
+    os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
+
     args = set_argparse_and_get_args()
     # cast stop-after, wait-after from list of options to a singleton or None
     if args.stop_after:
@@ -763,22 +772,15 @@ if __name__ == "__main__":
     if not args.development and not args.port:
         print("You must supply a port for the production server.")
 
-    # TODO: we currently need direct file access to this path, try a few places
-    if not demo_file_directory.exists():
-        demo_file_directory = Path("plom_server/Launcher/launch_scripts/demo_files/")
-    if not demo_file_directory.exists():
-        demo_file_directory = Path("Launcher/launch_scripts/demo_files/")
-    if not demo_file_directory.exists():
-        demo_file_directory = Path("demo_files/")
-    if not demo_file_directory.exists():
-        # try to get it from the module path
-        # TODO: better to just port all of this to importlib.resources
-        import plom_server
+    # we specify this directory relative to the plom_server
+    global demo_files
+    # TODO: better to just port all of this to importlib.resources
+    import plom_server
 
-        (_path,) = plom_server.__path__
-        demo_file_directory = Path(_path) / "Launcher/launch_scripts/demo_files/"
+    (_path,) = plom_server.__path__
+    demo_files = Path(_path) / "demo_files/"
 
-    assert demo_file_directory.exists(), "cannot continue w/o demo files"
+    assert demo_files.exists(), "cannot continue w/o demo files"
 
     # clean out old db and misc files, then rebuild blank db
     run_django_manage_command("plom_clean_all_and_build_db")
@@ -792,10 +794,10 @@ if __name__ == "__main__":
 
     # now put main things inside a try/finally so that we
     # can clean up the Huey/server processes on exit.
-    huey_process, server_process = None, None
+    huey_processes, server_process = None, None
     try:
         print("v" * 50)
-        huey_processes = launch_huey_process()
+        huey_processes = launch_huey_processes()
         if args.development:
             server_process = launch_django_dev_server_process(port=args.port)
         else:
@@ -859,3 +861,7 @@ if __name__ == "__main__":
         if server_process:
             server_process.terminate()
         print("^" * 50)
+
+
+if __name__ == "__main__":
+    main()

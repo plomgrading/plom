@@ -1,14 +1,22 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
+
+"""Command line tool to start a Plom server."""
+
+__copyright__ = "Copyright (C) 2018-2025 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__credits__ = "The Plom Project Developers"
+__license__ = "AGPL-3.0-or-later"
 
 import argparse
 import os
 import subprocess
 import time
 from shlex import split
+
+from plom_server import __version__
 
 
 def run_django_manage_command(cmd: str) -> None:
@@ -55,7 +63,7 @@ def get_django_cmd_prefix() -> str:
     return "python3 manage.py"
 
 
-def launch_huey_process() -> list[subprocess.Popen]:
+def launch_huey_processes() -> list[subprocess.Popen]:
     """Launch the Huey-consumer for processing background tasks."""
     print("Launching Huey queues as background jobs.")
     return [
@@ -124,8 +132,11 @@ def wait_for_user_to_type_quit() -> None:
             break
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__
+    )
     parser.add_argument(
         "--hot-start",
         action="store_true",
@@ -170,10 +181,10 @@ if __name__ == "__main__":
 
     # now put main things inside a try/finally so that we
     # can clean up the Huey/server processes on exit.
-    huey_process, server_process = None, None
+    huey_processes, server_process = None, None
     try:
         print("v" * 50)
-        huey_processes = launch_huey_process()
+        huey_processes = launch_huey_processes()
         if args.development:
             server_process = launch_django_dev_server_process(port=args.port)
         else:
@@ -203,3 +214,7 @@ if __name__ == "__main__":
         if server_process:
             server_process.terminate()
         print("^" * 50)
+
+
+if __name__ == "__main__":
+    main()

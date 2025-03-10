@@ -64,7 +64,7 @@ class DemoAllBundlesConfig:
 
 def _read_bundle_config(length: str) -> DemoAllBundlesConfig:
     """Read and parse the appropriate demo bundle config file."""
-    demo_file_directory = settings.BASE_DIR / "Launcher/launch_scripts/demo_files"
+    demo_files = settings.BASE_DIR / "demo_files"
     # read the config toml file
     if length == "quick":
         fname = "bundle_for_quick_demo.toml"
@@ -74,7 +74,7 @@ def _read_bundle_config(length: str) -> DemoAllBundlesConfig:
         fname = "bundle_for_plaid_demo.toml"
     else:
         fname = "bundle_for_demo.toml"
-    with open(demo_file_directory / fname, "rb") as fh:
+    with open(demo_files / fname, "rb") as fh:
         try:
             config_dict = tomllib.load(fh)
         except tomllib.TOMLDecodeError as e:
