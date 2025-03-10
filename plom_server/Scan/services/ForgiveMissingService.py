@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Colin B. Macdonald
 
 import hashlib
@@ -10,7 +10,7 @@ import pymupdf
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.contrib.auth.models import User
 
 from Papers.models import (
@@ -25,37 +25,53 @@ from Papers.services import SpecificationService
 from Preparation.services import SourceService
 from ..services import ManageDiscardService, ManageScanService
 
-# The name of the bundle of substitute pages to use
-# when student's paper is missing pages
-# We need this since all images belong to bundles
-#
+# Info about the system bundle of substitute pages to use when a paper
+# is missing pages (needed b/c all images must belong to bundles)
 system_substitute_images_bundle_name = "__system_substitute_pages_bundle__"
+system_substitute_images_bundle_hash = "bundle_for_substitute_pages"
 font_size_for_forgiven_blurb = 36
 page_not_submitted_text = "Page Not Submitted"
 
 
-@transaction.atomic
-def _get_or_create_substitute_pages_bundle() -> Bundle:
-    """Create (if needed) and return the system substitute pages bundle database object."""
-    try:
-        bundle_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
-    except ObjectDoesNotExist:
-        bundle_obj = Bundle.objects.create(
-            name=system_substitute_images_bundle_name,
-            hash="bundle_for_substitute_pages",
-        )
-    return bundle_obj
+def create_system_bundle_of_substitute_pages() -> bool:
+    """Create the system substitute pages and bundle database object.
+
+    Returns:
+        True if the substitutions bundle and its constutuent images were
+        created.  False if they already existed (it is safe to call it
+        repeatedly.
+
+    The call is "atomic": either both the bundle AND its constituent images
+    are created or neither occurs.
+
+    Warning: this can be rather slow for large number of pages / versions.
+    """
+    with transaction.atomic():
+        try:
+            bundle_obj = Bundle.objects.create(
+                name=system_substitute_images_bundle_name,
+                hash=system_substitute_images_bundle_hash,
+                _is_system=True,
+            )
+        except IntegrityError:
+            # it already exists; we must have already made it
+            return False
+
+        # We are making a new one, so make images within the same atomic block
+        assert bundle_obj.image_set.count() == 0
+        _create_all_substitute_pages(bundle_obj)
+        # if we're *not* making a bundle (b/c it already exists) then no
+        # action is required; let the transaction expire.
+    return True
 
 
 def _create_substitute_page_images_for_forgiveness_bundle() -> list[dict[str, Any]]:
     """Create all the substitute page pixmaps for missing pages.
 
     Returns:
-        List of dicts of form {'page':page,
-        'version': version,
-        'name': suggested image filename,
-        'bytes': the bytes of the image saved as png
-        } - one such dict for each page/version.
+        List of dicts with keys ``page``, ``version``, ``name`` (a
+        suggested image file), ``bytes`` (the bytes of the image,
+        probably as PNG data).
     """
     version_list = SpecificationService.get_list_of_versions()
     page_list = SpecificationService.get_list_of_pages()  # 1-indexed
@@ -159,69 +175,69 @@ def _create_substitute_page_images_for_forgiveness_bundle() -> list[dict[str, An
     return image_list
 
 
-def create_bundle_of_substitute_pages() -> None:
-    """Create the substitute images bundle and populate it with images.
+def _create_all_substitute_pages(sys_sub_bundle_obj: Bundle) -> None:
+    """Create the substitute page images and populate the given bundle with them.
 
-    The system substitute image bundle is created and then it is populated
-    with a substitute image for each page/version of the assessment. If the
-    assessment has N pages, then the substitute image for page p of version v
-    is created at bundle-order N*v+p.
+    The system substitute image bundle is populated with a substitute image for
+    each page/version of the assessment. If the assessment has n_pages pages,
+    then the substitute image for page p of version v is created at
+    bundle-order v*n_pages + p.
     """
     n_pages = SpecificationService.get_n_pages()
-    bundle_obj = _get_or_create_substitute_pages_bundle()
-    if bundle_obj.image_set.count() > 0:
-        # we already have the images.
-        return
-    else:
-        image_list = _create_substitute_page_images_for_forgiveness_bundle()
-    with transaction.atomic():
-        for n, img_dat in enumerate(image_list):
-            bundle_order = img_dat["version"] * n_pages + img_dat["page_number"]
-            image_name = img_dat["name"]
-            image_bytes = img_dat["bytes"]
-            image_hash = hashlib.sha256(image_bytes).hexdigest()
-            image_file = File(BytesIO(image_bytes), name=image_name)
-            Image.objects.create(
-                bundle=bundle_obj,
-                bundle_order=bundle_order,
-                original_name=image_name,
-                image_file=image_file,
-                hash=image_hash,
-                parsed_qr={},
-                rotation=0,
-            )
+    image_list = _create_substitute_page_images_for_forgiveness_bundle()
+    for n, img_dat in enumerate(image_list):
+        bundle_order = img_dat["version"] * n_pages + img_dat["page_number"]
+        image_name = img_dat["name"]
+        image_bytes = img_dat["bytes"]
+        image_hash = hashlib.sha256(image_bytes).hexdigest()
+        image_file = File(BytesIO(image_bytes), name=image_name)
+        Image.objects.create(
+            bundle=sys_sub_bundle_obj,
+            bundle_order=bundle_order,
+            original_name=image_name,
+            image_file=image_file,
+            hash=image_hash,
+            parsed_qr={},
+            rotation=0,
+        )
 
 
-def have_substitute_images_been_created() -> bool:
-    """Test if there are any images in the system substitute image bundle."""
-    bundle_obj = _get_or_create_substitute_pages_bundle()
-    return bundle_obj.image_set.count() > 0
-
-
-@transaction.atomic()
 def get_substitute_image(page_number: int, version: int) -> Image:
-    """Return the substitute Image-object for the given page/version."""
-    bundle_obj = _get_or_create_substitute_pages_bundle()
-    if bundle_obj.image_set.count() == 0:
-        create_bundle_of_substitute_pages()
+    """Return the substitute Image-object for the given page/version.
+
+    Raises:
+        ObjectDoesNotExist: Specifically ``Bundle.DoesNotExist`` if the
+            the substitution bundle has not been built yet.
+        ObjectDoesNotExist: probably Image.DoesNotExist if the pgae number
+            or version are out of range, TODO: but this is not tested.
+    """
+    bundle_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
     # bundle_order = version*number of pages + page_number
     n_pages = SpecificationService.get_n_pages()  # 1-indexed
     bundle_order = n_pages * version + page_number
     return Image.objects.get(bundle=bundle_obj, bundle_order=bundle_order)
 
 
-@transaction.atomic()
 def get_substitute_image_from_pk(image_pk: int) -> Image:
     """Return the Image object with the given pk."""
     return Image.objects.get(pk=image_pk)
 
 
-@transaction.atomic()
-def _delete_substitute_images():
+def erase_all_substitute_images_and_their_bundle() -> None:
     """Delete all the images from the system substitute image bundle."""
-    bundle_obj = _get_or_create_substitute_pages_bundle()
-    for X in bundle_obj.image_set.all():
-        X.delete()
+    # note that the parent caller (set papers printed) is a durable
+    # transaction, so this does not have to be.
+    with transaction.atomic():
+        try:
+            sys_sub_bundle_obj = Bundle.objects.get(
+                name=system_substitute_images_bundle_name
+            )
+        except Bundle.DoesNotExist:
+            # nothing needs done if no bundle
+            return
+        for X in sys_sub_bundle_obj.image_set.all():
+            X.delete()
+        sys_sub_bundle_obj.delete()
 
 
 def forgive_missing_fixed_page(
@@ -235,27 +251,31 @@ def forgive_missing_fixed_page(
         page_number: the page from the paper that is missing.
 
     Raises:
-        ObjectDoesNotExist: If the fixed-page of the given paper/page does not exist.
-        ValueError: If the paper/page has actually been scanned and the corresponding fixed-page object has an image.
-
+        ValueError: If the fixed-page of the given paper/page does not exist.
+        ValueError: If the paper/page does exist (has actually been scanned)
+            but the corresponding fixed-page object has an image.
     """
     try:
         fixedpage_obj = FixedPage.objects.get(
             paper__paper_number=paper_number, page_number=page_number
         )
-    except ObjectDoesNotExist:
+    except FixedPage.DoesNotExist as e:
         raise ValueError(
-            f"Cannot find the fixed page of paper {paper_number} page {page_number}"
-        )
+            f"Cannot find FixedPage of paper {paper_number} page {page_number}: {e}"
+        ) from e
     if fixedpage_obj.image:
         raise ValueError(
-            f"Paper {paper_number} page {page_number} already has an image - there is nothing to forgive!"
+            f"Paper {paper_number} page {page_number} already has an image"
+            " - there is nothing to forgive!"
         )
     image_obj = get_substitute_image(page_number, fixedpage_obj.version)
-    # create a discard page and then move it into place via assign_discard_page_to_fixed_page.
+    # create a discard page, move it into place via assign_discard_page_to_fixed_page
     discardpage_obj = DiscardPage.objects.create(
         image=image_obj,
-        discard_reason=f"System created page to susbstitue for paper {paper_number} page {page_number}",
+        discard_reason=(
+            "System-created page to substitute for"
+            f" paper {paper_number} page {page_number}"
+        ),
     )
     ManageDiscardService().assign_discard_page_to_fixed_page(
         user_obj, discardpage_obj.pk, paper_number, page_number
@@ -268,7 +288,8 @@ def forgive_missing_fixed_page_cmd(
     """Simple wrapper around forgive_missing_fixed_page.
 
     Raises:
-        ObjectDoesNotExist: when the given username does not exist or has wrong permissions.
+        ValueError: when the given username does not exist or has wrong
+            permissions.
     """
     try:
         user_obj = User.objects.get(username__iexact=username, groups__name="manager")
@@ -287,15 +308,15 @@ def get_substitute_page_info(paper_number: int, page_number: int) -> dict[str, A
         "substitute_image_pk" and "kind". "Kind" is one of "IDPage", "QuestionPage", or "DNMPage"
 
     Raises:
-        ObjectDoesNotExist: When no fixed page at the given paper/page exists.
+        ValueError: When no fixed page at the given paper/page exists.
     """
     try:
         fixedpage_obj = FixedPage.objects.get(
             paper__paper_number=paper_number, page_number=page_number
         )
-    except ObjectDoesNotExist as e:
+    except FixedPage.DoesNotExist as e:
         raise ValueError(
-            f"Cannot find the fixed page of paper {paper_number} page {page_number}"
+            f"Cannot find FixedPage of paper {paper_number} page {page_number}: {e}"
         ) from e
     version = fixedpage_obj.version
     substitute_image_pk = get_substitute_image(page_number, version).pk
@@ -319,7 +340,7 @@ def get_substitute_page_info(paper_number: int, page_number: int) -> dict[str, A
 def get_list_of_all_missing_dnm_pages() -> list[dict[str, int]]:
     """Get list of missing do-not-mark pages from incomplete papers.
 
-    Returns: A list of dict of the form {'paper_number':foo, "page_number": bah}
+    Returns: A list of dicts with keys ``paper_number`` and ``page_number``.
     """
     incomplete_papers = ManageScanService().get_all_incomplete_test_papers()
     missing_dnm = []

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024-2025 Colin B. Macdonald
 
@@ -284,7 +284,11 @@ def assert_can_unset_papers_printed():
     from Scan.models import StagingBundle
 
     # if any bundles uploaded then raise an exception
-    if StagingBundle.objects.exists() or Bundle.objects.exists():
+    # remember to exclude system bundles
+    if (
+        StagingBundle.objects.exists()
+        or Bundle.objects.filter(_is_system=False).exists()
+    ):
         raise PlomDependencyConflict(
             "Cannot unset papers-printed because bundles have been uploaded."
         )
