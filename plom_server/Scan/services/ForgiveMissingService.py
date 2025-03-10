@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Colin B. Macdonald
 
 import hashlib
@@ -30,39 +30,33 @@ from ..services import ManageDiscardService, ManageScanService
 # We need this since all images belong to bundles
 #
 system_substitute_images_bundle_name = "__system_substitute_pages_bundle__"
+system_substitute_images_bundle_hash = "bundle_for_substitute_pages"
 font_size_for_forgiven_blurb = 36
 page_not_submitted_text = "Page Not Submitted"
 
 
-def _get_or_create_substitute_pages_bundle() -> Bundle:
-    """Create (if needed) and return the system substitute pages bundle database object.
+def create_system_bundle_of_substitute_pages():
+    """Create the system substitute pages and bundle database object.
 
-    Warning: rather slow, and currently (2025-03) this is called in an async way.
-    So we make it durable to prevent more than one from running.
+    Warning: this can be rather slow for large number of pages / versions.
     """
-    with transaction.atomic(durable=True):
+    with transaction.atomic():
         try:
-            print("trying to make the subs bundle...")
             bundle_obj = Bundle.objects.create(
                 name=system_substitute_images_bundle_name,
-                hash="bundle_for_substitute_pages",
-                _is_singleton=True,
+                hash=system_substitute_images_bundle_hash,
+                _is_system=True,
             )
-            do_make_bundle = True
+            make_substitute_pages = True
         except IntegrityError:
-            do_make_bundle = False
-        if do_make_bundle:
+            # we must have made it previously
+            make_substitute_pages = False
+        if make_substitute_pages:
             # ok, so we're making it, do all the images
-            print(f"Starting a new subs bundle: {bundle_obj}")
             assert bundle_obj.image_set.count() == 0
-            _create_bundle_of_substitute_pages(bundle_obj)
+            _create_all_substitute_pages(bundle_obj)
         # if we're *not* making a bundle (b/c it already exists) then no
         # action is required; let the transaction expire.
-
-    # either it exists or we just made it, either way get it again and return it
-    existing_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
-    print(f"returning bundle obj: {existing_obj}")
-    return existing_obj
 
 
 def _create_substitute_page_images_for_forgiveness_bundle() -> list[dict[str, Any]]:
@@ -177,45 +171,36 @@ def _create_substitute_page_images_for_forgiveness_bundle() -> list[dict[str, An
     return image_list
 
 
-def _create_bundle_of_substitute_pages(bundle_obj: Bundle) -> None:
-    """Create the substitute images bundle and populate it with images.
+def _create_all_substitute_pages(sys_sub_bundle_obj: Bundle) -> None:
+    """Create the substitute page images and populate the given bundle with them.
 
-    The system substitute image bundle is populated
-    with a substitute image for each page/version of the assessment. If the
-    assessment has n_pages pages, then the substitute image for page p of version v
-    is created at bundle-order v*n_pages + p.
+    The system substitute image bundle is populated with a substitute image for
+    each page/version of the assessment. If the assessment has n_pages pages,
+    then the substitute image for page p of version v is created at
+    bundle-order v*n_pages + p.
     """
     n_pages = SpecificationService.get_n_pages()
     image_list = _create_substitute_page_images_for_forgiveness_bundle()
-    if True:
-        for n, img_dat in enumerate(image_list):
-            bundle_order = img_dat["version"] * n_pages + img_dat["page_number"]
-            image_name = img_dat["name"]
-            image_bytes = img_dat["bytes"]
-            image_hash = hashlib.sha256(image_bytes).hexdigest()
-            image_file = File(BytesIO(image_bytes), name=image_name)
-            Image.objects.create(
-                bundle=bundle_obj,
-                bundle_order=bundle_order,
-                original_name=image_name,
-                image_file=image_file,
-                hash=image_hash,
-                parsed_qr={},
-                rotation=0,
-            )
-
-
-def have_substitute_images_been_created() -> bool:
-    """Test if there are any images in the system substitute image bundle."""
-    bundle_obj = _get_or_create_substitute_pages_bundle()
-    return bundle_obj.image_set.count() > 0
+    for n, img_dat in enumerate(image_list):
+        bundle_order = img_dat["version"] * n_pages + img_dat["page_number"]
+        image_name = img_dat["name"]
+        image_bytes = img_dat["bytes"]
+        image_hash = hashlib.sha256(image_bytes).hexdigest()
+        image_file = File(BytesIO(image_bytes), name=image_name)
+        Image.objects.create(
+            bundle=sys_sub_bundle_obj,
+            bundle_order=bundle_order,
+            original_name=image_name,
+            image_file=image_file,
+            hash=image_hash,
+            parsed_qr={},
+            rotation=0,
+        )
 
 
 def get_substitute_image(page_number: int, version: int) -> Image:
     """Return the substitute Image-object for the given page/version."""
-    print("calling get_or_create...")
-    bundle_obj = _get_or_create_substitute_pages_bundle()
-    print("back from get_or_create")
+    bundle_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
     # bundle_order = version*number of pages + page_number
     n_pages = SpecificationService.get_n_pages()  # 1-indexed
     bundle_order = n_pages * version + page_number
@@ -227,17 +212,21 @@ def get_substitute_image_from_pk(image_pk: int) -> Image:
     return Image.objects.get(pk=image_pk)
 
 
-def _delete_substitute_images():
+def erase_all_substitute_images_and_their_bundle() -> None:
     """Delete all the images from the system substitute image bundle."""
-    with transaction.atomic(durable=True):
+    # note that the parent caller (set papers printed) is a durable
+    # transaction, so this does not have to be.
+    with transaction.atomic():
         try:
-            bundle_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
+            sys_sub_bundle_obj = Bundle.objects.get(
+                name=system_substitute_images_bundle_name
+            )
         except ObjectDoesNotExist:
             # nothing needs done if no bundle
             return
-        for X in bundle_obj.image_set.all():
+        for X in sys_sub_bundle_obj.image_set.all():
             X.delete()
-        bundle_obj.delete()
+        sys_sub_bundle_obj.delete()
 
 
 def forgive_missing_fixed_page(

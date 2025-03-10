@@ -471,7 +471,12 @@ def run_demo_preparation_commands(
     download_zip()
 
     # now set preparation status as done
-    # note that this also creates system rubrics
+    # note that this also creates system rubrics and
+    # builds substitute page images
+    print("Setting papers are printed")
+    run_django_manage_command("plom_preparation_status --set finished")
+    print("For testing purposes, set papers are not printed and then set it again.")
+    run_django_manage_command("plom_preparation_status --set todo")
     run_django_manage_command("plom_preparation_status --set finished")
 
     return True
