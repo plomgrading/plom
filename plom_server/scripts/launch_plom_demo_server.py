@@ -801,7 +801,7 @@ def main():
     # build extra-page and scrap-paper PDFs
     run_django_manage_command("plom_build_scrap_extra_pdfs")
 
-    if not args.devrrelopment:
+    if not args.development:
         run_django_manage_command("collectstatic --clear --no-input")
 
     # now put main things inside a try/finally so that we
