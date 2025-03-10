@@ -14,7 +14,7 @@ outside of writing the exam they should have no interaction with Plom.
 Project structure
 ================================
 
-See :doc:`Python modules`.
+See :doc:`code`.
 
 
 Contributing to Plom
