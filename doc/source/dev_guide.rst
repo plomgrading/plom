@@ -14,15 +14,7 @@ outside of writing the exam they should have no interaction with Plom.
 Project structure
 ================================
 
-Most Plom code can be found in one of two directories in the
-`project repository <https://gitlab.com/plom/plom>`_:
- * ``plom/``
- * ``plom_server/``
-The former is currently (2025 March) "in-flux" as the marking client has
-moved to a separate Plom-Client repo <https://gitlab.com/plom/plom-client>`_.
-The latter contains the "current" (non-legacy) Plom server.
-
-Note both ``plom/`` and ``plom_server/`` are modules.
+See :doc:`Python modules`.
 
 
 Contributing to Plom
