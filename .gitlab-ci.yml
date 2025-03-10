@@ -1033,7 +1033,7 @@ newOS_newdeps_django_tests:
     # song-and-dance here b/c of migrations (Issue #3826)
     # (just for "fun" use slightly different dance moves from "minpy_mindeps_django_tests")
     - pip install .
-    - pip install plom
+    - pip uninstall -y plom
     - ./plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
     - pip install .
     - python3 manage.py test
@@ -1156,8 +1156,8 @@ minpy_mindeps_django_tests:
     # which we need pip installed for tests to work
     - pip install .
     - python3 manage.py test
-    # alternative is we have nothing pip installed, that should work to (although need at least once for deps)
-    - pip uninstall plom
+    # alternative is we have nothing pip installed, that should work too (although need to install once for deps)
+    - pip uninstall -y plom
     - python3 manage.py test
 
 
