@@ -503,7 +503,7 @@ class ManageScanService:
 
         """
         discards = []
-        for dp_obj in DiscardPage.objects.all():
+        for dp_obj in DiscardPage.objects.all().prefetch_related("image__bundle"):
             img = dp_obj.image
             discards.append(
                 {
