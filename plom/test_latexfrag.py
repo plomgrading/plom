@@ -69,7 +69,7 @@ def test_frag_image_size() -> None:
 def abs_error_between_images(img1: Path, img2: Path) -> float:
     """The number of pixels that differ between two images: "AE" error from ImageMagick."""
     r = subprocess.run(
-        ["compare", "-metric", "AE", img1.name, img2.name, "null:"],
+        ["compare", "-metric", "AE", img1, img2, "null:"],
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE,
     )
@@ -85,21 +85,22 @@ def test_frag_image() -> None:
     valid, imgdata = processFragment(r"$\mathbb{Q}$ \LaTeX\ Plom")
     assert valid
     assert isinstance(imgdata, bytes)
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as img:
-        with open(img.name, "wb") as f:
+    with tempfile.TemporaryDirectory() as td:
+        img = Path(td) / "new_image.png"
+        with img.open("wb") as f:
             f.write(imgdata)
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as target:
-            with open(target.name, "wb") as fh:
-                fh.write((resources.files(plom) / "test_target_latex.png").read_bytes())
-            assert abs_error_between_images(img, target) < 100
+        target_img = Path(td) / "target.png"
+        with target_img.open("wb") as f:
+            f.write((resources.files(plom) / "test_target_latex.png").read_bytes())
 
-            # older image with poor quality white-tinged antialiasing
-            with open(target.name, "wb") as fh:
-                fh.write(
-                    (resources.files(plom) / "test_target_latex_white.png").read_bytes()
-                )
-            # somewhat close
-            assert abs_error_between_images(img, target) < 3000
-            # but not too close
-            assert abs_error_between_images(img, target) > 500
+        assert abs_error_between_images(img, target_img) < 100
+
+        # older image with poor quality white-tinged antialiasing
+        target_old = Path(td) / "target_old.png"
+        with target_old.open("wb") as f:
+            f.write((resources.files(plom) / "test_target_latex_old.png").read_bytes())
+        # somewhat close
+        assert abs_error_between_images(img, target_old) < 3000
+        # but not too close
+        assert abs_error_between_images(img, target_old) > 500
