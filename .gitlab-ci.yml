@@ -6,7 +6,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024 Aidan Murphy
 #
 # Copying and distribution of this file, with or without modification,
@@ -1032,7 +1032,6 @@ newOS_newdeps_webplom:
   script:
     - pip install .
     - ./plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
-    - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
 
 
@@ -1148,7 +1147,6 @@ minpy_mindeps_webplom:
     - pip install -r requirements.txt.tempminima
     - pip install .
     - ./plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
-    - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
 
 
