@@ -214,7 +214,7 @@ def get_substitute_image_from_pk(image_pk: int) -> Image:
     return Image.objects.get(pk=image_pk)
 
 
-def erase_all_substitute_images(*, delete_system_bundle_too: bool = True) -> None:
+def erase_all_substitute_images_and_their_bundle() -> None:
     """Delete all the images from the system substitute image bundle."""
     # note that the parent caller (set papers printed) is a durable
     # transaction, so this does not have to be.
@@ -228,8 +228,7 @@ def erase_all_substitute_images(*, delete_system_bundle_too: bool = True) -> Non
             return
         for X in sys_sub_bundle_obj.image_set.all():
             X.delete()
-        if delete_system_bundle_too:
-            sys_sub_bundle_obj.delete()
+        sys_sub_bundle_obj.delete()
 
 
 def forgive_missing_fixed_page(

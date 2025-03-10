@@ -508,7 +508,7 @@ class ManageScanService:
             if img.bundle.staging_bundle:
                 staging_bundle_slug = img.bundle.staging_bundle.slug
             else:  # must come from the system bundle of substitute images
-                staging_bundle_slug = "__system_substitute_pages_bundle__"
+                staging_bundle_slug = img.bundle.name
             discards.append(
                 {
                     "page_pk": dp_obj.pk,
