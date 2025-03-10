@@ -1035,7 +1035,7 @@ newOS_newdeps_django_tests:
     # (just for "fun" use slightly different dance moves from "minpy_mindeps_django_tests")
     - pip install .
     - pip uninstall -y plom
-    - ./plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
+    - PYTHONPATH=. ./plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
     - pip install .
     - python3 manage.py test
 
