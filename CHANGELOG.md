@@ -10,12 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * New support for multi-versioned ID pages, for example if different students should see different cover pages.  Currently, this uses the custom QV-map feature.
-* New API to remotely reset tasks.
+* New API to remotely reset tasks, usable via the client as well as `plom-cli`.
 * Rubrics can be created in the web UI as well as the client.
+* `plom-new-server` and `plom-new-demo` command line tools.
 
 ### Changed
 * Rubric edits can be indicated as "minor edits", generally meaning the Annotations using them do not need to be updated.
 * `Containerfile.bulk` renamed to `Containerfile`.
+* Django-based server no longer needs to be run in its own source code.
 
 ### Removed
 
