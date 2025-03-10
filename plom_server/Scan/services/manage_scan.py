@@ -503,18 +503,14 @@ class ManageScanService:
 
         """
         discards = []
-        for dp_obj in DiscardPage.objects.all():
+        for dp_obj in DiscardPage.objects.all().prefetch_related("image__bundle"):
             img = dp_obj.image
-            if img.bundle.staging_bundle:
-                staging_bundle_slug = img.bundle.staging_bundle.slug
-            else:  # must come from the system bundle of substitute images
-                staging_bundle_slug = img.bundle.name
             discards.append(
                 {
                     "page_pk": dp_obj.pk,
                     "reason": dp_obj.discard_reason,
                     "bundle_pk": img.bundle.pk,
-                    "bundle_name": staging_bundle_slug,
+                    "bundle_name": img.bundle.name,
                     "order": img.bundle_order,
                     "image_pk": img.pk,
                 }
