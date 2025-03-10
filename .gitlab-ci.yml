@@ -891,7 +891,7 @@ fedora_legacy:
 # get latest pip deps, doesn't use docker, closer to user install
 # allowed to fail (some pip stuff might be new) but we want to know
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
-fedora_webplom:
+fedora_django_tests:
   services:
     - postgres
   variables:
@@ -928,7 +928,8 @@ fedora_webplom:
     # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
     - pip install -U pytest
     - pip install .
-    - PYTHONPATH="." ./plom_server/scripts/launch_plom_demo_server.py --stop-after reports
+    - PYTHONPATH=. ./plom_server/scripts/launch_plom_demo_server.py --stop-after reports
+    - pip install .
     - export PLOM_DATABASE_BACKEND=sqlite
     - python3 manage.py test
 
