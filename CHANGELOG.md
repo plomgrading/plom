@@ -9,14 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased dev branch]
 
 ### Added
+* New support for multi-versioned ID pages, for example if different students should see different cover pages.  Currently, this uses the custom QV-map feature.
+* New API to remotely reset tasks.
+* Rubrics can be created in the web UI as well as the client.
 
 ### Changed
 * Rubric edits can be indicated as "minor edits", generally meaning the Annotations using them do not need to be updated.
+* `Containerfile.bulk` renamed to `Containerfile`.
 
 ### Removed
 
 ### Fixed
-
+* Student reports have been re-enabled using more efficient database queries.
 
 
 
@@ -25,13 +29,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* More flexible options for `plom-push-to-canvas.py` contrib script.
 
 ### Removed
 
 ### Fixed
 * More error checking and unit tests concerning rubric validity.
-* Minor fixes and performance improvements.
 * Refuse to build papers with inconsistent versions maps---there must be at most one version per page.
+* Show errors to end users in some cases that previously just said "error".
+* Minor fixes and performance improvements.
 
 
 

@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Elisa Pan
+# Copyright (C) 2025 Andrew Rechnitzer
 
 from datetime import datetime
 from pathlib import Path
@@ -25,7 +26,7 @@ GRAPH_DETAILS = {
     "graph1": {"title": "Histogram of total marks", "default": True},
     "graph2": {"title": "Histogram of marks by question", "default": False},
     "graph3": {"title": "Correlation heatmap", "default": False},
-    "graph4": {"title": "Histograms of grades by marker by question", "default": False},
+    "graph4": {"title": "Histograms of marks by marker by question", "default": False},
     "graph5": {
         "title": "Histograms of time spent marking each question",
         "default": False,
@@ -35,7 +36,7 @@ GRAPH_DETAILS = {
         "default": False,
     },
     "graph7": {
-        "title": "Box plots of grades given by marker by question",
+        "title": "Box plots of question marks by TA who marked",
         "default": False,
     },
     "graph8": {"title": "Line graph of average mark by question", "default": False},
@@ -83,10 +84,10 @@ def pdf_builder(
                     1. Histogram of total marks
                     2. Histogram of marks by question
                     3. Correlation heatmap
-                    4. Histograms of grades by marker by question
+                    4. Histograms of marks by marker by question
                     5. Histograms of time spent marking each question
                     6. Scatter plots of time spent marking vs mark given
-                    7. Box plots of grades given by marker by question
+                    7. Box plots of marks given by marker by question
                     8. Line graph of average mark by question
 
                 Generating..."""
@@ -317,7 +318,7 @@ def pdf_builder(
 
         for index, marker in enumerate(des._get_all_ta_data_by_ta()):
             html += f"""
-            <h4>Grades by {marker}</h4>
+            <h4>Marks by {marker}</h4>
             """
             html += _html_for_big_graphs(graphs["graph4"][index])
 
@@ -351,7 +352,7 @@ def pdf_builder(
 
             for index, marker in enumerate(des._get_all_ta_data_by_ta()):
                 html += f"""
-                <h4>Grades by {marker}</h4>
+                <h4>Marks by {marker}</h4>
                 """
                 html += _html_for_big_graphs(graphs["graph4"][index])
 

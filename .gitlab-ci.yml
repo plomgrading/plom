@@ -28,10 +28,10 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:27.4.0
+image: docker:27.5.1
 
 services:
-  - docker:27.4.0-dind
+  - docker:27.5.1-dind
 
 # $CI_REGISTRY_IMAGE is:
 # registry.gitlab.com/plom/plom
@@ -68,9 +68,9 @@ container-image:
       fi
     - >
       if [ "$DOCKER_USE_CACHE" == "1" ]; then
-        docker build --cache-from $IM_LATEST --tag $IM . -f Containerfile.bulk
+        docker build --cache-from $IM_LATEST --tag $IM . -f Containerfile
       else
-        docker build --tag $IM . -f Containerfile.bulk
+        docker build --tag $IM . -f Containerfile
       fi
     - docker push $IM
 
@@ -385,7 +385,7 @@ pyright:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - python3 -m pip install pyright~=1.1.394
+    - python3 -m pip install pyright~=1.1.396
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -409,7 +409,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.9.7
+    - python3 -m pip install ruff~=0.9.9
   script:
     - ruff check .
     # ruff format .
@@ -420,7 +420,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.9.7
+    - python3 -m pip install ruff~=0.9.9
   script:
     # run once just for log out but don't fail
     - EXCEPTIONS="D101,D102,D103,D104,D106"

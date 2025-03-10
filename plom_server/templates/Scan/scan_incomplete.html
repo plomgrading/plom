@@ -46,13 +46,13 @@
                                                                 {{ fp.page_number }}
                                                             </button>
                                                         {% else %}
-                                                            <button hx-get="{% url 'substitute_img_wrap' pn fp.page_number %}"
-                                                                    hx-target="#incompleteImageHere"
-                                                                    hx-replace="innerHTML"
-                                                                    class="btn btn-danger p-3"
+                                                            <button class="btn btn-danger p-3"
                                                                     data-bs-toggle="tooltip"
                                                                     data-bs-placement="top"
-                                                                    data-bs-title="missing {{ pn }}.{{ fp.page_number }}">
+                                                                    data-bs-title="missing {{ pn }}.{{ fp.page_number }}"
+                                                                    hx-get="{% url 'substitute_img_wrap' pn fp.page_number %}"
+                                                                    hx-target="#incompleteImageHere"
+                                                                    hx-replace="innerHTML">
                                                                 {{ fp.page_number }}
                                                             </button>
                                                         {% endif %}

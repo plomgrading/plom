@@ -91,6 +91,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
     )
     parser.add_argument("--no-prename", dest="prename", action="store_false")
     parser.add_argument("--versioned-id", dest="versioned_id", action="store_true")
+    parser.add_argument("--half-marks", dest="half_marks", action="store_true")
     parser.add_argument(
         "--muck",
         default=True,
@@ -510,7 +511,12 @@ def run_demo_preparation_commands(
     download_zip()
 
     # now set preparation status as done
-    # note that this also creates system rubrics
+    # note that this also creates system rubrics and
+    # builds substitute page images
+    print("Setting papers are printed")
+    run_django_manage_command("plom_preparation_status --set finished")
+    print("For testing purposes, set papers are not printed and then set it again.")
+    run_django_manage_command("plom_preparation_status --set todo")
     run_django_manage_command("plom_preparation_status --set finished")
 
     return True
@@ -618,7 +624,7 @@ def run_the_randoider(*, port):
     subprocess.check_call(split(cmd))
 
 
-def run_the_randomarker(*, port):
+def run_the_randomarker(*, port, half_marks=False):
     """Run the rando-Marker.
 
     All papers will be marked after this call.
@@ -637,6 +643,8 @@ def run_the_randomarker(*, port):
     randomarker_processes = []
     for X in users[1:]:
         cmd = f"python3 -m plom.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial {X[2]} --download-rubrics"
+        if half_marks:
+            cmd += " --allow-half"
         print(f"RandoMarking!  calling: {cmd}")
         randomarker_processes.append(subprocess.Popen(split(cmd)))
         sleep(0.5)
@@ -688,7 +696,7 @@ def create_and_link_question_tags():
         )
 
 
-def run_marking_commands(*, port: int, stop_after=None) -> bool:
+def run_marking_commands(*, port: int, stop_after=None, half_marks=False) -> bool:
     """Run commands to step through the marking process in the demo.
 
     In order it runs:
@@ -701,11 +709,15 @@ def run_marking_commands(*, port: int, stop_after=None) -> bool:
     KWargs:
         stop_after = after which step should the demo be stopped, see list above.
         port = the port on which the demo is running.
+        half_marks = whether or not to use +/- half-mark rubrics
 
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
     # add rubrics, question-tags and then run the randomaker.
     # add system rubrics first, then push the demo ones from toml
+    if half_marks:
+        print("Using +/- 0.5 rubrics")
+        run_django_manage_command("plom_rubrics half manager")
     push_demo_rubrics()
     if stop_after == "rubrics":
         return False
@@ -722,7 +734,7 @@ def run_marking_commands(*, port: int, stop_after=None) -> bool:
     if stop_after == "randoiding":
         return False
 
-    run_the_randomarker(port=port)
+    run_the_randomarker(port=port, half_marks=half_marks)
     if stop_after == "randomarking":
         return False
 
@@ -748,7 +760,7 @@ def run_finishing_commands(*, stop_after=None, solutions=True) -> bool:
         return False
 
     print(">> Future plom dev will include instructor-report download here.")
-    print(">> Future plom dev will include strudent-reports download here.")
+    print(">> Future plom dev will include student-reports download here.")
     return True
 
 
@@ -789,7 +801,7 @@ def main():
     # build extra-page and scrap-paper PDFs
     run_django_manage_command("plom_build_scrap_extra_pdfs")
 
-    if not args.development:
+    if not args.devrrelopment:
         run_django_manage_command("collectstatic --clear --no-input")
 
     # now put main things inside a try/finally so that we
@@ -837,7 +849,9 @@ def main():
 
             print("*" * 50)
             print(">> Ready for marking")
-            if not run_marking_commands(port=args.port, stop_after=stop_after):
+            if not run_marking_commands(
+                port=args.port, stop_after=stop_after, half_marks=args.half_marks
+            ):
                 break
 
             print("*" * 50)

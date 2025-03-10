@@ -2,10 +2,11 @@
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 
 from django.db import models
+from django.db.models.query_utils import Q
 from django.contrib.auth.models import User
 
 from plom_server.Scan.models import StagingBundle
@@ -20,7 +21,12 @@ class Bundle(models.Model):
 
     name (str): The name of the pdf/bundle (ie just the stem of the
         bundle's path)
-    hash (str): The sha256 of the bundle/pdf file.
+    hash (str): Generally the sha256 of the bundle/pdf file, although
+        special cases it could be something else (e.g., there is special
+        bundle for substitute pages in ForgiveMissingService.py)
+    _is_system: if the bundle is a system bundle then allow one bundle
+        with this precise name and hash. This is used internally, but
+        not currently used to prevent duplicate uploads.
     user: The user who pushed the bundle.
     time_of_last_update (datetime): The time of last change to the bundle.
     staging_bundle: a key to the staging bundle from which this bundle was created by a push
@@ -28,11 +34,22 @@ class Bundle(models.Model):
 
     name = models.TextField(null=False)
     hash = models.CharField(null=False, max_length=64)
+    _is_system = models.BooleanField(default=False)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     time_of_last_update = models.DateTimeField(auto_now=True)
     staging_bundle = models.ForeignKey(
         StagingBundle, null=True, on_delete=models.SET_NULL
     )
+
+    class Meta:
+        constraints = [
+            # This constraint checks that each name-hash pair is unique, when is_system is set
+            models.UniqueConstraint(
+                fields=["name", "hash"],
+                condition=Q(_is_system=True),
+                name="unique_system_bundles",
+            ),
+        ]
 
 
 class Image(models.Model):

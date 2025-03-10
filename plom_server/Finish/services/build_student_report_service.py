@@ -68,8 +68,8 @@ def brief_report_pdf_builder(
     from . import MinimalPlotService
 
     paper_info = StudentMarkService.get_paper_id_and_marks(paper_number)
-    timestamp = datetime.now()
-    timestamp_str = timestamp.strftime("%d/%m/%Y %H:%M:%S+00:00")
+    timestamp = datetime.utcnow()
+    timestamp_str = timestamp.strftime("%d/%m/%Y at %H:%M (UTC)")
 
     context = {
         "longname": SpecificationService.get_longname(),
@@ -88,15 +88,24 @@ def brief_report_pdf_builder(
             )
             for qi, score_list in question_score_lists.items()
         ],
+        "pedagogy_tags": None,
         "pedagogy_tags_graph": None,
-        "pedagogy_tags_descriptions": None,
     }
     # don't generate the lollypop graph is there are no pedagogy tags
-    if QuestionTagService.are_there_question_tag_links():
-        context["pedagogy_tags_descriptions"] = (
-            QuestionTagService.get_pedagogy_tag_descriptions()
-        )
+    tag_to_questions = QuestionTagService.get_tag_to_question_links()
+    if tag_to_questions:
+        qidx_to_html = SpecificationService.get_question_labels_str_and_html_map()
+        tag_descriptions = QuestionTagService.get_pedagogy_tag_descriptions()
+        context["pedagogy_tags"] = {
+            ptag: (
+                # translate the qidx to html label
+                [qidx_to_html[qi][1] for qi in sorted(qidx_list)],
+                tag_descriptions[ptag],
+            )
+            for ptag, qidx_list in tag_to_questions.items()
+        }
         context["pedagogy_tags_graph"] = MinimalPlotService().lollypop_of_pedagogy_tags(
+            tag_to_questions,
             {qi: paper_info[qi] for qi in question_score_lists},
             paper_info["question_max_marks"],
         )

@@ -2,7 +2,7 @@
 # Copyright (C) 2021-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aden Chan
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 
 import pathlib
 import sys
@@ -249,6 +249,17 @@ class Command(BaseCommand):
             metavar="N",
             help="Get rubrics only for question (index) N, or all rubrics if omitted.",
         )
+        sp_half = sub.add_parser(
+            "half",
+            help="Add plus/minus half-mark rubrics",
+            description="""
+                Add plus/minus half-mark rubrics to the system for all questions.""",
+        )
+        sp_half.add_argument(
+            "username",
+            type=str,
+            help="Name of user who is enabling the half-mark rubrics",
+        )
 
     def handle(self, *args, **opt):
         if opt["command"] == "init":
@@ -269,8 +280,15 @@ class Command(BaseCommand):
             N = self.upload_rubrics_from_file(f)
             self.stdout.write(self.style.SUCCESS(f"Added {N} rubrics from {f}"))
 
-        elif opt["command"] == "pull":
-            self.download_rubrics_to_file(opt["file"], question_idx=opt["question"])
-
+        elif opt["command"] == "half":
+            try:
+                if RubricService().build_half_mark_delta_rubrics(opt["username"]):
+                    self.stdout.write(self.style.SUCCESS("Half-mark rubrics added."))
+                else:
+                    raise CommandError(
+                        "Could not add half-mark rubrics - check if they are already present."
+                    )
+            except ValueError as e:
+                raise CommandError(e)
         else:
             self.print_help("manage.py", "plom_rubrics")
