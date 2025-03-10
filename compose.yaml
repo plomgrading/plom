@@ -31,9 +31,7 @@ services:
     # expose:
     #   - 8000
 
-    # this feels less than ideal; WIP, Issue #2759
-    command: bash -c "cd /src/plom_server; ./docker_run.sh"
-    # command: plom-new-server
+    command: plom-new-server
 
     volumes:
       - plom_media:/exam/
