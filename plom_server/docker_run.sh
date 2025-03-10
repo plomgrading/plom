@@ -11,6 +11,9 @@ else
 	PORT=$PLOM_CONTAINER_PORT
 fi
 
+# DEPRECATION NOTICE: this might be deprecated, or at least we're trying to move away from
+# it as of March 2025.
+
 if ! python3 manage.py plom_database --check-for-database; then
 	echo "DOING A HOT START (we already have a database)"
 	echo "Issue #3299: Please note this merely checks for the *existence* of"
