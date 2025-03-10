@@ -33,11 +33,13 @@ font_size_for_forgiven_blurb = 36
 page_not_submitted_text = "Page Not Submitted"
 
 
-def create_system_bundle_of_substitute_pages() -> None:
+def create_system_bundle_of_substitute_pages() -> bool:
     """Create the system substitute pages and bundle database object.
 
-    If the substitutions bundle already exists, this does nothing, so it
-    safe to call it repeatedly.  TODO: would a bool return be more useful?
+    Returns:
+        True if the substitutions bundle and its constutuent images were
+        created.  False if they already existed (it is safe to call it
+        repeatedly.
 
     The call is "atomic": either both the bundle AND its constituent images
     are created or neither occurs.
@@ -51,16 +53,16 @@ def create_system_bundle_of_substitute_pages() -> None:
                 hash=system_substitute_images_bundle_hash,
                 _is_system=True,
             )
-            make_substitute_pages = True
         except IntegrityError:
-            # we must have made it previously
-            make_substitute_pages = False
-        if make_substitute_pages:
-            # ok, so we're making it, do all the images
-            assert bundle_obj.image_set.count() == 0
-            _create_all_substitute_pages(bundle_obj)
+            # it already exists; we must have already made it
+            return False
+
+        # We are making a new one, so make images within the same atomic block
+        assert bundle_obj.image_set.count() == 0
+        _create_all_substitute_pages(bundle_obj)
         # if we're *not* making a bundle (b/c it already exists) then no
         # action is required; let the transaction expire.
+    return True
 
 
 def _create_substitute_page_images_for_forgiveness_bundle() -> list[dict[str, Any]]:
