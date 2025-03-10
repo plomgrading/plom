@@ -927,9 +927,8 @@ fedora-django-tests:
     # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
     - pip install -U pytest
     - pip install .
-    - PYTHONPATH=. ./plom_server/scripts/launch_plom_demo_server.py --stop-after reports
-    - pip install .
-    - export PLOM_DATABASE_BACKEND=sqlite
+    - pip uninstall -y plom
+    - PYTHONPATH="." ./plom_server/scripts/launch_plom_demo_server.py --stop-after reports
     - python3 manage.py test
 
 
