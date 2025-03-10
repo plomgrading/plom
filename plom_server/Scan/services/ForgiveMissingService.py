@@ -25,18 +25,22 @@ from Papers.services import SpecificationService
 from Preparation.services import SourceService
 from ..services import ManageDiscardService, ManageScanService
 
-# The name of the bundle of substitute pages to use
-# when student's paper is missing pages
-# We need this since all images belong to bundles
-#
+# Info about the system bundle of substitute pages to use when a paper
+# is missing pages (needed b/c all images must belong to bundles)
 system_substitute_images_bundle_name = "__system_substitute_pages_bundle__"
 system_substitute_images_bundle_hash = "bundle_for_substitute_pages"
 font_size_for_forgiven_blurb = 36
 page_not_submitted_text = "Page Not Submitted"
 
 
-def create_system_bundle_of_substitute_pages():
+def create_system_bundle_of_substitute_pages() -> None:
     """Create the system substitute pages and bundle database object.
+
+    If the substitutions bundle already exists, this does nothing, so it
+    safe to call it repeatedly.  TODO: would a bool return be more useful?
+
+    The call is "atomic": either both the bundle AND its constituent images
+    are created or neither occurs.
 
     Warning: this can be rather slow for large number of pages / versions.
     """
@@ -63,11 +67,9 @@ def _create_substitute_page_images_for_forgiveness_bundle() -> list[dict[str, An
     """Create all the substitute page pixmaps for missing pages.
 
     Returns:
-        List of dicts of form {'page':page,
-        'version': version,
-        'name': suggested image filename,
-        'bytes': the bytes of the image saved as png
-        } - one such dict for each page/version.
+        List of dicts with keys ``page``, ``version``, ``name`` (a
+        suggested image file), ``bytes`` (the bytes of the image,
+        probably as PNG data).
     """
     version_list = SpecificationService.get_list_of_versions()
     page_list = SpecificationService.get_list_of_pages()  # 1-indexed
@@ -199,7 +201,14 @@ def _create_all_substitute_pages(sys_sub_bundle_obj: Bundle) -> None:
 
 
 def get_substitute_image(page_number: int, version: int) -> Image:
-    """Return the substitute Image-object for the given page/version."""
+    """Return the substitute Image-object for the given page/version.
+
+    Raises:
+        ObjectDoesNotExist: Specifically ``Bundle.DoesNotExist`` if the
+            the substitution bundle has not been built yet.
+        ObjectDoesNotExist: probably Image.DoesNotExist if the pgae number
+            or version are out of range, TODO: but this is not tested.
+    """
     bundle_obj = Bundle.objects.get(name=system_substitute_images_bundle_name)
     # bundle_order = version*number of pages + page_number
     n_pages = SpecificationService.get_n_pages()  # 1-indexed
@@ -258,10 +267,13 @@ def forgive_missing_fixed_page(
             " - there is nothing to forgive!"
         )
     image_obj = get_substitute_image(page_number, fixedpage_obj.version)
-    # create a discard page and then move it into place via assign_discard_page_to_fixed_page.
+    # create a discard page, move it into place via assign_discard_page_to_fixed_page
     discardpage_obj = DiscardPage.objects.create(
         image=image_obj,
-        discard_reason=f"System created page to susbstitue for paper {paper_number} page {page_number}",
+        discard_reason=(
+            "System-created page to substitute for"
+            f" paper {paper_number} page {page_number}"
+        ),
     )
     ManageDiscardService().assign_discard_page_to_fixed_page(
         user_obj, discardpage_obj.pk, paper_number, page_number
@@ -326,7 +338,7 @@ def get_substitute_page_info(paper_number: int, page_number: int) -> dict[str, A
 def get_list_of_all_missing_dnm_pages() -> list[dict[str, int]]:
     """Get list of missing do-not-mark pages from incomplete papers.
 
-    Returns: A list of dict of the form {'paper_number':foo, "page_number": bah}
+    Returns: A list of dicts with keys ``paper_number`` and ``page_number``.
     """
     incomplete_papers = ManageScanService().get_all_incomplete_test_papers()
     missing_dnm = []
