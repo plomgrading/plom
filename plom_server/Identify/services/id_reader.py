@@ -482,9 +482,16 @@ class IDBoxProcessorService:
     # thankfully cv2 has some typing that will take care of us passing
     # these images as np arrays.
     # see https://stackoverflow.com/questions/73260250/how-do-i-type-hint-opencv-images-in-python
+    # problem with cv2.typing - see MR 3050.
+    # comment out the cv2.typing.MatLike hint here.
+    # TODO - fix the cv2.typing issue in dev sometime.
     def get_digit_images(
-        self, ID_box: cv.typing.MatLike, num_digits: int
-    ) -> list[cv.typing.MatLike]:
+        # self, ID_box: cv.typing.MatLike, num_digits: int
+        # ) -> list[cv.typing.MatLike]:
+        self,
+        ID_box,
+        num_digits: int,
+    ):
         """Find the digit images and return them in a list.
 
         Args:
@@ -596,9 +603,11 @@ class IDBoxProcessorService:
         """
         debugdir = None
         id_page_file = Path(id_box_file)
-        ID_box: cv.typing.MatLike | None = self.resize_ID_box_and_extract_digit_strip(
-            id_page_file
-        )
+        # TODO - sort out cv.typing
+        # ID_box: cv.typing.MatLike | None = self.resize_ID_box_and_extract_digit_strip(
+        #     id_page_file
+        # )
+        ID_box = self.resize_ID_box_and_extract_digit_strip(id_page_file)
         if ID_box is None:
             return []
         if debug:
