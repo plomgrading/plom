@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import cv2 as cv
+import cv2.typing
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 from sklearn.ensemble import RandomForestClassifier
@@ -452,7 +453,7 @@ class IDBoxProcessorService:
 
     def resize_ID_box_and_extract_digit_strip(
         self, id_box_file: Path
-    ) -> cv.typing.MatLike | None:
+    ) -> cv2.typing.MatLike | None:
         """Extract the strip of digits from the ID box from the given image file."""
         # WARNING: contains many magic numbers - must be updated if the IDBox
         # template is changed.
