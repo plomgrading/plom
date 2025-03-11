@@ -209,7 +209,6 @@ push-to-docker-io:
 
 # to ensure the pypi job works, make sure we can package
 # TODO: we make these again during pypi push: better to use these artifacts?
-# TODO: Do we need to makemigrations here? (Issue #3826)
 make_package:
   image: python:3.12
   stage: build
@@ -448,7 +447,6 @@ no-question-numbers:
   allow_failure: true
 
 
-# TODO: why do we need to run makemigrations/migrate before tests? (Issue #3826)
 webplom_test:
   stage: test
   needs: ["container-image"]
@@ -457,7 +455,8 @@ webplom_test:
     - export PYTHONPATH=$PWD
     - python3 -m pip install coverage~=7.6.12
     - export PLOM_DATABASE_BACKEND=sqlite
-    - python3 manage.py makemigrations
+    # need to migrate before tests but probably not makemigrations (Issue #3826)
+    # python3 manage.py makemigrations
     - python3 manage.py migrate
     - coverage run --source="." manage.py test
     # -i ignores an error caused by openCV's config-3.py file
@@ -554,13 +553,9 @@ out-of-tree-scratch:
     - pip install -U pytest
     # TODO: python3-django doesn't work, unsure why, instead get from pip (Issue #3830)
     - pip install django
-    # important: we must have the migration 00001 files in place (Issue #3826)
     - pwd
     - ls
     # install twice, first for dependencies
-    - pip install .
-    - python3 manage.py makemigrations
-    # now install with migrations
     - pip install .
     - pwd
     - cd ${HOME}
