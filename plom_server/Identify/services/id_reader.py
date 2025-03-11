@@ -6,7 +6,6 @@
 # Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 
-from collections import defaultdict
 import json
 from pathlib import Path
 from typing import Any
@@ -215,11 +214,11 @@ class IDReaderService:
         ).prefetch_related("paper"):
             existing_prename_predictions[pred.paper.paper_number] = pred
         # find any existing predictions from these papers
-        existing_predictions = defaultdict(list)
+        existing_predictions = {}  # a dict of lists
         for pred in IDPrediction.objects.filter(
             paper__paper_number__in=paper_numbers
         ).prefetch_related("paper"):
-            existing_predictions[pred.paper.paper_number].append(pred)
+            existing_predictions.get(pred.paper.paper_number, []).append(pred)
 
         new_predictions = []
         predictions_to_update = []

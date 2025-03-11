@@ -6,7 +6,6 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Colin B. Macdonald
 
-from collections import defaultdict
 from typing import Any
 
 from django.db import transaction
@@ -44,11 +43,11 @@ class IDProgressService:
         id_info = {}
         students_from_classlist = ClasslistService.get_students()
         registered_sid = {student["student_id"] for student in students_from_classlist}
-        predicted_sid = defaultdict(list)
+        predicted_sid = {}  # this will be a dict of int:list[str]
         for idp in IDPrediction.objects.prefetch_related("paper").order_by(
             "student_id"
         ):
-            predicted_sid[idp.paper.paper_number].append(idp.student_id)
+            predicted_sid.get(idp.paper.paper_number, []).append(idp.student_id)
 
         # first get all the task info, then get the id page image pk if they exist
         for task in (
