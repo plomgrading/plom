@@ -2,14 +2,15 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Edith Coates
     Copyright (C) 2022-2023 Brennen Chiu
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2023 Julian Lapenna
     Copyright (C) 2023-2024 Andrew Rechnitzer
+    Copyright (C) 2025 Aidan Murphy
 -->
 {% load static %}
 <ul class="nav flex-column mt-2">
     <li class="nav-item">
-        <a class="nav-link" href="{% url 'profile' %}">
+        <a class="nav-link link-secondary" href="{% url 'profile' %}">
             {% if request.user.first_name %}
                 {{ request.user.first_name }}
             {% else %}
@@ -19,75 +20,76 @@
     </li>
     <ul style="list-style-type: none">
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'logout' %}">Log out</a>
+            <a class="nav-link link-secondary" href="{% url 'logout' %}">Log out</a>
         </li>
     </ul>
     {% if user_is_admin %}
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'users' %}">Manage Users</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="{% url 'password_reset' %}">Password Reset Link</a>
+            <a class="nav-link link-secondary" href="{% url 'users' %}">Manage Users</a>
         </li>
     {% elif user_is_manager %}
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'users' %}">Manage Users</a>
+            <a class="nav-link link-secondary" href="{% url 'users' %}">Manage Users</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'prep_landing' %}">Prepare Assessment</a>
+            <a class="nav-link link-secondary" href="{% url 'prep_landing' %}">Prepare Assessment</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'scan_overview' %}">Scanning</a>
+            <a class="nav-link link-secondary" href="{% url 'scan_overview' %}">Scanning</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'rubrics_landing' %}">Rubrics</a>
+            <a class="nav-link link-secondary" href="{% url 'rubrics_landing' %}">Rubrics</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'overview_landing' %}">Marking and IDing</a>
+            <a class="nav-link link-secondary" href="{% url 'overview_landing' %}">Marking and IDing</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'progress_user_info_home' %}">User progress</a>
+            <a class="nav-link link-secondary"
+               href="{% url 'progress_user_info_home' %}">Marker Progress</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'tools_landing' %}">Tools</a>
+            <a class="nav-link link-secondary" href="{% url 'tools_landing' %}">Tools</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'soln_home' %}">Solutions</a>
+            <a class="nav-link link-secondary" href="{% url 'soln_home' %}">Solutions</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'reassemble_pdfs' %}">Reassemble</a>
+            <a class="nav-link link-secondary" href="{% url 'reassemble_pdfs' %}">Reassemble</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'reports_landing' %}">Spreadsheets & Reports</a>
+            <a class="nav-link link-secondary" href="{% url 'reports_landing' %}">Spreadsheets & Reports</a>
         </li>
-        <li class="nav-item accordion accordion-flush">
-            <a class="nav-link" href="#development">In development</a>
+        <li class="nav-item">
+            <a class="nav-link link-secondary" href="#development">In development</a>
             <div id="development">
                 <ul style="list-style-type: none">
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'tags_landing' %}">Tags</a>
+                        <a class="nav-link link-secondary" href="{% url 'tags_landing' %}">Tags</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'qtags_landing' %}">Question Tags</a>
+                        <a class="nav-link link-secondary" href="{% url 'qtags_landing' %}">Question Tags</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link link-secondary" href="{% url 'server_status' %}">Server status</a>
                     </li>
                 </ul>
             </div>
         </li>
     {% elif user_is_scanner %}
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'scan_overview' %}">Scanning</a>
+            <a class="nav-link link-secondary" href="{% url 'scan_overview' %}">Scanning</a>
         </li>
     {% elif user_is_marker %}
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'mark_papers' %}">Mark papers</a>
+            <a class="nav-link link-secondary" href="{% url 'mark_papers' %}">Mark papers</a>
         </li>
         {% if user_is_lead_marker %}
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'overview_landing' %}">Progress overview</a>
+                <a class="nav-link link-secondary" href="{% url 'overview_landing' %}">Progress overview</a>
             </li>
         {% else %}
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'progress_mark_home' %}">Marking progress</a>
+                <a class="nav-link link-secondary" href="{% url 'progress_mark_home' %}">Marking progress</a>
             </li>
         {% endif %}
     {% endif %}

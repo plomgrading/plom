@@ -1,23 +1,25 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 
+from importlib import resources
 from math import sqrt
-import sys
 
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
-
-from PIL import Image
-from PIL import ImageChops
+from PIL import Image, ImageChops
 
 import plom.scan
 from plom.scan import rotate_bitmap
-from plom.scan.rotate import pil_load_with_jpeg_exif_rot_applied
-from plom.scan.rotate import rot_angle_from_jpeg_exif_tag
+from plom.scan.rotate import (
+    pil_load_with_jpeg_exif_rot_applied,
+    rot_angle_from_jpeg_exif_tag,
+)
+
+
+def _PIL_Image_open(resource):
+    # mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
+    # assert isinstance(resource, (pathlib.Path, resources.abc.Traversable))
+    return Image.open(resource)
 
 
 def relative_error(x, y):
@@ -99,7 +101,7 @@ def test_rotate_png_ccw(tmp_path) -> None:
 def test_rotate_jpeg_cw(tmp_path) -> None:
     # make a lowish-quality jpeg and extract to bytes
     f = tmp_path / "rgb.jpg"
-    im = Image.open(resources.files(plom.scan) / "test_rgb.png")
+    im = _PIL_Image_open(resources.files(plom.scan) / "test_rgb.png")
     im.save(f, "JPEG", quality=2, optimize=True)
     with open(f, "rb") as fh:
         b = fh.read()
@@ -121,7 +123,7 @@ def test_rotate_jpeg_cw(tmp_path) -> None:
 def test_rotate_jpeg_ccw(tmp_path) -> None:
     # make a lowish-quality jpeg and extract to bytes
     f = tmp_path / "rgb.jpg"
-    im = Image.open(resources.files(plom.scan) / "test_rgb.png")
+    im = _PIL_Image_open(resources.files(plom.scan) / "test_rgb.png")
     im.save(f, "JPEG", quality=2, optimize=True)
     with open(f, "rb") as fh:
         b = fh.read()
@@ -143,7 +145,7 @@ def test_rotate_jpeg_ccw(tmp_path) -> None:
 def test_rotate_jpeg_lossless_cw(tmp_path) -> None:
     # make a lowish-quality jpeg and extract to bytes
     orig = tmp_path / "rgb.jpg"
-    im = Image.open(resources.files(plom.scan) / "test_rgb.png")
+    im = _PIL_Image_open(resources.files(plom.scan) / "test_rgb.png")
     im.save(orig, "JPEG", quality=2, optimize=True)
     with open(orig, "rb") as fh:
         b = fh.read()
@@ -178,7 +180,7 @@ def test_rotate_jpeg_lossless_cw(tmp_path) -> None:
 def test_rotate_jpeg_lossless_ccw(tmp_path) -> None:
     # make a lowish-quality jpeg and extract to bytes
     orig = tmp_path / "rgb.jpg"
-    im = Image.open(resources.files(plom.scan) / "test_rgb.png")
+    im = _PIL_Image_open(resources.files(plom.scan) / "test_rgb.png")
     im.save(orig, "JPEG", quality=2, optimize=True)
     with open(orig, "rb") as fh:
         b = fh.read()
@@ -201,7 +203,7 @@ def test_rotate_jpeg_lossless_ccw(tmp_path) -> None:
 def test_rotate_exif_read_back(tmp_path) -> None:
     # make jpeg and extract to bytes
     orig = tmp_path / "rgb.jpg"
-    im = Image.open(resources.files(plom.scan) / "test_rgb.png")
+    im = _PIL_Image_open(resources.files(plom.scan) / "test_rgb.png")
     im.save(orig, "JPEG", quality=90, optimize=True)
     with open(orig, "rb") as fh:
         jpg_bytes = fh.read()
@@ -231,7 +233,7 @@ def test_rotate_exif_read_back(tmp_path) -> None:
 def test_rotate_default_ccw(tmp_path) -> None:
     # make jpeg and extract to bytes
     orig = tmp_path / "rgb.jpg"
-    im = Image.open(resources.files(plom.scan) / "test_rgb.png")
+    im = _PIL_Image_open(resources.files(plom.scan) / "test_rgb.png")
     im.save(orig, "JPEG", quality=90, optimize=True)
     with open(orig, "rb") as fh:
         jpg_bytes = fh.read()

@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from django.shortcuts import render
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, Http404
 from django.http import FileResponse, StreamingHttpResponse
 from django.urls import reverse
 from django.utils.text import slugify
@@ -56,6 +56,12 @@ class ReassemblePapersView(ManagerRequiredView):
         n_complete = sum(
             [1 for x in all_paper_status if x["reassembled_status"] == "Complete"]
         )
+        min_paper_number = min(
+            [X["paper_num"] for X in all_paper_status if X["scanned"]], default=None
+        )
+        max_paper_number = max(
+            [X["paper_num"] for X in all_paper_status if X["scanned"]], default=None
+        )
 
         context.update(
             {
@@ -67,6 +73,8 @@ class ReassemblePapersView(ManagerRequiredView):
                 "n_errors": n_errors,
                 "n_complete": n_complete,
                 "n_queued": n_queued,
+                "min_paper_number": min_paper_number,
+                "max_paper_number": max_paper_number,
             }
         )
         return render(request, "Finish/reassemble_paper_pdfs.html", context=context)
@@ -105,6 +113,40 @@ class StartAllReassembly(ManagerRequiredView):
         # https://github.com/sandes/zipfly/blob/master/examples/streaming_django.py
         short_name = slugify(SpecificationService.get_shortname())
         zgen = ReassembleService().get_zipfly_generator(short_name)
+        response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
+        response["Content-Disposition"] = (
+            f"attachment; filename={short_name}_reassembled.zip"
+        )
+        return response
+
+
+class DownloadRangeOfReassembled(ManagerRequiredView):
+    """Download some reassembled papers from a specified range."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        """Get method streams a zipfile containing reassembled papers from a specified range.
+
+        If there are no reassembled papers, then return a 404.
+        """
+        last_paper = request.GET.get("last_paper", None)
+        first_paper = request.GET.get("first_paper", None)
+        # using zipfly python package.  see django example here
+        # https://github.com/sandes/zipfly/blob/master/examples/streaming_django.py
+        short_name = slugify(SpecificationService.get_shortname())
+        if first_paper:
+            short_name += f"_from_{first_paper}"
+        if last_paper:
+            short_name += f"_to_{last_paper}"
+        try:
+            zgen = ReassembleService().get_zipfly_generator(
+                short_name, first_paper=first_paper, last_paper=last_paper
+            )
+        except ValueError as err:
+            # TODO: how to do we do other errors other than 404?
+            # return HttpResponse(err, status=400)
+            # return HttpResponseBadRequest(err)
+            raise Http404(err)
+
         response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
         response["Content-Disposition"] = (
             f"attachment; filename={short_name}_reassembled.zip"

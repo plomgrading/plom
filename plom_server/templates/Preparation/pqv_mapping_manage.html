@@ -2,7 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2024 Andrew Rechnitzer
     Copyright (C) 2022 Edith Coates
-    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -17,293 +17,298 @@
         <div>
             <a class="btn btn-primary" href="{% url 'prep_landing' %}">Return to assessment preparation page</a>
         </div>
-        {% if no_spec %}
-            <div class="alert alert-warning">
-                <p>There is no assessment specification.</p>
-            </div>
-        {% else %}
-            <div class="alert alert-primary">
+        <div class="alert alert-primary pb-0">
+            <p>
+                Assessment specification indicates:
+                <ul>
+                    {% if question_labels_html_fix %}
+                        <li>
+                            The following questions will all be taken from source-version 1:
+                            {{ question_labels_html_fix|safe }}
+                        </li>
+                    {% endif %}
+                    {% if question_labels_html_shuffle %}
+                        <li>
+                            The following questions will be selected randomly from all source-versions:
+                            {{ question_labels_html_shuffle|safe }}
+                        </li>
+                    {% endif %}
+                </ul>
+            </p>
+            {% if student_list_present %}
                 <p>
-                    Assessment specification indicates:
-                    <ul>
-                        {% if question_labels_html_fix %}
-                            <li>
-                                The following questions will all be taken from source-version 1:
-                                {{ question_labels_html_fix|safe }}
-                            </li>
-                        {% endif %}
-                        {% if question_labels_html_shuffle %}
-                            <li>
-                                The following questions will be selected randomly from all source-versions:
-                                {{ question_labels_html_shuffle|safe }}
-                            </li>
-                        {% endif %}
-                    </ul>
-                </p>
-                {% if student_list_present %}
-                    <p>
-                        Student list present, contains {{ number_of_students }} entries
-                        {% if prenaming %}
-                            of which papers {{ prenamed_papers_list }} will be prenamed
-                        {% else %}
-                            without any prenamed papers
-                        {% endif %}
-                    {% endif %}
-                </div>
-                {% if chore_in_progress %}
-                    {% if populate_in_progress %}
-                        <div class="alert alert-info">
-                            <p>
-                                {% if chore_message %}
-                                    Database is currently being populated with papers: {{ chore_message }}
-                                {% else %}
-                                    Database is currently being populated with papers.
-                                {% endif %}
-                            </p>
-                            <p>
-                                Please reload page
-                                <button class="btn btn-info" onClick="window.location.reload();">
-                                    <i class="bi bi-arrow-clockwise"></i>
-                                </button>
-                            </p>
-                        </div>
-                    {% endif %}
-                    {% if evacuate_in_progress %}
-                        <div class="alert alert-warning">
-                            <p>
-                                {% if chore_message %}
-                                    Papers are currently being removed from the database: {{ chore_message }}
-                                {% else %}
-                                    Papers are currently being removed from the database.
-                                {% endif %}
-                            </p>
-                            <p>
-                                Please reload page
-                                <button class="btn btn-info" onClick="window.location.reload();">
-                                    <i class="bi bi-arrow-clockwise"></i>
-                                </button>
-                            </p>
-                        </div>
-                    {% endif %}
-                {% else %}
-                    {% if pqv_mapping_present %}
-                        <div class="alert alert-primary">
-                            <span>Question-version mapping present with {{ pqv_number_rows }} papers:</span>
-                            <a href="{% url 'prep_qvmapping_download' %}"
-                               download="qv_map.csv"
-                               class="btn btn-info">download</a>
-                            <button class="btn btn-danger"
-                                    hx-delete="{% url 'prep_qvmapping_delete' %}"
-                                    hx-confirm="Are you sure you want to delete the question-version map and clean the database?"
-                                    hx-target="body"
-                                    hx-swap="outerHTML">delete question-version map and papers</button>
-                        </div>
-                        <div>
-                            <table class="table table-striped border">
-                                <thead>
-                                    <th>Paper number</th>
-                                    {% if prenaming %}<th>Prename ID (if assigned)</th>{% endif %}
-                                    {% for qi, qstr, qlabel in question_labels_html %}<th>{{ qlabel|safe }}</th>{% endfor %}
-                                </thead>
-                                <tbody>
-                                    {% for paper_number, info in pqv_table.items %}
-                                        <tr>
-                                            <td>{{ paper_number }}</td>
-                                            {% if prenaming %}
-                                                <td>
-                                                    {% if info.prename %}
-                                                        {{ info.prename.0 }}: {{ info.prename.1 }}
-                                                    {% else %}
-                                                        &bull;
-                                                    {% endif %}
-                                                </td>
-                                            {% endif %}
-                                            {% for x in info.qvlist %}<td>{{ x }}</td>{% endfor %}
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
+                    Student list present, contains {{ number_of_students }} entries
+                    {% if prenaming %}
+                        of which papers {{ prenamed_papers_list }} will be prenamed
                     {% else %}
-                        <div class="card">
-                            <div class="card-body">
-                                <h4 class="card-title">Generate question-version map</h4>
-                                <div class="card-text">
-                                    {% if student_list_present %}
-                                        <details>
-                                            <summary>Suggested minimum number of papers to produce = {{ min_number_to_produce }}</summary>
-                                            <p>
-                                                <ul>
-                                                    <li>
-                                                        Student list present, contains {{ number_of_students }} entries
-                                                        {% if prenaming %}
-                                                            of which papers {{ prenamed_papers_list }} will be prenamed
-                                                        {% else %}
-                                                            without any prenamed papers
-                                                        {% endif %}
-                                                    </li>
-                                                    <li>
-                                                        We recommend that you produce <em>the maximum</em> of the following numbers
-                                                        <ul>
-                                                            <li>110% of the number of students in your classlist = {{ number_times_1dot1 }}</li>
-                                                            <li>the number of students in your classlist plus 20 = {{ number_plus_twenty }}</li>
-                                                            {% if prenaming %}<li>the paper-number of the last prenamed paper plus 10 = {{ last_plus_ten }}</li>{% endif %}
-                                                        </ul>
-                                                    </li>
-                                                    <li>
-                                                        You do not have to print all of the resulting
-                                                        papers. Rather, this ensures that you will have plenty
-                                                        of spare papers <em>if you need them</em>
-                                                    </li>
-                                                </ul>
-                                            </p>
-                                        </details>
-                                    </p>
-                                {% else %}
-                                    <p>
-                                        No student list present
-                                        <details>
-                                            <summary>Suggested minimum number of papers to produce = {{ min_number_to_produce }}</summary>
-                                            <ul>
-                                                <li>When you do not supply a classlist, this defaults to 20.</li>
-                                                <li>
-                                                    However, we recommend that you produce the maximum of the following numbers
-                                                    <ul>
-                                                        <li>110% of the number of students in your class</li>
-                                                        <li>the number of students in your class plus 20</li>
-                                                    </ul>
-                                                </li>
-                                                <li>
-                                                    You do not have to print all of the resulting
-                                                    papers. Rather, this ensures that you will have plenty
-                                                    of spare papers <em>if you need them</em>.
-                                                </li>
-                                            </ul>
-                                        </details>
-                                    </p>
-                                {% endif %}
-                                <div class="card-text">
-                                    <form enctype="multipart/form-data"
-                                          id="form"
-                                          method="post"
-                                          action="{% url 'prep_qvmapping' %}">
-                                        {% csrf_token %}
-                                        <label for="inp_ntp">Number to produce</label>
-                                        <input id="inp_ntp"
-                                               class="form-input"
-                                               type="number"
-                                               name="number_to_produce"
-                                               min="1"
-                                               value="{{ min_number_to_produce }}"
-                                               max="9999"
-                                               required />
-                                        <!-- TODO: this form has a lot of br in it :( -->
-                                        <br />
-                                        <br />
-                                        <details>
-                                            <summary>First paper:</summary>
-                                            <p>
-                                                <ul>
-                                                    <li>
-                                                        Typically the first paper has paper-number <q>1</q>, but you can choose to start from zero, or any other positive integer.
-                                                    </li>
-                                                    <li>
-                                                        The system will then generate a contiguous block of papers starting from your first paper, and of the chosen length.
-                                                    </li>
-                                                </ul>
-                                            </p>
-                                        </details>
-                                        <ul>
-                                            <input type="radio" id="start1" name="first_paper_num" value="1" checked />
-                                            <label for="start1">Start at number one (default)</label>
-                                            <br />
-                                            <input type="radio" id="startn" name="first_paper_num" value="n" />
-                                            <label for="startn">Start at number</label>
-                                            {% if prenaming %}
-                                                <input id="startn_value"
-                                                       type="number"
-                                                       name="startn_value"
-                                                       min="0"
-                                                       max="{{ first_prenamed_paper }}">
-                                                &mdash; note that the first prenamed paper is {{ first_prenamed_paper }}
+                        without any prenamed papers
+                    {% endif %}
+                {% endif %}
+            </div>
+            {% if chore_status == "Error" %}
+                <div class="alert alert-danger pb-0">
+                    <p>
+                        Background chore: {{ chore_status }}
+                        &nbsp;&mdash;&nbsp;
+                        {{ chore_message }}
+                    </p>
+                </div>
+            {% elif chore_status == "Complete" %}
+                <div class="alert alert-success pb-0">
+                    <p>
+                        Background chore: {{ chore_status }}
+                        &nbsp;&mdash;&nbsp;
+                        {{ chore_message }}
+                    </p>
+                </div>
+            {% endif %}
+            <!-- all other statuses should be encapsulated by the *_in_progress -->
+            {% if populate_in_progress %}
+                <div class="alert alert-info">
+                    <p>
+                        {% if chore_message %}
+                            Database is currently being populated with papers: {{ chore_message }}
+                        {% else %}
+                            Database is currently being populated with papers.
+                        {% endif %}
+                    </p>
+                    <p>
+                        Please reload page
+                        <button class="btn btn-info" onClick="window.location.reload();">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </p>
+                </div>
+            {% elif evacuate_in_progress %}
+                <div class="alert alert-warning">
+                    <p>
+                        {% if chore_message %}
+                            Papers are currently being removed from the database: {{ chore_message }}
+                        {% else %}
+                            Papers are currently being removed from the database.
+                        {% endif %}
+                    </p>
+                    <p>
+                        Please reload page
+                        <button class="btn btn-info" onClick="window.location.reload();">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </p>
+                </div>
+            {% elif pqv_mapping_present %}
+                <div class="alert alert-primary">
+                    <span>Question-version mapping present with {{ pqv_number_rows }} papers:</span>
+                    <a href="{% url 'prep_qvmapping_download' %}" class="btn btn-info">download</a>
+                    <button class="btn btn-danger"
+                            hx-delete="{% url 'prep_qvmapping_delete' %}"
+                            hx-confirm="Are you sure you want to delete the question-version map and clean the database?"
+                            hx-target="body"
+                            hx-swap="outerHTML">delete question-version map and papers</button>
+                </div>
+                <div>
+                    <table class="table table-striped border">
+                        <thead>
+                            <th>Paper number</th>
+                            {% if prenaming %}<th>Prename ID (if assigned)</th>{% endif %}
+                            {% for qi, qstr, qlabel in question_labels_html %}<th>{{ qlabel|safe }}</th>{% endfor %}
+                        </thead>
+                        <tbody>
+                            {% for paper_number, info in pqv_table.items %}
+                                <tr>
+                                    <td>{{ paper_number }}</td>
+                                    {% if prenaming %}
+                                        <td>
+                                            {% if info.prename %}
+                                                {{ info.prename.0 }}: {{ info.prename.1 }}
                                             {% else %}
-                                                <input id="startn_value"
-                                                       type="number"
-                                                       name="startn_value"
-                                                       min="0"
-                                                       max="9999">
+                                                &bull;
                                             {% endif %}
-                                            <br />
-                                            <input type="radio" id="start0" name="first_paper_num" value="0" />
-                                            <label for="start0">Start at number zero (warning: experimental!)</label>
-                                        </ul>
-                                        <button class="btn btn-primary" type="submit">Build question-version map and populate database</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-body">
-                            <h4 class="card-title">Upload a question-version map (advanced)</h4>
-                            <div class="card-text">
-                                <p>
-                                    <details>
-                                        <summary>
-                                            You can also upload a csv-file containing a question-version map. This is not recommended unless you really know what you are doing.
-                                        </summary>
+                                        </td>
+                                    {% endif %}
+                                    {% for x in info.qvlist %}<td>{{ x }}</td>{% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Generate question-version map</h4>
+                        <div class="card-text">
+                            {% if student_list_present %}
+                                <details>
+                                    <summary>Suggested minimum number of papers to produce = {{ min_number_to_produce }}</summary>
+                                    <p>
                                         <ul>
                                             <li>
-                                                The file must contain
+                                                Student list present, contains {{ number_of_students }} entries
+                                                {% if prenaming %}
+                                                    of which papers {{ prenamed_papers_list }} will be prenamed
+                                                {% else %}
+                                                    without any prenamed papers
+                                                {% endif %}
+                                            </li>
+                                            <li>
+                                                We recommend that you produce <em>the maximum</em> of the following numbers
                                                 <ul>
-                                                    <li>
-                                                        a <tt>paper_number</tt> column
-                                                    </li>
-                                                    <li>
-                                                        {{ question_indices|length }} columns with headers
-                                                        <tt>q{{ question_indices|first }}.version</tt>
-                                                        up to
-                                                        <tt>q{{ question_indices|last }}.version</tt>
-                                                    </li>
-                                                    {% if student_list_present %}
-                                                        <li>
-                                                            Your version map should be compatible with your uploaded classlist. It should contain at least one row for each student, namely {{ number_of_students }} rows. We recommend that it contain at least  {{ min_number_to_produce }} rows.
-                                                        </li>
-                                                    {% endif %}
-                                                    {% if prenaming %}
-                                                        <li>
-                                                            You have enabled prenaming; your version map must contain entries for each <em>paper_number</em> given in your classlist. The following papers are prenamed: {{ prenamed_papers_list }}.
-                                                        </li>
-                                                    {% endif %}
-                                                    <li>
-                                                        You may experience problems with non-contiguous <tt>paper_number</tt>, see  <a href="https://gitlab.com/plom/plom/-/issues/1745">Plom Issue #1745</a>.
-                                                    </li>
+                                                    <li>110% of the number of students in your classlist = {{ number_times_1dot1 }}</li>
+                                                    <li>the number of students in your classlist plus 20 = {{ number_plus_twenty }}</li>
+                                                    {% if prenaming %}<li>the paper-number of the last prenamed paper plus 10 = {{ last_plus_ten }}</li>{% endif %}
                                                 </ul>
                                             </li>
+                                            <li>
+                                                You do not have to print all of the resulting
+                                                papers. Rather, this ensures that you will have plenty
+                                                of spare papers <em>if you need them</em>
+                                            </li>
                                         </ul>
-                                    </details>
-                                </p>
-                                <form enctype="multipart/form-data"
-                                      id="form"
-                                      method="post"
-                                      action="{% url 'prep_qvmapping_upload' %}">
-                                    {% csrf_token %}
-                                    <div>
-                                        <input type="file" accept=".csv" name="pqvmap_csv" required />
-                                        <button class="btn btn-primary" type="submit">upload</button>
-                                    </div>
-                                </form>
-                            </div>
+                                    </p>
+                                </details>
+                            </p>
+                        {% else %}
+                            <p>
+                                No student list present
+                                <details>
+                                    <summary>Suggested minimum number of papers to produce = {{ min_number_to_produce }}</summary>
+                                    <ul>
+                                        <li>When you do not supply a classlist, this defaults to 20.</li>
+                                        <li>
+                                            However, we recommend that you produce the maximum of the following numbers
+                                            <ul>
+                                                <li>110% of the number of students in your class</li>
+                                                <li>the number of students in your class plus 20</li>
+                                            </ul>
+                                        </li>
+                                        <li>
+                                            You do not have to print all of the resulting
+                                            papers. Rather, this ensures that you will have plenty
+                                            of spare papers <em>if you need them</em>.
+                                        </li>
+                                    </ul>
+                                </details>
+                            </p>
+                        {% endif %}
+                        <div class="card-text">
+                            <form enctype="multipart/form-data"
+                                  id="form"
+                                  method="post"
+                                  action="{% url 'prep_qvmapping' %}">
+                                {% csrf_token %}
+                                <label for="inp_ntp">Number to produce</label>
+                                <input id="inp_ntp"
+                                       class="form-input"
+                                       type="number"
+                                       name="number_to_produce"
+                                       min="1"
+                                       value="{{ min_number_to_produce }}"
+                                       max="9999"
+                                       required />
+                                <!-- TODO: this form has a lot of br in it :( -->
+                                <br />
+                                <br />
+                                <details>
+                                    <summary>First paper:</summary>
+                                    <p>
+                                        <ul>
+                                            <li>
+                                                Typically the first paper has paper-number <q>1</q>, but you can choose to start from zero, or any other positive integer.
+                                            </li>
+                                            <li>
+                                                The system will then generate a contiguous block of papers starting from your first paper, and of the chosen length.
+                                            </li>
+                                        </ul>
+                                    </p>
+                                </details>
+                                <ul>
+                                    <input type="radio" id="start1" name="first_paper_num" value="1" checked />
+                                    <label for="start1">Start at number one (default)</label>
+                                    <br />
+                                    <input type="radio" id="startn" name="first_paper_num" value="n" />
+                                    <label for="startn">Start at number</label>
+                                    {% if prenaming %}
+                                        <input id="startn_value"
+                                               type="number"
+                                               name="startn_value"
+                                               min="0"
+                                               max="{{ first_prenamed_paper }}">
+                                        &mdash; note that the first prenamed paper is {{ first_prenamed_paper }}
+                                    {% else %}
+                                        <input id="startn_value"
+                                               type="number"
+                                               name="startn_value"
+                                               min="0"
+                                               max="9999">
+                                    {% endif %}
+                                    <br />
+                                    <input type="radio" id="start0" name="first_paper_num" value="0" />
+                                    <label for="start0">Start at number zero (warning: experimental!)</label>
+                                </ul>
+                                <button class="btn btn-primary" type="submit">Build question-version map and populate database</button>
+                            </form>
                         </div>
                     </div>
-                {% endif %}
-            {% endif %}
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Upload a question-version map (advanced)</h4>
+                    <div class="card-text">
+                        <p>
+                            <details>
+                                <summary>
+                                    You can also upload a csv-file containing a question-version map. This is not recommended unless you really know what you are doing.
+                                </summary>
+                                <ul>
+                                    <li>
+                                        The file must contain
+                                        <ul>
+                                            <li>
+                                                a <tt>paper_number</tt> column
+                                            </li>
+                                            <li>
+                                                {{ question_indices|length }} columns with headers
+                                                <tt>q{{ question_indices|first }}.version</tt>
+                                                up to
+                                                <tt>q{{ question_indices|last }}.version</tt>
+                                            </li>
+                                            {% if student_list_present %}
+                                                <li>
+                                                    Your version map should be compatible with your uploaded classlist. It should contain at least one row for each student, namely {{ number_of_students }} rows. We recommend that it contain at least  {{ min_number_to_produce }} rows.
+                                                </li>
+                                            {% endif %}
+                                            {% if prenaming %}
+                                                <li>
+                                                    You have enabled prenaming; your version map must contain entries for each <em>paper_number</em> given in your classlist. The following papers are prenamed: {{ prenamed_papers_list }}.
+                                                </li>
+                                            {% endif %}
+                                            <li>
+                                                You may experience problems with non-contiguous <tt>paper_number</tt>, see  <a href="https://gitlab.com/plom/plom/-/issues/1745">Plom Issue #1745</a>.
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </details>
+                        </p>
+                        <form enctype="multipart/form-data"
+                              id="form"
+                              method="post"
+                              action="{% url 'prep_qvmapping_upload' %}">
+                            {% csrf_token %}
+                            <div>
+                                <input type="file" accept=".csv" name="pqvmap_csv" required />
+                                <button class="btn btn-primary" type="submit">upload</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         {% endif %}
     </div>
     {% if populate_in_progress or evacuate_in_progress %}
         <script>
-  // reload page after 2 sec
-setTimeout(function () { window.location.reload(1); }, 5000);
+            // reload page after 2 sec
+            setTimeout(function () { window.location.reload(1); }, 5000);
         </script>
     {% endif %}
 {% endblock main_content %}

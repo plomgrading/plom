@@ -2,20 +2,18 @@
 /* Copyright (C) 2022 Edith Coates */
 /* Copyright (C) 2022-2023 Brennen Chiu */
 /* Copyright (C) 2023 Andrew Rechnitzer */
+/* Copyright (C) 2024-2025 Colin B. Macdonald */
 
+/* Bootstrap classes should be used instead of custom CSS
+ *
+ * TODO: each thing here should come with a brief comment about why its
+ * here.
+ *
+ * Avoid hardcoded colours; exceptions should be carefully commented.
+ */
 
+/* prevents flicker during page load of some pages using Alpine */
 [x-cloak] { display: none !important; }
-
-div.list-group {
-    --bs-list-group-bg: #F5F6FA;
-    --bs-list-group-action-hover-bg: #dadce2;
-    margin-right: 10px;
-
-}
-
-div.list-group-item {
-    border-bottom: 0;
-}
 
 div.is_pdf_thumbnail {
     width: 10rem;
@@ -26,41 +24,12 @@ div.is_pdf_thumbnail:hover {
     opacity: 0.5;
 }
 
-
-.nav-link {
-    color: black;
-}
+/* Customization of the left-hand/popup menu bar */
 .nav-link:hover {
     text-decoration: underline;
 }
 
-a.list-group-item {
-    border-bottom: 0;
-}
-
-p.is_test_spec_nav_text {
-    margin: 0;
-    margin-right: 20px;
-}
-
-
-a.btn.btn-primary.btn-lg {
-    color: black;
-}
-
-.btn-primary:focus {
-    box-shadow: 0 0 0 .2rem #282828 !important;
-}
-
-.form-control:focus {
-    box-shadow: 0 0 0 .2rem #AD9CFF !important;
-}
-
-.is_sidebar_link {
-    text-align: center;
-}
-
-
+/* TODO: document what this is for */
 .offcanvas-backdrop {
     width: 100%;
     height: 100%;

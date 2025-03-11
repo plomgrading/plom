@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023, 2025 Colin B. Macdonald
 
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -13,7 +13,6 @@ from Papers.services import PaperInfoService
 class SpecBaseView(ManagerRequiredView):
     def dispatch(self, request, *args, **kwargs):
         """Redirect to the assessment preparation page if the Papers database is already populated."""
-        paper_info = PaperInfoService()
-        if paper_info.is_paper_database_populated():
+        if PaperInfoService.is_paper_database_populated():
             return HttpResponseRedirect(reverse("prep_landing"))
         return super().dispatch(request, *args, **kwargs)

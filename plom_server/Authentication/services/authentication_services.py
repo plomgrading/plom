@@ -1,15 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
-from __future__ import annotations
-
+import csv
 import os
+from pathlib import Path
 
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction, IntegrityError
 from django.http import HttpRequest
 from django.utils.encoding import force_bytes
@@ -78,17 +79,22 @@ class AuthenticationServices:
 
         Raises:
             ObjectDoesNotExist: no such group.
+            ValueError: illegal user group received
             IntegrityError: user already exists; or perhaps a nearby one
                 does, such as one that differs only in case.
         """
+        if group_name == "admin":
+            raise ValueError(
+                f"cannot create a user belonging to the {group_name} group."
+            )
+
+        groups = [Group.objects.get(name=group_name)]
+        # some users belong to more than one group.
         if group_name == "manager":
-            # special case, maybe should call create_manager_user instead
-            groups = [
-                Group.objects.get(name=group_name),
-                Group.objects.get(name="scanner"),
-            ]
-        else:
-            groups = [Group.objects.get(name=group_name)]
+            # maybe should call create_manager_user instead
+            groups.append(Group.objects.get(name="scanner"))
+        elif group_name == "lead_marker":
+            groups.append(Group.objects.get(name="marker"))
 
         # if username that matches in case exists, fail.  Note that doesn't seem
         # to get raises by the call to "create_user" although it DOES get flagged
@@ -100,10 +106,8 @@ class AuthenticationServices:
                 f'username "{username}" already exists or differs only in case'
             )
 
-        User.objects.create_user(
-            username=username, email=email, password=None
-        ).groups.add(*groups)
-        user = User.objects.get(username=username)
+        user = User.objects.create_user(username=username, email=email, password=None)
+        user.groups.add(*groups)
         user.is_active = False
         user.save()
 
@@ -145,6 +149,52 @@ class AuthenticationServices:
                 manager.is_active = False
             manager.groups.add(manager_group, scanner_group)
             manager.save()
+
+    def create_users_from_csv(self, f: Path | str | bytes) -> list[dict[str, str]]:
+        """Creates multiple users from a .csv file.
+
+        This is an atomic operation: either all users are created or all fail.
+
+        Args:
+            f: a path to the .csv file, or the bytes of a .csv file.
+
+        Returns:
+            A list of dicts containing information for each user.
+
+        Raises:
+            KeyError: .csv file is missing required fields: `username`;`usergroup`.
+            IntegrityError: attempted to create a user that already exists.
+            ObjectDoesNotExist: specified usergroup doesn't exist.
+        """
+        if isinstance(f, bytes):
+            new_user_list = list(csv.DictReader(f.decode("utf-8").splitlines()))
+            _filename = "csv file"
+        else:
+            _filename = str(f)
+            with open(f) as csvfile:
+                new_user_list = list(csv.DictReader(csvfile))
+
+        required_fields = set(["username", "usergroup"])
+        if not required_fields.issubset(new_user_list[0].keys()):
+            raise KeyError(
+                f"{_filename} is missing required fields,"
+                f" it must contain: {required_fields}"
+            )
+
+        # either all succeed or all fail
+        with transaction.atomic():
+            for idx, user_dict in enumerate(new_user_list):
+                group = user_dict["usergroup"]
+                try:
+                    self.create_user_and_add_to_group(user_dict["username"], group)
+                except Group.DoesNotExist as e:
+                    raise ObjectDoesNotExist(
+                        f'Error near row {idx + 1}: Group "{group}" does not exist? {e}'
+                    ) from e
+                user = User.objects.get(username=user_dict["username"])
+                user_dict["reset_link"] = self.generate_link(user)
+
+        return new_user_list
 
     def generate_list_of_funky_usernames(
         self, group_name: str, num_users: int
@@ -201,26 +251,28 @@ class AuthenticationServices:
             Dictionary of username to password reset link.
         """
         links_dict = {}
+        request_domain = get_current_site(request).domain
         for username in username_list:
             user = User.objects.get(username=username)
-            links_dict[username] = self.generate_link(request, user)
+            links_dict[username] = self.generate_link(user, request_domain)
         return links_dict
 
     @transaction.atomic
-    def generate_link(self, request: HttpRequest, user: User) -> str:
+    def generate_link(self, user: User, hostname: str = "") -> str:
         """Generate a password reset link for a user.
 
         Args:
-            request: The HTTP request object.
             user: The user object for whom the password reset link is
                 generated.
+            hostname: If the server cannot find a domain while constructing
+                the link, this variable will be used as the domain.
 
         Returns:
             The generated password reset link as a string.
 
-        See :method:`get_base_link` for details about how to influence this link,
+        See :method:`get_base_link` for details about how to influence this link.
         """
-        baselink = self.get_base_link(default_host=get_current_site(request).domain)
+        baselink = self.get_base_link(default_host=hostname)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
         link = baselink + f"reset/{uid}/{token}"

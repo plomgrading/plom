@@ -1,16 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Bryan Tanady
 
-from __future__ import annotations
-
 import statistics
-from typing import Any, Dict, List, Optional
-from numpy import histogram
+from typing import Any
 
 import arrow
+from numpy import histogram
 
 from django.db import transaction
 
@@ -61,8 +59,8 @@ class MarkingStatsService:
 
     @transaction.atomic
     def get_basic_marking_stats(
-        self, question: int, *, version: Optional[int] = None
-    ) -> Dict[str, Any]:
+        self, question: int, *, version: int | None = None
+    ) -> dict[str, Any]:
         """Send back current marking statistics for the given question + version.
 
         Args:
@@ -73,10 +71,10 @@ class MarkingStatsService:
 
         Returns:
             Dictionary containing the following, 'number_of_completed_tasks',
-                'all_task_count', 'completed_percentage', 'mark_max',
-                'mark_max_str', 'mark_min', 'mark_min_str', 'mark_median',
-                'mark_median_str', 'mark_mean', 'mark_mean_str', 'mark_mode',
-                'mark_mode_str', 'mark_stdev', 'mark_stdev_str', 'mark_full'
+            'all_task_count', 'completed_percentage', 'mark_max',
+            'mark_max_str', 'mark_min', 'mark_min_str', 'mark_median',
+            'mark_median_str', 'mark_mean', 'mark_mean_str', 'mark_mode',
+            'mark_mode_str', 'mark_stdev', 'mark_stdev_str', 'mark_full'
         """
         stats_dict = {
             "number_of_completed_tasks": 0,
@@ -142,8 +140,8 @@ class MarkingStatsService:
 
     @transaction.atomic
     def get_mark_histogram(
-        self, question: int, *, version: Optional[int] = None
-    ) -> Dict[int, int]:
+        self, question: int, *, version: int | None = None
+    ) -> dict[int, int]:
         """Get the histogram of marks for the given question, version.
 
         Args:
@@ -152,10 +150,8 @@ class MarkingStatsService:
         Keyword Args:
             version: optionally, a specific version, or get for all versions if omitted.
 
-
         Returns:
             The histogram as a dict of mark vs count.
-
         """
         max_question_mark = SpecificationService.get_question_mark(question)
         scores = []
@@ -177,8 +173,8 @@ class MarkingStatsService:
 
     @transaction.atomic
     def get_list_of_users_who_marked(
-        self, question: int, *, version: Optional[int] = None
-    ) -> List[str]:
+        self, question: int, *, version: int | None = None
+    ) -> list[str]:
         """Return a list of the usernames that marked the given question/version.
 
         Args:
@@ -205,7 +201,7 @@ class MarkingStatsService:
     @transaction.atomic
     def get_mark_histogram_and_stats_by_users(
         self, question: int, version: int
-    ) -> Dict[int, Dict[str, Any]]:
+    ) -> dict[int, dict[str, Any]]:
         """Get marking histogram and stats for the given question/version separated by user.
 
         Args:
@@ -219,7 +215,7 @@ class MarkingStatsService:
             'mark_median', 'mark_median_str', 'mark_mean', 'mark_mean_str',
             'mark_mode', 'mark_mode_str', 'mark_stdev', 'mark_stdev_str'.
         """
-        data: Dict[int, Dict[str, Any]] = {}
+        data: dict[int, dict[str, Any]] = {}
         try:
             completed_tasks = MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE,
@@ -251,7 +247,7 @@ class MarkingStatsService:
     @transaction.atomic
     def get_mark_histogram_and_stats_by_versions(
         self, question: int
-    ) -> Dict[int, Dict[str, Any]]:
+    ) -> dict[int, dict[str, Any]]:
         """Get marking histogram and stats for the given question separated by version.
 
         Args:
@@ -264,7 +260,7 @@ class MarkingStatsService:
             'mark_mean','mark_mean_str', 'mark_mode','mark_mode_str',
             'mark_stdev','mark_stdev_str', 'remaining'.
         """
-        data: Dict[int, Dict[str, Any]] = {}
+        data: dict[int, dict[str, Any]] = {}
         try:
             completed_tasks = MarkingTask.objects.filter(
                 status=MarkingTask.COMPLETE,
@@ -327,15 +323,15 @@ class MarkingStatsService:
     @transaction.atomic
     def filter_marking_task_annotation_info(
         self,
-        paper_min: Optional[int] = None,
-        paper_max: Optional[int] = None,
-        score_min: Optional[int] = None,
-        score_max: Optional[int] = None,
-        question_idx: Optional[int] = None,
-        version: Optional[int] = None,
-        username: Optional[str] = None,
-        the_tag: Optional[str] = None,
-        status: Optional[int] = None,
+        paper_min: int | None = None,
+        paper_max: int | None = None,
+        score_min: int | None = None,
+        score_max: int | None = None,
+        question_idx: int | None = None,
+        version: int | None = None,
+        username: str | None = None,
+        the_tag: str | None = None,
+        status: int | None = None,
     ) -> list[dict[str, Any]]:
         task_set = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
         if paper_min:

@@ -1,21 +1,22 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2025 Andrew Rechnitzer
 
 from django.contrib.auth.models import User
 from django.test import TestCase
 
 from model_bakery import baker
-from rest_framework.exceptions import ValidationError
+from rest_framework import serializers
 
 from plom.plom_exceptions import PlomConflict
 from Mark.models.annotations import Annotation
 from Mark.models.tasks import MarkingTask
-from Papers.models.paper_structure import Paper
+from Papers.models import Paper, SpecQuestion
 from ..models import Rubric
 from ..services import RubricService
 
@@ -28,6 +29,7 @@ class RubricServiceTests_exceptions(TestCase):
 
     def setUp(self) -> None:
         baker.make(User, username="Liam")
+        baker.make(SpecQuestion, question_index=1, mark=5)
 
     def test_no_user_ValueError(self) -> None:
         """Test ValueError in RubricService.create_rubric().
@@ -41,7 +43,7 @@ class RubricServiceTests_exceptions(TestCase):
             "value": 0,
             "text": "qwerty",
             "username": "XXX_no_such_user_XXX",
-            "question": 1,
+            "question_index": 1,
         }
 
         with self.assertRaises(ValueError):
@@ -58,7 +60,7 @@ class RubricServiceTests_exceptions(TestCase):
             "kind": "neutral",
             "value": 0,
             "text": "qwerty",
-            "question": 1,
+            "question_index": 1,
         }
 
         with self.assertRaises(KeyError):
@@ -68,7 +70,7 @@ class RubricServiceTests_exceptions(TestCase):
         """Test for the RubricService.create_rubric() method when 'kind' is invalid.
 
         This test case checks if the RubricService.create_rubric()
-        method raises a ValidationError when attempting to create
+        method raises a serializers.ValidationError when attempting to create
         a rubric with an invalid 'kind' value. The 'kind' value
         is expected to be one of the following: "absolute", "neutral",
         or "relative".
@@ -78,28 +80,129 @@ class RubricServiceTests_exceptions(TestCase):
             "value": 0,
             "text": "qwerty",
             "username": "Liam",
-            "question": 1,
+            "question_index": 1,
         }
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(serializers.ValidationError):
             RubricService().create_rubric(rub)
 
     def test_no_kind_KeyValidationError(self) -> None:
         """Test ValidationError in RubricService.create_rubric().
 
         This test case checks if the RubricService.create_rubric()
-        method raises a ValidationError when attempting to create a rubric
+        method raises a serializers.ValidationError when attempting to create a rubric
         without providing the 'kind' key in the rubric dictionary.
         """
         rub = {
             "value": 0,
             "text": "qwerty",
             "username": "Liam",
-            "question": 1,
+            "question_index": 1,
         }
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(serializers.ValidationError):
             RubricService().create_rubric(rub)
+
+    def test_rubric_absolute_out_of_range(self) -> None:
+        rub = {
+            "value": 4,
+            "out_of": 3,
+            "kind": "absolute",
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 1,
+        }
+        # check error thrown when value > out_of
+        with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
+            RubricService().create_rubric(rub)
+        # check if value < 0
+        rub["value"] = -2
+        with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
+            RubricService().create_rubric(rub)
+        # check if out_of > max_mark
+        rub["value"] = 3
+        rub["out_of"] = 99
+        with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
+            RubricService().create_rubric(rub)
+
+    def test_create_rubric_should_not_have_existing_rid(self) -> None:
+        rub = {
+            "kind": "neutral",
+            "value": 0,
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 1,
+            "rid": 42,
+        }
+        with self.assertRaises(serializers.ValidationError):
+            RubricService().create_rubric(rub)
+
+
+class RubricServiceTests_extra_validation(TestCase):
+    """Tests for various validation routines, currently those not model-integrated."""
+
+    def setUp(self) -> None:
+        baker.make(User, username="Liam")
+        baker.make(SpecQuestion, question_index=1, mark=5)
+
+    def test_create_rubric_invalid_value(self) -> None:
+        rub = {
+            "kind": "relative",
+            "value": -999,
+            "text": "qwerty",
+            "username": "Liam",
+            "question_index": 1,
+        }
+        with self.assertRaises(serializers.ValidationError):
+            RubricService().create_rubric(rub)
+
+    def test_create_rubric_invalid_versions(self) -> None:
+        for bad_versions in ("[1, 1.2]", "[1, sth]", "{1, 2}", [1, 1.2], [1, "abc"]):
+            rub = {
+                "kind": "neutral",
+                "value": 0,
+                "text": "qwerty",
+                "username": "Liam",
+                "question_index": 1,
+                "versions": bad_versions,
+            }
+            with self.assertRaises(serializers.ValidationError):
+                RubricService().create_rubric(rub)
+
+    def test_create_rubric_valid_parameters(self) -> None:
+        for good_params in (
+            [],
+            [["{param1}", ["bar", "baz"]]],
+            [("{param1}", ["bar", "baz"]), ("<param2>", ("foo", "foz"))],
+        ):
+            rub = {
+                "kind": "neutral",
+                "value": 0,
+                "text": "qwerty",
+                "username": "Liam",
+                "question_index": 1,
+                "parameters": good_params,
+            }
+            RubricService().create_rubric(rub)
+
+    def test_create_rubric_invalid_parameters(self) -> None:
+        for bad_params in (
+            "[]",
+            [["foo", "bar", "baz"]],
+            [["foo", "bar"]],
+            [["foo", [1, 2]]],
+            [[42, ["bar", "baz"]]],
+        ):
+            rub = {
+                "kind": "neutral",
+                "value": 0,
+                "text": "qwerty",
+                "username": "Liam",
+                "question_index": 1,
+                "parameters": bad_params,
+            }
+            with self.assertRaises(serializers.ValidationError):
+                RubricService().create_rubric(rub)
 
 
 class RubricServiceTests(TestCase):
@@ -108,6 +211,9 @@ class RubricServiceTests(TestCase):
     def setUp(self) -> None:
         user1: User = baker.make(User, username="Liam")
         user2: User = baker.make(User, username="Olivia")
+        baker.make(SpecQuestion, question_index=1, mark=5)
+        baker.make(SpecQuestion, question_index=2, mark=5)
+        baker.make(SpecQuestion, question_index=3, mark=5)
 
         self.neutral_rubric = baker.make(
             Rubric,
@@ -116,7 +222,7 @@ class RubricServiceTests(TestCase):
             value=0.0,
             out_of=0.0,
             text="qwert",
-            question=1,
+            question_index=1,
             user=user1,
             tags="",
             meta="asdfg",
@@ -131,7 +237,7 @@ class RubricServiceTests(TestCase):
             value=0.0,
             out_of=0.0,
             text="yuiop",
-            question=1,
+            question_index=1,
             user=user2,
             tags="",
             meta="hjklz",
@@ -146,7 +252,7 @@ class RubricServiceTests(TestCase):
             value=2.5,
             out_of=0.0,
             text="yuiop",
-            question=1,
+            question_index=1,
             user=user2,
             tags="",
             meta="hjklz",
@@ -169,7 +275,7 @@ class RubricServiceTests(TestCase):
             value=1.5,
             out_of=5.0,
             text="mnbvc",
-            question=3,
+            question_index=3,
             user=user1,
             tags="",
             meta="lkjhg",
@@ -198,7 +304,7 @@ class RubricServiceTests(TestCase):
             "tags": "",
             "meta": "asdfg",
             "username": "Liam",
-            "question": 1,
+            "question_index": 1,
             "versions": [],
             "parameters": [],
         }
@@ -211,7 +317,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.meta, self.neutral_rubric.meta)
         self.assertEqual(r.user, self.neutral_rubric.user)
         self.assertIsNot(r.user, self.relative_rubric.user)
-        self.assertEqual(r.question, self.neutral_rubric.question)
+        self.assertEqual(r.question_index, self.neutral_rubric.question_index)
         self.assertEqual(r.versions, self.neutral_rubric.versions)
         self.assertEqual(r.parameters, self.neutral_rubric.parameters)
 
@@ -225,7 +331,7 @@ class RubricServiceTests(TestCase):
             "tags": "",
             "meta": "hjklz",
             "username": "Olivia",
-            "question": 1,
+            "question_index": 1,
             "versions": [],
             "parameters": [],
         }
@@ -238,7 +344,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.meta, self.relative_rubric.meta)
         self.assertEqual(r.user, self.relative_rubric.user)
         self.assertIsNot(r.user, self.neutral_rubric.user)
-        self.assertEqual(r.question, self.relative_rubric.question)
+        self.assertEqual(r.question_index, self.relative_rubric.question_index)
         self.assertEqual(r.versions, self.relative_rubric.versions)
         self.assertEqual(r.parameters, self.relative_rubric.parameters)
 
@@ -252,7 +358,7 @@ class RubricServiceTests(TestCase):
             "tags": "",
             "meta": "lkjhg",
             "username": "Liam",
-            "question": 3,
+            "question_index": 3,
             "versions": [],
             "parameters": [],
         }
@@ -265,7 +371,7 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r.meta, self.absolute_rubric.meta)
         self.assertEqual(r.user, self.absolute_rubric.user)
         self.assertIsNot(r.user, self.relative_rubric.user)
-        self.assertEqual(r.question, self.absolute_rubric.question)
+        self.assertEqual(r.question_index, self.absolute_rubric.question_index)
         self.assertEqual(r.versions, self.absolute_rubric.versions)
         self.assertEqual(r.parameters, self.absolute_rubric.parameters)
 
@@ -275,7 +381,7 @@ class RubricServiceTests(TestCase):
             "value": 0.0,
             "text": "qwerty",
             "username": "Olivia",
-            "question": 1,
+            "question_index": 1,
         }
         r = RubricService().create_rubric(simulated_client_data)
         assert isinstance(r, dict)
@@ -295,7 +401,7 @@ class RubricServiceTests(TestCase):
             "tags": "",
             "meta": "hjklz",
             "username": "Olivia",
-            "question": 1,
+            "question_index": 1,
             "versions": [],
             "parameters": [],
         }
@@ -320,7 +426,7 @@ class RubricServiceTests(TestCase):
             "tags": "",
             "meta": "hjklz",
             "username": "Olivia",
-            "question": 1,
+            "question_index": 1,
             "versions": [],
             "parameters": [],
         }
@@ -349,7 +455,7 @@ class RubricServiceTests(TestCase):
             "tags": "",
             "meta": "hjklz",
             "username": "Olivia",
-            "question": 1,
+            "question_index": 1,
             "versions": [],
             "parameters": [],
         }
@@ -364,6 +470,39 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r["out_of"], self.modified_absolute_rubric.out_of)
         self.assertEqual(r["username"], self.modified_absolute_rubric.user.username)
 
+    def test_modify_absolute_rubric_change_value_autogen_display(self) -> None:
+        service = RubricService()
+        rid = self.modified_absolute_rubric.rid
+
+        simulated_client_data = {
+            "rid": rid,
+            "kind": "absolute",
+            "value": 2.57,
+            "out_of": 3,
+            "text": "yuiop",
+            "username": "Olivia",
+            "question_index": 1,
+        }
+        r = service.modify_rubric(rid, simulated_client_data)
+        self.assertEqual(r["display_delta"], "2.57 of 3")
+
+    def test_modify_absolute_rubric_change_value_no_autogen_display(self) -> None:
+        service = RubricService()
+        rid = self.modified_absolute_rubric.rid
+
+        simulated_client_data = {
+            "rid": rid,
+            "kind": "absolute",
+            "value": 2.5,
+            "out_of": 3,
+            "display_delta": "2.50 of 3.00",
+            "text": "yuiop",
+            "username": "Olivia",
+            "question_index": 1,
+        }
+        r = service.modify_rubric(rid, simulated_client_data)
+        self.assertEqual(r["display_delta"], "2.50 of 3.00")
+
     def test_modify_rubric_change_kind(self) -> None:
         """Test RubricService.modify_rubric(), can change the "kind" of rubrics.
 
@@ -374,7 +513,9 @@ class RubricServiceTests(TestCase):
         username = user.username
 
         for kind in ("absolute", "relative", "neutral"):
-            rubric = baker.make(Rubric, user=user, kind=kind, latest=True)
+            rubric = baker.make(
+                Rubric, user=user, kind=kind, latest=True, question_index=1
+            )
             rid = rubric.rid
             d = _Rubric_to_dict(rubric)
 
@@ -498,7 +639,7 @@ class RubricServiceTests(TestCase):
             "kind": "neutral",
             "text": "qwerty",
             "username": "Liam",
-            "question": 1,
+            "question_index": 1,
             "revision": 10,
         }
         r = RubricService().create_rubric(rub)
@@ -512,6 +653,66 @@ class RubricServiceTests(TestCase):
         rub.update({"revision": 0})
         with self.assertRaises(PlomConflict):
             RubricService().modify_rubric(rid, rub)
+
+    def test_modify_absolute_rubric_change_value_invalid(self) -> None:
+        service = RubricService()
+        rid = self.modified_absolute_rubric.rid
+
+        simulated_client_data = {
+            "rid": rid,
+            "kind": "absolute",
+            "value": 4,
+            "out_of": 3,
+            "text": "yuiop",
+            "username": "Olivia",
+            "question_index": 1,
+        }
+        with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
+            service.modify_rubric(rid, simulated_client_data)
+        simulated_client_data["value"] = -2
+        with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
+            service.modify_rubric(rid, simulated_client_data)
+        simulated_client_data["value"] = 99
+        with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
+            service.modify_rubric(rid, simulated_client_data)
+        simulated_client_data["value"] = 4
+        simulated_client_data["out_of"] = 99
+        with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
+            service.modify_rubric(rid, simulated_client_data)
+
+    def test_modify_absolute_rubric_change_value_nonnumeric(self) -> None:
+        service = RubricService()
+        rid = self.modified_absolute_rubric.rid
+
+        simulated_client_data = {
+            "rid": rid,
+            "kind": "absolute",
+            "value": "forty two",
+            "display_delta": "forty two",
+            "out_of": 3,
+            "text": "yuiop",
+            "username": "Olivia",
+            "question_index": 1,
+        }
+        with self.assertRaisesRegex(serializers.ValidationError, "value.*convertible"):
+            service.modify_rubric(rid, simulated_client_data)
+
+    def test_modify_absolute_rubric_change_out_of_nonnumeric(self) -> None:
+        service = RubricService()
+        rid = self.modified_absolute_rubric.rid
+
+        simulated_client_data = {
+            "rid": rid,
+            "kind": "absolute",
+            "value": 3,
+            "display_delta": "3",
+            "out_of": "four",
+            "text": "yuiop",
+            "username": "Olivia",
+            "question_index": 1,
+        }
+        with self.assertRaisesRegex(serializers.ValidationError, "out of.*convertible"):
+            service.modify_rubric(rid, simulated_client_data)
 
     def test_rubrics_get_as_dicts(self) -> None:
         rubrics = RubricService().get_rubrics_as_dicts()

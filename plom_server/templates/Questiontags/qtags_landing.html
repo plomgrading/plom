@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2024 Elisa Pan
     Copyright (C) 2024 Colin B. Macdonald
+    Copyright (C) 2024 Aden Chan
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -18,7 +19,7 @@
     {% if error_message %}<div class="alert alert-danger">{{ error_message }}</div>{% endif %}
     <h3>Questions</h3>
     <a href="{% url 'download_question_tags' %}?format=csv&csv_type=questions"
-       class="btn btn-primary">Download qtags-link CSV</a>
+       class="btn btn-primary">Download Tag-Question Linking as CSV</a>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -86,7 +87,7 @@
         </tbody>
     </table>
     <a href="{% url 'download_question_tags' %}?format=csv&csv_type=tags"
-       class="btn btn-primary">Download tags CSV</a>
+       class="btn btn-primary">Download Tags as CSV</a>
     <br />
     <h3>Manage Tags</h3>
     <button type="button"
@@ -109,8 +110,10 @@
         <thead>
             <tr>
                 <th style=" width: 25%;">Tag Name</th>
-                <th>Tag Description (shown to students)</th>
-                <th>Confidential information (not shown to students)</th>
+                <th>Tag Description (public)</th>
+                <th>Confidential Information (private)</th>
+                <th>Help Threshold</th>
+                <th>Help Resources</th>
             </tr>
         </thead>
         <tbody>
@@ -119,6 +122,14 @@
                     <td>{{ tag.tag_name }}</td>
                     <td>{{ tag.text }}</td>
                     <td>{{ tag.confidential_info }}</td>
+                    <td>{{ tag.help_threshold }}</td>
+                    <td>
+                        {% if tag.help_resources %}
+                            Present
+                        {% else %}
+                            <em>Not Present</em>
+                        {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -149,6 +160,10 @@
                 $('#text_edit').val(selectedTagDescription);
                 var selectedTagconfidential_info = $(this).find('option:selected').data('confidential_info').trim();
                 $('#confidential_info_edit').val(selectedTagconfidential_info);
+                var selectedTagHelpThreshold = $(this).find('option:selected').data('help_threshold');
+                $('#help_threshold_edit').val(selectedTagHelpThreshold);
+                var selectedTagHelpResources = $(this).find('option:selected').data('help_resources').trim();
+                $('#help_resources_edit').val(selectedTagHelpResources);
             });
 
             $('#tagModal').on('show.bs.modal', function(event) {

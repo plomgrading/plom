@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QWidget
 
-from plom.client.annotator import Annotator
-from plom.client.marker import MarkerClient
+from .annotator import Annotator
+from .marker import MarkerClient
 
 
 class MockMarker(QWidget):

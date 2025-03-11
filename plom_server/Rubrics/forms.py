@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Divy Patel
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
 
@@ -93,7 +93,7 @@ class RubricDiffForm(forms.Form):
 class RubricItemForm(forms.ModelForm):
     """Form for creating or updating a Rubric."""
 
-    question = forms.TypedChoiceField(
+    question_index = forms.TypedChoiceField(
         required=True,
         widget=forms.Select(attrs={"onchange": "updateQuestion()"}),
         empty_value="",
@@ -108,12 +108,15 @@ class RubricItemForm(forms.ModelForm):
         initial=Rubric.RubricKind.ABSOLUTE,
         widget=forms.Select(attrs={"onchange": "updateKind()"}),
     )
-    out_of = forms.IntegerField(required=False)
-    versions = forms.MultipleChoiceField(required=False)
+    out_of = forms.IntegerField(
+        required=False,
+        widget=forms.NumberInput(attrs={"onchange": "updateValueConstraints()"}),
+    )
 
     class Meta:
         model = Rubric
         fields = [
+            "question_index",
             "text",
             "kind",
             "value",
@@ -121,11 +124,15 @@ class RubricItemForm(forms.ModelForm):
             "meta",
             "versions",
             "parameters",
+            "tags",
             "pedagogy_tags",
         ]
         widgets = {
             "text": forms.Textarea(attrs={"rows": 3}),
-            "meta": forms.Textarea(attrs={"rows": 3}),
+            "meta": forms.Textarea(attrs={"rows": 2}),
+            "versions": forms.TextInput(),  # default would be Textarea
+            "tags": forms.TextInput(),  # default would be Textarea
+            "parameters": forms.Textarea(attrs={"rows": 2}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -135,14 +142,7 @@ class RubricItemForm(forms.ModelForm):
             for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
         ]
 
-        self.fields["question"].choices = question_choices
-        self.fields["out_of"].widget.attrs["readonly"] = True
-
-        version_choices = [
-            (str(v_idx), v_idx)
-            for v_idx in range(1, SpecificationService.get_n_versions() + 1)
-        ]
-        self.fields["versions"].choices = version_choices
+        self.fields["question_index"].choices = question_choices
 
         for field in self.fields:
             self.fields[field].widget.attrs["class"] = "form-control"

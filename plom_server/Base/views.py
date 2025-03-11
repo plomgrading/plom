@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
+
+import importlib.metadata
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse
@@ -9,6 +11,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib import messages
 from django.views.generic import View
+from django_huey import get_queue
 
 from .base_group_views import ManagerRequiredView
 from .forms import CompleteWipeForm
@@ -21,6 +24,8 @@ from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationErr
 
 
 class TroublesAfootGenericErrorView(View):
+    """View class for some kludgey error handling, hopefully not used much."""
+
     def get(self, request: HttpRequest, *, hint: str) -> HttpResponse:
         """Render an unexpected or semi-expected "error page" using kludges.
 
@@ -42,6 +47,38 @@ class TroublesAfootGenericErrorView(View):
         """
         context = {"hint": hint}
         return render(request, "base/troubles_afoot.html", context)
+
+
+class ServerStatusView(ManagerRequiredView):
+    """View class for displaying server status."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        """Handles the GET request for the server status.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            An HTTP response object.
+        """
+        # importing at the top seems wasteful
+        from django import __version__ as django_version
+        from pymupdf import __version__ as pymupdf_version
+
+        context = self.build_context()
+        # TODO: need a service?
+        queue = get_queue("tasks")
+
+        context.update(
+            {
+                "django_version": django_version,
+                "huey_version": importlib.metadata.version("huey"),
+                "pymupdf_version": pymupdf_version,
+                "zxingcpp_version": importlib.metadata.version("zxing-cpp"),
+                "queue_length": len(queue),
+            }
+        )
+        return render(request, "base/server_status.html", context)
 
 
 class ResetView(ManagerRequiredView):
@@ -94,31 +131,36 @@ class ResetConfirmView(ManagerRequiredView):
         """Handles the POST request for the reset confirmation view.
 
         Args:
-            request (HttpRequest): The HTTP request object.
+            request: The HTTP request object.
 
         Returns:
-            HttpResponse: The HTTP response object.
+            A HTTP response object.
         """
         context = self.build_context()
         form = CompleteWipeForm(request.POST)
+        # TODO: one might expect the validator should checks if this matches
         reset_phrase = SpecificationService.get_shortname()
         _confirm_field = "confirmation_field"
-        if form.is_valid():
-            if form.cleaned_data[_confirm_field] == reset_phrase:
-                try:
-                    big_red_button.reset_assessment_preparation_database()
-                except (PlomDependencyConflict, PlomDatabaseCreationError) as err:
-                    messages.add_message(request, messages.ERROR, f"{err}")
-                    return redirect(reverse("prep_conflict"))
+        if not form.is_valid():
+            # not sure this can happen, or what to do if it does; for now
+            # display poorly formatted error message on the home screen
+            messages.error(request, f"Something expected happened: {form}")
+            return redirect("home")
+        if form.cleaned_data[_confirm_field] == reset_phrase:
+            try:
+                big_red_button.reset_assessment_preparation_database()
+            except (PlomDependencyConflict, PlomDatabaseCreationError) as err:
+                messages.add_message(request, messages.ERROR, f"{err}")
+                return redirect(reverse("prep_conflict"))
 
-                messages.success(request, "Plom instance successfully wiped.")
-                return redirect("home")
-            else:
-                form.add_error(_confirm_field, "Phrase is incorrect")
-                context.update(
-                    {
-                        "bundles_staged": ScanService().staging_bundles_exist(),
-                        "wipe_form": form,
-                    }
-                )
-                return render(request, "base/reset_confirm.html", context=context)
+            messages.success(request, "Plom instance successfully wiped.")
+            return redirect("home")
+        else:
+            form.add_error(_confirm_field, "Phrase is incorrect")
+            context.update(
+                {
+                    "bundles_staged": ScanService().staging_bundles_exist(),
+                    "wipe_form": form,
+                }
+            )
+            return render(request, "base/reset_confirm.html", context=context)

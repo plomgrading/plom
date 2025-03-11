@@ -241,14 +241,7 @@ class MarkerExamModel(QStandardItemModel):
         return r
 
     def _getPrefix(self, r: int) -> str:
-        """Return the prefix of the image.
-
-        Args:
-            r: the row identifier of the paper.
-
-        Returns:
-            the string prefix of the image
-        """
+        """Returns the task code of a specified row of the table."""
         return self.data(self.index(r, _idx_task_id))
 
     def _getStatus(self, r: int) -> str:
@@ -335,6 +328,15 @@ class MarkerExamModel(QStandardItemModel):
         column_idx = _idx_marking_time
         self.setData(self.index(r, column_idx), _marking_time_as_str(marking_time))
 
+    def get_all_tasks(self) -> list[str]:
+        """Return the task id strings of all the tasks in the full list.
+
+        Result is a list but no particular order is implied: for example
+        if the user has sorted the tasks this may or may not reflect that
+        ordering.
+        """
+        return [self._getPrefix(n) for n in range(self.rowCount())]
+
     def has_task(self, task: str) -> bool:
         try:
             self._findTask(task)
@@ -395,11 +397,11 @@ class MarkerExamModel(QStandardItemModel):
         r = self._findTask(task)
         return self.data(self.index(r, n))
 
-    def getStatusByTask(self, task):
+    def getStatusByTask(self, task: str) -> str:
         """Return status for task."""
         return self._getDataByTask(task, _idx_status)
 
-    def setStatusByTask(self, task, st):
+    def setStatusByTask(self, task: str, st: str) -> None:
         """Set status for task."""
         self._setDataByTask(task, _idx_status, st)
 
@@ -547,8 +549,8 @@ class MarkerExamModel(QStandardItemModel):
         """Sets the status for the task's paper to deferred."""
         self.setStatusByTask(task, "deferred")
 
-    def removePaper(self, task):
-        """Removes the task's paper from self."""
+    def remove_task(self, task: str) -> None:
+        """Removes the task from the list."""
         r = self._findTask(task)
         self.removeRow(r)
 
@@ -654,14 +656,7 @@ class ProxyModel(QSortFilterProxyModel):
         return all_search_terms_in_tags
 
     def getPrefix(self, r: int) -> str:
-        """Returns the task code of inputted row index.
-
-        Args:
-            r (int): the row identifier of the paper.
-
-        Returns:
-            str: the prefix of the paper indicated by r.
-        """
+        """Returns the task code of a given row index."""
         return self.data(self.index(r, _idx_task_id))
 
     def getStatus(self, r: int) -> str:

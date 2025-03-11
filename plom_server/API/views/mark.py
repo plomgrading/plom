@@ -1,17 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
-
-
-from __future__ import annotations
 
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
-from rest_framework import status
+from rest_framework import serializers, status
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse
@@ -113,6 +109,47 @@ class GetTasks(APIView):
             username=username,
         )
         return Response(data, status=status.HTTP_200_OK)
+
+
+# PATCH: /MK/tasks/{code}/reassign/{new_username}
+class ReassignTask(APIView):
+    """Reassign a task to another user.
+
+    Returns:
+        200: returns json of True.
+        404: task or user not found.
+        406: request not acceptable from calling user, e.g.,
+            not lead marker or manager.
+    """
+
+    def patch(self, request: Request, *, code: str, new_username: str) -> Response:
+        """Reassign a task to another user."""
+        calling_user = request.user
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if not ("lead_marker" in group_list or "manager" in group_list):
+            return _error_response(
+                f"You ({calling_user}) cannot reassign tasks because "
+                "you are not a lead marker or manager",
+                status.HTTP_406_NOT_ACCEPTABLE,
+            )
+
+        try:
+            task = MarkingTaskService().get_task_from_code(code)
+            task_pk = task.pk
+        except (ValueError, RuntimeError) as e:
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
+
+        try:
+            MarkingTaskService.reassign_task_to_user(
+                task_pk,
+                new_username=new_username,
+                calling_user=calling_user,
+                unassign_others=True,
+            )
+        except ValueError as e:
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
+
+        return Response(True, status=status.HTTP_200_OK)
 
 
 # GET: /pagedata/{papernum}
@@ -233,17 +270,16 @@ class MgetPageDataQuestionInContext(APIView):
         return Response(page_metadata, status=status.HTTP_200_OK)
 
 
+# GET: /MK/images/{image_id}/{hash}
 class MgetOneImage(APIView):
     """Get a page image from the server."""
 
     def get(self, request: Request, *, pk: int, hash: str) -> Response:
         """Get a page image."""
         pds = PageDataService()
-        # TODO - replace this fileresponse(open(file)) with fileresponse(filefield)
-        # so that we don't have explicit file-path handling.
         try:
-            img_path = pds.get_image_path(pk, hash)
-            return FileResponse(open(img_path, "rb"), status=status.HTTP_200_OK)
+            img_django_file = pds.get_page_image(pk, img_hash=hash)
+            return FileResponse(img_django_file, status=status.HTTP_200_OK)
         except Image.DoesNotExist:
             return _error_response("Image does not exist.", status.HTTP_400_BAD_REQUEST)
 
@@ -443,7 +479,7 @@ class TagsFromCodeView(APIView):
             return _error_response(e, status.HTTP_410_GONE)
         except RuntimeError as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
-        except ValidationError as e:
+        except serializers.ValidationError as e:
             return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
         return Response(status=status.HTTP_200_OK)
 

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Lior Silberman
@@ -11,29 +11,23 @@
 
 from __future__ import annotations
 
-__copyright__ = "Copyright (C) 2018-2024 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2018-2025 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-from collections import defaultdict
 import html
 import json
 import logging
+import platform
+import tempfile
+import threading
+import time
+from collections import defaultdict
+from importlib import resources
 from math import ceil
 from pathlib import Path
-import platform
-import random
-import sys
-import tempfile
 from textwrap import shorten
-import time
-import threading
 from typing import Any
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
 
 from packaging.version import Version
 from PyQt6 import QtGui, uic
@@ -53,7 +47,6 @@ from PyQt6.QtWidgets import (
 )
 
 from plom import __version__
-import plom.client.ui_files
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomBadTagError,
@@ -68,6 +61,7 @@ from plom.plom_exceptions import (
     PlomTaskDeletedError,
     PlomConflict,
     PlomNoPaper,
+    PlomNoPermission,
     PlomNoServerSupportException,
     PlomNoSolutionException,
 )
@@ -88,7 +82,7 @@ from .tagging_range_dialog import TaggingAndRangeOptions
 from .quota_dialogs import ExplainQuotaDialog, ReachedQuotaLimitDialog
 from .task_model import MarkerExamModel, ProxyModel
 from .uploader import BackgroundUploader, synchronous_upload
-
+from . import ui_files
 
 if platform.system() == "Darwin":
     # apparently needed for shortcuts under macOS
@@ -151,7 +145,7 @@ class MarkerClient(QWidget):
         super().__init__()
         self.Qapp = Qapp
 
-        uic.loadUi(resources.files(plom.client.ui_files) / "marker.ui", self)
+        uic.loadUi(resources.files(ui_files) / "marker.ui", self)
         # TODO: temporary workaround
         self.ui = self
 
@@ -343,6 +337,7 @@ class MarkerClient(QWidget):
         self.ui.tableView.claimSignal.connect(self.claim_task)
         self.ui.tableView.deferSignal.connect(self.defer_task)
         self.ui.tableView.reassignSignal.connect(self.reassign_task)
+        self.ui.tableView.reassignToMeSignal.connect(self.reassign_task_to_me)
 
         if Version(__version__).is_devrelease:
             self.ui.technicalButton.setChecked(True)
@@ -374,8 +369,8 @@ class MarkerClient(QWidget):
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         m = QMenu(self)
-        # TODO: once enabled we don't need the explicit QAction
-        # m.addAction("Reassign task to...", self.reassign_task)
+        m.addAction("Reassign task to me", self.reassign_task_to_me)
+        m.addAction("Reassign task...", self.reassign_task)
         m.addAction("Claim task for me", self.claim_task)
         self.ui.deferButton.setMenu(m)
         self.ui.deferButton.clicked.connect(self.defer_task)
@@ -1152,10 +1147,12 @@ class MarkerClient(QWidget):
             WarnMsg(self, str(e)).exec()
             return False
         our_username = self.msgr.username
+        task_ids_seen = []
         for t in tasks:
             task_id_str = paper_question_index_to_task_id_str(
                 t["paper_number"], t["question"]
             )
+            task_ids_seen.append(task_id_str)
             username = t.get("username", "")
             integrity = t.get("integrity", "")
             # TODO: maybe task_model can support None for mark too...?
@@ -1165,6 +1162,9 @@ class MarkerClient(QWidget):
             if status.casefold() == "out" and username == our_username:
                 status = "untouched"
 
+            # Issue #3706: sometimes server sends attn_tags...
+            tags = t["tags"]
+            tags.extend(t.get("attn_tags", []))
             try:
                 self.examModel.add_task(
                     task_id_str,
@@ -1172,7 +1172,7 @@ class MarkerClient(QWidget):
                     mark=mark,
                     marking_time=t.get("marking_time", 0.0),
                     status=status,
-                    tags=t["tags"],
+                    tags=tags,
                     username=username,
                     integrity_check=integrity,
                 )
@@ -1187,7 +1187,7 @@ class MarkerClient(QWidget):
                         local_status,
                     )
                     # even for those, we should update the tags
-                    self.tags_changed_signal.emit(task_id_str, t["tags"])
+                    self.tags_changed_signal.emit(task_id_str, tags)
                     continue
 
                 # In future, could try to keep existing src_img_data by *not* including
@@ -1200,7 +1200,7 @@ class MarkerClient(QWidget):
                     mark=mark,
                     marking_time=t.get("marking_time", 0.0),
                     status=status,
-                    tags=t["tags"],
+                    tags=tags,
                     username=username,
                 )
 
@@ -1217,37 +1217,55 @@ class MarkerClient(QWidget):
                     self.examModel.setAnnotatedFile(task_id_str, "", "")
                     self.examModel.setPaperDirByTask(task_id_str, "")
 
+        # Prune stale tasks that the server no longer lists as ours, carefully keep
+        # any that might not be saved yet (even if not seen in previous loop).
+        for task_id_str in self.examModel.get_all_tasks():
+            local_status = self.examModel.getStatusByTask(task_id_str)
+            if local_status.casefold() in ("uploading...", "failed upload"):
+                continue
+            if task_id_str in task_ids_seen:
+                continue
+            log.info("Removing row %s: server no longer says its ours", task_id_str)
+            self.examModel.remove_task(task_id_str)
+
         self._updateCurrentlySelectedRow()
         return True
 
-    def reassign_task(self):
-        """TODO: just a stub for now, no one is calling this."""
+    def reassign_task_to_me(self) -> None:
+        self.reassign_task(assign_to=self.msgr.username)
+
+    def reassign_task(self, *, assign_to: str | None = None) -> None:
+        """Reassign the currently-selected task to ourselves or another user.
+
+        Keyword Args:
+            assign_to: if present, try to reassign to this user directly.
+                If omitted, we'll ask using a popup dialog.
+        """
         task = self.get_current_task_id_or_none()
         if not task:
             return
-        # TODO: combobox
-        assign_to, ok = QInputDialog.getText(
-            self, "Reassign to", f"Who would you like to reassign {task} to?"
-        )
-        if not ok:
+        if assign_to is None:
+            # TODO: combobox or similar to choose users
+            assign_to, ok = QInputDialog.getText(
+                self,
+                "Reassign to",
+                f"Who would you like to reassign {task} to?",
+                text=self.msgr.username,
+            )
+            if not ok:
+                return
+        try:
+            # TODO: consider augmenting with a reason, e.g., reason="help" kwarg
+            self.msgr.reassign_task(task, assign_to)
+        except (
+            PlomNoServerSupportException,
+            PlomRangeException,
+            PlomNoPermission,
+        ) as e:
+            InfoMsg(self, f"{e}").exec()
             return
-        # try:
-        #     self.msgr.TODO_New_Function(task, self.user, assign_to, reason="help")
-        # except PlomNoServerSupportException as e:
-        #     InfoMsg(self, e).exec()
-        #     return
-        # except PlomNoPermission as e:
-        #     InfoMsg(self, "You don't have permission to reassign that task: {e}").exec()
-        #     return
-        if random.random() < 0.5:
-            WarnMsg(
-                self, f'TODO: faked error reassigning {task} to "{assign_to}"'
-            ).exec()
-            return
-        InfoMsg(self, f'TODO: faked success reassigning {task} to "{assign_to}"').exec()
-        # TODO, now what?
-        # TODO: adding a new possibility here will have some fallout
-        self.examModel.setStatusByTask(task, "reassigned")
+        # The simplest thing is simply to refresh/rebuild the task list
+        self.refresh_server_data()
 
     def claim_task(self) -> None:
         """Try to claim the currently selected task for this user."""
@@ -1349,17 +1367,8 @@ class MarkerClient(QWidget):
         task = self.get_current_task_id_or_none()
         if not task:
             return
-        if not self.examModel.is_our_task(task, self.msgr.username):
-            InfoMsg(self, f"Cannot annotate {task}: it is not assigned to you").exec()
-            return
         inidata = self.getDataForAnnotator(task)
         if inidata is None:
-            InfoMsg(
-                self,
-                f"Cannot annotate {task},"
-                " perhaps it is not assigned to you, or a download failed"
-                " perhaps due to poor or missing internet connection.",
-            ).exec()
             return
 
         # If we're at quota, don't start marking as server will reject them
@@ -1393,28 +1402,31 @@ class MarkerClient(QWidget):
         return self._user_reached_quota_limit
 
     def getDataForAnnotator(self, task: str) -> tuple | None:
-        """Start annotator on a particular task.
+        """Get the data the Annotator will need for a particular task.
 
         Args:
             task: the task id.  If original qXXXXgYY, then annotated
                 version is GXXXXgYY (G=graded).
 
         Returns:
-            A tuple of data or None.
+            A tuple of data or None.  In the case of None, the user has already
+            been shown a dialog, or parhaps choose a course of action already.
         """
-        status = self.examModel.getStatusByTask(task)
-
-        if status.casefold() not in (
-            "complete",
-            "marked",
-            "uploading...",
-            "failed upload",
-            "untouched",
-            "deferred",
-        ):
-            # TODO: should this make a dialog somewhere?
-            log.warn(f"task {task} status '{status}' is not your's to annotate")
+        if not self.examModel.is_our_task(task, self.msgr.username):
+            InfoMsg(
+                self,
+                f"Cannot annotate {task}: it is not assigned to you.",
+                info=(
+                    "Perhaps it was originally assigned to you and"
+                    " has recently changed ownership. Or if you recently "
+                    " re-assigned it yourself, try refreshing your task "
+                    " list as a server change may not yet have propagated."
+                ),
+                info_pre=False,
+            ).exec()
             return None
+
+        status = self.examModel.getStatusByTask(task)
 
         # Create annotated filename.
         assert task.startswith("q")
@@ -1464,9 +1476,12 @@ class MarkerClient(QWidget):
         # maybe the downloader failed for some (rare) reason
         for data in src_img_data:
             if not Path(data["filename"]).exists():
-                log.warning(
-                    "some kind of downloader fail? (unexpected, but probably harmless"
-                )
+                WarnMsg(
+                    self,
+                    f"Cannot annotate {task} because a file we expected "
+                    "to find does not exist. Some kind of downloader fail?"
+                    " While unnexpected, this is probably harmless.",
+                ).exec()
                 return None
 
         # we used to set status to indicate annotation-in-progress; removed as

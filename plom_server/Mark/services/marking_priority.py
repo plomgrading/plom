@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
@@ -8,7 +8,6 @@
 """Functions for setting and modifying priority for marking tasks."""
 
 import random
-from typing import Dict, Tuple
 
 from django.db import transaction
 from django.db.models import QuerySet
@@ -64,17 +63,19 @@ def set_marking_piority_shuffle():
 
 @transaction.atomic
 def set_marking_priority_paper_number():
-    """Set the priority to paper number: every marking task gets a priority value of n_papers - paper_number."""
-    n_papers = Paper.objects.count()
+    """Set the priority inversely proportional to the paper number."""
+    largest_paper_num = (
+        Paper.objects.all().order_by("-paper_number").first().paper_number
+    )
     tasks = get_tasks_to_update_priority()
     for task in tasks:
-        task.marking_priority = n_papers - task.paper.paper_number
+        task.marking_priority = largest_paper_num - task.paper.paper_number
     MarkingTask.objects.bulk_update(tasks, ["marking_priority"])
     set_marking_priority_strategy(MarkingTaskPriority.PAPER_NUMBER)
 
 
 @transaction.atomic
-def set_marking_priority_custom(custom_order: Dict[Tuple[int, int], int]):
+def set_marking_priority_custom(custom_order: dict[tuple[int, int], int]):
     """Set the priority to a custom ordering.
 
     Args:

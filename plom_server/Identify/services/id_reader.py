@@ -3,25 +3,26 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2020-2024 Colin B. Macdonald
-# Copyright (C) 2024 Andrew Rechnitzer
-
-from __future__ import annotations
+# Copyright (C) 2020-2025 Colin B. Macdonald
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 
 from collections import defaultdict
-import cv2 as cv
 import json
-import numpy as np
 from pathlib import Path
+from typing import Any
+
+import cv2 as cv
+import numpy as np
 from scipy.optimize import linear_sum_assignment
 from sklearn.ensemble import RandomForestClassifier
-from typing import Any
 
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import transaction
 from django_huey import db_task
+import huey
+import huey.api
 
 from plom.idreader.model_utils import load_model, download_model, is_model_present
 from Base.models import HueyTaskTracker
@@ -321,6 +322,7 @@ class IDReaderService:
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
 
+# The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks", context=True)
 def huey_id_reading_task(
     user: User,
@@ -328,7 +330,7 @@ def huey_id_reading_task(
     recompute_heatmap: bool,
     *,
     tracker_pk: int,
-    task=None,
+    task: huey.api.Task | None = None,
 ) -> bool:
     """Run the id reading process in the background via Huey.
 
@@ -343,12 +345,15 @@ def huey_id_reading_task(
     Keyword Args:
         tracker_pk: a key into the database for anyone interested in
             our progress.
-        task: includes our ID in the Huey process queue.
+        task: includes our ID in the Huey process queue.  This kwarg is
+            passed by `context=True` in decorator: callers should not
+            pass this in!
 
     Returns:
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
+    assert task is not None
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
     IDReadingHueyTaskTracker.set_message_to_user(
         tracker_pk, "ID Reading task has started. Getting ID boxes."
@@ -658,9 +663,9 @@ class IDBoxProcessorService:
         """
         if not is_model_present():
             download_model()
-        student_number_length = 8
+        student_id_length = 8
         heatmap = self.compute_probability_heatmap_for_idbox_images(
-            id_box_files, student_number_length
+            id_box_files, student_id_length
         )
 
         probs_as_list = {k: [x.tolist() for x in v] for k, v in heatmap.items()}

@@ -1,10 +1,14 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2023 Colin B. Macdonald
+    Copyright (C) 2023, 2025 Colin B. Macdonald
+    Copyright (C) 2024 Forest Kobayashi
 -->
 {% extends "base/base.html" %}
 {% load static %}
+{% block title %}
+    Miscellanea
+{% endblock title %}
 {% block page_heading %}
     Miscellanea
 {% endblock page_heading %}
@@ -41,6 +45,21 @@
                     </h4>
                     <p>A page for students to use as scrap-paper when writing assessment.</p>
                     <p>It is intended that nothing on this page will be marked.</p>
+                    <p>This page has qr-codes that are read by plom so that the page is automatically flagged for discard.</p>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <div class="card-title">
+                    <h4>
+                        Bundle-separator-paper PDF
+                        <a class="btn btn-success"
+                           href="{% static 'bundle_separator_paper.pdf' %}"
+                           download="bundle_separator_paper.pdf">Download</a>
+                    </h4>
+                    <p>*EXPERIMENTAL*.</p>
+                    <p>A bundle separator page for plom TAs to use to keep things organized while scanning large classes.</p>
                     <p>This page has qr-codes that are read by plom so that the page is automatically flagged for discard.</p>
                 </div>
             </div>

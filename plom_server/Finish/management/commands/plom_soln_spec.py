@@ -1,21 +1,21 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2025 Colin B. Macdonald
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
 
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
-from rest_framework.serializers import ValidationError
+from rest_framework import serializers
 
-from Finish.services import TemplateSolnSpecService
 from Papers.services import SolnSpecService
+from ...services import TemplateSolnSpecService
 
 
 class Command(BaseCommand):
@@ -62,7 +62,7 @@ class Command(BaseCommand):
             SolnSpecService.load_soln_spec_from_dict(spec_dict)
         except ValueError as err:
             raise CommandError(err)
-        except ValidationError as err:
+        except serializers.ValidationError as err:
             raise CommandError(err)
 
         unused_pages = SolnSpecService.get_unused_pages()

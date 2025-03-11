@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
@@ -21,6 +21,7 @@ from .identify import (
     IDgetNextTask,
     IDprogressCount,
     IDclaimThisTask,
+    IDdirect,
 )
 
 from .mark import (
@@ -31,9 +32,20 @@ from .mark import (
     MgetAnnotations,
     MgetAnnotationImage,
     GetTasks,
+    ReassignTask,
     TagsFromCodeView,
     GetAllTags,
     GetSolutionImage,
+)
+
+from .scan import (
+    ScanListBundles,
+    ScanBundleActions,
+    ScanMapBundle,
+)
+
+from .finish import (
+    FinishReassembled,
 )
 
 from .report import (

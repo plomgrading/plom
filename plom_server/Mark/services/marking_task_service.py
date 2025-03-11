@@ -1,26 +1,23 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Bryan Tanady
 
-from __future__ import annotations
-
 import json
 import pathlib
 import random
 from typing import Any, List, Tuple
 
-from rest_framework.exceptions import ValidationError
-
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import QuerySet
 from django.db import transaction
+from rest_framework import serializers
 
 from plom import is_valid_tag_text
 from Papers.services import ImageBundleService, PaperInfoService
@@ -59,7 +56,16 @@ class MarkingTaskService:
 
         Returns:
             The newly created marking task object.
+
+        Raises:
+            KeyError: cannot create tasks for non-positive question index,
+                as those are used as a DNM indicator.
+            RuntimeError: for "good" input data, this would indicate no
+                question-version map, although for nonsense input it could
+                also just mean invalid paper number or invalid question index.
         """
+        if question_index <= 0:
+            raise KeyError(f"Invalid question index: {question_index}")
         # get the version of the given paper/question
         try:
             question_version = PaperInfoService().get_version_from_paper_question(
@@ -71,9 +77,10 @@ class MarkingTaskService:
         task_code = f"q{paper.paper_number:04}g{question_index}"
 
         # other tasks with this code are now 'out of date'
+        # as per #3220 do not erase assigned user.
         MarkingTask.objects.filter(code=task_code).exclude(
             status=MarkingTask.OUT_OF_DATE
-        ).update(status=MarkingTask.OUT_OF_DATE, assigned_user=None)
+        ).update(status=MarkingTask.OUT_OF_DATE)
 
         # get priority of latest old task to assign to new task, but
         # if no previous priority exists, set a new value based on the current strategy
@@ -355,41 +362,57 @@ class MarkingTaskService:
             a JSON string.
 
         Raises:
-            ValidationError
+            serializers.ValidationError
         """
         annot_data = json.loads(plomfile)
         cleaned_data: dict[str, Any] = {}
 
         try:
             cleaned_data["pg"] = int(data["pg"])
-        except IndexError:
-            raise ValidationError('Multiple values for "pg", expected 1.')
-        except (ValueError, TypeError):
-            raise ValidationError(f'Could not cast "pg" as int: {data["pg"]}')
+        except IndexError as e:
+            raise serializers.ValidationError(
+                'Multiple values for "pg", expected 1.'
+            ) from e
+        except (ValueError, TypeError) as e:
+            raise serializers.ValidationError(
+                f'Could not cast "pg" as int: {data["pg"]}'
+            ) from e
 
         try:
             cleaned_data["ver"] = int(data["ver"])
-        except IndexError:
-            raise ValidationError('Multiple values for "ver", expected 1.')
-        except (ValueError, TypeError):
-            raise ValidationError(f'Could not cast "ver" as int: {data["ver"]}')
+        except IndexError as e:
+            raise serializers.ValidationError(
+                'Multiple values for "ver", expected 1.'
+            ) from e
+        except (ValueError, TypeError) as e:
+            raise serializers.ValidationError(
+                f'Could not cast "ver" as int: {data["ver"]}'
+            ) from e
 
         try:
             cleaned_data["score"] = float(data["score"])
-        except IndexError:
-            raise ValidationError('Multiple values for "score", expected 1.')
-        except (ValueError, TypeError):
-            raise ValidationError(f'Could not cast "score" as float: {data["score"]}')
+        except IndexError as e:
+            raise serializers.ValidationError(
+                'Multiple values for "score", expected 1.'
+            ) from e
+        except (ValueError, TypeError) as e:
+            raise serializers.ValidationError(
+                f'Could not cast "score" as float: {data["score"]}'
+            ) from e
 
         try:
             cleaned_data["marking_time"] = float(data["marking_time"])
         except (ValueError, TypeError) as e:
-            raise ValidationError(f"Could not cast 'marking_time' as float: {e}")
+            raise serializers.ValidationError(
+                f"Could not cast 'marking_time' as float: {e}"
+            ) from e
 
         try:
             cleaned_data["integrity_check"] = int(data["integrity_check"])
         except (ValueError, TypeError) as e:
-            raise ValidationError(f"Could not get 'integrity_check' as a int: {e}")
+            raise serializers.ValidationError(
+                f"Could not get 'integrity_check' as a int: {e}"
+            ) from e
 
         # We used to unpack the rubrics and ensure they all exist in the DB.
         # That will happen later when we try to save: I'm not sure its worth
@@ -399,7 +422,7 @@ class MarkingTaskService:
         for image_data in src_img_data:
             img_path = pathlib.Path(image_data["server_path"])
             if not img_path.exists():
-                raise ValidationError("Invalid original-image in request.")
+                raise serializers.ValidationError("Invalid original-image in request.")
 
         return cleaned_data, annot_data
 
@@ -520,10 +543,10 @@ class MarkingTaskService:
             MarkingTaskTag: reference to the tag
 
         Raises:
-            ValidationError: if the tag text is not legal.
+            serializers.ValidationError: if the tag text is not legal.
         """
         if not is_valid_tag_text(tag_text):
-            raise ValidationError(
+            raise serializers.ValidationError(
                 f'Invalid tag text: "{tag_text}"; contains disallowed characters'
             )
         try:
@@ -600,7 +623,7 @@ class MarkingTaskService:
         Raises:
             ValueError: invalid task code
             RuntimeError: task not found
-            ValidationError: invalid tag text
+            serializers.ValidationError: invalid tag text
         """
         the_task = self.get_task_from_code(code)
         the_tag = self.get_or_create_tag(user, tag_text)
@@ -649,13 +672,29 @@ class MarkingTaskService:
 
     @transaction.atomic
     def remove_tag_from_task_via_pks(self, tag_pk: int, task_pk: int) -> None:
-        """Add existing tag with given pk to the marking task with given pk."""
+        """Remove tag with given pk from the marking task with given pk."""
         try:
             the_task = MarkingTask.objects.select_for_update().get(pk=task_pk)
             the_tag = MarkingTaskTag.objects.get(pk=tag_pk)
         except (MarkingTask.DoesNotExist, MarkingTaskTag.DoesNotExist):
             raise ValueError("Cannot find task or tag with given pk")
         self._remove_tag_from_task(the_tag, the_task)
+
+    @classmethod
+    def _tag_task_pk_for_user(
+        cls, task_pk: int, username: str, calling_user: User, unassign_others: bool
+    ) -> None:
+        """Tag a task for a user, removing other user tags."""
+        task = MarkingTask.objects.get(pk=task_pk)
+        # TODO: maybe these many-to-many things don't need select_for_update
+        # task = MarkingTask.objects.select_for_update().get(pk=task_pk)
+        if unassign_others:
+            for tag in task.markingtasktag_set.all():
+                if tag.text.startswith("@"):
+                    # TODO: colin doesn't understand this notation
+                    tag.task.remove(task)
+        attn_user_tag_text = f"@{username}"
+        cls().create_tag_and_attach_to_task(calling_user, task_pk, attn_user_tag_text)
 
     @transaction.atomic
     def set_paper_marking_task_outdated(
@@ -729,26 +768,19 @@ class MarkingTaskService:
             None
 
         Raises:
-            ValidationError: if the tag text is not legal.
+            serializers.ValidationError: if the tag text is not legal.
         """
         tag_obj = self.get_or_create_tag(user, tag_text)
         self.add_tag_to_task_via_pks(tag_obj.pk, task_pk)
 
-    @transaction.atomic
     @staticmethod
-    def reassign_task_to_user(task_pk: int, username: str) -> None:
-        """Reassign a task to a different user.
+    def _reassign_task_to_user(task_pk: int, username: str) -> None:
+        """Reassign a task to a different user, low level routine.
 
         If tasks status is "COMPLETE" then the assigned_user will be updated,
         while if it is "OUT" or "TO_DO", then assigned user will be set to None.
         ie - this function assumes that the task will also be tagged with
         an appropriate @username tag (by the caller; we don't do it for you!)
-
-        Note: this looks superficially like :method:`assign_task_to_user` but
-        its used in a different way.  That method is about claiming tasks.
-        This current method is most useful for "unclaiming" tasks, and---with
-        extra tagging effort described above---pushing them toward a different
-        user.
 
         Args:
             task_pk: the primary key of a task.
@@ -790,3 +822,48 @@ class MarkingTaskService:
                 task_obj.save()
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find marking task {task_pk}")
+
+    @classmethod
+    def reassign_task_to_user(
+        cls,
+        task_pk: int,
+        *,
+        new_username: str,
+        calling_user: User,
+        unassign_others: bool = False,
+    ) -> None:
+        """Reassign a task to a different user.
+
+        If tasks status is "COMPLETE" then the assigned_user will be updated.
+        If it is "OUT" or "TO_DO", then assigned user will be set to None
+        and the task will be tagged with an appropriate @username tag.
+
+        Note: this looks superficially like :method:`assign_task_to_user` but
+        its used in a different way.  That method is about claiming tasks.
+        This current method is most useful for "unclaiming" tasks, and pushing
+        them toward a different user.
+
+        Args:
+            task_pk: the primary key of a task.
+
+        Keyword Args:
+            new_username: a string of a username to reassign to.
+            calling_user: the user who is doing the reassigning.
+            unassign_others: untag any other users assigned to this task,
+                defaults to False.
+
+        Returns:
+            None.
+
+        Raises:
+            ValueError: cannot find user, or cannot find marking task.
+            serializers.ValidationError: tag name failure, unexpected as
+                we make the tag.
+        """
+        with transaction.atomic():
+            # first reassign the task - this checks if the username
+            # corresponds to an existing marker-user
+            cls._reassign_task_to_user(task_pk, new_username)
+            cls._tag_task_pk_for_user(
+                task_pk, new_username, calling_user, unassign_others
+            )

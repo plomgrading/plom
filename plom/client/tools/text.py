@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2024 Bryan Tanady
 
@@ -12,7 +12,7 @@ from PyQt6.QtCore import QPointF, Qt, QTimer
 from PyQt6.QtGui import QColor, QFont, QPixmap, QUndoCommand
 from PyQt6.QtWidgets import QGraphicsItem, QGraphicsTextItem
 
-from plom.client.tools import CommandTool, OutOfBoundsFill, OutOfBoundsPen, log
+from . import CommandTool, OutOfBoundsFill, OutOfBoundsPen, log
 
 
 # TODO: move this to move.py?

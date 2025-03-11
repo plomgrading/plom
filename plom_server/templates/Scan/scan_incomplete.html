@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023 Andrew Rechnitzer
-    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
 -->
 {% extends "base/base.html" %}
@@ -22,6 +22,31 @@
             <div class="row">
                 <div class="row">
                     <h5>Incomplete papers: {{ number_of_incomplete_papers }}</h5>
+                    <!-- TODO: remove this div warning block when fixing #3852 -->
+                    <div class="alert alert-danger m-2" role="alert">
+                        <h4 class="alert-heading">Caution</h4>
+                        <p>
+                            The very <em>first time</em> you click on
+                            one of the red missing page
+                            buttons, <em>please</em> wait 10 seconds
+                            before clicking again.
+                        </p>
+                        <small>
+                            Details: if you click too quickly after the first click,
+                            you might hit
+                            <a href="https://gitlab.com/plom/plom/-/issues/3852" class="alert-link">Issue #3852</a>
+                            where the buttons will appear unresponsive due
+                            to a race condition.  After the initial 10
+                            second wait, there is no need to be click
+                            carefully, its only the first time while the
+                            database populates a table in a way that is not
+                            async-safe.  This will be fixed in the upcoming
+                            0.18.0 release but we cannot easily fix it
+                            during 0.17.x.  If you've already got yourself
+                            into this state, see the issue for known
+                            workarounds.
+                        </small>
+                    </div>
                     <div class="col">
                         <div class="card">
                             <div class="card-body">
@@ -46,13 +71,13 @@
                                                                 {{ fp.page_number }}
                                                             </button>
                                                         {% else %}
-                                                            <button hx-get="{% url 'substitute_img_wrap' pn fp.page_number %}"
-                                                                    hx-target="#incompleteImageHere"
-                                                                    hx-replace="innerHTML"
-                                                                    class="btn btn-danger p-3"
+                                                            <button class="btn btn-danger p-3"
                                                                     data-bs-toggle="tooltip"
                                                                     data-bs-placement="top"
-                                                                    data-bs-title="missing {{ pn }}.{{ fp.page_number }}">
+                                                                    data-bs-title="missing {{ pn }}.{{ fp.page_number }}"
+                                                                    hx-get="{% url 'substitute_img_wrap' pn fp.page_number %}"
+                                                                    hx-target="#incompleteImageHere"
+                                                                    hx-replace="innerHTML">
                                                                 {{ fp.page_number }}
                                                             </button>
                                                         {% endif %}
@@ -62,7 +87,7 @@
                                                                 hx-target="#incompleteImageHere"
                                                                 hx-replace="incompletInnerHTML"
                                                                 class="btn btn-outline-info">
-                                                            qi.{{ mp.question_number }}
+                                                            {{ mp.page_label }}
                                                         </button>
                                                     {% endfor %}
                                                 </td>
@@ -95,4 +120,9 @@
             </div>
         </div>
     </div>
+    <!-- https://getbootstrap.com/docs/5.3/components/tooltips -->
+    <script>
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+      const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+    </script>
 {% endblock main_content %}

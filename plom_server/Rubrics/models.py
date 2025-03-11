@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Aidan Murphy
@@ -71,21 +71,21 @@ class Rubric(models.Model):
         out_of: the maximum possible value for this rubric. only
             for absolute rubrics and is 0 for other types
         text: the text of the rubric
-        question: the question this rubric is associated with.
-        tags: a list of tags for this rubric.
+        question_index: the question this rubric is associated with.
         meta: text shown only to markers, not to students.
         parameters: a list of parameters for the rubric, used in
             parameterized rubrics.
         annotations: a mapping to Annotation objects.  Its many-to-many
             so that multiple rubrics can link to multiple Annotations.
-        out_of: the maximum ``value`` an "abs" ``kind`` rubric may hold, 0 otherwise.
-        text: a string to display to recipients, its format is not pre-defined.
-        question: the ``SpecQuestion`` this rubric is related to.
-        tags: TODO:
-        meta: TODO:
         versions: a JSON list containing the versions of ``question``
-            this rubric is assigned to.
-        parameters: TODO:
+            this rubric is assigned to, a comma-separated list of integers
+            such as ``[1, 3]``.
+            An empty list should be interpreted the same as a list of
+            all possible values.
+            All should be strictly positive and less than the maximum
+            number of versions, although this is not enforced at the database
+            level.
+            TODO: a future change might remove the brackets and use CharField.
         system_rubric: this Rubric was created by or is otherwise
             important to the functioning of the Plom system.  Probably
             readonly or at least extreme caution before poking at.
@@ -107,6 +107,22 @@ class Rubric(models.Model):
             creative/hacky.
         latest: True when this is the latest version of the rubric and
             false otherwise. There will be only one latest rubric per rid.
+        tags: a list of meta tags for this rubric, these are currently used
+            for organizing rubrics into groups, although the precise format
+            is still in-flux.  Caution: this is not a free-form tagging system
+            such as in-use in Tasks.  Special tasks about special meaning to
+            the Client.  Currently these are::
+                `group:(a)`: indicates that this Rubric is in group "(a)".
+                `exclusive:(a)`: at most one Rubric in group "(a)" can
+                    be placed on the page.
+            These tags can appears more than once.
+            Other experimental information can eppear here as well, e.g.,
+            in 2025-01, the demo tags its Rubrics as "demo".
+        pedagogy_tags: an experimental feature, where Rubrics can be associated
+            with, e.g., Learning Objectives for the purposes of generating
+            reports for students or pedagogical statistics about the assessment.
+            See also "Question Tags": as of 2025-01, these are sometimes
+            labelled in this way.
     """
 
     class RubricKind(models.TextChoices):
@@ -122,10 +138,18 @@ class Rubric(models.Model):
         null=False, blank=True, default=0, validators=[MinValueValidator(0.0)]
     )
     text = models.TextField(null=False)  # can be long
-    question = models.IntegerField(null=False, blank=True, default=0)
+    question_index = models.IntegerField(null=False, blank=False)
     tags = models.TextField(null=True, blank=True, default="")  # can be long
     meta = models.TextField(null=True, blank=True, default="")  # can be long
     versions = models.JSONField(null=True, blank=True, default=list)
+    # TODO: might be simpler to validate:
+    # but is DB change so careful when doing this, and must be "1, 2" not "[1, 2]"
+    # versions = models.CharField(
+    #     null=False,
+    #     blank=True,
+    #     default='',
+    #     validators=[validate_comma_separated_integer_list]
+    # )
     parameters = models.JSONField(null=True, blank=True, default=list)
     annotations = models.ManyToManyField(Annotation, blank=True)
     system_rubric = models.BooleanField(null=False, blank=True, default=False)
@@ -144,10 +168,11 @@ class Rubric(models.Model):
     latest = models.BooleanField(null=False, blank=True, default=True)
     pedagogy_tags = models.ManyToManyField("QuestionTags.PedagogyTag", blank=True)
 
-    def save(self, *args, **kwargs):
-        # TODO: this still gets called even when we bypass the serializer: queries users
-        self.full_clean()
-        return super(Rubric, self).save(*args, **kwargs)
+    # TODO: how to make this work?  never seems to be called...
+    # def clean_versions(self):
+    #     print(self.cleaned_data["versions"])
+    #     print("TODO: ensure positive integers etc")
+    #     return self.cleaned_data
 
     def __str__(self) -> str:
         """Return a string representation of the rubric.
@@ -210,6 +235,9 @@ class RubricTable(django_tables2.Table):
     """
 
     rid = django_tables2.Column("rid", linkify=True)
+    # prevent newlines from rendering in json fields
+    versions = django_tables2.JSONColumn(json_dumps_kwargs={})
+    parameters = django_tables2.JSONColumn(json_dumps_kwargs={})
     # TODO: issue #3648, seeking a way to display how often they are used
     # times_used = django_tables2.Column(
     #     verbose_name="# Used",
@@ -222,6 +250,8 @@ class RubricTable(django_tables2.Table):
     class Meta:
         model = Rubric
 
+        # which fields to include in the table.  Or omit for all fields
+        # and use equence = (...) to control the order.
         fields = (
             "rid",
             "display_delta",
@@ -229,16 +259,10 @@ class RubricTable(django_tables2.Table):
             "revision",
             "kind",
             "system_rubric",
-            "question",
+            "question_index",
             "text",
-        )
-        sequence = (
-            "rid",
-            "display_delta",
-            "last_modified",
-            "revision",
-            "kind",
-            "system_rubric",
-            "question",
-            "text",
+            "versions",
+            "parameters",
+            "tags",
+            "pedagogy_tags",
         )

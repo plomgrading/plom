@@ -1,16 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 from django.urls import path
 
-from API.views import (
+from ..views import (
     IDprogressCount,
     IDgetDoneTasks,
     IDgetNextTask,
     IDclaimThisTask,
+    IDdirect,
     GetIDPredictions,
     GetClasslist,
 )
@@ -82,5 +83,11 @@ class IdURLPatterns:
             path("classlist/", GetClasslist.as_view(), name="api_get_classlist"),
         ]
         id_patterns += classlist
+
+        # beta support for "direct IDing", bypassing tasks (legacy had these without "beta")
+        id_patterns += [
+            # /ID/beta/<papernum>/...
+            path("beta/<int:papernum>", IDdirect.as_view(), name="api_ID_beta_direct"),
+        ]
 
         return id_patterns

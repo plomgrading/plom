@@ -2,26 +2,25 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
-
-from huey.signals import SIGNAL_ERROR, SIGNAL_INTERRUPTED
-from django.db import models
-from django.db import transaction
-from django.contrib.auth.models import User
-from django_huey import get_queue
-from django.utils import timezone
 
 import logging
 
+import huey
+import huey.api
+import huey.signals
+from django.contrib.auth.models import User
+from django.db import models, transaction
+from django.utils import timezone
+from django_huey import get_queue
+
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 
-# TODO: what is this?  It is happening at import-time... scary
-# It comes from Django-Huey project and allows you to have multiple
-# task queues
-# TODO: this is used for the decorators to define the signal handlers
-# below, so it must presumably somehow be lazy...  but this :-(
-queue = get_queue("tasks")
+# TODO: Using the @signal decorator did not work with both queues
+# from django_huey import signal
+main_queue = get_queue("tasks")
+parent_queue = get_queue("parentchores")
 
 
 class HueyTaskTracker(models.Model):
@@ -251,7 +250,7 @@ class Tag(models.Model):
 
     This is an abstract class that should be extended in other apps.
 
-    user: reference to a User instance, the user who created the task
+    user: reference to a User instance, the user who created the tag
     time: when the tag was first created
     text: the text contents of the tag
     """
@@ -305,9 +304,45 @@ class SettingsModel(SingletonABCModel):
 # on the same computer, such as our test suite Issue #2800.
 
 
-@queue.signal(SIGNAL_ERROR)
-def on_huey_task_error(signal, task, exc):
+# @signal(huey.signals.SIGNAL_ERROR)
+@main_queue.signal(huey.signals.SIGNAL_ERROR)
+def on_huey_task_error(signal, task: huey.api.Task, exc):
     """Action to take when a Huey task fails."""
+    logging.warn(f"Error in task {task.id} {task.name} {task.args} - {exc}")
+    print(f"Error in task {task.id} {task.name} {task.args} - {exc}")
+
+    # Note: using filter except of a exception on DoesNotExist because I think
+    # the exception handling was rewinding some atomic transactions
+    if not HueyTaskTracker.objects.filter(huey_id=task.id).exists():
+        # task has been deleted from underneath us, or did not exist yet b/c of race conditions
+        # or perhaps this huey task is not being tracked by a one of our trackers
+        # (for example, it may have a parent task that is doing the tracking)
+        print(
+            f"(Error) Task {task.id} {task.name} with args {task.args}"
+            " is no longer (or not yet or never will be) in the database."
+        )
+        return
+
+    with transaction.atomic():
+        task_obj = HueyTaskTracker.objects.get(huey_id=task.id)
+        task_obj.status = HueyTaskTracker.ERROR
+        task_obj.message = exc
+        task_obj.save()
+
+
+# @signal(huey.signals.SIGNAL_INTERRUPTED)
+@main_queue.signal(huey.signals.SIGNAL_INTERRUPTED)
+def on_huey_task_interrupted(signal, task: huey.api.Task):
+    print(f"Interrupt was sent to task {task.id} - {task.name} {task.args}")
+
+
+@parent_queue.signal(huey.signals.SIGNAL_ERROR)
+def on_huey_parent_task_error(signal, task: huey.api.Task, exc):
+    """Action to take when a Huey task fails.
+
+    This is slightly different from the regular one above b/c all parent tasks
+    should always have a tracker (but child tasks might not).
+    """
     logging.warn(f"Error in task {task.id} {task.name} {task.args} - {exc}")
     print(f"Error in task {task.id} {task.name} {task.args} - {exc}")
 
@@ -328,6 +363,7 @@ def on_huey_task_error(signal, task, exc):
         task_obj.save()
 
 
-@queue.signal(SIGNAL_INTERRUPTED)
-def on_huey_task_interrupted(signal, task):
+@parent_queue.signal(huey.signals.SIGNAL_INTERRUPTED)
+def on_huey_parent_task_interrupted(signal, task: huey.api.Task):
+    # TODO: this code is duplicated b/c @signal decorate did work for both queues
     print(f"Interrupt was sent to task {task.id} - {task.name} {task.args}")

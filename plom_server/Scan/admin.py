@@ -2,15 +2,15 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.contrib import admin
 
 from .models import (
     StagingBundle,
     StagingImage,
-    PagesToImagesHueyTask,
-    ParseQR,
+    PagesToImagesChore,
+    ManageParseQRChore,
     KnownStagingImage,
     UnknownStagingImage,
     ExtraStagingImage,
@@ -26,5 +26,5 @@ admin.site.register(ExtraStagingImage)
 admin.site.register(ErrorStagingImage)
 admin.site.register(DiscardStagingImage)
 admin.site.register(UnknownStagingImage)
-admin.site.register(PagesToImagesHueyTask)
-admin.site.register(ParseQR)
+admin.site.register(PagesToImagesChore)
+admin.site.register(ManageParseQRChore)

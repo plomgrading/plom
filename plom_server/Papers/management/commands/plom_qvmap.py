@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 from __future__ import annotations
@@ -82,10 +82,9 @@ class Command(BaseCommand):
 
     def papers_status(self) -> None:
         """Get the status of test-papers in the database."""
-        paper_info = PaperInfoService()
-        n_papers = paper_info.how_many_papers_in_database()
+        n_papers = PaperInfoService().how_many_papers_in_database()
         self.stdout.write(f"{n_papers} test-papers saved to the database.")
-        if PaperInfoService().is_paper_database_fully_populated():
+        if PaperInfoService.is_paper_database_fully_populated():
             self.stdout.write("Database is ready")
         else:
             self.stdout.write("Database is not yet ready")
@@ -94,8 +93,7 @@ class Command(BaseCommand):
         self, *, number_to_produce: int | None = None, first: int | None = 1
     ) -> None:
         """Create a version map and use it to populate the database with papers."""
-        paper_info = PaperInfoService()
-        if paper_info.is_paper_database_populated():
+        if PaperInfoService.is_paper_database_populated():
             raise CommandError("Test-papers already saved to database - stopping.")
 
         self.stdout.write("Creating test-papers...")
@@ -131,20 +129,19 @@ class Command(BaseCommand):
 
     def download_pqv_map(self) -> None:
         # check if a populate/evacuate running
-        if PaperInfoService().is_paper_database_being_updated_in_background():
+        if PaperCreatorService.is_background_chore_in_progress():
             raise CommandError("Database is being updated - try again shortly.")
 
-        save_path = Path("question_version_map.csv")
+        save_path = Path(PQVMappingService.get_default_csv_filename())
         if save_path.exists():
             s = f"A file exists at {save_path} - overwrite it? [y/N] "
             choice = input(s).lower()
             if choice != "y":
                 self.stdout.write("Skipping.")
                 return
-            else:
-                self.stdout.write(f"Trying to overwrite {save_path}...")
+            self.stdout.write(f"Trying to overwrite {save_path}...")
         try:
-            PQVMappingService().pqv_map_to_csv(save_path)
+            PQVMappingService.pqv_map_to_csv(save_path)
         except ValueError as e:
             raise CommandError(e) from e
         self.stdout.write(f"Wrote {save_path}")
@@ -175,7 +172,7 @@ class Command(BaseCommand):
             PlomDatabaseCreationError,
             IntegrityError,
         ) as e:
-            raise CommandError(e) from e
+            raise CommandError(f"{e} (perhaps you need to force?)") from e
         self.stdout.write(f"Uploaded qvmap from {f}")
 
     def handle(self, *args, **options):

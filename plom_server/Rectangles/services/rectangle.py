@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Andrew Rechnitzer
-
-from __future__ import annotations
 
 from io import BytesIO
 from pathlib import Path
@@ -87,7 +85,7 @@ class RectangleExtractor:
 
     def _get_affine_transformation_matrix_ref_to_scan(
         self, qr_dict: dict[str, dict[str, Any]]
-    ) -> None | np.ndarray[Any, Any]:
+    ) -> None | np.ndarray:
         """Given QR data for an image, determine the affine transformation that maps coords in the reference image to coordinates in the scan image.
 
         Args:
@@ -141,8 +139,8 @@ class RectangleExtractor:
         return cv.getAffineTransform(ref_three_points, scan_three_points)
 
     def _get_perspective_transform_scan_to_ref(
-        self, ref_rect: dict[str, float], M_r_to_s: np.ndarray[Any, Any]
-    ) -> np.ndarray[Any, Any]:
+        self, ref_rect: dict[str, float], M_r_to_s: np.ndarray
+    ) -> np.ndarray:
         """Given the ref-rectangle and the transform from reference-to-scan, compute (essentially) the inverse transform.
 
         Args:

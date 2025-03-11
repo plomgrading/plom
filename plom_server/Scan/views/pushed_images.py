@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2024 Andrew Rechnitzer
+# Copyright (C) 2022-2025 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -31,6 +31,16 @@ class PushedImageView(ScannerLeadMarkerOrManagerView):
         """Discard a pushed image by its primary key."""
         mds = ManageDiscardService()
         mds.discard_pushed_image_from_pk(request.user, img_pk)
+        return HttpResponseClientRefresh()
+
+
+class DiscardWholePaperView(ScannerLeadMarkerOrManagerView):
+    """Discard all images of a given paper."""
+
+    def delete(self, request: HttpRequest, *, paper_number: int) -> HttpResponse:
+        """Discard a whole paper by its paper number."""
+        mds = ManageDiscardService()
+        mds.discard_whole_paper_by_number(request.user, paper_number, dry_run=False)
         return HttpResponseClientRefresh()
 
 

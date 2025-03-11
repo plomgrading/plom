@@ -1,25 +1,20 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
 from __future__ import annotations
 
-from pathlib import Path
 import re
 import shutil
 import subprocess
+from importlib import resources
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 # need these imports to get idBox template from plom
 import plom
-import sys
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
 
 
 def compile_tex(filepath: Path) -> None:
@@ -53,9 +48,7 @@ def compile_tex_str_to_filepath(tex_as_str: str, pdf_filepath: Path) -> None:
     tmp_tex_path = Path(tmp_tex_file.name)
     compile_tex(tmp_tex_path)
     # move the resulting .pdf into place
-    # note that shutil move and pathlib typing error - https://bugs.python.org/issue39140
-    # fixed in python 3.9 - so our mypy will throw an error on the following line
-    shutil.move(tmp_tex_path.with_suffix(".pdf"), pdf_filepath)  # type: ignore
+    shutil.move(tmp_tex_path.with_suffix(".pdf"), pdf_filepath)
     # now clean up the temp file
     tmp_tex_path.unlink(missing_ok=True)
 

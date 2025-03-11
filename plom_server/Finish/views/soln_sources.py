@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2025 Colin B. Macdonald
 
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -29,7 +30,7 @@ class SolnSourcesView(ManagerRequiredView):
                 return FileResponse(
                     source_bytes,
                     as_attachment=True,
-                    filename=f"source{version}.pdf",
+                    filename=f"solution{version}.pdf",
                 )
             except ObjectDoesNotExist:
                 raise Http404("No such file")

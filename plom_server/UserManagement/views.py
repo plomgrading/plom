@@ -6,23 +6,30 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2025 Aidan Murphy
 
 import json
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.contrib.sites.shortcuts import get_current_site
+from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse, Http404
 from django_htmx.http import HttpResponseClientRefresh
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
+from plom.misc_utils import humanize_seconds
 from Authentication.services import AuthenticationServices
 from Base.base_group_views import ManagerRequiredView
 from Progress.services.userinfo_service import UserInfoServices
 from .services import PermissionChanger
 from .services import QuotaService
+from .services.UsersService import get_user_info, delete_user
 from .models import Quota
 
 
@@ -38,32 +45,39 @@ class UserPage(ManagerRequiredView):
     set_quota_confirmation: the tag for the confirmation dialog interaction.
     """
 
-    def get(self, request):
-        managers = User.objects.filter(groups__name="manager")
-        scanners = User.objects.filter(groups__name="scanner").exclude(
-            groups__name="manager"
-        )
-        lead_markers = User.objects.filter(groups__name="lead_marker")
-        markers = User.objects.filter(groups__name="marker").prefetch_related(
-            "auth_token"
-        )
+    def get(self, request: HttpRequest) -> HttpResponse:
+        """Fetch user management page."""
+        users = get_user_info()
         # fetch these so that we don't loop over this in the template
         # remove db hits in loops.
-        online_now_ids = request.online_now_ids
+        uids = cache.get("online-now", [])
+
+        online_keys = ["online-%s" % (u,) for u in uids]
+        fresh = cache.get_many(online_keys).keys()
+        online_now_ids = [int(k.replace("online-", "")) for k in fresh]
 
         context = {
             "online_now_ids": online_now_ids,
-            "scanners": scanners,
-            "markers": markers,
-            "lead_markers": lead_markers,
-            "managers": managers,
+            "scanners": users["scanners"],
+            "markers": users["markers"],
+            "lead_markers": users["lead_markers"],
+            "managers": users["managers"],
             "users_with_quota_by_pk": QuotaService.get_list_of_user_pks_with_quotas(),
         }
         return render(request, "UserManagement/users.html", context)
 
-    def post(self, request, username):
+    def post(self, request: HttpRequest, username: str) -> HttpResponse:
+        """Set user to active or inactive."""
         PermissionChanger.toggle_user_active(username)
 
+        return HttpResponseClientRefresh()
+
+    def delete(self, request: HttpRequest, username: str) -> HttpResponse:
+        """Delete user."""
+        try:
+            delete_user(username, request.user.id)
+        except (ValueError, ObjectDoesNotExist) as e:
+            messages.error(request, e, extra_tags="danger")
         return HttpResponseClientRefresh()
 
     @login_required
@@ -89,15 +103,19 @@ class UserPage(ManagerRequiredView):
     @login_required
     def toggleLeadMarker(self, username):
         PermissionChanger.toggle_lead_marker_group_membership(username)
-        return redirect("/users")
+        return HttpResponseClientRefresh()
 
 
 class PasswordResetPage(ManagerRequiredView):
-    def get(self, request, username):
+    def get(self, request: HttpRequest, *, username: str) -> HttpResponse:
         user_obj = User.objects.get(username=username)
-        link = AuthenticationServices().generate_link(request, user_obj)
-
-        context = {"username": username, "link": link}
+        request_domain = get_current_site(request).domain
+        link = AuthenticationServices().generate_link(user_obj, request_domain)
+        context = {
+            "username": username,
+            "link": link,
+            "link_expiry_period": humanize_seconds(settings.PASSWORD_RESET_TIMEOUT),
+        }
         return render(request, "UserManagement/password_reset_page.html", context)
 
 
@@ -182,7 +200,7 @@ class EditQuotaLimitView(ManagerRequiredView):
         new_limit = int(request.POST.get("limit"))
         user = get_object_or_404(User, username=username)
 
-        if QuotaService.is_proposed_limit_valid(new_limit, user):
+        if QuotaService.can_set_quota(user, limit=new_limit):
             quota = Quota.objects.filter(user=user).first()
             quota.limit = new_limit
             quota.save()
@@ -205,22 +223,9 @@ class ModifyQuotaView(ManagerRequiredView):
         """Handle the POST request to update the quota limits for the specified users."""
         user_ids = request.POST.getlist("users")
         new_limit = int(request.POST.get("limit"))
-        valid_markers = []
-        invalid_markers = []
-
-        if not user_ids:
-            messages.error(request, "No users selected.")
-            return redirect(reverse("progress_user_info_home"))
-
-        for user_id in user_ids:
-            user = get_object_or_404(User, pk=user_id)
-            quota = Quota.objects.get(user=user)
-            if not QuotaService.is_proposed_limit_valid(limit=new_limit, user=user):
-                invalid_markers.append(user.username)
-            else:
-                valid_markers.append(user.username)
-                quota.limit = new_limit
-                quota.save()
+        valid_markers, invalid_markers = QuotaService.set_quotas_for_userlist(
+            user_ids, new_limit
+        )
 
         if len(invalid_markers) > 0:
             messages.success(

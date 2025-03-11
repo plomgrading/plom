@@ -9,7 +9,7 @@ from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 
 from Papers.services import SpecificationService, SolnSpecService
-from Finish.services import SolnSourceService
+from ...services import SolnSourceService
 
 
 class Command(BaseCommand):

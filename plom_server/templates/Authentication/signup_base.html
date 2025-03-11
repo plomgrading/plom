@@ -1,15 +1,16 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Brennen Chiu
-    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
+    Copyright (C) 2024 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% block title %}
-    Sign Up
+    Create users
 {% endblock title %}
 {% block page_heading %}
-    Sign up
+    Create users
 {% endblock page_heading %}
 {% block main_content %}
     <style>
@@ -29,33 +30,57 @@
         <div class="card-header">
             <ul class="nav nav-pills nav-fill">
                 <li class="nav-item">
-                    {% if current_page == "single" %}
-                        <a class="nav-link active" href="{% url 'signup_single' %}">Create Single User</a>
-                    {% else %}
-                        <a class="nav-link" href="{% url 'signup_single' %}">Create Single User</a>
-                    {% endif %}
+                    <a class="nav-link{% if current_page == "single" %} active{% endif %}"
+                       href="{% url 'signup_single' %}">Create single user</a>
                 </li>
                 <li class="nav-item">
-                    {% if current_page == "multiple" %}
-                        <a class="nav-link active" href="{% url 'signup_multiple' %}">Create Multiple Users</a>
-                    {% else %}
-                        <a class="nav-link" href="{% url 'signup_multiple' %}">Create Multiple Users</a>
-                    {% endif %}
+                    <a class="nav-link{% if current_page == "multiple" %} active{% endif %}"
+                       href="{% url 'signup_multiple' %}">Create multiple users</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link{% if current_page == "import" %} active{% endif %}"
+                       href="{% url 'signup_import' %}">Import users from file</a>
                 </li>
             </ul>
         </div>
         <div class="card-body">
+            {% if current_page == "import" %}
+                <p>
+                    Create many users via a <tt>.csv</tt> file.
+                    <details>
+                        <summary>File requirements</summary>
+                        A valid <tt>.csv</tt> file must contain 2 columns:
+                        <ul>
+                            <!-- WET - see authentication_service.create_users_from_csv -->
+                            <li>'username'</li>
+                            <li>'usergroup'. This can be one of:</li>
+                            <ul>
+                                {% for user_group in user_groups %}<li>{{ user_group }}</li>{% endfor %}
+                            </ul>
+                        </ul>
+                        <p>
+                            Here is a template:
+                            <button class="btn btn-link"
+                                    onclick="downloadCSV(this)"
+                                    id="download-all"
+                                    data-downloadText="{{ example_input_csv|safe }}"
+                                    data-filename="user_import_template.csv">
+                                user_import_template.csv<i class="bi bi-download"></i>
+                            </button>
+                        </p>
+                    </details>
+                </p>
+            {% endif %}
             {% block card_content %}
             {% endblock card_content %}
             <p>
-                <strong>Please note:</strong> links will <em>expire</em>
-                by default in 7 days; don't create accounts too far in
-                advance of sending them to your team!
-                <!-- todo: paste in the live setting -->
+                <strong>Please note:</strong> user links will <em>expire</em>
+                in {{ link_expiry_period }}.
             </p>
+            {% include "../base/alert_messages.html" with messages=messages %}
         </div>
     </div>
-    {% if created %}
+    {% if links %}
         <div class="mt-3" style="width: 100%; text-align: center">
             <table class="table table-sm">
                 <thead>
@@ -64,11 +89,18 @@
                         <th scope="col">Usernames</th>
                         <th scope="col">Links</th>
                         <th scope="col">
-                            {% if links|length > 1 %}
+                            {% if tsv %}
                                 <button class="btn btn-primary"
                                         onclick="copyText(this)"
                                         id="copy-all"
                                         data-copyText="{{ tsv|safe }}">Copy all</button>
+                            {% endif %}
+                            {% if csv %}
+                                <button class="btn btn-primary"
+                                        onclick="downloadCSV(this)"
+                                        id="download-all"
+                                        data-downloadText="{{ csv|safe }}"
+                                        data-filename="new_users.csv">Download csv</button>
                             {% endif %}
                         </th>
                     </tr>
@@ -80,15 +112,19 @@
                             <th>{{ username }}</th>
                             <td id="link">{{ link }}</td>
                             <td>
-                                <button class="btn btn-primary" style="margin-left: 4px" onclick="copyText(this)" data-copyText={{ link }} id="copy-button-{{ forloop.counter0 }}">Copy
-                                </button>
+                                <button class="btn btn-primary"
+                                        style="margin-left: 4px"
+                                        onclick="copyText(this)"
+                                        data-copyText="{{ link }}"
+                                        id="copy-button-{{ forloop.counter0 }}">Copy</button>
                             </td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        <script>
+    {% endif %}
+    <script>
             async function copyText(buttonObj) {
               const button = buttonObj;
               navigator.clipboard.writeText(buttonObj.dataset.copytext);
@@ -97,8 +133,20 @@
               await new Promise(r => setTimeout(r, 2000));
               button.innerText = prevText;
             }
-        </script>
-    {% endif %}
+            async function downloadCSV(buttonObj) {
+	    const csvContent = buttonObj.dataset.downloadtext;
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+
+            // download via 'a' element
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = buttonObj.dataset.filename;
+
+            link.click();
+            URL.revokeObjectURL(link.href);
+            }
+
+    </script>
     <div class="card my-2">
         <div class="card-body">
             <a class="btn btn-success my-2" href="{% url 'users' %}">return to user management</a>

@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020-2023 Andrew Rechnitzer
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2022 Edith Coates
 
 """Plom tools related to producing papers, and setting up servers."""
 
-__copyright__ = "Copyright (C) 2019-2024 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2019-2025 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -23,6 +23,7 @@ from .buildDatabaseAndPapers import build_database, build_papers
 from .mergeAndCodePages import make_PDF
 from .build_extra_page_with_qrcodes import build_extra_page_pdf
 from .build_scrap_paper_with_qrcodes import build_scrap_paper_pdf
+from .build_bundle_separators_with_qrcodes import build_bundle_separator_paper_pdf
 
 from .classlistValidator import (
     sid_field,

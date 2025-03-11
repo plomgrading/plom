@@ -1,81 +1,153 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2019-2024 Colin B. Macdonald
-# Copyright (C) 2019-2024 Andrew Rechnitzer
+# Copyright (C) 2019-2025 Colin B. Macdonald
+# Copyright (C) 2019-2025 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2024 Aden Chan
+# Copyright (C) 2024-2025 Aden Chan
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aidan Murphy
 
 from __future__ import annotations
 
+import ast
 import csv
 import io
 import html
 import json
 import logging
 import sys
-from django.db.models.aggregates import Count
-import tomlkit
+from operator import itemgetter
 from typing import Any
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
-
-
-from operator import itemgetter
+import tomlkit
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
+from django.db.models.aggregates import Count
 from django.db.models import QuerySet
-
-from rest_framework.exceptions import ValidationError
+from rest_framework import serializers
 
 from plom.plom_exceptions import PlomConflict
 from Base.models import SettingsModel
 from Mark.models import Annotation
 from Mark.models.tasks import MarkingTask
-from Mark.services import MarkingTaskService
 from Papers.models import Paper
 from Papers.services import SpecificationService
+from QuestionTags.models import PedagogyTag
 from ..serializers import RubricSerializer
 from ..models import Rubric
 from ..models import RubricPane
+from .utils import _generate_display_delta, _Rubric_to_dict
 
 
 log = logging.getLogger("RubricServer")
 
 
-def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
-    return {
-        "rid": r.rid,
-        "kind": r.kind,
-        "display_delta": r.display_delta,
-        "value": r.value,
-        "out_of": r.out_of,
-        "text": r.text,
-        "tags": r.tags,
-        "meta": r.meta,
-        "username": r.user.username,
-        "question": r.question,
-        "versions": r.versions,
-        "parameters": r.parameters,
-        "system_rubric": r.system_rubric,
-        "published": r.published,
-        "last_modified": r.last_modified,
-        "modified_by_username": (
-            None if not r.modified_by_user else r.modified_by_user.username
-        ),
-        "revision": r.revision,
-    }
+# TODO: more validation of JSONFields that the model/form/serializer should
+# be doing (see `clean_versions` commented out in Rubrics/models.py)
+# These `_validate_...` functions are written somelike like `clean_<field>`
+# in Django's model/form.
+def _validate_versions(vers: None | list | str) -> None:
+    if not vers:
+        # empty string is ok for versions
+        return
+
+    if not isinstance(vers, list):
+        raise serializers.ValidationError(
+            f'nonempty "versions" must be a list of ints but got "{vers}"'
+        )
+    for v in vers:
+        if not isinstance(v, int):
+            raise serializers.ValidationError(
+                f'nonempty "versions" must be a list of ints but got "{vers}"'
+            )
+
+
+def _validate_parameters(parameters: None | list) -> None:
+    if not parameters:
+        return
+
+    if not isinstance(parameters, list):
+        raise serializers.ValidationError(
+            'nonempty "parameters" must be a list but got'
+            f' type {type(parameters)}: "{parameters}"'
+        )
+    for row in parameters:
+        try:
+            param, values = row
+        except ValueError as e:
+            raise serializers.ValidationError(
+                f'Invalid row in "parameters": {e}'
+            ) from e
+
+        if not isinstance(param, str):
+            raise serializers.ValidationError(
+                'Invalid row in "parameters": first row entry "param" should be str'
+                f' but has type "{type(param)}"; row: "{row}"'
+            )
+
+        if not (isinstance(values, tuple) or isinstance(values, list)):
+            raise serializers.ValidationError(
+                'Invalid row in "parameters": expected list of substitution values;'
+                f' got type "{type(values)}"; row: "{row}"'
+            )
+
+        # TODO: could also assert len(values) matches number of versions
+
+        for v in values:
+            if not isinstance(v, str):
+                raise serializers.ValidationError(
+                    'Invalid row in "parameters": expected list of str substitutions;'
+                    f' value "{v}" has "{type(v)}"; row: "{row}"'
+                )
+
+
+# TODO: this code belongs in model/serializer?
+def _validate_value(value, max_mark) -> None:
+    # check that the "value" lies in [-max_mark, max_mark]
+    try:
+        value = float(value)
+    except ValueError as e:
+        raise serializers.ValidationError(
+            {"value": f"value {value} must be convertible to number: {e}"}
+        ) from e
+    if not -max_mark <= value <= max_mark:
+        raise serializers.ValidationError(
+            {"value": f"Value out of range: must lie in [-{max_mark}, {max_mark}]"}
+        )
+
+
+def _validate_value_out_of(value, out_of, max_mark) -> None:
+    try:
+        out_of = float(out_of)
+    except ValueError as e:
+        raise serializers.ValidationError(
+            {"out_of": f"out of {out_of} must be convertible to number: {e}"}
+        ) from e
+    try:
+        value = float(value)
+    except ValueError as e:
+        raise serializers.ValidationError(
+            {"value": f"value {value} must be convertible to number: {e}"}
+        ) from e
+    if not 0 <= value <= out_of:
+        raise serializers.ValidationError(
+            {"value": f"out of range: {value} is not in [0, {out_of}]."}
+        )
+    if not 0 < out_of <= max_mark:
+        raise serializers.ValidationError(
+            {"out_of": f"out of range: {out_of} is not in (0, {max_mark}]"}
+        )
 
 
 class RubricService:
@@ -99,8 +171,9 @@ class RubricService:
             The new rubric data, in dict key-value format.
 
         Raises:
-            KeyError: if rubric_data contains missing username or kind fields.
-            ValidationError: if rubric kind is not a valid option.
+            KeyError: if rubric_data contains missing username or user.
+            serializers.ValidationError: if rubric kind is not a valid
+                option, or other errors.
             ValueError: if username does not exist in the DB.
             PermissionDenied: user are not allowed to create rubrics.
                 This could be "this user" or "all users".
@@ -116,7 +189,12 @@ class RubricService:
 
         # some mangling around user/username here
         if "user" not in incoming_data.keys():
-            username = incoming_data.pop("username")
+            username = incoming_data.pop("username", None)
+            if not username:
+                # TODO: revisit this in the context of uploading rubrics from files
+                raise KeyError(
+                    "user or username is required (for now, might change in future)"
+                )
             try:
                 user = User.objects.get(username=username)
                 incoming_data["user"] = user.pk
@@ -124,11 +202,22 @@ class RubricService:
             except ObjectDoesNotExist as e:
                 raise ValueError(f"User {username} does not exist.") from e
 
-        if "kind" not in incoming_data.keys():
-            raise ValidationError({"kind": "Kind is required."})
+        if "rid" in incoming_data.keys():
+            # could potentially allow blank rid...
+            raise serializers.ValidationError(
+                'Data for creating a new rubric must not have a "rid" column,'
+                f' but this has {incoming_data.get("rid")}'
+            )
 
-        if incoming_data["kind"] not in ["absolute", "relative", "neutral"]:
-            raise ValidationError({"kind": "Invalid kind."})
+        # some mangling because client still uses "question"
+        if "question_index" not in incoming_data.keys():
+            incoming_data["question_index"] = incoming_data.pop("question")
+
+        if "kind" not in incoming_data.keys():
+            raise serializers.ValidationError({"kind": "Kind is required."})
+
+        if incoming_data["kind"] not in ("absolute", "relative", "neutral"):
+            raise serializers.ValidationError({"kind": "Invalid kind."})
 
         # Check permissions
         s = SettingsModel.load()
@@ -154,7 +243,6 @@ class RubricService:
 
         return self._create_rubric_lowlevel(incoming_data)
 
-    # less error checking, for internal use only
     def _create_rubric_lowlevel(
         self,
         data: dict[str, Any],
@@ -162,27 +250,45 @@ class RubricService:
         _bypass_serializer: bool = False,
         _bypass_user: User | None = None,
     ) -> Rubric:
+        """Create rubrics with less error checking, internal use only.
+
+        Careful with ``_pypass_serializer``.  I think this stuff was introduced
+        to decrease the number of database queries when making many rubrics.
+        """
         if data.get("display_delta", None) is None:
             # if we don't have a display_delta, we'll generate a default one
-            data["display_delta"] = self._generate_display_delta(
+            data["display_delta"] = _generate_display_delta(
                 # if value is missing, can only be neutral
                 # missing value will be prohibited in a future MR
                 data.get("value", 0),
                 data["kind"],
                 data.get("out_of", None),
             )
+        # check that the "value" lies in [-max_mark, max_mark]
+        max_mark = SpecificationService.get_question_max_mark(data["question_index"])
+        _validate_value(data.get("value", 0), max_mark)
+        # TODO: Perhaps the serializer should do this
+        if data["kind"] == "absolute":
+            _validate_value_out_of(data["value"], data["out_of"], max_mark)
+
+        # TODO: more validation of JSONFields that the model/form/serializer should
+        # be doing (see `clean_versions` commented out in Rubrics/models.py)
+        _validate_versions(data.get("versions"))
+        _validate_parameters(data.get("parameters"))
+
         data["latest"] = True
         if _bypass_serializer:
+            assert _bypass_user is not None
             new_rubric = Rubric.objects.create(
                 text=data["text"],
-                question=data["question"],
+                question_index=data["question_index"],
                 system_rubric=data["system_rubric"],
                 kind=data["kind"],
                 value=data["value"],
                 out_of=data["out_of"],
-                display_delta=data.get("display_delta"),
+                display_delta=data["display_delta"],
                 meta=data.get("meta"),
-                user=_bypass_user,  # TODO: None seems just fine too (?)
+                user=_bypass_user,
                 modified_by_user=_bypass_user,
                 latest=data.get("latest"),
                 versions=data.get("versions"),
@@ -193,7 +299,7 @@ class RubricService:
 
         serializer = RubricSerializer(data=data)
         if not serializer.is_valid():
-            raise ValidationError(serializer.errors)
+            raise serializers.ValidationError(serializer.errors)
         new_rubric = serializer.save()
         # TODO: if its new why do we need to clear these?
         # new_rubric.pedagogy_tags.clear()
@@ -235,9 +341,12 @@ class RubricService:
             ValueError: wrong "kind" or invalid rubric data.
             PermissionDenied: user does not have permission to modify.
                 This could be "this user" or "all users".
-            ValidationError: invalid kind, maybe other invalidity.
+            serializers.ValidationError: invalid kind, maybe other invalidity.
             PlomConflict: the new data is too old; someone else modified.
         """
+        # addresses a circular import?
+        from Mark.services import MarkingTaskService
+
         new_rubric_data = new_rubric_data.copy()
         username = new_rubric_data.pop("username")
 
@@ -265,6 +374,10 @@ class RubricService:
                 f"does not match database content (revision {old_rubric.revision}): "
                 f"most likely your edits have collided with those of someone else."
             )
+
+        # some mangling because client still uses "question"
+        if "question_index" not in new_rubric_data.keys():
+            new_rubric_data["question_index"] = new_rubric_data.pop("question")
 
         # Generally, omitting modifying_user bypasses checks
         if modifying_user is None:
@@ -308,26 +421,45 @@ class RubricService:
         new_rubric_data["latest"] = True
         new_rubric_data["rid"] = old_rubric.rid
 
-        # TODO: Issue #3582: don't autogenerate if input has custom display delta
-        new_rubric_data["display_delta"] = self._generate_display_delta(
-            new_rubric_data.get("value", 0),
-            new_rubric_data["kind"],
-            new_rubric_data.get("out_of", None),
+        if new_rubric_data.get("display_delta", None) is None:
+            # if we don't have a display_delta, we'll generate a default one
+            new_rubric_data["display_delta"] = _generate_display_delta(
+                new_rubric_data.get("value", 0),
+                new_rubric_data["kind"],
+                new_rubric_data.get("out_of", None),
+            )
+
+        if new_rubric_data["kind"] in ("relative", "neutral"):
+            new_rubric_data["out_of"] = 0
+
+        # TODO: Perhaps the serializer should do this
+        max_mark = SpecificationService.get_question_max_mark(
+            new_rubric_data["question_index"]
         )
+        _validate_value(new_rubric_data.get("value", 0), max_mark)
+        if new_rubric_data["kind"] == "absolute":
+            _validate_value_out_of(
+                new_rubric_data["value"], new_rubric_data["out_of"], max_mark
+            )
+
+        _validate_versions(new_rubric_data.get("versions"))
+        _validate_parameters(new_rubric_data.get("parameters"))
 
         serializer = RubricSerializer(data=new_rubric_data)
 
         if not serializer.is_valid():
-            raise ValidationError(serializer.errors)
+            raise serializers.ValidationError(serializer.errors)
 
         old_rubric.latest = False
         old_rubric.save()
 
         new_rubric = serializer.save()
 
-        new_rubric.pedagogy_tags.clear()
-        for tag in new_rubric_data.get("pedagogy_tags", []):
-            new_rubric.pedagogy_tags.add(tag)
+        if isinstance(new_rubric_data.get("pedagogy_tags"), list):
+            new_rubric_data["pedagogy_tags"] = PedagogyTag.objects.filter(
+                tag_name__in=new_rubric_data["pedagogy_tags"]
+            ).values_list("pk", flat=True)
+        new_rubric.pedagogy_tags.set(new_rubric_data.get("pedagogy_tags", []))
 
         if tag_tasks:
             # TODO: or do we need some "system tags" that definitely already exist?
@@ -347,68 +479,31 @@ class RubricService:
         rubric_obj = serializer.instance
         return _Rubric_to_dict(rubric_obj)
 
-    def _generate_display_delta(
-        self,
-        value: int | float | str,
-        kind: str,
-        out_of: int | float | str | None = None,
-    ) -> str:
-        """Generate the display delta for a rubric.
-
-        Keyword Args:
-            value: the value of the rubric.
-            kind: the kind of the rubric.
-            out_of: the maximum value of the rubric, required for
-                absolute rubrics, none for other rubrics
-
-        Raises:
-            ValueError: if the kind is not valid.
-            ValueError: if the kind is absolute and out_of is not provided.
-        """
-        value = float(value) if isinstance(value, str) else value
-        out_of = float(out_of) if isinstance(out_of, str) else out_of
-
-        # TODO: we may want to special case vulgar fractions in the future
-
-        if kind == "absolute":
-            if out_of is None:
-                raise ValueError("out_of is required for absolute rubrics.")
-            else:
-                if isinstance(value, int) or value.is_integer():
-                    return f"{value:g} of {out_of:g}"
-                else:
-                    return f"{value} of {out_of}"
-        elif kind == "relative":
-            if value > 0:
-                return f"+{value:g}"
-            else:
-                # Negative sign gets applied automatically
-                return f"{value:g}"
-        elif kind == "neutral":
-            return "."
-        else:
-            raise ValueError(f"Invalid kind: {kind}.")
-
     @classmethod
     def get_rubrics_as_dicts(
-        cls, *, question: int | None = None
+        cls, *, question_idx: int | None = None
     ) -> list[dict[str, Any]]:
         """Get the rubrics, possibly filtered by question.
 
         Keyword Args:
-            question: question index or ``None`` for all.
+            question_idx: question index or ``None`` for all.
 
         Returns:
             Collection of dictionaries, one for each rubric.
         """
         rubric_queryset = cls.get_all_rubrics()
-        if question is not None:
-            rubric_queryset = rubric_queryset.filter(question=question, latest=True)
+        if question_idx is not None:
+            rubric_queryset = rubric_queryset.filter(
+                question_index=question_idx, latest=True
+            )
         rubric_data = []
 
         # see issue #3683 - need to prefetch these fields for
         # the _Rubric_to_dict function.
-        for r in rubric_queryset.prefetch_related("user", "modified_by_user"):
+        # similarly we need to pedagogy tags prefetch
+        for r in rubric_queryset.prefetch_related(
+            "user", "modified_by_user", "pedagogy_tags"
+        ):
             rubric_data.append(_Rubric_to_dict(r))
 
         new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))
@@ -507,11 +602,10 @@ class RubricService:
             # make zero mark and full mark rubrics
             rubric = {
                 "kind": "absolute",
-                "display_delta": f"0 of {mx}",
-                "value": "0",
+                "value": 0,
                 "out_of": mx,
                 "text": "no answer given",
-                "question": q,
+                "question_index": q,
                 "meta": "Is this answer blank or nearly blank?  Please do not use "
                 + "if there is any possibility of relevant writing on the page.",
                 "tags": "",
@@ -521,11 +615,10 @@ class RubricService:
 
             rubric = {
                 "kind": "absolute",
-                "display_delta": f"0 of {mx}",
-                "value": "0",
+                "value": 0,
                 "out_of": mx,
                 "text": "no marks",
-                "question": q,
+                "question_index": q,
                 "meta": "There is writing here but its not sufficient for any points.",
                 "tags": "",
             }
@@ -534,41 +627,33 @@ class RubricService:
 
             rubric = {
                 "kind": "absolute",
-                "display_delta": f"{mx} of {mx}",
-                "value": f"{mx}",
+                "value": mx,
                 "out_of": mx,
                 "text": "full marks",
-                "question": q,
-                "meta": "",
+                "question_index": q,
                 "tags": "",
             }
             create_system_rubric(rubric)
             # log.info("Built full-marks-rubric Q%s: key %s", q, r.pk)
 
-            # now make delta-rubrics
+            # now make +/- delta-rubrics
             for m in range(1, int(mx) + 1):
-                # make positive delta
                 rubric = {
-                    "display_delta": "+{}".format(m),
                     "value": m,
                     "out_of": 0,
                     "text": ".",
                     "kind": "relative",
-                    "question": q,
-                    "meta": "",
+                    "question_index": q,
                     "tags": "",
                 }
                 create_system_rubric(rubric)
                 # log.info("Built delta-rubric +%d for Q%s: %s", m, q, r["rid"])
-                # make negative delta
                 rubric = {
-                    "display_delta": "-{}".format(m),
                     "value": -m,
                     "out_of": 0,
                     "text": ".",
                     "kind": "relative",
-                    "question": q,
-                    "meta": "",
+                    "question_index": q,
                     "tags": "",
                 }
                 create_system_rubric(rubric)
@@ -578,39 +663,38 @@ class RubricService:
             if False:
                 for rubric in [
                     {
-                        "display_delta": "+1\N{Vulgar Fraction One Half}",
+                        "display_delta": "+1\N{VULGAR FRACTION ONE HALF}",
                         "value": 1.5,
                         "text": "testing non-integer rubric",
                         "kind": "relative",
-                        "question": q,
+                        "question_index": q,
                     },
                     {
-                        "display_delta": "-\N{Vulgar Fraction One Half}",
                         "value": -0.5,
                         "text": "testing negative non-integer rubric",
                         "kind": "relative",
-                        "question": q,
+                        "question_index": q,
                     },
                     {
                         "display_delta": "+a tenth",
                         "value": 1 / 10,
                         "text": "one tenth of one point",
                         "kind": "relative",
-                        "question": q,
+                        "question_index": q,
                     },
                     {
                         "display_delta": "+1/29",
                         "value": 1 / 29,
                         "text": "ADR will love co-prime pairs",
                         "kind": "relative",
-                        "question": q,
+                        "question_index": q,
                     },
                     {
                         "display_delta": "+1/31",
                         "value": 1 / 31,
                         "text": r"tex: Note that $31 \times 29 = 899$.",
                         "kind": "relative",
-                        "question": q,
+                        "question_index": q,
                     },
                     {
                         "display_delta": "1/49 of 1/7",
@@ -618,7 +702,7 @@ class RubricService:
                         "out_of": 1 / 7,
                         "text": "testing absolute rubric",
                         "kind": "absolute",
-                        "question": q,
+                        "question_index": q,
                     },
                 ]:
                     create_system_rubric(rubric)
@@ -660,11 +744,11 @@ class RubricService:
         log.info("Building half-mark delta rubrics")
         for q in SpecificationService.get_question_indices():
             rubric = {
-                "display_delta": "+\N{Vulgar Fraction One Half}",
+                "display_delta": "+\N{VULGAR FRACTION ONE HALF}",
                 "value": 0.5,
                 "text": ".",
                 "kind": "relative",
-                "question": q,
+                "question_index": q,
                 "username": username,
                 "system_rubric": True,
             }
@@ -672,16 +756,16 @@ class RubricService:
             log.info(
                 "Built delta-rubric %s for Qidx %d: %s",
                 r["display_delta"],
-                r["question"],
+                r["question_index"],
                 r["rid"],
             )
 
             rubric = {
-                "display_delta": "-\N{Vulgar Fraction One Half}",
+                "display_delta": "-\N{VULGAR FRACTION ONE HALF}",
                 "value": -0.5,
                 "text": ".",
                 "kind": "relative",
-                "question": q,
+                "question_index": q,
                 "username": username,
                 "system_rubric": True,
             }
@@ -689,7 +773,7 @@ class RubricService:
             log.info(
                 "Built delta-rubric %s for Qidx %d: %s",
                 r["display_delta"],
-                r["question"],
+                r["question_index"],
                 r["rid"],
             )
 
@@ -710,30 +794,34 @@ class RubricService:
 
         Rubric.objects.all().select_for_update().delete()
 
-    def get_rubric_pane(self, user: User, question: int) -> dict:
+    def get_rubric_pane(self, user: User, question_idx: int) -> dict[str, Any]:
         """Gets a rubric pane for a user.
 
         Args:
             user: a User instance
-            question: which question index.
+            question_idx: which question by index.
 
         Returns:
-            dict: the JSON representation of the pane.
+            Rubric pane data as key-value pairs.
         """
-        pane, created = RubricPane.objects.get_or_create(user=user, question=question)
+        pane, created = RubricPane.objects.get_or_create(
+            user=user, question=question_idx
+        )
         if created:
             return {}
         return pane.data
 
-    def update_rubric_pane(self, user: User, question: int, data: dict) -> None:
+    def update_rubric_pane(
+        self, user: User, question_idx: int, data: dict[str, Any]
+    ) -> None:
         """Updates a rubric pane for a user.
 
         Args:
             user: a User instance
-            question: question index associated with the rubric pane.
-            data: dict representing the new pane
+            question_idx: question index associated with the rubric pane.
+            data: dict representing the pane.
         """
-        pane = RubricPane.objects.get(user=user, question=question)
+        pane = RubricPane.objects.get(user=user, question=question_idx)
         pane.data = data
         pane.save()
 
@@ -827,7 +915,7 @@ class RubricService:
         Returns:
             HTML representation of the rubric.
 
-        TODO: code duplication from plom.client.rubrics.py.
+        TODO: code duplication from plom.rubric_utils.py.
         """
         text = html.escape(rubric.text)
         display_delta = html.escape(rubric.display_delta)
@@ -844,12 +932,13 @@ class RubricService:
             </table>
         """
 
-    def get_rubric_data(self, filetype: str, question: int | None) -> str:
-        """Get the rubric data as a file.
+    def get_rubric_data(self, filetype: str, question_idx: int | None) -> str:
+        """Get the rubric data as the string contents of file of a specified type.
 
         Args:
             filetype: The type of file to generate. Supported file types are "json", "toml", and "csv".
-            question: The question ID to filter the rubric data. If None, all rubrics will be included.
+            question_idx: Filter the rubrics by those relevant to this
+                question, by index.  If None, all rubrics will be included.
 
         Returns:
             A string containing the rubric data from the specified file format.
@@ -857,22 +946,22 @@ class RubricService:
         Raises:
             ValueError: If the specified file type is not supported.
         """
-        rubrics = self.get_rubrics_as_dicts(question=question)
-
         if filetype == "json":
-            if question is not None:
-                queryset = Rubric.objects.filter(question=question)
+            if question_idx is not None:
+                queryset = Rubric.objects.filter(question_index=question_idx)
             else:
                 queryset = Rubric.objects.all()
             serializer = RubricSerializer(queryset, many=True)
             data_string = json.dumps(serializer.data, indent="  ")
         elif filetype == "toml":
+            rubrics = self.get_rubrics_as_dicts(question_idx=question_idx)
             for dictionary in rubrics:
                 filtered = {k: v for k, v in dictionary.items() if v is not None}
                 dictionary.clear()
                 dictionary.update(filtered)
             data_string = tomlkit.dumps({"rubric": rubrics})
         elif filetype == "csv":
+            rubrics = self.get_rubrics_as_dicts(question_idx=question_idx)
             f = io.StringIO()
             writer = csv.DictWriter(f, fieldnames=rubrics[0].keys())
             writer.writeheader()
@@ -894,7 +983,12 @@ class RubricService:
             A list of the rubrics created.
 
         Raises:
-            ValueError: If the file type is not supported.
+            ValueError: If the file type is not supported.  Also if
+                username does not exist.
+            PermissionDenied: username not allowed to make rubrics.
+            serializers.ValidationError: rubric data is invalid.
+            KeyError: TODO, what should happen if no user specified?
+                See also TODO in the create code.
         """
         if filetype == "json":
             rubrics = json.loads(data)
@@ -907,4 +1001,39 @@ class RubricService:
         else:
             raise ValueError(f"Unsupported file type: {filetype}")
 
-        return [self.create_rubric(r) for r in rubrics]
+        # This smells like ask-permission: try to avoid too much "pre-validation"
+        # and instead leave that for the rubric creation code.  Try to keep this
+        # code specific to file uploads, e.g., csv ambiguities.
+        for r in rubrics:
+            # Fixes for Issue #3807: csv often scramble empty lists or otherwise makes strings
+            if r.get("pedagogy_tags") == "[]":
+                r["pedagogy_tags"] = []
+            if r.get("versions") == "[]":
+                r["versions"] = []
+            if isinstance(r.get("versions"), str) and r.get("versions") != "":
+                versions = r["versions"]
+                try:
+                    versions = ast.literal_eval(versions)
+                except (SyntaxError, ValueError) as e:
+                    raise serializers.ValidationError(
+                        f'Invalid "versions" field type {type(versions)}'
+                        f' "{versions}"; {e}'
+                    ) from e
+                r["versions"] = versions
+
+            if r.get("parameters") in ("[]", ""):
+                r["parameters"] = []
+            if isinstance(r.get("parameters"), str):
+                parameters = r["parameters"]
+                log.debug('evaluating string "parameters" input')
+                try:
+                    parameters = ast.literal_eval(parameters)
+                except (SyntaxError, ValueError) as e:
+                    raise serializers.ValidationError(
+                        f'Invalid "parameters" field of type {type(parameters)}: {e}'
+                    ) from e
+                r["parameters"] = parameters
+
+        # ensure either all rubrics succeed or all fail
+        with transaction.atomic():
+            return [self.create_rubric(r) for r in rubrics]

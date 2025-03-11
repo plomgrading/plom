@@ -51,12 +51,12 @@ class ScannerReassignView(ManagerRequiredView):
 
         papers_missing_fixed_pages = mss.get_papers_missing_fixed_pages()
         used_papers = mss.get_all_used_test_papers()
-        question_html_labels = SpecificationService.get_question_html_label_triples()
+        question_labels_html = SpecificationService.get_question_html_label_triples()
 
         context.update(
             {
                 "papers_missing_fixed_pages": papers_missing_fixed_pages,
-                "question_html_labels": question_html_labels,
+                "question_labels_html": question_labels_html,
                 "used_papers": used_papers,
             }
         )
@@ -65,7 +65,6 @@ class ScannerReassignView(ManagerRequiredView):
 
     def post(self, request: HttpRequest, *, page_pk: int) -> HttpResponse:
         reassignment_data = request.POST
-        mds = ManageDiscardService()
 
         if reassignment_data.get("assignment_type", "fixed") == "fixed":
             try:
@@ -74,10 +73,10 @@ class ScannerReassignView(ManagerRequiredView):
                 ).split(",")
             except ValueError:
                 return HttpResponse(
-                    """<div class="alert alert-danger">Choose paper/page</div>"""
+                    """<span class="alert alert-danger">Choose paper/page</span>"""
                 )
             try:
-                mds.assign_discard_page_to_fixed_page(
+                ManageDiscardService().assign_discard_page_to_fixed_page(
                     request.user, page_pk, paper_number, page_number
                 )
             except ValueError as e:
@@ -91,21 +90,33 @@ class ScannerReassignView(ManagerRequiredView):
                 paper_number = int(paper_number)
             except ValueError:
                 return HttpResponse(
-                    """<div class="alert alert-danger">Invalid paper number</div>"""
+                    """<span class="alert alert-danger">Invalid paper number</span>"""
                 )
-            if reassignment_data.get("questionAll", "off") == "all":
+
+            choice = reassignment_data.get("question_all_dnm", "")
+            if choice == "choose_all":
                 # set all the questions
                 to_questions = SpecificationService.get_question_indices()
-            else:
-                if len(reassignment_data.get("questions", [])):
-                    to_questions = [int(q) for q in reassignment_data["questions"]]
-                else:
+            elif choice == "choose_dnm":
+                # TODO: or explicitly empty list or ...?
+                to_questions = []
+            elif choice == "choose_q":
+                # caution: `get` would return just the last entry
+                to_questions = [int(q) for q in reassignment_data.getlist("questions")]
+                if not to_questions:
                     return HttpResponse(
                         """<span class="alert alert-danger">At least one question</span>"""
                     )
+            else:
+                return HttpResponse(
+                    """<span class="alert alert-danger">
+                        Unexpected radio choice: this is a bug; please file an issue!
+                    </span>"""
+                )
+
             try:
-                mds.assign_discard_page_to_mobile_page(
-                    request.user, page_pk, paper_number, to_questions
+                ManageDiscardService()._assign_discard_page_to_mobile_page(
+                    page_pk, paper_number, to_questions
                 )
             except ValueError as e:
                 return HttpResponse(

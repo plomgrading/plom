@@ -2,16 +2,14 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Aidan Murphy
 
-
-from __future__ import annotations
-
-import arrow
 from datetime import datetime
 from typing import Any
+
+import arrow
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib import messages
@@ -104,9 +102,9 @@ class ScannerPushedView(ScannerRequiredView):
             else:
                 cover_img_rotation = 0
             n_pages = scanner.get_n_images(bundle)
-            paper_list = format_int_list_with_runs(
-                scanner.get_bundle_paper_numbers(bundle)
-            )
+            _papers = scanner.get_bundle_paper_numbers(bundle)
+            pretty_print_paper_list = format_int_list_with_runs(_papers)
+            n_papers = len(_papers)
             pushed_bundles.append(
                 {
                     "id": bundle.pk,
@@ -115,7 +113,8 @@ class ScannerPushedView(ScannerRequiredView):
                     "time_uploaded": arrow.get(date_time).humanize(),
                     "username": bundle.user.username,
                     "n_pages": n_pages,
-                    "paper_list": paper_list,
+                    "n_papers": n_papers,
+                    "pretty_print_paper_list": pretty_print_paper_list,
                     "cover_angle": cover_img_rotation,
                 }
             )
@@ -175,13 +174,13 @@ class ScannerUploadView(ScannerRequiredView):
         pdf_hash = data["sha256"]
         number_of_pages = data["number_of_pages"]
         timestamp = datetime.timestamp(data["time_uploaded"])
-        ScanService().upload_bundle(
+        ScanService.upload_bundle(
             bundle_file,
             slug,
             user,
-            timestamp,
-            pdf_hash,
-            number_of_pages,
+            timestamp=timestamp,
+            file_hash=pdf_hash,
+            number_of_pages=number_of_pages,
             force_render=data["force_render"],
             read_after=data["read_after"],
         )
@@ -214,10 +213,10 @@ class GetBundleView(ScannerRequiredView):
 
 
 class GetStagedBundleFragmentView(ScannerRequiredView):
-    """Return a user-uploaded bundle PDF."""
+    """Various http methods for a staged-but-not-pushed user-uploaded bundle PDF."""
 
     def get(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
-        """Rendered fragment of a staged but not pushed bundle.
+        """Rendered fragment for one row of a staged bundle.
 
         Args:
             request: the request.
@@ -227,12 +226,15 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
                 internally.
 
         Returns:
-            A rendered HTML page.
+            A rendered HTML fragment to be inserted into a complete
+            page using htmx.
         """
         scanner = ScanService()
 
         bundle = scanner.get_bundle_from_pk(bundle_id)
-        paper_list = format_int_list_with_runs(scanner.get_bundle_paper_numbers(bundle))
+        _papers = scanner.get_bundle_paper_numbers(bundle)
+        pretty_print_paper_list = format_int_list_with_runs(_papers)
+        n_papers = len(_papers)
         n_known = scanner.get_n_known_images(bundle)
         n_unknown = scanner.get_n_unknown_images(bundle)
         n_extra = scanner.get_n_extra_images(bundle)
@@ -245,19 +247,50 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         else:
             cover_img_rotation = 0
 
+        from ..models import PagesToImagesChore, ManageParseQRChore
+
+        try:
+            _ = PagesToImagesChore.objects.get(bundle=bundle)
+            _proc_status = _.get_status_display()
+            _proc_msg = _.message
+        except PagesToImagesChore.DoesNotExist:
+            _proc_status = None
+            _proc_msg = ""
+        try:
+            _ = ManageParseQRChore.objects.get(bundle=bundle)
+            _read_status = _.get_status_display()
+            _read_msg = _.message
+        except ManageParseQRChore.DoesNotExist:
+            _read_status = None
+            _read_msg = ""
+
+        is_waiting_or_processing = False
+        if _proc_status in ("Queued", "Starting", "Running"):
+            is_waiting_or_processing = True
+        if _read_status in ("Queued", "Starting", "Running"):
+            is_waiting_or_processing = True
+        is_error = _proc_status == "Error" or _read_status == "Error"
+        error_msg = _proc_msg + _read_msg
+
         context = {
             "bundle_id": bundle.pk,
             "timestamp": bundle.timestamp,
             "slug": bundle.slug,
             "when": arrow.get(bundle.timestamp).humanize(),
             "username": bundle.user.username,
+            "proc_chore_status": _proc_status,
+            "readQR_chore_status": _read_status,
             "number_of_pages": bundle.number_of_pages,
             "has_been_processed": bundle.has_page_images,
             "has_qr_codes": bundle.has_qr_codes,
+            "is_waiting_or_processing": is_waiting_or_processing,
+            "is_error": is_error,
+            "error_msg": error_msg,
             "is_mid_qr_read": scanner.is_bundle_mid_qr_read(bundle.pk),
             "is_push_locked": bundle.is_push_locked,
             "is_perfect": scanner.is_bundle_perfect(bundle.pk),
-            "paper_list": paper_list,
+            "n_papers": n_papers,
+            "pretty_print_paper_list": pretty_print_paper_list,
             "n_known": n_known,
             "n_unknown": n_unknown,
             "n_extra": n_extra,
@@ -267,12 +300,13 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             "n_incomplete": n_incomplete,
             "cover_angle": cover_img_rotation,
         }
+        numpgs = context["number_of_pages"]
         if not context["has_been_processed"]:
             done = scanner.get_bundle_split_completions(bundle.pk)
             context.update(
                 {
                     "number_of_split_pages": done,
-                    "percent_split": (100 * done) // context["number_of_pages"],
+                    "percent_split": 0 if numpgs is None else (100 * done) // numpgs,
                 }
             )
         if context["is_mid_qr_read"]:
@@ -280,7 +314,7 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
             context.update(
                 {
                     "number_of_read_pages": done,
-                    "percent_read": (100 * done) // context["number_of_pages"],
+                    "percent_read": 0 if numpgs is None else (100 * done) // numpgs,
                 }
             )
 
@@ -298,8 +332,9 @@ class GetStagedBundleFragmentView(ScannerRequiredView):
         """Triggers deletion of the bundle."""
         scanner = ScanService()
         try:
-            scanner._remove_bundle_by_pk(bundle_id)
-        except PlomBundleLockedException:
+            scanner.remove_bundle_by_pk(bundle_id)
+        except PlomBundleLockedException as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )

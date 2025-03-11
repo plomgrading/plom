@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
-
-from __future__ import annotations
+# Copyright (C) 2023-2025 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -104,10 +102,50 @@ class ManageDiscardService:
         # and now delete each of those mobile pages
         for mpg in img_to_disc.mobilepage_set.all():
             mpg.delete()
-        # outdate the associated marking tasks
+        # outdate any associated marking tasks
         # this also makes new marking tasks if possible
         for qn in qn_to_outdate:
+            # the ones that were DNM cannot effect tasks
+            if qn == MobilePage.DNM_qidx:
+                continue
             MarkingTaskService().set_paper_marking_task_outdated(paper_number, qn)
+
+    def discard_whole_paper_by_number(
+        self, user_obj: User, paper_number: int, *, dry_run: bool = True
+    ):
+        """Discard all pushed images from the given paper.
+
+        Args:
+            user_obj (User): the User who is discarding
+            paper_number (int): the paper_number of the paper to be discarded
+
+        Keyword Args:
+            dry_run: really do it or just pretend?
+
+        Returns:
+            A status message about what happened (or, if ``dry_run`` is True,
+            what would be attempted).
+
+        Raises:
+            ValueError: no such page, no image attached to page, unexpectedly
+                unknown page type, maybe other cases.
+        """
+        try:
+            paper_obj = Paper.objects.get(paper_number=paper_number)
+        except ObjectDoesNotExist as e:
+            raise ValueError(
+                f"A paper with paper_number {paper_number} does not exist"
+            ) from e
+
+        msg = ""
+
+        for fp in paper_obj.fixedpage_set.all():
+            # check if that fixedpage has an image
+            if fp.image:
+                msg += self.discard_pushed_fixed_page(user_obj, fp.pk, dry_run=dry_run)
+        for mp in paper_obj.mobilepage_set.all():
+            msg += self.discard_pushed_mobile_page(user_obj, mp.pk, dry_run=dry_run)
+        return msg
 
     def discard_pushed_fixed_page(
         self, user_obj: User, fixedpage_pk: int, *, dry_run: bool = True
@@ -321,19 +359,28 @@ class ManageDiscardService:
             )
 
     @transaction.atomic
-    def _assign_discard_to_mobile_page(
+    def _assign_discard_page_to_mobile_page(
         self,
-        user_obj: User,
         discard_pk: int,
         paper_number: int,
         assign_to_question_indices: list[int],
     ) -> None:
+        """Low-level routine to assign a discard image by attaching it to one or more questions in an ad hoc way.
+
+        Generally, this will be a page without QR codes such as a self-scanned
+        "homework" page or an "oops that wasn't scrap" or a sheet of plain paper.
+
+        Args:
+            user_obj: which user, as a database object.
+            discard_pk: which discarded page.
+            paper_number: which paper to assign it o.
+            assign_to_question_indices: which questions, by a list of
+                one-based indices, should we assign this discarded page to.
+        """
         try:
             discard_obj = DiscardPage.objects.get(pk=discard_pk)
         except ObjectDoesNotExist as e:
-            raise ValueError(
-                f"Cannot find a discard page with pk = {discard_pk}"
-            ) from e
+            raise ValueError(f"Cannot find discard page with pk = {discard_pk}") from e
 
         try:
             paper_obj = Paper.objects.get(paper_number=paper_number)
@@ -352,6 +399,14 @@ class ManageDiscardService:
                 question_index=qi,
                 image=discard_obj.image,
                 version=version,
+            )
+        # otherwise, if question index list empty, make a non-marked MobilePage
+        if not assign_to_question_indices:
+            MobilePage.objects.create(
+                paper=paper_obj,
+                image=discard_obj.image,
+                question_index=MobilePage.DNM_qidx,
+                version=0,
             )
 
         # delete the discard page
@@ -377,37 +432,6 @@ class ManageDiscardService:
             raise ValueError(f"Cannot find discard page with pk = {page_pk}") from e
 
         self._assign_discard_to_fixed_page(user_obj, page_pk, paper_number, page_number)
-
-    def assign_discard_page_to_mobile_page(
-        self,
-        user_obj: User,
-        page_pk: int,
-        paper_number: int,
-        assign_to_question_indices: list[int],
-    ) -> None:
-        """Reassign a discard image by attaching it to one or more questions in an ad hoc way.
-
-        Generally, this will be a page without QR codes such as a self-scanned
-        "homework" page or an "oops that wasn't scrap" or a sheet of plain paper.
-
-        Args:
-            user_obj: which user, as a database object.
-            page_pk: which discard page.
-            paper_number: which paper to assign it o.
-            assign_to_question_indices: which questions, by a list of
-                one-based indices, should we assign this discarded page to.
-        """
-        try:
-            _ = DiscardPage.objects.get(pk=page_pk)
-        except ObjectDoesNotExist as e:
-            raise ValueError(f"Cannot find discard page with pk = {page_pk}") from e
-
-        self._assign_discard_to_mobile_page(
-            user_obj,
-            page_pk,
-            paper_number,
-            assign_to_question_indices,
-        )
 
     def reassign_discard_page_to_fixed_page_cmd(
         self, username: str, discard_pk: int, paper_number: int, page_number: int
@@ -439,27 +463,29 @@ class ManageDiscardService:
         username: str,
         discard_pk: int,
         paper_number: int,
-        question_list: list[int],
+        assign_to_question_indices: list[int],
     ) -> None:
-        """A wrapper around the assign_discard_page_to_mobile_page command.
+        """Reassign a discard image by attaching it to one or more questions in an ad hoc way.
+
+        Generally, this will be a page without QR codes such as a self-scanned
+        "homework" page or an "oops that wasn't scrap" or a sheet of plain paper.
 
         Args:
             username: the name of the user who is doing the reassignment.
                 Must be a manager.
             discard_pk: the pk of the discard page to be reassigned.
             paper_number: the number of the paper containing the fixed page.
-            question_list: a list of the questions on the discard page. A
-                mobile page is created for each question.
+            assign_to_question_indices: a list of the questions on the
+                discard page. A mobile page is created for each.
+                An empty list creates a DNM mobile page.
         """
         try:
-            user_obj = User.objects.get(
-                username__iexact=username, groups__name="manager"
-            )
+            _ = User.objects.get(username__iexact=username, groups__name="manager")
         except ObjectDoesNotExist as e:
             raise ValueError(
                 f"User '{username}' does not exist or has wrong permissions."
             ) from e
 
-        self._assign_discard_to_mobile_page(
-            user_obj, discard_pk, paper_number, question_list
+        self._assign_discard_page_to_mobile_page(
+            discard_pk, paper_number, assign_to_question_indices
         )

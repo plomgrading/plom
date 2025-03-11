@@ -1,16 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 
-from __future__ import annotations
-
-from pathlib import Path
 import tempfile
+from io import BytesIO
+from pathlib import Path
 from typing import Any
 
 from django.shortcuts import render, redirect
-from django.http import HttpRequest, HttpResponseRedirect, HttpResponse
+from django.http import FileResponse, HttpRequest, HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect
 from django.contrib import messages
@@ -41,10 +40,12 @@ class PQVMappingUploadView(ManagerRequiredView):
             return redirect("prep_qvmapping")
 
         # if database is populated then redirect
-        if PaperInfoService().is_paper_database_populated():
+        if PaperInfoService.is_paper_database_populated():
             return redirect("prep_qvmapping")
 
         prenamed_papers = list(StagingStudentService().get_prenamed_papers().keys())
+        num_questions = SpecificationService.get_n_questions()
+        num_versions = SpecificationService.get_n_versions()
 
         context: dict[str, Any] = {"errors": []}
         # far from ideal, but the csv module doesn't like bytes.
@@ -54,7 +55,12 @@ class PQVMappingUploadView(ManagerRequiredView):
                 with f.open("wb") as fh:
                     fh.write(request.FILES["pqvmap_csv"].read())
                 # this function also validates the version map
-                vm = version_map_from_file(f, required_papers=prenamed_papers)
+                vm = version_map_from_file(
+                    f,
+                    required_papers=prenamed_papers,
+                    num_questions=num_questions,
+                    num_versions=num_versions,
+                )
         except ValueError as e:
             context["errors"].append({"kind": "ValueError", "err_text": f"{e}"})
         except KeyError as e:
@@ -74,15 +80,24 @@ class PQVMappingUploadView(ManagerRequiredView):
 
 
 class PQVMappingDownloadView(ManagerRequiredView):
-    def get(self, request: HttpRequest) -> HttpResponse:
+    """Download the question-version map as a csv file."""
+
+    def get(self, request: HttpRequest) -> HttpResponse | FileResponse:
+        """Get method to download the question-version map as a csv file."""
         try:
-            pqvs_csv_txt = PQVMappingService().get_pqv_map_as_csv_string()
+            pqvs_csv_txt = PQVMappingService.get_pqv_map_as_csv_string()
         except ValueError as err:  # triggered by empty qv-map
             messages.add_message(request, messages.ERROR, f"{err}")
             # redirect here (not htmx) since this is called by normal http
             return redirect(reverse("prep_conflict"))
 
-        return HttpResponse(pqvs_csv_txt, content_type="text/plain")
+        # Note: without BytesIO here it doesn't respect filename, get "download.csv"
+        return FileResponse(
+            BytesIO(pqvs_csv_txt.encode("utf-8")),
+            content_type="text/csv; charset=UTF-8",
+            filename=PQVMappingService.get_default_csv_filename(),
+            as_attachment=True,
+        )
 
 
 class PQVMappingDeleteView(ManagerRequiredView):
@@ -104,8 +119,11 @@ class PQVMappingDeleteView(ManagerRequiredView):
 
 class PQVMappingView(ManagerRequiredView):
     def build_context(self) -> dict[str, Any]:
+        """Retrieve various information related to papers in DB."""
         if not SpecificationService.is_there_a_spec():
-            return {"no_spec": True}
+            raise PlomDependencyConflict(
+                "DB papers cannot be created before the assessment specification."
+            )
 
         triples = SpecificationService.get_question_html_label_triples()
         question_indices = [t[0] for t in triples]
@@ -121,13 +139,13 @@ class PQVMappingView(ManagerRequiredView):
             "question_labels_html_fix": labels_fix,
             "question_labels_html_shuffle": labels_shf,
             "prenaming": PrenameSettingService().get_prenaming_setting(),
-            "pqv_mapping_present": PaperInfoService().is_paper_database_fully_populated(),
+            "pqv_mapping_present": PaperInfoService.is_paper_database_fully_populated(),
             "number_of_students": num_students,
             "number_plus_twenty": num_students + 20,
             "number_times_1dot1": (num_students * 11) // 10,
             "student_list_present": StagingStudentService().are_there_students(),
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
-            "chore_in_progress": PaperCreatorService.is_chore_in_progress(),
+            "chore_status": PaperCreatorService.get_chore_status(),
             "chore_message": PaperCreatorService.get_chore_message(),
             "populate_in_progress": PaperCreatorService.is_populate_in_progress(),
             "evacuate_in_progress": PaperCreatorService.is_evacuate_in_progress(),
@@ -166,10 +184,17 @@ class PQVMappingView(ManagerRequiredView):
         return context
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        context = self.build_context()
+        """Render page for paper DB and qvmap management."""
+        try:
+            context = self.build_context()
+        except PlomDependencyConflict as err:
+            messages.add_message(request, messages.ERROR, f"{err}")
+            return redirect(reverse("prep_conflict"))
+
         return render(request, "Preparation/pqv_mapping_manage.html", context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        """Populate DB with papers."""
         ntp = request.POST.get("number_to_produce", None)
         first = request.POST.get("first_paper_num", None)
         if not ntp:

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2025 Colin B. Macdonald
 
 from django.contrib.auth.models import User, Group
 from django.db import transaction
@@ -17,7 +18,15 @@ def get_users_groups(username: str):
 
 
 @transaction.atomic
-def toggle_user_active(username: str):
+def toggle_user_active(username: str) -> None:
+    """Toggle whether as user is "active", and if now inactive, force logout.
+
+    An inactive user can be thought of as a "soft delete" [1].
+    Apparently it "doesn't necessarily control whether or not the user
+    can login" [1].
+
+    [1] https://docs.djangoproject.com/en/5.1/ref/contrib/auth/#django.contrib.auth.models.User.is_active
+    """
     user_to_change = User.objects.get_by_natural_key(username)
     user_to_change.is_active = not user_to_change.is_active
     user_to_change.save()

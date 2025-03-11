@@ -1,26 +1,25 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
-# Copyright (C) 2023-2024 Andrew Rechnitzer
-
-from __future__ import annotations
+# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 
 from datetime import datetime
 from pathlib import Path
 import random
 import tempfile
 import time
-from typing import Any, Tuple
+from typing import Any
 
 import arrow
 import zipfly
 
-from django.conf import settings
 from django.core.files import File
 from django.db import transaction
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 from django_huey import db_task, get_queue
+import huey
+import huey.api
 
 from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
@@ -28,7 +27,7 @@ from plom.finish.examReassembler import reassemble
 from Identify.models import PaperIDTask
 from Mark.models import MarkingTask
 from Mark.services import MarkingTaskService
-from Papers.models import Paper, IDPage, DNMPage
+from Papers.models import Paper, IDPage, DNMPage, MobilePage
 from Papers.services import SpecificationService
 from Scan.services import ManageScanService
 
@@ -40,8 +39,6 @@ from .student_marks_service import StudentMarkService
 
 class ReassembleService:
     """Class that contains helper functions for sending data to plom-finish."""
-
-    reassemble_dir = settings.MEDIA_ROOT / "reassemble"
 
     def get_completion_status(self) -> dict[int, tuple[bool, bool, int, datetime]]:
         """Return a dictionary of overall marking completion progress."""
@@ -64,9 +61,8 @@ class ReassembleService:
             where ``qi`` is 1-indexed question index, ``v`` is version and
             ``m`` is mark.
         """
-        sms = StudentMarkService()
         legacy_cover_page_info: list[list[Any]] = []
-        student_info = sms.get_paper_id_or_none(paper)
+        student_info = StudentMarkService.get_paper_id_or_none(paper)
         if student_info:
             student_id, student_name = student_info
         else:
@@ -74,7 +70,7 @@ class ReassembleService:
         legacy_cover_page_info.append([student_id, student_name])
 
         for i in SpecificationService.get_question_indices():
-            version, mark = sms.get_question_version_and_mark(paper, i)
+            version, mark = StudentMarkService().get_question_version_and_mark(paper, i)
             legacy_cover_page_info.append([i, version, mark])
 
         return legacy_cover_page_info
@@ -119,7 +115,7 @@ class ReassembleService:
         Returns:
             pathlib.Path: filename of the coverpage.
         """
-        tmp = StudentMarkService().get_paper_id_or_none(paper)
+        tmp = StudentMarkService.get_paper_id_or_none(paper)
         if tmp:
             sid, sname = tmp
         else:
@@ -177,6 +173,29 @@ class ReassembleService:
             for img in dnm_images
         ]
 
+    def _get_seen_but_nonmarked_page_images(self, paper: Paper) -> list[dict[str, Any]]:
+        """Get the path and rotation for a paper's pages that weere seen but non-marked.
+
+        TODO: eventually this should look inside the annotations to decide if
+        a page was used or not.  For efficiency, perhaps this should should
+        be done in the same code that is getting the annotation images.
+
+        Args:
+            paper: a reference to a Paper instance.
+
+        Returns:
+            List of dicts, each having keys 'filename' and 'rotation'
+            giving the path to the image and the rotation angle of the
+            image.
+        """
+        nonmarked = MobilePage.objects.filter(
+            paper=paper, question_index=MobilePage.DNM_qidx
+        )
+        return [
+            {"filename": img.image.image_file.path, "rotation": img.image.rotation}
+            for img in nonmarked
+        ]
+
     def get_annotation_images(self, paper: Paper) -> list[dict[str, Any]]:
         """Get the paths for a paper's annotation images.
 
@@ -225,7 +244,7 @@ class ReassembleService:
             )
         student_id, student_name = paper_id
 
-        if not StudentMarkService().is_paper_marked(paper):
+        if not StudentMarkService.is_paper_marked(paper):
             raise ValueError(f"Paper {paper.paper_number} is not fully marked.")
 
         shortname = SpecificationService.get_shortname()
@@ -237,14 +256,21 @@ class ReassembleService:
             id_pages = self.get_id_page_image(paper)
             dnm_pages = self.get_dnm_page_images(paper)
             marked_pages = self.get_annotation_images(paper)
+            # Another category: pages seen but not marked.
+            # Quick-n-dirty: all those extra pages with empty question_idx
+            # later: any page from any other category that has not been included
+            # (for example, if Ctrl-R is used to discard a page from every question
+            # we could include it here).
+            nonmarked = self._get_seen_but_nonmarked_page_images(paper)
             reassemble(
                 outname,
                 shortname,
                 student_id,
-                cover_file,
-                id_pages,
-                marked_pages,
-                dnm_pages,
+                coverfile=cover_file,
+                id_images=id_pages,
+                marked_pages=marked_pages,
+                dnm_images=dnm_pages,
+                nonmarked_images=nonmarked,
             )
         return outname
 
@@ -348,6 +374,9 @@ class ReassembleService:
 
         Keyword Args:
             build_student_report: Whether or not build the student report along with reassembling the paper.
+
+        Raises:
+            ValueError: no paper with that number, or existing chore.
         """
         try:
             paper = Paper.objects.get(paper_number=paper_num)
@@ -379,8 +408,8 @@ class ReassembleService:
         res = huey_reassemble_paper(
             paper_num,
             tracker_pk=tracker_pk,
-            _debug_be_flaky=False,
             build_student_report=build_student_report,
+            _debug_be_flaky=False,
         )
         print(f"Just enqueued Huey reassembly task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
@@ -642,41 +671,85 @@ class ReassembleService:
         )
 
     @transaction.atomic
-    def get_completed_pdf_files_and_names(self) -> list[Tuple[File, str]]:
+    def get_completed_pdf_files_and_names(
+        self, *, first_paper: int | None = None, last_paper: int | None = None
+    ) -> list[tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of reassembled papers that are not obsolete.
+
+        Keyword Args:
+            first_paper: filter to get all papers with paper_number greater or equal to this.
+            last_paper: filter to get all papers with paper_number less or equal to this.
 
         Returns:
             A list of pairs [django-File, display filename] of the reassembled pdf.
         """
-        return [
-            (task.pdf_file, task.display_filename)
-            for task in ReassemblePaperChore.objects.filter(
-                obsolete=False, status=HueyTaskTracker.COMPLETE
-            )
-        ]
+        query = ReassemblePaperChore.objects.filter(
+            obsolete=False, status=HueyTaskTracker.COMPLETE
+        )
+        if first_paper:
+            query = query.filter(paper__paper_number__gte=first_paper)
+        if last_paper:
+            query = query.filter(paper__paper_number__lte=last_paper)
+        return [(task.pdf_file, task.display_filename) for task in query]
 
     @transaction.atomic
-    def get_completed_report_files_and_names(self) -> list[Tuple[File, str]]:
+    def get_completed_report_files_and_names(
+        self, *, first_paper: int | None = None, last_paper: int | None = None
+    ) -> list[tuple[File, str]]:
         """Get list of Files and recommended names of pdf-files of student reports that are not obsolete.
+
+        Keyword Args:
+            first_paper: filter to get all papers with paper_number greater or equal to this.
+            last_paper: filter to get all papers with paper_number less or equal to this.
 
         Returns:
             A list of pairs [django-File, display filename] of the reports
         """
-        return [
-            (task.report_pdf_file, task.report_display_filename)
-            for task in ReassemblePaperChore.objects.filter(
-                obsolete=False, status=HueyTaskTracker.COMPLETE
-            )
-        ]
+        query = ReassemblePaperChore.objects.filter(
+            obsolete=False, status=HueyTaskTracker.COMPLETE
+        )
+        if first_paper:
+            query = query.filter(paper__paper_number__gte=first_paper)
+        if last_paper:
+            query = query.filter(paper__paper_number__lte=last_paper)
+
+        return [(task.report_pdf_file, task.report_display_filename) for task in query]
 
     @transaction.atomic
-    def get_zipfly_generator(self, short_name: str, *, chunksize: int = 1024 * 1024):
+    def get_zipfly_generator(
+        self,
+        short_name: str,
+        *,
+        first_paper: int | None = None,
+        last_paper: int | None = None,
+        chunksize: int = 1024 * 1024,
+    ):
+        """Return a generator that can stream a zipfile of some papers without building in memory.
+
+        Args:
+            short_name: TODO: appears to be unused.
+
+        Keyword Args:
+            first_paper: optionally grab papers greater than or equal
+                to this paper number.  Omit or `None` for no restriction.
+            last_paper: optionally grab papers less than or equal to
+                this number.  Omit or `None` for no restriction.
+            chunksize: a parameter related to the building of the zipfile.
+
+        Returns:
+            Some sort of generator for the zipfile streamer.
+
+        Raises:
+            ValueError: if there are no reassembled papers in the requested range.
+        """
         paths = [
             {
                 "fs": pdf_file.path,
                 "n": f"reassembled/{display_filename}",
             }
-            for pdf_file, display_filename in self.get_completed_pdf_files_and_names()
+            for pdf_file, display_filename in self.get_completed_pdf_files_and_names(
+                first_paper=first_paper, last_paper=last_paper
+            )
         ]
         # report_paths = [
         #     {
@@ -686,22 +759,29 @@ class ReassembleService:
         #     for report_pdf_file, report_display_filename in self.get_completed_report_files_and_names()
         # ]
 
+        if not paths:
+            rng1 = f"{first_paper} <= " if first_paper is not None else ""
+            rng2 = f" <= {last_paper}" if last_paper is not None else ""
+            if rng1 or rng2:
+                rng_msg = " satisfying " + rng1 + "paper_number" + rng2
+            else:
+                rng_msg = ""
+            raise ValueError("There are no reassembled papers" + rng_msg)
         # zfly = zipfly.ZipFly(paths=paths + report_paths, chunksize=chunksize)
         zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)
         return zfly.generator()
 
 
 # The decorated function returns a ``huey.api.Result``
-# ``context=True`` so that the task knows its ID etc.
 # TODO: investigate "preserve=True" here if we want to wait on them?
 @db_task(queue="tasks", context=True)
 def huey_reassemble_paper(
     paper_number: int,
     *,
     tracker_pk: int,
-    task=None,
-    _debug_be_flaky: bool = False,
     build_student_report: bool = True,
+    _debug_be_flaky: bool = False,
+    task: huey.api.Task | None = None,
 ) -> bool:
     """Reassemble a single paper, updating the database with progress and resulting PDF.
 
@@ -711,15 +791,18 @@ def huey_reassemble_paper(
     Keyword Args:
         tracker_pk: a key into the database for anyone interested in
             our progress.
-        task: includes our ID in the Huey process queue.
+        build_student_report: whether or not to build the student report at the same time.
         _debug_be_flaky: for debugging, all take a while and some
             percentage will fail.
-        build_student_report: whether or not to build the student report at the same time.
+        task: includes our ID in the Huey process queue.  This kwarg is
+            passed by `context=True` in decorator: callers should not
+            pass this in!
 
     Returns:
         True, no meaning, just as per the Huey docs: "if you need to
         block or detect whether a task has finished".
     """
+    assert task is not None
     try:
         paper_obj = Paper.objects.get(paper_number=paper_number)
     except Paper.DoesNotExist:

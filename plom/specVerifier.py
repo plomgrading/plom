@@ -1,24 +1,20 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2024 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Brennen Chiu
 
 from __future__ import annotations
 
-from copy import deepcopy
 import logging
-from math import ceil
-from pathlib import Path
 import random
 import re
 import sys
+from copy import deepcopy
+from importlib import resources
+from math import ceil
+from pathlib import Path
 from typing import Any
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -28,7 +24,6 @@ import tomlkit
 
 import plom
 from plom.tpv_utils import new_magic_code
-
 
 specdir = Path("specAndDatabase")
 log = logging.getLogger("spec")
@@ -192,26 +187,54 @@ def build_page_to_group_dict(spec) -> dict[int, str]:
     return page_to_group
 
 
-def build_page_to_version_dict(spec, question_versions):
+def _build_page_to_versions_dict(
+    spec, question_versions: dict[int, int]
+) -> dict[int, list[int]]:
+    # idpage and dnm pages always from version 1
+    page_to_versions = {spec["idPage"]: [1]}
+    for pg in spec["doNotMarkPages"]:
+        page_to_versions[pg] = [1]
+    for q in spec["question"]:
+        for pg in spec["question"][q]["pages"]:
+            # Issue #3838: do this carefully in case there are multiple conflicting versions
+            verlist = page_to_versions.get(pg, [])
+            # be careful, the qv-map keys are ints, while those in the spec are strings
+            verlist.append(question_versions[int(q)])
+            page_to_versions[pg] = verlist
+    return page_to_versions
+
+
+def build_page_to_version_dict(
+    spec, question_versions: dict[int, int]
+) -> dict[int, int]:
     """Given the spec and the question-version dict, produce a dict that maps pages to versions.
 
     Args:
         spec (dict): A validated test spec
-        question_versions (dict): A dict mapping question numbers to version numbers.
+        question_versions: A dict mapping question numbers to version numbers.
         Note that typically each exam has a different qv-map.
 
     Returns:
         dict: A mapping of page numbers to versions. Note idpages and
-        dnm pages have version 1.
+        dnm pages have version 1 FOR NOW.
+
+    Raises:
+        NotImplementedError: a page has multiple versions, that is b/c two
+            or more questions that share a page but have different versions.
+            See also
+            :method:`plom_server.Papers.service.paper_info.get_version_from_paper_page`.
     """
-    # idpage and dnm pages always from version 1
-    page_to_version = {spec["idPage"]: 1}
-    for pg in spec["doNotMarkPages"]:
-        page_to_version[pg] = 1
-    for q in spec["question"]:
-        for pg in spec["question"][q]["pages"]:
-            # be careful, the qv-map keys are ints, while those in the spec are strings
-            page_to_version[pg] = question_versions[int(q)]
+    page_to_versions = _build_page_to_versions_dict(spec, question_versions)
+    page_to_version = {}
+    for pg, vers in page_to_versions.items():
+        verset = set(vers)
+        if len(verset) != 1:
+            raise NotImplementedError(
+                "This code requires pages be uniquely versioned, "
+                f"but page {pg} has versions {sorted(vers)}"
+            )
+        (ver,) = verset
+        page_to_version[pg] = ver
     return page_to_version
 
 

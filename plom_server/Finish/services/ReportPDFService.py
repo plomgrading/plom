@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Elisa Pan
+# Copyright (C) 2025 Andrew Rechnitzer
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from textwrap import dedent
 
-import numpy as np
 from tqdm import tqdm as _tqdm
 from weasyprint import HTML, CSS
 
@@ -25,7 +25,7 @@ GRAPH_DETAILS = {
     "graph1": {"title": "Histogram of total marks", "default": True},
     "graph2": {"title": "Histogram of marks by question", "default": False},
     "graph3": {"title": "Correlation heatmap", "default": False},
-    "graph4": {"title": "Histograms of grades by marker by question", "default": False},
+    "graph4": {"title": "Histograms of marks by marker by question", "default": False},
     "graph5": {
         "title": "Histograms of time spent marking each question",
         "default": False,
@@ -35,7 +35,7 @@ GRAPH_DETAILS = {
         "default": False,
     },
     "graph7": {
-        "title": "Box plots of grades given by marker by question",
+        "title": "Box plots of question marks by TA who marked",
         "default": False,
     },
     "graph8": {"title": "Line graph of average mark by question", "default": False},
@@ -49,7 +49,7 @@ def pdf_builder(
     _use_tqdm: bool = False,
     brief: bool = False,
     selected_graphs: Optional[Dict[str, bool]] = None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Build a PDF file report and return it as bytes.
 
     Args:
@@ -83,10 +83,10 @@ def pdf_builder(
                     1. Histogram of total marks
                     2. Histogram of marks by question
                     3. Correlation heatmap
-                    4. Histograms of grades by marker by question
+                    4. Histograms of marks by marker by question
                     5. Histograms of time spent marking each question
                     6. Scatter plots of time spent marking vs mark given
-                    7. Box plots of grades given by marker by question
+                    7. Box plots of marks given by marker by question
                     8. Line graph of average mark by question
 
                 Generating..."""
@@ -164,50 +164,45 @@ def pdf_builder(
         bin_width = 15
         graphs["graph5"] = [
             mpls.histogram_of_time_spent_marking_each_question(
-                question,
+                qidx,
                 marking_times_df=marking_times_df,
                 versions=versions,
                 max_time=max_time,
                 bin_width=bin_width,
             )
-            for question, marking_times_df in tqdm(
-                des._get_all_ta_data_by_question().items(),
+            for qidx, marking_times_df in tqdm(
+                des._get_all_ta_data_by_qidx().items(),
                 desc="Histograms of time spent marking each question",
             )
         ]
 
     if not brief or selected_graphs.get("graph6"):
+        # Note: the marking_times_df seems to be used only to get the list
+        # of versions involved in each question: the "des" helper functions
+        # are re-filtering by qidx.
         graphs["graph6"] = [
             mpls.scatter_time_spent_vs_mark_given(
-                question,
+                qidx,
                 times_spent_minutes=(
-                    np.array(marking_times_df["seconds_spent_marking"].div(60))
-                    .astype(float)
-                    .tolist()
+                    [des._get_marking_times_for_qidx(qidx)]
                     if not versions
                     else [
-                        np.array(marking_times_df["seconds_spent_marking"].div(60))
-                        .astype(float)
-                        .tolist()
-                        for version in marking_times_df["question_version"].unique()
+                        des._get_marking_times_for_qidx(qidx, ver=v)
+                        for v in sorted(marking_times_df["question_version"].unique())
                     ]
                 ),
                 marks_given=(
-                    np.array(des.get_scores_for_question(question))
-                    .astype(float)
-                    .tolist()
+                    [des._get_scores_for_qidx(qidx)]
                     if not versions
                     else [
-                        np.array(des.get_scores_for_question(question))
-                        .astype(float)
-                        .tolist()
-                        for version in marking_times_df["question_version"].unique()
+                        des._get_scores_for_qidx(qidx, ver=v)
+                        for v in sorted(marking_times_df["question_version"].unique())
                     ]
                 ),
                 versions=versions,
             )
-            for question, marking_times_df in tqdm(
-                des._get_all_ta_data_by_question().items(),
+            for qidx, marking_times_df in tqdm(
+                des._get_all_ta_data_by_qidx().items(),
                 desc="Scatter plots of time spent marking vs mark given",
             )
         ]
@@ -215,29 +210,19 @@ def pdf_builder(
     if not brief or selected_graphs.get("graph7"):
         graphs["graph7"] = [
             mpls.boxplot_of_marks_given_by_ta(
-                [
-                    np.array(des.get_scores_for_question(question_index))
-                    .astype(float)
-                    .tolist()
-                ]
+                [des._get_scores_for_qidx(qidx)]
                 + [
-                    np.array(
-                        des.get_scores_for_ta(ta_name=marker_name, ta_df=question_df)
-                    )
-                    .astype(float)
-                    .tolist()
+                    des.get_scores_for_ta(ta_name=marker_name, ta_df=question_df)
                     for marker_name in des.get_tas_that_marked_this_question(
-                        question_index, ta_df=question_df
+                        qidx, ta_df=question_df
                     )
                 ],
                 ["Overall"]
-                + des.get_tas_that_marked_this_question(
-                    question_index, ta_df=question_df
-                ),
-                question_index,
+                + des.get_tas_that_marked_this_question(qidx, ta_df=question_df),
+                qidx,
             )
-            for question_index, question_df in tqdm(
-                des._get_all_ta_data_by_question().items(),
+            for qidx, question_df in tqdm(
+                des._get_all_ta_data_by_qidx().items(),
                 desc="Box plots of marks given by marker by question",
             )
         ]
@@ -332,7 +317,7 @@ def pdf_builder(
 
         for index, marker in enumerate(des._get_all_ta_data_by_ta()):
             html += f"""
-            <h4>Grades by {marker}</h4>
+            <h4>Marks by {marker}</h4>
             """
             html += _html_for_big_graphs(graphs["graph4"][index])
 
@@ -366,7 +351,7 @@ def pdf_builder(
 
             for index, marker in enumerate(des._get_all_ta_data_by_ta()):
                 html += f"""
-                <h4>Grades by {marker}</h4>
+                <h4>Marks by {marker}</h4>
                 """
                 html += _html_for_big_graphs(graphs["graph4"][index])
 

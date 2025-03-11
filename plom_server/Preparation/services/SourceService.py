@@ -1,27 +1,26 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
-from __future__ import annotations
-from collections import defaultdict
 import hashlib
 import pathlib
-from pathlib import Path
 import tempfile
+from collections import defaultdict
+from pathlib import Path
 from typing import Any
+
 import pymupdf as fitz
 from django.core.files import File
 from django.db import transaction
-from Papers.services import SpecificationService
-from ..models import PaperSourcePDF
-from Preparation.services.preparation_dependency_service import (
-    assert_can_modify_sources,
-)
-from Preparation.services.mocker import ExamMockerService
+
 from plom.scan import QRextract
-from Scan.services import ScanService
 from Papers.models import ReferenceImage
+from Papers.services import SpecificationService
+from Scan.services import ScanService
+from ..models import PaperSourcePDF
+from ..services.mocker import ExamMockerService
+from ..services.preparation_dependency_service import assert_can_modify_sources
 
 
 def _get_source_file(source_version: int) -> File:
@@ -39,6 +38,15 @@ def _get_source_file(source_version: int) -> File:
     return PaperSourcePDF.objects.get(version=source_version).source_pdf
 
 
+def _get_source_files() -> list[File]:
+    """Return the ordered list of Django-files for all current source versions.
+
+    Returns:
+        Some sort of file abstraction, not for use outside Django.
+    """
+    return [x.source_pdf for x in PaperSourcePDF.objects.all().order_by("version")]
+
+
 @transaction.atomic
 def how_many_source_versions_uploaded() -> int:
     return PaperSourcePDF.objects.count()
@@ -52,46 +60,60 @@ def are_all_sources_uploaded() -> bool:
         return False
 
 
-@transaction.atomic()
 def delete_source_pdf(source_version: int) -> None:
     """Delete a particular version of the source PDF files.
 
     If no such version exists (either out of range or never uploaded)
     then silently return (no error is raised).
+
+    Raises:
+        PlomDependencyException: sources cannot be modified.
     """
-    # raises a PlomDependencyException if cannot modify
     assert_can_modify_sources()
 
-    # delete the DB entry and the file
-    try:
-        pdf_obj = PaperSourcePDF.objects.filter(version=source_version).get()
-        Path(pdf_obj.source_pdf.path).unlink()
-        pdf_obj.delete()
-    except PaperSourcePDF.DoesNotExist:
-        pass
+    with transaction.atomic():
+        # delete the DB entry and *then* the file: the order is important
+        # b/c the atomic operation can undo the DB operation but not the
+        # file unlinking!
+        # TODO: Colin thinks this important juggling should be in the model
+        # TODO: see for example Paper/models/reference_image.py
+        try:
+            pdf_obj = PaperSourcePDF.objects.filter(version=source_version).get()
+            path = Path(pdf_obj.source_pdf.path)
+            pdf_obj.delete()
+            # if the file fails to delete for some reason, the object delete
+            # will also be rewound by the atomic context
+            path.unlink()
+            # Ignoring a missing file could mask an bug, so I think we'd want to
+            # know... but we could revisit in the future:
+            # path.unlink(missing_ok=True)
+
+        except PaperSourcePDF.DoesNotExist:
+            return
 
 
-@transaction.atomic()
 def delete_all_source_pdfs() -> None:
-    """Delete all versions of the source PDF files."""
-    # raises a PlomDependencyException if cannot modify
+    """Delete all versions of the source PDF files.
+
+    Raises:
+        PlomDependencyException: sources cannot be modified.
+    """
     assert_can_modify_sources()
 
-    # delete the DB entry and the file
     for pdf_obj in PaperSourcePDF.objects.all():
-        Path(pdf_obj.source_pdf.path).unlink()
-        pdf_obj.delete()
+        delete_source_pdf(pdf_obj.version)
 
 
 @transaction.atomic()
 def get_source(version: int) -> dict[str, Any]:
-    """Return a dictionary with the source version.
+    """Return a dictionary with info about the source version.
 
     Args:
         version: which version, indexed from one.
 
     Returns:
-        A dictionary with the version and uploaded status.
+        A dictionary with the version, uploaded status, and file hash
+        if uploaded.
     """
     try:
         pdf_obj = PaperSourcePDF.objects.filter(version=version).get()
@@ -125,8 +147,8 @@ def store_source_pdf(version: int, source_pdf: pathlib.Path) -> None:
 
     Raises:
         ValueError: source already present for that version.
+        PlomDependencyException: sources cannot currently be modified.
     """
-    # raises a PlomDependencyException if cannot modify
     assert_can_modify_sources()
 
     try:
@@ -138,7 +160,7 @@ def store_source_pdf(version: int, source_pdf: pathlib.Path) -> None:
 
     with open(source_pdf, "rb") as fh:
         the_bytes = fh.read()  # read entire file as bytes
-        hashed = hashlib.sha256(the_bytes).hexdigest()
+    hashed = hashlib.sha256(the_bytes).hexdigest()
 
     with open(source_pdf, "rb") as fh:
         dj_file = File(fh, name=f"version{version}.pdf")

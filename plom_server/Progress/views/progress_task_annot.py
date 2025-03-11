@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 
 import html
@@ -10,7 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse, FileResponse, Http404
 from django.shortcuts import render, reverse, redirect
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
-from rest_framework.exceptions import ValidationError
+from rest_framework import serializers
 
 from plom import plom_valid_tag_text_pattern, plom_valid_tag_text_description
 from plom.misc_utils import pprint_score
@@ -305,7 +305,7 @@ class MarkingTaskTagView(LeadMarkerOrManagerView):
             MarkingTaskService().create_tag_and_attach_to_task(
                 request.user, task_pk, tagtext
             )
-        except ValidationError:
+        except serializers.ValidationError:
             # the form *should* catch validation errors.
             # we don't throw an explicit error here instead just refresh the page.
             return HttpResponseClientRefresh()
@@ -340,26 +340,28 @@ class MarkingTaskResetView(LeadMarkerOrManagerView):
 
 
 class MarkingTaskReassignView(LeadMarkerOrManagerView):
-    def post(self, request, task_pk: int):
+    """Operations for reassigning tasks betweeb users."""
+
+    def post(self, request: HttpRequest, *, task_pk: int) -> HttpResponse:
+        """Posting reassigns a task to a possibly different user."""
         if "newUser" not in request.POST:
             return HttpResponseClientRefresh()
         new_username = request.POST.get("newUser")
 
-        # Note a task is reassigned by both tagging it @username,
-        # and also clearing / changing the task.assigned_user field.
-        # accordingly we call two functions.
         try:
-            # first reassign the task - this checks if the username
-            # corresponds to an existing marker-user
-            MarkingTaskService.reassign_task_to_user(task_pk, new_username)
-            # note - the service creates the tag if needed
-            attn_user_tag_text = f"@{new_username}"
-            MarkingTaskService().create_tag_and_attach_to_task(
-                request.user, task_pk, attn_user_tag_text
+            MarkingTaskService.reassign_task_to_user(
+                task_pk,
+                new_username=new_username,
+                calling_user=request.user,
+                unassign_others=True,
             )
-        except ValueError:
-            # TO DO - report the error
-            pass
+        except ValueError as e:
+            # TODO: fix Issue #3718
+            print("TODO: Error happened, not sure how to report it: Issue #3718")
+            print(e)
+            # return HttpResponseClientRedirect("some_error_page.html")
+            # for now. let's just get the yellow-screen-of-death
+            raise
 
         return HttpResponseClientRedirect(
             reverse("progress_marking_task_details", args=[task_pk])

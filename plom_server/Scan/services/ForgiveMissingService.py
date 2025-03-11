@@ -1,13 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
-
-from __future__ import annotations
+# Copyright (C) 2025 Colin B. Macdonald
 
 import hashlib
 from io import BytesIO
 from typing import Any
 
-import pymupdf as fitz
+import pymupdf
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
@@ -62,18 +61,18 @@ def _create_substitute_page_images_for_forgiveness_bundle() -> list[dict[str, An
     page_list = SpecificationService.get_list_of_pages()  # 1-indexed
     image_list = []
     for v in version_list:
-        doc = fitz.Document(stream=SourceService.get_source_as_bytes(v))
+        doc = pymupdf.Document(stream=SourceService.get_source_as_bytes(v))
         for pg in page_list:
             the_page = doc[pg - 1]  # 0-indexed
             the_rect = the_page.rect
-            pns_length = fitz.get_text_length(
+            pns_length = pymupdf.get_text_length(
                 page_not_submitted_text, fontsize=font_size_for_forgiven_blurb
             )
             text_start = (
                 (the_rect.width - pns_length) // 2,
                 the_rect.height // 10 + font_size_for_forgiven_blurb,
             )
-            text_box = fitz.Rect(
+            text_box = pymupdf.Rect(
                 text_start[0] - 8,
                 text_start[1] - font_size_for_forgiven_blurb,
                 text_start[0] + 8 + pns_length,
@@ -97,7 +96,7 @@ def _create_substitute_page_images_for_forgiveness_bundle() -> list[dict[str, An
                 (the_rect.width - pns_length) // 2,
                 9 * the_rect.height // 10 + font_size_for_forgiven_blurb,
             )
-            text_box = fitz.Rect(
+            text_box = pymupdf.Rect(
                 text_start[0] - 8,
                 text_start[1] - font_size_for_forgiven_blurb,
                 text_start[0] + 8 + pns_length,
@@ -118,14 +117,14 @@ def _create_substitute_page_images_for_forgiveness_bundle() -> list[dict[str, An
                 color=(1, 0, 0),
             )
             text_blob = f"Substitute Page {pg}"
-            text_blob_length = fitz.get_text_length(
+            text_blob_length = pymupdf.get_text_length(
                 text_blob, fontsize=font_size_for_forgiven_blurb
             )
             text_start = (
                 (the_rect.width - text_blob_length) // 2,
                 the_rect.height // 2,
             )
-            text_box = fitz.Rect(
+            text_box = pymupdf.Rect(
                 text_start[0] - 8,
                 text_start[1] - font_size_for_forgiven_blurb,
                 text_start[0] + 8 + text_blob_length,
@@ -294,10 +293,10 @@ def get_substitute_page_info(paper_number: int, page_number: int) -> dict[str, A
         fixedpage_obj = FixedPage.objects.get(
             paper__paper_number=paper_number, page_number=page_number
         )
-    except ObjectDoesNotExist:
+    except ObjectDoesNotExist as e:
         raise ValueError(
             f"Cannot find the fixed page of paper {paper_number} page {page_number}"
-        )
+        ) from e
     version = fixedpage_obj.version
     substitute_image_pk = get_substitute_image(page_number, version).pk
 

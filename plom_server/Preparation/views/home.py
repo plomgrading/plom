@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpRequest
@@ -33,15 +33,14 @@ class PreparationLandingView(ManagerRequiredView):
         pss = PrenameSettingService()
         sss = StagingStudentService()
         bps = BuildPapersService()
-        pinfo = PaperInfoService()
 
         context = {
             "num_uploaded_source_versions": SourceService.how_many_source_versions_uploaded(),
             "all_sources_uploaded": SourceService.are_all_sources_uploaded(),
             "prename_enabled": pss.get_prenaming_setting(),
             "student_list_present": sss.are_there_students(),
-            "is_db_chore_running": pinfo.is_paper_database_being_updated_in_background(),
-            "is_db_fully_populated": pinfo.is_paper_database_fully_populated(),
+            "is_db_chore_running": PaperInfoService.is_paper_database_being_updated_in_background(),
+            "is_db_fully_populated": PaperInfoService.is_paper_database_fully_populated(),
             "all_papers_built": bps.are_all_papers_built(),
             "any_papers_built": bps.are_any_papers_built(),
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
@@ -91,9 +90,7 @@ class PreparationFinishedView(ManagerRequiredView):
     """Toggle the PapersPrint state. When True, bundles are allowed to be pushed to the server."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        from Preparation.services.preparation_dependency_service import (
-            can_unset_papers_printed,
-        )
+        from ..services.preparation_dependency_service import can_unset_papers_printed
 
         context = {
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),

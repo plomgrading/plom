@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2025 Andrew Rechnitzer
 
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from django.forms import ValidationError
 
 from .choices import (
     USERNAME_CHOICES,
@@ -15,10 +15,10 @@ from .choices import (
 )
 
 
-class CreateUserForm(UserCreationForm):
-    username = forms.CharField(max_length=40, help_text="Username")
+class CreateSingleUserForm(forms.ModelForm):
+    # also validated by User model, e.g., restricting the length to some max
+    username = forms.CharField(help_text="Username")
     email = forms.EmailField(
-        max_length=100,
         help_text="Email",
         required=False,
         widget=forms.EmailInput(attrs={"placeholder": "Optional"}),
@@ -32,16 +32,31 @@ class CreateUserForm(UserCreationForm):
         initial="marker",
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["password1"].required = False
-        self.fields["password2"].required = False
-        self.fields["password1"].widget.attrs["autocomplete"] = "off"
-        self.fields["password2"].widget.attrs["autocomplete"] = "off"
-
     class Meta:
         model = User
         fields = ["username", "email"]
+
+    def clean_username(self) -> str:
+        """Reject usernames that differ only in case."""
+        # we no longer subclass UserCreationForm (Issue #3798) so instead we implement username
+        # cleaning following Django's UserCreationForm
+        # https://github.com/django/django/blob/stable/5.1.x/django/contrib/auth/forms.py#L221
+        username = self.cleaned_data.get("username")
+        # TODO - do we want other username checks? they should prolly go here.
+        if (
+            username
+            and self._meta.model.objects.filter(username__iexact=username).exists()
+        ):
+            self._update_errors(
+                ValidationError(
+                    {
+                        "username": self.instance.unique_error_message(
+                            self._meta.model, ["username"]
+                        )
+                    }
+                )
+            )
+        return username
 
 
 class CreateMultiUsersForm(forms.Form):
@@ -72,9 +87,8 @@ class CreateMultiUsersForm(forms.Form):
         initial="marker",
     )
 
-    def clean(self):
+    def clean(self) -> dict:
         data = self.cleaned_data
-        min_users = 1
-
-        if data["num_users"] < min_users:
-            raise ValidationError("Cannot create less than 1 users!")
+        if data["num_users"] < 1:
+            raise ValidationError("Cannot create fewer than 1 users!")
+        return super().clean()

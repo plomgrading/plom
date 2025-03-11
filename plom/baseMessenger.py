@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2024 Andrew Rechnitzer
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2022 Michael Deakin
 # Copyright (C) 2022-2023 Edith Coates
@@ -51,6 +51,8 @@ from plom.plom_exceptions import (
 # define an allow-list of versions we support.
 Supported_Server_API_Versions = [
     int(Plom_Legacy_Server_API_Version),
+    112,
+    113,  # introduced /MK/tasks/{code}/reassign/{username}
     int(Plom_API_Version),
 ]
 
@@ -206,9 +208,28 @@ class BaseMessenger:
         return self.whoami()
 
     def is_legacy_server(self) -> bool | None:
+        """Check if the server is the older legacy server.
+
+        Returns:
+            True/False, or None if we're not connected.
+        """
         if self.get_server_API_version() is None:
             return None
         return self.get_server_API_version() == int(Plom_Legacy_Server_API_Version)
+
+    def is_server_api_less_than(self, api_number: int) -> bool | None:
+        """Check if the server API is strictly less than a value.
+
+        Args:
+            api_number: what value to compare to.
+
+        Returns:
+            True/False, or None if we're not connected.
+        """
+        ver = self.get_server_API_version()
+        if ver is None:
+            return None
+        return int(ver) < api_number
 
     @property
     def server(self) -> str:
@@ -303,6 +324,42 @@ class BaseMessenger:
 
         assert self.session
         return self.session.put(self.base + url, *args, **kwargs)
+
+    def put_auth(self, url: str, *args, **kwargs) -> requests.Response:
+        """Perform a PUT method on a URL, with a token for authorization."""
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
+
+        if not self.token:
+            raise PlomAuthenticationException("Trying auth'd operation w/o token")
+
+        assert not self.is_legacy_server()
+
+        assert isinstance(self.token, dict)
+        # Django-based servers pass token in the header
+        token_str = self.token["token"]
+        kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+
+        assert self.session
+        return self.session.put(self.base + url, *args, **kwargs)
+
+    def delete_auth(self, url: str, *args, **kwargs) -> requests.Response:
+        """Perform a DELETE method on a URL with a token for authorization."""
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
+
+        if not self.token:
+            raise PlomAuthenticationException("Trying auth'd operation w/o token")
+
+        assert not self.is_legacy_server()
+
+        assert isinstance(self.token, dict)
+        # Django-based servers pass token in the header
+        token_str = self.token["token"]
+        kwargs["headers"] = {"Authorization": f"Token {token_str}"}
+
+        assert self.session
+        return self.session.delete(self.base + url, *args, **kwargs)
 
     def delete(self, url: str, *args, **kwargs) -> requests.Response:
         """Perform a DELETE method on a URL."""
@@ -1082,6 +1139,8 @@ class BaseMessenger:
 
         Raises:
             PlomAuthenticationException: Authentication error.
+            PlomInconsistentRubric: proposed rubric data is invalid,
+                message should include details.
             PlomSeriousException: Other error types, possible needs fix or debugging.
 
         Returns:
@@ -1107,7 +1166,7 @@ class BaseMessenger:
                 elif response.status_code == 403:
                     raise PlomNoPermission(response.reason) from None
                 if response.status_code == 406:
-                    raise PlomSeriousException(response.reason) from None
+                    raise PlomInconsistentRubric(response.reason) from None
                 raise PlomSeriousException(
                     f"Error when creating new rubric: {e}"
                 ) from None
@@ -1254,7 +1313,8 @@ class BaseMessenger:
 
         Raises:
             PlomAuthenticationException: Authentication error.
-            PlomInconsistentRubric:
+            PlomInconsistentRubric: proposed rubric data is invalid,
+                message should include details.
             PlomNoRubric:
             PlomNoPermission: you are not allowed to modify the rubric.
             PlomConflict: two users try to modify the rubric.

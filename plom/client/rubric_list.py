@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2025 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
@@ -37,7 +37,7 @@ from plom.misc_utils import next_in_longest_subsequence
 from .useful_classes import SimpleQuestion, ErrorMsg, InfoMsg, WarnMsg
 from .useful_classes import BigMessageDialog
 from .rubric_wrangler import RubricWrangler
-from .rubrics import compute_score, diff_rubric, render_rubric_as_html
+from plom.rubric_utils import compute_score, diff_rubric, render_rubric_as_html
 from .rubric_add_dialog import AddRubricBox
 from .rubric_other_usage_dialog import RubricOtherUsageDialog
 
@@ -105,11 +105,13 @@ def isLegalRubric(rubric: dict[str, Any], *, scene, version: int, max_mark: int)
 
 def render_params(
     template: str,
-    params: Sequence[tuple[str, Sequence[str]]],
+    params: Sequence[tuple[str, Sequence[str]]] | None,
     ver: int,
 ) -> str:
     """Perform version-dependent substitutions on a template text."""
     s = template
+    if not params:
+        return s
     for param, values in params:
         s = s.replace(param, values[ver - 1])
     return s
@@ -1176,7 +1178,11 @@ class RubricWidget(QWidget):
             self.syncB.setText("Sync")
 
     def refreshRubrics(self) -> None:
-        """Get rubrics from server and if non-trivial then repopulate."""
+        """Get rubrics from server and if non-trivial then repopulate.
+
+        TODO: consider splitting this in two: trigger a refresh elsewhere
+        and react to a refresh.
+        """
         old_rubrics = self.rubrics
         self.rubrics = self._parent.getRubricsFromServer()
         self.setRubricTabsFromState(self.get_tab_rubric_lists())
@@ -1580,6 +1586,9 @@ class RubricWidget(QWidget):
             tab.updateLegality()
         self.tabDeltaP.updateLegality()
         self.tabDeltaN.updateLegality()
+        # TODO: port to slots and signals instead
+        if self._parent.scene:
+            self._parent.scene.react_to_rubric_list_changes(self.rubrics)
 
     def handleClick(self) -> None:
         self.RTW.currentWidget().handleClick()
@@ -1825,7 +1834,7 @@ class RubricWidget(QWidget):
                 InfoMsg(self, f"No permission to modify that rubric: {e}").exec()
                 return
             except PlomInconsistentRubric as e:
-                ErrorMsg(self, f"Inconsistent Rubric: {e}").exec()
+                WarnMsg(self, f"Inconsistent Rubric: {e}").exec()
                 return
             except PlomNoRubric as e:
                 ErrorMsg(self, f"{e}").exec()
@@ -1858,6 +1867,9 @@ class RubricWidget(QWidget):
                 new_rubric = self._parent.createNewRubric(new_rubric)
             except PlomNoPermission as e:
                 InfoMsg(self, f"No permission to create rubrics: {e}").exec()
+                return
+            except PlomInconsistentRubric as e:
+                WarnMsg(self, f"Inconsistent Rubric: {e}").exec()
                 return
             self.rubrics.append(new_rubric)
 

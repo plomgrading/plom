@@ -1,23 +1,19 @@
 #!/usr/bin/env python3
+
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
-from pathlib import Path
 import shutil
 import subprocess
-import sys
 import tempfile
+from importlib import resources
+from pathlib import Path
 
 import segno
 
 import plom.create
 from plom.tpv_utils import encodeExtraPageCode
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
 
 
 def build_extra_page_pdf(destination_dir=None) -> None:

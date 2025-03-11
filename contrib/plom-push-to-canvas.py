@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 # Copyright (C) 2022 Nicholas J H Lai
 
 """Upload reassembled Plom papers and grades to Canvas.
@@ -71,7 +71,7 @@ from plom.canvas import (
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.3.0"
+__script_version__ = "0.6.0"
 
 
 def sis_id_to_student_dict(student_list):
@@ -110,9 +110,23 @@ def get_sis_id_to_sub_and_name_table(subs):
 def get_sis_id_to_marks():
     """A dictionary of the Student Number ("sis id") to total mark."""
     df = pandas.read_csv("marks.csv", dtype="object")
-    return df.set_index("StudentID")["Total"].to_dict()
+    try:
+        d = df.set_index("StudentID")["Total"].to_dict()
+    except KeyError as e:
+        # Issue #3722, if something goes wrong give a very verbose error:
+        print(f'Pandas raised a KeyError reading "marks.csv":\n    {e}')
+        header_names = ", ".join(f'"{x}"' for x in df.columns)
+        print(f"We have headers:\n    {header_names}")
+        print(f'The first few lines of "marks.csv" looks like:\n{df.head()}')
+        raise KeyError(
+            'Something wrong with "StudentID" or "Total" columns?\n'
+            '  "marks.csv" contains headers:\n'
+            f"    {header_names}\n"
+            f"  KeyError was raised: {e}\n"
+        ) from e
     # TODO: if specific types are needed
     # return {str(k): int(v) for k,v in d.items()}
+    return d
 
 
 parser = argparse.ArgumentParser(
@@ -193,11 +207,38 @@ parser.add_argument(
     """,
 )
 parser.add_argument(
+    "--post-grades",
+    action="store_true",
+    default=True,
+    help="""
+        By default, we post grades for each student (as well as uploading
+        the reassembled papers (default: on).
+    """,
+)
+parser.add_argument(
+    "--no-post-grades",
+    dest="post_grades",
+    action="store_false",
+)
+parser.add_argument(
+    "--no-papers",
+    dest="papers",
+    action="store_false",
+    help="""
+        Don't push the reassembled papers.
+        CAUTION: in this case, this script still uses the pdf files in
+        "reassembled/" directory to decide who to upload to.  This is
+        a bit counter-intuitive b/c those files themselves are not uploaded.
+        The intended use of this option is for ADDING additional files
+        (see `--solutions, `--reports`).
+    """,
+)
+parser.add_argument(
     "--solutions",
     action="store_true",
     default=True,
     help="""
-        Upload individualized solutions as well as reassembled papers
+        Upload individualized solutions, in addition to reassembled papers
         (default: on).
     """,
 )
@@ -205,6 +246,16 @@ parser.add_argument(
     "--no-solutions",
     dest="solutions",
     action="store_false",
+)
+parser.add_argument(
+    "--reports",
+    action="store_true",
+    help="""
+        Upload individualized student reports, in addition to reassembled papers
+        (default: off).
+        The reports must be PDF files of the form "Student_Reports/12345678.pdf".
+        There must be one such file for each PDF file in "reassembled/".
+    """,
 )
 
 
@@ -272,6 +323,12 @@ if __name__ == "__main__":
             )
         print(f'  Found "{soln_dir}" directory.')
 
+    if args.reports:
+        report_dir = Path("Student_Reports")
+        if not report_dir.exists():
+            raise ValueError(f'Cannot upload reports b/c of missing "{report_dir}"')
+        print(f'  Found "{report_dir}" directory.')
+
     print("\nFetching data from canvas now...")
     print("  --------------------------------------------------------------------")
     if section:
@@ -311,9 +368,9 @@ if __name__ == "__main__":
     print("    done.")
 
     if args.dry_run:
-        print("\n\nPushing grades and marked papers to Canvas [DRY-RUN]...")
+        print("\n\nPushing to Canvas [DRY-RUN]...")
     else:
-        print("\n\nPushing grades and marked papers to Canvas...")
+        print("\n\nPushing to Canvas...")
     print("  --------------------------------------------------------------------")
     timeouts = []
     for pdf in tqdm(Path("reassembled").glob("*.pdf")):
@@ -321,6 +378,12 @@ if __name__ == "__main__":
         sis_id = pdf.stem.split("_")[-1]
         # rebuild the stuff before the last underscore
         basename = "_".join(pdf.stem.split("_")[0:-1])
+        if sis_id == "None":
+            print(f"\nWARNING: PDF {pdf} has a 'None' ID")
+            print("  probably someone didn't fill in the front")
+            print("  (or possibly its a blank paper)")
+            print("Skipping for now; you will have to deal with this one manually")
+            continue
         assert len(sis_id) == 8, f"sis_id {sis_id} did not have 8 digits"
         assert set(sis_id) <= set(string.digits), f"sis_id {sis_id} had non-digit chars"
         try:
@@ -328,7 +391,7 @@ if __name__ == "__main__":
             student = sis_id_to_students[sis_id]
             mark = sis_id_to_marks[sis_id]
         except KeyError:
-            print(f"No student # {sis_id} in Canvas!")
+            print(f"\nWARNING: No student # {sis_id} in Canvas!")
             print("  Hopefully this is 1-1 w/ a prev canvas id error")
             print("  SKIPPING this paper and continuing")
             continue
@@ -337,8 +400,15 @@ if __name__ == "__main__":
             # stuff "solutions" into filename, b/w base and SID
             soln_pdf = soln_dir / f"{basename}_solutions_{sis_id}.pdf"
             if not soln_pdf.exists():
+                print()
                 print(f"WARNING: Student #{sis_id} has no solutions: {soln_pdf}")
                 soln_pdf = None
+        if args.reports:
+            report_pdf = report_dir / f"{sis_id}.pdf"
+            if not report_pdf.exists():
+                print()
+                print(f"WARNING: Student #{sis_id} has no report: {report_pdf}")
+                report_pdf = None
 
         # try:
         #     if sub.submission_comments:
@@ -349,20 +419,25 @@ if __name__ == "__main__":
         #     print("no")
         #     pass
         if args.dry_run:
-            timeouts.append((pdf.name, sis_id, name))
+            if args.papers:
+                timeouts.append((pdf.name, sis_id, name))
             if args.solutions and soln_pdf:
                 timeouts.append((soln_pdf.name, sis_id, name))
-            timeouts.append((mark, sis_id, name))
+            if args.reports and report_pdf:
+                timeouts.append((report_pdf.name, sis_id, name))
+            if args.post_grades:
+                timeouts.append((mark, sis_id, name))
             continue
 
         # TODO: should look at the return values
         # TODO: back off on canvasapi.exception.RateLimitExceeded?
-        try:
-            sub.upload_comment(pdf)
-        except CanvasException as e:
-            print(e)
-            timeouts.append((pdf.name, sis_id, name))
-        time.sleep(random.uniform(0.1, 0.2))
+        if args.papers:
+            try:
+                sub.upload_comment(pdf)
+            except CanvasException as e:
+                print(e)
+                timeouts.append((pdf.name, sis_id, name))
+            time.sleep(random.uniform(0.1, 0.2))
         if args.solutions and soln_pdf:
             try:
                 sub.upload_comment(soln_pdf)
@@ -370,12 +445,20 @@ if __name__ == "__main__":
                 print(e)
                 timeouts.append((soln_pdf.name, sis_id, name))
             time.sleep(random.uniform(0.1, 0.2))
-        try:
-            sub.edit(submission={"posted_grade": mark})
-        except CanvasException as e:
-            print(e)
-            timeouts.append((mark, sis_id, name))
-        time.sleep(random.uniform(0.1, 0.2))
+        if args.reports and report_pdf:
+            try:
+                sub.upload_comment(report_pdf)
+            except CanvasException as e:
+                print(e)
+                timeouts.append((report_pdf.name, sis_id, name))
+            time.sleep(random.uniform(0.1, 0.2))
+        if args.post_grades:
+            try:
+                sub.edit(submission={"posted_grade": mark})
+            except CanvasException as e:
+                print(e)
+                timeouts.append((mark, sis_id, name))
+            time.sleep(random.uniform(0.1, 0.2))
 
     print(
         dedent(

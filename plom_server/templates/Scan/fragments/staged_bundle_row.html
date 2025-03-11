@@ -1,17 +1,23 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2024 Colin B. Macdonald
+    Copyright (C) 2024-2025 Colin B. Macdonald
 -->
 {% load static %}
 <td>
     <div class="bundle-thumb">
-        {% if not has_been_processed or is_mid_qr_read %}
+        {% if is_waiting_or_processing %}
             <img src="{% static 'ball_triangle.svg' %}"
                  hx-get="{% url 'scan_get_staged_bundle_fragment' bundle_id %}"
                  hw-swap="innerHTML"
                  hx-trigger="load delay:2s"
                  hx-target="#bundle{{ slug }}" />
+        {% elif is_error %}
+            <p class="alert alert-danger p-1 mb-0">
+                Error <i class="bi bi-exclamation-diamond-fill text-warning"></i>
+                <br />
+                <small>(you could try removing and then re-uploading)</small>
+            </p>
         {% else %}
             <img src="{% url 'scan_get_thumbnail' bundle_id 1 %}" />
         {% endif %}
@@ -35,7 +41,10 @@
         </li>
         {% if has_been_processed %}
             {% if has_qr_codes %}
-                <li>Papers: {{ paper_list }}</li>
+                <li>
+                    {{ n_papers }} paper{{ n_papers|pluralize }}:
+                    {{ pretty_print_paper_list }}
+                </li>
                 {% if n_known == number_of_pages %}
                     <li>
                         Known pages: <i class="bi bi-check-circle text-success"> all</i>
@@ -95,6 +104,11 @@
             {% endif %}
         {% endif %}
     </ul>
+    <p class="fw-light small lh-1 mt-0">
+        Debug: image extract chore: {{ proc_chore_status }};
+        read QR chore: {{ readQR_chore_status }}
+    </p>
+    {% if is_error %}<p class="alert alert-danger p-1 mb-0">{{ error_msg }}</p>{% endif %}
 </td>
 <td>
     <div class="d-flex justify-content-evenly my-2">

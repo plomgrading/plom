@@ -48,9 +48,7 @@
                                                     <button hx-get="{% url 'pushed_img_wrap' 'mobile' mp.page_pk %}"
                                                             hx-target="#imageHere"
                                                             hx-replace="innerHTML"
-                                                            class="btn btn-outline-info">
-                                                        qi.{{ mp.question_number }}
-                                                    </button>
+                                                            class="btn btn-outline-info">{{ mp.page_label }}</button>
                                                 {% endfor %}
                                             </td>
                                         </tr>

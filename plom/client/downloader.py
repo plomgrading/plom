@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 """The background downloader downloads images using threads."""
@@ -8,25 +8,23 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 import random
-import sys
 import tempfile
 import threading
+from importlib import resources
+from pathlib import Path
 from time import sleep, time
 from typing import Any
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
 
 # from PyQt6.QtCore import QThread
 from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal, pyqtSlot
 
-from plom.messenger import Messenger, BaseMessenger
-from plom.plom_exceptions import PlomException, PlomConnectionError
+from plom.messenger import BaseMessenger, Messenger
+from plom.plom_exceptions import PlomConnectionError, PlomException
+
 from .pagecache import PageCache
+from . import icons
+
 
 log = logging.getLogger("Downloader")
 
@@ -156,12 +154,8 @@ class Downloader(QObject):
         self.simulate_failures = False
 
     def make_placeholder(self) -> None:
-        # Not imported earlier b/c of some circular import stuff (?)
-        import plom.client.icons
-
-        res = resources.files(plom.client.icons) / "manager_unknown.svg"
-        placeholder = self.basedir / "placeholder"
-        placeholder = placeholder.with_suffix(res.suffix)
+        res = resources.files(icons) / "manager_unknown.svg"
+        placeholder = self.basedir / "placeholder.svg"
         with res.open("rb") as fin, placeholder.open("wb") as fout:
             fout.write(fin.read())
         self._placeholder_image = placeholder

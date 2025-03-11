@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Forest Kobayashi
 # Copyright (C) 2021 Peter Lee
@@ -16,38 +16,32 @@ __copyright__ = "Copyright (C) 2018-2024 Andrew Rechnitzer, Colin B. Macdonald, 
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-from pathlib import Path
 import logging
 import shutil
 import sys
 import tempfile
 import time
+from importlib import resources
+from pathlib import Path
 from typing import Any
 
 import arrow
 import platformdirs
 from packaging.version import Version
 
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
-
 if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
 import tomlkit
-
 import urllib3
-from PyQt6 import uic, QtGui
+from PyQt6 import QtGui, uic
 from PyQt6.QtCore import pyqtSlot
 from PyQt6.QtWidgets import QDialog, QMessageBox
 
 from plom import __version__
 from plom import Plom_API_Version
 from plom import Default_Port
-import plom.client.ui_files
 from plom import get_question_label
 from plom.plom_exceptions import (
     PlomException,
@@ -61,7 +55,8 @@ from plom.plom_exceptions import (
     PlomNoServerSupportException,
 )
 from plom.messenger import Messenger, ManagerMessenger
-from plom.client import MarkerClient, IDClient
+from . import MarkerClient, IDClient
+from . import ui_files
 from .downloader import Downloader
 from .about_dialog import show_about_dialog
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, WarningQuestion
@@ -97,7 +92,7 @@ class Chooser(QDialog):
     def __init__(self, Qapp):
         self.APIVersion = Plom_API_Version
         super().__init__()
-        uic.loadUi(resources.files(plom.client.ui_files) / "chooser.ui", self)
+        uic.loadUi(resources.files(ui_files) / "chooser.ui", self)
         self.Qapp = Qapp
         self.messenger = None
         self._old_client_note_seen = False
@@ -128,6 +123,7 @@ class Chooser(QDialog):
             __version__, self.APIVersion
         )
         log.info(s)
+        log.warning("Deprecation notice: please use standalone Plom Client")
 
         self._workdir = Path(tempfile.mkdtemp(prefix="plom_"))
         log.info("Using newly created temp directory %s", self._workdir)
@@ -450,7 +446,7 @@ class Chooser(QDialog):
         if Version(__version__) < Version(info["version"]):
             s = "\nWARNING: old client!"
             self.ui.infoLabel.setText(self.ui.infoLabel.text() + s)
-            msg = WarnMsg(
+            msg_ = WarnMsg(
                 self,
                 f"Your client version {__version__} is older than the "
                 f"server {info['version']}: you may want to consider upgrading.",
@@ -461,7 +457,7 @@ class Chooser(QDialog):
                 ),
             )
             if not self._old_client_note_seen:
-                msg.exec()
+                msg_.exec()
                 self._old_client_note_seen = True
         return True
 

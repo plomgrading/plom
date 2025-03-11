@@ -1,17 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024 Bryan Tanady
 
-
-from __future__ import annotations
-
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
-from rest_framework import status
-from rest_framework.exceptions import ValidationError
+from rest_framework import serializers, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.request import Request
@@ -178,7 +174,7 @@ class QuestionMarkingViewSet(ViewSet):
             )
         except ObjectDoesNotExist as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
-        except ValidationError as e:
+        except serializers.ValidationError as e:
             # happens automatically but this way we keep the error msg
             return _error_response(e, status.HTTP_400_BAD_REQUEST)
 
@@ -186,6 +182,7 @@ class QuestionMarkingViewSet(ViewSet):
         img_md5sum = data["md5sum"]
 
         try:
+            # TODO: use query param, allow client to override require_latest_rubrics=True?
             QuestionMarkingService.mark_task(
                 code,
                 user=request.user,

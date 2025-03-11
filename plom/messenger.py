@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024 Bryan Tanady
 
@@ -15,10 +15,13 @@ import logging
 import mimetypes
 import pathlib
 import tempfile
+from email.message import EmailMessage
+from pathlib import Path
 from typing import Any
 
 import requests
 from requests_toolbelt import MultipartEncoder
+from tqdm import tqdm
 
 from plom.baseMessenger import BaseMessenger
 from plom.scanMessenger import ScanMessenger
@@ -27,14 +30,17 @@ from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomConflict,
+    PlomNoBundle,
+    PlomNoPaper,
+    PlomNoPermission,
     PlomNoServerSupportException,
-    PlomTakenException,
+    PlomQuotaLimitExceeded,
     PlomRangeException,
-    PlomVersionMismatchException,
+    PlomTakenException,
     PlomTaskChangedError,
     PlomTaskDeletedError,
     PlomTimeoutError,
-    PlomQuotaLimitExceeded,
+    PlomVersionMismatchException,
 )
 
 
@@ -448,6 +454,45 @@ class Messenger(BaseMessenger):
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
+    def reassign_task(self, code: str, username: str) -> None:
+        """Reassign a task that belongs to a user to a different user.
+
+        Some cases to consider:
+          - if its TO_DO should we claim it for the user?
+          - if it already belongs to that user, is that an error?
+
+        Args:
+            code: a task code such as `"q0123g2"`.
+            username: who should we assign it to?
+
+        Returns:
+            None.
+
+        Raises:
+            PlomRangeException: no such task, or no such user.
+            PlomNoPermission: you don't have permission to reassign tasks.
+            PlomNoServerSupportException: server too old, does not support.
+            PlomAuthenticationException: no logged in.
+            PlomSeriousException: generic unexpected error.
+        """
+        if self.is_server_api_less_than(113):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support reassign"
+            )
+
+        with self.SRmutex:
+            try:
+                response = self.patch_auth(f"/MK/tasks/{code}/reassign/{username}")
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 404:
+                    raise PlomRangeException(response.reason) from None
+                if response.status_code == 406:
+                    raise PlomNoPermission(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
     def MlatexFragment(self, latex: str) -> tuple[bool, bytes | str]:
         """Give some text to the server, it comes back as a PNG image processed via TeX.
 
@@ -665,9 +710,10 @@ class Messenger(BaseMessenger):
         """
         with self.SRmutex:
             try:
-                with open(annotated_img, "rb") as annot_img_file, open(
-                    plomfile, "rb"
-                ) as plom_data_file:
+                with (
+                    open(annotated_img, "rb") as annot_img_file,
+                    open(plomfile, "rb") as plom_data_file,
+                ):
                     data = {
                         "pg": str(pg),
                         "ver": str(ver),
@@ -799,3 +845,238 @@ class Messenger(BaseMessenger):
             ) from None
         finally:
             self.SRmutex.release()
+
+    def new_server_upload_bundle(self, pdf: Path) -> dict[str, Any]:
+        """Upload a PDF file to the server as a new bundle.
+
+        Returns:
+            A dictionary, including the bundle_id and maybe other
+            information in the future.
+        """
+        if self.is_server_api_less_than(113):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support staging bundle upload"
+            )
+
+        with self.SRmutex:
+            try:
+                with pdf.open("rb") as f:
+                    files = {
+                        "pdf_file": f,
+                    }
+                    response = self.post_auth("/api/beta/scan/bundles", files=files)
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomSeriousException(response.reason) from None
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def new_server_list_bundles(self) -> list[list[Any]]:
+        """Get a list of information about bundles on the server.
+
+        TODO: beta: rename to something reasonable in due time.
+
+        Returns:
+            A list of of lists, representing a table where the first row
+            is the column headers.
+            TODO: maybe a list of dicts would be a more general API; could
+            format as a table client-side.
+        """
+        if self.is_server_api_less_than(113):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support staging bundle list"
+            )
+
+        with self.SRmutex:
+            try:
+                response = self.get_auth("/api/beta/scan/bundles")
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def new_server_bundle_map_page(
+        self, bundle_id: int, page: int, papernum: int, questions: str | list
+    ) -> Any:
+        """Map a page of a bundle to zero or more questions.
+
+        TODO: beta: rename to something reasonable in due time.
+
+        Returns:
+            TODO: nothing yet, still WIP?
+        """
+        if self.is_server_api_less_than(113):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support page mapping"
+            )
+
+        with self.SRmutex:
+            try:
+                # qall TODO?
+                # qdnm versus empty list?
+                query_args = ["qall", f"papernum={papernum}"]
+                print(questions)
+                query_args.extend([f"qidx={n}" for n in questions])
+                p = (
+                    f"/api/beta/scan/bundle/{bundle_id}/{page}/map"
+                    + "?"
+                    + "&".join(query_args)
+                )
+                print(p)
+                response = self.post_auth(p)
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomSeriousException(response.reason) from None
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomRangeException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def new_server_push_bundle(self, bundle_id: int):
+        """Push a bundle from the staging area.
+
+        TODO: beta: rename to something reasonable in due time.
+
+        Returns:
+            TODO: WIP
+        """
+        if self.is_server_api_less_than(113):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support bundle push"
+            )
+
+        with self.SRmutex:
+            try:
+                response = self.patch_auth(f"/api/beta/scan/bundle/{bundle_id}")
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomSeriousException(response.reason) from None
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoBundle(response.reason) from None
+                if response.status_code == 406:
+                    raise PlomConflict(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def new_server_get_reassembled(self, papernum: int) -> dict[str, Any]:
+        """Download a reassembled PDF file from the server.
+
+        Returns:
+            A dict including key `"filename"` for the file that was written
+            and other information about the download.
+        """
+        if self.is_server_api_less_than(113):
+            raise PlomNoServerSupportException(
+                "Server too old: API does not support getting reassembled papers"
+            )
+
+        with self.SRmutex:
+            try:
+                response = self.get_auth(
+                    f"/api/beta/finish/reassembled/{papernum}", stream=True
+                )
+                response.raise_for_status()
+                # https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
+                msg = EmailMessage()
+                msg["Content-Disposition"] = response.headers.get("Content-Disposition")
+                filename = msg.get_filename()
+                assert filename is not None
+                num_bytes = 0
+                # defaults to CWD: TODO: kwarg to change that?
+                with open(filename, "wb") as f:
+                    for chunk in tqdm(response.iter_content(chunk_size=8192)):
+                        print((type(chunk), len(chunk)))
+                        f.write(chunk)
+                        num_bytes += len(chunk)
+                r = {
+                    "filename": filename,
+                    "content-length": num_bytes,
+                }
+                return r
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def beta_id_paper(
+        self, paper_number: int, student_id: str, student_name: str
+    ) -> None:
+        """Identify a paper directly, not as part of a IDing task.
+
+        Exceptions:
+            PlomConflict: `studentID` already used on a different paper.
+            PlomAuthenticationException: login problems.
+            PlomSeriousException: other errors.
+            PlomNoServerSupportException: old server
+        """
+        if self.is_server_api_less_than(113):
+            raise PlomNoServerSupportException(
+                "Server too old: API does not support direct IDing of papers."
+            )
+        with self.SRmutex:
+            try:
+                url = f"/ID/beta/{paper_number}"
+                url += f"?student_id={student_id}&student_name={student_name}"
+                response = self.put_auth(url)
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def beta_un_id_paper(self, paper_number: int) -> None:
+        """Remove the identify of a paper directly.
+
+        Exceptions:
+            PlomAuthenticationException: login problems.
+            PlomSeriousException: other errors.
+        """
+        if self.is_server_api_less_than(113):
+            raise PlomNoServerSupportException(
+                "Server too old: API does not support direct IDing of papers."
+            )
+        with self.SRmutex:
+            try:
+                response = self.delete_auth(f"/ID/beta/{paper_number}")
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
+                if response.status_code == 406:
+                    raise PlomSeriousException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None

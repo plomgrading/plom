@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Elisa Pan
-# Copyright (C) 2024 Andrew Rechnitzer
-
-from __future__ import annotations
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 
 import base64
 from io import BytesIO
@@ -95,7 +93,7 @@ class MatplotlibService:
 
         ax.hist(
             self.des.get_totals(),
-            bins=np.arange(paper_total_marks + RANGE_BIN_OFFSET) - 0.5,
+            bins=np.arange(paper_total_marks + RANGE_BIN_OFFSET) - 0.5,  # type: ignore[arg-type]
             ec="black",
             alpha=0.5,
             width=0.8,
@@ -174,9 +172,9 @@ class MatplotlibService:
                 maxver = 0
             else:
                 maxver = round(student_df[ver_column].max())
-            for version in range(1, maxver + 1):
+            for v in range(1, maxver + 1):
                 plot_series.append(
-                    student_df[(student_df[ver_column] == version)][mark_column]
+                    student_df[(student_df[ver_column] == v)][mark_column]
                 )
         else:
             plot_series.append(student_df[mark_column])
@@ -185,7 +183,13 @@ class MatplotlibService:
         maxmark = SpecificationService.get_question_mark(question_idx)
         bins = np.arange(maxmark + RANGE_BIN_OFFSET) - 0.5
 
-        ax.hist(plot_series, bins=bins, ec="black", alpha=0.5, density=True)
+        ax.hist(
+            plot_series,
+            bins=bins,  # type: ignore[arg-type]
+            ec="black",
+            alpha=0.5,
+            density=True,
+        )
         ax.set_title(f"Histogram of {qlabel} marks")
         ax.set_xlabel(f"{qlabel} mark")
         ax.set_ylabel("Proportion of students")
@@ -425,20 +429,20 @@ class MatplotlibService:
 
         plot_series = []
         if versions:
-            for version in range(1, round(ta_df["question_version"].max()) + 1):
+            for v in range(1, round(ta_df["question_version"].max()) + 1):
                 plot_series.append(
-                    ta_df[(ta_df["question_version"] == version)]["score_given"]
+                    ta_df[(ta_df["question_version"] == v)]["score_given"]
                 )
         else:
             plot_series.append(ta_df["score_given"])
 
         ax.hist(
             plot_series,
-            bins=bins,
+            bins=bins,  # type: ignore[arg-type]
             ec="black",
             alpha=0.5,
         )
-        ax.set_title(f"Grades for {qlabel} (by {ta_name})")
+        ax.set_title(f"Marks for {qlabel} (by {ta_name})")
         ax.set_xlabel("Mark given")
         ax.set_ylabel("# of times assigned")
         if versions:
@@ -495,12 +499,13 @@ class MatplotlibService:
         """
         qlabel = SpecificationService.get_question_label(question_idx)
         if marking_times_df is None:
-            marking_times_df = self.ta_df
-
-        assert isinstance(marking_times_df, pd.DataFrame)
+            df = self.ta_df
+        else:
+            df = marking_times_df
+        assert isinstance(df, pd.DataFrame)
 
         if max_time == 0:
-            max_time = round(max(marking_times_df["seconds_spent_marking"].div(60)))
+            max_time = np.ceil(max(df["seconds_spent_marking"].div(60)))
 
         assert max_time > 0
         assert format in self.formats
@@ -511,28 +516,16 @@ class MatplotlibService:
 
         plot_series = []
         if versions:
-            for version in range(
-                1, round(marking_times_df["question_version"].max()) + 1
-            ):
+            for v in range(1, round(df["question_version"].max()) + 1):
                 plot_series.append(
-                    marking_times_df[
-                        (marking_times_df["question_number"] == question_idx)
-                    ][(marking_times_df["question_version"] == version)][
-                        "seconds_spent_marking"
-                    ].div(
-                        60
-                    )
+                    df[(df["question_version"] == v)]["seconds_spent_marking"].div(60)
                 )
         else:
-            plot_series.append(
-                marking_times_df[(marking_times_df["question_number"] == question_idx)][
-                    "seconds_spent_marking"
-                ].div(60)
-            )
+            plot_series.append(df["seconds_spent_marking"].div(60))
 
         ax.hist(
             plot_series,
-            bins=bins,
+            bins=bins,  # type: ignore[arg-type]
             ec="black",
             alpha=0.5,
         )
@@ -561,8 +554,8 @@ class MatplotlibService:
     def scatter_time_spent_vs_mark_given(
         self,
         question_idx: int,
-        times_spent_minutes: list[float] | list[list[float]],
-        marks_given: list[float] | list[list[float]],
+        times_spent_minutes: list[list[float]],
+        marks_given: list[list[float]],
         *,
         versions: bool = False,
         format: str = "base64",
@@ -571,11 +564,10 @@ class MatplotlibService:
 
         Args:
             question_idx: The question index to generate the scatter plot for.
-            times_spent_minutes: Listlike containing the marking times in minutes or
-                a list of listlikes containing the marking times in minutes for each
-                version.
-            marks_given: Listlike containing the marks given or a list of listlikes
-                containing the marks given for each version.
+            times_spent_minutes: A list of list-like containing the marking times
+                in minutes for each version.
+            marks_given: A list of list-likes containing the marks given
+                for each version.
 
         Keyword Args:
             versions: Whether to split the scatter plot into versions. If omitted,
@@ -592,7 +584,7 @@ class MatplotlibService:
 
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
-        if versions is True:
+        if versions:
             for i in range(len(times_spent_minutes)):
                 ax.scatter(
                     marks_given[i],
@@ -603,8 +595,8 @@ class MatplotlibService:
                 )
         else:
             ax.scatter(
-                marks_given,
-                times_spent_minutes,
+                marks_given[0],
+                times_spent_minutes[0],
                 ec="black",
                 alpha=0.5,
                 label="All versions",
@@ -675,7 +667,7 @@ class MatplotlibService:
         ax.set_yticks(range(len(marker_names)))
         ax.set_yticklabels(marker_names)
 
-        ax.set_title(f"{qlabel} boxplot by marker")
+        ax.set_title(f"{qlabel} marks boxplot by marker")
         ax.set_xlabel(f"{qlabel} mark")
         ax.tick_params(
             axis="y",
@@ -687,10 +679,11 @@ class MatplotlibService:
 
         plt.xlim(
             [
-                0,
+                -0.5,
                 self.des._get_ta_data_for_question(question_index=question_idx)[
                     "max_score"
-                ].max(),
+                ].max()
+                + 0.5,
             ]
         )
 

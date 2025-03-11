@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2024 Aidan Murphy
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from plom.plom_exceptions import PlomDependencyConflict
 
@@ -37,7 +37,7 @@ def assert_can_modify_spec():
         )
     # cannot modify spec if there is a QVmap (e.g., change number of questions)
     # TODO: in theory, we could allow finer-grained edits, such as points.
-    if PaperInfoService().is_paper_database_populated():
+    if PaperInfoService.is_paper_database_populated():
         raise PlomDependencyConflict(
             "Cannot save a new spec while there is a existing "
             "paper-question-version map: try deleting that first?"
@@ -76,11 +76,11 @@ def assert_can_modify_classlist():
         return
     # if db populated (or being populated) and prenaming is set, then cannot modify classlist
     if PrenameSettingService().get_prenaming_setting():
-        if PaperInfoService().is_paper_database_populated():
+        if PaperInfoService.is_paper_database_populated():
             raise PlomDependencyConflict(
                 "Database has been populated with some prenamed papers, cannot change the classlist."
             )
-        if PaperInfoService().is_paper_database_being_updated_in_background():
+        if PaperInfoService.is_paper_database_being_updated_in_background():
             raise PlomDependencyConflict(
                 "Database is being updated currently with some prenamed papers, cannot change the classlist."
             )
@@ -104,11 +104,11 @@ def assert_can_enable_disable_prenaming():
         raise PlomDependencyConflict("Papers have been printed.")
 
     # if the qv-mapping/database is built then cannot modify prenaming.
-    if PaperInfoService().is_paper_database_populated():
+    if PaperInfoService.is_paper_database_populated():
         raise PlomDependencyConflict(
             "The database has been populated, so cannot change the prenaming setting."
         )
-    if PaperInfoService().is_paper_database_being_updated_in_background():
+    if PaperInfoService.is_paper_database_being_updated_in_background():
         raise PlomDependencyConflict(
             "Database is being updated currently, so cannot change the prenaming setting."
         )
@@ -145,6 +145,7 @@ def assert_can_modify_prenaming_config():
         raise PlomDependencyConflict("There is no specification.")
 
 
+# 4 - qvmap depends on the spec, build papers depends on the qvmap
 def assert_can_modify_qv_mapping_database():
     from . import PapersPrinted, PrenameSettingService, StagingStudentService
     from Papers.services import SpecificationService
@@ -185,11 +186,11 @@ def assert_can_rebuild_test_pdfs():
     # and we need sources-pdfs and a populated db
     if not SourceService.are_all_sources_uploaded():
         raise PlomDependencyConflict("Not all source PDFs have been uploaded.")
-    if not PaperInfoService().is_paper_database_populated():
+    if not PaperInfoService.is_paper_database_populated():
         raise PlomDependencyConflict(
             "The qv-mapping has been built and the database have been populated."
         )
-    if PaperInfoService().is_paper_database_being_updated_in_background():
+    if PaperInfoService.is_paper_database_being_updated_in_background():
         raise PlomDependencyConflict("Database is being updated.")
 
 

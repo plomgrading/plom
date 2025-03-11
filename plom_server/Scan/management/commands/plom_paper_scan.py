@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
-
-from __future__ import annotations
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from tabulate import tabulate
 
@@ -62,7 +60,7 @@ class Command(BaseCommand):
 
     def staging_bundle_status(self):
         scanner = ScanService()
-        bundle_status = scanner.staging_bundle_status_cmd()
+        bundle_status = scanner.staging_bundle_status()
         self.stdout.write(
             tabulate(bundle_status, headers="firstrow", tablefmt="simple_outline")
         )
@@ -85,7 +83,7 @@ class Command(BaseCommand):
         scanner = ScanService()
         try:
             scanner.map_bundle_pages_cmd(
-                bundle_name, papernum=papernum, question_map=questions
+                bundle_name=bundle_name, papernum=papernum, question_map=questions
             )
         except ValueError as err:
             raise CommandError(err)

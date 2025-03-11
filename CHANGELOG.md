@@ -11,13 +11,105 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* More flexible options for `plom-push-to-canvas.py` contrib script.
+
+### Removed
 
 ### Fixed
+* More error checking and unit tests concerning rubric validity.
+* Refuse to build papers with inconsistent versions maps---there must be at most one version per page.
+* Show errors to end users in some cases that previously just said "error".
+* Minor fixes and performance improvements.
 
 
 
+## [0.17.3] - 2025-02-28
 
-## [2024-11-06]
+### Added
+* Users who have not logged in can now be deleted.
+* Server is less-trusting of the client-supplied annotations, with additional server-side validation of rubric use.
+
+### Changed
+* Improvements in the push-to-canvas contrib script.
+* Documentation improvements.
+
+### Removed
+* Support code for Plom Client, which is now developed in a separate repo.
+
+### Fixed
+* Fix hard-to-debug errors about casing of headers in classlist.
+* Better debugging of custom version maps.
+* Fix versioned scatterplots in reports.
+* Fix errors removing source PDF files.
+* Fix creating multiple users.
+* Better error handling in paper generation background chores; future unexpected errors should be explicitly shown to users.
+* Minor UI fixes and cleanups, such as improved contrast of the sidebar when the OS is in dark mode.
+* Code cleanups and maintenance.
+
+
+## [0.17.2] - 2025-02-03
+
+### Added
+* Ability to download Annotations `.csv` for analysis in external tools.
+* Server can transmit a reject-list of known-bad clients.
+
+### Fixed
+* Fixes about PedagogyTags in Rubrics.
+
+
+## [0.17.1] - 2025-01-29
+
+### Added
+* New experimental "bundle separator" sheets for organizing scanning in very large courses.
+
+### Changed
+* The experimental `plom-cli` tool can identify papers.
+
+### Fixed
+* Fixed a bug where users could not be created.
+* Improved overall error handling.
+
+
+## [0.17.0] - 2025-01-24
+
+### Added
+* Plom server's web UI now supports dark mode.
+* All the pages of a paper can be discarded, rather than one page at a time.
+* Beta version of command-line tool and API to support "Homework Mode".
+
+### Changed
+* Plom server now runs on Django 5 and has a minimum Python version of 3.10.
+* Plom server does not accept annotations using old revisions of rubrics.
+* Rubrics can now be edited within the web UI.
+
+### Removed
+* Plom Client is now developed separately at https://gitlab.com/plom/plom-client
+* The `plom.client` code in this repo is deprecated but not yet removed.
+
+### Fixed
+* Improved error checked around validity of rubrics.
+* Many minor fixes and database improvements.
+
+
+## [0.16.11] - 2024-12-10
+
+### Added
+* Server accepts upload of userlist in csv format.
+
+### Changed
+* Increase default password reset link expiry to 14 days.
+
+### Fixed
+* In some cases, discarding a pushed paper and re-uploading prevented the paper from being identified.
+* Client was not showing tags drawing attention to a particular user.
+* plom-push-to-canvas can handle blank-ID pages more gracefully by warning the user instead of crashing.
+* Fix command-line tools for manipulating staging bundles which were incorrectly complaining about multiple users.
+* Better (but not yet ideal) error handling during scan upload.
+* Reassigning a task to another user removes existing user tags from that task.
+* Misc fixes, cleanups and documentation improvements.
+
+
+## [0.16.10] - 2024-11-06
 
 ### Added
 * Bundle upload displays a progress bar.
@@ -1354,7 +1446,12 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.16.10...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.17.3...main
+[0.17.3]: https://gitlab.com/plom/plom/-/compare/v0.17.2...v0.17.3
+[0.17.2]: https://gitlab.com/plom/plom/-/compare/v0.17.1...v0.17.2
+[0.17.1]: https://gitlab.com/plom/plom/-/compare/v0.17.0...v0.17.1
+[0.17.0]: https://gitlab.com/plom/plom/-/compare/v0.16.11...v0.17.0
+[0.16.11]: https://gitlab.com/plom/plom/-/compare/v0.16.10...v0.16.11
 [0.16.10]: https://gitlab.com/plom/plom/-/compare/v0.16.9...v0.16.10
 [0.16.9]: https://gitlab.com/plom/plom/-/compare/v0.16.8...v0.16.9
 [0.16.8]: https://gitlab.com/plom/plom/-/compare/v0.16.7...v0.16.8

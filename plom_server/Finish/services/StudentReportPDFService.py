@@ -1,10 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
-# Copyright (C) 2024 Andrew Rechnitzer
-
-from __future__ import annotations
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 
 from datetime import datetime
 from typing import Any
@@ -31,7 +29,7 @@ def pdf_builder(
 
     Args:
         versions: Whether to include versions in the report.
-        sid: student number.
+        sid: student id.
 
     Keyword Args:
         verbose: print messages on the stdout.

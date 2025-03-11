@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Brennen Chiu
-    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
 -->
 {% load static %}
 <!DOCTYPE html>
@@ -9,12 +9,6 @@
     <head>
         <meta charset="UTF-8">
         <title>Plom - Login</title>
-        <!-- Font Awesome -->
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-              rel="stylesheet" />
-        <!-- Google Fonts -->
-        <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
-              rel="stylesheet" />
         <!-- MDB -->
         <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.2.0/mdb.min.css"
               rel="stylesheet" />
@@ -64,7 +58,7 @@
                                         </button>
                                     </form>
                                     <br>
-                                    {% for message in messages %}<p class="text-danger">{{ message }}</p>{% endfor %}
+                                    {% include "../base/alert_messages.html" with messages=messages %}
                                 </div>
                             </div>
                         </div>

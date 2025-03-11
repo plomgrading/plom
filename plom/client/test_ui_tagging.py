@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMessageBox
 
-from plom.client.tagging import AddRemoveTagDialog
+from .tagging import AddRemoveTagDialog
 
 
 def test_tag_add(qtbot) -> None:

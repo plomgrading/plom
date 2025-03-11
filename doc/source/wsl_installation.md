@@ -1,5 +1,5 @@
 <!--
-__copyright__ = "Copyright (C) 2021-2023 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2021-2025 Colin B. Macdonald"
 __copyright__ = "Copyright (C) 2021 Jalal Khouhak"
 __license__ = "AGPL-3.0-or-later"
  -->
@@ -32,7 +32,8 @@ and were last tested in March 2023.
     sudo apt update
     sudo apt install \
             cmake make imagemagick dvipng g++ \
-            python3-passlib python3-pandas python3-pyqt5 python3-pytest \
+            python3-passlib python3-pandas python3-pytest \
+            python3-pyqt6 python3-pyqt6.qtsvg pyqt6-dev-tools \
             python3-dev python3-pip python3-setuptools python3-wheel \
             python3-requests-toolbelt texlive-latex-extra \
             latexmk texlive-fonts-recommended python3-pillow
@@ -42,10 +43,11 @@ and were last tested in March 2023.
 3.  `pip install --user plom` (or `pip install --user .` from inside
     the Plom source tree) should pull in the remaining dependencies.
 4.  Like regular Ubuntu, this seems to lack `~/.local/bin` in the path so
-    you may not be able to run `plom-create`.
-      - You can try `~/.local/bin/plom-demo` to see if things are working
+    you may not be able to run `plom-client`.
+      - You can try `~/.local/bin/plom-client` to see if things are working
         without messing around with such config files.
-      - Probably you need to modify the `PATH` environment variable in a
+      - You can use `python3 -m plomclient.client` instead.
+      - Or you can modify the `PATH` environment variable in a
         `bash` startup file... something like adding
         `export PATH=$PATH:~/.local/bin` to the file `.bash_profile`,
         (You might need to create that file, e.g., with `nano .bash_profile`.)

@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 
 from Base.base_group_views import ManagerRequiredView
@@ -74,11 +75,13 @@ class TagItemView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
     @staticmethod
-    def post(request, tag_id):
+    def post(request: HttpRequest, *, tag_id: int) -> HttpResponse:
         form = TagEditForm(request.POST)
-        if form.is_valid():
-            tag = TagService().get_tag_from_id(tag_id=tag_id)
-            TagService().update_tag_content(tag=tag, content=form.cleaned_data)
+        if not form.is_valid():
+            # TODO for now we just do nothing and let it redirect (?)
+            pass
+        tag = TagService().get_tag_from_id(tag_id=tag_id)
+        TagService().update_tag_content(tag=tag, content=form.cleaned_data)
         return redirect("tag_item", tag_id=tag_id)
 
     @staticmethod

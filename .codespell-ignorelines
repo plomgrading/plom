@@ -8,5 +8,11 @@
 
 # lines that codespell should ignore: whitespace matters!
 
+# "datas"
           a.datas,
              datas=[
+# "nwe"
+  \coordinate (nwe) at ($(nw) + (\cornerlen, 0cm)$);
+  \draw[line width=\cornerwidth] (nwe) -- (nw) -- (nws);
+
+# eof

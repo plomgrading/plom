@@ -67,9 +67,12 @@ class IdentifyTaskService:
 
     @transaction.atomic
     def id_task_exists(self, paper: Paper) -> bool:
-        """Return true if an ID tasks exists for a particular paper."""
-        # TO_DO - do we need to exclude "out of date" tasks here
-        return PaperIDTask.objects.filter(paper=paper).exists()
+        """Return true if an ID tasks not OUT_OF_DATE exists for a particular paper."""
+        return (
+            PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE)
+            .filter(paper=paper)
+            .exists()
+        )
 
     @transaction.atomic
     def get_latest_id_results(self, task: PaperIDTask) -> PaperIDAction | None:

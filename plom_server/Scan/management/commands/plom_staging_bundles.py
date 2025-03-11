@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
 from datetime import datetime
@@ -9,13 +9,14 @@ import hashlib
 import pathlib
 from time import sleep
 
-import pymupdf as fitz
+import pymupdf
 from tabulate import tabulate
 
 from django.utils import timezone
 from django.utils.text import slugify
 from django.core.management.base import BaseCommand, CommandError
 
+from plom.plom_exceptions import PlomConflict
 from ...services import ScanService
 
 
@@ -51,16 +52,13 @@ class Command(BaseCommand):
         timestamp = datetime.timestamp(timezone.now())
         hashed = hashlib.sha256(file_bytes).hexdigest()
         try:
-            with fitz.open(stream=file_bytes) as pdf_doc:
+            with pymupdf.open(stream=file_bytes) as pdf_doc:
                 number_of_pages = pdf_doc.page_count
-        except fitz.FileDataError as err:
+        except pymupdf.FileDataError as err:
             raise CommandError(err)
 
-        if scanner.check_for_duplicate_hash(hashed):
-            raise CommandError("Upload failed - Bundle was already uploaded.")
-
         try:
-            scanner.upload_bundle_cmd(
+            bundle_id = scanner.upload_bundle_cmd(
                 source_pdf,
                 slug,
                 username,
@@ -68,15 +66,15 @@ class Command(BaseCommand):
                 hashed,
                 number_of_pages,
             )
-            self.stdout.write(
-                f"Uploaded {source_pdf} as user {username} - processing it in the background now."
-            )
-        except ValueError as err:
+        except (ValueError, PlomConflict) as err:
             raise CommandError(err)
+        self.stdout.write(
+            f"Uploaded {source_pdf} as bundle {bundle_id}: background processing started."
+        )
 
     def staging_bundle_status(self, bundle_name=None):
         scanner = ScanService()
-        bundle_status = scanner.staging_bundle_status_cmd()
+        bundle_status = scanner.staging_bundle_status()
         if bundle_name is None:
             self.stdout.write(
                 tabulate(bundle_status, headers="firstrow", tablefmt="simple_outline")
@@ -135,13 +133,13 @@ class Command(BaseCommand):
         ):
             self.stdout.write("  *  bundle perfect, ready to push")
 
-    def delete_staged_bundle(self, bundle_name):
+    def delete_staged_bundle(self, bundle_pk: int) -> None:
         scanner = ScanService()
         try:
-            scanner.remove_bundle(bundle_name)
+            scanner.remove_bundle_by_pk(bundle_pk)
         except ValueError as err:
             raise CommandError(err)
-        self.stdout.write(f"Deleted {bundle_name}")
+        self.stdout.write(f"Deleted bundle id {bundle_pk}")
 
     def push_staged_bundle(self, bundle_name, username):
         scanner = ScanService()
@@ -178,12 +176,14 @@ class Command(BaseCommand):
                 dat.append(" - ")
             elif page["status"] == "known":
                 dat.append(
-                    f"paper {page['info']['paper_number']}: p.{page['info']['page_number']} v.{page['info']['version']}"
+                    f"paper {page['info']['paper_number']}: "
+                    f"p.{page['info']['page_number']} v.{page['info']['version']}"
                 )
             elif page["status"] == "extra":
-                if page["info"]["paper_number"] and page["info"]["question_list"]:
+                if page["info"]["paper_number"]:
                     dat.append(
-                        f"paper {page['info']['paper_number']}: q{page['info']['question_list']}"
+                        f"paper {page['info']['paper_number']}: "
+                        f"q{page['info']['question_idx_list']}"
                     )
                 else:
                     dat.append("extra page without data")
@@ -260,7 +260,7 @@ class Command(BaseCommand):
         )
 
         sp_del = sp.add_parser("delete", help="delete a bundle.")
-        sp_del.add_argument("bundle_name", type=str, help="Which bundle to delete")
+        sp_del.add_argument("bundle_id", type=int, help="Which bundle to delete")
 
         # Push
         sp_push = sp.add_parser("push", help="Push the staged bundles.")
@@ -303,7 +303,7 @@ class Command(BaseCommand):
         elif options["command"] == "status":
             self.staging_bundle_status(bundle_name=options["bundle_name"])
         elif options["command"] == "delete":
-            self.delete_staged_bundle(bundle_name=options["bundle_name"])
+            self.delete_staged_bundle(options["bundle_id"])
         elif options["command"] == "push":
             self.push_staged_bundle(
                 bundle_name=options["bundle_name"],

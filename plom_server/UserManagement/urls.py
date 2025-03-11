@@ -4,15 +4,16 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2024 Elisa Pan
+# Copyright (C) 2025 Aidan Murphy
 
 from django.urls import path
 
-from UserManagement import views
+from . import views
 
 
 urlpatterns = [
     path("users", view=views.UserPage.as_view(), name="users"),
-    path("users/<str:username>", views.UserPage.as_view(), name="change_user_status"),
+    path("users/<str:username>", views.UserPage.as_view(), name="modify_user"),
     path(
         "user_reset/<str:username>",
         views.PasswordResetPage.as_view(),

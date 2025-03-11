@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
@@ -11,17 +11,12 @@
 from __future__ import annotations
 
 import re
-import sys
+from importlib import resources
 from textwrap import shorten
 from typing import Any
 
 import arrow
 from spellchecker import SpellChecker
-
-if sys.version_info >= (3, 9):
-    from importlib import resources
-else:
-    import importlib_resources as resources
 
 from PyQt6.QtCore import Qt, QRegularExpression
 from PyQt6 import QtGui
@@ -34,7 +29,6 @@ from PyQt6.QtGui import (
     QTextCursor,
     QMouseEvent,
 )
-
 
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -61,8 +55,8 @@ from PyQt6.QtWidgets import (
     QSplitter,
 )
 
-import plom.client.icons
 from plom.misc_utils import next_in_longest_subsequence
+from . import icons
 from .useful_classes import InfoMsg, WarnMsg, SimpleQuestion
 
 
@@ -750,6 +744,9 @@ class AddRubricBox(QDialog):
                     ", ".join(str(x) for x in com["versions"])
                 )
             params = com.get("parameters", [])
+            if not params:
+                # in case it was empty string or None or ...
+                params = []
             tags = com.get("tags", "").split()
             # TODO: Python >= 3.9: t.removeprefix("exclusive:")
             exclusive_tags = [
@@ -1062,7 +1059,7 @@ class AddRubricBox(QDialog):
             return
         if not txt.casefold().startswith("tex:") and txt.count("$") >= 2:
             # Image by krzysiu, CC-PDDC, https://openclipart.org/detail/213508/crazy-paperclip
-            res = resources.files(plom.client.icons) / "crazy_paperclip.svg"
+            res = resources.files(icons) / "crazy_paperclip.svg"
             pix = QPixmap()
             pix.loadFromData(res.read_bytes())
             pix = pix.scaledToHeight(150, Qt.TransformationMode.SmoothTransformation)

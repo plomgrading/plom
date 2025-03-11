@@ -6,6 +6,7 @@
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2024 Bryan Tanady
     Copyright (C) 2024 Elisa Pan
+    Copyright (C) 2025 Aden Chan
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -49,13 +50,35 @@
                         <input type="checkbox" name="timing_info" checked>
                         <label for="check_timing">timing info</label>
                     </div>
+                    <div class="col-auto">
+                        <input type="checkbox" name="privacy_mode" id="privacy_mode">
+                        <label for="privacy_mode">privacy mode</label>
+                    </div>
+                    <div class="col-auto" id="privacy_mode_salt_div" style="display: none;">
+                        <input type="text" name="privacy_mode_salt">
+                        <label for="privacy_mode_salt">privacy mode salt</label>
+                    </div>
+                    <script>
+                        // Colin asks if whatever this javascript does can be replaced with htmx someday
+                        document.getElementById('privacy_mode').addEventListener('change', function() {
+                            var privacyModeSaltDiv = document.getElementById('privacy_mode_salt_div');
+                            if (this.checked) {
+                                privacyModeSaltDiv.style.display = 'block';
+                            } else {
+                                privacyModeSaltDiv.style.display = 'none';
+                            }
+                        });
+                    </script>
                 </div>
             </form>
             <p>
                 <ul>
-                    <li>this is a standard spreadsheet of student grading information</li>
-                    <li>we recommend that you include warning information - it will help you check that papers are ID'd and marked</li>
-                    <li>download does not include incomplete grading actions (i.e. ungraded questions, grading in progress, etc.)</li>
+                    <li>This is a standard spreadsheet of student grading information</li>
+                    <li>We recommend that you include warning information - it will help you check that papers are ID'd and marked</li>
+                    <li>Download does not include incomplete grading actions (i.e. ungraded questions, grading in progress, etc.)</li>
+                    <li>
+                        Privacy mode replaces identifying information (name and student id) with an obfuscated code based on student ID.  Using the same salt will allow matching of students between assessments.
+                    </li>
                 </ul>
             </p>
         </div>
@@ -76,9 +99,30 @@
             </form>
             <p>
                 <ul>
-                    <li>produces a csv of what questions were marked by which TA</li>
-                    <li>includes username, paper, question, version, mark given, time spent grading, and last update time.</li>
-                    <li>download does not include incomplete grading actions (i.e. ungraded questions, grading in progress, etc.)</li>
+                    <li>Produces a csv of what questions were marked by which TA</li>
+                    <li>Includes username, paper, question, version, mark given, time spent grading, and last update time.</li>
+                    <li>Download does not include incomplete grading actions (i.e. ungraded questions, grading in progress, etc.)</li>
+                </ul>
+            </p>
+        </div>
+    </div>
+    <div class="card m-2">
+        <div class="card-body">
+            <h5 class="card-title">Download a .csv of annotation information.</h5>
+            <form method="post" action="{% url 'annotation_info_download' %}">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-auto">
+                        <button type="submit"
+                                class="btn {% if all_marked %}btn-primary{% else %}btn-warning{% endif %}">
+                            Download annotation information
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <p>
+                <ul>
+                    <li>Produces a csv of what comments were left on each paper</li>
                 </ul>
             </p>
         </div>

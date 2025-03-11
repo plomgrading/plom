@@ -1,12 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
-
-from __future__ import annotations
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 import logging
-from typing import List
 
 from django.db import transaction
 
@@ -14,9 +11,9 @@ from ..models import (
     Paper,
     FixedPage,
     QuestionPage,
-    PopulateEvacuateDBChore,
     NumberOfPapersToProduceSetting,
 )
+from .paper_creator import PaperCreatorService
 
 log = logging.getLogger("PaperInfoService")
 
@@ -27,39 +24,37 @@ class PaperInfoService:
         """How many papers have been created in the database."""
         return Paper.objects.count()
 
-    def is_paper_database_being_updated_in_background(self):
-        """Returns true when the paper-db is being updated via background tasks.
+    @staticmethod
+    def is_paper_database_being_updated_in_background() -> bool:
+        """Returns true when the paper-db is being updated via background tasks."""
+        return PaperCreatorService.is_background_chore_in_progress()
 
-        Note that this function is the same as PaperCreatorService.is_chore_in_progress
-        """
-        return PopulateEvacuateDBChore.objects.filter(obsolete=False).exists()
-
-    def is_paper_database_partially_populated(self):
-        """Returns true when at least one paper exists in the DB."""
-        return Paper.objects.filter().exists()
-
-    def is_paper_database_fully_populated(self):
+    @staticmethod
+    def is_paper_database_fully_populated() -> bool:
         """Returns true when number of papers in the database equals the number to produce."""
         nop = NumberOfPapersToProduceSetting.load().number_of_papers
         db_count = Paper.objects.count()
-        if db_count > 0 and db_count == nop:
-            return True
-        else:
-            return False
+        return db_count > 0 and db_count == nop
 
-    def is_paper_database_partially_but_not_fully_populated(self):
-        """Returns true when number of papers in the database is positive but strictly less than the number to produce."""
+    @staticmethod
+    def is_paper_database_partially_but_not_fully_populated() -> bool:
+        """Returns true when number of papers in the database is positive but strictly less than the number to produce.
+
+        TODO: currently I think this is unused.
+        """
         nop = NumberOfPapersToProduceSetting.load().number_of_papers
         db_count = Paper.objects.count()
         return db_count > 0 and db_count < nop
 
-    @transaction.atomic
-    def is_paper_database_populated(self):
+    @staticmethod
+    def is_paper_database_populated() -> bool:
         """True if any papers have been created in the DB.
 
         The database is initially created with empty tables.  Users get added.
         This function still returns False.  Eventually Tests (i.e., "papers")
         get created.  Then this function returns True.
+
+        See also :method:`is_paper_database_fully_populated`.
         """
         return Paper.objects.filter().exists()
 
@@ -68,7 +63,7 @@ class PaperInfoService:
         return Paper.objects.filter(paper_number=paper_number).exists()
 
     @transaction.atomic
-    def which_papers_in_database(self) -> List:
+    def which_papers_in_database(self) -> list[int]:
         """List which papers have been created in the database."""
         return list(Paper.objects.values_list("paper_number", flat=True))
 
@@ -119,11 +114,17 @@ class PaperInfoService:
                 f" for page {page_number} of paper {paper_number}"
             ) from None
 
-    @transaction.atomic
     def get_version_from_paper_question(
         self, paper_number: int, question_idx: int
     ) -> int:
-        """Given a paper number and question index, return the version of that question."""
+        """Given a paper number and question index, return the version of that question.
+
+        Raises:
+            ValueError: no such paper / question_idx exists.  Typically
+                because there is no such paper, or no such paper *yet*,
+                but also includes the case where question_idx is out of
+                bounds, for example, a non-positive integer.
+        """
         try:
             paper = Paper.objects.get(paper_number=paper_number)
         except Paper.DoesNotExist:
@@ -148,7 +149,7 @@ class PaperInfoService:
     @transaction.atomic
     def get_paper_numbers_containing_given_page_version(
         self, version, page_number, *, scanned=True
-    ) -> List[int]:
+    ) -> list[int]:
         """Given the version and page-number, return list of paper numbers that contain that page/version."""
         if scanned:
             return sorted(
@@ -169,8 +170,8 @@ class PaperInfoService:
                 )
             )
 
-    @transaction.atomic()
-    def get_pqv_map_dict(self) -> dict[int, dict[int, int]]:
+    @staticmethod
+    def get_pqv_map_dict() -> dict[int, dict[int, int]]:
         """Get the paper-question-version mapping as a dict.
 
         Note if there is no version map (no papers) then this returns
@@ -178,18 +179,19 @@ class PaperInfoService:
         check for the empty return yourself.
         """
         pqvmapping: dict[int, dict[int, int]] = {}
-        # note that this gets all question pages, not just one for each question.
-        for qp_obj in (
-            QuestionPage.objects.all()
-            .prefetch_related("paper")
-            .order_by("paper__paper_number")
-        ):
-            pn = qp_obj.paper.paper_number
-            if pn in pqvmapping:
-                if qp_obj.question_index in pqvmapping[pn]:
-                    pass
+        with transaction.atomic():
+            # note that this gets all question pages, not just one for each question.
+            for qp_obj in (
+                QuestionPage.objects.all()
+                .prefetch_related("paper")
+                .order_by("paper__paper_number")
+            ):
+                pn = qp_obj.paper.paper_number
+                if pn in pqvmapping:
+                    if qp_obj.question_index in pqvmapping[pn]:
+                        pass
+                    else:
+                        pqvmapping[pn][qp_obj.question_index] = qp_obj.version
                 else:
-                    pqvmapping[pn][qp_obj.question_index] = qp_obj.version
-            else:
-                pqvmapping[pn] = {qp_obj.question_index: qp_obj.version}
-        return pqvmapping
+                    pqvmapping[pn] = {qp_obj.question_index: qp_obj.version}
+            return pqvmapping

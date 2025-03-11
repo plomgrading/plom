@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aden Chan
 
@@ -9,8 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
-from rest_framework import status
+from rest_framework import status, serializers
 
 from plom.plom_exceptions import PlomConflict
 from Rubrics.services import RubricService
@@ -21,7 +20,7 @@ from .utils import _error_response
 
 class MgetAllRubrics(APIView):
     def get(self, request: Request) -> Response:
-        all_rubric_data = RubricService.get_rubrics_as_dicts(question=None)
+        all_rubric_data = RubricService.get_rubrics_as_dicts()
         if not all_rubric_data:
             return _error_response(
                 "Server has no rubrics: check server settings",
@@ -32,7 +31,7 @@ class MgetAllRubrics(APIView):
 
 class MgetRubricsByQuestion(APIView):
     def get(self, request: Request, *, question: int) -> Response:
-        all_rubric_data = RubricService.get_rubrics_as_dicts(question=question)
+        all_rubric_data = RubricService.get_rubrics_as_dicts(question_idx=question)
         if not all_rubric_data:
             return _error_response(
                 "Server has no rubrics: check server settings",
@@ -73,13 +72,12 @@ class McreateRubric(APIView):
             Responds with 403 if you are
             not allowed to create new rubrics.
         """
-        rs = RubricService()
         try:
-            rubric_as_dict = rs.create_rubric(
+            rubric_as_dict = RubricService().create_rubric(
                 request.data["rubric"], creating_user=request.user
             )
             return Response(rubric_as_dict, status=status.HTTP_200_OK)
-        except (ValidationError, NotImplementedError) as e:
+        except (serializers.ValidationError, NotImplementedError) as e:
             return _error_response(
                 f"Invalid rubric: {e}", status.HTTP_406_NOT_ACCEPTABLE
             )
@@ -112,9 +110,8 @@ class MmodifyRubric(APIView):
             Responds with 409 if your modifications conflict with others'
             (e.g., two users have both modified the same rubric).
         """
-        rs = RubricService()
         try:
-            rubric_as_dict = rs.modify_rubric(
+            rubric_as_dict = RubricService().modify_rubric(
                 rid,
                 request.data["rubric"],
                 modifying_user=request.user,
@@ -129,7 +126,7 @@ class MmodifyRubric(APIView):
         except PermissionDenied as e:
             # not catching this would work, but we don't get the full error message
             return _error_response(e, status.HTTP_403_FORBIDDEN)
-        except (ValidationError, NotImplementedError) as e:
+        except (serializers.ValidationError, NotImplementedError) as e:
             return _error_response(e, status.HTTP_406_NOT_ACCEPTABLE)
         except PlomConflict as e:
             return _error_response(e, status.HTTP_409_CONFLICT)
