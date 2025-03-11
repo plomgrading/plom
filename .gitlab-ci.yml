@@ -344,6 +344,16 @@ doctests:
     - pytest -l --doctest-modules --doctest-continue-on-failure --ignore-glob="*digitHunter.py" --ignore-glob="*/test_*.py" plom
 
 
+# Ensure the migrations have been updated
+# needs full dependencies, cannot easily run with other early static analysis
+migrations-uptodate:
+  stage: test
+  needs: ["container-image"]
+  image: $IM
+  script:
+    - PYTHONPATH=. python manage.py makemigrations --update --check
+
+
 # needs full dependencies, cannot easily run with other early static analysis
 pylint:
   stage: test
