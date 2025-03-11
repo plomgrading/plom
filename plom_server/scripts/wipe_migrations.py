@@ -43,6 +43,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
 
 
 def main():
+    """Remove all the migration files, in preparation for regenerating from scratch."""
     # This would be a good default, but this script does not depend on Django
     # basedir = settings.BASE_DIR
 

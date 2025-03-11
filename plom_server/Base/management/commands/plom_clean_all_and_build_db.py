@@ -21,13 +21,15 @@ class Command(BaseCommand):
 
     def remove_misc_user_files(self):
         """Remove any user-generated files from django's MEDIA directory."""
-        print("Removing any user-generated files from django's MEDIA_ROOT directory")
+        self.stdout.write(
+            "Removing any user-generated files from django's MEDIA_ROOT directory"
+        )
         shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
 
     def huey_cleanup(self):
         """Remove any existing huey db."""
         for path in settings.PLOM_BASE_DIR.glob("hueydb*.sqlite*"):
-            print(f"Removing {path}")
+            self.stdout.write(f"Removing {path}")
             path.unlink(missing_ok=True)
 
     def handle(self, *args, **options):
@@ -40,9 +42,7 @@ class Command(BaseCommand):
         self.stdout.write("Rebuilding database and migrations.")
         database_service.create_database()
         self.stdout.write("Database created.")
-        # TODO: if we check them in (#3826) then stop making here
-        call_command("makemigrations")
         call_command("migrate")
-        self.stdout.write("Database migration done (including database init).")
+        self.stdout.write("Database initial migrate done.")
         self.stdout.write("Note: neither server nor huey are running yet.")
         self.stdout.write("Note: no groups or users have been created yet.")
