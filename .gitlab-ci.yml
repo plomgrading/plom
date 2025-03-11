@@ -1034,7 +1034,7 @@ newOS_newdeps_django_tests:
     - python3 -m pip install --upgrade pip setuptools packaging wheel
     - pip --version
   script:
-    - # we can run in-tree but we need pip for dependencies
+    # we can run in-tree but we need pip for dependencies
     - pip install .
     - pip uninstall -y plom
     - PYTHONPATH=. ./plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
