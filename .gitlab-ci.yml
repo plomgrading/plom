@@ -924,13 +924,15 @@ fedora-django-tests:
           python3-zxing-cpp
           python3-pytest
           python3-PyMuPDF python3-scikit-learn python3-PyMySQL
-          python3-weasyprint python3-whitenoise python3-django
+          python3-weasyprint python3-whitenoise
           file python3-file-magic
           iproute
     - pip --version
   script:
     # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
     - pip install -U pytest
+    # TODO: python3-django doesn't work, unsure why, instead get from pip (Issue #3830)
+    - pip install django
     - pip install .
     - PYTHONPATH="." ./plom_server/scripts/launch_plom_demo_server.py --stop-after reports
     - python3 manage.py test
