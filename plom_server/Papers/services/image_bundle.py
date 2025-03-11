@@ -20,9 +20,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import QuerySet
 
-from Scan.models import StagingImage, StagingBundle
+from plom_server.Scan.models import StagingImage, StagingBundle
 
-from Preparation.services import PapersPrinted
+from plom_server.Preparation.services import PapersPrinted
 from ..models import (
     Bundle,
     Image,
@@ -266,10 +266,10 @@ class ImageBundleService:
         DiscardPage.objects.bulk_create(new_discard_pages)
         FixedPage.objects.bulk_update(updated_fixed_pages, ["image"])
 
-        from Mark.services import MarkingTaskService
-        from Identify.services import IdentifyTaskService
-        from Identify.services import IDReaderService
-        from Preparation.services import StagingStudentService
+        from plom_server.Mark.services import MarkingTaskService
+        from plom_server.Identify.services import IdentifyTaskService
+        from plom_server.Identify.services import IDReaderService
+        from plom_server.Preparation.services import StagingStudentService
 
         # bulk create the associated marking tasks in O(1)
         MarkingTaskService().bulk_create_marking_tasks(

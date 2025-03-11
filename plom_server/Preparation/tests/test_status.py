@@ -6,7 +6,7 @@
 from django.test import TestCase
 from model_bakery import baker
 
-from Papers.models import Paper, Bundle
+from plom_server.Papers.models import Paper, Bundle
 
 from ..services import PapersPrinted
 from ..models import PapersPrintedSettingModel

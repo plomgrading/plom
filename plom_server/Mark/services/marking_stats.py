@@ -5,7 +5,7 @@
 # Copyright (C) 2024 Bryan Tanady
 
 import statistics
-from typing import Any
+from typing import Any, Tuple
 
 import arrow
 from numpy import histogram
@@ -14,7 +14,7 @@ from django.db import transaction
 
 from plom.misc_utils import pprint_score
 
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 from ..models import MarkingTask, MarkingTaskTag
 
 
@@ -408,3 +408,39 @@ class MarkingStatsService:
             .prefetch_related("assigned_user")
             .distinct("assigned_user")
         ]
+
+    @transaction.atomic
+    def _get_paper_question_score_data(self) -> dict[int, dict[int, int]]:
+        paper_question_score: dict[int, dict[int, int]] = {}
+        for task in MarkingTask.objects.filter(
+            status=MarkingTask.COMPLETE,
+        ).prefetch_related("latest_annotation", "paper"):
+            if task.paper.paper_number not in paper_question_score:
+                paper_question_score[task.paper.paper_number] = {}
+            paper_question_score[task.paper.paper_number][
+                task.question_index
+            ] = task.latest_annotation.score
+        return paper_question_score
+
+    def build_report_score_lists(
+        self,
+    ) -> Tuple[list[float], dict[int, list[float]]]:
+        # get (effectively) all the marks for everything
+        # so that we can form all histograms and also
+        # a histogram for total marks only for those papers that
+        # are completely graded.
+        score_data = self._get_paper_question_score_data()
+        question_indices = SpecificationService.get_question_indices()
+        n_questions = len(question_indices)
+        question_score_lists: dict[int, list[float]] = {
+            qi: [] for qi in question_indices
+        }
+        total_score_list = []
+        for pn, data in score_data.items():
+            for qi, v in data.items():
+                question_score_lists[qi].append(v)
+            # only append total if all questions marked
+            if len(data) == n_questions:
+                total_score_list.append(sum(data.values()))
+
+        return (total_score_list, question_score_lists)

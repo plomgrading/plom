@@ -7,8 +7,8 @@
 
 from django.db import models
 
-from Base.models import HueyTaskTracker
-from Papers.models import Paper
+from plom_server.Base.models import HueyTaskTracker
+from plom_server.Papers.models import Paper
 
 
 class ReassemblePaperChore(HueyTaskTracker):

@@ -19,7 +19,7 @@ import django_tables2
 # from django.db.models import Max
 # from django.db.models.query_utils import Q
 
-from Mark.models.annotations import Annotation
+from plom_server.Mark.models.annotations import Annotation
 
 
 def generate_rid():
@@ -197,19 +197,22 @@ class Rubric(models.Model):
         """
         return reverse("rubric_item", kwargs={"rid": self.rid})
 
-    class Meta:
-        constraints = [
-            # This constraint checks that each rid-revision pair is unique
-            models.UniqueConstraint(
-                fields=["rid", "revision"], name="unique_revision_per_rid"
-            ),
-            # This constraint checks that each rid has only one rubric where latest=True
-            # TODO: unclear where "at most one" or "exactly one"
-            # TODO: seems to conflict with RubricService.modify_rubric or maybe the serializer
-            # models.UniqueConstraint(
-            #     fields=["rid"], condition=Q(latest=True), name="unique_latest_per_rid"
-            # ),
-        ]
+    # class Meta:
+    #     constraints = [
+    #         # This constraint checks that each rid-revision pair is unique
+    #         # TODO: this conflicts with the serializer in modify_rubric b/c the
+    #         # serializer checks this constraint before we decide if we're overwriting
+    #         # or making a new rubric.
+    #         # models.UniqueConstraint(
+    #         #     fields=["rid", "revision"], name="unique_revision_per_rid"
+    #         # ),
+    #         # This constraint checks that each rid has only one rubric where latest=True
+    #         # TODO: unclear where "at most one" or "exactly one"
+    #         # TODO: seems to conflict with RubricService.modify_rubric or maybe the serializer
+    #         # models.UniqueConstraint(
+    #         #     fields=["rid"], condition=Q(latest=True), name="unique_latest_per_rid"
+    #         # ),
+    #     ]
 
     # TODO: issue #3648, seeking a way to display how often they are used
     # def get_usage_count(self) -> int:

@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.shortcuts import get_current_site
 from .edit_profile_form import EditProfileForm
-from Authentication.services import AuthenticationServices
+from plom_server.Authentication.services import AuthenticationServices
 
 
 class ProfileView(LoginRequiredMixin, View):

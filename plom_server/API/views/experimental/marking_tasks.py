@@ -4,8 +4,8 @@
 
 from .base import ManagerReadOnlyViewSet
 
-from Mark.models import MarkingTask
-from Mark.serializers import MarkingTaskSerializer
+from plom_server.Mark.models import MarkingTask
+from plom_server.Mark.serializers import MarkingTaskSerializer
 
 
 class MarkingTaskViewSet(ManagerReadOnlyViewSet):

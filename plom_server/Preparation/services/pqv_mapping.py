@@ -3,8 +3,6 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
 
-from __future__ import annotations
-
 from pathlib import Path
 import tempfile
 from typing import Any
@@ -12,7 +10,7 @@ from typing import Any
 from plom import SpecVerifier
 from plom.version_maps import version_map_to_csv
 
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 
 from ..services import StagingStudentService
 
@@ -28,8 +26,8 @@ class PQVMappingService:
         return "question_version_map.csv"
 
     @staticmethod
-    def get_pqv_map_dict() -> dict[int, dict[int, int]]:
-        from Papers.services import PaperInfoService
+    def get_pqv_map_dict() -> dict[int, dict[int | str, int]]:
+        from plom_server.Papers.services import PaperInfoService
 
         return PaperInfoService.get_pqv_map_dict()
 
@@ -48,6 +46,7 @@ class PQVMappingService:
             pqv_table[paper_number] = {
                 "prename": None,
                 "qvlist": [qvmap[q] for q in question_indices],
+                "id_ver": 1 if "id" not in qvmap.keys() else qvmap["id"],
             }
 
             # if prenaming then we need to put in those student details
@@ -88,7 +87,7 @@ class PQVMappingService:
 
     def make_version_map(
         self, numberToProduce: int, *, first: int = 1
-    ) -> dict[int, dict[int, int]]:
+    ) -> dict[int, dict[int | str, int]]:
         """Generate a paper-question-version-map.
 
         Args:

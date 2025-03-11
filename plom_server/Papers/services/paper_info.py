@@ -6,16 +6,28 @@
 import logging
 
 from django.db import transaction
+from django.db.models import Count
 
 from ..models import (
     Paper,
     FixedPage,
+    IDPage,
     QuestionPage,
     NumberOfPapersToProduceSetting,
 )
 from .paper_creator import PaperCreatorService
 
 log = logging.getLogger("PaperInfoService")
+
+
+def fixedpage_version_count(page_number: int) -> dict[int, int]:
+    """Get the number of papers using each version of the given page number."""
+    return {
+        dat["version"]: dat["count"]
+        for dat in FixedPage.objects.filter(page_number=page_number)
+        .values("version")
+        .annotate(count=Count("version"))
+    }
 
 
 class PaperInfoService:
@@ -146,39 +158,50 @@ class PaperInfoService:
             )
         return page.version
 
-    @transaction.atomic
-    def get_paper_numbers_containing_given_page_version(
-        self, version, page_number, *, scanned=True
+    @staticmethod
+    def get_paper_numbers_containing_page(
+        page_number: int, *, version: int | None = None, scanned: bool = True
     ) -> list[int]:
-        """Given the version and page-number, return list of paper numbers that contain that page/version."""
+        """Return a sorted list of paper numbers that contain a particular page number and optionally, version.
+
+        Args:
+            page_number: which page number.
+
+        Keyword Args:
+            version: which version, if omitted (or None) then return paper numbers
+                independent of version.
+            scanned: By default, we only return paper numbers based on FixedPage
+                objects that have actually been scanned.  If False, then return
+                more results (TODO: presumably from all rows of the paper database).
+                but be aware that these papers might be partially (or perhaps, TODO)
+                not all all scanned.
+        """
         if scanned:
-            return sorted(
-                list(
-                    FixedPage.objects.filter(
-                        page_number=page_number, version=version, image__isnull=False
-                    )
-                    .prefetch_related("paper")
-                    .values_list("paper__paper_number", flat=True)
-                )
+            query = FixedPage.objects.filter(
+                page_number=page_number, image__isnull=False
             )
         else:
-            return sorted(
-                list(
-                    FixedPage.objects.filter(page_number=page_number, version=version)
-                    .prefetch_related("paper")
-                    .values_list("paper__paper_number", flat=True)
+            query = FixedPage.objects.filter(page_number=page_number)
+        if version is not None:
+            query = query.filter(version=version)
+        # Note lazy evaluation: no query should be actually performed until now
+        return sorted(
+            list(
+                query.prefetch_related("paper").values_list(
+                    "paper__paper_number", flat=True
                 )
             )
+        )
 
     @staticmethod
-    def get_pqv_map_dict() -> dict[int, dict[int, int]]:
+    def get_pqv_map_dict() -> dict[int, dict[int | str, int]]:
         """Get the paper-question-version mapping as a dict.
 
         Note if there is no version map (no papers) then this returns
         an empty dict.  If you'd prefer an error message you have to
         check for the empty return yourself.
         """
-        pqvmapping: dict[int, dict[int, int]] = {}
+        pqvmapping: dict[int, dict[int | str, int]] = {}
         with transaction.atomic():
             # note that this gets all question pages, not just one for each question.
             for qp_obj in (
@@ -194,4 +217,11 @@ class PaperInfoService:
                         pqvmapping[pn][qp_obj.question_index] = qp_obj.version
                 else:
                     pqvmapping[pn] = {qp_obj.question_index: qp_obj.version}
+            for idpage_obj in (
+                IDPage.objects.all()
+                .prefetch_related("paper")
+                .order_by("paper__paper_number")
+            ):
+                pn = idpage_obj.paper.paper_number
+                pqvmapping[pn]["id"] = idpage_obj.version
             return pqvmapping

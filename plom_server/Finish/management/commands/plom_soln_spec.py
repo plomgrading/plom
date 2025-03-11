@@ -14,7 +14,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 from rest_framework import serializers
 
-from Papers.services import SolnSpecService
+from plom_server.Papers.services import SolnSpecService
 from ...services import TemplateSolnSpecService
 
 

@@ -188,10 +188,10 @@ def build_page_to_group_dict(spec) -> dict[int, str]:
 
 
 def _build_page_to_versions_dict(
-    spec, question_versions: dict[int, int]
+    spec, qvmap_row: dict[int | str, int]
 ) -> dict[int, list[int]]:
-    # idpage and dnm pages always from version 1
-    page_to_versions = {spec["idPage"]: [1]}
+    page_to_versions = {spec["idPage"]: [qvmap_row.get("id", 1)]}
+    # dnm pages always from version 1
     for pg in spec["doNotMarkPages"]:
         page_to_versions[pg] = [1]
     for q in spec["question"]:
@@ -199,24 +199,22 @@ def _build_page_to_versions_dict(
             # Issue #3838: do this carefully in case there are multiple conflicting versions
             verlist = page_to_versions.get(pg, [])
             # be careful, the qv-map keys are ints, while those in the spec are strings
-            verlist.append(question_versions[int(q)])
+            verlist.append(qvmap_row[int(q)])
             page_to_versions[pg] = verlist
     return page_to_versions
 
 
-def build_page_to_version_dict(
-    spec, question_versions: dict[int, int]
-) -> dict[int, int]:
+def build_page_to_version_dict(spec, qvmap_row: dict[int | str, int]) -> dict[int, int]:
     """Given the spec and the question-version dict, produce a dict that maps pages to versions.
 
     Args:
         spec (dict): A validated test spec
-        question_versions: A dict mapping question numbers to version numbers.
-        Note that typically each exam has a different qv-map.
+        qvmap_row: A dict mapping question numbers to version numbers.
+            Note that typically each paper has a different qv-map.
 
     Returns:
-        dict: A mapping of page numbers to versions. Note idpages and
-        dnm pages have version 1 FOR NOW.
+        dict: A mapping of page numbers to versions. Note that DNM
+        pages currently always have version 1.
 
     Raises:
         NotImplementedError: a page has multiple versions, that is b/c two
@@ -224,7 +222,7 @@ def build_page_to_version_dict(
             See also
             :method:`plom_server.Papers.service.paper_info.get_version_from_paper_page`.
     """
-    page_to_versions = _build_page_to_versions_dict(spec, question_versions)
+    page_to_versions = _build_page_to_versions_dict(spec, qvmap_row)
     page_to_version = {}
     for pg, vers in page_to_versions.items():
         verset = set(vers)

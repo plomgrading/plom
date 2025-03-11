@@ -11,10 +11,10 @@ from django.http import HttpResponseRedirect, FileResponse, Http404
 from django_htmx.http import HttpResponseClientRedirect
 
 
-from Base.base_group_views import ManagerRequiredView
+from plom_server.Base.base_group_views import ManagerRequiredView
 
 from ..services import SolnSourceService, BuildSolutionService
-from Papers.services import SolnSpecService, SpecificationService
+from plom_server.Papers.services import SolnSpecService, SpecificationService
 
 
 class SolnSourcesView(ManagerRequiredView):

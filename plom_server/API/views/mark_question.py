@@ -20,9 +20,9 @@ from plom.plom_exceptions import (
     PlomQuotaLimitExceeded,
 )
 
-from Mark.services import QuestionMarkingService, MarkingTaskService
-from Mark.services import mark_task, page_data
-from Progress.services import UserInfoServices
+from plom_server.Mark.services import QuestionMarkingService, MarkingTaskService
+from plom_server.Mark.services import mark_task, page_data
+from plom_server.Progress.services import UserInfoServices
 from .utils import _error_response
 
 

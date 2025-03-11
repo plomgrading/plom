@@ -6,9 +6,9 @@ from django.shortcuts import render
 from django.http import FileResponse
 from django_htmx.http import HttpResponseClientRefresh
 
-from Base.base_group_views import LeadMarkerOrManagerView
+from plom_server.Base.base_group_views import LeadMarkerOrManagerView
 
-from Identify.services import IDProgressService
+from plom_server.Identify.services import IDProgressService
 from ..services import ProgressOverviewService
 
 

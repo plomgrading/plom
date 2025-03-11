@@ -18,10 +18,10 @@ from rest_framework import status
 
 from plom import __version__
 from plom import Plom_API_Version
-from Base.models import SettingsModel
-from Mark.services import MarkingTaskService
-from Identify.services import IdentifyTaskService
-from Papers.services import SpecificationService
+from plom_server.Base.models import SettingsModel
+from plom_server.Mark.services import MarkingTaskService
+from plom_server.Identify.services import IdentifyTaskService
+from plom_server.Papers.services import SpecificationService
 from ..permissions import AllowAnyReadOnly
 from .utils import _error_response
 

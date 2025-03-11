@@ -14,16 +14,16 @@ from rest_framework import serializers
 
 from plom import plom_valid_tag_text_pattern, plom_valid_tag_text_description
 from plom.misc_utils import pprint_score
-from Base.base_group_views import LeadMarkerOrManagerView
-from Mark.services import (
+from plom_server.Base.base_group_views import LeadMarkerOrManagerView
+from plom_server.Mark.services import (
     MarkingStatsService,
     MarkingTaskService,
     page_data,
     mark_task,
 )
-from Papers.services import SpecificationService
-from Rubrics.services import RubricService
-from Mark.models import MarkingTask, AnnotationImage
+from plom_server.Papers.services import SpecificationService
+from plom_server.Rubrics.services import RubricService
+from plom_server.Mark.models import MarkingTask, AnnotationImage
 from ..services import ProgressOverviewService
 
 
@@ -222,7 +222,7 @@ class ProgressMarkingTaskDetailsView(LeadMarkerOrManagerView):
                     "edition": task_obj.latest_annotation.edition,
                     "last_update": task_obj.latest_annotation.time_of_last_update,
                     "marking_time": task_obj.latest_annotation.marking_time,
-                    "rubrics": RubricService().get_rubrics_from_annotation(
+                    "rubrics": RubricService.get_rubrics_from_annotation(
                         task_obj.latest_annotation
                     ),
                 }

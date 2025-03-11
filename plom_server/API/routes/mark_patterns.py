@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aden Chan
 
@@ -11,6 +11,7 @@ from ..views import (
     GetTasks,
     MarkingProgress,
     ReassignTask,
+    ResetTask,
     MgetOneImage,
     MgetAllRubrics,
     MgetRubricsByQuestion,
@@ -58,6 +59,15 @@ class MarkURLPatterns:
                 "tasks/<str:code>/reassign/<str:new_username>",
                 ReassignTask.as_view(),
                 name="api_MK_reassign_task_new_username",
+            )
+        )
+
+        # PATCH: /MK/tasks/{code}/reset
+        mark_patterns.append(
+            path(
+                "tasks/<str:code>/reset",
+                ResetTask.as_view(),
+                name="api_MK_reset_task",
             )
         )
 

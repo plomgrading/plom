@@ -8,8 +8,8 @@ from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.text import slugify
 
-from Papers.services import SpecificationService
-from SpecCreator.services import SpecificationUploadService
+from plom_server.Papers.services import SpecificationService
+from plom_server.SpecCreator.services import SpecificationUploadService
 
 
 class Command(BaseCommand):

@@ -19,8 +19,8 @@ from django.urls import reverse
 
 from django.contrib import messages
 
-from Base.base_group_views import ManagerRequiredView
-from Papers.services import SpecificationService, PaperInfoService
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Papers.services import SpecificationService, PaperInfoService
 from .services import BuildPapersService
 
 from plom.plom_exceptions import PlomDependencyConflict

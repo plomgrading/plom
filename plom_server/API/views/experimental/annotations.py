@@ -3,8 +3,8 @@
 
 from .base import ManagerReadOnlyViewSet
 
-from Mark.models import Annotation
-from Mark.serializers import AnnotationSerializer
+from plom_server.Mark.models import Annotation
+from plom_server.Mark.serializers import AnnotationSerializer
 
 
 class AnnotationViewSet(ManagerReadOnlyViewSet):

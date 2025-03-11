@@ -2,8 +2,8 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
 
 from typing import Any
@@ -11,7 +11,7 @@ from typing import Any
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Prefetch
 
-from Papers.models import (
+from plom_server.Papers.models import (
     FixedPage,
     MobilePage,
     DiscardPage,
@@ -21,7 +21,7 @@ from Papers.models import (
     IDPage,
     DNMPage,
 )
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 from ..models import StagingBundle
 
 
@@ -369,8 +369,8 @@ class ManageScanService:
         return page.image
 
     def get_number_pushed_bundles(self) -> int:
-        """Return the number of pushed bundles."""
-        return Bundle.objects.all().count()
+        """Return the number of pushed bundles (excluding system bundles)."""
+        return Bundle.objects.filter(_is_system=False).count()
 
     def get_number_unpushed_bundles(self) -> int:
         """Return the number of uploaded, but not yet pushed, bundles."""
@@ -503,18 +503,14 @@ class ManageScanService:
 
         """
         discards = []
-        for dp_obj in DiscardPage.objects.all():
+        for dp_obj in DiscardPage.objects.all().prefetch_related("image__bundle"):
             img = dp_obj.image
-            if img.bundle.staging_bundle:
-                staging_bundle_slug = img.bundle.staging_bundle.slug
-            else:
-                staging_bundle_slug = "__system_substitute_pages_bundle__"
             discards.append(
                 {
                     "page_pk": dp_obj.pk,
                     "reason": dp_obj.discard_reason,
                     "bundle_pk": img.bundle.pk,
-                    "bundle_name": staging_bundle_slug,
+                    "bundle_name": img.bundle.name,
                     "order": img.bundle_order,
                     "image_pk": img.pk,
                 }

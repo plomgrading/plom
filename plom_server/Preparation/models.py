@@ -7,7 +7,7 @@
 
 from django.db import models
 
-from Base.models import SingletonABCModel
+from plom_server.Base.models import SingletonABCModel
 
 
 class PaperSourcePDF(models.Model):

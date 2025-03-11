@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Natalie Balashov
 
 import logging
+from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
@@ -13,7 +14,7 @@ import huey
 import huey.api
 
 from plom.plom_exceptions import PlomDatabaseCreationError
-from Preparation.services.preparation_dependency_service import (
+from plom_server.Preparation.services.preparation_dependency_service import (
     assert_can_modify_qv_mapping_database,
 )
 from ..services import SpecificationService
@@ -32,7 +33,7 @@ log = logging.getLogger("PaperCreatorService")
 # The decorated function returns a ``huey.api.Result``
 @db_task(queue="tasks", context=True)
 def huey_populate_whole_db(
-    qv_map: dict[int, dict[int, int]],
+    qv_map: dict[int, dict[int | str, int]],
     *,
     tracker_pk: int,
     task: huey.api.Task | None = None,
@@ -174,7 +175,7 @@ class PaperCreatorService:
     @transaction.atomic()
     def _create_single_paper_from_qvmapping_and_pages(
         paper_number: int,
-        qv_row: dict[int, int],
+        qv_row: dict[Any, int],
         *,
         id_page_number: int | None = None,
         dnm_page_numbers: list[int] | None = None,
@@ -189,6 +190,8 @@ class PaperCreatorService:
             paper_number: The number of the paper being created
             qv_row: Mapping from each question index to
                 version for this particular paper. Of the form ``{q: v}``.
+                Optionally contains the key `"id"`, the value of which
+                is assumed to be 1 if omitted.
 
         Keyword Args:
             id_page_number: (optionally) the id-page page-number
@@ -211,11 +214,13 @@ class PaperCreatorService:
             question_page_numbers = SpecificationService.get_question_pages()
 
         paper_obj = Paper.objects.create(paper_number=paper_number)
-        # TODO - change how DNM and ID pages taken from versions
-        # currently ID page and DNM page both taken from version 1
         IDPage.objects.create(
-            paper=paper_obj, image=None, page_number=id_page_number, version=1
+            paper=paper_obj,
+            image=None,
+            page_number=id_page_number,
+            version=qv_row.get("id", 1),
         )
+        # currently DNM pages are always taken from version 1
         for pg in dnm_page_numbers:
             DNMPage.objects.create(
                 paper=paper_obj, image=None, page_number=pg, version=1
@@ -327,7 +332,7 @@ class PaperCreatorService:
     @classmethod
     def add_all_papers_in_qv_map(
         cls,
-        qv_map: dict[int, dict[int, int]],
+        qv_map: dict[int, dict[int | str, int]],
         *,
         background: bool = True,
         _testing: bool = False,
@@ -376,7 +381,7 @@ class PaperCreatorService:
     @classmethod
     def append_papers_to_qv_map(
         cls,
-        qv_map: dict[int, dict[int, int]],
+        qv_map: dict[int, dict[int | str, int]],
         *,
         force: bool = False,
     ):
@@ -414,7 +419,7 @@ class PaperCreatorService:
 
     @staticmethod
     def _populate_whole_db_huey_wrapper(
-        qv_map: dict[int, dict[int, int]], *, background: bool = True
+        qv_map: dict[int, dict[int | str, int]], *, background: bool = True
     ) -> None:
         # TODO - add seatbelt logic here
         with transaction.atomic(durable=True):

@@ -14,9 +14,9 @@ from django.contrib import messages
 
 from plom.plom_exceptions import PlomDependencyConflict
 
-from Base.base_group_views import ManagerRequiredView
-from BuildPaperPDF.services import BuildPapersService
-from Papers.services import (
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.BuildPaperPDF.services import BuildPapersService
+from plom_server.Papers.services import (
     SpecificationService,
     PaperInfoService,
 )

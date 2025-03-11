@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 
 from .models import Rubric
-from QuestionTags.serializers import PedagogyTagSerializer
+from plom_server.QuestionTags.serializers import PedagogyTagSerializer
 
 
 class RubricSerializer(serializers.ModelSerializer):

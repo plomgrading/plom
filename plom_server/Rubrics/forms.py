@@ -6,7 +6,7 @@
 
 from django import forms
 
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 
 from .models import Rubric
 

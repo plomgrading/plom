@@ -9,7 +9,7 @@ from django.db import transaction
 from django.contrib.auth.models import User, Group
 
 from plom.aliceBob import simple_password
-from Authentication.services import AuthenticationServices
+from plom_server.Authentication.services import AuthenticationServices
 
 
 class Command(BaseCommand):

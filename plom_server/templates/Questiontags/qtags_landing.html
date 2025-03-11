@@ -3,6 +3,7 @@
     Copyright (C) 2024 Elisa Pan
     Copyright (C) 2024 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
+    Copyright (C) 2025 Andrew Rechnitzer
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -66,7 +67,7 @@
                                                data-bs-toggle="modal"
                                                data-bs-target="#tagModal"
                                                data-tag-name="{{ qt.tag.tag_name }}"
-                                               data-tag-description="{{ qt.tag.text }}">{{ qt.tag.tag_name }}</a>
+                                               data-tag-description="{{ qt.tag.description }}">{{ qt.tag.tag_name }}</a>
                                             <form method="post" action="{% url 'qtags_landing' %}" class="d-inline">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="question_tag_id" value="{{ qt.id }}">
@@ -120,7 +121,7 @@
             {% for tag in tags %}
                 <tr>
                     <td>{{ tag.tag_name }}</td>
-                    <td>{{ tag.text }}</td>
+                    <td>{{ tag.description }}</td>
                     <td>{{ tag.confidential_info }}</td>
                     <td>{{ tag.help_threshold }}</td>
                     <td>

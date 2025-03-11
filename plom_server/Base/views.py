@@ -17,8 +17,8 @@ from .base_group_views import ManagerRequiredView
 from .forms import CompleteWipeForm
 from .services import big_red_button
 
-from Papers.services import SpecificationService
-from Scan.services import ScanService
+from plom_server.Papers.services import SpecificationService
+from plom_server.Scan.services import ScanService
 
 from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 

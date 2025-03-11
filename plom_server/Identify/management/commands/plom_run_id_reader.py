@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
+# Copyright (C) 2025 Colin B. Macdonald
 
 from tabulate import tabulate
 from time import sleep
@@ -8,45 +9,46 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.core.exceptions import MultipleObjectsReturned
 
-from Rectangles.services import RectangleExtractor
-from Papers.services import SpecificationService
+from plom_server.Rectangles.services import RectangleExtractor
+from plom_server.Papers.services import SpecificationService
 from ...services import IDReaderService
 
 
 class Command(BaseCommand):
-    """Commandline tool for running and managing the results of the ID-reader."""
+    """Commandline tool for running and managing the results of the ID-reader.
 
-    def get_the_rectangle(self):
+    Note --- at present only works for ID page version 1.
+    """
+
+    def get_the_rectangle(self) -> dict[str, float]:
         id_page_number = SpecificationService.get_id_page_number()
+        # Always searches version 1
         rex = RectangleExtractor(1, id_page_number)
         # note that this rectangle is stated [0,1] coords relative to qr-code positions
         region = None  # we are not specifying a region to search.
         initial_rectangle = rex.get_largest_rectangle_contour(region)
+        if initial_rectangle is None:
+            raise CommandError("Could not find id box rectangle")
         self.stdout.write(f"Found id box rectangle at = {initial_rectangle}")
         return initial_rectangle
 
-    def run_the_reader(self, user_obj, rectangle):
+    def run_the_reader(self, user_obj, rectangle: dict[str, float]) -> None:
         try:
             self.stdout.write("Running the ID reader")
             IDReaderService().run_the_id_reader_in_background_via_huey(
                 user_obj,
-                (
-                    rectangle["left_f"],
-                    rectangle["top_f"],
-                    rectangle["right_f"],
-                    rectangle["bottom_f"],
-                ),
+                {1: rectangle},
                 recompute_heatmap=True,
             )
         except MultipleObjectsReturned:
             raise CommandError("The ID reader is already running.")
 
-    def delete_ID_predictions(self):
+    def delete_ID_predictions(self) -> None:
         self.stdout.write("Deleting all MLLAP and MLGreedy ID predictions.")
         IDReaderService().delete_ID_predictions("MLLAP")
         IDReaderService().delete_ID_predictions("MLGreedy")
 
-    def wait_for_reader(self):
+    def wait_for_reader(self) -> None:
         self.stdout.write("Waiting for any ID reader processes to finish")
         while True:
             status = IDReaderService().get_id_reader_background_task_status()
@@ -57,7 +59,7 @@ class Command(BaseCommand):
             else:
                 break
 
-    def list_predictions(self):
+    def list_predictions(self) -> None:
         all_predictions = IDReaderService().get_ID_predictions()
         if not all_predictions:
             self.stderr.write("No ID predictions")

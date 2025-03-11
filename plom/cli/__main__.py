@@ -5,6 +5,7 @@
 # Copyright (C) 2020-2023, 2025 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2025 Aidan Murphy
 
 """Plom tools for pushing and manipulating bundles from the command line.
 
@@ -35,6 +36,7 @@ from plom.cli import (
     list_bundles,
     start_messenger,
     upload_bundle,
+    reset_task,
 )
 
 # from plom.cli import clear_login
@@ -122,7 +124,13 @@ def _get_parser():
 
     s = sub.add_parser(
         "delete-bundle",
-        help="Delete a bundle from the staging area, NOT IMPLEMENTED YET",
+        help="Delete a bundle from the staging area",
+        description="""
+            A bundle that is in staging (a.k.a. not pushed), and isn't being processed may be
+            deleted.
+
+            Use the `list-bundles` command to check on the status of your bundle.
+        """,
     )
     _add_server_args(s)
     s.add_argument("bundle_id", type=int)
@@ -158,6 +166,19 @@ def _get_parser():
     _add_server_args(s)
     s.add_argument("papernum", type=int, help="Which paper number to identify")
 
+    s = sub.add_parser(
+        "reset-task",
+        help="Reset the task, making annotations out-of-date",
+        description="""
+            Reset the task, making annotations out-of-date.
+            The task will need to be marked again.
+        """,
+    )
+    _add_server_args(s)
+    s.add_argument("papernum", type=int, help="Which paper to reset")
+    s.add_argument("question_idx", type=int, help="Which question to reset")
+
+    # TODO: perhaps unnecessary for modern Plom
     s = sub.add_parser(
         "clear",
         help='Clear "scanner" login',
@@ -227,13 +248,12 @@ def main():
     if hasattr(args, "password") and not args.password:
         args.password = getpass("password: ")
 
+    m = (args.server, args.username, args.password)
     if args.command == "upload-bundle":
-        r = upload_bundle(
-            Path(args.pdf), msgr=(args.server, args.username, args.password)
-        )
+        r = upload_bundle(Path(args.pdf), msgr=m)
         print(r)
     elif args.command == "list-bundles":
-        list_bundles(msgr=(args.server, args.username, args.password))
+        list_bundles(msgr=m)
     elif args.command == "push-bundle":
         msgr = start_messenger(args.server, args.username, args.password)
         try:
@@ -249,7 +269,7 @@ def main():
             args.bundle_page,
             papernum=args.papernum,
             questions=args.question,
-            msgr=(args.server, args.username, args.password),
+            msgr=m,
         )
 
     elif args.command == "id-paper":
@@ -257,20 +277,30 @@ def main():
             args.papernum,
             args.sid,
             args.name,
-            msgr=(args.server, args.username, args.password),
+            msgr=m,
         )
 
     elif args.command == "un-id-paper":
-        un_id_paper(args.papernum, msgr=(args.server, args.username, args.password))
+        un_id_paper(args.papernum, msgr=m)
+
+    elif args.command == "reset-task":
+        r = reset_task(args.papernum, args.question_idx, msgr=m)
+        print(r)
 
     elif args.command == "get-reassembled":
-        r = get_reassembled(
-            args.papernum, msgr=(args.server, args.username, args.password)
-        )
+        r = get_reassembled(args.papernum, msgr=m)
         print(
             f"wrote reassembled paper number {args.papernum} to "
             f'file {r["filename"]} [{r["content-length"]} bytes]'
         )
+    elif args.command == "delete-bundle":
+        msgr = start_messenger(args.server, args.username, args.password)
+        try:
+            r = msgr.new_server_delete_bundle(args.bundle_id)
+            print(r)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
     elif args.command == "clear":
         print("TODO: do we need this on new Plom?")
         # clear_login(args.server, args.password)

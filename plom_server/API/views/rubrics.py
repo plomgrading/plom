@@ -12,8 +12,8 @@ from rest_framework.response import Response
 from rest_framework import status, serializers
 
 from plom.plom_exceptions import PlomConflict
-from Rubrics.services import RubricService
-from Mark.serializers.tasks import MarkingTaskSerializer
+from plom_server.Rubrics.services import RubricService
+from plom_server.Mark.serializers.tasks import MarkingTaskSerializer
 
 from .utils import _error_response
 
@@ -73,7 +73,7 @@ class McreateRubric(APIView):
             not allowed to create new rubrics.
         """
         try:
-            rubric_as_dict = RubricService().create_rubric(
+            rubric_as_dict = RubricService.create_rubric(
                 request.data["rubric"], creating_user=request.user
             )
             return Response(rubric_as_dict, status=status.HTTP_200_OK)
@@ -110,12 +110,15 @@ class MmodifyRubric(APIView):
             Responds with 409 if your modifications conflict with others'
             (e.g., two users have both modified the same rubric).
         """
+        # TODO: change is_minor_change default to `None`, add API extension
+        # (maybe a "&" param) to support client-selection.
         try:
-            rubric_as_dict = RubricService().modify_rubric(
+            rubric_as_dict = RubricService.modify_rubric(
                 rid,
                 request.data["rubric"],
                 modifying_user=request.user,
                 tag_tasks=False,
+                is_minor_change=True,
             )
             # TODO: use a serializer to get automatic conversion from Rubric object?
             return Response(rubric_as_dict, status=status.HTTP_200_OK)

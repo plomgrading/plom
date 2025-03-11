@@ -31,7 +31,7 @@ from .views import (
     ClearID,
     IDImageWrapView,
 )
-from UserManagement.views import (
+from plom_server.UserManagement.views import (
     SetQuotaView,
     UnsetQuotaView,
     EditQuotaLimitView,
