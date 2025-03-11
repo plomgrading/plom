@@ -12,7 +12,8 @@ from pathlib import Path
 from typing import Any
 
 import cv2 as cv
-import cv2.typing
+
+# import cv2.typing - problems importing this - see MR 3050.
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 from sklearn.ensemble import RandomForestClassifier
@@ -451,9 +452,11 @@ class IDBoxProcessorService:
 
         return img_file_dict
 
-    def resize_ID_box_and_extract_digit_strip(
-        self, id_box_file: Path
-    ) -> cv2.typing.MatLike | None:
+    # problem with cv2.typing - see MR 3050.
+    # comment out the cv2.typing.MatLike hint here.
+    # TODO - fix the cv2.typing issue in dev sometime.
+    def resize_ID_box_and_extract_digit_strip(self, id_box_file: Path):
+        # ) -> cv2.typing.MatLike | None:
         """Extract the strip of digits from the ID box from the given image file."""
         # WARNING: contains many magic numbers - must be updated if the IDBox
         # template is changed.
