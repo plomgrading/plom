@@ -5,7 +5,6 @@
 # Copyright (C) 2024-2025 Colin B. Macdonald
 
 import argparse
-import shutil
 from pathlib import Path
 
 # from django.conf import settings
@@ -29,10 +28,9 @@ def remove_all_migration_files(basedir: Path, *, verbose: bool = True) -> None:
 def set_argparse_and_get_args() -> argparse.Namespace:
     """Configure argparse to collect commandline options."""
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawTextHelpFormatter,
-        epilog="""
-            blah blah blah
-    """,
+        description="""
+            Remove all the migration files, in preparation for regenerating from scratch
+        """,
     )
     parser.add_argument(
         "--basedir",
