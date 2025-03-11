@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 
@@ -38,6 +38,7 @@ ok_no_copyright = [
     "plom_server/static/*.svg",
     "testTemplates/idBox*.eps",
     "testTemplates/idBox*.svg",
+    "*/migrations/00??.py",
 ]
 
 if __name__ == "__main__":
