@@ -11,7 +11,7 @@
 import json
 import pathlib
 import random
-from typing import Any, List, Tuple
+from typing import Any
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -114,7 +114,7 @@ class MarkingTaskService:
     @transaction.atomic
     def bulk_create_marking_tasks(
         self,
-        paper_question_version_list: List[Tuple[int, int, int]],
+        paper_question_version_list: list[tuple[int, int, int]],
         *,
         copy_old_tags: bool = True,
     ):

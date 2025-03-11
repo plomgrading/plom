@@ -199,7 +199,6 @@ class IDReaderService:
         """Add ID prediction for a prenamed paper."""
         self.add_or_change_ID_prediction(user, paper_number, student_id, 0.9, "prename")
 
-    @transaction.atomic
     def bulk_add_prename_ID_predictions(
         self,
         user: User,
@@ -214,7 +213,7 @@ class IDReaderService:
         ).prefetch_related("paper"):
             existing_prename_predictions[pred.paper.paper_number] = pred
         # find any existing predictions from these papers
-        existing_predictions = {}  # a dict of lists
+        existing_predictions: dict[int, list[IDPrediction]] = {}  # a dict of lists
         for pred in IDPrediction.objects.filter(
             paper__paper_number__in=paper_numbers
         ).prefetch_related("paper"):
@@ -240,8 +239,6 @@ class IDReaderService:
                         certainty=0.9,
                     )
                 )
-        IDPrediction.objects.bulk_update(predictions_to_update, ["student_id"])
-        IDPrediction.objects.bulk_create(new_predictions)
         # now update the priorities of the associated IDtasks
         # note that the updated IDPredictions did not change certainties, so
         # they don't change the associated priorities
@@ -258,7 +255,12 @@ class IDReaderService:
             else:
                 idt.iding_priority = 0.9
             priority_updates.append(idt)
-        PaperIDTask.objects.bulk_update(priority_updates, ["iding_priority"])
+        # Finally actually create + update all the predictions and tasks
+        with transaction.atomic():
+            IDPrediction.objects.bulk_update(predictions_to_update, ["student_id"])
+            IDPrediction.objects.bulk_create(new_predictions)
+
+            PaperIDTask.objects.bulk_update(priority_updates, ["iding_priority"])
 
     def run_the_id_reader_in_foreground(
         self,
