@@ -38,7 +38,7 @@ ok_no_copyright = [
     "plom_server/static/*.svg",
     "testTemplates/idBox*.eps",
     "testTemplates/idBox*.svg",
-    "*/migrations/00??.py",
+    "*/migrations/00??_initial.py",
 ]
 
 if __name__ == "__main__":
