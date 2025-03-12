@@ -6,13 +6,10 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024-2025 Colin B. Macdonald
 
-from __future__ import annotations
-from collections import defaultdict
 import pathlib
-from typing import List, Tuple
 import uuid
-
-from plom.tpv_utils import encodePaperPageVersion
+from collections import defaultdict
+from typing import List, Tuple
 
 from django.contrib.auth.models import User
 from django.core.files import File
@@ -20,8 +17,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import QuerySet
 
+from plom.tpv_utils import encodePaperPageVersion
+from plom.plom_exceptions import PlomPushCollisionException
+from plom.misc_utils import format_int_list_with_runs
 from plom_server.Scan.models import StagingImage, StagingBundle
-
 from plom_server.Preparation.services import PapersPrinted
 from ..models import (
     Bundle,
@@ -35,9 +34,6 @@ from ..models import (
     Paper,
 )
 from .paper_info import PaperInfoService
-
-from plom.plom_exceptions import PlomPushCollisionException
-from plom.misc_utils import format_int_list_with_runs
 
 
 class ImageBundleService:
