@@ -9,7 +9,6 @@
 import pathlib
 import uuid
 from collections import defaultdict
-from typing import List, Tuple
 
 from django.contrib.auth.models import User
 from django.core.files import File
@@ -384,7 +383,7 @@ class ImageBundleService:
         Returns:
             list [(StagingImage, Image, paper_number, page_number)]: list of unordered collisions.
         """
-        collisions: List[Tuple[StagingImage, Image, int, int]] = []
+        collisions: list[tuple[StagingImage, Image, int, int]] = []
         # note that only known images can cause collisions
         # get all the known paper/pages in the bundle
         staged_pp_img_dict = {
@@ -453,8 +452,8 @@ class ImageBundleService:
             set([X[0] for X in papers_questions_versions_updated_by_bundle])
         )
         # use this to get all QuestionPage and MobilePage in those papers
-        pq_qpage_with_img: dict[Tuple[int, int, int], int] = defaultdict(int)
-        pq_qpage_no_img: dict[Tuple[int, int, int], int] = defaultdict(int)
+        pq_qpage_with_img: dict[tuple[int, int, int], int] = defaultdict(int)
+        pq_qpage_no_img: dict[tuple[int, int, int], int] = defaultdict(int)
         for qpage in QuestionPage.objects.filter(
             paper__paper_number__in=papers_updated_by_bundle
         ).prefetch_related("paper", "image"):
@@ -463,7 +462,7 @@ class ImageBundleService:
                 pq_qpage_no_img[pnqiv] += 1
             else:
                 pq_qpage_with_img[pnqiv] += 1
-        pq_mpage: dict[Tuple[int, int, int], int] = defaultdict(int)
+        pq_mpage: dict[tuple[int, int, int], int] = defaultdict(int)
         for mpage in MobilePage.objects.filter(
             paper__paper_number__in=papers_updated_by_bundle
         ).prefetch_related("paper", "image"):
