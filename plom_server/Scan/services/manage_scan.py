@@ -342,11 +342,14 @@ class ManageScanService:
 
         return no_images_at_all.count()
 
+    @staticmethod
     @transaction.atomic
-    def get_all_unused_test_papers(self) -> list[int]:
+    def get_all_unused_papers() -> list[int]:
         """Return a list of paper-numbers of all unused test-papers. Is sorted into paper-number order.
 
         A paper is unused when it has no fixed page images nor any mobile pages.
+
+        TODO: currently, and ironically, "unused" (but tested)
         """
         # Get fixed pages with image - ie scanned.
         fixed_with_scan = FixedPage.objects.filter(
@@ -358,9 +361,10 @@ class ManageScanService:
         )
         return sorted([paper.paper_number for paper in no_images_at_all])
 
+    @staticmethod
     @transaction.atomic
-    def get_all_used_test_papers(self) -> list[int]:
-        """Return a list of paper-numbers of all used test-papers. Is sorted into paper-number order.
+    def get_all_used_papers() -> list[int]:
+        """Return a list of paper-numbers of all used papers. Is sorted into paper-number order.
 
         A paper is used when it has at least one fixed page image or any mobile page.
         """

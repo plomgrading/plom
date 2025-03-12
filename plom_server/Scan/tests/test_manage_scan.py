@@ -116,9 +116,11 @@ class ManageScanServiceTests(TestCase):
         assert mss.get_number_completed_test_papers() == 5 + 4
         assert mss.get_number_incomplete_test_papers() == 2 + 2
 
-    def test_get_all_unused_test_papers(self) -> None:
-        mss = ManageScanService()
-        assert mss.get_all_unused_test_papers() == [8, 9]
+    def test_get_all_used_and_unused_papers(self) -> None:
+        unused = [8, 9]
+        self.assertEqual(ManageScanService.get_all_unused_papers(), unused)
+        used = [x for x in range(1, 16) if x not in unused]
+        self.assertEqual(ManageScanService.get_all_used_papers(), used)
 
     def test_get_all_incomplete_papers(self) -> None:
         mss_incomplete = ManageScanService.get_all_incomplete_papers()
