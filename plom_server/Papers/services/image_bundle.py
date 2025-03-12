@@ -270,9 +270,8 @@ class ImageBundleService:
         from plom_server.Preparation.services import StagingStudentService
 
         # bulk create the associated marking tasks in O(1)
-        MarkingTaskService.bulk_create_marking_tasks(
-            self.get_ready_questions(uploaded_bundle)["ready"]
-        )
+        ready, notready = self.get_ready_and_not_ready_questions(uploaded_bundle)
+        MarkingTaskService.bulk_create_marking_tasks(ready)
 
         # bulk create the associated ID tasks in O(1).
         papers = [
@@ -413,8 +412,10 @@ class ImageBundleService:
 
     @staticmethod
     @transaction.atomic
-    def get_ready_questions(bundle: Bundle) -> dict[str, list[tuple[int, int, int]]]:
-        """Find questions across all test-papers in the database that now ready.
+    def get_ready_and_not_ready_questions(
+        bundle: Bundle,
+    ) -> tuple[list[tuple[int, int, int]], list[tuple[int, int, int]]]:
+        """Find questions across all papers effected by this bundle now ready, and those that are not ready.
 
         A question is ready when either it has all of its
         fixed-pages, or it has no fixed-pages but has some
@@ -424,13 +425,12 @@ class ImageBundleService:
         could have some "ready" and "unready" questions.
 
         Args:
-            bundle: a Bundle instance that has just been uploaded.
+            bundle: a Bundle instance.
 
         Returns:
-            Dict with two keys, each to a list of ints.
-            "ready" is the list of paper_number/question_index/version triples
-            that have pages in this bundle, and are now ready to be marked.
-            "not_ready" are paper_number/question_index pairs that have pages
+            Two lists, the first is the "ready" list of paper_number/question_index/version
+            triples that have pages in this bundle, and are now ready to be marked.
+            The "not_ready" are paper_number/question_index pairs that have pages
             in this bundle, but are not ready to be marked yet.
         """
         # find all question-pages (ie fixed pages) that attach to images in the current bundle.
@@ -470,36 +470,33 @@ class ImageBundleService:
         for mpage in MobilePage.objects.filter(
             paper__paper_number__in=papers_updated_by_bundle
         ).prefetch_related("paper", "image"):
-            pq_mpage[
-                (mpage.paper.paper_number, mpage.question_index, mpage.version)
-            ] += 1
+            pnqiv = (mpage.paper.paper_number, mpage.question_index, mpage.version)
+            pq_mpage[pnqiv] += 1
 
         # for each paper/question that has been updated, check if has either
         # all fixed pages, or no fixed pages but some mobile-pages.
         # if some, but not all, fixed pages then is not ready.
-
-        result: dict[str, list[tuple[int, int, int]]] = {"ready": [], "not_ready": []}
-
+        ready = []
+        not_ready = []
         for (
             paper_number,
             question_index,
             version,
         ) in papers_questions_versions_updated_by_bundle:
-            if (
-                pq_qpage_no_img[(paper_number, question_index, version)] == 0
-            ):  # all fixed pages have images
-                result["ready"].append((paper_number, question_index, version))
+            if pq_qpage_no_img[(paper_number, question_index, version)] == 0:
+                # all fixed pages have images
+                ready.append((paper_number, question_index, version))
                 continue
             # question has some images
             if pq_qpage_with_img[(paper_number, question_index, version)] > 0:
                 # question has some pages with and some without images - not ready
-                result["not_ready"].append((paper_number, question_index, version))
+                not_ready.append((paper_number, question_index, version))
                 continue
             # all fixed pages without images - check if has any mobile pages
             if pq_mpage[(paper_number, question_index, version)] > 0:
-                result["ready"].append((paper_number, question_index, version))
+                ready.append((paper_number, question_index, version))
 
-        return result
+        return ready, not_ready
 
     @transaction.atomic
     def get_id_pages_in_bundle(self, bundle: Bundle) -> QuerySet[IDPage]:
