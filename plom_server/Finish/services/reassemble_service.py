@@ -298,10 +298,9 @@ class ReassembleService:
                 "outdated": False,
                 "obsolete": None,
             }
-        mss = ManageScanService()
         number_of_questions = SpecificationService.get_n_questions()
 
-        for pn in mss.get_all_completed_test_papers():
+        for pn in ManageScanService.get_all_complete_papers():
             status[pn]["scanned"] = True
 
         def latest_update(time_a: datetime | None, time_b: datetime) -> datetime:

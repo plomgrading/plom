@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2025 Colin B. Macdonald
 
 from tqdm import tqdm
 
@@ -14,7 +15,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # get a list of all complete papers
-        complete_paper_keys = ManageScanService().get_all_completed_test_papers().keys()
+        complete_paper_keys = ManageScanService.get_all_complete_papers().keys()
         for n, pn in tqdm(
             enumerate(complete_paper_keys),
             desc="Building solution pdfs for each paper.",

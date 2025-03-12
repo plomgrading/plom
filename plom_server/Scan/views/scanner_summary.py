@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -14,11 +14,10 @@ from ..services import ManageScanService
 
 class ScannerCompletePaperView(ScannerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
-        mss = ManageScanService()
-
-        # this is a dict - key is paper_number, value = list of pages
-        completed_papers_dict = mss.get_all_completed_test_papers()
+        # dict keyed by paper_number, values are (TODO: eventually) list of pages
+        completed_papers_dict = ManageScanService.get_all_complete_papers()
         # turn into list of tuples (key, value) ordered by key
+        # TODO: clean all this up!  comments are bad here
         completed_papers_list = [
             (pn, pgs) for pn, pgs in sorted(completed_papers_dict.items())
         ]

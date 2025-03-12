@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from django.test import TestCase
 from model_bakery import baker
@@ -185,9 +185,8 @@ class ManageScanServiceTests(TestCase):
                     "img_pk" in m_pg_data[pg - 1]
                 )  # not testing the actual value of image_pk
 
-    def test_get_all_completed_test_papers(self) -> None:
-        mss = ManageScanService()
-        mss_complete = mss.get_all_completed_test_papers()
+    def test_get_all_complete_papers(self) -> None:
+        mss_complete = ManageScanService.get_all_complete_papers()
         # should return a dict of papers and their pages
         # paper 1 has 6 fixed and 1 mobile.
         # papers 2,3,4,5 = should have all 6 fixed pages - returned in page-number order
