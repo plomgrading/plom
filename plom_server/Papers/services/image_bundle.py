@@ -376,9 +376,10 @@ class ImageBundleService:
 
         return collisions
 
+    @staticmethod
     @transaction.atomic
     def find_external_collisions(
-        self, staged_imgs: QuerySet
+        staged_imgs: QuerySet,
     ) -> list[tuple[StagingImage, Image, int, int]]:
         """Check for collisions between images in the input list and all the *currently uploaded* images.
 
@@ -410,10 +411,9 @@ class ImageBundleService:
                 collisions.append((img, pushed_img_pp_dict[pp], pp[0], pp[1]))
         return collisions
 
+    @staticmethod
     @transaction.atomic
-    def get_ready_questions(
-        self, bundle: Bundle
-    ) -> dict[str, list[tuple[int, int, int]]]:
+    def get_ready_questions(bundle: Bundle) -> dict[str, list[tuple[int, int, int]]]:
         """Find questions across all test-papers in the database that now ready.
 
         A question is ready when either it has all of its
