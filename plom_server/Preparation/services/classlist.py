@@ -55,8 +55,8 @@ class StagingStudentService:
         else:
             return (None, None)
 
-    @transaction.atomic()
-    def get_prenamed_papers(self) -> dict[int, tuple[str, str]]:
+    @staticmethod
+    def get_prenamed_papers() -> dict[int, tuple[str, str]]:
         """Return dict of prenamed papers {paper_number: (student_id, student_name)}."""
         return {
             s_obj.paper_number: (s_obj.student_id, s_obj.student_name)

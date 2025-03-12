@@ -111,9 +111,9 @@ class MarkingTaskService:
             the_task.save()
         return the_task
 
+    @staticmethod
     @transaction.atomic
     def bulk_create_marking_tasks(
-        self,
         paper_question_version_list: list[tuple[int, int, int]],
         *,
         copy_old_tags: bool = True,

@@ -49,12 +49,12 @@ class PQVMappingService:
                 "id_ver": 1 if "id" not in qvmap.keys() else qvmap["id"],
             }
 
-            # if prenaming then we need to put in those student details
+        # if prenaming then we need to put in those student details
         if prenaming:
-            sss = StagingStudentService()
-            for paper_number, student in sss.get_prenamed_papers().items():
+            sss = StagingStudentService
+            for papernum, student in sss.get_prenamed_papers().items():
                 if paper_number in pqv_table:
-                    pqv_table[paper_number]["prename"] = student
+                    pqv_table[papernum]["prename"] = student
                 else:
                     # TODO - issue a warning - means we are trying to prename a
                     # paper for which we do not have a qvmap.

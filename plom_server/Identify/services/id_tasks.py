@@ -48,7 +48,8 @@ class IdentifyTaskService:
         task = PaperIDTask(paper=paper)
         task.save()
 
-    def bulk_create_id_tasks(self, papers: list[Paper]) -> None:
+    @staticmethod
+    def bulk_create_id_tasks(papers: list[Paper]) -> None:
         """Outdate existing tasks/actions and create new tasks based on local changes to a list of Paper objects.
 
         Args:

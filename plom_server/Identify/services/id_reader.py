@@ -199,8 +199,8 @@ class IDReaderService:
         """Add ID prediction for a prenamed paper."""
         self.add_or_change_ID_prediction(user, paper_number, student_id, 0.9, "prename")
 
+    @staticmethod
     def bulk_add_prename_ID_predictions(
-        self,
         user: User,
         papers: list[Paper],
         prenamed_papers: dict[int, tuple[str, str]],

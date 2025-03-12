@@ -270,7 +270,7 @@ class ImageBundleService:
         from plom_server.Preparation.services import StagingStudentService
 
         # bulk create the associated marking tasks in O(1)
-        MarkingTaskService().bulk_create_marking_tasks(
+        MarkingTaskService.bulk_create_marking_tasks(
             self.get_ready_questions(uploaded_bundle)["ready"]
         )
 
@@ -278,10 +278,10 @@ class ImageBundleService:
         papers = [
             id_page.paper for id_page in self.get_id_pages_in_bundle(uploaded_bundle)
         ]
-        IdentifyTaskService().bulk_create_id_tasks(papers)
+        IdentifyTaskService.bulk_create_id_tasks(papers)
         # now create any prename-predictions
-        prenamed_papers = StagingStudentService().get_prenamed_papers()
-        IDReaderService().bulk_add_prename_ID_predictions(
+        prenamed_papers = StagingStudentService.get_prenamed_papers()
+        IDReaderService.bulk_add_prename_ID_predictions(
             user_obj, papers, prenamed_papers
         )
 
