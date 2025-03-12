@@ -377,16 +377,17 @@ class ImageBundleService:
         return collisions
 
     @transaction.atomic
-    def find_external_collisions(self, staged_imgs: QuerySet) -> list:
+    def find_external_collisions(
+        self, staged_imgs: QuerySet
+    ) -> list[tuple[StagingImage, Image, int, int]]:
         """Check for collisions between images in the input list and all the *currently uploaded* images.
 
         Args:
             staged_imgs: QuerySet, a list of all staged images for a bundle
 
         Returns:
-            list [(StagingImage, Image, paper_number, page_number)]: list of unordered collisions.
+            An unordered collection of tuples of describing collisions.
         """
-        collisions: list[tuple[StagingImage, Image, int, int]] = []
         # note that only known images can cause collisions
         # get all the known paper/pages in the bundle
         staged_pp_img_dict = {
