@@ -13,32 +13,36 @@ from ..services import ManageScanService
 
 
 class ScannerCompletePaperView(ScannerRequiredView):
+    """View for Complete Scans page."""
+
     def get(self, request: HttpRequest) -> HttpResponse:
-        # dict keyed by paper_number, values are (TODO: eventually) list of pages
-        completed_papers_dict = ManageScanService.get_all_complete_papers()
-        # turn into list of tuples (key, value) ordered by key
-        # TODO: clean all this up!  comments are bad here
-        completed_papers_list = [
-            (pn, pgs) for pn, pgs in sorted(completed_papers_dict.items())
+        """Render a page of information about scans that are complete."""
+        # dict keyed by paper_number, contents a bit complicated
+        complete_papers_dict = ManageScanService.get_all_complete_papers()
+        # turn into list of tuples (papernum, value) ordered by papernum
+        complete_papers_list = [
+            (pn, pgs) for pn, pgs in sorted(complete_papers_dict.items())
         ]
 
         context = self.build_context()
         context.update(
             {
                 "current_page": "complete",
-                "number_of_completed_papers": len(completed_papers_dict),
-                "completed_papers_list": completed_papers_list,
+                "number_of_complete_papers": len(complete_papers_dict),
+                "complete_papers_list": complete_papers_list,
             }
         )
         return render(request, "Scan/scan_complete.html", context)
 
 
 class ScannerIncompletePaperView(ScannerRequiredView):
+    """View for Incomplete Scans page."""
+
     def get(self, request: HttpRequest) -> HttpResponse:
-        # dict keyed by paper_number, values are TODO
+        """Render a page of information about scans that are incomplete."""
+        # dict keyed by paper_number, contents a bit complicated
         incomplete_papers_dict = ManageScanService.get_all_incomplete_papers()
-        # turn into list of tuples (key, value) ordered by key
-        # TODO: clean all this up!  comments seem incorrect
+        # turn into list of tuples (papernum, value) ordered by papernum
         incomplete_papers_list = [
             (pn, pgs) for pn, pgs in sorted(incomplete_papers_dict.items())
         ]
