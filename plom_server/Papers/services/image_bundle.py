@@ -396,11 +396,11 @@ class ImageBundleService:
         }
         # get the list of papers in the bundle so that we can grab all
         # known pages from just those papers.
-        staged_paper_list = [X[0] for X in staged_pp_img_dict.keys()]
+        staged_paper_nums = [pp[0] for pp in staged_pp_img_dict.keys()]
         pushed_img_pp_dict = {
             (X.paper.paper_number, X.page_number): X.image
             for X in FixedPage.objects.filter(
-                image__isnull=False, paper__paper_number__in=staged_paper_list
+                image__isnull=False, paper__paper_number__in=staged_paper_nums
             ).prefetch_related("paper", "image")
         }
         # now compare image by image and store list of collisions
