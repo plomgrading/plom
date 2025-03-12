@@ -126,7 +126,7 @@ class ManageScanService:
     @staticmethod
     @transaction.atomic
     def get_all_complete_papers() -> dict[int, dict[str, list[dict[str, Any]]]]:
-        """Dict of info about Papers that are completely scanned.
+        """Dicts of info about papers that are completely scanned.
 
         A paper is complete when it either has **all** its fixed
         pages, or it has no fixed pages but has some extra-pages.
@@ -225,11 +225,19 @@ class ManageScanService:
                 )
         return complete
 
+    @staticmethod
     @transaction.atomic
-    def get_all_incomplete_test_papers(self) -> dict[int, dict[str, Any]]:
-        """Return a dict of test-papers that are partially but not completely scanned.
+    def get_all_incomplete_papers() -> dict[int, dict[str, list[dict[str, Any]]]]:
+        """Dicts of info about papers that are partially but not completely scanned.
 
         A paper is not completely scanned when it has *some* but not all its fixed pages.
+
+        Returns:
+            Dict keyed by paper number and then for each we have keys
+            "fixed" and "mobile".  Under each of those we have a list of
+            dicts of key-value pairs about pages.  The information in
+            "fixed" and "mobile" case is different, for example "mobile"
+            have page labels and "fixed" do not.
         """
         # Get fixed pages with no image - ie not scanned.
         fixed_with_no_scan = FixedPage.objects.filter(
@@ -255,7 +263,7 @@ class ManageScanService:
             "mobilepage_set__image",
         )
 
-        incomplete: dict[int, dict[str, Any]] = {}
+        incomplete = {}
         for paper in some_but_not_all_fixed_present:
             incomplete[paper.paper_number] = {"fixed": [], "mobile": []}
             for fp in paper.fixedpage_set.all():

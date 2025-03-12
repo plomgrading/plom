@@ -120,9 +120,8 @@ class ManageScanServiceTests(TestCase):
         mss = ManageScanService()
         assert mss.get_all_unused_test_papers() == [8, 9]
 
-    def test_get_all_incomplete_test_papers(self) -> None:
-        mss = ManageScanService()
-        mss_incomplete = mss.get_all_incomplete_test_papers()
+    def test_get_all_incomplete_papers(self) -> None:
+        mss_incomplete = ManageScanService.get_all_incomplete_papers()
         # papers 6,7,10,11 is incomplete - should return dict of the form
         #
         # 6: {'fixed': [{'status': 'present', 'page_number': 1,

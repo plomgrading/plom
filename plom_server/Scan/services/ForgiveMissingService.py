@@ -342,7 +342,7 @@ def get_list_of_all_missing_dnm_pages() -> list[dict[str, int]]:
 
     Returns: A list of dicts with keys ``paper_number`` and ``page_number``.
     """
-    incomplete_papers = ManageScanService().get_all_incomplete_test_papers()
+    incomplete_papers = ManageScanService.get_all_incomplete_papers()
     missing_dnm = []
     for paper_number, dat in incomplete_papers.items():
         for fp in dat["fixed"]:

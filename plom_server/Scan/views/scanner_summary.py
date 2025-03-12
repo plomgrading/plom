@@ -35,11 +35,10 @@ class ScannerCompletePaperView(ScannerRequiredView):
 
 class ScannerIncompletePaperView(ScannerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
-        mss = ManageScanService()
-
-        # this is a dict - key is paper_number, value = list of pages
-        incomplete_papers_dict = mss.get_all_incomplete_test_papers()
+        # dict keyed by paper_number, values are TODO
+        incomplete_papers_dict = ManageScanService.get_all_incomplete_papers()
         # turn into list of tuples (key, value) ordered by key
+        # TODO: clean all this up!  comments seem incorrect
         incomplete_papers_list = [
             (pn, pgs) for pn, pgs in sorted(incomplete_papers_dict.items())
         ]
