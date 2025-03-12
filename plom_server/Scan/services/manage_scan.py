@@ -185,7 +185,7 @@ class ManageScanService:
         # in a specified order, and ref the image in those mobile-pages
         # we do all this prefetching.
 
-        complete: dict[int, dict[str, list[dict[str, Any]]]] = {}
+        complete: dict[int, Any] = {}  # more precise typing in defn
         for paper in all_fixed_present:
             complete[paper.paper_number] = {"fixed": [], "mobile": []}
             # notice we don't specify order or prefetch in the loops
@@ -263,7 +263,7 @@ class ManageScanService:
             "mobilepage_set__image",
         )
 
-        incomplete = {}
+        incomplete: dict[int, Any] = {}  # more precise typing in defn
         for paper in some_but_not_all_fixed_present:
             incomplete[paper.paper_number] = {"fixed": [], "mobile": []}
             for fp in paper.fixedpage_set.all():
