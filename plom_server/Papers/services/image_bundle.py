@@ -181,15 +181,16 @@ class ImageBundleService:
             for staged in bundle_images
             if staged.image_type == StagingImage.KNOWN
         )
-        # make an easy look-up dict - note that a given pn/page may have
-        # multiple fixed pages since when questions share pages.
-        fp_by_pn_and_page = defaultdict(list)
+        # make look-up dict to more-easily get fixed pages from (papernum, pagenum)
+        # note that a given pn/page may have multiple fixed pages (e.g., when
+        # questions share pages).
+        fixedpage_by_pn_pg = defaultdict(list)
         for fp in (
             FixedPage.objects.select_for_update()
             .filter(paper__paper_number__in=paper_numbers)
             .prefetch_related("paper")
         ):
-            fp_by_pn_and_page[(fp.paper.paper_number, fp.page_number)].append(fp)
+            fixedpage_by_pn_pg[(fp.paper.paper_number, fp.page_number)].append(fp)
 
         for staged in bundle_images:
             with staged.image_file.open("rb") as fh:
@@ -215,7 +216,7 @@ class ImageBundleService:
             if staged.image_type == StagingImage.KNOWN:
                 known = staged.knownstagingimage
                 # Note that since fixedpage is polymorphic, this will handle question, ID and DNM pages.
-                fp_list = fp_by_pn_and_page[(known.paper_number, known.page_number)]
+                fp_list = fixedpage_by_pn_pg[(known.paper_number, known.page_number)]
                 if len(fp_list) == 0:
                     raise ObjectDoesNotExist(
                         f"Paper {known.paper_number}"
