@@ -165,6 +165,7 @@ class Rubric(models.Model):
         User, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
     )
     revision = models.IntegerField(null=False, blank=True, default=0)
+    subrevision = models.IntegerField(null=False, default=0)
     latest = models.BooleanField(null=False, blank=True, default=True)
     pedagogy_tags = models.ManyToManyField("QuestionTags.PedagogyTag", blank=True)
 
