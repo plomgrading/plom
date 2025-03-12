@@ -1,11 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2024 Colin B. Macdonald
-# Copyright (C) 2023-2024 Andrew Rechnitzer
-
-from __future__ import annotations
-from typing import List
+# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 
 from django.contrib.auth.models import User
 from django.core.exceptions import (
@@ -52,7 +49,7 @@ class IdentifyTaskService:
         task.save()
 
     @transaction.atomic
-    def bulk_create_id_tasks(self, papers: List[Paper]) -> None:
+    def bulk_create_id_tasks(self, papers: list[Paper]) -> None:
         old_tasks = PaperIDTask.objects.filter(paper__in=papers)
         old_actions = PaperIDAction.objects.filter(task__in=old_tasks)
         for X in old_tasks:
