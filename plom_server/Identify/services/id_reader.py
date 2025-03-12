@@ -205,6 +205,22 @@ class IDReaderService:
         papers: list[Paper],
         prenamed_papers: dict[int, tuple[str, str]],
     ) -> None:
+        """Update the system for changes to papers and prenamed papers.
+
+        Args:
+            user: who should new prenames be associated with?
+                TODO: it appears that existing prenames are not updated
+                to this user.  Is that intentional or a bug?  See TODO
+                in code.
+            papers: a list of Paper objects, any papers not in this will
+                not be updated.  TODO: basically lookign for a brief
+                explanation of why this would be anything other than
+                all papers in the system?
+            prenamed_papers: a list of new or updates to which papers
+                TODO: explain whether `prenamed_papers` *must* be a
+                subset of `papers` or any other assumptions between the
+                two args.
+        """
         paper_numbers = [paper.paper_number for paper in papers]
         # find existing prename-predictions from these papers
         existing_prename_predictions = {}
@@ -219,6 +235,7 @@ class IDReaderService:
         ).prefetch_related("paper"):
             existing_predictions.get(pred.paper.paper_number, []).append(pred)
 
+        # loop over papers making two lists: things to make and things to update
         new_predictions = []
         predictions_to_update = []
         for paper in papers:
@@ -228,8 +245,10 @@ class IDReaderService:
             if paper.paper_number in existing_prename_predictions:
                 pred = existing_prename_predictions[paper.paper_numbers]
                 pred.student_id = prenamed_papers[paper.paper_number][0]
+                # TODO: pred.user = user?
                 predictions_to_update.append(pred)
             else:
+                # this does not immediately create a DB entry, we do it in bulk later
                 new_predictions.append(
                     IDPrediction(
                         user=user,
@@ -254,6 +273,7 @@ class IDReaderService:
                 idt.iding_priority = min(certs)
             else:
                 idt.iding_priority = 0.9
+            # no idt.save() here b/c we are deferring these for a bulk change
             priority_updates.append(idt)
         # Finally actually create + update all the predictions and tasks
         with transaction.atomic():
