@@ -48,19 +48,34 @@ class IdentifyTaskService:
         task = PaperIDTask(paper=paper)
         task.save()
 
-    @transaction.atomic
     def bulk_create_id_tasks(self, papers: list[Paper]) -> None:
-        old_tasks = PaperIDTask.objects.filter(paper__in=papers)
-        old_actions = PaperIDAction.objects.filter(task__in=old_tasks)
-        for X in old_tasks:
-            X.status = PaperIDTask.OUT_OF_DATE
-            X.assigned_user = None
-        PaperIDTask.objects.bulk_update(old_tasks, ["status", "assigned_user"])
-        for X in old_actions:
-            X.is_valid = False
-        PaperIDAction.objects.bulk_update(old_actions, ["is_valid"])
-        new_tasks = [PaperIDTask(paper=X) for X in papers]
-        PaperIDTask.objects.bulk_create(new_tasks)
+        """Update a bunch of stuff based on local changes to a list of Paper objects.
+
+        Args:
+            papers: a list of Django-objects that have been changed
+                "locally" in some way that their underlying database entries
+                are not updated (like a local caching mechanism that Django
+                somehow provides for us).
+
+        Instead of looping over all of the ``Paper`` objects and doing
+        ``.save()``, we do some bulk updating to try to minimize the
+        number of overall database transactions.  Presumably the
+        caller will have gone to some effort to *build* the input list
+        of `papers` in a way that also minimizes database queries.
+        TODO: is this why its a list and not a ``QuerySet``?
+        """
+        with transaction.atomic():
+            old_tasks = PaperIDTask.objects.filter(paper__in=papers)
+            old_actions = PaperIDAction.objects.filter(task__in=old_tasks)
+            for X in old_tasks:
+                X.status = PaperIDTask.OUT_OF_DATE
+                X.assigned_user = None
+            PaperIDTask.objects.bulk_update(old_tasks, ["status", "assigned_user"])
+            for X in old_actions:
+                X.is_valid = False
+            PaperIDAction.objects.bulk_update(old_actions, ["is_valid"])
+            new_tasks = [PaperIDTask(paper=X) for X in papers]
+            PaperIDTask.objects.bulk_create(new_tasks)
 
     @transaction.atomic
     def id_task_exists(self, paper: Paper) -> bool:
