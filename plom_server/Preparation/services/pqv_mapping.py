@@ -37,7 +37,7 @@ class PQVMappingService:
         # format the data in a way that makes it easy to display for django-template
         # in particular, a dict of lists.
         pqvmapping = self.get_pqv_map_dict()
-        pqv_table = {}
+        pqv_table: dict[int, dict[str, Any]] = {}
         question_indices = SpecificationService.get_question_indices()
         # sort in paper-number-order so that the table renders in this order
         # python keeps keys in insertion order since v3.7
