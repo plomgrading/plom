@@ -235,6 +235,7 @@ class ImageBundleService:
                     v = pi_service.get_version_from_paper_question(
                         extra.paper_number, q
                     )
+                    # defer actual DB creation to bulk operation later
                     new_mobile_pages.append(
                         MobilePage(
                             paper=paper, image=image, question_index=q, version=v
@@ -242,11 +243,13 @@ class ImageBundleService:
                     )
                 # otherwise, if question index list empty, make a non-marked MobilePage
                 if not extra.question_idx_list:
-                    MobilePage.objects.create(
-                        paper=paper,
-                        image=image,
-                        question_index=MobilePage.DNM_qidx,
-                        version=0,
+                    new_mobile_pages.append(
+                        MobilePage(
+                            paper=paper,
+                            image=image,
+                            question_index=MobilePage.DNM_qidx,
+                            version=0,
+                        )
                     )
             elif staged.image_type == StagingImage.DISCARD:
                 disc = staged.discardstagingimage
