@@ -49,7 +49,7 @@ class IdentifyTaskService:
         task.save()
 
     def bulk_create_id_tasks(self, papers: list[Paper]) -> None:
-        """Update a bunch of stuff based on local changes to a list of Paper objects.
+        """Outdate existing tasks/actions and create new tasks based on local changes to a list of Paper objects.
 
         Args:
             papers: a list of Django-objects that have been changed
@@ -67,12 +67,12 @@ class IdentifyTaskService:
         with transaction.atomic():
             old_tasks = PaperIDTask.objects.filter(paper__in=papers)
             old_actions = PaperIDAction.objects.filter(task__in=old_tasks)
-            for X in old_tasks:
-                X.status = PaperIDTask.OUT_OF_DATE
-                X.assigned_user = None
+            for task in old_tasks:
+                task.status = PaperIDTask.OUT_OF_DATE
+                task.assigned_user = None
             PaperIDTask.objects.bulk_update(old_tasks, ["status", "assigned_user"])
-            for X in old_actions:
-                X.is_valid = False
+            for action in old_actions:
+                action.is_valid = False
             PaperIDAction.objects.bulk_update(old_actions, ["is_valid"])
             new_tasks = [PaperIDTask(paper=X) for X in papers]
             PaperIDTask.objects.bulk_create(new_tasks)
