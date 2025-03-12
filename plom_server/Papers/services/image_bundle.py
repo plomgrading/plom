@@ -222,10 +222,9 @@ class ImageBundleService:
                         f"Paper {known.paper_number}"
                         f" page {known.page_number} does not exist"
                     )
-                else:
-                    for fp in fp_list:
-                        fp.image = image
-                        updated_fixed_pages.append(fp)
+                for fp in fp_list:
+                    fp.image = image
+                    updated_fixed_pages.append(fp)
 
             elif staged.image_type == StagingImage.EXTRA:
                 # need to make one mobile page for each question in the question-list
