@@ -47,7 +47,7 @@ class PQVMappingUploadView(ManagerRequiredView):
         if PaperInfoService.is_paper_database_populated():
             return redirect("prep_qvmapping")
 
-        prenamed_papers = list(StagingStudentService().get_prenamed_papers().keys())
+        prenamed_papers = list(StagingStudentService.get_prenamed_papers().keys())
         num_questions = SpecificationService.get_n_questions()
         num_versions = SpecificationService.get_n_versions()
 
@@ -155,9 +155,7 @@ class PQVMappingView(ManagerRequiredView):
             "evacuate_in_progress": PaperCreatorService.is_evacuate_in_progress(),
         }
 
-        prenamed_papers_list = list(
-            StagingStudentService().get_prenamed_papers().keys()
-        )
+        prenamed_papers_list = list(StagingStudentService.get_prenamed_papers().keys())
 
         if prenamed_papers_list:
             context.update(

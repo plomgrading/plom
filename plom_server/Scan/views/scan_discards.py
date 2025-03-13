@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import render
@@ -50,7 +50,7 @@ class ScannerReassignView(ManagerRequiredView):
         )
 
         papers_missing_fixed_pages = mss.get_papers_missing_fixed_pages()
-        used_papers = mss.get_all_used_test_papers()
+        used_papers = ManageScanService.get_all_used_papers()
         question_labels_html = SpecificationService.get_question_html_label_triples()
 
         context.update(

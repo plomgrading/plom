@@ -251,7 +251,7 @@ class BuildPapersService:
         # get all the qvmap and student-id/name info
         spec = SpecificationService.get_the_spec()
         qvmap = PQVMappingService.get_pqv_map_dict()
-        prenamed = StagingStudentService().get_prenamed_papers()
+        prenamed = StagingStudentService.get_prenamed_papers()
         prename_config = PrenameSettingService().get_prenaming_config()
 
         the_papers = Paper.objects.filter(paper_number__in=paper_number_list)

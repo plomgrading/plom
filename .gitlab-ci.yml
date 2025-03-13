@@ -450,7 +450,7 @@ count-no-docstring:
     - ruff check --select $EXCEPTIONS --statistics --exit-zero
     - echo "Total $HOWMANY things without docstrings, please don't increase it"
     # Dear hackers: please try to decrease this number
-    - bash -c "[[ $HOWMANY -le 1490 ]]"
+    - bash -c "[[ $HOWMANY -le 1475 ]]"
   allow_failure: true
 
 
