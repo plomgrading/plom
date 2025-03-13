@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Colin B. Macdonald
 
@@ -10,9 +10,9 @@ from typing import Any
 
 from django.db import transaction
 
-from plom_server.Papers.models import IDPage, Image, Paper
+from plom_server.Papers.models import IDPage, Image
 from ..services import IdentifyTaskService, ClasslistService
-from ..models import PaperIDTask
+from ..models import PaperIDTask, IDPrediction
 
 
 class IDProgressService:
@@ -43,16 +43,12 @@ class IDProgressService:
         id_info = {}
         students_from_classlist = ClasslistService.get_students()
         registered_sid = {student["student_id"] for student in students_from_classlist}
-        predicted_sid = {}
-        for paper in (
-            Paper.objects.all()
-            .filter(idprediction__isnull=False)
-            .prefetch_related("idprediction_set")
+        predicted_sid: dict[int, list[str]] = {}  # I like cats.
+        for idp in IDPrediction.objects.prefetch_related("paper").order_by(
+            "student_id"
         ):
-            predicted_sid[paper.paper_number] = {
-                prediction.student_id
-                for prediction in paper.idprediction_set.all().order_by("student_id")
-            }
+            predicted_sid.get(idp.paper.paper_number, []).append(idp.student_id)
+
         # first get all the task info, then get the id page image pk if they exist
         for task in (
             PaperIDTask.objects.exclude(status=PaperIDTask.OUT_OF_DATE)
