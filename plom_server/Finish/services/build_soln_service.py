@@ -61,8 +61,7 @@ class BuildSolutionService:
                 "outdated": False,
                 "obsolete": None,
             }
-        mss = ManageScanService()
-        for pn in mss.get_all_completed_test_papers():
+        for pn in ManageScanService.get_all_complete_papers():
             status[pn]["scanned"] = True
 
         for task in PaperIDTask.objects.filter(
