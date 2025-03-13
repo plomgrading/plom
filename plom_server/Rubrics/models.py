@@ -261,6 +261,7 @@ class RubricTable(django_tables2.Table):
             "display_delta",
             "last_modified",
             "revision",
+            "subrevision",
             "kind",
             "system_rubric",
             "question_index",

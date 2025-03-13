@@ -185,22 +185,26 @@ def _is_rubric_change_considered_minor(
     return (True, "")
 
 
-def _modify_rubric_in_place(old_rubric: Rubric, serializer: RubricSerializer) -> Rubric:
-    log.info(f"Modifying rubric {old_rubric.rid} rev {old_rubric.revision} in-place")
+def _modify_rubric_in_place(old: Rubric, serializer: RubricSerializer) -> Rubric:
+    log.info(
+        f"Modifying rubric {old.rid} rev {old.revision}.{old.subrevision} in-place"
+    )
     serializer.validated_data["latest"] = True
-    return serializer.update(old_rubric, serializer.validated_data)
+    serializer.validated_data["subrevision"] += 1
+    return serializer.update(old, serializer.validated_data)
 
 
 def _modify_rubric_by_making_new_one(
-    old_rubric: Rubric, serializer: RubricSerializer
+    old: Rubric, serializer: RubricSerializer
 ) -> Rubric:
     log.info(
-        f"Modifying rubric {old_rubric.rid} rev {old_rubric.revision} by"
+        f"Modifying rubric {old.rid} rev {old.revision}.{old.subrevision} by"
         " making a new rubric with bumped revision"
     )
-    old_rubric.latest = False
-    old_rubric.save()
+    old.latest = False
+    old.save()
     serializer.validated_data["revision"] += 1
+    serializer.validated_data["subrevision"] = 0
     serializer.validated_data["latest"] = True
     return serializer.save()
 
@@ -437,14 +441,19 @@ class RubricService:
 
         # default revision if missing from incoming data
         new_rubric_data.setdefault("revision", 0)
+        new_rubric_data.setdefault("subrevision", 0)
 
         # Mid-air collision detection
-        # TODO: warning: minor edits don't have this check
-        if not new_rubric_data["revision"] == old_rubric.revision:
+        if not (
+            new_rubric_data["revision"] == old_rubric.revision
+            and new_rubric_data["subrevision"] == old_rubric.subrevision
+        ):
             # TODO: record who last modified and when
             raise PlomConflict(
-                f'The rubric your revision was based upon {new_rubric_data["revision"]} '
-                f"does not match database content (revision {old_rubric.revision}): "
+                "Your rubric is a change based on revision "
+                f'{new_rubric_data["revision"]}.{new_rubric_data["subrevision"]};'
+                " this does not match database content "
+                f"(revision {old_rubric.revision}.{old_rubric.revision}): "
                 f"most likely your edits have collided with those of someone else."
             )
 
