@@ -262,19 +262,19 @@ class IDReaderService:
         # note that the updated IDPredictions did not change certainties, so
         # they don't change the associated priorities
         priority_updates = []
-        for idt in PaperIDTask.objects.filter(
+        for idt_obj in PaperIDTask.objects.filter(
             paper__paper_number__in=paper_numbers
         ).prefetch_related("paper"):
-            if idt.paper.paper_number in existing_prename_predictions:
+            if idt_obj.paper.paper_number in existing_prename_predictions:
                 certs = [
                     X.certainty
                     for X in existing_prename_predictions[paper.paper_number]
                 ]
-                idt.iding_priority = min(certs)
+                idt_obj.iding_priority = min(certs)
             else:
-                idt.iding_priority = 0.9
-            # no idt.save() here b/c we are deferring these for a bulk change
-            priority_updates.append(idt)
+                idt_obj.iding_priority = 0.9
+            # no idt_obj.save() here b/c we are deferring these for a bulk change
+            priority_updates.append(idt_obj)
         # Finally actually create + update all the predictions and tasks
         with transaction.atomic():
             IDPrediction.objects.bulk_update(predictions_to_update, ["student_id"])

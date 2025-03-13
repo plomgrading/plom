@@ -50,20 +50,28 @@ class IdentifyTaskService:
 
     @staticmethod
     def bulk_create_id_tasks(papers: list[Paper]) -> None:
-        """Outdate existing tasks/actions and create new tasks based on local changes to a list of Paper objects.
+        """For each given paper set any ID tasks and actions as out of date and create new tasks.
+
+        For each paper in the list we set any existing ID tasks and actions as
+        out of date and then create new ID tasks.
+
+        These operations are all done in bulk to minimise DB access. So
+        instead of looping over each paper and doing a ``save()'' we
+        loop over the list and construct lists of PaperIDTask and PaperIDAction
+        that need to be updated. We alter the corresponding python objects
+        and then pass the list of those (locally) updated objects to a
+        django bulk-update functions that minimise the number of DB calls.
+        Similarly when we create new PaperIDTask in the DB we do not do
+        this one at a time, but create a list of (local) python objects and
+        then pass that list to django-bulk-create function that creates
+        things minimising DB access.
 
         Args:
-            papers: a list of Django-objects that have been changed
-                "locally" in some way that their underlying database entries
-                are not updated (like a local caching mechanism that Django
-                somehow provides for us).
+            papers: a list of Django-objects that require their ID tasks + actions
+            updated. For example, if ID pages have been replaced then any existing
+            ID tasks + actions need to be set as out-of-date and new ID tasks
+            need to be instantiated.
 
-        Instead of looping over all of the ``Paper`` objects and doing
-        ``.save()``, we do some bulk updating to try to minimize the
-        number of overall database transactions.  Presumably the
-        caller will have gone to some effort to *build* the input list
-        of `papers` in a way that also minimizes database queries.
-        TODO: is this why its a list and not a ``QuerySet``?
         """
         with transaction.atomic():
             old_tasks = PaperIDTask.objects.filter(paper__in=papers)
