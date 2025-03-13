@@ -130,7 +130,8 @@
                                                 data-bs-target="#collapse-{{ forloop.counter }}"
                                                 aria-expanded="false"
                                                 aria-controls="collapse-{{ forloop.counter }}">
-                                            Revision {{ revision.revision }} - by {{ revision.modified_by_user }}, {{ revision.last_modified|naturaltime }}
+                                            Revision {{ revision.revision }}.{{ revision.subrevision }}
+                                            - by {{ revision.modified_by_user }}, {{ revision.last_modified|naturaltime }}
                                         </button>
                                     </h2>
                                     <div id="collapse-{{ forloop.counter }}"

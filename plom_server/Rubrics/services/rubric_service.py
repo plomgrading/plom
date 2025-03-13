@@ -644,7 +644,7 @@ class RubricService:
 
     @staticmethod
     def get_past_revisions_by_rid(rid: int) -> list[Rubric]:
-        """Get all earlier revisions of a rubric by the rid, not including the latest one.
+        """Get all earlier available revisions of a rubric by the rid, not including the latest one.
 
         Args:
             rid: which rubric series to we want the past revisions of.
