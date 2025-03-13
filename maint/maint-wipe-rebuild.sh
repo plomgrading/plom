@@ -12,6 +12,6 @@
 # after Django-upgrades to regenerate the migration files that are
 # used to initialize the database.
 
-python plom_server/scripts/wipe_migrations.py
+python3 plom_server/scripts/wipe_migrations.py
 
-PYTHONPATH=. python manage.py makemigrations --no-header
+PYTHONPATH=. python3 manage.py makemigrations --no-header
