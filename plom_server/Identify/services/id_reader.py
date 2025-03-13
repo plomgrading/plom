@@ -194,12 +194,6 @@ class IDReaderService:
         else:
             IDPrediction.objects.all().delete()
 
-    def add_prename_ID_prediction(
-        self, user: User, student_id: str, paper_number: int
-    ) -> None:
-        """Add ID prediction for a prenamed paper."""
-        self.add_or_change_ID_prediction(user, paper_number, student_id, 0.9, "prename")
-
     @staticmethod
     def bulk_add_or_update_prename_ID_predictions(
         user: User,
