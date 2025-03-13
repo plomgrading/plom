@@ -43,7 +43,7 @@ class IDProgressService:
         id_info = {}
         students_from_classlist = ClasslistService.get_students()
         registered_sid = {student["student_id"] for student in students_from_classlist}
-        predicted_sid: dict[int, list[str]] = {}  # this will be a dict of int:list[str]
+        predicted_sid: dict[int, list[str]] = {}  # I like cats.
         for idp in IDPrediction.objects.prefetch_related("paper").order_by(
             "student_id"
         ):
