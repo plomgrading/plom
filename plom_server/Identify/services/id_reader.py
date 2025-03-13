@@ -29,6 +29,7 @@ from plom.idreader.model_utils import load_model, download_model, is_model_prese
 from plom_server.Base.models import HueyTaskTracker
 from plom_server.Papers.models import Paper
 from plom_server.Papers.services import SpecificationService, PaperInfoService
+from plom_server.Preparation.services import StagingStudentService
 from plom_server.Rectangles.services import RectangleExtractor
 from ..models import PaperIDTask, IDPrediction, IDReadingHueyTaskTracker
 from ..services import IdentifyTaskService, ClasslistService
@@ -200,12 +201,11 @@ class IDReaderService:
         self.add_or_change_ID_prediction(user, paper_number, student_id, 0.9, "prename")
 
     @staticmethod
-    def bulk_add_prename_ID_predictions(
+    def bulk_add_or_update_prename_ID_predictions(
         user: User,
         papers: list[Paper],
-        prenamed_papers: dict[int, tuple[str, str]],
     ) -> None:
-        """Update the system for changes to papers and prenamed papers.
+        """Update the system for changes to prenamed papers.
 
         Args:
             user: who should new prenames be associated with. Any
@@ -213,10 +213,9 @@ class IDReaderService:
             papers: a list of Paper objects that have been updated
                 (elsewhere in the system - eg ID page uploaded or changed)
                 and so need their prename-predictions updated.
-            prenamed_papers: a list all prenamed papers in the system
-                (ie that the user set when the classlist was uploaded).
-                It does not have to correspond to a subset of papers.
         """
+        # get dict of all prenamed papers (as per classlist)
+        prenamed_papers = StagingStudentService.get_prenamed_papers()
         # find existing prename-predictions from these papers
         existing_prename_predictions = {}
         for pred in IDPrediction.objects.filter(

@@ -267,7 +267,6 @@ class ImageBundleService:
         from plom_server.Mark.services import MarkingTaskService
         from plom_server.Identify.services import IdentifyTaskService
         from plom_server.Identify.services import IDReaderService
-        from plom_server.Preparation.services import StagingStudentService
 
         # bulk create the associated marking tasks in O(1)
         ready, notready = self.get_ready_and_not_ready_questions(uploaded_bundle)
@@ -279,10 +278,7 @@ class ImageBundleService:
         ]
         IdentifyTaskService.bulk_create_id_tasks(papers)
         # now create any prename-predictions
-        prenamed_papers = StagingStudentService.get_prenamed_papers()
-        IDReaderService.bulk_add_prename_ID_predictions(
-            user_obj, papers, prenamed_papers
-        )
+        IDReaderService.bulk_add_or_update_prename_ID_predictions(user_obj, papers)
 
     def get_staged_img_location(
         self, staged_image: StagingImage
