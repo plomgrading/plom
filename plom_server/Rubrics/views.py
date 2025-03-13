@@ -230,14 +230,15 @@ class RubricItemView(UpdateView, ManagerRequiredView):
     def get(self, request: HttpRequest, *, rid: int) -> HttpResponse:
         """Get a rubric item."""
         template_name = "Rubrics/rubric_item.html"
-        rs = RubricService()
         question_max_marks_dict = SpecificationService.get_questions_max_marks()
 
         context = self.build_context()
 
-        rubric = rs.get_rubric_by_rid(rid)
-        revisions = rs.get_past_revisions_by_rid(rid)
-        marking_tasks = rs.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
+        rubric = RubricService.get_rubric_by_rid(rid)
+        revisions = RubricService.get_past_revisions_by_rid(rid)
+        marking_tasks = (
+            RubricService.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
+        )
         rubric_form = RubricItemForm(instance=rubric)
         # TODO: does this enumerate serve any purpose?  workaround for...?
         for _, task in enumerate(marking_tasks):
@@ -245,7 +246,7 @@ class RubricItemView(UpdateView, ManagerRequiredView):
                 task.latest_annotation.score
             )
 
-        rubric_as_html = rs.get_rubric_as_html(rubric)
+        rubric_as_html = RubricService.get_rubric_as_html(rubric)
         # TODO: consider getting rid of this dumps stuff...  maybe plain ol' list?
         context.update(
             {
@@ -268,8 +269,7 @@ class RubricItemView(UpdateView, ManagerRequiredView):
         form = RubricItemForm(request.POST)
 
         if form.is_valid():
-            rs = RubricService()
-            rubric = rs.get_rubric_by_rid(rid)
+            rubric = RubricService.get_rubric_by_rid(rid)
             for key, value in form.cleaned_data.items():
                 rubric.__setattr__(key, value)
             rubric.save()
@@ -481,7 +481,7 @@ class RubricEditView(ManagerRequiredView):
         if not form.is_valid():
             messages.error(request, f"invalid form data: {form.errors}")
             return redirect("rubric_item", rid)
-        rubric = RubricService().get_rubric_by_rid(rid)
+        rubric = RubricService.get_rubric_by_rid(rid)
         rubric_data = {
             "username": request.user.username,
             "text": form.cleaned_data["text"],

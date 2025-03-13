@@ -528,7 +528,7 @@ class RubricServiceTests(TestCase):
             d["value"] = 2.0
             d["username"] = username
             # update the revision
-            d["revision"] = RubricService().get_rubric_by_rid(rid).revision
+            d["revision"] = RubricService.get_rubric_by_rid(rid).revision
 
             r = RubricService.modify_rubric(rid, d)
             self.assertEqual(r["rid"], rubric.rid)
@@ -542,7 +542,7 @@ class RubricServiceTests(TestCase):
             d["out_of"] = 3.0
             d["username"] = username
             # update the revision
-            d["revision"] = RubricService().get_rubric_by_rid(rid).revision
+            d["revision"] = RubricService.get_rubric_by_rid(rid).revision
 
             r = RubricService.modify_rubric(rid, d)
             self.assertEqual(r["rid"], rubric.rid)

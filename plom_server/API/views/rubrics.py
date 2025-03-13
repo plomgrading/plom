@@ -42,8 +42,7 @@ class MgetRubricsByQuestion(APIView):
 
 class MgetRubricPanes(APIView):
     def get(self, request: Request, *, username: str, question: int) -> Response:
-        rs = RubricService()
-        pane = rs.get_rubric_pane(request.user, question)
+        pane = RubricService.get_rubric_pane(request.user, question)
         return Response(pane, status=status.HTTP_200_OK)
 
     def put(self, request: Request, *, username: str, question: int) -> Response:
@@ -155,15 +154,13 @@ class MgetRubricMarkingTasks(APIView):
         the `latest_annotation` field contains a unusable URL (Issue #3521).
         TODO: Similarly, `paper` field is broken (Issue #3522).
         """
-        rs = RubricService()
-
         try:
-            rubric = rs.get_rubric_by_rid(rid)
+            rubric = RubricService.get_rubric_by_rid(rid)
         except ObjectDoesNotExist as e:
             return _error_response(
                 f"Rubric rid={rid} not found: {e}", status.HTTP_404_NOT_FOUND
             )
-        tasks = rs.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
+        tasks = RubricService.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
         serializer = MarkingTaskSerializer(
             tasks, many=True, context={"request": request}
         )

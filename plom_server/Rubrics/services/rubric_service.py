@@ -628,7 +628,8 @@ class RubricService:
         """How many rubrics in total (excluding revisions)."""
         return Rubric.objects.filter(latest=True).count()
 
-    def get_rubric_by_rid(self, rid: int) -> Rubric:
+    @staticmethod
+    def get_rubric_by_rid(rid: int) -> Rubric:
         """Get the latest rurbic revision by its rubric id.
 
         Args:
@@ -641,7 +642,8 @@ class RubricService:
         """
         return Rubric.objects.get(rid=rid, latest=True)
 
-    def get_past_revisions_by_rid(self, rid: int) -> list[Rubric]:
+    @staticmethod
+    def get_past_revisions_by_rid(rid: int) -> list[Rubric]:
         """Get all earlier revisions of a rubric by the rid, not including the latest one.
 
         Args:
@@ -882,7 +884,8 @@ class RubricService:
 
         Rubric.objects.all().select_for_update().delete()
 
-    def get_rubric_pane(self, user: User, question_idx: int) -> dict[str, Any]:
+    @staticmethod
+    def get_rubric_pane(user: User, question_idx: int) -> dict[str, Any]:
         """Gets a rubric pane for a user.
 
         Args:
@@ -925,8 +928,9 @@ class RubricService:
         """
         return rubric.annotations.all()
 
+    @staticmethod
     def get_marking_tasks_with_rubric_in_latest_annotation(
-        self, rubric: Rubric
+        rubric: Rubric,
     ) -> QuerySet[MarkingTask]:
         """Get the QuerySet of MarkingTasks that use this Rubric in their latest annotations.
 
@@ -1002,7 +1006,8 @@ class RubricService:
         user = User.objects.get(username=username)
         return Rubric.objects.filter(user=user)
 
-    def get_rubric_as_html(self, rubric: Rubric) -> str:
+    @staticmethod
+    def get_rubric_as_html(rubric: Rubric) -> str:
         """Gets a rubric as HTML.
 
         Args:
