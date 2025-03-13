@@ -113,7 +113,7 @@ class MarkingTaskService:
 
     @staticmethod
     @transaction.atomic
-    def bulk_create_marking_tasks(
+    def bulk_create_and_update_marking_tasks(
         paper_question_version_list: list[tuple[int, int, int]],
         *,
         copy_old_tags: bool = True,

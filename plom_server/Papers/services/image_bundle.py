@@ -270,7 +270,7 @@ class ImageBundleService:
 
         # bulk create the associated marking tasks in O(1)
         ready, notready = self.get_ready_and_not_ready_questions(uploaded_bundle)
-        MarkingTaskService.bulk_create_marking_tasks(ready)
+        MarkingTaskService.bulk_create_and_update_marking_tasks(ready)
 
         # bulk create the associated ID tasks in O(1).
         papers = [
