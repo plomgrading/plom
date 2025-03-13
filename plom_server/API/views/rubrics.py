@@ -113,12 +113,13 @@ class MmodifyRubric(APIView):
         # TODO: change is_minor_change default to `None`, add API extension
         # (maybe a "&" param) to support client-selection.
         try:
+            # TODO: default to major change: might reconsider, see also web editor default
             rubric_as_dict = RubricService.modify_rubric(
                 rid,
                 request.data["rubric"],
                 modifying_user=request.user,
                 tag_tasks=False,
-                is_minor_change=True,
+                is_minor_change=False,
             )
             # TODO: use a serializer to get automatic conversion from Rubric object?
             return Response(rubric_as_dict, status=status.HTTP_200_OK)
