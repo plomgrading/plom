@@ -350,6 +350,9 @@ migrations-uptodate:
   stage: test
   needs: ["container-image"]
   image: $IM
+  before_script:
+    - apt-get update
+    - apt-get --no-install-recommends --yes install git
   script:
     - PYTHONPATH=. python3 manage.py makemigrations --update --check
     # now check we can wipe and rebuild
