@@ -1,3 +1,6 @@
+# Colin testing by making a change directly to this autogen file
+# I am expecting CI to notice and fail.
+
 import django.utils.timezone
 from django.db import migrations, models
 

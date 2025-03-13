@@ -352,6 +352,14 @@ migrations-uptodate:
   image: $IM
   script:
     - PYTHONPATH=. python3 manage.py makemigrations --update --check
+    # now check we can wipe and rebuild
+    - ./maint/maint-wipe-rebuild.sh
+    - git diff
+    - DIFFLEN=`git diff | wc -l`
+    - echo $DIFFLEN
+    # diff should be effectively zero
+    - bash -c "[[ $DIFFLEN -le 5 ]]"
+
 
 
 # needs full dependencies, cannot easily run with other early static analysis
