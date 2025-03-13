@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2024 Colin B. Macdonald
+    Copyright (C) 2024-2025 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
 -->
 {% extends "base/base.html" %}
@@ -20,7 +20,7 @@
     <div class="card my-2">
         <div class="card-body">
             <div class="row">
-                <h5>Complete papers: {{ number_of_completed_papers }}</h5>
+                <h5>Complete papers: {{ number_of_complete_papers }}</h5>
                 <div class="col">
                     <div class="card">
                         <div class="card-body">
@@ -32,7 +32,7 @@
                                             <th>Pages</th>
                                         </tr>
                                     </thead>
-                                    {% for pn,pages in completed_papers_list %}
+                                    {% for pn, pages in complete_papers_list %}
                                         <tr>
                                             <td>{{ pn }}</td>
                                             <td>

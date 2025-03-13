@@ -123,12 +123,20 @@ class ManageScanService:
         # paper is not completely scanned in those cases
         return False
 
+    @staticmethod
     @transaction.atomic
-    def get_all_completed_test_papers(self) -> dict[int, dict[str, Any]]:
-        """Return dict of test-papers that have been completely scanned.
+    def get_all_complete_papers() -> dict[int, dict[str, list[dict[str, Any]]]]:
+        """Dicts of info about papers that are completely scanned.
 
         A paper is complete when it either has **all** its fixed
         pages, or it has no fixed pages but has some extra-pages.
+
+        Returns:
+            Dict keyed by paper number and then for each we have keys
+            "fixed" and "mobile".  Under each of those we have a list of
+            dicts of key-value pairs about pages.  The information in
+            "fixed" and "mobile" case is different, for example "mobile"
+            have page labels and "fixed" do not.
         """
         # Subquery of fixed pages with no image
         fixed_with_no_scan = FixedPage.objects.filter(paper=OuterRef("pk"), image=None)
@@ -177,7 +185,7 @@ class ManageScanService:
         # in a specified order, and ref the image in those mobile-pages
         # we do all this prefetching.
 
-        complete: dict[int, dict[str, Any]] = {}
+        complete: dict[int, Any] = {}  # more precise typing in defn
         for paper in all_fixed_present:
             complete[paper.paper_number] = {"fixed": [], "mobile": []}
             # notice we don't specify order or prefetch in the loops
@@ -217,11 +225,19 @@ class ManageScanService:
                 )
         return complete
 
+    @staticmethod
     @transaction.atomic
-    def get_all_incomplete_test_papers(self) -> dict[int, dict[str, Any]]:
-        """Return a dict of test-papers that are partially but not completely scanned.
+    def get_all_incomplete_papers() -> dict[int, dict[str, list[dict[str, Any]]]]:
+        """Dicts of info about papers that are partially but not completely scanned.
 
         A paper is not completely scanned when it has *some* but not all its fixed pages.
+
+        Returns:
+            Dict keyed by paper number and then for each we have keys
+            "fixed" and "mobile".  Under each of those we have a list of
+            dicts of key-value pairs about pages.  The information in
+            "fixed" and "mobile" case is different, for example "mobile"
+            have page labels and "fixed" do not.
         """
         # Get fixed pages with no image - ie not scanned.
         fixed_with_no_scan = FixedPage.objects.filter(
@@ -247,7 +263,7 @@ class ManageScanService:
             "mobilepage_set__image",
         )
 
-        incomplete: dict[int, dict[str, Any]] = {}
+        incomplete: dict[int, Any] = {}  # more precise typing in defn
         for paper in some_but_not_all_fixed_present:
             incomplete[paper.paper_number] = {"fixed": [], "mobile": []}
             for fp in paper.fixedpage_set.all():
@@ -326,11 +342,14 @@ class ManageScanService:
 
         return no_images_at_all.count()
 
+    @staticmethod
     @transaction.atomic
-    def get_all_unused_test_papers(self) -> list[int]:
+    def get_all_unused_papers() -> list[int]:
         """Return a list of paper-numbers of all unused test-papers. Is sorted into paper-number order.
 
         A paper is unused when it has no fixed page images nor any mobile pages.
+
+        TODO: currently, and ironically, "unused" (but tested)
         """
         # Get fixed pages with image - ie scanned.
         fixed_with_scan = FixedPage.objects.filter(
@@ -342,9 +361,10 @@ class ManageScanService:
         )
         return sorted([paper.paper_number for paper in no_images_at_all])
 
+    @staticmethod
     @transaction.atomic
-    def get_all_used_test_papers(self) -> list[int]:
-        """Return a list of paper-numbers of all used test-papers. Is sorted into paper-number order.
+    def get_all_used_papers() -> list[int]:
+        """Return a list of paper-numbers of all used papers. Is sorted into paper-number order.
 
         A paper is used when it has at least one fixed page image or any mobile page.
         """

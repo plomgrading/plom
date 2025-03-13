@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -13,34 +13,36 @@ from ..services import ManageScanService
 
 
 class ScannerCompletePaperView(ScannerRequiredView):
-    def get(self, request: HttpRequest) -> HttpResponse:
-        mss = ManageScanService()
+    """View for Complete Scans page."""
 
-        # this is a dict - key is paper_number, value = list of pages
-        completed_papers_dict = mss.get_all_completed_test_papers()
-        # turn into list of tuples (key, value) ordered by key
-        completed_papers_list = [
-            (pn, pgs) for pn, pgs in sorted(completed_papers_dict.items())
+    def get(self, request: HttpRequest) -> HttpResponse:
+        """Render a page of information about scans that are complete."""
+        # dict keyed by paper_number, contents a bit complicated
+        complete_papers_dict = ManageScanService.get_all_complete_papers()
+        # turn into list of tuples (papernum, value) ordered by papernum
+        complete_papers_list = [
+            (pn, pgs) for pn, pgs in sorted(complete_papers_dict.items())
         ]
 
         context = self.build_context()
         context.update(
             {
                 "current_page": "complete",
-                "number_of_completed_papers": len(completed_papers_dict),
-                "completed_papers_list": completed_papers_list,
+                "number_of_complete_papers": len(complete_papers_dict),
+                "complete_papers_list": complete_papers_list,
             }
         )
         return render(request, "Scan/scan_complete.html", context)
 
 
 class ScannerIncompletePaperView(ScannerRequiredView):
-    def get(self, request: HttpRequest) -> HttpResponse:
-        mss = ManageScanService()
+    """View for Incomplete Scans page."""
 
-        # this is a dict - key is paper_number, value = list of pages
-        incomplete_papers_dict = mss.get_all_incomplete_test_papers()
-        # turn into list of tuples (key, value) ordered by key
+    def get(self, request: HttpRequest) -> HttpResponse:
+        """Render a page of information about scans that are incomplete."""
+        # dict keyed by paper_number, contents a bit complicated
+        incomplete_papers_dict = ManageScanService.get_all_incomplete_papers()
+        # turn into list of tuples (papernum, value) ordered by papernum
         incomplete_papers_list = [
             (pn, pgs) for pn, pgs in sorted(incomplete_papers_dict.items())
         ]
