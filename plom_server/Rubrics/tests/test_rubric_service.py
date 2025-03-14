@@ -523,12 +523,11 @@ class RubricServiceTests(TestCase):
             self.assertEqual(r["kind"], d["kind"])
             self.assertEqual(r["display_delta"], d["display_delta"])
 
+            d = r
             d["kind"] = "relative"
             d["display_delta"] = "+2"
             d["value"] = 2.0
             d["username"] = username
-            # update the revision
-            d["revision"] = RubricService.get_rubric_by_rid(rid).revision
 
             r = RubricService.modify_rubric(rid, d)
             self.assertEqual(r["rid"], rubric.rid)
@@ -536,13 +535,12 @@ class RubricServiceTests(TestCase):
             self.assertEqual(r["display_delta"], d["display_delta"])
             self.assertEqual(r["value"], d["value"])
 
+            d = r
             d["kind"] = "absolute"
             d["display_delta"] = "2 of 3"
             d["value"] = 2.0
             d["out_of"] = 3.0
             d["username"] = username
-            # update the revision
-            d["revision"] = RubricService.get_rubric_by_rid(rid).revision
 
             r = RubricService.modify_rubric(rid, d)
             self.assertEqual(r["rid"], rubric.rid)
