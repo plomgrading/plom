@@ -453,7 +453,7 @@ class RubricService:
                 "Your rubric is a change based on revision "
                 f'{new_rubric_data["revision"]}.{new_rubric_data["subrevision"]};'
                 " this does not match database content "
-                f"(revision {old_rubric.revision}.{old_rubric.revision}): "
+                f"(revision {old_rubric.revision}.{old_rubric.subrevision}): "
                 f"most likely your edits have collided with those of someone else."
             )
 
