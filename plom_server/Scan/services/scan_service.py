@@ -23,7 +23,6 @@ from django.contrib.auth.models import User
 from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models import prefetch_related_objects
 from django.forms import ValidationError
 from django.utils import timezone
 from django_huey import db_task
