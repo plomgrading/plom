@@ -747,16 +747,21 @@ class RubricServiceTests(TestCase):
         new = RubricService.modify_rubric(rid, data, is_minor_change=None)
         self.assertEqual(new["revision"], data["revision"])
 
-    def test_modify_force_major_minor_change_text(self) -> None:
+    def test_modify_force_minor_than_major_change_text(self) -> None:
         data = _Rubric_to_dict(self.absolute_rubric)
         rid = data["rid"]
-        data["text"] = "some brand new text"
+        data["text"] = data["text"] + "changing text"
         new1 = RubricService.modify_rubric(rid, data, is_minor_change=True)
+        # minor changes leaves revision unchanged and increases subrevision
         self.assertEqual(new1["revision"], data["revision"])
-        new2 = RubricService.modify_rubric(rid, data, is_minor_change=False)
-        self.assertEqual(new2["revision"], data["revision"] + 1)
-        # Perhaps we'd like to also test that new1 is not a new DB record
-        # and that new2 *is* a different DB record
+        self.assertEqual(new1["subrevision"], data["subrevision"] + 1)
+
+        # a subsequent major change
+        new1["text"] = new1["text"] + "more changes"
+        new2 = RubricService.modify_rubric(rid, new1, is_minor_change=False)
+        # major change increases revision and resets subrevision
+        self.assertEqual(new2["revision"], new1["revision"] + 1)
+        self.assertEqual(new2["subrevision"], 0)
 
     def test_modify_force_minor_change_value(self) -> None:
         data = _Rubric_to_dict(self.absolute_rubric)
@@ -764,5 +769,9 @@ class RubricServiceTests(TestCase):
         data["value"] += 1
         new1 = RubricService.modify_rubric(rid, data, is_minor_change=True)
         self.assertEqual(new1["revision"], data["revision"])
-        new2 = RubricService.modify_rubric(rid, data, is_minor_change=False)
-        self.assertEqual(new2["revision"], data["revision"] + 1)
+        self.assertEqual(new1["subrevision"], data["subrevision"] + 1)
+
+        new1["value"] += 1
+        new2 = RubricService.modify_rubric(rid, new1, is_minor_change=False)
+        self.assertEqual(new2["revision"], new1["revision"] + 1)
+        self.assertEqual(new2["subrevision"], 0)
