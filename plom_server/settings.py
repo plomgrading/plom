@@ -377,7 +377,7 @@ if PROFILER_SILK_ENABLED:
 
 # When hunting down n-plus-1 query problems make use of the nplusone package
 # https://github.com/jmcarp/nplusone
-PROFILER_NPLUSONE_ENABLED = True
+PROFILER_NPLUSONE_ENABLED = False
 if PROFILER_NPLUSONE_ENABLED:
     INSTALLED_APPS.append("nplusone.ext.django")
     MIDDLEWARE.append("nplusone.ext.django.NPlusOneMiddleware")
