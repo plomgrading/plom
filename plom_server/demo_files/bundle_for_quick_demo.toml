@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 
 # bundle 1
 [[bundles]]
 first_paper = 1
 last_paper = 10
-invalid_qr_papers = [10]
 
 
 # HW bundle 1
@@ -13,4 +12,4 @@ invalid_qr_papers = [10]
 paper_number = 21
 student_id = 98989898
 student_name = "Kenson, Ken"
-pages = [[1], [2], [], [2, 3], [3]]
+pages = [[1], [2], [], [2, 3], [3, 4]]
