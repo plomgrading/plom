@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Forest Kobayashi
@@ -23,6 +23,7 @@ from django.contrib.auth.models import User
 from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.db.models import prefetch_related_objects
 from django.forms import ValidationError
 from django.utils import timezone
 from django_huey import db_task
@@ -47,7 +48,7 @@ from plom.tpv_utils import (
 
 from plom_server.Papers.services import ImageBundleService, SpecificationService
 from plom_server.Papers.models import FixedPage
-from plom_server.Base.models import HueyTaskTracker
+from plom_server.Base.models import HueyTaskTracker, BaseImage
 from ..models import (
     StagingBundle,
     StagingImage,
@@ -401,9 +402,7 @@ class ScanService:
             info about the associated staging images.
         """
         return list(
-            StagingBundle.objects.all()
-            .prefetch_related("stagingimage_set", "user")
-            .order_by("-timestamp")
+            StagingBundle.objects.all().prefetch_related("user").order_by("-timestamp")
         )
 
     def get_most_recent_unpushed_bundle(self) -> StagingBundle | None:
@@ -1387,16 +1386,13 @@ class ScanService:
     def get_bundle_paper_numbers(bundle_obj: StagingBundle) -> list[int]:
         """Return a sorted list of paper-numbers in the given bundle as determined by known and extra pages."""
         paper_list = []
-        for img in bundle_obj.stagingimage_set.filter(
-            image_type=StagingImage.KNOWN
-        ).prefetch_related("knownstagingimage"):
-            paper_list.append(img.knownstagingimage.paper_number)
 
-        for img in bundle_obj.stagingimage_set.filter(
-            image_type=StagingImage.EXTRA
-        ).prefetch_related("extrastagingimage"):
-            if img.extrastagingimage.paper_number:
-                paper_list.append(img.extrastagingimage.paper_number)
+        for ksi in KnownStagingImage.objects.filter(staging_image__bundle=bundle_obj):
+            paper_list.append(ksi.paper_number)
+        for esi in ExtraStagingImage.objects.filter(staging_image__bundle=bundle_obj):
+            if esi.paper_number:
+                paper_list.append(esi.paper_number)
+
         return sorted(list(set(paper_list)))
 
     @transaction.atomic
@@ -1722,11 +1718,12 @@ def huey_parent_split_bundle_chore(
         with transaction.atomic():
             for X in results:
                 with open(X["file_path"], "rb") as fh:
-                    img = StagingImage.objects.create(
-                        bundle=bundle_obj,
-                        bundle_order=X["order"],
+                    bimg = BaseImage.objects.create(
                         image_file=File(fh, name=X["file_name"]),
                         image_hash=X["image_hash"],
+                    )
+                    img = StagingImage.objects.create(
+                        bundle=bundle_obj, bundle_order=X["order"], base_image=bimg
                     )
                 with open(X["thumb_path"], "rb") as fh:
                     StagingThumbnail.objects.create(
@@ -1972,8 +1969,8 @@ def huey_child_parse_qr_code(
     assert task is not None
     log.debug("Huey debug, we are task %s with id %s", task, task.id)
 
-    img = StagingImage.objects.get(pk=image_pk)
-    image_path = img.image_file.path
+    stimg = StagingImage.objects.get(pk=image_pk)
+    image_path = stimg.base_image.image_file.path
 
     scanner = ScanService()
 

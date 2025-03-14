@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 
@@ -294,6 +294,31 @@ class SettingsModel(SingletonABCModel):
         if not rules:
             return static_feedback_rules
         return rules
+
+
+class BaseImage(models.Model):
+    def _image_save_path(self, filename: str) -> str:
+        """Create a path to which the associated base image file should be saved.
+
+        Args:
+            filename: the name of the file to be saved at the created path.
+
+        Returns:
+            The string of the path to which the image file will be saved
+            (relative to the media directory, and including the actual filename).
+        """
+        return f"page_images/{filename}"
+
+    image_file = models.ImageField(
+        null=False,
+        upload_to=_image_save_path,
+        # tell Django where to automagically store height/width info on save
+        height_field="height",
+        width_field="width",
+    )
+    image_hash = models.CharField(null=True, max_length=64)
+    height = models.IntegerField(default=0)
+    width = models.IntegerField(default=0)
 
 
 # ---------------------------------

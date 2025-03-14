@@ -112,7 +112,10 @@ class ImageBundleService:
         bundle_images = StagingImage.objects.filter(
             bundle=staged_bundle
         ).prefetch_related(
-            "knownstagingimage", "extrastagingimage", "discardstagingimage"
+            "base_image",
+            "knownstagingimage",
+            "extrastagingimage",
+            "discardstagingimage",
         )
 
         # Staging has checked this - but we check again here to be very sure
@@ -165,7 +168,7 @@ class ImageBundleService:
             else:
                 prefix = ""
 
-            suffix = pathlib.Path(staged.image_file.name).suffix
+            suffix = pathlib.Path(staged.base_image.image_file.name).suffix
             return prefix + str(uuid.uuid4()) + suffix
 
         # we create all the images as O(n) but then update
@@ -193,7 +196,7 @@ class ImageBundleService:
             fixedpage_by_pn_pg[(fp.paper.paper_number, fp.page_number)].append(fp)
 
         for staged in bundle_images:
-            with staged.image_file.open("rb") as fh:
+            with staged.base_image.image_file.open("rb") as fh:
                 # ensure that a pushed image has a defined rotation
                 # hard-coded to set rotation=0 if no staging image rotation exists
                 # the use of rotation=None for StagingImages is currently unused,
@@ -205,9 +208,9 @@ class ImageBundleService:
                 image = Image(
                     bundle=uploaded_bundle,
                     bundle_order=staged.bundle_order,
-                    original_name=staged.image_file.name,
+                    original_name=staged.base_image.image_file.name,
                     image_file=File(fh, name=image_save_name(staged)),
-                    hash=staged.image_hash,
+                    hash=staged.base_image.image_hash,
                     rotation=rot_to_push,
                     parsed_qr=staged.parsed_qr,
                 )

@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2025 Colin B. Macdonald
 
 from django.db import models
 
 from ..models import StagingBundle
+from plom_server.Base.models import BaseImage
 
 
 class StagingImage(models.Model):
@@ -22,7 +23,7 @@ class StagingImage(models.Model):
             fractional rotations are handled elsewhere,
     """
 
-    # some implicit ctor is generating pylint errors:
+    # some implicit actor is generating pylint errors:
     # pylint: disable=too-many-function-args
     ImageTypeChoices = models.TextChoices(
         "ImageType", "UNREAD KNOWN UNKNOWN EXTRA DISCARD ERROR"
@@ -43,8 +44,7 @@ class StagingImage(models.Model):
     bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
     # starts from 1 not zero.
     bundle_order = models.PositiveIntegerField(null=True)
-    image_file = models.ImageField(upload_to=_staging_image_upload_path)
-    image_hash = models.CharField(max_length=64)
+    base_image = models.ForeignKey(BaseImage, on_delete=models.CASCADE)
     parsed_qr = models.JSONField(default=dict, null=True)
     rotation = models.IntegerField(null=True, default=None)
     pushed = models.BooleanField(default=False)
