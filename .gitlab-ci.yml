@@ -356,14 +356,15 @@ migrations-uptodate:
     - pip install black
   script:
     - PYTHONPATH=. python3 manage.py makemigrations --update --check
-    # now check we can wipe and rebuild
-    - export COLUMNS=80
+    - echo "Now check we can wipe and rebuild migrations"
     - ./maint/maint-wipe-rebuild.sh
+    - echo "We expect there to be no changes - its a potential problem if there are"
     - git diff
-    - DIFFLEN=`git diff | wc -l`
-    - echo $DIFFLEN
-    # diff should be effectively zero
-    - bash -c "[[ $DIFFLEN -le 5 ]]"
+    - echo "So we measure the length of the diff"
+    - DIFF_LENGTH=`git diff | wc -l`
+    - echo $DIFF_LENGTH
+    - echo "... and the test fails if the diff is too long"
+    - bash -c "[[ $DIFF_LENGTH -le 5 ]]"
 
 
 
