@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2022-2024 Andrew Rechnitzer
+# Copyright (C) 2022-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024 Colin B. Macdonald
 
@@ -22,6 +22,7 @@ from ..models import (
     QuestionPage,
     MobilePage,
 )
+from plom_server.Base.models import BaseImage
 
 
 class ImageBundleTests(TestCase):
@@ -49,12 +50,15 @@ class ImageBundleTests(TestCase):
         self.page1 = baker.make(DNMPage, paper=self.paper, page_number=2)
         # make a staged bundle with one known image.
         self.staged_bundle = baker.make(StagingBundle, pdf_hash="abcde", user=self.user)
+        self.staged_base_image = baker.make(
+            BaseImage,
+            image_hash="abcdef",
+        )
         self.staged_image = baker.make(
             StagingImage,
             bundle=self.staged_bundle,
             bundle_order=1,
-            # image_file="page2.png",
-            image_hash="abcdef",
+            base_image=self.staged_base_image,
             rotation=90,
             image_type=StagingImage.KNOWN,
             _create_files=True,  # argument to tell baker to actually make the file
@@ -309,13 +313,13 @@ class ImageBundleTests(TestCase):
         baker.make(QuestionPage, paper=paper2, page_number=1, question_index=1)
         baker.make(DNMPage, paper=paper3, page_number=2)
 
+        bimg1 = baker.make(BaseImage, image_hash="ghijk", _create_files=True)
         img1 = baker.make(
             StagingImage,
             bundle=bundle,
             parsed_qr={"NW": "abcde"},
-            image_hash="ghijk",
+            base_image=bimg1,
             image_type=StagingImage.KNOWN,
-            _create_files=True,
         )
         baker.make(
             KnownStagingImage,
@@ -324,12 +328,13 @@ class ImageBundleTests(TestCase):
             page_number=1,
             version=1,
         )
+        bimg2 = baker.make(BaseImage, image_hash="lmnop", _create_files=True)
         img2 = baker.make(
             StagingImage,
             bundle=bundle,
             parsed_qr={"NW": "abcde"},
+            base_image=bimg2,
             image_type=StagingImage.KNOWN,
-            _create_files=True,
         )
         baker.make(
             KnownStagingImage,
@@ -345,7 +350,7 @@ class ImageBundleTests(TestCase):
         self.assertEqual(Bundle.objects.all()[0].hash, bundle.pdf_hash)
         self.assertEqual(
             Image.objects.get(fixedpage__page_number=1, fixedpage__paper=paper2).hash,
-            img1.image_hash,
+            bimg1.image_hash,
         )
 
     def test_paper_question_ready(self) -> None:
