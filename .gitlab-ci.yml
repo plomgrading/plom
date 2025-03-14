@@ -367,7 +367,6 @@ migrations-uptodate:
     - bash -c "[[ $DIFF_LENGTH -le 5 ]]"
 
 
-
 # needs full dependencies, cannot easily run with other early static analysis
 pylint:
   stage: test
