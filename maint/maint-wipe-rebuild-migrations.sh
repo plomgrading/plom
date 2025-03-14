@@ -4,7 +4,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 
 # Run this script from the project root (where pyproject.toml is)
-#   ./maint/maint-wipe-rebuild.sh
+#   ./maint/maint-wipe-rebuild-migrations.sh
 #
 # As of 2025-03 we do not use "layered" migrations: we change the
 # database design only between major versions, and we rebuild from

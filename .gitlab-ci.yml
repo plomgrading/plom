@@ -357,7 +357,7 @@ migrations-uptodate:
   script:
     - PYTHONPATH=. python3 manage.py makemigrations --update --check
     - echo "Now check we can wipe and rebuild migrations"
-    - ./maint/maint-wipe-rebuild.sh
+    - ./maint/maint-wipe-rebuild-migrations.sh
     - echo "We expect there to be no changes - its a potential problem if there are"
     - git diff
     - echo "So we measure the length of the diff"
