@@ -213,7 +213,7 @@ class IDReaderService:
         # find existing prename-predictions from these papers
         existing_prename_predictions = {}
         for pred in IDPrediction.objects.filter(
-            predictor="prenanmed", paper__in=papers
+            predictor="prename", paper__in=papers
         ).prefetch_related("paper"):
             existing_prename_predictions[pred.paper.paper_number] = pred
         # find any existing predictions from these papers
@@ -241,7 +241,7 @@ class IDReaderService:
                     IDPrediction(
                         user=user,
                         paper=paper,
-                        predictor="prenamed",
+                        predictor="prename",
                         student_id=prenamed_papers[paper.paper_number][0],
                         certainty=0.9,
                     )

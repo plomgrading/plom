@@ -36,6 +36,9 @@ class IDPredictionView(ManagerRequiredView):
 
         # get all predictions.
         all_predictions = IDReaderService().get_ID_predictions()
+        print("#" * 50)
+        print(all_predictions)
+        print("#" * 50)
         id_task_info = IDProgressService().get_all_id_task_info()
         # massage it into a table
         prediction_table = {}

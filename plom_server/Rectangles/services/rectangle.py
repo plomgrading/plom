@@ -273,13 +273,19 @@ class RectangleExtractor:
         paper_obj = Paper.objects.get(paper_number=paper_number)
         if _version_ignore:
             print("recklessly ignoring the version...")
-            img_obj = FixedPage.objects.get(
-                page_number=self.page_number, paper=paper_obj
-            ).image
+            img_obj = (
+                FixedPage.objects.select_related("image", "image__base_image")
+                .get(page_number=self.page_number, paper=paper_obj)
+                .image
+            )
         else:
-            img_obj = FixedPage.objects.get(
-                version=self.version, page_number=self.page_number, paper=paper_obj
-            ).image
+            img_obj = (
+                FixedPage.objects.select_related("image", "image__base_image")
+                .get(
+                    version=self.version, page_number=self.page_number, paper=paper_obj
+                )
+                .image
+            )
 
         # rectangle to extract in ref-image-coords
         top = round(self.TOP + top_f * self.HEIGHT)
@@ -304,7 +310,9 @@ class RectangleExtractor:
         # the origin.
         M_s_to_r = self._get_perspective_transform_scan_to_ref(ref_rect, M_r_to_s)
         # now get the scan-image ready to extract the rectangle
-        pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(img_obj.image_file.path)
+        pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(
+            img_obj.base_image.image_file.path
+        )
         # Note: this `img_obj.rotation` is (currently) only 0, 90, 180, 270
         # (The small adjustments from true will be handled by warpPerspective)
         pil_img = pil_img.rotate(img_obj.rotation, expand=True)
