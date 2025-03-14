@@ -23,7 +23,7 @@ class StagingImage(models.Model):
             fractional rotations are handled elsewhere,
     """
 
-    # some implicit actor is generating pylint errors:
+    # some implicit constructor is generating pylint errors:
     # pylint: disable=too-many-function-args
     ImageTypeChoices = models.TextChoices(
         "ImageType", "UNREAD KNOWN UNKNOWN EXTRA DISCARD ERROR"
