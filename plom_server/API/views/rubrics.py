@@ -118,7 +118,8 @@ class MmodifyRubric(APIView):
             (e.g., two users have both modified the same rubric).
 
         """
-        is_minor_change = None
+        # TODO: default to major change: might reconsider, see also web editor default
+        is_minor_change = False
         if (
             "major_change" in request.query_params
             and "minor_change" in request.query_params
@@ -131,16 +132,15 @@ class MmodifyRubric(APIView):
         elif "minor_change" in request.query_params:
             is_minor_change = True
         else:
-            is_minor_change = None
+            # use the default value above
+            pass
 
+        # TODO: change to tri-state for auto (on for major change, off for minor)
         tag_tasks = False
         if "tag_tasks" in request.query_params:
             tag_tasks = True
 
-        print(f"DEBUG: passing is_minor_change={is_minor_change}")
-        print(f"DEBUG: passing tag_tags={tag_tasks}")
         try:
-            # TODO: default to major change: might reconsider, see also web editor default
             rubric_as_dict = RubricService.modify_rubric(
                 rid,
                 request.data["rubric"],
