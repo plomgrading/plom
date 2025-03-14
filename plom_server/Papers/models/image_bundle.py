@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2022-2025 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2025 Colin B. Macdonald
@@ -10,6 +10,7 @@ from django.db.models.query_utils import Q
 from django.contrib.auth.models import User
 
 from plom_server.Scan.models import StagingBundle
+from plom_server.Base.models import BaseImage
 
 
 class Bundle(models.Model):
@@ -61,10 +62,10 @@ class Image(models.Model):
     original_name (str): the name of the image-file when it was extracted
         from the bundle. Typically, this will be something like "foo-7.png",
         which also indicates that it was page-7 from the bundle foo.pdf"
-    image_file (ImageField): the django-imagefield storing the image for the server.
-        In the future this could be a url to some cloud storage. Note that this also
-        tells django where to automagically compute+store height/width information on save
-    hash (str): the sha256 hash of the image.
+
+    base_image (BaseImage): a key to the underlying base-image (which stores
+        the file, hash and other information.
+
     rotation (int): the angle to rotate the original image in order to give
         it the correct approximate orientation.  Currently this only deals
         with 0, 90, 180, 270, -90.  More precise fractional rotations are
@@ -72,54 +73,14 @@ class Image(models.Model):
 
     parsed_qr (dict): the JSON dict containing QR code information for the page image.
 
-    height (int): the height of the image in px (auto-populated on
-        save by django). Note that this height is the *raw* height in
-        pixels before any exif rotations and any plom rotations.
-
-    width (int): the width of the image in px (auto-populated on
-        save by django).  Note that this width is the *raw* width in
-        pixels before any exif rotations and any plom rotations.
     """
-
-    def _image_upload_path(self, filename: str) -> str:
-        """Create a path to which the associated file should be saved.
-
-        Given a image instance and a filename create a path to which
-        the associated file should be saved. We use this function to set
-        save-paths for pushed images rather than 'hand-coding' them
-        elsewhere.
-
-        Args:
-            filename: the name of the file to be saved at the created path.
-
-        Returns:
-            The string of the path to which the image file
-            will be saved (relative to the media directory, and including the
-            actual filename).
-        """
-        return f"pushed_images/{self.bundle.pk:05}/{filename}"
 
     bundle = models.ForeignKey(Bundle, on_delete=models.CASCADE)
     bundle_order = models.PositiveIntegerField(null=True)
     original_name = models.TextField(null=True)  # can be empty.
-    # using imagefield over filefield allows django to automagically compute
-    # height and width of the image - see django docs.
-    image_file = models.ImageField(
-        null=False,
-        upload_to=_image_upload_path,
-        # tell Django where to automagically store height/width info on save
-        height_field="height",
-        width_field="width",
-    )
-    hash = models.CharField(null=True, max_length=64)
+    base_image = models.ForeignKey(BaseImage, on_delete=models.PROTECT)
     rotation = models.IntegerField(null=False, default=0)
     parsed_qr = models.JSONField(default=dict, null=True)
-
-    # height and width fields auto-populated by django on save
-    # I don't think we use these *yet* but we may in the future
-    # These are raw height/width in pixels before any exif rotations or plom rotations.
-    height = models.IntegerField(default=0)
-    width = models.IntegerField(default=0)
 
 
 class DiscardPage(models.Model):

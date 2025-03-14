@@ -297,6 +297,24 @@ class SettingsModel(SingletonABCModel):
 
 
 class BaseImage(models.Model):
+    """
+    Table to store an image (usually a scanned page image)
+
+    image_file (ImageField): the django-imagefield storing the image for the server.
+        In the future this could be a url to some cloud storage. Note that this also
+        tells django where to automagically compute+store height/width information on save
+
+    image_hash (str): the sha256 hash of the image
+
+    height (int): the height of the image in px (auto-populated on
+        save by django). Note that this height is the *raw* height in
+        pixels before any exif rotations and any plom rotations.
+
+    width (int): the width of the image in px (auto-populated on
+        save by django).  Note that this width is the *raw* width in
+        pixels before any exif rotations and any plom rotations.
+    """
+
     def _image_save_path(self, filename: str) -> str:
         """Create a path to which the associated base image file should be saved.
 

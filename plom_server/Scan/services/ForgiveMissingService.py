@@ -13,6 +13,7 @@ from django.core.files import File
 from django.db import transaction, IntegrityError
 from django.contrib.auth.models import User
 
+from plom_server.Base.models import BaseImage
 from plom_server.Papers.models import (
     Bundle,
     Image,
@@ -191,12 +192,12 @@ def _create_all_substitute_pages(sys_sub_bundle_obj: Bundle) -> None:
         image_bytes = img_dat["bytes"]
         image_hash = hashlib.sha256(image_bytes).hexdigest()
         image_file = File(BytesIO(image_bytes), name=image_name)
+        bimg = BaseImage.objects.create(image_file=image_file, image_hash=image_hash)
         Image.objects.create(
             bundle=sys_sub_bundle_obj,
             bundle_order=bundle_order,
             original_name=image_name,
-            image_file=image_file,
-            hash=image_hash,
+            base_image=bimg,
             parsed_qr={},
             rotation=0,
         )
@@ -215,12 +216,14 @@ def get_substitute_image(page_number: int, version: int) -> Image:
     # bundle_order = version*number of pages + page_number
     n_pages = SpecificationService.get_n_pages()  # 1-indexed
     bundle_order = n_pages * version + page_number
-    return Image.objects.get(bundle=bundle_obj, bundle_order=bundle_order)
+    return Image.objects.select_related("base_image").get(
+        bundle=bundle_obj, bundle_order=bundle_order
+    )
 
 
 def get_substitute_image_from_pk(image_pk: int) -> Image:
     """Return the Image object with the given pk."""
-    return Image.objects.get(pk=image_pk)
+    return Image.objects.select_related("base_image").get(pk=image_pk)
 
 
 def erase_all_substitute_images_and_their_bundle() -> None:
@@ -237,6 +240,7 @@ def erase_all_substitute_images_and_their_bundle() -> None:
             return
         for X in sys_sub_bundle_obj.image_set.all():
             X.delete()
+            X.base_image.delete()
         sys_sub_bundle_obj.delete()
 
 

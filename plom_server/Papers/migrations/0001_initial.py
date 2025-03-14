@@ -1,5 +1,4 @@
 import django.db.models.deletion
-import plom_server.Papers.models.image_bundle
 from django.conf import settings
 from django.db import migrations, models
 
@@ -328,19 +327,14 @@ class Migration(migrations.Migration):
                 ),
                 ("bundle_order", models.PositiveIntegerField(null=True)),
                 ("original_name", models.TextField(null=True)),
-                (
-                    "image_file",
-                    models.ImageField(
-                        height_field="height",
-                        upload_to=plom_server.Papers.models.image_bundle.Image._image_upload_path,
-                        width_field="width",
-                    ),
-                ),
-                ("hash", models.CharField(max_length=64, null=True)),
                 ("rotation", models.IntegerField(default=0)),
                 ("parsed_qr", models.JSONField(default=dict, null=True)),
-                ("height", models.IntegerField(default=0)),
-                ("width", models.IntegerField(default=0)),
+                (
+                    "base_image",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT, to="Base.baseimage"
+                    ),
+                ),
                 (
                     "bundle",
                     models.ForeignKey(

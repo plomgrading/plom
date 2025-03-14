@@ -21,6 +21,7 @@ from plom.plom_exceptions import PlomPushCollisionException
 from plom.misc_utils import format_int_list_with_runs
 from plom_server.Scan.models import StagingImage, StagingBundle
 from plom_server.Preparation.services import PapersPrinted
+from plom_server.Base.models import BaseImage
 from ..models import (
     Bundle,
     Image,
@@ -209,8 +210,7 @@ class ImageBundleService:
                     bundle=uploaded_bundle,
                     bundle_order=staged.bundle_order,
                     original_name=staged.base_image.image_file.name,
-                    image_file=File(fh, name=image_save_name(staged)),
-                    hash=staged.base_image.image_hash,
+                    base_image=staged.base_image,
                     rotation=rot_to_push,
                     parsed_qr=staged.parsed_qr,
                 )
