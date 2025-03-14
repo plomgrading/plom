@@ -292,7 +292,7 @@ class ReassembleService:
                 "student_id": "",
                 "last_update": None,
                 "last_update_humanised": None,
-                "reassembled_status": "",
+                "reassembled_status": "To Do",
                 "reassembled_time": None,
                 "reassembled_time_humanised": None,
                 "outdated": False,
