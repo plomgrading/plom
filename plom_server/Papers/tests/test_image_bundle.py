@@ -349,7 +349,9 @@ class ImageBundleTests(TestCase):
 
         self.assertEqual(Bundle.objects.all()[0].hash, bundle.pdf_hash)
         self.assertEqual(
-            Image.objects.get(fixedpage__page_number=1, fixedpage__paper=paper2).hash,
+            Image.objects.get(
+                fixedpage__page_number=1, fixedpage__paper=paper2
+            ).base_image.image_hash,
             bimg1.image_hash,
         )
 

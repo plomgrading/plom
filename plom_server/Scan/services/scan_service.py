@@ -1513,6 +1513,7 @@ class ScanService:
     def get_bundle_discard_pages_info(
         self, bundle_obj: StagingBundle
     ) -> list[dict[str, Any]]:
+        """Get information about the discard pages within the given staged bundle."""
         # compute number of digits in longest page number to pad the page numbering
         n_digits = len(str(bundle_obj.number_of_pages))
 
@@ -1537,6 +1538,7 @@ class ScanService:
     def get_bundle_discard_pages_info_cmd(
         self, bundle_name: str
     ) -> list[dict[str, Any]]:
+        """Wrapper around get_bundle_discard_pages_info function."""
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist:
