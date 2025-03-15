@@ -11,7 +11,6 @@ import uuid
 from collections import defaultdict
 
 from django.contrib.auth.models import User
-from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import QuerySet
@@ -21,7 +20,6 @@ from plom.plom_exceptions import PlomPushCollisionException
 from plom.misc_utils import format_int_list_with_runs
 from plom_server.Scan.models import StagingImage, StagingBundle
 from plom_server.Preparation.services import PapersPrinted
-from plom_server.Base.models import BaseImage
 from ..models import (
     Bundle,
     Image,
@@ -197,24 +195,23 @@ class ImageBundleService:
             fixedpage_by_pn_pg[(fp.paper.paper_number, fp.page_number)].append(fp)
 
         for staged in bundle_images:
-            with staged.base_image.image_file.open("rb") as fh:
-                # ensure that a pushed image has a defined rotation
-                # hard-coded to set rotation=0 if no staging image rotation exists
-                # the use of rotation=None for StagingImages is currently unused,
-                # but could be in future for user scanning orientation default: see #1825 and #2050
-                if staged.rotation is None:
-                    rot_to_push = 0
-                else:
-                    rot_to_push = staged.rotation
-                image = Image(
-                    bundle=uploaded_bundle,
-                    bundle_order=staged.bundle_order,
-                    original_name=staged.base_image.image_file.name,
-                    base_image=staged.base_image,
-                    rotation=rot_to_push,
-                    parsed_qr=staged.parsed_qr,
-                )
-                image.save()
+            # ensure that a pushed image has a defined rotation
+            # hard-coded to set rotation=0 if no staging image rotation exists
+            # the use of rotation=None for StagingImages is currently unused,
+            # but could be in future for user scanning orientation default: see #1825 and #2050
+            if staged.rotation is None:
+                rot_to_push = 0
+            else:
+                rot_to_push = staged.rotation
+            image = Image(
+                bundle=uploaded_bundle,
+                bundle_order=staged.bundle_order,
+                original_name=staged.base_image.image_file.name,
+                base_image=staged.base_image,
+                rotation=rot_to_push,
+                parsed_qr=staged.parsed_qr,
+            )
+            image.save()
 
             if staged.image_type == StagingImage.KNOWN:
                 known = staged.knownstagingimage

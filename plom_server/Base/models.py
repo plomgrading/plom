@@ -297,8 +297,7 @@ class SettingsModel(SingletonABCModel):
 
 
 class BaseImage(models.Model):
-    """
-    Table to store an image (usually a scanned page image)
+    """Table to store an image (usually a scanned page image).
 
     image_file (ImageField): the django-imagefield storing the image for the server.
         In the future this could be a url to some cloud storage. Note that this also
