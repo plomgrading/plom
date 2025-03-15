@@ -144,11 +144,13 @@ class ReassembleService:
             giving the path to the image and the rotation angle of the
             image.  If there is no ID page image we get an empty list.
         """
-        id_page_obj = IDPage.objects.get(paper=paper)
+        id_page_obj = IDPage.objects.select_related("image", "image__base_image").get(
+            paper=paper
+        )
         if id_page_obj.image:
             return [
                 {
-                    "filename": id_page_obj.image.image_file.path,
+                    "filename": id_page_obj.image.base_image.image_file.path,
                     "rotation": id_page_obj.image.rotation,
                 }
             ]
@@ -166,10 +168,12 @@ class ReassembleService:
             giving the path to the image and the rotation angle of the
             image.
         """
-        dnm_pages = DNMPage.objects.filter(paper=paper)
+        dnm_pages = DNMPage.objects.filter(paper=paper).prefetch_related(
+            "image", "image__base_image"
+        )
         dnm_images = [dnmpage.image for dnmpage in dnm_pages if dnmpage.image]
         return [
-            {"filename": img.image_file.path, "rotation": img.rotation}
+            {"filename": img.base_image.image_file.path, "rotation": img.rotation}
             for img in dnm_images
         ]
 
@@ -190,9 +194,12 @@ class ReassembleService:
         """
         nonmarked = MobilePage.objects.filter(
             paper=paper, question_index=MobilePage.DNM_qidx
-        )
+        ).prefetch_related("image", "image__base_image")
         return [
-            {"filename": img.image.image_file.path, "rotation": img.image.rotation}
+            {
+                "filename": img.image.base_image.image_file.path,
+                "rotation": img.image.rotation,
+            }
             for img in nonmarked
         ]
 
