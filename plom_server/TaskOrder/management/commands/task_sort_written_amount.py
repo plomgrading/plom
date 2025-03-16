@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 import csv
 
@@ -180,7 +180,7 @@ class Command(BaseCommand):
 
         with open(filename, "w") as f:
             writer = csv.writer(f)
-            writer.writerow(["Paper Number", "Question Number", "Priority Value"])
+            writer.writerow(["Paper Number", "Question Index", "Priority Value"])
             for i, (k, th_sum) in enumerate(sorted_imgs.items()):
                 paper_number, question_idx = k  # unpack key
                 # TODO: could save grey value th_sum in new column...
