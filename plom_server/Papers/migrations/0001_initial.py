@@ -203,7 +203,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("name", models.TextField()),
-                ("hash", models.CharField(max_length=64)),
+                ("pdf_hash", models.CharField(max_length=64)),
                 ("_is_system", models.BooleanField(default=False)),
                 ("time_of_last_update", models.DateTimeField(auto_now=True)),
                 (
@@ -450,7 +450,7 @@ class Migration(migrations.Migration):
             model_name="bundle",
             constraint=models.UniqueConstraint(
                 condition=models.Q(("_is_system", True)),
-                fields=("name", "hash"),
+                fields=("name", "pdf_hash"),
                 name="unique_system_bundles",
             ),
         ),

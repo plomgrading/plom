@@ -44,9 +44,9 @@ class Bundle(models.Model):
 
     class Meta:
         constraints = [
-            # This constraint checks that each name-hash pair is unique, when is_system is set
+            # Check that each name-pdf_hash pair is unique, when is_system is set
             models.UniqueConstraint(
-                fields=["name", "hash"],
+                fields=["name", "pdf_hash"],
                 condition=Q(_is_system=True),
                 name="unique_system_bundles",
             ),
