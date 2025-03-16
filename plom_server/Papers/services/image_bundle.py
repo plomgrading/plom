@@ -37,20 +37,20 @@ from .paper_info import PaperInfoService
 class ImageBundleService:
     """Class to encapsulate all functions around validated page images and bundles."""
 
-    def create_bundle(self, name: str, hash: str) -> Bundle:
+    def create_bundle(self, name: str, pdf_hash: str) -> Bundle:
         """Create a bundle and store its name and sha256 hash."""
-        if Bundle.objects.filter(hash=hash).exists():
+        if Bundle.objects.filter(pdf_hash=pdf_hash).exists():
             raise RuntimeError("A bundle with that hash already exists.")
-        bundle = Bundle.objects.create(name=name, hash=hash)
+        bundle = Bundle.objects.create(name=name, pdf_hash=pdf_hash)
         return bundle
 
-    def get_bundle(self, hash: str) -> Bundle:
+    def get_bundle(self, pdf_hash: str) -> Bundle:
         """Get a bundle from its hash."""
-        return Bundle.objects.get(hash=hash)
+        return Bundle.objects.get(pdf_hash=hash)
 
-    def get_or_create_bundle(self, name: str, hash: str) -> Bundle:
+    def get_or_create_bundle(self, name: str, pdf_hash: str) -> Bundle:
         """Get a Bundle instance, or create if it doesn't exist."""
-        if not Bundle.objects.filter(hash=hash).exists():
+        if not Bundle.objects.filter(pdf_hash=pdf_hash).exists():
             return self.create_bundle(name, hash)
         else:
             return self.get_bundle(hash)
@@ -142,7 +142,7 @@ class ImageBundleService:
 
         uploaded_bundle = Bundle(
             name=staged_bundle.slug,
-            hash=staged_bundle.pdf_hash,
+            pdf_hash=staged_bundle.pdf_hash,
             user=user_obj,
             staging_bundle=staged_bundle,
         )

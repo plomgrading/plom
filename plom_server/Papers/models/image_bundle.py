@@ -22,7 +22,7 @@ class Bundle(models.Model):
 
     name (str): The name of the pdf/bundle (ie just the stem of the
         bundle's path)
-    hash (str): Generally the sha256 of the bundle/pdf file, although
+    pdf_hash (str): Generally the sha256 of the bundle/pdf file, although
         special cases it could be something else (e.g., there is special
         bundle for substitute pages in ForgiveMissingService.py)
     _is_system: if the bundle is a system bundle then allow one bundle
@@ -34,7 +34,7 @@ class Bundle(models.Model):
     """
 
     name = models.TextField(null=False)
-    hash = models.CharField(null=False, max_length=64)
+    pdf_hash = models.CharField(null=False, max_length=64)
     _is_system = models.BooleanField(default=False)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     time_of_last_update = models.DateTimeField(auto_now=True)

@@ -180,7 +180,7 @@ class ScannerUploadView(ScannerRequiredView):
             slug,
             user,
             timestamp=timestamp,
-            file_hash=pdf_hash,
+            pdf_hash=pdf_hash,
             number_of_pages=number_of_pages,
             force_render=data["force_render"],
             read_after=data["read_after"],

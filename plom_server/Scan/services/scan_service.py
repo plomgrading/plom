@@ -82,7 +82,7 @@ class ScanService:
         user: User,
         *,
         timestamp: float | None = None,
-        file_hash: str = "",
+        pdf_hash: str = "",
         number_of_pages: int | None = None,
         force_render: bool = False,
         read_after: bool = False,
@@ -107,7 +107,7 @@ class ScanService:
         Keyword Args:
             timestamp: the timestamp of the time at which the file was
                 uploaded.  If omitted, we'll use right now.
-            file_hash: the sha256 of the pdf file.  If omitted, we will
+            pdf_hash: the sha256 of the pdf file.  If omitted, we will
                 compute it.
             number_of_pages: the number of pages in the pdf, can be None
                 if we don't know yet.
@@ -135,8 +135,8 @@ class ScanService:
         except OSError as err:
             raise ValidationError(f"Unexpected error handling file: {err}") from err
 
-        if not file_hash:
-            file_hash = hashlib.sha256(file_bytes).hexdigest()
+        if not pdf_hash:
+            pdf_hash = hashlib.sha256(file_bytes).hexdigest()
 
         try:
             with pymupdf.open(stream=file_bytes) as pdf_doc:
@@ -163,11 +163,11 @@ class ScanService:
         # Warning: Issue #2888, and https://gitlab.com/plom/plom/-/merge_requests/2361
         # strange behaviour can result from relaxing this durable=True
         with transaction.atomic(durable=True):
-            existing = StagingBundle.objects.filter(pdf_hash=file_hash)
+            existing = StagingBundle.objects.filter(pdf_hash=pdf_hash)
             if existing:
                 raise PlomConflict(
                     f"Bundle(s) {[x.slug for x in existing]} with the"
-                    f" same file hash {file_hash} have already uploaded"
+                    f" same file hash {pdf_hash} have already uploaded"
                 )
             # create the bundle first, so it has a pk and
             # then give it the file and resave it.
@@ -179,7 +179,7 @@ class ScanService:
                 force_page_render=force_render,
             )
             bundle_obj.pdf_file = File(BytesIO(file_bytes), name=f"{slug}.pdf")
-            bundle_obj.pdf_hash = file_hash
+            bundle_obj.pdf_hash = pdf_hash
             bundle_obj.number_of_pages = number_of_pages
             bundle_obj.save()
         cls.split_and_save_bundle_images(bundle_obj.pk, read_after=read_after)
@@ -231,7 +231,7 @@ class ScanService:
             slug,
             user_obj,
             timestamp=timestamp,
-            file_hash=pdf_hash,
+            pdf_hash=pdf_hash,
             number_of_pages=number_of_pages,
         )
 

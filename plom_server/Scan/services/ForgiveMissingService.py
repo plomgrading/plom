@@ -51,7 +51,7 @@ def create_system_bundle_of_substitute_pages() -> bool:
         try:
             bundle_obj = Bundle.objects.create(
                 name=system_substitute_images_bundle_name,
-                hash=system_substitute_images_bundle_hash,
+                pdf_hash=system_substitute_images_bundle_hash,
                 _is_system=True,
             )
         except IntegrityError:
