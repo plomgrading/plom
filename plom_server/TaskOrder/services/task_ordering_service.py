@@ -77,7 +77,8 @@ class TaskOrderService:
             ]
         return paper_to_priority_and_status_list
 
-    def get_csv_header(self) -> list[str]:
+    @staticmethod
+    def get_csv_header() -> list[str]:
         """Get the CSV header for the task priorities."""
         return ["Paper Number", "Question Index", "Priority Value", "Status"]
 
