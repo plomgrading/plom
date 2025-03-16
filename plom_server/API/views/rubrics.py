@@ -118,27 +118,31 @@ class MmodifyRubric(APIView):
             (e.g., two users have both modified the same rubric).
 
         """
-        # TODO: default to major change: might reconsider, see also web editor default
-        is_minor_change = False
-        if (
-            "major_change" in request.query_params
-            and "minor_change" in request.query_params
-        ):
-            return _error_response(
-                "Can't be both a minor AND a major change", status.HTTP_400_BAD_REQUEST
-            )
-        elif "major_change" in request.query_params:
+        if "major_change" in request.query_params:
+            if "minor_change" in request.query_params:
+                return _error_response(
+                    "Cannot specify both major and minor change",
+                    status.HTTP_400_BAD_REQUEST,
+                )
             is_minor_change = False
         elif "minor_change" in request.query_params:
             is_minor_change = True
         else:
-            # use the default value above
-            pass
+            # TODO: default to major change: might reconsider, see also web editor default
+            # is_minor_change = None
+            is_minor_change = False
 
-        # TODO: change to tri-state for auto (on for major change, off for minor)
-        tag_tasks = False
         if "tag_tasks" in request.query_params:
+            if "no_tag_tasks" in request.query_params:
+                return _error_response(
+                    "Cannot specify both 'tag_tasks' and 'no_tag_tasks'",
+                    status.HTTP_400_BAD_REQUEST,
+                )
             tag_tasks = True
+        elif "no_tag_tasks" in request.query_params:
+            tag_tasks = False
+        else:
+            tag_tasks = None
 
         try:
             rubric_as_dict = RubricService.modify_rubric(
