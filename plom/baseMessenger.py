@@ -1349,8 +1349,14 @@ class BaseMessenger:
             params.append("minor_change")
         else:
             params.append("major_change")
-        if tag_tasks:
+
+        if tag_tasks is None:
+            pass
+        elif tag_tasks:
             params.append("tag_tasks")
+        else:
+            params.append("no_tag_tasks")
+
         url = f"/MK/rubric/{key}"
         if params:
             if self.is_server_api_less_than(114):
