@@ -111,7 +111,7 @@ class ImageBundleService:
         bundle_images = StagingImage.objects.filter(
             bundle=staged_bundle
         ).prefetch_related(
-            "base_image",
+            "baseimage",
             "knownstagingimage",
             "extrastagingimage",
             "discardstagingimage",
@@ -167,7 +167,7 @@ class ImageBundleService:
             else:
                 prefix = ""
 
-            suffix = pathlib.Path(staged.base_image.image_file.name).suffix
+            suffix = pathlib.Path(staged.baseimage.image_file.name).suffix
             return prefix + str(uuid.uuid4()) + suffix
 
         # we create all the images as O(n) but then update
@@ -206,8 +206,8 @@ class ImageBundleService:
             image = Image(
                 bundle=uploaded_bundle,
                 bundle_order=staged.bundle_order,
-                original_name=staged.base_image.image_file.name,
-                base_image=staged.base_image,
+                original_name=staged.baseimage.image_file.name,
+                baseimage=staged.baseimage,
                 rotation=rot_to_push,
                 parsed_qr=staged.parsed_qr,
             )

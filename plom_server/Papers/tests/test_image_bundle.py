@@ -50,7 +50,7 @@ class ImageBundleTests(TestCase):
         self.page1 = baker.make(DNMPage, paper=self.paper, page_number=2)
         # make a staged bundle with one known image.
         self.staged_bundle = baker.make(StagingBundle, pdf_hash="abcde", user=self.user)
-        self.staged_base_image = baker.make(
+        self.staged_baseimage = baker.make(
             BaseImage,
             image_hash="abcdef",
         )
@@ -58,7 +58,7 @@ class ImageBundleTests(TestCase):
             StagingImage,
             bundle=self.staged_bundle,
             bundle_order=1,
-            base_image=self.staged_base_image,
+            baseimage=self.staged_baseimage,
             rotation=90,
             image_type=StagingImage.KNOWN,
             _create_files=True,  # argument to tell baker to actually make the file
@@ -318,7 +318,7 @@ class ImageBundleTests(TestCase):
             StagingImage,
             bundle=bundle,
             parsed_qr={"NW": "abcde"},
-            base_image=bimg1,
+            baseimage=bimg1,
             image_type=StagingImage.KNOWN,
         )
         baker.make(
@@ -333,7 +333,7 @@ class ImageBundleTests(TestCase):
             StagingImage,
             bundle=bundle,
             parsed_qr={"NW": "abcde"},
-            base_image=bimg2,
+            baseimage=bimg2,
             image_type=StagingImage.KNOWN,
         )
         baker.make(
@@ -351,7 +351,7 @@ class ImageBundleTests(TestCase):
         self.assertEqual(
             Image.objects.get(
                 fixedpage__page_number=1, fixedpage__paper=paper2
-            ).base_image.image_hash,
+            ).baseimage.image_hash,
             bimg1.image_hash,
         )
 

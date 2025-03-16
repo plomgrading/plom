@@ -330,7 +330,7 @@ class Migration(migrations.Migration):
                 ("rotation", models.IntegerField(default=0)),
                 ("parsed_qr", models.JSONField(default=dict, null=True)),
                 (
-                    "base_image",
+                    "baseimage",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT, to="Base.baseimage"
                     ),

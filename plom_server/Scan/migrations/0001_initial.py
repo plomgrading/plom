@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "base_image",
+                    "baseimage",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE, to="Base.baseimage"
                     ),

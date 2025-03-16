@@ -63,7 +63,7 @@ class Image(models.Model):
         from the bundle. Typically, this will be something like "foo-7.png",
         which also indicates that it was page-7 from the bundle foo.pdf"
 
-    base_image (BaseImage): a key to the underlying base-image (which stores
+    baseimage (BaseImage): a key to the underlying base-image (which stores
         the file, hash and other information.
 
     rotation (int): the angle to rotate the original image in order to give
@@ -78,7 +78,7 @@ class Image(models.Model):
     bundle = models.ForeignKey(Bundle, on_delete=models.CASCADE)
     bundle_order = models.PositiveIntegerField(null=True)
     original_name = models.TextField(null=True)  # can be empty.
-    base_image = models.ForeignKey(BaseImage, on_delete=models.PROTECT)
+    baseimage = models.ForeignKey(BaseImage, on_delete=models.PROTECT)
     rotation = models.IntegerField(null=False, default=0)
     parsed_qr = models.JSONField(default=dict, null=True)
 

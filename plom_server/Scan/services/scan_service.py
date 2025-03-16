@@ -1724,7 +1724,7 @@ def huey_parent_split_bundle_chore(
                         image_hash=X["image_hash"],
                     )
                     img = StagingImage.objects.create(
-                        bundle=bundle_obj, bundle_order=X["order"], base_image=bimg
+                        bundle=bundle_obj, bundle_order=X["order"], baseimage=bimg
                     )
                 with open(X["thumb_path"], "rb") as fh:
                     StagingThumbnail.objects.create(
@@ -1971,7 +1971,7 @@ def huey_child_parse_qr_code(
     log.debug("Huey debug, we are task %s with id %s", task, task.id)
 
     stimg = StagingImage.objects.get(pk=image_pk)
-    image_path = stimg.base_image.image_file.path
+    image_path = stimg.baseimage.image_file.path
 
     scanner = ScanService()
 

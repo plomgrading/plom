@@ -197,7 +197,7 @@ def _create_all_substitute_pages(sys_sub_bundle_obj: Bundle) -> None:
             bundle=sys_sub_bundle_obj,
             bundle_order=bundle_order,
             original_name=image_name,
-            base_image=bimg,
+            baseimage=bimg,
             parsed_qr={},
             rotation=0,
         )
@@ -216,14 +216,14 @@ def get_substitute_image(page_number: int, version: int) -> Image:
     # bundle_order = version*number of pages + page_number
     n_pages = SpecificationService.get_n_pages()  # 1-indexed
     bundle_order = n_pages * version + page_number
-    return Image.objects.select_related("base_image").get(
+    return Image.objects.select_related("baseimage").get(
         bundle=bundle_obj, bundle_order=bundle_order
     )
 
 
 def get_substitute_image_from_pk(image_pk: int) -> Image:
     """Return the Image object with the given pk."""
-    return Image.objects.select_related("base_image").get(pk=image_pk)
+    return Image.objects.select_related("baseimage").get(pk=image_pk)
 
 
 def erase_all_substitute_images_and_their_bundle() -> None:
@@ -240,7 +240,7 @@ def erase_all_substitute_images_and_their_bundle() -> None:
             return
         for X in sys_sub_bundle_obj.image_set.all():
             X.delete()
-            X.base_image.delete()
+            X.baseimage.delete()
         sys_sub_bundle_obj.delete()
 
 

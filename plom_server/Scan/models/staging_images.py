@@ -44,7 +44,7 @@ class StagingImage(models.Model):
     bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
     # starts from 1 not zero.
     bundle_order = models.PositiveIntegerField(null=True)
-    base_image = models.ForeignKey(BaseImage, on_delete=models.CASCADE)
+    baseimage = models.ForeignKey(BaseImage, on_delete=models.CASCADE)
     parsed_qr = models.JSONField(default=dict, null=True)
     rotation = models.IntegerField(null=True, default=None)
     pushed = models.BooleanField(default=False)

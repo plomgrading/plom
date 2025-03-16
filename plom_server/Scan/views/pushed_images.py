@@ -25,7 +25,7 @@ class PushedImageView(ScannerLeadMarkerOrManagerView):
         img_obj = ManageScanService().get_pushed_image(img_pk)
         if img_obj is None:
             raise Http404(f"Cannot find pushed image with pk {img_pk}.")
-        return FileResponse(img_obj.base_image.image_file)
+        return FileResponse(img_obj.baseimage.image_file)
 
     def delete(self, request: HttpRequest, *, img_pk: int) -> HttpResponse:
         """Discard a pushed image by its primary key."""
@@ -54,7 +54,7 @@ class PushedImageRotatedView(ScannerLeadMarkerOrManagerView):
 
         return HttpResponse(
             hard_rotate_image_from_file_by_exif_and_angle(
-                img_obj.base_image.image_file, theta=img_obj.rotation
+                img_obj.baseimage.image_file, theta=img_obj.rotation
             ),
             content_type="image/png",
         )
@@ -130,4 +130,4 @@ class SubstituteImageView(ScannerLeadMarkerOrManagerView):
         img_obj = ForgiveMissingService.get_substitute_image_from_pk(img_pk)
         if img_obj is None:
             raise Http404(f"Cannot find pushed image with pk {img_pk}.")
-        return FileResponse(img_obj.base_image.image_file)
+        return FileResponse(img_obj.baseimage.image_file)

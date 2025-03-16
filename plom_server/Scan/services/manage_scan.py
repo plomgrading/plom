@@ -402,7 +402,7 @@ class ManageScanService:
     def get_pushed_image(self, img_pk: int) -> Image | None:
         """Return a database Image object with the given pk or None if it does not exist."""
         try:
-            return Image.objects.select_related("base_image").get(pk=img_pk)
+            return Image.objects.select_related("baseimage").get(pk=img_pk)
         except Image.DoesNotExist:
             return None
 
