@@ -85,9 +85,9 @@ class McreateRubric(APIView):
 
 
 # PATCH: /MK/rubric/{rid}
-# PATCH: /MK/rubric/{rid}&minor_change
-# PATCH: /MK/rubric/{rid}&major_change
-# PATCH: /MK/rubric/{rid}&major_change&tag_tasks
+# PATCH: /MK/rubric/{rid}?minor_change
+# PATCH: /MK/rubric/{rid}?major_change
+# PATCH: /MK/rubric/{rid}?major_change&tag_tasks
 class MmodifyRubric(APIView):
     """Change a rubric on the server."""
 
