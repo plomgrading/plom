@@ -314,13 +314,14 @@ def _build_with_and_without_soln(source_path: Path) -> None:
         print(f"  - successfully built {yes_soln_pdf_filename}")
 
 
-def build_demo_test_source_pdfs() -> None:
+def build_demo_assessment_source_pdfs() -> None:
+    """Build the demo source PDF files."""
     print("Building assessment / solution source pdfs from tex in temp dirs")
     for filename in ("assessment_v1", "assessment_v2", "assessment_v3"):
         _build_with_and_without_soln(demo_files / filename)
 
 
-def upload_demo_test_source_files():
+def upload_demo_assessment_source_files():
     """Use 'plom_preparation_source' to upload a demo assessment source pdfs."""
     print("Uploading demo assessment source pdfs")
     for v in (1, 2, 3):
@@ -447,7 +448,7 @@ def run_demo_preparation_commands(
     In order it runs:
         * (users): create demo users,
         * (spec): upload the demo spec,
-        * (sources): upload the test-source pdfs
+        * (sources): upload the source pdfs
             >> will also upload solutions at this point if instructed by user
             >> will also upload the classlist
         * (populate): make the qv-map and populate the database
@@ -478,8 +479,8 @@ def run_demo_preparation_commands(
         print("Stopping after assessment specification uploaded.")
         return False
 
-    build_demo_test_source_pdfs()
-    upload_demo_test_source_files()
+    build_demo_assessment_source_pdfs()
+    upload_demo_assessment_source_files()
     if solutions:
         upload_demo_solution_files()
     upload_demo_classlist(length, prename)
@@ -583,7 +584,7 @@ def run_demo_bundle_scan_commands(
     KWargs:
         stop_after = after which step should the demo be stopped, see list above.
         length = the length of the demo: quick, normal, long, plaid.
-        muck = whether or not to "muck" with the mock test bundles - this is intended to imitate the effects of poor scanning. Not yet functional.
+        muck = whether or not to "muck" with the mock bundles - this is intended to imitate the effects of poor scanning. Not yet functional.
 
     Returns: a bool to indicate if the demo should continue (true) or stop (false).
     """
@@ -603,6 +604,7 @@ def run_demo_bundle_scan_commands(
 
 
 def run_the_auto_id_reader():
+    """Run the auto ID reader."""
     run_django_manage_command("plom_run_id_reader --run")
     run_django_manage_command("plom_run_id_reader --wait")
 
@@ -671,7 +673,7 @@ def run_the_randomarker(*, port, half_marks=False):
 
 
 def push_demo_rubrics():
-    # push demo rubrics from toml
+    """Push demo rubrics from toml."""
     # note - hard coded question range here.
     for question_idx in (1, 2, 3, 4):
         rubric_toml = demo_files / f"demo_assessment_rubrics_q{question_idx}.toml"
@@ -679,6 +681,7 @@ def push_demo_rubrics():
 
 
 def create_and_link_question_tags():
+    """Create the demo question tags and link them to some questions."""
     qtags_csv = demo_files / "demo_assessment_qtags.csv"
     # upload question-tags as user "manager"
     run_django_manage_command(f"upload_qtags_csv {qtags_csv} manager")
@@ -742,6 +745,7 @@ def run_marking_commands(*, port: int, stop_after=None, half_marks=False) -> boo
 
 
 def run_finishing_commands(*, stop_after=None, solutions=True) -> bool:
+    """Run the finishing commands."""
     print("Reassembling all marked papers.")
     run_django_manage_command("plom_reassemble")
     run_django_manage_command("plom_reassemble --wait")
