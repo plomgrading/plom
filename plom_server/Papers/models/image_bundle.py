@@ -57,8 +57,10 @@ class Image(models.Model):
     """Table to store information about an uploaded page-image.
 
     bundle (ref to Bundle object): which bundle the image is from
+
     bundle_order (int): the position of the image in that bundle
         (ie which page in the pdf/bundle) - is 1-indexed and not 0-indexed
+
     original_name (str): the name of the image-file when it was extracted
         from the bundle. Typically, this will be something like "foo-7.png",
         which also indicates that it was page-7 from the bundle foo.pdf"
@@ -72,7 +74,6 @@ class Image(models.Model):
         handled elsewhere,
 
     parsed_qr (dict): the JSON dict containing QR code information for the page image.
-
     """
 
     bundle = models.ForeignKey(Bundle, on_delete=models.CASCADE)
