@@ -688,7 +688,8 @@ class DemoBundleCreationService:
 
         for i in range(min(2, n_bundles)):
             bundle_path = Path(f"fake_bundle{i + 1}.pdf")
-            print(f"Reversing order of bundle {bundle_path}")
+            # TODO: consider outsourcing this operation to the pdfmucker tool
+            print(f"Reversing order and rotating pages of bundle {bundle_path}")
             d2 = pymupdf.open()
             with pymupdf.open(bundle_path) as doc:
                 for i in range(len(doc) - 1, -1, -1):
