@@ -694,8 +694,6 @@ class DemoBundleCreationService:
             with pymupdf.open(bundle_path) as doc:
                 for i in range(len(doc) - 1, -1, -1):
                     d2.insert_pdf(doc, from_page=i, to_page=i)
-            # fix #3663 - some bundles should be upside down.
-            print(f"Rotating pages of bundle {bundle_path} 180 degrees")
             for pg in range(len(d2)):
                 d2[pg].set_rotation(180)
             d2.ez_save(bundle_path)
