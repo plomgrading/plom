@@ -16,6 +16,12 @@ class StagingImage(models.Model):
 
     Note that bundle_order is the 1-indexed position of the image with the pdf. This contrasts with pymupdf (for example) for which pages are 0-indexed.
 
+    Also note: staging bundles (and these associated staging images and base
+    images) can be deleted by the user - hence the base images are
+    cascade-deleted. However, if the staging bundle is pushed we do not allow
+    the user to delete the associated staging bundle (and staging images, base
+    images).
+
     TODO: document other fields.
 
     Fields:
