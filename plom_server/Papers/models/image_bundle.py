@@ -22,7 +22,7 @@ class Bundle(models.Model):
 
     name (str): The name of the pdf/bundle (ie just the stem of the
         bundle's path)
-    hash (str): Generally the sha256 of the bundle/pdf file, although
+    pdf_hash (str): Generally the sha256 of the bundle/pdf file, although
         special cases it could be something else (e.g., there is special
         bundle for substitute pages in ForgiveMissingService.py)
     _is_system: if the bundle is a system bundle then allow one bundle
@@ -34,7 +34,7 @@ class Bundle(models.Model):
     """
 
     name = models.TextField(null=False)
-    hash = models.CharField(null=False, max_length=64)
+    pdf_hash = models.CharField(null=False, max_length=64)
     _is_system = models.BooleanField(default=False)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     time_of_last_update = models.DateTimeField(auto_now=True)
@@ -44,9 +44,9 @@ class Bundle(models.Model):
 
     class Meta:
         constraints = [
-            # This constraint checks that each name-hash pair is unique, when is_system is set
+            # Check that each name-pdf_hash pair is unique, when is_system is set
             models.UniqueConstraint(
-                fields=["name", "hash"],
+                fields=["name", "pdf_hash"],
                 condition=Q(_is_system=True),
                 name="unique_system_bundles",
             ),
@@ -57,8 +57,10 @@ class Image(models.Model):
     """Table to store information about an uploaded page-image.
 
     bundle (ref to Bundle object): which bundle the image is from
+
     bundle_order (int): the position of the image in that bundle
         (ie which page in the pdf/bundle) - is 1-indexed and not 0-indexed
+
     original_name (str): the name of the image-file when it was extracted
         from the bundle. Typically, this will be something like "foo-7.png",
         which also indicates that it was page-7 from the bundle foo.pdf"
@@ -72,7 +74,6 @@ class Image(models.Model):
         handled elsewhere,
 
     parsed_qr (dict): the JSON dict containing QR code information for the page image.
-
     """
 
     bundle = models.ForeignKey(Bundle, on_delete=models.CASCADE)

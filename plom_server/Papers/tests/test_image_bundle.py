@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2025 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from django.test import TestCase
 from model_bakery import baker
@@ -347,7 +347,7 @@ class ImageBundleTests(TestCase):
         ibs = ImageBundleService()
         ibs.upload_valid_bundle(bundle, self.user)
 
-        self.assertEqual(Bundle.objects.all()[0].hash, bundle.pdf_hash)
+        self.assertEqual(Bundle.objects.all()[0].pdf_hash, bundle.pdf_hash)
         self.assertEqual(
             Image.objects.get(
                 fixedpage__page_number=1, fixedpage__paper=paper2

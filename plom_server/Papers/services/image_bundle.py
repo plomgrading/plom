@@ -37,27 +37,27 @@ from .paper_info import PaperInfoService
 class ImageBundleService:
     """Class to encapsulate all functions around validated page images and bundles."""
 
-    def create_bundle(self, name: str, hash: str) -> Bundle:
+    def create_bundle(self, name: str, pdf_hash: str) -> Bundle:
         """Create a bundle and store its name and sha256 hash."""
-        if Bundle.objects.filter(hash=hash).exists():
+        if Bundle.objects.filter(pdf_hash=pdf_hash).exists():
             raise RuntimeError("A bundle with that hash already exists.")
-        bundle = Bundle.objects.create(name=name, hash=hash)
+        bundle = Bundle.objects.create(name=name, pdf_hash=pdf_hash)
         return bundle
 
-    def get_bundle(self, hash: str) -> Bundle:
+    def get_bundle(self, pdf_hash: str) -> Bundle:
         """Get a bundle from its hash."""
-        return Bundle.objects.get(hash=hash)
+        return Bundle.objects.get(pdf_hash=pdf_hash)
 
-    def get_or_create_bundle(self, name: str, hash: str) -> Bundle:
+    def get_or_create_bundle(self, name: str, pdf_hash: str) -> Bundle:
         """Get a Bundle instance, or create if it doesn't exist."""
-        if not Bundle.objects.filter(hash=hash).exists():
-            return self.create_bundle(name, hash)
+        if not Bundle.objects.filter(pdf_hash=pdf_hash).exists():
+            return self.create_bundle(name, pdf_hash)
         else:
-            return self.get_bundle(hash)
+            return self.get_bundle(pdf_hash)
 
-    def image_exists(self, hash: str) -> bool:
+    def image_exists(self, imghash: str) -> bool:
         """Return True if a page image with the input hash exists in the database."""
-        return Image.objects.filter(hash=hash).exists()
+        return Image.objects.filter(hash=imghash).exists()
 
     @transaction.atomic
     def get_image_pushing_status(self, staged_image: StagingImage) -> str | None:
@@ -142,7 +142,7 @@ class ImageBundleService:
 
         uploaded_bundle = Bundle(
             name=staged_bundle.slug,
-            hash=staged_bundle.pdf_hash,
+            pdf_hash=staged_bundle.pdf_hash,
             user=user_obj,
             staging_bundle=staged_bundle,
         )
