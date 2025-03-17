@@ -2,7 +2,7 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
@@ -693,6 +693,10 @@ class DemoBundleCreationService:
             with pymupdf.open(bundle_path) as doc:
                 for i in range(len(doc) - 1, -1, -1):
                     d2.insert_pdf(doc, from_page=i, to_page=i)
+            # fix #3663 - some bundles should be upside down.
+            print(f"Rotating pages of bundle {bundle_path} 180 degrees")
+            for pg in range(len(d2)):
+                d2[pg].set_rotation(180)
             d2.ez_save(bundle_path)
 
         print("^" * 40)
