@@ -76,7 +76,7 @@ def percent_error_between_images(img1: Path, img2: Path) -> float:
     with Image.open(img1) as im1, Image.open(img2) as im2:
         d = ImageChops.difference(im1, im2)
         total = 0.0
-        for pixel in d.getdata():
+        for pixel in d.getdata():  # type: ignore[attr-defined]
             assert 0 <= pixel <= 255, "Incorrectly assumed pixel values in [0, 255]"
             total += float(pixel) / 255.0
             print((pixel, total))
