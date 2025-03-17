@@ -76,11 +76,10 @@ def percent_error_between_images(img1: Path, img2: Path) -> float:
     with Image.open(img1) as im1, Image.open(img2) as im2:
         d = ImageChops.difference(im1, im2)
         total = 0.0
-        for i in range(d.width):
-            for j in range(d.height):
-                # assume each value is in [0, 255], I think is how ImageChops works
-                # print((i, j, total))
-                total += float(d.getpixel((i, j)) / 255.0)
+        for pixel in d.getdata():
+            assert 0 <= pixel <= 255, "Incorrectly assumed pixel values in [0, 255]"
+            total += float(pixel) / 255.0
+            print((pixel, total))
         return 100 * total / (d.width * d.height)
 
 
@@ -106,4 +105,4 @@ def test_frag_image() -> None:
         # somewhat close
         assert percent_error_between_images(img, target_old) < 10
         # but not too close
-        assert percent_error_between_images(img, target_old) > 2
+        assert percent_error_between_images(img, target_old) > 0.1
