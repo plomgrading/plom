@@ -2,7 +2,7 @@
 # Copyright (C) 2023-2024 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
 from __future__ import annotations
@@ -688,11 +688,14 @@ class DemoBundleCreationService:
 
         for i in range(min(2, n_bundles)):
             bundle_path = Path(f"fake_bundle{i + 1}.pdf")
-            print(f"Reversing order of bundle {bundle_path}")
+            # TODO: consider outsourcing this operation to the pdfmucker tool
+            print(f"Reversing order and rotating pages of bundle {bundle_path}")
             d2 = pymupdf.open()
             with pymupdf.open(bundle_path) as doc:
                 for i in range(len(doc) - 1, -1, -1):
                     d2.insert_pdf(doc, from_page=i, to_page=i)
+            for pg in range(len(d2)):
+                d2[pg].set_rotation(180)
             d2.ez_save(bundle_path)
 
         print("^" * 40)
