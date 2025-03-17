@@ -1890,7 +1890,7 @@ def huey_child_get_page_images(
                 time.sleep(random.random() * 4)
                 if random.random() < 0.04:
                     raise RuntimeError("Flaky simulated image split failure")
-            basename = f"page{order:05}"
+            basename = f"page_{bundle_obj.pk:03}_{order:05}"
             if bundle_obj.force_page_render:
                 save_path = None
                 msgs = ["Force render"]
