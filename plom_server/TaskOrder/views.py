@@ -12,7 +12,7 @@ from django.http import HttpRequest, HttpResponse
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Papers.services import SpecificationService
 from .forms import TaskOrderForm, UploadFileForm
-from .services.task_ordering_service import TaskOrderService
+from .services import TaskOrderService
 
 
 class TaskOrderPageView(ManagerRequiredView):
