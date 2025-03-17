@@ -4,7 +4,9 @@
 
 import hashlib
 from io import BytesIO
+import pathlib
 from typing import Any
+
 
 import pymupdf
 
@@ -238,10 +240,20 @@ def erase_all_substitute_images_and_their_bundle() -> None:
         except Bundle.DoesNotExist:
             # nothing needs done if no bundle
             return
-        for X in sys_sub_bundle_obj.image_set.all():
-            X.delete()
-            X.baseimage.delete()
+        # get the image files to unlink - do that after the
+        # db objects are successfully deleted
+        base_images_to_delete = BaseImage.objects.filter(
+            image__bundle=sys_sub_bundle_obj
+        )
+        files_to_unlink = [bimg.image_file.path for bimg in base_images_to_delete]
+        # carefully delete the Image objects before we delete the base-image objects
+        # (they are protected).
+        sys_sub_bundle_obj.image_set.all().delete()
         sys_sub_bundle_obj.delete()
+        base_images_to_delete.delete()
+        # now that all db ops done - clean up the files.
+        for fp in files_to_unlink:
+            pathlib.Path(fp).unlink()
 
 
 def forgive_missing_fixed_page(

@@ -9,6 +9,7 @@ from django.contrib import admin
 from .models import (
     StagingBundle,
     StagingImage,
+    StagingThumbnail,
     PagesToImagesChore,
     ManageParseQRChore,
     KnownStagingImage,
@@ -21,6 +22,7 @@ from .models import (
 # This makes models appear in the admin interface
 admin.site.register(StagingBundle)
 admin.site.register(StagingImage)
+admin.site.register(StagingThumbnail)
 admin.site.register(KnownStagingImage)
 admin.site.register(ExtraStagingImage)
 admin.site.register(ErrorStagingImage)
