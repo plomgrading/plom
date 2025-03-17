@@ -1,13 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2025 Colin B. Macdonald
 
-import subprocess
 import tempfile
 from importlib import resources
 from io import BytesIO
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageChops
 
 import plom
 
@@ -66,19 +65,23 @@ def test_frag_image_size() -> None:
     assert img.width > 2 * imgt.width
 
 
-def abs_error_between_images(img1: Path, img2: Path) -> float:
-    """The number of pixels that differ between two images: "AE" error from ImageMagick."""
-    r = subprocess.run(
-        ["compare", "-metric", "AE", img1, img2, "null:"],
-        stderr=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-    )
-    # Note "AE" not "rmse" with transparency www.imagemagick.org/Usage/compare/
-    s = r.stderr.decode()
-    if "(" in s:
-        # Fedora 42, Issue #3851, looks like `<float> (<AE>)`
-        return float(s.split()[1].strip("()"))
-    return float(s)
+def percent_error_between_images(img1: Path, img2: Path) -> float:
+    """A percentage difference of pixels that differ between two images.
+
+    Returns:
+        A percentage as a floating point number in [0, 100].  If the
+        images are the same, return 0.  If the images are as different
+        as can be (e.g., inverse of each other) then return 100.
+    """
+    with Image.open(img1) as im1, Image.open(img2) as im2:
+        d = ImageChops.difference(im1, im2)
+        total = 0.0
+        for i in range(d.width):
+            for j in range(d.height):
+                # assume each value is in [0, 255], I think is how ImageChops works
+                # print((i, j, total))
+                total += float(d.getpixel((i, j)) / 255.0)
+        return 100 * total / (d.width * d.height)
 
 
 def test_frag_image() -> None:
@@ -94,13 +97,13 @@ def test_frag_image() -> None:
         with target_img.open("wb") as f:
             f.write((resources.files(plom) / "test_target_latex.png").read_bytes())
 
-        assert abs_error_between_images(img, target_img) < 100
+        assert percent_error_between_images(img, target_img) < 0.1
 
         # older image with poor quality white-tinged antialiasing
         target_old = Path(td) / "target_old.png"
         with target_old.open("wb") as f:
             f.write((resources.files(plom) / "test_target_latex_old.png").read_bytes())
         # somewhat close
-        assert abs_error_between_images(img, target_old) < 3000
+        assert percent_error_between_images(img, target_old) < 10
         # but not too close
-        assert abs_error_between_images(img, target_old) > 500
+        assert percent_error_between_images(img, target_old) > 2
