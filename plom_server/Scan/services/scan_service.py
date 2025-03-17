@@ -365,6 +365,14 @@ class ScanService:
             for file_path in files_to_unlink:
                 pathlib.Path(file_path).unlink()
 
+    def remove_bundle_by_slug_cmd(self, bundle_slug: str) -> None:
+        """Wrapper around remove_bundle_by_pk but takes bundle-slug instead."""
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_slug)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_slug}' does not exist!")
+        self.remove_bundle_by_pk(bundle_obj.pk)
+
     @transaction.atomic
     def check_for_duplicate_hash(self, pdf_hash: str) -> bool:
         """Check if a PDF has already been uploaded.

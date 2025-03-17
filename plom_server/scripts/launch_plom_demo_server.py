@@ -553,6 +553,12 @@ def upload_the_bundles(length="normal"):
     """
     run_django_manage_command(f"plom_demo_bundles --length {length} --action upload")
     run_django_manage_command("plom_staging_bundles wait")
+    # delete the first bundle and upload it again so that we exercise
+    # that part of the code-base.
+    print("For testing purposes, delete first bundle and upload it again.")
+    run_django_manage_command(f"plom_demo_bundles --length {length} --action delreup")
+    run_django_manage_command("plom_staging_bundles wait")
+    # now trigger reading of qr-codes
     run_django_manage_command(f"plom_demo_bundles --length {length} --action read")
     run_django_manage_command("plom_staging_bundles wait")
 
