@@ -201,6 +201,7 @@ class GetBundleThumbnailView(ScannerRequiredView):
             image = scanner.get_thumbnail_image(bundle_id, index)
         except ObjectDoesNotExist as e:
             raise Http404(e)
+        # note - is a thumbnail - so we don't need the baseimage here.
         return FileResponse(image.image_file)
 
 

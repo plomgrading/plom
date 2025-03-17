@@ -101,7 +101,7 @@ class GetRotatedPushedImageView(ScannerRequiredView):
         theta = img_obj.rotation
         return HttpResponse(
             hard_rotate_image_from_file_by_exif_and_angle(
-                img_obj.image_file, theta=theta
+                img_obj.baseimage.image_file, theta=theta
             ),
             content_type="image/png",
         )
