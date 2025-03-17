@@ -156,7 +156,7 @@ class Command(BaseCommand):
     def delete_and_reupload_first_bundle(
         self, demo_config: DemoAllBundlesConfig, *, bundle_slug: str = "fake_bundle1"
     ) -> None:
-        """Delete and re-upload the first demo bundles"""
+        """Delete and re-upload the first demo bundles."""
         scanner_user = "demoScanner1"
         if demo_config.bundles is not None:
             call_command("plom_staging_bundles", "delbyslug", bundle_slug)
