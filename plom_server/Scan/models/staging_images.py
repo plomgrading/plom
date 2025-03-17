@@ -41,12 +41,6 @@ class StagingImage(models.Model):
     DISCARD = ImageTypeChoices.DISCARD
     ERROR = ImageTypeChoices.ERROR
 
-    def _staging_image_upload_path(self, filename):
-        # save bundle as "//media/staging/bundles/username/bundle-pk/page_images/filename"
-        return "staging/bundles/{}/{}/page_images/{}".format(
-            self.bundle.user.username, self.bundle.pk, filename
-        )
-
     bundle = models.ForeignKey(StagingBundle, on_delete=models.CASCADE)
     # starts from 1 not zero.
     bundle_order = models.PositiveIntegerField(null=True)
@@ -59,7 +53,7 @@ class StagingImage(models.Model):
 
 class StagingThumbnail(models.Model):
     def _staging_thumbnail_upload_path(self, filename):
-        # save bundle as "//media/staging/bundles/username/bundle-pk/page_images/filename"
+        # save thumbnail in "//media/staging/bundles/username/bundle-pk/page_images/filename"
         return "staging/bundles/{}/{}/page_images/{}".format(
             self.staging_image.bundle.user.username,
             self.staging_image.bundle.pk,
