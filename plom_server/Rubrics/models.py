@@ -101,10 +101,18 @@ class Rubric(models.Model):
         modified_by_user: who last modified this rubric.  Currently, once
             this makes it to the client, its called ``modified_by_username``
             and is a string.
-        revision: a monontonically-increasing integer used to detect mid-air
-            collisions.  Modifying a rubric will increase this by one.
-            If you are messing with this, presumably you are doing something
-            creative/hacky.
+        revision: a monontonically-increasing integer used to track major
+            edits to the rubric.
+            A major modifying to a rubric will increase this by one, and
+            corresponds to making a new row in the Rubric table.
+            Both revision and subrevision are used for detection of midair
+            collisions during rubric edits.
+            If you are messing with revisions/subrevisions directly,
+            you are probably doing something creative/hacky.
+        subrevision: a monontonically-increasing integer, that is reset to zero
+            on each (major) edit and is increased by one on each minor edit.
+            Minor edits currently happen "in-place" without creating new rows
+            of the Rubric table.
         latest: True when this is the latest version of the rubric and
             false otherwise. There will be only one latest rubric per rid.
         tags: a list of meta tags for this rubric, these are currently used
@@ -123,6 +131,11 @@ class Rubric(models.Model):
             reports for students or pedagogical statistics about the assessment.
             See also "Question Tags": as of 2025-01, these are sometimes
             labelled in this way.
+
+    Notes: the modifications to rubrics are handled in the `rubric_service.py`
+    mostly by the ``_modify_rubric_in_place`` and
+    ``_modify_rubric_by_making_new_one`` functions.  There are also many
+    ``_validate*`` functions there which are effectively part of this model.
     """
 
     class RubricKind(models.TextChoices):
