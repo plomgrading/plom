@@ -634,7 +634,11 @@ class ScanService:
         Raises:
             ObjectDoesNotExist: no such BundleImage, e.g., invalid bundle id or page
         """
+        # TODO: is it really necessary to make these here?  should be a model problem
         root_folder = settings.MEDIA_ROOT / "page_images"
+        print("=" * 88)
+        print(f"DEBUG: explicitly and inappropriately making {root_folder}")
+        print("DEBUG: likely rcalled by plom-cli uploads: ensure unneeded then remove")
         root_folder.mkdir(exist_ok=True)
 
         # TODO: assert the length of question is same as pages in bundle
