@@ -46,18 +46,18 @@ class ImageBundleService:
 
     def get_bundle(self, pdf_hash: str) -> Bundle:
         """Get a bundle from its hash."""
-        return Bundle.objects.get(pdf_hash=hash)
+        return Bundle.objects.get(pdf_hash=pdf_hash)
 
     def get_or_create_bundle(self, name: str, pdf_hash: str) -> Bundle:
         """Get a Bundle instance, or create if it doesn't exist."""
         if not Bundle.objects.filter(pdf_hash=pdf_hash).exists():
-            return self.create_bundle(name, hash)
+            return self.create_bundle(name, pdf_hash)
         else:
-            return self.get_bundle(hash)
+            return self.get_bundle(pdf_hash)
 
-    def image_exists(self, hash: str) -> bool:
+    def image_exists(self, imghash: str) -> bool:
         """Return True if a page image with the input hash exists in the database."""
-        return Image.objects.filter(hash=hash).exists()
+        return Image.objects.filter(hash=imghash).exists()
 
     @transaction.atomic
     def get_image_pushing_status(self, staged_image: StagingImage) -> str | None:
