@@ -12,7 +12,7 @@ from django.http import HttpRequest, HttpResponse
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Papers.services import SpecificationService
 from .forms import TaskOrderForm, UploadFileForm
-from .services.task_ordering_service import TaskOrderService
+from .services import TaskOrderService
 
 
 class TaskOrderPageView(ManagerRequiredView):
@@ -70,9 +70,8 @@ class TaskOrderPageView(ManagerRequiredView):
     def download_priorities(request: HttpRequest) -> HttpResponse:
         """Download the task priorities."""
         shortname = SpecificationService.get_short_name_slug()
-        tos = TaskOrderService()
-        keys = tos.get_csv_header()
-        priorities = tos.get_task_priorities_download()
+        keys = TaskOrderService.get_csv_header()
+        priorities = TaskOrderService().get_task_priorities_download()
 
         f = StringIO()
         w = csv.DictWriter(f, keys)
