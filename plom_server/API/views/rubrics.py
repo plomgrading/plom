@@ -85,6 +85,9 @@ class McreateRubric(APIView):
 
 
 # PATCH: /MK/rubric/{rid}
+# PATCH: /MK/rubric/{rid}?minor_change
+# PATCH: /MK/rubric/{rid}?major_change
+# PATCH: /MK/rubric/{rid}?major_change&tag_tasks
 class MmodifyRubric(APIView):
     """Change a rubric on the server."""
 
@@ -99,6 +102,11 @@ class MmodifyRubric(APIView):
             rid: the key/id of the rubric to modify.  This is not
                 the same thing as the "primary key" in the database.
 
+        Query parameter include "major_change", "minor_change" and
+        "tag_tasks" all of which are boolean (you either pass them or
+        you don't).  They are used to influence what sort of revision
+        this is.
+
         Returns:
             On success, responds with the JSON key-value representation
             of the modified rubric.
@@ -108,17 +116,41 @@ class MmodifyRubric(APIView):
             not allowed to modify this rubric.
             Responds with 409 if your modifications conflict with others'
             (e.g., two users have both modified the same rubric).
+
         """
-        # TODO: change is_minor_change default to `None`, add API extension
-        # (maybe a "&" param) to support client-selection.
-        try:
+        if "major_change" in request.query_params:
+            if "minor_change" in request.query_params:
+                return _error_response(
+                    "Cannot specify both major and minor change",
+                    status.HTTP_400_BAD_REQUEST,
+                )
+            is_minor_change = False
+        elif "minor_change" in request.query_params:
+            is_minor_change = True
+        else:
             # TODO: default to major change: might reconsider, see also web editor default
+            # is_minor_change = None
+            is_minor_change = False
+
+        if "tag_tasks" in request.query_params:
+            if "no_tag_tasks" in request.query_params:
+                return _error_response(
+                    "Cannot specify both 'tag_tasks' and 'no_tag_tasks'",
+                    status.HTTP_400_BAD_REQUEST,
+                )
+            tag_tasks = True
+        elif "no_tag_tasks" in request.query_params:
+            tag_tasks = False
+        else:
+            tag_tasks = None
+
+        try:
             rubric_as_dict = RubricService.modify_rubric(
                 rid,
                 request.data["rubric"],
                 modifying_user=request.user,
-                tag_tasks=False,
-                is_minor_change=False,
+                tag_tasks=tag_tasks,
+                is_minor_change=is_minor_change,
             )
             # TODO: use a serializer to get automatic conversion from Rubric object?
             return Response(rubric_as_dict, status=status.HTTP_200_OK)
