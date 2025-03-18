@@ -67,7 +67,30 @@ class ServerStatusView(ManagerRequiredView):
 
         context = self.build_context()
         # TODO: need a service?
-        queue = get_queue("tasks")
+        queues = []
+        for queue_name in ("chores", "parentchores"):
+            # TODO: fails with KeyError if no such queue...
+            queue = get_queue(queue_name)
+            # state = "ok?"
+            # print("= = " * 80)
+            # print(queue_name)
+            # print(queue)
+            # print(queue.storage.enqueued_items())
+            # print(type(queue.storage.enqueued_items()))
+            # print(queue.result_store_size())
+            pending3 = queue.pending(limit=3)
+            # TODO: is a list of of things like
+            # <class 'plom_server.Finish.services.reassemble_service.huey_reassemble_paper'>
+            # <ckass 'plom_server.Papers.services.paper_creator.huey_populate_whole_db'>
+            info = {
+                "name": queue_name,
+                "queue": queue,
+                "length": len(queue),
+                "result_count": queue.result_count(),
+                "other_info": queue.storage_kwargs,
+                "pending3": pending3,
+            }
+            queues.append(info)
 
         context.update(
             {
@@ -75,7 +98,7 @@ class ServerStatusView(ManagerRequiredView):
                 "huey_version": importlib.metadata.version("huey"),
                 "pymupdf_version": pymupdf_version,
                 "zxingcpp_version": importlib.metadata.version("zxing-cpp"),
-                "queue_length": len(queue),
+                "queues": queues,
             }
         )
         return render(request, "base/server_status.html", context)
