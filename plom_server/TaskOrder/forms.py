@@ -53,7 +53,7 @@ class UploadFileForm(forms.Form):
             data = csv.reader(StringIO(file), delimiter=",")
             # check that the header is correct
             header = next(data)
-            expected_header = ["Paper Number", "Question Number", "Priority Value"]
+            expected_header = ["Paper Number", "Question Index", "Priority Value"]
             if header != expected_header:
                 raise ValidationError(
                     "Invalid csv header. Please use the following headers: "

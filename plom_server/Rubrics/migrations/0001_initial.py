@@ -64,6 +64,7 @@ class Migration(migrations.Migration):
                 ("published", models.BooleanField(blank=True, default=True)),
                 ("last_modified", models.DateTimeField(auto_now=True)),
                 ("revision", models.IntegerField(blank=True, default=0)),
+                ("subrevision", models.IntegerField(default=0)),
                 ("latest", models.BooleanField(blank=True, default=True)),
                 (
                     "annotations",

@@ -185,22 +185,26 @@ def _is_rubric_change_considered_minor(
     return (True, "")
 
 
-def _modify_rubric_in_place(old_rubric: Rubric, serializer: RubricSerializer) -> Rubric:
-    log.info(f"Modifying rubric {old_rubric.rid} rev {old_rubric.revision} in-place")
+def _modify_rubric_in_place(old: Rubric, serializer: RubricSerializer) -> Rubric:
+    log.info(
+        f"Modifying rubric {old.rid} rev {old.revision}.{old.subrevision} in-place"
+    )
     serializer.validated_data["latest"] = True
-    return serializer.update(old_rubric, serializer.validated_data)
+    serializer.validated_data["subrevision"] += 1
+    return serializer.update(old, serializer.validated_data)
 
 
 def _modify_rubric_by_making_new_one(
-    old_rubric: Rubric, serializer: RubricSerializer
+    old: Rubric, serializer: RubricSerializer
 ) -> Rubric:
     log.info(
-        f"Modifying rubric {old_rubric.rid} rev {old_rubric.revision} by"
+        f"Modifying rubric {old.rid} rev {old.revision}.{old.subrevision} by"
         " making a new rubric with bumped revision"
     )
-    old_rubric.latest = False
-    old_rubric.save()
+    old.latest = False
+    old.save()
     serializer.validated_data["revision"] += 1
+    serializer.validated_data["subrevision"] = 0
     serializer.validated_data["latest"] = True
     return serializer.save()
 
@@ -437,14 +441,19 @@ class RubricService:
 
         # default revision if missing from incoming data
         new_rubric_data.setdefault("revision", 0)
+        new_rubric_data.setdefault("subrevision", 0)
 
         # Mid-air collision detection
-        # TODO: warning: minor edits don't have this check
-        if not new_rubric_data["revision"] == old_rubric.revision:
+        if not (
+            new_rubric_data["revision"] == old_rubric.revision
+            and new_rubric_data["subrevision"] == old_rubric.subrevision
+        ):
             # TODO: record who last modified and when
             raise PlomConflict(
-                f'The rubric your revision was based upon {new_rubric_data["revision"]} '
-                f"does not match database content (revision {old_rubric.revision}): "
+                "Your rubric is a change based on revision "
+                f'{new_rubric_data["revision"]}.{new_rubric_data["subrevision"]};'
+                " this does not match database content "
+                f"(revision {old_rubric.revision}.{old_rubric.subrevision}): "
                 f"most likely your edits have collided with those of someone else."
             )
 
@@ -619,7 +628,8 @@ class RubricService:
         """How many rubrics in total (excluding revisions)."""
         return Rubric.objects.filter(latest=True).count()
 
-    def get_rubric_by_rid(self, rid: int) -> Rubric:
+    @staticmethod
+    def get_rubric_by_rid(rid: int) -> Rubric:
         """Get the latest rurbic revision by its rubric id.
 
         Args:
@@ -632,8 +642,9 @@ class RubricService:
         """
         return Rubric.objects.get(rid=rid, latest=True)
 
-    def get_past_revisions_by_rid(self, rid: int) -> list[Rubric]:
-        """Get all earlier revisions of a rubric by the rid, not including the latest one.
+    @staticmethod
+    def get_past_revisions_by_rid(rid: int) -> list[Rubric]:
+        """Get all earlier available revisions of a rubric by the rid, not including the latest one.
 
         Args:
             rid: which rubric series to we want the past revisions of.
@@ -873,7 +884,8 @@ class RubricService:
 
         Rubric.objects.all().select_for_update().delete()
 
-    def get_rubric_pane(self, user: User, question_idx: int) -> dict[str, Any]:
+    @staticmethod
+    def get_rubric_pane(user: User, question_idx: int) -> dict[str, Any]:
         """Gets a rubric pane for a user.
 
         Args:
@@ -916,8 +928,9 @@ class RubricService:
         """
         return rubric.annotations.all()
 
+    @staticmethod
     def get_marking_tasks_with_rubric_in_latest_annotation(
-        self, rubric: Rubric
+        rubric: Rubric,
     ) -> QuerySet[MarkingTask]:
         """Get the QuerySet of MarkingTasks that use this Rubric in their latest annotations.
 
@@ -993,7 +1006,8 @@ class RubricService:
         user = User.objects.get(username=username)
         return Rubric.objects.filter(user=user)
 
-    def get_rubric_as_html(self, rubric: Rubric) -> str:
+    @staticmethod
+    def get_rubric_as_html(rubric: Rubric) -> str:
         """Gets a rubric as HTML.
 
         Args:

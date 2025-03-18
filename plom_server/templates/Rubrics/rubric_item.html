@@ -21,7 +21,8 @@
             <div class="col">
                 <div class="card">
                     <h5 class="card-header d-flex justify-content-between align-items-center">
-                        Rubric {{ latest_rubric.rid }}, revision {{ latest_rubric.revision }}
+                        Rubric {{ latest_rubric.rid }},
+                        revision {{ latest_rubric.revision }}.{{ latest_rubric.subrevision }}
                         <a class="btn btn-outline-primary float-end"
                            data-bs-toggle="modal"
                            data-bs-target="#editModal"
@@ -33,10 +34,6 @@
                     <div class="card-body">
                         <table class="table">
                             <tbody>
-                                <tr>
-                                    <th scope="row">Rubric-ID</th>
-                                    <td>{{ latest_rubric.rid }}</td>
-                                </tr>
                                 <tr>
                                     <th scope="row">Question idx</th>
                                     <td>{{ latest_rubric.question_index }}</td>
@@ -133,7 +130,8 @@
                                                 data-bs-target="#collapse-{{ forloop.counter }}"
                                                 aria-expanded="false"
                                                 aria-controls="collapse-{{ forloop.counter }}">
-                                            Revision {{ revision.revision }} - by {{ revision.modified_by_user }}, {{ revision.last_modified|naturaltime }}
+                                            Revision {{ revision.revision }}.{{ revision.subrevision }}
+                                            - by {{ revision.modified_by_user }}, {{ revision.last_modified|naturaltime }}
                                         </button>
                                     </h2>
                                     <div id="collapse-{{ forloop.counter }}"
