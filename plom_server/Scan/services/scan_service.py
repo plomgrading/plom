@@ -1840,7 +1840,7 @@ def huey_parent_read_qr_codes_chore(
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks", context=True)
+@db_task(queue="chores", context=True)
 def huey_child_get_page_images(
     bundle_pk: int,
     order_list: list[int],
@@ -1944,7 +1944,7 @@ def huey_child_get_page_images(
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks", context=True)
+@db_task(queue="chores", context=True)
 def huey_child_parse_qr_code(
     image_pk: int,
     *,

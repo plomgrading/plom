@@ -213,7 +213,7 @@ class BuildSolutionService:
         ).get()
         chore.set_as_obsolete()
         if chore.status == HueyTaskTracker.QUEUED:
-            queue = get_queue("tasks")
+            queue = get_queue("chores")
             queue.revoke_by_id(str(chore.huey_id))
             chore.transition_to_error("never ran: forcibly dequeued")
         if chore.status == HueyTaskTracker.RUNNING:
@@ -350,7 +350,7 @@ class BuildSolutionService:
         )
         chore.set_as_obsolete()
         if chore.huey_id:
-            queue = get_queue("tasks")
+            queue = get_queue("chores")
             queue.revoke_by_id(str(chore.huey_id))
         if chore.status in (
             BuildSolutionPDFChore.STARTING,
@@ -372,7 +372,7 @@ class BuildSolutionService:
             before they reached the queue).
         """
         N = 0
-        queue = get_queue("tasks")
+        queue = get_queue("chores")
         with transaction.atomic(durable=True):
             for chore in BuildSolutionPDFChore.objects.filter(
                 Q(status=BuildSolutionPDFChore.STARTING)
@@ -423,7 +423,7 @@ class BuildSolutionService:
 
 # The decorated function returns a ``huey.api.Result``
 # TODO: investigate "preserve=True" here if we want to wait on them?
-@db_task(queue="tasks", context=True)
+@db_task(queue="chores", context=True)
 def huey_build_soln_for_paper(
     paper_number: int,
     *,

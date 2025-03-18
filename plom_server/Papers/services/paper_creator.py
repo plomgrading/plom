@@ -31,7 +31,7 @@ log = logging.getLogger("PaperCreatorService")
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks", context=True)
+@db_task(queue="chores", context=True)
 def huey_populate_whole_db(
     qv_map: dict[int, dict[int | str, int]],
     *,
@@ -102,7 +102,7 @@ def huey_populate_whole_db(
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks", context=True)
+@db_task(queue="chores", context=True)
 def huey_evacuate_whole_db(
     *, tracker_pk: int, task: huey.api.Task | None = None
 ) -> bool:
