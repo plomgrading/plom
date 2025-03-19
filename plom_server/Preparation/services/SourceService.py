@@ -248,13 +248,6 @@ def store_reference_images(source_version: int):
     mocker = ExamMockerService()
     scanner = ScanService()
 
-    # remove any existing reference images for this version
-    for ri_obj in ReferenceImage.objects.filter(
-        version=source_version
-    ).select_for_update():
-        ri_obj.image_file.path.unlink(missing_ok=True)
-        ri_obj.delete()
-
     source_pdf_obj = PaperSourcePDF.objects.get(version=source_version)
     n_pages = SpecificationService.get_n_pages()
 
