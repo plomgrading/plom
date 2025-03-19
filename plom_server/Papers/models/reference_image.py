@@ -15,8 +15,9 @@ class ReferenceImage(models.Model):
 
     source_pdf: a link the pdf file from which this came.
     image: an abstraction of a file for the image.
-    parsed_qr: TODO that is this?  Source PDF shouldn't have
-        any QR codes so why does this and what is it for?
+    parsed_qr: we place dummy QR codes on the reference pages during
+        rendering, using the same process as Plom's actual paper
+        creation.  We can read this information back here.
     page_number: which page is this.
     version: which version is this.
     height: how many pixels high is the image.
