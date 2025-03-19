@@ -9,6 +9,20 @@ from plom_server.Preparation.models import PaperSourcePDF
 
 
 class ReferenceImage(models.Model):
+    """An image of a particular page of the assessment source.
+
+    A cached copy of the rendered PDF file.
+
+    source_pdf: a link the pdf file from which this came.
+    image: an abstraction of a file for the image.
+    parsed_qr: TODO that is this?  Source PDF shouldn't have
+        any QR codes so why does this and what is it for?
+    page_number: which page is this.
+    version: which version is this.
+    height: how many pixels high is the image.
+    width: how many pixels wide is the image.
+    """
+
     # this on_delete means that when PaperSourcePDF is deleted, these ReferenceImages
     # will also be deleted automatically
     source_pdf = models.ForeignKey(PaperSourcePDF, null=False, on_delete=models.CASCADE)

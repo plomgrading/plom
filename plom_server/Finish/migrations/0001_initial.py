@@ -68,7 +68,16 @@ class Migration(migrations.Migration):
                 ),
                 ("version", models.PositiveIntegerField()),
                 ("solution_number", models.PositiveIntegerField()),
-                ("image", models.ImageField(upload_to="sourceVersions")),
+                (
+                    "image",
+                    models.ImageField(
+                        height_field="height",
+                        upload_to="sourceVersions",
+                        width_field="width",
+                    ),
+                ),
+                ("height", models.IntegerField(default=0)),
+                ("width", models.IntegerField(default=0)),
             ],
         ),
         migrations.CreateModel(

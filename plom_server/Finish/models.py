@@ -57,6 +57,25 @@ class SolutionSourcePDF(models.Model):
 
 
 class SolutionImage(models.Model):
+    """An image of the solution to a version of a question.
+
+    A cached copy of the rendered PDF file.
+
+    version: which version.
+    question_index: which question.  TODO: renaming
+    image: an abstraction of a file for the image.
+    height: how many pixels high is the image.
+    width: how many pixels wide is the image.
+    """
+
     version = models.PositiveIntegerField(null=False)
     solution_number = models.PositiveIntegerField(null=False)
-    image = models.ImageField(upload_to="sourceVersions")
+    image = models.ImageField(
+        null=False,
+        upload_to="sourceVersions",
+        # tell Django where to automagically store height/width info on save
+        height_field="height",
+        width_field="width",
+    )
+    height = models.IntegerField(default=0)
+    width = models.IntegerField(default=0)
