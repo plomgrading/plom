@@ -103,7 +103,6 @@ def delete_all_source_pdfs() -> None:
         delete_source_pdf(pdf_obj.version)
 
 
-@transaction.atomic()
 def get_source(version: int) -> dict[str, Any]:
     """Return a dictionary with info about the source version.
 
