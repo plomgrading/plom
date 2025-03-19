@@ -10,7 +10,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-import pymupdf as fitz
+import pymupdf
 from django.core.files import File
 from django.db import transaction
 
@@ -178,10 +178,12 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
             which passes a plain-old open file handle.
 
     Raises:
-        PlomDependencyException: if prepration dependencies prevent modification of source files.
+        PlomDependencyException: if preparation dependencies prevent modification
+            of source files.
 
     Returns:
-        A tuple with a boolean for success and a message or error message.
+        A tuple with a boolean for success and a message or error message,
+        for example if the PDF already exists.
     """
     # raises a PlomDependencyException if cannot modify
     assert_can_modify_sources()
@@ -197,7 +199,7 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
             for chunk in in_memory_file:
                 fh.write(chunk)
         # now check it has correct number of pages
-        with fitz.open(tmp_pdf) as doc:
+        with pymupdf.open(tmp_pdf) as doc:
             if doc.page_count != int(required_pages):
                 return (
                     False,
@@ -254,19 +256,23 @@ def store_reference_images(source_version: int):
         ri_obj.delete()
 
     source_pdf_obj = PaperSourcePDF.objects.get(version=source_version)
-    source_path = Path(source_pdf_obj.source_pdf.path)
-
     n_pages = SpecificationService.get_n_pages()
-    mock_exam_pdf_bytes = mocker.mock_exam(
-        source_version, source_path, n_pages, SpecificationService.get_short_name_slug()
-    )
-    doc = fitz.Document(stream=mock_exam_pdf_bytes)
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        save_path = pathlib.Path(tmpdir)
+    # TODO: this does direct file access?  Why else would it need `source_path`...
+    _source_path = Path(source_pdf_obj.source_pdf.path)
+    mock_exam_pdf_bytes = mocker.mock_exam(
+        source_version,
+        _source_path,
+        n_pages,
+        SpecificationService.get_short_name_slug(),
+    )
+    doc = pymupdf.Document(stream=mock_exam_pdf_bytes)
+
+    with tempfile.TemporaryDirectory() as _tmpdir:
+        tmpdir = pathlib.Path(_tmpdir)
         for n, pg in enumerate(doc.pages()):
             pix = pg.get_pixmap(dpi=200, annots=True)
-            fname = save_path / f"ref_{source_version}_{n+1}.png"
+            fname = tmpdir / f"ref_{source_version}_{n+1}.png"
             pix.save(fname)
             code_dict = QRextract(fname)
             page_data = scanner.parse_qr_code([code_dict])
