@@ -71,7 +71,7 @@ def delete_source_pdf(source_version: int) -> None:
     """
     assert_can_modify_sources()
 
-    with transaction.atomic():
+    with transaction.atomic(durable=True):
         # delete the DB entry and *then* the file: the order is important
         # b/c the atomic operation can undo the DB operation but not the
         # file unlinking!
@@ -81,15 +81,16 @@ def delete_source_pdf(source_version: int) -> None:
             pdf_obj = PaperSourcePDF.objects.filter(version=source_version).get()
             path = Path(pdf_obj.source_pdf.path)
             pdf_obj.delete()
-            # if the file fails to delete for some reason, the object delete
-            # will also be rewound by the atomic context
-            path.unlink()
-            # Ignoring a missing file could mask an bug, so I think we'd want to
-            # know... but we could revisit in the future:
-            # path.unlink(missing_ok=True)
-
         except PaperSourcePDF.DoesNotExist:
             return
+
+    # now that we're sure the database has been updated (by the atomic durable)
+    # we can safely delete the file.  If the power went out *right now*, the
+    # database would be fine and we'd have a dangling file on disc.
+    path.unlink()
+    # Ignoring a missing file could mask an bug, so I think we'd want to
+    # know... but we could revisit in the future:
+    # path.unlink(missing_ok=True)d
 
 
 def delete_all_source_pdfs() -> None:
