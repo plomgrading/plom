@@ -11,6 +11,8 @@ from plom_server.Preparation.models import PaperSourcePDF
 
 
 class ReferenceImage(models.Model):
+    # this on_delete means that when PaperSourcePDF is deleted, these ReferenceImages
+    # will also be deleted automatically
     source_pdf = models.ForeignKey(PaperSourcePDF, null=False, on_delete=models.CASCADE)
     image_file = models.ImageField(
         null=False,
@@ -28,7 +30,20 @@ class ReferenceImage(models.Model):
 
 @receiver(models.signals.post_delete, sender=ReferenceImage)
 def auto_delete_file_on_delete(sender, instance, **kwargs):
-    """Deletes file when linked `ReferenceImage` object is deleted."""
+    """Deletes file when linked `ReferenceImage` object is deleted.
+
+    Note: we must be careful about rollbacks caused by an upstream atomic
+    transaction in a function outside of where the deletion happens (even
+    if that function itself is atomic).
+
+    Django docs do say this:
+
+        Note that the object will no longer be in the database,
+        so be very careful what you do with this instance.
+
+    So perhaps its enough that you use a durable transaction on the
+    code that triggers the deletion.
+    """
     if instance.image_file:
         path = Path(instance.image_file.path)
         if path.is_file():
