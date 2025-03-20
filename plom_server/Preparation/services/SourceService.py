@@ -85,8 +85,7 @@ def delete_source_pdf(version: int) -> None:
         img_objs = list(ReferenceImage.objects.filter(version=version))
         # Make sure we delete after we get the ReferenceImages (before the cascade)
         pdf_obj.delete()
-        # remove associated images, first by deleting their db rows
-        # TODO: do we need to?  Will the cascade do it?
+        # The cascade will have removed these DB rows for us
         # for img_obj in img_objs:
         #     img_obj.delete()
 

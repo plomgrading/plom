@@ -37,7 +37,7 @@ class ReferenceImage(models.Model):
     """
 
     # this on_delete means that when PaperSourcePDF is deleted, these ReferenceImages
-    # will also be deleted automatically
+    # will also be deleted automatically (although not their underlying files)
     source_pdf = models.ForeignKey(PaperSourcePDF, null=False, on_delete=models.CASCADE)
     image_file = models.ImageField(
         null=False,
