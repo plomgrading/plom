@@ -36,9 +36,8 @@ class ReferenceImage(models.Model):
     but it runs *during* the atomic durable.
     """
 
-    # this on_delete means that when PaperSourcePDF is deleted, these ReferenceImages
-    # will also be deleted automatically (although not their underlying files)
-    source_pdf = models.ForeignKey(PaperSourcePDF, null=False, on_delete=models.CASCADE)
+    page_number = models.PositiveIntegerField(null=False)
+    version = models.PositiveIntegerField(null=False)
     image_file = models.ImageField(
         null=False,
         upload_to="reference_images",
@@ -47,7 +46,5 @@ class ReferenceImage(models.Model):
         width_field="width",
     )
     parsed_qr = models.JSONField(default=dict, null=True)
-    page_number = models.PositiveIntegerField(null=False)
-    version = models.PositiveIntegerField(null=False)
     height = models.IntegerField(default=0)
     width = models.IntegerField(default=0)
