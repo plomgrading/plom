@@ -69,7 +69,7 @@ class Migration(migrations.Migration):
                 ("question_index", models.PositiveIntegerField()),
                 ("version", models.PositiveIntegerField()),
                 (
-                    "image",
+                    "image_file",
                     models.ImageField(
                         height_field="height",
                         upload_to="sourceVersions",

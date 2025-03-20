@@ -15,4 +15,6 @@ class SolnImageService:
         If the image is not present then an ObjectDoesNotExist
         exception thrown and it is up to the caller to deal with that.
         """
-        return SolutionImage.objects.get(question_index=qidx, version=version).image
+        return SolutionImage.objects.get(
+            question_index=qidx, version=version
+        ).image_file

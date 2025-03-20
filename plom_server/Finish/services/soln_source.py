@@ -80,8 +80,8 @@ class SolnSourceService:
         if soln_source_obj.source_pdf:
             soln_source_obj.source_pdf.delete(save=False)  # delete the underlying file
         for img_obj in img_objs:
-            if img_obj.image:
-                img_obj.image.delete(save=False)  # delete the underlying file
+            if img_obj.image_file:
+                img_obj.image_file.delete(save=False)  # delete the underlying file
 
     @classmethod
     def remove_all_solution_pdf(cls):
@@ -166,7 +166,7 @@ class SolnSourceService:
             SolutionImage.objects.create(
                 version=version,
                 question_index=sqs_obj.question_index,
-                image=File(
+                image_file=File(
                     io.BytesIO(soln_img.tobytes()),
                     name=f"soln_{version}_{sqs_obj.question_index}.png",
                 ),

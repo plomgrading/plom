@@ -70,7 +70,7 @@ class SolutionImage(models.Model):
 
     question_index = models.PositiveIntegerField(null=False)
     version = models.PositiveIntegerField(null=False)
-    image = models.ImageField(
+    image_file = models.ImageField(
         null=False,
         upload_to="sourceVersions",
         # tell Django where to automagically store height/width info on save
