@@ -67,9 +67,9 @@ class SolnSourceService:
                 soln_source_obj = SolutionSourcePDF.objects.get(version=version)
             except ObjectDoesNotExist:
                 raise ValueError(f"There is no solution pdf for version {version}")
-            soln_source_obj.delete()  # delete the db row
             # force QuerySet to list: we're going to traverse twice; don't want any magic
             img_objs = list(SolutionImage.objects.filter(version=version))
+            soln_source_obj.delete()  # delete the db row
             # remove associated images, first by deleting their db rows
             for img_obj in img_objs:
                 img_obj.delete()

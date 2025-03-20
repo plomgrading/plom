@@ -60,7 +60,7 @@ def are_all_sources_uploaded() -> bool:
         return False
 
 
-def delete_source_pdf(source_version: int) -> None:
+def delete_source_pdf(version: int) -> None:
     """Delete a particular version of the source PDF files.
 
     If no such version exists (either out of range or never uploaded)
@@ -78,10 +78,16 @@ def delete_source_pdf(source_version: int) -> None:
         # TODO: Colin thinks this important juggling should be in the model
         # TODO: see for example Paper/models/reference_image.py
         try:
-            pdf_obj = PaperSourcePDF.objects.filter(version=source_version).get()
-            pdf_obj.delete()
+            pdf_obj = PaperSourcePDF.objects.filter(version=version).get()
         except PaperSourcePDF.DoesNotExist:
             return
+        # force QuerySet to list: we're going to traverse twice; don't want any magic
+        img_objs = list(ReferenceImage.objects.filter(version=version))
+        # Make sure we delete after we get the ReferenceImages (before the cascade)
+        pdf_obj.delete()
+        # The cascade will have removed these DB rows for us
+        # for img_obj in img_objs:
+        #     img_obj.delete()
 
     # now that we're sure the database has been updated (by the atomic durable)
     # we can safely delete the file.  If the power went out *right now*, the
@@ -89,6 +95,10 @@ def delete_source_pdf(source_version: int) -> None:
     pdf_obj.source_pdf.delete(save=False)
     # (This looks like we're using the object after deletion but its "ok" b/c
     # pdf_obj is the Django abstraction)
+
+    for img_obj in img_objs:
+        if img_obj.image_file:
+            img_obj.image_file.delete(save=False)  # delete the underlying file
 
 
 def delete_all_source_pdfs() -> None:
