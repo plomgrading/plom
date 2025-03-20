@@ -14,7 +14,7 @@ class ReferenceImage(models.Model):
     A cached copy of the rendered PDF file.
 
     source_pdf: a link the pdf file from which this came.
-    image: an abstraction of a file for the image.
+    image_file: an abstraction of a file for the image.
     parsed_qr: we place dummy QR codes on the reference pages during
         rendering, using the same process as Plom's actual paper
         creation.  We can read this information back here.

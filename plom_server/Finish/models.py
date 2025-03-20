@@ -63,7 +63,7 @@ class SolutionImage(models.Model):
 
     question_index: which question.
     version: which version.
-    image: an abstraction of a file for the image.
+    image_file: an abstraction of a file for the image.
     height: how many pixels high is the image.
     width: how many pixels wide is the image.
     """
