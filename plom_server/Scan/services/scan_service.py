@@ -319,7 +319,7 @@ class ScanService:
             PlomBundleLockedException: bundle was splitting or reading QR
                 codes, or "push-locked", or already pushed.
         """
-        with transaction.atomic():
+        with transaction.atomic(durable=True):
             _bundle_obj = (
                 StagingBundle.objects.select_for_update().filter(pk=bundle_pk).get()
             )
@@ -359,10 +359,14 @@ class ScanService:
             # thumbnails will then be automatically deleted by the deletion
             # of the staging_images.
             BaseImage.objects.filter(stagingimage__bundle=_bundle_obj).delete()
-            # now safe to delete the bundle itself and then the files
+            # now safe to delete the bundle itself
             _bundle_obj.delete()
-            for file_path in files_to_unlink:
-                pathlib.Path(file_path).unlink()
+
+        # Now that all DB ops are done, the actual files are deleted OUTSIDE
+        # of the durable atomic block. See the changes and discussions in
+        # https://gitlab.com/plom/plom/-/merge_requests/3127
+        for file_path in files_to_unlink:
+            pathlib.Path(file_path).unlink()
 
     def remove_bundle_by_slug_cmd(self, bundle_slug: str) -> None:
         """Wrapper around remove_bundle_by_pk but takes bundle-slug instead."""
