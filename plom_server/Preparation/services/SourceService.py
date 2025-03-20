@@ -79,7 +79,6 @@ def delete_source_pdf(source_version: int) -> None:
         # TODO: see for example Paper/models/reference_image.py
         try:
             pdf_obj = PaperSourcePDF.objects.filter(version=source_version).get()
-            path = Path(pdf_obj.source_pdf.path)
             pdf_obj.delete()
         except PaperSourcePDF.DoesNotExist:
             return
@@ -87,10 +86,9 @@ def delete_source_pdf(source_version: int) -> None:
     # now that we're sure the database has been updated (by the atomic durable)
     # we can safely delete the file.  If the power went out *right now*, the
     # database would be fine and we'd have a dangling file on disc.
-    path.unlink()
-    # Ignoring a missing file could mask an bug, so I think we'd want to
-    # know... but we could revisit in the future:
-    # path.unlink(missing_ok=True)d
+    pdf_obj.source_pdf.delete(save=False)
+    # (This looks like we're using the object after deletion but its "ok" b/c
+    # pdf_obj is the Django abstraction)
 
 
 def delete_all_source_pdfs() -> None:
