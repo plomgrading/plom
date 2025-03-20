@@ -341,14 +341,13 @@ class ScanService:
                 for bimg in BaseImage.objects.filter(stagingimage__bundle=_bundle_obj)
             ]
             # and the thumbnails...
+            # (note subtle difference in staging_image / stagingimage - sigh)
             files_to_unlink.extend(
                 [
                     thb.image_file.path
                     for thb in StagingThumbnail.objects.filter(
                         staging_image__bundle=_bundle_obj
                     )
-                    # note subtle difference in staging_image
-                    # and staging_image - sigh.
                 ]
             )
             # and the bundle pdf
