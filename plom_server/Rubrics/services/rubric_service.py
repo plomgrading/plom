@@ -645,7 +645,8 @@ class RubricService:
             Rubric.objects.filter(rid=rid, latest=False).all().order_by("revision")
         )
 
-    def init_rubrics(self) -> bool:
+    @classmethod
+    def init_rubrics(cls) -> bool:
         """Add special rubrics such as deltas and per-question specific.
 
         Returns:
@@ -653,10 +654,11 @@ class RubricService:
         """
         if Rubric.objects.exists():
             return False
-        self._build_system_rubrics()
+        cls._build_system_rubrics()
         return True
 
-    def _build_system_rubrics(self) -> None:
+    @classmethod
+    def _build_system_rubrics(cls) -> None:
         log.info("Building special manager-generated rubrics")
 
         # get the first manager object
@@ -671,7 +673,7 @@ class RubricService:
             # data["user"] = any_manager_pk
             # data["modified_by_user"] = any_manager_pk
             data["system_rubric"] = True
-            self._create_rubric_lowlevel(
+            cls._create_rubric_lowlevel(
                 data, _bypass_serializer=True, _bypass_user=any_manager
             )
 
@@ -856,7 +858,8 @@ class RubricService:
                 r["rid"],
             )
 
-    def _erase_all_rubrics(self) -> None:
+    @staticmethod
+    def _erase_all_rubrics() -> None:
         """Remove all rubrics, permanently deleting them.  BE CAREFUL.
 
         Warning - although this checks if any annotations have been produced

@@ -106,8 +106,7 @@ class Command(BaseCommand):
         return len(rubrics)
 
     def init_rubrics_cmd(self):
-        service = RubricService()
-        return service.init_rubrics()
+        return RubricService.init_rubrics()
 
     def download_rubrics_to_file(
         self,

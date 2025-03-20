@@ -56,8 +56,8 @@ def set_papers_printed(status: bool, *, ignore_dependencies: bool = False):
     from plom_server.Scan.services import ForgiveMissingService
 
     if status:
-        RubricService().init_rubrics()
+        RubricService.init_rubrics()
         ForgiveMissingService.create_system_bundle_of_substitute_pages()
     else:
-        RubricService()._erase_all_rubrics()
+        RubricService._erase_all_rubrics()
         ForgiveMissingService.erase_all_substitute_images_and_their_bundle()
