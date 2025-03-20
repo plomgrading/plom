@@ -82,10 +82,11 @@ class SolnSourceService:
             if img_obj.image:
                 img_obj.image.delete()  # delete the underlying file
 
-    def remove_all_solution_pdf(self):
+    @classmethod
+    def remove_all_solution_pdf(cls):
         """Remove all solution pdfs and associated images."""
         for obj in SolutionSourcePDF.objects.all():
-            self.remove_solution_pdf(obj.version)
+            cls.remove_solution_pdf(obj.version)
 
     def get_soln_pdf_for_download(self, version: int) -> io.BytesIO:
         """Return bytes of solution pdf for given version."""

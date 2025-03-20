@@ -55,9 +55,9 @@ class Command(BaseCommand):
     def remove_source(self, version=None, all=False):
         try:
             if all:
-                SolnSourceService().remove_all_solution_pdf()
+                SolnSourceService.remove_all_solution_pdf()
             elif version:
-                SolnSourceService().remove_solution_pdf(version)
+                SolnSourceService.remove_solution_pdf(version)
             else:
                 return
         except ValueError as err:
