@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import arrow
-import pymupdf as fitz
+import pymupdf
 import zipfly
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -100,12 +100,12 @@ class BuildSolutionService:
         # we used the keys of paper number to build it but now keep only the rows
         return list(status.values())
 
-    def watermark_pages(self, doc: fitz.Document, watermark_text: str) -> None:
+    def watermark_pages(self, doc: pymupdf.Document, watermark_text: str) -> None:
         """Watermark the pages of the given document with the given text."""
         margin = 10
         for pg in doc:
             h = pg.rect.height
-            wm_rect = fitz.Rect(margin, h - margin - 32, margin + 200, h - margin)
+            wm_rect = pymupdf.Rect(margin, h - margin - 32, margin + 200, h - margin)
             excess = pg.insert_textbox(
                 wm_rect,
                 watermark_text,
@@ -152,16 +152,16 @@ class BuildSolutionService:
         # get the solution pdfs
         soln_doc = {}
         for spdf_obj in SolutionSourcePDF.objects.all():
-            soln_doc[spdf_obj.version] = fitz.open(spdf_obj.source_pdf.path)
+            soln_doc[spdf_obj.version] = pymupdf.open(spdf_obj.source_pdf.path)
 
         # build the solution coverpage in a tempdir
-        # open it as a fitz doc and then append the soln pages to it.
+        # open it as a pymupdf doc and then append the soln pages to it.
         reas = ReassembleService()
         with tempfile.TemporaryDirectory() as tmpdir:
             cp_path = reas.build_paper_cover_page(
                 Path(tmpdir), paper_obj, solution=True
             )
-            with fitz.open(cp_path) as dest_doc:
+            with pymupdf.open(cp_path) as dest_doc:
                 # now append required soln pages.
                 # do this in order of the solution-number
                 # see issue #3689
