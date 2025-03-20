@@ -78,10 +78,10 @@ class SolnSourceService:
         # we can safely delete the files.  If the power went out *right now*, the
         # database would be fine and we'd have dangling files on disc.
         if soln_source_obj.source_pdf:
-            soln_source_obj.source_pdf.delete()  # delete the underlying file
+            soln_source_obj.source_pdf.delete(save=False)  # delete the underlying file
         for img_obj in img_objs:
             if img_obj.image:
-                img_obj.image.delete()  # delete the underlying file
+                img_obj.image.delete(save=False)  # delete the underlying file
 
     @classmethod
     def remove_all_solution_pdf(cls):
