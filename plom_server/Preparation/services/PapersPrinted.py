@@ -27,7 +27,10 @@ def set_papers_printed(status: bool, *, ignore_dependencies: bool = False):
       * true => will create system rubrics
       * false => will delete all existing rubrics
 
-    KWArgs:
+    Args:
+        status: True to set printed, False to set unprinted.
+
+    Keyword Args:
         ignore_dependencies: set this for testing purposes, so that one
             can set papers-printed=true, without actually building pdfs.
             Setting this also means rubrics will not be produced.
