@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 
 import random
@@ -136,25 +136,27 @@ class SolnSpecSerializer(serializers.ModelSerializer):
                 f"Number of solutions {len(self.data['solution'])} does not match "
                 f"number of questions {spec.numberOfQuestions}"
             )
-        # check that the solution numbers match question indices
-        for sn in range(1, spec.numberOfQuestions + 1):
-            if str(sn) not in self.data["solution"]:
-                raise ValueError(f"Cannot find solution for question {sn}")
+        # check that we have a solution for each question and vice versa
+        for qi in range(1, spec.numberOfQuestions + 1):
+            if str(qi) not in self.data["solution"]:
+                raise ValueError(f"Cannot find solution for question {qi}")
             # check that the page numbers for each solution are in range.
-            for pg in self.data["solution"][f"{sn}"]["pages"]:
+            for pg in self.data["solution"][f"{qi}"]["pages"]:
                 if pg < 1:
-                    raise ValueError(f"Page {pg} in solution {sn} is not positive")
+                    raise ValueError(f"Page {pg} in solution {qi} is not positive")
                 elif pg > self.data["numberOfPages"]:
                     raise ValueError(
-                        f"Page {pg} in solution {sn} is larger than the number of pages {self.data['numberOfPages']}"
+                        f"Page {pg} in solution {qi} is larger than "
+                        f"the number of pages {self.data['numberOfPages']}"
                     )
             # check that the page numbers for each soln are contiguous
             # is sufficient to check that the number of pages = max-min+1.
-            min_pg = min(self.data["solution"][f"{sn}"]["pages"])
-            max_pg = max(self.data["solution"][f"{sn}"]["pages"])
-            if len(self.data["solution"][f"{sn}"]["pages"]) != max_pg - min_pg + 1:
+            min_pg = min(self.data["solution"][f"{qi}"]["pages"])
+            max_pg = max(self.data["solution"][f"{qi}"]["pages"])
+            if len(self.data["solution"][f"{qi}"]["pages"]) != max_pg - min_pg + 1:
                 raise ValueError(
-                    f"The list of pages for solution {sn} is not contiguous - {self.data['solution'][f'{sn}']['pages']}"
+                    f"The list of pages for solution {qi} is not contiguous "
+                    f"- {self.data['solution'][f'{qi}']['pages']}"
                 )
 
         return True
