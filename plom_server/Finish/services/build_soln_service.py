@@ -166,7 +166,7 @@ class BuildSolutionService:
                 # do this in order of the solution-number
                 # see issue #3689
                 for qi, v in sorted(qv_map.items()):
-                    pg_list = SolnSpecQuestion.objects.get(solution_number=qi).pages
+                    pg_list = SolnSpecQuestion.objects.get(question_index=qi).pages
                     # pg_list can be "[3]" or "[3, 4, 5]".
                     # minus one b/c pg_list is 1-indexed but pymupdf pages 0-indexed
                     dest_doc.insert_pdf(

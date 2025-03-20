@@ -84,7 +84,7 @@ class SpecSerializer(serializers.ModelSerializer):
             return False
 
     @transaction.atomic
-    def create(self, validated_data):
+    def create(self, validated_data) -> Specification:
         """Create a Specification instance and SpecQuestion instances.
 
         If a spec instance already exists, this method overwrites the old spec.
@@ -160,7 +160,7 @@ class SolnSpecSerializer(serializers.ModelSerializer):
         return True
 
     @transaction.atomic
-    def create(self, validated_data):
+    def create(self, validated_data) -> SolnSpecification:
         """Create a Specification instance and SpecQuestion instances.
 
         If a spec instance already exists, this method overwrites the old spec.
@@ -170,6 +170,6 @@ class SolnSpecSerializer(serializers.ModelSerializer):
 
         solution_dict = validated_data.pop("solution")
         for idx, soln in solution_dict.items():
-            soln["solution_number"] = int(idx)
+            soln["question_index"] = int(idx)
             SolnSpecQuestion.objects.create(**soln)
         return SolnSpecification.objects.create(**validated_data)

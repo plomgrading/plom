@@ -133,7 +133,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("pages", models.JSONField()),
-                ("solution_number", models.PositiveIntegerField(unique=True)),
+                ("question_index", models.PositiveIntegerField(unique=True)),
             ],
         ),
         migrations.CreateModel(

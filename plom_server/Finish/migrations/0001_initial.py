@@ -66,8 +66,8 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
+                ("question_index", models.PositiveIntegerField()),
                 ("version", models.PositiveIntegerField()),
-                ("solution_number", models.PositiveIntegerField()),
                 (
                     "image",
                     models.ImageField(

@@ -163,9 +163,9 @@ class SolnSourceService:
             # now save the result into the DB.
             SolutionImage.objects.create(
                 version=version,
-                solution_number=sqs_obj.solution_number,
+                question_index=sqs_obj.question_index,
                 image=File(
                     io.BytesIO(soln_img.tobytes()),
-                    name=f"soln_{version}_{sqs_obj.solution_number}.png",
+                    name=f"soln_{version}_{sqs_obj.question_index}.png",
                 ),
             )
