@@ -79,11 +79,12 @@ def delete_source_pdf(version: int) -> None:
         # TODO: see for example Paper/models/reference_image.py
         try:
             pdf_obj = PaperSourcePDF.objects.filter(version=version).get()
-            pdf_obj.delete()
         except PaperSourcePDF.DoesNotExist:
             return
         # force QuerySet to list: we're going to traverse twice; don't want any magic
         img_objs = list(ReferenceImage.objects.filter(version=version))
+        # Make sure we delete after we get the ReferenceImages (before the cascade)
+        pdf_obj.delete()
         # remove associated images, first by deleting their db rows
         # TODO: do we need to?  Will the cascade do it?
         # for img_obj in img_objs:
