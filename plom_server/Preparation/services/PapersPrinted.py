@@ -19,7 +19,6 @@ def have_papers_been_printed() -> bool:
     return setting_obj.have_printed_papers
 
 
-@transaction.atomic(durable=True)
 def set_papers_printed(status: bool, *, ignore_dependencies: bool = False):
     """Set the papers as (true) 'printed' or (false) 'yet to be printed'.
 
