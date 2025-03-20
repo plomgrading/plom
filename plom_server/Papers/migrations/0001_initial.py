@@ -9,7 +9,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("Base", "0001_initial"),
-        ("Preparation", "0001_initial"),
         ("Scan", "0001_initial"),
         ("contenttypes", "0002_remove_content_type_name"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
@@ -101,6 +100,33 @@ class Migration(migrations.Migration):
                 ),
             ],
             bases=("Base.hueytasktracker",),
+        ),
+        migrations.CreateModel(
+            name="ReferenceImage",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("page_number", models.PositiveIntegerField()),
+                ("version", models.PositiveIntegerField()),
+                (
+                    "image_file",
+                    models.ImageField(
+                        height_field="height",
+                        upload_to="reference_images",
+                        width_field="width",
+                    ),
+                ),
+                ("parsed_qr", models.JSONField(default=dict, null=True)),
+                ("height", models.IntegerField(default=0)),
+                ("width", models.IntegerField(default=0)),
+            ],
         ),
         migrations.CreateModel(
             name="SolnSpecification",
@@ -411,40 +437,6 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(
                 on_delete=django.db.models.deletion.CASCADE, to="Papers.paper"
             ),
-        ),
-        migrations.CreateModel(
-            name="ReferenceImage",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "image_file",
-                    models.ImageField(
-                        height_field="height",
-                        upload_to="reference_images",
-                        width_field="width",
-                    ),
-                ),
-                ("parsed_qr", models.JSONField(default=dict, null=True)),
-                ("page_number", models.PositiveIntegerField()),
-                ("version", models.PositiveIntegerField()),
-                ("height", models.IntegerField(default=0)),
-                ("width", models.IntegerField(default=0)),
-                (
-                    "source_pdf",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to="Preparation.papersourcepdf",
-                    ),
-                ),
-            ],
         ),
         migrations.AddConstraint(
             model_name="bundle",

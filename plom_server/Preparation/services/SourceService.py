@@ -78,16 +78,16 @@ def delete_source_pdf(version: int) -> None:
         # TODO: Colin thinks this important juggling should be in the model
         # TODO: see for example Paper/models/reference_image.py
         try:
-            pdf_obj = PaperSourcePDF.objects.filter(version=version).get()
+            pdf_obj = PaperSourcePDF.objects.get(version=version)
         except PaperSourcePDF.DoesNotExist:
             return
         # force QuerySet to list: we're going to traverse twice; don't want any magic
         img_objs = list(ReferenceImage.objects.filter(version=version))
         # Make sure we delete after we get the ReferenceImages (before the cascade)
-        pdf_obj.delete()
-        # The cascade will have removed these DB rows for us
-        # for img_obj in img_objs:
-        #     img_obj.delete()
+        pdf_obj.delete()  # delete the db row
+        # remove associated images, first by deleting their db rows
+        for img_obj in img_objs:
+            img_obj.delete()
 
     # now that we're sure the database has been updated (by the atomic durable)
     # we can safely delete the file.  If the power went out *right now*, the
@@ -286,7 +286,6 @@ def store_reference_images(source_version: int):
                     version=source_version,
                     image_file=pix_file,
                     parsed_qr=page_data,
-                    source_pdf=source_pdf_obj,
                 )
 
 
