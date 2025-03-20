@@ -4,7 +4,6 @@
 # Copyright (C) 2025 Colin B. Macdonald
 
 from django.db import models
-from plom_server.Preparation.models import PaperSourcePDF
 
 
 class ReferenceImage(models.Model):
