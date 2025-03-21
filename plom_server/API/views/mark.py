@@ -152,7 +152,7 @@ class ReassignTask(APIView):
         return Response(True, status=status.HTTP_200_OK)
 
 
-# PATCH: /MK/tasks/{code}/reset
+# PATCH: /MK/tasks/{papernum}/{qidx}/reset
 class ResetTask(APIView):
     """Reset a task, making all annotations outdating and putting it back into the pool for remarking from scratch.
 
@@ -163,7 +163,7 @@ class ResetTask(APIView):
             not lead marker or manager.
     """
 
-    def patch(self, request: Request, *, code: str) -> Response:
+    def patch(self, request: Request, *, papernum: int, qidx: int) -> Response:
         """Reset a task."""
         calling_user = request.user
         group_list = list(request.user.groups.values_list("name", flat=True))
@@ -175,12 +175,7 @@ class ResetTask(APIView):
             )
 
         try:
-            papernum, question_idx = mark_task.unpack_code(code)
-        except AssertionError as e:
-            return _error_response(e, status.HTTP_404_NOT_FOUND)
-
-        try:
-            MarkingTaskService().set_paper_marking_task_outdated(papernum, question_idx)
+            MarkingTaskService().set_paper_marking_task_outdated(papernum, qidx)
         except ValueError as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
 

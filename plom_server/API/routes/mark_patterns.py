@@ -62,10 +62,10 @@ class MarkURLPatterns:
             )
         )
 
-        # PATCH: /MK/tasks/{code}/reset
+        # PATCH: /MK/tasks/{papernum}/{qidx}/reset
         mark_patterns.append(
             path(
-                "tasks/<str:code>/reset",
+                "tasks/<int:papernum>/<int:qidx>/reset",
                 ResetTask.as_view(),
                 name="api_MK_reset_task",
             )
