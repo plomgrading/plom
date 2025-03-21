@@ -494,11 +494,12 @@ class Messenger(BaseMessenger):
                     raise PlomNoPermission(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def reset_task(self, code: str) -> bool:
+    def reset_task(self, papernum: int, qidx: int) -> bool:
         """Reset a task, outdating all annotations.
 
         Args:
-            code: a task code such as `"q0123g2"`.
+            papernum: which paper number.
+            qidx: which question index.
 
         Returns:
             True on success.
@@ -517,7 +518,7 @@ class Messenger(BaseMessenger):
 
         with self.SRmutex:
             try:
-                response = self.patch_auth(f"/MK/tasks/{code}/reset")
+                response = self.patch_auth(f"/MK/tasks/{papernum}/{qidx}/reset")
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
