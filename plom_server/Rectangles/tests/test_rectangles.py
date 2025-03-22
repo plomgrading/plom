@@ -3,11 +3,9 @@
 
 from importlib import resources
 
+from django.test import TestCase
 import numpy
 from PIL import Image
-
-from django.contrib.auth.models import User
-from django.test import TestCase
 
 from plom.scan import QRextract
 import plom_server.Scan.tests as _Scan_tests

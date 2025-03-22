@@ -395,6 +395,7 @@ class RectangleExtractor:
         *,
         region: None | dict[str, float] = None,
     ) -> None | dict[str, float]:
+        """Implementation of find rectangle, for testing."""
         IMG_WIDTH, IMG_HEIGHT = img_size
         LEFT, TOP, RIGHT, BOTTOM = reference_region
         WIDTH = RIGHT - LEFT
