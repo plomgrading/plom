@@ -367,11 +367,12 @@ class RectangleExtractor:
             top_f = (top - self.TOP) / self.HEIGHT
             bottom_f = (bottom - self.TOP) / self.HEIGHT
 
+            # cast each to float (from numpy.float64)
             return {
-                "left_f": left_f,
-                "top_f": top_f,
-                "right_f": right_f,
-                "bottom_f": bottom_f,
+                "left_f": float(left_f),
+                "top_f": float(top_f),
+                "right_f": float(right_f),
+                "bottom_f": float(bottom_f),
             }
 
         return None
