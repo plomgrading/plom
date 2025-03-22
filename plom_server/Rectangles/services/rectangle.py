@@ -40,7 +40,7 @@ def get_reference_qr_coords(version: int, page: int) -> dict[str, list[float]]:
     except ReferenceImage.DoesNotExist:
         raise ValueError(f"There is no reference image for v{version} pg{page}.")
     corner_dat = {}
-    for cnr in ["NE", "SE", "NW", "SW"]:
+    for cnr in ("NE", "SE", "NW", "SW"):
         val = rimg_obj.parsed_qr.get(cnr, None)
         if val:
             corner_dat[cnr] = [val["x_coord"], val["y_coord"]]
@@ -380,26 +380,40 @@ class RectangleExtractor:
             ) from e
         # ref-image into cv image: cannot just use imread b/c of DB abstraction
         img_bytes = rimg_obj.image_file.read()
+        return self._get_largest_rectangle_contour(
+            img_bytes,
+            (self.FULL_WIDTH, self.FULL_HEIGHT),
+            (self.LEFT, self.TOP, self.RIGHT, self.BOTTOM),
+            region=region,
+        )
+
+    @staticmethod
+    def _get_largest_rectangle_contour(
+        img_bytes: bytes,
+        img_size: tuple[int, int],
+        reference_region: tuple[int, int, int, int],
+        *,
+        region: None | dict[str, float] = None,
+    ) -> None | dict[str, float]:
+        IMG_WIDTH, IMG_HEIGHT = img_size
+        LEFT, TOP, RIGHT, BOTTOM = reference_region
+        WIDTH = RIGHT - LEFT
+        HEIGHT = BOTTOM - TOP
+
         raw_bytes_as_1d_array: Any = np.frombuffer(img_bytes, np.uint8)
         src_image = cv.imdecode(raw_bytes_as_1d_array, cv.IMREAD_COLOR)
         if src_image is None:
-            raise ValueError(
-                f"Could not read reference image v{self.version} pg{self.page_number}."
-            )
+            raise ValueError("Could not read reference image")
         # if a region is specified then cut it out from the original image,
         # but we need to remember to map the resulting rectangle back to the
         # original coordinate system.
         # make sure region is padded by a few pixels.
         pad = 16
         if region:
-            img_left = max(int(region["left_f"] * self.WIDTH + self.LEFT) - pad, 0)
-            img_right = min(
-                int(region["right_f"] * self.WIDTH + self.LEFT) + pad, self.FULL_WIDTH
-            )
-            img_top = max(int(region["top_f"] * self.HEIGHT + self.TOP) - pad, 0)
-            img_bottom = min(
-                int(region["bottom_f"] * self.HEIGHT + self.TOP) + pad, self.FULL_HEIGHT
-            )
+            img_left = max(int(region["left_f"] * WIDTH + LEFT) - pad, 0)
+            img_right = min(int(region["right_f"] * WIDTH + LEFT) + pad, IMG_WIDTH)
+            img_top = max(int(region["top_f"] * HEIGHT + TOP) - pad, 0)
+            img_bottom = min(int(region["bottom_f"] * HEIGHT + TOP) + pad, IMG_HEIGHT)
             src_image = src_image[img_top:img_bottom, img_left:img_right]
         else:
             img_left = 0
@@ -439,10 +453,10 @@ class RectangleExtractor:
             return None
 
         # convert to [0,1] ranges relative to qr code positions
-        left_f = (left - self.LEFT) / self.WIDTH
-        right_f = (right - self.LEFT) / self.WIDTH
-        top_f = (top - self.TOP) / self.HEIGHT
-        bottom_f = (bottom - self.TOP) / self.HEIGHT
+        left_f = (left - LEFT) / WIDTH
+        right_f = (right - LEFT) / WIDTH
+        top_f = (top - TOP) / HEIGHT
+        bottom_f = (bottom - TOP) / HEIGHT
 
         # cast each to float (from numpy.float64)
         return {

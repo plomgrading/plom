@@ -418,11 +418,12 @@ class ScanService:
         """Check if any staging bundles exist."""
         return StagingBundle.objects.all().exists()
 
-    def parse_qr_code(self, list_qr_codes: list[dict[str, Any]]) -> dict[str, Any]:
+    @staticmethod
+    def parse_qr_code(list_qr_codes: list[dict[str, Any]]) -> dict[str, Any]:
         """Parse QR codes into list of dictionaries.
 
         Args:
-            list_qr_codes: (list) QR codes returned from QRextract() method as a dictionary
+            list_qr_codes: QR codes returned from QRextract() method as a dictionary
 
         Returns:
             groupings: (dict) Set of data from raw-qr-strings
