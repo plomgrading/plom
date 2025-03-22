@@ -411,10 +411,17 @@ class RectangleExtractor:
         # make sure region is padded by a few pixels.
         pad = 16
         if region:
-            img_left = max(int(region["left_f"] * WIDTH + LEFT) - pad, 0)
-            img_right = min(int(region["right_f"] * WIDTH + LEFT) + pad, IMG_WIDTH)
-            img_top = max(int(region["top_f"] * HEIGHT + TOP) - pad, 0)
-            img_bottom = min(int(region["bottom_f"] * HEIGHT + TOP) + pad, IMG_HEIGHT)
+            # convert [0, 1] coordinates into pixels
+            img_left = int(region["left_f"] * WIDTH + LEFT) - pad
+            img_right = int(region["right_f"] * WIDTH + LEFT) + pad
+            img_top = int(region["top_f"] * HEIGHT + TOP) - pad
+            img_bottom = int(region["bottom_f"] * HEIGHT + TOP) + pad
+            # cap pixel values in the image domain
+            img_left = max(img_left, 0)
+            img_right = min(img_right, IMG_WIDTH)
+            img_top = max(img_top, 0)
+            img_bottom = min(img_bottom, IMG_HEIGHT)
+            # crop the image
             src_image = src_image[img_top:img_bottom, img_left:img_right]
         else:
             img_left = 0
