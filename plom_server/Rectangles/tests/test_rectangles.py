@@ -20,10 +20,12 @@ class RectangleServiceTests(TestCase):
     def test_rectangle_floats(self) -> None:
         img_path = resources.files(_Scan_tests) / "page_img_good.png"
         img = Image.open(img_path)  # type: ignore[arg-type]
-        img_bytes = (resources.files(_Scan_tests) / "page_img_good.png").read_bytes()
+        img_size = (img.width, img.height)
+        img_bytes = img_path.read_bytes()
         r = RectangleExtractor._get_largest_rectangle_contour(
-            img_bytes, (img.width, img.height), (0, 0, 100, 100)
+            img_bytes, img_size, (0, 0, 100, 100)
         )
+        assert r is not None
         for k, v in r.items():
             self.assertIsInstance(k, str)
             self.assertIsInstance(v, float)
@@ -33,26 +35,41 @@ class RectangleServiceTests(TestCase):
     def test_rectangle_find(self) -> None:
         img_path = resources.files(_Scan_tests) / "page_img_good.png"
         img = Image.open(img_path)  # type: ignore[arg-type]
+        img_size = (img.width, img.height)
+        img_bytes = img_path.read_bytes()
+        ref_rect = (0, 0, img_size[0], img_size[1])
 
-        codes = QRextract(img_path)
-        parsed_codes = ScanService.parse_qr_code([codes])
-        # print(parsed_codes)
-        # meh = _get_reference_rectangle(parsed_codes)
-        # print(meh)
-        x_coords = []
-        y_coords = []
-        for cnr in ["NE", "SE", "NW", "SW"]:
-            if cnr in parsed_codes:
-                x_coords.append(parsed_codes[cnr]["x_coord"])
-                y_coords.append(parsed_codes[cnr]["y_coord"])
-        # rectangle described by location of the 3 qr-code stamp centres of the reference image
-        LEFT = min(x_coords)
-        RIGHT = max(x_coords)
-        TOP = min(y_coords)
-        BOTTOM = max(y_coords)
-
-        img_bytes = (resources.files(_Scan_tests) / "page_img_good.png").read_bytes()
+        # given the whole image, we find *some* rectangle
         r = RectangleExtractor._get_largest_rectangle_contour(
-            img_bytes, (img.width, img.height), (LEFT, TOP, RIGHT, BOTTOM)
+            img_bytes, img_size, ref_rect
         )
-        print(r)
+        self.assertEqual(set(r.keys()), set(("top_f", "bottom_f", "left_f", "right_f")))
+
+        # coor sys increases as we go down so bottom bigger than top
+        self.assertGreater(r["bottom_f"], r["top_f"])
+
+        # Find rectangle in the lower right
+        region = {"left_f": 0.7, "top_f": 0.7, "right_f": 1.0, "bottom_f": 1.0}
+        r = RectangleExtractor._get_largest_rectangle_contour(
+            img_bytes, img_size, ref_rect, region=region
+        )
+        ratio = (r["right_f"] - r["left_f"]) / (r["bottom_f"] - r["top_f"])
+        # not a square b/c we're in [0,1]^2 coord system
+        assert 1.3 < ratio < 1.5, f"not close to square: ratio={ratio}"
+
+        # search the top middle to find the boxed text
+        region = {"left_f": 0.2, "top_f": 0, "right_f": 0.8, "bottom_f": 0.2}
+        r = RectangleExtractor._get_largest_rectangle_contour(
+            img_bytes, img_size, ref_rect, region=region
+        )
+        self.assertAlmostEqual(r["left_f"], 0.32, delta=0.04)
+        self.assertAlmostEqual(r["right_f"], 0.65, delta=0.04)
+        self.assertAlmostEqual(r["top_f"], 0.04, delta=0.01)
+        self.assertAlmostEqual(r["bottom_f"], 0.07, delta=0.01)
+
+        # no box in the bottom middle
+        region = {"left_f": 0.2, "top_f": 0.9, "right_f": 0.8, "bottom_f": 1.0}
+        r = RectangleExtractor._get_largest_rectangle_contour(
+            img_bytes, img_size, ref_rect, region=region
+        )
+        self.assertIsNone(r)
