@@ -5,6 +5,7 @@ from importlib import resources
 
 from django.test import TestCase
 import numpy
+import numpy as np
 from PIL import Image
 
 from plom.scan import QRextract
@@ -12,7 +13,10 @@ import plom_server.Scan.tests as _Scan_tests
 from plom_server.Scan.services import ScanService
 from ..services import RectangleExtractor
 
-from ..services.rectangle import _get_reference_rectangle
+from ..services.rectangle import (
+    _get_reference_rectangle,
+    _get_affine_transf_matrix_ref_to_QR_target,
+)
 
 
 class RectangleServiceTests(TestCase):
@@ -98,3 +102,15 @@ class RectangleServiceTests(TestCase):
         self.assertAlmostEqual(r["right_f"], 1.07, delta=0.05)
         self.assertAlmostEqual(r["top_f"], 0.94, delta=0.05)
         self.assertAlmostEqual(r["bottom_f"], 1.04, delta=0.05)
+
+    def test_rect_affine_matrix_no_correction(self) -> None:
+        """Identity for affine transformation matrix."""
+        img_path = resources.files(_Scan_tests) / "id_page_img.png"
+
+        codes = QRextract(img_path)
+        parsed_codes = ScanService.parse_qr_code([codes])
+        rd = _get_reference_rectangle(parsed_codes)
+        ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
+        matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)
+        expected_matrix = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+        self.assertTrue(np.linalg.norm(matrix - expected_matrix, "fro") < 0.001)
