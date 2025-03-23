@@ -202,7 +202,7 @@ class RectangleExtractor:
         return cv.getAffineTransform(ref_three_points, scan_three_points)
 
     def _get_perspective_transform_scan_to_ref(
-        self, ref_rect: dict[str, float], M_r_to_s: np.ndarray
+        self, ref_rect: dict[str, int], M_r_to_s: np.ndarray
     ) -> np.ndarray:
         """Given the ref-rectangle and the transform from reference-to-scan, compute (essentially) the inverse transform.
 
