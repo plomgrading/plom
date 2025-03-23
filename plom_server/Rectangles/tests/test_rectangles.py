@@ -12,7 +12,7 @@ import plom_server.Scan.tests as _Scan_tests
 from plom_server.Scan.services import ScanService
 from ..services import RectangleExtractor
 
-# from ..services.rectangle import _get_reference_rectangle
+from ..services.rectangle import _get_reference_rectangle
 
 
 class RectangleServiceTests(TestCase):
@@ -73,3 +73,24 @@ class RectangleServiceTests(TestCase):
             img_bytes, img_size, ref_rect, region=region
         )
         self.assertIsNone(r)
+
+    def test_rectangle_find_QR_coord_system(self) -> None:
+        img_path = resources.files(_Scan_tests) / "page_img_good.png"
+        img = Image.open(img_path)  # type: ignore[arg-type]
+        img_size = (img.width, img.height)
+        img_bytes = img_path.read_bytes()
+
+        codes = QRextract(img_path)
+        parsed_codes = ScanService.parse_qr_code([codes])
+        r = _get_reference_rectangle(parsed_codes)
+        ref_rect = (r["left"], r["top"], r["right"], r["bottom"])
+
+        # find the lower-right box around the QR code
+        region = {"left_f": 0.9, "top_f": 0.9, "right_f": 1.1, "bottom_f": 1.1}
+        r = RectangleExtractor._get_largest_rectangle_contour(
+            img_bytes, img_size, ref_rect, region=region
+        )
+        self.assertAlmostEqual(r["left_f"], 0.93, delta=0.05)
+        self.assertAlmostEqual(r["right_f"], 1.07, delta=0.05)
+        self.assertAlmostEqual(r["top_f"], 0.94, delta=0.05)
+        self.assertAlmostEqual(r["bottom_f"], 1.04, delta=0.05)

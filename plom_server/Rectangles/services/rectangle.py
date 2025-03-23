@@ -48,14 +48,27 @@ def get_reference_qr_coords(version: int, page: int) -> dict[str, list[float]]:
     return corner_dat
 
 
-def get_reference_rectangle(version: int, page: int) -> dict[str, float]:
-    corner_dat = get_reference_qr_coords(version, page)
+def _get_reference_rectangle(parsed_qr: dict[str, dict[str, Any]]) -> dict[str, float]:
+    x_coords = []
+    y_coords = []
+    for cnr in ("NE", "SE", "NW", "SW"):
+        if cnr in parsed_qr:
+            x_coords.append(parsed_qr[cnr]["x_coord"])
+            y_coords.append(parsed_qr[cnr]["y_coord"])
     return {
-        "left": min([X[0] for X in corner_dat.values()]),
-        "right": max([X[0] for X in corner_dat.values()]),
-        "top": min([X[1] for X in corner_dat.values()]),
-        "bottom": max([X[1] for X in corner_dat.values()]),
+        "left": min(x_coords),
+        "right": max(x_coords),
+        "top": min(y_coords),
+        "bottom": max(y_coords),
     }
+
+
+def get_reference_rectangle(version: int, page: int) -> dict[str, float]:
+    try:
+        rimg_obj = ReferenceImage.objects.get(version=version, page_number=page)
+    except ReferenceImage.DoesNotExist:
+        raise ValueError(f"There is no reference image for v{version} pg{page}.")
+    return _get_reference_rectangle(rimg_obj.parsed_qr)
 
 
 def set_idbox_rectangle(
@@ -114,23 +127,18 @@ class RectangleExtractor:
     def __init__(self, version: int, page: int) -> None:
         self.page_number = page
         self.version = version
+
         try:
             rimg_obj = ReferenceImage.objects.get(version=version, page_number=page)
         except ReferenceImage.DoesNotExist:
             raise ValueError(f"There is no reference image for v{version} pg{page}.")
 
-        x_coords = []
-        y_coords = []
-        for cnr in ["NE", "SE", "NW", "SW"]:
-            if cnr in rimg_obj.parsed_qr:
-                x_coords.append(rimg_obj.parsed_qr[cnr]["x_coord"])
-                y_coords.append(rimg_obj.parsed_qr[cnr]["y_coord"])
-
+        r = _get_reference_rectangle(rimg_obj.parsed_qr)
         # rectangle described by location of the 3 qr-code stamp centres of the reference image
-        self.LEFT = min(x_coords)
-        self.RIGHT = max(x_coords)
-        self.TOP = min(y_coords)
-        self.BOTTOM = max(y_coords)
+        self.LEFT = r["left"]
+        self.RIGHT = r["right"]
+        self.TOP = r["top"]
+        self.BOTTOM = r["bottom"]
         # width and height of the qr-code bounded region of the reference image
         self.WIDTH = self.RIGHT - self.LEFT
         self.HEIGHT = self.BOTTOM - self.TOP
