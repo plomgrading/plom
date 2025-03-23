@@ -231,6 +231,8 @@ class PageImageProcessor:
     ) -> np.ndarray:
         """Given QR data for an image, determine the affine transformation needed to correct the image's orientation.
 
+        TODO: this is likely dead code.
+
         Args:
             qr_dict (dict): the QR information for the image
 
@@ -275,7 +277,7 @@ class PageImageProcessor:
             dest_three_points.astype(np.float32),
         )
 
-    def extract_rect_region(
+    def extract_rect_region_TODO_REMOVE(
         self,
         image_path: str | Path,
         orientation: int,
@@ -286,6 +288,8 @@ class PageImageProcessor:
         right_f: float,
     ) -> Image.Image:
         """Given an image, get a particular sub-rectangle, after applying an affine transformation to correct it.
+
+        TODO: this is likely dead code, use Rectangle.extract_rect_region instead?
 
         Args:
             image_path (str/pathlib.Path): path to image file

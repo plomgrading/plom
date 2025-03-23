@@ -133,7 +133,11 @@ class PageImageProcessorTests(TestCase):
             pipr.get_page_orientation({})
 
     def test_affine_matrix_correct_5_deg_rot(self) -> None:
-        """Test PageImageProcessor.create_affine_transformation_matrix() for an image with 5-degree rotation."""
+        """Test PageImageProcessor.create_affine_transformation_matrix() for an image with 5-degree rotation.
+
+        TODO: this is likely a test for dead code.  It might be good to port these tests
+        to Rectangle app rather than deleting them!
+        """
         pipr = PageImageProcessor()
         test_img = Image.open(resources.files(_Scan_tests) / "id_page_img.png")  # type: ignore[arg-type]
 
@@ -153,7 +157,11 @@ class PageImageProcessorTests(TestCase):
             self.assertTrue(relative_err < 0.01)
 
     def test_affine_matrix_no_correction(self) -> None:
-        """Test PageImageProcessor.create_affine_transformation_matrix() with an image that does not need correction."""
+        """Test PageImageProcessor.create_affine_transformation_matrix() with an image that does not need correction.
+
+        TODO: this is likely a test for dead code.  It might be good to port these tests
+        to Rectangle app rather than deleting them!
+        """
         pipr = PageImageProcessor()
         img_path = resources.files(_Scan_tests) / "id_page_img.png"
 
@@ -185,7 +193,8 @@ class PageImageProcessorTests(TestCase):
             codes = QRextract(img_rot_path)
             qr_dict_id = ScanService.parse_qr_code([codes])
 
-            output_img = pipr.extract_rect_region(
+            # TODO: this code seems to be unused?
+            output_img = pipr.extract_rect_region_TODO_REMOVE(
                 img_rot_path, 0, qr_dict_id, in_top, in_bottom, in_left, in_right
             )
             output_opencv = cv.cvtColor(np.array(output_img), cv.COLOR_RGB2BGR)
