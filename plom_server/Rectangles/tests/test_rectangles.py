@@ -43,6 +43,7 @@ class RectangleServiceTests(TestCase):
         r = RectangleExtractor._get_largest_rectangle_contour(
             img_bytes, img_size, ref_rect
         )
+        assert r is not None
         self.assertEqual(set(r.keys()), set(("top_f", "bottom_f", "left_f", "right_f")))
 
         # coor sys increases as we go down so bottom bigger than top
@@ -53,6 +54,7 @@ class RectangleServiceTests(TestCase):
         r = RectangleExtractor._get_largest_rectangle_contour(
             img_bytes, img_size, ref_rect, region=region
         )
+        assert r is not None
         ratio = (r["right_f"] - r["left_f"]) / (r["bottom_f"] - r["top_f"])
         # not a square b/c we're in [0,1]^2 coord system
         assert 1.3 < ratio < 1.5, f"not close to square: ratio={ratio}"
@@ -62,6 +64,7 @@ class RectangleServiceTests(TestCase):
         r = RectangleExtractor._get_largest_rectangle_contour(
             img_bytes, img_size, ref_rect, region=region
         )
+        assert r is not None
         self.assertAlmostEqual(r["left_f"], 0.32, delta=0.04)
         self.assertAlmostEqual(r["right_f"], 0.65, delta=0.04)
         self.assertAlmostEqual(r["top_f"], 0.04, delta=0.01)
@@ -82,14 +85,15 @@ class RectangleServiceTests(TestCase):
 
         codes = QRextract(img_path)
         parsed_codes = ScanService.parse_qr_code([codes])
-        r = _get_reference_rectangle(parsed_codes)
-        ref_rect = (r["left"], r["top"], r["right"], r["bottom"])
+        rd = _get_reference_rectangle(parsed_codes)
+        ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
 
         # find the lower-right box around the QR code
         region = {"left_f": 0.9, "top_f": 0.9, "right_f": 1.1, "bottom_f": 1.1}
         r = RectangleExtractor._get_largest_rectangle_contour(
             img_bytes, img_size, ref_rect, region=region
         )
+        assert r is not None
         self.assertAlmostEqual(r["left_f"], 0.93, delta=0.05)
         self.assertAlmostEqual(r["right_f"], 1.07, delta=0.05)
         self.assertAlmostEqual(r["top_f"], 0.94, delta=0.05)

@@ -399,7 +399,7 @@ class RectangleExtractor:
     def _get_largest_rectangle_contour(
         img_bytes: bytes,
         img_size: tuple[int, int],
-        reference_region: tuple[int, int, int, int],
+        reference_region: tuple[int | float, int | float, int | float, int | float],
         *,
         region: None | dict[str, float] = None,
     ) -> None | dict[str, float]:
