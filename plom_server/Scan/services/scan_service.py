@@ -1976,11 +1976,9 @@ def huey_child_parse_qr_code(
     img = StagingImage.objects.get(pk=image_pk)
     image_path = img.image_file.path
 
-    scanner = ScanService()
-
     code_dict = QRextract(image_path)
 
-    page_data = scanner.parse_qr_code([code_dict])
+    page_data = ScanService.parse_qr_code([code_dict])
 
     pipr = PageImageProcessor()
 
@@ -1999,7 +1997,7 @@ def huey_child_parse_qr_code(
     # Re-read QR codes if the page image needs to be rotated
     if rotation and rotation != 0:
         code_dict = QRextract(image_path, rotation=rotation)
-        page_data = scanner.parse_qr_code([code_dict])
+        page_data = ScanService.parse_qr_code([code_dict])
         # qr_error_checker.check_qr_codes(page_data, image_path, bundle)
 
     # Return the parsed QR codes for parent process to store in db

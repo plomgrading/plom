@@ -143,8 +143,7 @@ class PageImageProcessorTests(TestCase):
             img_rot.save(img_rot_path)
 
             codes = QRextract(img_rot_path)
-            scanner = ScanService()
-            qr_dict_id = scanner.parse_qr_code([codes])
+            qr_dict_id = ScanService.parse_qr_code([codes])
             affine_matrix = pipr.create_affine_transformation_matrix(qr_dict_id)
             expected_matrix = np.array(
                 [[0.996, -0.087, 10.855], [0.087, 0.996, -134.659]]
@@ -159,8 +158,7 @@ class PageImageProcessorTests(TestCase):
         img_path = resources.files(_Scan_tests) / "id_page_img.png"
 
         codes = QRextract(img_path)
-        scanner = ScanService()
-        qr_dict_id = scanner.parse_qr_code([codes])
+        qr_dict_id = ScanService.parse_qr_code([codes])
         affine_matrix = pipr.create_affine_transformation_matrix(qr_dict_id)
         expected_matrix = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
         self.assertTrue(np.linalg.norm(affine_matrix - expected_matrix, "fro") < 0.001)
@@ -185,8 +183,7 @@ class PageImageProcessorTests(TestCase):
             img_rot.save(img_rot_path)
 
             codes = QRextract(img_rot_path)
-            scanner = ScanService()
-            qr_dict_id = scanner.parse_qr_code([codes])
+            qr_dict_id = ScanService.parse_qr_code([codes])
 
             output_img = pipr.extract_rect_region(
                 img_rot_path, 0, qr_dict_id, in_top, in_bottom, in_left, in_right
