@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+* ID reader "find rectangle" code was failing.
+* ID reader "find rectangle" would not work if Idbox was too far down the page.
 * More error checking and unit tests concerning rubric validity.
 * Refuse to build papers with inconsistent versions maps---there must be at most one version per page.
 * Show errors to end users in some cases that previously just said "error".
