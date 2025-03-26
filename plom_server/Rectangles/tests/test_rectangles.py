@@ -1,11 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Colin B. Macdonald
 
+import tempfile
 from importlib import resources
+from pathlib import Path
 
-from django.test import TestCase
 import numpy
 import numpy as np
+import cv2 as cv
+from django.test import TestCase
 from PIL import Image
 
 from plom.scan import QRextract
@@ -14,6 +17,7 @@ from plom_server.Scan.services import ScanService
 from ..services import RectangleExtractor
 
 from ..services.rectangle import (
+    extract_rect_region_from_image,
     _get_reference_rectangle,
     _get_affine_transf_matrix_ref_to_QR_target,
 )
@@ -114,3 +118,41 @@ class RectangleServiceTests(TestCase):
         matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)
         expected_matrix = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
         self.assertTrue(np.linalg.norm(matrix - expected_matrix, "fro") < 0.001)
+
+    def test_rect_ID_box_corrected_and_extracted(self) -> None:
+        # just some hardcoded numbers for where the ID Box is, this test
+        # is NOT based on finding the rectangle.
+        in_top = 0.28
+        in_bottom = 0.58
+        in_left = 0.09
+        in_right = 0.91
+        img_path = resources.files(_Scan_tests) / "id_page_img.png"
+        # mypy stumbling over Traversable
+        test_img = Image.open(img_path)  # type: ignore[arg-type]
+        codes = QRextract(img_path)
+        parsed_codes = ScanService.parse_qr_code([codes])
+        rd = _get_reference_rectangle(parsed_codes)
+        ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Debug the test by saving images locally:
+            # tmpdir = Path("/home/cbm/src/plom/plom.git")
+            img_rot_path = Path(tmpdir) / "rotated_img.png"
+            img_rot = test_img.rotate(3, expand=True)
+            img_rot.save(img_rot_path)
+
+            codes = QRextract(img_rot_path)
+            qr_dict_id = ScanService.parse_qr_code([codes])
+
+            output_bytes = extract_rect_region_from_image(
+                img_rot_path, qr_dict_id, in_left, in_top, in_right, in_bottom, ref_rect
+            )
+            output_path = Path(tmpdir) / "output_img.png"
+            with output_path.open("wb") as f:
+                f.write(output_bytes)
+            output_img = Image.open(output_path)
+            output_opencv = cv.cvtColor(np.array(output_img), cv.COLOR_RGB2BGR)
+            assert 1000 < output_img.width
+            assert 475 < output_img.height
+            white_subimage = output_opencv[410:475, 330:1000]
+            self.assertAlmostEqual(np.mean(white_subimage.astype(float)), 255, delta=5)
