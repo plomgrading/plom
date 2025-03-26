@@ -285,7 +285,7 @@ If the command line access is not feasible, another option is:
      and push those rubrics to Server 2.
 
 
-...I have many reused the same paper _many_ times
+...I have many reused the same paper **many** times
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Read the above answers.  Suppose Paper 20 has been reused 100 times;
