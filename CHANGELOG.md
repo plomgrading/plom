@@ -6,14 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
-
-### Added
+## [0.17.4] - 2025-03-26
 
 ### Changed
 * More flexible options for `plom-push-to-canvas.py` contrib script.
-
-### Removed
 
 ### Fixed
 * ID reader "find rectangle" code was failing.
@@ -22,7 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Refuse to build papers with inconsistent versions maps---there must be at most one version per page.
 * Show errors to end users in some cases that previously just said "error".
 * Minor fixes and performance improvements.
-
 
 
 ## [0.17.3] - 2025-02-28
@@ -1448,7 +1443,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.17.3...main
+[0.17.4]: https://gitlab.com/plom/plom/-/compare/v0.17.3...v0.17.4
 [0.17.3]: https://gitlab.com/plom/plom/-/compare/v0.17.2...v0.17.3
 [0.17.2]: https://gitlab.com/plom/plom/-/compare/v0.17.1...v0.17.2
 [0.17.1]: https://gitlab.com/plom/plom/-/compare/v0.17.0...v0.17.1
