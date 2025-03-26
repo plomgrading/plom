@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "baseimage",
-                    models.ForeignKey(
+                    models.OneToOneField(
                         on_delete=django.db.models.deletion.CASCADE, to="Base.baseimage"
                     ),
                 ),

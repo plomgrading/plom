@@ -97,10 +97,11 @@ class Command(BaseCommand):
         parser.add_argument(
             "--action",
             action="store",
-            choices=["build", "upload", "read", "wait", "push", "id_hw"],
+            choices=["build", "upload", "delreup", "read", "wait", "push", "id_hw"],
             required=True,
             help="""(build) demo bundles,
             (upload) demo bundles,
+            (delreup) remove and re-upload the first demo bundle,
             (read) qr-codes in uploaded demo bundles,
             (wait) for background processing of upload and qr-code reading,
             (push) processed bundles from staging,
@@ -151,6 +152,17 @@ class Command(BaseCommand):
                     "plom_staging_bundles", "upload", scanner_user, bundle_name
                 )
                 sleep(0.5)  # small sleep to not overwhelm huey's db
+
+    def delete_and_reupload_first_bundle(
+        self, demo_config: DemoAllBundlesConfig, *, bundle_slug: str = "fake_bundle1"
+    ) -> None:
+        """Delete and re-upload the first demo bundles."""
+        scanner_user = "demoScanner1"
+        if demo_config.bundles is not None:
+            call_command("plom_staging_bundles", "delbyslug", bundle_slug)
+            bundle_file = bundle_slug + ".pdf"
+            call_command("plom_staging_bundles", "upload", scanner_user, bundle_file)
+            sleep(0.5)  # small sleep to not overwhelm huey's db
 
     def read_qr_codes_in_bundles(self, demo_config: DemoAllBundlesConfig) -> None:
         """Read QR-codes of the uploaded bundles, and wait for process to finish."""
@@ -216,6 +228,8 @@ class Command(BaseCommand):
             self.build_the_bundles(demo_config, versioned_id=options["versioned_id"])
         elif options["action"] == "upload":
             self.upload_the_bundles(demo_config)
+        elif options["action"] == "delreup":
+            self.delete_and_reupload_first_bundle(demo_config)
         elif options["action"] == "read":
             self.read_qr_codes_in_bundles(demo_config)
         elif options["action"] == "push":

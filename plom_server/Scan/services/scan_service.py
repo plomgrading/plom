@@ -309,6 +309,9 @@ class ScanService:
     def remove_bundle_by_pk(self, bundle_pk: int) -> None:
         """Remove a bundle PDF from the filesystem + database.
 
+        Note - as side-effect this removes the associated images
+        from the filesystem and database.
+
         Args:
             bundle_pk: the primary key for a particular bundle.
 
@@ -316,7 +319,7 @@ class ScanService:
             PlomBundleLockedException: bundle was splitting or reading QR
                 codes, or "push-locked", or already pushed.
         """
-        with transaction.atomic():
+        with transaction.atomic(durable=True):
             _bundle_obj = (
                 StagingBundle.objects.select_for_update().filter(pk=bundle_pk).get()
             )
@@ -331,8 +334,47 @@ class ScanService:
                 )
             # will raise exception if the bundle is locked or push-locked - cannot remove it.
             check_bundle_object_is_neither_locked_nor_pushed(_bundle_obj)
-            pathlib.Path(_bundle_obj.pdf_file.path).unlink()
+            # start making a list of files to unlink - we do that after
+            # all the DB ops are successful. Get the base image files
+            files_to_unlink = [
+                bimg.image_file.path
+                for bimg in BaseImage.objects.filter(stagingimage__bundle=_bundle_obj)
+            ]
+            # and the thumbnails...
+            # (note subtle difference in staging_image / stagingimage - sigh)
+            files_to_unlink.extend(
+                [
+                    thb.image_file.path
+                    for thb in StagingThumbnail.objects.filter(
+                        staging_image__bundle=_bundle_obj
+                    )
+                ]
+            )
+            # and the bundle pdf
+            files_to_unlink.append(_bundle_obj.pdf_file.path)
+            # the base images in the bundle are not automatically
+            # removed by deleting the bundle (fun with cascade deletes)
+            # so we delete them here "by hand" - this has the side-effect
+            # of deleting the staging_images they are attached to. the
+            # thumbnails will then be automatically deleted by the deletion
+            # of the staging_images.
+            BaseImage.objects.filter(stagingimage__bundle=_bundle_obj).delete()
+            # now safe to delete the bundle itself
             _bundle_obj.delete()
+
+        # Now that all DB ops are done, the actual files are deleted OUTSIDE
+        # of the durable atomic block. See the changes and discussions in
+        # https://gitlab.com/plom/plom/-/merge_requests/3127
+        for file_path in files_to_unlink:
+            pathlib.Path(file_path).unlink()
+
+    def remove_bundle_by_slug_cmd(self, bundle_slug: str) -> None:
+        """Wrapper around remove_bundle_by_pk but takes bundle-slug instead."""
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_slug)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_slug}' does not exist!")
+        self.remove_bundle_by_pk(bundle_obj.pk)
 
     @transaction.atomic
     def check_for_duplicate_hash(self, pdf_hash: str) -> bool:
