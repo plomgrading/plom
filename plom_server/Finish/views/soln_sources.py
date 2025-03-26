@@ -48,7 +48,7 @@ class SolnSourcesView(ManagerRequiredView):
         # reset any built soln pdfs as well as delete this soln source pdf.
         if version:
             BuildSolutionService().reset_all_soln_build()
-            SolnSourceService().remove_solution_pdf(version)
+            SolnSourceService.remove_solution_pdf(version)
 
         return HttpResponseClientRedirect(reverse("soln_sources"))
 

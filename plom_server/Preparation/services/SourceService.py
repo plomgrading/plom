@@ -10,7 +10,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-import pymupdf as fitz
+import pymupdf
 from django.core.files import File
 from django.db import transaction
 
@@ -60,7 +60,7 @@ def are_all_sources_uploaded() -> bool:
         return False
 
 
-def delete_source_pdf(source_version: int) -> None:
+def delete_source_pdf(version: int) -> None:
     """Delete a particular version of the source PDF files.
 
     If no such version exists (either out of range or never uploaded)
@@ -71,25 +71,34 @@ def delete_source_pdf(source_version: int) -> None:
     """
     assert_can_modify_sources()
 
-    with transaction.atomic():
+    with transaction.atomic(durable=True):
         # delete the DB entry and *then* the file: the order is important
         # b/c the atomic operation can undo the DB operation but not the
         # file unlinking!
         # TODO: Colin thinks this important juggling should be in the model
         # TODO: see for example Paper/models/reference_image.py
         try:
-            pdf_obj = PaperSourcePDF.objects.filter(version=source_version).get()
-            path = Path(pdf_obj.source_pdf.path)
-            pdf_obj.delete()
-            # if the file fails to delete for some reason, the object delete
-            # will also be rewound by the atomic context
-            path.unlink()
-            # Ignoring a missing file could mask an bug, so I think we'd want to
-            # know... but we could revisit in the future:
-            # path.unlink(missing_ok=True)
-
+            pdf_obj = PaperSourcePDF.objects.get(version=version)
         except PaperSourcePDF.DoesNotExist:
             return
+        # force QuerySet to list: we're going to traverse twice; don't want any magic
+        img_objs = list(ReferenceImage.objects.filter(version=version))
+        # Make sure we delete after we get the ReferenceImages (before the cascade)
+        pdf_obj.delete()  # delete the db row
+        # remove associated images, first by deleting their db rows
+        for img_obj in img_objs:
+            img_obj.delete()
+
+    # now that we're sure the database has been updated (by the atomic durable)
+    # we can safely delete the file.  If the power went out *right now*, the
+    # database would be fine and we'd have a dangling file on disc.
+    pdf_obj.source_pdf.delete(save=False)
+    # (This looks like we're using the object after deletion but its "ok" b/c
+    # pdf_obj is the Django abstraction)
+
+    for img_obj in img_objs:
+        if img_obj.image_file:
+            img_obj.image_file.delete(save=False)  # delete the underlying file
 
 
 def delete_all_source_pdfs() -> None:
@@ -104,7 +113,6 @@ def delete_all_source_pdfs() -> None:
         delete_source_pdf(pdf_obj.version)
 
 
-@transaction.atomic()
 def get_source(version: int) -> dict[str, Any]:
     """Return a dictionary with info about the source version.
 
@@ -180,10 +188,12 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
             which passes a plain-old open file handle.
 
     Raises:
-        PlomDependencyException: if prepration dependencies prevent modification of source files.
+        PlomDependencyException: if preparation dependencies prevent modification
+            of source files.
 
     Returns:
-        A tuple with a boolean for success and a message or error message.
+        A tuple with a boolean for success and a message or error message,
+        for example if the PDF already exists.
     """
     # raises a PlomDependencyException if cannot modify
     assert_can_modify_sources()
@@ -199,7 +209,7 @@ def take_source_from_upload(version: int, in_memory_file: File) -> tuple[bool, s
             for chunk in in_memory_file:
                 fh.write(chunk)
         # now check it has correct number of pages
-        with fitz.open(tmp_pdf) as doc:
+        with pymupdf.open(tmp_pdf) as doc:
             if doc.page_count != int(required_pages):
                 return (
                     False,
@@ -248,27 +258,24 @@ def store_reference_images(source_version: int):
     mocker = ExamMockerService()
     scanner = ScanService()
 
-    # remove any existing reference images for this version
-    for ri_obj in ReferenceImage.objects.filter(
-        version=source_version
-    ).select_for_update():
-        ri_obj.image_file.path.unlink(missing_ok=True)
-        ri_obj.delete()
-
     source_pdf_obj = PaperSourcePDF.objects.get(version=source_version)
-    source_path = Path(source_pdf_obj.source_pdf.path)
-
     n_pages = SpecificationService.get_n_pages()
-    mock_exam_pdf_bytes = mocker.mock_exam(
-        source_version, source_path, n_pages, SpecificationService.get_short_name_slug()
-    )
-    doc = fitz.Document(stream=mock_exam_pdf_bytes)
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        save_path = pathlib.Path(tmpdir)
+    # TODO: this does direct file access?  Why else would it need `source_path`...
+    _source_path = Path(source_pdf_obj.source_pdf.path)
+    mock_exam_pdf_bytes = mocker.mock_exam(
+        source_version,
+        _source_path,
+        n_pages,
+        SpecificationService.get_short_name_slug(),
+    )
+    doc = pymupdf.Document(stream=mock_exam_pdf_bytes)
+
+    with tempfile.TemporaryDirectory() as _tmpdir:
+        tmpdir = pathlib.Path(_tmpdir)
         for n, pg in enumerate(doc.pages()):
             pix = pg.get_pixmap(dpi=200, annots=True)
-            fname = save_path / f"ref_{source_version}_{n+1}.png"
+            fname = tmpdir / f"ref_{source_version}_{n+1}.png"
             pix.save(fname)
             code_dict = QRextract(fname)
             page_data = scanner.parse_qr_code([code_dict])
@@ -279,7 +286,6 @@ def store_reference_images(source_version: int):
                     version=source_version,
                     image_file=pix_file,
                     parsed_qr=page_data,
-                    source_pdf=source_pdf_obj,
                 )
 
 
