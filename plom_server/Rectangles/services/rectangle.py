@@ -322,7 +322,7 @@ class RectangleExtractor:
             )
             img_top = max(int(region["top_f"] * self.HEIGHT + self.TOP) - pad, 0)
             img_bottom = min(
-                int(region["bottom_f"] * self.HEIGHT + self.TOP) + pad, self.FULL_WIDTH
+                int(region["bottom_f"] * self.HEIGHT + self.TOP) + pad, self.FULL_HEIGHT
             )
             src_image = src_image[img_top:img_bottom, img_left:img_right]
         else:
@@ -367,11 +367,12 @@ class RectangleExtractor:
             top_f = (top - self.TOP) / self.HEIGHT
             bottom_f = (bottom - self.TOP) / self.HEIGHT
 
+            # cast each to float (from numpy.float64)
             return {
-                "left_f": left_f,
-                "top_f": top_f,
-                "right_f": right_f,
-                "bottom_f": bottom_f,
+                "left_f": float(left_f),
+                "top_f": float(top_f),
+                "right_f": float(right_f),
+                "bottom_f": float(bottom_f),
             }
 
         return None
