@@ -232,7 +232,7 @@ def erase_all_substitute_images_and_their_bundle() -> None:
     """Delete all the images from the system substitute image bundle."""
     # note that the parent caller (set papers printed) is a durable
     # transaction, so this does not have to be.
-    with transaction.atomic():
+    with transaction.atomic(durable=True):
         try:
             sys_sub_bundle_obj = Bundle.objects.get(
                 name=system_substitute_images_bundle_name
@@ -251,9 +251,12 @@ def erase_all_substitute_images_and_their_bundle() -> None:
         sys_sub_bundle_obj.image_set.all().delete()
         sys_sub_bundle_obj.delete()
         base_images_to_delete.delete()
-        # now that all db ops done - clean up the files.
-        for fp in files_to_unlink:
-            pathlib.Path(fp).unlink()
+
+    # Now that all DB ops are done, the actual files are deleted OUTSIDE
+    # of the durable atomic block. See the changes and discussions in
+    # https://gitlab.com/plom/plom/-/merge_requests/3127
+    for file_path in files_to_unlink:
+        pathlib.Path(file_path).unlink()
 
 
 def forgive_missing_fixed_page(
