@@ -3,6 +3,7 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
 # Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2025 Philip D. Loewen
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -68,6 +69,11 @@ coverage.xml
 *.log
 local_settings.py
 db.sqlite3
+
+# Leftovers from Huey and test server
+*hueydb*.sqlite3
+*hueydb*.sqlite3-shm
+*hueydb*.sqlite3-wal
 
 # Flask stuff:
 instance/
