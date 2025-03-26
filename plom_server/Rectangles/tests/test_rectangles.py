@@ -119,6 +119,33 @@ class RectangleServiceTests(TestCase):
         expected_matrix = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
         self.assertTrue(np.linalg.norm(matrix - expected_matrix, "fro") < 0.001)
 
+    def test_rect_affine_matrix_5degree_rot(self) -> None:
+        """Rotation of image, and affine transformation."""
+        img_path = resources.files(_Scan_tests) / "id_page_img.png"
+        img = Image.open(img_path)  # type: ignore[arg-type]
+        codes = QRextract(img_path)
+        parsed_codes = ScanService.parse_qr_code([codes])
+        rd = _get_reference_rectangle(parsed_codes)
+        ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Debug the test by saving images locally:
+            # tmpdir = Path("/home/cbm/src/plom/plom.git")
+            img_rot_path = Path(tmpdir) / "rot_5_deg_img.png"
+            img_rot = img.rotate(5, expand=True)
+            img_rot.save(img_rot_path)
+
+            codes = QRextract(img_rot_path)
+            parsed_codes = ScanService.parse_qr_code([codes])
+
+            matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)
+            expected_matrix = np.array(
+                [[0.996, 0.0870, 0.338], [-0.0870, 0.996, 134.263]]
+            )
+            err = np.linalg.norm(matrix - expected_matrix, "fro")
+            relative_err = err / np.linalg.norm(expected_matrix, "fro")
+            self.assertTrue(relative_err < 0.01)
+
     def test_rect_ID_box_corrected_and_extracted_from_3degree_rotation(self) -> None:
         """Artificially rotate the image, then try to recover the ID box based on its known location in the source image."""
         img_path = resources.files(_Scan_tests) / "id_page_img.png"
