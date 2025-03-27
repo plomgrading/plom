@@ -32,10 +32,10 @@ def get_question_pages_list(paper: int, question_index: int) -> list[dict[str, A
     test_paper = Paper.objects.get(paper_number=paper)
     question_pages = QuestionPage.objects.filter(
         paper=test_paper, question_index=question_index
-    ).prefetch_related("image")
+    ).prefetch_related("image", "image__baseimage")
     mobile_pages = MobilePage.objects.filter(
         paper=test_paper, question_index=question_index
-    ).prefetch_related("image")
+    ).prefetch_related("image", "image__baseimage")
 
     page_list = []
     for page in question_pages.order_by("page_number"):
@@ -44,9 +44,9 @@ def get_question_pages_list(paper: int, question_index: int) -> list[dict[str, A
             page_list.append(
                 {
                     "id": image.pk,
-                    "md5": image.hash,
+                    "md5": image.baseimage.image_hash,
                     "orientation": image.rotation,
-                    "server_path": image.image_file.path,
+                    "server_path": image.baseimage.image_file.path,
                     "included": True,
                     "order": page.page_number,
                     # For Future us vvvvv ?
@@ -67,9 +67,9 @@ def get_question_pages_list(paper: int, question_index: int) -> list[dict[str, A
         page_list.append(
             {
                 "id": image.pk,
-                "md5": image.hash,
+                "md5": image.baseimage.image_hash,
                 "orientation": image.rotation,
-                "server_path": image.image_file.path,
+                "server_path": image.baseimage.image_file.path,
                 "included": True,
                 # BEGIN HACKERY
                 "order": len(page_list) + 1,
@@ -157,7 +157,7 @@ class PageDataService:
         # get all the fixed pages of the test that have images - prefetch the related image
         fixed_pages = FixedPage.objects.filter(
             paper=test_paper, image__isnull=False
-        ).prefetch_related("image")
+        ).prefetch_related("image", "image__baseimage")
 
         # possibly filter out ID and DNM pages
         if not include_idpage:
@@ -186,12 +186,12 @@ class PageDataService:
             pages_metadata.append(
                 {
                     "pagename": f"{prefix}{page.page_number}",
-                    "md5": page.image.hash,
+                    "md5": page.image.baseimage.image_hash,
                     "included": included,
                     "order": page.page_number,
                     "id": page.image.pk,
                     "orientation": page.image.rotation,
-                    "server_path": str(page.image.image_file.path),
+                    "server_path": str(page.image.baseimage.image_file.path),
                 }
             )
 
@@ -209,7 +209,7 @@ class PageDataService:
         for page in (
             MobilePage.objects.filter(paper=test_paper)
             .order_by("pk")
-            .prefetch_related("image")
+            .prefetch_related("image", "image__baseimage")
         ):
             qidx = page.question_index
             question_mobile_page_count.setdefault(qidx, 0)
@@ -221,14 +221,14 @@ class PageDataService:
             pages_metadata.append(
                 {
                     "pagename": pagename,
-                    "md5": page.image.hash,
+                    "md5": page.image.image__baseimage.image_hash,
                     "included": qidx == question,
                     # WARNING - HACKERY HERE vvvvvvvv
                     "order": len(pages_metadata) + 1,
                     # WARNING - HACKERY HERE ^^^^^^^^
                     "id": page.image.pk,
                     "orientation": page.image.rotation,
-                    "server_path": str(page.image.image_file.path),
+                    "server_path": str(page.image.baseimage.image_file.path),
                 }
             )
 
@@ -251,7 +251,9 @@ class PageDataService:
             ObjectDoesNotExist: no such page image or hash does not match.
         """
         if img_hash:
-            image = Image.objects.get(pk=pk, hash=img_hash)
+            image = Image.objects.select_related("baseimage").get(
+                pk=pk, baseimage__image_hash=img_hash
+            )
         else:
-            image = Image.objects.get(pk=pk)
-        return image.image_file
+            image = Image.objects.select_related("baseimage").get(pk=pk)
+        return image.baseimage.image_file

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2023 Andrew Rechnitzer
+# Copyright (C) 2022-2025 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2025 Colin B. Macdonald
@@ -10,6 +10,7 @@ from django.db.models.query_utils import Q
 from django.contrib.auth.models import User
 
 from plom_server.Scan.models import StagingBundle
+from plom_server.Base.models import BaseImage
 
 
 class Bundle(models.Model):
@@ -21,7 +22,7 @@ class Bundle(models.Model):
 
     name (str): The name of the pdf/bundle (ie just the stem of the
         bundle's path)
-    hash (str): Generally the sha256 of the bundle/pdf file, although
+    pdf_hash (str): Generally the sha256 of the bundle/pdf file, although
         special cases it could be something else (e.g., there is special
         bundle for substitute pages in ForgiveMissingService.py)
     _is_system: if the bundle is a system bundle then allow one bundle
@@ -33,7 +34,7 @@ class Bundle(models.Model):
     """
 
     name = models.TextField(null=False)
-    hash = models.CharField(null=False, max_length=64)
+    pdf_hash = models.CharField(null=False, max_length=64)
     _is_system = models.BooleanField(default=False)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     time_of_last_update = models.DateTimeField(auto_now=True)
@@ -43,9 +44,9 @@ class Bundle(models.Model):
 
     class Meta:
         constraints = [
-            # This constraint checks that each name-hash pair is unique, when is_system is set
+            # Check that each name-pdf_hash pair is unique, when is_system is set
             models.UniqueConstraint(
-                fields=["name", "hash"],
+                fields=["name", "pdf_hash"],
                 condition=Q(_is_system=True),
                 name="unique_system_bundles",
             ),
@@ -55,71 +56,44 @@ class Bundle(models.Model):
 class Image(models.Model):
     """Table to store information about an uploaded page-image.
 
+    Note: A user should not be able to delete pushed bundle, and these
+    associated images and base-images. Consequently we protect these
+    base-images from deletion. The only exception to this is when we
+    construct substitution images (which are effectively pushed bundles)
+    and then (when sources are changed) we have to delete them in a
+    careful order.
+
     bundle (ref to Bundle object): which bundle the image is from
+
     bundle_order (int): the position of the image in that bundle
         (ie which page in the pdf/bundle) - is 1-indexed and not 0-indexed
+
     original_name (str): the name of the image-file when it was extracted
         from the bundle. Typically, this will be something like "foo-7.png",
         which also indicates that it was page-7 from the bundle foo.pdf"
-    image_file (ImageField): the django-imagefield storing the image for the server.
-        In the future this could be a url to some cloud storage. Note that this also
-        tells django where to automagically compute+store height/width information on save
-    hash (str): the sha256 hash of the image.
+
+    baseimage (BaseImage): a key to the underlying base-image (which stores
+        the file, hash and other information.
+
     rotation (int): the angle to rotate the original image in order to give
         it the correct approximate orientation.  Currently this only deals
         with 0, 90, 180, 270, -90.  More precise fractional rotations are
         handled elsewhere,
 
     parsed_qr (dict): the JSON dict containing QR code information for the page image.
-
-    height (int): the height of the image in px (auto-populated on
-        save by django). Note that this height is the *raw* height in
-        pixels before any exif rotations and any plom rotations.
-
-    width (int): the width of the image in px (auto-populated on
-        save by django).  Note that this width is the *raw* width in
-        pixels before any exif rotations and any plom rotations.
     """
-
-    def _image_upload_path(self, filename: str) -> str:
-        """Create a path to which the associated file should be saved.
-
-        Given a image instance and a filename create a path to which
-        the associated file should be saved. We use this function to set
-        save-paths for pushed images rather than 'hand-coding' them
-        elsewhere.
-
-        Args:
-            filename: the name of the file to be saved at the created path.
-
-        Returns:
-            The string of the path to which the image file
-            will be saved (relative to the media directory, and including the
-            actual filename).
-        """
-        return f"pushed_images/{self.bundle.pk:05}/{filename}"
 
     bundle = models.ForeignKey(Bundle, on_delete=models.CASCADE)
     bundle_order = models.PositiveIntegerField(null=True)
     original_name = models.TextField(null=True)  # can be empty.
-    # using imagefield over filefield allows django to automagically compute
-    # height and width of the image - see django docs.
-    image_file = models.ImageField(
-        null=False,
-        upload_to=_image_upload_path,
-        # tell Django where to automagically store height/width info on save
-        height_field="height",
-        width_field="width",
-    )
-    hash = models.CharField(null=True, max_length=64)
+    baseimage = models.OneToOneField(BaseImage, on_delete=models.PROTECT)
+    # if we attempt to delete this base image (eg by deleting a staging image
+    # that contains it) then this will throw a `django.db.ProtectedError`, a
+    # subclass of `IntegrityError`. we can delete substitution images (when
+    # source pdfs change) and so we have to delete things in a careful order.
+    baseimage = models.ForeignKey(BaseImage, on_delete=models.PROTECT)
     rotation = models.IntegerField(null=False, default=0)
     parsed_qr = models.JSONField(default=dict, null=True)
-
-    # height and width fields auto-populated by django on save
-    # I don't think we use these *yet* but we may in the future
-    # These are raw height/width in pixels before any exif rotations or plom rotations.
-    height = models.IntegerField(default=0)
-    width = models.IntegerField(default=0)
 
 
 class DiscardPage(models.Model):

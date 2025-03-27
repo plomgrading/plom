@@ -1,5 +1,4 @@
 import django.db.models.deletion
-import plom_server.Papers.models.image_bundle
 from django.conf import settings
 from django.db import migrations, models
 
@@ -10,7 +9,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("Base", "0001_initial"),
-        ("Preparation", "0001_initial"),
         ("Scan", "0001_initial"),
         ("contenttypes", "0002_remove_content_type_name"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
@@ -104,6 +102,33 @@ class Migration(migrations.Migration):
             bases=("Base.hueytasktracker",),
         ),
         migrations.CreateModel(
+            name="ReferenceImage",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("page_number", models.PositiveIntegerField()),
+                ("version", models.PositiveIntegerField()),
+                (
+                    "image_file",
+                    models.ImageField(
+                        height_field="height",
+                        upload_to="reference_images",
+                        width_field="width",
+                    ),
+                ),
+                ("parsed_qr", models.JSONField(default=dict, null=True)),
+                ("height", models.IntegerField(default=0)),
+                ("width", models.IntegerField(default=0)),
+            ],
+        ),
+        migrations.CreateModel(
             name="SolnSpecification",
             fields=[
                 (
@@ -134,7 +159,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("pages", models.JSONField()),
-                ("solution_number", models.PositiveIntegerField(unique=True)),
+                ("question_index", models.PositiveIntegerField(unique=True)),
             ],
         ),
         migrations.CreateModel(
@@ -204,7 +229,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("name", models.TextField()),
-                ("hash", models.CharField(max_length=64)),
+                ("pdf_hash", models.CharField(max_length=64)),
                 ("_is_system", models.BooleanField(default=False)),
                 ("time_of_last_update", models.DateTimeField(auto_now=True)),
                 (
@@ -328,19 +353,14 @@ class Migration(migrations.Migration):
                 ),
                 ("bundle_order", models.PositiveIntegerField(null=True)),
                 ("original_name", models.TextField(null=True)),
-                (
-                    "image_file",
-                    models.ImageField(
-                        height_field="height",
-                        upload_to=plom_server.Papers.models.image_bundle.Image._image_upload_path,
-                        width_field="width",
-                    ),
-                ),
-                ("hash", models.CharField(max_length=64, null=True)),
                 ("rotation", models.IntegerField(default=0)),
                 ("parsed_qr", models.JSONField(default=dict, null=True)),
-                ("height", models.IntegerField(default=0)),
-                ("width", models.IntegerField(default=0)),
+                (
+                    "baseimage",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT, to="Base.baseimage"
+                    ),
+                ),
                 (
                     "bundle",
                     models.ForeignKey(
@@ -418,45 +438,11 @@ class Migration(migrations.Migration):
                 on_delete=django.db.models.deletion.CASCADE, to="Papers.paper"
             ),
         ),
-        migrations.CreateModel(
-            name="ReferenceImage",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "image_file",
-                    models.ImageField(
-                        height_field="height",
-                        upload_to="reference_images",
-                        width_field="width",
-                    ),
-                ),
-                ("parsed_qr", models.JSONField(default=dict, null=True)),
-                ("page_number", models.PositiveIntegerField()),
-                ("version", models.PositiveIntegerField()),
-                ("height", models.IntegerField(default=0)),
-                ("width", models.IntegerField(default=0)),
-                (
-                    "source_pdf",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to="Preparation.papersourcepdf",
-                    ),
-                ),
-            ],
-        ),
         migrations.AddConstraint(
             model_name="bundle",
             constraint=models.UniqueConstraint(
                 condition=models.Q(("_is_system", True)),
-                fields=("name", "hash"),
+                fields=("name", "pdf_hash"),
                 name="unique_system_bundles",
             ),
         ),

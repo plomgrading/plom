@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Forest Kobayashi
@@ -47,7 +47,7 @@ from plom.tpv_utils import (
 
 from plom_server.Papers.services import ImageBundleService, SpecificationService
 from plom_server.Papers.models import FixedPage
-from plom_server.Base.models import HueyTaskTracker
+from plom_server.Base.models import HueyTaskTracker, BaseImage
 from ..models import (
     StagingBundle,
     StagingImage,
@@ -82,7 +82,7 @@ class ScanService:
         user: User,
         *,
         timestamp: float | None = None,
-        file_hash: str = "",
+        pdf_hash: str = "",
         number_of_pages: int | None = None,
         force_render: bool = False,
         read_after: bool = False,
@@ -107,7 +107,7 @@ class ScanService:
         Keyword Args:
             timestamp: the timestamp of the time at which the file was
                 uploaded.  If omitted, we'll use right now.
-            file_hash: the sha256 of the pdf file.  If omitted, we will
+            pdf_hash: the sha256 of the pdf file.  If omitted, we will
                 compute it.
             number_of_pages: the number of pages in the pdf, can be None
                 if we don't know yet.
@@ -135,8 +135,8 @@ class ScanService:
         except OSError as err:
             raise ValidationError(f"Unexpected error handling file: {err}") from err
 
-        if not file_hash:
-            file_hash = hashlib.sha256(file_bytes).hexdigest()
+        if not pdf_hash:
+            pdf_hash = hashlib.sha256(file_bytes).hexdigest()
 
         try:
             with pymupdf.open(stream=file_bytes) as pdf_doc:
@@ -163,11 +163,11 @@ class ScanService:
         # Warning: Issue #2888, and https://gitlab.com/plom/plom/-/merge_requests/2361
         # strange behaviour can result from relaxing this durable=True
         with transaction.atomic(durable=True):
-            existing = StagingBundle.objects.filter(pdf_hash=file_hash)
+            existing = StagingBundle.objects.filter(pdf_hash=pdf_hash)
             if existing:
                 raise PlomConflict(
                     f"Bundle(s) {[x.slug for x in existing]} with the"
-                    f" same file hash {file_hash} have already uploaded"
+                    f" same file hash {pdf_hash} have already uploaded"
                 )
             # create the bundle first, so it has a pk and
             # then give it the file and resave it.
@@ -179,7 +179,7 @@ class ScanService:
                 force_page_render=force_render,
             )
             bundle_obj.pdf_file = File(BytesIO(file_bytes), name=f"{slug}.pdf")
-            bundle_obj.pdf_hash = file_hash
+            bundle_obj.pdf_hash = pdf_hash
             bundle_obj.number_of_pages = number_of_pages
             bundle_obj.save()
         cls.split_and_save_bundle_images(bundle_obj.pk, read_after=read_after)
@@ -231,7 +231,7 @@ class ScanService:
             slug,
             user_obj,
             timestamp=timestamp,
-            file_hash=pdf_hash,
+            pdf_hash=pdf_hash,
             number_of_pages=number_of_pages,
         )
 
@@ -309,6 +309,9 @@ class ScanService:
     def remove_bundle_by_pk(self, bundle_pk: int) -> None:
         """Remove a bundle PDF from the filesystem + database.
 
+        Note - as side-effect this removes the associated images
+        from the filesystem and database.
+
         Args:
             bundle_pk: the primary key for a particular bundle.
 
@@ -316,7 +319,7 @@ class ScanService:
             PlomBundleLockedException: bundle was splitting or reading QR
                 codes, or "push-locked", or already pushed.
         """
-        with transaction.atomic():
+        with transaction.atomic(durable=True):
             _bundle_obj = (
                 StagingBundle.objects.select_for_update().filter(pk=bundle_pk).get()
             )
@@ -331,8 +334,47 @@ class ScanService:
                 )
             # will raise exception if the bundle is locked or push-locked - cannot remove it.
             check_bundle_object_is_neither_locked_nor_pushed(_bundle_obj)
-            pathlib.Path(_bundle_obj.pdf_file.path).unlink()
+            # start making a list of files to unlink - we do that after
+            # all the DB ops are successful. Get the base image files
+            files_to_unlink = [
+                bimg.image_file.path
+                for bimg in BaseImage.objects.filter(stagingimage__bundle=_bundle_obj)
+            ]
+            # and the thumbnails...
+            # (note subtle difference in staging_image / stagingimage - sigh)
+            files_to_unlink.extend(
+                [
+                    thb.image_file.path
+                    for thb in StagingThumbnail.objects.filter(
+                        staging_image__bundle=_bundle_obj
+                    )
+                ]
+            )
+            # and the bundle pdf
+            files_to_unlink.append(_bundle_obj.pdf_file.path)
+            # the base images in the bundle are not automatically
+            # removed by deleting the bundle (fun with cascade deletes)
+            # so we delete them here "by hand" - this has the side-effect
+            # of deleting the staging_images they are attached to. the
+            # thumbnails will then be automatically deleted by the deletion
+            # of the staging_images.
+            BaseImage.objects.filter(stagingimage__bundle=_bundle_obj).delete()
+            # now safe to delete the bundle itself
             _bundle_obj.delete()
+
+        # Now that all DB ops are done, the actual files are deleted OUTSIDE
+        # of the durable atomic block. See the changes and discussions in
+        # https://gitlab.com/plom/plom/-/merge_requests/3127
+        for file_path in files_to_unlink:
+            pathlib.Path(file_path).unlink()
+
+    def remove_bundle_by_slug_cmd(self, bundle_slug: str) -> None:
+        """Wrapper around remove_bundle_by_pk but takes bundle-slug instead."""
+        try:
+            bundle_obj = StagingBundle.objects.get(slug=bundle_slug)
+        except ObjectDoesNotExist:
+            raise ValueError(f"Bundle '{bundle_slug}' does not exist!")
+        self.remove_bundle_by_pk(bundle_obj.pk)
 
     @transaction.atomic
     def check_for_duplicate_hash(self, pdf_hash: str) -> bool:
@@ -401,9 +443,7 @@ class ScanService:
             info about the associated staging images.
         """
         return list(
-            StagingBundle.objects.all()
-            .prefetch_related("stagingimage_set", "user")
-            .order_by("-timestamp")
+            StagingBundle.objects.all().prefetch_related("user").order_by("-timestamp")
         )
 
     def get_most_recent_unpushed_bundle(self) -> StagingBundle | None:
@@ -636,7 +676,11 @@ class ScanService:
         Raises:
             ObjectDoesNotExist: no such BundleImage, e.g., invalid bundle id or page
         """
+        # TODO: is it really necessary to make these here?  should be a model problem
         root_folder = settings.MEDIA_ROOT / "page_images"
+        print("=" * 88)
+        print(f"DEBUG: explicitly and inappropriately making {root_folder}")
+        print("DEBUG: likely rcalled by plom-cli uploads: ensure unneeded then remove")
         root_folder.mkdir(exist_ok=True)
 
         # TODO: assert the length of question is same as pages in bundle
@@ -1387,16 +1431,13 @@ class ScanService:
     def get_bundle_paper_numbers(bundle_obj: StagingBundle) -> list[int]:
         """Return a sorted list of paper-numbers in the given bundle as determined by known and extra pages."""
         paper_list = []
-        for img in bundle_obj.stagingimage_set.filter(
-            image_type=StagingImage.KNOWN
-        ).prefetch_related("knownstagingimage"):
-            paper_list.append(img.knownstagingimage.paper_number)
 
-        for img in bundle_obj.stagingimage_set.filter(
-            image_type=StagingImage.EXTRA
-        ).prefetch_related("extrastagingimage"):
-            if img.extrastagingimage.paper_number:
-                paper_list.append(img.extrastagingimage.paper_number)
+        for ksi in KnownStagingImage.objects.filter(staging_image__bundle=bundle_obj):
+            paper_list.append(ksi.paper_number)
+        for esi in ExtraStagingImage.objects.filter(staging_image__bundle=bundle_obj):
+            if esi.paper_number:
+                paper_list.append(esi.paper_number)
+
         return sorted(list(set(paper_list)))
 
     @transaction.atomic
@@ -1518,6 +1559,7 @@ class ScanService:
     def get_bundle_discard_pages_info(
         self, bundle_obj: StagingBundle
     ) -> list[dict[str, Any]]:
+        """Get information about the discard pages within the given staged bundle."""
         # compute number of digits in longest page number to pad the page numbering
         n_digits = len(str(bundle_obj.number_of_pages))
 
@@ -1542,6 +1584,7 @@ class ScanService:
     def get_bundle_discard_pages_info_cmd(
         self, bundle_name: str
     ) -> list[dict[str, Any]]:
+        """Wrapper around get_bundle_discard_pages_info function."""
         try:
             bundle_obj = StagingBundle.objects.get(slug=bundle_name)
         except ObjectDoesNotExist:
@@ -1722,11 +1765,12 @@ def huey_parent_split_bundle_chore(
         with transaction.atomic():
             for X in results:
                 with open(X["file_path"], "rb") as fh:
-                    img = StagingImage.objects.create(
-                        bundle=bundle_obj,
-                        bundle_order=X["order"],
+                    bimg = BaseImage.objects.create(
                         image_file=File(fh, name=X["file_name"]),
                         image_hash=X["image_hash"],
+                    )
+                    img = StagingImage.objects.create(
+                        bundle=bundle_obj, bundle_order=X["order"], baseimage=bimg
                     )
                 with open(X["thumb_path"], "rb") as fh:
                     StagingThumbnail.objects.create(
@@ -1888,7 +1932,7 @@ def huey_child_get_page_images(
                 time.sleep(random.random() * 4)
                 if random.random() < 0.04:
                     raise RuntimeError("Flaky simulated image split failure")
-            basename = f"page{order:05}"
+            basename = f"page_{bundle_obj.pk:03}_{order:05}"
             if bundle_obj.force_page_render:
                 save_path = None
                 msgs = ["Force render"]
@@ -1972,8 +2016,8 @@ def huey_child_parse_qr_code(
     assert task is not None
     log.debug("Huey debug, we are task %s with id %s", task, task.id)
 
-    img = StagingImage.objects.get(pk=image_pk)
-    image_path = img.image_file.path
+    stimg = StagingImage.objects.get(pk=image_pk)
+    image_path = stimg.baseimage.image_file.path
 
     scanner = ScanService()
 

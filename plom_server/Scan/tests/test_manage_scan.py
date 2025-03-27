@@ -17,7 +17,7 @@ class ManageScanServiceTests(TestCase):
     def setUp(self):
         self.bundle = baker.make(
             Bundle,
-            hash="qwerty",
+            pdf_hash="qwerty",
         )
         # make 15 papers
         # * 1 has all fixed-page images  (6 scanned pages) and 1 mobile page for Q1.

@@ -564,6 +564,6 @@ class GetSolutionImage(APIView):
     def get(self, request: Request, *, question: int, version: int) -> Response:
         """Get a solution image."""
         try:
-            return FileResponse(SolnImageService().get_soln_image(question, version))
+            return FileResponse(SolnImageService.get_soln_image(question, version))
         except ObjectDoesNotExist:
             return _error_response("Image does not exist.", status.HTTP_404_NOT_FOUND)

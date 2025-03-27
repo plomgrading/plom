@@ -66,9 +66,18 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
+                ("question_index", models.PositiveIntegerField()),
                 ("version", models.PositiveIntegerField()),
-                ("solution_number", models.PositiveIntegerField()),
-                ("image", models.ImageField(upload_to="sourceVersions")),
+                (
+                    "image_file",
+                    models.ImageField(
+                        height_field="height",
+                        upload_to="sourceVersions",
+                        width_field="width",
+                    ),
+                ),
+                ("height", models.IntegerField(default=0)),
+                ("width", models.IntegerField(default=0)),
             ],
         ),
         migrations.CreateModel(
