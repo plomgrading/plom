@@ -31,16 +31,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-* More flexible options for `plom-push-to-canvas.py` contrib script.
 
 ### Removed
 
 ### Fixed
+
+
+
+## [0.17.4] - 2025-03-26
+
+### Changed
+* More flexible options for `plom-push-to-canvas.py` contrib script.
+
+### Fixed
+* ID reader "find rectangle" code was failing.
+* ID reader "find rectangle" would not work if Idbox was too far down the page.
 * More error checking and unit tests concerning rubric validity.
 * Refuse to build papers with inconsistent versions maps---there must be at most one version per page.
 * Show errors to end users in some cases that previously just said "error".
 * Minor fixes and performance improvements.
-
 
 
 ## [0.17.3] - 2025-02-28
@@ -1467,7 +1476,8 @@ This is the first release of Plom, Paperless Open Marking.
 
 
 [Unreleased dev branch]: https://gitlab.com/plom/plom/-/compare/main...dev
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.17.3...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.17.4...main
+[0.17.4]: https://gitlab.com/plom/plom/-/compare/v0.17.3...v0.17.4
 [0.17.3]: https://gitlab.com/plom/plom/-/compare/v0.17.2...v0.17.3
 [0.17.2]: https://gitlab.com/plom/plom/-/compare/v0.17.1...v0.17.2
 [0.17.1]: https://gitlab.com/plom/plom/-/compare/v0.17.0...v0.17.1

@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2025 Andrew Rechnitzer
+# Copyright (C) 2025 Philip D. Loewen
 
 import sys
 from pathlib import Path
@@ -51,7 +52,7 @@ class Command(BaseCommand):
             "--delete-all",
             action="store_true",
             help="""
-                Delete all reasssembled PDFs that have been built
+                Delete all reassembled PDFs that have been built
                 on the server.  Actually we don't delete, just mark
                 as obsolete.
             """,
