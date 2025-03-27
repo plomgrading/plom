@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2025 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from django.db import models, transaction
 from django.contrib.auth.models import User
@@ -123,7 +123,10 @@ class IDReadingHueyTaskTracker(HueyTaskTracker):
 
 
 class IDRectangle(models.Model):
-    """A model to store the location of the ID box on a version of the paper."""
+    """A model to store the location of the ID box on a version of the paper.
+
+    The coordinates are stored in the coordinate system of the QR-code centres.
+    """
 
     version = models.IntegerField(null=False, default=None, unique=True)
     top = models.FloatField(null=False)

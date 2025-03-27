@@ -3,19 +3,9 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2025 Colin B. Macdonald
 
-import pathlib
-import tempfile
-from importlib import resources
-
-import cv2 as cv
-import numpy as np
 from django.test import TestCase
-from PIL import Image
 
-from plom.scan import QRextract
-
-from .. import tests as _Scan_tests
-from ..services import PageImageProcessor, ScanService
+from ..services import PageImageProcessor
 
 
 class PageImageProcessorTests(TestCase):
@@ -131,72 +121,3 @@ class PageImageProcessorTests(TestCase):
 
         with self.assertRaises(RuntimeError):
             pipr.get_page_orientation({})
-
-    def test_affine_matrix_correct_5_deg_rot(self) -> None:
-        """Test PageImageProcessor.create_affine_transformation_matrix() for an image with 5-degree rotation.
-
-        TODO: this is likely a test for dead code.  It might be good to port these tests
-        to Rectangle app rather than deleting them!
-        """
-        pipr = PageImageProcessor()
-        test_img = Image.open(resources.files(_Scan_tests) / "id_page_img.png")  # type: ignore[arg-type]
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            img_rot_path = pathlib.Path(tmpdir) / "rot_5_deg_img.png"
-            img_rot = test_img.rotate(5, expand=True)
-            img_rot.save(img_rot_path)
-
-            codes = QRextract(img_rot_path)
-            qr_dict_id = ScanService.parse_qr_code([codes])
-            affine_matrix = pipr.create_affine_transformation_matrix(qr_dict_id)
-            expected_matrix = np.array(
-                [[0.996, -0.087, 10.855], [0.087, 0.996, -134.659]]
-            )
-            err = np.linalg.norm(affine_matrix - expected_matrix, "fro")
-            relative_err = err / np.linalg.norm(expected_matrix, "fro")
-            self.assertTrue(relative_err < 0.01)
-
-    def test_affine_matrix_no_correction(self) -> None:
-        """Test PageImageProcessor.create_affine_transformation_matrix() with an image that does not need correction.
-
-        TODO: this is likely a test for dead code.  It might be good to port these tests
-        to Rectangle app rather than deleting them!
-        """
-        pipr = PageImageProcessor()
-        img_path = resources.files(_Scan_tests) / "id_page_img.png"
-
-        codes = QRextract(img_path)
-        qr_dict_id = ScanService.parse_qr_code([codes])
-        affine_matrix = pipr.create_affine_transformation_matrix(qr_dict_id)
-        expected_matrix = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
-        self.assertTrue(np.linalg.norm(affine_matrix - expected_matrix, "fro") < 0.001)
-
-    def test_ID_box_corrected_and_extracted(self) -> None:
-        """Test PageImageProcessor rectangle extractor on an image with 3-degree rotation.
-
-        Verify that the extracted ID box is upright by checking the interior of the blank "Signature" box,
-        which is a subsection of the image that should be white.
-        """
-        in_top = 0.28
-        in_bottom = 0.58
-        in_left = 0.09
-        in_right = 0.91
-        pipr = PageImageProcessor()
-        # mypy stumbling over Traversable
-        test_img = Image.open(resources.files(_Scan_tests) / "id_page_img.png")  # type: ignore[arg-type]
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            img_rot_path = pathlib.Path(tmpdir) / "rotated_img.png"
-            img_rot = test_img.rotate(3, expand=True)
-            img_rot.save(img_rot_path)
-
-            codes = QRextract(img_rot_path)
-            qr_dict_id = ScanService.parse_qr_code([codes])
-
-            # TODO: this code seems to be unused?
-            output_img = pipr.extract_rect_region_TODO_REMOVE(
-                img_rot_path, 0, qr_dict_id, in_top, in_bottom, in_left, in_right
-            )
-            output_opencv = cv.cvtColor(np.array(output_img), cv.COLOR_RGB2BGR)
-            white_subimage = output_opencv[395:490, 300:1030]
-            self.assertTrue((np.mean(white_subimage.astype(float)) - 255) < 0.001)

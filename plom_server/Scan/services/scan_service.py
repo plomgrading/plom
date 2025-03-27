@@ -1980,8 +1980,6 @@ def huey_child_parse_qr_code(
 
     page_data = ScanService.parse_qr_code([code_dict])
 
-    pipr = PageImageProcessor()
-
     if _debug_be_flaky:
         print(f"Huey debug, random sleep in task {task.id}")
         log.debug("Huey debug, random sleep in task %d", task.id)
@@ -1989,7 +1987,7 @@ def huey_child_parse_qr_code(
         if random.random() < 0.04:
             raise RuntimeError("Flaky simulated QR read failure")
 
-    rotation = pipr.get_rotation_angle_or_None_from_QRs(page_data)
+    rotation = PageImageProcessor.get_rotation_angle_or_None_from_QRs(page_data)
 
     # Andrew wanted to leave the possibility of re-introducing hard
     # rotations in the future, such as `plom.scan.rotate_bitmap`.
