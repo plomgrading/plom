@@ -10,8 +10,9 @@ from typing import Any
 import cv2 as cv
 import imutils
 import numpy as np
-from PIL import Image
 import zipfile
+from PIL import Image
+from math import ceil, floor
 
 from plom_server.Papers.models import ReferenceImage
 from plom_server.Papers.models import Paper, FixedPage
@@ -496,10 +497,10 @@ class RectangleExtractor:
         pad = 16
         if region:
             # convert [0, 1] coordinates into pixels
-            img_left = int(region["left_f"] * WIDTH + LEFT) - pad
-            img_right = int(region["right_f"] * WIDTH + LEFT) + pad
-            img_top = int(region["top_f"] * HEIGHT + TOP) - pad
-            img_bottom = int(region["bottom_f"] * HEIGHT + TOP) + pad
+            img_left = floor(region["left_f"] * WIDTH + LEFT) - pad
+            img_right = ceil(region["right_f"] * WIDTH + LEFT) + pad
+            img_top = floor(region["top_f"] * HEIGHT + TOP) - pad
+            img_bottom = ceil(region["bottom_f"] * HEIGHT + TOP) + pad
             # cap pixel values in the image domain
             img_left = max(img_left, 0)
             img_right = min(img_right, IMG_WIDTH)
