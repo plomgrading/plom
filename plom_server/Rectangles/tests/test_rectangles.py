@@ -24,6 +24,11 @@ from ..services.rectangle import (
 
 
 class RectangleServiceTests(TestCase):
+    """Tests for the Rectangle extraction and related tests.
+
+    Testing RectangleExtractor directly requires a lot of boiler plate setup so
+    here we mostly check the underlying functions used in its implementation.
+    """
 
     def test_rectangle_floats(self) -> None:
         img_path = resources.files(_Scan_tests) / "page_img_good.png"
