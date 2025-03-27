@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2025 Colin B. Macdonald
 
-import subprocess
 import tempfile
 from importlib import resources
 from io import BytesIO
+from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageChops
 
-import plom.server
+import plom
 
 from .textools import texFragmentToPNG as processFragment
 
@@ -35,7 +35,7 @@ def test_frag_broken_tex() -> None:
 
 
 def test_frag_image_size() -> None:
-    res = resources.files(plom.server) / "target_Q_latex_plom.png"
+    res = resources.files(plom) / "test_target_latex.png"
     # mypy stumbling over resource Traversables?
     imgt = Image.open(res)  # type: ignore[arg-type]
     frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
@@ -65,24 +65,44 @@ def test_frag_image_size() -> None:
     assert img.width > 2 * imgt.width
 
 
-def test_frag_image() -> None:
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as target:
-        with open(target.name, "wb") as fh:
-            fh.write(
-                (resources.files(plom.server) / "target_Q_latex_plom.png").read_bytes()
-            )
+def percent_error_between_images(img1: Path, img2: Path) -> float:
+    """A percentage difference of pixels that differ between two images.
 
-        valid, imgdata = processFragment(r"$\mathbb{Q}$ \LaTeX\ Plom")
-        assert valid
-        assert isinstance(imgdata, bytes)
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as img:
-            with open(img.name, "wb") as f:
-                f.write(imgdata)
-            r = subprocess.run(
-                ["compare", "-metric", "AE", img.name, target.name, "null"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
-            )
-            # Note "AE" not "rmse" with transparency www.imagemagick.org/Usage/compare/
-            s = r.stderr.decode()
-            assert float(s) < 3000
+    Returns:
+        A percentage as a floating point number in [0, 100].  If the
+        images are the same, return 0.  If the images are as different
+        as can be (e.g., inverse of each other) then return 100.
+    """
+    with Image.open(img1) as im1, Image.open(img2) as im2:
+        d = ImageChops.difference(im1, im2)
+        total = 0.0
+        for pixel in d.getdata():  # type: ignore[attr-defined]
+            assert 0 <= pixel <= 255, "Incorrectly assumed pixel values in [0, 255]"
+            total += float(pixel) / 255.0
+            print((pixel, total))
+        return 100 * total / (d.width * d.height)
+
+
+def test_frag_image() -> None:
+    valid, imgdata = processFragment(r"$\mathbb{Q}$ \LaTeX\ Plom")
+    assert valid
+    assert isinstance(imgdata, bytes)
+    with tempfile.TemporaryDirectory() as td:
+        img = Path(td) / "new_image.png"
+        with img.open("wb") as f:
+            f.write(imgdata)
+
+        target_img = Path(td) / "target.png"
+        with target_img.open("wb") as f:
+            f.write((resources.files(plom) / "test_target_latex.png").read_bytes())
+
+        assert percent_error_between_images(img, target_img) < 0.1
+
+        # older image with poor quality white-tinged antialiasing
+        target_old = Path(td) / "target_old.png"
+        with target_old.open("wb") as f:
+            f.write((resources.files(plom) / "test_target_latex_old.png").read_bytes())
+        # somewhat close
+        assert percent_error_between_images(img, target_old) < 10
+        # but not too close
+        assert percent_error_between_images(img, target_old) > 0.1

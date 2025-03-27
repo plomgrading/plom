@@ -6,8 +6,8 @@ from django.contrib.auth.models import User
 from django.db import transaction, models
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 
-from Papers.models import Paper, QuestionPage
-from Papers.services import PaperInfoService, SpecificationService
+from plom_server.Papers.models import Paper, QuestionPage
+from plom_server.Papers.services import PaperInfoService, SpecificationService
 
 from ..models import (
     StagingBundle,

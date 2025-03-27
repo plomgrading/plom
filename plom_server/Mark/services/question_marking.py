@@ -211,7 +211,7 @@ class QuestionMarkingService:
         tag_marked_during_quota = "during_quota"
 
         # Check if the user has quota limits
-        from Progress.services import UserInfoServices
+        from plom_server.Progress.services import UserInfoServices
 
         uis = UserInfoServices()
         progress = uis.get_user_progress(username=user.username)

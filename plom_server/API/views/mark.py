@@ -12,17 +12,17 @@ from rest_framework import serializers, status
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse
 
-from Finish.services import SolnImageService
-from Mark.services import (
+from plom_server.Finish.services import SolnImageService
+from plom_server.Mark.services import (
     mark_task,
     MarkingTaskService,
     PageDataService,
     MarkingStatsService,
 )
-from Papers.services import SpecificationService
-from Papers.models import Image
+from plom_server.Papers.services import SpecificationService
+from plom_server.Papers.models import Image
 
-from Progress.services import UserInfoServices
+from plom_server.Progress.services import UserInfoServices
 
 from .utils import _error_response
 
@@ -146,6 +146,41 @@ class ReassignTask(APIView):
                 calling_user=calling_user,
                 unassign_others=True,
             )
+        except ValueError as e:
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
+
+        return Response(True, status=status.HTTP_200_OK)
+
+
+# PATCH: /MK/tasks/{code}/reset
+class ResetTask(APIView):
+    """Reset a task, making all annotations outdating and putting it back into the pool for remarking from scratch.
+
+    Returns:
+        200: returns json of True.
+        404: task not found.
+        406: request not acceptable from calling user, e.g.,
+            not lead marker or manager.
+    """
+
+    def patch(self, request: Request, *, code: str) -> Response:
+        """Reset a task."""
+        calling_user = request.user
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if not ("lead_marker" in group_list or "manager" in group_list):
+            return _error_response(
+                f"You ({calling_user}) cannot reassign tasks because "
+                "you are not a lead marker or manager",
+                status.HTTP_406_NOT_ACCEPTABLE,
+            )
+
+        try:
+            papernum, question_idx = mark_task.unpack_code(code)
+        except AssertionError as e:
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
+
+        try:
+            MarkingTaskService().set_paper_marking_task_outdated(papernum, question_idx)
         except ValueError as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
 

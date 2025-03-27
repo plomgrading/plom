@@ -7,9 +7,9 @@
 from django.contrib.auth.models import User
 from django.shortcuts import render
 
-from Base.base_group_views import ManagerRequiredView
-from UserManagement.models import Quota
-from UserManagement.services import QuotaService
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.UserManagement.models import Quota
+from plom_server.UserManagement.services import QuotaService
 from ..forms import AnnotationFilterForm
 from ..services import UserInfoServices
 

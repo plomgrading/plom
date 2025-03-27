@@ -4,8 +4,8 @@
 
 from .base import ManagerReadOnlyViewSet
 
-from Rubrics.models import Rubric
-from Rubrics.serializers import RubricSerializer
+from plom_server.Rubrics.models import Rubric
+from plom_server.Rubrics.serializers import RubricSerializer
 
 
 class RubricViewSet(ManagerReadOnlyViewSet):

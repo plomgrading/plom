@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
 
 from django.db import models, transaction
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-from Base.models import HueyTaskTracker
-from Papers.models import Paper
+from plom_server.Base.models import HueyTaskTracker
+from plom_server.Papers.models import Paper
 
 
 class PaperIDTask(models.Model):
@@ -120,3 +120,13 @@ class IDReadingHueyTaskTracker(HueyTaskTracker):
         """Set the user-readible message string."""
         with transaction.atomic(durable=True):
             cls.objects.select_for_update().filter(pk=pk).update(message=message)
+
+
+class IDRectangle(models.Model):
+    """A model to store the location of the ID box on a version of the paper."""
+
+    version = models.IntegerField(null=False, default=None, unique=True)
+    top = models.FloatField(null=False)
+    left = models.FloatField(null=False)
+    bottom = models.FloatField(null=False)
+    right = models.FloatField(null=False)

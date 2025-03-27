@@ -74,7 +74,7 @@ def create_QR_codes(
 def _create_QRcoded_pdf(
     spec: dict[str, Any],
     papernum: int,
-    question_versions: dict[int, int],
+    qvmap_row: dict[int | str, int],
     tmpdir: pathlib.Path,
     source_versions: list[pathlib.Path],
     *,
@@ -87,7 +87,8 @@ def _create_QRcoded_pdf(
     Arguments:
         spec (dict): A validated test specification
         papernum (int): the paper/test number.
-        question_versions (dict): version number for each question of this paper.
+        qvmap_row: version number for each question of this paper.
+            and optionally the id page.  A row of the "qvmap".
         tmpdir (pathlib.Path): a place where we can make temporary files.
         source_versions: list of paths for the source versions.
 
@@ -105,7 +106,7 @@ def _create_QRcoded_pdf(
     # from spec get the mapping from page to group
     page_to_group = build_page_to_group_dict(spec)
     # also build page to version mapping from spec and the question-version dict
-    page_to_version = build_page_to_version_dict(spec, question_versions)
+    page_to_version = build_page_to_version_dict(spec, qvmap_row)
 
     assert len(source_versions) == spec["numberOfVersions"]
     # dict of version (int) -> source pdf (pymupdf.Document)
@@ -391,7 +392,7 @@ def pdf_page_add_name_id_box(
 def make_PDF(
     spec,
     papernum: int,
-    question_versions: dict[int, int],
+    question_versions: dict[int | str, int],
     extra: dict[str, Any] | None = None,
     xcoord: float | None = None,
     ycoord: float | None = None,

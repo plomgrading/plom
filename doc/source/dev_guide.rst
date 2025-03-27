@@ -1,6 +1,6 @@
 .. Plom documentation
    Copyright (C) 2024 Aidan Murphy
-   Copyright (C) 2024 Colin B. Macdonald
+   Copyright (C) 2024-2025 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 *********************************
@@ -14,20 +14,7 @@ outside of writing the exam they should have no interaction with Plom.
 Project structure
 ================================
 
-Most Plom code can be found in one of two directories in the
-`project repository <https://gitlab.com/plom/plom>`_:
- * ``plom/``
- * ``plom_server/``
-The former contains the code used to build the marking client
-and several tools to run and interact with the 'legacy' server,
-the latter contains the 'current' Plom server.
-It's important to establish this as the directory structure
-(or lack thereof) will differ depending on which directory code
-is found in.
-
-Note that ``plom/`` is a package and can be imported,
-while ``plom_server/`` is not
-(though it'd be nice, see issue `#2759 <https://gitlab.com/plom/plom/-/issues/2759>`_).
+See :doc:`code`.
 
 
 Contributing to Plom
@@ -68,7 +55,6 @@ Automatic updating of dependencies is beyond the scope of this project.
 Plom is not a package manager.
 
 
-
 Getting started
 ---------------------------------
 
@@ -76,6 +62,7 @@ This project is controlled with git, maintainers will happily welcome
 contributors but are not keen to teach the basics of git.
 There are many guides and tutorials freely available to learn git, here is one by
 `gitlab <https://docs.gitlab.com/ee/tutorials/learn_git.html>`_.
+
 
 Repository set up
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -112,6 +99,7 @@ the pattern to do this should look familiar:
    $ git checkout main
    $ git fetch upstream
    $ git merge upstream/main
+
 
 Best practices
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

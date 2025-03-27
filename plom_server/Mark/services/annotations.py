@@ -17,9 +17,9 @@ import pathlib
 from django.db import transaction
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
-from Papers.services.SpecificationService import get_question_max_mark
-from Rubrics.models import Rubric
-from Rubrics.services import _list_of_rubrics_to_dict_of_dict
+from plom_server.Papers.services.SpecificationService import get_question_max_mark
+from plom_server.Rubrics.models import Rubric
+from plom_server.Rubrics.services import _list_of_rubrics_to_dict_of_dict
 from ..models import Annotation, AnnotationImage, MarkingTask
 from plom.plom_exceptions import PlomConflict, PlomInconsistentRubric
 from plom.rubric_utils import compute_score

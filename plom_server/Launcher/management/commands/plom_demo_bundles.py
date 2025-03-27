@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Colin B. Macdonald
 
 from dataclasses import dataclass
@@ -21,8 +21,8 @@ from django.core.management.base import BaseCommand
 from django.core.management import call_command
 from django.conf import settings
 
-from Identify.services import IDDirectService
-from Scan.services import ScanService
+from plom_server.Identify.services import IDDirectService
+from plom_server.Scan.services import ScanService
 from ...services import DemoBundleCreationService, DemoHWBundleCreationService
 
 
@@ -64,7 +64,7 @@ class DemoAllBundlesConfig:
 
 def _read_bundle_config(length: str) -> DemoAllBundlesConfig:
     """Read and parse the appropriate demo bundle config file."""
-    demo_file_directory = settings.BASE_DIR / "Launcher/launch_scripts/demo_files"
+    demo_files = settings.BASE_DIR / "demo_files"
     # read the config toml file
     if length == "quick":
         fname = "bundle_for_quick_demo.toml"
@@ -74,7 +74,7 @@ def _read_bundle_config(length: str) -> DemoAllBundlesConfig:
         fname = "bundle_for_plaid_demo.toml"
     else:
         fname = "bundle_for_demo.toml"
-    with open(demo_file_directory / fname, "rb") as fh:
+    with open(demo_files / fname, "rb") as fh:
         try:
             config_dict = tomllib.load(fh)
         except tomllib.TOMLDecodeError as e:
@@ -106,8 +106,11 @@ class Command(BaseCommand):
             (push) processed bundles from staging,
             (id_hw) ID pushed demo homework bundles.""",
         )
+        parser.add_argument("--versioned-id", dest="versioned_id", action="store_true")
 
-    def build_the_bundles(self, demo_config: DemoAllBundlesConfig) -> None:
+    def build_the_bundles(
+        self, demo_config: DemoAllBundlesConfig, *, versioned_id=False
+    ) -> None:
         """Build demo bundles as per the chosen demo-config."""
         # at present the bundle-creator assumes that the
         # scrap-paper and extra-page pdfs are in media/papersToPrint
@@ -119,7 +122,9 @@ class Command(BaseCommand):
         # TODO - get bundle-creator to take from static.
 
         if demo_config.bundles:
-            DemoBundleCreationService().scribble_on_exams(demo_config)
+            DemoBundleCreationService().scribble_on_exams(
+                demo_config, versioned_id=versioned_id
+            )
 
         if demo_config.hw_bundles is not None:
             for bundle in demo_config.hw_bundles:
@@ -208,7 +213,7 @@ class Command(BaseCommand):
         demo_config = _read_bundle_config(options["length"])
 
         if options["action"] == "build":
-            self.build_the_bundles(demo_config)
+            self.build_the_bundles(demo_config, versioned_id=options["versioned_id"])
         elif options["action"] == "upload":
             self.upload_the_bundles(demo_config)
         elif options["action"] == "read":

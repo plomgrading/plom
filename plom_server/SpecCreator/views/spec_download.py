@@ -6,8 +6,8 @@ import io
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse, FileResponse, Http404
 
-from Base.base_group_views import ManagerRequiredView
-from Papers.services import SpecificationService
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Papers.services import SpecificationService
 
 
 class SpecDownloadView(ManagerRequiredView):

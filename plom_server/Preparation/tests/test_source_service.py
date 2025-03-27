@@ -9,7 +9,7 @@ from django.test import TestCase
 from django.conf import settings
 from model_bakery import baker
 
-from Base.tests import config_test
+from plom_server.Base.tests import config_test
 from ..services import SourceService, PapersPrinted
 from ..models import PaperSourcePDF
 from .. import useful_files_for_testing as useful_files
@@ -111,7 +111,7 @@ class SourceServiceTests(TestCase):
         pdf_source_path = settings.MEDIA_ROOT / "sourceVersions"
         self.assertTrue(pdf_source_path.exists())
         location_on_disc = pathlib.Path(f.path).parent
-        self.assertTrue(location_on_disc == pdf_source_path)
+        self.assertTrue(location_on_disc.resolve() == pdf_source_path.resolve())
         # This test is sus: DB might store as version1_abc123.pdf
         # assert f.path == pdf_source_path / "version1.pdf"
         SourceService.delete_source_pdf(1)

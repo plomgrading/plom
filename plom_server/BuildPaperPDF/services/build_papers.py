@@ -28,16 +28,16 @@ from django_huey import db_task, get_queue
 from plom.create.mergeAndCodePages import make_PDF
 
 # TODO: why "staging"? We should talk to the "real" student service
-from Preparation.services import (
+from plom_server.Preparation.services import (
     StagingStudentService,
     PQVMappingService,
     PrenameSettingService,
 )
-from Papers.services import SpecificationService
-from Papers.models import Paper
-from Preparation.services import SourceService
-from Base.models import HueyTaskTracker
-from Preparation.services.preparation_dependency_service import (
+from plom_server.Papers.services import SpecificationService
+from plom_server.Papers.models import Paper
+from plom_server.Preparation.services import SourceService
+from plom_server.Base.models import HueyTaskTracker
+from plom_server.Preparation.services.preparation_dependency_service import (
     assert_can_rebuild_test_pdfs,
 )
 
@@ -49,7 +49,7 @@ from ..models import BuildPaperPDFChore
 def huey_build_single_paper(
     papernum: int,
     spec: dict,
-    question_versions: dict[int, int],
+    qvmap_row: dict[int | str, int],
     source_versions: list[pathlib.Path],
     *,
     student_info: dict[str, Any] | None = None,
@@ -70,7 +70,7 @@ def huey_build_single_paper(
     Args:
         papernum: which paper to assemble
         spec: the specification of the assessment.
-        question_versions: which version to use for each question.
+        qvmap_row: which version to use for each question and id page.
             A row of the "qvmap".
         source_versions: list of paths to the PDF files for each version.
 
@@ -97,7 +97,7 @@ def huey_build_single_paper(
         save_path = make_PDF(
             spec=spec,
             papernum=papernum,
-            question_versions=question_versions,
+            question_versions=qvmap_row,
             extra=student_info,
             xcoord=prename_config["xcoord"],
             ycoord=prename_config["ycoord"],
@@ -251,7 +251,7 @@ class BuildPapersService:
         # get all the qvmap and student-id/name info
         spec = SpecificationService.get_the_spec()
         qvmap = PQVMappingService.get_pqv_map_dict()
-        prenamed = StagingStudentService().get_prenamed_papers()
+        prenamed = StagingStudentService.get_prenamed_papers()
         prename_config = PrenameSettingService().get_prenaming_config()
 
         the_papers = Paper.objects.filter(paper_number__in=paper_number_list)

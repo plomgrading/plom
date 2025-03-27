@@ -10,8 +10,8 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 
-from Base.models import Tag, SingletonABCModel
-from Papers.models import Paper
+from plom_server.Base.models import Tag, SingletonABCModel
+from plom_server.Papers.models import Paper
 
 
 class MarkingTask(models.Model):

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2024 Andrew Rechnitzer
+# Copyright (C) 2020-2025 Andrew Rechnitzer
 # Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2023 Julian Lapenna
@@ -315,7 +315,13 @@ def do_random_marking_backend(
         remarking_counter += 1
 
 
-def build_rubrics_from_server_info(question_idx: int, *, username, messenger) -> None:
+def build_rubrics_from_server_info(
+    question_idx: int,
+    *,
+    username,
+    messenger,
+    allow_half: bool = False,
+) -> None:
     """Get the rubrics from the server and set up local lists to use them.
 
     Args:
@@ -324,6 +330,7 @@ def build_rubrics_from_server_info(question_idx: int, *, username, messenger) ->
     Keyword Args:
         messenger: a messenger object already connected to the server.
         username (str): which username to create the rubrics.
+        allow_half: use half-mark rubrics if present.
 
     Returns:
         None
@@ -332,8 +339,13 @@ def build_rubrics_from_server_info(question_idx: int, *, username, messenger) ->
     for rubric in rubric_dat:
         # avoid using rubrics with no feedback
         if rubric["text"] == ".":
-            continue
-        elif rubric["kind"] == "relative":
+            # skip rubrics with no text except +/- 0.5 rubrics
+            if allow_half and rubric["value"] in [-0.5, 0.5]:
+                pass
+            else:
+                continue
+
+        if rubric["kind"] == "relative":
             if rubric["value"] > 0:
                 positiveRubrics.setdefault(question_idx, [])
                 positiveRubrics[question_idx].append(rubric)
@@ -343,6 +355,9 @@ def build_rubrics_from_server_info(question_idx: int, *, username, messenger) ->
         elif rubric["kind"] == "neutral":
             neutralRubrics.setdefault(question_idx, [])
             neutralRubrics[question_idx].append(rubric)
+        else:
+            # don't use absolute rubrics for the time being.
+            pass
 
 
 def build_random_rubrics(question_idx: int, *, username, messenger) -> None:
@@ -422,6 +437,7 @@ def do_rando_marking(
     question: Union[None, int] = None,
     version: Union[None, int] = None,
     download_rubrics: bool = False,
+    allow_half: bool = False,
 ) -> int:
     """Randomly annotate the papers assigning RANDOM grades: only for testing please.
 
@@ -440,6 +456,7 @@ def do_rando_marking(
         question: what question to mark or if omitted, mark all of them.
         version: what version to mark or if omitted, mark all of them.
         download_rubrics: get and use rubrics from the server.
+        allow_half: use half-mark rubrics if present.
 
     Returns:
         0 on success, non-zero on error/unexpected.
@@ -480,7 +497,9 @@ def do_rando_marking(
 
         for q in questions:
             if download_rubrics:
-                build_rubrics_from_server_info(q, username=user, messenger=messenger)
+                build_rubrics_from_server_info(
+                    q, username=user, messenger=messenger, allow_half=allow_half
+                )
             else:
                 build_random_rubrics(q, username=user, messenger=messenger)
             for v in versions:

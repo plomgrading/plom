@@ -5,8 +5,8 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth import get_user_model
 
-from Papers.services import SpecificationService
-from Papers.models.specifications import SpecQuestion
+from plom_server.Papers.services import SpecificationService
+from plom_server.Papers.models.specifications import SpecQuestion
 from ...services import QuestionTagService
 from ...models import PedagogyTag, QuestionTagLink
 

@@ -5,7 +5,7 @@
 from django.contrib.auth.models import User, Group
 from django.db import transaction
 
-from API.views.server_info import CloseUser
+from plom_server.API.views.server_info import CloseUser
 
 
 @transaction.atomic

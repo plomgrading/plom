@@ -6,7 +6,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024 Aidan Murphy
 #
 # Copying and distribution of this file, with or without modification,
@@ -68,9 +68,9 @@ container-image:
       fi
     - >
       if [ "$DOCKER_USE_CACHE" == "1" ]; then
-        docker build --cache-from $IM_LATEST --tag $IM . -f Containerfile.bulk
+        docker build --cache-from $IM_LATEST --tag $IM . -f Containerfile
       else
-        docker build --tag $IM . -f Containerfile.bulk
+        docker build --tag $IM . -f Containerfile
       fi
     - docker push $IM
 
@@ -111,10 +111,12 @@ wet_no_drift:
     - 'echo "Issue #2402: ensure two identical copies of the latex template"'
     - diff -s plom/latexTemplate.tex testTemplates/latexTemplate.tex
     - diff -s plom/latexTemplatev2.tex testTemplates/latexTemplatev2.tex
-    - echo "If version info duplicated, ensure same (currently none)"
+    - echo "If version info duplicated, ensure same"
     - export VER0=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
     - echo $VER0
-    # bash -c "[[ x$VER0 == x$VER1 ]]"
+    - export VER1=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom_server/__init__.py`
+    - echo $VER1
+    - bash -c "[[ x$VER0 == x$VER1 ]]"
 
 # we don't yet manage our CSS/JS libraries very well (Issue #2763)
 wet_css_js_3rd_party:
@@ -342,6 +344,29 @@ doctests:
     - pytest -l --doctest-modules --doctest-continue-on-failure --ignore-glob="*digitHunter.py" --ignore-glob="*/test_*.py" plom
 
 
+# Ensure the migrations have been updated
+# needs full dependencies, cannot easily run with other early static analysis
+migrations-uptodate:
+  stage: test
+  needs: ["container-image"]
+  image: $IM
+  before_script:
+    - apt-get update
+    - apt-get --no-install-recommends --yes install git
+    - pip install black
+  script:
+    - PYTHONPATH=. python3 manage.py makemigrations --update --check
+    - echo "Now check we can wipe and rebuild migrations"
+    - ./maint/maint-wipe-rebuild-migrations.sh
+    - echo "We expect there to be no changes - its a potential problem if there are"
+    - git diff
+    - echo "So we measure the length of the diff"
+    - DIFF_LENGTH=`git diff | wc -l`
+    - echo $DIFF_LENGTH
+    - echo "... and the test fails if the diff is too long"
+    - bash -c "[[ $DIFF_LENGTH -le 5 ]]"
+
+
 # needs full dependencies, cannot easily run with other early static analysis
 pylint:
   stage: test
@@ -427,7 +452,7 @@ count-no-docstring:
     - ruff check --select $EXCEPTIONS --statistics --exit-zero
     - echo "Total $HOWMANY things without docstrings, please don't increase it"
     # Dear hackers: please try to decrease this number
-    - bash -c "[[ $HOWMANY -le 1490 ]]"
+    - bash -c "[[ $HOWMANY -le 1464 ]]"
   allow_failure: true
 
 
@@ -441,11 +466,10 @@ no-question-numbers:
     # For now, just ensure the total does not increase
     - echo $HOW_MANY
     # Future hackers: consider trying to decrease this number
-    - bash -c "[[ $HOW_MANY -le 28 ]]"
+    - bash -c "[[ $HOW_MANY -le 23 ]]"
   allow_failure: true
 
 
-# TODO: why do we need to run makemigrations/migrate before tests?
 webplom_test:
   stage: test
   needs: ["container-image"]
@@ -453,21 +477,20 @@ webplom_test:
   script:
     - export PYTHONPATH=$PWD
     - python3 -m pip install coverage~=7.6.12
-    - pushd plom_server
     - export PLOM_DATABASE_BACKEND=sqlite
-    - python3 manage.py makemigrations
+    # need to migrate before tests but probably not makemigrations (Issue #3826)
+    # python3 manage.py makemigrations
     - python3 manage.py migrate
     - coverage run --source="." manage.py test
     # -i ignores an error caused by openCV's config-3.py file
     - coverage report -i --precision=2
     - coverage xml -i -o django_coverage.xml
-    - popd
   coverage: '/^TOTAL\s+.*\s(\d+\.\d+)%$/'
   artifacts:
     reports:
       coverage_report:
         coverage_format: cobertura
-        path: plom_server/django_coverage.xml
+        path: django_coverage.xml
 
 
 webplom_demo:
@@ -485,9 +508,91 @@ webplom_demo:
   script:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
-    - pushd plom_server
-    - ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after reports
+    - ./plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after reports
+
+
+# ensure we can run the code some other than inside itself!
+out-of-tree:
+  services:
+    - postgres
+  variables:
+    POSTGRES_DB: "plom_db"
+    POSTGRES_USER: "postgres"
+    POSTGRES_PASSWORD: "postgres"
+    POSTGRES_HOST_AUTH_METHOD: trust
+    PLOM_DATABASE_HOSTNAME: "postgres"
+  stage: test
+  needs: ["container-image"]
+  image: $IM
+  script:
+    - cd ${HOME}
+    - mkdir somewhere
+    - pushd somewhere
+    - export DJANGO_SETTINGS_MODULE=plom_server.settings
+    - django-admin --version
+    - django-admin -h
+    - django-admin -h | grep plom
+    - django-admin plom_demo_spec -h
+    - django-admin test plom_server
     - popd
+  allow_failure: true
+
+
+# ensure we can run the code some other than inside itself!
+out-of-tree-scratch:
+  services:
+    - postgres
+  variables:
+    POSTGRES_DB: "plom_db"
+    POSTGRES_USER: "postgres"
+    POSTGRES_PASSWORD: "postgres"
+    POSTGRES_HOST_AUTH_METHOD: trust
+    PLOM_DATABASE_HOSTNAME: "postgres"
+  stage: alt_build
+  needs: []
+  image: fedora:42
+  # when: manual
+  before_script:
+    - dnf install -y ImageMagick gcc gcc-c++ cmake
+          latexmk tex-dvipng texlive-scheme-basic
+          tex-preview tex-charter tex-exam tex-preprint
+          python3-passlib python3-pyqt6
+          python3-jsmin python3-defusedxml python3-yaml
+          python3-urllib3 python3-more-itertools
+          python3-seaborn python3-pandas python3-requests-toolbelt
+          python3-pip python3-wheel python3-setuptools
+          python3-tomlkit python3-pillow python3-tqdm
+          python3-appdirs python3-arrow
+          python3-aiohttp python3-peewee python3-cryptography
+          python3-zxing-cpp
+          python3-pytest
+          python3-PyMuPDF python3-scikit-learn python3-PyMySQL
+          python3-weasyprint python3-whitenoise
+          file python3-file-magic
+          iproute
+    - pip --version
+  script:
+    # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
+    - pip install -U pytest
+    # TODO: python3-django doesn't work, unsure why, instead get from pip (Issue #3830)
+    - pip install django
+    - pwd
+    - ls
+    # install twice, first for dependencies
+    - pip install .
+    - pwd
+    - cd ${HOME}
+    - mkdir somewhere
+    - pushd somewhere
+    - python3 -c "import plom_server; print(plom_server.__version__); print(plom_server.__path__)"
+    - export DJANGO_SETTINGS_MODULE=plom_server.settings
+    - django-admin --version
+    - django-admin -h
+    - django-admin -h | grep plom
+    - django-admin plom_demo_spec -h
+    - django-admin test plom_server
+    - popd
+  allow_failure: true
 
 
 # a legacy-only job
@@ -700,6 +805,7 @@ fullworkflow:
 
 
 # TODO: perhaps all deps should be in the docker image?
+# Commented-out latex/pdf for now as unused (and a bit slow?)
 docs_sphinx:
   stage: test
   needs: ["container-image"]
@@ -715,11 +821,11 @@ docs_sphinx:
     - make html
     - make singlehtml
     - make linkcheck
-    - make latexpdf
+    # make latexpdf
     - popd
   artifacts:
     paths:
-      - doc/build/latex/plom.pdf
+      # doc/build/latex/plom.pdf
       - doc/build/html/
     expire_in: 16 days
 
@@ -727,11 +833,11 @@ docs_sphinx:
 # get latest pip deps, doesn't use docker, closer to user install
 # allowed to fail (some pip stuff might be new) but we want to know
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
-fedora_legacy:
+fedora-legacy:
   stage: alt_build
+  needs: []
   image: fedora:42
   when: manual
-  allow_failure: true
   before_script:
     - dnf install -y ImageMagick gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
@@ -803,7 +909,7 @@ fedora_legacy:
 # get latest pip deps, doesn't use docker, closer to user install
 # allowed to fail (some pip stuff might be new) but we want to know
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
-fedora_webplom:
+fedora-django-tests:
   services:
     - postgres
   variables:
@@ -816,7 +922,6 @@ fedora_webplom:
   needs: []
   image: fedora:42
   when: manual
-  allow_failure: true
   before_script:
     - dnf install -y ImageMagick gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
@@ -832,21 +937,18 @@ fedora_webplom:
           python3-zxing-cpp
           python3-pytest
           python3-PyMuPDF python3-scikit-learn python3-PyMySQL
+          python3-weasyprint python3-whitenoise
           file python3-file-magic
           iproute
-          python3-django
     - pip --version
   script:
     # temporary, see https://gitlab.com/plom/plom/-/merge_requests/1634
     - pip install -U pytest
+    # TODO: python3-django doesn't work, unsure why, instead get from pip (Issue #3830)
+    - pip install django
     - pip install .
-    - export PYTHONPATH=$PWD
-    - echo $PYTHONPATH
-    - pushd plom_server
-    - ./Launcher/launch_scripts/launch_plom_demo_server.py --stop-after reports
-    - export PLOM_DATABASE_BACKEND=sqlite
+    - PYTHONPATH="." ./plom_server/scripts/launch_plom_demo_server.py --stop-after reports
     - python3 manage.py test
-    - popd
 
 
 # get latest pip deps, doesn't use docker, closer to user install
@@ -920,7 +1022,7 @@ newOS_newdeps_legacy:
 
 # get latest pip deps, doesn't use docker, closer to user install
 # allowed to fail (some pip stuff might be new) but we want to know
-newOS_newdeps_webplom:
+newOS_newdeps_django_tests:
   services:
     - postgres
   variables:
@@ -947,14 +1049,11 @@ newOS_newdeps_webplom:
     - python3 -m pip install --upgrade pip setuptools packaging wheel
     - pip --version
   script:
+    # we can run in-tree but we need pip for dependencies
     - pip install .
-    - export PYTHONPATH=$PWD
-    - echo $PYTHONPATH
-    - pushd plom_server
-    - ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
-    - export PLOM_DATABASE_BACKEND=sqlite
+    - pip uninstall -y plom
+    - PYTHONPATH=. ./plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
     - python3 manage.py test
-    - popd
 
 
 # Ensure minimum listed dependency versions actually work on older system
@@ -1047,7 +1146,7 @@ minpy_mindeps:
 
 
 # Minimum Python, minimum deps
-minpy_mindeps_webplom:
+minpy_mindeps_django_tests:
   services:
     - postgres
   variables:
@@ -1068,13 +1167,12 @@ minpy_mindeps_webplom:
   script:
     - pip install -r requirements.txt.tempminima
     - pip install .
-    - export PYTHONPATH=$PWD
-    - echo $PYTHONPATH
-    - pushd plom_server
-    - ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
-    - export PLOM_DATABASE_BACKEND=sqlite
+    # TODO: do we want full demo or just makemigrate?
+    - PYTHONPATH="." python3 plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
     - python3 manage.py test
-    - popd
+    # alternative is we have nothing pip installed, that should work too (although need to install once for deps)
+    - pip uninstall -y plom
+    - python3 manage.py test
 
 
 # upload binaries are generic gitlab packages
@@ -1133,7 +1231,8 @@ binary_upload:
 #   asdf install imagemagick 7.0.11-5
 # Runs Python 3.10 as of 2023-10
 # As of 2023-10, we only try to run webplom tests, see TODO about legacy
-macos_server_webplom:
+# TODO: as of 2025-03, no way to build migrations without demo and without postgres
+macos-server-django-tests:
   variables:
     HOMEBREW_NO_AUTO_UPDATE: 1
     HOMEBREW_NO_INSTALL_CLEANUP: 1
@@ -1188,11 +1287,7 @@ macos_server_webplom:
   # TODO this fails b/c it runs python3, which is not the right Python
   # python -m pytest -l --pyargs plom
   # Instead test webplom
-  - export PYTHONPATH=$PWD
-  - echo $PYTHONPATH
-  - pushd plom_server
   # no postgres yet
-  # ./Launcher/launch_scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
-  - export PLOM_DATABASE_BACKEND=sqlite
-  - python manage.py test
-  - popd
+  # ./plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
+  # export PLOM_DATABASE_BACKEND=sqlite
+  # python manage.py test

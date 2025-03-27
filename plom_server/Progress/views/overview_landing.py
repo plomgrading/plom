@@ -4,7 +4,7 @@
 
 from django.shortcuts import render
 
-from Base.base_group_views import LeadMarkerOrManagerView
+from plom_server.Base.base_group_views import LeadMarkerOrManagerView
 
 
 class OverviewLandingView(LeadMarkerOrManagerView):

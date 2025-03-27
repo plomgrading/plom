@@ -7,8 +7,6 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
 
-from __future__ import annotations
-
 import difflib
 import json
 from copy import deepcopy
@@ -25,10 +23,10 @@ from rest_framework import serializers
 from plom.feedback_rules import feedback_rules as static_feedback_rules
 from plom.misc_utils import pprint_score
 
-from Base.base_group_views import ManagerRequiredView
-from Base.models import SettingsModel
-from Papers.services import SpecificationService
-from Preparation.services import PapersPrinted
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Base.models import SettingsModel
+from plom_server.Papers.services import SpecificationService
+from plom_server.Preparation.services import PapersPrinted
 from .services import RubricService
 from .forms import (
     RubricHalfMarkForm,
@@ -232,14 +230,15 @@ class RubricItemView(UpdateView, ManagerRequiredView):
     def get(self, request: HttpRequest, *, rid: int) -> HttpResponse:
         """Get a rubric item."""
         template_name = "Rubrics/rubric_item.html"
-        rs = RubricService()
         question_max_marks_dict = SpecificationService.get_questions_max_marks()
 
         context = self.build_context()
 
-        rubric = rs.get_rubric_by_rid(rid)
-        revisions = rs.get_past_revisions_by_rid(rid)
-        marking_tasks = rs.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
+        rubric = RubricService.get_rubric_by_rid(rid)
+        revisions = RubricService.get_past_revisions_by_rid(rid)
+        marking_tasks = (
+            RubricService.get_marking_tasks_with_rubric_in_latest_annotation(rubric)
+        )
         rubric_form = RubricItemForm(instance=rubric)
         # TODO: does this enumerate serve any purpose?  workaround for...?
         for _, task in enumerate(marking_tasks):
@@ -247,7 +246,7 @@ class RubricItemView(UpdateView, ManagerRequiredView):
                 task.latest_annotation.score
             )
 
-        rubric_as_html = rs.get_rubric_as_html(rubric)
+        rubric_as_html = RubricService.get_rubric_as_html(rubric)
         # TODO: consider getting rid of this dumps stuff...  maybe plain ol' list?
         context.update(
             {
@@ -270,8 +269,7 @@ class RubricItemView(UpdateView, ManagerRequiredView):
         form = RubricItemForm(request.POST)
 
         if form.is_valid():
-            rs = RubricService()
-            rubric = rs.get_rubric_by_rid(rid)
+            rubric = RubricService.get_rubric_by_rid(rid)
             for key, value in form.cleaned_data.items():
                 rubric.__setattr__(key, value)
             rubric.save()
@@ -445,7 +443,6 @@ class RubricCreateView(ManagerRequiredView):
         if not form.is_valid():
             messages.error(request, f"invalid form data: {form.errors}")
             return redirect("rubrics_landing")
-        rs = RubricService()
         rubric_data = {
             "user": request.user.pk,
             "modified_by_user": request.user.pk,
@@ -457,7 +454,7 @@ class RubricCreateView(ManagerRequiredView):
             "question_index": form.cleaned_data["question_index"],
             "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
         }
-        rs.create_rubric(rubric_data)
+        RubricService.create_rubric(rubric_data)
         messages.success(request, "Rubric created successfully.")
         return redirect("rubrics_landing")
 
@@ -466,13 +463,25 @@ class RubricEditView(ManagerRequiredView):
     """Handles the editing of existing rubrices."""
 
     def post(self, request: HttpRequest, *, rid: int) -> HttpResponse:
-        """Posting from a form to to edit an existing rubric."""
+        """Posting from a form to edit an existing rubric."""
+        # TODO: am I supposed to do this through the form?
+        tag_tasks = request.POST.get("tag_tasks") == "on"
+        minor_change = request.POST.get("minor_change")
+        if minor_change is None or minor_change == "auto":
+            is_minor_change = None
+        elif minor_change == "yes":
+            is_minor_change = True
+        elif minor_change == "no":
+            is_minor_change = False
+        else:
+            messages.error(request, "invalid form choices for minor radios")
+            return redirect("rubric_item", rid)
+
         form = RubricItemForm(request.POST)
         if not form.is_valid():
             messages.error(request, f"invalid form data: {form.errors}")
             return redirect("rubric_item", rid)
-        rs = RubricService()
-        rubric = rs.get_rubric_by_rid(rid)
+        rubric = RubricService.get_rubric_by_rid(rid)
         rubric_data = {
             "username": request.user.username,
             "text": form.cleaned_data["text"],
@@ -484,14 +493,16 @@ class RubricEditView(ManagerRequiredView):
             "versions": form.cleaned_data["versions"],
             "parameters": form.cleaned_data["parameters"],
             "revision": rubric.revision,
+            "subrevision": rubric.subrevision,
             "tags": form.cleaned_data["tags"],
             "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
         }
-        rs.modify_rubric(
+        RubricService.modify_rubric(
             rid,
             new_rubric_data=rubric_data,
             modifying_user=User.objects.get(username=request.user.username),
-            tag_tasks=False,
+            tag_tasks=tag_tasks,
+            is_minor_change=is_minor_change,
         )
         messages.success(request, "Rubric edited successfully.")
         return redirect("rubric_item", rid)

@@ -1,6 +1,6 @@
 <!--
 __copyright__ = "Copyright (C) 2023-2024 Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2023-2024 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2023-2025 Colin B. Macdonald"
 __copyright__ = "Copyright (C) 2023 Edith Coates"
 __copyright__ = "Copyright (C) 2023 Natalie Balashov"
 __license__ = "AGPL-3.0-or-later"
@@ -8,17 +8,20 @@ __license__ = "AGPL-3.0-or-later"
 
 # Running the demo
 
-Currently we must run the demo from the `plom_server` directory, by running
+You can run the demo "in-tree" (without installing Plom) by first
+making sure your current working directory is the root of the source
+code (where `pyproject.toml` is located).  Then run:
 ```
-python3 Launcher/launch_scripts/launch_plom_demo_server.py
+python3 plom_server/scripts/launch_plom_demo_server.py
 ```
+or perhaps you'll need:
+```
+PYTHONPATH=. python3 plom_server/scripts/launch_plom_demo_server.py
+```
+
 This runs the entire demo through to reassembling papers.
-You should probably run it with a `--wait-after` option:
-  * 'users' - will wait after creating demo-users
-  * 'spec' - wait after a demo-spec is uploaded
-  * 'papers_built' - wait after paper pdfs are built
-  * 'rubrics' - wait after bundles are uploaded and system+demo rubrics set up - useful for playing with the client
-  * 'randomarker' - wait after papers are marked and ID'd by the rando-marker
+You should probably run it with a `--wait-after` option,
+pass `--help` to see the various options.
 
 To stop the demo type "quit" and press enter.
 
@@ -30,9 +33,10 @@ lingering huey tasks floating about that you'll need to terminate
 before running again.  On Unix systems, one way to do this is:
 ```
 pkill -KILL -f manage.py
+pkill -KILL -f django-admin
 ```
 This will terminate **any** user process that includes "manage.py",
-which is (basically) all running django related stuff.... not just
+which is (basically) all running Django related stuff.... not just
 those associated with the demo. **Use with care.**
 
 

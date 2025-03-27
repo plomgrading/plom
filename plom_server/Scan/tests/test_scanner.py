@@ -62,15 +62,15 @@ class ScanServiceTests(TestCase):
 
         the_bundle = StagingBundle.objects.get(user=self.user, slug=slug)
         bundle_path = pathlib.Path(the_bundle.pdf_file.path)
-        self.assertEqual(
-            bundle_path,
+        expected_path = (
             settings.MEDIA_ROOT
             / "staging"
             / "bundles"
             / self.user.username
             / str(the_bundle.pk)
-            / f"{slug}.pdf",
+            / f"{slug}.pdf"
         )
+        self.assertEqual(bundle_path.resolve(), expected_path.resolve())
         self.assertTrue(bundle_path.exists())
         # TODO: is this an appropriate way to cleanup?
         the_bundle.delete()

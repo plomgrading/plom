@@ -21,8 +21,8 @@ from django.utils import timezone
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 from django.conf import settings
 
-from Base.base_group_views import ScannerRequiredView
-from Preparation.services import PapersPrinted
+from plom_server.Base.base_group_views import ScannerRequiredView
+from plom_server.Preparation.services import PapersPrinted
 from ..services import ScanService, ManageScanService
 from ..forms import BundleUploadForm
 

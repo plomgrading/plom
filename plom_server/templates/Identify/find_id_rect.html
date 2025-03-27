@@ -1,6 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2024 Andrew Rechnitzer
+    Copyright (C) 2025 Andrew Rechnitzer
+    Copyright (C) 2025 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -12,19 +13,19 @@
 {% endblock page_heading %}
 {% block main_content %}
     <div>
-        <a class="btn btn-success" href="{% url 'id_prediction_home' %}">
+        <a class="btn btn-secondary" href="{% url 'get_id_box_parent' %}">
             <i class="bi bi-chevron-left"></i>
-            Return to ID predictions
+            Return to ID pages
         </a>
     </div>
     <div class="card m-2">
         <div class="card-body">
-            <h5 class="card-title">ID Page from Version 1</h5>
+            <h5 class="card-title">ID Page from Version {{ version }}</h5>
             <div class="row mb-4">
                 <div class="col-6">
                     <img id="reference_image"
                          class="border w-100"
-                         src="{% url 'reference_image' 1 page_number %}">
+                         src="{% url 'reference_image' version page_number %}">
                 </img>
                 <canvas id="canvas" style="position:absolute; left: 0px; top: 0px"></canvas>
             </div>
@@ -86,13 +87,17 @@
                            name="find_rect"
                            value="Find Rectangle">
                     <input class="btn btn-warning"
-                           onclick="return confirm('Are you sure?')"
                            type="submit"
                            name="submit"
-                           value="Submit">
+                           value="Set Rectangle">
+                    <button hx-delete="" class="btn btn-danger">Clear</button>
                 </form>
                 {% if initial_rectangle %}
-                    <div class="alert alert-success">Found rectangle</div>
+                    {% if best_guess %}
+                        <div class="alert alert-info">No pre-existing rectangle, making a reasonable guess (we hope)</div>
+                    {% else %}
+                        <div class="alert alert-success">Found rectangle</div>
+                    {% endif %}
                 {% else %}
                     <div class="alert alert-warning">Could not find rectangle</div>
                 {% endif %}
@@ -101,7 +106,7 @@
     </div>
 </div>
 <script type="text/javascript">
-  var corner_dat = {{qr_info|safe}};
+  var corner_data = {{qr_info|safe}};
   var top_left_coord = {{top_left|safe}};
   var bottom_right_coord = {{bottom_right|safe}};
 </script>

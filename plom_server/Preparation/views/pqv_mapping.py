@@ -14,8 +14,12 @@ from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect
 from django.contrib import messages
 
-from Base.base_group_views import ManagerRequiredView
-from Papers.services import SpecificationService, PaperCreatorService, PaperInfoService
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Papers.services import (
+    SpecificationService,
+    PaperCreatorService,
+    PaperInfoService,
+)
 
 from plom.misc_utils import format_int_list_with_runs
 from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
@@ -43,7 +47,7 @@ class PQVMappingUploadView(ManagerRequiredView):
         if PaperInfoService.is_paper_database_populated():
             return redirect("prep_qvmapping")
 
-        prenamed_papers = list(StagingStudentService().get_prenamed_papers().keys())
+        prenamed_papers = list(StagingStudentService.get_prenamed_papers().keys())
         num_questions = SpecificationService.get_n_questions()
         num_versions = SpecificationService.get_n_versions()
 
@@ -151,9 +155,7 @@ class PQVMappingView(ManagerRequiredView):
             "evacuate_in_progress": PaperCreatorService.is_evacuate_in_progress(),
         }
 
-        prenamed_papers_list = list(
-            StagingStudentService().get_prenamed_papers().keys()
-        )
+        prenamed_papers_list = list(StagingStudentService.get_prenamed_papers().keys())
 
         if prenamed_papers_list:
             context.update(

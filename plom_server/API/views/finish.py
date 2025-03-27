@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework import status
 
-from Finish.services import ReassembleService
+from plom_server.Finish.services import ReassembleService
 
 from .utils import _error_response
 

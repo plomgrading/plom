@@ -2,12 +2,12 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from django.test import TestCase
 from model_bakery import baker
 
-from Papers.models import Image, FixedPage, MobilePage, Bundle, Paper
+from plom_server.Papers.models import Image, FixedPage, MobilePage, Bundle, Paper
 from ..services import ManageScanService
 
 
@@ -116,13 +116,14 @@ class ManageScanServiceTests(TestCase):
         assert mss.get_number_completed_test_papers() == 5 + 4
         assert mss.get_number_incomplete_test_papers() == 2 + 2
 
-    def test_get_all_unused_test_papers(self) -> None:
-        mss = ManageScanService()
-        assert mss.get_all_unused_test_papers() == [8, 9]
+    def test_get_all_used_and_unused_papers(self) -> None:
+        unused = [8, 9]
+        self.assertEqual(ManageScanService.get_all_unused_papers(), unused)
+        used = [x for x in range(1, 16) if x not in unused]
+        self.assertEqual(ManageScanService.get_all_used_papers(), used)
 
-    def test_get_all_incomplete_test_papers(self) -> None:
-        mss = ManageScanService()
-        mss_incomplete = mss.get_all_incomplete_test_papers()
+    def test_get_all_incomplete_papers(self) -> None:
+        mss_incomplete = ManageScanService.get_all_incomplete_papers()
         # papers 6,7,10,11 is incomplete - should return dict of the form
         #
         # 6: {'fixed': [{'status': 'present', 'page_number': 1,
@@ -185,9 +186,8 @@ class ManageScanServiceTests(TestCase):
                     "img_pk" in m_pg_data[pg - 1]
                 )  # not testing the actual value of image_pk
 
-    def test_get_all_completed_test_papers(self) -> None:
-        mss = ManageScanService()
-        mss_complete = mss.get_all_completed_test_papers()
+    def test_get_all_complete_papers(self) -> None:
+        mss_complete = ManageScanService.get_all_complete_papers()
         # should return a dict of papers and their pages
         # paper 1 has 6 fixed and 1 mobile.
         # papers 2,3,4,5 = should have all 6 fixed pages - returned in page-number order

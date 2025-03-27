@@ -13,7 +13,7 @@ from django.db.utils import IntegrityError
 
 from plom.plom_exceptions import PlomDependencyConflict, PlomDatabaseCreationError
 from plom.version_maps import version_map_from_file
-from Preparation.services import PQVMappingService
+from plom_server.Preparation.services import PQVMappingService
 from ...services import PaperCreatorService, PaperInfoService
 
 
@@ -53,7 +53,10 @@ class Command(BaseCommand):
                 The paper number to start at.  Defaults to 1 if omitted.
             """,
         )
-        sp.add_parser("download", help="Download the question-version map.")
+        dlp = sp.add_parser("download", help="Download the question-version map.")
+        dlp.add_argument(
+            "csv_file", nargs="?", help="Destination filename.csv - else use default"
+        )
 
         p = sp.add_parser("upload", help="Upload a question-version map")
         p.add_argument("csv_or_json_file")
@@ -127,12 +130,15 @@ class Command(BaseCommand):
             raise CommandError(e) from e
         self.stdout.write("Database cleared of test-papers.")
 
-    def download_pqv_map(self) -> None:
+    def download_pqv_map(self, dest_filename: str | None) -> None:
         # check if a populate/evacuate running
         if PaperCreatorService.is_background_chore_in_progress():
             raise CommandError("Database is being updated - try again shortly.")
 
-        save_path = Path(PQVMappingService.get_default_csv_filename())
+        if dest_filename:
+            save_path = Path(dest_filename)
+        else:
+            save_path = Path(PQVMappingService.get_default_csv_filename())
         if save_path.exists():
             s = f"A file exists at {save_path} - overwrite it? [y/N] "
             choice = input(s).lower()
@@ -184,7 +190,7 @@ class Command(BaseCommand):
                 first=options["first_paper"],
             )
         elif options["command"] == "download":
-            self.download_pqv_map()
+            self.download_pqv_map(options["csv_file"])
         elif options["command"] == "upload":
             self.upload_pqv_map(options["csv_or_json_file"])
         elif options["command"] == "clear":

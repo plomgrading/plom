@@ -4,9 +4,9 @@
 
 from importlib import resources
 
-from Base.tests import ConfigTestCase
-from Papers.models import Paper
-from TaskOrder.services.task_ordering_service import TaskOrderService
+from plom_server.Base.tests import ConfigTestCase
+from plom_server.Papers.models import Paper
+from plom_server.TaskOrder.services import TaskOrderService
 
 from ..models import MarkingTask, MarkingTaskPriority
 from ..services import QuestionMarkingService, marking_priority

@@ -8,8 +8,8 @@ from django.shortcuts import render
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect
 
-from Base.base_group_views import ScannerRequiredView
-from Papers.services import SpecificationService, PaperInfoService
+from plom_server.Base.base_group_views import ScannerRequiredView
+from plom_server.Papers.services import SpecificationService, PaperInfoService
 
 from ..services import (
     ScanCastService,

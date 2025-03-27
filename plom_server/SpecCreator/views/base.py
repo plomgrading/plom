@@ -6,8 +6,8 @@
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
-from Base.base_group_views import ManagerRequiredView
-from Papers.services import PaperInfoService
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Papers.services import PaperInfoService
 
 
 class SpecBaseView(ManagerRequiredView):

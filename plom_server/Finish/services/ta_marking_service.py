@@ -13,8 +13,8 @@ from django.db.models import Sum, Avg, StdDev
 from django.utils import timezone
 
 from ..services import StudentMarkService
-from Mark.models import MarkingTask
-from Mark.services import MarkingTaskService
+from plom_server.Mark.models import MarkingTask
+from plom_server.Mark.services import MarkingTaskService
 
 
 class TaMarkingService:
@@ -81,6 +81,7 @@ class TaMarkingService:
         return csv_data
 
     def build_ta_info_csv_as_string(self) -> str:
+        """Constructs TA info csv and casts it to a string."""
         ta_info = self.build_csv_data()
         keys = self.get_csv_header()
         csv_io = StringIO()

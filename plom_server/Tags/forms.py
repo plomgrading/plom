@@ -3,7 +3,7 @@
 
 from django import forms
 
-from Mark.models import MarkingTaskTag
+from plom_server.Mark.models import MarkingTaskTag
 
 
 class TagFormFilter(forms.Form):

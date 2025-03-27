@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
-
-from __future__ import annotations
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -16,10 +14,10 @@ from django.http import (
 from django.core.files.base import ContentFile
 from django.shortcuts import render
 
-from Papers.services import SpecificationService, PaperInfoService
-from Preparation.services import SourceService
-from Base.base_group_views import ManagerRequiredView
-from .services import get_reference_rectangle, RectangleExtractor
+from plom_server.Papers.services import SpecificationService, PaperInfoService
+from plom_server.Preparation.services import SourceService
+from plom_server.Base.base_group_views import ManagerRequiredView
+from .services import get_reference_qr_coords, RectangleExtractor
 
 
 class RectangleHomeView(ManagerRequiredView):
@@ -43,7 +41,7 @@ class SelectRectangleView(ManagerRequiredView):
     def get(self, request: HttpRequest, version: int, page: int) -> HttpResponse:
         context = self.build_context()
         try:
-            qr_info = get_reference_rectangle(version, page)
+            qr_info = get_reference_qr_coords(version, page)
         except ValueError as err:
             raise Http404(err)
         x_coords = [X[0] for X in qr_info.values()]
@@ -69,10 +67,8 @@ class SelectRectangleView(ManagerRequiredView):
         right = round(float(request.POST.get("plom_right")), 6)
         bottom = round(float(request.POST.get("plom_bottom")), 6)
         # get all scanned papers with that page,version
-        paper_numbers = (
-            PaperInfoService().get_paper_numbers_containing_given_page_version(
-                version, page, scanned=True
-            )
+        paper_numbers = PaperInfoService.get_paper_numbers_containing_page(
+            page, version=version, scanned=True
         )
         context.update(
             {

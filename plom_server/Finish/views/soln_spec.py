@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
 
 from typing import Any
@@ -10,13 +10,14 @@ from django.http import HttpRequest, HttpResponse
 from django_htmx.http import HttpResponseClientRedirect
 from rest_framework import serializers
 
-from Base.base_group_views import ManagerRequiredView
-from Papers.services import SolnSpecService
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Papers.services import SolnSpecService
 from ..services import TemplateSolnSpecService, BuildSolutionService, SolnSourceService
 
 
 class SolnSpecView(ManagerRequiredView):
     def get(self, request):
+        """Display solution specification page."""
         context = self.build_context()
         if SolnSpecService.is_there_a_soln_spec():
             soln_toml = SolnSpecService.get_the_soln_spec_as_toml()
@@ -34,6 +35,11 @@ class SolnSpecView(ManagerRequiredView):
         return render(request, "Finish/soln_spec.html", context=context)
 
     def delete(self, request):
+        """Delete the solution specification.
+
+        Also deletes any uploaded sources and marks any built solution
+        pdfs as obsolete.
+        """
         # remove any uploaded sources, and make any built soln pdfs obsolete.
         BuildSolutionService().reset_all_soln_build()
         SolnSourceService().remove_all_solution_pdf()
@@ -41,6 +47,7 @@ class SolnSpecView(ManagerRequiredView):
         return HttpResponseClientRedirect(reverse("soln_spec"))
 
     def patch(self, request: HttpRequest) -> HttpResponse:
+        """Sets solution spec to same format as assessment spec."""
         spec = TemplateSolnSpecService().build_soln_toml_from_test_spec()
 
         context: dict[str, Any] = {
@@ -113,6 +120,7 @@ class SolnSpecView(ManagerRequiredView):
 
 class TemplateSolnSpecView(ManagerRequiredView):
     def get(self, request):
+        """Generate and display a template soln spec."""
         context = self.build_context()
         soln_toml = TemplateSolnSpecService().build_template_soln_toml()
         context.update(

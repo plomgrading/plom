@@ -21,15 +21,15 @@ from django_huey import db_task, get_queue
 import huey
 import huey.api
 
-from Scan.services import ManageScanService
-from Base.models import HueyTaskTracker
-from Identify.models import PaperIDTask
-from Papers.models import (
+from plom_server.Scan.services import ManageScanService
+from plom_server.Base.models import HueyTaskTracker
+from plom_server.Identify.models import PaperIDTask
+from plom_server.Papers.models import (
     SolnSpecQuestion,
     Paper,
     QuestionPage,
 )
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 from ..models import SolutionSourcePDF, BuildSolutionPDFChore
 from .student_marks_service import StudentMarkService
 from .soln_source import SolnSourceService
@@ -61,8 +61,7 @@ class BuildSolutionService:
                 "outdated": False,
                 "obsolete": None,
             }
-        mss = ManageScanService()
-        for pn in mss.get_all_completed_test_papers():
+        for pn in ManageScanService.get_all_complete_papers():
             status[pn]["scanned"] = True
 
         for task in PaperIDTask.objects.filter(
@@ -102,6 +101,7 @@ class BuildSolutionService:
         return list(status.values())
 
     def watermark_pages(self, doc: fitz.Document, watermark_text: str) -> None:
+        """Watermark the pages of the given document with the given text."""
         margin = 10
         for pg in doc:
             h = pg.rect.height
@@ -332,7 +332,7 @@ class BuildSolutionService:
         return chore.pdf_file
 
     def try_to_cancel_single_queued_chore(self, paper_num: int) -> None:
-        """Mark a soln pdf build chore as obsolete and try to cancel it if queued in Huey.
+        """Mark a solution pdf build chore as obsolete and try to cancel it if queued in Huey.
 
         Args:
             paper_num: The paper number of the chore to cancel.
@@ -400,7 +400,15 @@ class BuildSolutionService:
         ]
 
     @transaction.atomic
-    def get_zipfly_generator(self, short_name: str, *, chunksize: int = 1024 * 1024):
+    def get_zipfly_generator(self, *, chunksize: int = 1024 * 1024) -> zipfly.ZipFly:
+        """Return a streaminmg zipfile generator for archive of the solution pdfs.
+
+        Keyword Args:
+            chunksize: the size of chunks for the stream.
+
+        Returns:
+            The streaming zipfile generator.
+        """
         paths = [
             {
                 "fs": pdf_file.path,

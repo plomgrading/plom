@@ -8,7 +8,7 @@
 import pandas as pd
 
 from . import StudentMarkService, TaMarkingService
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 
 
 class DataExtractionService:

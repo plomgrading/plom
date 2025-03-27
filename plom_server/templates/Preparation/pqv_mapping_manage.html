@@ -110,7 +110,8 @@
                         <thead>
                             <th>Paper number</th>
                             {% if prenaming %}<th>Prename ID (if assigned)</th>{% endif %}
-                            {% for qi, qstr, qlabel in question_labels_html %}<th>{{ qlabel|safe }}</th>{% endfor %}
+                            <th>id page ver</th>
+                            {% for qi, qstr, qlabel in question_labels_html %}<th>{{ qlabel|safe }} ver</th>{% endfor %}
                         </thead>
                         <tbody>
                             {% for paper_number, info in pqv_table.items %}
@@ -125,6 +126,7 @@
                                             {% endif %}
                                         </td>
                                     {% endif %}
+                                    <td>{{ info.id_ver }}</td>
                                     {% for x in info.qvlist %}<td>{{ x }}</td>{% endfor %}
                                 </tr>
                             {% endfor %}

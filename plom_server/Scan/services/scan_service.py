@@ -45,9 +45,9 @@ from plom.tpv_utils import (
     isValidBundleSeparatorPaperCode,
 )
 
-from Papers.services import ImageBundleService, SpecificationService
-from Papers.models import FixedPage
-from Base.models import HueyTaskTracker
+from plom_server.Papers.services import ImageBundleService, SpecificationService
+from plom_server.Papers.models import FixedPage
+from plom_server.Base.models import HueyTaskTracker
 from ..models import (
     StagingBundle,
     StagingImage,
@@ -1831,7 +1831,8 @@ def huey_parent_read_qr_codes_chore(
         _write_bundle.save()
 
     bundle_obj.refresh_from_db()
-    # TODO: does this need error handling?
+    # this could unexpected raise ValueError errors which would be caught
+    # by the general catch-all handler
     QRService.create_staging_images_based_on_QR_codes(bundle_obj)
 
     HueyTaskTracker.transition_to_complete(tracker_pk)

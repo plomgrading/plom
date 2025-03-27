@@ -8,10 +8,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from Finish.services import ReassembleService
-from Finish.services import StudentMarkService
+from plom_server.Finish.services import ReassembleService
+from plom_server.Finish.services import StudentMarkService
 
-from Papers.models import Paper
+from plom_server.Papers.models import Paper
 
 
 class REPspreadsheet(APIView):
