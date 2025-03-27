@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 
 from io import BytesIO
 from pathlib import Path
@@ -17,7 +17,6 @@ from math import ceil, floor
 from plom_server.Papers.models import ReferenceImage
 from plom_server.Papers.models import Paper, FixedPage
 from plom_server.Papers.services import PaperInfoService
-from plom_server.Identify.models import IDRectangle
 from plom.scan import rotate
 
 
@@ -65,48 +64,12 @@ def _get_reference_rectangle(parsed_qr: dict[str, dict[str, Any]]) -> dict[str, 
 
 
 def get_reference_rectangle(version: int, page: int) -> dict[str, float]:
+    """The reference rectangle is based on the centres of the QR coordinates."""
     try:
         rimg_obj = ReferenceImage.objects.get(version=version, page_number=page)
     except ReferenceImage.DoesNotExist:
         raise ValueError(f"There is no reference image for v{version} pg{page}.")
     return _get_reference_rectangle(rimg_obj.parsed_qr)
-
-
-def set_idbox_rectangle(
-    version: int, left: float, top: float, right: float, bottom: float
-) -> None:
-    try:
-        idr = IDRectangle.objects.get(version=version)
-        idr.top = top
-        idr.left = left
-        idr.bottom = bottom
-        idr.right = right
-        idr.save()
-    except IDRectangle.DoesNotExist:
-        IDRectangle.objects.create(
-            version=version, left=left, top=top, right=right, bottom=bottom
-        )
-
-
-def get_idbox_rectangle(version: int) -> dict[str, float] | None:
-    try:
-        idr = IDRectangle.objects.get(version=version)
-        return {
-            "top_f": idr.top,
-            "left_f": idr.left,
-            "bottom_f": idr.bottom,
-            "right_f": idr.right,
-        }
-    except IDRectangle.DoesNotExist:
-        return None
-
-
-def clear_idbox_rectangle(version: int) -> None:
-    try:
-        idr = IDRectangle.objects.get(version=version)
-        idr.delete()
-    except IDRectangle.DoesNotExist:
-        pass
 
 
 def _get_affine_transf_matrix_ref_to_QR_target(
