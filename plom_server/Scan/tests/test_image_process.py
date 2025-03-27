@@ -3,19 +3,9 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2025 Colin B. Macdonald
 
-import pathlib
-import tempfile
-from importlib import resources
-
-import cv2 as cv
-import numpy as np
 from django.test import TestCase
-from PIL import Image
 
-from plom.scan import QRextract
-
-from .. import tests as _Scan_tests
-from ..services import PageImageProcessor, ScanService
+from ..services import PageImageProcessor
 
 
 class PageImageProcessorTests(TestCase):
