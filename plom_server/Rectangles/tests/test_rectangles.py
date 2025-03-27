@@ -164,6 +164,7 @@ class RectangleServiceTests(TestCase):
             ref_rect,
             region={"left_f": 0.0, "top_f": 0.25, "right_f": 1.0, "bottom_f": 0.65},
         )
+        assert idbox_src_loc is not None
 
         with tempfile.TemporaryDirectory() as tmpdir:
             # Debug the test by saving images locally:
@@ -183,6 +184,7 @@ class RectangleServiceTests(TestCase):
                 idbox_src_loc["bottom_f"],
                 ref_rect,
             )
+            assert output_bytes is not None
             output_path = Path(tmpdir) / "output_img.png"
             with output_path.open("wb") as f:
                 f.write(output_bytes)
