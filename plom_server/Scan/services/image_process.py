@@ -22,7 +22,8 @@ class PageImageProcessor:
     WIDTH = RIGHT - LEFT
     HEIGHT = BOTTOM - TOP
 
-    def get_page_orientation(self, qr_code_data: dict[str, dict[str, Any]]) -> str:
+    @classmethod
+    def get_page_orientation(cls, qr_code_data: dict[str, dict[str, Any]]) -> str:
         """Return a string representing a page orientation.
 
         The choices are:
@@ -71,7 +72,7 @@ class PageImageProcessor:
         northeast_orientation = None
         if "NE" in qr_code_data:
             expected_corner = qr_code_data["NE"]["quadrant"]
-            northeast_orientation = self._check_corner(
+            northeast_orientation = cls._check_corner(
                 val_from_qr=expected_corner,
                 upright="1",
                 turned_right="2",
@@ -82,7 +83,7 @@ class PageImageProcessor:
         northwest_orientation = None
         if "NW" in qr_code_data:
             expected_corner = qr_code_data["NW"]["quadrant"]
-            northwest_orientation = self._check_corner(
+            northwest_orientation = cls._check_corner(
                 val_from_qr=expected_corner,
                 upright="2",
                 turned_right="3",
@@ -93,7 +94,7 @@ class PageImageProcessor:
         southeast_orientation = None
         if "SE" in qr_code_data:
             expected_corner = qr_code_data["SE"]["quadrant"]
-            southeast_orientation = self._check_corner(
+            southeast_orientation = cls._check_corner(
                 val_from_qr=expected_corner,
                 upright="4",
                 turned_right="1",
@@ -104,7 +105,7 @@ class PageImageProcessor:
         southwest_orientation = None
         if "SW" in qr_code_data:
             expected_corner = qr_code_data["SW"]["quadrant"]
-            southwest_orientation = self._check_corner(
+            southwest_orientation = cls._check_corner(
                 val_from_qr=expected_corner,
                 upright="3",
                 turned_right="4",
@@ -130,8 +131,8 @@ class PageImageProcessor:
 
         return truthy_results[0]
 
+    @staticmethod
     def _check_corner(
-        self,
         val_from_qr: str,
         upright: str,
         turned_right: str,
@@ -161,7 +162,8 @@ class PageImageProcessor:
             return "upside_down"
         raise RuntimeError("Tertium non datur")
 
-    def get_rotation_angle_from_QRs(self, qr_data: dict[str, dict[str, Any]]) -> int:
+    @classmethod
+    def get_rotation_angle_from_QRs(cls, qr_data: dict[str, dict[str, Any]]) -> int:
         """Get the current orientation of a page-image using its parsed QR code data.
 
         If it isn't upright, return the angle by which the image needs to be rotated,
@@ -177,7 +179,7 @@ class PageImageProcessor:
         Raises:
             RuntimeError: something inconsistent in the QR data.
         """
-        orientation = self.get_page_orientation(qr_data)
+        orientation = cls.get_page_orientation(qr_data)
 
         if orientation == "upright":
             return 0
@@ -191,8 +193,9 @@ class PageImageProcessor:
 
         return rotate_angle
 
+    @classmethod
     def get_rotation_angle_or_None_from_QRs(
-        self, qr_data: dict[str, dict[str, Any]]
+        cls, qr_data: dict[str, dict[str, Any]]
     ) -> int | None:
         """Get the current orientation or None of a page-image using its parsed QR code data.
 
@@ -210,7 +213,7 @@ class PageImageProcessor:
             methods should perhaps converge in the future (TODO).
         """
         try:
-            return self.get_rotation_angle_from_QRs(qr_data)
+            return cls.get_rotation_angle_from_QRs(qr_data)
         except RuntimeError:
             # We cannot get the page orientation
             return None
