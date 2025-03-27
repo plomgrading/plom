@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Chris Jin
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Bryan Tanady
@@ -107,7 +107,10 @@ class UserPage(ManagerRequiredView):
 
 
 class PasswordResetPage(ManagerRequiredView):
+    """View for displaying the password reset page."""
+
     def get(self, request: HttpRequest, *, username: str) -> HttpResponse:
+        """Get the password reset page for a particular user."""
         user_obj = User.objects.get(username=username)
         request_domain = get_current_site(request).domain
         link = AuthenticationServices().generate_link(user_obj, request_domain)
@@ -141,7 +144,7 @@ class SetQuotaView(ManagerRequiredView):
     to their current number of question marked.
     """
 
-    def post(self, request, username):
+    def post(self, request: HttpRequest, *, username: str) -> HttpResponse:
         """Handle the POST request to set the quota limit for the specified user."""
         user = get_object_or_404(User, username=username)
         next_page = request.POST.get(
@@ -179,7 +182,7 @@ class SetQuotaView(ManagerRequiredView):
 class UnsetQuotaView(ManagerRequiredView):
     """View to handle removing a quota limit from a user."""
 
-    def post(self, request, username):
+    def post(self, request: HttpRequest, *, username: str) -> HttpResponse:
         """Handle the POST request to unset the quota limit for the specified user."""
         user = get_object_or_404(User, username=username)
         quota = Quota.objects.filter(user=user)
@@ -194,7 +197,7 @@ class UnsetQuotaView(ManagerRequiredView):
 class EditQuotaLimitView(ManagerRequiredView):
     """View to handle editing the quota limit for a user."""
 
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         """Handle the POST request to update the quota limit for the specified user."""
         username = request.POST.get("username")
         new_limit = int(request.POST.get("limit"))
@@ -219,7 +222,7 @@ class EditQuotaLimitView(ManagerRequiredView):
 class ModifyQuotaView(ManagerRequiredView):
     """View to handle modifying the quota state and/or limit for multiple users."""
 
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         """Handle the POST request to update the quota limits for the specified users."""
         user_ids = request.POST.getlist("users")
         new_limit = int(request.POST.get("limit"))
@@ -250,7 +253,7 @@ class ModifyQuotaView(ManagerRequiredView):
 class ModifyDefaultLimitView(ManagerRequiredView):
     """View to handle modifying the default quota limit."""
 
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
         """Handle the POST request to change the default limit."""
         new_limit = int(request.POST.get("limit"))
 
@@ -273,7 +276,8 @@ class ModifyDefaultLimitView(ManagerRequiredView):
 class BulkSetQuotaView(ManagerRequiredView):
     """View to handle bulk setting quota for all markers."""
 
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
+        """Post to set the quota for all markers."""
         markers = User.objects.filter(groups__name="marker")
         markers_with_warnings = []
         successful_markers = []
@@ -318,7 +322,8 @@ class BulkSetQuotaView(ManagerRequiredView):
 class BulkUnsetQuotaView(ManagerRequiredView):
     """View to handle bulk unsetting of quota for all markers."""
 
-    def post(self, request):
+    def post(self, request: HttpRequest) -> HttpResponse:
+        """Post to unset the quota for all markers."""
         markers = User.objects.filter(groups__name="marker")
         Quota.objects.filter(user__in=markers).delete()
         messages.success(request, "Quota removed from all markers.")
