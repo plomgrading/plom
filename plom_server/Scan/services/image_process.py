@@ -3,22 +3,11 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
-from warnings import warn
 from typing import Any
-
-import cv2 as cv
-import numpy as np
-from pathlib import Path
-from PIL import Image
-
-from plom.scan import rotate
 
 
 class PageImageProcessor:
-    """Functions for processing a page-image: rotation.
-
-    (TODO: gamma correction, etc?)
-    """
+    """Functions for processing a page-image: rotation."""
 
     # values used for QR code centre locations and page dimensions
     # obtained by running QRextract on un-rotated demo page images
