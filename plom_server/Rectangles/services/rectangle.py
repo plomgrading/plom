@@ -208,13 +208,13 @@ def extract_rect_region_from_image(
     HEIGHT = BOTTOM - TOP
 
     # rectangle to extract in ref-image-coords
-    top = round(TOP + top_f * HEIGHT)
-    bottom = round(TOP + bottom_f * HEIGHT)
-    left = round(LEFT + left_f * WIDTH)
-    right = round(LEFT + right_f * WIDTH)
+    top = TOP + top_f * HEIGHT
+    bottom = TOP + bottom_f * HEIGHT
+    left = LEFT + left_f * WIDTH
+    right = LEFT + right_f * WIDTH
     ref_rect = {"left": left, "right": right, "top": top, "bottom": bottom}
-    rect_height = bottom - top
-    rect_width = right - left
+    rect_height_int = round(bottom - top)
+    rect_width_int = round(right - left)
 
     # now build a transformation to map from ref-image-coords to
     # scan-image-coords
@@ -240,7 +240,7 @@ def extract_rect_region_from_image(
     opencv_img = cv.cvtColor(np.array(pil_img), cv.COLOR_RGB2BGR)
     # now finally extract out the rectangle from the scan image
     extracted_rect_img = cv.warpPerspective(
-        opencv_img, M_s_to_r, (rect_width, rect_height)
+        opencv_img, M_s_to_r, (rect_width_int, rect_height_int)
     )
     # convert the result to a PIL.Image
     resulting_img = Image.fromarray(cv.cvtColor(extracted_rect_img, cv.COLOR_BGR2RGB))
@@ -304,12 +304,13 @@ class RectangleExtractor:
 
     @staticmethod
     def _get_perspective_transform_scan_to_ref(
-        ref_rect: dict[str, int], M_r_to_s: np.ndarray
+        ref_rect: dict[str, float], M_r_to_s: np.ndarray
     ) -> np.ndarray:
         """Given the ref-rectangle and the transform from reference-to-scan, compute (essentially) the inverse transform.
 
         Args:
-            ref_rect: the ref-image coords (pixels) of the ref-rectangle given as {'left': px, 'top':px} etc.
+            ref_rect: the ref-image coords (pixels, but can be floats)
+                of the ref-rectangle given as {'left': px, 'top':px} etc.
             M_r_to_s: the affine transform from ref-image to scan-image as computed via the location of the qr-codes.
 
         Returns:
