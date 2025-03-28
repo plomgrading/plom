@@ -53,7 +53,7 @@ class MarkURLPatterns:
         ]
         mark_patterns += tasks
 
-        # PATCH: /MK/tasks/{code}/reassign/{new_username}
+        # PATCH: /MK/tasks/{papernum}/{qidx}/reassign/{new_username}
         mark_patterns.append(
             path(
                 "tasks/<str:code>/reassign/<str:new_username>",

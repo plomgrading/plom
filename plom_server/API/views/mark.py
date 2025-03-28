@@ -111,7 +111,7 @@ class GetTasks(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
-# PATCH: /MK/tasks/{code}/reassign/{new_username}
+# PATCH: /MK/tasks/{papernum}/{qidx}/reassign/{new_username}
 class ReassignTask(APIView):
     """Reassign a task to another user.
 
@@ -122,7 +122,9 @@ class ReassignTask(APIView):
             not lead marker or manager.
     """
 
-    def patch(self, request: Request, *, code: str, new_username: str) -> Response:
+    def patch(
+        self, request: Request, *, papernum: int, qidx: int, new_username: str
+    ) -> Response:
         """Reassign a task to another user."""
         calling_user = request.user
         group_list = list(request.user.groups.values_list("name", flat=True))
@@ -134,14 +136,13 @@ class ReassignTask(APIView):
             )
 
         try:
-            task = MarkingTaskService().get_task_from_code(code)
-            task_pk = task.pk
+            latest_task = mark_task.get_latest_task(papernum, qidx)
         except (ValueError, RuntimeError) as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
 
         try:
             MarkingTaskService.reassign_task_to_user(
-                task_pk,
+                latest_task.pk,
                 new_username=new_username,
                 calling_user=calling_user,
                 unassign_others=True,
