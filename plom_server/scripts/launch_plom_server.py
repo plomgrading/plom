@@ -164,6 +164,9 @@ def wait_for_user_to_type_quit() -> None:
 
 
 def main():
+    # TODO: I guess?
+    os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
+
     args = set_argparse_and_get_args()
 
     if not args.development and not args.port:
