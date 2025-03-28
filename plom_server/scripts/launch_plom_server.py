@@ -17,6 +17,7 @@ import time
 from shlex import split
 
 from plom_server import __version__
+from plom_server.Base.services import database_service
 
 
 def set_argparse_and_get_args() -> argparse.Namespace:
@@ -26,10 +27,29 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         "--version", action="version", version="%(prog)s " + __version__
     )
     parser.add_argument(
-        "--hot-start",
-        action="store_true",
-        help="Attempt to start Huey and the server using existing data.",
+        "--hotstart",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="""
+            By default, attempt to hotstart the server using existing
+            data, if such data is found.  Note the detection is not
+            perfect and currently no verification of integrity between
+            database and media is performed.
+
+            If False, refuse to start if there appears to be data in
+            place.  You will have to remove the data for the server to
+            start in this case.
+        """,
     )
+    parser.add_argument(
+        "--wipe",
+        action="store_true",
+        help="""
+            Remove all database, media and other data before starting.
+            Be careful with this!
+        """,
+    )
+
     parser.add_argument("--port", help="Port number on which to launch server")
     prod_dev_group = parser.add_mutually_exclusive_group()
     prod_dev_group.add_argument(
@@ -172,12 +192,19 @@ def main():
     if not args.development and not args.port:
         print("You must supply a port for the production server.")
 
-    # clean up and rebuild things before launching.
-    if args.hot_start:
-        print("Attempting a hot-start of the server and Huey.")
+    # Note: run_django_manage_command("plom_database --check-for-database") has no
+    # return value, so we call the service directly (isn't this better anyway?)
+    have_db = database_service.is_there_a_database()
+
+    if have_db and not args.wipe:
+        if not args.hotstart:
+            raise ValueError(
+                "There is an existing database: consider passing --hotstart or --wipe"
+            )
         # TODO: Issue #3577 remove later?
         run_django_manage_command("plom_build_scrap_extra_pdfs")
     else:
+        # We either don't have a DB or we do and we want to wipe it.
         # clean out old db and misc files, then rebuild blank db
         run_django_manage_command("plom_clean_all_and_build_db")
         # build the user-groups and the admin and manager users
@@ -185,6 +212,7 @@ def main():
         # build extra-page and scrap-paper PDFs
         run_django_manage_command("plom_build_scrap_extra_pdfs")
 
+    # TODO: really do this on a hotstart? (c.f., extra/scrap Issue #3874)
     if not args.development:
         run_django_manage_command("collectstatic --clear --no-input")
 
