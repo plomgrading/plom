@@ -819,7 +819,6 @@ docs_sphinx:
     - ls
     - make autodocs
     - make html
-    - make singlehtml
     - make linkcheck
     # make latexpdf
     - popd
