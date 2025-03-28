@@ -40,7 +40,7 @@ def wait_for_user_to_type_quit() -> None:
 def set_argparse_and_get_args() -> argparse.Namespace:
     """Configure argparse to collect commandline options."""
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawTextHelpFormatter,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
     The --stop-after and --wait-after options take many possible values.
 
