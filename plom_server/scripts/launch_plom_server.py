@@ -19,6 +19,37 @@ from shlex import split
 from plom_server import __version__
 
 
+def set_argparse_and_get_args() -> argparse.Namespace:
+    """Configure argparse to collect commandline options."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__
+    )
+    parser.add_argument(
+        "--hot-start",
+        action="store_true",
+        help="Attempt to start Huey and the server using existing data.",
+    )
+    parser.add_argument("--port", help="Port number on which to launch server")
+    prod_dev_group = parser.add_mutually_exclusive_group()
+    prod_dev_group.add_argument(
+        "--development",
+        action="store_true",
+        help="""
+            Run the Django development webserver.
+            Not intended for use in production.
+        """,
+    )
+    prod_dev_group.add_argument(
+        "--production",
+        action="store_false",
+        dest="development",
+        help="Run a production Gunicorn server (default).",
+    )
+    args = parser.parse_args()
+    return args
+
+
 def run_django_manage_command(cmd: str) -> None:
     """Run the given Django command and wait for return.
 
@@ -133,32 +164,7 @@ def wait_for_user_to_type_quit() -> None:
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--version", action="version", version="%(prog)s " + __version__
-    )
-    parser.add_argument(
-        "--hot-start",
-        action="store_true",
-        help="Attempt to start Huey and the server using existing data.",
-    )
-    parser.add_argument("--port", help="Port number on which to launch server")
-    prod_dev_group = parser.add_mutually_exclusive_group()
-    prod_dev_group.add_argument(
-        "--development",
-        action="store_true",
-        help="""
-            Run the Django development webserver.
-            Not intended for use in production.
-        """,
-    )
-    prod_dev_group.add_argument(
-        "--production",
-        action="store_false",
-        dest="development",
-        help="Run a production Gunicorn server (default).",
-    )
-    args = parser.parse_args()
+    args = set_argparse_and_get_args()
 
     if not args.development and not args.port:
         print("You must supply a port for the production server.")
