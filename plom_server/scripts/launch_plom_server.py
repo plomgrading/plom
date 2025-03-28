@@ -201,6 +201,9 @@ def main():
             raise ValueError(
                 "There is an existing database: consider passing --hotstart or --wipe"
             )
+        print("DOING A HOT START (we already have a database)")
+        print("Issue #3299: Please note this merely checks for the *existence* of")
+        print("a database; it does not yet check anything about the filesystem.")
         # TODO: Issue #3577 remove later?
         run_django_manage_command("plom_build_scrap_extra_pdfs")
     else:
