@@ -80,6 +80,12 @@ html_theme = "sphinx_rtd_theme"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
+html_theme_options = {
+    "display_version": True,
+    "flyout_display": "hidden",
+    "version_selector": True,
+}
+
 # -- Options for LaTeX output ------------------------------------------------
 
 with open("_latex/preamble.tex", "r+") as f:
