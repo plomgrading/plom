@@ -111,7 +111,7 @@ class GetTasks(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
-# PATCH: /MK/tasks/{papernum}/{qidx}/reassign/{new_username}
+# PATCH: /api/v0/tasks/{papernum}/{qidx}/reassign/{new_username}
 class ReassignTask(APIView):
     """Reassign a task to another user.
 
@@ -153,7 +153,7 @@ class ReassignTask(APIView):
         return Response(True, status=status.HTTP_200_OK)
 
 
-# PATCH: /MK/tasks/{papernum}/{qidx}/reset
+# PATCH: /api/v0/tasks/{papernum}/{qidx}/reset
 class ResetTask(APIView):
     """Reset a task, making all annotations outdating and putting it back into the pool for remarking from scratch.
 
