@@ -7,7 +7,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2025 Andrew Rechnitzer
-# Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024-2025 Aidan Murphy
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -129,25 +129,48 @@ wet_css_js_3rd_party:
     - ls plom_server/static/3rdpartyjs/
     - ls plom_server/static/3rdpartycss/
 
+
+# By default we assume the target is origin/main but if a MR is open,
+# we try to determine the target branch and use that instead.
 copyright_year:
-  image: python:3
+  image: fedora:42
   stage: static_analysis
   before_script:
+    - dnf install -y python3 glab git
     - git --version
-    - echo "ensure we have the main branch for comparing"
-    - git fetch origin main
-    - git checkout main
+    - glab --version
+    # Note that "upstream" is used as the local name for plom/plom
+    - git remote add upstream https://gitlab.com/plom/plom.git
+    - echo "Consider these various open merge requests"
+    - glab mr list --source-branch=$CI_COMMIT_BRANCH --repo=plom/plom
+    - TARGET_MR=$(glab mr list --source-branch=$CI_COMMIT_BRANCH --repo=plom/plom)
+    # we expect to find at most one MR
+    - NUM_MRS=$(glab mr list --source-branch=$CI_COMMIT_BRANCH --repo=plom/plom | sed '1,2d;$d' | wc -l)
+    # / regex pattern / delete non-matches ; last_match // \1 /
+    # TODO could potentially be easier with "glab mr list --output json"
+    - TARGET_BRANCH_NAME=$( echo $TARGET_MR | sed '/.*\s(\(.*\))\s←\s(.*)$/!d;s//\1/' )
+    # if we have a MR then set local repo name to "upstream"
+    - TARGET_REPO_NAME=${TARGET_BRANCH_NAME:+"upstream"}
+    # else we want origin/main
+    - TARGET_REPO_NAME=${TARGET_REPO_NAME:-"origin"}
+    - TARGET_BRANCH_NAME=${TARGET_BRANCH_NAME:-"main"}
+    # finally we have either upstream/foo or origin/main
+    - TARGET_BRANCH=${TARGET_REPO_NAME}/${TARGET_BRANCH_NAME}
+    - echo "We think the target branch is '$TARGET_BRANCH'"
+    - echo "Next ensure we have that target branch for comparing"
+    - git fetch ${TARGET_REPO_NAME} ${TARGET_BRANCH_NAME}
+    - git checkout ${TARGET_BRANCH}
     - git checkout $CI_COMMIT_BRANCH --
     - git branch -avv
   script:
-    - echo "Considering the following commits to this branch (since main):"
-    - git shortlog origin/main..${CI_COMMIT_BRANCH} --
+    - echo "Considering the following commits to this branch (since '${TARGET_BRANCH}'):"
+    - git shortlog ${TARGET_BRANCH}..${CI_COMMIT_BRANCH} --
     - echo "Those commits touch the following files:"
-    # git show --pretty="" --name-only origin/main..${CI_COMMIT_BRANCH} -- | uniq -u
-    # TODO: tried ${CI_MERGE_REQUEST_TARGET_BRANCH_NAME} instead of main?
-    - git diff --name-only origin/main...${CI_COMMIT_BRANCH} --
-    - ./contrib/is_copyright_uptodate.py `git diff --name-only origin/main...$CI_COMMIT_BRANCH --`
+    # git show --pretty="" --name-only ${TARGET_BRANCH}..${CI_COMMIT_BRANCH} -- | uniq -u
+    - git diff --name-only ${TARGET_BRANCH}...${CI_COMMIT_BRANCH} --
+    - ./contrib/is_copyright_uptodate.py `git diff --name-only ${TARGET_BRANCH}...$CI_COMMIT_BRANCH --`
     - echo "Note that there are some files that do not have/need copyright headers"
+    - if [ ${NUM_MRS} -gt 1 ]; then exit 1; fi
   allow_failure: true
 
 
