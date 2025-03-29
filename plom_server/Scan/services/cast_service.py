@@ -740,13 +740,6 @@ class ScanCastService:
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an image at order {bundle_order}")
 
-        if img.image_type not in [
-            StagingImage.UNKNOWN,
-            StagingImage.DISCARD,
-            StagingImage.ERROR,
-        ]:
-            raise ValueError("Can only 'knowify' discarded, unknown and error images")
-
         # now check if this paper/page in the current bundle
         bundle_known_img = bundle_obj.stagingimage_set.filter(
             image_type=StagingImage.KNOWN
@@ -766,7 +759,9 @@ class ScanCastService:
         elif img.image_type == StagingImage.ERROR:
             img.errorstagingimage.delete()
         else:
-            raise ValueError(f"Cannot knowify an image of type {img.image_type}")
+            raise ValueError(
+                f"Cannot knowify an image of type {img.image_type}. Permitted types are 'DISCARD', 'UNKNOWN', and 'ERROR'"
+            )
         # before we create the known-page we need the version of this paper/page
 
         version_in_db = PaperInfoService().get_version_from_paper_page(
