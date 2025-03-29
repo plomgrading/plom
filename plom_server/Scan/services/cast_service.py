@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 from django.contrib.auth.models import User
 from django.db import transaction, models
@@ -731,6 +732,31 @@ class ScanCastService:
         paper_number: int,
         page_number: int,
     ) -> None:
+        """Cast a page image from a staged bundle to a known page.
+
+        This operation only succeeds for certain page image types.
+        For example, if the page image is already a 'KNOWN',
+        casting it to a 'KNOWN' with a different paper and/or page
+        number will fail.
+
+        Args:
+            user_obj: An instance of a django user.
+            bundle_obj: The StagingBundle object containing the page image.
+            bundle_order: The page image's (1-based) index in bundle_obj.
+            paper_number: Set page image as known-page with this paper number.
+            page_number: Set page image as known-page with this page number.
+
+        Returns:
+            None.
+
+        Raises:
+            ValueError: Provided bundle_order doesn't map to a page image in
+                the provided bundle_obj. A page image already exists for
+                the specified paper_number and page_number. Or, the page
+                image type forbids it from being cast to a known page.
+            PlomBundleLockedException: The bundle has already been pushed, or is
+                in use by other resources.
+        """
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
