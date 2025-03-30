@@ -787,8 +787,7 @@ class ScanCastService:
         img.image_type = StagingImage.KNOWN
         img.save()
 
-    @transaction.atomic
-    def assign_page_as_known_cmd(
+    def knowify_image_from_bundle_name(
         self,
         username: str,
         bundle_name: str,
@@ -796,8 +795,14 @@ class ScanCastService:
         paper_number: int,
         page_number: int,
     ) -> None:
+        """A wrapper around knowify_image_from_bundle taking a bundle name and user name instead of objects.
+
+        Raises the same things as :method:`knowify_image_from_bundle` but
+        can also raise ValueError when the bundle does not exist.
+        """
         user_obj = _manager_or_scanner_user_from_username(username)
 
+        # TODO: check if the underlying method would ValueError here...
         if page_number < 0 or page_number > SpecificationService.get_n_pages():
             raise ValueError("Page number out of range - check the specification")
         if paper_number < 0:
