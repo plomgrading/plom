@@ -578,11 +578,10 @@ class ScanCastService:
 
         self.clear_extra_page(user_obj, bundle_obj, bundle_order)
 
-    @transaction.atomic
-    def extralise_image_type_from_bundle_pk_and_order(
+    def extralise_image_from_bundle_id(
         self, user_obj: User, bundle_id: int, bundle_order: int
     ) -> None:
-        """A wrapper around extralise_image_type_from_bundle cmd.
+        """A wrapper around extralise_image_from_bundle.
 
         The main difference is that it that takes a
         bundle-id instead of a bundle-object itself. Further,
@@ -597,17 +596,18 @@ class ScanCastService:
         Returns:
             None.
         """
+        # TODO: value error here too?
         bundle_obj = StagingBundle.objects.get(pk=bundle_id)
         try:
             img_obj = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an image at order {bundle_order}")
-        self.extralise_image_type_from_bundle(
+        self.extralise_image_from_bundle(
             user_obj, bundle_obj, bundle_order, image_type=img_obj.image_type
         )
 
     @transaction.atomic
-    def extralise_image_type_from_bundle(
+    def extralise_image_from_bundle(
         self,
         user_obj: User,
         bundle_obj: StagingBundle,
@@ -615,6 +615,7 @@ class ScanCastService:
         *,
         image_type: str | None = None,
     ) -> None:
+        """TODO: docstring."""
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
@@ -624,19 +625,18 @@ class ScanCastService:
         except ObjectDoesNotExist:
             raise ValueError(f"Cannot find an image at order {bundle_order}")
 
-        if (
-            image_type is None
-        ):  # Compute the type of the image at that position and use that.
+        if image_type is None:
+            # Compute the type of the image at that position and use that.
             image_type = img.image_type
 
         if image_type == StagingImage.EXTRA:
             raise ValueError("Trying to 'extralise' an already 'extra' bundle image.")
-        if image_type not in [
+        if image_type not in (
             StagingImage.DISCARD,
             StagingImage.KNOWN,
             StagingImage.UNKNOWN,
             StagingImage.ERROR,
-        ]:
+        ):
             raise ValueError(f"Cannot 'extralise' an image of type '{image_type}'.")
         if img.image_type != image_type:
             raise ValueError(
@@ -665,7 +665,7 @@ class ScanCastService:
         img.save()
 
     @transaction.atomic
-    def extralise_image_type_from_bundle_cmd(
+    def extralise_image_from_bundle_cmd(
         self,
         username: str,
         bundle_name: str,
@@ -680,7 +680,7 @@ class ScanCastService:
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
-        self.extralise_image_type_from_bundle(
+        self.extralise_image_from_bundle(
             user_obj, bundle_obj, bundle_order, image_type=image_type
         )
 
