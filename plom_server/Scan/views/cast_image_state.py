@@ -229,7 +229,7 @@ class KnowifyImageView(ScannerRequiredView):
             )
 
         try:
-            ScanCastService().knowify_image_from_bundle_pk_and_order(
+            ScanCastService().knowify_image_from_bundle_id(
                 request.user, bundle_id, index, paper_number, page_number
             )
         except ValueError as err:

@@ -684,8 +684,7 @@ class ScanCastService:
             user_obj, bundle_obj, bundle_order, image_type=image_type
         )
 
-    @transaction.atomic
-    def knowify_image_from_bundle_pk_and_order(
+    def knowify_image_from_bundle_id(
         self,
         user_obj: User,
         bundle_id: int,
@@ -693,28 +692,12 @@ class ScanCastService:
         paper_number: int,
         page_number: int,
     ) -> None:
-        """A wrapper around knowify_image_from_bundle cmd.
+        """A wrapper around knowify_image_from_bundle taking a bundle id instead of bundle object.
 
-        The main difference is that it that takes a
-        bundle-id instead of a bundle-object itself. Further,
-        it infers the image-type from the bundle and the bundle-order
-        rather than requiring it explicitly.
-
-        Args:
-            user_obj: (obj) An instead of a django user
-            bundle_id: (int) The pk of the bundle
-            bundle_order: (int) Bundle order of a page.
-            paper_number: (int) Set image as known-page with this paper number
-            page_number: (int) Set image as known-page with this page number
-
-        Returns:
-            None.
+        Raises the same things as :method:`knowify_image_from_bundle` but
+        also raise ``StagingBundke.DoesNotExist``.
         """
-        bundle_obj = StagingBundle.objects.get(
-            pk=bundle_id,
-        )
-        if not bundle_obj.stagingimage_set.filter(bundle_order=bundle_order).exists():
-            raise ValueError(f"Cannot find an image at order {bundle_order}")
+        bundle_obj = StagingBundle.objects.get(pk=bundle_id)
         self.knowify_image_from_bundle(
             user_obj,
             bundle_obj,
