@@ -695,7 +695,7 @@ class ScanCastService:
         """A wrapper around knowify_image_from_bundle taking a bundle id instead of bundle object.
 
         Raises the same things as :method:`knowify_image_from_bundle` but
-        also raise ``StagingBundke.DoesNotExist``.
+        can also raise ``StagingBundle.DoesNotExist``.
         """
         bundle_obj = StagingBundle.objects.get(pk=bundle_id)
         self.knowify_image_from_bundle(
