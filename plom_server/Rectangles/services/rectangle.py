@@ -133,6 +133,48 @@ def _get_affine_transf_matrix_ref_to_QR_target(
     return cv.getAffineTransform(ref_three_points, scan_three_points)
 
 
+def _get_perspective_transform_scan_to_ref(
+    ref_rect: dict[str, float], M_r_to_s: np.ndarray
+) -> np.ndarray:
+    """Given the ref-rectangle and the transform from reference-to-scan, compute (essentially) the inverse transform.
+
+    Args:
+        ref_rect: the ref-image coords (pixels, but can be floats)
+            of the ref-rectangle given as {'left': px, 'top':px} etc.
+        M_r_to_s: the affine transform from ref-image to scan-image as computed via the location of the qr-codes.
+
+    Returns:
+        The perspective transformation matrix that takes the rectangle (in scan-image px coords) and maps it back to
+        a rectangle with width-height given by reference rectangle (but translated to origin).
+    """
+    # map the reference rectangle to scan coordinates
+    # (sc_x, sc_y) = M @ (r_x,r_y,1)
+    # recall np matrix-mul Matrix @ vec, not M*v.
+    scan_rect_coords = np.array(
+        [
+            M_r_to_s
+            @ np.array([ref_rect["left"], ref_rect["top"], 1], dtype="float32"),
+            M_r_to_s
+            @ np.array([ref_rect["right"], ref_rect["top"], 1], dtype="float32"),
+            M_r_to_s
+            @ np.array([ref_rect["right"], ref_rect["bottom"], 1], dtype="float32"),
+            M_r_to_s
+            @ np.array([ref_rect["left"], ref_rect["bottom"], 1], dtype="float32"),
+        ],
+        dtype="float32",
+    )
+    # TODO - there should be some checks here for what happens
+    # when these coords are outside the bounds of the scan image?
+
+    dest_h = ref_rect["bottom"] - ref_rect["top"]
+    dest_w = ref_rect["right"] - ref_rect["left"]
+    dest_rect_coords = np.array(
+        [[0, 0], [dest_w, 0], [dest_w, dest_h], [0, dest_h]], dtype="float32"
+    )
+    # now build the getPerspectiveTransform from scan-coords back to ref-coords
+    return cv.getPerspectiveTransform(scan_rect_coords, dest_rect_coords)
+
+
 def extract_rect_region_from_image(
     img_path: Path,
     qr_dict: dict[str, dict[str, Any]],
@@ -192,9 +234,7 @@ def extract_rect_region_from_image(
     # take that quadrilateral back to a rectangle of same
     # dimensions as the ref-rectangle, but translated to
     # the origin.
-    M_s_to_r = RectangleExtractor._get_perspective_transform_scan_to_ref(
-        ref_rect, M_r_to_s
-    )
+    M_s_to_r = _get_perspective_transform_scan_to_ref(ref_rect, M_r_to_s)
     # now get the scan-image ready to extract the rectangle
     pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(img_path)
     # Note: this `img_obj.rotation` is (currently) only 0, 90, 180, 270
@@ -265,48 +305,6 @@ class RectangleExtractor:
         return _get_affine_transf_matrix_ref_to_QR_target(
             (self.LEFT, self.TOP, self.RIGHT, self.BOTTOM), qr_dict
         )
-
-    @staticmethod
-    def _get_perspective_transform_scan_to_ref(
-        ref_rect: dict[str, float], M_r_to_s: np.ndarray
-    ) -> np.ndarray:
-        """Given the ref-rectangle and the transform from reference-to-scan, compute (essentially) the inverse transform.
-
-        Args:
-            ref_rect: the ref-image coords (pixels, but can be floats)
-                of the ref-rectangle given as {'left': px, 'top':px} etc.
-            M_r_to_s: the affine transform from ref-image to scan-image as computed via the location of the qr-codes.
-
-        Returns:
-            The perspective transformation matrix that takes the rectangle (in scan-image px coords) and maps it back to
-            a rectangle with width-height given by reference rectangle (but translated to origin).
-        """
-        # map the reference rectangle to scan coordinates
-        # (sc_x, sc_y) = M @ (r_x,r_y,1)
-        # recall np matrix-mul Matrix @ vec, not M*v.
-        scan_rect_coords = np.array(
-            [
-                M_r_to_s
-                @ np.array([ref_rect["left"], ref_rect["top"], 1], dtype="float32"),
-                M_r_to_s
-                @ np.array([ref_rect["right"], ref_rect["top"], 1], dtype="float32"),
-                M_r_to_s
-                @ np.array([ref_rect["right"], ref_rect["bottom"], 1], dtype="float32"),
-                M_r_to_s
-                @ np.array([ref_rect["left"], ref_rect["bottom"], 1], dtype="float32"),
-            ],
-            dtype="float32",
-        )
-        # TODO - there should be some checks here for what happens
-        # when these coords are outside the bounds of the scan image?
-
-        dest_h = ref_rect["bottom"] - ref_rect["top"]
-        dest_w = ref_rect["right"] - ref_rect["left"]
-        dest_rect_coords = np.array(
-            [[0, 0], [dest_w, 0], [dest_w, dest_h], [0, dest_h]], dtype="float32"
-        )
-        # now build the getPerspectiveTransform from scan-coords back to ref-coords
-        return cv.getPerspectiveTransform(scan_rect_coords, dest_rect_coords)
 
     def extract_rect_region(
         self,
@@ -434,96 +432,94 @@ class RectangleExtractor:
             ) from e
         # ref-image into cv image: cannot just use imread b/c of DB abstraction
         img_bytes = rimg_obj.image_file.read()
-        return self._get_largest_rectangle_contour(
+        return get_largest_rectangle_contour_from_image(
             img_bytes,
             (self.FULL_WIDTH, self.FULL_HEIGHT),
             (self.LEFT, self.TOP, self.RIGHT, self.BOTTOM),
             region=region,
         )
 
-    @staticmethod
-    def _get_largest_rectangle_contour(
-        img_bytes: bytes,
-        img_size: tuple[int, int],
-        reference_region: tuple[int | float, int | float, int | float, int | float],
-        *,
-        region: None | dict[str, float] = None,
-    ) -> None | dict[str, float]:
-        """Implementation of find rectangle, for testing."""
-        IMG_WIDTH, IMG_HEIGHT = img_size
-        LEFT, TOP, RIGHT, BOTTOM = reference_region
-        WIDTH = RIGHT - LEFT
-        HEIGHT = BOTTOM - TOP
 
-        raw_bytes_as_1d_array: Any = np.frombuffer(img_bytes, np.uint8)
-        src_image = cv.imdecode(raw_bytes_as_1d_array, cv.IMREAD_COLOR)
-        if src_image is None:
-            raise ValueError("Could not read reference image")
-        # if a region is specified then cut it out from the original image,
-        # but we need to remember to map the resulting rectangle back to the
-        # original coordinate system.
-        # make sure region is padded by a few pixels.
-        pad = 16
-        if region:
-            # convert [0, 1] coordinates into pixels
-            img_left = floor(region["left_f"] * WIDTH + LEFT) - pad
-            img_right = ceil(region["right_f"] * WIDTH + LEFT) + pad
-            img_top = floor(region["top_f"] * HEIGHT + TOP) - pad
-            img_bottom = ceil(region["bottom_f"] * HEIGHT + TOP) + pad
-            # cap pixel values in the image domain
-            img_left = max(img_left, 0)
-            img_right = min(img_right, IMG_WIDTH)
-            img_top = max(img_top, 0)
-            img_bottom = min(img_bottom, IMG_HEIGHT)
-            # crop the image
-            src_image = src_image[img_top:img_bottom, img_left:img_right]
-        else:
-            img_left = 0
-            img_top = 0
-        # Process the image so as to find the contours.
-        # TODO = improve this - it seems pretty clunky.
-        # Grey, Blur and Edging are standard processes for text detection.
-        grey_image = cv.cvtColor(src_image, cv.COLOR_BGR2GRAY)
-        blurred_image = cv.GaussianBlur(grey_image, (3, 3), 0)
-        edged_image = cv.Canny(blurred_image, threshold1=5, threshold2=255)
-        contours = cv.findContours(
-            edged_image, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE
-        )
-        contour_lists = imutils.grab_contours(contours)
-        sorted_contour_list = sorted(contour_lists, key=cv.contourArea, reverse=True)
+def get_largest_rectangle_contour_from_image(
+    img_bytes: bytes,
+    img_size: tuple[int, int],
+    reference_region: tuple[int | float, int | float, int | float, int | float],
+    *,
+    region: None | dict[str, float] = None,
+) -> None | dict[str, float]:
+    """Implementation of find rectangle, for testing."""
+    IMG_WIDTH, IMG_HEIGHT = img_size
+    LEFT, TOP, RIGHT, BOTTOM = reference_region
+    WIDTH = RIGHT - LEFT
+    HEIGHT = BOTTOM - TOP
 
-        box_contour = None
-        for contour in sorted_contour_list:
-            perimeter = cv.arcLength(contour, True)
-            # Approximate the contour
-            third_order_moment = cv.approxPolyDP(contour, 0.02 * perimeter, True)
-            # check that the contour is a quadrilateral
-            if len(third_order_moment) == 4:
-                box_contour = third_order_moment
-                break
-        if box_contour is None:
-            return None
-        corners_as_array = box_contour.reshape(4, 2)
-        # the box contour will be 4 points - take min/max of x and y to get the corners.
-        # this is in image pixels
-        left = min([X[0] for X in corners_as_array]) + img_left
-        right = max([X[0] for X in corners_as_array]) + img_left
-        top = min([X[1] for X in corners_as_array]) + img_top
-        bottom = max([X[1] for X in corners_as_array]) + img_top
-        # make sure the box is not too small
-        if (right - left) < 16 or (bottom - top) < 16:
-            return None
+    raw_bytes_as_1d_array: Any = np.frombuffer(img_bytes, np.uint8)
+    src_image = cv.imdecode(raw_bytes_as_1d_array, cv.IMREAD_COLOR)
+    if src_image is None:
+        raise ValueError("Could not read reference image")
+    # if a region is specified then cut it out from the original image,
+    # but we need to remember to map the resulting rectangle back to the
+    # original coordinate system.
+    # make sure region is padded by a few pixels.
+    pad = 16
+    if region:
+        # convert [0, 1] coordinates into pixels
+        img_left = floor(region["left_f"] * WIDTH + LEFT) - pad
+        img_right = ceil(region["right_f"] * WIDTH + LEFT) + pad
+        img_top = floor(region["top_f"] * HEIGHT + TOP) - pad
+        img_bottom = ceil(region["bottom_f"] * HEIGHT + TOP) + pad
+        # cap pixel values in the image domain
+        img_left = max(img_left, 0)
+        img_right = min(img_right, IMG_WIDTH)
+        img_top = max(img_top, 0)
+        img_bottom = min(img_bottom, IMG_HEIGHT)
+        # crop the image
+        src_image = src_image[img_top:img_bottom, img_left:img_right]
+    else:
+        img_left = 0
+        img_top = 0
+    # Process the image so as to find the contours.
+    # TODO = improve this - it seems pretty clunky.
+    # Grey, Blur and Edging are standard processes for text detection.
+    grey_image = cv.cvtColor(src_image, cv.COLOR_BGR2GRAY)
+    blurred_image = cv.GaussianBlur(grey_image, (3, 3), 0)
+    edged_image = cv.Canny(blurred_image, threshold1=5, threshold2=255)
+    contours = cv.findContours(edged_image, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    contour_lists = imutils.grab_contours(contours)
+    sorted_contour_list = sorted(contour_lists, key=cv.contourArea, reverse=True)
 
-        # convert to [0,1] ranges relative to qr code positions
-        left_f = (left - LEFT) / WIDTH
-        right_f = (right - LEFT) / WIDTH
-        top_f = (top - TOP) / HEIGHT
-        bottom_f = (bottom - TOP) / HEIGHT
+    box_contour = None
+    for contour in sorted_contour_list:
+        perimeter = cv.arcLength(contour, True)
+        # Approximate the contour
+        third_order_moment = cv.approxPolyDP(contour, 0.02 * perimeter, True)
+        # check that the contour is a quadrilateral
+        if len(third_order_moment) == 4:
+            box_contour = third_order_moment
+            break
+    if box_contour is None:
+        return None
+    corners_as_array = box_contour.reshape(4, 2)
+    # the box contour will be 4 points - take min/max of x and y to get the corners.
+    # this is in image pixels
+    left = min([X[0] for X in corners_as_array]) + img_left
+    right = max([X[0] for X in corners_as_array]) + img_left
+    top = min([X[1] for X in corners_as_array]) + img_top
+    bottom = max([X[1] for X in corners_as_array]) + img_top
+    # make sure the box is not too small
+    if (right - left) < 16 or (bottom - top) < 16:
+        return None
 
-        # cast each to float (from numpy.float64)
-        return {
-            "left_f": float(left_f),
-            "top_f": float(top_f),
-            "right_f": float(right_f),
-            "bottom_f": float(bottom_f),
-        }
+    # convert to [0,1] ranges relative to qr code positions
+    left_f = (left - LEFT) / WIDTH
+    right_f = (right - LEFT) / WIDTH
+    top_f = (top - TOP) / HEIGHT
+    bottom_f = (bottom - TOP) / HEIGHT
+
+    # cast each to float (from numpy.float64)
+    return {
+        "left_f": float(left_f),
+        "top_f": float(top_f),
+        "right_f": float(right_f),
+        "bottom_f": float(bottom_f),
+    }

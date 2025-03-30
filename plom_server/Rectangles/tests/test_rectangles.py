@@ -14,10 +14,10 @@ from PIL import Image
 from plom.scan import QRextract
 import plom_server.Scan.tests as _Scan_tests
 from plom_server.Scan.services import ScanService
-from ..services import RectangleExtractor
 
 from ..services.rectangle import (
     extract_rect_region_from_image,
+    get_largest_rectangle_contour_from_image,
     _get_reference_rectangle,
     _get_affine_transf_matrix_ref_to_QR_target,
 )
@@ -35,7 +35,7 @@ class RectangleServiceTests(TestCase):
         img = Image.open(img_path)  # type: ignore[arg-type]
         img_size = (img.width, img.height)
         img_bytes = img_path.read_bytes()
-        r = RectangleExtractor._get_largest_rectangle_contour(
+        r = get_largest_rectangle_contour_from_image(
             img_bytes, img_size, (0, 0, 100, 100)
         )
         assert r is not None
@@ -53,9 +53,7 @@ class RectangleServiceTests(TestCase):
         ref_rect = (0, 0, img_size[0], img_size[1])
 
         # given the whole image, we find *some* rectangle
-        r = RectangleExtractor._get_largest_rectangle_contour(
-            img_bytes, img_size, ref_rect
-        )
+        r = get_largest_rectangle_contour_from_image(img_bytes, img_size, ref_rect)
         assert r is not None
         self.assertEqual(set(r.keys()), set(("top_f", "bottom_f", "left_f", "right_f")))
 
@@ -64,7 +62,7 @@ class RectangleServiceTests(TestCase):
 
         # Find rectangle in the lower right
         region = {"left_f": 0.7, "top_f": 0.7, "right_f": 1.0, "bottom_f": 1.0}
-        r = RectangleExtractor._get_largest_rectangle_contour(
+        r = get_largest_rectangle_contour_from_image(
             img_bytes, img_size, ref_rect, region=region
         )
         assert r is not None
@@ -74,7 +72,7 @@ class RectangleServiceTests(TestCase):
 
         # search the top middle to find the boxed text
         region = {"left_f": 0.2, "top_f": 0, "right_f": 0.8, "bottom_f": 0.2}
-        r = RectangleExtractor._get_largest_rectangle_contour(
+        r = get_largest_rectangle_contour_from_image(
             img_bytes, img_size, ref_rect, region=region
         )
         assert r is not None
@@ -85,7 +83,7 @@ class RectangleServiceTests(TestCase):
 
         # no box in the bottom middle
         region = {"left_f": 0.2, "top_f": 0.9, "right_f": 0.8, "bottom_f": 1.0}
-        r = RectangleExtractor._get_largest_rectangle_contour(
+        r = get_largest_rectangle_contour_from_image(
             img_bytes, img_size, ref_rect, region=region
         )
         self.assertIsNone(r)
@@ -103,7 +101,7 @@ class RectangleServiceTests(TestCase):
 
         # find the lower-right box around the QR code
         region = {"left_f": 0.9, "top_f": 0.9, "right_f": 1.1, "bottom_f": 1.1}
-        r = RectangleExtractor._get_largest_rectangle_contour(
+        r = get_largest_rectangle_contour_from_image(
             img_bytes, img_size, ref_rect, region=region
         )
         assert r is not None
@@ -163,7 +161,7 @@ class RectangleServiceTests(TestCase):
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
 
         # find id box in the source image
-        idbox_src_loc = RectangleExtractor._get_largest_rectangle_contour(
+        idbox_src_loc = get_largest_rectangle_contour_from_image(
             img_bytes,
             img.size,
             ref_rect,
