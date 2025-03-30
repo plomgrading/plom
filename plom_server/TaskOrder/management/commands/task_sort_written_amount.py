@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2025 Andrew Rechnitzer
 
 import csv
 
@@ -129,7 +130,7 @@ class Command(BaseCommand):
 
         for page in tqdm(pages, desc="Analyzing pages"):
             # get the image
-            image = cv.imread(page.image.image_file.path)
+            image = cv.imread(page.image.baseimage.image_file.path)
             cropped_im = _set_aspect_ratio(
                 _crop_img(image, scale=0.8),  # crop to keep center 80% of image
                 scale=0.2,  # resize to 20% of original size

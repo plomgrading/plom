@@ -1,4 +1,5 @@
 import django.utils.timezone
+import plom_server.Base.models
 from django.db import migrations, models
 
 
@@ -9,6 +10,31 @@ class Migration(migrations.Migration):
     dependencies = []
 
     operations = [
+        migrations.CreateModel(
+            name="BaseImage",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "image_file",
+                    models.ImageField(
+                        height_field="height",
+                        upload_to=plom_server.Base.models.BaseImage._image_save_path,
+                        width_field="width",
+                    ),
+                ),
+                ("image_hash", models.CharField(max_length=64, null=True)),
+                ("height", models.IntegerField(default=0)),
+                ("width", models.IntegerField(default=0)),
+            ],
+        ),
         migrations.CreateModel(
             name="HueyTaskTracker",
             fields=[

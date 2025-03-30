@@ -348,13 +348,19 @@ class RectangleExtractor:
         paper_obj = Paper.objects.get(paper_number=paper_number)
         if _version_ignore:
             print("recklessly ignoring the version...")
-            img_obj = FixedPage.objects.get(
-                page_number=self.page_number, paper=paper_obj
-            ).image
+            img_obj = (
+                FixedPage.objects.select_related("image", "image__baseimage")
+                .get(page_number=self.page_number, paper=paper_obj)
+                .image
+            )
         else:
-            img_obj = FixedPage.objects.get(
-                version=self.version, page_number=self.page_number, paper=paper_obj
-            ).image
+            img_obj = (
+                FixedPage.objects.select_related("image", "image__baseimage")
+                .get(
+                    version=self.version, page_number=self.page_number, paper=paper_obj
+                )
+                .image
+            )
 
         # TODO: smells like direct file access?
         img_path = img_obj.image_file.path

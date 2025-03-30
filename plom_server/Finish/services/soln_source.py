@@ -59,34 +59,35 @@ class SolnSourceService:
             )
         return status
 
-    @transaction.atomic
-    def remove_solution_pdf(self, version: int):
+    @staticmethod
+    def remove_solution_pdf(version: int):
         """Remove solution pdf and associated images for the given version."""
-        # remove the PDF if it is there
-        try:
-            soln_source_obj = SolutionSourcePDF.objects.get(version=version)
-            if soln_source_obj.source_pdf:
-                soln_source_obj.source_pdf.delete()  # this deletes the underlying file
-            soln_source_obj.delete()  # now delete the db row
-        except ObjectDoesNotExist:
-            raise ValueError(f"There is no solution pdf for version {version}")
-        # remove any associated images
-        for img_obj in SolutionImage.objects.filter(version=version):
-            if img_obj.image:
-                img_obj.image.delete()  # delete the underlying file
-            img_obj.delete()  # now delete the db row
+        with transaction.atomic(durable=True):
+            try:
+                soln_source_obj = SolutionSourcePDF.objects.get(version=version)
+            except ObjectDoesNotExist:
+                raise ValueError(f"There is no solution pdf for version {version}")
+            # force QuerySet to list: we're going to traverse twice; don't want any magic
+            img_objs = list(SolutionImage.objects.filter(version=version))
+            soln_source_obj.delete()  # delete the db row
+            # remove associated images, first by deleting their db rows
+            for img_obj in img_objs:
+                img_obj.delete()
 
-    @transaction.atomic
-    def remove_all_solution_pdf(self):
+        # now that we're sure the database has been updated (by the atomic durable)
+        # we can safely delete the files.  If the power went out *right now*, the
+        # database would be fine and we'd have dangling files on disc.
+        if soln_source_obj.source_pdf:
+            soln_source_obj.source_pdf.delete(save=False)  # delete the underlying file
+        for img_obj in img_objs:
+            if img_obj.image_file:
+                img_obj.image_file.delete(save=False)  # delete the underlying file
+
+    @classmethod
+    def remove_all_solution_pdf(cls):
         """Remove all solution pdfs and associated images."""
-        for sspdf_obj in SolutionSourcePDF.objects.all():
-            if sspdf_obj.source_pdf:
-                sspdf_obj.source_pdf.delete()
-            sspdf_obj.delete()
-        for si_obj in SolutionImage.objects.all():
-            if si_obj.image:
-                si_obj.image.delete()
-            si_obj.delete()
+        for obj in SolutionSourcePDF.objects.all():
+            cls.remove_solution_pdf(obj.version)
 
     def get_soln_pdf_for_download(self, version: int) -> io.BytesIO:
         """Return bytes of solution pdf for given version."""
@@ -164,9 +165,9 @@ class SolnSourceService:
             # now save the result into the DB.
             SolutionImage.objects.create(
                 version=version,
-                solution_number=sqs_obj.solution_number,
-                image=File(
+                question_index=sqs_obj.question_index,
+                image_file=File(
                     io.BytesIO(soln_img.tobytes()),
-                    name=f"soln_{version}_{sqs_obj.solution_number}.png",
+                    name=f"soln_{version}_{sqs_obj.question_index}.png",
                 ),
             )

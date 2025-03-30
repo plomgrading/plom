@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022-2023 Brennen Chiu
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
 
 from django.db import models
@@ -10,6 +10,13 @@ from django.contrib.auth.models import User
 
 class StagingBundle(models.Model):
     """A user-uploaded bundle that isn't validated.
+
+    Note: StagingBundles can be deleted.  In this case the associated
+    StagingImages and BaseImages are automatically deleted. There is a
+    potential catch: if StagingBundle is pushed, then a Bundle is created and
+    the BaseImages are shared between the original StagingBundle and the new
+    Bundle.  In this case, its not well-defined what happens if you try to
+    delete the original StagingBundle and we generally don't allow that.
 
     TODO: document other fields.
 

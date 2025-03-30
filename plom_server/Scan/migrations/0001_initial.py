@@ -28,13 +28,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("bundle_order", models.PositiveIntegerField(null=True)),
-                (
-                    "image_file",
-                    models.ImageField(
-                        upload_to=plom_server.Scan.models.staging_images.StagingImage._staging_image_upload_path
-                    ),
-                ),
-                ("image_hash", models.CharField(max_length=64)),
                 ("parsed_qr", models.JSONField(default=dict, null=True)),
                 ("rotation", models.IntegerField(default=None, null=True)),
                 ("pushed", models.BooleanField(default=False)),
@@ -50,6 +43,12 @@ class Migration(migrations.Migration):
                             ("ERROR", "Error"),
                         ],
                         default="UNREAD",
+                    ),
+                ),
+                (
+                    "baseimage",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE, to="Base.baseimage"
                     ),
                 ),
             ],

@@ -11,7 +11,6 @@ import uuid
 from collections import defaultdict
 
 from django.contrib.auth.models import User
-from django.core.files import File
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import QuerySet
@@ -38,27 +37,27 @@ from .paper_info import PaperInfoService
 class ImageBundleService:
     """Class to encapsulate all functions around validated page images and bundles."""
 
-    def create_bundle(self, name: str, hash: str) -> Bundle:
+    def create_bundle(self, name: str, pdf_hash: str) -> Bundle:
         """Create a bundle and store its name and sha256 hash."""
-        if Bundle.objects.filter(hash=hash).exists():
+        if Bundle.objects.filter(pdf_hash=pdf_hash).exists():
             raise RuntimeError("A bundle with that hash already exists.")
-        bundle = Bundle.objects.create(name=name, hash=hash)
+        bundle = Bundle.objects.create(name=name, pdf_hash=pdf_hash)
         return bundle
 
-    def get_bundle(self, hash: str) -> Bundle:
+    def get_bundle(self, pdf_hash: str) -> Bundle:
         """Get a bundle from its hash."""
-        return Bundle.objects.get(hash=hash)
+        return Bundle.objects.get(pdf_hash=pdf_hash)
 
-    def get_or_create_bundle(self, name: str, hash: str) -> Bundle:
+    def get_or_create_bundle(self, name: str, pdf_hash: str) -> Bundle:
         """Get a Bundle instance, or create if it doesn't exist."""
-        if not Bundle.objects.filter(hash=hash).exists():
-            return self.create_bundle(name, hash)
+        if not Bundle.objects.filter(pdf_hash=pdf_hash).exists():
+            return self.create_bundle(name, pdf_hash)
         else:
-            return self.get_bundle(hash)
+            return self.get_bundle(pdf_hash)
 
-    def image_exists(self, hash: str) -> bool:
+    def image_exists(self, imghash: str) -> bool:
         """Return True if a page image with the input hash exists in the database."""
-        return Image.objects.filter(hash=hash).exists()
+        return Image.objects.filter(hash=imghash).exists()
 
     @transaction.atomic
     def get_image_pushing_status(self, staged_image: StagingImage) -> str | None:
@@ -112,7 +111,10 @@ class ImageBundleService:
         bundle_images = StagingImage.objects.filter(
             bundle=staged_bundle
         ).prefetch_related(
-            "knownstagingimage", "extrastagingimage", "discardstagingimage"
+            "baseimage",
+            "knownstagingimage",
+            "extrastagingimage",
+            "discardstagingimage",
         )
 
         # Staging has checked this - but we check again here to be very sure
@@ -140,7 +142,7 @@ class ImageBundleService:
 
         uploaded_bundle = Bundle(
             name=staged_bundle.slug,
-            hash=staged_bundle.pdf_hash,
+            pdf_hash=staged_bundle.pdf_hash,
             user=user_obj,
             staging_bundle=staged_bundle,
         )
@@ -165,7 +167,7 @@ class ImageBundleService:
             else:
                 prefix = ""
 
-            suffix = pathlib.Path(staged.image_file.name).suffix
+            suffix = pathlib.Path(staged.baseimage.image_file.name).suffix
             return prefix + str(uuid.uuid4()) + suffix
 
         # we create all the images as O(n) but then update
@@ -193,25 +195,23 @@ class ImageBundleService:
             fixedpage_by_pn_pg[(fp.paper.paper_number, fp.page_number)].append(fp)
 
         for staged in bundle_images:
-            with staged.image_file.open("rb") as fh:
-                # ensure that a pushed image has a defined rotation
-                # hard-coded to set rotation=0 if no staging image rotation exists
-                # the use of rotation=None for StagingImages is currently unused,
-                # but could be in future for user scanning orientation default: see #1825 and #2050
-                if staged.rotation is None:
-                    rot_to_push = 0
-                else:
-                    rot_to_push = staged.rotation
-                image = Image(
-                    bundle=uploaded_bundle,
-                    bundle_order=staged.bundle_order,
-                    original_name=staged.image_file.name,
-                    image_file=File(fh, name=image_save_name(staged)),
-                    hash=staged.image_hash,
-                    rotation=rot_to_push,
-                    parsed_qr=staged.parsed_qr,
-                )
-                image.save()
+            # ensure that a pushed image has a defined rotation
+            # hard-coded to set rotation=0 if no staging image rotation exists
+            # the use of rotation=None for StagingImages is currently unused,
+            # but could be in future for user scanning orientation default: see #1825 and #2050
+            if staged.rotation is None:
+                rot_to_push = 0
+            else:
+                rot_to_push = staged.rotation
+            image = Image(
+                bundle=uploaded_bundle,
+                bundle_order=staged.bundle_order,
+                original_name=staged.baseimage.image_file.name,
+                baseimage=staged.baseimage,
+                rotation=rot_to_push,
+                parsed_qr=staged.parsed_qr,
+            )
+            image.save()
 
             if staged.image_type == StagingImage.KNOWN:
                 known = staged.knownstagingimage

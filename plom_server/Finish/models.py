@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023, 2025 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
 
@@ -57,6 +57,25 @@ class SolutionSourcePDF(models.Model):
 
 
 class SolutionImage(models.Model):
+    """An image of the solution to a version of a question.
+
+    A cached copy of the rendered PDF file.
+
+    question_index: which question.
+    version: which version.
+    image_file: an abstraction of a file for the image.
+    height: how many pixels high is the image.
+    width: how many pixels wide is the image.
+    """
+
+    question_index = models.PositiveIntegerField(null=False)
     version = models.PositiveIntegerField(null=False)
-    solution_number = models.PositiveIntegerField(null=False)
-    image = models.ImageField(upload_to="sourceVersions")
+    image_file = models.ImageField(
+        null=False,
+        upload_to="sourceVersions",
+        # tell Django where to automagically store height/width info on save
+        height_field="height",
+        width_field="width",
+    )
+    height = models.IntegerField(default=0)
+    width = models.IntegerField(default=0)

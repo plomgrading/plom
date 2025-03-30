@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
-import pymupdf as fitz
+import pymupdf
 from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
@@ -37,13 +37,13 @@ class Command(BaseCommand):
         # make sure we can actually open the pdf and check pages
         np = SolnSpecService.get_n_pages()
         try:
-            with fitz.open(pdf_path) as doc:
+            with pymupdf.open(pdf_path) as doc:
                 if len(doc) != np:
                     raise CommandError(
                         f"Solution source pdf must have {np} pages according to"
                         f"the soln spec; supplied file has {len(doc)} pages."
                     )
-        except fitz.FileDataError as err:
+        except pymupdf.FileDataError as err:
             raise CommandError(err)
 
         try:
@@ -55,9 +55,9 @@ class Command(BaseCommand):
     def remove_source(self, version=None, all=False):
         try:
             if all:
-                SolnSourceService().remove_all_solution_pdf()
+                SolnSourceService.remove_all_solution_pdf()
             elif version:
-                SolnSourceService().remove_solution_pdf(version)
+                SolnSourceService.remove_solution_pdf(version)
             else:
                 return
         except ValueError as err:

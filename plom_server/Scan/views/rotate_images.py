@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023-2024 Colin B. Macdonald
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 
 from django.urls import reverse
 from django.http import HttpResponse, HttpRequest, Http404
@@ -84,7 +84,7 @@ class GetRotatedBundleImageView(ScannerRequiredView):
         theta = img_obj.rotation
         return HttpResponse(
             hard_rotate_image_from_file_by_exif_and_angle(
-                img_obj.image_file, theta=theta
+                img_obj.baseimage.image_file, theta=theta
             ),
             content_type="image/png",
         )
@@ -101,7 +101,7 @@ class GetRotatedPushedImageView(ScannerRequiredView):
         theta = img_obj.rotation
         return HttpResponse(
             hard_rotate_image_from_file_by_exif_and_angle(
-                img_obj.image_file, theta=theta
+                img_obj.baseimage.image_file, theta=theta
             ),
             content_type="image/png",
         )
