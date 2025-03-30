@@ -7,6 +7,7 @@
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2025 Philip D. Loewen
 
 """Django settings for Plom project."""
 
@@ -100,6 +101,8 @@ INSTALLED_APPS = [
     "mathfilters",
     # for 'fun' with migrations - see #77
     "reset_migrations",
+    # General functionality, including "manage.py show_urls"
+    "django_extensions",
     # Huey + polymorphism
     "django_huey",
     "polymorphic",
