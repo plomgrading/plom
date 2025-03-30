@@ -21,7 +21,7 @@
     <div class="card m-2">
         <div class="card-body">
             <h5 class="card-title">ID Pages</h5>
-            {% if left_to_set %}
+            {% if need_to_set %}
                 <div class="alert alert-info w-50">Not all ID-box rectangles are set: see below.</div>
             {% else %}
                 <div class="alert alert-success w-50 d-flex align-items-center">
@@ -115,7 +115,7 @@ function drawBits(canvas, image, plom_tl, plom_br, sel_tl_f, sel_br_f){
 function init(){
   {% for data in idpage_list %}
   {% if data.sel_rectangle %}
-  drawBits(canvas{{data.version}}, image{{data.version}}, {{data.ref_top_left}}, {{data.ref_bottom_right}}, 
+  drawBits(canvas{{data.version}}, image{{data.version}}, {{data.ref_top_left}}, {{data.ref_bottom_right}},
     [{{data.sel_rectangle.left_f}}, {{data.sel_rectangle.top_f}}],
     [{{data.sel_rectangle.right_f}}, {{data.sel_rectangle.bottom_f}}]
     );

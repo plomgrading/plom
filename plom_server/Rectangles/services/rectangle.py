@@ -20,7 +20,9 @@ from plom_server.Papers.services import PaperInfoService
 from plom.scan import rotate
 
 
-def get_reference_qr_coords(version: int, page: int) -> dict[str, list[float]]:
+def get_reference_qr_coords_for_page(
+    page: int, *, version: int
+) -> dict[str, list[float]]:
     """Given the version and page number, return the x/y coords of the qr codes on the reference image.
 
     Those coords are used to build a reference rectangle, given by the max/min x/y, which, in turn defines a coordinate system on the page.
@@ -48,7 +50,10 @@ def get_reference_qr_coords(version: int, page: int) -> dict[str, list[float]]:
     return corner_dat
 
 
-def _get_reference_rectangle(parsed_qr: dict[str, dict[str, Any]]) -> dict[str, float]:
+def get_reference_rectangle_from_QR_data(
+    parsed_qr: dict[str, dict[str, Any]],
+) -> dict[str, float]:
+    """The reference rectangle is based on the centres of the QR codes."""
     x_coords = []
     y_coords = []
     for cnr in ("NE", "SE", "NW", "SW"):
@@ -63,13 +68,13 @@ def _get_reference_rectangle(parsed_qr: dict[str, dict[str, Any]]) -> dict[str, 
     }
 
 
-def get_reference_rectangle(version: int, page: int) -> dict[str, float]:
-    """The reference rectangle is based on the centres of the QR coordinates."""
+def get_reference_rectangle_for_page(page: int, *, version: int) -> dict[str, float]:
+    """The reference rectangle for a particular version and page, based on the centres of the QR codes."""
     try:
         rimg_obj = ReferenceImage.objects.get(version=version, page_number=page)
     except ReferenceImage.DoesNotExist:
         raise ValueError(f"There is no reference image for v{version} pg{page}.")
-    return _get_reference_rectangle(rimg_obj.parsed_qr)
+    return get_reference_rectangle_from_QR_data(rimg_obj.parsed_qr)
 
 
 def _get_affine_transf_matrix_ref_to_QR_target(
@@ -278,7 +283,7 @@ class RectangleExtractor:
         except ReferenceImage.DoesNotExist:
             raise ValueError(f"There is no reference image for v{version} pg{page}.")
 
-        r = _get_reference_rectangle(rimg_obj.parsed_qr)
+        r = get_reference_rectangle_from_QR_data(rimg_obj.parsed_qr)
         # rectangle described by location of the 3 qr-code stamp centres of the reference image
         self.LEFT = r["left"]
         self.RIGHT = r["right"]

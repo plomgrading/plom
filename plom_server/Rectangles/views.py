@@ -17,7 +17,7 @@ from django.shortcuts import render
 from plom_server.Papers.services import SpecificationService, PaperInfoService
 from plom_server.Preparation.services import SourceService
 from plom_server.Base.base_group_views import ManagerRequiredView
-from .services import get_reference_qr_coords, RectangleExtractor
+from .services import get_reference_qr_coords_for_page, RectangleExtractor
 
 
 class RectangleHomeView(ManagerRequiredView):
@@ -41,9 +41,9 @@ class SelectRectangleView(ManagerRequiredView):
     def get(self, request: HttpRequest, version: int, page: int) -> HttpResponse:
         context = self.build_context()
         try:
-            qr_info = get_reference_qr_coords(version, page)
+            qr_info = get_reference_qr_coords_for_page(page, version=version)
         except ValueError as err:
-            raise Http404(err)
+            raise Http404(err) from err
         x_coords = [X[0] for X in qr_info.values()]
         y_coords = [X[1] for X in qr_info.values()]
         rect_top_left = [min(x_coords), min(y_coords)]

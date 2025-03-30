@@ -18,7 +18,7 @@ from plom_server.Scan.services import ScanService
 from ..services.rectangle import (
     extract_rect_region_from_image,
     get_largest_rectangle_contour_from_image,
-    _get_reference_rectangle,
+    get_reference_rectangle_from_QR_data,
     _get_affine_transf_matrix_ref_to_QR_target,
 )
 
@@ -96,7 +96,7 @@ class RectangleServiceTests(TestCase):
 
         codes = QRextract(img_path)
         parsed_codes = ScanService.parse_qr_code([codes])
-        rd = _get_reference_rectangle(parsed_codes)
+        rd = get_reference_rectangle_from_QR_data(parsed_codes)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
 
         # find the lower-right box around the QR code
@@ -116,7 +116,7 @@ class RectangleServiceTests(TestCase):
 
         codes = QRextract(img_path)
         parsed_codes = ScanService.parse_qr_code([codes])
-        rd = _get_reference_rectangle(parsed_codes)
+        rd = get_reference_rectangle_from_QR_data(parsed_codes)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
         matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)
         expected_matrix = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
@@ -128,7 +128,7 @@ class RectangleServiceTests(TestCase):
         img = Image.open(img_path)  # type: ignore[arg-type]
         codes = QRextract(img_path)
         parsed_codes = ScanService.parse_qr_code([codes])
-        rd = _get_reference_rectangle(parsed_codes)
+        rd = get_reference_rectangle_from_QR_data(parsed_codes)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -157,7 +157,7 @@ class RectangleServiceTests(TestCase):
         img_bytes = img_path.read_bytes()
         codes = QRextract(img_path)
         parsed_codes = ScanService.parse_qr_code([codes])
-        rd = _get_reference_rectangle(parsed_codes)
+        rd = get_reference_rectangle_from_QR_data(parsed_codes)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
 
         # find id box in the source image

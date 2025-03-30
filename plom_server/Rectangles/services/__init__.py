@@ -5,8 +5,8 @@
 
 from .rectangle import (
     RectangleExtractor,
-    get_reference_qr_coords,
-    get_reference_rectangle,
+    get_reference_qr_coords_for_page,
+    get_reference_rectangle_for_page,
 )
 
 from .idbox_utils import (
