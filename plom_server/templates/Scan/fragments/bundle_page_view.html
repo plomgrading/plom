@@ -158,17 +158,20 @@
                             <!-- error page can cast to discard, extra, known (but caution) -->
                             <div>
                                 <a class="btn btn-warning text-center w-100 mb-3"
-                                   hx-put="{% url 'extralise_image' the_filter bundle_id index %}">
-                                Cast to extra page</a>
+                                   hx-put="{% url 'extralise_image' the_filter bundle_id index %}"
+                                   hx-confirm="Do you want to change this error page into a known page? Please also consider rescanning because error pages can indicate more serious canning problems.">
+                                    Cast to extra page
+                                </a>
                             </div>
                             <div>
                                 <a class="btn btn-outline-success text-center w-100 mb-3"
                                    hx-get="{% url 'knowify_image' the_filter bundle_id index %}"
+                                   hx-confirm="Do you want to change this error page into a known page? Please also consider rescanning because error pages can indicate more serious canning problems."
                                    hx-target="#bundlePageFragment">Cast to known page</a>
                             </div>
                             <a class="btn btn-danger text-center w-100 mb-3"
                                hx-post="{% url 'discard_image' the_filter bundle_id index %}"
-                               hx-confirm="Are you sure you wish to discard this error page? We do not generally recommend doing this since error pages tend to indicate larger scanning problems.">
+                               hx-confirm="Are you sure you wish to discard this error page? Please also consider rescanning because error pages can indicate more serious canning problems.">
                                 Discard
                             </a>
                         {% elif current_page.status == 'unread' %}
