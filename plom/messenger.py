@@ -455,7 +455,7 @@ class Messenger(BaseMessenger):
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def reassign_task(self, code: str, username: str) -> None:
+    def reassign_task(self, papernum: int, qidx: int, username: str) -> None:
         """Reassign a task that belongs to a user to a different user.
 
         Some cases to consider:
@@ -463,7 +463,8 @@ class Messenger(BaseMessenger):
           - if it already belongs to that user, is that an error?
 
         Args:
-            code: a task code such as `"q0123g2"`.
+            papernum: which paper.
+            qidx: which question index.
             username: who should we assign it to?
 
         Returns:
@@ -480,10 +481,15 @@ class Messenger(BaseMessenger):
             raise PlomNoServerSupportException(
                 "Server too old: does not support reassign"
             )
+        if self.is_server_api_less_than(114):
+            code = f"q{papernum:04}g{qidx}"
+            url = f"/MK/tasks/{code}/reassign/{username}"
+        else:
+            url = f"/api/v0/tasks/{papernum}/{qidx}/reassign/{username}"
 
         with self.SRmutex:
             try:
-                response = self.patch_auth(f"/MK/tasks/{code}/reassign/{username}")
+                response = self.patch_auth(url)
                 response.raise_for_status()
             except requests.HTTPError as e:
                 if response.status_code == 401:
@@ -494,11 +500,12 @@ class Messenger(BaseMessenger):
                     raise PlomNoPermission(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def reset_task(self, code: str) -> bool:
+    def reset_task(self, papernum: int, qidx: int) -> bool:
         """Reset a task, outdating all annotations.
 
         Args:
-            code: a task code such as `"q0123g2"`.
+            papernum: which paper number.
+            qidx: which question index.
 
         Returns:
             True on success.
@@ -517,7 +524,7 @@ class Messenger(BaseMessenger):
 
         with self.SRmutex:
             try:
-                response = self.patch_auth(f"/MK/tasks/{code}/reset")
+                response = self.patch_auth(f"/api/v0/tasks/{papernum}/{qidx}/reset")
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:

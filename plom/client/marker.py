@@ -1244,6 +1244,8 @@ class MarkerClient(QWidget):
         task = self.get_current_task_id_or_none()
         if not task:
             return
+        papernum, qidx = task_id_str_to_paper_question_index(task)
+
         if assign_to is None:
             # TODO: combobox or similar to choose users
             assign_to, ok = QInputDialog.getText(
@@ -1254,9 +1256,10 @@ class MarkerClient(QWidget):
             )
             if not ok:
                 return
+
         try:
             # TODO: consider augmenting with a reason, e.g., reason="help" kwarg
-            self.msgr.reassign_task(task, assign_to)
+            self.msgr.reassign_task(papernum, qidx, assign_to)
         except (
             PlomNoServerSupportException,
             PlomRangeException,

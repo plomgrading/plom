@@ -7,6 +7,7 @@
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2025 Philip D. Loewen
 
 """Django settings for Plom project."""
 
@@ -367,6 +368,16 @@ LOGGING: dict[str, Any] = {
         }
     },
 }
+
+# For general debugging and introspection, consider the django-extensions app.
+# Get it with "pip install django-extensions". One good tool this enables is
+# the command "manage.py show_urls", which walks the tree of URL specifications
+# and prints a complete list of all API URL's, with destinations and codenames.
+# (For this one the server does not even need to be running.)
+# See  https://github.com/django-extensions/django-extensions
+USE_DJANGO_EXTENSIONS = False
+if USE_DJANGO_EXTENSIONS:
+    INSTALLED_APPS.append("django_extensions")
 
 # When hunting down slow http request / db queries make use of the django-silk package
 # https://github.com/jazzband/django-silk

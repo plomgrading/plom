@@ -10,8 +10,6 @@ from django.urls import path, re_path
 from ..views import (
     GetTasks,
     MarkingProgress,
-    ReassignTask,
-    ResetTask,
     MgetOneImage,
     MgetAllRubrics,
     MgetRubricsByQuestion,
@@ -52,24 +50,6 @@ class MarkURLPatterns:
             path("tasks/all", GetTasks.as_view(), name="api_MK_get_tasks_all"),
         ]
         mark_patterns += tasks
-
-        # PATCH: /MK/tasks/{code}/reassign/{new_username}
-        mark_patterns.append(
-            path(
-                "tasks/<str:code>/reassign/<str:new_username>",
-                ReassignTask.as_view(),
-                name="api_MK_reassign_task_new_username",
-            )
-        )
-
-        # PATCH: /MK/tasks/{code}/reset
-        mark_patterns.append(
-            path(
-                "tasks/<str:code>/reset",
-                ResetTask.as_view(),
-                name="api_MK_reset_task",
-            )
-        )
 
         # Getting page-images from the server
         images = [

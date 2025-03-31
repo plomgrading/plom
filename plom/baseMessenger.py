@@ -51,11 +51,19 @@ from plom.plom_exceptions import (
 # define an allow-list of versions we support.
 Supported_Server_API_Versions = [
     int(Plom_Legacy_Server_API_Version),
-    112,
-    113,  # new /MK/tasks/{code}/reassign/{username}
-    114,  # new /MK/tasks/{code}/reset/, new params for /MK/rubric/{key}
+    112,  # 2024-09
+    113,  # 2025-01
+    114,  # 2025-
     int(Plom_API_Version),
 ]
+# Brief changelog
+#
+# * 113
+#    - new /MK/tasks/{code}/reassign/{username}
+# * 114
+#    - new /api/v0/tasks/{papernum}/{qidx}/reset/
+#    - changes /api/v0/tasks/{papernum}/{qidx}/reassign/{username}
+#    - new params for /MK/rubric/{key}
 
 
 log = logging.getLogger("messenger")
