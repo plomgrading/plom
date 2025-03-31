@@ -134,10 +134,15 @@
                         <details>
                             <summary>This bundle contains {{ error_pages }} error page{{ error_pages|pluralize }}</summary>
                             <ul>
-                                <li>this typically indicates serious scanning problems</li>
-                                <li>while these can be repaired here, we recommend that you do not</li>
+                                <li>This could indicate serious scanning problems.</li>
                                 <li>
-                                    instead we recommend that you look at the error pages, fix any problems with the corresponding physical pages, then discard this PDF and rescan the papers.
+                                    Consider fixing any problems with the physical pages,
+                                    then delete this PDF and rescan the papers.
+                                </li>
+                                <li>
+                                    If there are only a small number of problems, you may
+                                    be able to workaround them by casting Error pages to
+                                    Known/Extra pages.
                                 </li>
                             </ul>
                             <a class="btn btn-danger {% if bundle.disable_delete %}disabled{% endif %}"
