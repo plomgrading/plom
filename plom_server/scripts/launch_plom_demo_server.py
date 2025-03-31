@@ -617,7 +617,8 @@ def run_the_auto_id_reader():
 
 def _ensure_client_available():
     try:
-        import plomclient
+        # tell MyPy to ignore this for testing
+        import plomclient  # type: ignore[import-not-found]
     except ImportError as err:
         raise RuntimeError(
             f"You must install plom-client for randomarking utilities to work: {err}"
