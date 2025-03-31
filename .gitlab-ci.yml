@@ -528,6 +528,8 @@ webplom_demo:
   stage: test
   needs: ["container-image"]
   image: $IM
+  before_script:
+    - pip install plom-client
   script:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
@@ -717,6 +719,7 @@ newOS_newdeps_django_tests:
     - python3 -m pip install --upgrade pip setuptools packaging wheel
     - pip --version
   script:
+    - pip install plom-client
     # we can run in-tree but we need pip for dependencies
     - pip install .
     - pip uninstall -y plom
@@ -746,6 +749,7 @@ minpy_mindeps_django_tests:
   script:
     - pip install -r requirements.txt.tempminima
     - pip install .
+    - pip install plom-client
     # TODO: do we want full demo or just makemigrate?
     - PYTHONPATH="." python3 plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
     - python3 manage.py test
