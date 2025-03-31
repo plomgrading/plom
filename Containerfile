@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2019-2023 Andrew Rechnitzer
-# Copyright (C) 2019-2023 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2023 Julian Lapenna
 #
