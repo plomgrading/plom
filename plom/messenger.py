@@ -485,7 +485,7 @@ class Messenger(BaseMessenger):
             code = f"q{papernum:04}g{qidx}"
             url = f"/MK/tasks/{code}/reassign/{username}"
         else:
-            url = f"/MK/tasks/{papernum}/{qidx}/reassign/{username}"
+            url = f"/api/v0/tasks/{papernum}/{qidx}/reassign/{username}"
 
         with self.SRmutex:
             try:
@@ -524,7 +524,7 @@ class Messenger(BaseMessenger):
 
         with self.SRmutex:
             try:
-                response = self.patch_auth(f"/MK/tasks/{papernum}/{qidx}/reset")
+                response = self.patch_auth(f"/api/v0/tasks/{papernum}/{qidx}/reset")
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:

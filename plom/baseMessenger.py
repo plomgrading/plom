@@ -49,11 +49,15 @@ from plom.plom_exceptions import (
 
 # We can support earlier servers by special-case code, so
 # define an allow-list of versions we support.
+# 113: new /MK/tasks/{code}/reassign/{username}
+# 114: new /api/v0/tasks/{papernum}/{qidx}/reset/
+#      changes /api/v0/tasks/{papernum}/{qidx}/reassign/{username}
+#      new params for /MK/rubric/{key}
 Supported_Server_API_Versions = [
     int(Plom_Legacy_Server_API_Version),
     112,
-    113,  # new /MK/tasks/{code}/reassign/{username}
-    114,  # new /MK/tasks/{papernum]/{qidx}/reset/, new params for /MK/rubric/{key}
+    113,
+    114,
     int(Plom_API_Version),
 ]
 
