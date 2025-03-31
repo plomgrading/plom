@@ -13,7 +13,7 @@ def find_my_console_scripts(package_name):
     entrypoints = (
         ep.name
         for ep in importlib.metadata.entry_points(group="console_scripts")
-        if ep.name.startswith(package_name)
+        if ep.name.startswith(package_name) and not ep.name.startswith("plom-client")
     )
     return entrypoints
 
