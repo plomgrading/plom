@@ -132,12 +132,6 @@ packages = [
     "plom.create.fonts",
     "plom.scan",
     "plom.finish",
-    "plom.client",
-    "plom.client.ui_files",
-    "plom.client.tools",
-    "plom.client.icons",
-    "plom.client.cursors",
-    "plom.client.help_img",
     "plom.idreader",
     "plom.solutions",
     "plom.canvas",
@@ -225,8 +219,6 @@ packages = [
 version = {attr = 'plom.__version__'}
 
 [project.scripts]
-# plom-client = "plom.client.__main__:main"
-# plom-demo = "plom.demo.__main__:main"
 plom-create = "plom.create.__main__:main"
 plom-scan = "plom.scan.__main__:main"
 plom-finish = "plom.finish.__main__:main"
@@ -313,7 +305,6 @@ ignore_missing_imports = true
 #   - TODO: fix the temporary ones for Issue #2847 and Issue #2849
 [[tool.mypy.overrides]]
 module = [
-    'plom.client.tools.tool',
     'plom.db.examDB',
     'plom.server.theServer',
 ]
