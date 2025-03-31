@@ -156,7 +156,10 @@
                         {% elif current_page.status == 'error' %}
                             <!-- error page can discard -->
                             <a class="btn btn-danger text-center w-100 mb-3"
-                               hx-post="{% url 'discard_image' the_filter bundle_id index %}">Discard</a>
+                               hx-post="{% url 'discard_image' the_filter bundle_id index %}"
+                               hx-confirm="Are you sure you wish to discard this error page? We do not generally recommend doing this since error pages tend to indicate larger scanning problems.">
+                                Discard
+                            </a>
                         {% elif current_page.status == 'unread' %}
                             <!-- cannot do anything with an unread page -->
                         {% elif current_page.status == 'discard' %}
