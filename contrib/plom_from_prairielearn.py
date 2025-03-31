@@ -1,9 +1,11 @@
 #!/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 
 """Start a Plom server from a PrairieLearn pdf file upload.
+
+TODO: Needs updating for the legagy->django transition
 
 Instructions:
   * Make a directory containing:
@@ -34,8 +36,10 @@ import magic
 import pandas
 
 import plom
-import plom.server
 import plom.scan
+
+# TODO: no such thing anymore
+from plom.server import PlomServer  # type: ignore[attr-defined]
 
 
 ########################################################################
@@ -70,6 +74,8 @@ with open("fake_classlist.csv", "w") as csvfile:
 # TODO: Forest had a function for this
 shortname = qid.replace("_", "")
 
+raise NotImplementedError("script needs updating for the legagy->django transition")
+
 # Folder to store the server files
 serverdir = Path(f"plom_pl_server-{shortname}")
 serverdir.mkdir(exist_ok=True)
@@ -78,7 +84,7 @@ serverdir.mkdir(exist_ok=True)
 # serverdir.mkdir(exist_ok=True)
 
 # Prepare the directory ("plom-server init <some_dir>" on command line)
-plom.server.PlomServer.initialise_server(basedir=serverdir)
+PlomServer.initialise_server(basedir=serverdir)
 
 # Plom's "versions" are more like PL's "alternatives".
 # Plom does not yet natively support variants (but that is planned)
@@ -111,7 +117,7 @@ finally:
     os.chdir(cwd)
 
 # Start Plom Server in background, control returns in a few seconds
-server = plom.server.PlomServer(basedir=serverdir)
+server = PlomServer(basedir=serverdir)
 
 pwds = {}
 with open(serverdir / "userListRaw.csv", "r") as csvfile:
