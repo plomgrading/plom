@@ -1154,6 +1154,9 @@ oldOS_mindeps:
 minpy_mindeps:
   stage: alt_build
   image: python:3.10
+  variables:
+    # ideally we'd test with OOTB pip so hide pip upgrade msg
+    PIP_DISABLE_PIP_VERSION_CHECK: 1
   before_script:
     - apt-get update
     - apt-get --no-install-recommends --yes install
@@ -1168,6 +1171,7 @@ minpy_mindeps:
 
 
 # Minimum Python, minimum deps
+# generally keep things as old as possible for this job
 minpy_mindeps_django_tests:
   services:
     - postgres
@@ -1177,6 +1181,8 @@ minpy_mindeps_django_tests:
     POSTGRES_PASSWORD: "postgres"
     POSTGRES_HOST_AUTH_METHOD: trust
     PLOM_DATABASE_HOSTNAME: "postgres"
+    # ideally we'd test with OOTB pip so hide pip upgrade msg
+    PIP_DISABLE_PIP_VERSION_CHECK: 1
   stage: alt_build
   image: python:3.10
   before_script:
