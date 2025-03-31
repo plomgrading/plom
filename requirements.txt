@@ -9,7 +9,6 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Bryan Tanady
-# Copyright (C) 2025 Philip D. Loewen
 
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -33,7 +32,6 @@ arrow==1.3.0
 canvasapi==3.2.0
 django==5.1.7
 django-braces==1.17.0
-django-extensions==3.2.3
 django-filter==25.1
 django-htmx==1.23.0
 django-huey==1.2.1

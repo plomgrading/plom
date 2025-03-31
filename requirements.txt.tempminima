@@ -6,7 +6,6 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024 Bryan Tanady
-# Copyright (C) 2025 Philip D. Loewen
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -29,7 +28,6 @@ canvasapi==3.0.0
 cryptography==41.0.3
 django==4.2.6
 django-braces==1.15.0
-django-extensions==3.2.3
 django-filter==23.2
 django-htmx==1.14.0
 django-huey==1.1.1
