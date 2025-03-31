@@ -256,7 +256,6 @@ def store_reference_images(source_version: int):
     Then stores the images with that qr-code information.
     """
     mocker = ExamMockerService()
-    scanner = ScanService()
 
     source_pdf_obj = PaperSourcePDF.objects.get(version=source_version)
     n_pages = SpecificationService.get_n_pages()
@@ -278,7 +277,7 @@ def store_reference_images(source_version: int):
             fname = tmpdir / f"ref_{source_version}_{n+1}.png"
             pix.save(fname)
             code_dict = QRextract(fname)
-            page_data = scanner.parse_qr_code([code_dict])
+            page_data = ScanService.parse_qr_code([code_dict])
             with open(fname, "rb") as fh:
                 pix_file = File(fh, name=fname.name)
                 ReferenceImage.objects.create(

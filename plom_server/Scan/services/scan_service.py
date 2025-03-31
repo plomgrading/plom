@@ -458,11 +458,12 @@ class ScanService:
         """Check if any staging bundles exist."""
         return StagingBundle.objects.all().exists()
 
-    def parse_qr_code(self, list_qr_codes: list[dict[str, Any]]) -> dict[str, Any]:
+    @staticmethod
+    def parse_qr_code(list_qr_codes: list[dict[str, Any]]) -> dict[str, Any]:
         """Parse QR codes into list of dictionaries.
 
         Args:
-            list_qr_codes: (list) QR codes returned from QRextract() method as a dictionary
+            list_qr_codes: QR codes returned from QRextract() method as a dictionary
 
         Returns:
             groupings: (dict) Set of data from raw-qr-strings
@@ -2019,13 +2020,9 @@ def huey_child_parse_qr_code(
     stimg = StagingImage.objects.get(pk=image_pk)
     image_path = stimg.baseimage.image_file.path
 
-    scanner = ScanService()
-
     code_dict = QRextract(image_path)
 
-    page_data = scanner.parse_qr_code([code_dict])
-
-    pipr = PageImageProcessor()
+    page_data = ScanService.parse_qr_code([code_dict])
 
     if _debug_be_flaky:
         print(f"Huey debug, random sleep in task {task.id}")
@@ -2034,7 +2031,7 @@ def huey_child_parse_qr_code(
         if random.random() < 0.04:
             raise RuntimeError("Flaky simulated QR read failure")
 
-    rotation = pipr.get_rotation_angle_or_None_from_QRs(page_data)
+    rotation = PageImageProcessor.get_rotation_angle_or_None_from_QRs(page_data)
 
     # Andrew wanted to leave the possibility of re-introducing hard
     # rotations in the future, such as `plom.scan.rotate_bitmap`.
@@ -2042,7 +2039,7 @@ def huey_child_parse_qr_code(
     # Re-read QR codes if the page image needs to be rotated
     if rotation and rotation != 0:
         code_dict = QRextract(image_path, rotation=rotation)
-        page_data = scanner.parse_qr_code([code_dict])
+        page_data = ScanService.parse_qr_code([code_dict])
         # qr_error_checker.check_qr_codes(page_data, image_path, bundle)
 
     # Return the parsed QR codes for parent process to store in db

@@ -1,15 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024-2025 Andrew Rechnitzer
-# Copyright (C) 2024 Colin B. Macdonald
-
-from __future__ import annotations
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from django.core.exceptions import MultipleObjectsReturned
-from django.http import (
-    HttpRequest,
-    HttpResponse,
-    Http404,
-)
+from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect, HttpResponseClientRefresh
@@ -17,8 +11,8 @@ from django_htmx.http import HttpResponseClientRedirect, HttpResponseClientRefre
 from plom_server.Papers.services import SpecificationService, fixedpage_version_count
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Rectangles.services import (
-    get_reference_qr_coords,
-    get_reference_rectangle,
+    get_reference_qr_coords_for_page,
+    get_reference_rectangle_for_page,
     get_idbox_rectangle,
     set_idbox_rectangle,
     clear_idbox_rectangle,
@@ -79,7 +73,7 @@ class IDPredictionLaunchHXPutView(ManagerRequiredView):
         id_page_number = SpecificationService.get_id_page_number()
         id_version_counts = fixedpage_version_count(id_page_number)
         id_version_rectangles: dict[int, dict[str, float] | None] = {
-            v: get_idbox_rectangle(v) for v in id_version_counts
+            v: get_idbox_rectangle(v) for v in id_version_counts.keys()
         }
         try:
             IDReaderService().run_the_id_reader_in_background_via_huey(
@@ -102,12 +96,12 @@ class GetIDBoxesRectangleView(ManagerRequiredView):
     def get(self, request: HttpRequest, version: int) -> HttpResponse:
         id_page_number = SpecificationService.get_id_page_number()
         try:
-            qr_info = get_reference_qr_coords(version, id_page_number)
+            qr_info = get_reference_qr_coords_for_page(id_page_number, version=version)
         except ValueError as err:
-            raise Http404(err)
+            raise Http404(err) from err
 
         # the plom-coord system defined by the location of the qr-codes
-        ref_rect = get_reference_rectangle(version, id_page_number)
+        ref_rect = get_reference_rectangle_for_page(id_page_number, version=version)
         rect_top_left = [ref_rect["left"], ref_rect["top"]]
         rect_bottom_right = [ref_rect["right"], ref_rect["bottom"]]
         context = {
@@ -183,31 +177,29 @@ class IDBoxParentView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         id_page_number = SpecificationService.get_id_page_number()
         id_version_counts = fixedpage_version_count(id_page_number)
-        ref_tl = {}
-        ref_br = {}
         unused_id_versions = []
         the_idpages = []
-        for n in range(SpecificationService.get_n_versions()):
-            if n + 1 in id_version_counts:
-                ref_rect = get_reference_rectangle(n + 1, id_page_number)
-                ref_tl[n + 1] = [ref_rect["left"], ref_rect["top"]]
-                ref_br[n + 1] = [ref_rect["right"], ref_rect["bottom"]]
+        for v in range(1, SpecificationService.get_n_versions() + 1):
+            if v in id_version_counts.keys():
+                ref_rect = get_reference_rectangle_for_page(id_page_number, version=v)
+                ref_tl = [ref_rect["left"], ref_rect["top"]]
+                ref_br = [ref_rect["right"], ref_rect["bottom"]]
                 the_idpages.append(
                     {
-                        "version": n + 1,
-                        "sel_rectangle": get_idbox_rectangle(n + 1),
-                        "ref_top_left": ref_tl[n + 1],
-                        "ref_bottom_right": ref_br[n + 1],
+                        "version": v,
+                        "sel_rectangle": get_idbox_rectangle(v),
+                        "ref_top_left": ref_tl,
+                        "ref_bottom_right": ref_br,
                     }
                 )
             else:
-                unused_id_versions.append(n + 1)
+                unused_id_versions.append(v)
 
-        left_to_set = [X["version"] for X in the_idpages if X["sel_rectangle"] is None]
+        need_to_set = [X["version"] for X in the_idpages if X["sel_rectangle"] is None]
         context = {
             "page_number": id_page_number,
             "idpage_list": the_idpages,
-            "left_to_set": left_to_set,
+            "need_to_set": need_to_set,
             "unused_id_versions": unused_id_versions,
         }
         return render(request, "Identify/parent_idbox_rect.html", context)
