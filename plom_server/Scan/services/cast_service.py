@@ -581,20 +581,7 @@ class ScanCastService:
     def extralise_image_from_bundle_id(
         self, user_obj: User, bundle_id: int, bundle_order: int
     ) -> None:
-        """A wrapper around extralise_image_from_bundle.
-
-        The main difference is that it that takes a
-        bundle-id instead of a bundle-object itself. Further,
-        it infers the image-type from the bundle and the bundle-order
-        rather than requiring it explicitly.
-
-        Args:
-            user_obj: An instead of a django user.
-            bundle_id: The id ("pk") of the bundle.
-            bundle_order: (int) Bundle order of a page.
-
-        Returns:
-            None.
+        """A wrapper around extralise_image_from_bundle taking a bundle id instead of bundle object.
 
         Raises the same things as :method:`extralise_image_from_bundle`
         but also StagingBundle.DoesNotExist the bundle id is invalid.
@@ -616,7 +603,35 @@ class ScanCastService:
         *,
         image_type: str | None = None,
     ) -> None:
-        """TODO: docstring."""
+        """Cast a page image from a staged bundle to an extra page.
+
+        This operation only succeeds for certain page image types.
+        For example, if the page image is already an 'EXTRA',
+        casting it to a 'EXTRA', even with a different paper and/or
+        page number will fail.
+
+        Args:
+            user_obj: An instance of a django user.
+            bundle_obj: The StagingBundle object containing the page image.
+            bundle_order: The page image's (1-based) index in bundle_obj.
+
+        Keyword Args:
+            image_type: the current image type, mostly for you to ensure
+                correctness of what you expect the data to be.  If omitted
+                or None, we'll compute it.  If provided, we'll check that
+                it matches reality.
+
+        Returns:
+            None.
+
+        Raises:
+            ValueError: Provided bundle_order doesn't map to a page image in
+                the provided bundle_obj.  The page image type forbids it from
+                being cast to a known page, or the provided image type doesn't
+                match.
+            PlomBundleLockedException: The bundle has already been pushed, or is
+                in use by other resources.
+        """
         check_bundle_object_is_neither_locked_nor_pushed(bundle_obj)
 
         try:
