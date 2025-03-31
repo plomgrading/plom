@@ -312,7 +312,7 @@ ignore_errors = true
 
 [tool.pyright]
 pythonVersion = "3.12"
-exclude = ['plom/manager', 'plom/server', '**/_digitHunter.py']
+exclude = ['plom/server', '**/_digitHunter.py']
 # changing to "off" makes this much quieter
 typeCheckingMode = "basic"
 # lots of Django false positives?
