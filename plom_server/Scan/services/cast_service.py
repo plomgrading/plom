@@ -695,7 +695,6 @@ class ScanCastService:
         Raises the same things as :method:`knowify_image_from_bundle` but
         can also raise ValueError when the bundle does not exist.
         """
-        bundle_obj = StagingBundle.objects.get(pk=bundle_id)
         try:
             bundle_obj = StagingBundle.objects.get(pk=bundle_id)
         except ObjectDoesNotExist:
