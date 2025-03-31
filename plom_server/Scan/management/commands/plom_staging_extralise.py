@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2025 Colin B. Macdonald
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -11,7 +12,7 @@ class Command(BaseCommand):
 
     help = "Cast to extra a page from the given bundle at the given order"
 
-    def extralise_image_type_from_bundle(
+    def extralise_image_from_bundle(
         self, username, bundle_name, order, *, image_type=None
     ):
         scs = ScanCastService()
@@ -26,7 +27,7 @@ class Command(BaseCommand):
                 f"Attempting to extralise image of type '{image_type}' at position {order} from bundle {bundle_name} as user {username}"
             )
         try:
-            ScanCastService().extralise_image_type_from_bundle_cmd(
+            ScanCastService().extralise_image_from_bundle_cmd(
                 username, bundle_name, order, image_type=image_type
             )
         except ValueError as err:
@@ -54,7 +55,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        self.extralise_image_type_from_bundle(
+        self.extralise_image_from_bundle(
             options["username"],
             options["bundle"],
             options["order"],

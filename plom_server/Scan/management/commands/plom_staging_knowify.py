@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023, 2025 Colin B. Macdonald
 
 from tabulate import tabulate
 
@@ -22,7 +22,7 @@ class Command(BaseCommand):
                 bundle_name
             )
         except ValueError as err:
-            raise CommandError(err)
+            raise CommandError(err) from err
 
         if len(missing_papers_pages) == 0:
             self.stdout.write(
@@ -44,7 +44,7 @@ class Command(BaseCommand):
                 bundle_name
             )
         except ValueError as err:
-            raise CommandError(err)
+            raise CommandError(err) from err
 
         self.stdout.write("Unknown pages:")
         self.stdout.write(
@@ -61,12 +61,12 @@ class Command(BaseCommand):
     ):
         scs = ScanCastService()
         try:
-            scs.assign_page_as_known_cmd(
+            scs.knowify_image_from_bundle_name(
                 username, bundle_name, bundle_order, paper_number, page_number
             )
             self.stdout.write("Image assigned")
         except (PermissionDenied, ValueError) as err:
-            raise CommandError(err)
+            raise CommandError(err) from err
 
     def add_arguments(self, parser):
         parser.add_argument(
