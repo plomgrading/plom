@@ -589,22 +589,21 @@ class ScanCastService:
         rather than requiring it explicitly.
 
         Args:
-            user_obj: (obj) An instead of a django user
-            bundle_id: (int) The pk of the bundle.
+            user_obj: An instead of a django user.
+            bundle_id: The id ("pk") of the bundle.
             bundle_order: (int) Bundle order of a page.
 
         Returns:
             None.
+
+        Raises the same things as :method:`extralise_image_from_bundle`
+        but also ValueError when the bundle id is invalid.
         """
-        # TODO: value error here too?
-        bundle_obj = StagingBundle.objects.get(pk=bundle_id)
         try:
-            img_obj = bundle_obj.stagingimage_set.get(bundle_order=bundle_order)
+            bundle_obj = StagingBundle.objects.get(pk=bundle_id)
         except ObjectDoesNotExist:
-            raise ValueError(f"Cannot find an image at order {bundle_order}")
-        self.extralise_image_from_bundle(
-            user_obj, bundle_obj, bundle_order, image_type=img_obj.image_type
-        )
+            raise ValueError(f"Bundle id {bundle_id} does not exist!")
+        self.extralise_image_from_bundle(user_obj, bundle_obj, bundle_order)
 
     @transaction.atomic
     def extralise_image_from_bundle(
@@ -664,7 +663,6 @@ class ScanCastService:
         )
         img.save()
 
-    @transaction.atomic
     def extralise_image_from_bundle_cmd(
         self,
         username: str,
