@@ -597,12 +597,14 @@ class ScanCastService:
             None.
 
         Raises the same things as :method:`extralise_image_from_bundle`
-        but also ValueError when the bundle id is invalid.
+        but also StagingBundle.DoesNotExist the bundle id is invalid.
         """
-        try:
-            bundle_obj = StagingBundle.objects.get(pk=bundle_id)
-        except ObjectDoesNotExist:
-            raise ValueError(f"Bundle id {bundle_id} does not exist!")
+        bundle_obj = StagingBundle.objects.get(pk=bundle_id)
+        # TODO: or ValueError, see also Issue #3878
+        # try:
+        #     bundle_obj = StagingBundle.objects.get(pk=bundle_id)
+        # except ObjectDoesNotExist:
+        #     raise ValueError(f"Bundle id {bundle_id} does not exist!")
         self.extralise_image_from_bundle(user_obj, bundle_obj, bundle_order)
 
     @transaction.atomic

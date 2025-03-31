@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import render
 from django.urls import reverse
@@ -317,6 +318,12 @@ class ExtraliseImageView(ScannerRequiredView):
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
+        except ObjectDoesNotExist as err:
+            return Http404(err)
+        except ValueError as err:
+            print(f"Issue #3878: got ValueError we're unsure how to handle: {err}")
+            # TODO: redirect ala scan_bundle_lock?
+            raise
 
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
