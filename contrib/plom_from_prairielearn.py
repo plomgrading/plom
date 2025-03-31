@@ -39,6 +39,7 @@ import plom
 import plom.scan
 
 # TODO: no such thing anymore
+# pylint: disable
 from plom.server import PlomServer  # type: ignore[attr-defined]
 
 
