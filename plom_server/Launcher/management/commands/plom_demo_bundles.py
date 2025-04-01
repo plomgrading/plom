@@ -4,12 +4,9 @@
 # Copyright (C) 2025 Colin B. Macdonald
 
 from dataclasses import dataclass
-from pathlib import Path
-from shutil import copy2
 from time import sleep
 from typing import Optional, List, Dict, Any
 
-# sigh.... python dependent import of toml - sorry.
 import sys
 
 if sys.version_info < (3, 11):
@@ -113,15 +110,6 @@ class Command(BaseCommand):
         self, demo_config: DemoAllBundlesConfig, *, versioned_id=False
     ) -> None:
         """Build demo bundles as per the chosen demo-config."""
-        # at present the bundle-creator assumes that the
-        # scrap-paper and extra-page pdfs are in media/papersToPrint
-        # so we make a copy of them from static to there.
-        src_dir = Path(settings.STATICFILES_DIRS[0])
-        dest_dir = Path(settings.MEDIA_ROOT) / "papersToPrint"
-        copy2(src_dir / "extra_page.pdf", dest_dir)
-        copy2(src_dir / "scrap_paper.pdf", dest_dir)
-        # TODO - get bundle-creator to take from static.
-
         if demo_config.bundles:
             DemoBundleCreationService().scribble_on_exams(
                 demo_config, versioned_id=versioned_id
