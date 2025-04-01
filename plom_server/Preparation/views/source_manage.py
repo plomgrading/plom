@@ -142,5 +142,5 @@ class SourceManageView(ManagerRequiredView):
 
 
 class ReferenceImageView(ManagerRequiredView):
-    def get(self, request: HttpRequest, version: int, page: int) -> HttpRequest:
+    def get(self, request: HttpRequest, *, version: int, page: int) -> HttpResponse:
         return FileResponse(SourceService._get_reference_image_file(version, page))
