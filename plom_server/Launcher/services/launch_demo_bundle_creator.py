@@ -106,25 +106,25 @@ class DemoBundleCreationService:
                 from_page_idx = to_page_idx + 1
                 to_page_idx = from_page_idx + default_n_pages - 1
 
-    def get_extra_page(self) -> None:
-        """Download the extra-page pdf to the working directory."""
+    def _get_extra_page_copy(self, dest_dir: Path) -> Path:
+        """Get a copy of the extra-page pdf to the specified directory."""
         # Assumes that the extra page has been generated
-        # and is sitting in the static directory
+        # and that we have local file system access to copy it
         shutil.copy2(
-            Path(settings.STATICFILES_DIRS[0]) / "extra_page.pdf",
-            settings.MEDIA_ROOT / "papersToPrint/extra_page.pdf",
+            (settings.MEDIA_ROOT / "non_db_files") / "extra_page.pdf",
+            dest_dir,
         )
-        # note staticfiles_dirs is a list of static file directories, and we only use the zeroth.
+        return dest_dir / "extra_page.pdf"
 
-    def get_scrap_paper(self) -> None:
-        """Download the scrap-paper pdf to the working directory."""
+    def _get_scrap_paper_copy(self, dest_dir: Path) -> Path:
+        """Get a copy of the scrap-paper pdf to the specified directory."""
         # Assumes that the scrap paper has been generated
-        # and is sitting in the static directory
+        # and that we have local file system access to copy it
         shutil.copy2(
-            Path(settings.STATICFILES_DIRS[0]) / "scrap_paper.pdf",
-            settings.MEDIA_ROOT / "papersToPrint/scrap_paper.pdf",
+            (settings.MEDIA_ROOT / "non_db_files") / "scrap_paper.pdf",
+            dest_dir,
         )
-        # note staticfiles_dirs is a list of static file directories, and we only use the zeroth.
+        return dest_dir / "scrap_paper.pdf"
 
     def assign_students_to_papers(self, paper_list, classlist) -> List[Dict]:
         """Map papers to names and IDs from the classlist, skipping any prenamed ones."""
@@ -648,7 +648,7 @@ class DemoBundleCreationService:
         """Add simulated student-annotations to the pages of papers.
 
         Note: Also, if dictated by the demo config, simulates poor
-            scanning of physical papers.
+        scanning of physical papers.
         """
         bundles = config.bundles
         n_bundles = len(bundles)
@@ -657,10 +657,8 @@ class DemoBundleCreationService:
         classlist_length = len(classlist)
         papers_to_print = settings.MEDIA_ROOT / "papersToPrint"
         paper_list = [paper for paper in papers_to_print.glob("exam*.pdf")]
-        self.get_extra_page()  # download copy of the extra-page pdf to papersToPrint subdirectory
-        extra_page_path = papers_to_print / "extra_page.pdf"
-        self.get_scrap_paper()  # download copy of the scrap_paper pdf to papersToPrint subdirectory
-        scrap_paper_path = papers_to_print / "scrap_paper.pdf"
+        extra_page_path = self._get_extra_page_copy(papers_to_print)
+        scrap_paper_path = self._get_scrap_paper_copy(papers_to_print)
 
         number_papers_to_use = classlist_length
         papers_to_use = sorted(paper_list)[:number_papers_to_use]
