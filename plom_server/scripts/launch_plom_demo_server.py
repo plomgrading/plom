@@ -55,8 +55,8 @@ def set_argparse_and_get_args() -> argparse.Namespace:
     * rubrics = system and demo rubrics are created for marking.
     * qtags = demo question-tags are created.
     * auto-id = run the auto-id-reader
-    * randoiding = run rando-id'er to identify papers, will use best predictions to ID papers and else random.
-    * randomarking = several rando-markers are run in parallel to leave comments and annotations on student work.
+    * randoiding = run rando-id'er to identify papers, will use best predictions to ID papers and else random.  You will need to have the `plom-client` installed.
+    * randomarking = several rando-markers are run in parallel to leave comments and annotations on student work.  You will need to have the `plom-client` installed.
     * tagging = (future/not-yet-implemented) = pedagogy tags will be applied to questions to label them with learning goals.
     * spreadsheet = a marking spreadsheet is downloaded.
     * reassembly = marked papers are reassembled (along, optionally, with solutions).
