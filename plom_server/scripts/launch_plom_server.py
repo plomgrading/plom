@@ -204,8 +204,6 @@ def main():
         print("DOING A HOT START (we already have a database)")
         print("Issue #3299: Please note this merely checks for the *existence* of")
         print("a database; it does not yet check anything about the filesystem.")
-        # TODO: Issue #3577 remove later?
-        run_django_manage_command("plom_build_scrap_extra_pdfs")
     else:
         # We either don't have a DB or we do and we want to wipe it.
         # clean out old db and misc files, then rebuild blank db
@@ -215,9 +213,8 @@ def main():
         # build extra-page and scrap-paper PDFs
         run_django_manage_command("plom_build_scrap_extra_pdfs")
 
-    # TODO: really do this on a hotstart? (c.f., extra/scrap Issue #3874)
-    if not args.development:
-        run_django_manage_command("collectstatic --clear --no-input")
+        if not args.development:
+            run_django_manage_command("collectstatic --clear --no-input")
 
     # now put main things inside a try/finally so that we
     # can clean up the Huey/server processes on exit.

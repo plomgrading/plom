@@ -40,10 +40,8 @@ classifiers=[
 ]
 dynamic = ['version']
 requires-python = '>=3.10'
-# note aiohttp and peewee are legacy deps only
 # pyopenssl is not a direct dependency but old versions caused trouble: Issue #3150
 dependencies = [
-    "aiohttp>=3.7.2",
     "arrow>=1.1.1",
     "canvasapi>=3.0.0",
     "cryptography>=41.0.3",
@@ -69,7 +67,6 @@ dependencies = [
     "packaging",
     "pandas>=1.5.0",
     "passlib",
-    "peewee>=3.13.3",
     "Pillow>=10.2",
     "platformdirs>=3.0.0",
     "pymupdf>=1.24.8",
@@ -102,8 +99,6 @@ dependencies = [
 #   "file-magic || python-magic>=0.4.20",
 
 # Non-Python deps for server
-#   - imagemagick (legacy)
-#   - ghostscript (optional, legacy)
 #   - latex installation including (Debian/Ubuntu pkg names):
 #       texlive-latex-extra dvipng latexmk texlive-fonts-recommended
 #   - latex installation including (Fedora pkg names):
@@ -134,17 +129,6 @@ packages = [
     "plom.create.fonts",
     "plom.scan",
     "plom.finish",
-    "plom.client",
-    "plom.client.ui_files",
-    "plom.client.tools",
-    "plom.client.icons",
-    "plom.client.cursors",
-    "plom.client.help_img",
-    "plom.manager",
-    "plom.server",
-    "plom.server.plomServer",
-    "plom.db",
-    "plom.demo",
     "plom.idreader",
     "plom.solutions",
     "plom.canvas",
@@ -232,15 +216,8 @@ packages = [
 version = {attr = 'plom.__version__'}
 
 [project.scripts]
-# plom-client = "plom.client.__main__:main"
-plom-demo = "plom.demo.__main__:main"
-plom-hwdemo = "plom.scripts.hwdemo:main"
 plom-create = "plom.create.__main__:main"
-plom-server = "plom.server.__main__:main"
-plom-legacy-server = "plom.server.__main__:main"
 plom-scan = "plom.scan.__main__:main"
-plom-manager = "plom.manager.__main__:main"
-plom-legacy-manager = "plom.manager.__main__:main"
 plom-finish = "plom.finish.__main__:main"
 plom-hwscan = "plom.scripts.hwscan:main"
 plom-solutions = "plom.solutions.__main__:main"
@@ -325,7 +302,6 @@ ignore_missing_imports = true
 #   - TODO: fix the temporary ones for Issue #2847 and Issue #2849
 [[tool.mypy.overrides]]
 module = [
-    'plom.client.tools.tool',
     'plom.db.examDB',
     'plom.server.theServer',
 ]
@@ -333,7 +309,7 @@ ignore_errors = true
 
 [tool.pyright]
 pythonVersion = "3.12"
-exclude = ['plom/manager', 'plom/server', '**/_digitHunter.py']
+exclude = ['plom/server', '**/_digitHunter.py']
 # changing to "off" makes this much quieter
 typeCheckingMode = "basic"
 # lots of Django false positives?

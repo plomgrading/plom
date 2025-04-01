@@ -131,15 +131,6 @@ TODO: add documentation on backing up a Plom server.
 
 
 
-My legacy server sometimes has random disk I/O errors
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Like this ``peewee.OperationalError: disk I/O error``
-The Plom legacy server uses an SQLite database; it
-`should not be run on NFS storage <https://gitlab.com/plom/plom/-/issues/811>`_.
-Apparently "people" know this but we were just as "thrilled" as you probably
-are to discover it on a production server.
-
 
 Legacy: How can I get past SSL certificate errors?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -226,7 +217,7 @@ Can I scan and mark papers without QR codes on my Plom server?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This can be accomplished by treating these papers as "double-printed", the solution
-is identical to the one offered for 
+is identical to the one offered for
 `I messed up by double-printing some papers, now I have collisions`_:
   1. Scan the paper with the missing QR codes
   2. "discard" each of the pages belonging to the paper, then manually cast each of
@@ -235,8 +226,8 @@ is identical to the one offered for
 
 Keep in mind which unused paper you casted to will no longer be unused (i.e. you
 must cast to a different unused paper each time you do this).
-       
-"I don't have an unused paper?" - that's unfortunate, see 
+
+"I don't have an unused paper?" - that's unfortunate, see
 `I messed up by double-printing and I'm using multiple versions`_
 
 Of course, one should consider whether these papers should be marked using Plom.

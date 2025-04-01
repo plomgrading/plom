@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
 from django.urls import path
@@ -18,8 +18,11 @@ from .views import (
     PQVMappingDownloadView,
     PQVMappingDeleteView,
     PQVMappingUploadView,
+    MiscellaneaView,
+    MiscellaneaDownloadExtraPageView,
+    MiscellaneaDownloadScrapPaperView,
+    MiscellaneaDownloadBundleSeparatorView,
     MockExamView,
-    MiscExtrasView,
     ReferenceImageView,
 )
 
@@ -55,7 +58,22 @@ urlpatterns = [
     path(
         "qvmapping/upload", PQVMappingUploadView.as_view(), name="prep_qvmapping_upload"
     ),
-    path("misc/", MiscExtrasView.as_view(), name="misc_extras"),
+    path("misc/", MiscellaneaView.as_view(), name="miscellanea"),
+    path(
+        "misc/extra_page.pdf",
+        MiscellaneaDownloadExtraPageView.as_view(),
+        name="miscellanea_extra_page.pdf",
+    ),
+    path(
+        "misc/scrap_paper.pdf",
+        MiscellaneaDownloadScrapPaperView.as_view(),
+        name="miscellanea_scrap_paper.pdf",
+    ),
+    path(
+        "misc/bundle_separator_paper.pdf",
+        MiscellaneaDownloadBundleSeparatorView.as_view(),
+        name="miscellanea_bundle_separator.pdf",
+    ),
     path(
         "prep_finished/",
         PreparationFinishedView.as_view(),

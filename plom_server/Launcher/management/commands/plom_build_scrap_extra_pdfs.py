@@ -1,8 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2025 Colin B. Macdonald
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
+
+from plom.create import (
+    build_extra_page_pdf,
+    build_scrap_paper_pdf,
+    build_bundle_separator_paper_pdf,
+)
 
 
 class Command(BaseCommand):
@@ -10,13 +17,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         """Build and store the extra-page and scrap paper pdfs."""
-        from plom.create import (
-            build_extra_page_pdf,
-            build_scrap_paper_pdf,
-            build_bundle_separator_paper_pdf,
-        )
-
-        dest_dir = settings.STATICFILES_DIRS[0]
+        dest_dir = settings.MEDIA_ROOT / "non_db_files/"
+        dest_dir.mkdir(exist_ok=True, parents=True)
         build_extra_page_pdf(dest_dir)
         build_scrap_paper_pdf(dest_dir)
         build_bundle_separator_paper_pdf(dest_dir)
