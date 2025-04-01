@@ -19,8 +19,6 @@ import requests
 import urllib3
 
 from plom import __version__
-from plom import Plom_API_Version
-from plom import Plom_Legacy_Server_API_Version
 from plom import Default_Port
 from plom import undo_json_packing_of_version_map
 from plom.plom_exceptions import PlomSeriousException
@@ -47,14 +45,16 @@ from plom.plom_exceptions import (
 )
 
 
+Plom_API_Version = 114  # Our API version
+Plom_Legacy_Server_API_Version = 60
+
 # We can support earlier servers by special-case code, so
 # define an allow-list of versions we support.
 Supported_Server_API_Versions = [
-    int(Plom_Legacy_Server_API_Version),
+    Plom_Legacy_Server_API_Version,
     112,  # 2024-09
     113,  # 2025-01
     114,  # 2025-
-    int(Plom_API_Version),
 ]
 # Brief changelog
 #
@@ -224,7 +224,7 @@ class BaseMessenger:
         """
         if self.get_server_API_version() is None:
             return None
-        return self.get_server_API_version() == int(Plom_Legacy_Server_API_Version)
+        return self.get_server_API_version() == Plom_Legacy_Server_API_Version
 
     def is_server_api_less_than(self, api_number: int) -> bool | None:
         """Check if the server API is strictly less than a value.
@@ -642,7 +642,7 @@ class BaseMessenger:
                 json={
                     "user": user,
                     "pw": pw,
-                    "api": Plom_Legacy_Server_API_Version,
+                    "api": str(Plom_Legacy_Server_API_Version),
                     "client_ver": __version__,
                 },
                 timeout=5,
