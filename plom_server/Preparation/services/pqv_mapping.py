@@ -7,7 +7,7 @@ from pathlib import Path
 import tempfile
 from typing import Any
 
-from plom import SpecVerifier
+from plom.spec_verifier import SpecVerifier
 from plom.version_maps import version_map_to_csv
 
 from plom_server.Papers.services import SpecificationService

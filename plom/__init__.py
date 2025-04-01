@@ -21,7 +21,7 @@ import sys
 if sys.version_info[0] == 2:
     raise RuntimeError("Plom requires Python 3; it will not work with Python 2")
 
-from .specVerifier import SpecVerifier, specdir, get_question_label
+from .spec_verifier import specdir, get_question_label
 
 Default_Port = 41984
 

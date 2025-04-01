@@ -7,7 +7,7 @@ from pytest import raises
 
 from plom import make_random_version_map, check_version_map
 from plom import undo_json_packing_of_version_map
-from plom import SpecVerifier
+from plom.spec_verifier import SpecVerifier
 
 
 def test_make_rand_ver_map() -> None:

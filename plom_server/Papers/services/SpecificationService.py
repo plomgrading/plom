@@ -15,7 +15,7 @@ from django.utils.text import slugify
 from django.db import transaction
 from django.db.models import Max
 
-from plom import SpecVerifier
+from plom.spec_verifier import SpecVerifier
 
 from plom_server.Base.compat import load_toml_from_path
 from ..models import Specification, SpecQuestion

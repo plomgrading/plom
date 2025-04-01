@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from copy import deepcopy
 
-from plom import SpecVerifier
+from plom.spec_verifier import SpecVerifier
 
 from .question_labels import get_question_label, verbose_question_label
 from .question_labels import check_for_shared_pages

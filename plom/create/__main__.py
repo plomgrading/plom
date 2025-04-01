@@ -34,7 +34,7 @@ from stdiomask import getpass
 import plom
 from plom import __version__
 from plom import Default_Port
-from plom import SpecVerifier
+from plom.spec_verifier import SpecVerifier
 from plom.plom_exceptions import PlomExistingDatabase, PlomServerNotReady
 from plom.create import process_classlist_file, get_demo_classlist, upload_classlist
 from plom.create import start_messenger

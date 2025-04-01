@@ -20,7 +20,7 @@ import pymupdf
 import segno
 
 from plom.create import paperdir
-from plom.specVerifier import (
+from plom.spec_verifier import (
     build_page_to_group_dict,
     build_page_to_version_dict,
     get_question_labels,
