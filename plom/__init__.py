@@ -43,6 +43,3 @@ from .tagging import (
     plom_valid_tag_text_pattern,
     plom_valid_tag_text_description,
 )
-
-# TODO: what you get from "from plom import *"
-# __all__ = ["client", "server", "produce", "scan", "finish", "manager"]
