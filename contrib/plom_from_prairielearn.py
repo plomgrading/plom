@@ -39,7 +39,8 @@ import plom
 import plom.scan
 
 # TODO: no such thing anymore
-# pylint: disable
+# pylint: disable=import-error
+# pylint: disable=no-name-in-module
 from plom.server import PlomServer  # type: ignore[attr-defined]
 
 

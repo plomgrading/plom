@@ -54,7 +54,8 @@ from plom import __version__ as __plom_version__
 from plom.misc_utils import working_directory
 
 # TODO: no such thing anymore
-# pylint: disable
+# pylint: disable=import-error
+# pylint: disable=no-name-in-module
 from plom.server import PlomServer  # type: ignore[attr-defined]
 
 from plom.canvas import __DEFAULT_CANVAS_API_URL__
