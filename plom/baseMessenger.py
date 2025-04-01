@@ -6,6 +6,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Tam Nguyen
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2025 Philip D. Loewen
 
 from __future__ import annotations
 
