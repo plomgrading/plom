@@ -55,8 +55,8 @@ def set_argparse_and_get_args() -> argparse.Namespace:
     * rubrics = system and demo rubrics are created for marking.
     * qtags = demo question-tags are created.
     * auto-id = run the auto-id-reader
-    * randoiding = run rando-id'er to identify papers, will use best predictions to ID papers and else random.
-    * randomarking = several rando-markers are run in parallel to leave comments and annotations on student work.
+    * randoiding = run rando-id'er to identify papers, will use best predictions to ID papers and else random.  You will need to have the `plom-client` installed.
+    * randomarking = several rando-markers are run in parallel to leave comments and annotations on student work.  You will need to have the `plom-client` installed.
     * tagging = (future/not-yet-implemented) = pedagogy tags will be applied to questions to label them with learning goals.
     * spreadsheet = a marking spreadsheet is downloaded.
     * reassembly = marked papers are reassembled (along, optionally, with solutions).
@@ -615,11 +615,24 @@ def run_the_auto_id_reader():
     run_django_manage_command("plom_run_id_reader --wait")
 
 
+def _ensure_client_available():
+    try:
+        # tell MyPy to ignore this for testing
+        import plomclient  # type: ignore[import-not-found]
+    except ImportError as err:
+        raise RuntimeError(
+            f"You must install plom-client for randomarking utilities to work: {err}"
+        ) from err
+    print(f"Good we have plom-client installed, version {plomclient.__version__}")
+
+
 def run_the_randoider(*, port):
     """Run the rando-IDer.
 
     All papers will be ID'd after this call.
     """
+    _ensure_client_available()
+
     # TODO: hardcoded http://
     srv = f"http://localhost:{port}"
     # list of markers and their passwords
@@ -627,7 +640,7 @@ def run_the_randoider(*, port):
         ("demoMarker1", "demoMarker1"),
     ]
 
-    cmd = f"python3 -m plom.client.randoIDer -s {srv} -u {users[0][0]} -w {users[0][1]} --use-predictions"
+    cmd = f"python3 -m plomclient.client.randoIDer -s {srv} -u {users[0][0]} -w {users[0][1]} --use-predictions"
     print(f"RandoIDing!  calling: {cmd}")
     subprocess.check_call(split(cmd))
 
@@ -637,6 +650,8 @@ def run_the_randomarker(*, port, half_marks=False):
 
     All papers will be marked after this call.
     """
+    _ensure_client_available()
+
     # TODO: hardcoded http://
     srv = f"http://localhost:{port}"
     # list of markers and their passwords and percentage to mark
@@ -650,7 +665,7 @@ def run_the_randomarker(*, port, half_marks=False):
 
     randomarker_processes = []
     for X in users[1:]:
-        cmd = f"python3 -m plom.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial {X[2]} --download-rubrics"
+        cmd = f"python3 -m plomclient.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial {X[2]} --download-rubrics"
         if half_marks:
             cmd += " --allow-half"
         print(f"RandoMarking!  calling: {cmd}")
@@ -673,7 +688,7 @@ def run_the_randomarker(*, port, half_marks=False):
 
     # now a final run to do any remaining tasks
     for X in users[:1]:
-        cmd = f"python3 -m plom.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial 100"
+        cmd = f"python3 -m plomclient.client.randoMarker -s {srv} -u {X[0]} -w {X[1]} --partial 100"
         print(f"RandoMarking!  calling: {cmd}")
         subprocess.check_call(split(cmd))
 

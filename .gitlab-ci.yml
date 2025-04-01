@@ -528,6 +528,12 @@ webplom_demo:
   stage: test
   needs: ["container-image"]
   image: $IM
+  before_script:
+    - apt-get update
+    - apt-get --no-install-recommends --yes install git
+    # pip install plom-client
+    # but we might need a more recent one if API recently changed
+    - pip install -U git+https://gitlab.com/plom/plom-client.git@main
   script:
     - export PYTHONPATH=$PWD
     - echo $PYTHONPATH
@@ -712,11 +718,14 @@ newOS_newdeps_django_tests:
       libpango-1.0-0 libpangocairo-1.0-0
       python3-pytest python3-dev
       python3-pip
-      iproute2 psmisc file python3-magic
+      iproute2 psmisc file python3-magic git
     # apt-get --no-install-recommends --yes install libimage-exiftool-perl
     - python3 -m pip install --upgrade pip setuptools packaging wheel
     - pip --version
   script:
+    # pip install plom-client
+    # but we might need a more recent one if API recently changed
+    - pip install -U git+https://gitlab.com/plom/plom-client.git@main
     # we can run in-tree but we need pip for dependencies
     - pip install .
     - pip uninstall -y plom
@@ -742,10 +751,14 @@ minpy_mindeps_django_tests:
       cmake make imagemagick dvipng g++
       texlive-latex-extra latexmk texlive-fonts-recommended
       libgl1-mesa-glx libsm6 libxrender1 libegl1 libxkbcommon0 libdbus-1-3
+      git
     - pip install pytest
   script:
     - pip install -r requirements.txt.tempminima
     - pip install .
+    # pip install plom-client
+    # but we might need a more recent one if API recently changed
+    - pip install -U git+https://gitlab.com/plom/plom-client.git@main
     # TODO: do we want full demo or just makemigrate?
     - PYTHONPATH="." python3 plom_server/scripts/launch_plom_demo_server.py --length quick --stop-after randomarking
     - python3 manage.py test
