@@ -35,7 +35,6 @@ Tested on Fedora 40.  Some stuff from the package manager:
         python3-tomlkit python3-tqdm python3-urllib3 \
         python3-pytest python3-PyMySQL \
         python3-django python3-django-filter \
-        python3-aiohttp python3-peewee python3-cryptography \
         python3-zxing-cpp \
         python3-gunicorn python3-whitenoise \
         python3-weasyprint python3-pyqt6 \
