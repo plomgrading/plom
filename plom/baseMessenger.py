@@ -520,8 +520,8 @@ class BaseMessenger:
         self._server_API_version = int(ver)
         if self._server_API_version not in Supported_Server_API_Versions:
             raise PlomAPIException(
-                f"Server API version {ver} is not supported because its "
-                f"not in {Supported_Server_API_Versions}"
+                f"Server API version {ver} is not supported. "
+                f"Supported versions: {Supported_Server_API_Versions}."
             )
 
     def get_server_API_version(self) -> int | None:
