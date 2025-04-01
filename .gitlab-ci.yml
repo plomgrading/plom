@@ -497,9 +497,10 @@ webplom_test:
   stage: test
   needs: ["container-image"]
   image: $IM
+  before_script:
+    - pip install coverage~=7.6.12
   script:
     - export PYTHONPATH=$PWD
-    - pip install coverage~=7.6.12
     - export PLOM_DATABASE_BACKEND=sqlite
     # need to migrate before tests but probably not makemigrations (Issue #3826)
     # python3 manage.py makemigrations
