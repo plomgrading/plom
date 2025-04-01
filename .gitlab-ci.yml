@@ -91,7 +91,7 @@ codespell:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install codespell~=2.4.1
+    - pip install codespell~=2.4.1
   script:
     - echo "Need an exception?  See the .codespell-ignore* files"
     - codespell
@@ -397,8 +397,8 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
-    - python3 -m pip install astroid~=3.3.8  # codespell:ignore astroid
-    - python3 -m pip install pylint~=3.3.4
+    - pip install astroid~=3.3.9  # codespell:ignore astroid
+    - pip install pylint~=3.3.6
   script:
     - pylint plom
     - pylint plom_server
@@ -415,7 +415,7 @@ mypy-type-checking:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - python3 -m pip install mypy~=1.15.0
+    - pip install mypy~=1.15.0
   script:
     - mypy --version
     - mypy plom --python-ver 3.10 --install-types --non-interactive || true
@@ -430,7 +430,7 @@ pyright:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - python3 -m pip install pyright~=1.1.396
+    - pip install pyright~=1.1.398
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -441,7 +441,7 @@ flake8:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install flake8~=7.1.2
+    - pip install flake8~=7.1.2
   script:
     # first show all errors and warnings but don't fail
     - flake8 --exit-zero
@@ -454,7 +454,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.9.9
+    - pip install ruff~=0.11.2
   script:
     - ruff check .
     # ruff format .
@@ -465,7 +465,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - python3 -m pip install ruff~=0.9.9
+    - pip install ruff~=0.11.2
   script:
     # run once just for log out but don't fail
     - EXCEPTIONS="D101,D102,D103,D104,D106"
@@ -497,9 +497,10 @@ webplom_test:
   stage: test
   needs: ["container-image"]
   image: $IM
+  before_script:
+    - pip install coverage~=7.6.12
   script:
     - export PYTHONPATH=$PWD
-    - python3 -m pip install coverage~=7.6.12
     - export PLOM_DATABASE_BACKEND=sqlite
     # need to migrate before tests but probably not makemigrations (Issue #3826)
     # python3 manage.py makemigrations
@@ -734,6 +735,7 @@ newOS_newdeps_django_tests:
 
 
 # Minimum Python, minimum deps
+# generally keep things as old as possible for this job
 minpy_mindeps_django_tests:
   services:
     - postgres
@@ -743,6 +745,8 @@ minpy_mindeps_django_tests:
     POSTGRES_PASSWORD: "postgres"
     POSTGRES_HOST_AUTH_METHOD: trust
     PLOM_DATABASE_HOSTNAME: "postgres"
+    # ideally we'd test with OOTB pip so hide pip upgrade msg
+    PIP_DISABLE_PIP_VERSION_CHECK: 1
   stage: alt_build
   image: python:3.10
   before_script:
