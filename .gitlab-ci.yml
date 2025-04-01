@@ -397,8 +397,8 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
-    - pip install astroid~=3.3.8  # codespell:ignore astroid
-    - pip install pylint~=3.3.4
+    - pip install astroid~=3.3.9  # codespell:ignore astroid
+    - pip install pylint~=3.3.6
   script:
     - pylint plom
     - pylint plom_server
@@ -430,7 +430,7 @@ pyright:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install pyright~=1.1.396
+    - pip install pyright~=1.1.398
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
