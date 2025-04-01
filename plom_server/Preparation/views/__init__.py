@@ -22,7 +22,7 @@ from .pqv_mapping import (
     PQVMappingUploadView,
 )
 from .mocker import MockExamView
-from .misc_extras import (
+from .miscellanea import (
     MiscellaneaView,
     MiscellaneaDownloadExtraPageView,
     MiscellaneaDownloadScrapPaperView,
