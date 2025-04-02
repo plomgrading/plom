@@ -22,3 +22,5 @@ There are also commands to launch the server and client themselves:
    :maxdepth: 1
 
    plom-client
+   plom-new-server
+   plom-new-demo
