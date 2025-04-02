@@ -49,9 +49,7 @@ TODO
 Command-line tools
 ..................
 
-At this time, there is no command-line tool similar to
-legacy :doc:`plom-scan` for uploading files to the new server.
-Such tools may be developed at a later date.
+The :doc:`plom-cli` tool can be used to upload files from the command-line.
 
 
 --------------------------------------------------------------------
