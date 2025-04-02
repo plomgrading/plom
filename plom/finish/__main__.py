@@ -25,8 +25,7 @@ from textwrap import dedent
 
 from stdiomask import getpass
 
-from plom import __version__
-from plom import Default_Port
+from plom.finish import __version__, Default_Port
 from plom.finish import start_messenger
 from plom.finish import clear_manager_login
 from plom.finish import CSVFilename

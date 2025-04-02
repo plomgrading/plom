@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Andreas Buttenschoen
-
-from __future__ import annotations
 
 import logging
 from pathlib import Path
@@ -24,9 +22,9 @@ import PIL
 import PIL.ExifTags
 import PIL.PngImagePlugin
 
-from plom import __version__
 from plom import PlomImageExts
 from plom import ScenePixelHeight
+from plom.scan import __version__
 from plom.scan.bundle_utils import make_bundle_dir
 from plom.scan.rotate import pil_load_with_jpeg_exif_rot_applied
 

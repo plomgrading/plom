@@ -31,9 +31,8 @@ from textwrap import dedent
 
 from stdiomask import getpass
 
-import plom
-from plom import __version__
-from plom import Default_Port
+import plom.create
+from plom.create import __version__, Default_Port
 from plom.spec_verifier import SpecVerifier
 from plom.plom_exceptions import PlomExistingDatabase, PlomServerNotReady
 from plom.create import process_classlist_file, get_demo_classlist, upload_classlist

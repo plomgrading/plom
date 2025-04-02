@@ -10,6 +10,7 @@ __license__ = "AGPL-3.0-or-later"
 
 
 from plom import __version__
+from plom import Default_Port
 
 from .fasterQRExtract import QRextract_legacy, QRextract
 
