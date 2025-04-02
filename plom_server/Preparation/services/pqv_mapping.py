@@ -101,7 +101,7 @@ class PQVMappingService:
             question index (int, but indexed from 1 not 0).  Values are
             integers.
         """
-        from plom import make_random_version_map
+        from plom.version_maps import make_random_version_map
 
         # grab the spec as dict from the test creator services
         spec_dict = SpecificationService.get_the_spec()

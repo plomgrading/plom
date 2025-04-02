@@ -20,7 +20,7 @@ import urllib3
 
 from plom import __version__
 from plom import Default_Port
-from plom import undo_json_packing_of_version_map
+from plom.version_maps import undo_json_packing_of_version_map
 from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (
     PlomAPIException,

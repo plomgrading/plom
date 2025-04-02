@@ -12,8 +12,8 @@ from django.shortcuts import render, reverse, redirect
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 from rest_framework import serializers
 
-from plom import plom_valid_tag_text_pattern, plom_valid_tag_text_description
 from plom.misc_utils import pprint_score
+from plom.tagging import plom_valid_tag_text_pattern, plom_valid_tag_text_description
 from plom_server.Base.base_group_views import LeadMarkerOrManagerView
 from plom_server.Mark.services import (
     MarkingStatsService,

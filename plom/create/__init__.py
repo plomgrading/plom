@@ -40,7 +40,7 @@ from .push_pull_rubrics import upload_rubrics, download_rubrics
 from .push_pull_rubrics import upload_demo_rubrics
 from .push_pull_rubrics import upload_rubrics_from_file, download_rubrics_to_file
 
-from plom import version_map_from_file, version_map_to_csv
+from plom.version_maps import version_map_from_file, version_map_to_csv
 from .version_map_utils import download_version_map
 from .version_map_utils import save_version_map
 

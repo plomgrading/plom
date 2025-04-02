@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2023 Julian Lapenna
 
@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pymupdf
 
-from plom import check_version_map
+from plom.version_maps import check_version_map
 from plom.misc_utils import working_directory
 from plom.create.buildNamedPDF import build_papers_backend
 from plom.create.buildNamedPDF import check_pdf_and_prename_if_needed

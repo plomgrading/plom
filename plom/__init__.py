@@ -21,8 +21,6 @@ import sys
 if sys.version_info[0] == 2:
     raise RuntimeError("Plom requires Python 3; it will not work with Python 2")
 
-from .spec_verifier import specdir, get_question_label
-
 Default_Port = 41984
 
 # Image types we expect the client to be able to handle, in lowercase
@@ -31,15 +29,3 @@ PlomImageExts = ("png", "jpg", "jpeg")
 
 # TODO: this should be a default and the PageScene should have a physical size.
 ScenePixelHeight = 2000
-
-from .rules import isValidStudentID
-
-from .version_maps import undo_json_packing_of_version_map
-from .version_maps import make_random_version_map, check_version_map
-from .version_maps import version_map_from_file, version_map_to_csv
-
-from .tagging import (
-    is_valid_tag_text,
-    plom_valid_tag_text_pattern,
-    plom_valid_tag_text_description,
-)
