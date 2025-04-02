@@ -26,8 +26,6 @@ Welcome to Plom's documentation!
 
    marking.rst
 
-   manage.rst
-
    hw_processing.rst
 
    rubrics.rst
