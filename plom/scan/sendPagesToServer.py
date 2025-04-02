@@ -12,8 +12,8 @@ from typing import Union
 
 from tqdm import tqdm
 
+from plom.scan import PlomImageExts
 from plom.scan import with_scanner_messenger
-from plom import PlomImageExts
 
 
 log = logging.getLogger("scan")

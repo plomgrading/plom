@@ -22,10 +22,3 @@ if sys.version_info[0] == 2:
     raise RuntimeError("Plom requires Python 3; it will not work with Python 2")
 
 Default_Port = 41984
-
-# Image types we expect the client to be able to handle, in lowercase
-# TODO: think about JBIG, etc: other stuff that commonly lives in PDF
-PlomImageExts = ("png", "jpg", "jpeg")
-
-# TODO: this should be a default and the PageScene should have a physical size.
-ScenePixelHeight = 2000

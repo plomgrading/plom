@@ -12,6 +12,13 @@ __license__ = "AGPL-3.0-or-later"
 from plom import __version__
 from plom import Default_Port
 
+# Image types we expect the client to be able to handle, in lowercase
+# TODO: think about JBIG, etc: other stuff that commonly lives in PDF
+PlomImageExts = ("png", "jpg", "jpeg")
+
+# This used to be shared with Client; don't think they need to match
+DefaultPixelHeight = 2000
+
 from .fasterQRExtract import QRextract_legacy, QRextract
 
 from .start_messenger import start_messenger, with_scanner_messenger
