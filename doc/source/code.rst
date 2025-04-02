@@ -35,10 +35,6 @@ plom
 
    module-plom-client
 
-   module-plom-legacy-server
-
-   module-plom-db
-
    module-plom-other
 
 plom_server
