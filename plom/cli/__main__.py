@@ -308,7 +308,7 @@ def main():
         print("TODO: do we need this on new Plom?")
         # clear_login(args.server, args.password)
     else:
-        parser.print_help()
+        get_parser().print_help()
 
 
 if __name__ == "__main__":
