@@ -878,7 +878,7 @@ def main():
                 muck=args.muck,
                 versioned_id=args.versioned_id,
             ):
-                break0
+                break
 
             print("*" * 50)
             print(">> Ready for marking")
