@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
+# Copyright (C) 2025 Philip D. Loewen
 
 """Command line tool to start a Plom demonstration server."""
 
@@ -124,14 +125,14 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         action="store",
         choices=stop_wait_choices,
         nargs=1,
-        help="Stop the demo sequence at a certain breakpoint.",
+        help="Stop the demo sequence at a certain breakpoint. Leave the server running.",
     )
     stop_wait_group.add_argument(
         "--wait-after",
         action="store",
         choices=stop_wait_choices,
         nargs=1,
-        help="Stop the demo sequence at a certain breakpoint.",
+        help="Stop the demo sequence at a certain breakpoint. Terminate the server.",
     )
     prod_dev_group = parser.add_mutually_exclusive_group()
     prod_dev_group.add_argument(
@@ -621,7 +622,14 @@ def _ensure_client_available():
         import plomclient  # type: ignore[import-not-found]
     except ImportError as err:
         raise RuntimeError(
-            f"You must install plom-client for randomarking utilities to work: {err}"
+            "*" * 64
+            + "\n"
+            + "The randoiding and randomarking utilities depend on plom-client, which is not installed:\n"
+            + f"{err}.\n"
+            + "Suggestion: Either install plom-client, or re-launch the demo with a\n"
+            + "--wait-after or --stop-after option. Use the --help option to see a list of choices.\n"
+            + "*" * 64
+            + "\n"
         ) from err
     print(f"Good we have plom-client installed, version {plomclient.__version__}")
 
@@ -870,7 +878,7 @@ def main():
                 muck=args.muck,
                 versioned_id=args.versioned_id,
             ):
-                break
+                break0
 
             print("*" * 50)
             print(">> Ready for marking")
