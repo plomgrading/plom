@@ -5,6 +5,7 @@
 # Copyright (C) 2020-2023, 2025 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
 # Copyright (C) 2023 Julian Lapenna
+# Copyright (C) 2025 Philip D. Loewen
 
 """Plom tools for pushing and manipulating bundles from the command line.
 
@@ -35,6 +36,7 @@ from plom.cli import (
     list_bundles,
     start_messenger,
     upload_bundle,
+    upload_spec,
 )
 
 # from plom.cli import clear_login
@@ -119,6 +121,14 @@ def _get_parser():
     )
     _add_server_args(s)
     s.add_argument("bundle_id", type=int)
+
+    s = sub.add_parser(
+        "upload-spec",
+        help="Upload assessment spec",
+        description="Upload a .toml file containing a valid exam spec.",
+    )
+    s.add_argument("toml", help="a .toml file containing a valid exam spec.")
+    _add_server_args(s)
 
     s = sub.add_parser(
         "delete-bundle",
@@ -270,6 +280,10 @@ def main():
         print(
             f"wrote reassembled paper number {args.papernum} to "
             f'file {r["filename"]} [{r["content-length"]} bytes]'
+        )
+    elif args.command == "upload-spec":
+        r = upload_spec(
+            Path(args.toml), msgr=(args.server, args.username, args.password)
         )
     elif args.command == "clear":
         print("TODO: do we need this on new Plom?")

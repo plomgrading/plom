@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2023, 2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2025 Philip D. Loewen
 
-"""Plom tools associated with scanning papers."""
+
+"""Scriptable Plom tools for use by experts."""
 
 __copyright__ = "Copyright (C) 2018-2025 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
@@ -16,6 +18,7 @@ from .list_bundles import list_bundles
 from .bundle_tools import upload_bundle, bundle_map_page
 from .identify_tools import id_paper, un_id_paper
 from .finish_tools import get_reassembled
+from .spec_tools import upload_spec
 
 # TODO: see also start_messenger error message
 # from .clearScannerLogin import clear_login
@@ -28,4 +31,5 @@ __all__ = [
     "list_bundles",
     "upload_bundle",
     "get_reassembled",
+    "upload_spec",
 ]
