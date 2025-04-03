@@ -3,6 +3,7 @@
 # Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2025 Philip D. Loewen
 
 """Backend bits 'n bobs to talk to a Plom server."""
 
@@ -1079,4 +1080,41 @@ class Messenger(BaseMessenger):
                     raise PlomNoPaper(response.reason) from None
                 if response.status_code == 406:
                     raise PlomSeriousException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def new_server_upload_spec(self, spec_toml_string: str) -> None:
+        """Upload an assessment spec to the server.
+
+        Args:
+            spec_toml_string: The string you get by reading a valid spec.toml file
+
+        Exceptions:
+            PlomConflict: server already has a database, cannot accept spec.
+            PlomAuthenticationException: login problems.
+            ValueError: invalid spec
+            PlomSeriousException: other errors.
+
+        Returns:
+            None
+        """
+        with self.SRmutex:
+            try:
+                response = self.put_auth(
+                    "/info/spec",
+                    json={
+                        "spec_toml": spec_toml_string,
+                    },
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise ValueError(response.reason) from None
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 406:
+                    raise PlomSeriousException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
