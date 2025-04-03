@@ -1082,6 +1082,16 @@ class Messenger(BaseMessenger):
                     raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
+    def new_server_get_spec(self) -> [None | str]:
+        """Get the current assessment spec from the server.
+
+        Returns:
+            None - if there is no spec
+            str  - if there is one
+        """
+        response = self.get_auth("/api/beta/spec")
+        return response
+
     def new_server_upload_spec(self, spec_toml_string: str) -> None:
         """Upload an assessment spec to the server.
 
@@ -1099,13 +1109,14 @@ class Messenger(BaseMessenger):
         """
         with self.SRmutex:
             try:
-                response = self.put_auth(
-                    "/info/spec",
+                response = self.post_auth(
+                    "/api/beta/spec",
                     json={
                         "spec_toml": spec_toml_string,
                     },
                 )
                 response.raise_for_status()
+                return response
             except requests.HTTPError as e:
                 if response.status_code == 400:
                     raise ValueError(response.reason) from None
