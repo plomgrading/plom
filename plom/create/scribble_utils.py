@@ -263,7 +263,15 @@ name_font_size = 26
 answer_font_size = 18
 
 
-def scribble_name_and_id(pdf_doc, student_id, student_name, *, pagenum=0, seed=None):
+def scribble_name_and_id(
+    pdf_doc,
+    student_id,
+    student_name,
+    *,
+    pagenum=0,
+    seed=None,
+    y_offset: int = 0,
+):
     """Write name/number on coverpage of fitz pdf_doc.
 
     Args:
@@ -277,6 +285,8 @@ def scribble_name_and_id(pdf_doc, student_id, student_name, *, pagenum=0, seed=N
         seed (None/int): seed the random number generator with this value.
             Default of None means don't.  This can be used to ensure the
             same digit images are chosen each time, useful for testing.
+        y_offset: how far to offset the scribbles from their
+            'default' position in the version-1 assessment paper.
 
     Returns:
         None: but modifies the open document as a side effect.
@@ -290,6 +300,7 @@ def scribble_name_and_id(pdf_doc, student_id, student_name, *, pagenum=0, seed=N
     if seed is not None:
         random.seed(seed)
 
+    # warning - magic numbers here
     # insert digit images into rectangles - some hackery required to get correct positions.
     id_page = pdf_doc[pagenum]
     width = 28
@@ -297,9 +308,9 @@ def scribble_name_and_id(pdf_doc, student_id, student_name, *, pagenum=0, seed=N
     for n, digit in enumerate(student_id):
         rect1 = fitz.Rect(
             220 + border * n + width * n,
-            265,
+            265 + y_offset,
             220 + border * n + width * (n + 1),
-            265 + width,
+            265 + y_offset + width,
         )
         # uu-encoded png
         uuImg = digit_array[int(digit) * num_samples + random.randrange(num_samples)]
@@ -308,7 +319,7 @@ def scribble_name_and_id(pdf_doc, student_id, student_name, *, pagenum=0, seed=N
         # TODO - there should be an assert or something here after insert?
 
     fontname, ttf = "ejx", "ejx_handwriting.ttf"
-    rect = fitz.Rect(220 + random.randrange(0, 16), 406, 600, 511)
+    rect = fitz.Rect(220 + random.randrange(0, 16), 406 + y_offset, 600, 511 + y_offset)
     fontres = resources.files(plom.create.fonts) / ttf
     excess = id_page.insert_textbox(
         rect,

@@ -16,10 +16,10 @@ from django.db import transaction
 from django.db.models.query import QuerySet
 from django.utils import timezone
 
-from Mark.models import Annotation, MarkingTask
-from Mark.services import MarkingTaskService
+from plom_server.Mark.models import Annotation, MarkingTask
+from plom_server.Mark.services import MarkingTaskService
 
-from UserManagement.models import Quota
+from plom_server.UserManagement.models import Quota
 
 
 class UserInfoServices:

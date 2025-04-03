@@ -6,7 +6,7 @@
 
 from django import forms
 
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 
 from .models import Rubric
 
@@ -78,15 +78,15 @@ class RubricDiffForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         if rid:
-            queryset = Rubric.objects.filter(rid=rid)
-            self.fields["left_compare"].queryset = queryset
+            revs = Rubric.objects.filter(rid=rid).order_by("revision")
+            self.fields["left_compare"].queryset = revs
             self.fields["left_compare"].label_from_instance = (
-                lambda obj: "Rev. %i" % obj.revision
+                lambda obj: f"Rev. {obj.revision}.{obj.subrevision}"
             )
 
-            self.fields["right_compare"].queryset = queryset
+            self.fields["right_compare"].queryset = revs
             self.fields["right_compare"].label_from_instance = (
-                lambda obj: "Rev. %i" % obj.revision
+                lambda obj: f"Rev. {obj.revision}.{obj.subrevision}"
             )
 
 

@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from __future__ import annotations
 
@@ -20,8 +20,8 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 
 from plom.plom_exceptions import PlomDependencyConflict
-from Base.base_group_views import ManagerRequiredView
-from Papers.services import SpecificationService
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Papers.services import SpecificationService
 
 from ..services import SourceService
 
@@ -142,5 +142,5 @@ class SourceManageView(ManagerRequiredView):
 
 
 class ReferenceImageView(ManagerRequiredView):
-    def get(self, request: HttpRequest, version: int, page: int) -> HttpRequest:
+    def get(self, request: HttpRequest, *, version: int, page: int) -> HttpResponse:
         return FileResponse(SourceService._get_reference_image_file(version, page))

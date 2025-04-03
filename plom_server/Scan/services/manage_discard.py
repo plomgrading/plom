@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
-from Papers.models import (
+from plom_server.Papers.models import (
     Paper,
     FixedPage,
     MobilePage,
@@ -16,8 +16,8 @@ from Papers.models import (
     DiscardPage,
     Image,
 )
-from Identify.services import IdentifyTaskService
-from Mark.services import MarkingTaskService
+from plom_server.Identify.services import IdentifyTaskService
+from plom_server.Mark.services import MarkingTaskService
 
 
 class ManageDiscardService:

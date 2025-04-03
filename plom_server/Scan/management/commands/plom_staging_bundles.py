@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
-# Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
 
@@ -141,6 +141,14 @@ class Command(BaseCommand):
             raise CommandError(err)
         self.stdout.write(f"Deleted bundle id {bundle_pk}")
 
+    def delete_staged_bundle_by_slug(self, bundle_slug: str) -> None:
+        scanner = ScanService()
+        try:
+            scanner.remove_bundle_by_slug_cmd(bundle_slug)
+        except ValueError as err:
+            raise CommandError(err)
+        self.stdout.write(f"Deleted bundle {bundle_slug}")
+
     def push_staged_bundle(self, bundle_name, username):
         scanner = ScanService()
         try:
@@ -260,7 +268,12 @@ class Command(BaseCommand):
         )
 
         sp_del = sp.add_parser("delete", help="delete a bundle.")
-        sp_del.add_argument("bundle_id", type=int, help="Which bundle to delete")
+        sp_del.add_argument("bundle_id", type=int, help="PK of bundle to delete")
+
+        sp_delslug = sp.add_parser("delbyslug", help="delete a bundle by its slug.")
+        sp_delslug.add_argument(
+            "bundle_slug", type=str, help="Name of bundle to delete (excluding '.pdf')"
+        )
 
         # Push
         sp_push = sp.add_parser("push", help="Push the staged bundles.")
@@ -304,6 +317,8 @@ class Command(BaseCommand):
             self.staging_bundle_status(bundle_name=options["bundle_name"])
         elif options["command"] == "delete":
             self.delete_staged_bundle(options["bundle_id"])
+        elif options["command"] == "delbyslug":
+            self.delete_staged_bundle_by_slug(options["bundle_slug"])
         elif options["command"] == "push":
             self.push_staged_bundle(
                 bundle_name=options["bundle_name"],

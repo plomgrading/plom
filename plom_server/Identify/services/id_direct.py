@@ -5,7 +5,7 @@
 from django.contrib.auth.models import User
 from django.db import transaction
 
-from Papers.models import Paper
+from plom_server.Papers.models import Paper
 from ..services import IdentifyTaskService
 
 

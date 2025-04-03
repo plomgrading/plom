@@ -14,7 +14,7 @@ from django_htmx.http import HttpResponseClientRedirect
 
 from ..services import StagingStudentService, PrenameSettingService, PapersPrinted
 
-from Base.base_group_views import ManagerRequiredView
+from plom_server.Base.base_group_views import ManagerRequiredView
 from plom.plom_exceptions import PlomDependencyConflict
 
 

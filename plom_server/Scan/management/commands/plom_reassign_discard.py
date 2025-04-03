@@ -5,7 +5,7 @@
 from django.core.management.base import BaseCommand, CommandError
 
 from plom.scan.question_list_utils import check_question_list
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 from ...services import ManageDiscardService
 
 

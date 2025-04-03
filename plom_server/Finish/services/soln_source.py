@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
 
 import hashlib
@@ -11,29 +11,34 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import transaction
 
-from Papers.services import SpecificationService, SolnSpecService
-from Papers.models import SolnSpecQuestion
+from plom_server.Papers.services import SpecificationService, SolnSpecService
+from plom_server.Papers.models import SolnSpecQuestion
 
 from ..models import SolutionSourcePDF, SolutionImage
 
 
 class SolnSourceService:
     def is_there_a_solution_pdf(self, version: int) -> bool:
+        """Returns true if a solution pdf of given version has been uploaded."""
         return SolutionSourcePDF.objects.filter(version=version).exists()
 
     def are_there_any_solution_pdf(self) -> bool:
+        """Returns true if any solution pdf have been uploaded."""
         return SolutionSourcePDF.objects.exists()
 
     def get_number_of_solution_pdf(self) -> int:
+        """Returns number of uploaded solution pdf."""
         return SolutionSourcePDF.objects.count()
 
     def are_all_solution_pdf_present(self) -> bool:
+        """Returns true if all required solution pdf have been uploaded."""
         return (
             SolutionSourcePDF.objects.all().count()
             == SpecificationService.get_n_versions()
         )
 
     def get_solution_pdf_hashes(self) -> dict[int, None | str]:
+        """Returns dict of hash of each uploaded solution pdf, or Nones if pdf missing."""
         soln_pdfs: dict[int, None | str] = {
             v: None for v in SpecificationService.get_list_of_versions()
         }
@@ -54,34 +59,38 @@ class SolnSourceService:
             )
         return status
 
-    @transaction.atomic
-    def remove_solution_pdf(self, version: int):
-        # remove the PDF if it is there
-        try:
-            soln_source_obj = SolutionSourcePDF.objects.get(version=version)
-            if soln_source_obj.source_pdf:
-                soln_source_obj.source_pdf.delete()  # this deletes the underlying file
-            soln_source_obj.delete()  # now delete the db row
-        except ObjectDoesNotExist:
-            raise ValueError(f"There is no solution pdf for version {version}")
-        # remove any associated images
-        for img_obj in SolutionImage.objects.filter(version=version):
-            if img_obj.image:
-                img_obj.image.delete()  # delete the underlying file
-            img_obj.delete()  # now delete the db row
+    @staticmethod
+    def remove_solution_pdf(version: int):
+        """Remove solution pdf and associated images for the given version."""
+        with transaction.atomic(durable=True):
+            try:
+                soln_source_obj = SolutionSourcePDF.objects.get(version=version)
+            except ObjectDoesNotExist:
+                raise ValueError(f"There is no solution pdf for version {version}")
+            # force QuerySet to list: we're going to traverse twice; don't want any magic
+            img_objs = list(SolutionImage.objects.filter(version=version))
+            soln_source_obj.delete()  # delete the db row
+            # remove associated images, first by deleting their db rows
+            for img_obj in img_objs:
+                img_obj.delete()
 
-    @transaction.atomic
-    def remove_all_solution_pdf(self):
-        for sspdf_obj in SolutionSourcePDF.objects.all():
-            if sspdf_obj.source_pdf:
-                sspdf_obj.source_pdf.delete()
-            sspdf_obj.delete()
-        for si_obj in SolutionImage.objects.all():
-            if si_obj.image:
-                si_obj.image.delete()
-            si_obj.delete()
+        # now that we're sure the database has been updated (by the atomic durable)
+        # we can safely delete the files.  If the power went out *right now*, the
+        # database would be fine and we'd have dangling files on disc.
+        if soln_source_obj.source_pdf:
+            soln_source_obj.source_pdf.delete(save=False)  # delete the underlying file
+        for img_obj in img_objs:
+            if img_obj.image_file:
+                img_obj.image_file.delete(save=False)  # delete the underlying file
+
+    @classmethod
+    def remove_all_solution_pdf(cls):
+        """Remove all solution pdfs and associated images."""
+        for obj in SolutionSourcePDF.objects.all():
+            cls.remove_solution_pdf(obj.version)
 
     def get_soln_pdf_for_download(self, version: int) -> io.BytesIO:
+        """Return bytes of solution pdf for given version."""
         if version not in SpecificationService.get_list_of_versions():
             raise ValueError(f"Version {version} is out of range")
         try:
@@ -156,9 +165,9 @@ class SolnSourceService:
             # now save the result into the DB.
             SolutionImage.objects.create(
                 version=version,
-                solution_number=sqs_obj.solution_number,
-                image=File(
+                question_index=sqs_obj.question_index,
+                image_file=File(
                     io.BytesIO(soln_img.tobytes()),
-                    name=f"soln_{version}_{sqs_obj.solution_number}.png",
+                    name=f"soln_{version}_{sqs_obj.question_index}.png",
                 ),
             )

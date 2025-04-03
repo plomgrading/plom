@@ -14,9 +14,9 @@ from model_bakery import baker
 from rest_framework import serializers
 
 from plom.plom_exceptions import PlomConflict
-from Mark.models.annotations import Annotation
-from Mark.models.tasks import MarkingTask
-from Papers.models import Paper, SpecQuestion
+from plom_server.Mark.models.annotations import Annotation
+from plom_server.Mark.models.tasks import MarkingTask
+from plom_server.Papers.models import Paper, SpecQuestion
 from ..models import Rubric
 from ..services import RubricService
 
@@ -47,7 +47,7 @@ class RubricServiceTests_exceptions(TestCase):
         }
 
         with self.assertRaises(ValueError):
-            RubricService().create_rubric(rub)
+            RubricService.create_rubric(rub)
 
     def test_no_user_KeyError(self) -> None:
         """Test KeyError in RubricService.create_rubric().
@@ -64,7 +64,7 @@ class RubricServiceTests_exceptions(TestCase):
         }
 
         with self.assertRaises(KeyError):
-            RubricService().create_rubric(rub)
+            RubricService.create_rubric(rub)
 
     def test_no_kind_ValidationError(self) -> None:
         """Test for the RubricService.create_rubric() method when 'kind' is invalid.
@@ -84,7 +84,7 @@ class RubricServiceTests_exceptions(TestCase):
         }
 
         with self.assertRaises(serializers.ValidationError):
-            RubricService().create_rubric(rub)
+            RubricService.create_rubric(rub)
 
     def test_no_kind_KeyValidationError(self) -> None:
         """Test ValidationError in RubricService.create_rubric().
@@ -101,7 +101,7 @@ class RubricServiceTests_exceptions(TestCase):
         }
 
         with self.assertRaises(serializers.ValidationError):
-            RubricService().create_rubric(rub)
+            RubricService.create_rubric(rub)
 
     def test_rubric_absolute_out_of_range(self) -> None:
         rub = {
@@ -114,16 +114,16 @@ class RubricServiceTests_exceptions(TestCase):
         }
         # check error thrown when value > out_of
         with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
-            RubricService().create_rubric(rub)
+            RubricService.create_rubric(rub)
         # check if value < 0
         rub["value"] = -2
         with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
-            RubricService().create_rubric(rub)
+            RubricService.create_rubric(rub)
         # check if out_of > max_mark
         rub["value"] = 3
         rub["out_of"] = 99
         with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
-            RubricService().create_rubric(rub)
+            RubricService.create_rubric(rub)
 
     def test_create_rubric_should_not_have_existing_rid(self) -> None:
         rub = {
@@ -135,7 +135,7 @@ class RubricServiceTests_exceptions(TestCase):
             "rid": 42,
         }
         with self.assertRaises(serializers.ValidationError):
-            RubricService().create_rubric(rub)
+            RubricService.create_rubric(rub)
 
 
 class RubricServiceTests_extra_validation(TestCase):
@@ -154,7 +154,7 @@ class RubricServiceTests_extra_validation(TestCase):
             "question_index": 1,
         }
         with self.assertRaises(serializers.ValidationError):
-            RubricService().create_rubric(rub)
+            RubricService.create_rubric(rub)
 
     def test_create_rubric_invalid_versions(self) -> None:
         for bad_versions in ("[1, 1.2]", "[1, sth]", "{1, 2}", [1, 1.2], [1, "abc"]):
@@ -167,7 +167,7 @@ class RubricServiceTests_extra_validation(TestCase):
                 "versions": bad_versions,
             }
             with self.assertRaises(serializers.ValidationError):
-                RubricService().create_rubric(rub)
+                RubricService.create_rubric(rub)
 
     def test_create_rubric_valid_parameters(self) -> None:
         for good_params in (
@@ -183,7 +183,7 @@ class RubricServiceTests_extra_validation(TestCase):
                 "question_index": 1,
                 "parameters": good_params,
             }
-            RubricService().create_rubric(rub)
+            RubricService.create_rubric(rub)
 
     def test_create_rubric_invalid_parameters(self) -> None:
         for bad_params in (
@@ -202,7 +202,7 @@ class RubricServiceTests_extra_validation(TestCase):
                 "parameters": bad_params,
             }
             with self.assertRaises(serializers.ValidationError):
-                RubricService().create_rubric(rub)
+                RubricService.create_rubric(rub)
 
 
 class RubricServiceTests(TestCase):
@@ -308,7 +308,7 @@ class RubricServiceTests(TestCase):
             "versions": [],
             "parameters": [],
         }
-        r = RubricService()._create_rubric(simulated_client_data)
+        r = RubricService._create_rubric(simulated_client_data)
 
         self.assertEqual(r.kind, self.neutral_rubric.kind)
         self.assertEqual(r.display_delta, self.neutral_rubric.display_delta)
@@ -335,7 +335,7 @@ class RubricServiceTests(TestCase):
             "versions": [],
             "parameters": [],
         }
-        r = RubricService()._create_rubric(simulated_client_data)
+        r = RubricService._create_rubric(simulated_client_data)
 
         self.assertEqual(r.kind, self.relative_rubric.kind)
         self.assertEqual(r.display_delta, self.relative_rubric.display_delta)
@@ -362,7 +362,7 @@ class RubricServiceTests(TestCase):
             "versions": [],
             "parameters": [],
         }
-        r = RubricService()._create_rubric(simulated_client_data)
+        r = RubricService._create_rubric(simulated_client_data)
 
         self.assertEqual(r.kind, self.absolute_rubric.kind)
         self.assertEqual(r.display_delta, self.absolute_rubric.display_delta)
@@ -383,12 +383,11 @@ class RubricServiceTests(TestCase):
             "username": "Olivia",
             "question_index": 1,
         }
-        r = RubricService().create_rubric(simulated_client_data)
+        r = RubricService.create_rubric(simulated_client_data)
         assert isinstance(r, dict)
 
     def test_modify_neutral_rubric(self) -> None:
         """Test RubricService.modify_rubric() to modify a neural rubric."""
-        service = RubricService()
         rid = self.modified_neutral_rubric.rid
 
         simulated_client_data = {
@@ -405,7 +404,7 @@ class RubricServiceTests(TestCase):
             "versions": [],
             "parameters": [],
         }
-        r = service.modify_rubric(rid, simulated_client_data)
+        r = RubricService.modify_rubric(rid, simulated_client_data)
 
         self.assertEqual(r["rid"], self.modified_neutral_rubric.rid)
         self.assertEqual(r["kind"], self.modified_neutral_rubric.kind)
@@ -413,7 +412,6 @@ class RubricServiceTests(TestCase):
 
     def test_modify_relative_rubric(self) -> None:
         """Test RubricService.modify_rubric() to modify a relative rubric."""
-        service = RubricService()
         rid = self.modified_relative_rubric.rid
 
         simulated_client_data = {
@@ -430,7 +428,7 @@ class RubricServiceTests(TestCase):
             "versions": [],
             "parameters": [],
         }
-        r = service.modify_rubric(rid, simulated_client_data)
+        r = RubricService.modify_rubric(rid, simulated_client_data)
 
         self.assertEqual(r["rid"], self.modified_relative_rubric.rid)
         self.assertEqual(r["kind"], self.modified_relative_rubric.kind)
@@ -442,7 +440,6 @@ class RubricServiceTests(TestCase):
 
     def test_modify_absolute_rubric(self) -> None:
         """Test RubricService.modify_rubric() to modify a relative rubric."""
-        service = RubricService()
         rid = self.modified_absolute_rubric.rid
 
         simulated_client_data = {
@@ -459,7 +456,7 @@ class RubricServiceTests(TestCase):
             "versions": [],
             "parameters": [],
         }
-        r = service.modify_rubric(rid, simulated_client_data)
+        r = RubricService.modify_rubric(rid, simulated_client_data)
 
         self.assertEqual(r["rid"], self.modified_absolute_rubric.rid)
         self.assertEqual(r["kind"], self.modified_absolute_rubric.kind)
@@ -471,7 +468,6 @@ class RubricServiceTests(TestCase):
         self.assertEqual(r["username"], self.modified_absolute_rubric.user.username)
 
     def test_modify_absolute_rubric_change_value_autogen_display(self) -> None:
-        service = RubricService()
         rid = self.modified_absolute_rubric.rid
 
         simulated_client_data = {
@@ -483,11 +479,10 @@ class RubricServiceTests(TestCase):
             "username": "Olivia",
             "question_index": 1,
         }
-        r = service.modify_rubric(rid, simulated_client_data)
+        r = RubricService.modify_rubric(rid, simulated_client_data)
         self.assertEqual(r["display_delta"], "2.57 of 3")
 
     def test_modify_absolute_rubric_change_value_no_autogen_display(self) -> None:
-        service = RubricService()
         rid = self.modified_absolute_rubric.rid
 
         simulated_client_data = {
@@ -500,7 +495,7 @@ class RubricServiceTests(TestCase):
             "username": "Olivia",
             "question_index": 1,
         }
-        r = service.modify_rubric(rid, simulated_client_data)
+        r = RubricService.modify_rubric(rid, simulated_client_data)
         self.assertEqual(r["display_delta"], "2.50 of 3.00")
 
     def test_modify_rubric_change_kind(self) -> None:
@@ -523,95 +518,89 @@ class RubricServiceTests(TestCase):
             d["display_delta"] = "."
             d["username"] = username
 
-            r = RubricService().modify_rubric(rid, d)
+            r = RubricService.modify_rubric(rid, d)
             self.assertEqual(r["rid"], rubric.rid)
             self.assertEqual(r["kind"], d["kind"])
             self.assertEqual(r["display_delta"], d["display_delta"])
 
+            d = r
             d["kind"] = "relative"
             d["display_delta"] = "+2"
             d["value"] = 2.0
             d["username"] = username
-            # update the revision
-            d["revision"] = RubricService().get_rubric_by_rid(rid).revision
 
-            r = RubricService().modify_rubric(rid, d)
+            r = RubricService.modify_rubric(rid, d)
             self.assertEqual(r["rid"], rubric.rid)
             self.assertEqual(r["kind"], d["kind"])
             self.assertEqual(r["display_delta"], d["display_delta"])
             self.assertEqual(r["value"], d["value"])
 
+            d = r
             d["kind"] = "absolute"
             d["display_delta"] = "2 of 3"
             d["value"] = 2.0
             d["out_of"] = 3.0
             d["username"] = username
-            # update the revision
-            d["revision"] = RubricService().get_rubric_by_rid(rid).revision
 
-            r = RubricService().modify_rubric(rid, d)
+            r = RubricService.modify_rubric(rid, d)
             self.assertEqual(r["rid"], rubric.rid)
             self.assertEqual(r["kind"], d["kind"])
             self.assertEqual(r["display_delta"], d["display_delta"])
             self.assertEqual(r["value"], d["value"])
             self.assertEqual(r["out_of"], d["out_of"])
 
-    def test_rubrics_from_user(self) -> None:
-        service = RubricService()
+    def test_rubrics_created_by_user(self) -> None:
         user: User = baker.make(User)
-        rubrics = service.get_rubrics_from_user(user)
+        rubrics = RubricService.get_rubrics_created_by_user(user)
         self.assertEqual(rubrics.count(), 0)
 
         baker.make(Rubric, user=user)
-        rubrics = service.get_rubrics_from_user(user)
+        rubrics = RubricService.get_rubrics_created_by_user(user)
         self.assertEqual(rubrics.count(), 1)
 
         baker.make(Rubric, user=user)
-        rubrics = service.get_rubrics_from_user(user)
+        rubrics = RubricService.get_rubrics_created_by_user(user)
         self.assertEqual(rubrics.count(), 2)
 
         baker.make(Rubric, user=user)
-        rubrics = service.get_rubrics_from_user(user)
+        rubrics = RubricService.get_rubrics_created_by_user(user)
         self.assertEqual(rubrics.count(), 3)
 
     def test_rubrics_from_annotation(self) -> None:
-        service = RubricService()
         annotation1 = baker.make(Annotation)
 
-        rubrics = service.get_rubrics_from_annotation(annotation1)
+        rubrics = RubricService.get_rubrics_from_annotation(annotation1)
         self.assertEqual(rubrics.count(), 0)
 
         b = baker.make(Rubric)
         b.annotations.add(annotation1)
         b.save()
-        rubrics = service.get_rubrics_from_annotation(annotation1)
+        rubrics = RubricService.get_rubrics_from_annotation(annotation1)
         self.assertEqual(rubrics.count(), 1)
 
         b = baker.make(Rubric)
         b.annotations.add(annotation1)
         b.save()
-        rubrics = service.get_rubrics_from_annotation(annotation1)
+        rubrics = RubricService.get_rubrics_from_annotation(annotation1)
         self.assertEqual(rubrics.count(), 2)
 
     def test_annotations_from_rubric(self) -> None:
-        service = RubricService()
         rubric1 = baker.make(Rubric)
 
-        annotations = service.get_annotation_from_rubric(rubric1)
+        annotations = RubricService.get_annotations_from_rubric(rubric1)
         self.assertEqual(annotations.count(), 0)
 
         annot1 = baker.make(Annotation, rubric=rubric1)
         rubric1.annotations.add(annot1)
-        annotations = service.get_annotation_from_rubric(rubric1)
+        annotations = RubricService.get_annotations_from_rubric(rubric1)
         self.assertEqual(annotations.count(), 1)
 
         annot2 = baker.make(Annotation, rubric=rubric1)
         rubric1.annotations.add(annot2)
-        annotations = service.get_annotation_from_rubric(rubric1)
+        annotations = RubricService.get_annotations_from_rubric(rubric1)
         self.assertEqual(annotations.count(), 2)
 
     def test_rubrics_from_paper(self) -> None:
-        service = RubricService()
         paper1 = baker.make(Paper, paper_number=1)
         marking_task1 = baker.make(MarkingTask, paper=paper1)
         marking_task2 = baker.make(MarkingTask, paper=paper1)
@@ -620,18 +609,18 @@ class RubricServiceTests(TestCase):
         annotation3 = baker.make(Annotation, task=marking_task1)
         annotation4 = baker.make(Annotation, task=marking_task2)
 
-        rubrics = service.get_rubrics_from_paper(paper1)
+        rubrics = RubricService.get_rubrics_from_paper(paper1)
         self.assertEqual(rubrics.count(), 0)
 
         rubric1 = baker.make(Rubric)
         rubric1.annotations.add(annotation1)
         rubric1.annotations.add(annotation2)
-        rubrics = service.get_rubrics_from_paper(paper1)
+        rubrics = RubricService.get_rubrics_from_paper(paper1)
         self.assertEqual(rubrics.count(), 2)
 
         rubric1.annotations.add(annotation3)
         rubric1.annotations.add(annotation4)
-        rubrics = service.get_rubrics_from_paper(paper1)
+        rubrics = RubricService.get_rubrics_from_paper(paper1)
         self.assertEqual(rubrics.count(), 4)
 
     def test_modify_rubric_wrong_revision(self) -> None:
@@ -642,20 +631,19 @@ class RubricServiceTests(TestCase):
             "question_index": 1,
             "revision": 10,
         }
-        r = RubricService().create_rubric(rub)
+        r = RubricService.create_rubric(rub)
         rid = r["rid"]
 
         # ok to change if revision matches
         rub.update({"text": "Changed"})
-        RubricService().modify_rubric(rid, rub)
+        RubricService.modify_rubric(rid, rub)
 
         # but its an error if the revision does not match
         rub.update({"revision": 0})
         with self.assertRaises(PlomConflict):
-            RubricService().modify_rubric(rid, rub)
+            RubricService.modify_rubric(rid, rub)
 
     def test_modify_absolute_rubric_change_value_invalid(self) -> None:
-        service = RubricService()
         rid = self.modified_absolute_rubric.rid
 
         simulated_client_data = {
@@ -668,20 +656,19 @@ class RubricServiceTests(TestCase):
             "question_index": 1,
         }
         with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
-            service.modify_rubric(rid, simulated_client_data)
+            RubricService.modify_rubric(rid, simulated_client_data)
         simulated_client_data["value"] = -2
         with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
-            service.modify_rubric(rid, simulated_client_data)
+            RubricService.modify_rubric(rid, simulated_client_data)
         simulated_client_data["value"] = 99
         with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
-            service.modify_rubric(rid, simulated_client_data)
+            RubricService.modify_rubric(rid, simulated_client_data)
         simulated_client_data["value"] = 4
         simulated_client_data["out_of"] = 99
         with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
-            service.modify_rubric(rid, simulated_client_data)
+            RubricService.modify_rubric(rid, simulated_client_data)
 
     def test_modify_absolute_rubric_change_value_nonnumeric(self) -> None:
-        service = RubricService()
         rid = self.modified_absolute_rubric.rid
 
         simulated_client_data = {
@@ -695,10 +682,9 @@ class RubricServiceTests(TestCase):
             "question_index": 1,
         }
         with self.assertRaisesRegex(serializers.ValidationError, "value.*convertible"):
-            service.modify_rubric(rid, simulated_client_data)
+            RubricService.modify_rubric(rid, simulated_client_data)
 
     def test_modify_absolute_rubric_change_out_of_nonnumeric(self) -> None:
-        service = RubricService()
         rid = self.modified_absolute_rubric.rid
 
         simulated_client_data = {
@@ -712,10 +698,78 @@ class RubricServiceTests(TestCase):
             "question_index": 1,
         }
         with self.assertRaisesRegex(serializers.ValidationError, "out of.*convertible"):
-            service.modify_rubric(rid, simulated_client_data)
+            RubricService.modify_rubric(rid, simulated_client_data)
 
     def test_rubrics_get_as_dicts(self) -> None:
         rubrics = RubricService().get_rubrics_as_dicts()
         self.assertEqual(len(rubrics), RubricService().get_rubric_count())
         for r in rubrics:
             assert isinstance(r, dict)
+
+    def test_modify_autodetect_major_edit_on_value_change(self) -> None:
+        data = _Rubric_to_dict(self.absolute_rubric)
+        rid = data["rid"]
+        data["value"] += 1
+        new = RubricService.modify_rubric(rid, data, is_minor_change=None)
+        self.assertEqual(new["revision"], data["revision"] + 1)
+
+    def test_modify_autodetect_major_edit_on_kind_change(self) -> None:
+        data = _Rubric_to_dict(self.neutral_rubric)
+        rid = data["rid"]
+        data["value"] = 1
+        data["kind"] = "relative"
+        data.pop("out_of")
+        new = RubricService.modify_rubric(rid, data, is_minor_change=None)
+        self.assertEqual(new["revision"], data["revision"] + 1)
+
+    def test_modify_autodetect_major_edit_on_out_of_change(self) -> None:
+        data = _Rubric_to_dict(self.absolute_rubric)
+        rid = data["rid"]
+        data["out_of"] -= 1
+        new = RubricService.modify_rubric(rid, data, is_minor_change=None)
+        self.assertEqual(new["revision"], data["revision"] + 1)
+
+    def test_modify_autodetect_major_edit_on_change_question(self) -> None:
+        data = _Rubric_to_dict(self.absolute_rubric)
+        rid = data["rid"]
+        current_qidx = data["question_index"]
+        assert current_qidx != 2, "test invalid unless we change the question index"
+        data["question_index"] = 2
+        new = RubricService.modify_rubric(rid, data, is_minor_change=None)
+        self.assertEqual(new["revision"], data["revision"] + 1)
+
+    def test_modify_autodetect_minor_edit_on_tag_change(self) -> None:
+        data = _Rubric_to_dict(self.absolute_rubric)
+        rid = data["rid"]
+        data["tags"] = "new_tag"
+        new = RubricService.modify_rubric(rid, data, is_minor_change=None)
+        self.assertEqual(new["revision"], data["revision"])
+
+    def test_modify_force_minor_than_major_change_text(self) -> None:
+        data = _Rubric_to_dict(self.absolute_rubric)
+        rid = data["rid"]
+        data["text"] = data["text"] + "changing text"
+        new1 = RubricService.modify_rubric(rid, data, is_minor_change=True)
+        # minor changes leaves revision unchanged and increases subrevision
+        self.assertEqual(new1["revision"], data["revision"])
+        self.assertEqual(new1["subrevision"], data["subrevision"] + 1)
+
+        # a subsequent major change
+        new1["text"] = new1["text"] + "more changes"
+        new2 = RubricService.modify_rubric(rid, new1, is_minor_change=False)
+        # major change increases revision and resets subrevision
+        self.assertEqual(new2["revision"], new1["revision"] + 1)
+        self.assertEqual(new2["subrevision"], 0)
+
+    def test_modify_force_minor_change_value(self) -> None:
+        data = _Rubric_to_dict(self.absolute_rubric)
+        rid = data["rid"]
+        data["value"] += 1
+        new1 = RubricService.modify_rubric(rid, data, is_minor_change=True)
+        self.assertEqual(new1["revision"], data["revision"])
+        self.assertEqual(new1["subrevision"], data["subrevision"] + 1)
+
+        new1["value"] += 1
+        new2 = RubricService.modify_rubric(rid, new1, is_minor_change=False)
+        self.assertEqual(new2["revision"], new1["revision"] + 1)
+        self.assertEqual(new2["subrevision"], 0)

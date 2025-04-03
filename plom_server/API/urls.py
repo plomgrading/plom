@@ -24,6 +24,8 @@ from .routes import (
 
 from .views import (
     QuestionMarkingViewSet,
+    ReassignTask,
+    ResetTask,
     # TODO: these are possibly temporary
     ScanListBundles,
     ScanBundleActions,
@@ -120,6 +122,16 @@ marking_router.register("tasks", QuestionMarkingViewSet, basename="tasks")
 urlpatterns += [
     path("experimental/", include(experimental_router.urls)),
     path("MK/", include(marking_router.urls)),
+    path(
+        "api/v0/tasks/<int:papernum>/<int:qidx>/reassign/<str:new_username>",
+        ReassignTask.as_view(),
+        name="api_task_reassign_new_username",
+    ),
+    path(
+        "api/v0/tasks/<int:papernum>/<int:qidx>/reset",
+        ResetTask.as_view(),
+        name="api_task_reset",
+    ),
     path(
         "rubrics/<int:rid>/tasks",
         MgetRubricMarkingTasks.as_view(),

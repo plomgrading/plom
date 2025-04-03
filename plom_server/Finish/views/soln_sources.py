@@ -11,10 +11,10 @@ from django.http import HttpResponseRedirect, FileResponse, Http404
 from django_htmx.http import HttpResponseClientRedirect
 
 
-from Base.base_group_views import ManagerRequiredView
+from plom_server.Base.base_group_views import ManagerRequiredView
 
 from ..services import SolnSourceService, BuildSolutionService
-from Papers.services import SolnSpecService, SpecificationService
+from plom_server.Papers.services import SolnSpecService, SpecificationService
 
 
 class SolnSourcesView(ManagerRequiredView):
@@ -48,7 +48,7 @@ class SolnSourcesView(ManagerRequiredView):
         # reset any built soln pdfs as well as delete this soln source pdf.
         if version:
             BuildSolutionService().reset_all_soln_build()
-            SolnSourceService().remove_solution_pdf(version)
+            SolnSourceService.remove_solution_pdf(version)
 
         return HttpResponseClientRedirect(reverse("soln_sources"))
 

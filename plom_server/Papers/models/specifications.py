@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Aden Chan
 
 from django.db import models
 
-from Base.models import SingletonABCModel
+from plom_server.Base.models import SingletonABCModel
 
 
 class SpecQuestion(models.Model):
@@ -93,7 +93,7 @@ class SolnSpecQuestion(models.Model):
     """A solution to a question in the solution specification."""
 
     pages = models.JSONField()
-    solution_number = models.PositiveIntegerField(null=False, unique=True)
+    question_index = models.PositiveIntegerField(null=False, unique=True)
 
 
 class SolnSpecification(SingletonABCModel):
@@ -118,7 +118,7 @@ class SolnSpecification(SingletonABCModel):
 
     def get_solution_dict(self):
         """Return all the solution questions in the form of a dictionary, where keys are str question indices."""
-        return {str(s.solution_number): s for s in SolnSpecQuestion.objects.all()}
+        return {str(s.question_index): s for s in SolnSpecQuestion.objects.all()}
 
     def get_soltion_list(self):
         """Return the solution questions in the form of a list."""

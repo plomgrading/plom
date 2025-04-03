@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2024 Andrew Rechnitzer
-    Copyright (C) 2024 Colin B. Macdonald
+    Copyright (C) 2024-2025 Andrew Rechnitzer
+    Copyright (C) 2024-2025 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -15,7 +15,7 @@
     <div>
         {% if id_reader_task_status.status == "Complete" %}
             <p class="my-4">
-                <a class="btn btn-primary" href="{% url 'get_id_box_rectangle' %}">Re-run ID auto-reader tool</a>
+                <a class="btn btn-primary" href="{% url 'get_id_box_parent' %}">Re-run ID auto-reader tool</a>
                 <button class="btn btn-warning"
                         hx-confirm="Are you sure?"
                         hx-delete="{% url 'id_prediction_delete' "MLLAP" %}">Delete LAP predictions</button>
@@ -26,7 +26,7 @@
             <span class="alert alert-success my-4">{{ id_reader_task_status.message }}</span>
         {% elif id_reader_task_status.status == "Error" %}
             <p class="my-4">
-                <a class="btn btn-primary" href="{% url 'get_id_box_rectangle' %}">Re-run ID auto-reader tool</a>
+                <a class="btn btn-primary" href="{% url 'get_id_box_parent' %}">Re-run ID auto-reader tool</a>
                 <button class="btn btn-warning"
                         hx-confirm="Are you sure?"
                         hx-delete="{% url 'id_prediction_delete' "MLLAP" %}">Delete LAP predictions</button>
@@ -37,7 +37,7 @@
             <span class="alert alert-warning my-4">{{ id_reader_task_status.message }}</span>
         {% elif id_reader_task_status.status == "To Do" %}
             <p class="my-4">
-                <a class="btn btn-primary" href="{% url 'get_id_box_rectangle' %}">Run ID auto-reader tool</a>
+                <a class="btn btn-primary" href="{% url 'get_id_box_parent' %}">Run ID auto-reader tool</a>
                 <button class="btn btn-warning"
                         hx-confirm="Are you sure?"
                         hx-delete="{% url 'id_prediction_delete' "MLLAP" %}">Delete LAP predictions</button>
@@ -48,9 +48,7 @@
             <span class="alert alert-info my-4">Reader not yet run.</span>
         {% else %}
             <p class="my-4">
-                <button disabled
-                        class="btn btn-primary"
-                        href="{% url 'get_id_box_rectangle' %}">Run ID auto-reader tool</button>
+                <button disabled class="btn btn-primary" href="{% url 'get_id_box_parent' %}">Run ID auto-reader tool</button>
                 <button class="btn btn-warning" disabled>Delete LAP predictions</button>
                 <button class="btn btn-warning" disabled>Delete Greedy predictions</button>
                 <a class="btn btn-primary" href="{% url 'id_prediction_home' %}"><i class="bi bi-arrow-clockwise"></i></a>
@@ -76,6 +74,8 @@
                                 <th>Certainty</th>
                             </tr>
                             {% for pn, dat in predictions.items %}
+                                <!-- Note: table-xxx styling "most likely won’t see" dark mode until
+                                     Bootstrap v6, https://getbootstrap.com/docs/5.3/content/tables/ -->
                                 <tr {% if 'identified' in dat %}class="table-success" {% elif 'prename' in dat %}class="table-secondary" {% endif %}>
                                     <td>
                                         {{ pn }}

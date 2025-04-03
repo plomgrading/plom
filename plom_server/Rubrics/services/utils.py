@@ -38,6 +38,7 @@ def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
             None if not r.modified_by_user else r.modified_by_user.username
         ),
         "revision": r.revision,
+        "subrevision": r.subrevision,
         "pedagogy_tags": [tag.tag_name for tag in r.pedagogy_tags.all()],
     }
 
@@ -62,6 +63,7 @@ def _list_of_rubrics_to_dict_of_dict(rlist: list[Rubric]) -> dict[int, dict[str,
             "published": r.published,
             "last_modified": r.last_modified,
             "revision": r.revision,
+            "subrevision": r.subrevision,
             "latest": r.latest,
         }
         for r in rlist

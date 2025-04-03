@@ -10,7 +10,7 @@ from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedire
 from django.urls import reverse
 from django.contrib import messages
 
-from Base.base_group_views import ScannerRequiredView
+from plom_server.Base.base_group_views import ScannerRequiredView
 
 from ..services import ScanService
 from plom.plom_exceptions import PlomBundleLockedException, PlomPushCollisionException

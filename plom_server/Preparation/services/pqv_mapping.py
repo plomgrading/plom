@@ -3,8 +3,6 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
 
-from __future__ import annotations
-
 from pathlib import Path
 import tempfile
 from typing import Any
@@ -12,7 +10,7 @@ from typing import Any
 from plom import SpecVerifier
 from plom.version_maps import version_map_to_csv
 
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 
 from ..services import StagingStudentService
 
@@ -28,8 +26,8 @@ class PQVMappingService:
         return "question_version_map.csv"
 
     @staticmethod
-    def get_pqv_map_dict() -> dict[int, dict[int, int]]:
-        from Papers.services import PaperInfoService
+    def get_pqv_map_dict() -> dict[int, dict[int | str, int]]:
+        from plom_server.Papers.services import PaperInfoService
 
         return PaperInfoService.get_pqv_map_dict()
 
@@ -39,7 +37,7 @@ class PQVMappingService:
         # format the data in a way that makes it easy to display for django-template
         # in particular, a dict of lists.
         pqvmapping = self.get_pqv_map_dict()
-        pqv_table = {}
+        pqv_table: dict[int, dict[str, Any]] = {}
         question_indices = SpecificationService.get_question_indices()
         # sort in paper-number-order so that the table renders in this order
         # python keeps keys in insertion order since v3.7
@@ -48,14 +46,15 @@ class PQVMappingService:
             pqv_table[paper_number] = {
                 "prename": None,
                 "qvlist": [qvmap[q] for q in question_indices],
+                "id_ver": 1 if "id" not in qvmap.keys() else qvmap["id"],
             }
 
-            # if prenaming then we need to put in those student details
+        # if prenaming then we need to put in those student details
         if prenaming:
-            sss = StagingStudentService()
-            for paper_number, student in sss.get_prenamed_papers().items():
+            sss = StagingStudentService
+            for papernum, student in sss.get_prenamed_papers().items():
                 if paper_number in pqv_table:
-                    pqv_table[paper_number]["prename"] = student
+                    pqv_table[papernum]["prename"] = student
                 else:
                     # TODO - issue a warning - means we are trying to prename a
                     # paper for which we do not have a qvmap.
@@ -88,7 +87,7 @@ class PQVMappingService:
 
     def make_version_map(
         self, numberToProduce: int, *, first: int = 1
-    ) -> dict[int, dict[int, int]]:
+    ) -> dict[int, dict[int | str, int]]:
         """Generate a paper-question-version-map.
 
         Args:

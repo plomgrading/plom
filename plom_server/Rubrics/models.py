@@ -19,7 +19,7 @@ import django_tables2
 # from django.db.models import Max
 # from django.db.models.query_utils import Q
 
-from Mark.models.annotations import Annotation
+from plom_server.Mark.models.annotations import Annotation
 
 
 def generate_rid():
@@ -101,10 +101,18 @@ class Rubric(models.Model):
         modified_by_user: who last modified this rubric.  Currently, once
             this makes it to the client, its called ``modified_by_username``
             and is a string.
-        revision: a monontonically-increasing integer used to detect mid-air
-            collisions.  Modifying a rubric will increase this by one.
-            If you are messing with this, presumably you are doing something
-            creative/hacky.
+        revision: a monontonically-increasing integer used to track major
+            edits to the rubric.
+            A major modifying to a rubric will increase this by one, and
+            corresponds to making a new row in the Rubric table.
+            Both revision and subrevision are used for detection of midair
+            collisions during rubric edits.
+            If you are messing with revisions/subrevisions directly,
+            you are probably doing something creative/hacky.
+        subrevision: a monontonically-increasing integer, that is reset to zero
+            on each (major) edit and is increased by one on each minor edit.
+            Minor edits currently happen "in-place" without creating new rows
+            of the Rubric table.
         latest: True when this is the latest version of the rubric and
             false otherwise. There will be only one latest rubric per rid.
         tags: a list of meta tags for this rubric, these are currently used
@@ -123,6 +131,11 @@ class Rubric(models.Model):
             reports for students or pedagogical statistics about the assessment.
             See also "Question Tags": as of 2025-01, these are sometimes
             labelled in this way.
+
+    Notes: the modifications to rubrics are handled in the `rubric_service.py`
+    mostly by the ``_modify_rubric_in_place`` and
+    ``_modify_rubric_by_making_new_one`` functions.  There are also many
+    ``_validate*`` functions there which are effectively part of this model.
     """
 
     class RubricKind(models.TextChoices):
@@ -165,6 +178,7 @@ class Rubric(models.Model):
         User, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
     )
     revision = models.IntegerField(null=False, blank=True, default=0)
+    subrevision = models.IntegerField(null=False, default=0)
     latest = models.BooleanField(null=False, blank=True, default=True)
     pedagogy_tags = models.ManyToManyField("QuestionTags.PedagogyTag", blank=True)
 
@@ -197,19 +211,22 @@ class Rubric(models.Model):
         """
         return reverse("rubric_item", kwargs={"rid": self.rid})
 
-    class Meta:
-        constraints = [
-            # This constraint checks that each rid-revision pair is unique
-            models.UniqueConstraint(
-                fields=["rid", "revision"], name="unique_revision_per_rid"
-            ),
-            # This constraint checks that each rid has only one rubric where latest=True
-            # TODO: unclear where "at most one" or "exactly one"
-            # TODO: seems to conflict with RubricService.modify_rubric or maybe the serializer
-            # models.UniqueConstraint(
-            #     fields=["rid"], condition=Q(latest=True), name="unique_latest_per_rid"
-            # ),
-        ]
+    # class Meta:
+    #     constraints = [
+    #         # This constraint checks that each rid-revision pair is unique
+    #         # TODO: this conflicts with the serializer in modify_rubric b/c the
+    #         # serializer checks this constraint before we decide if we're overwriting
+    #         # or making a new rubric.
+    #         # models.UniqueConstraint(
+    #         #     fields=["rid", "revision"], name="unique_revision_per_rid"
+    #         # ),
+    #         # This constraint checks that each rid has only one rubric where latest=True
+    #         # TODO: unclear where "at most one" or "exactly one"
+    #         # TODO: seems to conflict with RubricService.modify_rubric or maybe the serializer
+    #         # models.UniqueConstraint(
+    #         #     fields=["rid"], condition=Q(latest=True), name="unique_latest_per_rid"
+    #         # ),
+    #     ]
 
     # TODO: issue #3648, seeking a way to display how often they are used
     # def get_usage_count(self) -> int:
@@ -257,6 +274,7 @@ class RubricTable(django_tables2.Table):
             "display_delta",
             "last_modified",
             "revision",
+            "subrevision",
             "kind",
             "system_rubric",
             "question_index",

@@ -22,31 +22,6 @@
             <div class="row">
                 <div class="row">
                     <h5>Incomplete papers: {{ number_of_incomplete_papers }}</h5>
-                    <!-- TODO: remove this div warning block when fixing #3852 -->
-                    <div class="alert alert-danger m-2" role="alert">
-                        <h4 class="alert-heading">Caution</h4>
-                        <p>
-                            The very <em>first time</em> you click on
-                            one of the red missing page
-                            buttons, <em>please</em> wait 10 seconds
-                            before clicking again.
-                        </p>
-                        <small>
-                            Details: if you click too quickly after the first click,
-                            you might hit
-                            <a href="https://gitlab.com/plom/plom/-/issues/3852" class="alert-link">Issue #3852</a>
-                            where the buttons will appear unresponsive due
-                            to a race condition.  After the initial 10
-                            second wait, there is no need to be click
-                            carefully, its only the first time while the
-                            database populates a table in a way that is not
-                            async-safe.  This will be fixed in the upcoming
-                            0.18.0 release but we cannot easily fix it
-                            during 0.17.x.  If you've already got yourself
-                            into this state, see the issue for known
-                            workarounds.
-                        </small>
-                    </div>
                     <div class="col">
                         <div class="card">
                             <div class="card-body">

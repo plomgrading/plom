@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Colin B. Macdonald
 
 from django.db import transaction
@@ -19,7 +19,6 @@ def have_papers_been_printed() -> bool:
     return setting_obj.have_printed_papers
 
 
-@transaction.atomic
 def set_papers_printed(status: bool, *, ignore_dependencies: bool = False):
     """Set the papers as (true) 'printed' or (false) 'yet to be printed'.
 
@@ -27,7 +26,10 @@ def set_papers_printed(status: bool, *, ignore_dependencies: bool = False):
       * true => will create system rubrics
       * false => will delete all existing rubrics
 
-    KWArgs:
+    Args:
+        status: True to set printed, False to set unprinted.
+
+    Keyword Args:
         ignore_dependencies: set this for testing purposes, so that one
             can set papers-printed=true, without actually building pdfs.
             Setting this also means rubrics will not be produced.
@@ -50,9 +52,12 @@ def set_papers_printed(status: bool, *, ignore_dependencies: bool = False):
     if ignore_dependencies:
         return
 
-    from Rubrics.services import RubricService
+    from plom_server.Rubrics.services import RubricService
+    from plom_server.Scan.services import ForgiveMissingService
 
     if status:
-        RubricService().init_rubrics()
+        RubricService.init_rubrics()
+        ForgiveMissingService.create_system_bundle_of_substitute_pages()
     else:
-        RubricService()._erase_all_rubrics()
+        RubricService._erase_all_rubrics()
+        ForgiveMissingService.erase_all_substitute_images_and_their_bundle()

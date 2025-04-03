@@ -8,8 +8,8 @@ from typing import Any
 
 from django.db.models import QuerySet
 
-from Mark.models import MarkingTaskTag
-from Papers.models import Paper
+from plom_server.Mark.models import MarkingTaskTag
+from plom_server.Papers.models import Paper
 
 
 class TagService:

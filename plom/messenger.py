@@ -4,6 +4,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2025 Aidan Murphy
 
 """Backend bits 'n bobs to talk to a Plom server."""
 
@@ -455,7 +456,7 @@ class Messenger(BaseMessenger):
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def reassign_task(self, code: str, username: str) -> None:
+    def reassign_task(self, papernum: int, qidx: int, username: str) -> None:
         """Reassign a task that belongs to a user to a different user.
 
         Some cases to consider:
@@ -463,7 +464,8 @@ class Messenger(BaseMessenger):
           - if it already belongs to that user, is that an error?
 
         Args:
-            code: a task code such as `"q0123g2"`.
+            papernum: which paper.
+            qidx: which question index.
             username: who should we assign it to?
 
         Returns:
@@ -480,11 +482,52 @@ class Messenger(BaseMessenger):
             raise PlomNoServerSupportException(
                 "Server too old: does not support reassign"
             )
+        if self.is_server_api_less_than(114):
+            code = f"q{papernum:04}g{qidx}"
+            url = f"/MK/tasks/{code}/reassign/{username}"
+        else:
+            url = f"/api/v0/tasks/{papernum}/{qidx}/reassign/{username}"
 
         with self.SRmutex:
             try:
-                response = self.patch_auth(f"/MK/tasks/{code}/reassign/{username}")
+                response = self.patch_auth(url)
                 response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 404:
+                    raise PlomRangeException(response.reason) from None
+                if response.status_code == 406:
+                    raise PlomNoPermission(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def reset_task(self, papernum: int, qidx: int) -> bool:
+        """Reset a task, outdating all annotations.
+
+        Args:
+            papernum: which paper number.
+            qidx: which question index.
+
+        Returns:
+            True on success.
+
+        Raises:
+            PlomRangeException: no such task
+            PlomNoPermission: you don't have permission to reset tasks.
+            PlomNoServerSupportException: server too old, does not support.
+            PlomAuthenticationException: no logged in.
+            PlomSeriousException: generic unexpected error.
+        """
+        if self.is_server_api_less_than(114):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support task reset"
+            )
+
+        with self.SRmutex:
+            try:
+                response = self.patch_auth(f"/api/v0/tasks/{papernum}/{qidx}/reset")
+                response.raise_for_status()
+                return response.json()
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
@@ -977,6 +1020,37 @@ class Messenger(BaseMessenger):
                 if response.status_code == 406:
                     raise PlomConflict(response.reason) from None
                 if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def new_server_delete_bundle(self, bundle_id: int):
+        """Delete a bundle from the staging area.
+
+        TODO: beta: rename to something reasonable in due time.
+
+        Returns:
+            The id of the bundle that was deleted.
+        """
+        if self.is_server_api_less_than(114):
+            raise PlomNoServerSupportException(
+                "Server too old: does not support bundle deletion"
+            )
+
+        with self.SRmutex:
+            try:
+                response = self.delete_auth(f"/api/beta/scan/bundle/{bundle_id}")
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomSeriousException(response.reason) from None
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoBundle(response.reason) from None
+                if response.status_code == 406:
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 

@@ -24,15 +24,15 @@ import huey.api
 from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
 
-from Identify.models import PaperIDTask
-from Mark.models import MarkingTask
-from Mark.services import MarkingTaskService
-from Papers.models import Paper, IDPage, DNMPage, MobilePage
-from Papers.services import SpecificationService
-from Scan.services import ManageScanService
+from plom_server.Identify.models import PaperIDTask
+from plom_server.Mark.models import MarkingTask
+from plom_server.Mark.services import MarkingTaskService, MarkingStatsService
+from plom_server.Papers.models import Paper, IDPage, DNMPage, MobilePage
+from plom_server.Papers.services import SpecificationService
+from plom_server.Scan.services import ManageScanService
 
 from ..models import ReassemblePaperChore
-from Base.models import HueyTaskTracker
+from plom_server.Base.models import HueyTaskTracker
 
 from .student_marks_service import StudentMarkService
 
@@ -144,11 +144,13 @@ class ReassembleService:
             giving the path to the image and the rotation angle of the
             image.  If there is no ID page image we get an empty list.
         """
-        id_page_obj = IDPage.objects.get(paper=paper)
+        id_page_obj = IDPage.objects.select_related("image", "image__baseimage").get(
+            paper=paper
+        )
         if id_page_obj.image:
             return [
                 {
-                    "filename": id_page_obj.image.image_file.path,
+                    "filename": id_page_obj.image.baseimage.image_file.path,
                     "rotation": id_page_obj.image.rotation,
                 }
             ]
@@ -166,10 +168,12 @@ class ReassembleService:
             giving the path to the image and the rotation angle of the
             image.
         """
-        dnm_pages = DNMPage.objects.filter(paper=paper)
+        dnm_pages = DNMPage.objects.filter(paper=paper).prefetch_related(
+            "image", "image__baseimage"
+        )
         dnm_images = [dnmpage.image for dnmpage in dnm_pages if dnmpage.image]
         return [
-            {"filename": img.image_file.path, "rotation": img.rotation}
+            {"filename": img.baseimage.image_file.path, "rotation": img.rotation}
             for img in dnm_images
         ]
 
@@ -190,9 +194,12 @@ class ReassembleService:
         """
         nonmarked = MobilePage.objects.filter(
             paper=paper, question_index=MobilePage.DNM_qidx
-        )
+        ).prefetch_related("image", "image__baseimage")
         return [
-            {"filename": img.image.image_file.path, "rotation": img.image.rotation}
+            {
+                "filename": img.image.baseimage.image_file.path,
+                "rotation": img.image.rotation,
+            }
             for img in nonmarked
         ]
 
@@ -298,10 +305,9 @@ class ReassembleService:
                 "outdated": False,
                 "obsolete": None,
             }
-        mss = ManageScanService()
         number_of_questions = SpecificationService.get_n_questions()
 
-        for pn in mss.get_all_completed_test_papers():
+        for pn in ManageScanService.get_all_complete_papers():
             status[pn]["scanned"] = True
 
         def latest_update(time_a: datetime | None, time_b: datetime) -> datetime:
@@ -363,7 +369,12 @@ class ReassembleService:
         return list(status.values())
 
     def queue_single_paper_reassembly(
-        self, paper_num: int, *, build_student_report: bool = True
+        self,
+        paper_num: int,
+        *,
+        build_student_report: bool = True,
+        total_score_list: None | list[float] = None,
+        question_score_lists: None | dict[int, list[float]] = None,
     ) -> None:
         """Create and queue a huey task to reassemble the given paper.
 
@@ -374,6 +385,8 @@ class ReassembleService:
 
         Keyword Args:
             build_student_report: Whether or not build the student report along with reassembling the paper.
+            total_score_list: a list of total scores of all completely marked papers.
+            question_score_lists: a dict (keyed by question index) of lists of scores of all marked questions.
 
         Raises:
             ValueError: no paper with that number, or existing chore.
@@ -388,6 +401,14 @@ class ReassembleService:
             self.reset_single_paper_reassembly(paper_num)
         except ObjectDoesNotExist:
             pass
+
+        # if build_student_report is true, but we dont have the
+        # score_list data, then build it here
+        if build_student_report:
+            if (total_score_list is None) or (question_score_lists is None):
+                total_score_list, question_score_lists = (
+                    MarkingStatsService().build_report_score_lists()
+                )
 
         with transaction.atomic(durable=True):
             if ReassemblePaperChore.objects.filter(
@@ -409,6 +430,8 @@ class ReassembleService:
             paper_num,
             tracker_pk=tracker_pk,
             build_student_report=build_student_report,
+            total_score_list=total_score_list,
+            question_score_lists=question_score_lists,
             _debug_be_flaky=False,
         )
         print(f"Just enqueued Huey reassembly task id={res.id}")
@@ -639,6 +662,11 @@ class ReassembleService:
         Keyword Args:
             build_student_report: whether or not to build the student reports at same time.
         """
+        if build_student_report:
+            total_score_list, question_score_lists = (
+                MarkingStatsService().build_report_score_lists()
+            )
+
         # first work out which papers are ready
         for data in self.get_all_paper_status_for_reassembly():
             # check if both id'd and marked
@@ -652,11 +680,18 @@ class ReassembleService:
             if data["reassembled_status"] == "Complete" and not data["outdated"]:
                 # is complete and not outdated
                 continue
-            self.queue_single_paper_reassembly(
-                data["paper_num"], build_student_report=build_student_report
-            )
+            if build_student_report:
+                self.queue_single_paper_reassembly(
+                    data["paper_num"],
+                    build_student_report=True,
+                    total_score_list=total_score_list,
+                    question_score_lists=question_score_lists,
+                )
+            else:
+                self.queue_single_paper_reassembly(data["paper_num"])
 
     def how_many_papers_are_mid_reassembly(self) -> int:
+        """Return number of papers that are in the middle of being reassembled."""
         # any chores that are not complete
         return (
             ReassemblePaperChore.objects.exclude(obsolete=True)
@@ -718,16 +753,12 @@ class ReassembleService:
     @transaction.atomic
     def get_zipfly_generator(
         self,
-        short_name: str,
         *,
         first_paper: int | None = None,
         last_paper: int | None = None,
         chunksize: int = 1024 * 1024,
     ):
         """Return a generator that can stream a zipfile of some papers without building in memory.
-
-        Args:
-            short_name: TODO: appears to be unused.
 
         Keyword Args:
             first_paper: optionally grab papers greater than or equal
@@ -742,6 +773,8 @@ class ReassembleService:
         Raises:
             ValueError: if there are no reassembled papers in the requested range.
         """
+        # Note "n" here is "name", it is the name inside the zip file (i.e.,
+        # what users see when they download the zip file).
         paths = [
             {
                 "fs": pdf_file.path,
@@ -751,13 +784,15 @@ class ReassembleService:
                 first_paper=first_paper, last_paper=last_paper
             )
         ]
-        # report_paths = [
-        #     {
-        #         "fs": report_pdf_file.path,
-        #         "n": f"student_reports/{report_display_filename}",
-        #     }
-        #     for report_pdf_file, report_display_filename in self.get_completed_report_files_and_names()
-        # ]
+        report_paths = [
+            {
+                "fs": report_pdf_file.path,
+                "n": f"student_reports/{report_display_filename}",
+            }
+            for report_pdf_file, report_display_filename in self.get_completed_report_files_and_names(
+                first_paper=first_paper, last_paper=last_paper
+            )
+        ]
 
         if not paths:
             rng1 = f"{first_paper} <= " if first_paper is not None else ""
@@ -767,8 +802,7 @@ class ReassembleService:
             else:
                 rng_msg = ""
             raise ValueError("There are no reassembled papers" + rng_msg)
-        # zfly = zipfly.ZipFly(paths=paths + report_paths, chunksize=chunksize)
-        zfly = zipfly.ZipFly(paths=paths, chunksize=chunksize)
+        zfly = zipfly.ZipFly(paths=paths + report_paths, chunksize=chunksize)
         return zfly.generator()
 
 
@@ -780,6 +814,8 @@ def huey_reassemble_paper(
     *,
     tracker_pk: int,
     build_student_report: bool = True,
+    total_score_list: None | list[float] = None,
+    question_score_lists: None | dict[int, list[float]] = None,
     _debug_be_flaky: bool = False,
     task: huey.api.Task | None = None,
 ) -> bool:
@@ -792,6 +828,8 @@ def huey_reassemble_paper(
         tracker_pk: a key into the database for anyone interested in
             our progress.
         build_student_report: whether or not to build the student report at the same time.
+        total_score_list: a list of total scores of all completely marked papers.
+        question_score_lists: a dict (keyed by question index) of lists of scores of all marked questions.
         _debug_be_flaky: for debugging, all take a while and some
             percentage will fail.
         task: includes our ID in the Huey process queue.  This kwarg is
@@ -810,17 +848,22 @@ def huey_reassemble_paper(
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
 
-    # from .build_student_report_service import BuildStudentReportService
-
     with tempfile.TemporaryDirectory() as tempdir:
         save_path = ReassembleService().reassemble_paper(
             paper_obj, outdir=Path(tempdir)
         )
-        # report_data = BuildStudentReportService().build_one_report(paper_number)
-        # # save the report data to file in tempdir - TODO can we do this all in memory?
-        # report_path = Path(tempdir) / report_data["filename"]
-        # with report_path.open("wb") as fh:
-        #     fh.write(report_data["bytes"])
+        if build_student_report:
+            from .build_student_report_service import BuildStudentReportService
+
+            assert total_score_list is not None
+            assert question_score_lists is not None
+            report_data = BuildStudentReportService().build_brief_report(
+                paper_number, total_score_list, question_score_lists
+            )
+            # save the report data to file in tempdir - TODO can we do this all in memory?
+            report_path = Path(tempdir) / report_data["filename"]
+            with report_path.open("wb") as fh:
+                fh.write(report_data["bytes"])
 
         if _debug_be_flaky:
             for i in range(5):
@@ -839,10 +882,11 @@ def huey_reassemble_paper(
                     chore.pdf_file = File(f, name=save_path.name)
                     chore.display_filename = save_path.name
                     chore.save()
-                # with report_path.open("rb") as f2:
-                #     chore.report_pdf_file = File(f2, name=report_path.name)
-                #     chore.report_display_filename = report_path.name
-                #     chore.save()
+                if build_student_report:
+                    with report_path.open("rb") as f2:
+                        chore.report_pdf_file = File(f2, name=report_path.name)
+                        chore.report_display_filename = report_path.name
+                        chore.save()
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
     return True

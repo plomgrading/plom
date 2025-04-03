@@ -1,5 +1,6 @@
 .. Plom documentation
    Copyright (C) 2019-2025 Colin B. Macdonald
+   Copyright (C) 2025 Aidan Murphy
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 Frequently Asked Questions
@@ -130,15 +131,6 @@ TODO: add documentation on backing up a Plom server.
 
 
 
-My legacy server sometimes has random disk I/O errors
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Like this ``peewee.OperationalError: disk I/O error``
-The Plom legacy server uses an SQLite database; it
-`should not be run on NFS storage <https://gitlab.com/plom/plom/-/issues/811>`_.
-Apparently "people" know this but we were just as "thrilled" as you probably
-are to discover it on a production server.
-
 
 Legacy: How can I get past SSL certificate errors?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -221,6 +213,26 @@ Similar to :ref:`clone_server`, you need to download the ``.toml``
 specification and the version-map, using the command-line legacy
 management tools.
 
+Can I scan and mark papers without QR codes on my Plom server?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This can be accomplished by treating these papers as "double-printed", the solution
+is identical to the one offered for
+`I messed up by double-printing some papers, now I have collisions`_:
+  1. Scan the paper with the missing QR codes
+  2. "discard" each of the pages belonging to the paper, then manually cast each of
+     the pages to the corresponding pages of an **unused** paper (e.g. paper number 20).
+  3. Push this paper to the server!
+
+Keep in mind which unused paper you casted to will no longer be unused (i.e. you
+must cast to a different unused paper each time you do this).
+
+"I don't have an unused paper?" - that's unfortunate, see
+`I messed up by double-printing and I'm using multiple versions`_
+
+Of course, one should consider whether these papers should be marked using Plom.
+If you have a large number of papers without QR codes, you might consider marking
+them by hand and avoid tediously casting all pages across tens or hundreds of papers.
 
 I messed up by double-scanning some papers and uploading and now I have collisions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -285,7 +297,7 @@ If the command line access is not feasible, another option is:
      and push those rubrics to Server 2.
 
 
-...I have many reused the same paper _many_ times
+...I have many reused the same paper **many** times
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Read the above answers.  Suppose Paper 20 has been reused 100 times;
@@ -326,12 +338,9 @@ organized by term and port number, for example
 
 Using the name of the container, you can run commands directly::
 
-    docker exec -it plom2024w141234_plom_1 bash -c "cd /src/plom_server; python3 manage.py plom_download_marks_csv; ls"
+    docker exec -it plom2024w141234_plom_1 bash -c "DJANGO_SETTINGS_MODULE=plom_server.settings django-admin plom_download_marks_csv; ls"
 
-    docker cp plom2024w141234_plom_1:/src/plom_server/marks.csv .
-
-Note that because of a `long-standing issue <https://gitlab.com/plom/plom/-/issues/2759>`_,
-you must run the command from the directory ``src/plom_server``.
+    docker cp plom2024w141234_plom_1:/exam/marks.csv .
 
 You can also get an interactive ``bash`` prompt::
 

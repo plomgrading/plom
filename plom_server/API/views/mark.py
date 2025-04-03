@@ -12,17 +12,17 @@ from rest_framework import serializers, status
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse
 
-from Finish.services import SolnImageService
-from Mark.services import (
+from plom_server.Finish.services import SolnImageService
+from plom_server.Mark.services import (
     mark_task,
     MarkingTaskService,
     PageDataService,
     MarkingStatsService,
 )
-from Papers.services import SpecificationService
-from Papers.models import Image
+from plom_server.Papers.services import SpecificationService
+from plom_server.Papers.models import Image
 
-from Progress.services import UserInfoServices
+from plom_server.Progress.services import UserInfoServices
 
 from .utils import _error_response
 
@@ -111,7 +111,7 @@ class GetTasks(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
-# PATCH: /MK/tasks/{code}/reassign/{new_username}
+# PATCH: /api/v0/tasks/{papernum}/{qidx}/reassign/{new_username}
 class ReassignTask(APIView):
     """Reassign a task to another user.
 
@@ -122,7 +122,9 @@ class ReassignTask(APIView):
             not lead marker or manager.
     """
 
-    def patch(self, request: Request, *, code: str, new_username: str) -> Response:
+    def patch(
+        self, request: Request, *, papernum: int, qidx: int, new_username: str
+    ) -> Response:
         """Reassign a task to another user."""
         calling_user = request.user
         group_list = list(request.user.groups.values_list("name", flat=True))
@@ -134,18 +136,47 @@ class ReassignTask(APIView):
             )
 
         try:
-            task = MarkingTaskService().get_task_from_code(code)
-            task_pk = task.pk
+            latest_task = mark_task.get_latest_task(papernum, qidx)
         except (ValueError, RuntimeError) as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
 
         try:
             MarkingTaskService.reassign_task_to_user(
-                task_pk,
+                latest_task.pk,
                 new_username=new_username,
                 calling_user=calling_user,
                 unassign_others=True,
             )
+        except ValueError as e:
+            return _error_response(e, status.HTTP_404_NOT_FOUND)
+
+        return Response(True, status=status.HTTP_200_OK)
+
+
+# PATCH: /api/v0/tasks/{papernum}/{qidx}/reset
+class ResetTask(APIView):
+    """Reset a task, making all annotations outdating and putting it back into the pool for remarking from scratch.
+
+    Returns:
+        200: returns json of True.
+        404: task not found.
+        406: request not acceptable from calling user, e.g.,
+            not lead marker or manager.
+    """
+
+    def patch(self, request: Request, *, papernum: int, qidx: int) -> Response:
+        """Reset a task."""
+        calling_user = request.user
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if not ("lead_marker" in group_list or "manager" in group_list):
+            return _error_response(
+                f"You ({calling_user}) cannot reassign tasks because "
+                "you are not a lead marker or manager",
+                status.HTTP_406_NOT_ACCEPTABLE,
+            )
+
+        try:
+            MarkingTaskService().set_paper_marking_task_outdated(papernum, qidx)
         except ValueError as e:
             return _error_response(e, status.HTTP_404_NOT_FOUND)
 
@@ -529,6 +560,6 @@ class GetSolutionImage(APIView):
     def get(self, request: Request, *, question: int, version: int) -> Response:
         """Get a solution image."""
         try:
-            return FileResponse(SolnImageService().get_soln_image(question, version))
+            return FileResponse(SolnImageService.get_soln_image(question, version))
         except ObjectDoesNotExist:
             return _error_response("Image does not exist.", status.HTTP_404_NOT_FOUND)

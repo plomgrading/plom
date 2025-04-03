@@ -12,8 +12,8 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib import messages
 
-from Base.base_group_views import ScannerRequiredView
-from Papers.services import SpecificationService, PaperInfoService
+from plom_server.Base.base_group_views import ScannerRequiredView
+from plom_server.Papers.services import SpecificationService, PaperInfoService
 from ..services import ScanService
 
 from plom.misc_utils import format_int_list_with_runs
@@ -201,6 +201,7 @@ class GetBundleThumbnailView(ScannerRequiredView):
             image = scanner.get_thumbnail_image(bundle_id, index)
         except ObjectDoesNotExist as e:
             raise Http404(e)
+        # note - is a thumbnail - so we don't need the baseimage here.
         return FileResponse(image.image_file)
 
 

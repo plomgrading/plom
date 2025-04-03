@@ -4,9 +4,9 @@
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 
-from Mark.models import MarkingTask
-from Mark.services import marking_priority
-from Papers.services import SpecificationService
+from plom_server.Mark.models import MarkingTask
+from plom_server.Mark.services import marking_priority
+from plom_server.Papers.services import SpecificationService
 
 
 class TaskOrderService:
@@ -77,9 +77,10 @@ class TaskOrderService:
             ]
         return paper_to_priority_and_status_list
 
-    def get_csv_header(self) -> list[str]:
+    @staticmethod
+    def get_csv_header() -> list[str]:
         """Get the CSV header for the task priorities."""
-        return ["Paper Number", "Question Number", "Priority Value", "Status"]
+        return ["Paper Number", "Question Index", "Priority Value", "Status"]
 
     def get_task_priorities_download(self) -> list[dict[str, int]]:
         """Get the task priorities for download."""
@@ -87,7 +88,7 @@ class TaskOrderService:
         return [
             {
                 "Paper Number": paper_number,
-                "Question Number": question_idx,
+                "Question Index": question_idx,
                 "Priority Value": priority,
                 "Status": status,
             }

@@ -1,0 +1,79 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2024 Bryan Tanady
+    Copyright (C) 2024-2025 Andrew Rechnitzer
+-->
+<body>
+    <h2>Student report: {{ longname }}</h2>
+    <h3>Student: {{ name }} {{ sid }}</h3>
+    <p>Date and time: {{ timestamp_str }}</p>
+    <br>
+    <h3>Total score</h3>
+    <p>{{ grade }} out of {{ totalMarks }}</p>
+    <h3>Overall Assessment Statistics</h3>
+    <ul>
+        <li>Median = {{ total_stats.median|floatformat:1 }}, Mean = {{ total_stats.mean|floatformat:1 }}</li>
+        <li>Standard Deviation: {{ total_stats.stddev|floatformat:1 }}</li>
+        <li>
+            Percentile Range 25% to 75%: from {{ total_stats.percentile25|floatformat:1 }} to {{ total_stats.percentile75|floatformat:1 }}
+        </li>
+    </ul>
+    <h3>Distribution of total marks</h3>
+    <img src="data:image/png;base64,{{ kde_graph }}" />
+    <p>The approximation distribution of marks for the assessment; the student's score is indicated.</p>
+    <br>
+    <p style="break-before: page;"></p>
+    <h3>Student achievement by topic or learning objective</h3>
+    <img src="data:image/png;base64,{{ pedagogy_tags_graph }}" />
+    <p>
+        {% for ptag, ql_desc in pedagogy_tags.items %}
+            <dl>
+                <dt>
+                    <b>{{ ptag }}</b>
+                </dt>
+                <dd>
+                    {{ ql_desc.1 }}
+                </dd>
+                <dd>
+                    <!-- format list nicely with commas and and -->
+                    {% for ql in ql_desc.0 %}
+                        {% if not forloop.first %}
+                            {% if forloop.last %}
+                                and
+                            {% else %}
+                                ,
+                            {% endif %}
+                        {% endif %}
+                        {{ ql|safe }}
+                    {% endfor %}
+                </dd>
+            </dl>
+        {% endfor %}
+    </p>
+    <h4>Explanation of this graph</h4>
+    <p>
+        Each question on this assessment was tagged by the instructor
+        with a topic or learning objective. Above is a graph
+        which indicates your proficiency in the identified topic. The
+        score for each label is calculated as a weighted average of
+        the score on the associated questions.
+    </p>
+    <br>
+    <p style="break-before: page;"></p>
+    <h3>Boxplot of marks by question</h3>
+    <p>
+        In the boxplots below the distribution of marks for each question is shown.
+        <ul>
+            <li>The student mark is shown as a dot</li>
+            <li>The median is shown as a thick vertical line in the middle of the box</li>
+            <li>
+                The box shows the 25-75 percentile range of marks and the extreme left/right vertical lines show the minimum and maximum marks.
+            </li>
+        </ul>
+    </p>
+    {% for graph in boxplots %}
+        <div class="col" style="margin-left:0mm;">
+            <img src="data:image/png;base64,{{ graph }}" width="100%" height="100%" />
+        </div>
+    {% endfor %}
+</body>

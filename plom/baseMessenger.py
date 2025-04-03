@@ -51,10 +51,19 @@ from plom.plom_exceptions import (
 # define an allow-list of versions we support.
 Supported_Server_API_Versions = [
     int(Plom_Legacy_Server_API_Version),
-    112,
-    113,  # introduced /MK/tasks/{code}/reassign/{username}
+    112,  # 2024-09
+    113,  # 2025-01
+    114,  # 2025-
     int(Plom_API_Version),
 ]
+# Brief changelog
+#
+# * 113
+#    - new /MK/tasks/{code}/reassign/{username}
+# * 114
+#    - new /api/v0/tasks/{papernum}/{qidx}/reset/
+#    - changes /api/v0/tasks/{papernum}/{qidx}/reassign/{username}
+#    - new params for /MK/rubric/{key}
 
 
 log = logging.getLogger("messenger")
@@ -1299,12 +1308,26 @@ class BaseMessenger:
                 r.setdefault("modified_by_username", "")
             return rubrics
 
-    def MmodifyRubric(self, key: int, new_rubric: dict[str, Any]) -> dict[str, Any]:
+    def MmodifyRubric(
+        self,
+        key: int,
+        new_rubric: dict[str, Any],
+        *,
+        minor_change: bool | None = None,
+        tag_tasks: bool | None = None,
+    ) -> dict[str, Any]:
         """Ask server to modify a rubric and get back new rubric.
 
         Args:
             key: the key of the rubric to change.
             new_rubric: the changes we want to make as a key-value dict.
+
+        Keyword Args:
+            minor_change: None tells the server to choose, True to
+                specify a minor edit or False for a major edit.
+            tag_tasks: for major edits, we can additionally tag all
+                existing tasks that use the Rubric for manual updates.
+                Default of None leaves decision to the server.
 
         Returns:
             The dict key-value representation of the new rubric.  This is
@@ -1326,10 +1349,35 @@ class BaseMessenger:
             # we also use "rid" now but legacy still wants "id"
             if "rid" in new_rubric.keys():
                 new_rubric["id"] = str(new_rubric.pop("rid"))
+
+        params = []
+        if minor_change is None:
+            pass
+        elif minor_change:
+            params.append("minor_change")
+        else:
+            params.append("major_change")
+
+        if tag_tasks is None:
+            pass
+        elif tag_tasks:
+            params.append("tag_tasks")
+        else:
+            params.append("no_tag_tasks")
+
+        url = f"/MK/rubric/{key}"
+        if params:
+            if self.is_server_api_less_than(114):
+                raise PlomNoServerSupportException(
+                    "older server does not support specifying major/minor or tag_tasks"
+                )
+            url += "?"
+            url += "&".join(params)
+
         with self.SRmutex:
             try:
                 response = self.patch(
-                    f"/MK/rubric/{key}",
+                    url,
                     json={
                         "user": self.user,
                         "token": self.token,

@@ -10,8 +10,8 @@ from django.utils.text import slugify
 
 from django_htmx.http import HttpResponseClientRedirect
 
-from Base.base_group_views import ManagerRequiredView
-from Papers.services import SpecificationService
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Papers.services import SpecificationService
 from ..services import ReassembleService
 
 
@@ -82,7 +82,9 @@ class ReassemblePapersView(ManagerRequiredView):
 
 class StartOneReassembly(ManagerRequiredView):
     def post(self, request, paper_number):
-        ReassembleService().queue_single_paper_reassembly(paper_number)
+        ReassembleService().queue_single_paper_reassembly(
+            paper_number, build_student_report=True
+        )
         return HttpResponseClientRedirect(reverse("reassemble_pdfs"))
 
     def delete(self, request, paper_number):
@@ -101,7 +103,7 @@ class StartOneReassembly(ManagerRequiredView):
 
 class StartAllReassembly(ManagerRequiredView):
     def post(self, request):
-        ReassembleService().queue_all_paper_reassembly()
+        ReassembleService().queue_all_paper_reassembly(build_student_report=True)
         return HttpResponseClientRedirect(reverse("reassemble_pdfs"))
 
     def delete(self, request):
@@ -112,7 +114,7 @@ class StartAllReassembly(ManagerRequiredView):
         # using zipfly python package.  see django example here
         # https://github.com/sandes/zipfly/blob/master/examples/streaming_django.py
         short_name = slugify(SpecificationService.get_shortname())
-        zgen = ReassembleService().get_zipfly_generator(short_name)
+        zgen = ReassembleService().get_zipfly_generator()
         response = StreamingHttpResponse(zgen, content_type="application/octet-stream")
         response["Content-Disposition"] = (
             f"attachment; filename={short_name}_reassembled.zip"
@@ -139,7 +141,7 @@ class DownloadRangeOfReassembled(ManagerRequiredView):
             short_name += f"_to_{last_paper}"
         try:
             zgen = ReassembleService().get_zipfly_generator(
-                short_name, first_paper=first_paper, last_paper=last_paper
+                first_paper=first_paper, last_paper=last_paper
             )
         except ValueError as err:
             # TODO: how to do we do other errors other than 404?

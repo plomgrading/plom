@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 
@@ -294,6 +294,48 @@ class SettingsModel(SingletonABCModel):
         if not rules:
             return static_feedback_rules
         return rules
+
+
+class BaseImage(models.Model):
+    """Table to store an image (usually a scanned page image).
+
+    image_file (ImageField): the django-imagefield storing the image for the server.
+        In the future this could be a url to some cloud storage. Note that this also
+        tells django where to automagically compute+store height/width information on save
+
+    image_hash (str): the sha256 hash of the image
+
+    height (int): the height of the image in px (auto-populated on
+        save by django). Note that this height is the *raw* height in
+        pixels before any exif rotations and any plom rotations.
+
+    width (int): the width of the image in px (auto-populated on
+        save by django).  Note that this width is the *raw* width in
+        pixels before any exif rotations and any plom rotations.
+    """
+
+    def _image_save_path(self, filename: str) -> str:
+        """Create a path to which the associated base image file should be saved.
+
+        Args:
+            filename: the name of the file to be saved at the created path.
+
+        Returns:
+            The string of the path to which the image file will be saved
+            (relative to the media directory, and including the actual filename).
+        """
+        return f"page_images/{filename}"
+
+    image_file = models.ImageField(
+        null=False,
+        upload_to=_image_save_path,
+        # tell Django where to automagically store height/width info on save
+        height_field="height",
+        width_field="width",
+    )
+    image_hash = models.CharField(null=True, max_length=64)
+    height = models.IntegerField(default=0)
+    width = models.IntegerField(default=0)
 
 
 # ---------------------------------

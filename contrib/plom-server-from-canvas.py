@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 # Copyright (C) 2022 Nicholas J H Lai
 # Copyright (C) 2023 Philip Loewen
 
@@ -25,6 +25,7 @@ your own risk, no warranty, etc, etc.
 Notes:
   * TODO: needs to log instead of just discarding so much output
   * TODO: support an existing configured server in basedir: or fork
+  * TODO: Needs updating for the legagy->django transition
 """
 
 import argparse
@@ -51,7 +52,12 @@ from tqdm import tqdm
 
 from plom import __version__ as __plom_version__
 from plom.misc_utils import working_directory
-from plom.server import PlomServer
+
+# TODO: no such thing anymore
+# pylint: disable=import-error
+# pylint: disable=no-name-in-module
+from plom.server import PlomServer  # type: ignore[attr-defined]
+
 from plom.canvas import __DEFAULT_CANVAS_API_URL__
 from plom.canvas import (
     canvas_login,
@@ -853,6 +859,8 @@ if __name__ == "__main__":
         raise ValueError(f"Total marks do not match Canvas: {symsum} =/= {pp}")
     print(f"Ok, using {len(args.marks)} questions with breakdown {symsum} = {pp}")
     del pp
+
+    raise NotImplementedError("script needs updating for the legagy->django transition")
 
     if args.init:
         print(f"Initializing a fresh plom server in {basedir}")

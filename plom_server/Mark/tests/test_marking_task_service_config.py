@@ -8,9 +8,9 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from model_bakery import baker
 
-from Base.tests import config_test
-from Papers.models import Paper
-from Papers.services import PaperInfoService
+from plom_server.Base.tests import config_test
+from plom_server.Papers.models import Paper
+from plom_server.Papers.services import PaperInfoService
 
 from ..services import MarkingTaskService, QuestionMarkingService
 from ..models import MarkingTask

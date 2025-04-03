@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aden Chan
 
@@ -10,7 +10,6 @@ from django.urls import path, re_path
 from ..views import (
     GetTasks,
     MarkingProgress,
-    ReassignTask,
     MgetOneImage,
     MgetAllRubrics,
     MgetRubricsByQuestion,
@@ -51,15 +50,6 @@ class MarkURLPatterns:
             path("tasks/all", GetTasks.as_view(), name="api_MK_get_tasks_all"),
         ]
         mark_patterns += tasks
-
-        # PATCH: /MK/tasks/{code}/reassign/{new_username}
-        mark_patterns.append(
-            path(
-                "tasks/<str:code>/reassign/<str:new_username>",
-                ReassignTask.as_view(),
-                name="api_MK_reassign_task_new_username",
-            )
-        )
 
         # Getting page-images from the server
         images = [

@@ -40,10 +40,8 @@ classifiers=[
 ]
 dynamic = ['version']
 requires-python = '>=3.10'
-# note aiohttp and peewee are legacy deps only
 # pyopenssl is not a direct dependency but old versions caused trouble: Issue #3150
 dependencies = [
-    "aiohttp>=3.7.2",
     "arrow>=1.1.1",
     "canvasapi>=3.0.0",
     "cryptography>=41.0.3",
@@ -69,7 +67,6 @@ dependencies = [
     "packaging",
     "pandas>=1.5.0",
     "passlib",
-    "peewee>=3.13.3",
     "Pillow>=10.2",
     "platformdirs>=3.0.0",
     "pymupdf>=1.24.8",
@@ -102,8 +99,6 @@ dependencies = [
 #   "file-magic || python-magic>=0.4.20",
 
 # Non-Python deps for server
-#   - imagemagick (legacy)
-#   - ghostscript (optional, legacy)
 #   - latex installation including (Debian/Ubuntu pkg names):
 #       texlive-latex-extra dvipng latexmk texlive-fonts-recommended
 #   - latex installation including (Fedora pkg names):
@@ -123,6 +118,9 @@ Changelog = "https://gitlab.com/plom/plom/-/blob/main/CHANGELOG.md"
 # [tool.setuptools]
 # zip-safe = true
 
+# ugh, maintaining this list is horrible, need get get "find" working
+# with the flat layout.  But we have now two packages (plom and plom_server)
+# not sure how to make that work.
 [tool.setuptools]
 packages = [
     "plom",
@@ -131,22 +129,65 @@ packages = [
     "plom.create.fonts",
     "plom.scan",
     "plom.finish",
-    "plom.client",
-    "plom.client.ui_files",
-    "plom.client.tools",
-    "plom.client.icons",
-    "plom.client.cursors",
-    "plom.client.help_img",
-    "plom.manager",
-    "plom.server",
-    "plom.server.plomServer",
-    "plom.db",
-    "plom.demo",
     "plom.idreader",
     "plom.solutions",
     "plom.canvas",
     "plom.scripts",
+    "plom_server",
+    "plom_server.API",
+    "plom_server.Authentication",
+    "plom_server.Authentication.services",
+    "plom_server.Base",
+    "plom_server.Base.services",
+    "plom_server.Base.management.commands",
+    "plom_server.BuildPaperPDF",
+    "plom_server.BuildPaperPDF.services",
+    "plom_server.Contrib",
+    "plom_server.Demo",
+    "plom_server.Demo.services",
+    "plom_server.Finish",
+    "plom_server.Finish.services",
+    "plom_server.Identify",
+    "plom_server.Identify.services",
+    "plom_server.QuestionTags",
+    "plom_server.QuestionTags.services",
+    "plom_server.Launcher",
+    "plom_server.Launcher.services",
+    "plom_server.Launcher.management.commands",
+    "plom_server.Mark",
+    "plom_server.Mark.services",
+    "plom_server.Mark.tests",
+    "plom_server.Papers",
+    "plom_server.Papers.services",
+    "plom_server.Papers.models",
+    "plom_server.Papers.tests",
+    "plom_server.Preparation",
+    "plom_server.Preparation.services",
+    "plom_server.Profile",
+    "plom_server.Progress",
+    "plom_server.Progress.services",
+    "plom_server.Rectangles",
+    "plom_server.Rectangles.services",
+    "plom_server.Reports",
+    "plom_server.Rubrics",
+    "plom_server.Rubrics.services",
+    "plom_server.Scan",
+    "plom_server.Scan.models",
+    "plom_server.Scan.services",
+    "plom_server.SpecCreator",
+    "plom_server.SpecCreator.services",
+    "plom_server.scripts",
+    "plom_server.static",
+    "plom_server.Tags",
+    "plom_server.Tags.services",
+    "plom_server.TaskOrder",
+    "plom_server.TaskOrder.services",
+    "plom_server.templates",
+    "plom_server.UserManagement",
+    "plom_server.UserManagement.services",
+    "plom_server.Visualization",
 ]
+# TODO: fixtures?  huey?  media?
 
 # somewhat deprecated?  not supposed to package things into share?
 # https://blog.raek.se/2022/10/31/os-integration-files-in-python-packages/u
@@ -175,20 +216,13 @@ packages = [
 version = {attr = 'plom.__version__'}
 
 [project.scripts]
-# plom-client = "plom.client.__main__:main"
-plom-demo = "plom.demo.__main__:main"
-plom-hwdemo = "plom.scripts.hwdemo:main"
 plom-create = "plom.create.__main__:main"
-plom-server = "plom.server.__main__:main"
-plom-legacy-server = "plom.server.__main__:main"
 plom-scan = "plom.scan.__main__:main"
-plom-manager = "plom.manager.__main__:main"
-plom-legacy-manager = "plom.manager.__main__:main"
 plom-finish = "plom.finish.__main__:main"
 plom-hwscan = "plom.scripts.hwscan:main"
 plom-solutions = "plom.solutions.__main__:main"
-# TODO: move to plom_server.Launcher... waiting on Issue #3377.
-plom-new-server = "plom.scripts.newserver:main"
+plom-new-server = "plom_server.scripts.launch_plom_server:main"
+plom-new-demo = "plom_server.scripts.launch_plom_demo_server:main"
 plom-cli = "plom.cli.__main__:main"
 
 
@@ -229,6 +263,7 @@ ignore="H006,H013,H021,H023,H030,H031"
 # pretty = true
 exclude = [
     'digitHunter.py',
+    '0001_initial.py',
 ]
 
 # These avoid mypy errors: mostly libraries that don't yet have typing
@@ -267,7 +302,6 @@ ignore_missing_imports = true
 #   - TODO: fix the temporary ones for Issue #2847 and Issue #2849
 [[tool.mypy.overrides]]
 module = [
-    'plom.client.tools.tool',
     'plom.db.examDB',
     'plom.server.theServer',
 ]
@@ -275,7 +309,7 @@ ignore_errors = true
 
 [tool.pyright]
 pythonVersion = "3.12"
-exclude = ['plom/manager', 'plom/server', '**/_digitHunter.py']
+exclude = ['plom/server', '**/_digitHunter.py']
 # changing to "off" makes this much quieter
 typeCheckingMode = "basic"
 # lots of Django false positives?

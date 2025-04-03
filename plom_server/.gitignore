@@ -32,11 +32,6 @@ db.sqlite3-journal
 # PyCharm
 .idea/*
 
-# Migrations (ignores all files within migrations except __init__.py)
-**/migrations/**
-!**/migrations
-!**/migrations/__init__.py
-
 # Ignore PDF folders/zipfiles
 produced_papers.csv
 papersToPrint/*

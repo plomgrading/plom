@@ -1,10 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2023-2024 Colin B. Macdonald
-# Copyright (C) 2023-2024 Andrew Rechnitzer
-
-from __future__ import annotations
+# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2023-2025 Andrew Rechnitzer
 
 from django.contrib.auth.models import User
 from django.core.exceptions import (
@@ -14,8 +12,8 @@ from django.core.exceptions import (
 )
 from django.db import transaction, IntegrityError
 
-from Papers.models import IDPage, Paper, Image
-from Papers.services import ImageBundleService
+from plom_server.Papers.models import IDPage, Paper, Image
+from plom_server.Papers.services import ImageBundleService
 from ..models import PaperIDTask, PaperIDAction, IDPrediction
 
 
@@ -49,6 +47,44 @@ class IdentifyTaskService:
 
         task = PaperIDTask(paper=paper)
         task.save()
+
+    @staticmethod
+    def bulk_create_id_tasks(papers: list[Paper]) -> None:
+        """For each given paper set any ID tasks and actions as out of date and create new tasks.
+
+        For each paper in the list we set any existing ID tasks and actions as
+        out of date and then create new ID tasks.
+
+        These operations are all done in bulk to minimise DB access. So
+        instead of looping over each paper and doing a ``save()'' we
+        loop over the list and construct lists of PaperIDTask and PaperIDAction
+        that need to be updated. We alter the corresponding python objects
+        and then pass the list of those (locally) updated objects to a
+        django bulk-update functions that minimise the number of DB calls.
+        Similarly when we create new PaperIDTask in the DB we do not do
+        this one at a time, but create a list of (local) python objects and
+        then pass that list to django-bulk-create function that creates
+        things minimising DB access.
+
+        Args:
+            papers: a list of Django-objects that require their ID tasks + actions
+            updated. For example, if ID pages have been replaced then any existing
+            ID tasks + actions need to be set as out-of-date and new ID tasks
+            need to be instantiated.
+
+        """
+        with transaction.atomic():
+            old_tasks = PaperIDTask.objects.filter(paper__in=papers)
+            old_actions = PaperIDAction.objects.filter(task__in=old_tasks)
+            for task in old_tasks:
+                task.status = PaperIDTask.OUT_OF_DATE
+                task.assigned_user = None
+            PaperIDTask.objects.bulk_update(old_tasks, ["status", "assigned_user"])
+            for action in old_actions:
+                action.is_valid = False
+            PaperIDAction.objects.bulk_update(old_actions, ["is_valid"])
+            new_tasks = [PaperIDTask(paper=X) for X in papers]
+            PaperIDTask.objects.bulk_create(new_tasks)
 
     @transaction.atomic
     def id_task_exists(self, paper: Paper) -> bool:
@@ -87,11 +123,14 @@ class IdentifyTaskService:
         id_list = []
         for task in PaperIDTask.objects.filter(
             status=PaperIDTask.COMPLETE, assigned_user=user
-        ):
-            latest = self.get_latest_id_results(task)
-            if latest:
+        ).prefetch_related("paper", "latest_action"):
+            if task.latest_action:
                 id_list.append(
-                    [task.paper.paper_number, latest.student_id, latest.student_name]
+                    [
+                        task.paper.paper_number,
+                        task.latest_action.student_id,
+                        task.latest_action.student_name,
+                    ]
                 )
         return id_list
 

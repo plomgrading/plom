@@ -13,9 +13,9 @@ import arrow
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 
-from Base.base_group_views import ManagerRequiredView
-from Mark.services import MarkingTaskService
-from Papers.services import SpecificationService
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Mark.services import MarkingTaskService
+from plom_server.Papers.services import SpecificationService
 from ..services import StudentMarkService, TaMarkingService, AnnotationDataService
 from ..services import DataExtractionService, D3Service
 from ..forms import StudentMarksFilterForm

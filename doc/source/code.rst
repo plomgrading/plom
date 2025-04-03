@@ -1,21 +1,21 @@
 .. Plom documentation
-   Copyright (C) 2021-2023 Colin B. Macdonald
+   Copyright (C) 2021-2023, 2025 Colin B. Macdonald
    Copyright (C) 2024 Aidan Murphy
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 Python modules
 ==============
 
-The Plom code can be found in one of two places in the project repository:
- - `plom`
- - `plom_server`
-The former contains the code used to build the marking client (still in use)
-and several tools to run and interact with the "legacy" server.
-The latter contains the "current" Plom server, using
-`Django <https://www.djangoproject.com>`_.
+Most Plom code can be found in one of two directories in the
+`project repository <https://gitlab.com/plom/plom>`_:
+ * ``plom/``
+ * ``plom_server/``
+The former is currently (2025 March) "in-flux" as the marking client has
+moved to a separate Plom-Client repo <https://gitlab.com/plom/plom-client>`_.
+The latter contains the "current" (non-legacy) Plom server.
 
-`plom` itself is a package and can be imported, while `plom_server` is not yet packaged
-(though it'd be nice, see issue `#2759 <https://gitlab.com/plom/plom/-/issues/2759>`_).
+Note both ``plom/`` and ``plom_server/`` are modules.
+
 
 plom
 -----------

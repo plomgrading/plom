@@ -3,13 +3,14 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import render
 from django.urls import reverse
 from django_htmx.http import HttpResponseClientRedirect
 
-from Base.base_group_views import ScannerRequiredView
-from Papers.services import SpecificationService, PaperInfoService
+from plom_server.Base.base_group_views import ScannerRequiredView
+from plom_server.Papers.services import SpecificationService, PaperInfoService
 
 from ..services import (
     ScanCastService,
@@ -229,7 +230,7 @@ class KnowifyImageView(ScannerRequiredView):
             )
 
         try:
-            ScanCastService().knowify_image_from_bundle_pk_and_order(
+            ScanCastService().knowify_image_from_bundle_id(
                 request.user, bundle_id, index, paper_number, page_number
             )
         except ValueError as err:
@@ -310,13 +311,19 @@ class ExtraliseImageView(ScannerRequiredView):
         self, request: HttpRequest, *, the_filter: str, bundle_id: int, index: int
     ) -> HttpResponse:
         try:
-            ScanCastService().extralise_image_type_from_bundle_pk_and_order(
+            ScanCastService().extralise_image_from_bundle_id(
                 request.user, bundle_id, index
             )
         except PlomBundleLockedException:
             return HttpResponseClientRedirect(
                 reverse("scan_bundle_lock", args=[bundle_id])
             )
+        except ObjectDoesNotExist as err:
+            return Http404(err)
+        except ValueError as err:
+            print(f"Issue #3878: got ValueError we're unsure how to handle: {err}")
+            # TODO: redirect ala scan_bundle_lock?
+            raise
 
         return HttpResponseClientRedirect(
             reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])

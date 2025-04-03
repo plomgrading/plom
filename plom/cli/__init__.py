@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2023, 2025 Colin B. Macdonald
 # Copyright (C) 2023 Natalie Balashov
+# Copyright (C) 2025 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 
 
@@ -19,6 +20,7 @@ from .bundle_tools import upload_bundle, bundle_map_page
 from .identify_tools import id_paper, un_id_paper
 from .finish_tools import get_reassembled
 from .spec_tools import upload_spec
+from .task_tools import reset_task
 
 # TODO: see also start_messenger error message
 # from .clearScannerLogin import clear_login
@@ -32,4 +34,5 @@ __all__ = [
     "upload_bundle",
     "get_reassembled",
     "upload_spec",
+    "reset_task",
 ]

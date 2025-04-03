@@ -20,8 +20,8 @@ from django.db import transaction
 from rest_framework import serializers
 
 from plom import is_valid_tag_text
-from Papers.services import ImageBundleService, PaperInfoService
-from Papers.models import Paper
+from plom_server.Papers.services import ImageBundleService, PaperInfoService
+from plom_server.Papers.models import Paper
 
 from . import marking_priority, mark_task
 from ..models import (
@@ -110,6 +110,69 @@ class MarkingTaskService:
                 the_task.markingtasktag_set.add(tag_obj)
             the_task.save()
         return the_task
+
+    @staticmethod
+    @transaction.atomic
+    def bulk_create_and_update_marking_tasks(
+        paper_question_version_list: list[tuple[int, int, int]],
+        *,
+        copy_old_tags: bool = True,
+    ):
+        # create all the task codes
+        task_codes = [f"q{X[0]:04}g{X[1]}" for X in paper_question_version_list]
+        # use this to get all existing marking tasks
+        existing_tasks = (
+            MarkingTask.objects.filter(code__in=task_codes)
+            .exclude(status=MarkingTask.OUT_OF_DATE)
+            .prefetch_related("markingtasktag")
+        )
+        # set all as out of date but keep any priorities and tags
+        priorities = {}
+        existing_tags = {}
+        for X in existing_tasks:
+            X.status = MarkingTask.OUT_OF_DATE
+            X.assigned_user = None
+            priorities[X.code] = X.marking_priority
+            existing_tags[X.code] = X.markingtasktag_set.all()
+        # get priority strategy for new tasks
+        strategy = marking_priority.get_mark_priority_strategy()
+        total_papers = Paper.objects.count()
+        # create new tasks using any existing priorities
+        # unfortunately we need the associated paper-objects
+        # and need to be able to look-up from paper-number
+        updated_paper_numbers = set(X[0] for X in paper_question_version_list)
+        updated_papers = Paper.objects.filter(paper_number__in=updated_paper_numbers)
+        pn_to_paper = {X.paper_number: X for X in updated_papers}
+        # finally get on with building things
+        new_tasks = []
+        for pn, qi, v in paper_question_version_list:
+            code = f"q{pn:04}g{qi}"
+            if code in priorities:
+                priority = priorities[code]
+            elif strategy == MarkingTaskPriority.PAPER_NUMBER:
+                priority = total_papers - pn
+            else:
+                priority = random.randint(0, 1000)
+            new_tasks.append(
+                MarkingTask(
+                    assigned_user=None,
+                    code=code,
+                    paper=pn_to_paper[pn],
+                    question_index=qi,
+                    question_version=v,
+                    marking_priority=priority,
+                )
+            )
+        # now bulk-update existing tasks and bulk_create the new ones
+        MarkingTask.objects.bulk_update(existing_tasks, ["assigned_user", "status"])
+        MarkingTask.objects.bulk_create(new_tasks)
+        # copy over any old tags - unfortunately this is O(n) not O(1)
+        if copy_old_tags:
+            for X in new_tasks:
+                if X.code in existing_tags:
+                    for tag_obj in existing_tags[X.code]:
+                        X.markingtasktag_set.add(tag_obj)
+                    X.save()
 
     def get_marking_progress(self, question: int, version: int) -> tuple[int, int]:
         """Send back current marking progress counts to the client.
@@ -637,7 +700,7 @@ class MarkingTaskService:
     def set_paper_marking_task_outdated(
         self, paper_number: int, question_index: int
     ) -> None:
-        """Set the marking task for the given paper/question as OUT_OF_DATE.
+        """Set the marking tasks for the given paper/question as OUT_OF_DATE.
 
         When a page-image is removed or added to a paper/question, any
         existing annotations are now out of date (since the underlying

@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from Preparation.services import StagingStudentService
+from plom_server.Preparation.services import StagingStudentService
 
 
 def get_students() -> list[dict[str, str | int]]:

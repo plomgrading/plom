@@ -9,7 +9,7 @@ from django.db import transaction
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 
-from Progress.services import UserInfoServices
+from plom_server.Progress.services import UserInfoServices
 from ..models import Quota
 
 

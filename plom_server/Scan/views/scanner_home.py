@@ -21,8 +21,8 @@ from django.utils import timezone
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
 from django.conf import settings
 
-from Base.base_group_views import ScannerRequiredView
-from Preparation.services import PapersPrinted
+from plom_server.Base.base_group_views import ScannerRequiredView
+from plom_server.Preparation.services import PapersPrinted
 from ..services import ScanService, ManageScanService
 from ..forms import BundleUploadForm
 
@@ -92,6 +92,7 @@ class ScannerPushedView(ScannerRequiredView):
         context = self.build_context()
         scanner = ScanService()
         pushed_bundles = []
+
         for bundle in scanner.get_all_staging_bundles():
             # only keep pushed bundles
             if not bundle.pushed:
@@ -179,7 +180,7 @@ class ScannerUploadView(ScannerRequiredView):
             slug,
             user,
             timestamp=timestamp,
-            file_hash=pdf_hash,
+            pdf_hash=pdf_hash,
             number_of_pages=number_of_pages,
             force_render=data["force_render"],
             read_after=data["read_after"],

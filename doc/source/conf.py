@@ -21,8 +21,7 @@ from django import setup as django_setup
 # we need access to the `plom` module:
 sys.path.insert(0, os.path.abspath("../../"))
 # setup django env
-sys.path.insert(0, os.path.abspath("../../plom_server"))
-os.environ["DJANGO_SETTINGS_MODULE"] = "Web_Plom.settings"
+os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
 django_setup()
 
 
@@ -80,6 +79,12 @@ html_theme = "sphinx_rtd_theme"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+html_theme_options = {
+    "display_version": True,
+    "flyout_display": "hidden",
+    "version_selector": True,
+}
 
 # -- Options for LaTeX output ------------------------------------------------
 

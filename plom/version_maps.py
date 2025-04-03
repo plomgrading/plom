@@ -14,7 +14,7 @@ from pathlib import Path
 
 
 def check_version_map(
-    vm: dict[int, dict[int, int]],
+    vm: dict[int, dict[int | str, int]],
     spec=None,
     *,
     legacy: bool = False,
@@ -70,14 +70,22 @@ def check_version_map(
         if not isinstance(qd, dict):
             raise ValueError(f'row "{qd}" of version map should be a dict')
         if num_questions is not None:
-            if len(qd) != num_questions:
-                raise ValueError(
-                    f"length of row {qd} does not match num questions {num_questions}"
-                )
+            if "id" in qd.keys():
+                if len(qd) != num_questions + 1:
+                    raise ValueError(
+                        f"length of row {qd} does not match num questions {num_questions}"
+                    )
+            else:
+                if len(qd) != num_questions:
+                    raise ValueError(
+                        f"length of row {qd} does not match num questions {num_questions}"
+                    )
         # even if no spec we can ensure all rows the same
         rowlens.add(len(qd))
         for q, v in qd.items():
-            if not isinstance(q, int):
+            if q == "id":
+                pass
+            elif not isinstance(q, int):
                 raise ValueError(f'question key "{q}" ({type(q)}) is not an integer')
             if not isinstance(v, int):
                 raise ValueError(f'version "{v}" ({type(v)}) should be an integer')
@@ -129,7 +137,7 @@ def check_version_map(
 
 def make_random_version_map(
     spec, *, seed: str | None = None
-) -> dict[int, dict[int, int]]:
+) -> dict[int, dict[int | str, int]]:
     """Build a random version map.
 
     Args:
@@ -163,7 +171,7 @@ def make_random_version_map(
     ]
     # we use the above when a question is shuffled, else we just use v=1.
 
-    vmap: dict[int, dict[int, int]] = {}
+    vmap: dict[int, dict[int | str, int]] = {}
     for t in range(1, spec["numberToProduce"] + 1):
         vmap[t] = {}
         for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
@@ -201,7 +209,7 @@ def make_random_version_map(
 
 def undo_json_packing_of_version_map(
     vermap_in: dict[str, dict[str, int]],
-) -> dict[int, dict[int, int]]:
+) -> dict[int, dict[int | str, int]]:
     """JSON must have string keys; undo such to int keys for version map.
 
     Both the test number and the question number have likely been
@@ -212,8 +220,8 @@ def undo_json_packing_of_version_map(
     of question number.  This same function can be used in that case.
     """
     vmap = {}
-    for t, question_vers in vermap_in.items():
-        vmap[int(t)] = {int(q): v for q, v in question_vers.items()}
+    for t, vers in vermap_in.items():
+        vmap[int(t)] = {(int(q) if q != "id" else q): v for q, v in vers.items()}
     return vmap
 
 
@@ -242,14 +250,15 @@ def _version_map_from_csv(
     required_papers: list[int] | None = None,
     num_questions: int | None = None,
     num_versions: int | None = None,
-) -> dict[int, dict[int, int]]:
+) -> dict[int, dict[int | str, int]]:
     """Extract the version map from a csv file.
 
     Args:
         f: a csv file, must have a `test_number` column
             and some `q{n}.version` columns.  The number of such columns
-            is autodetected.  For example, this could be output of
-            :func:`save_question_version_map`.
+            is generally autodetected unless ``num_questions`` kwarg is passed.
+            Optionally, there can be an `id.version` column,
+            This could be output of :func:`save_question_version_map`.
 
     Keyword Args:
         required_papers: A list of paper_numbers that the qv map must have.
@@ -261,21 +270,26 @@ def _version_map_from_csv(
     Returns:
         dict: keys are the paper numbers (`int`) and each value is a row
         of the version map: another dict with questions as question
-        number (`int`) and value version (`int`).
+        number (`int`) and value version (`int`).  If there was an
+        `id.version` column in the input, there will be `"id"` keys
+        (i.e., of type `str`).
 
     Raises:
         ValueError: values could not be converted to integers, or
             other errors in the version map.
         KeyError: wrong column header names.
     """
-    qvmap: dict[int, dict[int, int]] = {}
+    qvmap: dict[int, dict[int | str, int]] = {}
 
     with open(f, "r") as csvfile:
         reader = csv.DictReader(csvfile)
         if not reader.fieldnames:
             raise ValueError("csv must have column names")
         if num_questions is None:
+            # in this case we have to autodetect...
             N = len(reader.fieldnames) - 1
+            if "id.version" in reader.fieldnames:
+                N -= 1
         else:
             N = num_questions
         for line, row in enumerate(reader):
@@ -292,12 +306,20 @@ def _version_map_from_csv(
                 raise ValueError(
                     f"In line {line} Duplicate paper number detected: {papernum}"
                 )
+
             try:
                 qvmap[papernum] = {
                     n: int(row[f"q{n}.version"]) for n in range(1, N + 1)
                 }
             except KeyError as err:
                 raise KeyError(f"Missing column header {err}") from err
+            except ValueError as err:
+                raise ValueError(f"In line {line}: {err}") from err
+
+            try:
+                qvmap[papernum]["id"] = int(row["id.version"])
+            except KeyError:
+                pass  # id.version is optional
             except ValueError as err:
                 raise ValueError(f"In line {line}: {err}") from err
 
@@ -316,7 +338,7 @@ def version_map_from_file(
     required_papers: list[int] | None = None,
     num_questions: int | None = None,
     num_versions: int | None = None,
-) -> dict[int, dict[int, int]]:
+) -> dict[int, dict[int | str, int]]:
     """Extract the version map from a csv or json file.
 
     Args:
@@ -367,7 +389,7 @@ def version_map_from_file(
 
 
 def version_map_to_csv(
-    qvmap: dict[int, dict[int, int]], filename: Path, *, _legacy: bool = True
+    qvmap: dict[int, dict[int | str, int]], filename: Path, *, _legacy: bool = True
 ) -> None:
     """Output a csv of the question-version map.
 
@@ -389,11 +411,24 @@ def version_map_to_csv(
         header = ["test_number"]
     else:
         header = ["paper_number"]
+
+    has_id_versions = False
+    # do rows generally have "id" is in the keys?
+    if any("id" in row for row in qvmap.values()):
+        has_id_versions = True
+    if has_id_versions:
+        N -= 1
+        header.append("id.version")
+
     for q in range(1, N + 1):
         header.append(f"q{q}.version")
     with open(filename, "w") as csvfile:
         csv_writer = csv.writer(csvfile)
         csv_writer.writerow(header)
-        # make sure the rows are ordered = #3597
-        for k, v in sorted(qvmap.items()):
-            csv_writer.writerow([k, *[v[q] for q in range(1, N + 1)]])
+        # make sure the rows are ordered by paper num (Issue #3597)
+        for t, row in sorted(qvmap.items()):
+            output_row = [t]
+            if has_id_versions:
+                output_row.append(row["id"])
+            output_row.extend([row[q] for q in range(1, N + 1)])
+            csv_writer.writerow(output_row)

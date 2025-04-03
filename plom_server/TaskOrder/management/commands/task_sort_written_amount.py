@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2025 Andrew Rechnitzer
 
 import csv
 
@@ -11,8 +12,10 @@ from tqdm import tqdm
 from django.core.management.base import BaseCommand, CommandError
 
 # TODO: why model here?  Maybe there is some service to talk to instead?
-from Papers.models import QuestionPage
-from Papers.services import SpecificationService
+from plom_server.Papers.models import QuestionPage
+from plom_server.Papers.services import SpecificationService
+
+from ...services import TaskOrderService
 
 
 class Command(BaseCommand):
@@ -127,7 +130,7 @@ class Command(BaseCommand):
 
         for page in tqdm(pages, desc="Analyzing pages"):
             # get the image
-            image = cv.imread(page.image.image_file.path)
+            image = cv.imread(page.image.baseimage.image_file.path)
             cropped_im = _set_aspect_ratio(
                 _crop_img(image, scale=0.8),  # crop to keep center 80% of image
                 scale=0.2,  # resize to 20% of original size
@@ -178,12 +181,22 @@ class Command(BaseCommand):
             filename += "reverse_"
         filename += "sorted.csv"
 
+        keys = TaskOrderService.get_csv_header()
+        assert "Paper Number" in keys
+        assert "Question Index" in keys
+        assert "Priority" in keys
         with open(filename, "w") as f:
-            writer = csv.writer(f)
-            writer.writerow(["Paper Number", "Question Number", "Priority Value"])
+            w = csv.DictWriter(f, keys)
+            w.writeheader()
             for i, (k, th_sum) in enumerate(sorted_imgs.items()):
                 paper_number, question_idx = k  # unpack key
                 # TODO: could save grey value th_sum in new column...
-                writer.writerow((paper_number, question_idx, i))
+                w.writerow(
+                    {
+                        "Paper Number": paper_number,
+                        "Question Index": question_idx,
+                        "Priority": i,
+                    }
+                )
 
         print(f"Saved to {filename}")

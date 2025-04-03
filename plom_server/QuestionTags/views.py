@@ -13,8 +13,8 @@ from django.urls import reverse
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.db.utils import IntegrityError
 
-from Base.base_group_views import ManagerRequiredView
-from Papers.services import SpecificationService
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Papers.services import SpecificationService
 from .services import QuestionTagService
 from .models import TmpAbstractQuestion, PedagogyTag
 from .forms import AddTagForm, RemoveTagForm

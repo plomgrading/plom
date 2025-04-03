@@ -4,16 +4,15 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2020-2025 Colin B. Macdonald
-# Copyright (C) 2024 Andrew Rechnitzer
-
-# need this until newer minimum version of opencv
-from __future__ import annotations
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 
 import json
 from pathlib import Path
 from typing import Any
 
 import cv2 as cv
+
+# import cv2.typing - problems importing this - see MR 3050.
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 from sklearn.ensemble import RandomForestClassifier
@@ -27,10 +26,11 @@ import huey
 import huey.api
 
 from plom.idreader.model_utils import load_model, download_model, is_model_present
-from Base.models import HueyTaskTracker
-from Papers.models import Paper
-from Papers.services import SpecificationService, PaperInfoService
-from Rectangles.services import RectangleExtractor
+from plom_server.Base.models import HueyTaskTracker
+from plom_server.Papers.models import Paper
+from plom_server.Papers.services import SpecificationService, PaperInfoService
+from plom_server.Preparation.services import StagingStudentService
+from plom_server.Rectangles.services import RectangleExtractor
 from ..models import PaperIDTask, IDPrediction, IDReadingHueyTaskTracker
 from ..services import IdentifyTaskService, ClasslistService
 
@@ -82,8 +82,11 @@ class IDReaderService:
         """
         predictions = {}
         if predictor:
-            pred_query = IDPrediction.objects.filter(predictor=predictor)
-            for pred in pred_query:
+            for pred in (
+                IDPrediction.objects.filter(predictor=predictor)
+                .order_by("paper__paper_number")
+                .prefetch_related("paper")
+            ):
                 predictions[pred.paper.paper_number] = {
                     "student_id": pred.student_id,
                     "certainty": pred.certainty,
@@ -93,8 +96,11 @@ class IDReaderService:
 
         # else we want all predictors
         allpred: dict[int, list[dict[str, Any]]] = {}
-        pred_query = IDPrediction.objects.all()
-        for pred in pred_query:
+        for pred in (
+            IDPrediction.objects.all()
+            .order_by("paper__paper_number")
+            .prefetch_related("paper")
+        ):
             if allpred.get(pred.paper.paper_number) is None:
                 allpred[pred.paper.paper_number] = []
             allpred[pred.paper.paper_number].append(
@@ -188,20 +194,92 @@ class IDReaderService:
         else:
             IDPrediction.objects.all().delete()
 
-    def add_prename_ID_prediction(
-        self, user: User, student_id: str, paper_number: int
+    @staticmethod
+    def bulk_add_or_update_prename_ID_predictions(
+        user: User,
+        papers: list[Paper],
     ) -> None:
-        """Add ID prediction for a prenamed paper."""
-        self.add_or_change_ID_prediction(user, paper_number, student_id, 0.9, "prename")
+        """Update the system for changes to prenamed papers.
+
+        Args:
+            user: who should new prenames be associated with. Any
+                existing prenames are updated with this user.
+            papers: a list of Paper objects that have been updated
+                (elsewhere in the system - eg ID page uploaded or changed)
+                and so need their prename-predictions updated.
+        """
+        # get dict of all prenamed papers (as per classlist)
+        prenamed_papers = StagingStudentService.get_prenamed_papers()
+        # find existing prename-predictions from these papers
+        existing_prename_predictions = {}
+        for pred in IDPrediction.objects.filter(
+            predictor="prename", paper__in=papers
+        ).prefetch_related("paper"):
+            existing_prename_predictions[pred.paper.paper_number] = pred
+        # find any existing predictions from these papers
+        existing_predictions: dict[int, list[IDPrediction]] = {}  # I like cats
+        for pred in IDPrediction.objects.filter(paper__in=papers).prefetch_related(
+            "paper"
+        ):
+            existing_predictions.get(pred.paper.paper_number, []).append(pred)
+
+        # loop over papers making two lists: things to make and things to update
+        new_predictions = []
+        predictions_to_update = []
+        for paper in papers:
+            # check if paper is actually prenamed.
+            if paper.paper_number not in prenamed_papers:
+                continue
+            if paper.paper_number in existing_prename_predictions:
+                pred = existing_prename_predictions[paper.paper_number]
+                pred.student_id = prenamed_papers[paper.paper_number][0]
+                pred.user = user  # update the associated user too.
+                predictions_to_update.append(pred)
+            else:
+                # this does not immediately create a DB entry, we do it in bulk later
+                new_predictions.append(
+                    IDPrediction(
+                        user=user,
+                        paper=paper,
+                        predictor="prename",
+                        student_id=prenamed_papers[paper.paper_number][0],
+                        certainty=0.9,
+                    )
+                )
+        # now update the priorities of the associated IDtasks
+        # note that the updated IDPredictions did not change certainties, so
+        # they don't change the associated priorities
+        priority_updates = []
+        for idt_obj in PaperIDTask.objects.filter(paper__in=papers).prefetch_related(
+            "paper"
+        ):
+            if idt_obj.paper.paper_number in existing_prename_predictions:
+                certs = [
+                    X.certainty
+                    for X in existing_prename_predictions[paper.paper_number]
+                ]
+                idt_obj.iding_priority = min(certs)
+            else:
+                idt_obj.iding_priority = 0.9
+            # no idt_obj.save() here b/c we are deferring these for a bulk change
+            priority_updates.append(idt_obj)
+        # Finally actually create + update all the predictions and tasks
+        with transaction.atomic():
+            IDPrediction.objects.bulk_update(
+                predictions_to_update, ["student_id", "user"]
+            )
+            IDPrediction.objects.bulk_create(new_predictions)
+            # Some existing ID tasks will need their priorities updated too.
+            PaperIDTask.objects.bulk_update(priority_updates, ["iding_priority"])
 
     def run_the_id_reader_in_foreground(
         self,
         user: User,
-        box: tuple[float, float, float, float],
+        box_versions: dict[int, dict[str, float] | None],
         *,
         recompute_heatmap: bool = True,
     ):
-        id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(box)
+        id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(box_versions)
         IDBoxProcessorService().make_id_predictions(
             user, id_box_image_dict, recompute_heatmap=recompute_heatmap
         )
@@ -217,7 +295,7 @@ class IDReaderService:
     def run_the_id_reader_in_background_via_huey(
         self,
         user: User,
-        box: tuple[float, float, float, float],
+        box_versions: dict[int, dict[str, float] | None],
         recompute_heatmap: bool | None = True,
     ):
         """Run the ID reading process in the background.
@@ -257,7 +335,10 @@ class IDReaderService:
         tracker_pk = new_idht.pk
         # now build the actual huey task
         res = huey_id_reading_task(
-            user, box, recompute_heatmap=recompute_heatmap, tracker_pk=tracker_pk
+            user,
+            box_versions,
+            recompute_heatmap=recompute_heatmap,
+            tracker_pk=tracker_pk,
         )
         # and update the status
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
@@ -267,7 +348,7 @@ class IDReaderService:
 @db_task(queue="tasks", context=True)
 def huey_id_reading_task(
     user: User,
-    box: tuple[float, float, float, float],
+    box_versions: dict[int, tuple[float, float, float, float] | None],
     recompute_heatmap: bool,
     *,
     tracker_pk: int,
@@ -280,7 +361,7 @@ def huey_id_reading_task(
 
     Args:
         user: the user who triggered this process and so who will be associated with the predictions.
-        box: the coordinates of the ID box to extract.
+        box_versions: a dict keyed by version of the coordinates of the ID box to extract.
         recompute_heatmap: whether or not to recompute the digit probability heatmap.
 
     Keyword Args:
@@ -300,7 +381,7 @@ def huey_id_reading_task(
         tracker_pk, "ID Reading task has started. Getting ID boxes."
     )
 
-    id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(box)
+    id_box_image_dict = IDBoxProcessorService().save_all_id_boxes(box_versions)
     # check if we got any ID boxes (eg no scanned papers, or all prenamed)
     if len(id_box_image_dict) == 0:
         IDReadingHueyTaskTracker.set_message_to_user(
@@ -335,9 +416,9 @@ class IDBoxProcessorService:
     @transaction.atomic
     def save_all_id_boxes(
         self,
-        box: tuple[float, float, float, float],
+        box_versions: dict[int, dict[str, float] | None],
         *,
-        exlude_prenamed_papers: bool | None = True,
+        exclude_prenamed_papers: bool = True,
         save_dir: Path | None = None,
     ) -> dict[int, Path]:
         """Extract the id box, or really any rectangular part of the id page.
@@ -346,12 +427,13 @@ class IDBoxProcessorService:
         and so uses qr-code positions to rotate and find the given rectangle.
 
         Args:
-            box: A list of the box to extract or a default if ``None``.
-                This is of the form "top bottom left right", each how
-                much of the page as a float ``[0.0, 1.0]``.
+            box_versions: A dict keyed by version of dict giving coords
+                of the box to extract. Dict of coords has keys 'left_f', 'right_f',
+                'top_f', 'bottom_f', with float values.
 
         Keyword Args:
-            exlude_prenamed_papers: by default we don't extract the id box from prenamed papers.
+            exclude_prenamed_papers: by default we don't extract the id
+                box from prenamed papers.
             save_dir: what directory to save to, or a default if omitted.
 
         Returns:
@@ -365,35 +447,48 @@ class IDBoxProcessorService:
         # get the ID page-number and the papers which have it scanned.
         id_page_number = SpecificationService.get_id_page_number()
         # but exclude any prenamed papers
-        if exlude_prenamed_papers:
-            prenamed_papers = IDReaderService().get_prenamed_paper_numbers()
+        if exclude_prenamed_papers:
+            exclude_papers = IDReaderService().get_prenamed_paper_numbers()
         else:
-            prenamed_papers = []
-        paper_numbers = [
-            pn
-            for pn in PaperInfoService().get_paper_numbers_containing_given_page_version(
-                1, id_page_number, scanned=True
-            )
-            if pn not in prenamed_papers
-        ]
-
-        # use the rectangle extractor to then get all the rectangles from those pages and save them
-        rex = RectangleExtractor(1, id_page_number)
+            exclude_papers = []
+        # Note this gets all id pages regardless of version
         img_file_dict = {}
-        for pn in paper_numbers:
-            id_box_filename = id_box_folder / f"id_box_{pn:04}.png"
-            id_box_bytes = rex.extract_rect_region(pn, *box)
-            if id_box_bytes is None:
-                # just leave them out when rex cannot compute appropriate transforms
+        for v, box_as_dict in box_versions.items():
+            # do each id page version separately
+            if box_as_dict is None:
+                # if no box for that version then skip it.
                 continue
-            id_box_filename.write_bytes(id_box_bytes)
-            img_file_dict[pn] = id_box_filename
+            box = [
+                box_as_dict["left_f"],
+                box_as_dict["top_f"],
+                box_as_dict["right_f"],
+                box_as_dict["bottom_f"],
+            ]
+            paper_numbers = [
+                pn
+                for pn in PaperInfoService.get_paper_numbers_containing_page(
+                    id_page_number, version=v, scanned=True
+                )
+                if pn not in exclude_papers
+            ]
+            # use the rectangle extractor to then get all the rectangles from those pages and save them
+            rex = RectangleExtractor(v, id_page_number)
+            for pn in paper_numbers:
+                id_box_filename = id_box_folder / f"id_box_{pn:04}.png"
+                id_box_bytes = rex.extract_rect_region(pn, *box)
+                if id_box_bytes is None:
+                    # just leave them out when rex cannot compute appropriate transforms
+                    continue
+                id_box_filename.write_bytes(id_box_bytes)
+                img_file_dict[pn] = id_box_filename
 
         return img_file_dict
 
-    def resize_ID_box_and_extract_digit_strip(
-        self, id_box_file: Path
-    ) -> cv.typing.MatLike | None:
+    # problem with cv2.typing - see MR 3050.
+    # comment out the cv2.typing.MatLike hint here.
+    # TODO - fix the cv2.typing issue in dev sometime.
+    def resize_ID_box_and_extract_digit_strip(self, id_box_file: Path):
+        # ) -> cv2.typing.MatLike | None:
         """Extract the strip of digits from the ID box from the given image file."""
         # WARNING: contains many magic numbers - must be updated if the IDBox
         # template is changed.
@@ -419,9 +514,16 @@ class IDBoxProcessorService:
     # thankfully cv2 has some typing that will take care of us passing
     # these images as np arrays.
     # see https://stackoverflow.com/questions/73260250/how-do-i-type-hint-opencv-images-in-python
+    # problem with cv2.typing - see MR 3050.
+    # comment out the cv2.typing.MatLike hint here.
+    # TODO - fix the cv2.typing issue in dev sometime.
     def get_digit_images(
-        self, ID_box: cv.typing.MatLike, num_digits: int
-    ) -> list[cv.typing.MatLike]:
+        # self, ID_box: cv.typing.MatLike, num_digits: int
+        # ) -> list[cv.typing.MatLike]:
+        self,
+        ID_box,
+        num_digits: int,
+    ):
         """Find the digit images and return them in a list.
 
         Args:
@@ -533,9 +635,11 @@ class IDBoxProcessorService:
         """
         debugdir = None
         id_page_file = Path(id_box_file)
-        ID_box: cv.typing.MatLike | None = self.resize_ID_box_and_extract_digit_strip(
-            id_page_file
-        )
+        # TODO - sort out cv.typing
+        # ID_box: cv.typing.MatLike | None = self.resize_ID_box_and_extract_digit_strip(
+        #     id_page_file
+        # )
+        ID_box = self.resize_ID_box_and_extract_digit_strip(id_page_file)
         if ID_box is None:
             return []
         if debug:

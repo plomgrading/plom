@@ -1,15 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
-# Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Colin B. Macdonald
 
 from dataclasses import dataclass
-from pathlib import Path
-from shutil import copy2
 from time import sleep
 from typing import Optional, List, Dict, Any
 
-# sigh.... python dependent import of toml - sorry.
 import sys
 
 if sys.version_info < (3, 11):
@@ -21,8 +18,8 @@ from django.core.management.base import BaseCommand
 from django.core.management import call_command
 from django.conf import settings
 
-from Identify.services import IDDirectService
-from Scan.services import ScanService
+from plom_server.Identify.services import IDDirectService
+from plom_server.Scan.services import ScanService
 from ...services import DemoBundleCreationService, DemoHWBundleCreationService
 
 
@@ -64,7 +61,7 @@ class DemoAllBundlesConfig:
 
 def _read_bundle_config(length: str) -> DemoAllBundlesConfig:
     """Read and parse the appropriate demo bundle config file."""
-    demo_file_directory = settings.BASE_DIR / "Launcher/launch_scripts/demo_files"
+    demo_files = settings.BASE_DIR / "demo_files"
     # read the config toml file
     if length == "quick":
         fname = "bundle_for_quick_demo.toml"
@@ -74,7 +71,7 @@ def _read_bundle_config(length: str) -> DemoAllBundlesConfig:
         fname = "bundle_for_plaid_demo.toml"
     else:
         fname = "bundle_for_demo.toml"
-    with open(demo_file_directory / fname, "rb") as fh:
+    with open(demo_files / fname, "rb") as fh:
         try:
             config_dict = tomllib.load(fh)
         except tomllib.TOMLDecodeError as e:
@@ -97,29 +94,26 @@ class Command(BaseCommand):
         parser.add_argument(
             "--action",
             action="store",
-            choices=["build", "upload", "read", "wait", "push", "id_hw"],
+            choices=["build", "upload", "delreup", "read", "wait", "push", "id_hw"],
             required=True,
             help="""(build) demo bundles,
             (upload) demo bundles,
+            (delreup) remove and re-upload the first demo bundle,
             (read) qr-codes in uploaded demo bundles,
             (wait) for background processing of upload and qr-code reading,
             (push) processed bundles from staging,
             (id_hw) ID pushed demo homework bundles.""",
         )
+        parser.add_argument("--versioned-id", dest="versioned_id", action="store_true")
 
-    def build_the_bundles(self, demo_config: DemoAllBundlesConfig) -> None:
+    def build_the_bundles(
+        self, demo_config: DemoAllBundlesConfig, *, versioned_id=False
+    ) -> None:
         """Build demo bundles as per the chosen demo-config."""
-        # at present the bundle-creator assumes that the
-        # scrap-paper and extra-page pdfs are in media/papersToPrint
-        # so we make a copy of them from static to there.
-        src_dir = Path(settings.STATICFILES_DIRS[0])
-        dest_dir = Path(settings.MEDIA_ROOT) / "papersToPrint"
-        copy2(src_dir / "extra_page.pdf", dest_dir)
-        copy2(src_dir / "scrap_paper.pdf", dest_dir)
-        # TODO - get bundle-creator to take from static.
-
         if demo_config.bundles:
-            DemoBundleCreationService().scribble_on_exams(demo_config)
+            DemoBundleCreationService().scribble_on_exams(
+                demo_config, versioned_id=versioned_id
+            )
 
         if demo_config.hw_bundles is not None:
             for bundle in demo_config.hw_bundles:
@@ -146,6 +140,17 @@ class Command(BaseCommand):
                     "plom_staging_bundles", "upload", scanner_user, bundle_name
                 )
                 sleep(0.5)  # small sleep to not overwhelm huey's db
+
+    def delete_and_reupload_first_bundle(
+        self, demo_config: DemoAllBundlesConfig, *, bundle_slug: str = "fake_bundle1"
+    ) -> None:
+        """Delete and re-upload the first demo bundles."""
+        scanner_user = "demoScanner1"
+        if demo_config.bundles is not None:
+            call_command("plom_staging_bundles", "delbyslug", bundle_slug)
+            bundle_file = bundle_slug + ".pdf"
+            call_command("plom_staging_bundles", "upload", scanner_user, bundle_file)
+            sleep(0.5)  # small sleep to not overwhelm huey's db
 
     def read_qr_codes_in_bundles(self, demo_config: DemoAllBundlesConfig) -> None:
         """Read QR-codes of the uploaded bundles, and wait for process to finish."""
@@ -208,9 +213,11 @@ class Command(BaseCommand):
         demo_config = _read_bundle_config(options["length"])
 
         if options["action"] == "build":
-            self.build_the_bundles(demo_config)
+            self.build_the_bundles(demo_config, versioned_id=options["versioned_id"])
         elif options["action"] == "upload":
             self.upload_the_bundles(demo_config)
+        elif options["action"] == "delreup":
+            self.delete_and_reupload_first_bundle(demo_config)
         elif options["action"] == "read":
             self.read_qr_codes_in_bundles(demo_config)
         elif options["action"] == "push":

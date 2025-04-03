@@ -1,7 +1,8 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023-2024 Andrew Rechnitzer
-    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
+    Copyright (C) 2025 Aidan Murphy
 -->
 <div id="bundlePageFragment">
     <!-- TODO: I would like to use the containers "class col" in the containing file. -->
@@ -154,10 +155,23 @@
                                hx-post="{% url 'discard_image' the_filter bundle_id index %}"
                                hx-confirm="Are you sure you wish to discard this known page?">Discard</a>
                         {% elif current_page.status == 'error' %}
-                            <!-- error page can discard but not recommended -->
+                            <!-- error page can cast to discard, extra, known (but caution) -->
+                            <div>
+                                <a class="btn btn-warning text-center w-100 mb-3"
+                                   hx-put="{% url 'extralise_image' the_filter bundle_id index %}"
+                                   hx-confirm="Do you want to change this error page into a known page? Please also consider rescanning because error pages can indicate more serious canning problems.">
+                                    Cast to extra page
+                                </a>
+                            </div>
+                            <div>
+                                <a class="btn btn-outline-success text-center w-100 mb-3"
+                                   hx-get="{% url 'knowify_image' the_filter bundle_id index %}"
+                                   hx-confirm="Do you want to change this error page into a known page? Please also consider rescanning because error pages can indicate more serious canning problems."
+                                   hx-target="#bundlePageFragment">Cast to known page</a>
+                            </div>
                             <a class="btn btn-danger text-center w-100 mb-3"
                                hx-post="{% url 'discard_image' the_filter bundle_id index %}"
-                               hx-confirm="Are you sure you wish to discard this error page? We do not generally recommend doing this since error pages tend to indicate larger scanning problems.">
+                               hx-confirm="Are you sure you wish to discard this error page? Please also consider rescanning because error pages can indicate more serious canning problems.">
                                 Discard
                             </a>
                         {% elif current_page.status == 'unread' %}
@@ -166,8 +180,7 @@
                             <!-- discard can cast to known, extra, unknown -->
                             <div>
                                 <a class="btn btn-warning text-center w-100 mb-3"
-                                   hx-put="{% url 'extralise_image' the_filter bundle_id index %}"
-                                   hx-confirm="Are you sure you wish to set this discarded page as an extra page?">
+                                   hx-put="{% url 'extralise_image' the_filter bundle_id index %}">
                                     Cast to extra page
                                 </a>
                             </div>
@@ -178,8 +191,7 @@
                             </div>
                             <div>
                                 <a class="btn btn-outline-warning text-center w-100 mb-3"
-                                   hx-post="{% url 'unknowify_image' the_filter bundle_id index %}"
-                                   hx-confirm="Are you sure you wish to set this discarded page as an unknown page?">
+                                   hx-post="{% url 'unknowify_image' the_filter bundle_id index %}">
                                     Cast to unknown page
                                 </a>
                             </div>
@@ -196,13 +208,11 @@
                             <!-- unknown page can discard, extralise, knowify-->
                             <div>
                                 <a class="btn btn-danger text-center w-100 mb-3"
-                                   hx-post="{% url 'discard_image' the_filter bundle_id index %}"
-                                   hx-confirm="Are you sure you wish to discard this unknown page?">Discard</a>
+                                   hx-post="{% url 'discard_image' the_filter bundle_id index %}">Discard</a>
                             </div>
                             <div>
                                 <a class="btn btn-warning text-center w-100 mb-3"
-                                   hx-put="{% url 'extralise_image' the_filter bundle_id index %}"
-                                   hx-confirm="Are you sure you wish to set this unknown page as an extra page?">
+                                   hx-put="{% url 'extralise_image' the_filter bundle_id index %}">
                                     Cast to extra page
                                 </a>
                             </div>
@@ -224,14 +234,12 @@
                             <!-- can discard  -->
                             <div>
                                 <a class="btn btn-danger text-center w-100 mb-3"
-                                   hx-post="{% url 'discard_image' the_filter bundle_id index %}"
-                                   hx-confirm="Are you sure you wish to discard this extra page?">Discard</a>
+                                   hx-post="{% url 'discard_image' the_filter bundle_id index %}">Discard</a>
                             </div>
                             {% if current_page.info.paper_number %}
                                 <div>
                                     <a class="btn btn-danger text-center w-100 mb-3"
-                                       hx-delete="{% url 'extralise_image' the_filter bundle_id index %}"
-                                       hx-confirm="Are you sure you wish to clear the extra page information?">
+                                       hx-delete="{% url 'extralise_image' the_filter bundle_id index %}">
                                         Clear information
                                     </a>
                                 </div>
