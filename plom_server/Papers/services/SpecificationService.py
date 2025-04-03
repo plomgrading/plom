@@ -4,6 +4,7 @@
 # Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2025 Philip D. Loewen
 
 from copy import deepcopy
 import html
@@ -38,19 +39,21 @@ def validate_spec_from_dict(spec_dict: dict[str, Any]) -> bool:
         spec_dict: a dictionary of the proposed spec.
 
     Returns:
-        True if the spec seems valid.
+        True if the spec serializes correctly
 
     Raises:
         ValueError: explaining what is invalid.
         serializers.ValidationError: in this case the ``.detail`` field
             will contain a list of what is wrong.
     """
+    test_dict = deepcopy(spec_dict)  # Defend input dict from changes in next stanza
+
     # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
     # Also, this function does not care if there are no questions in the spec dictionary. It assumes
     # the serializer/SpecVerifier will catch it.
-    if "question" in spec_dict.keys():
-        spec_dict["question"] = question_list_to_dict(spec_dict["question"])
-    serializer = SpecSerializer(data=spec_dict)
+    if "question" in test_dict.keys():
+        test_dict["question"] = question_list_to_dict(test_dict["question"])
+    serializer = SpecSerializer(data=test_dict)
     return serializer.is_valid()
 
 
@@ -79,19 +82,21 @@ def load_spec_from_dict(
     # this will Raise a PlomDependencyConflict if cannot modify the spec
     assert_can_modify_spec()
 
+    test_dict = deepcopy(spec_dict)  # Defend input dict from changes in next stanza
+
     # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
     # Also, this function does not care if there are no questions in the spec dictionary. It assumes
     # the serializer/SpecVerifier will catch it.
-    if "question" in spec_dict.keys():
-        spec_dict["question"] = question_list_to_dict(spec_dict["question"])
-    serializer = SpecSerializer(data=spec_dict)
+    if "question" in test_dict.keys():
+        test_dict["question"] = question_list_to_dict(test_dict["question"])
+    serializer = SpecSerializer(data=test_dict)
     assert serializer.is_valid(), "Unexpectedly invalid serializer"
     valid_data = serializer.validated_data
 
     if public_code:
         valid_data["publicCode"] = public_code
 
-    return serializer.create(serializer.validated_data)
+    return serializer.create(valid_data)
 
 
 @transaction.atomic

@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2025 Philip D. Loewen
 
 from pathlib import Path
 from typing import Any
@@ -78,7 +79,7 @@ class SpecificationUploadService:
     def validate_spec(self):
         if not self.spec_dict:
             raise ValueError("Cannot find specification to validate.")
-        SpecificationService.validate_spec_from_dict(
+        return SpecificationService.validate_spec_from_dict(
             self.spec_dict,
         )
 
