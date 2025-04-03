@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status
 
-from Papers.services import SpecificationService
+from plom_server.Papers.services import SpecificationService
 from plom_server.SpecCreator.services import SpecificationUploadService
 from .utils import _error_response
 
