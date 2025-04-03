@@ -40,11 +40,28 @@ Login to your server using one of those accounts.
 Follow the instructions to upload bundles of papers as PDF files.
 
 
-Dealing with unknown pages, extra pages, etc
-............................................
+Dealing with unknown pages, extra pages, error pages, etc
+.........................................................
 
-TODO
+After scanning, you likely have some "Pages that need your attention",
+such as folded pages, pages without readable QR codes due to
+printing/scanning troubles, extra pages using our template or even
+adhoc pages such as looseleaf.
 
+These can all be handling using the web interface.
+
+Occasionally, you may see pages where the QR-reader has failed (hopefully
+these are rare).  Folded pages are one possibility: you may
+need to re-scan a page.
+
+
+Collisions
+..........
+
+"Good collisions" are caused for example by re-scanning a page.
+These can be dealt with using the web interface, for example by discarding one of them.
+"Bad collisions" come from accidental reuse of papers e.g., from double-printing.
+This is a more serious problem, see :doc:`faq`.
 
 
 
