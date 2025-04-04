@@ -1166,7 +1166,7 @@ class Messenger(BaseMessenger):
         response = self.get_auth("/api/beta/spec")
         return response
 
-    def new_server_upload_spec(self, spec_toml_string: str) -> response.Result | None:
+    def new_server_upload_spec(self, spec_toml_string: str) -> None | requests.Response:
         """Upload an assessment spec to the server.
 
         Args:
