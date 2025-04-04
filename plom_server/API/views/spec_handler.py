@@ -12,14 +12,22 @@ from rest_framework import status
 
 from plom_server.Papers.services import SpecificationService
 from plom_server.SpecCreator.services import SpecificationUploadService
+from plom_server.Preparation.services.preparation_dependency_service import (
+    assert_can_modify_spec,
+)
 from .utils import _error_response
+
+
+from plom.plom_exceptions import (
+    PlomDependencyConflict,
+)
 
 
 class SpecificationHandler(APIView):
     """Handle transactions involving the Assessment Specification."""
 
-    # The GET method never looks at the request, but apparently it has to be in the header
-    def get(self) -> Response:
+    # GET /api/beta/spec
+    def get(self, request: Request) -> Response:
         """Get the current spec.
 
         Returns:
@@ -36,6 +44,7 @@ class SpecificationHandler(APIView):
 
         return Response(the_spec)
 
+    # POST /api/beta/spec
     def post(self, request: Request) -> Response:
         """Use a string containing TOML to replace the current spec, if any.
 
@@ -44,27 +53,35 @@ class SpecificationHandler(APIView):
             (400) Could not save the given spec.
             (404) Something went wrong.
         """
-        SUS = SpecificationUploadService()
+        try:
+            # Make sure this action is safe. Inherit the exception if not.
+            assert_can_modify_spec()
+        except Exception as e:
+            raise PlomDependencyConflict(
+                "Preparations have advanced too far to change the spec now."
+                + f"Detail: {e}"
+            ) from None
 
         if SpecificationService.is_there_a_spec():
             try:
-                SUS.delete_spec()
+                _SUS = SpecificationUploadService()
+                _SUS.delete_spec()
             except Exception as e:
                 return _error_response(
                     f"\nDeleting old spec failed, with exception {e}. Quitting!\n",
                     status.HTTP_400_BAD_REQUEST,
                 )
 
-        # In principle this block should be redundant.
-        if SpecificationService.is_there_a_spec():
-            return _error_response(
-                "\nDeleting old spec failed. Quitting!\n",
-                status.HTTP_400_BAD_REQUEST,
-            )
-
         # There is no spec. Upload the given one.
         spec_toml_string = request.data["spec_toml"]  # Get the TOML string
-        SUS.__init__(toml_string=spec_toml_string)  # Read it into the service
+        try:
+            SUS = SpecificationUploadService(toml_string=spec_toml_string)
+        except Exception as e:
+            return _error_response(
+                "\nGiven TOML string was rejected. Consider pre-validating it.\n"
+                + f"Details: {e}\n",
+                status.HTTP_400_BAD_REQUEST,
+            )
         try:
             SUS.save_spec()  # Main activity is load_spec_from_dict
         except Exception:
@@ -77,27 +94,6 @@ class SpecificationHandler(APIView):
         if not SpecificationService.is_there_a_spec():
             return _error_response(
                 "Upload failed. No idea why.", status.HTTP_404_NOT_FOUND
-            )
-
-        the_spec = SpecificationService.get_the_spec()
-        the_spec.pop("privateSeed", None)
-
-        return Response(the_spec)
-
-
-class BogusSpecificationHandler(APIView):
-    """Handle transactions involving the Assessment Specification."""
-
-    def get(self, request: Request) -> Response:
-        """Get the current spec.
-
-        Returns:
-            (200) JsonResponse: the current spec.
-            (404) spec not found.
-        """
-        if not SpecificationService.is_there_a_spec():
-            return _error_response(
-                "Server does not have a spec", status.HTTP_400_BAD_REQUEST
             )
 
         the_spec = SpecificationService.get_the_spec()

@@ -22,6 +22,9 @@ def upload_spec(toml: Path, *, msgr) -> bool:
     tomlbytes = filepointer.read()
     tomlstring = tomlbytes.decode("utf-8")
 
-    msgr.new_server_upload_spec(tomlstring)
+    try:
+        msgr.new_server_upload_spec(tomlstring)
+    except Exception as e:
+        print(f"Upload failed with exception: {e}.")
 
     return True  # Could do something fancier after looking at return value above
