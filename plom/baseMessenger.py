@@ -6,6 +6,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Tam Nguyen
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2025 Philip D. Loewen
 
 from __future__ import annotations
 
@@ -771,9 +772,9 @@ class BaseMessenger:
         with self.SRmutex:
             try:
                 if self.is_legacy_server():
-                    response = self.get("/info/spec")
+                    response = self.get("/api/beta/spec")
                 else:
-                    response = self.get_auth("/info/spec")
+                    response = self.get_auth("/api/beta/spec")
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
