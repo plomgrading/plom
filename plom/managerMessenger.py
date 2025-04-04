@@ -2,6 +2,7 @@
 # Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
 # Copyright (C) 2022 Edith Coates
+# Copyright (C) 2025 Philip D. Loewen
 
 import hashlib
 from io import BytesIO
