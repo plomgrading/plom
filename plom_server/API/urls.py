@@ -36,6 +36,7 @@ from .views import (
     REPcompletionStatus,
     REPcoverPageInfo,
     SpecificationHandler,
+    BogusSpecificationHandler,
 )
 
 from .views import MgetRubricMarkingTasks
@@ -109,8 +110,8 @@ urlpatterns = [
     ),
     path(
         "info/spec",
-        SpecificationHandler.as_view(),
-        name="api_spec_handler",
+        BogusSpecificationHandler.as_view(),
+        name="b_api_spec_handler",
     ),
 ]
 

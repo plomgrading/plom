@@ -18,6 +18,7 @@ from .utils import _error_response
 class SpecificationHandler(APIView):
     """Handle transactions involving the Assessment Specification."""
 
+    # The GET method never looks at the request, but apparently it has to be in the header
     def get(self) -> Response:
         """Get the current spec.
 
@@ -76,6 +77,27 @@ class SpecificationHandler(APIView):
         if not SpecificationService.is_there_a_spec():
             return _error_response(
                 "Upload failed. No idea why.", status.HTTP_404_NOT_FOUND
+            )
+
+        the_spec = SpecificationService.get_the_spec()
+        the_spec.pop("privateSeed", None)
+
+        return Response(the_spec)
+
+
+class BogusSpecificationHandler(APIView):
+    """Handle transactions involving the Assessment Specification."""
+
+    def get(self, request: Request) -> Response:
+        """Get the current spec.
+
+        Returns:
+            (200) JsonResponse: the current spec.
+            (404) spec not found.
+        """
+        if not SpecificationService.is_there_a_spec():
+            return _error_response(
+                "Server does not have a spec", status.HTTP_400_BAD_REQUEST
             )
 
         the_spec = SpecificationService.get_the_spec()

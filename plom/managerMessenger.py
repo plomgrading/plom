@@ -311,7 +311,7 @@ class ManagerMessenger(BaseMessenger):
         with self.SRmutex:
             try:
                 response = self.put(
-                    "/info/spec",
+                    "/api/beta/spec",
                     json={
                         "user": self.user,
                         "token": self.token,
