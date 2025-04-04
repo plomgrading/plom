@@ -31,10 +31,9 @@ from textwrap import dedent
 
 from stdiomask import getpass
 
-import plom
-from plom import __version__
-from plom import Default_Port
-from plom import SpecVerifier
+import plom.create
+from plom.create import __version__, Default_Port
+from plom.spec_verifier import SpecVerifier
 from plom.plom_exceptions import PlomExistingDatabase, PlomServerNotReady
 from plom.create import process_classlist_file, get_demo_classlist, upload_classlist
 from plom.create import start_messenger
@@ -45,7 +44,7 @@ from plom.create import upload_demo_rubrics
 from plom.create import clear_manager_login
 from plom.create import version_map_from_file
 from plom.create import save_version_map
-from plom import check_version_map
+from plom.version_maps import check_version_map
 
 from plom.manage_user_files import write_csv_user_list
 from plom.manage_user_files import get_raw_user_dict_from_csv

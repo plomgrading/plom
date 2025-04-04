@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020-2022, 2025 Colin B. Macdonald
 
 import hashlib
 import json
@@ -9,8 +9,8 @@ from pathlib import Path
 import shutil
 from textwrap import dedent
 
+from plom.scan import PlomImageExts
 from plom.scan import with_scanner_messenger
-from plom import PlomImageExts
 from plom.scan.sendPagesToServer import extract_order
 
 

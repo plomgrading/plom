@@ -8,7 +8,7 @@ import pymupdf
 
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.mergeAndCodePages import make_PDF
-from plom import SpecVerifier
+from plom.spec_verifier import SpecVerifier
 
 
 def test_make_pdf_shared_pages(tmp_path) -> None:

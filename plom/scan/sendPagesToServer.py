@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 
 from collections import defaultdict
 import hashlib
@@ -12,8 +12,8 @@ from typing import Union
 
 from tqdm import tqdm
 
+from plom.scan import PlomImageExts
 from plom.scan import with_scanner_messenger
-from plom import PlomImageExts
 
 
 log = logging.getLogger("scan")

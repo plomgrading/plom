@@ -7,7 +7,7 @@ from pathlib import Path
 import tempfile
 from typing import Any
 
-from plom import SpecVerifier
+from plom.spec_verifier import SpecVerifier
 from plom.version_maps import version_map_to_csv
 
 from plom_server.Papers.services import SpecificationService
@@ -101,7 +101,7 @@ class PQVMappingService:
             question index (int, but indexed from 1 not 0).  Values are
             integers.
         """
-        from plom import make_random_version_map
+        from plom.version_maps import make_random_version_map
 
         # grab the spec as dict from the test creator services
         spec_dict = SpecificationService.get_the_spec()

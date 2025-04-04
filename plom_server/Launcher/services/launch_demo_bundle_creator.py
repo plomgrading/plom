@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
-
-from __future__ import annotations
 
 from collections import defaultdict
 import csv
@@ -13,14 +11,14 @@ from dataclasses import asdict
 from pathlib import Path
 import shutil
 import tempfile
-from typing import List, Dict, Any
+from typing import Any
 
 import pymupdf
 
 from django.core.management import call_command
 from django.conf import settings
 
-from plom import SpecVerifier
+from plom.spec_verifier import SpecVerifier
 from plom.create.mergeAndCodePages import (
     create_QR_codes,
     create_invalid_QR_and_bar_codes,
@@ -32,7 +30,7 @@ from plom.scan import pdfmucker
 class DemoBundleCreationService:
     """Handle generating demo bundles."""
 
-    def get_classlist_as_dict(self) -> List[Dict[str, Any]]:
+    def get_classlist_as_dict(self) -> list[dict[str, Any]]:
         """Download the classlist and return as a list of dicts."""
         with tempfile.TemporaryDirectory() as td:
             classlist_file = Path(td) / "classlist.csv"
@@ -126,7 +124,7 @@ class DemoBundleCreationService:
         )
         return dest_dir / "scrap_paper.pdf"
 
-    def assign_students_to_papers(self, paper_list, classlist) -> List[Dict]:
+    def assign_students_to_papers(self, paper_list, classlist) -> list[dict]:
         """Map papers to names and IDs from the classlist, skipping any prenamed ones."""
         # prenamed papers are "exam_XXXX_YYYYYYY" and normal are "exam_XXXX"
         id_to_name = {X["id"]: X["name"] for X in classlist}

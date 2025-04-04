@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 
 from pathlib import Path
 import pytest
@@ -8,7 +8,7 @@ import exif
 from PIL import Image, ImageDraw
 import pymupdf
 
-from plom import __version__
+from plom.scan import __version__
 from plom.scan.scansToImages import (
     add_metadata_jpeg_comment,
     add_metadata_jpeg_exif,

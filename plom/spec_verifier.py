@@ -352,8 +352,8 @@ class SpecVerifier:
         """Initialize a SpecVerifier from a dict.
 
         Args:
-            d (dict): an exam specification - it will not be modified by the specVerifier, rather
-                specVerifier makes a copy of that dict.
+            d (dict): an exam specification - it will not be modified by the
+                SpecVerifier, rather SpecVerifier makes a copy of that dict.
         """
         local_d = deepcopy(d)  # see issue 2258
         # Issue #2276, we're removing numberToProduce but legacy servers still need it

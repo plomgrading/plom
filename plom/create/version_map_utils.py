@@ -1,16 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 
 import json
 from pathlib import Path
-from typing import Dict
 
-from plom import version_map_to_csv
 from plom.create import with_manager_messenger
+from plom.version_maps import version_map_to_csv
 
 
 @with_manager_messenger
-def download_version_map(*, msgr) -> Dict[int, Dict[int, int]]:
+def download_version_map(*, msgr) -> dict[int, dict[int, int]]:
     """Get the question-version map from a server.
 
     Keyword Args:

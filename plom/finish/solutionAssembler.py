@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
 import tempfile
@@ -9,7 +9,7 @@ from pathlib import Path
 from PIL import Image
 import pymupdf
 
-from plom import __version__
+from plom.finish import __version__
 
 # hardcoded for letter, https://gitlab.com/plom/plom/issues/276
 papersize_portrait = (612, 792)

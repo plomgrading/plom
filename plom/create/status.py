@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2022 Natalia Accomazzo Scotti
 
 from textwrap import wrap
 
-from plom import SpecVerifier
+from plom.spec_verifier import SpecVerifier
 from plom.create import with_manager_messenger
 from plom.plom_exceptions import PlomServerNotReady, PlomNoClasslist
 from plom.misc_utils import format_int_list_with_runs

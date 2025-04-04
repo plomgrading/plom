@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2023 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 
 import json
 import logging
@@ -19,7 +19,7 @@ from plom.tpv_utils import (
 from plom.scan import with_scanner_messenger
 from plom.scan import QRextract_legacy
 from plom.scan.rotate import rotate_bitmap
-from plom import PlomImageExts
+from plom.scan import PlomImageExts
 
 
 log = logging.getLogger("scan")

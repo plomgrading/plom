@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
 
 from copy import deepcopy
@@ -13,7 +13,7 @@ if sys.version_info < (3, 11):
 else:
     import tomllib
 
-from plom import SpecVerifier, get_question_label
+from plom.spec_verifier import SpecVerifier, get_question_label
 
 
 raw = SpecVerifier.demo().spec
