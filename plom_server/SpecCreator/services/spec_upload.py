@@ -16,10 +16,6 @@ from Preparation.services.preparation_dependency_service import assert_can_modif
 from Papers.services import SpecificationService
 
 
-class SpecExistsException(Exception):
-    """Raised if a specification already exists in the database."""
-
-
 class SpecificationUploadService:
     """Handle the workflow of uploading a assessment specification.
 
