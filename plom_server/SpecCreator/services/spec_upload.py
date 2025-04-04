@@ -72,12 +72,19 @@ class SpecificationUploadService:
             except TOMLDecodeError as e:
                 raise ValueError(f"Unable to parse TOML: {e}") from e
 
-    def validate_spec(self):
+    def _validate_spec(self) -> None:
+        """A frontend to a some serializer stuff.
+
+        Perhaps callers should use the Serializer directly instead of this.
+
+        Raises:
+            ValueError: no spec to validate
+            ValidationError: TODO: probably?
+        """
         if not self.spec_dict:
             raise ValueError("Cannot find specification to validate.")
-        return SpecificationService.validate_spec_from_dict(
-            self.spec_dict,
-        )
+        # Note this returns bool and we ignore it
+        SpecificationService.validate_spec_from_dict(self.spec_dict)
 
     @transaction.atomic
     def save_spec(
