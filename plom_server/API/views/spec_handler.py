@@ -52,14 +52,14 @@ class SpecificationHandler(APIView):
             except Exception as e:
                 return _error_response(
                     f"\nDeleting old spec failed, with exception {e}. Quitting!\n",
-                    status.HTTP_HTTP_400_BAD_REQUEST,
+                    status.HTTP_400_BAD_REQUEST,
                 )
 
         # In principle this block should be redundant.
         if SpecificationService.is_there_a_spec():
             return _error_response(
                 "\nDeleting old spec failed. Quitting!\n",
-                status.HTTP_HTTP_400_BAD_REQUEST,
+                status.HTTP_400_BAD_REQUEST,
             )
 
         # There is no spec. Upload the given one.
