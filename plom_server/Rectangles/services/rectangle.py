@@ -366,7 +366,7 @@ class RectangleExtractor:
             )
 
         # TODO: smells like direct file access?
-        img_path = img_obj.image_file.path
+        img_path = img_obj.baseimage.image_file.path
 
         return extract_rect_region_from_image(
             img_path,
