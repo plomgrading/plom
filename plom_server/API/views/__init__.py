@@ -16,6 +16,7 @@ from .server_info import (
 
 from .spec_handler import (
     SpecificationHandler,
+    BogusSpecificationHandler,
 )
 
 from .identify import (
