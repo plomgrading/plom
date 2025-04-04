@@ -38,8 +38,11 @@ def wait_for_user_to_type_quit() -> None:
             break
 
 
-def set_argparse_and_get_args() -> argparse.Namespace:
-    """Configure argparse to collect commandline options."""
+def get_parser() -> argparse.ArgumentParser:
+    """Build the command-line parser.
+
+    Also used by the sphinx docs: do not rename without changing there.
+    """
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
@@ -152,8 +155,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         dest="development",
         help="Run a production Gunicorn server.",
     )
-
-    return parser.parse_args()
+    return parser
 
 
 def run_django_manage_command(cmd) -> None:
@@ -800,7 +802,8 @@ def main():
     # TODO: I guess?
     os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
 
-    args = set_argparse_and_get_args()
+    args = get_parser().parse_args()
+
     # cast stop-after, wait-after from list of options to a singleton or None
     if args.stop_after:
         stop_after = args.stop_after[0]

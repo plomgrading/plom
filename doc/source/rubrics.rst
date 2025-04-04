@@ -113,8 +113,6 @@ Managing rubrics
 It also possible to populate the rubric database in bulk from external
 tools such as a spreadsheet.  For example, this could be done before
 marking begins or by reusing rubrics from a previous assessment.
-This still needs to be implemented:
-see `Issue #3352 <https://gitlab.com/plom/plom/-/issues/3352>`_.
 
 If you're using the legacy server,
 see the :doc:`plom-create` command-line tool or the :doc:`module-plom-create`.

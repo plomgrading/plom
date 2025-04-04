@@ -11,19 +11,18 @@ Most Plom code can be found in one of two directories in the
  * ``plom/``
  * ``plom_server/``
 The former is currently (2025 March) "in-flux" as the marking client has
-moved to a separate Plom-Client repo <https://gitlab.com/plom/plom-client>`_.
-The latter contains the "current" (non-legacy) Plom server.
+moved to a separate `Plom-Client repo <https://gitlab.com/plom/plom-client>`_
+and the legacy server has been deprecated and subsequently removed.
 
-Note both ``plom/`` and ``plom_server/`` are modules.
+The ``plom_server`` module contains the "current" (non-legacy) Plom server.
+
 
 
 plom
------------
+----
 
 .. toctree::
    :maxdepth: 1
-
-   plom/plom.rst
 
    module-plom-create
 
@@ -33,13 +32,8 @@ plom
 
    module-plom-finish
 
-   module-plom-client
-
-   module-plom-legacy-server
-
-   module-plom-db
-
    module-plom-other
+
 
 plom_server
 -----------

@@ -1,5 +1,5 @@
 .. Plom documentation
-   Copyright (C) 2022-2024 Colin B. Macdonald
+   Copyright (C) 2022-2025 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
 
@@ -33,9 +33,6 @@ Getting solutions onto the server
 The command-line tool :doc:`plom-solutions` can extract solutions from
 PDF files, push to server, etc.  See ``plom-solutions --help`` for
 more information.
-
-The :doc:`plom-legacy-manager` GUI tool currently allows some manipulation of
-the solutions but is not yet a replacement for the command-line tool.
 
 
 Preparing solutions for students

@@ -20,8 +20,11 @@ from plom_server import __version__
 from plom_server.Base.services import database_service
 
 
-def set_argparse_and_get_args() -> argparse.Namespace:
-    """Configure argparse to collect commandline options."""
+def get_parser() -> argparse.ArgumentParser:
+    """Build the command-line parser.
+
+    Also used by the sphinx docs: do not rename without changing there.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--version", action="version", version="%(prog)s " + __version__
@@ -66,8 +69,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         dest="development",
         help="Run a production Gunicorn server (default).",
     )
-    args = parser.parse_args()
-    return args
+    return parser
 
 
 def run_django_manage_command(cmd: str) -> None:
@@ -187,7 +189,7 @@ def main():
     # TODO: I guess?
     os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
 
-    args = set_argparse_and_get_args()
+    args = get_parser().parse_args()
 
     if not args.development and not args.port:
         print("You must supply a port for the production server.")

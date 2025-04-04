@@ -42,7 +42,11 @@ from plom.cli import (
 # from plom.cli import clear_login
 
 
-def _get_parser():
+def get_parser() -> argparse.ArgumentParser:
+    """Build the command-line parser.
+
+    Also used by the sphinx docs: do not rename without changing there.
+    """
     parser = argparse.ArgumentParser(
         description=__doc__.split("\n")[0],
         epilog="\n".join(__doc__.split("\n")[1:]),
@@ -231,8 +235,7 @@ def _get_parser():
 
 def main():
     """The plom-cli command line tool."""
-    parser = _get_parser()
-    args = parser.parse_args()
+    args = get_parser().parse_args()
 
     if hasattr(args, "server"):
         args.server = args.server or os.environ.get("PLOM_SERVER")
@@ -305,7 +308,7 @@ def main():
         print("TODO: do we need this on new Plom?")
         # clear_login(args.server, args.password)
     else:
-        parser.print_help()
+        get_parser().print_help()
 
 
 if __name__ == "__main__":

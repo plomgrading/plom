@@ -20,13 +20,9 @@ Welcome to Plom's documentation!
 
    scanning
 
-   unknown_pages
-
    identifying_papers.rst
 
    marking.rst
-
-   manage.rst
 
    hw_processing.rst
 
