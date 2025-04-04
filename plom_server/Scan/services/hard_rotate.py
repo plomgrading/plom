@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
+# Copyright (C) 2025 Colin B. Macdonald
 
 from io import BytesIO
+
 from PIL import Image
-from typing import Optional
 
 from django.db.models.fields.files import ImageFieldFile
 
@@ -31,20 +32,23 @@ class ExifNumbers:
 def hard_rotate_image_from_file_by_exif_and_angle(
     image_file: ImageFieldFile,
     *,
-    theta: Optional[int] = None,
-    save_format: Optional[str] = "png",
+    theta: int | None = None,
+    save_format: str = "png",
 ) -> bytes:
     """Construct an image hard-rotated by the given angle and any exif.
 
     Args:
-        image_file: the Django image field file to be rotated
+        image_file: the Django image "FieldFile" to be rotated.  Exactly
+            what this is depends on the storage being used.  We can read
+            from it.  We will not write to it.
 
     Keyword Args:
-        theta: the anti-clockwise angle to rotate (not inc any exif rotations) - default 0.
+        theta: the anti-clockwise angle to rotate (not including any
+            exif rotations) - default 0.
         save_format: the format in which to save - default is png.
 
     Returns:
-        (bytes) bytes of the image
+        The bytes of a new image (the original is unchanged).
     """
     # We will rotate image by theta anti-clockwise.
     if theta is None:
