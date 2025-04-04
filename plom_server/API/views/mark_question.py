@@ -89,27 +89,8 @@ class QuestionMarkingViewSet(ViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(task.code, status=status.HTTP_200_OK)
 
-    # POST: /MK/tasks/{code}
     # PATCH: /MK/tasks/{code}
-    @action(detail=False, methods=["patch", "post"], url_path="(?P<code>q.+)")
-    def claim_or_mark_task(self, request: Request, code: str) -> Response:
-        """Attach a user to a marking task, or accept a grade and annotation.
-
-        patch:
-        Attach a user to a marking task.
-
-        post:
-        Accept a marker's grade and annotation.
-
-        Methods:
-            PATCH: see self.claim_task()
-            POST: see self.mark_task()
-        """
-        if request.method == "PATCH":
-            return self.claim_task(request, code=code)
-        elif request.method == "POST":
-            return self.mark_task(request, code=code)
-
+    @action(detail=False, methods=["patch"], url_path="(?P<code>q.+)")
     def claim_task(self, request: Request, *, code: str) -> Response:
         """Attach a user to a marking task and return the task's metadata.
 
@@ -148,6 +129,8 @@ class QuestionMarkingViewSet(ViewSet):
             tags = MarkingTaskService().get_tags_for_task_pk(task.pk)
             return Response([question_data, tags, task.pk])
 
+    # POST: /MK/tasks/{code}
+    @action(detail=False, methods=["post"], url_path="(?P<code>q.+)")
     def mark_task(self, request: Request, *, code: str) -> Response:
         """Accept a marker's grade and annotation for a task.
 
