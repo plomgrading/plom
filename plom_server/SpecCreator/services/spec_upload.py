@@ -75,7 +75,8 @@ class SpecificationUploadService:
     def _validate_spec(self) -> None:
         """A frontend to a some serializer stuff.
 
-        Perhaps callers should use the Serializer directly instead of this.
+        Perhaps callers should use the Serializer directly instead of this,
+        hence the underscore.
 
         Raises:
             ValueError: no spec to validate
