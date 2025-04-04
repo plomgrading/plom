@@ -628,7 +628,7 @@ def _ensure_client_available():
             "The randoiding and randomarking utilities depend on plom-client, "
             f"which is not installed:\n  {err}.\n"
             "Either install plom-client, or stop the demo earlier."
-        ) from err
+        ) from None
     print(f"Good we have plom-client installed, version {plomclient.__version__}")
 
 
