@@ -4,6 +4,7 @@
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 
 from io import BytesIO
+from math import ceil, floor
 from pathlib import Path
 from typing import Any
 
@@ -11,8 +12,8 @@ import cv2 as cv
 import imutils
 import numpy as np
 import zipfile
+from django.db.models.fields.files import ImageFieldFile
 from PIL import Image
-from math import ceil, floor
 
 from plom_server.Papers.models import ReferenceImage
 from plom_server.Papers.models import Paper, FixedPage
@@ -86,7 +87,7 @@ def _get_affine_transf_matrix_ref_to_QR_target(
         reference_region: the corners of the reference region in the
             "source" or "ref" image.  Typically, the QR-code locations
             in the reference ("input") image.
-        qr_dict: the QR information for the target or scanend image.
+        qr_dict: the QR information for the target or scanned image.
 
     Returns:
         The affine transformation matrix for correcting the image, or None if there is insufficient data.
@@ -181,7 +182,7 @@ def _get_perspective_transform_scan_to_ref(
 
 
 def extract_rect_region_from_image(
-    img_path: Path,
+    img: Path | ImageFieldFile,
     qr_dict: dict[str, dict[str, Any]],
     left_f: float,
     top_f: float,
@@ -194,8 +195,10 @@ def extract_rect_region_from_image(
     """Given an image, get a particular sub-rectangle, after applying an affine transformation to correct it.
 
     Args:
-        img_path: TODO.
-        qr_dict: TODO.
+        img: A path to an image or a django "FieldField", which has restrictions
+            because we don't want to assume what storage it uses.  We will read
+            from it.  We won't write to it.
+        qr_dict: the QR information for the image.
         left_f: fractional value in roughly in ``[0, 1]`` which define
             the left boundary of the desired subsection of the image.
             Measured relative to the ``reference_region`` which is
@@ -241,7 +244,7 @@ def extract_rect_region_from_image(
     # the origin.
     M_s_to_r = _get_perspective_transform_scan_to_ref(ref_rect, M_r_to_s)
     # now get the scan-image ready to extract the rectangle
-    pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(img_path)
+    pil_img = rotate.pil_load_with_jpeg_exif_rot_applied(img)
     # Note: this `img_obj.rotation` is (currently) only 0, 90, 180, 270
     # (The small adjustments from true will be handled by warpPerspective)
     pil_img = pil_img.rotate(pre_rotation, expand=True)
@@ -365,11 +368,8 @@ class RectangleExtractor:
                 .image
             )
 
-        # TODO: smells like direct file access?
-        img_path = img_obj.baseimage.image_file.path
-
         return extract_rect_region_from_image(
-            img_path,
+            img_obj.baseimage.image_file,
             img_obj.parsed_qr,
             left_f,
             top_f,
