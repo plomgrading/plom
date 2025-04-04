@@ -35,6 +35,9 @@ class MiscURLPatterns:
             path(
                 "api/beta/spec", SpecificationHandler.as_view(), name="api_spec_handler"
             ),  # Redundant with urls.py?
+            path(
+                "info/spec", SpecificationHandler.as_view(), name="api_spec_handler"
+            ),  # Redundant with urls.py?
             path("info/user/<str:username>", UserRole.as_view(), name="api_user_role"),
             path(
                 "maxmark/<int:question>",

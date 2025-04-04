@@ -1156,7 +1156,7 @@ class Messenger(BaseMessenger):
                     raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_get_spec(self) -> [None | str]:
+    def new_server_get_spec(self) -> None | requests.Response:
         """Get the current assessment spec from the server.
 
         Returns:
