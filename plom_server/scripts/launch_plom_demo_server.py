@@ -44,6 +44,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
     The --stop-after and --wait-after options take many possible values.
+    If both are omitted, the code behaves like `--wait-after rubrics`.
 
     * users = the basic plom-system (server, db, etc) are set up, and demo-users are created.
     * spec = a demo assessment specification is uploaded.
@@ -812,7 +813,8 @@ def main():
         if args.wait_after:
             stop_after = args.wait_after[0]
         else:
-            stop_after = None
+            # default if no stop/wait after specified
+            stop_after = "rubrics"
 
     if not args.development and not args.port:
         print("You must supply a port for the production server.")
