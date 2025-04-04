@@ -622,15 +622,12 @@ def _ensure_client_available():
         # tell MyPy to ignore this for testing
         import plomclient  # type: ignore[import-not-found]
     except ImportError as err:
+        print("*" * 64)
+        print()
         raise RuntimeError(
-            "*" * 64
-            + "\n"
-            + "The randoiding and randomarking utilities depend on plom-client, which is not installed:\n"
-            + f"{err}.\n"
-            + "Suggestion: Either install plom-client, or re-launch the demo with a\n"
-            + "--wait-after or --stop-after option. Use the --help option to see a list of choices.\n"
-            + "*" * 64
-            + "\n"
+            "The randoiding and randomarking utilities depend on plom-client, "
+            f"which is not installed:\n  {err}.\n"
+            "Either install plom-client, or stop the demo earlier."
         ) from err
     print(f"Good we have plom-client installed, version {plomclient.__version__}")
 
