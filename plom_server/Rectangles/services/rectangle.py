@@ -12,7 +12,6 @@ import cv2 as cv
 import imutils
 import numpy as np
 import zipfile
-from django.db.models.fields.files import ImageFieldFile
 from PIL import Image
 
 from plom_server.Papers.models import ReferenceImage
@@ -182,7 +181,7 @@ def _get_perspective_transform_scan_to_ref(
 
 
 def extract_rect_region_from_image(
-    img: Path | ImageFieldFile,
+    img: Path,
     qr_dict: dict[str, dict[str, Any]],
     left_f: float,
     top_f: float,
@@ -195,9 +194,9 @@ def extract_rect_region_from_image(
     """Given an image, get a particular sub-rectangle, after applying an affine transformation to correct it.
 
     Args:
-        img: A path to an image or a django "FieldField", which has restrictions
-            because we don't want to assume what storage it uses.  We will read
-            from it.  We won't write to it.
+        img: A path to an image, we will read from it, not write to it.
+            TODO: in the future maybe a django "FieldField", which has
+            restrictions because we don't want to assume what storage it uses.
         qr_dict: the QR information for the image.
         left_f: fractional value in roughly in ``[0, 1]`` which define
             the left boundary of the desired subsection of the image.
@@ -368,8 +367,10 @@ class RectangleExtractor:
                 .image
             )
 
+        # TODO: Issue #3888 this `.path` assumes storage is local and will fail
+        # with a NotImplementedError when FileField uses remote storage.
         return extract_rect_region_from_image(
-            img_obj.baseimage.image_file,
+            img_obj.baseimage.image_file.path,
             img_obj.parsed_qr,
             left_f,
             top_f,
