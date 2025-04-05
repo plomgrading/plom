@@ -1,20 +1,20 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2022 Andrew Rechnitzer
-# Copyright (C) 2018-2024 Colin B. Macdonald
+# Copyright (C) 2018-2025 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
 from __future__ import annotations
 
-from pathlib import Path
 import tempfile
+from pathlib import Path
 from typing import Any
 
 from tqdm import tqdm
 
-from plom import get_question_label
 from plom.finish import with_finish_messenger
 from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
+from plom.question_labels import get_question_label
 
 
 def download_data_build_cover_page(

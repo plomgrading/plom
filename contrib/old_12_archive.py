@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2021, 2024 Colin B. Macdonald
+# Copyright (C) 2019-2021, 2024-2025 Colin B. Macdonald
 # Copyright (C) 2019 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
@@ -29,7 +29,7 @@ import os
 import sys
 import shutil
 
-from plom import SpecVerifier
+from plom.spec_verifier import SpecVerifier
 from plom.finish import CSVFilename
 
 

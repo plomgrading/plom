@@ -8,6 +8,8 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 from plom import __version__
+from plom import Default_Port
+
 from .utils import rand_integer_code, salted_int_hash_from_str
 from .utils import rand_hex, salted_hex_hash_from_str
 

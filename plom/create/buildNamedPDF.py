@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2022 Andrew Rechnitzer
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
@@ -16,7 +16,7 @@ from typing import Any, Iterable
 from tqdm import tqdm
 
 from plom.create import paperdir as paperdir_name
-from plom.specVerifier import build_page_to_version_dict
+from plom.spec_verifier import build_page_to_version_dict
 from .mergeAndCodePages import make_PDF
 
 

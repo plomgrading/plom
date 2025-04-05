@@ -62,8 +62,7 @@ from pathlib import Path
 
 from stdiomask import getpass
 
-from plom.scan import __version__
-from plom import Default_Port
+from plom.scan import __version__, Default_Port
 from plom.scan import clear_login
 from plom.scan import check_and_print_scan_status
 from plom.scan import processScans, uploadImages

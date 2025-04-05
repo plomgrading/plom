@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
+# Copyright (C) 2025 Philip D. Loewen
 
 from pathlib import Path
 from typing import Any
@@ -19,10 +20,6 @@ from plom_server.Preparation.services.preparation_dependency_service import (
 )
 
 from plom_server.Papers.services import SpecificationService
-
-
-class SpecExistsException(Exception):
-    """Raised if a specification already exists in the database."""
 
 
 class SpecificationUploadService:
@@ -81,12 +78,20 @@ class SpecificationUploadService:
             except TOMLDecodeError as e:
                 raise ValueError(f"Unable to parse TOML: {e}") from e
 
-    def validate_spec(self):
+    def _validate_spec(self) -> None:
+        """A frontend to a some serializer stuff.
+
+        Perhaps callers should use the Serializer directly instead of this,
+        hence the underscore.
+
+        Raises:
+            ValueError: no spec to validate
+            ValidationError: TODO: probably?
+        """
         if not self.spec_dict:
             raise ValueError("Cannot find specification to validate.")
-        SpecificationService.validate_spec_from_dict(
-            self.spec_dict,
-        )
+        # Note this returns bool and we ignore it
+        SpecificationService.validate_spec_from_dict(self.spec_dict)
 
     @transaction.atomic
     def save_spec(

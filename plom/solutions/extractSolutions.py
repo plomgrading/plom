@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
-# Copyright (C) 2022-2023 Colin B. Macdonald
+# Copyright (C) 2022-2023, 2025 Colin B. Macdonald
 
 from pathlib import Path
 import sys
@@ -15,7 +15,7 @@ else:
 import tomlkit
 
 from plom.scan import processFileToBitmaps
-from plom.specVerifier import checkSolutionSpec
+from plom.spec_verifier import checkSolutionSpec
 from plom.solutions import with_manager_messenger
 
 source_path = Path("sourceVersions")

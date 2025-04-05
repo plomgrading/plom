@@ -1,13 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 """Utilities for dealing with question labels, question indices, etc.."""
 
-from __future__ import annotations
-
 from typing import Any
 
-from .specVerifier import get_question_label
+from plom.spec_verifier import get_question_label
 
 
 def verbose_question_label(spec: dict[str, Any], qidx: int) -> str:

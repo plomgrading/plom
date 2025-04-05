@@ -28,8 +28,7 @@ import sys
 
 from stdiomask import getpass
 
-from plom import __version__
-from plom import Default_Port
+from plom.solutions import __version__, Default_Port
 from plom.solutions import clear_manager_login
 from plom.solutions import deleteSolutionImage, putSolutionImage
 from plom.solutions import getSolutionImage

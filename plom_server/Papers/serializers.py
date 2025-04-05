@@ -11,7 +11,7 @@ from rest_framework import serializers
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 
-from plom import SpecVerifier
+from plom.spec_verifier import SpecVerifier
 from plom.tpv_utils import new_magic_code
 
 from .models import SpecQuestion, Specification, SolnSpecification, SolnSpecQuestion

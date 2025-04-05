@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2024 Colin B. Macdonald
+# Copyright (C) 2021-2025 Colin B. Macdonald
 
 import shutil
 
@@ -8,7 +8,7 @@ import pymupdf
 from PIL import Image
 
 from plom.misc_utils import working_directory
-from plom import ScenePixelHeight
+from plom.scan import DefaultPixelHeight
 from plom.scan import processFileToBitmaps
 
 
@@ -46,7 +46,7 @@ def test_pdf_process_img_height(tmp_path) -> None:
         d.save(f)
     (onefile,) = processFileToBitmaps(f, tmp_path)
     im = Image.open(onefile)
-    assert im.height == ScenePixelHeight
+    assert im.height == DefaultPixelHeight
 
 
 def test_pdf_process_img_heights_other(tmp_path) -> None:
@@ -59,14 +59,14 @@ def test_pdf_process_img_heights_other(tmp_path) -> None:
         d.save(f)
     files = processFileToBitmaps(f, tmp_path)
     im = Image.open(files[0])
-    assert im.height == ScenePixelHeight
+    assert im.height == DefaultPixelHeight
     im = Image.open(files[1])
-    assert im.height == ScenePixelHeight
-    assert im.width == ScenePixelHeight
+    assert im.height == DefaultPixelHeight
+    assert im.width == DefaultPixelHeight
     im = Image.open(files[2])
-    assert im.height > ScenePixelHeight
+    assert im.height > DefaultPixelHeight
     im = Image.open(files[3])
-    assert im.height < ScenePixelHeight
+    assert im.height < DefaultPixelHeight
 
 
 def test_pdf_process_img_ridiculous_ratios(tmp_path) -> None:

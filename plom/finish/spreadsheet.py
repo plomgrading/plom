@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2022 Colin B. Macdonald
+# Copyright (C) 2019-2022, 2025 Colin B. Macdonald
 # Copyright (C) 2020-2023 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2023 Julian Lapenna
@@ -7,9 +7,9 @@
 import arrow
 import csv
 
-from plom import get_question_label
 from plom.finish import with_finish_messenger
 from plom.finish import CSVFilename
+from plom.question_labels import get_question_label
 
 
 def write_spreadsheet(spreadSheetDict, labels, filename):

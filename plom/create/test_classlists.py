@@ -5,11 +5,10 @@
 from pytest import raises
 from pathlib import Path
 
-from plom import SpecVerifier
-
+from plom.spec_verifier import SpecVerifier
+from plom.misc_utils import working_directory
 from .classlistValidator import PlomClasslistValidator
 from .buildClasslist import clean_non_canvas_csv
-from ..misc_utils import working_directory
 
 
 def test_ok_to_contain_unused_column_names(tmpdir) -> None:

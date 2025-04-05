@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2025 Philip D. Loewen
 
@@ -11,7 +11,7 @@ import json
 import requests
 from requests_toolbelt import MultipartDecoder, MultipartEncoder
 
-from plom import undo_json_packing_of_version_map
+from plom.version_maps import undo_json_packing_of_version_map
 from plom.plom_exceptions import PlomBenignException, PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,

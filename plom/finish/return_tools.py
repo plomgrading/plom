@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2023 Colin B. Macdonald
+# Copyright (C) 2018-2023, 2025 Colin B. Macdonald
 # Copyright (C) 2020 Matthew Coles
 # Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
@@ -180,7 +180,7 @@ def csv_add_return_codes(csvin, csvout, idcol, use_hex, digits, salt=None):
         dict of the mapping from student number to secret code.
     """
     import pandas
-    from plom import isValidStudentID
+    from plom.rules import isValidStudentID
 
     df = pandas.read_csv(csvin, dtype="object")
 

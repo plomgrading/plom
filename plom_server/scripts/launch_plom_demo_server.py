@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
+# Copyright (C) 2025 Philip D. Loewen
 
 """Command line tool to start a Plom demonstration server."""
 
@@ -37,12 +38,16 @@ def wait_for_user_to_type_quit() -> None:
             break
 
 
-def set_argparse_and_get_args() -> argparse.Namespace:
-    """Configure argparse to collect commandline options."""
+def get_parser() -> argparse.ArgumentParser:
+    """Build the command-line parser.
+
+    Also used by the sphinx docs: do not rename without changing there.
+    """
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
     The --stop-after and --wait-after options take many possible values.
+    If both are omitted, the code behaves like `--wait-after rubrics`.
 
     * users = the basic plom-system (server, db, etc) are set up, and demo-users are created.
     * spec = a demo assessment specification is uploaded.
@@ -124,14 +129,14 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         action="store",
         choices=stop_wait_choices,
         nargs=1,
-        help="Stop the demo sequence at a certain breakpoint.",
+        help="Stop the demo sequence at a certain breakpoint. Leave the server running.",
     )
     stop_wait_group.add_argument(
         "--wait-after",
         action="store",
         choices=stop_wait_choices,
         nargs=1,
-        help="Stop the demo sequence at a certain breakpoint.",
+        help="Stop the demo sequence at a certain breakpoint. Terminate the server.",
     )
     prod_dev_group = parser.add_mutually_exclusive_group()
     prod_dev_group.add_argument(
@@ -150,8 +155,7 @@ def set_argparse_and_get_args() -> argparse.Namespace:
         dest="development",
         help="Run a production Gunicorn server.",
     )
-
-    return parser.parse_args()
+    return parser
 
 
 def run_django_manage_command(cmd) -> None:
@@ -620,9 +624,13 @@ def _ensure_client_available():
         # tell MyPy to ignore this for testing
         import plomclient  # type: ignore[import-not-found]
     except ImportError as err:
+        print("*" * 64)
+        print()
         raise RuntimeError(
-            f"You must install plom-client for randomarking utilities to work: {err}"
-        ) from err
+            "The randoiding and randomarking utilities depend on plom-client, "
+            f"which is not installed:\n  {err}.\n"
+            "Either install plom-client, or stop the demo earlier."
+        ) from None
     print(f"Good we have plom-client installed, version {plomclient.__version__}")
 
 
@@ -794,7 +802,8 @@ def main():
     # TODO: I guess?
     os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
 
-    args = set_argparse_and_get_args()
+    args = get_parser().parse_args()
+
     # cast stop-after, wait-after from list of options to a singleton or None
     if args.stop_after:
         stop_after = args.stop_after[0]
@@ -804,7 +813,8 @@ def main():
         if args.wait_after:
             stop_after = args.wait_after[0]
         else:
-            stop_after = None
+            # default if no stop/wait after specified
+            stop_after = "rubrics"
 
     if not args.development and not args.port:
         print("You must supply a port for the production server.")
