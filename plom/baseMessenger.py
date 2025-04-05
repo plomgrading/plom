@@ -675,7 +675,7 @@ class BaseMessenger:
                 json={
                     "username": user,
                     "password": pw,
-                    "api": Plom_API_Version,
+                    "api": str(Plom_API_Version),  # >= 0.18.0 supports int or str
                     "client_ver": __version__,
                 },
             )

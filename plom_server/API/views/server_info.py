@@ -220,15 +220,16 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
 
         Returns:
             200 and a token in json if user logged in successfully.
-            401 for bad client version.  400 for poorly formed requests,
-            such as no client version.  Legacy used to send 409 if user
+            400 for poorly formed requests, such as no client version or
+            bad client version.  Legacy used to send 409 if user
             was already logged in but currently that may not be enforced.
+            (See related Issue #3845).
         """
         # TODO: probably serializer supposed to do something but ain't nobody got time for that
         client_api = request.data.get("api")
         client_ver = request.data.get("client_ver")
         if not client_api:
-            # TODO: should I log and how to log in django?
+            # TODO: should I log and how to log in django? (Issue #2642)
             # log.warn(f"login from old client {client_ver} that speaks API {client_api}")
             return _error_response(
                 "Client did not report their API version", status.HTTP_400_BAD_REQUEST
@@ -240,14 +241,16 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
             )
 
         # should the serializer be doing this?
-        if not client_api.isdigit():
+        try:
+            client_api = int(client_api)
+        except (ValueError, TypeError) as e:
             return _error_response(
-                f'Client sent non-integer API version: "{client_api}"',
+                f'Client sent non-integer API version: "{client_api}": {e}',
                 status.HTTP_400_BAD_REQUEST,
             )
 
         # note if client is more recent then their responsibility to check compat
-        if int(client_api) < int(Plom_API_Version):
+        if client_api < int(Plom_API_Version):
             return _error_response(
                 f"Client API version {client_api} is too old for this server "
                 f"(server API version {Plom_API_Version})",
