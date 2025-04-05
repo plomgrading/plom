@@ -500,7 +500,7 @@ class ReassembleService:
         )
         chore.set_as_obsolete()
         if chore.huey_id:
-            queue = get_queue("tasks")
+            queue = get_queue("chores")
             queue.revoke_by_id(str(chore.huey_id))
         if chore.status in (ReassemblePaperChore.STARTING, ReassemblePaperChore.QUEUED):
             chore.transition_to_error("never ran: forcibly dequeued")
@@ -519,7 +519,7 @@ class ReassembleService:
             before the reached the queue).
         """
         N = 0
-        queue = get_queue("tasks")
+        queue = get_queue("chores")
         with transaction.atomic(durable=True):
             for chore in ReassemblePaperChore.objects.filter(
                 Q(status=ReassemblePaperChore.STARTING)
@@ -557,7 +557,7 @@ class ReassembleService:
         ).get()
         chore.set_as_obsolete()
         if chore.status == HueyTaskTracker.QUEUED:
-            queue = get_queue("tasks")
+            queue = get_queue("chores")
             queue.revoke_by_id(str(chore.huey_id))
             chore.transition_to_error("never ran: forcibly dequeued")
         if chore.status == HueyTaskTracker.RUNNING:
@@ -596,7 +596,7 @@ class ReassembleService:
                     )
 
     def _WIP_reset_all_paper_reassembly(self) -> None:
-        """Reset all reassembly tasks and remove any associated pdfs.
+        """Reset all reassembly chores and remove any associated pdfs.
 
         This tries to somewhat gracefully ("like an eagle...piloting a blimp")
         revoke queued tasks, wait for running tasks, etc.
@@ -611,7 +611,7 @@ class ReassembleService:
         tries = 10
         blocking_wait = total_wait - tries * 1
 
-        queue = get_queue("tasks")
+        queue = get_queue("chores")
 
         # I believe all this is racey and we cannot prevent something from slipping
         # between cases: we do multiple passes through to hopefully resolve that but
@@ -808,7 +808,7 @@ class ReassembleService:
 
 # The decorated function returns a ``huey.api.Result``
 # TODO: investigate "preserve=True" here if we want to wait on them?
-@db_task(queue="tasks", context=True)
+@db_task(queue="chores", context=True)
 def huey_reassemble_paper(
     paper_number: int,
     *,

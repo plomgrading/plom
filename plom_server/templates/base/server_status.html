@@ -30,10 +30,41 @@
     </div>
     <div class="card m-2">
         <div class="card-body">
-            <h4 class="card-title">Huey queue</h4>
+            <h4 class="card-title">Huey queues</h4>
             <div class="card-text">
-                <p>Current queue length: {{ queue_length }}</p>
-                <p>Plom's background processes are managed by Huey.</p>
+                <p>
+                    Plom&apos;s background processes (&ldquo;chores&rdquo;)
+                    are managed by Huey.
+                </p>
+                {% for queue in queues %}
+                    <div class="float-start me-4">
+                        <h5>Queue: {{ queue.name }}</h5>
+                        <p>
+                            <!-- Running: TODO can we get this? <br /> -->
+                            Enqueued: {{ queue.length }}
+                            <br />
+                            <!-- "Finished": often wrong as not all have results -->
+                            Results: {{ queue.result_count }}
+                            <br />
+                            Other info: {{ queue.other_info }}
+                            <br />
+                            Pending chores: {{ queue.pending3 }}
+                            <br />
+                            (at most three)
+                        </p>
+                    </div>
+                {% endfor %}
+                <div class="clearfix m-0 p-0">
+                    <!-- placeholder to end the floats -->
+                </div>
+                <p class="fw-light small lh-1 mb-0">
+                    As of early 2025, the management of these chores
+                    has proven to be a frequent source of bugs in
+                    Plom, for example, because the error messages if
+                    one fails are not always displayed to users and
+                    because they are occasionally killed by the OS
+                    during low-memory situations.
+                </p>
             </div>
         </div>
     </div>

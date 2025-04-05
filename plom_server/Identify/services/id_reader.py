@@ -345,7 +345,7 @@ class IDReaderService:
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks", context=True)
+@db_task(queue="chores", context=True)
 def huey_id_reading_task(
     user: User,
     box_versions: dict[int, tuple[float, float, float, float] | None],

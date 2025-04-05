@@ -45,7 +45,7 @@ from ..models import BuildPaperPDFChore
 
 
 # The decorated function returns a ``huey.api.Result``
-@db_task(queue="tasks", context=True)
+@db_task(queue="chores", context=True)
 def huey_build_single_paper(
     papernum: int,
     spec: dict,
@@ -332,7 +332,7 @@ class BuildPapersService:
             The number of tasks we tried to revoke.
         """
         N = 0
-        queue = get_queue("tasks")
+        queue = get_queue("chores")
         with transaction.atomic(durable=True):
             queue_tasks = BuildPaperPDFChore.objects.filter(
                 Q(status=BuildPaperPDFChore.STARTING)
@@ -362,7 +362,7 @@ class BuildPapersService:
             obsolete=False, paper__paper_number=paper_number
         )
         if task.huey_id:
-            queue = get_queue("tasks")
+            queue = get_queue("chores")
             queue.revoke_by_id(str(task.huey_id))
         if task.status in (BuildPaperPDFChore.STARTING, BuildPaperPDFChore.QUEUED):
             task.transition_to_error("never ran: forcibly dequeued")

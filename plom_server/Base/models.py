@@ -19,7 +19,7 @@ from plom.feedback_rules import feedback_rules as static_feedback_rules
 
 # TODO: Using the @signal decorator did not work with both queues
 # from django_huey import signal
-main_queue = get_queue("tasks")
+main_queue = get_queue("chores")
 parent_queue = get_queue("parentchores")
 
 
