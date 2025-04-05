@@ -2017,8 +2017,12 @@ def huey_child_parse_qr_code(
     assert task is not None
     log.debug("Huey debug, we are task %s with id %s", task, task.id)
 
-    stimg = StagingImage.objects.get(pk=image_pk)
-    image_path = stimg.baseimage.image_file.path
+    staging_img = StagingImage.objects.get(pk=image_pk)
+    # TODO: Issue #3888 this `.path` assumes storage is local and will fail
+    # with a NotImplementedError when FileField uses remote storage.
+    # TODO: refactor the rotation stuff to work with FieldFile:
+    # image_fieldfile = staging_img.baseimage.image_file
+    image_path = staging_img.baseimage.image_file.path
 
     code_dict = QRextract(image_path)
 
