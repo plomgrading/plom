@@ -228,7 +228,7 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
         client_api = request.data.get("api")
         client_ver = request.data.get("client_ver")
         if not client_api:
-            # TODO: should I log and how to log in django?
+            # TODO: should I log and how to log in django? (Issue #2642)
             # log.warn(f"login from old client {client_ver} that speaks API {client_api}")
             return _error_response(
                 "Client did not report their API version", status.HTTP_400_BAD_REQUEST
