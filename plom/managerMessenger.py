@@ -2,7 +2,6 @@
 # Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2022 Edith Coates
-# Copyright (C) 2025 Philip D. Loewen
 
 import hashlib
 from io import BytesIO
@@ -312,7 +311,7 @@ class ManagerMessenger(BaseMessenger):
         with self.SRmutex:
             try:
                 response = self.put(
-                    "/api/beta/spec",
+                    "/info/spec",
                     json={
                         "user": self.user,
                         "token": self.token,
