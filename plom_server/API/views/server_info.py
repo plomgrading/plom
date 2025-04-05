@@ -220,7 +220,7 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
             )
 
         # should the serializer be doing this?
-        if not client_api.isdigit():
+        if not isinstance(client_api, int) and not client_api.isdigit():
             return _error_response(
                 f'Client sent non-integer API version: "{client_api}"',
                 status.HTTP_400_BAD_REQUEST,
