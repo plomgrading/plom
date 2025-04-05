@@ -49,13 +49,15 @@ class Command(BaseCommand):
         IDReaderService().delete_ID_predictions("MLGreedy")
 
     def wait_for_reader(self) -> None:
-        self.stdout.write("Waiting for any ID reader processes to finish")
+        self.stdout.write("Waiting for any background ID reader processes to finish")
         while True:
             status = IDReaderService().get_id_reader_background_task_status()
             self.stdout.write(f"Status = {status['status']}: {status['message']}")
-            if status["status"] in ["Starting", "Queued", "Running"]:
+            if status["status"] in ("Starting", "Queued", "Running"):
                 self.stdout.write("Waiting....")
                 sleep(2)
+            elif status["status"] == "Error":
+                raise CommandError(f"Background ID reader failed: {status['message']}")
             else:
                 break
 
