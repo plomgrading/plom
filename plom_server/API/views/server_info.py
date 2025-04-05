@@ -220,9 +220,10 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
 
         Returns:
             200 and a token in json if user logged in successfully.
-            401 for bad client version.  400 for poorly formed requests,
-            such as no client version.  Legacy used to send 409 if user
+            400 for poorly formed requests, such as no client version or
+            bad client version.  Legacy used to send 409 if user
             was already logged in but currently that may not be enforced.
+            (See related Issue #3845).
         """
         # TODO: probably serializer supposed to do something but ain't nobody got time for that
         client_api = request.data.get("api")
