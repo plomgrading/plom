@@ -772,7 +772,7 @@ class BaseMessenger:
         with self.SRmutex:
             try:
                 if self.is_legacy_server():
-                    response = self.get("/api/beta/spec")
+                    response = self.get("/info/spec")
                 else:
                     response = self.get_auth("/api/beta/spec")
                 response.raise_for_status()
