@@ -240,14 +240,16 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
             )
 
         # should the serializer be doing this?
-        if not isinstance(client_api, int) and not client_api.isdigit():
+        try:
+            client_api = int(client_api)
+        except (ValueError, TypeError) as e:
             return _error_response(
-                f'Client sent non-integer API version: "{client_api}"',
+                f'Client sent non-integer API version: "{client_api}": {e}',
                 status.HTTP_400_BAD_REQUEST,
             )
 
         # note if client is more recent then their responsibility to check compat
-        if int(client_api) < int(Plom_API_Version):
+        if client_api < int(Plom_API_Version):
             return _error_response(
                 f"Client API version {client_api} is too old for this server "
                 f"(server API version {Plom_API_Version})",
