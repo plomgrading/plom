@@ -1156,17 +1156,11 @@ class Messenger(BaseMessenger):
                     raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_get_spec(self) -> None | requests.Response:
-        """Get the current assessment spec from the server.
+    def new_server_get_spec(self) -> dict:
+        """Transparent wrapper around baseMessenger.get_spec()."""
+        return self.get_spec(self)
 
-        Returns:
-            None - if there is no spec
-            str  - if there is one
-        """
-        response = self.get_auth("/api/beta/spec")
-        return response
-
-    def new_server_upload_spec(self, spec_toml_string: str) -> None | requests.Response:
+    def new_server_upload_spec(self, spec_toml_string: str) -> dict:
         """Upload an assessment spec to the server.
 
         Args:
@@ -1179,7 +1173,7 @@ class Messenger(BaseMessenger):
             PlomSeriousException: other errors.
 
         Returns:
-            None
+            dict containing the uploaded spec, freshly extracted from database
         """
         with self.SRmutex:
             try:
@@ -1190,7 +1184,7 @@ class Messenger(BaseMessenger):
                     },
                 )
                 response.raise_for_status()
-                return response
+                return self.get_spec(self)
             except requests.HTTPError as e:
                 if response.status_code == 400:
                     raise ValueError(response.reason) from None
