@@ -441,7 +441,7 @@ flake8:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install flake8~=7.1.2
+    - pip install flake8~=7.2.0
   script:
     # first show all errors and warnings but don't fail
     - flake8 --exit-zero
