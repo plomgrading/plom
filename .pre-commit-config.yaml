@@ -42,6 +42,11 @@ repos:
   hooks:
   - id: black
 
+- repo: https://github.com/pycqa/flake8
+  rev: 7.2.0
+  hooks:
+  - id: flake8
+
 - repo: https://github.com/Riverside-Healthcare/djLint
   rev: v1.36.4
   hooks:
