@@ -191,6 +191,9 @@ class CloseUser(APIView):
 
     def surrender_tasks_and_logout(self, user_obj):
         # if user has an auth token then delete it
+        # TODO: Issue #3845, its not clear this is the best approach, see also the
+        # creating of the token elsewhere.  If we change one of these, make sure
+        # to change the other.
         try:
             user_obj.auth_token.delete()
         except Token.DoesNotExist:
@@ -266,6 +269,17 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
                 status.HTTP_401_UNAUTHORIZED,
             )
         user = serializer.validated_data["user"]
+        # TODO: probably fine for multiple sessions to share a token, see Issue #3845
+        # and discussion there-in.  If changing this, look at delete carefully as well.
+        try:
+            Token.objects.get(user=user)
+            return _error_response(
+                "User already has a token: perhaps logged in elsewhere, "
+                "or there was crash.  You will need to clear the login.",
+                status.HTTP_409_CONFLICT,
+            )
+        except Token.DoesNotExist:
+            pass
         token, created = Token.objects.get_or_create(user=user)
         update_last_login(None, token.user)
         return Response({"token": token.key})
