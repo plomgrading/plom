@@ -18,7 +18,6 @@ def start_messenger(
     msgr = Messenger(server, verify_ssl=verify_ssl)
     msgr.start()
 
-    # TODO: we have no plom-cli clear yet
     try:
         msgr.requestAndSaveToken(usr, pwd)
     except PlomExistingLoginException:
@@ -27,7 +26,7 @@ def start_messenger(
             "  * Perhaps a previous session crashed?\n"
             "  * Do you have another scanner-script running,\n"
             "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-scan clear"'
+            'In order to force-logout the existing authorisation run "plom-cli clear"'
         )
         raise
     return msgr
@@ -61,3 +60,14 @@ def with_messenger(f):
             msgr.stop()
 
     return wrapped
+
+
+def clear_login(server: str | None, username: str, password: str) -> None:
+    msgr = Messenger(server)
+    msgr.start()
+
+    try:
+        msgr.clearAuthorisation(username, password)
+        print(f'Login cleared for "{username}".')
+    finally:
+        msgr.stop()

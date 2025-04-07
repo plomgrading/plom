@@ -11,15 +11,12 @@ __license__ = "AGPL-3.0-or-later"
 
 from plom import __version__
 
-from .start_messenger import with_messenger, start_messenger
+from .start_messenger import with_messenger, start_messenger, clear_login
 from .list_bundles import list_bundles
 from .bundle_tools import upload_bundle, bundle_map_page
 from .identify_tools import id_paper, un_id_paper
 from .finish_tools import get_reassembled
 from .task_tools import reset_task
-
-# TODO: see also start_messenger error message
-# from .clearScannerLogin import clear_login
 
 # what you get from "from plom.cli import *"
 __all__ = [
