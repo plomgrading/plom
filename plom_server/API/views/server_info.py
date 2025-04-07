@@ -23,6 +23,7 @@ from plom_server.Mark.services import MarkingTaskService
 from plom_server.Identify.services import IdentifyTaskService
 from plom_server.Papers.services import SpecificationService
 from ..permissions import AllowAnyReadOnly
+from ..services import TokenService
 from .utils import _error_response
 
 
@@ -181,16 +182,6 @@ class ExamInfo(APIView):
         return Response(info)
 
 
-def _drop_api_token(user_obj: User) -> None:
-    # if user has an auth token then delete it
-    try:
-        print(f"Dropping token from user {user_obj} (token was {user_obj.auth_token})")
-        user_obj.auth_token.delete()
-    except Token.DoesNotExist:
-        # does not have a token, no need to delete.
-        pass
-
-
 class CloseUser(APIView):
     """Delete the user's token, surrender their tasks, and log them out.
 
@@ -208,7 +199,7 @@ class CloseUser(APIView):
             # TODO: Issue #3845, its not clear this is the best approach, see also the
             # creating of the token elsewhere.  If we change one of these, make sure
             # to change the other.
-            _drop_api_token(request.user)
+            TokenService.drop_api_token(request.user)
             return Response(status=status.HTTP_200_OK)
         except (ValueError, ObjectDoesNotExist, AttributeError):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
@@ -303,7 +294,7 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
         try:
             MarkingTaskService.surrender_all_tasks(user)
             IdentifyTaskService.surrender_all_tasks(user)
-            _drop_api_token(user)
+            TokenService.drop_api_token(user)
             return Response(status=status.HTTP_200_OK)
         except (ValueError, ObjectDoesNotExist, AttributeError):
             return Response(status=status.HTTP_401_UNAUTHORIZED)

@@ -5,8 +5,7 @@
 from django.contrib.auth.models import User, Group
 from django.db import transaction
 
-# Bit strange to import from a view TO a service
-from plom_server.API.views.server_info import _drop_api_token
+from plom_server.API.services import TokenService
 from plom_server.Mark.services import MarkingTaskService
 from plom_server.Identify.services import IdentifyTaskService
 
@@ -40,7 +39,7 @@ def toggle_user_active(username: str) -> None:
         if marker_group_obj in user.groups.all():
             MarkingTaskService.surrender_all_tasks(user)
             IdentifyTaskService.surrender_all_tasks(user)
-            _drop_api_token(user)
+            TokenService.drop_api_token(user)
 
 
 @transaction.atomic
@@ -74,7 +73,7 @@ def set_all_markers_active(active: bool):
         for user in Group.objects.get(name="marker").user_set.all():
             MarkingTaskService.surrender_all_tasks(user)
             IdentifyTaskService.surrender_all_tasks(user)
-            _drop_api_token(user)
+            TokenService.drop_api_token(user)
 
 
 @transaction.atomic
