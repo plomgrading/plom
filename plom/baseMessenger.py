@@ -65,6 +65,7 @@ Supported_Server_API_Versions = [
 #    - new /api/v0/tasks/{papernum}/{qidx}/reset/
 #    - changes /api/v0/tasks/{papernum}/{qidx}/reassign/{username}
 #    - new params for /MK/rubric/{key}
+#    - DELETE: /get_token/ removes the login token
 
 
 log = logging.getLogger("messenger")
@@ -699,7 +700,7 @@ class BaseMessenger:
                 ) from None
 
     def clearAuthorisation(self, user: str, pw: str) -> None:
-        """User self-indicates they wish to clear any existing authorisation, authenticating with username/password.
+        """User self-indicates they wish to clear any and all existing authorisations, authenticating with username/password.
 
         This method is used when you don't have an existing connection
         (you have a username/password instead of a token).  See also

@@ -119,9 +119,8 @@ class MarkingTaskServiceTests(TestCase):
         user: User = baker.make(User)
         task1 = baker.make(MarkingTask, assigned_user=user, status=MarkingTask.OUT)
         task2 = baker.make(MarkingTask, assigned_user=user, status=MarkingTask.OUT)
-        mts = MarkingTaskService()
 
-        mts.surrender_all_tasks(user)
+        MarkingTaskService.surrender_all_tasks(user)
         task1.refresh_from_db()
         task2.refresh_from_db()
         self.assertEqual(task1.status, MarkingTask.TO_DO)

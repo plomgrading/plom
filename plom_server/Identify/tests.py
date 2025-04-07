@@ -212,13 +212,12 @@ class IdentifyTaskTests(TestCase):
         )
 
     def test_claim_and_surrender(self) -> None:
-        its = IdentifyTaskService()
         for k in range(1, 5):
             paper = baker.make(Paper, paper_number=k)
-            its.create_task(paper)
+            IdentifyTaskService().create_task(paper)
         for k in range(1, 3):
-            its.claim_task(self.marker0, k)
-        its.surrender_all_tasks(self.marker0)
+            IdentifyTaskService().claim_task(self.marker0, k)
+        IdentifyTaskService.surrender_all_tasks(self.marker0)
 
     def test_id_task_misc(self) -> None:
         """Test the number of id'd papers."""

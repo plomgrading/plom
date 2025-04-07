@@ -5,8 +5,10 @@
 from django.contrib.auth.models import User, Group
 from django.db import transaction
 
-# TODO: maybe this should live elsewhere?
-from plom_server.API.views.server_info import _surrender_all_tasks, _drop_api_token
+# Bit strange to import from a view TO a service
+from plom_server.API.views.server_info import _drop_api_token
+from plom_server.Mark.services import MarkingTaskService
+from plom_server.Identify.services import IdentifyTaskService
 
 
 @transaction.atomic
@@ -28,16 +30,17 @@ def toggle_user_active(username: str) -> None:
 
     [1] https://docs.djangoproject.com/en/5.1/ref/contrib/auth/#django.contrib.auth.models.User.is_active
     """
-    user_to_change = User.objects.get_by_natural_key(username)
-    user_to_change.is_active = not user_to_change.is_active
-    user_to_change.save()
+    user = User.objects.get_by_natural_key(username)
+    user.is_active = not user.is_active
+    user.save()
     # if user is now inactive and a marker then make sure that they are logged
     # out of the API system by removing their API access token.
-    if not user_to_change.is_active:
+    if not user.is_active:
         marker_group_obj = Group.objects.get_by_natural_key("marker")
-        if marker_group_obj in user_to_change.groups.all():
-            _surrender_all_tasks(user_to_change)
-            _drop_api_token(user_to_change)
+        if marker_group_obj in user.groups.all():
+            MarkingTaskService.surrender_all_tasks(user)
+            IdentifyTaskService.surrender_all_tasks(user)
+            _drop_api_token(user)
 
 
 @transaction.atomic
@@ -69,7 +72,8 @@ def set_all_markers_active(active: bool):
     # loop over all (now) deactivated markers, log them out and surrender their tasks
     if not active:
         for user in Group.objects.get(name="marker").user_set.all():
-            _surrender_all_tasks(user)
+            MarkingTaskService.surrender_all_tasks(user)
+            IdentifyTaskService.surrender_all_tasks(user)
             _drop_api_token(user)
 
 

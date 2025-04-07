@@ -181,12 +181,6 @@ class ExamInfo(APIView):
         return Response(info)
 
 
-def _surrender_all_tasks(user_obj: User) -> None:
-    # TODO: maybe this should live elsewhere?
-    MarkingTaskService().surrender_all_tasks(user_obj)
-    IdentifyTaskService().surrender_all_tasks(user_obj)
-
-
 def _drop_api_token(user_obj: User) -> None:
     # if user has an auth token then delete it
     try:
@@ -209,7 +203,8 @@ class CloseUser(APIView):
     def delete(self, request: Request) -> Response:
         """Token-based logout, currently surrenders the token and all tasks."""
         try:
-            _surrender_all_tasks(request.user)
+            MarkingTaskService.surrender_all_tasks(request.user)
+            IdentifyTaskService.surrender_all_tasks(request.user)
             # TODO: Issue #3845, its not clear this is the best approach, see also the
             # creating of the token elsewhere.  If we change one of these, make sure
             # to change the other.
@@ -306,7 +301,8 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
         # note this differs from request.user which is AnonymousUser
         user = serializer.validated_data["user"]
         try:
-            _surrender_all_tasks(user)
+            MarkingTaskService.surrender_all_tasks(user)
+            IdentifyTaskService.surrender_all_tasks(user)
             _drop_api_token(user)
             return Response(status=status.HTTP_200_OK)
         except (ValueError, ObjectDoesNotExist, AttributeError):
