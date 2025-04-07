@@ -309,5 +309,5 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
             _surrender_all_tasks(user)
             _drop_api_token(user)
             return Response(status=status.HTTP_200_OK)
-        except (ValueError, ObjectDoesNotExist, AttributeError) as e:
+        except (ValueError, ObjectDoesNotExist, AttributeError):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
