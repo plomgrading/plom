@@ -699,21 +699,44 @@ class BaseMessenger:
                 ) from None
 
     def clearAuthorisation(self, user: str, pw: str) -> None:
-        self.SRmutex.acquire()
-        try:
-            response = self.delete(
-                "/authorisation", json={"user": user, "password": pw}
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        """User self-indicates they wish to clear any existing authorisation, authenticating with username/password.
+
+        This method is used when you don't have an existing connection
+        (you have a username/password instead of a token).  See also
+        the closely-related :method:`closeUser` which uses the token.
+
+        Raises:
+            PlomAuthenticationException: Cannot login.
+            PlomSeriousException: other problems such as trying to close
+                another user, other than yourself.
+        """
+        with self.SRmutex:
+            try:
+                if self.is_legacy_server():
+                    response = self.delete(
+                        "/authorisation", json={"user": user, "password": pw}
+                    )
+                elif self.is_server_api_less_than(114):
+                    raise PlomNoServerSupportException(
+                        "older server does not support clear auth"
+                    )
+                else:
+                    response = self.delete(
+                        "/get_token/", json={"username": user, "password": pw}
+                    )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def closeUser(self) -> None:
-        """User self-indicates they are logging out, surrender token and tasks.
+        """User self-indicates they are logging out, surrender token and tasks, based on token auth.
+
+        This method is used when you have an existing connection (you
+        have a token).  See also the closely-related
+        :method:`clearAuthorisation` which uses username and password
+        instead.
 
         Raises:
             PlomAuthenticationException: Ironically, the user must be
@@ -721,16 +744,15 @@ class BaseMessenger:
             PlomSeriousException: other problems such as trying to close
                 another user, other than yourself.
         """
-        if self.is_legacy_server():
-            path = f"/users/{self.user}"
-        else:
-            path = "/close_user/"
         with self.SRmutex:
             try:
-                response = self.delete(
-                    path,
-                    json={"user": self.user, "token": self.token},
-                )
+                if self.is_legacy_server():
+                    response = self.delete(
+                        f"/users/{self.user}",
+                        json={"user": self.user, "token": self.token},
+                    )
+                else:
+                    response = self.delete_auth("/close_user/")
                 response.raise_for_status()
             except requests.HTTPError as e:
                 if response.status_code == 401:

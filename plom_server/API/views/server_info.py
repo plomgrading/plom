@@ -181,43 +181,48 @@ class ExamInfo(APIView):
         return Response(info)
 
 
+def _surrender_all_tasks(user_obj: User) -> None:
+    # TODO: maybe this should live elsewhere?
+    MarkingTaskService().surrender_all_tasks(user_obj)
+    IdentifyTaskService().surrender_all_tasks(user_obj)
+
+
+def _drop_api_token(user_obj: User) -> None:
+    # if user has an auth token then delete it
+    try:
+        print(f"Dropping token from user {user_obj} (token was {user_obj.auth_token})")
+        user_obj.auth_token.delete()
+    except Token.DoesNotExist:
+        # does not have a token, no need to delete.
+        pass
+
+
 class CloseUser(APIView):
-    """Delete the user's token and log them out.
+    """Delete the user's token, surrender their tasks, and log them out.
 
     Returns:
         (200) user is logged out successfully
         (401) user is not signed in
     """
 
-    def surrender_tasks_and_logout(self, user_obj):
-        # if user has an auth token then delete it
-        # TODO: Issue #3845, its not clear this is the best approach, see also the
-        # creating of the token elsewhere.  If we change one of these, make sure
-        # to change the other.
+    # DELETE: /close_user/
+    def delete(self, request: Request) -> Response:
+        """Token-based logout, currently surrenders the token and all tasks."""
         try:
-            user_obj.auth_token.delete()
-        except Token.DoesNotExist:
-            # does not have a token, no need to delete.
-            pass
-
-        MarkingTaskService().surrender_all_tasks(user_obj)
-        IdentifyTaskService().surrender_all_tasks(user_obj)
-
-    def delete(self, request):
-        try:
-            self.surrender_tasks_and_logout(request.user)
+            _surrender_all_tasks(request.user)
+            # TODO: Issue #3845, its not clear this is the best approach, see also the
+            # creating of the token elsewhere.  If we change one of these, make sure
+            # to change the other.
+            _drop_api_token(request.user)
             return Response(status=status.HTTP_200_OK)
         except (ValueError, ObjectDoesNotExist, AttributeError):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
-# POST: /get_token/
 class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
     """Overrides the DRF auth-token creator so that it updates the user last_login field, and does an API version check."""
 
-    # Idea from
-    # https://stackoverflow.com/questions/28613102/last-login-field-is-not-updated-when-authenticating-using-tokenauthentication-in
-    # and https://www.django-rest-framework.org/api-guide/authentication/#tokenauthentication
+    # POST: /get_token/
     def post(self, request: Request, *args, **kwargs) -> Response:
         """Login a user from the client, provided they have given us an appropriate client version.
 
@@ -227,6 +232,10 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
             bad client version.  Send 409 if user already has a token
             (See related Issue #3845).
         """
+        # Idea from
+        # https://stackoverflow.com/questions/28613102/last-login-field-is-not-updated-when-authenticating-using-tokenauthentication-in
+        # and https://www.django-rest-framework.org/api-guide/authentication/#tokenauthentication
+
         # TODO: probably serializer supposed to do something but ain't nobody got time for that
         client_api = request.data.get("api")
         client_ver = request.data.get("client_ver")
@@ -282,3 +291,23 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
         token, created = Token.objects.get_or_create(user=user)
         update_last_login(None, token.user)
         return Response({"token": token.key})
+
+    # DELETE: /get_token/
+    def delete(self, request: Request) -> Response:
+        """Non-token-based logout: force erase token corresponding to user, based on username/password auth."""
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}
+        )
+        if not serializer.is_valid():
+            return _error_response(
+                "The username / password pair are not authorized",
+                status.HTTP_401_UNAUTHORIZED,
+            )
+        # note this differs from request.user which is AnonymousUser
+        user = serializer.validated_data["user"]
+        try:
+            _surrender_all_tasks(user)
+            _drop_api_token(user)
+            return Response(status=status.HTTP_200_OK)
+        except (ValueError, ObjectDoesNotExist, AttributeError) as e:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
