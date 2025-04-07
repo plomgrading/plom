@@ -253,31 +253,15 @@ class IdentifyTaskService:
         task.save()
 
     @staticmethod
-    def surrender_task(user: User, task: PaperIDTask) -> None:
-        """Remove a user from an id-ing task and set its status to 'todo'.
-
-        Args:
-            user: reference to a User instance
-            task: reference to a MarkingTask instance
-        """
-        # only set status back to "TODO" if the task is OUT
-        if task.status == PaperIDTask.OUT:
-            task.assigned_user = None
-            task.status = PaperIDTask.TO_DO
-            task.save()
-
-    @classmethod
-    def surrender_all_tasks(cls, user: User) -> None:
+    def surrender_all_tasks(user: User) -> None:
         """Surrender all of the tasks currently assigned to the user.
 
         Args:
             user: reference to a User instance
         """
-        user_tasks = PaperIDTask.objects.filter(
-            assigned_user=user, status=PaperIDTask.OUT
+        PaperIDTask.objects.filter(assigned_user=user, status=PaperIDTask.OUT).update(
+            assigned_user=None, status=PaperIDTask.TO_DO
         )
-        for task in user_tasks:
-            cls.surrender_task(user, task)
 
     @transaction.atomic
     def set_paper_idtask_outdated(self, paper_number: int) -> None:
