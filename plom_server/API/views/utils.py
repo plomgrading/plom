@@ -4,8 +4,19 @@
 from rest_framework import serializers
 from rest_framework.response import Response
 
+import sys  # PDL wants this for debugging
+import datetime
+
+
+def debugnote(text: str):
+    prefix = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:22]
+    print(prefix + ": " + text)
+    sys.stdout.flush()
+    sys.stderr.flush()
+
 
 def _error_response(e: Exception | str, status) -> Response:
+    debugnote("<><> _err_response: Starting.")
     # status is e.g., `status.HTTP_404_NOT_FOUND`
     # I think those are int but not sure that's the right type
     r = Response(status=status)
@@ -21,4 +32,5 @@ def _error_response(e: Exception | str, status) -> Response:
         (r.reason_phrase,) = e.args
         return r
     r.reason_phrase = str(e)
+    debugnote("<><> _err_response: Next line is return.")
     return r

@@ -46,6 +46,17 @@ from plom.plom_exceptions import (
 )
 
 
+import sys  # PDL wants this for debugging
+import datetime
+
+
+def debugnote(text: str):
+    prefix = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:22]
+    print(prefix + ": " + text)
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+
 __all__ = [
     "Messenger",
     "ManagerMessenger",
@@ -1158,7 +1169,28 @@ class Messenger(BaseMessenger):
 
     def new_server_get_spec(self) -> dict:
         """Transparent wrapper around baseMessenger.get_spec()."""
-        return self.get_spec(self)
+        return self.get_spec()
+
+    def new_server_patch_spec(self) -> None:
+        """Debug thing always errors out."""
+        try:
+            debugnote("** new_server_patch_spec: try launching patch_auth.")
+            response = self.patch_auth(
+                "/api/beta/spec",
+                json={
+                    "key": "value",
+                },
+                timeout=(2, 3),  # TODO: Remove later. PDL.
+            )
+            debugnote("** new_server_patch_spec: Returned from post_auth. Exception?")
+            response.raise_for_status()
+            debugnote(
+                "** new_server_patch_spec: Got past the response.raise_for_status line. Done here."
+            )
+            return None
+        except Exception as e:
+            debugnote("new_server_patch_spec: Exception noted. Returning.")
+            return None
 
     def new_server_upload_spec(self, spec_toml_string: str) -> dict:
         """Upload an assessment spec to the server.
@@ -1168,7 +1200,6 @@ class Messenger(BaseMessenger):
 
         Exceptions:
             PlomConflict: server already has a database, cannot accept spec.
-            PlomAuthenticationException: login problems.
             ValueError: invalid spec
             PlomSeriousException: other errors.
 
@@ -1176,24 +1207,29 @@ class Messenger(BaseMessenger):
             dict containing the uploaded spec, freshly extracted from database
         """
         with self.SRmutex:
+
             try:
+                debugnote("** new_server_upload_spec: try launching post_auth.")
                 response = self.post_auth(
                     "/api/beta/spec",
                     json={
                         "spec_toml": spec_toml_string,
                     },
+                    timeout=(2, 3),  # TODO: Remove later. PDL.
+                )
+                debugnote(
+                    "** new_server_upload_spec: Returned from post_auth. Exception?"
                 )
                 response.raise_for_status()
-                return self.get_spec(self)
+                debugnote(
+                    "** new_server_upload_spec: Got past the response.raise_for_status line. Done here."
+                )
             except requests.HTTPError as e:
                 if response.status_code == 400:
                     raise ValueError(response.reason) from None
-                if response.status_code == 401:
-                    raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 403:
-                    raise PlomNoPermission(response.reason) from None
-                if response.status_code == 406:
-                    raise PlomSeriousException(response.reason) from None
-                if response.status_code == 409:
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+        debugnote("** new_server_upload_spec: Next line is return statement.")
+        return self.get_spec()
