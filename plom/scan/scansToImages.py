@@ -608,7 +608,7 @@ def postProcessing(thedir, dest, skip_gamma: bool = False) -> None:
 
 
 def process_scans(
-    pdf_fname, bundle_dir, skip_gamma=False, skip_img_extract=False, *, demo=False
+    pdf_fname, bundle_dir, *, skip_gamma=False, skip_img_extract=False, demo=False
 ):
     """Process a pdf file into bitmap images of each page.
 
@@ -625,13 +625,13 @@ def process_scans(
             anything else by code called by this function?
         bundle_dir (pathlib.Path): the filesystem path to the bundle,
             either as an absolute path or relative the CWD.
+
+    Keyword Args:
         skip_gamma (bool): skip white balancing in post processing.
         skip_img_extract (bool): don't try to extract raw images, just
             render each page.  If `False`, images still may not be
             extracted: there are a variety of sanity checks that must
             pass.
-
-    Keyword Args:
         demo (bool): Simulate scanning with random rotations, adding
             noise, lower-quality jpegs, etc.  Default: False
 

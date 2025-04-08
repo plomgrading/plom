@@ -168,7 +168,9 @@ def processHWScans(
         tomlkit.dump({"file": str(pdf_fname), "md5": md5}, f)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    files = process_scans(pdf_fname, bundledir, not gamma, not extractbmp)
+    files = process_scans(
+        pdf_fname, bundledir, skip_gamma=(not gamma), skip_img_extract=(not extractbmp)
+    )
 
     print(f'Trying to create bundle "{pdf_fname}" on server')
     exists, extra = createNewBundle(bundle_name, md5, msgr=msgr)
