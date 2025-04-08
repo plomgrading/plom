@@ -616,16 +616,28 @@ class BaseMessenger:
                     raise PlomAuthenticationException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def requestAndSaveToken(self, user: str, pw: str) -> None:
+    def requestAndSaveToken(
+        self, user: str, pw: str, *, exclusive: bool = False
+    ) -> None:
         """Get a authorisation token from the server.
 
         The token is then used to authenticate future transactions with the server.
+
+        Args:
+            user: the username.
+            pw: the password.
+
+        Keyword Args:
+            exclusive: default False.  True means we want a brand-new
+                unused token.
 
         Raises:
             PlomAPIException: a mismatch between server/client versions.
             PlomExistingLoginException: user already has a token:
                 currently, we do not support getting another one on
-                legacy servers.  TBD on the new server.
+                legacy servers.  On the current server, you'll get this
+                error if you ask for exclusive access but a token already
+                exists.  This behaviour might change in the future.
             PlomAuthenticationException: wrong password, account
                 disabled, etc: check contents for details.
             PlomSeriousException: something else unexpected such as a
@@ -634,7 +646,7 @@ class BaseMessenger:
         if self.is_legacy_server():
             self._requestAndSaveToken_legacy(user, pw)
         else:
-            self._requestAndSaveToken_webplom(user, pw)
+            self._requestAndSaveToken_webplom(user, pw, exclusive=exclusive)
 
     def _requestAndSaveToken_legacy(self, user: str, pw: str) -> None:
         self.SRmutex.acquire()
@@ -668,7 +680,9 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
-    def _requestAndSaveToken_webplom(self, user: str, pw: str) -> None:
+    def _requestAndSaveToken_webplom(
+        self, user: str, pw: str, *, exclusive: bool = False
+    ) -> None:
         """Get an authorisation token from a new-style server."""
         with self.SRmutex:
             response = self.post_raw(
@@ -678,6 +692,7 @@ class BaseMessenger:
                     "password": pw,
                     "api": str(Plom_API_Version),  # >= 0.18.0 supports int or str
                     "client_ver": __version__,
+                    "want_exclusive_access": exclusive,
                 },
             )
             try:
@@ -690,7 +705,6 @@ class BaseMessenger:
                 elif response.status_code == 400:
                     raise PlomAPIException(response.reason) from None
                 elif response.status_code == 409:
-                    # TODO: not sure django-server prevents simultaneous logins
                     raise PlomExistingLoginException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
             except requests.ConnectionError as err:

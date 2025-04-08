@@ -210,13 +210,18 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
 
     # POST: /get_token/
     def post(self, request: Request, *args, **kwargs) -> Response:
-        """Login a user from the client, provided they have given us an appropriate client version.
+        """Request a token for a user, used to access the client-side API, provided they have given us an appropriate client version.
+
+        In addition to "username" and "password", the request must contain
+        the data "api" (and int or string) and string "client_ver".
+        Optionally it can contain the data "want_exclusive_access" (a boolean)
+        where True specifies that they want a brand-new unused token.
 
         Returns:
             200 and a token in json if user logged in successfully.
             400 for poorly formed requests, such as no client version or
-            bad client version.  Send 409 if user already has a token
-            (See related Issue #3845).
+            bad client version.  If the callers asks for exclusive access,
+            then reply with 409 if user already has a token (see Issue #3845).
         """
         # Idea from
         # https://stackoverflow.com/questions/28613102/last-login-field-is-not-updated-when-authenticating-using-tokenauthentication-in
@@ -263,17 +268,21 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
                 status.HTTP_401_UNAUTHORIZED,
             )
         user = serializer.validated_data["user"]
+
         # TODO: probably fine for multiple sessions to share a token, see Issue #3845
         # and discussion there-in.  If changing this, look at delete carefully as well.
-        try:
-            Token.objects.get(user=user)
-            return _error_response(
-                "User already has a token: perhaps logged in elsewhere, "
-                "or there was crash.  You will need to clear the login.",
-                status.HTTP_409_CONFLICT,
-            )
-        except Token.DoesNotExist:
-            pass
+        want_exclusive_access = request.data.get("want_exclusive_access", None)
+        if want_exclusive_access:
+            try:
+                Token.objects.get(user=user)
+                return _error_response(
+                    "Caller asked for exclusive access but this user already has a token:"
+                    " perhaps logged in elsewhere, or there was crash."
+                    ' You will need to "clear" the login to remove the pre-existing token.',
+                    status.HTTP_409_CONFLICT,
+                )
+            except Token.DoesNotExist:
+                pass
         token, created = Token.objects.get_or_create(user=user)
         update_last_login(None, token.user)
         return Response({"token": token.key})
