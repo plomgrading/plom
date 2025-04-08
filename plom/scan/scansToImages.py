@@ -573,12 +573,14 @@ def gamma_adjust(fn):
     )
 
 
-def postProcessing(thedir, dest, skip_gamma: bool = False) -> None:
+def postProcessing(thedir, dest, *, skip_gamma: bool = True) -> None:
     """Do post processing on a directory of scanned bitmaps.
 
     Args:
         thedir (str, Path): a directory full of bitmaps.
         dest (str, Path): move images here (???).
+
+    Keyword Args:
         skip_gamma: skip the white balancing.
 
     Returns:
@@ -608,7 +610,7 @@ def postProcessing(thedir, dest, skip_gamma: bool = False) -> None:
 
 
 def process_scans(
-    pdf_fname, bundle_dir, *, skip_gamma=False, skip_img_extract=False, demo=False
+    pdf_fname, bundle_dir, *, skip_gamma=True, skip_img_extract=False, demo=False
 ):
     """Process a pdf file into bitmap images of each page.
 
@@ -628,6 +630,7 @@ def process_scans(
 
     Keyword Args:
         skip_gamma (bool): skip white balancing in post processing.
+            Always true no matter what you specify (feature removed).
         skip_img_extract (bool): don't try to extract raw images, just
             render each page.  If `False`, images still may not be
             extracted: there are a variety of sanity checks that must
@@ -648,8 +651,10 @@ def process_scans(
         do_not_extract=skip_img_extract,
         debug_jpeg=demo,
     )
-    # TODO: if not skip_gamma, this might clear our image uniqifier (#1573)
-    postProcessing(bitmaps_dir, bundle_dir / "pageImages", skip_gamma)
+    if not skip_gamma:
+        warn("Deprecated: 'skip_gamma=True' is forced no matter what you ask for")
+        skip_gamma = True
+    postProcessing(bitmaps_dir, bundle_dir / "pageImages", skip_gamma=skip_gamma)
     #           ,,,
     #          (o o)
     # -----ooO--(_)--Ooo------
