@@ -498,7 +498,7 @@ models-in-admin:
     - rg admin.site.register .
     - rg "admin.site.register\((.*)\)" . -r "\$1" --no-filename | sort > in_admin.txt
     - rg "class (.*)\(models.Model\):" . -r "\$1" --no-filename
-    - SUPERCLASSES = "models.Model Tag HueyTaskTracker PolymorphicModel FixedPage"
+    - SUPERCLASSES="models.Model Tag HueyTaskTracker PolymorphicModel FixedPage"
     - for SUPER in $SUPERCLASSES; do
         rg "class (.*)\($SUPER\):" . -r "\$1" --no-filename >> _models.txt;
       done
@@ -510,6 +510,7 @@ models-in-admin:
     - echo $HOW_MANY_IN_ADMIN
     - echo "TODO Do we expect them to be the same?"
     - echo "Currently, job passes even if there is a difference"
+    - echo "Models NOT in the admin site appear in red"
     - diff -u100 models.txt in_admin.txt | cdiff || true
 
 
