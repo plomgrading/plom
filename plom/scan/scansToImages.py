@@ -563,43 +563,18 @@ def processFileToPng_w_ghostscript(fname, dest):
 # processFileToBitmaps = processFileToPng_w_ghostscript
 
 
-def gamma_adjust(fn):
-    """Apply a simple gamma shift to an image."""
-    subprocess.run(
-        ["mogrify", "-quiet", "-gamma", "0.5", fn],
-        stderr=subprocess.STDOUT,
-        shell=False,
-        check=True,
-    )
-
-
-def postProcessing(thedir, dest, *, skip_gamma: bool = True) -> None:
+def postProcessing(thedir, dest) -> None:
     """Do post processing on a directory of scanned bitmaps.
 
     Args:
         thedir (str, Path): a directory full of bitmaps.
         dest (str, Path): move images here (???).
 
-    Keyword Args:
-        skip_gamma: skip the white balancing.
-
     Returns:
         None
     """
     thedir = Path(thedir)
     dest = Path(dest)
-
-    if not skip_gamma:
-        # TODO: maybe tiff as well?  Not jpeg: not anything lossy!
-        print("Gamma shift the PNG images")
-        # list and len bit crude here: more pythonic to leave as iterator?
-        stuff = list(thedir.glob("*.png"))
-        N = len(stuff)
-        with Pool() as p:
-            _ = list(tqdm(p.imap_unordered(gamma_adjust, stuff), total=N))
-        # Pool does this loop, but in parallel
-        # for x in glob.glob("..."):
-        #     gamma_adjust(x)
 
     fileList = []
     for ext in PlomImageExts:
@@ -654,7 +629,7 @@ def process_scans(
     if not skip_gamma:
         warn("Deprecated: 'skip_gamma=True' is forced no matter what you ask for")
         skip_gamma = True
-    postProcessing(bitmaps_dir, bundle_dir / "pageImages", skip_gamma=skip_gamma)
+    postProcessing(bitmaps_dir, bundle_dir / "pageImages")
     #           ,,,
     #          (o o)
     # -----ooO--(_)--Ooo------
