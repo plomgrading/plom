@@ -480,6 +480,12 @@ count-no-docstring:
 
 
 # sometimes we add a model and forget to add it to the admin interface
+# currently this just shows the difference but could be setup to fail
+# if a Model is added but not put in the admin interface.
+# TODO: we could use our own container image and then use:
+#       from django.apps import apps
+#       apps.get_models()
+#       This would avoid the complexities of subclasses
 models-in-admin:
   image: ubuntu
   stage: static_analysis
@@ -492,9 +498,9 @@ models-in-admin:
     - rg admin.site.register .
     - rg "admin.site.register\((.*)\)" . -r "\$1" --no-filename | sort > in_admin.txt
     - rg "class (.*)\(models.Model\):" . -r "\$1" --no-filename
-    - for super in models.Model Tag HueyTaskTracker PolymorphicModel FixedPage;
-      do
-        rg "class (.*)\($super\):" . -r "\$1" --no-filename >> _models.txt;
+    - SUPERCLASSES = "models.Model Tag HueyTaskTracker PolymorphicModel FixedPage"
+    - for SUPER in $SUPERCLASSES; do
+        rg "class (.*)\($SUPER\):" . -r "\$1" --no-filename >> _models.txt;
       done
     - cat _models.txt | sort > models.txt
     - rm _models.txt
@@ -503,8 +509,8 @@ models-in-admin:
     - echo $HOW_MANY_MODELS
     - echo $HOW_MANY_IN_ADMIN
     - echo "TODO Do we expect them to be the same?"
-    - echo "Currently, job fails if there is a difference"
-    - diff -u100 models.txt in_admin.txt | cdiff
+    - echo "Currently, job passes even if there is a difference"
+    - diff -u100 models.txt in_admin.txt | cdiff || true
 
 
 no-question-numbers:
