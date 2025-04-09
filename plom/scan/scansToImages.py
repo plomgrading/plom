@@ -10,12 +10,10 @@ from pathlib import Path
 import shutil
 import struct
 import subprocess
-from multiprocessing import Pool
 import random
 from warnings import warn
 import uuid
 
-from tqdm import tqdm
 import exif
 import pymupdf
 import PIL
