@@ -595,6 +595,7 @@ out-of-tree-scratch:
           python3-appdirs python3-arrow
           python3-aiohttp python3-peewee python3-cryptography
           python3-zxing-cpp
+          python3-psycopg3
           python3-pytest
           python3-PyMuPDF python3-scikit-learn python3-PyMySQL
           python3-weasyprint python3-whitenoise
@@ -679,6 +680,7 @@ fedora-django-tests:
           python3-appdirs python3-arrow
           python3-aiohttp python3-peewee python3-cryptography
           python3-zxing-cpp
+          python3-psycopg3
           python3-pytest
           python3-PyMuPDF python3-scikit-learn python3-PyMySQL
           python3-weasyprint python3-whitenoise
