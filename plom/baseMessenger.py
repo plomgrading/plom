@@ -65,7 +65,9 @@ Supported_Server_API_Versions = [
 #    - new /api/v0/tasks/{papernum}/{qidx}/reset/
 #    - changes /api/v0/tasks/{papernum}/{qidx}/reassign/{username}
 #    - new params for /MK/rubric/{key}
-#    - DELETE: /get_token/ removes the login token
+#    - added "exclusive" option to push:/get_token/
+#    - added "revoke_token" option to delete:/close_user/
+#    - new delete:/get_token/ revokes token
 
 
 log = logging.getLogger("messenger")
@@ -690,9 +692,9 @@ class BaseMessenger:
                 json={
                     "username": user,
                     "password": pw,
-                    "api": str(Plom_API_Version),  # >= 0.18.0 supports int or str
+                    "api": str(Plom_API_Version),  # API >= 114 supports int or str
                     "client_ver": __version__,
-                    "want_exclusive_access": exclusive,
+                    "want_exclusive_access": exclusive,  # API >= 114 no effect on < 114
                 },
             )
             try:
@@ -745,17 +747,24 @@ class BaseMessenger:
                     raise PlomAuthenticationException() from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def closeUser(self) -> None:
-        """User self-indicates they are logging out, surrender token and tasks, based on token auth.
+    def closeUser(self, *, revoke_token: bool = False) -> None:
+        """User self-indicates they are logging out, surrender tasks, based on token auth.
 
         This method is used when you have an existing connection (you
         have a token).  See also the closely-related
         :method:`clearAuthorisation` which uses username and password
         instead.
 
+        Keyword Args:
+            revoke_token: default False.  Pass True if you'd also like to
+                destroy the token.  Generally used with ``exclusive`` in
+                in :method:`requestAndSaveToken` as a ham-fisted approach
+                to single-session enforcement.
+
         Raises:
             PlomAuthenticationException: Ironically, the user must be
-                logged in to call this.  A second call will raise this.
+                logged in to call this.  If revoke_token was true, a
+                second call will raise this.
             PlomSeriousException: other problems such as trying to close
                 another user, other than yourself.
         """
@@ -767,7 +776,11 @@ class BaseMessenger:
                         json={"user": self.user, "token": self.token},
                     )
                 else:
-                    response = self.delete_auth("/close_user/")
+                    url = "/close_user/"
+                    if revoke_token:
+                        # added in API 114, previous versions *always* revoke the token
+                        url += "?revoke_token"
+                    response = self.delete_auth(url)
                 response.raise_for_status()
             except requests.HTTPError as e:
                 if response.status_code == 401:

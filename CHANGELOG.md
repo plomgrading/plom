@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Student reports have been re-enabled using more efficient database queries.
-* The API uses a "single session" model again, which fixes some confusing behaviour involving multiple simultaneous logins.
+* The API can optionally enforce a "single session" model again, which should fix some confusing behaviour involving multiple simultaneous logins.
 
 
 

@@ -191,15 +191,21 @@ class CloseUser(APIView):
     """
 
     # DELETE: /close_user/
+    # DELETE: /close_user/?revoke_token
     def delete(self, request: Request) -> Response:
-        """Token-based logout, currently surrenders the token and all tasks."""
+        """Token-based logout, surrender all tasks, and optionally revoke the token.
+
+        If the ``query_params`` contains ``revoke_token`` then we'll revoke the tablet
+        preventing future API calls until login creates a new token.
+        """
+        revoke_token = False
+        if "revoke_token" in request.query_params:
+            revoke_token = True
         try:
             MarkingTaskService.surrender_all_tasks(request.user)
             IdentifyTaskService.surrender_all_tasks(request.user)
-            # TODO: Issue #3845, its not clear this is the best approach, see also the
-            # creating of the token elsewhere.  If we change one of these, make sure
-            # to change the other.
-            TokenService.drop_api_token(request.user)
+            if revoke_token:
+                TokenService.drop_api_token(request.user)
             return Response(status=status.HTTP_200_OK)
         except (ValueError, ObjectDoesNotExist, AttributeError):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
@@ -216,6 +222,8 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
         the data "api" (and int or string) and string "client_ver".
         Optionally it can contain the data "want_exclusive_access" (a boolean)
         where True specifies that they want a brand-new unused token.
+        Such callers may also want to destroy the token when they logout,
+        typically by passing "revoke_token" to CloseUser.
 
         Returns:
             200 and a token in json if user logged in successfully.
@@ -289,7 +297,7 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
 
     # DELETE: /get_token/
     def delete(self, request: Request) -> Response:
-        """Non-token-based logout: force erase token corresponding to user, based on username/password auth."""
+        """Non-token-based logout: force surrender tasks and revoke user token, based on username/password auth."""
         serializer = self.serializer_class(
             data=request.data, context={"request": request}
         )
