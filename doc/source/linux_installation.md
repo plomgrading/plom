@@ -19,7 +19,7 @@ read :doc:`install-client`.
 Fedora
 ------
 
-Tested on Fedora 40.  Some stuff from the package manager:
+Tested on Fedora 41.  Some stuff from the package manager:
 ```
   # sudo dnf install \
         ImageMagick gcc gcc-c++ cmake \
