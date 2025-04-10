@@ -23,6 +23,7 @@ from plom_server.Mark.services import MarkingTaskService
 from plom_server.Identify.services import IdentifyTaskService
 from plom_server.Papers.services import SpecificationService
 from ..permissions import AllowAnyReadOnly
+from ..services import TokenService
 from .utils import _error_response
 
 
@@ -182,49 +183,58 @@ class ExamInfo(APIView):
 
 
 class CloseUser(APIView):
-    """Delete the user's token and log them out.
+    """Delete the user's token, surrender their tasks, and log them out.
 
     Returns:
         (200) user is logged out successfully
         (401) user is not signed in
     """
 
-    def surrender_tasks_and_logout(self, user_obj):
-        # if user has an auth token then delete it
-        try:
-            user_obj.auth_token.delete()
-        except Token.DoesNotExist:
-            # does not have a token, no need to delete.
-            pass
+    # DELETE: /close_user/
+    # DELETE: /close_user/?revoke_token
+    def delete(self, request: Request) -> Response:
+        """Token-based logout, surrender all tasks, and optionally revoke the token.
 
-        MarkingTaskService().surrender_all_tasks(user_obj)
-        IdentifyTaskService().surrender_all_tasks(user_obj)
-
-    def delete(self, request):
+        If the ``query_params`` contains ``revoke_token`` then we'll revoke the tablet
+        preventing future API calls until login creates a new token.
+        """
+        revoke_token = False
+        if "revoke_token" in request.query_params:
+            revoke_token = True
         try:
-            self.surrender_tasks_and_logout(request.user)
+            MarkingTaskService.surrender_all_tasks(request.user)
+            IdentifyTaskService.surrender_all_tasks(request.user)
+            if revoke_token:
+                TokenService.drop_api_token(request.user)
             return Response(status=status.HTTP_200_OK)
         except (ValueError, ObjectDoesNotExist, AttributeError):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
-# POST: /get_token/
 class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
     """Overrides the DRF auth-token creator so that it updates the user last_login field, and does an API version check."""
 
-    # Idea from
-    # https://stackoverflow.com/questions/28613102/last-login-field-is-not-updated-when-authenticating-using-tokenauthentication-in
-    # and https://www.django-rest-framework.org/api-guide/authentication/#tokenauthentication
+    # POST: /get_token/
     def post(self, request: Request, *args, **kwargs) -> Response:
-        """Login a user from the client, provided they have given us an appropriate client version.
+        """Request a token for a user, used to access the client-side API, provided they have given us an appropriate client version.
+
+        In addition to "username" and "password", the request must contain
+        the data "api" (and int or string) and string "client_ver".
+        Optionally it can contain the data "want_exclusive_access" (a boolean)
+        where True specifies that they want a brand-new unused token.
+        Such callers may also want to destroy the token when they logout,
+        typically by passing "revoke_token" to CloseUser.
 
         Returns:
             200 and a token in json if user logged in successfully.
             400 for poorly formed requests, such as no client version or
-            bad client version.  Legacy used to send 409 if user
-            was already logged in but currently that may not be enforced.
-            (See related Issue #3845).
+            bad client version.  If the callers asks for exclusive access,
+            then reply with 409 if user already has a token (see Issue #3845).
         """
+        # Idea from
+        # https://stackoverflow.com/questions/28613102/last-login-field-is-not-updated-when-authenticating-using-tokenauthentication-in
+        # and https://www.django-rest-framework.org/api-guide/authentication/#tokenauthentication
+
         # TODO: probably serializer supposed to do something but ain't nobody got time for that
         client_api = request.data.get("api")
         client_ver = request.data.get("client_ver")
@@ -266,6 +276,42 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
                 status.HTTP_401_UNAUTHORIZED,
             )
         user = serializer.validated_data["user"]
+
+        # TODO: probably fine for multiple sessions to share a token, see Issue #3845
+        # and discussion there-in.  If changing this, look at delete carefully as well.
+        want_exclusive_access = request.data.get("want_exclusive_access", None)
+        if want_exclusive_access:
+            try:
+                Token.objects.get(user=user)
+                return _error_response(
+                    "Caller asked for exclusive access but this user already has a token:"
+                    " perhaps logged in elsewhere, or there was crash."
+                    ' You will need to "clear" the login to remove the pre-existing token.',
+                    status.HTTP_409_CONFLICT,
+                )
+            except Token.DoesNotExist:
+                pass
         token, created = Token.objects.get_or_create(user=user)
         update_last_login(None, token.user)
         return Response({"token": token.key})
+
+    # DELETE: /get_token/
+    def delete(self, request: Request) -> Response:
+        """Non-token-based logout: force surrender tasks and revoke user token, based on username/password auth."""
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}
+        )
+        if not serializer.is_valid():
+            return _error_response(
+                "The username / password pair are not authorized",
+                status.HTTP_401_UNAUTHORIZED,
+            )
+        # note this differs from request.user which is AnonymousUser
+        user = serializer.validated_data["user"]
+        try:
+            MarkingTaskService.surrender_all_tasks(user)
+            IdentifyTaskService.surrender_all_tasks(user)
+            TokenService.drop_api_token(user)
+            return Response(status=status.HTTP_200_OK)
+        except (ValueError, ObjectDoesNotExist, AttributeError):
+            return Response(status=status.HTTP_401_UNAUTHORIZED)

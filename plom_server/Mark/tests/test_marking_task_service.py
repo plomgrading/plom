@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Andrew Rechnitzer
 
@@ -119,9 +119,8 @@ class MarkingTaskServiceTests(TestCase):
         user: User = baker.make(User)
         task1 = baker.make(MarkingTask, assigned_user=user, status=MarkingTask.OUT)
         task2 = baker.make(MarkingTask, assigned_user=user, status=MarkingTask.OUT)
-        mts = MarkingTaskService()
 
-        mts.surrender_all_tasks(user)
+        MarkingTaskService.surrender_all_tasks(user)
         task1.refresh_from_db()
         task2.refresh_from_db()
         self.assertEqual(task1.status, MarkingTask.TO_DO)

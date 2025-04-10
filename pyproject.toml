@@ -135,6 +135,7 @@ packages = [
     "plom.scripts",
     "plom_server",
     "plom_server.API",
+    "plom_server.API.services",
     "plom_server.Authentication",
     "plom_server.Authentication.services",
     "plom_server.Base",

@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased dev branch]
+## [Unreleased]
 
 ### Added
 * New support for multi-versioned ID pages, for example if different students should see different cover pages.  Currently, this uses the custom QV-map feature.
@@ -25,18 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Student reports have been re-enabled using more efficient database queries.
-
-
-
-## [Unreleased]
-
-### Added
-
-### Changed
-
-### Removed
-
-### Fixed
+* The API can optionally enforce a "single session" model again, which should fix some confusing behaviour involving multiple simultaneous logins.
 
 
 
@@ -1477,7 +1466,6 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased dev branch]: https://gitlab.com/plom/plom/-/compare/main...dev
 [Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.17.4...main
 [0.17.4]: https://gitlab.com/plom/plom/-/compare/v0.17.3...v0.17.4
 [0.17.3]: https://gitlab.com/plom/plom/-/compare/v0.17.2...v0.17.3

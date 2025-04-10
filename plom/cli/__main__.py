@@ -30,6 +30,7 @@ from stdiomask import getpass
 from plom import Default_Port, __version__
 from plom.cli import (
     bundle_map_page,
+    clear_login,
     get_reassembled,
     id_paper,
     un_id_paper,
@@ -305,8 +306,7 @@ def main():
             msgr.closeUser()
             msgr.stop()
     elif args.command == "clear":
-        print("TODO: do we need this on new Plom?")
-        # clear_login(args.server, args.password)
+        clear_login(args.server, args.username, args.password)
     else:
         get_parser().print_help()
 

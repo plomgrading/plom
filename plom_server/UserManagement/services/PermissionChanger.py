@@ -5,7 +5,9 @@
 from django.contrib.auth.models import User, Group
 from django.db import transaction
 
-from plom_server.API.views.server_info import CloseUser
+from plom_server.API.services import TokenService
+from plom_server.Mark.services import MarkingTaskService
+from plom_server.Identify.services import IdentifyTaskService
 
 
 @transaction.atomic
@@ -27,16 +29,17 @@ def toggle_user_active(username: str) -> None:
 
     [1] https://docs.djangoproject.com/en/5.1/ref/contrib/auth/#django.contrib.auth.models.User.is_active
     """
-    user_to_change = User.objects.get_by_natural_key(username)
-    user_to_change.is_active = not user_to_change.is_active
-    user_to_change.save()
-    # if user is now inactive and a marker then make sure that they are logged out.
-    # We use a function from the CloseUser(APIView) to do this.
-    # see #3084
-    if not user_to_change.is_active:
+    user = User.objects.get_by_natural_key(username)
+    user.is_active = not user.is_active
+    user.save()
+    # if user is now inactive and a marker then make sure that they are logged
+    # out of the API system by removing their API access token.
+    if not user.is_active:
         marker_group_obj = Group.objects.get_by_natural_key("marker")
-        if marker_group_obj in user_to_change.groups.all():
-            CloseUser().surrender_tasks_and_logout(user_to_change)
+        if marker_group_obj in user.groups.all():
+            MarkingTaskService.surrender_all_tasks(user)
+            IdentifyTaskService.surrender_all_tasks(user)
+            TokenService.drop_api_token(user)
 
 
 @transaction.atomic
@@ -62,13 +65,15 @@ def set_all_markers_active(active: bool):
     marker-client access-token revoked (ie client is logged out) and
     any outstanding tasks revoked.
     """
-    # if de-activating markers then we also need to surrender tasks and log them out.
-    # see #3084
+    # if de-activating markers then we also need to surrender tasks and log them out
+    # of the API, see Issue #3084.
     set_all_users_in_group_active("marker", active)
     # loop over all (now) deactivated markers, log them out and surrender their tasks
     if not active:
         for user in Group.objects.get(name="marker").user_set.all():
-            CloseUser().surrender_tasks_and_logout(user)
+            MarkingTaskService.surrender_all_tasks(user)
+            IdentifyTaskService.surrender_all_tasks(user)
+            TokenService.drop_api_token(user)
 
 
 @transaction.atomic

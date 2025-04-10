@@ -318,7 +318,8 @@ class MarkingTaskService:
         task.status = MarkingTask.OUT
         task.save()
 
-    def surrender_all_tasks(self, user: User) -> None:
+    @staticmethod
+    def surrender_all_tasks(user: User) -> None:
         """Surrender all of the tasks currently assigned to the user.
 
         Args:
