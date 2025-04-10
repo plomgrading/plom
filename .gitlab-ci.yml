@@ -479,9 +479,7 @@ count-no-docstring:
   allow_failure: true
 
 
-# sometimes we add a model and forget to add it to the admin interface
-# currently this just shows the difference but could be setup to fail
-# if a Model is added but not put in the admin interface.
+# Detect if someone adds a model but forget to add it to the admin interface
 # TODO: we could use our own container image and then use:
 #       from django.apps import apps
 #       apps.get_models()
@@ -498,7 +496,7 @@ models-in-admin:
     - rg admin.site.register .
     - rg "admin.site.register\((.*)\)" . -r "\$1" --no-filename | sort > in_admin.txt
     - rg "class (.*)\(models.Model\):" . -r "\$1" --no-filename
-    - SUPERCLASSES="models.Model Tag HueyTaskTracker PolymorphicModel FixedPage"
+    - SUPERCLASSES="models.Model Tag HueyTaskTracker PolymorphicModel FixedPage SingletonABCModel"
     - for SUPER in $SUPERCLASSES; do
         rg "class (.*)\($SUPER\):" . -r "\$1" --no-filename >> _models.txt;
       done
@@ -508,10 +506,8 @@ models-in-admin:
     - HOW_MANY_IN_ADMIN=`cat in_admin.txt | wc -l`
     - echo $HOW_MANY_MODELS
     - echo $HOW_MANY_IN_ADMIN
-    - echo "TODO Do we expect them to be the same?"
-    - echo "Currently, job passes even if there is a difference"
     - echo "Models NOT in the admin site appear in red"
-    - diff -u100 models.txt in_admin.txt | cdiff || true
+    - diff -u100 models.txt in_admin.txt | cdiff
 
 
 no-question-numbers:

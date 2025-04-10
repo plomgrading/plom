@@ -14,14 +14,24 @@ from .models.paper_structure import (
     DNMPage,
     QuestionPage,
 )
-from .models.specifications import Specification
+from .models.specifications import (
+    NumberOfPapersToProduceSetting,
+    SolnSpecification,
+    SolnSpecQuestion,
+    Specification,
+    SpecQuestion,
+)
 from .models.background_tasks import CreateImageHueyTask, PopulateEvacuateDBChore
 from .models.image_bundle import Image, DiscardPage, Bundle
 from .models.reference_image import ReferenceImage
 
 # This makes models appear in the admin interface
+admin.site.register(NumberOfPapersToProduceSetting)
 admin.site.register(Paper)
+admin.site.register(SolnSpecification)
+admin.site.register(SolnSpecQuestion)
 admin.site.register(Specification)
+admin.site.register(SpecQuestion)
 admin.site.register(MobilePage)
 admin.site.register(FixedPage)
 admin.site.register(IDPage)
