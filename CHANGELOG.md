@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 * Some "are you sure?" dialogs were removed from the scanning work flow.
+* Container no long respects the PLOM_DEMO env var.
 
 ### Fixed
 * Student reports have been re-enabled using more efficient database queries.
