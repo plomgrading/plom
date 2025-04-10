@@ -183,7 +183,7 @@ plom_database_name = os.environ.get("PLOM_DATABASE_NAME") or "plom_db"
 
 DATABASES = {
     "postgres": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "ENGINE": "django.db.backends.postgresql",
         "NAME": plom_database_name,
         "USER": os.environ.get("PLOM_DATABASE_USER") or "postgres",
         "PASSWORD": os.environ.get("PLOM_DATABASE_PASSWORD") or "postgres",

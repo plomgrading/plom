@@ -19,7 +19,7 @@ read :doc:`install-client`.
 Fedora
 ------
 
-Tested on Fedora 40.  Some stuff from the package manager:
+Tested on Fedora 41.  Some stuff from the package manager:
 ```
   # sudo dnf install \
         ImageMagick gcc gcc-c++ cmake \
@@ -33,7 +33,7 @@ Tested on Fedora 40.  Some stuff from the package manager:
         python3-stdiomask python3-requests-toolbelt \
         python3-pip python3-wheel python3-setuptools \
         python3-tomlkit python3-tqdm python3-urllib3 \
-        python3-pytest python3-PyMySQL \
+        python3-psycopg3 python3-pytest python3-PyMySQL \
         python3-django python3-django-filter \
         python3-zxing-cpp \
         python3-gunicorn python3-whitenoise \
