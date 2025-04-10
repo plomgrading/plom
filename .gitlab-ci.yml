@@ -498,10 +498,13 @@ models-in-admin:
     - rg "class (.*)\(models.Model\):" . -r "\$1" --no-filename
     - SUPERCLASSES="models.Model Tag HueyTaskTracker PolymorphicModel FixedPage SingletonABCModel"
     - for SUPER in $SUPERCLASSES; do
-        rg "class (.*)\($SUPER\):" . -r "\$1" --no-filename >> _models.txt;
+        rg "class (.*)\($SUPER\):" . -r "\$1" --no-filename >> models1.txt;
       done
-    - cat _models.txt | sort > models.txt
-    - rm _models.txt
+    - cat models1.txt | sort > models2.txt
+    # Special cases, ABCs cannot be in admin site
+    - cat models2.txt | grep -v SingletonABCModel | grep -v "^Tag" > models3.txt
+    # Special case, TmpAbstractQuestion uses decorator
+    - cat models3.txt | grep -v TmpAbstractQuestion > models.txt
     - HOW_MANY_MODELS=`cat models.txt | wc -l`
     - HOW_MANY_IN_ADMIN=`cat in_admin.txt | wc -l`
     - echo $HOW_MANY_MODELS

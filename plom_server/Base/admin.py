@@ -5,11 +5,9 @@
 
 from django.contrib import admin
 
-from .models import BaseImage, HueyTaskTracker, SettingsModel, SingletonABCModel, Tag
+from .models import BaseImage, HueyTaskTracker, SettingsModel
 
 # This makes models appear in the admin interface
 admin.site.register(BaseImage)
 admin.site.register(HueyTaskTracker)
 admin.site.register(SettingsModel)
-admin.site.register(SingletonABCModel)
-admin.site.register(Tag)
