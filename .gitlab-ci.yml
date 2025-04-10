@@ -479,6 +479,40 @@ count-no-docstring:
   allow_failure: true
 
 
+# Detect if someone adds a model but forget to add it to the admin interface
+# TODO: we could use our own container image and then use:
+#       from django.apps import apps
+#       apps.get_models()
+#       This would avoid the complexities of subclasses
+models-in-admin:
+  image: ubuntu
+  stage: static_analysis
+  before_script:
+    - apt-get update
+    - apt-get install --no-install-recommends --yes ripgrep colordiff less
+  script:
+    - pushd plom_server
+    - rg models.Model .
+    - rg admin.site.register .
+    - rg "admin.site.register\((.*)\)" . -r "\$1" --no-filename | sort > in_admin.txt
+    - rg "class (.*)\(models.Model\):" . -r "\$1" --no-filename
+    - SUPERCLASSES="models.Model Tag HueyTaskTracker PolymorphicModel FixedPage SingletonABCModel"
+    - for SUPER in $SUPERCLASSES; do
+        rg "class (.*)\($SUPER\):" . -r "\$1" --no-filename >> models1.txt;
+      done
+    - cat models1.txt | sort > models2.txt
+    # Special cases, ABCs cannot be in admin site
+    - cat models2.txt | grep -v SingletonABCModel | grep -v "^Tag" > models3.txt
+    # Special case, TmpAbstractQuestion uses decorator
+    - cat models3.txt | grep -v TmpAbstractQuestion > models.txt
+    - HOW_MANY_MODELS=`cat models.txt | wc -l`
+    - HOW_MANY_IN_ADMIN=`cat in_admin.txt | wc -l`
+    - echo $HOW_MANY_MODELS
+    - echo $HOW_MANY_IN_ADMIN
+    - echo "Models NOT in the admin site appear in red"
+    - diff -u100 models.txt in_admin.txt | cdiff
+
+
 no-question-numbers:
   image: python:3.12
   stage: static_analysis
