@@ -49,7 +49,7 @@ pyOpenSSL==23.2.0
 pyspellchecker==0.8.1
 pytest==7.2.0
 pytest-qt==4.2.0
-psycopg[binary]==3.1.1
+psycopg[binary]==3.1.8
 random-username==1.0.2
 scikit-learn==1.0.2
 scipy==1.8.1
