@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2022 Natalia Accomazzo Scotti
 
 """Plom tools for scanning tests and pushing to servers.
@@ -132,7 +132,10 @@ def processScans(
         tomlkit.dump({"file": str(pdf_fname), "md5": md5}, f)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    process_scans(pdf_fname, bundledir, not gamma, not extractbmp, demo=demo)
+    process_scans(
+        pdf_fname, bundledir, skip_gamma=(not gamma), skip_img_extract=(not extractbmp)
+    )
+
     print("Read QR codes")
     readQRCodes.processBitmaps(bundledir, msgr=msgr)
     # TODO: can collisions warning be written here too?

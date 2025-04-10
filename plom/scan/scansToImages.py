@@ -10,12 +10,10 @@ from pathlib import Path
 import shutil
 import struct
 import subprocess
-from multiprocessing import Pool
 import random
 from warnings import warn
 import uuid
 
-from tqdm import tqdm
 import exif
 import pymupdf
 import PIL
@@ -563,41 +561,18 @@ def processFileToPng_w_ghostscript(fname, dest):
 # processFileToBitmaps = processFileToPng_w_ghostscript
 
 
-def gamma_adjust(fn):
-    """Apply a simple gamma shift to an image."""
-    subprocess.run(
-        ["mogrify", "-quiet", "-gamma", "0.5", fn],
-        stderr=subprocess.STDOUT,
-        shell=False,
-        check=True,
-    )
-
-
-def postProcessing(thedir, dest, skip_gamma: bool = False) -> None:
+def postProcessing(thedir, dest) -> None:
     """Do post processing on a directory of scanned bitmaps.
 
     Args:
         thedir (str, Path): a directory full of bitmaps.
         dest (str, Path): move images here (???).
-        skip_gamma: skip the white balancing.
 
     Returns:
         None
     """
     thedir = Path(thedir)
     dest = Path(dest)
-
-    if not skip_gamma:
-        # TODO: maybe tiff as well?  Not jpeg: not anything lossy!
-        print("Gamma shift the PNG images")
-        # list and len bit crude here: more pythonic to leave as iterator?
-        stuff = list(thedir.glob("*.png"))
-        N = len(stuff)
-        with Pool() as p:
-            _ = list(tqdm(p.imap_unordered(gamma_adjust, stuff), total=N))
-        # Pool does this loop, but in parallel
-        # for x in glob.glob("..."):
-        #     gamma_adjust(x)
 
     fileList = []
     for ext in PlomImageExts:
@@ -608,7 +583,7 @@ def postProcessing(thedir, dest, skip_gamma: bool = False) -> None:
 
 
 def process_scans(
-    pdf_fname, bundle_dir, skip_gamma=False, skip_img_extract=False, *, demo=False
+    pdf_fname, bundle_dir, *, skip_gamma=True, skip_img_extract=False, demo=False
 ):
     """Process a pdf file into bitmap images of each page.
 
@@ -625,13 +600,14 @@ def process_scans(
             anything else by code called by this function?
         bundle_dir (pathlib.Path): the filesystem path to the bundle,
             either as an absolute path or relative the CWD.
+
+    Keyword Args:
         skip_gamma (bool): skip white balancing in post processing.
+            Always true no matter what you specify (feature removed).
         skip_img_extract (bool): don't try to extract raw images, just
             render each page.  If `False`, images still may not be
             extracted: there are a variety of sanity checks that must
             pass.
-
-    Keyword Args:
         demo (bool): Simulate scanning with random rotations, adding
             noise, lower-quality jpegs, etc.  Default: False
 
@@ -648,8 +624,10 @@ def process_scans(
         do_not_extract=skip_img_extract,
         debug_jpeg=demo,
     )
-    # TODO: if not skip_gamma, this might clear our image uniqifier (#1573)
-    postProcessing(bitmaps_dir, bundle_dir / "pageImages", skip_gamma)
+    if not skip_gamma:
+        warn("Deprecated: 'skip_gamma=True' is forced no matter what you ask for")
+        skip_gamma = True
+    postProcessing(bitmaps_dir, bundle_dir / "pageImages")
     #           ,,,
     #          (o o)
     # -----ooO--(_)--Ooo------

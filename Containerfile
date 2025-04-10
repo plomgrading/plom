@@ -14,7 +14,6 @@ RUN apt-get -y update && \
     DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata && \
     apt-get --no-install-recommends -y install \
         cmake make g++ \
-        imagemagick \
         openssl \
         dvipng latexmk texlive-latex-extra texlive-fonts-recommended texlive-pictures \
         libpango-1.0-0 libpangocairo-1.0-0 \
