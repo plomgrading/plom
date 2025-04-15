@@ -191,9 +191,8 @@ def _build_page_to_versions_dict(
     spec, qvmap_row: dict[int | str, int]
 ) -> dict[int, list[int]]:
     page_to_versions = {spec["idPage"]: [qvmap_row.get("id", 1)]}
-    # dnm pages always from version 1
     for pg in spec["doNotMarkPages"]:
-        page_to_versions[pg] = [1]
+        page_to_versions[pg] = [qvmap_row.get("dnm", 1)]
     for q in spec["question"]:
         for pg in spec["question"][q]["pages"]:
             # Issue #3838: do this carefully in case there are multiple conflicting versions

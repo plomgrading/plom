@@ -47,6 +47,7 @@ class ExamMockerService:
             tmpdir = Path(tmpdirname)
             qvmap_row = {n: version for n in range(1, num_questions + 1)}
             qvmap_row["id"] = version
+            qvmap_row["dnm"] = version
             f = make_PDF(
                 spec,
                 0,
