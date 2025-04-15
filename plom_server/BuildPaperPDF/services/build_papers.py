@@ -50,7 +50,7 @@ def huey_build_single_paper(
     papernum: int,
     spec: dict,
     qvmap_row: dict[int | str, int],
-    source_versions: list[pathlib.Path],
+    source_versions: dict[int, pathlib.Path],
     *,
     student_info: dict[str, Any] | None = None,
     prename_config: dict[str, Any],
@@ -72,7 +72,7 @@ def huey_build_single_paper(
         spec: the specification of the assessment.
         qvmap_row: which version to use for each question and id page.
             A row of the "qvmap".
-        source_versions: list of paths to the PDF files for each version.
+        source_versions: dict of paths to the PDF files for each version.
 
     Keyword Args:
         student_info: None for a regular blank paper or a dict with
@@ -288,10 +288,11 @@ class BuildPapersService:
                 )
             del paper
 
-        # TODO: this probably only works with the default FileSystemStorage
-        source_versions = [
-            settings.MEDIA_ROOT / x.path for x in SourceService._get_source_files()
-        ]
+        # TODO: Issue #3888 this probably only works with the default FileSystemStorage
+        source_versions = {
+            (v + 1): settings.MEDIA_ROOT / x.path
+            for v, x in enumerate(SourceService._get_source_files())
+        }
         # (I suppose in theory the source versions could change during the lifetime
         # of the chores but Plom presumably prevents changing sources during builds)
 

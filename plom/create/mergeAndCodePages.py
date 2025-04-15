@@ -76,7 +76,7 @@ def _create_QRcoded_pdf(
     papernum: int,
     qvmap_row: dict[int | str, int],
     tmpdir: pathlib.Path,
-    source_versions: list[pathlib.Path],
+    source_versions: dict[int, pathlib.Path],
     *,
     no_qr: bool = False,
 ) -> pymupdf.Document:
@@ -90,7 +90,9 @@ def _create_QRcoded_pdf(
         qvmap_row: version number for each question of this paper.
             and optionally the id page.  A row of the "qvmap".
         tmpdir (pathlib.Path): a place where we can make temporary files.
-        source_versions: list of paths for the source versions.
+        source_versions: dict of paths for the source versions, keyed
+            by version.  Some can be missing as long as they don't appear
+            in the ``qvmap_row``.
 
     Keyword Arguments:
         no_qr (bool): whether to paste in QR-codes (default: False)
@@ -108,11 +110,8 @@ def _create_QRcoded_pdf(
     # also build page to version mapping from spec and the question-version dict
     page_to_version = build_page_to_version_dict(spec, qvmap_row)
 
-    assert len(source_versions) == spec["numberOfVersions"]
     # dict of version (int) -> source pdf (pymupdf.Document)
-    pdf_version = {}
-    for i, pth in enumerate(source_versions):
-        pdf_version[i + 1] = pymupdf.open(pth)
+    pdf_version = {v: pymupdf.open(f) for v, f in source_versions.items()}
 
     exam = pymupdf.open()
     # Insert the relevant page-versions into this pdf.
@@ -481,9 +480,9 @@ def make_PDF(
             _src = Path(source_versions_path)
         else:
             _src = Path("sourceVersions")
-        source_versions = [
-            _src / f"version{i + 1}.pdf" for i in range(spec["numberOfVersions"])
-        ]
+        source_versions = {
+            v: _src / f"version{v}.pdf" for v in range(1, spec["numberOfVersions"] + 1)
+        }
 
     # Build all relevant pngs in a temp directory
     with tempfile.TemporaryDirectory() as tmp_dir:

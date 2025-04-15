@@ -37,23 +37,22 @@ class ExamMockerService:
         """
         spec = SpecificationService.get_the_spec()
         num_questions = SpecificationService.get_n_questions()
-        num_versions = SpecificationService.get_n_versions()
-        print(spec)
-        print(type(spec))
+        # ensure mocked papers won't scan by using wrong public code
+        if spec["publicCode"] == "00000":
+            spec["publicCode"] = "99999"
+        else:
+            spec["publicCode"] = "00000"
+
         with tempfile.TemporaryDirectory() as tmpdirname:
             tmpdir = Path(tmpdirname)
-            # bit naughty, we know we only need this one version, so pass None for
-            # others; seems likely this will make some linter unhappy!
-            # sources = [None] * num_versions
-            # sources[version] = source_path
-            # TODO: yuck even worse
-            sources = [source_path] * num_versions
+            qvmap_row = {n: version for n in range(1, num_questions + 1)}
+            qvmap_row["id"] = version
             f = make_PDF(
                 spec,
                 0,
-                {n: version for n in range(1, num_questions + 1)},
+                qvmap_row,
                 where=tmpdir,
-                source_versions=sources,
+                source_versions={version: source_path},
             )
             with pymupdf.open(f) as pdf_doc:
                 return pdf_doc.tobytes()
