@@ -54,6 +54,7 @@ class ExamMockerService:
                 qvmap_row,
                 where=tmpdir,
                 source_versions={version: source_path},
+                paperstr="<Mock>",
             )
             with pymupdf.open(f) as pdf_doc:
                 return pdf_doc.tobytes()

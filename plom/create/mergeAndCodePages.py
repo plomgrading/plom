@@ -89,6 +89,7 @@ def _create_QRcoded_pdf(
     source_versions: dict[int, pathlib.Path],
     *,
     no_qr: bool = False,
+    paperstr: str | None = None,
 ) -> pymupdf.Document:
     """Creates a PDF document from versioned sources, stamps QR codes on the corners.
 
@@ -107,6 +108,7 @@ def _create_QRcoded_pdf(
     Keyword Arguments:
         no_qr (bool): whether to paste in QR-codes (default: False)
             Note backward logic: False means yes to QR-codes.
+        paperstr: override the default string version of the paper number.
 
     Returns:
         PDF document, apparently open, which seems to me a scary
@@ -149,8 +151,6 @@ def _create_QRcoded_pdf(
     #     )
 
     for p in range(1, spec["numberOfPages"] + 1):
-        group = page_to_group_name[p]
-        text = label_for_top_of_page(papernum, group, p)
         odd: bool | None = (p - 1) % 2 == 0
         if no_qr:
             odd = None
@@ -158,6 +158,11 @@ def _create_QRcoded_pdf(
         else:
             ver = page_to_version[p]
             qr_files = create_QR_codes(papernum, p, ver, spec["publicCode"], tmpdir)
+
+        if paperstr is None:
+            text = label_for_top_of_page(papernum, page_to_group_name[p], p)
+        else:
+            text = label_for_top_of_page(paperstr, page_to_group_name[p], p)
 
         pdf_page_add_labels_QRs(exam[p - 1], spec["name"], text, qr_files, odd=odd)
 
@@ -411,6 +416,7 @@ def make_PDF(
     source_versions_path: Path | str | None = None,
     source_versions: list[Path] | None = None,
     font_subsetting: bool | None = None,
+    paperstr: str | None = None,
 ) -> pathlib.Path | None:
     """Make a PDF of particular versions, with QR codes, and optionally name stamped.
 
@@ -460,6 +466,8 @@ def make_PDF(
             So we only do the subsetting if we're added non-ascii chars
             in any of the shortname, student name or question labels.
             Non-ascii is a stronger requirement than needed,
+        paperstr: override the default string version of the paper number.
+            Probably you don't need to do this, although Mocker does.
 
     Returns:
         pathlib.Path: the file that was just written, or None in the slightly
@@ -502,6 +510,7 @@ def make_PDF(
             Path(tmp_dir),
             source_versions,
             no_qr=no_qr,
+            paperstr=paperstr,
         )
 
     # If provided with student name and id, preprint on cover
