@@ -28,8 +28,6 @@ class ExamMockerService:
         self,
         version: int,
         source_path: str | Path | File,
-        n_pages: int,
-        short_name: str,
     ) -> bytes:
         """Create the mock exam.
 

@@ -258,16 +258,10 @@ def store_reference_images(source_version: int):
     mocker = ExamMockerService()
 
     source_pdf_obj = PaperSourcePDF.objects.get(version=source_version)
-    n_pages = SpecificationService.get_n_pages()
 
-    # TODO: this does direct file access?  Why else would it need `source_path`...
+    # TODO: Issue #3888 this does direct file access?  Why else would it need `source_path`...
     _source_path = Path(source_pdf_obj.source_pdf.path)
-    mock_exam_pdf_bytes = mocker.mock_exam(
-        source_version,
-        _source_path,
-        n_pages,
-        SpecificationService.get_short_name_slug(),
-    )
+    mock_exam_pdf_bytes = mocker.mock_exam(source_version, _source_path)
     doc = pymupdf.Document(stream=mock_exam_pdf_bytes)
 
     with tempfile.TemporaryDirectory() as _tmpdir:

@@ -23,9 +23,6 @@ class MockExamView(ManagerRequiredView):
         mocker = ExamMockerService()
         source_path = Path(SourceService._get_source_file(version).path)
 
-        n_pages = SpecificationService.get_n_pages()
-        mock_exam_pdf_bytes = mocker.mock_exam(
-            version, source_path, n_pages, SpecificationService.get_short_name_slug()
-        )
+        mock_exam_pdf_bytes = mocker.mock_exam(version, source_path)
         mock_exam_file = File(BytesIO(mock_exam_pdf_bytes), name=f"mock_v{version}.pdf")
         return FileResponse(mock_exam_file, content_type="application/pdf")
