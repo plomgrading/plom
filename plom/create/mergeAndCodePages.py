@@ -442,7 +442,7 @@ def make_PDF(
             are omitted.
         font_subsetting: if None/omitted, do a generally-sensible default
             of using subsetting only when *we* added non-ascii characters.
-            True forces subsetting and False disables is.
+            True forces subsetting and False disables it.
             We embed fonts for names and other overlay.  But if there are
             non-Latin characters (e.g., CJK) in names, then the embedded
             font is quite large (several megabytes).
