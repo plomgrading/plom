@@ -45,9 +45,10 @@ class ExamMockerService:
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             tmpdir = Path(tmpdirname)
-            qvmap_row = {n: version for n in range(1, num_questions + 1)}
-            qvmap_row["id"] = version
-            qvmap_row["dnm"] = version
+
+            _keys = ["id", "dnm", *range(1, num_questions + 1)]
+            qvmap_row = {k: version for k in _keys}
+
             f = make_PDF(
                 spec,
                 0,

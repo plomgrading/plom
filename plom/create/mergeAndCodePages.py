@@ -414,7 +414,7 @@ def make_PDF(
     *,
     where: Path | None = None,
     source_versions_path: Path | str | None = None,
-    source_versions: list[Path] | None = None,
+    source_versions: dict[int, Path] | None = None,
     font_subsetting: bool | None = None,
     paperstr: str | None = None,
 ) -> pathlib.Path | None:
