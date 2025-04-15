@@ -1,21 +1,20 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
-from __future__ import annotations
-
-import pathlib
 import tempfile
+from pathlib import Path
 
 from django.core.files import File
-import pymupdf as fitz
+import pymupdf
 
 from plom.create.mergeAndCodePages import (
     create_QR_codes,
     pdf_page_add_labels_QRs,
     pdf_page_add_name_id_box,
+    make_PDF,
 )
 
 from plom_server.Papers.services import SpecificationService
@@ -28,7 +27,7 @@ class ExamMockerService:
     def mock_exam(
         self,
         version: int,
-        source_path: str | pathlib.Path | File,
+        source_path: str | Path | File,
         n_pages: int,
         short_name: str,
     ) -> bytes:
@@ -36,21 +35,27 @@ class ExamMockerService:
 
         Returns: a bytes object containing the document.
         """
+        spec = SpecificationService.get_the_spec()
+        num_questions = SpecificationService.get_n_questions()
+        num_versions = SpecificationService.get_n_versions()
+        print(spec)
+        print(type(spec))
         with tempfile.TemporaryDirectory() as tmpdirname:
-            with fitz.open(source_path) as pdf_doc:
-                for i in range(n_pages):
-                    qr_codes = create_QR_codes(
-                        1, i + 1, version, "00000", pathlib.Path(tmpdirname)
-                    )  # dummy values
-                    page = pdf_doc[i]
-                    odd = i % 2 == 0
-                    pdf_page_add_labels_QRs(
-                        page,
-                        short_name,
-                        f"Mock exam v {version} pg {i+1}",
-                        qr_codes,
-                        odd=odd,
-                    )
+            tmpdir = Path(tmpdirname)
+            # bit naughty, we know we only need this one version, so pass None for
+            # others; seems likely this will make some linter unhappy!
+            # sources = [None] * num_versions
+            # sources[version] = source_path
+            # TODO: yuck even worse
+            sources = [source_path] * num_versions
+            f = make_PDF(
+                spec,
+                0,
+                {n: version for n in range(1, num_questions + 1)},
+                where=tmpdir,
+                source_versions=sources,
+            )
+            with pymupdf.open(f) as pdf_doc:
                 return pdf_doc.tobytes()
 
     def mock_ID_page(
@@ -68,7 +73,8 @@ class ExamMockerService:
         from .SourceService import _get_source_file
 
         short_name = SpecificationService.get_short_name_slug()
-        source_path = pathlib.Path(_get_source_file(version).path)
+        # TODO: Issue #3888, local path access may fail on remote file storage
+        source_path = Path(_get_source_file(version).path)
         id_page_number = SpecificationService.get_id_page_number()
         return self._make_prename_box_page(
             version,
@@ -84,7 +90,7 @@ class ExamMockerService:
     def _make_prename_box_page(
         self,
         version: int,
-        source_path: str | pathlib.Path | File,
+        source_path: str | Path | File,
         page_num: int,
         short_name: str,
         xcoord: float,
@@ -97,11 +103,11 @@ class ExamMockerService:
         Returns: a bytes object containing the id page as a png or pdf, depending on `return_pdf`.
         """
         with tempfile.TemporaryDirectory() as tmpdirname:
-            with fitz.open(source_path) as pdf_doc:
+            with pymupdf.open(source_path) as pdf_doc:
                 pdf_doc.select([page_num - 1])
                 ID_page = pdf_doc[0]
                 qr_codes = create_QR_codes(
-                    1, 1, version, "00000", pathlib.Path(tmpdirname)
+                    1, 1, version, "00000", Path(tmpdirname)
                 )  # dummy values
                 odd = page_num % 2 != 0
                 pdf_page_add_labels_QRs(

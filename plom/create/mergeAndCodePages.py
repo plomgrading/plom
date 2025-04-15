@@ -399,7 +399,7 @@ def make_PDF(
     no_qr: bool = False,
     fakepdf: bool = False,
     *,
-    where=None,
+    where: Path | None = None,
     source_versions_path: Path | str | None = None,
     source_versions: list[Path] | None = None,
     font_subsetting: bool | None = None,
@@ -435,8 +435,7 @@ def make_PDF(
             writing new code.
 
     Keyword Args:
-        where (pathlib.Path/None): where to save the files, with some
-            default if omitted.
+        where: where to save the files, with some default if omitted.
         source_versions: ordered list of locations of the source-version
             files.  Mutually-exclusive with ``source_versions_path``.
         source_versions_path: location of the source versions directory.
@@ -530,7 +529,7 @@ def make_PDF(
 
 
 def create_invalid_QR_and_bar_codes(dur: pathlib.Path) -> list[pathlib.Path]:
-    """Creates qr-codes and barcodes to make sure we handle invalid codes.
+    """Creates qr-codes and barcodes to make sure we handle invalid codes, for testing.
 
     More precisely, it creates 4 png images.
         * an invalid plom qr-code (read by plom)
