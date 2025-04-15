@@ -165,7 +165,7 @@ def isContiguous(L: list[str | int]) -> bool:
     return True
 
 
-def build_page_to_group_dict(spec) -> dict[int, str]:
+def build_page_to_group_name_dict(spec) -> dict[int, str]:
     """Given a valid spec return a dict that translates each page to its containing group.
 
     Args:
@@ -567,7 +567,7 @@ class SpecVerifier:
         return d
 
     def group_label_from_page(self, pagenum):
-        return build_page_to_group_dict(self)[pagenum]
+        return build_page_to_group_name_dict(self)[pagenum]
 
     def verify(
         self, *, verbose: str | None | bool = False, _legacy: bool = True

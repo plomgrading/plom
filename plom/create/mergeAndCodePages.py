@@ -21,7 +21,7 @@ import segno
 
 from plom.create import paperdir
 from plom.spec_verifier import (
-    build_page_to_group_dict,
+    build_page_to_group_name_dict,
     build_page_to_version_dict,
     get_question_labels,
 )
@@ -71,6 +71,16 @@ def create_QR_codes(
     return qr_file
 
 
+def label_for_top_of_page(paper: str | int, group: str, page: int) -> str:
+    """Format the text label that appears at the top of each page.
+
+    If paper is a string, show it as-is, else zero-pad to 4 digits.
+    """
+    if not isinstance(paper, str):
+        paper = f"{paper:04}"
+    return f"Test {paper} {group:5} p. {page}"
+
+
 def _create_QRcoded_pdf(
     spec: dict[str, Any],
     papernum: int,
@@ -106,7 +116,7 @@ def _create_QRcoded_pdf(
         RuntimeError: one or more of your version<N>.pdf files not found.
     """
     # from spec get the mapping from page to group
-    page_to_group = build_page_to_group_dict(spec)
+    page_to_group_name = build_page_to_group_name_dict(spec)
     # also build page to version mapping from spec and the question-version dict
     page_to_version = build_page_to_version_dict(spec, qvmap_row)
 
@@ -139,9 +149,8 @@ def _create_QRcoded_pdf(
     #     )
 
     for p in range(1, spec["numberOfPages"] + 1):
-        # name of the group to which page belongs
-        group = page_to_group[p]
-        text = f"Test {papernum:04} {group:5} p. {p}"
+        group = page_to_group_name[p]
+        text = label_for_top_of_page(papernum, group, p)
         odd: bool | None = (p - 1) % 2 == 0
         if no_qr:
             odd = None
