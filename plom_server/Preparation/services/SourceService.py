@@ -255,13 +255,7 @@ def store_reference_images(source_version: int):
     Uses the exam mocker to put qr codes stamps in correct pages.
     Then stores the images with that qr-code information.
     """
-    mocker = ExamMockerService()
-
-    source_pdf_obj = PaperSourcePDF.objects.get(version=source_version)
-
-    # TODO: Issue #3888 this does direct file access?  Why else would it need `source_path`...
-    _source_path = Path(source_pdf_obj.source_pdf.path)
-    mock_exam_pdf_bytes = mocker.mock_exam(source_version, _source_path)
+    mock_exam_pdf_bytes = ExamMockerService.mock_exam(source_version)
     doc = pymupdf.Document(stream=mock_exam_pdf_bytes)
 
     with tempfile.TemporaryDirectory() as _tmpdir:

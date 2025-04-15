@@ -24,17 +24,25 @@ from .preparation_dependency_service import assert_can_modify_prenaming_config
 class ExamMockerService:
     """Take an uploaded source file and stamp dummy QR codes/text."""
 
-    def mock_exam(
-        self,
-        version: int,
-        source_path: str | Path | File,
-    ) -> bytes:
+    @staticmethod
+    def mock_exam(version: int) -> bytes:
         """Create the mock exam.
 
-        Returns: a bytes object containing the document.
+        Args:
+            version: which version to mock.
+
+        Returns:
+            A bytes object containing the document.
         """
         spec = SpecificationService.get_the_spec()
         num_questions = SpecificationService.get_n_questions()
+
+        # TODO: refactor to delocalize this import, SourceService and mocker are circular
+        from .SourceService import _get_source_file
+
+        # TODO: Issue #3888 this does direct file access, fails for remote storage?
+        source_path = Path(_get_source_file(version).path)
+
         # ensure mocked papers won't scan by using wrong public code
         if spec["publicCode"] == "00000":
             spec["publicCode"] = "99999"
