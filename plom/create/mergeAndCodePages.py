@@ -159,12 +159,12 @@ def _create_QRcoded_pdf(
             ver = page_to_version[p]
             qr_files = create_QR_codes(papernum, p, ver, spec["publicCode"], tmpdir)
 
-        if paperstr is None:
-            text = label_for_top_of_page(papernum, page_to_group_name[p], p)
-        else:
-            text = label_for_top_of_page(paperstr, page_to_group_name[p], p)
-
-        pdf_page_add_labels_QRs(exam[p - 1], spec["name"], text, qr_files, odd=odd)
+        label = label_for_top_of_page(
+            papernum if paperstr is None else paperstr,
+            page_to_group_name[p],
+            p,
+        )
+        pdf_page_add_labels_QRs(exam[p - 1], spec["name"], label, qr_files, odd=odd)
 
     for ver, pdf in pdf_version.items():
         pdf.close()
