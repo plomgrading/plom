@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022-2023 Edith Coates
-    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -50,13 +50,29 @@
         </div>
         <div class="fw-light">
             <h5>Hints and notes</h5>
-            <p>
-                For now, the file can optionally include the
-                &ldquo;<tt>publicCode</tt>&rdquo; and &ldquo;<tt>privateSeed</tt>&rdquo;:
-                perhaps this should require explicitly checking a box in the future.
-                <br />
-                If you include non-ASCII characters, the file should use the UTF-8 encoding.
-            </p>
+            <ul>
+                <li>
+                    You can use this feature to reuse a specification:
+                    e.g., if last year's exam was similar in structure
+                    to this one.
+                </li>
+                <li>
+                    However, the upload will fail if the file contains the
+                    &ldquo;<tt>publicCode</tt>&rdquo; or
+                    &ldquo;<tt>privateSeed</tt>&rdquo; fields,
+                    which are used to detect accidental uploads of papers
+                    from a different assessment.
+                </li>
+                <li>
+                    (If you <em>want</em> to duplicate the publicCode then
+                    then you can modify the publicCode manually after
+                    uploading&mdash;you should think carefully about this.)
+                </li>
+                <li>
+                    If you include non-ASCII characters, the file should use
+                    the UTF-8 encoding.
+                </li>
+            </ul>
         </div>
     </div>
 {% endblock main_content %}
