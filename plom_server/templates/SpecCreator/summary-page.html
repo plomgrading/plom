@@ -1,7 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2022 Edith Coates
-    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2024 Andrew Rechnitzer
     Copyright (C) 2025 Philip D. Loewen
 -->
@@ -72,6 +72,10 @@
                         <dt class="col-sm-2">Total marks</dt>
                         <dd class="col-sm-10">
                             {{ spec.totalMarks }}
+                        </dd>
+                        <dt class="col-sm-2">Public Code</dt>
+                        <dd class="col-sm-10">
+                            {{ spec.publicCode }}
                         </dd>
                         {% for i in spec.question %}
                             <!-- heads up: using HTMX here -->
