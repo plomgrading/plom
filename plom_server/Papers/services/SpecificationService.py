@@ -9,7 +9,7 @@
 from copy import deepcopy
 import html
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.text import slugify
@@ -63,7 +63,7 @@ def validate_spec_from_dict(spec_dict: dict[str, Any]) -> bool:
 def load_spec_from_dict(
     spec_dict: dict[str, Any],
     *,
-    public_code: Optional[str] = None,
+    public_code: str | None = None,
 ) -> Specification:
     """Load a test spec from a dictionary and save to the database.
 
@@ -80,6 +80,8 @@ def load_spec_from_dict(
 
     Raises:
         PlomDependencyConflict: if the spec cannot be modified.
+        serializers.ValidationError: TODO: comment where this is actually raised
+            in the code below... maybe is_valid()?
     """
     # this will Raise a PlomDependencyConflict if cannot modify the spec
     assert_can_modify_spec()
@@ -92,6 +94,8 @@ def load_spec_from_dict(
     if "question" in test_dict.keys():
         test_dict["question"] = question_list_to_dict(test_dict["question"])
     serializer = SpecSerializer(data=test_dict)
+
+    # TODO: maybe we should pass raise_exception=True here instead?
     assert serializer.is_valid(), "Unexpectedly invalid serializer"
     valid_data = serializer.validated_data
 

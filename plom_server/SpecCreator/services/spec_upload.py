@@ -86,7 +86,8 @@ class SpecificationUploadService:
 
         Raises:
             ValueError: no spec to validate
-            ValidationError: TODO: probably?
+            serializers.ValidationError: the ``.detail`` field will contain
+                a list of what is wrong.
         """
         if not self.spec_dict:
             raise ValueError("Cannot find specification to validate.")

@@ -67,8 +67,9 @@ class SpecSerializer(serializers.ModelSerializer):
 
         Raises:
             ValueError: explaining what is invalid.
-            ValidationError: in this case the ``.detail`` field will contain
-                a list of what is wrong.
+                TODO: maybe these should be re-raised as serializers.ValidationErrors
+            serializers.ValidationError: in this case the ``.detail``
+                field will contain a list of what is wrong.
         """
         if not super().is_valid(raise_exception=raise_exception):
             return False
