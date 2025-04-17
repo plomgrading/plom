@@ -75,6 +75,10 @@ class SpecSerializer(serializers.ModelSerializer):
             return False
 
         data_with_dummy_num_to_produce = {**deepcopy(self.data), "numberToProduce": -1}
+        existing_publicCode = data_with_dummy_num_to_produce.get("publicCode", None)
+        if existing_publicCode:
+            # raise serializers.ValidationError(...)
+            raise ValueError("Not allowed to specify a publicCode directly")
         try:
             vlad = SpecVerifier(data_with_dummy_num_to_produce)
             vlad.verify(_legacy=False)
