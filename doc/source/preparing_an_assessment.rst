@@ -156,7 +156,7 @@ and create the actual QR-coded PDF files to print for you assessment.
 Technical docs
 --------------
 
-* For scripting, the command-line tools `django-admin plom_preparation_test_spec`,
+* For scripting, the command-line tools `django-admin plom_preparation_spec`,
   `django-admin plom_qvmap`, `django-admin plom_build_paper_pdfs`, and others
   can used.
 

@@ -268,10 +268,10 @@ def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
 
 
 def upload_demo_assessment_spec_file() -> None:
-    """Use 'plom_preparation_test_spec' to upload a demo assessment spec."""
+    """Use 'plom_preparation_spec' to upload a demo assessment spec."""
     print("Uploading demo assessment spec")
     spec_file = demo_files / "demo_assessment_spec.toml"
-    run_django_manage_command(f"plom_preparation_test_spec upload {spec_file}")
+    run_django_manage_command(f"plom_preparation_spec upload {spec_file}")
 
 
 def _build_with_and_without_soln(source_path: Path) -> None:
