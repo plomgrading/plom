@@ -200,14 +200,14 @@ def getPaperPageVersion(tpv: str) -> str:
     """Return the paper, page, version substring of a TPV string.
 
     Args:
-        tpv: a TPV string of the form "TTTTTPPPVVVOCCCCC",
+        tpv: a TPV string of the form "TTTTTPPPVVOCCCCCC",
             typically from a QR-code
 
     Returns:
         A substring of the original TPV string,
         containing the paper number, page number and version number.
     """
-    return tpv[0:11]
+    return tpv[0:10]
 
 
 def parse_paper_page_version(ppv: str) -> tuple[int, int, int]:
