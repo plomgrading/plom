@@ -1,24 +1,33 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023, 2025 Colin B. Macdonald
+# Copyright (C) 2025 Philip D. Loewen
 
 from rest_framework import serializers
 from rest_framework.response import Response
 
-import sys  # PDL wants this for debugging
-import datetime
+import datetime, pytz
+import sys
 
 
-def debugnote(text: str, newline: bool = False):
-    dt = datetime.timedelta(hours=-7)
-    now = datetime.datetime.now() + dt
+def debugnote(text: str, newline: bool = False) -> None:
+    """Print given text with an opening datestamp. Useful for old-style debugging.
+
+    Args:
+        text: String to print
+        newline: Boolean to activate an initial newline
+
+    Returns:
+        None
+    """
+    myZone = "America/Vancouver"
+    now = datetime.datetime.now(pytz.timezone(myZone))
     prefix = now.strftime("%Y-%m-%d %H:%M:%S.%f")[:22]
     print(("\n" if newline else "") + prefix + ": " + text)
-    sys.stdout.flush()
+    sys.stdout.flush()  # Don't let buffering delay delivery!
     sys.stderr.flush()
 
 
 def _error_response(e: Exception | str, status) -> Response:
-    debugnote("<><> _err_response: Starting.")
     # status is e.g., `status.HTTP_404_NOT_FOUND`
     # I think those are int but not sure that's the right type
     r = Response(status=status)
@@ -34,6 +43,4 @@ def _error_response(e: Exception | str, status) -> Response:
         (r.reason_phrase,) = e.args
         return r
     r.reason_phrase = str(e)
-    debugnote("<><> _err_response: reason_phrase follows:\n" + r.reason_phrase)
-    debugnote("<><> _err_response: Next line is return.")
     return r

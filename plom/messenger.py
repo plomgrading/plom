@@ -45,18 +45,6 @@ from plom.plom_exceptions import (
     PlomVersionMismatchException,
 )
 
-
-import sys  # PDL wants this for debugging
-import datetime
-
-
-def debugnote(text: str):
-    prefix = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:22]
-    print(prefix + ": " + text)
-    sys.stdout.flush()
-    sys.stderr.flush()
-
-
 __all__ = [
     "Messenger",
     "ManagerMessenger",
@@ -1172,63 +1160,51 @@ class Messenger(BaseMessenger):
         return self.get_spec()
 
     def new_server_patch_spec(self) -> None:
-        """Debug thing always errors out."""
+        """Send a PATCH request to the API endpoint for the spec. For debugging.
+
+        The PATCH method has no effect. The API says this when called.
+
+        Args: None
+
+        Returns: None
+        """
         try:
-            debugnote("** new_server_patch_spec: try launching patch_auth.")
             response = self.patch_auth(
                 "/api/beta/spec",
                 json={
                     "key": "value",
                 },
-                timeout=(2, 3),  # TODO: Remove later. PDL.
             )
-            debugnote("** new_server_patch_spec: Returned from patch_auth. Exception?")
             response.raise_for_status()
-            debugnote(
-                "** new_server_patch_spec: Got past the response.raise_for_status line. Done here."
-            )
-            return None
         except Exception as e:
-            debugnote(
-                f"new_server_patch_spec: Exception noted. Specifically, {e}. Returning."
-            )
             raise PlomSeriousException(
                 f"In new_server_patch_spec, {e}"
             ) from None  # TODO: Experimental - PDL
-            return None
+        return None
 
-    def new_server_upload_spec(self, spec_toml_string: str) -> dict:
+    def new_server_upload_spec(self, spec_toml_string: str) -> None:
         """Upload an assessment spec to the server.
 
         Args:
-            spec_toml_string: The string you get by reading a valid spec.toml file
+            spec_toml_string: The utf-8 string you get by reading a valid spec.toml file
 
         Exceptions:
             PlomConflict: server already has a database, cannot accept spec.
-            ValueError: invalid spec
+            ValueError: invalid spec.
             PlomSeriousException: other errors.
 
         Returns:
-            dict containing the uploaded spec, freshly extracted from database
+            None
         """
         with self.SRmutex:
-
             try:
-                debugnote("** new_server_upload_spec: try launching post_auth.")
                 response = self.post_auth(
                     "/api/beta/spec",
                     json={
                         "spec_toml": spec_toml_string,
                     },
-                    #                    timeout=(2, 3),  # TODO: Remove later. PDL.
-                )
-                debugnote(
-                    "** new_server_upload_spec: Returned from post_auth. Exception?"
                 )
                 response.raise_for_status()
-                debugnote(
-                    "** new_server_upload_spec: Got past the response.raise_for_status line. Done here."
-                )
             except requests.HTTPError as e:
                 if response.status_code == 400:
                     raise ValueError(response.reason) from None
@@ -1236,5 +1212,4 @@ class Messenger(BaseMessenger):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-        debugnote("** new_server_upload_spec: Next line is return statement.")
-        return self.get_spec()
+        return None
