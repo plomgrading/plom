@@ -28,7 +28,7 @@ def upload_spec(toml: Path, *, msgr) -> bool:
     except PermissionError:
         print(f"Error: Cannot read file '{toml}'. Assessment spec unchanged.")
         return rc
-    except Exception as e:
+    except:
         print("Something went wrong. Assessment spec unchanged.")
         return rc
 
