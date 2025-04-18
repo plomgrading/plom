@@ -16,15 +16,21 @@ def upload_spec(toml: Path, *, msgr) -> bool:
         msgr:  An active Messenger object.
 
     Returns:
-        (True): Always
+        (True)  Spec got updated
+        (False) Opposite of true
     """
+    rc = False  # Nothing achieved *yet*
     try:
         filepointer = open(toml, "rb")
+    except FileNotFoundError:
+        print(f"Error: File '{toml}' not found. Assessment spec unchanged.")
+        return rc
+    except PermissionError:
+        print(f"Error: Cannot read file '{toml}'. Assessment spec unchanged.")
+        return rc
     except Exception as e:
-        print(
-            f"Error: Could not open file '{toml}' for reading. Assessment spec unchanged."
-        )
-        return False
+        print("Something went wrong. Assessment spec unchanged.")
+        return rc
 
     tomlbytes = filepointer.read()
     tomlstring = tomlbytes.decode("utf-8")
@@ -35,8 +41,9 @@ def upload_spec(toml: Path, *, msgr) -> bool:
         print(
             f"Success: Server spec now addresses {check['name']}, {check['longName']}."
         )
+        rc = True
     except Exception as e:
         print(f"Upload failed with exception: {e}")
-        return False
+        return rc
 
-    return True  # Could do something fancier after looking at return value above
+    return rc

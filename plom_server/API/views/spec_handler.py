@@ -12,9 +12,7 @@ from rest_framework import status
 
 from plom_server.Papers.services import SpecificationService
 from plom_server.SpecCreator.services import SpecificationUploadService
-from plom_server.Preparation.services.preparation_dependency_service import (
-    assert_can_modify_spec,
-)
+
 from .utils import _error_response
 from .utils import debugnote
 

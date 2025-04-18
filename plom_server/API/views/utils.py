@@ -5,7 +5,8 @@
 from rest_framework import serializers
 from rest_framework.response import Response
 
-import datetime, pytz
+import datetime
+import pytz
 import sys
 
 
