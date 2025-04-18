@@ -56,12 +56,7 @@ class Command(BaseCommand):
     def remove_spec(self) -> None:
         if not SpecificationService.is_there_a_spec():
             raise CommandError("No specification uploaded - no action taken.")
-
-        service = SpecificationUploadService()
-        try:
-            service.delete_spec()
-        except ValueError as e:
-            raise CommandError(e)
+        SpecificationService.remove_spec()
         self.stdout.write("Assessment specification was removed.")
 
     def add_arguments(self, parser: CommandParser) -> None:
