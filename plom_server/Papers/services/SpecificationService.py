@@ -80,20 +80,27 @@ def load_spec_from_dict(
 
     Raises:
         PlomDependencyConflict: if the spec cannot be modified.
+        ValueError: existing public code.
         serializers.ValidationError: TODO: comment where this is actually raised
             in the code below... maybe is_valid()?
     """
     # this will Raise a PlomDependencyConflict if cannot modify the spec
     assert_can_modify_spec()
 
-    test_dict = deepcopy(spec_dict)  # Defend input dict from changes in next stanza
+    spec_dict = deepcopy(spec_dict)  # Defend input dict from changes
+
+    # Note: the serializer makes these codes so it seems too late the ask it there
+    existing_publicCode = spec_dict.get("publicCode", None)
+    if existing_publicCode:
+        # raise serializers.ValidationError(...)
+        raise ValueError("Not allowed to specify a publicCode directly")
 
     # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
     # Also, this function does not care if there are no questions in the spec dictionary. It assumes
     # the serializer/SpecVerifier will catch it.
-    if "question" in test_dict.keys():
-        test_dict["question"] = question_list_to_dict(test_dict["question"])
-    serializer = SpecSerializer(data=test_dict)
+    if "question" in spec_dict.keys():
+        spec_dict["question"] = question_list_to_dict(spec_dict["question"])
+    serializer = SpecSerializer(data=spec_dict)
 
     # TODO: maybe we should pass raise_exception=True here instead?
     assert serializer.is_valid(), "Unexpectedly invalid serializer"
