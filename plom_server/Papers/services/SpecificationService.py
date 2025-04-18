@@ -214,7 +214,6 @@ def store_validated_spec(validated_spec: dict) -> None:
     serializer.create(validated_spec)
 
 
-@transaction.atomic
 def remove_spec() -> None:
     """Removes the specification from the db, if possible.
 
@@ -228,8 +227,9 @@ def remove_spec() -> None:
         raise ObjectDoesNotExist("The database does not contain a specification.")
 
     assert_can_modify_spec()
-    Specification.objects.all().delete()
-    SpecQuestion.objects.all().delete()
+    with transaction.atomic():
+        Specification.objects.all().delete()
+        SpecQuestion.objects.all().delete()
 
 
 @transaction.atomic

@@ -5,9 +5,11 @@
 
 from pathlib import Path
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.utils.text import slugify
 
+from plom.plom_exceptions import PlomDependencyConflict
 from plom_server.Papers.services import SpecificationService
 from plom_server.SpecCreator.services import SpecificationUploadService
 
@@ -54,9 +56,10 @@ class Command(BaseCommand):
         self.stdout.write("Assessment specification uploaded to server.")
 
     def remove_spec(self) -> None:
-        if not SpecificationService.is_there_a_spec():
-            raise CommandError("No specification uploaded - no action taken.")
-        SpecificationService.remove_spec()
+        try:
+            SpecificationService.remove_spec()
+        except (ObjectDoesNotExist, PlomDependencyConflict) as e:
+            raise CommandError(e) from e
         self.stdout.write("Assessment specification was removed.")
 
     def add_arguments(self, parser: CommandParser) -> None:
