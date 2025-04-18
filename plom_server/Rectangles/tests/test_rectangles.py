@@ -156,7 +156,8 @@ class RectangleServiceTests(TestCase):
         img_path = resources.files(_Scan_tests) / "id_page_img.png"
         # mypy stumbling over Traversable
         img = Image.open(img_path)  # type: ignore[arg-type]
-        img = img.convert("RGB")
+        img = img.convert("RGB")  # type: ignore[assignment]
+
         img_bytes = img_path.read_bytes()
         codes = QRextract(img_path)
         parsed_codes = ScanService.parse_qr_code([codes])

@@ -234,7 +234,7 @@ class MoreScanServiceTests(TestCase):
         codes_original = ScanService.parse_qr_code([qrs_original])
         # mypy complains about Traversable
         image_original = Image.open(image_original_path)  # type: ignore[arg-type]
-        image_original = image_original.convert("RGB")
+        image_original = image_original.convert("RGB")  # type: ignore[assignment]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_flipped_path = pathlib.Path(tmpdir) / "flipped_no_exif.jpeg"
@@ -279,7 +279,7 @@ class MoreScanServiceTests(TestCase):
         image_original_path = resources.files(_Scan_tests) / "id_page_img.png"
         # mypy complains about Traversable
         image_original = Image.open(image_original_path)  # type: ignore[arg-type]
-        image_original = image_original.convert("RGB")
+        image_original = image_original.convert("RGB")  # type: ignore[assignment]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_exif_180_path = pathlib.Path(tmpdir) / "upright_exif_180.jpeg"
@@ -307,7 +307,7 @@ class MoreScanServiceTests(TestCase):
         codes_original = ScanService.parse_qr_code([qrs_original])
         # mypy complains about Traversable
         image_original = Image.open(image_original_path)  # type: ignore[arg-type]
-        image_original = image_original.convert("RGB")
+        image_original = image_original.convert("RGB")  # type: ignore[assignment]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_flipped_path = pathlib.Path(tmpdir) / "flipped_exif_180.jpeg"
@@ -351,7 +351,7 @@ class MoreScanServiceTests(TestCase):
         codes_original = ScanService.parse_qr_code([qrs_original])
         # mypy complains about Traversable
         image_original = Image.open(image_original_path)  # type: ignore[arg-type]
-        image_original = image_original.convert("RGB")
+        image_original = image_original.convert("RGB")  # type: ignore[assignment]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_exif_90_path = pathlib.Path(tmpdir) / "rot_exif_90.jpeg"
