@@ -112,29 +112,52 @@ class RectangleServiceTests(TestCase):
         self.assertAlmostEqual(r["top_f"], 0.94, delta=0.05)
         self.assertAlmostEqual(r["bottom_f"], 1.04, delta=0.05)
 
-    def test_rect_affine_matrix_no_correction(self) -> None:
-        """Identity for affine transformation matrix."""
+    def test_rect_affine_matrix_minimal_correction(self) -> None:
+        """Close to identity for affine transformation matrix."""
         img_path = resources.files(_Scan_tests) / "id_page_img.png"
-
         codes = QRextract(img_path)
         parsed_codes = ScanService.parse_qr_code([codes])
-        print(codes)
-        print(parsed_codes)
         rd = get_reference_rectangle_from_QR_data(parsed_codes)
-        print(rd)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
         matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)
         expected_rot = np.array([[1.0, 0.0], [0.0, 1.0]])
         expected_shift = np.array([[0.0], [0.0]])
-        print(matrix)
         rot = matrix[:, 0:-1]
         shift = matrix[:, 2:]
-        print(rot)
-        print(shift)
-        print(rot - expected_rot)
-        print(expected_shift - shift)
         self.assertLess(np.linalg.norm(rot - expected_rot, "fro"), 0.001)
+        # at most one pixel of error in shifts
         self.assertLess(np.linalg.norm(shift - expected_shift, "fro"), 1.0)
+
+    def test_rect_precisely_affine_matrix_no_correction(self) -> None:
+        img_path = resources.files(_Scan_tests) / "id_page_img.png"
+        codes = QRextract(img_path)
+        # hack our own integer values in, so we get a precise transform
+        codes["NE"]["x"] = 1500
+        codes["NE"]["y"] = 100
+        codes["SE"]["x"] = 1500
+        codes["SE"]["y"] = 2000
+        codes["SW"]["x"] = 100
+        codes["SW"]["y"] = 2000
+        parsed_codes = ScanService.parse_qr_code([codes])
+        rd = get_reference_rectangle_from_QR_data(parsed_codes)
+        ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
+        matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)
+        expected_matrix = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+        self.assertLess(np.linalg.norm(matrix - expected_matrix, "fro"), 0.000001)
+
+        # Now try the other corner
+        codes["NW"] = codes.pop("NE")
+        codes["NW"]["x"] = 100
+        codes["SE"]["x"] = 1500
+        codes["SE"]["y"] = 2000
+        codes["SW"]["x"] = 100
+        codes["SW"]["y"] = 2000
+        parsed_codes = ScanService.parse_qr_code([codes])
+        rd = get_reference_rectangle_from_QR_data(parsed_codes)
+        ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
+        matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)
+        expected_matrix = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+        self.assertLess(np.linalg.norm(matrix - expected_matrix, "fro"), 0.000001)
 
     def test_rect_affine_matrix_5degree_rot(self) -> None:
         """Rotation of image, and affine transformation."""
