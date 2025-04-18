@@ -110,9 +110,7 @@ urlpatterns = [
     ),
     path(
         "info/spec",
-        #        Try just pointing this URI to the same endpoint as above
-        #        BogusSpecificationHandler.as_view(),
-        #        name="b_api_spec_handler",
+        #        An old URI. Just aim it at the same endpoint as above.
         SpecificationHandler.as_view(),
         name="api_spec_handler",
     ),

@@ -793,7 +793,10 @@ class BaseMessenger:
         with self.SRmutex:
             try:
                 if self.is_legacy_server():
+                    # legacy will give the spec to anybody, authorized or not
                     response = self.get("/info/spec")
+                elif self.is_server_api_less_than(114):
+                    response = self.get_auth("/info/spec")
                 else:
                     response = self.get_auth("/api/beta/spec")
                 response.raise_for_status()
