@@ -127,6 +127,7 @@ class SpecificationUploadService:
             ValueError: various reasons for not being able to change
                 the spec.  Notably quietly returns None without an
                 exception when there is no spec.
+                TODO: Does not seem to return ValueError?
         """
         if not SpecificationService.is_there_a_spec():
             return
