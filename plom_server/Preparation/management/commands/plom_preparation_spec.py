@@ -11,7 +11,6 @@ from django.utils.text import slugify
 
 from plom.plom_exceptions import PlomDependencyConflict
 from plom_server.Papers.services import SpecificationService
-from plom_server.SpecCreator.services import SpecificationUploadService
 
 
 class Command(BaseCommand):
@@ -48,11 +47,11 @@ class Command(BaseCommand):
 
     def upload_spec(self, spec_file: str | Path) -> None:
         try:
-            service = SpecificationUploadService(toml_file_path=spec_file)
-            service.save_spec()
-        except ValueError as e:
+            SpecificationService.load_spec_from_toml(pathname=spec_file)
+        except (ValueError, PlomDependencyConflict) as e:
+            # TODO: maybe other exceptions are possible?  See TODOs about
+            # serializers.ValidationError in SpecificationService.py
             raise CommandError(e) from e
-
         self.stdout.write("Assessment specification uploaded to server.")
 
     def remove_spec(self) -> None:
