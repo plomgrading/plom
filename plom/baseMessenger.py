@@ -45,6 +45,22 @@ from plom.plom_exceptions import (
     PlomNoServerSupportException,
 )
 
+# TODO - PDL - Clean this out later #########################
+import datetime
+import sys
+
+
+def debugnote(text: str, newline: bool = False):
+    dt = datetime.timedelta(hours=-7)
+    now = datetime.datetime.now() + dt
+    prefix = now.strftime("%Y-%m-%d %H:%M:%S.%f")[:22]
+    print(("\n" if newline else "") + prefix + ": " + text)
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+
+#############################################################
+
 
 Plom_API_Version = 114  # Our API version
 Plom_Legacy_Server_API_Version = 60
@@ -311,6 +327,11 @@ class BaseMessenger:
             kwargs["json"] = json
 
         assert self.session
+        debugnote(
+            "** post_auth in baseMessenger is about to send session.post to "
+            + self.base
+            + url
+        )  # TODO - PDL remove this
         return self.session.post(self.base + url, *args, **kwargs)
 
     def put(self, url: str, *args, **kwargs) -> requests.Response:

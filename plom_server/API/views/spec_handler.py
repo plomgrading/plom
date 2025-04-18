@@ -27,9 +27,11 @@ import sys  # PDL wants this for debugging
 import datetime
 
 
-def debugnote(text: str):
-    prefix = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:22]
-    print(prefix + ": " + text)
+def debugnote(text: str, newline: bool = False):
+    dt = datetime.timedelta(hours=-7)
+    now = datetime.datetime.now() + dt
+    prefix = now.strftime("%Y-%m-%d %H:%M:%S.%f")[:22]
+    print(("\n" if newline else "") + prefix + ": " + text)
     sys.stdout.flush()
     sys.stderr.flush()
 
@@ -40,6 +42,9 @@ class SpecificationHandler(APIView):
     # PATCH /api/beta/spec
     def patch(self, request: Request) -> Response:
         """Testing code for HTTP PATCH method: this is just *always* an error."""
+        debugnote(
+            "SpecificationHandler: PATCH method starting. Return _error_response."
+        )
         prefix = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:22]
         return _error_response(
             prefix + ": We don't do PATCH here.", status.HTTP_400_BAD_REQUEST
@@ -73,13 +78,12 @@ class SpecificationHandler(APIView):
             (403) Modifications forbidden.
             (500) This never happens.
         """
-        debugnote("SpecificationHandler: Starting POST handling.")
+        debugnote("SpecificationHandler: Starting POST handling.", newline=True)
         spec_toml_string = request.data.get("spec_toml", "")  # Get the TOML string
         if len(spec_toml_string) == 0:
             debugnote("SpecificationHandler: String length 0 for spec_toml_string.")
             return _error_response(
-                "\nGiven TOML string has length 0. Assessment spec unchanged.\n"
-                + f"Details: {e}\n",
+                "Given TOML string has length 0. Assessment spec unchanged.",
                 status.HTTP_400_BAD_REQUEST,
             )
 
@@ -89,13 +93,11 @@ class SpecificationHandler(APIView):
         except ValueError as e:
             debugnote("SpecificationHandler: Failed to instantiate SUS.")
             # return Response({"badnews":"Bad TOML! Return code should be 400"}) # TODO - Remove this hack
-            # debugnote("SpecificationHandler: Should have returned, not printed this!")
+            debugnote("ValueError in SpecificationHandler!")
             prefix = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:22]
             return _error_response(
-                "\n"
-                + prefix
-                + ": Given TOML string was rejected. Consider pre-validating it.\n"
-                + f"Details: {e}\n",
+                "Given TOML string was rejected. Consider pre-validating it.\n"
+                + f"Details: {e}",
                 status.HTTP_400_BAD_REQUEST,
             )
 
@@ -107,10 +109,7 @@ class SpecificationHandler(APIView):
         except PlomDependencyConflict as e:
             prefix = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:22]
             return _error_response(
-                "\n"
-                + prefix
-                + ": Modifying the assessment spec is not allowed. Details:\n"
-                + f"{e}\n",
+                "Modifying the assessment spec is not allowed. Details:\n" + f"{e}",
                 status.HTTP_403_FORBIDDEN,
             )
 

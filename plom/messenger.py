@@ -1182,14 +1182,19 @@ class Messenger(BaseMessenger):
                 },
                 timeout=(2, 3),  # TODO: Remove later. PDL.
             )
-            debugnote("** new_server_patch_spec: Returned from post_auth. Exception?")
+            debugnote("** new_server_patch_spec: Returned from patch_auth. Exception?")
             response.raise_for_status()
             debugnote(
                 "** new_server_patch_spec: Got past the response.raise_for_status line. Done here."
             )
             return None
         except Exception as e:
-            debugnote("new_server_patch_spec: Exception noted. Returning.")
+            debugnote(
+                f"new_server_patch_spec: Exception noted. Specifically, {e}. Returning."
+            )
+            raise PlomSeriousException(
+                f"In new_server_patch_spec, {e}"
+            ) from None  # TODO: Experimental - PDL
             return None
 
     def new_server_upload_spec(self, spec_toml_string: str) -> dict:
@@ -1215,7 +1220,7 @@ class Messenger(BaseMessenger):
                     json={
                         "spec_toml": spec_toml_string,
                     },
-                    timeout=(2, 3),  # TODO: Remove later. PDL.
+                    #                    timeout=(2, 3),  # TODO: Remove later. PDL.
                 )
                 debugnote(
                     "** new_server_upload_spec: Returned from post_auth. Exception?"
