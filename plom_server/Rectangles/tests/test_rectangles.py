@@ -118,12 +118,16 @@ class RectangleServiceTests(TestCase):
 
         codes = QRextract(img_path)
         parsed_codes = ScanService.parse_qr_code([codes])
+        print(codes)
+        print(parsed_codes)
         rd = get_reference_rectangle_from_QR_data(parsed_codes)
+        print(rd)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
         matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)
         expected_matrix = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
         print(matrix)
         print(expected_matrix)
+        print(matrix - expected_matrix)
         self.assertLess(np.linalg.norm(matrix - expected_matrix, "fro"), 0.001)
 
     def test_rect_affine_matrix_5degree_rot(self) -> None:
