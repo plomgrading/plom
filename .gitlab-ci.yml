@@ -617,7 +617,8 @@ out-of-tree-scratch:
   image: fedora:42
   # when: manual
   before_script:
-    - dnf install -y gcc gcc-c++ cmake
+    - dnf install -y --setopt=install_weak_deps=False
+          gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview tex-charter tex-exam tex-preprint
           python3-passlib python3-pyqt6
@@ -702,7 +703,8 @@ fedora-django-tests:
   image: fedora:42
   when: manual
   before_script:
-    - dnf install -y gcc gcc-c++ cmake
+    - dnf install -y --setopt=install_weak_deps=False
+          gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview tex-charter tex-exam tex-preprint
           python3-passlib python3-pyqt6
