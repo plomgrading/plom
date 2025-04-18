@@ -120,6 +120,7 @@ class RectangleServiceTests(TestCase):
         rd = get_reference_rectangle_from_QR_data(parsed_codes)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
         matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)
+        assert matrix is not None
         expected_rot = np.array([[1.0, 0.0], [0.0, 1.0]])
         expected_shift = np.array([[0.0], [0.0]])
         rot = matrix[:, 0:-1]
@@ -158,6 +159,26 @@ class RectangleServiceTests(TestCase):
         matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)
         expected_matrix = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
         self.assertLess(np.linalg.norm(matrix - expected_matrix, "fro"), 0.000001)
+
+    def test_rect_fail_with_less_than_three_corners(self) -> None:
+        img_path = resources.files(_Scan_tests) / "id_page_img.png"
+        codes = QRextract(img_path)
+        # hack these a bit for testing: without a top point, we'll get None
+        codes.pop("NE")
+        codes.pop("NW")
+        parsed_codes = ScanService.parse_qr_code([codes])
+        rd = get_reference_rectangle_from_QR_data(parsed_codes)
+        ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
+        matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)
+        self.assertIsNone(matrix)
+
+        codes = QRextract(img_path)
+        codes.pop("SE")
+        parsed_codes = ScanService.parse_qr_code([codes])
+        rd = get_reference_rectangle_from_QR_data(parsed_codes)
+        ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
+        matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)
+        self.assertIsNone(matrix)
 
     def test_rect_affine_matrix_5degree_rot(self) -> None:
         """Rotation of image, and affine transformation."""
