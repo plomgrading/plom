@@ -9,7 +9,7 @@
 from copy import deepcopy
 import html
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.text import slugify
@@ -255,7 +255,7 @@ def get_shortname() -> str:
 
 
 @transaction.atomic
-def get_short_and_long_names_or_empty() -> Tuple[str, str]:
+def get_short_and_long_names_or_empty() -> tuple[str, str]:
     """Get the long and short names of the exam, or return empty strings."""
     try:
         spec = Specification.objects.get()
@@ -286,7 +286,7 @@ def get_id_page_number() -> int:
 
 
 @transaction.atomic
-def get_dnm_pages() -> List[int]:
+def get_dnm_pages() -> list[int]:
     """Get the list of do-no-mark page numbers.
 
     Exceptions:
@@ -297,7 +297,7 @@ def get_dnm_pages() -> List[int]:
 
 
 @transaction.atomic
-def get_question_pages() -> Dict[int, List[int]]:
+def get_question_pages() -> dict[int, list[int]]:
     """Get the pages of each question, indexed from one.
 
     Returns:
