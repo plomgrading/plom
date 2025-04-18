@@ -146,22 +146,22 @@ class MoreScanServiceTests(TestCase):
                 "page_info": page_info,
                 "tpv": tpv,
                 "quadrant": "2",
-                "x_coord": 166.5,
-                "y_coord": 272,
+                "x_coord": 1420,  # units of pixels
+                "y_coord": 140,
             },
             "SW": {
                 "page_info": page_info,
                 "tpv": tpv,
                 "quadrant": "3",
-                "x_coord": 173.75,
-                "y_coord": 2895.5,
+                "x_coord": 120,
+                "y_coord": 1866,
             },
             "SE": {
                 "page_info": page_info,
                 "tpv": tpv,
                 "quadrant": "4",
-                "x_coord": 2141,
-                "y_coord": 2883.5,
+                "x_coord": 1420,
+                "y_coord": 1866,
             },
         }
         for quadrant in code_dict.keys():
@@ -185,15 +185,15 @@ class MoreScanServiceTests(TestCase):
                 parsed_codes[quadrant]["tpv"],
                 code_dict[quadrant]["tpv"],
             )
-            self.assertTrue(
-                (parsed_codes[quadrant]["x_coord"] - code_dict[quadrant]["x_coord"])
-                / code_dict[quadrant]["x_coord"]
-                < 0.01
+            self.assertAlmostEqual(
+                parsed_codes[quadrant]["x_coord"],
+                code_dict[quadrant]["x_coord"],
+                delta=20,
             )
-            self.assertTrue(
-                (parsed_codes[quadrant]["y_coord"] - code_dict[quadrant]["y_coord"])
-                / code_dict[quadrant]["y_coord"]
-                < 0.01
+            self.assertAlmostEqual(
+                parsed_codes[quadrant]["y_coord"],
+                code_dict[quadrant]["y_coord"],
+                delta=20,
             )
 
     def test_parse_qr_codes_png_rotated_180(self) -> None:
