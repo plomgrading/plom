@@ -23,6 +23,7 @@ from django.utils import timezone
 from model_bakery import baker
 from PIL import Image
 
+from plom.tpv_utils import encodePaperPageVersion
 from plom.scan import QRextract, pdfmucker, rotate
 
 from .. import tests as _Scan_tests
@@ -78,7 +79,7 @@ class ScanServiceTests(TestCase):
         bundle_path.parent.rmdir()
 
         # upload_bundle should fail for non-pdf bundles
-        img_path = str(resources.files(_Scan_tests) / "page_img_good.png")
+        img_path = str(resources.files(_Scan_tests) / "id_page_img.png")
         with open(img_path, "rb") as fh:
             fh.seek(0)
             non_pdf_file_object = File(fh)
@@ -127,45 +128,38 @@ class MoreScanServiceTests(TestCase):
 
     def test_parse_qr_codes(self) -> None:
         """Test QR codes read and parsed correctly."""
-        img_path = resources.files(_Scan_tests) / "page_img_good.png"
+        img_path = resources.files(_Scan_tests) / "id_page_img.png"
         codes = QRextract(img_path)
         parsed_codes = ScanService.parse_qr_code([codes])
 
         assert parsed_codes
+        # note this info is highly specific to the tested image
+        page_info = {
+            "paper_id": 11,
+            "page_num": 1,
+            "version_num": 1,
+            "public_code": "411392",
+        }
+        tpv = encodePaperPageVersion(11, 1, 1)
         code_dict: dict[str, dict[str, Any]] = {
-            "NW": {
-                "page_info": {
-                    "paper_id": 6,
-                    "page_num": 4,
-                    "version_num": 1,
-                    "public_code": "93849",
-                },
+            "NE": {
+                "page_info": page_info,
+                "tpv": tpv,
                 "quadrant": "2",
-                "tpv": "00006004001",
                 "x_coord": 166.5,
                 "y_coord": 272,
             },
             "SW": {
-                "page_info": {
-                    "paper_id": 6,
-                    "page_num": 4,
-                    "version_num": 1,
-                    "public_code": "93849",
-                },
+                "page_info": page_info,
+                "tpv": tpv,
                 "quadrant": "3",
-                "tpv": "00006004001",
                 "x_coord": 173.75,
                 "y_coord": 2895.5,
             },
             "SE": {
-                "page_info": {
-                    "paper_id": 6,
-                    "page_num": 4,
-                    "version_num": 1,
-                    "public_code": "93849",
-                },
+                "page_info": page_info,
+                "tpv": tpv,
                 "quadrant": "4",
-                "tpv": "00006004001",
                 "x_coord": 2141,
                 "y_coord": 2883.5,
             },
@@ -204,7 +198,7 @@ class MoreScanServiceTests(TestCase):
 
     def test_parse_qr_codes_png_rotated_180(self) -> None:
         """Test QR codes read correctly after rotation."""
-        image_upright_path = resources.files(_Scan_tests) / "page_img_good.png"
+        image_upright_path = resources.files(_Scan_tests) / "id_page_img.png"
         qrs_upright = QRextract(image_upright_path)
         codes_upright = ScanService.parse_qr_code([qrs_upright])
         # mypy complains about Traversable
@@ -244,11 +238,12 @@ class MoreScanServiceTests(TestCase):
 
     def test_parse_qr_codes_jpeg_rotated_180_no_exif(self) -> None:
         """Test QR codes are read correctly, after rotating an upside-down jpeg page image with no exif."""
-        image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
+        image_original_path = resources.files(_Scan_tests) / "id_page_img.png"
         qrs_original = QRextract(image_original_path)
         codes_original = ScanService.parse_qr_code([qrs_original])
         # mypy complains about Traversable
         image_original = Image.open(image_original_path)  # type: ignore[arg-type]
+        image_original = image_original.convert("RGB")
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_flipped_path = pathlib.Path(tmpdir) / "flipped_no_exif.jpeg"
@@ -290,9 +285,10 @@ class MoreScanServiceTests(TestCase):
 
     def test_parse_qr_codes_jpeg_upright_exif_rot_180(self) -> None:
         """Test QR codes are read correctly after an upright page image with exif rotation of 180 is rotated."""
-        image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
+        image_original_path = resources.files(_Scan_tests) / "id_page_img.png"
         # mypy complains about Traversable
         image_original = Image.open(image_original_path)  # type: ignore[arg-type]
+        image_original = image_original.convert("RGB")
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_exif_180_path = pathlib.Path(tmpdir) / "upright_exif_180.jpeg"
@@ -315,11 +311,12 @@ class MoreScanServiceTests(TestCase):
 
     def test_parse_qr_codes_jpeg_upside_down_exif_180(self) -> None:
         """Test ScanService.parse_qr_code() when image is upside down, but exif indicates 180 rotation."""
-        image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
+        image_original_path = resources.files(_Scan_tests) / "id_page_img.png"
         qrs_original = QRextract(image_original_path)
         codes_original = ScanService.parse_qr_code([qrs_original])
         # mypy complains about Traversable
         image_original = Image.open(image_original_path)  # type: ignore[arg-type]
+        image_original = image_original.convert("RGB")
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_flipped_path = pathlib.Path(tmpdir) / "flipped_exif_180.jpeg"
@@ -358,11 +355,12 @@ class MoreScanServiceTests(TestCase):
 
     def test_parse_qr_codes_jpeg_exif_90(self) -> None:
         """Test ScanService.parse_qr_code() when image exif indicates 90 counterclockwise rotation."""
-        image_original_path = resources.files(_Scan_tests) / "page_img_good.png"
+        image_original_path = resources.files(_Scan_tests) / "id_page_img.png"
         qrs_original = QRextract(image_original_path)
         codes_original = ScanService.parse_qr_code([qrs_original])
         # mypy complains about Traversable
         image_original = Image.open(image_original_path)  # type: ignore[arg-type]
+        image_original = image_original.convert("RGB")
 
         with tempfile.TemporaryDirectory() as tmpdir:
             image_exif_90_path = pathlib.Path(tmpdir) / "rot_exif_90.jpeg"

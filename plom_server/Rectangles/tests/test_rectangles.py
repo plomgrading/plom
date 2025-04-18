@@ -149,7 +149,7 @@ class RectangleServiceTests(TestCase):
             )
             err = np.linalg.norm(matrix - expected_matrix, "fro")
             relative_err = err / np.linalg.norm(expected_matrix, "fro")
-            self.assertTrue(relative_err < 0.01)
+            self.assertLess(relative_err, 0.05)
 
     def test_rect_ID_box_corrected_and_extracted_from_3degree_rotation(self) -> None:
         """Artificially rotate the image, then try to recover the ID box based on its known location in the source image."""

@@ -474,10 +474,10 @@ class ScanService:
                         'paper_id': 1,
                         'page_num': 3,
                         'version_num': 1,
-                        'public_code': '93849',
+                        'public_code': '193849',
                     }
                     'quadrant': '1',
-                    'tpv': '00001003001',
+                    'tpv': '0000100301',
                     'x_coord': 2204,
                     'y_coord': 279.5
                 },
@@ -487,10 +487,10 @@ class ScanService:
                         'paper_id': 1,
                         'page_num': 3,
                         'version_num': 1,
-                        'public_code': '93849',
+                        'public_code': '193849',
                 }
                     'quadrant': '3',
-                    'tpv': '00001003001',
+                    'tpv': '0000100301',
                     'x_coord': 234,
                     'y_coord': 2909.5
                 },
@@ -500,10 +500,10 @@ class ScanService:
                         'paper_id': 1,
                         'page_num': 3,
                         'version_num': 1,
-                        'public_code': '93849',
+                        'public_code': '193849',
                     }
                     'quadrant': '4',
-                    'tpv': '00001003001',
+                    'tpv': '0000100301',
                     'x_coord': 2203,
                     'y_coord': 2906.5
                 }
