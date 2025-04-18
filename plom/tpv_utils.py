@@ -247,7 +247,7 @@ def encodePaperPageVersion(paper_number: str | int, p: str | int, v: str | int) 
 
     Args:
         paper_number: the test number, 0 ≤ test ≤ 99999
-        p: page number, 1 ≤ p ≤ 990
+        p: page number, 1 ≤ p ≤ 999
         v: version number, 1 ≤ v ≤ 99
 
     Returns:
