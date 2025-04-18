@@ -165,36 +165,27 @@ class MoreScanServiceTests(TestCase):
             },
         }
         for quadrant in code_dict.keys():
+            parsed = parsed_codes[quadrant]
+            truth = code_dict[quadrant]
             self.assertEqual(
-                parsed_codes[quadrant]["page_info"]["paper_id"],
-                code_dict[quadrant]["page_info"]["paper_id"],
-            )
-            self.assertEqual(
-                parsed_codes[quadrant]["page_info"]["page_num"],
-                code_dict[quadrant]["page_info"]["page_num"],
+                parsed["page_info"]["paper_id"],
+                truth["page_info"]["paper_id"],
             )
             self.assertEqual(
-                parsed_codes[quadrant]["page_info"]["version_num"],
-                code_dict[quadrant]["page_info"]["version_num"],
+                parsed["page_info"]["page_num"],
+                truth["page_info"]["page_num"],
             )
             self.assertEqual(
-                parsed_codes[quadrant]["page_info"]["public_code"],
-                code_dict[quadrant]["page_info"]["public_code"],
+                parsed["page_info"]["version_num"],
+                truth["page_info"]["version_num"],
             )
             self.assertEqual(
-                parsed_codes[quadrant]["tpv"],
-                code_dict[quadrant]["tpv"],
+                parsed["page_info"]["public_code"],
+                truth["page_info"]["public_code"],
             )
-            self.assertAlmostEqual(
-                parsed_codes[quadrant]["x_coord"],
-                code_dict[quadrant]["x_coord"],
-                delta=20,
-            )
-            self.assertAlmostEqual(
-                parsed_codes[quadrant]["y_coord"],
-                code_dict[quadrant]["y_coord"],
-                delta=20,
-            )
+            self.assertEqual(parsed["tpv"], truth["tpv"])
+            self.assertAlmostEqual(parsed["x_coord"], truth["x_coord"], delta=20)
+            self.assertAlmostEqual(parsed["y_coord"], truth["y_coord"], delta=20)
 
     def test_parse_qr_codes_png_rotated_180(self) -> None:
         """Test QR codes read correctly after rotation."""
