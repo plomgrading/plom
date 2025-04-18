@@ -31,7 +31,7 @@ class RectangleServiceTests(TestCase):
     """
 
     def test_rectangle_floats(self) -> None:
-        img_path = resources.files(_Scan_tests) / "page_img_good.png"
+        img_path = resources.files(_Scan_tests) / "id_page_img.png"
         img = Image.open(img_path)  # type: ignore[arg-type]
         img_size = (img.width, img.height)
         img_bytes = img_path.read_bytes()
@@ -46,7 +46,7 @@ class RectangleServiceTests(TestCase):
         self.assertEqual(set(r.keys()), set(("top_f", "bottom_f", "left_f", "right_f")))
 
     def test_rectangle_find(self) -> None:
-        img_path = resources.files(_Scan_tests) / "page_img_good.png"
+        img_path = resources.files(_Scan_tests) / "id_page_img.png"
         img = Image.open(img_path)  # type: ignore[arg-type]
         img_size = (img.width, img.height)
         img_bytes = img_path.read_bytes()
@@ -67,8 +67,10 @@ class RectangleServiceTests(TestCase):
         )
         assert r is not None
         ratio = (r["right_f"] - r["left_f"]) / (r["bottom_f"] - r["top_f"])
-        # not a square b/c we're in [0,1]^2 coord system
-        assert 1.3 < ratio < 1.5, f"not close to square: ratio={ratio}"
+        # not a square b/c we're in [0,1]^2 coord system but should match
+        # the ratio of height to width of the over all image (about 1.3)
+        target_ratio = img.height / img.width
+        self.assertAlmostEqual(ratio, target_ratio, delta=0.1)
 
         # search the top middle to find the boxed text
         region = {"left_f": 0.2, "top_f": 0, "right_f": 0.8, "bottom_f": 0.2}
@@ -76,10 +78,10 @@ class RectangleServiceTests(TestCase):
             img_bytes, img_size, ref_rect, region=region
         )
         assert r is not None
-        self.assertAlmostEqual(r["left_f"], 0.32, delta=0.04)
-        self.assertAlmostEqual(r["right_f"], 0.65, delta=0.04)
-        self.assertAlmostEqual(r["top_f"], 0.04, delta=0.01)
-        self.assertAlmostEqual(r["bottom_f"], 0.07, delta=0.01)
+        self.assertAlmostEqual(r["left_f"], 0.4, delta=0.1)
+        self.assertAlmostEqual(r["right_f"], 0.6, delta=0.1)
+        self.assertAlmostEqual(r["top_f"], 0.02, delta=0.01)
+        self.assertAlmostEqual(r["bottom_f"], 0.05, delta=0.02)
 
         # no box in the bottom middle
         region = {"left_f": 0.2, "top_f": 0.9, "right_f": 0.8, "bottom_f": 1.0}
@@ -89,7 +91,7 @@ class RectangleServiceTests(TestCase):
         self.assertIsNone(r)
 
     def test_rectangle_find_QR_coord_system(self) -> None:
-        img_path = resources.files(_Scan_tests) / "page_img_good.png"
+        img_path = resources.files(_Scan_tests) / "id_page_img.png"
         img = Image.open(img_path)  # type: ignore[arg-type]
         img_size = (img.width, img.height)
         img_bytes = img_path.read_bytes()
