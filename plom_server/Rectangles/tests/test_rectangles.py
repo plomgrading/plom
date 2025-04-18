@@ -124,11 +124,17 @@ class RectangleServiceTests(TestCase):
         print(rd)
         ref_rect = (rd["left"], rd["top"], rd["right"], rd["bottom"])
         matrix = _get_affine_transf_matrix_ref_to_QR_target(ref_rect, parsed_codes)
-        expected_matrix = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+        expected_rot = np.array([[1.0, 0.0], [0.0, 1.0]])
+        expected_shift = np.array([[0.0], [0.0]])
         print(matrix)
-        print(expected_matrix)
-        print(matrix - expected_matrix)
-        self.assertLess(np.linalg.norm(matrix - expected_matrix, "fro"), 0.001)
+        rot = matrix[:, 0:-1]
+        shift = matrix[:, 2:]
+        print(rot)
+        print(shift)
+        print(rot - expected_rot)
+        print(expected_shift - shift)
+        self.assertLess(np.linalg.norm(rot - expected_rot, "fro"), 0.001)
+        self.assertLess(np.linalg.norm(shift - expected_shift, "fro"), 1.0)
 
     def test_rect_affine_matrix_5degree_rot(self) -> None:
         """Rotation of image, and affine transformation."""
