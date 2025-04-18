@@ -18,13 +18,25 @@ def upload_spec(toml: Path, *, msgr) -> bool:
     Returns:
         (True): Always
     """
-    filepointer = open(toml, "rb")
+    try:
+        filepointer = open(toml, "rb")
+    except Exception as e:
+        print(
+            f"Error: Could not open file '{toml}' for reading. Assessment spec unchanged."
+        )
+        return False
+
     tomlbytes = filepointer.read()
     tomlstring = tomlbytes.decode("utf-8")
 
     try:
         msgr.new_server_upload_spec(tomlstring)
+        check = msgr.new_server_get_spec()
+        print(
+            f"Success: Server spec now addresses {check['name']}, {check['longName']}."
+        )
     except Exception as e:
-        print(f"Upload failed with exception: {e}.")
+        print(f"Upload failed with exception: {e}")
+        return False
 
     return True  # Could do something fancier after looking at return value above

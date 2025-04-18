@@ -82,7 +82,7 @@ class SpecificationHandler(APIView):
         except ValueError as e:
             # debugnote("SpecificationHandler: Failed to instantiate SUS.")
             return _error_response(
-                "Given TOML string was rejected. Consider pre-validating it. "
+                "Given TOML string was rejected. Assessment spec unchanged. "
                 + f"Details: {e}",
                 status.HTTP_400_BAD_REQUEST,
             )
