@@ -6,9 +6,10 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2025 Philip D. Loewen
 
-from copy import deepcopy
 import html
 import logging
+from copy import deepcopy
+from pathlib import Path
 from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -18,7 +19,7 @@ from django.db.models import Max
 
 from plom.spec_verifier import SpecVerifier
 
-from plom_server.Base.compat import load_toml_from_path
+from plom_server.Base.compat import load_toml_from_path, load_toml_from_string
 from ..models import Specification, SpecQuestion
 from ..serializers import SpecSerializer
 from plom_server.Preparation.services.preparation_dependency_service import (
@@ -30,7 +31,7 @@ log = logging.getLogger("SpecificationService")
 
 
 def validate_spec_from_dict(spec_dict: dict[str, Any]) -> bool:
-    """Load a test spec from a dictionary and validate it.
+    """Validate an assessment specification (as a dict), but don't load it into the server.
 
     Will call the SpecSerializer on the proposed spec dict and validate.
 
@@ -54,6 +55,19 @@ def validate_spec_from_dict(spec_dict: dict[str, Any]) -> bool:
         test_dict["question"] = question_list_to_dict(test_dict["question"])
     serializer = SpecSerializer(data=test_dict)
     return serializer.is_valid()
+
+
+def validate_spec_from_string(spec_toml_str: str) -> bool:
+    """Validate an assessment specification (from a toml format string), but don't load it into the server.
+
+    Raises:
+        TOMLDecodeError: cannot get toml from the string.
+        ValueError: explaining what is invalid.
+        serializers.ValidationError: in this case the ``.detail`` field
+            will contain a list of what is wrong.
+    """
+    spec_dict = load_toml_from_string(spec_toml_str)
+    return validate_spec_from_dict(spec_dict)
 
 
 @transaction.atomic
@@ -109,17 +123,48 @@ def load_spec_from_dict(
     return serializer.create(valid_data)
 
 
-@transaction.atomic
-def load_spec_from_toml(
-    pathname,
-    public_code=None,
+def load_spec_from_toml_file(
+    pathname: str | Path,
+    *,
+    public_code: str | None = None,
 ) -> Specification:
-    """Load a test spec from a TOML file and save it to the database."""
+    """Load a specification from a TOML file and save it to the database.
+
+    Args:
+         pathname: what file to load from.
+
+    Keyword Args:
+         public_code: specify our own public code, TODO: currently unused?
+             By default, one is chosen randomly.
+
+    Raises:
+         TOMLDecodeError: cannot read toml.
+         PlomDependencyConflict: if the spec cannot be modified.
+         ValueError: existing public code.
+         serializers.ValidationError: TODO: comment where this is actually raised
+             in the code below... maybe is_valid()?
+    """
     data = load_toml_from_path(pathname)
     return load_spec_from_dict(data, public_code=public_code)
 
 
-@transaction.atomic
+def load_spec_from_toml_string(tomlstr: str) -> Specification:
+    """Load a specification from a string in TOML format and save it to the database.
+
+    Args:
+         tomlstr: a string containing toml.
+
+    Raises:
+         TOMLDecodeError: cannot read toml.
+         PlomDependencyConflict: if the spec cannot be modified.
+         ValueError: existing public code.
+         serializers.ValidationError: TODO: comment where this is actually raised
+             in the code below... maybe is_valid()?
+    """
+    data = load_toml_from_string(tomlstr)
+    return load_spec_from_dict(data)
+
+
 def is_there_a_spec() -> bool:
     """Has a test-specification been uploaded to the database."""
     return Specification.objects.count() == 1
@@ -127,13 +172,13 @@ def is_there_a_spec() -> bool:
 
 @transaction.atomic
 def get_the_spec() -> dict:
-    """Return the test-specification from the database.
+    """Return the assessment specification from the database.
 
     Returns:
-        The exam specification as a dictionary.
+        The assessment specification as a dictionary.
 
     Exceptions:
-        ObjectDoesNotExist: no exam specification yet.
+        ObjectDoesNotExist: no specification yet.
     """
     try:
         spec = Specification.objects.get()

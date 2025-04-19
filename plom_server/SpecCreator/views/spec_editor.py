@@ -15,9 +15,8 @@ from plom.plom_exceptions import PlomDependencyConflict
 from django_htmx.http import HttpResponseClientRedirect
 
 from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Base.compat import TOMLDecodeError
 from plom_server.Papers.services import SpecificationService
-
-from ..services import SpecificationUploadService
 
 
 class SpecEditorView(ManagerRequiredView):
@@ -80,21 +79,19 @@ class SpecEditorView(ManagerRequiredView):
             return render(request, "SpecCreator/validation.html", context)
         only_validate = data.get("which_action") == "validate"
         try:
-            service = SpecificationUploadService(toml_string=spec)
             if only_validate:
-                service._validate_spec()
+                SpecificationService.validate_spec_from_string(spec)
                 context["msg"] = "Specification passes validity checks."
+                context["success"] = True
             else:
-                service.save_spec()
+                SpecificationService.load_spec_from_toml_string(spec)
                 # Spec saved successfully - redirect to the summary page.
                 return HttpResponseClientRedirect(reverse("spec_summary"))
-
-            context["success"] = True
         except PlomDependencyConflict as e:
             context["error_list"] = [f"Dependency error - {e}"]
         except PermissionDenied as e:
             context["error_list"] = [str(e)]
-        except (ValueError, RuntimeError) as e:
+        except (TOMLDecodeError, ValueError, RuntimeError) as e:
             context["error_list"] = [f"Cannot modify specification - {e}"]
         except serializers.ValidationError as errs:
             for k, v in errs.detail.items():
