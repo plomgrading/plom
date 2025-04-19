@@ -7,16 +7,9 @@
 import tempfile
 from pathlib import Path
 
-from django.core.files import File
 import pymupdf
 
-from plom.create.mergeAndCodePages import (
-    create_QR_codes,
-    pdf_page_add_labels_QRs,
-    pdf_page_add_name_id_box,
-    make_PDF,
-)
-
+from plom.create.mergeAndCodePages import make_PDF
 from plom_server.Papers.services import SpecificationService
 from .preparation_dependency_service import assert_can_modify_prenaming_config
 
