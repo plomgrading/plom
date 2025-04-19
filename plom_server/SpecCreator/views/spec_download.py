@@ -15,7 +15,7 @@ class SpecDownloadView(ManagerRequiredView):
 
     def get(self, request: HttpRequest) -> HttpResponse | FileResponse:
         try:
-            toml = SpecificationService.get_the_spec_as_toml()
+            toml = SpecificationService.get_the_spec_as_toml(include_public_code=True)
         except ObjectDoesNotExist as e:
             raise Http404(e) from e
         return FileResponse(

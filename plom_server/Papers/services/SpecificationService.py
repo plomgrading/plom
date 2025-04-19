@@ -148,19 +148,28 @@ def get_the_spec() -> dict:
         raise ObjectDoesNotExist("The database does not contain a test specification.")
 
 
-@transaction.atomic
-def get_the_spec_as_toml() -> str:
+def get_the_spec_as_toml(
+    *, include_public_code: bool = False, _include_private_seed: bool = False
+) -> str:
     """Return the test-specification from the database.
 
-    If present, remove the private seed.  But the public code
-    is included (if present).
+    Generally, the public code and the private seed are removed (hidden
+    from the return) but this can be changed with keyword arguments.
+
+    Keyword Args:
+        include_public_code: if True, include the current public code.
+        _include_private_seed: if True, include the current private seed
+            (currently unused, except maybe in testing?)
 
     Exceptions:
         ObjectDoesNotExist: no exam specification yet.
     """
     spec = get_the_spec()
     spec.pop("id", None)
-    spec.pop("privateSeed", None)
+    if not _include_private_seed:
+        spec.pop("privateSeed", None)
+    if not include_public_code:
+        spec.pop("publicCode")
 
     for idx, question in spec["question"].items():
         for key, val in deepcopy(question).items():
@@ -178,7 +187,6 @@ def get_private_seed() -> str:
     return spec.privateSeed
 
 
-@transaction.atomic
 def get_the_spec_as_toml_with_codes() -> str:
     """Return the test-specification from the database.
 
@@ -191,15 +199,7 @@ def get_the_spec_as_toml_with_codes() -> str:
         you need the private seed.  At the time of writing, no one
         is calling this.
     """
-    spec = get_the_spec()
-
-    for idx, question in spec["question"].items():
-        for key, val in deepcopy(question).items():
-            if val is None or key == "id":
-                question.pop(key, None)
-
-    sv = SpecVerifier(spec)
-    return sv.as_toml_string(_legacy=False)
+    return get_the_spec_as_toml(include_public_code=True, _include_private_seed=True)
 
 
 @transaction.atomic

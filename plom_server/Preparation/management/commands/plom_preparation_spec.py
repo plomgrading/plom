@@ -21,7 +21,7 @@ class Command(BaseCommand):
             self.stdout.write("No assessment specification present")
             return
 
-        toml_text = SpecificationService.get_the_spec_as_toml()
+        toml_text = SpecificationService.get_the_spec_as_toml(include_public_code=True)
         self.stdout.write("A valid assessment specification is present:")
         self.stdout.write("#" * 40)
         self.stdout.write(f"{toml_text}")
