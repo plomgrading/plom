@@ -12,9 +12,7 @@ from django.urls import reverse
 from model_bakery import baker
 
 from plom_server.Papers.services import SpecificationService
-from plom_server.Papers.models import Specification
 from ..views import PreparationLandingView
-
 from .. import useful_files_for_testing as useful_files
 
 
@@ -76,7 +74,7 @@ class PreparationLandingTests(TestCase):
         self.assertTrue(context["can_upload_source_tests"])
 
         # Remove the spec - the above settings should be false again
-        Specification.objects.all().delete()
+        SpecificationService.remove_spec()
 
         new_context = landing.build_context()
         self.assertFalse(new_context["valid_spec"])
