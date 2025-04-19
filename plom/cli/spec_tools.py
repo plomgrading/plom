@@ -16,8 +16,7 @@ def upload_spec(toml: Path, *, msgr) -> bool:
         msgr:  An active Messenger object.
 
     Returns:
-        (True)  Spec got updated
-        (False) Opposite of true
+        True if the server's specification was updated, otherwise False.
     """
     rc = False  # Nothing achieved *yet*
     try:
