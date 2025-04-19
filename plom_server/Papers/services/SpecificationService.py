@@ -25,11 +25,8 @@ from plom_server.Preparation.services.preparation_dependency_service import (
     assert_can_modify_spec,
 )
 
-# TODO - build similar for solution specs
-# NOTE - this does not **validate** test specs, it assumes the spec is valid
 
-
-log = logging.getLogger("ValidatedSpecService")
+log = logging.getLogger("SpecificationService")
 
 
 def validate_spec_from_dict(spec_dict: dict[str, Any]) -> bool:
