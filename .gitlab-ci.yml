@@ -596,7 +596,7 @@ out-of-tree:
     - django-admin --version
     - django-admin -h
     - django-admin -h | grep plom
-    - django-admin plom_demo_spec -h
+    - django-admin plom_preparation_spec -h
     - django-admin test plom_server
     - popd
   allow_failure: true
@@ -655,7 +655,7 @@ out-of-tree-scratch:
     - django-admin --version
     - django-admin -h
     - django-admin -h | grep plom
-    - django-admin plom_demo_spec -h
+    - django-admin plom_preparation_spec -h
     - django-admin test plom_server
     - popd
   allow_failure: true
