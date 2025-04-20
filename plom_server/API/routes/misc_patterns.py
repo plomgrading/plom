@@ -4,12 +4,12 @@
 # Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2025 Philip D. Loewen
 
 from django.urls import path
 
 from ..views import (
     ExamInfo,
-    GetSpecification,
     ServerInfo,
     ServerVersion,
     CloseUser,
@@ -31,7 +31,6 @@ class MiscURLPatterns:
             path("Version/", ServerVersion.as_view(), name="api_server_version"),
             path("info/server/", ServerInfo.as_view(), name="api_server_info"),
             path("info/exam/", ExamInfo.as_view(), name="api_exam_info"),
-            path("info/spec/", GetSpecification.as_view(), name="api_info_spec"),
             path("info/user/<str:username>", UserRole.as_view(), name="api_user_role"),
             path(
                 "maxmark/<int:question>",
