@@ -7,13 +7,12 @@
 
 from rest_framework.response import Response
 from rest_framework.request import Request
+from rest_framework.views import APIView
 from rest_framework import status
 
 from plom_server.Papers.services import SpecificationService
 from plom_server.SpecCreator.services import SpecificationUploadService
 
-# from rest_framework.views import APIView  # Base class for next line
-from plom_server.Base.base_group_views import AdminOrManagerRequiredView
 
 from .utils import _error_response
 from .utils import debugnote
@@ -24,7 +23,7 @@ from plom.plom_exceptions import (
 from django.core.exceptions import ObjectDoesNotExist
 
 
-class SpecificationHandler(AdminOrManagerRequiredView):
+class SpecificationHandler(APIView):
     """Handle transactions involving the Assessment Specification."""
 
     # GET /api/beta/spec (and, for backward compatibility, /info/spec)
@@ -58,10 +57,18 @@ class SpecificationHandler(AdminOrManagerRequiredView):
         Returns:
             (200) JsonResponse: the freshly-installed new spec.
             (400) TOML didn't parse correctly.
-            (403) Modifications forbidden.
-            (500) This never happens.
+            (403) User does not belong to "manager" group.
+            (409) Changing the spec is not allowed. Typically because the server is in an advanced state.
+            (500) Spec retrieval failed, even though spec updating seemed to succeed. Eek!
         """
-        spec_toml_string = request.data.get("spec_toml", "")  # Get the TOML string
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
+            return _error_response(
+                'Only users in the "manager" group can upload an assessment spec',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        spec_toml_string = request.data.get("spec_toml", "")
         if len(spec_toml_string) == 0:
             # debugnote("SpecificationHandler: String length 0 for spec_toml_string.")
             return _error_response(
@@ -89,18 +96,18 @@ class SpecificationHandler(AdminOrManagerRequiredView):
         except PlomDependencyConflict as e:
             return _error_response(
                 "Modifying the assessment spec is not allowed. Details:\n" + f"{e}",
-                status.HTTP_403_FORBIDDEN,
+                status.HTTP_409_CONFLICT,
             )
 
         # debugnote("SpecificationHandler: The server's spec slot is now vacant.")
 
         try:
-            SUS.save_spec()  # Main activity is load_spec_from_dict, elsewhere
-        except Exception as e:
-            debugnote(f"SpecificationHandler: Unknown exception with details {e}.")
+            SUS.save_spec()  # Main activity is load_spec_from_dict, done elsewhere
+        except ValueError as e:
+            debugnote(f"SpecificationHandler: save_spec failed, with details {e}.")
             return _error_response(
                 "SpecificationHandler: Failed to save spec.",
-                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status.HTTP_409_CONFLICT,
             )
 
         # debugnote("SpecificationHandler: Block of SUS actions has finished.")

@@ -26,12 +26,9 @@ def upload_spec(toml: Path, *, msgr) -> bool:
     try:
         msgr.new_server_upload_spec(tomlstring)
         check = msgr.new_server_get_spec()
-        print(
-            f"Success: Server spec now addresses {check['name']}, {check['longName']}."
-        )
-        return True
     except (PlomAuthenticationException, PlomConflict, ValueError) as e:
         print(f"Upload failed with exception: {e}")
         return False
 
-    return False
+    print(f"Success: Server spec now addresses {check['name']}, {check['longName']}.")
+    return True
