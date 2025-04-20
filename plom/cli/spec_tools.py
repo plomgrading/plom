@@ -25,7 +25,7 @@ def upload_spec(toml: Path, *, msgr) -> bool:
 
     try:
         msgr.new_server_upload_spec(tomlstring)
-        check = msgr.new_server_get_spec()
+        check = msgr.get_spec()
     except (PlomAuthenticationException, PlomConflict, ValueError) as e:
         print(f"Upload failed with exception: {e}")
         return False

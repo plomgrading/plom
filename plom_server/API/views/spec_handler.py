@@ -5,28 +5,24 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
 
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
 from rest_framework import status
 
+from plom.plom_exceptions import PlomDependencyConflict
 from plom_server.Papers.services import SpecificationService
 from plom_server.SpecCreator.services import SpecificationUploadService
 
-
-from .utils import _error_response
 from .utils import debugnote
-
-from plom.plom_exceptions import (
-    PlomDependencyConflict,
-)
-from django.core.exceptions import ObjectDoesNotExist
+from .utils import _error_response
 
 
 class SpecificationHandler(APIView):
     """Handle transactions involving the Assessment Specification."""
 
-    # GET /api/beta/spec (and, for backward compatibility, /info/spec)
+    # GET /api/v0/spec (and, for backward compatibility, /info/spec)
     def get(self, request: Request) -> Response:
         """Get the current assessment spec.
 
@@ -44,7 +40,7 @@ class SpecificationHandler(APIView):
 
         return Response(the_spec)
 
-    # POST /api/beta/spec
+    # POST /api/v0/spec
     def post(self, request: Request) -> Response:
         """Use a string containing TOML to replace the server's current spec, or to instantiate a brand new one.
 

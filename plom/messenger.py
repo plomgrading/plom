@@ -1155,33 +1155,6 @@ class Messenger(BaseMessenger):
                     raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_get_spec(self) -> dict:
-        """Transparent wrapper around baseMessenger.get_spec()."""
-        return self.get_spec()
-
-    def new_server_patch_spec(self) -> None:
-        """Send a PATCH request to the API endpoint for the spec. For debugging.
-
-        The PATCH method has no effect. The API says this when called.
-
-        Args: None
-
-        Returns: None
-        """
-        try:
-            response = self.patch_auth(
-                "/api/beta/spec",
-                json={
-                    "key": "value",
-                },
-            )
-            response.raise_for_status()
-        except Exception as e:
-            raise PlomSeriousException(
-                f"In new_server_patch_spec, {e}"
-            ) from None  # TODO: Experimental - PDL
-        return None
-
     def new_server_upload_spec(self, spec_toml_string: str) -> None:
         """Upload an assessment spec to the server.
 
@@ -1199,7 +1172,7 @@ class Messenger(BaseMessenger):
         with self.SRmutex:
             try:
                 response = self.post_auth(
-                    "/api/beta/spec",
+                    "/api/v0/spec",
                     json={
                         "spec_toml": spec_toml_string,
                     },

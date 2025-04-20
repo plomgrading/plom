@@ -14,10 +14,7 @@ from .server_info import (
     ObtainAuthTokenUpdateLastLogin,
 )
 
-from .spec_handler import (
-    SpecificationHandler,
-    #    BogusSpecificationHandler,
-)
+from .spec_handler import SpecificationHandler
 
 from .identify import (
     GetClasslist,

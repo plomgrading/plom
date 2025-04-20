@@ -776,7 +776,7 @@ class BaseMessenger:
                 elif self.is_server_api_less_than(114):
                     response = self.get_auth("/info/spec")
                 else:
-                    response = self.get_auth("/api/beta/spec")
+                    response = self.get_auth("/api/v0/spec")
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
