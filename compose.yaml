@@ -50,8 +50,6 @@ services:
       - PLOM_PUBLIC_FACING_PORT=8443
       - PLOM_PUBLIC_FACING_SCHEME=https
       # - PLOM_PUBLIC_FACING_PREFIX=
-      # If PLOM_DEMO is 1, the container will start the demo automatically
-      # - PLOM_DEMO=1
       # For production, set PLOM_DEBUG to 0; and must define a random secret
       # - PLOM_DEBUG=0
       # - PLOM_SECRET_KEY=bismarkomitleafagebuckbank
