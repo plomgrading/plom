@@ -3,16 +3,18 @@
 # Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2025 Philip D. Loewen
 
 from .server_info import (
     UserRole,
     ExamInfo,
-    GetSpecification,
     ServerVersion,
     ServerInfo,
     CloseUser,
     ObtainAuthTokenUpdateLastLogin,
 )
+
+from .spec_handler import SpecificationHandler
 
 from .identify import (
     GetClasslist,

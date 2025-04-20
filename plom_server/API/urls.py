@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2025 Philip D. Loewen
 
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter, SimpleRouter
@@ -34,6 +35,7 @@ from .views import (
     REPidentified,
     REPcompletionStatus,
     REPcoverPageInfo,
+    SpecificationHandler,
 )
 
 from .views import MgetRubricMarkingTasks
@@ -99,6 +101,17 @@ urlpatterns = [
         "REP/coverPageInfo/<int:papernum>",
         REPcoverPageInfo.as_view(),
         name="api_REP_cover_page_info",
+    ),
+    path(
+        "api/v0/spec",
+        SpecificationHandler.as_view(),
+        name="api_spec_handler",
+    ),
+    path(
+        "info/spec",
+        #        An old URI. Just aim it at the same endpoint as above.
+        SpecificationHandler.as_view(),
+        name="api_spec_handler",
     ),
 ]
 
