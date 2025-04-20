@@ -86,7 +86,7 @@ def install_spec_from_dict(
 
     Keyword Args:
         force_public_code: Usually you may not include "publicCode" in
-            the toml.  Pass True to allow overriding the default.
+            the specification.  Pass True to allow overriding that default.
 
     Returns:
         The Specification that was just saved.
@@ -139,7 +139,7 @@ def install_spec_from_toml_file(
 
     Keyword Args:
         force_public_code: Usually you may not include "publicCode" in
-            the toml.  Pass True to allow overriding the default.
+            the specification.  Pass True to allow overriding that default.
 
     Raises:
         TOMLDecodeError: cannot read toml.
@@ -163,7 +163,7 @@ def install_spec_from_toml_string(
 
     Keyword Args:
         force_public_code: Usually you may not include "publicCode" in
-            the toml.  Pass True to allow overriding the default.
+            the specification.  Pass True to allow overriding that default.
 
     Raises:
         TOMLDecodeError: cannot read toml.
