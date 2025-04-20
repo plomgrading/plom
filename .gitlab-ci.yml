@@ -342,7 +342,7 @@ coverage:
   needs: ["container-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.6.12
+    - pip install pytest pytest-cov coverage[toml]~=7.8.0
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -441,7 +441,7 @@ flake8:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install flake8~=7.1.2
+    - pip install flake8~=7.2.0
   script:
     # first show all errors and warnings but don't fail
     - flake8 --exit-zero
@@ -454,7 +454,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.11.2
+    - pip install ruff~=0.11.4
   script:
     - ruff check .
     # ruff format .
@@ -465,7 +465,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.11.2
+    - pip install ruff~=0.11.4
   script:
     # run once just for log out but don't fail
     - EXCEPTIONS="D101,D102,D103,D104,D106"
@@ -532,7 +532,7 @@ webplom_test:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install coverage~=7.6.12
+    - pip install coverage~=7.8.0
   script:
     - export PYTHONPATH=$PWD
     - export PLOM_DATABASE_BACKEND=sqlite

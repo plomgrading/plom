@@ -30,7 +30,7 @@ repos:
   - id: check-json
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.11.2
+  rev: v0.11.4
   hooks:
     - id: ruff
       args: [ --fix ]
@@ -41,6 +41,11 @@ repos:
   rev: 25.1.0
   hooks:
   - id: black
+
+- repo: https://github.com/pycqa/flake8
+  rev: 7.2.0
+  hooks:
+  - id: flake8
 
 - repo: https://github.com/Riverside-Healthcare/djLint
   rev: v1.36.4
