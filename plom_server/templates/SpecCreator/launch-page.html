@@ -50,12 +50,29 @@
                         that you have prepared elsewhere.
                     </p>
                     <p>Or you can edit specification in the box below.</p>
-                    <label for="spec-toml-input" class="form-label">Assessment specification:</label>
-                    <textarea class="form-control"
-                              id="spec-toml-input"
-                              name="spec"
-                              rows="12"
-                              spellcheck="false">{{ editable_toml }}</textarea>
+                    <div>
+                        <label for="spec-toml-input" class="form-label">Assessment specification:</label>
+                        <textarea class="form-control"
+                                  id="spec-toml-input"
+                                  name="spec"
+                                  rows="12"
+                                  spellcheck="false">{{ editable_toml }}</textarea>
+                    </div>
+                    <details class="my-2">
+                        <summary>Advanced settings</summary>
+                        <div>
+                            <div class="ms-4 form-check">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="force-public-code"
+                                       name="force-public-code">
+                                <label class="form-check-label" for="force-public-code">
+                                    Allow specifying the <tt>publicCode</tt>,
+                                    which would otherwise be an error.
+                                </label>
+                            </div>
+                        </div>
+                    </details>
                     <button type="submit" class="btn btn-primary me-1 mt-2">Submit</button>
                     <!--
                         <button type="submit" class="btn btn-primary" name="which_action" value="submit">Submit</button>
