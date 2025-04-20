@@ -5,13 +5,15 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
 
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status
 
 from plom_server.Papers.services import SpecificationService
 from plom_server.SpecCreator.services import SpecificationUploadService
+
+# from rest_framework.views import APIView  # Base class for next line
+from plom_server.Base.base_group_views import AdminOrManagerRequiredView
 
 from .utils import _error_response
 from .utils import debugnote
@@ -22,15 +24,8 @@ from plom.plom_exceptions import (
 from django.core.exceptions import ObjectDoesNotExist
 
 
-class SpecificationHandler(APIView):
+class SpecificationHandler(AdminOrManagerRequiredView):
     """Handle transactions involving the Assessment Specification."""
-
-    # PATCH /api/beta/spec
-    def patch(self, request: Request) -> Response:
-        """Test our response to the HTTP PATCH method: this is just *always* an error."""
-        return _error_response(
-            "We disdain the PATCH method.", status.HTTP_400_BAD_REQUEST
-        )
 
     # GET /api/beta/spec (and, for backward compatibility, /info/spec)
     def get(self, request: Request) -> Response:
@@ -56,9 +51,9 @@ class SpecificationHandler(APIView):
 
         Args:
             request: An HTTP request in which the data dict has a string-type
-                     key named "spec_toml" whose corresponding value is a
-                     utf-8 string containing everything read from a well-formed
-                     spec file in TOML format.
+                key named "spec_toml" whose corresponding value is a
+                utf-8 string containing everything read from a well-formed
+                spec file in TOML format.
 
         Returns:
             (200) JsonResponse: the freshly-installed new spec.

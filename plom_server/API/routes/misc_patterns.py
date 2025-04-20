@@ -10,8 +10,6 @@ from django.urls import path
 
 from ..views import (
     ExamInfo,
-    SpecificationHandler,
-    #    BogusSpecificationHandler,
     ServerInfo,
     ServerVersion,
     CloseUser,
@@ -33,16 +31,6 @@ class MiscURLPatterns:
             path("Version/", ServerVersion.as_view(), name="api_server_version"),
             path("info/server/", ServerInfo.as_view(), name="api_server_info"),
             path("info/exam/", ExamInfo.as_view(), name="api_exam_info"),
-            path(
-                "api/beta/spec", SpecificationHandler.as_view(), name="api_spec_handler"
-            ),  # Redundant with urls.py?
-            path(
-                "info/spec",  # This is old, hope it goes away. Redirect to above.
-                # BogusSpecificationHandler.as_view(),
-                # name="b_api_spec_handler",
-                SpecificationHandler.as_view(),
-                name="api_spec_handler",
-            ),  # Redundant with urls.py?
             path("info/user/<str:username>", UserRole.as_view(), name="api_user_role"),
             path(
                 "maxmark/<int:question>",

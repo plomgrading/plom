@@ -6,6 +6,8 @@ from pathlib import Path
 
 from plom.cli import with_messenger
 
+from plom.plom_exceptions import PlomAuthenticationException, PlomConflict
+
 
 @with_messenger
 def upload_spec(toml: Path, *, msgr) -> bool:
@@ -18,21 +20,8 @@ def upload_spec(toml: Path, *, msgr) -> bool:
     Returns:
         True if the server's specification was updated, otherwise False.
     """
-    rc = False  # Nothing achieved *yet*
-    try:
-        filepointer = open(toml, "rb")
-    except FileNotFoundError:
-        print(f"Error: File '{toml}' not found. Assessment spec unchanged.")
-        return rc
-    except PermissionError:
-        print(f"Error: Cannot read file '{toml}'. Assessment spec unchanged.")
-        return rc
-    except Exception:
-        print("Something went wrong. Assessment spec unchanged.")
-        return rc
-
-    tomlbytes = filepointer.read()
-    tomlstring = tomlbytes.decode("utf-8")
+    with open(toml, "rb") as f:
+        tomlstring = f.read().decode("utf-8")
 
     try:
         msgr.new_server_upload_spec(tomlstring)
@@ -40,9 +29,9 @@ def upload_spec(toml: Path, *, msgr) -> bool:
         print(
             f"Success: Server spec now addresses {check['name']}, {check['longName']}."
         )
-        rc = True
-    except Exception as e:
+        return True
+    except (PlomAuthenticationException, PlomConflict, ValueError) as e:
         print(f"Upload failed with exception: {e}")
-        return rc
+        return False
 
-    return rc
+    return False
