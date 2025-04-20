@@ -106,8 +106,9 @@ class SpecificationHandler(APIView):
                 status.HTTP_409_CONFLICT,
             )
 
-        # debugnote("SpecificationHandler: Block of SUS actions has finished.")
-
+        # TODO: we probably should not explicitly throw 500, revisit this
+        # during/after https://gitlab.com/plom/plom/-/merge_requests/3182
+        # along with changes to "SUS".
         if not SpecificationService.is_there_a_spec():
             return _error_response(
                 "SpecificationHandler: Catastrophe beyond imagining.",
