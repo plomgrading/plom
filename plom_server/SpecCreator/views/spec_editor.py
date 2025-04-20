@@ -91,8 +91,10 @@ class SpecEditorView(ManagerRequiredView):
             context["error_list"] = [f"Dependency error - {e}"]
         except PermissionDenied as e:
             context["error_list"] = [str(e)]
-        except (TOMLDecodeError, ValueError, RuntimeError) as e:
+        except (TOMLDecodeError, ValueError) as e:
             context["error_list"] = [f"Cannot modify specification - {e}"]
+        except RuntimeError as e:
+            context["error_list"] = [f"Cannot modify, unexpected RuntimeError - {e}"]
         except serializers.ValidationError as errs:
             for k, v in errs.detail.items():
                 if isinstance(v, list) and len(v) == 1:

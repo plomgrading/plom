@@ -58,9 +58,16 @@ class SpecSerializer(serializers.ModelSerializer):
     def is_valid(self, *, raise_exception: bool = True) -> bool:
         """Perform additional soundness checks on the test spec.
 
+        This isn't a custom thing we added: its part of the superclass
+        ``serializers.ModelSerializer`` which comes from the DRF, not
+        basic Django.
+
         Keyword Args:
             raise_exception: Default True, else just return False
-                without explanation.
+                without explanation.  TODO: think this might be a bit
+                non-standard viz the superclass.  For example, when
+                False, probably errors should be set in .errors?
+                See also, that we raise ValueErrors.
 
         Returns:
             Whether the spec is valid.
@@ -78,11 +85,12 @@ class SpecSerializer(serializers.ModelSerializer):
         try:
             vlad = SpecVerifier(data_with_dummy_num_to_produce)
             vlad.verify(_legacy=False)
-            return True
         except ValueError as e:
             if raise_exception:
-                raise e from None
+                raise e from e
+                # raise serializers.ValidationError(e) from e
             return False
+        return True
 
     @transaction.atomic
     def create(self, validated_data) -> Specification:

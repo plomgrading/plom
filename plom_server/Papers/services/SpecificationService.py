@@ -31,7 +31,7 @@ log = logging.getLogger("SpecificationService")
 
 
 def validate_spec_from_dict(spec_dict: dict[str, Any]) -> bool:
-    """Validate an assessment specification (as a dict), but don't load it into the server.
+    """Validate an assessment specification (as a dict), but don't install it on server.
 
     Will call the SpecSerializer on the proposed spec dict and validate.
 
@@ -46,19 +46,19 @@ def validate_spec_from_dict(spec_dict: dict[str, Any]) -> bool:
         serializers.ValidationError: in this case the ``.detail`` field
             will contain a list of what is wrong.
     """
-    test_dict = deepcopy(spec_dict)  # Defend input dict from changes in next stanza
+    spec_dict = deepcopy(spec_dict)  # Defend input dict from changes
 
     # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
     # Also, this function does not care if there are no questions in the spec dictionary. It assumes
     # the serializer/SpecVerifier will catch it.
-    if "question" in test_dict.keys():
-        test_dict["question"] = question_list_to_dict(test_dict["question"])
-    serializer = SpecSerializer(data=test_dict)
-    return serializer.is_valid()
+    if "question" in spec_dict.keys():
+        spec_dict["question"] = question_list_to_dict(spec_dict["question"])
+    serializer = SpecSerializer(data=spec_dict)
+    return serializer.is_valid(raise_exception=True)
 
 
 def validate_spec_from_string(spec_toml_str: str) -> bool:
-    """Validate an assessment specification (from a toml format string), but don't load it into the server.
+    """Validate an assessment specification (from a toml format string), but don't install it on server.
 
     Raises:
         TOMLDecodeError: cannot get toml from the string.
@@ -91,9 +91,11 @@ def install_spec_from_dict(
 
     Raises:
         PlomDependencyConflict: if the spec cannot be modified.
-        ValueError: existing public code.
-        serializers.ValidationError: TODO: comment where this is actually raised
-            in the code below... maybe is_valid()?
+        ValueError: existing public code, and other cases.  Currently
+            a bit unclear which cases give ValueErrors and which give
+            the following serializers.ValidationErrors.  Callers should
+            check for both.
+        serializers.ValidationError: with more info in the ``.details``.
     """
     # this will Raise a PlomDependencyConflict if cannot modify the spec
     assert_can_modify_spec()
@@ -103,7 +105,7 @@ def install_spec_from_dict(
     # Note: the serializer makes these codes so it seems too late the ask it there
     existing_publicCode = spec_dict.get("publicCode", None)
     if existing_publicCode:
-        # raise serializers.ValidationError(...)
+        # raise serializers.ValidationError(...)?
         raise ValueError("Not allowed to specify a publicCode directly")
 
     # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
@@ -111,10 +113,13 @@ def install_spec_from_dict(
     # the serializer/SpecVerifier will catch it.
     if "question" in spec_dict.keys():
         spec_dict["question"] = question_list_to_dict(spec_dict["question"])
+
     serializer = SpecSerializer(data=spec_dict)
 
-    # TODO: maybe we should pass raise_exception=True here instead?
-    assert serializer.is_valid(), "Unexpectedly invalid serializer"
+    # This raises both serializers.ValidationErrors and ValueErrors
+    # TODO: the raising of ValueErrors appears non-standard, consider refactor
+    serializer.is_valid(raise_exception=True)
+
     valid_data = serializer.validated_data
 
     if public_code:
@@ -131,18 +136,17 @@ def install_spec_from_toml_file(
     """Load a specification from a TOML file and save it to the database.
 
     Args:
-         pathname: what file to load from.
+        pathname: what file to load from.
 
     Keyword Args:
-         public_code: specify our own public code, TODO: currently unused?
-             By default, one is chosen randomly.
+        public_code: specify our own public code, TODO: currently unused?
+            By default, one is chosen randomly.
 
     Raises:
-         TOMLDecodeError: cannot read toml.
-         PlomDependencyConflict: if the spec cannot be modified.
-         ValueError: existing public code.
-         serializers.ValidationError: TODO: comment where this is actually raised
-             in the code below... maybe is_valid()?
+        TOMLDecodeError: cannot read toml.
+        PlomDependencyConflict: if the spec cannot be modified.
+        ValueError: see :func:`install_spec_from_dict`.
+        serializers.ValidationError: see :func:`install_spec_from_dict`.
     """
     data = load_toml_from_path(pathname)
     return install_spec_from_dict(data, public_code=public_code)
@@ -152,14 +156,13 @@ def install_spec_from_toml_string(tomlstr: str) -> Specification:
     """Load a specification from a string in TOML format and save it to the database.
 
     Args:
-         tomlstr: a string containing toml.
+        tomlstr: a string containing toml.
 
     Raises:
-         TOMLDecodeError: cannot read toml.
-         PlomDependencyConflict: if the spec cannot be modified.
-         ValueError: existing public code.
-         serializers.ValidationError: TODO: comment where this is actually raised
-             in the code below... maybe is_valid()?
+        TOMLDecodeError: cannot read toml.
+        PlomDependencyConflict: if the spec cannot be modified.
+        ValueError: see :func:`install_spec_from_dict`.
+        serializers.ValidationError: see :func:`install_spec_from_dict`.
     """
     data = load_toml_from_string(tomlstr)
     return install_spec_from_dict(data)
