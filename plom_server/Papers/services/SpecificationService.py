@@ -20,6 +20,7 @@ from django.db.models import Max
 from plom.spec_verifier import SpecVerifier
 
 from plom_server.Base.compat import load_toml_from_path, load_toml_from_string
+from plom_server.Base.compat import TOMLDecodeError  # noqa: F401
 from ..models import Specification, SpecQuestion
 from ..serializers import SpecSerializer
 from plom_server.Preparation.services.preparation_dependency_service import (

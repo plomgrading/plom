@@ -8,6 +8,7 @@ from pathlib import Path
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.utils.text import slugify
+from rest_framework import serializers
 
 from plom.plom_exceptions import PlomDependencyConflict
 from plom_server.Papers.services import SpecificationService
@@ -48,9 +49,12 @@ class Command(BaseCommand):
     def upload_spec(self, spec_file: str | Path) -> None:
         try:
             SpecificationService.install_spec_from_toml_file(spec_file)
-        except (ValueError, PlomDependencyConflict) as e:
-            # TODO: maybe other exceptions are possible?  See TODOs about
-            # serializers.ValidationError in SpecificationService.py
+        except (
+            PlomDependencyConflict,
+            SpecificationService.TOMLDecodeError,
+            ValueError,
+            serializers.ValidationError,
+        ) as e:
             raise CommandError(e) from e
         self.stdout.write("Assessment specification uploaded to server.")
 

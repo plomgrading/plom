@@ -15,7 +15,6 @@ from plom.plom_exceptions import PlomDependencyConflict
 from django_htmx.http import HttpResponseClientRedirect
 
 from plom_server.Base.base_group_views import ManagerRequiredView
-from plom_server.Base.compat import TOMLDecodeError
 from plom_server.Papers.services import SpecificationService
 
 
@@ -91,7 +90,7 @@ class SpecEditorView(ManagerRequiredView):
             context["error_list"] = [f"Dependency error - {e}"]
         except PermissionDenied as e:
             context["error_list"] = [str(e)]
-        except (TOMLDecodeError, ValueError) as e:
+        except (SpecificationService.TOMLDecodeError, ValueError) as e:
             context["error_list"] = [f"Cannot modify specification - {e}"]
         except RuntimeError as e:
             context["error_list"] = [f"Cannot modify, unexpected RuntimeError - {e}"]
