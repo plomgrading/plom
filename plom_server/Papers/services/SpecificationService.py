@@ -633,3 +633,25 @@ def get_selection_method_of_all_questions() -> dict[int, str]:
     for question in SpecQuestion.objects.all().order_by("question_index"):
         selection_method[question.question_index] = question.select
     return selection_method
+
+
+def _flatten_serializer_errors(errs) -> list[str]:
+    error_list = []
+    for k, v in errs.detail.items():
+        if isinstance(v, list) and len(v) == 1:
+            error_list.append(f"{k}: {v[0]}")
+            continue
+        if k == "question" and isinstance(v, dict):
+            # this big ol pile of spaghetti renders errors within questions
+            for j, u in v.items():
+                if isinstance(u, dict):
+                    for i, w in u.items():
+                        if isinstance(w, list) and len(w) == 1:
+                            (w,) = w
+                        error_list.append(f"{k} {j}: {i}: {w}")
+                else:
+                    error_list.append(f"{k} {j}: {u}")
+            continue
+        # last ditch effort if neither of the above: make 'em into strings
+        error_list.append(f"{k}: {str(v)}")
+    return error_list

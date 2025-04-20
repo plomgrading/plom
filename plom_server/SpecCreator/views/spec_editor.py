@@ -94,22 +94,6 @@ class SpecEditorView(ManagerRequiredView):
             context["error_list"] = [f"Cannot modify specification - {e}"]
         except RuntimeError as e:
             context["error_list"] = [f"Cannot modify, unexpected RuntimeError - {e}"]
-        except serializers.ValidationError as errs:
-            for k, v in errs.detail.items():
-                if isinstance(v, list) and len(v) == 1:
-                    context["error_list"].append(f"{k}: {v[0]}")
-                    continue
-                if k == "question" and isinstance(v, dict):
-                    # this big ol pile of spaghetti renders errors within questions
-                    for j, u in v.items():
-                        if isinstance(u, dict):
-                            for i, w in u.items():
-                                if isinstance(w, list) and len(w) == 1:
-                                    (w,) = w
-                                context["error_list"].append(f"{k} {j}: {i}: {w}")
-                        else:
-                            context["error_list"].append(f"{k} {j}: {u}")
-                    continue
-                # last ditch effort if neither of the above: make 'em into strings
-                context["error_list"].append(f"{k}: {str(v)}")
+        except serializers.ValidationError as e:
+            context["error_list"] = SpecificationService._flatten_serializer_errors(e)
         return render(request, "SpecCreator/validation.html", context)

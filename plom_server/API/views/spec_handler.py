@@ -79,13 +79,15 @@ class SpecificationHandler(APIView):
                 "Modifying the assessment spec is not allowed. Details:\n" + f"{e}",
                 status.HTTP_409_CONFLICT,
             )
-        except (
-            SpecificationService.TOMLDecodeError,
-            serializers.ValidationError,
-            ValueError,
-        ) as e:
+        except (SpecificationService.TOMLDecodeError, ValueError) as e:
             return _error_response(
                 f"Cannot modify specification - {e}",
+                status.HTTP_400_BAD_REQUEST,
+            )
+        except serializers.ValidationError as e:
+            error_list = SpecificationService._flatten_serializer_errors(e)
+            return _error_response(
+                f"Cannot modify specification - {error_list}",
                 status.HTTP_400_BAD_REQUEST,
             )
         except RuntimeError as e:
