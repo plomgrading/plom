@@ -1163,8 +1163,9 @@ class Messenger(BaseMessenger):
 
         Exceptions:
             PlomConflict: server already has a database, cannot accept spec.
+            PlomNoPermission: wrong user.
             ValueError: invalid spec.
-            PlomSeriousException: other errors.
+            PlomSeriousException: other errors unexpected errors.
 
         Returns:
             The newly-uploaded spec, as a dict.
@@ -1182,6 +1183,8 @@ class Messenger(BaseMessenger):
                 if response.status_code == 400:
                     raise ValueError(response.reason) from None
                 if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 409:
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
