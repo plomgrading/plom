@@ -1155,7 +1155,7 @@ class Messenger(BaseMessenger):
                     raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_upload_spec(self, spec_toml_string: str) -> None:
+    def new_server_upload_spec(self, spec_toml_string: str) -> dict:
         """Upload an assessment spec to the server.
 
         Args:
@@ -1167,7 +1167,7 @@ class Messenger(BaseMessenger):
             PlomSeriousException: other errors.
 
         Returns:
-            None
+            The newly-uploaded spec, as a dict.
         """
         with self.SRmutex:
             try:
@@ -1185,4 +1185,4 @@ class Messenger(BaseMessenger):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-        return None
+        return response.json()
