@@ -132,9 +132,19 @@ def get_parser() -> argparse.ArgumentParser:
     s = sub.add_parser(
         "upload-spec",
         help="Upload assessment spec",
-        description="Upload a .toml file containing a valid exam spec.",
+        description="Upload a .toml file containing an assessment specification.",
     )
-    s.add_argument("toml", help="a .toml file containing a valid exam spec.")
+    s.add_argument("tomlfile", help="The assessment specification.")
+    s.add_argument(
+        "--force-public-code",
+        default=False,
+        action="store_true",
+        help="""
+            Allow specifying the "publicCode" which prevents uploading
+            papers from a different server.
+            Read the docs before using this!
+        """,
+    )
     _add_server_args(s)
 
     s = sub.add_parser(
@@ -310,7 +320,9 @@ def main():
 
     elif args.command == "upload-spec":
         r = upload_spec(
-            Path(args.toml), msgr=(args.server, args.username, args.password)
+            Path(args.tomlfile),
+            force_public_code=args.force_public_code,
+            msgr=(args.server, args.username, args.password),
         )
 
     elif args.command == "delete-bundle":

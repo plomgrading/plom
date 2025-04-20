@@ -64,6 +64,8 @@ class SpecificationHandler(APIView):
             )
 
         spec_toml_string = request.data.get("spec_toml", "")
+        # TODO: could instead use a query_param in the URL?
+        force_public_code = request.data.get("force_public_code")
 
         # would be handled by next block but with a more verbose errors
         if not spec_toml_string:
@@ -73,7 +75,10 @@ class SpecificationHandler(APIView):
             )
 
         try:
-            SpecificationService.install_spec_from_toml_string(spec_toml_string)
+            SpecificationService.install_spec_from_toml_string(
+                spec_toml_string,
+                force_public_code=force_public_code,
+            )
         except PlomDependencyConflict as e:
             return _error_response(
                 "Modifying the assessment spec is not allowed. Details:\n" + f"{e}",
