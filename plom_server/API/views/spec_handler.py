@@ -72,9 +72,7 @@ class SpecificationHandler(APIView):
             )
 
         try:
-            the_spec = SpecificationService.install_spec_from_toml_string(
-                spec_toml_string
-            )
+            SpecificationService.install_spec_from_toml_string(spec_toml_string)
         except PlomDependencyConflict as e:
             return _error_response(
                 "Modifying the assessment spec is not allowed. Details:\n" + f"{e}",
@@ -95,6 +93,6 @@ class SpecificationHandler(APIView):
                 status.HTTP_400_BAD_REQUEST,
             )
 
+        the_spec = SpecificationService.get_the_spec()
         the_spec.pop("privateSeed", None)
-
         return Response(the_spec)
