@@ -1,8 +1,31 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023, 2025 Colin B. Macdonald
+# Copyright (C) 2025 Philip D. Loewen
 
 from rest_framework import serializers
 from rest_framework.response import Response
+
+import datetime
+import pytz
+import sys
+
+
+def debugnote(text: str, newline: bool = False) -> None:
+    """Print given text with an opening datestamp. Useful for old-style debugging.
+
+    Args:
+        text: String to print
+        newline: Boolean to activate an initial newline
+
+    Returns:
+        None
+    """
+    myZone = "America/Vancouver"
+    now = datetime.datetime.now(pytz.timezone(myZone))
+    prefix = now.strftime("%Y-%m-%d %H:%M:%S.%f")[:22]
+    print(("\n" if newline else "") + prefix + ": " + text)
+    sys.stdout.flush()  # Don't let buffering delay delivery!
+    sys.stderr.flush()
 
 
 def _error_response(e: Exception | str, status) -> Response:

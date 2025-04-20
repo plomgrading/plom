@@ -3,6 +3,7 @@
 # Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2025 Philip D. Loewen
 # Copyright (C) 2025 Aidan Murphy
 
 """Backend bits 'n bobs to talk to a Plom server."""
@@ -43,7 +44,6 @@ from plom.plom_exceptions import (
     PlomTimeoutError,
     PlomVersionMismatchException,
 )
-
 
 __all__ = [
     "Messenger",
@@ -1154,3 +1154,35 @@ class Messenger(BaseMessenger):
                 if response.status_code == 406:
                     raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def new_server_upload_spec(self, spec_toml_string: str) -> dict:
+        """Upload an assessment spec to the server.
+
+        Args:
+            spec_toml_string: The utf-8 string you get by reading a valid spec.toml file
+
+        Exceptions:
+            PlomConflict: server already has a database, cannot accept spec.
+            ValueError: invalid spec.
+            PlomSeriousException: other errors.
+
+        Returns:
+            The newly-uploaded spec, as a dict.
+        """
+        with self.SRmutex:
+            try:
+                response = self.post_auth(
+                    "/api/v0/spec",
+                    json={
+                        "spec_toml": spec_toml_string,
+                    },
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise ValueError(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+        return response.json()
