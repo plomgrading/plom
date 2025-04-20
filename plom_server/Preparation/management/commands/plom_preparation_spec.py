@@ -47,7 +47,7 @@ class Command(BaseCommand):
 
     def upload_spec(self, spec_file: str | Path) -> None:
         try:
-            SpecificationService.load_spec_from_toml_file(spec_file)
+            SpecificationService.install_spec_from_toml_file(spec_file)
         except (ValueError, PlomDependencyConflict) as e:
             # TODO: maybe other exceptions are possible?  See TODOs about
             # serializers.ValidationError in SpecificationService.py

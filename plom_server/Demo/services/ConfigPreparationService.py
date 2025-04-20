@@ -42,7 +42,7 @@ def create_specification(config: PlomServerConfig):
         else:
             spec_src = config.parent_dir / spec_path
         # mypy stumbling over Traverseable?
-        SpecificationService.load_spec_from_toml_file(spec_src)  # type: ignore[arg-type]
+        SpecificationService.install_spec_from_toml_file(spec_src)  # type: ignore[arg-type]
     except Exception as e:
         raise PlomConfigCreationError(e) from e
 

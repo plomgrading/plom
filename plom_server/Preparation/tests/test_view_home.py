@@ -66,7 +66,7 @@ class PreparationLandingTests(TestCase):
         """
         spec_path = resources.files(useful_files) / "testing_test_spec.toml"
         # mypy stumbling over Traverseable?
-        SpecificationService.load_spec_from_toml_file(spec_path)  # type: ignore[arg-type]
+        SpecificationService.install_spec_from_toml_file(spec_path)  # type: ignore[arg-type]
 
         landing = PreparationLandingView()
         context = landing.build_context()

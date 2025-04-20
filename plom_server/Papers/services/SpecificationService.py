@@ -71,7 +71,7 @@ def validate_spec_from_string(spec_toml_str: str) -> bool:
 
 
 @transaction.atomic
-def load_spec_from_dict(
+def install_spec_from_dict(
     spec_dict: dict[str, Any],
     *,
     public_code: str | None = None,
@@ -87,7 +87,7 @@ def load_spec_from_dict(
         public_code: optionally pass a manually specified public code (mainly for unit testing)
 
     Returns:
-        Specification: saved test spec instance.
+        The Specification that was just saved.
 
     Raises:
         PlomDependencyConflict: if the spec cannot be modified.
@@ -123,7 +123,7 @@ def load_spec_from_dict(
     return serializer.create(valid_data)
 
 
-def load_spec_from_toml_file(
+def install_spec_from_toml_file(
     pathname: str | Path,
     *,
     public_code: str | None = None,
@@ -145,10 +145,10 @@ def load_spec_from_toml_file(
              in the code below... maybe is_valid()?
     """
     data = load_toml_from_path(pathname)
-    return load_spec_from_dict(data, public_code=public_code)
+    return install_spec_from_dict(data, public_code=public_code)
 
 
-def load_spec_from_toml_string(tomlstr: str) -> Specification:
+def install_spec_from_toml_string(tomlstr: str) -> Specification:
     """Load a specification from a string in TOML format and save it to the database.
 
     Args:
@@ -162,7 +162,7 @@ def load_spec_from_toml_string(tomlstr: str) -> Specification:
              in the code below... maybe is_valid()?
     """
     data = load_toml_from_string(tomlstr)
-    return load_spec_from_dict(data)
+    return install_spec_from_dict(data)
 
 
 def is_there_a_spec() -> bool:

@@ -84,7 +84,7 @@ class SpecEditorView(ManagerRequiredView):
                 context["msg"] = "Specification passes validity checks."
                 context["success"] = True
             else:
-                SpecificationService.load_spec_from_toml_string(spec)
+                SpecificationService.install_spec_from_toml_string(spec)
                 # Spec saved successfully - redirect to the summary page.
                 return HttpResponseClientRedirect(reverse("spec_summary"))
         except PlomDependencyConflict as e:
