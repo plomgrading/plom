@@ -64,7 +64,8 @@ class SpecificationHandler(APIView):
             )
 
         spec_toml_string = request.data.get("spec_toml", "")
-        # TODO: likely will be handled by next...
+
+        # would be handled by next block but with a more verbose errors
         if not spec_toml_string:
             return _error_response(
                 "Given TOML string empty or missing. Assessment spec unchanged.",
