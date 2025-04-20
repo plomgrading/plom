@@ -1157,7 +1157,7 @@ class Messenger(BaseMessenger):
 
     def new_server_upload_spec(
         self, spec_toml_string: str, *, force_public_code: bool = False
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Upload an assessment spec to the server.
 
         Args:
