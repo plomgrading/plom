@@ -21,7 +21,7 @@ import segno
 
 from plom.create import paperdir
 from plom.spec_verifier import (
-    build_page_to_group_dict,
+    build_page_to_group_name_dict,
     build_page_to_version_dict,
     get_question_labels,
 )
@@ -71,14 +71,25 @@ def create_QR_codes(
     return qr_file
 
 
+def label_for_top_of_page(paper: str | int, group: str, page: int) -> str:
+    """Format the text label that appears at the top of each page.
+
+    If paper is a string, show it as-is, else zero-pad to 4 digits.
+    """
+    if not isinstance(paper, str):
+        paper = f"{paper:04}"
+    return f"Test {paper}  {group}  p. {page}"
+
+
 def _create_QRcoded_pdf(
     spec: dict[str, Any],
     papernum: int,
     qvmap_row: dict[int | str, int],
     tmpdir: pathlib.Path,
-    source_versions: list[pathlib.Path],
+    source_versions: dict[int, pathlib.Path],
     *,
     no_qr: bool = False,
+    paperstr: str | None = None,
 ) -> pymupdf.Document:
     """Creates a PDF document from versioned sources, stamps QR codes on the corners.
 
@@ -90,11 +101,14 @@ def _create_QRcoded_pdf(
         qvmap_row: version number for each question of this paper.
             and optionally the id page.  A row of the "qvmap".
         tmpdir (pathlib.Path): a place where we can make temporary files.
-        source_versions: list of paths for the source versions.
+        source_versions: dict of paths for the source versions, keyed
+            by version.  Some can be missing as long as they don't appear
+            in the ``qvmap_row``.
 
     Keyword Arguments:
         no_qr (bool): whether to paste in QR-codes (default: False)
             Note backward logic: False means yes to QR-codes.
+        paperstr: override the default string version of the paper number.
 
     Returns:
         PDF document, apparently open, which seems to me a scary
@@ -104,15 +118,12 @@ def _create_QRcoded_pdf(
         RuntimeError: one or more of your version<N>.pdf files not found.
     """
     # from spec get the mapping from page to group
-    page_to_group = build_page_to_group_dict(spec)
+    page_to_group_name = build_page_to_group_name_dict(spec)
     # also build page to version mapping from spec and the question-version dict
     page_to_version = build_page_to_version_dict(spec, qvmap_row)
 
-    assert len(source_versions) == spec["numberOfVersions"]
     # dict of version (int) -> source pdf (pymupdf.Document)
-    pdf_version = {}
-    for i, pth in enumerate(source_versions):
-        pdf_version[i + 1] = pymupdf.open(pth)
+    pdf_version = {v: pymupdf.open(f) for v, f in source_versions.items()}
 
     exam = pymupdf.open()
     # Insert the relevant page-versions into this pdf.
@@ -140,9 +151,6 @@ def _create_QRcoded_pdf(
     #     )
 
     for p in range(1, spec["numberOfPages"] + 1):
-        # name of the group to which page belongs
-        group = page_to_group[p]
-        text = f"Test {papernum:04} {group:5} p. {p}"
         odd: bool | None = (p - 1) % 2 == 0
         if no_qr:
             odd = None
@@ -151,7 +159,12 @@ def _create_QRcoded_pdf(
             ver = page_to_version[p]
             qr_files = create_QR_codes(papernum, p, ver, spec["publicCode"], tmpdir)
 
-        pdf_page_add_labels_QRs(exam[p - 1], spec["name"], text, qr_files, odd=odd)
+        label = label_for_top_of_page(
+            papernum if paperstr is None else paperstr,
+            page_to_group_name[p],
+            p,
+        )
+        pdf_page_add_labels_QRs(exam[p - 1], spec["name"], label, qr_files, odd=odd)
 
     for ver, pdf in pdf_version.items():
         pdf.close()
@@ -399,10 +412,11 @@ def make_PDF(
     no_qr: bool = False,
     fakepdf: bool = False,
     *,
-    where=None,
+    where: Path | None = None,
     source_versions_path: Path | str | None = None,
-    source_versions: list[Path] | None = None,
+    source_versions: dict[int, Path] | None = None,
     font_subsetting: bool | None = None,
+    paperstr: str | None = None,
 ) -> pathlib.Path | None:
     """Make a PDF of particular versions, with QR codes, and optionally name stamped.
 
@@ -435,8 +449,7 @@ def make_PDF(
             writing new code.
 
     Keyword Args:
-        where (pathlib.Path/None): where to save the files, with some
-            default if omitted.
+        where: where to save the files, with some default if omitted.
         source_versions: ordered list of locations of the source-version
             files.  Mutually-exclusive with ``source_versions_path``.
         source_versions_path: location of the source versions directory.
@@ -444,7 +457,7 @@ def make_PDF(
             are omitted.
         font_subsetting: if None/omitted, do a generally-sensible default
             of using subsetting only when *we* added non-ascii characters.
-            True forces subsetting and False disables is.
+            True forces subsetting and False disables it.
             We embed fonts for names and other overlay.  But if there are
             non-Latin characters (e.g., CJK) in names, then the embedded
             font is quite large (several megabytes).
@@ -453,6 +466,8 @@ def make_PDF(
             So we only do the subsetting if we're added non-ascii chars
             in any of the shortname, student name or question labels.
             Non-ascii is a stronger requirement than needed,
+        paperstr: override the default string version of the paper number.
+            Probably you don't need to do this, although Mocker does.
 
     Returns:
         pathlib.Path: the file that was just written, or None in the slightly
@@ -482,9 +497,9 @@ def make_PDF(
             _src = Path(source_versions_path)
         else:
             _src = Path("sourceVersions")
-        source_versions = [
-            _src / f"version{i + 1}.pdf" for i in range(spec["numberOfVersions"])
-        ]
+        source_versions = {
+            v: _src / f"version{v}.pdf" for v in range(1, spec["numberOfVersions"] + 1)
+        }
 
     # Build all relevant pngs in a temp directory
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -495,6 +510,7 @@ def make_PDF(
             Path(tmp_dir),
             source_versions,
             no_qr=no_qr,
+            paperstr=paperstr,
         )
 
     # If provided with student name and id, preprint on cover
@@ -530,7 +546,7 @@ def make_PDF(
 
 
 def create_invalid_QR_and_bar_codes(dur: pathlib.Path) -> list[pathlib.Path]:
-    """Creates qr-codes and barcodes to make sure we handle invalid codes.
+    """Creates qr-codes and barcodes to make sure we handle invalid codes, for testing.
 
     More precisely, it creates 4 png images.
         * an invalid plom qr-code (read by plom)

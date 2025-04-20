@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2022 Brennen Chiu
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023, 2025 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
 import base64
@@ -47,7 +47,7 @@ class PrenamingConfigView(ManagerRequiredView):
         version = 1
         try:
             prenaming_config = PrenameSettingService().get_prenaming_config()
-            png_bytes = ExamMockerService().mock_ID_page(
+            png_bytes = ExamMockerService.mock_ID_page(
                 version, prenaming_config["xcoord"], prenaming_config["ycoord"]
             )
             png_as_string = base64.b64encode(png_bytes).decode("ascii")

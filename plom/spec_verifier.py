@@ -165,7 +165,7 @@ def isContiguous(L: list[str | int]) -> bool:
     return True
 
 
-def build_page_to_group_dict(spec) -> dict[int, str]:
+def build_page_to_group_name_dict(spec) -> dict[int, str]:
     """Given a valid spec return a dict that translates each page to its containing group.
 
     Args:
@@ -191,9 +191,8 @@ def _build_page_to_versions_dict(
     spec, qvmap_row: dict[int | str, int]
 ) -> dict[int, list[int]]:
     page_to_versions = {spec["idPage"]: [qvmap_row.get("id", 1)]}
-    # dnm pages always from version 1
     for pg in spec["doNotMarkPages"]:
-        page_to_versions[pg] = [1]
+        page_to_versions[pg] = [qvmap_row.get("dnm", 1)]
     for q in spec["question"]:
         for pg in spec["question"][q]["pages"]:
             # Issue #3838: do this carefully in case there are multiple conflicting versions
@@ -568,7 +567,7 @@ class SpecVerifier:
         return d
 
     def group_label_from_page(self, pagenum):
-        return build_page_to_group_dict(self)[pagenum]
+        return build_page_to_group_name_dict(self)[pagenum]
 
     def verify(
         self, *, verbose: str | None | bool = False, _legacy: bool = True
