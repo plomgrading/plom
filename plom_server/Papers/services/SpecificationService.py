@@ -75,7 +75,7 @@ def validate_spec_from_string(spec_toml_str: str) -> bool:
 def install_spec_from_dict(
     spec_dict: dict[str, Any],
     *,
-    public_code: str | None = None,
+    force_public_code: bool = False,
 ) -> Specification:
     """Load a test spec from a dictionary and save to the database.
 
@@ -85,7 +85,8 @@ def install_spec_from_dict(
         spec_dict: the dictionary describing the assessment.
 
     Keyword Args:
-        public_code: optionally pass a manually specified public code (mainly for unit testing)
+        force_public_code: Usually you may not include "publicCode" in
+            the toml.  Pass True to allow overriding the default.
 
     Returns:
         The Specification that was just saved.
@@ -105,7 +106,7 @@ def install_spec_from_dict(
 
     # Note: the serializer makes these codes so it seems too late the ask it there
     existing_publicCode = spec_dict.get("publicCode", None)
-    if existing_publicCode:
+    if existing_publicCode and not force_public_code:
         # raise serializers.ValidationError(...)?
         raise ValueError("Not allowed to specify a publicCode directly")
 
@@ -123,16 +124,13 @@ def install_spec_from_dict(
 
     valid_data = serializer.validated_data
 
-    if public_code:
-        valid_data["publicCode"] = public_code
-
     return serializer.create(valid_data)
 
 
 def install_spec_from_toml_file(
     pathname: str | Path,
     *,
-    public_code: str | None = None,
+    force_public_code: bool = False,
 ) -> Specification:
     """Load a specification from a TOML file and save it to the database.
 
@@ -140,8 +138,8 @@ def install_spec_from_toml_file(
         pathname: what file to load from.
 
     Keyword Args:
-        public_code: specify our own public code, TODO: currently unused?
-            By default, one is chosen randomly.
+        force_public_code: Usually you may not include "publicCode" in
+            the toml.  Pass True to allow overriding the default.
 
     Raises:
         TOMLDecodeError: cannot read toml.
@@ -150,14 +148,22 @@ def install_spec_from_toml_file(
         serializers.ValidationError: see :func:`install_spec_from_dict`.
     """
     data = load_toml_from_path(pathname)
-    return install_spec_from_dict(data, public_code=public_code)
+    return install_spec_from_dict(data, force_public_code=force_public_code)
 
 
-def install_spec_from_toml_string(tomlstr: str) -> Specification:
+def install_spec_from_toml_string(
+    tomlstr: str,
+    *,
+    force_public_code: bool = False,
+) -> Specification:
     """Load a specification from a string in TOML format and save it to the database.
 
     Args:
         tomlstr: a string containing toml.
+
+    Keyword Args:
+        force_public_code: Usually you may not include "publicCode" in
+            the toml.  Pass True to allow overriding the default.
 
     Raises:
         TOMLDecodeError: cannot read toml.
@@ -166,7 +172,7 @@ def install_spec_from_toml_string(tomlstr: str) -> Specification:
         serializers.ValidationError: see :func:`install_spec_from_dict`.
     """
     data = load_toml_from_string(tomlstr)
-    return install_spec_from_dict(data)
+    return install_spec_from_dict(data, force_public_code=force_public_code)
 
 
 def is_there_a_spec() -> bool:

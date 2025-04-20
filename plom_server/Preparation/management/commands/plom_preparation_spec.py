@@ -46,9 +46,13 @@ class Command(BaseCommand):
         with open(fname, "w") as f:
             f.write(SpecificationService.get_the_spec_as_toml())
 
-    def upload_spec(self, spec_file: str | Path) -> None:
+    def upload_spec(
+        self, spec_file: str | Path, force_public_code: bool = False
+    ) -> None:
         try:
-            SpecificationService.install_spec_from_toml_file(spec_file)
+            SpecificationService.install_spec_from_toml_file(
+                spec_file, force_public_code=force_public_code
+            )
         except (
             PlomDependencyConflict,
             SpecificationService.TOMLDecodeError,
@@ -75,6 +79,16 @@ class Command(BaseCommand):
         )
         sub.add_parser("status", help="Show details of current specification")
         sp_U = sub.add_parser("upload", help="Upload a specification")
+        sp_U.add_argument(
+            "--force-public-code",
+            default=False,
+            action="store_true",
+            help="""
+                Allow specifying the "publicCode" which prevents uploading
+                papers from a different server.
+                Read the docs before using this!
+            """,
+        )
         sp_D = sub.add_parser("download", help="Download the current specification")
         sp_D.add_argument(
             "dest", type=str, nargs="?", help="Where to download specification toml"
@@ -89,7 +103,7 @@ class Command(BaseCommand):
         if options["command"] == "status":
             self.show_status()
         elif options["command"] == "upload":
-            self.upload_spec(options["test_spec.toml"])
+            self.upload_spec(options["test_spec.toml"], options["force_public_code"])
         elif options["command"] == "download":
             self.download_spec(options["dest"])
         elif options["command"] == "remove":
