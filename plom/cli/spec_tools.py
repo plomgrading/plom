@@ -6,7 +6,11 @@ from pathlib import Path
 
 from plom.cli import with_messenger
 
-from plom.plom_exceptions import PlomAuthenticationException, PlomConflict
+from plom.plom_exceptions import (
+    PlomAuthenticationException,
+    PlomConflict,
+    PlomNoPermission,
+)
 
 
 @with_messenger
@@ -14,8 +18,8 @@ def upload_spec(toml: Path, *, msgr) -> bool:
     """Upload a new spec from a local toml file.
 
     Args:
-        toml:  Path to a .toml file containing a valid assessment spec.
-        msgr:  An active Messenger object.
+        toml: Path to a .toml file containing a valid assessment spec.
+        msgr: An active Messenger object.
 
     Returns:
         True if the server's specification was updated, otherwise False.
@@ -24,9 +28,13 @@ def upload_spec(toml: Path, *, msgr) -> bool:
         tomlstring = f.read().decode("utf-8")
 
     try:
-        msgr.new_server_upload_spec(tomlstring)
-        check = msgr.get_spec()
-    except (PlomAuthenticationException, PlomConflict, ValueError) as e:
+        check = msgr.new_server_upload_spec(tomlstring)
+    except (
+        PlomAuthenticationException,
+        PlomConflict,
+        PlomNoPermission,
+        ValueError,
+    ) as e:
         print(f"Upload failed with exception: {e}")
         return False
 
