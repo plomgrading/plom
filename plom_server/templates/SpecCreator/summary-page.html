@@ -73,6 +73,12 @@
                         <dd class="col-sm-10">
                             {{ spec.totalMarks }}
                         </dd>
+                        {% if spec.allowSharedPages %}
+                            <dt class="col-sm-2">allowSharedPages</dt>
+                            <dd class="col-sm-10">
+                                {{ spec.allowSharedPages }}
+                            </dd>
+                        {% endif %}
                         <dt class="col-sm-2">Public Code</dt>
                         <dd class="col-sm-10">
                             {{ spec.publicCode }}
