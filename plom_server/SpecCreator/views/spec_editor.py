@@ -31,11 +31,8 @@ class SpecEditorView(ManagerRequiredView):
         context.update({"editable_toml": ""})
         context.update({"is_there_a_spec": SpecificationService.is_there_a_spec()})
         if SpecificationService.is_there_a_spec():
-            context.update(
-                {
-                    "editable_toml": SpecificationService.get_the_spec_as_toml(),
-                }
-            )
+            toml = SpecificationService.get_the_spec_as_toml(include_public_code=False)
+            context.update({"editable_toml": toml})
         return render(request, "SpecCreator/launch-page.html", context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
