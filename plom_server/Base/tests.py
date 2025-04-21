@@ -9,7 +9,7 @@ from functools import wraps
 from inspect import getfile
 from pathlib import Path
 
-from plom_server.Demo.services import (
+from plom_server.TestingSupport.services import (
     ConfigFileService,
     ConfigPreparationService,
     ConfigTaskService,

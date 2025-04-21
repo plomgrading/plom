@@ -128,7 +128,7 @@ INSTALLED_APPS = [
     "plom_server.Identify",
     "plom_server.Progress",
     "plom_server.Rubrics",
-    "plom_server.Demo",
+    "plom_server.TestingSupport",
     "plom_server.Finish",
     "plom_server.Contrib",
     "plom_server.TaskOrder",
