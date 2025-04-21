@@ -7,7 +7,6 @@ from pathlib import Path
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError, CommandParser
-from django.utils.text import slugify
 from rest_framework import serializers
 
 from plom.plom_exceptions import PlomDependencyConflict
@@ -32,12 +31,10 @@ class Command(BaseCommand):
         if not SpecificationService.is_there_a_spec():
             raise CommandError("No specification is present")
 
-        spec_dict = SpecificationService.get_the_spec()
-        self.stdout.write(
-            f"A valid assessment spec is present: shortname {spec_dict['name']}"
-        )
-        if dest is None:
-            fname = Path(slugify(spec_dict["name"]) + "_spec.toml")
+        shortname = SpecificationService.get_short_name_slug()
+        self.stdout.write(f'An assessment spec is present with shortname "{shortname}"')
+        if not dest:
+            fname = Path(shortname + "_spec.toml")
         else:
             fname = Path(dest)
         self.stdout.write(f"Writing assessment specification to {fname}")
