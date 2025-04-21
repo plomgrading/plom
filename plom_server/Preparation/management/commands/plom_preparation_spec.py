@@ -44,7 +44,7 @@ class Command(BaseCommand):
         if fname.exists():
             raise CommandError(f"File {fname} already present - not overwriting.")
         with open(fname, "w") as f:
-            f.write(SpecificationService.get_the_spec_as_toml())
+            f.write(SpecificationService.get_the_spec_as_toml(include_public_code=True))
 
     def upload_spec(self, spec_file: str | Path) -> None:
         try:
