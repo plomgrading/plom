@@ -25,7 +25,7 @@ class SpecficiationServiceMiscTests(TestCase):
                 4: {"pages": [5], "mark": 5, "select": "shuffle"},
             },
         }
-        s.store_validated_spec(spec_dict)
+        s._store_validated_spec(spec_dict)
         return super().setUp()
 
     def test_selection_methods_dict(self) -> None:
@@ -54,11 +54,15 @@ class SpecficiationServiceMiscTests(TestCase):
         t = s.get_the_spec_as_toml()
         assert isinstance(t, str)
 
-    def test_get_the_spec_as_toml_with_codes(self) -> None:
-        t = s.get_the_spec_as_toml_with_codes()
+    def test_get_the_spec_as_toml_with_code(self) -> None:
+        t = s.get_the_spec_as_toml(include_public_code=True)
         assert isinstance(t, str)
-        # TODO: should we be testing it has a code in it?, don't think it does...
         assert "publicCode" in t
+
+    def test_get_the_spec_as_toml_without_code(self) -> None:
+        t = s.get_the_spec_as_toml(include_public_code=False)
+        assert isinstance(t, str)
+        assert "publicCode" not in t
 
     def test_remove_spec(self) -> None:
         s.remove_spec()
@@ -86,10 +90,6 @@ class SpecficiationServiceMiscNoSpecTests(TestCase):
     def test_get_the_spec_as_toml(self) -> None:
         with self.assertRaises(ObjectDoesNotExist):
             s.get_the_spec_as_toml()
-
-    def test_get_the_spec_as_toml_with_codes(self) -> None:
-        with self.assertRaises(ObjectDoesNotExist):
-            s.get_the_spec_as_toml_with_codes()
 
     def test_remove_spec(self) -> None:
         with self.assertRaises(ObjectDoesNotExist):

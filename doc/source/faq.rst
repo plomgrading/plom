@@ -169,7 +169,7 @@ How can I clone a server so that it accepts scans intended for another server?
 You need three things from the existing server: the server specification `.toml` file,
 the question-version map `.csv`, and the classlist.
 Double-check that the `.toml` file contains the ``publicCode``,
-something like: ``publicCode = "123456"``.
+something like: ``publicCode = "123456"`` and write it down.
 
 .. caution::
     One should be very carefully doing this sort of thing: the
@@ -179,6 +179,7 @@ something like: ``publicCode = "123456"``.
 
 Use the saved `.toml` and the saved version map `.csv` to provision
 the new server.
+You'll need to manually enter the publicCode you noted above.
 If prenaming, ensure you use the same settings as before.
 Continue provisioning the server, creating the database etc.  No need
 to physically print the papers (as they should be identical!)  You
