@@ -233,8 +233,7 @@ def get_private_seed() -> str:
     return spec.privateSeed
 
 
-@transaction.atomic
-def store_validated_spec(validated_spec: dict) -> None:
+def _store_validated_spec(validated_spec: dict) -> None:
     """Takes the validated test specification and stores it in the db.
 
     Note this is used in unit testing but otherwise has no callers as

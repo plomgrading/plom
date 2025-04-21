@@ -25,7 +25,7 @@ class SpecficiationServiceMiscTests(TestCase):
                 4: {"pages": [5], "mark": 5, "select": "shuffle"},
             },
         }
-        s.store_validated_spec(spec_dict)
+        s._store_validated_spec(spec_dict)
         return super().setUp()
 
     def test_selection_methods_dict(self) -> None:
