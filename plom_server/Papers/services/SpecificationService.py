@@ -233,21 +233,6 @@ def get_private_seed() -> str:
     return spec.privateSeed
 
 
-def get_the_spec_as_toml_with_codes() -> str:
-    """Return the test-specification from the database.
-
-    Exceptions:
-        ObjectDoesNotExist: no exam specification yet.
-
-    .. warning::
-        Note this includes both the public code and the private
-        seed.  If you are calling this, consider carefully whether
-        you need the private seed.  At the time of writing, no one
-        is calling this.
-    """
-    return get_the_spec_as_toml(include_public_code=True, _include_private_seed=True)
-
-
 @transaction.atomic
 def store_validated_spec(validated_spec: dict) -> None:
     """Takes the validated test specification and stores it in the db.
