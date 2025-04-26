@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse, Http404
@@ -25,12 +26,12 @@ class ReassemblePapersView(ManagerRequiredView):
         reas = ReassembleService()
         all_paper_status = reas.get_all_paper_status_for_reassembly()
         # Compute some counts required for the page
-        n_papers = sum([1 for x in all_paper_status if x["scanned"]])
+        n_papers = sum([1 for x in all_paper_status if x["partially_scanned"]])
         n_not_ready = sum(
             [
                 1
                 for x in all_paper_status
-                if x["scanned"] and not (x["identified"] and x["marked"])
+                if x["partially_scanned"] and not (x["identified"] and x["marked"])
             ]
         )
         n_ready = sum(
@@ -57,10 +58,12 @@ class ReassemblePapersView(ManagerRequiredView):
             [1 for x in all_paper_status if x["reassembled_status"] == "Complete"]
         )
         min_paper_number = min(
-            [X["paper_num"] for X in all_paper_status if X["scanned"]], default=None
+            [X["paper_num"] for X in all_paper_status if X["partially_scanned"]],
+            default=None,
         )
         max_paper_number = max(
-            [X["paper_num"] for X in all_paper_status if X["scanned"]], default=None
+            [X["paper_num"] for X in all_paper_status if X["partially_scanned"]],
+            default=None,
         )
 
         context.update(
