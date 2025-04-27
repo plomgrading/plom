@@ -188,10 +188,6 @@
                                         <i class="bi bi-exclamation-diamond-fill text-danger"></i>
                                     {% elif row.reassembled_status == "Complete" %}
                                         <i class="bi bi-check-circle text-success"></i>
-                                    {% elif not row.scanned %}
-                                        <a href="{% url 'scan_list_incomplete' %}">
-                                            <i class="bi bi-exclamation-diamond-fill text-success">pages missing</i>
-                                        </a>
                                     {% else %}
                                         <i class="bi bi-dot"></i>
                                     {% endif %}
