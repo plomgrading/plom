@@ -14,6 +14,9 @@ from django_htmx.http import HttpResponseClientRedirect
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Papers.services import SpecificationService
 from ..services import ReassembleService
+from plom.misc_utils import format_int_list_with_runs
+
+from plom_server.Scan.services import ManageScanService
 
 
 class ReassemblePapersView(ManagerRequiredView):
@@ -26,12 +29,12 @@ class ReassemblePapersView(ManagerRequiredView):
         reas = ReassembleService()
         all_paper_status = reas.get_all_paper_status_for_reassembly()
         # Compute some counts required for the page
-        n_papers = sum([1 for x in all_paper_status if x["partially_scanned"]])
+        n_papers = sum([1 for x in all_paper_status if x["used"]])
         n_not_ready = sum(
             [
                 1
                 for x in all_paper_status
-                if x["partially_scanned"] and not (x["identified"] and x["marked"])
+                if x["used"] and not (x["identified"] and x["marked"])
             ]
         )
         n_ready = sum(
@@ -58,17 +61,25 @@ class ReassemblePapersView(ManagerRequiredView):
             [1 for x in all_paper_status if x["reassembled_status"] == "Complete"]
         )
         min_paper_number = min(
-            [X["paper_num"] for X in all_paper_status if X["partially_scanned"]],
+            [X["paper_num"] for X in all_paper_status if X["used"]],
             default=None,
         )
         max_paper_number = max(
-            [X["paper_num"] for X in all_paper_status if X["partially_scanned"]],
+            [X["paper_num"] for X in all_paper_status if X["used"]],
             default=None,
+        )
+        partially_scanned_papers_list = list(
+            ManageScanService.get_all_incomplete_papers().keys()
+        )
+        pp_partially_scanned_papers_list = format_int_list_with_runs(
+            partially_scanned_papers_list
         )
 
         context.update(
             {
                 "papers": all_paper_status,
+                "partially_scanned_papers_list": partially_scanned_papers_list,
+                "pp_partially_scanned_papers_list": pp_partially_scanned_papers_list,
                 "n_papers": n_papers,
                 "n_not_ready": n_not_ready,
                 "n_ready": n_ready,

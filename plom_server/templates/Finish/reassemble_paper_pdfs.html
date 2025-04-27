@@ -80,6 +80,14 @@
                         <i class="bi bi-exclamation-diamond-fill text-danger"></i> {{ n_errors }} errors in reassembly
                     </li>
                 {% endif %}
+                {% if pp_partially_scanned_papers_list %}
+                    <li>
+                        <i class="bi bi-question-diamond-fill text-warning"></i>
+                        paper{{ partially_scanned_papers_list|length|pluralize }} {{ pp_partially_scanned_papers_list }}
+                        may be missing page[s]
+                        (see <a href="{% url 'scan_list_incomplete' %}">'incomplete' papers</a>)
+                    </li>
+                {% endif %}
             </ul>
             {% if n_papers == 0 %}
                 <a href="{% url 'reassemble_all_pdfs' %}"
@@ -156,7 +164,7 @@
                     <th scope="col">Action</th>
                 </tr>
                 {% for row in papers %}
-                    {% if row.partially_scanned %}
+                    {% if row.used %}
                         <tr style="{% if row.obsolete %} text-decoration: line-through;
                                    {% endif %}">
                             <td>{{ row.paper_num }}</td>

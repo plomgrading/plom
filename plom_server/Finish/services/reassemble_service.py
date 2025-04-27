@@ -293,7 +293,7 @@ class ReassembleService:
         for paper in all_papers:
             status[paper.paper_number] = {
                 "paper_num": int(paper.paper_number),
-                "partially_scanned": False,
+                "used": False,
                 "scanned": False,
                 "identified": False,
                 "marked": False,
@@ -310,7 +310,7 @@ class ReassembleService:
         number_of_questions = SpecificationService.get_n_questions()
 
         for pn in ManageScanService.get_all_used_papers():
-            status[pn]["partially_scanned"] = True
+            status[pn]["used"] = True
         for pn in ManageScanService.get_all_complete_papers():
             status[pn]["scanned"] = True
 
