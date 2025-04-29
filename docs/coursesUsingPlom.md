@@ -309,7 +309,17 @@ Approx: 12100 student in at least 28 courses in at least four depts.
 | MATH307              | Midterm(x2)+Final                                 | 230                                         |                                                                            |
 | MATH317              | Midterm(x2)+Final                                 | 160                                         |                                                                            |
 | MATH340              | Final                                             | 155                                         |                                                                            |
+| BIOL112 | Midterm+Final | 775 | |
+| BIOL121 | Midterm+Final | 675 | |
+| BIOL155 | Midterm,Final, tutorial final | 357 | |
+| BIOL201 | Midterm+Final | 216 | |
+| BIOL204 | Lab-midterm+final, midterm+final | 205 | |
+| BIOL260 | Midterm(x2)+Final | 375 | |
+| BIOL331 | Midterm+Final | 72 | |
+| BIOL363 | Final | 65 | |
+| BIOL371 | Midterm+Final | 87 | |
+| BIOL372 | Midterm+Final | 156 | |
 
-TODO: BIOL and other dept's
+TODO: MICB + PHAS (+other depts? )
 
-Approx: 7030 students across 14 courses
+Approx: 10k students across 25 courses
