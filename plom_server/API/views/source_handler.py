@@ -67,7 +67,7 @@ class SourceDetail(APIView):
         except IndexError:
             N = len(LOS)
             return _error_response(
-                f"Spec allows versions 1,...,{N}, but you specified {version}.",
+                f"Spec allows versions 1,...,{N}, but you referred to number {version}.",
                 status.HTTP_404_NOT_FOUND,
             )
 

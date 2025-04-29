@@ -38,6 +38,7 @@ from plom.cli import (
     list_bundles,
     start_messenger,
     upload_bundle,
+    upload_source,
     upload_spec,
     reset_task,
 )
@@ -128,6 +129,17 @@ def get_parser() -> argparse.ArgumentParser:
     )
     _add_server_args(s)
     s.add_argument("bundle_id", type=int)
+
+    s = sub.add_parser(
+        "upload-source",
+        help="Upload an assessment source PDF",
+        description="Upload a .pdf file containing a valid assessment source version.",
+    )
+    _add_server_args(s)
+    s.add_argument(
+        "source_pdf", help="a .pdf file containing a valid assessment source."
+    )
+    s.add_argument("--version", type=int, help="Number of this source version.")
 
     s = sub.add_parser(
         "upload-spec",
@@ -306,6 +318,21 @@ def main():
         print(
             f"wrote reassembled paper number {args.papernum} to "
             f'file {r["filename"]} [{r["content-length"]} bytes]'
+        )
+
+    elif args.command == "upload-source":
+        try:
+            v = args.version
+        except Exception as e:
+            print(
+                f"Trying to upload source, but no version is available. Exception {e}."
+            )
+            msgr.closeUser()
+            msgr.stop()
+            return
+
+        r = upload_source(
+            v, Path(args.source_pdf), msgr=(args.server, args.username, args.password)
         )
 
     elif args.command == "upload-spec":
