@@ -30,6 +30,7 @@ class SourceOverview(APIView):
             (200) a list of dicts, with one entry for each source
                   sources declared in the spec. Each dict comes
                   straight from SourceService. Look there for details.
+                  ("version": int, "uploaded": bool, "hash": str)
             (404) There are no sources, and the number of sources
                   cannot be determined ... probably because there is
                   no spec.
@@ -52,7 +53,8 @@ class SourceDetail(APIView):
 
         Returns:
             (200) Here is the info.
-            (404) Info not found. (Various reasons could apply.)
+            (400) Requested source number is incompatible with the spec.
+            (404) Info not found. (Maybe no spec exists, maybe some anomaly.)
         """
         if not SpecificationService.is_there_a_spec():
             return _error_response(
@@ -68,7 +70,7 @@ class SourceDetail(APIView):
             N = len(LOS)
             return _error_response(
                 f"Spec allows versions 1,...,{N}, but you referred to number {version}.",
-                status.HTTP_404_NOT_FOUND,
+                status.HTTP_400_BAD_REQUEST,
             )
 
         if detail["version"] == version:
@@ -89,26 +91,33 @@ class SourceDetail(APIView):
 
         Returns:
             (200) Dict describing the freshly-uploaded source, just like for GET
-            (403) User does not belong to "manager" group, or there was no PDF file provided
+            (400) No PDF file provided (empty files are OK), or version number out of range
+            (401) User does not belong to "manager" group
+            (404) Not used directly here, but could bubble up from a call to get(), above
             (409) Changing the source is not allowed. Typically because the server is in an advanced state.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list:
             return _error_response(
                 'Only users in the "manager" group can upload an assessment source.',
-                status.HTTP_403_FORBIDDEN,
+                status.HTTP_401_FORBIDDEN,
             )
 
         if "source_pdf" not in request.FILES:
             return _error_response(
-                "No source PDF supplied.", status.HTTP_403_BAD_REQUEST
+                "No source PDF supplied.", status.HTTP_400_BAD_REQUEST
             )
+
+        checkthis = self.get(request, version)
+        if checkthis.status_code != 200:
+            return _error_response(checkthis.reason_phrase, checkthis.status_code)
 
         source_pdf = request.FILES["source_pdf"]
         if source_pdf.size == 0:
             SourceService.delete_source_pdf(version)
         else:
             try:
+                SourceService.delete_source_pdf(version)
                 success, message = SourceService.take_source_from_upload(
                     version, request.FILES["source_pdf"]
                 )

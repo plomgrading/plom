@@ -3,10 +3,16 @@
 # Copyright (C) 2025 Philip D. Loewen
 
 from pathlib import Path
+import traceback
 
 from plom.cli import with_messenger
 
-from plom.plom_exceptions import PlomAuthenticationException, PlomConflict
+from plom.plom_exceptions import (
+    PlomAuthenticationException,
+    PlomDependencyConflict,
+    PlomSeriousException,
+    PlomVersionMismatchException,
+)
 
 
 @with_messenger
@@ -23,24 +29,17 @@ def upload_source(version, source_pdf: Path, *, msgr) -> bool:
     """
     with open(source_pdf, "rb") as f:
         try:
-            r = msgr.post_auth(f"/api/v0/source/{version:d}", files={"source_pdf": f})
+            returndict = msgr.new_server_upload_source(version, f)
         except (
             PlomAuthenticationException,
-            PlomConflict,
-            ValueError,
-        ) as e:  # TODO - check these
+            PlomDependencyConflict,
+            PlomVersionMismatchException,
+            PlomSeriousException,
+        ) as e:
             print(f"Upload failed with exception: {e}")
+            traceback.print_exc()
             return False
 
-    #########
-    # Handle errors here temporarily -- ideas will move to messenger on next iteration
-    if r.status_code != 200:
-        print(f"Something went wrong. HTTP {r.status_code:d}, with reason below:")
-        print(r.reason)
-        return False
-    #########
-
-    returndict = r.json()
     returnversion = returndict["version"]
     if returnversion != version:
         print("Massive catastrophe.")
@@ -49,7 +48,7 @@ def upload_source(version, source_pdf: Path, *, msgr) -> bool:
     fsize = source_pdf.stat().st_size
     if fsize == 0:
         if not returndict["uploaded"]:
-            print(f"Source version {version} successfully deleted.")
+            print(f"Source version {version} deleted.")
             return True
         else:
             print(
@@ -58,6 +57,6 @@ def upload_source(version, source_pdf: Path, *, msgr) -> bool:
             return False
     else:
         if returndict["uploaded"]:
-            print(f"Source version {version} successfully uploaded.")
+            print(f"Source version {version} uploaded.")
             print(f"Uploaded hash is {returndict['hash']}.")
             return True

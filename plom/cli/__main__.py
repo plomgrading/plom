@@ -132,18 +132,22 @@ def get_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser(
         "upload-source",
-        help="Upload an assessment source PDF",
-        description="Upload a .pdf file containing a valid assessment source version.",
+        help="Upload an assessment source PDF.",
+        description="Upload a .pdf file containing a valid assessment source version, "
+        "replacing the existing source, if any.",
     )
     _add_server_args(s)
     s.add_argument(
-        "source_pdf", help="a .pdf file containing a valid assessment source."
+        "source_pdf",
+        help="A .pdf file containing a valid assessment source. 0-byte file deletes current source.",
     )
-    s.add_argument("--version", type=int, help="Number of this source version.")
+    s.add_argument(
+        "-v", "--version", type=int, help="Number of this source version (default 1)."
+    )
 
     s = sub.add_parser(
         "upload-spec",
-        help="Upload assessment spec",
+        help="Upload an assessment spec.",
         description="Upload a .toml file containing a valid exam spec.",
     )
     s.add_argument("toml", help="a .toml file containing a valid exam spec.")
@@ -321,18 +325,13 @@ def main():
         )
 
     elif args.command == "upload-source":
-        try:
-            v = args.version
-        except Exception as e:
-            print(
-                f"Trying to upload source, but no version is available. Exception {e}."
-            )
-            msgr.closeUser()
-            msgr.stop()
-            return
+        ver = args.version
+        if ver is None:
+            print("No version specified, using default 1.")
+            ver = 1
 
         r = upload_source(
-            v, Path(args.source_pdf), msgr=(args.server, args.username, args.password)
+            ver, Path(args.source_pdf), msgr=(args.server, args.username, args.password)
         )
 
     elif args.command == "upload-spec":
