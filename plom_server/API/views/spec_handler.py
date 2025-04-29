@@ -54,7 +54,8 @@ class SpecificationHandler(APIView):
             (200) JsonResponse: the freshly-installed new spec.
             (400) TOML didn't parse correctly.
             (403) User does not belong to "manager" group.
-            (409) Changing the spec is not allowed. Typically because the server is in an advanced state.
+            (409) Changing the spec is not allowed. Typically because
+                the server is in an advanced state.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list:
@@ -80,10 +81,7 @@ class SpecificationHandler(APIView):
                 force_public_code=force_public_code,
             )
         except PlomDependencyConflict as e:
-            return _error_response(
-                "Modifying the assessment spec is not allowed. Details:\n" + f"{e}",
-                status.HTTP_409_CONFLICT,
-            )
+            return _error_response(e, status.HTTP_409_CONFLICT)
         except (SpecificationService.TOMLDecodeError, ValueError) as e:
             return _error_response(
                 f"Cannot modify specification - {e}",
