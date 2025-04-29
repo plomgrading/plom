@@ -60,3 +60,5 @@ def upload_source(version, source_pdf: Path, *, msgr) -> bool:
             print(f"Source version {version} uploaded.")
             print(f"Uploaded hash is {returndict['hash']}.")
             return True
+
+    return
