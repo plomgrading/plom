@@ -35,6 +35,8 @@ from .views import (
     REPidentified,
     REPcompletionStatus,
     REPcoverPageInfo,
+    SourceOverview,
+    SourceDetail,
     SpecificationHandler,
 )
 
@@ -112,6 +114,16 @@ urlpatterns = [
         #        An old URI. Just aim it at the same endpoint as above.
         SpecificationHandler.as_view(),
         name="api_spec_handler",
+    ),
+    path(
+        "api/v0/source",
+        SourceOverview.as_view(),
+        name="api_source_overview",
+    ),
+    path(
+        "api/v0/source/<int:version>",
+        SourceDetail.as_view(),
+        name="api_source_detail",
     ),
 ]
 
