@@ -10,7 +10,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024-2025 Aden Chan
 # Copyright (C) 2024 Bryan Tanady
-# Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024-2025 Aidan Murphy
 
 import ast
 import csv
@@ -71,7 +71,9 @@ def _validate_versions(vers: None | list | str) -> None:
             )
 
 
-def _validate_parameters(parameters: None | list) -> None:
+def _validate_parameters(
+    parameters: None | list, num_versions: None | int = None
+) -> None:
     if not parameters:
         return
 
@@ -100,7 +102,11 @@ def _validate_parameters(parameters: None | list) -> None:
                 f' got type "{type(values)}"; row: "{row}"'
             )
 
-        # TODO: could also assert len(values) matches number of versions
+        if num_versions and not len(values) == num_versions:
+            raise serializers.ValidationError(
+                f'Invalid row in "parameters": must provide {num_versions}'
+                f' substitutions, only {len(values)} provided; row: "{row}"'
+            )
 
         for v in values:
             if not isinstance(v, str):
@@ -335,7 +341,9 @@ class RubricService:
         # TODO: more validation of JSONFields that the model/form/serializer should
         # be doing (see `clean_versions` commented out in Rubrics/models.py)
         _validate_versions(data.get("versions"))
-        _validate_parameters(data.get("parameters"))
+        _validate_parameters(
+            data.get("parameters"), SpecificationService.get_n_versions()
+        )
 
         data["latest"] = True
         if _bypass_serializer:
@@ -524,7 +532,9 @@ class RubricService:
             )
 
         _validate_versions(new_rubric_data.get("versions"))
-        _validate_parameters(new_rubric_data.get("parameters"))
+        _validate_parameters(
+            new_rubric_data.get("parameters"), SpecificationService.get_n_versions()
+        )
 
         serializer = RubricSerializer(data=new_rubric_data)
 

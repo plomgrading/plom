@@ -6,6 +6,7 @@
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2025 Andrew Rechnitzer
+# Copyright (C) 2025 Aidan Murphy
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -16,12 +17,29 @@ from rest_framework import serializers
 from plom.plom_exceptions import PlomConflict
 from plom_server.Mark.models.annotations import Annotation
 from plom_server.Mark.models.tasks import MarkingTask
-from plom_server.Papers.models import Paper, SpecQuestion
+from plom_server.Papers.models import Paper, SpecQuestion, Specification
 from ..models import Rubric
 from ..services import RubricService
 
 # helper fcn private to that service, but useful here
 from ..services.rubric_service import _Rubric_to_dict
+
+
+def bake_spec():
+    """Helper for rubric creation tests."""
+    return baker.make(
+        Specification,
+        name="demo_test",
+        longName="Demonstration test",
+        numberOfVersions=2,
+        numberOfPages=20,
+        totalMarks=95,
+        privateSeed="privateSeed",
+        publicCode="123456",
+        idPage=1,
+        doNotMarkPages=[],
+        allowSharedPages=False,
+    )
 
 
 class RubricServiceTests_exceptions(TestCase):
@@ -30,6 +48,7 @@ class RubricServiceTests_exceptions(TestCase):
     def setUp(self) -> None:
         baker.make(User, username="Liam")
         baker.make(SpecQuestion, question_index=1, mark=5)
+        bake_spec()
 
     def test_no_user_ValueError(self) -> None:
         """Test ValueError in RubricService.create_rubric().
@@ -144,6 +163,7 @@ class RubricServiceTests_extra_validation(TestCase):
     def setUp(self) -> None:
         baker.make(User, username="Liam")
         baker.make(SpecQuestion, question_index=1, mark=5)
+        bake_spec()
 
     def test_create_rubric_invalid_value(self) -> None:
         rub = {
@@ -188,6 +208,7 @@ class RubricServiceTests_extra_validation(TestCase):
     def test_create_rubric_invalid_parameters(self) -> None:
         for bad_params in (
             "[]",
+            [["{param1}", ["bar"]]],
             [["foo", "bar", "baz"]],
             [["foo", "bar"]],
             [["foo", [1, 2]]],
@@ -214,6 +235,7 @@ class RubricServiceTests(TestCase):
         baker.make(SpecQuestion, question_index=1, mark=5)
         baker.make(SpecQuestion, question_index=2, mark=5)
         baker.make(SpecQuestion, question_index=3, mark=5)
+        bake_spec()
 
         self.neutral_rubric = baker.make(
             Rubric,
