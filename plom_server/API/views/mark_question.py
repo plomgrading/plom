@@ -8,7 +8,6 @@
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers, status
-from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
@@ -30,7 +29,6 @@ class MarkTaskNextAvailable(APIView):
     """Get the next currently-available marking task."""
 
     # GET: /MK/tasks/available
-    @action(detail=False, methods=["get"], url_path="available")
     def get(self, request: Request) -> Response:
         """Get the next currently-available marking task.
 
@@ -133,8 +131,7 @@ class MarkTask(APIView):
             return Response([question_data, tags, task.pk])
 
     # POST: /MK/tasks/{code}
-    @action(detail=False, methods=["post"], url_path="(?P<code>q.+)")
-    def mark_task(self, request: Request, *, code: str) -> Response:
+    def post(self, request: Request, *, code: str) -> Response:
         """Accept a marker's grade and annotation for a task.
 
         Returns:
