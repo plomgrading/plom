@@ -50,6 +50,9 @@ rubric as they see fit.
 The default is somewhere in the middle; anyone can create their own
 rubrics, and some users can modify all rubrics.
 
+As a manager, you can change these settings under "Rubrics" in the
+web interface.
+
 
 Rubric revisions
 ^^^^^^^^^^^^^^^^
