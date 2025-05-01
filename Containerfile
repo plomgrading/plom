@@ -34,8 +34,7 @@ WORKDIR /src
 RUN pip install -U --no-cache-dir pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Because source still includes the PyQt client, we need minimal deps for Qt.
-# For example, to install PyQt and run tests
+# Minimal deps for Qt, e.g., to support installing client inside container for testing
 RUN apt-get -y update && \
     apt-get --no-install-recommends -y install libglib2.0-0 libgl1-mesa-glx \
     libegl1 libxkbcommon0 libdbus-1-3 && \
