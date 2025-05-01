@@ -3,8 +3,8 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
 
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter, SimpleRouter
+from django.urls import include, path, re_path
+from rest_framework.routers import DefaultRouter
 
 from .views.experimental import (
     RubricViewSet,
@@ -23,7 +23,8 @@ from .routes import (
 )
 
 from .views import (
-    QuestionMarkingViewSet,
+    MarkTaskNextAvailable,
+    MarkTask,
     ReassignTask,
     ResetTask,
     # TODO: these are possibly temporary
@@ -122,12 +123,12 @@ experimental_router.register(
     "marking-tasks", MarkingTaskViewSet, basename="marking-tasks"
 )
 
-marking_router = SimpleRouter(trailing_slash=False)
-marking_router.register("tasks", QuestionMarkingViewSet, basename="tasks")
-
 urlpatterns += [
     path("experimental/", include(experimental_router.urls)),
-    path("MK/", include(marking_router.urls)),
+    path(
+        "MK/tasks/available", MarkTaskNextAvailable.as_view(), name="api_mark_task_next"
+    ),
+    re_path("MK/tasks/(?P<code>q.+)", MarkTask.as_view(), name="api_mark_task"),
     path(
         "api/v0/tasks/<int:papernum>/<int:qidx>/reassign/<str:new_username>",
         ReassignTask.as_view(),
