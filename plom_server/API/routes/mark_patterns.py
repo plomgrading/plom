@@ -8,7 +8,6 @@
 from django.urls import path, re_path
 
 from ..views import (
-    GetTasks,
     MarkingProgress,
     MgetOneImage,
     MgetAllRubrics,
@@ -44,12 +43,6 @@ class MarkURLPatterns:
         ]
 
         mark_patterns += progress
-
-        # Task management
-        tasks = [
-            path("tasks/all", GetTasks.as_view(), name="api_MK_get_tasks_all"),
-        ]
-        mark_patterns += tasks
 
         # Getting page-images from the server
         images = [
