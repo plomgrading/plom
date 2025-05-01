@@ -39,13 +39,13 @@ gunicorn==23.0.0
 imutils==0.5.4
 matplotlib==3.10.1
 model-bakery==1.20.4
-numpy==2.2.4
+numpy==2.2.5
 opencv-python-headless==4.11.0.86
 packaging==24.2
 pandas==2.2.3
 passlib==1.7.4
 Pillow==11.1.0
-psycopg[binary]==3.2.6
+psycopg[binary]==3.2.7
 pydyf==0.11.0
 pymupdf==1.25.4
 PyMySQL==1.1.1
