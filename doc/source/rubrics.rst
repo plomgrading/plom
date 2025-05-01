@@ -76,6 +76,19 @@ you want to track changes.
    it easier in the future.
 
 
+Rubric Rendering
+----------------
+
+By default, the text field of a rubric is plain text.
+You can use TeX commands, e.g., rendering math using ``$\sin \theta$``:
+simply prepending your text with ``tex:``.
+
+The client will try to remind you of this, if it notices multiple
+dollar signs in your text.
+
+We hope to offer partial Markdown support in the future.
+
+
 Rubric Scope
 ------------
 
