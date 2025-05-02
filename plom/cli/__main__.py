@@ -39,6 +39,7 @@ from plom.cli import (
     start_messenger,
     upload_bundle,
     upload_source,
+    delete_source,
     upload_spec,
     reset_task,
 )
@@ -133,16 +134,28 @@ def get_parser() -> argparse.ArgumentParser:
     s = sub.add_parser(
         "upload-source",
         help="Upload an assessment source PDF.",
-        description="Upload a .pdf file containing a valid assessment source version, "
-        "replacing the existing source, if any.",
+        description="""
+            Upload a PDF file containing a valid assessment source version,
+            replacing the existing source, if any.
+        """,
     )
     _add_server_args(s)
     s.add_argument(
         "source_pdf",
-        help="A .pdf file containing a valid assessment source. 0-byte file deletes current source.",
+        help="A PDF file containing a valid assessment source.",
     )
     s.add_argument(
-        "-v", "--version", type=int, help="Number of this source version (default 1)."
+        "-v", type=int, dest="version", help="Source version number (default 1)."
+    )
+
+    s = sub.add_parser(
+        "delete-source",
+        help="Delete an assessment source PDF.",
+        description="Remove the indicated assessment source.",
+    )
+    _add_server_args(s)
+    s.add_argument(
+        "-v", type=int, dest="version", help="Source version number (default 1)."
     )
 
     s = sub.add_parser(
@@ -333,6 +346,13 @@ def main():
         r = upload_source(
             ver, Path(args.source_pdf), msgr=(args.server, args.username, args.password)
         )
+
+    elif args.command == "delete-source":
+        ver = args.version
+        if ver is None:
+            print("No version specified, using default 1.")
+            ver = 1
+        r = delete_source(ver, msgr=(args.server, args.username, args.password))
 
     elif args.command == "upload-spec":
         r = upload_spec(

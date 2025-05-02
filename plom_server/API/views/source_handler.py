@@ -5,6 +5,9 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
 
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import FileResponse
+
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
@@ -27,10 +30,10 @@ class SourceOverview(APIView):
         """Get overview info about assessment sources.
 
         Returns:
-            (200) a list of dicts, with one entry for each source
-                  sources declared in the spec. Each dict comes
-                  straight from SourceService. Look there for details.
-                  ("version": int, "uploaded": bool, "hash": str)
+            (200) a list of dicts, with one entry for each source.
+                  Number of sources is declared in the spec.
+                  Each dict comes straight from SourceService, typically
+                  {"version": int, "uploaded": bool, "hash": str}
             (404) There are no sources, and the number of sources
                   cannot be determined ... probably because there is
                   no spec.
@@ -49,39 +52,27 @@ class SourceDetail(APIView):
 
     # GET /api/v0/source/<int:ver>
     def get(self, request: Request, version: int) -> Response:
-        """Get detailed info about a numbered assessment source.
+        """Get a copy of the numbered assessment source PDF.
 
         Returns:
-            (200) Here is the info.
-            (400) Requested source number is incompatible with the spec.
-            (404) Info not found. (Maybe no spec exists, maybe some anomaly.)
+            (200) Here is the file you requested.
+            (404) File not found.
         """
-        if not SpecificationService.is_there_a_spec():
-            return _error_response(
-                "Server does not even have a spec.", status.HTTP_404_NOT_FOUND
-            )
+        spec = SpecificationService.get_the_spec()
+        name = "".join(char for char in spec["name"] if char.isalnum())
+        if version is not None:
+            try:
+                return FileResponse(
+                    SourceService._get_source_file(version),
+                    as_attachment=True,
+                    filename=f"{name.lower()}_source{version}.pdf",
+                )
+            except ObjectDoesNotExist:
+                return _error_response(
+                    f"PDF for source {version} not found.", status.HTTP_404_NOT_FOUND
+                )
 
-        # Exploit redundancy in list of source dicts to do extra error-checking.
-        LOS = SourceService.get_list_of_sources()
-        k = version - 1
-        try:
-            detail = LOS[k]
-        except IndexError:
-            N = len(LOS)
-            return _error_response(
-                f"Spec allows versions 1,...,{N}, but you referred to number {version}.",
-                status.HTTP_400_BAD_REQUEST,
-            )
-
-        if detail["version"] == version:
-            return Response(detail)
-
-        return _error_response(
-            f"Anomaly: {detail['version']:d} found in position {version:d}.",
-            status.HTTP_404_NOT_FOUND,
-        )
-
-    # POST /api/v0/source
+    # POST /api/v0/source/<int:ver>
     def post(self, request: Request, version: int) -> Response:
         """Create, replace, or delete a source version.
 
@@ -93,7 +84,6 @@ class SourceDetail(APIView):
             (200) Dict describing the freshly-uploaded source, just like for GET
             (400) No PDF file provided (empty files are OK), or version number out of range
             (401) User does not belong to "manager" group
-            (404) Not used directly here, but could bubble up from a call to get(), above
             (409) Changing the source is not allowed. Typically because the server is in an advanced state.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
@@ -108,12 +98,15 @@ class SourceDetail(APIView):
                 "No source PDF supplied.", status.HTTP_400_BAD_REQUEST
             )
 
-        checkthis = self.get(request, version)
-        if checkthis.status_code != 200:
-            return _error_response(checkthis.reason_phrase, checkthis.status_code)
+        ListOfSources = SourceService.get_list_of_sources()
+        if version < 0 or version > len(ListOfSources):
+            return _error_response(
+                f"Source version number {version} is invalid.",
+                status.HTTP_409_CONFLICT,
+            )
 
         source_pdf = request.FILES["source_pdf"]
-        if source_pdf.size == 0:
+        if source_pdf is None or source_pdf.size == 0:
             SourceService.delete_source_pdf(version)
         else:
             try:
@@ -127,4 +120,26 @@ class SourceDetail(APIView):
                     status.HTTP_409_CONFLICT,
                 )
 
-        return self.get(request, version)
+        ListOfSources = SourceService.get_list_of_sources()
+        sourcenotes = ListOfSources[version - 1]
+        if sourcenotes["version"] != version:
+            return _error_response(
+                "Coding error by Philip", status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        return Response(sourcenotes)
+
+    # DELETE /api/v0/source/<int:ver>
+    def delete(self, request: Request, version: int) -> Response:
+        """Delete the specified source version.
+
+        Args:
+            request: An HTTP request object that will be ignored.
+            version: The version number of the source to operate on.
+
+        Returns:
+            (200) The updated list of dicts as described in SourceOverview.get(), above
+        """
+        SourceService.delete_source_pdf(version)
+        LOS = SourceService.get_list_of_sources()
+        return Response(LOS)

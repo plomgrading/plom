@@ -3,42 +3,25 @@
 # Copyright (C) 2025 Philip D. Loewen
 
 from pathlib import Path
-import traceback
 
 from plom.cli import with_messenger
 
-from plom.plom_exceptions import (
-    PlomAuthenticationException,
-    PlomDependencyConflict,
-    PlomSeriousException,
-    PlomVersionMismatchException,
-)
-
 
 @with_messenger
-def upload_source(version, source_pdf: Path, *, msgr) -> bool:
+def upload_source(version: int, source_pdf: Path, *, msgr) -> bool:
     """Upload a new assessment source from a local PDF file.
 
     Args:
         version: integer number of source version
         source_pdf:  Path to a PDF file containing a valid assessment source
+
+    Keyword Args:
         msgr:  An active Messenger object.
 
     Returns:
         True if the server's source was updated, otherwise False.
     """
-    with open(source_pdf, "rb") as f:
-        try:
-            returndict = msgr.new_server_upload_source(version, f)
-        except (
-            PlomAuthenticationException,
-            PlomDependencyConflict,
-            PlomVersionMismatchException,
-            PlomSeriousException,
-        ) as e:
-            print(f"Upload failed with exception: {e}")
-            traceback.print_exc()
-            return False
+    returndict = msgr.new_server_upload_source(version, source_pdf)
 
     returnversion = returndict["version"]
     if returnversion != version:
@@ -50,15 +33,31 @@ def upload_source(version, source_pdf: Path, *, msgr) -> bool:
         if not returndict["uploaded"]:
             print(f"Source version {version} deleted.")
             return True
-        else:
-            print(
-                "ERROR: Empty upload should delete source, but that didn't happen. Why not?"
-            )
-            return False
-    else:
-        if returndict["uploaded"]:
-            print(f"Source version {version} uploaded.")
-            print(f"Uploaded hash is {returndict['hash']}.")
-            return True
+        print(
+            "ERROR: Empty upload should delete source, but that didn't happen. Why not?"
+        )
+        return False
+
+    if returndict["uploaded"]:
+        print(f"Source version {version} uploaded.")
+        print(f"Uploaded hash is {returndict['hash']}.")
+        return True
 
     return False
+
+
+@with_messenger
+def delete_source(version: int, *, msgr) -> bool:
+    """Delete the specified assessment source.
+
+    Args:
+        version: integer number of source version
+
+    Keyword Args:
+        msgr:  An active Messenger object.
+
+    Returns:
+        True if the server's source was updated, otherwise False.
+    """
+    msgr.new_server_delete_source(version)
+    return True

@@ -15,6 +15,7 @@ from io import BytesIO
 import json
 import logging
 import mimetypes
+import os
 import pathlib
 import tempfile
 from email.message import EmailMessage
@@ -1156,7 +1157,9 @@ class Messenger(BaseMessenger):
                     raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_upload_source(self, version: int, source_pdf: Path) -> dict:
+    def new_server_upload_source(
+        self, version: int, source_pdf: Path
+    ) -> dict[str, Any]:
         """Upload an assessment source to the server.
 
         Args:
@@ -1174,11 +1177,50 @@ class Messenger(BaseMessenger):
             The dict produced by SourceService, as documented elsewhere.
             ("version": int, "uploaded": bool, "hash": str)
         """
+        with open(source_pdf, "rb") as pdfstream:
+            files = {"source_pdf": (os.path.basename(source_pdf), pdfstream)}
+
+            with self.SRmutex:
+                try:
+                    response = self.post_auth(
+                        f"/api/v0/source/{version:d}", files=files
+                    )
+                    response.raise_for_status()
+                except requests.HTTPError as e:
+                    if response.status_code == 400:
+                        raise PlomVersionMismatchException(response.reason) from None
+                    if response.status_code == 401:
+                        raise PlomAuthenticationException(response.reason) from None
+                    if response.status_code == 404:
+                        raise PlomSeriousException(response.reason) from None
+                    if response.status_code == 409:
+                        raise PlomDependencyConflict(response.reason) from None
+                    raise PlomSeriousException(
+                        f"Some other sort of error {e}"
+                    ) from None
+
+        return response.json()
+
+    def new_server_delete_source(self, version: int) -> dict[str, Any]:
+        """Delete the specified assessment source from the server.
+
+        Args:
+            version: The source version number. Must be compatible with the spec.
+
+        Exceptions:
+            PlomAuthenticationException: user not logged in, or not in manager group
+            PlomDependencyConflict: server state is incompatible with changes to a source.
+            PlomVersionMismatchException: source number out of range set by spec
+            PlomSeriousException: other errors.
+
+        Returns:
+            The updated list of dicts, one for each source expected by the spec,
+            describing the status of the sources in the database. Typically,
+            {"version": int, "uploaded": bool, "hash": str}
+        """
         with self.SRmutex:
             try:
-                response = self.post_auth(
-                    f"/api/v0/source/{version:d}", files={"source_pdf": source_pdf}
-                )
+                response = self.delete_auth(f"/api/v0/source/{version:d}")
                 response.raise_for_status()
             except requests.HTTPError as e:
                 if response.status_code == 400:
