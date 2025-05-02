@@ -16,8 +16,6 @@ from plom_server.Papers.services import SpecificationService
 
 from .utils import _error_response
 
-# from .utils import debugnote
-
 
 class SpecificationHandler(APIView):
     """Handle transactions involving the Assessment Specification."""
