@@ -14,7 +14,7 @@ This is as much as can be packed into a QR code without
 increasing its size.
 
 The format consists of:
-  * 01234 = test number
+  * 01234 = paper number (formerly "test number")
   * 567 = page number
   * 89 = version
   * 0 = position/orientation code
@@ -123,7 +123,7 @@ def parseTPV(tpv: str) -> tuple[int, int, int, str, str]:
             typically from a QR-code, possibly with the prefix "QR-Code:".
 
     Returns:
-        tn (int): test number, up to 5 digits
+        tn (int): paper number, up to 5 digits (formerly "test number")
         pn (int): page group number, up to 3 digits
         vn (int): version number, up to 2 digits
         cn (str): the "magic code", 6 digits zero padded
@@ -218,7 +218,7 @@ def parse_paper_page_version(ppv: str) -> tuple[int, int, int]:
 
     Returns:
         A triple of integers,
-        tn: test number, up to 5 digits,
+        tn: paper number, up to 5 digits (formally "test number"),
         pn: page group number, up to 3 digits, and
         vn: version number, up to 2 digits.
     """
@@ -240,44 +240,45 @@ def getCode(tpv: str) -> str:
     return parseTPV(tpv)[3]
 
 
-def encodePaperPageVersion(paper_number: str | int, p: str | int, v: str | int) -> str:
+def encodePaperPageVersion(papernum: str | int, p: str | int, v: str | int) -> str:
     """Encode three values as the short paper-page-version code.
 
     Typically used for collision detection.
 
     Args:
-        paper_number: the test number, 0 ≤ test ≤ 99999
+        papernum: satisfying 0 ≤ papernum ≤ 99999
         p: page number, 1 ≤ p ≤ 999
-        v: version number, 1 ≤ v ≤ 99
+        v: version number, 1 ≤
+    v ≤ 99
 
     Returns:
         A string of the short page-paper-version code
     """
-    assert int(paper_number) >= 0
+    assert int(papernum) >= 0
     # TODO: allow zero
     assert int(v) >= 1
     assert int(p) >= 1
-    paper_number = str(paper_number).zfill(5)
+    papernum = str(papernum).zfill(5)
     p = str(p).zfill(3)
     v = str(v).zfill(2)
-    assert paper_number.isnumeric()
+    assert papernum.isnumeric()
     assert p.isnumeric()
     assert v.isnumeric()
-    assert len(paper_number) == 5
+    assert len(papernum) == 5
     assert len(p) == 3
     assert len(v) == 2
-    tpv = f"{paper_number}{p}{v}"
+    tpv = f"{papernum}{p}{v}"
     assert len(tpv) == 10
     return tpv
 
 
 def encodeTPV(
-    test: int | str, p: int | str, v: int | str, o: int | str, code: int | str
+    papernum: int | str, p: int | str, v: int | str, o: int | str, code: int | str
 ) -> str:
     """Encode some values as a TPV code.
 
     Args:
-        test: the test number, 0 ≤ test ≤ 99999
+        papernum: satisfying 0 ≤ papernum ≤ 99999
         p: page number, 1 ≤ p ≤ 990
         v: version number, 1 ≤ v ≤ 99
         o: position code, 0 ≤ code ≤ 4
@@ -286,27 +287,27 @@ def encodeTPV(
     Returns:
         A string of the full TPV code.
     """
-    assert int(test) >= 0
+    assert int(papernum) >= 0
     # TODO: allow zero
     assert int(v) >= 1
     assert int(p) >= 1
     assert int(o) >= 0 and int(o) <= 4
-    test = str(test).zfill(5)
+    papernum = str(papernum).zfill(5)
     p = str(p).zfill(3)
     v = str(v).zfill(2)
     o = str(o)
     code = str(code).zfill(6)
-    assert test.isnumeric()
+    assert papernum.isnumeric()
     assert p.isnumeric()
     assert v.isnumeric()
     assert o.isnumeric()
     assert code.isnumeric()
-    assert len(test) == 5
+    assert len(papernum) == 5
     assert len(p) == 3
     assert len(v) == 2
     assert len(o) == 1
     assert len(code) == 6
-    tpv = f"{test}{p}{v}{o}{code}"
+    tpv = f"{papernum}{p}{v}{o}{code}"
     assert len(tpv) == 17
     return tpv
 

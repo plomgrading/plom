@@ -1163,7 +1163,8 @@ class Messenger(BaseMessenger):
 
         Exceptions:
             PlomConflict: server already has a database, cannot accept spec.
-            PlomNoPermission: wrong user.
+            PlomNoPermission: user is not in the group required to make
+                these changes.
             ValueError: invalid spec.
             PlomSeriousException: other errors unexpected errors.
 
