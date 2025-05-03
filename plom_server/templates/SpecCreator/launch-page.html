@@ -50,12 +50,38 @@
                         that you have prepared elsewhere.
                     </p>
                     <p>Or you can edit specification in the box below.</p>
-                    <label for="spec-toml-input" class="form-label">Assessment specification:</label>
-                    <textarea class="form-control"
-                              id="spec-toml-input"
-                              name="spec"
-                              rows="12"
-                              spellcheck="false">{{ editable_toml }}</textarea>
+                    <div>
+                        <label for="spec-toml-input" class="form-label">Assessment specification:</label>
+                        <textarea class="form-control"
+                                  id="spec-toml-input"
+                                  name="spec"
+                                  rows="12"
+                                  spellcheck="false">{{ editable_toml }}</textarea>
+                    </div>
+                    <details class="my-2">
+                        <summary>Advanced settings</summary>
+                        <div class="ms-3 p-2 border rounded">
+                            <p class="mb-2">
+                                Trying to put two questions on a page?  Read
+                                <a href="https://plom.readthedocs.io/en/stable/preparing_an_assessment.html">the documentation</a>
+                                and consider the <tt>allowedSharedPage</tt> option.
+                            </p>
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="force-public-code"
+                                       name="force-public-code">
+                                <label class="form-check-label" for="force-public-code">
+                                    Allow specifying the <tt>publicCode</tt>.
+                                    Usually you don't want to check this and should
+                                    instead remove publicCode from your edits.
+                                    But this can be used to
+                                    <a href="https://plom.readthedocs.io/en/stable/faq.html#how-can-i-clone-a-server-so-that-it-accepts-scans-intended-for-another-server">clone a server</a>,
+                                    so that it accepts scans intended for another.
+                                </label>
+                            </div>
+                        </div>
+                    </details>
                     <button type="submit" class="btn btn-primary me-1 mt-2">Submit</button>
                     <!--
                         <button type="submit" class="btn btn-primary" name="which_action" value="submit">Submit</button>
