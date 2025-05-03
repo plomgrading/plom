@@ -1288,3 +1288,24 @@ class Messenger(BaseMessenger):
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
         return response.text[1:-1]
+
+    def new_server_download_classlist(self) -> BytesIO:
+        """Download the classlist (if any) held by the server.
+
+        Returns:
+            BytesIO object with the classlist in standard form, i.e.,
+                one header row followed by rows of student data.
+
+        Raises:
+            PlomSeriousException - if the GET request produces an HTTPError
+        """
+        with self.SRmutex:
+            try:
+                response = self.get_auth("/api/v0/classlist", stream=True)
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+        csv_content = BytesIO(response.content)
+
+        return csv_content

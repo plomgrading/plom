@@ -3,6 +3,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2025 Philip D. Loewen
 
 import csv
 import logging
@@ -66,15 +67,23 @@ class StagingStudentService:
     def get_students_as_csv_string(self, *, prename: bool = False) -> str:
         """Write the data from the classlist table into a string in CSV format.
 
-        The header and name-columns are quoted.
+        Return (id, name) when prename==False,
+        return (id, name, paper_number) when prename==True.
+
+        Quote headers and names, but not ids or paper numbers.
         """
-        txt = '"id","name","paper_number"\n'
+        txt = '"id","name"\n'
+        if prename:
+            txt = '"id","name","paper_number"\n'
+
         for row in self.get_students():
             if prename and row["paper_number"]:
                 txt += f"{row['student_id']},\"{row['student_name']}\",{row['paper_number']}\n"
-            else:
+            elif prename:
                 # don't print the -1 for non-prename.
                 txt += f"{row['student_id']},\"{row['student_name']}\",\n"
+            else:
+                txt += f"{row['student_id']},\"{row['student_name']}\"\n"
         return txt
 
     @transaction.atomic()

@@ -25,6 +25,7 @@ __license__ = "AGPL-3.0-or-later"
 import argparse
 import os
 from pathlib import Path
+import sys
 
 from stdiomask import getpass
 
@@ -101,6 +102,13 @@ def get_parser() -> argparse.ArgumentParser:
         "delete-classlist",
         help="Delete the classlist held by the server.",
         description="Delete the classlist held by the server.",
+    )
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "download-classlist",
+        help="Download the classlist held by the server.",
+        description="Copy the classlist held by the server to stdout, in CSV format.",
     )
     _add_server_args(s)
 
@@ -395,17 +403,25 @@ def main():
 
     elif args.command == "delete-classlist":
         msgr = start_messenger(args.server, args.username, args.password)
+        rc = 1
         try:
             r = msgr.new_server_delete_classlist()
             print(r)
             rc = 0
         except PlomConflict as e:
             print(f"PlomConflict exception: {e}")
-            rc = 1
         finally:
             msgr.closeUser()
             msgr.stop()
-            return rc
+        return rc
+
+    elif args.command == "download-classlist":
+        msgr = start_messenger(args.server, args.username, args.password)
+        csvstream = msgr.new_server_download_classlist()
+        msgr.closeUser()
+        msgr.stop()
+        for chunk in csvstream:
+            sys.stdout.buffer.write(chunk)
 
     elif args.command == "clear":
         clear_login(args.server, args.username, args.password)
