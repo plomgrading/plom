@@ -1309,3 +1309,29 @@ class Messenger(BaseMessenger):
         csv_content = BytesIO(response.content)
 
         return csv_content
+
+    def new_server_upload_classlist(self, csvpath: Path) -> int:
+        # TODO - Build this!
+        """Upload the given CSV file to the server.
+
+           Check first that it will not overwrite any known student ID's.
+
+        Returns:
+            Nstudents, the number of student ID's known to the server after update.
+
+        Raises:
+            PlomSeriousException - if the GET request produces an HTTPError
+        """
+        with self.SRmutex:
+            try:
+                response = self.post_auth("/api/v0/classlist", files=None)
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+        print("In new_server_upload_classlist, here is the response content:")
+        print(response.content)
+
+        Nstudents = 0
+
+        return Nstudents

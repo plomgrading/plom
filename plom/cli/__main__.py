@@ -39,6 +39,7 @@ from plom.cli import (
     list_bundles,
     start_messenger,
     upload_bundle,
+    upload_classlist,
     upload_source,
     delete_source,
     upload_spec,
@@ -111,6 +112,22 @@ def get_parser() -> argparse.ArgumentParser:
         description="Copy the classlist held by the server to stdout, in CSV format.",
     )
     _add_server_args(s)
+
+    s = sub.add_parser(
+        "upload-classlist",
+        help="Augment server classlist with rows from this CSV file.",
+        description="""
+            Add student info from this CSV file to server's classlist.
+            Any info already on server will be retained, BUT
+            the whole operation will be rejected if the upload
+            mentions even a single student ID already present on the server.
+        """,
+    )
+    _add_server_args(s)
+    s.add_argument(
+        "csvfile",
+        help="a CSV file with column headers 'id','name', and [optionally] 'paper_number'.",
+    )
 
     s = sub.add_parser(
         "get-reassembled",
@@ -422,6 +439,12 @@ def main():
         msgr.stop()
         for chunk in csvstream:
             sys.stdout.buffer.write(chunk)
+
+    elif args.command == "upload-classlist":
+        r = upload_classlist(
+            Path(args.csvfile), msgr=(args.server, args.username, args.password)
+        )
+        print(f"upload_classlist returns {r}.")
 
     elif args.command == "clear":
         clear_login(args.server, args.username, args.password)

@@ -23,7 +23,7 @@ from .source_tools import upload_source
 from .source_tools import delete_source
 from .spec_tools import upload_spec
 from .task_tools import reset_task
-from .classlist_tools import download_classlist
+from .classlist_tools import upload_classlist
 
 # what you get from "from plom.cli import *"
 __all__ = [
@@ -37,5 +37,5 @@ __all__ = [
     "upload_source",
     "upload_spec",
     "reset_task",
-    "download_classlist",
+    "upload_classlist",
 ]

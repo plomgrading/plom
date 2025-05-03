@@ -56,5 +56,20 @@ class ClasslistHandler(APIView):
             (200) FileResponse
         """
         zzz = ClasslistDownloadView().get(request)
-        print(f"In ClasslistHandler.get(), type(zzz) = {type(zzz)}.")
         return zzz
+
+    # POST /api/v0/classlist
+    def post(self, request: Request) -> Response:
+        # TODO: Build this.
+        """Fetch the classlist held by the server.
+
+        Args:
+            request: A Request object that gets ignored.
+
+        Returns:
+            (200)
+        """
+        SSS = StagingStudentService()
+        zzz = SSS.get_students()
+        print(f"In ClasslistHandler.get(), type(zzz) = {type(zzz)}.")
+        return Response(zzz)
