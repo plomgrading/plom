@@ -11,14 +11,13 @@
 from __future__ import annotations
 
 import hashlib
-from io import BytesIO
 import json
 import logging
 import mimetypes
-import os
 import pathlib
 import tempfile
 from email.message import EmailMessage
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
@@ -906,9 +905,7 @@ class Messenger(BaseMessenger):
         with self.SRmutex:
             try:
                 with pdf.open("rb") as f:
-                    files = {
-                        "pdf_file": f,
-                    }
+                    files = {"pdf_file": f}
                     response = self.post_auth("/api/beta/scan/bundles", files=files)
                 response.raise_for_status()
                 return response.json()
@@ -1177,27 +1174,24 @@ class Messenger(BaseMessenger):
             The dict produced by SourceService, as documented elsewhere.
             ("version": int, "uploaded": bool, "hash": str)
         """
-        with open(source_pdf, "rb") as pdfstream:
-            files = {"source_pdf": (os.path.basename(source_pdf), pdfstream)}
-
-            with self.SRmutex:
-                try:
+        with self.SRmutex:
+            try:
+                with source_pdf.open("rb") as f:
+                    files = {"source_pdf": f}
                     response = self.post_auth(
                         f"/api/v0/source/{version:d}", files=files
                     )
-                    response.raise_for_status()
-                except requests.HTTPError as e:
-                    if response.status_code == 400:
-                        raise PlomVersionMismatchException(response.reason) from None
-                    if response.status_code == 401:
-                        raise PlomAuthenticationException(response.reason) from None
-                    if response.status_code == 404:
-                        raise PlomSeriousException(response.reason) from None
-                    if response.status_code == 409:
-                        raise PlomDependencyConflict(response.reason) from None
-                    raise PlomSeriousException(
-                        f"Some other sort of error {e}"
-                    ) from None
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomVersionMismatchException(response.reason) from None
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomSeriousException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomDependencyConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
         return response.json()
 
