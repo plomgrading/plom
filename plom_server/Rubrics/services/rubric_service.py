@@ -71,9 +71,7 @@ def _validate_versions(vers: None | list | str) -> None:
             )
 
 
-def _validate_parameters(
-    parameters: None | list, num_versions: None | int = None
-) -> None:
+def _validate_parameters(parameters: None | list, num_versions: None | int = 1) -> None:
     if not parameters:
         return
 
@@ -102,7 +100,7 @@ def _validate_parameters(
                 f' got type "{type(values)}"; row: "{row}"'
             )
 
-        if num_versions and not len(values) == num_versions:
+        if not len(values) == num_versions:
             raise serializers.ValidationError(
                 f'Invalid row in "parameters": must provide {num_versions}'
                 f' substitutions, only {len(values)} provided; row: "{row}"'
