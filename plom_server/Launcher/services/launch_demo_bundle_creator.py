@@ -55,7 +55,7 @@ class DemoBundleCreationService:
         #
         with tempfile.TemporaryDirectory() as td:
             spec_file = Path(td) / "the_spec.toml"
-            call_command("plom_preparation_test_spec", "download", f"{spec_file}")
+            call_command("plom_preparation_spec", "download", f"{spec_file}")
             return SpecVerifier.from_toml_file(spec_file)["numberOfPages"]
 
     def split_into_bundle_files(self, out_file, config):
@@ -182,7 +182,7 @@ class DemoBundleCreationService:
         # really we just need the public code.
         with tempfile.TemporaryDirectory() as td:
             spec_file = Path(td) / "the_spec.toml"
-            call_command("plom_preparation_test_spec", "download", f"{spec_file}")
+            call_command("plom_preparation_spec", "download", f"{spec_file}")
             spec = SpecVerifier.from_toml_file(spec_file).spec
             code = spec["publicCode"]
             max_ver = spec["numberOfVersions"]
@@ -301,7 +301,7 @@ class DemoBundleCreationService:
         # really we just need the public code.
         with tempfile.TemporaryDirectory() as td:
             spec_file = Path(td) / "the_spec.toml"
-            call_command("plom_preparation_test_spec", "download", f"{spec_file}")
+            call_command("plom_preparation_spec", "download", f"{spec_file}")
             code = SpecVerifier.from_toml_file(spec_file).spec["publicCode"]
 
             # take last page of paper and insert a qr-code from the page before that.
@@ -340,13 +340,16 @@ class DemoBundleCreationService:
         # really we just need the public code.
         with tempfile.TemporaryDirectory() as td:
             spec_file = Path(td) / "the_spec.toml"
-            call_command("plom_preparation_test_spec", "download", f"{spec_file}")
+            call_command("plom_preparation_spec", "download", f"{spec_file}")
             spec = SpecVerifier.from_toml_file(spec_file).spec
+
             # now make a new magic code that is not the same as the spec
-            if spec["publicCode"] == "00000":
-                code = "99999"
+            assert len(spec["publicCode"]) == 6
+            if spec["publicCode"] == "000000":
+                code = "999999"
             else:
-                code = "00000"
+                code = "000000"
+
             qr_pngs = create_QR_codes(1, 1, 1, code, Path(td))
             # now we have qr-code pngs that we can use to make a bogus page from a different assessment.
             # these are called "qr_0001_pg1_4.png" etc.
@@ -371,7 +374,7 @@ class DemoBundleCreationService:
         # really we just need the public code.
         with tempfile.TemporaryDirectory() as td:
             spec_file = Path(td) / "the_spec.toml"
-            call_command("plom_preparation_test_spec", "download", f"{spec_file}")
+            call_command("plom_preparation_spec", "download", f"{spec_file}")
             code = SpecVerifier.from_toml_file(spec_file).spec["publicCode"]
 
             qr_pngs = create_QR_codes(99999, 1, 1, code, Path(td))

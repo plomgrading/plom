@@ -44,7 +44,7 @@ class ImageBundleTests(TestCase):
                 "2": {"pages": [4], "mark": 5},
             },
         }
-        SpecificationService.store_validated_spec(spec_dict)
+        SpecificationService._store_validated_spec(spec_dict)
         self.user: User = baker.make(User, username="testScanner")
         self.paper = baker.make(Paper, paper_number=1)
         self.page1 = baker.make(DNMPage, paper=self.paper, page_number=2)

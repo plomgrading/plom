@@ -2,7 +2,7 @@
 # Copyright (C) 2022 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from django.test import TestCase
 from django.db import IntegrityError
@@ -30,7 +30,7 @@ class PaperCreatorTests(TestCase):
                 "2": {"pages": [4], "mark": 5},
             },
         }
-        SpecificationService.store_validated_spec(spec_dict)
+        SpecificationService._store_validated_spec(spec_dict)
         return super().setUp()
 
     def get_n_models(self):

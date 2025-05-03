@@ -7,7 +7,7 @@
     Copyright (C) 2022 Elizabeth Xiao
     Copyright (C) 2022 Tony Nguyen
     Copyright (C) 2022 Charlotte Dean
-    Copyright (C) 2024 Aidan Murphy
+    Copyright (C) 2024-2025 Aidan Murphy
 -->
 
 # Courses that have used Plom
@@ -288,3 +288,38 @@ Approx: 1320 students over 9 courses
 | MICB302      | final                                      | 160        |                               |
 
 Approx: 12100 student in at least 28 courses in at least four depts.
+
+
+## 2024W2
+
+| Course          | Tasks                                         | # students                           | Notes                                         |
+|----------       |----------------------------------             |:----------:                          |-------------------------------                |
+| MATH100         | Midterm+Final                                 | 322                                  |                                               |
+| MATH101         | Midterm(x2)+Final                             | 3000                                 |                                               |
+| MATH121         | Final                                         | 54                                   |                                               |
+| MATH152         | Midterm(sections 205+207)+Final(all sections) | 1000 total (350 in sections 205+207) |                                               |
+| MATH215         | Quiz(x6)+Final                                | 350                                  |                                               |
+| MATH221         | Midterm(x2)+Final                             | 550                                  |                                               |
+| MATH227         | Midterm(x2)+Homework(x3)                      | 50                                   | First attempt at homework with Django backend |
+| MATH256         | Midterm(x2)+Final                             | 400                                  |                                               |
+| MATH257/316     | Midterm(x2)+Final                             | 157                                  |                                               |
+| MATH264/BMEG220 | Quiz(many)+Final                              | 300                                  |                                               |
+| MATH303         | Midterm(x3)+Final                             | 230                                  |                                               |
+| MATH305         | Midterm(x2)+Final                             | 75                                   |                                               |
+| MATH307         | Midterm(x2)+Final                             | 230                                  |                                               |
+| MATH317         | Midterm(x2)+Final                             | 160                                  |                                               |
+| MATH340         | Final                                         | 155                                  |                                               |
+| BIOL112         | Midterm+Final                                 | 775                                  |                                               |
+| BIOL121         | Midterm+Final                                 | 675                                  |                                               |
+| BIOL155         | Midterm,Final, tutorial final                 | 357                                  |                                               |
+| BIOL201         | Midterm+Final                                 | 216                                  |                                               |
+| BIOL204         | Lab-midterm+final, midterm+final              | 205                                  |                                               |
+| BIOL260         | Midterm(x2)+Final                             | 375                                  |                                               |
+| BIOL331         | Midterm+Final                                 | 72                                   |                                               |
+| BIOL363         | Final                                         | 65                                   |                                               |
+| BIOL371         | Midterm+Final                                 | 87                                   |                                               |
+| BIOL372         | Midterm+Final                                 | 156                                  |                                               |
+
+TODO: MICB + PHAS (+other depts? )
+
+Approx: 10k students across 25 courses

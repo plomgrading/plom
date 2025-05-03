@@ -17,8 +17,6 @@ from django_htmx.http import HttpResponseClientRedirect
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Papers.services import SpecificationService
 
-from ..services import SpecificationUploadService
-
 
 class SpecEditorView(ManagerRequiredView):
     """Create and modify a test specification in the browser.
@@ -33,11 +31,8 @@ class SpecEditorView(ManagerRequiredView):
         context.update({"editable_toml": ""})
         context.update({"is_there_a_spec": SpecificationService.is_there_a_spec()})
         if SpecificationService.is_there_a_spec():
-            context.update(
-                {
-                    "editable_toml": SpecificationService.get_the_spec_as_toml(),
-                }
-            )
+            toml = SpecificationService.get_the_spec_as_toml(include_public_code=False)
+            context.update({"editable_toml": toml})
         return render(request, "SpecCreator/launch-page.html", context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
@@ -56,6 +51,9 @@ class SpecEditorView(ManagerRequiredView):
             }
         )
         data = request.POST
+
+        force_public_code = data.get("force-public-code")
+
         gave_toml_file = data.get("which_action") == "upload_file"
         if gave_toml_file:
             f = request.FILES.get("toml_file")
@@ -75,43 +73,31 @@ class SpecEditorView(ManagerRequiredView):
                 return render(request, "SpecCreator/validation.html", context)
         else:
             spec = data.get("spec")
+
         if not spec:
             context["error_list"] = ["No spec provided"]
             return render(request, "SpecCreator/validation.html", context)
+
         only_validate = data.get("which_action") == "validate"
         try:
-            service = SpecificationUploadService(toml_string=spec)
             if only_validate:
-                service._validate_spec()
+                SpecificationService.validate_spec_from_string(spec)
                 context["msg"] = "Specification passes validity checks."
+                context["success"] = True
             else:
-                service.save_spec()
+                SpecificationService.install_spec_from_toml_string(
+                    spec, force_public_code=force_public_code
+                )
                 # Spec saved successfully - redirect to the summary page.
                 return HttpResponseClientRedirect(reverse("spec_summary"))
-
-            context["success"] = True
         except PlomDependencyConflict as e:
             context["error_list"] = [f"Dependency error - {e}"]
         except PermissionDenied as e:
             context["error_list"] = [str(e)]
-        except (ValueError, RuntimeError) as e:
+        except (SpecificationService.TOMLDecodeError, ValueError) as e:
             context["error_list"] = [f"Cannot modify specification - {e}"]
-        except serializers.ValidationError as errs:
-            for k, v in errs.detail.items():
-                if isinstance(v, list) and len(v) == 1:
-                    context["error_list"].append(f"{k}: {v[0]}")
-                    continue
-                if k == "question" and isinstance(v, dict):
-                    # this big ol pile of spaghetti renders errors within questions
-                    for j, u in v.items():
-                        if isinstance(u, dict):
-                            for i, w in u.items():
-                                if isinstance(w, list) and len(w) == 1:
-                                    (w,) = w
-                                context["error_list"].append(f"{k} {j}: {i}: {w}")
-                        else:
-                            context["error_list"].append(f"{k} {j}: {u}")
-                    continue
-                # last ditch effort if neither of the above: make 'em into strings
-                context["error_list"].append(f"{k}: {str(v)}")
+        except RuntimeError as e:
+            context["error_list"] = [f"Cannot modify, unexpected RuntimeError - {e}"]
+        except serializers.ValidationError as e:
+            context["error_list"] = SpecificationService._flatten_serializer_errors(e)
         return render(request, "SpecCreator/validation.html", context)

@@ -41,7 +41,8 @@ def create_specification(config: PlomServerConfig):
             spec_src = resources.files(useful_files) / "testing_test_spec.toml"
         else:
             spec_src = config.parent_dir / spec_path
-        SpecificationService.load_spec_from_toml(spec_src)
+        # mypy stumbling over Traverseable?
+        SpecificationService.install_spec_from_toml_file(spec_src)  # type: ignore[arg-type]
     except Exception as e:
         raise PlomConfigCreationError(e) from e
 

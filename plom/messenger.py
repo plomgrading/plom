@@ -1235,19 +1235,27 @@ class Messenger(BaseMessenger):
 
         return response.json()
 
-    def new_server_upload_spec(self, spec_toml_string: str) -> dict:
+    def new_server_upload_spec(
+        self, spec_toml_string: str, *, force_public_code: bool = False
+    ) -> dict[str, Any]:
         """Upload an assessment spec to the server.
 
         Args:
             spec_toml_string: The utf-8 string you get by reading a valid spec.toml file
 
-        Exceptions:
-            PlomConflict: server already has a database, cannot accept spec.
-            ValueError: invalid spec.
-            PlomSeriousException: other errors.
+        Keyword Args:
+            force_public_code: Usually you may not include "publicCode" in
+                the specification.  Pass True to allow overriding that default.
 
         Returns:
             The newly-uploaded spec, as a dict.
+
+        Exceptions:
+            PlomConflict: server already has a database, cannot accept spec.
+            PlomNoPermission: user is not in the group required to make
+                these changes.
+            ValueError: invalid spec.
+            PlomSeriousException: other errors unexpected errors.
         """
         with self.SRmutex:
             try:
@@ -1255,6 +1263,7 @@ class Messenger(BaseMessenger):
                     "/api/v0/spec",
                     json={
                         "spec_toml": spec_toml_string,
+                        "force_public_code": force_public_code,
                     },
                 )
                 response.raise_for_status()
@@ -1262,6 +1271,8 @@ class Messenger(BaseMessenger):
                 if response.status_code == 400:
                     raise ValueError(response.reason) from None
                 if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 409:
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
