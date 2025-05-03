@@ -20,7 +20,7 @@ from .utils import _error_response
 class SpecificationHandler(APIView):
     """Handle transactions involving the Assessment Specification."""
 
-    # GET /api/v0/spec (and, for backward compatibility, /info/spec)
+    # GET /api/v0/spec
     def get(self, request: Request) -> Response:
         """Get the current assessment spec.
 
