@@ -52,7 +52,7 @@ class SourceDetail(APIView):
     """Handle transactions involving specific assessment Sources."""
 
     # GET /api/v0/source/<int:ver>
-    def get(self, request: Request, version: int) -> Response:
+    def get(self, request: Request, *, version: int) -> Response:
         """Get a copy of the numbered assessment source PDF.
 
         Returns:
@@ -76,7 +76,7 @@ class SourceDetail(APIView):
                 )
 
     # POST /api/v0/source/<int:ver>
-    def post(self, request: Request, version: int) -> Response:
+    def post(self, request: Request, *, version: int) -> Response:
         """Create, replace, or delete a source version.
 
         Args:
@@ -141,7 +141,7 @@ class SourceDetail(APIView):
         return Response(sourcenotes)
 
     # DELETE /api/v0/source/<int:ver>
-    def delete(self, request: Request, version: int) -> Response:
+    def delete(self, request: Request, *, version: int) -> Response:
         """Delete the specified source version.
 
         Args:
