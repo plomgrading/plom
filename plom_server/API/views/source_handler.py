@@ -20,8 +20,6 @@ from plom_server.Preparation.services.preparation_dependency_service import (
     assert_can_modify_sources,
 )
 
-#
-# from .utils import debugnote
 from .utils import _error_response
 
 
@@ -58,17 +56,19 @@ class SourceDetail(APIView):
         """Get a copy of the numbered assessment source PDF.
 
         Returns:
-            (200) Here is the file you requested.
-            (404) File not found.
+            Http response 200 with the PDF file as the payload.
+            A 404 response if that version isn't found.
         """
-        spec = SpecificationService.get_the_spec()
-        name = "".join(char for char in spec["name"] if char.isalnum())
+        abstract_django_file = SourceService._get_source_file(version)
+        slug = SpecificationService.get_short_name_slug()
         if version is not None:
             try:
                 return FileResponse(
-                    SourceService._get_source_file(version),
+                    abstract_django_file,
                     as_attachment=True,
-                    filename=f"{name.lower()}_source{version}.pdf",
+                    filename=f"{slug}_source{version}.pdf",
+                    # TODO: would this append junk if we cycle a few times?
+                    # filename=abstract_django_file.name,
                 )
             except ObjectDoesNotExist:
                 return _error_response(
