@@ -84,7 +84,8 @@ class SourceDetail(APIView):
             version: The version number of the source to operate on.
 
         Returns:
-            (200) Dict describing the freshly-uploaded source, just like for GET
+            Http response 200 with a dict describing the freshly-uploaded source,
+            which is one entry of the list in :class:`SourceOverview`.
             (400) File provided is absent or invalid (empty files are OK),
                   or version number out of range, or upload failed for some reason
             (401) User does not belong to "manager" group
