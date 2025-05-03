@@ -114,9 +114,9 @@ class SourceDetail(APIView):
             )
 
         n_versions = SpecificationService.get_n_versions()
-        if version < 0 or version > n_versions:
+        if version < 1 or version > n_versions:
             return _error_response(
-                f"Source version number {version} is out of range [0, {n_versions}].",
+                f"Source version number {version} is out of range [1, {n_versions}].",
                 status.HTTP_409_CONFLICT,
             )
 
@@ -165,9 +165,9 @@ class SourceDetail(APIView):
             )
 
         n_versions = SpecificationService.get_n_versions()
-        if version < 0 or version > n_versions:
+        if version < 1 or version > n_versions:
             return _error_response(
-                f"Source version number {version} is out of range [0, {n_versions}]",
+                f"Source version number {version} is out of range [1, {n_versions}]",
                 status.HTTP_400_BAD_REQUEST,
             )
 
