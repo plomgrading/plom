@@ -113,10 +113,10 @@ class SourceDetail(APIView):
                 "No source PDF supplied.", status.HTTP_400_BAD_REQUEST
             )
 
-        ListOfSources = SourceService.get_list_of_sources()
-        if version < 0 or version > len(ListOfSources):
+        n_versions = SpecificationService.get_n_versions()
+        if version < 0 or version > n_versions:
             return _error_response(
-                f"Source version number {version} is invalid.",
+                f"Source version number {version} is out of range [0, {n_versions}].",
                 status.HTTP_409_CONFLICT,
             )
 
@@ -162,6 +162,13 @@ class SourceDetail(APIView):
             return _error_response(
                 'Only users in the "manager" group can upload an assessment source.',
                 status.HTTP_401_FORBIDDEN,
+            )
+
+        n_versions = SpecificationService.get_n_versions()
+        if version < 0 or version > n_versions:
+            return _error_response(
+                f"Source version number {version} is out of range [0, {n_versions}]",
+                status.HTTP_400_BAD_REQUEST,
             )
 
         try:
