@@ -61,7 +61,7 @@ Getting started
 This project is controlled with git, maintainers will happily welcome
 contributors but are not keen to teach the basics of git.
 There are many guides and tutorials freely available to learn git, here is one by
-`gitlab <https://docs.gitlab.com/ee/tutorials/learn_git.html>`_.
+`gitlab <https://docs.gitlab.com/tutorials/learn_git>`_.
 
 
 Repository set up
@@ -69,7 +69,7 @@ Repository set up
 
 Plom uses a distributed model for git development, contributors are to fork the
 main repository: ``plom/plom``, if you don't know how to do this, gitlab has
-`instructions <https://docs.gitlab.com/ee/user/project/repository/forking_workflow.html>`_.
+`instructions <https://docs.gitlab.com/user/project/repository/forking_workflow/>`_.
 
 Next, clone your forked repository to your local machine and track the official
 Plom repository as an upstream repository, for example:
@@ -87,7 +87,7 @@ There are now **3** Plom repositories relevant to you:
 
 As a contributor you will not be able to commit changes or new branches directly to the
 upstream repository; you will need to commit branches to origin and open
-`Merge Requests <https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html>`_
+`Merge Requests <https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests>`_
 to the upstream/main branch.
 
 You will need to keep your origin/main branch up to date with upstream/main branch,
