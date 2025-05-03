@@ -1271,3 +1271,22 @@ class Messenger(BaseMessenger):
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
         return response.json()
+
+    def new_server_delete_classlist(self) -> None:
+        """Delete the classlist (if any) held by the server.
+
+        Returns:
+            None
+        """
+        with self.SRmutex:
+            try:
+                response = self.delete_auth("/api/v0/classlist")
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise ValueError(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+        return None

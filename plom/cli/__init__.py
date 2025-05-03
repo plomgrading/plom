@@ -24,6 +24,8 @@ from .source_tools import delete_source
 from .spec_tools import upload_spec
 from .task_tools import reset_task
 
+# from .classlist_tools import delete_classlist
+
 # what you get from "from plom.cli import *"
 __all__ = [
     "bundle_map_page",
@@ -36,4 +38,5 @@ __all__ = [
     "upload_source",
     "upload_spec",
     "reset_task",
+    #    "delete_classlist",
 ]
