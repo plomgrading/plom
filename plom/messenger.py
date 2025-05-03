@@ -1272,7 +1272,7 @@ class Messenger(BaseMessenger):
 
         return response.json()
 
-    def new_server_delete_classlist(self) -> None:
+    def new_server_delete_classlist(self) -> str:
         """Delete the classlist (if any) held by the server.
 
         Returns:
@@ -1283,10 +1283,8 @@ class Messenger(BaseMessenger):
                 response = self.delete_auth("/api/v0/classlist")
                 response.raise_for_status()
             except requests.HTTPError as e:
-                if response.status_code == 400:
-                    raise ValueError(response.reason) from None
-                if response.status_code == 403:
+                if response.status_code == 409:
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-        return None
+        return response.text[1:-1]

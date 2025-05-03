@@ -44,6 +44,11 @@ from plom.cli import (
     reset_task,
 )
 
+from plom.plom_exceptions import (
+    PlomConflict,
+)
+
+
 # from plom.cli import clear_login
 
 
@@ -393,9 +398,14 @@ def main():
         try:
             r = msgr.new_server_delete_classlist()
             print(r)
+            rc = 0
+        except PlomConflict as e:
+            print(f"PlomConflict exception: {e}")
+            rc = 1
         finally:
             msgr.closeUser()
             msgr.stop()
+            return rc
 
     elif args.command == "clear":
         clear_login(args.server, args.username, args.password)
