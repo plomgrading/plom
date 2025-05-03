@@ -342,11 +342,14 @@ class DemoBundleCreationService:
             spec_file = Path(td) / "the_spec.toml"
             call_command("plom_preparation_spec", "download", f"{spec_file}")
             spec = SpecVerifier.from_toml_file(spec_file).spec
+
             # now make a new magic code that is not the same as the spec
-            if spec["publicCode"] == "00000":
-                code = "99999"
+            assert len(spec["publicCode"]) == 6
+            if spec["publicCode"] == "000000":
+                code = "999999"
             else:
-                code = "00000"
+                code = "000000"
+
             qr_pngs = create_QR_codes(1, 1, 1, code, Path(td))
             # now we have qr-code pngs that we can use to make a bogus page from a different assessment.
             # these are called "qr_0001_pg1_4.png" etc.
