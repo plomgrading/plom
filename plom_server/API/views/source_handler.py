@@ -149,7 +149,12 @@ class SourceDetail(APIView):
             version: The version number of the source to operate on.
 
         Returns:
-            (200) The updated list of dicts as described in SourceOverview.get(), above
+            HTTP response 200 with the updated list of dicts as described
+            in :class:`SourceOverview`.  200 is returned even in the case
+            where no such source version exists (that's not an error).
+            Only managers can do this; others get a 401.
+            409 is returned if the source is "in use", typically b/c
+            server configuration has progressed further.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list:
@@ -159,13 +164,10 @@ class SourceDetail(APIView):
             )
 
         try:
-            assert_can_modify_sources()
+            # note: no error if that source version does not exist
+            SourceService.delete_source_pdf(version)
         except PlomDependencyConflict as e:
-            return _error_response(
-                e,
-                status.HTTP_409_CONFLICT,
-            )
+            return _error_response(e, status.HTTP_409_CONFLICT)
 
-        SourceService.delete_source_pdf(version)
         LOS = SourceService.get_list_of_sources()
         return Response(LOS)
