@@ -132,9 +132,8 @@ class SourceDetail(APIView):
                     f"Modifying source {version} is not allowed. {e}",
                     status.HTTP_409_CONFLICT,
                 )
-
-        if not success:
-            return _error_response(message, status.HTTP_400_BAD_REQUEST)
+            if not success:
+                return _error_response(message, status.HTTP_400_BAD_REQUEST)
 
         ListOfSources = SourceService.get_list_of_sources()
         sourcenotes = ListOfSources[version - 1]
