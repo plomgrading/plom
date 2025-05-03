@@ -6,10 +6,11 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2025 Philip D. Loewen
 
-from copy import deepcopy
 import html
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from copy import deepcopy
+from pathlib import Path
+from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.text import slugify
@@ -18,22 +19,20 @@ from django.db.models import Max
 
 from plom.spec_verifier import SpecVerifier
 
-from plom_server.Base.compat import load_toml_from_path
+from plom_server.Base.compat import load_toml_from_path, load_toml_from_string
+from plom_server.Base.compat import TOMLDecodeError  # noqa: F401
 from ..models import Specification, SpecQuestion
 from ..serializers import SpecSerializer
 from plom_server.Preparation.services.preparation_dependency_service import (
     assert_can_modify_spec,
 )
 
-# TODO - build similar for solution specs
-# NOTE - this does not **validate** test specs, it assumes the spec is valid
 
-
-log = logging.getLogger("ValidatedSpecService")
+log = logging.getLogger("SpecificationService")
 
 
 def validate_spec_from_dict(spec_dict: dict[str, Any]) -> bool:
-    """Load a test spec from a dictionary and validate it.
+    """Validate an assessment specification (as a dict), but don't install it on server.
 
     Will call the SpecSerializer on the proposed spec dict and validate.
 
@@ -48,22 +47,35 @@ def validate_spec_from_dict(spec_dict: dict[str, Any]) -> bool:
         serializers.ValidationError: in this case the ``.detail`` field
             will contain a list of what is wrong.
     """
-    test_dict = deepcopy(spec_dict)  # Defend input dict from changes in next stanza
+    spec_dict = deepcopy(spec_dict)  # Defend input dict from changes
 
     # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
     # Also, this function does not care if there are no questions in the spec dictionary. It assumes
     # the serializer/SpecVerifier will catch it.
-    if "question" in test_dict.keys():
-        test_dict["question"] = question_list_to_dict(test_dict["question"])
-    serializer = SpecSerializer(data=test_dict)
-    return serializer.is_valid()
+    if "question" in spec_dict.keys():
+        spec_dict["question"] = question_list_to_dict(spec_dict["question"])
+    serializer = SpecSerializer(data=spec_dict)
+    return serializer.is_valid(raise_exception=True)
+
+
+def validate_spec_from_string(spec_toml_str: str) -> bool:
+    """Validate an assessment specification (from a toml format string), but don't install it on server.
+
+    Raises:
+        TOMLDecodeError: cannot get toml from the string.
+        ValueError: explaining what is invalid.
+        serializers.ValidationError: in this case the ``.detail`` field
+            will contain a list of what is wrong.
+    """
+    spec_dict = load_toml_from_string(spec_toml_str)
+    return validate_spec_from_dict(spec_dict)
 
 
 @transaction.atomic
-def load_spec_from_dict(
+def install_spec_from_dict(
     spec_dict: dict[str, Any],
     *,
-    public_code: Optional[str] = None,
+    force_public_code: bool = False,
 ) -> Specification:
     """Load a test spec from a dictionary and save to the database.
 
@@ -73,45 +85,96 @@ def load_spec_from_dict(
         spec_dict: the dictionary describing the assessment.
 
     Keyword Args:
-        public_code: optionally pass a manually specified public code (mainly for unit testing)
+        force_public_code: Usually you may not include "publicCode" in
+            the specification.  Pass True to allow overriding that default.
 
     Returns:
-        Specification: saved test spec instance.
+        The Specification that was just saved.
 
     Raises:
         PlomDependencyConflict: if the spec cannot be modified.
+        ValueError: existing public code, and other cases.  Currently
+            a bit unclear which cases give ValueErrors and which give
+            the following serializers.ValidationErrors.  Callers should
+            check for both.
+        serializers.ValidationError: with more info in the ``.details``.
     """
     # this will Raise a PlomDependencyConflict if cannot modify the spec
     assert_can_modify_spec()
 
-    test_dict = deepcopy(spec_dict)  # Defend input dict from changes in next stanza
+    spec_dict = deepcopy(spec_dict)  # Defend input dict from changes
+
+    # Note: the serializer makes these codes so it seems too late the ask it there
+    existing_publicCode = spec_dict.get("publicCode", None)
+    if existing_publicCode and not force_public_code:
+        # raise serializers.ValidationError(...)?
+        raise ValueError("Not allowed to specify a publicCode directly")
 
     # Note: we must re-format the question list-of-dicts into a dict-of-dicts in order to make SpecVerifier happy.
     # Also, this function does not care if there are no questions in the spec dictionary. It assumes
     # the serializer/SpecVerifier will catch it.
-    if "question" in test_dict.keys():
-        test_dict["question"] = question_list_to_dict(test_dict["question"])
-    serializer = SpecSerializer(data=test_dict)
-    assert serializer.is_valid(), "Unexpectedly invalid serializer"
-    valid_data = serializer.validated_data
+    if "question" in spec_dict.keys():
+        spec_dict["question"] = question_list_to_dict(spec_dict["question"])
 
-    if public_code:
-        valid_data["publicCode"] = public_code
+    serializer = SpecSerializer(data=spec_dict)
+
+    # This raises both serializers.ValidationErrors and ValueErrors
+    # TODO: the raising of ValueErrors appears non-standard, consider refactor
+    serializer.is_valid(raise_exception=True)
+
+    valid_data = serializer.validated_data
 
     return serializer.create(valid_data)
 
 
-@transaction.atomic
-def load_spec_from_toml(
-    pathname,
-    public_code=None,
+def install_spec_from_toml_file(
+    pathname: str | Path,
+    *,
+    force_public_code: bool = False,
 ) -> Specification:
-    """Load a test spec from a TOML file and save it to the database."""
+    """Load a specification from a TOML file and save it to the database.
+
+    Args:
+        pathname: what file to load from.
+
+    Keyword Args:
+        force_public_code: Usually you may not include "publicCode" in
+            the specification.  Pass True to allow overriding that default.
+
+    Raises:
+        TOMLDecodeError: cannot read toml.
+        PlomDependencyConflict: if the spec cannot be modified.
+        ValueError: see :func:`install_spec_from_dict`.
+        serializers.ValidationError: see :func:`install_spec_from_dict`.
+    """
     data = load_toml_from_path(pathname)
-    return load_spec_from_dict(data, public_code=public_code)
+    return install_spec_from_dict(data, force_public_code=force_public_code)
 
 
-@transaction.atomic
+def install_spec_from_toml_string(
+    tomlstr: str,
+    *,
+    force_public_code: bool = False,
+) -> Specification:
+    """Load a specification from a string in TOML format and save it to the database.
+
+    Args:
+        tomlstr: a string containing toml.
+
+    Keyword Args:
+        force_public_code: Usually you may not include "publicCode" in
+            the specification.  Pass True to allow overriding that default.
+
+    Raises:
+        TOMLDecodeError: cannot read toml.
+        PlomDependencyConflict: if the spec cannot be modified.
+        ValueError: see :func:`install_spec_from_dict`.
+        serializers.ValidationError: see :func:`install_spec_from_dict`.
+    """
+    data = load_toml_from_string(tomlstr)
+    return install_spec_from_dict(data, force_public_code=force_public_code)
+
+
 def is_there_a_spec() -> bool:
     """Has a test-specification been uploaded to the database."""
     return Specification.objects.count() == 1
@@ -119,13 +182,13 @@ def is_there_a_spec() -> bool:
 
 @transaction.atomic
 def get_the_spec() -> dict:
-    """Return the test-specification from the database.
+    """Return the assessment specification from the database.
 
     Returns:
-        The exam specification as a dictionary.
+        The assessment specification as a dictionary.
 
     Exceptions:
-        ObjectDoesNotExist: no exam specification yet.
+        ObjectDoesNotExist: no specification yet.
     """
     try:
         spec = Specification.objects.get()
@@ -137,19 +200,28 @@ def get_the_spec() -> dict:
         raise ObjectDoesNotExist("The database does not contain a test specification.")
 
 
-@transaction.atomic
-def get_the_spec_as_toml() -> str:
+def get_the_spec_as_toml(
+    *, include_public_code: bool = False, _include_private_seed: bool = False
+) -> str:
     """Return the test-specification from the database.
 
-    If present, remove the private seed.  But the public code
-    is included (if present).
+    Generally, the public code and the private seed are removed (hidden
+    from the return) but this can be changed with keyword arguments.
+
+    Keyword Args:
+        include_public_code: if True, include the current public code.
+        _include_private_seed: if True, include the current private seed
+            (currently unused, except maybe in testing?)
 
     Exceptions:
         ObjectDoesNotExist: no exam specification yet.
     """
     spec = get_the_spec()
     spec.pop("id", None)
-    spec.pop("privateSeed", None)
+    if not _include_private_seed:
+        spec.pop("privateSeed", None)
+    if not include_public_code:
+        spec.pop("publicCode")
 
     for idx, question in spec["question"].items():
         for key, val in deepcopy(question).items():
@@ -167,33 +239,13 @@ def get_private_seed() -> str:
     return spec.privateSeed
 
 
-@transaction.atomic
-def get_the_spec_as_toml_with_codes() -> str:
-    """Return the test-specification from the database.
-
-    Exceptions:
-        ObjectDoesNotExist: no exam specification yet.
-
-    .. warning::
-        Note this includes both the public code and the private
-        seed.  If you are calling this, consider carefully whether
-        you need the private seed.  At the time of writing, no one
-        is calling this.
-    """
-    spec = get_the_spec()
-
-    for idx, question in spec["question"].items():
-        for key, val in deepcopy(question).items():
-            if val is None or key == "id":
-                question.pop(key, None)
-
-    sv = SpecVerifier(spec)
-    return sv.as_toml_string(_legacy=False)
-
-
-@transaction.atomic
-def store_validated_spec(validated_spec: dict) -> None:
+def _store_validated_spec(validated_spec: dict) -> None:
     """Takes the validated test specification and stores it in the db.
+
+    Note this is used in unit testing but otherwise has no callers as
+    of April 2025.  Instead, consider :func:`install_spec_from_dict` or
+    the helpers :func:`install_spec_from_toml_file` and
+    :func:`install_spec_from_toml_string`.
 
     Args:
         validated_spec: A dictionary containing a validated test
@@ -203,7 +255,6 @@ def store_validated_spec(validated_spec: dict) -> None:
     serializer.create(validated_spec)
 
 
-@transaction.atomic
 def remove_spec() -> None:
     """Removes the specification from the db, if possible.
 
@@ -217,8 +268,9 @@ def remove_spec() -> None:
         raise ObjectDoesNotExist("The database does not contain a specification.")
 
     assert_can_modify_spec()
-    Specification.objects.all().delete()
-    SpecQuestion.objects.all().delete()
+    with transaction.atomic():
+        Specification.objects.all().delete()
+        SpecQuestion.objects.all().delete()
 
 
 @transaction.atomic
@@ -244,7 +296,7 @@ def get_shortname() -> str:
 
 
 @transaction.atomic
-def get_short_and_long_names_or_empty() -> Tuple[str, str]:
+def get_short_and_long_names_or_empty() -> tuple[str, str]:
     """Get the long and short names of the exam, or return empty strings."""
     try:
         spec = Specification.objects.get()
@@ -275,7 +327,7 @@ def get_id_page_number() -> int:
 
 
 @transaction.atomic
-def get_dnm_pages() -> List[int]:
+def get_dnm_pages() -> list[int]:
     """Get the list of do-no-mark page numbers.
 
     Exceptions:
@@ -286,7 +338,7 @@ def get_dnm_pages() -> List[int]:
 
 
 @transaction.atomic
-def get_question_pages() -> Dict[int, List[int]]:
+def get_question_pages() -> dict[int, list[int]]:
     """Get the pages of each question, indexed from one.
 
     Returns:
@@ -576,3 +628,25 @@ def get_selection_method_of_all_questions() -> dict[int, str]:
     for question in SpecQuestion.objects.all().order_by("question_index"):
         selection_method[question.question_index] = question.select
     return selection_method
+
+
+def _flatten_serializer_errors(errs) -> list[str]:
+    error_list = []
+    for k, v in errs.detail.items():
+        if isinstance(v, list) and len(v) == 1:
+            error_list.append(f"{k}: {v[0]}")
+            continue
+        if k == "question" and isinstance(v, dict):
+            # this big ol pile of spaghetti renders errors within questions
+            for j, u in v.items():
+                if isinstance(u, dict):
+                    for i, w in u.items():
+                        if isinstance(w, list) and len(w) == 1:
+                            (w,) = w
+                        error_list.append(f"{k} {j}: {i}: {w}")
+                else:
+                    error_list.append(f"{k} {j}: {u}")
+            continue
+        # last ditch effort if neither of the above: make 'em into strings
+        error_list.append(f"{k}: {str(v)}")
+    return error_list

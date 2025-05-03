@@ -43,7 +43,7 @@ MAX_PAPERS_TO_PRODUCE = 9999
 
 # a canonical ordering of spec keys for output to toml
 # not used by legacy.
-spec_key_order_for_toml_output = [
+_spec_key_order_for_toml_output = [
     "name",
     "longName",
     "publicCode",
@@ -463,8 +463,9 @@ class SpecVerifier:
         # put the keys in a particular order by constructing a
         # new dict since python orders by insertion
         ordered_toml = dict()
-        for k in spec_key_order_for_toml_output:
-            ordered_toml.update({k: s[k]})
+        for k in _spec_key_order_for_toml_output:
+            if k in s:
+                ordered_toml.update({k: s[k]})
         return tomlkit.dumps(ordered_toml)
 
     def __getitem__(self, what):

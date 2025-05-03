@@ -596,7 +596,7 @@ out-of-tree:
     - django-admin --version
     - django-admin -h
     - django-admin -h | grep plom
-    - django-admin plom_demo_spec -h
+    - django-admin plom_preparation_spec -h
     - django-admin test plom_server
     - popd
   allow_failure: true
@@ -617,7 +617,8 @@ out-of-tree-scratch:
   image: fedora:42
   # when: manual
   before_script:
-    - dnf install -y gcc gcc-c++ cmake
+    - dnf install -y --setopt=install_weak_deps=False
+          gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview tex-charter tex-exam tex-preprint
           python3-passlib python3-pyqt6
@@ -654,7 +655,7 @@ out-of-tree-scratch:
     - django-admin --version
     - django-admin -h
     - django-admin -h | grep plom
-    - django-admin plom_demo_spec -h
+    - django-admin plom_preparation_spec -h
     - django-admin test plom_server
     - popd
   allow_failure: true
@@ -702,7 +703,8 @@ fedora-django-tests:
   image: fedora:42
   when: manual
   before_script:
-    - dnf install -y gcc gcc-c++ cmake
+    - dnf install -y --setopt=install_weak_deps=False
+          gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview tex-charter tex-exam tex-preprint
           python3-passlib python3-pyqt6

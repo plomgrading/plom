@@ -474,10 +474,10 @@ class ScanService:
                         'paper_id': 1,
                         'page_num': 3,
                         'version_num': 1,
-                        'public_code': '93849',
+                        'public_code': '193849',
                     }
                     'quadrant': '1',
-                    'tpv': '00001003001',
+                    'tpv': '0000100301',
                     'x_coord': 2204,
                     'y_coord': 279.5
                 },
@@ -487,10 +487,10 @@ class ScanService:
                         'paper_id': 1,
                         'page_num': 3,
                         'version_num': 1,
-                        'public_code': '93849',
+                        'public_code': '193849',
                 }
                     'quadrant': '3',
-                    'tpv': '00001003001',
+                    'tpv': '0000100301',
                     'x_coord': 234,
                     'y_coord': 2909.5
                 },
@@ -500,10 +500,10 @@ class ScanService:
                         'paper_id': 1,
                         'page_num': 3,
                         'version_num': 1,
-                        'public_code': '93849',
+                        'public_code': '193849',
                     }
                     'quadrant': '4',
-                    'tpv': '00001003001',
+                    'tpv': '0000100301',
                     'x_coord': 2203,
                     'y_coord': 2906.5
                 }
@@ -544,8 +544,8 @@ class ScanService:
         # TODO - simplify this loop using enumerate(list) or similar.
         for page in range(len(list_qr_codes)):
             for quadrant in list_qr_codes[page]:
-                # note that from legacy-scan code the tpv_signature is the full raw "TTTTTPPPVVVOCCCCC" qr-string
-                # while tpv refers to "TTTTTPPPVVV"
+                # note that from legacy-scan code the tpv_signature is the full raw "TTTTTPPPVVOCCCCCC" qr-string
+                # while tpv refers to "TTTTTPPPVV"
                 raw_qr_string = list_qr_codes[page][quadrant].get("tpv_signature", None)
                 if raw_qr_string is None:
                     continue

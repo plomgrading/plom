@@ -39,7 +39,7 @@ def test_stamp_QRs(tmp_path) -> None:
     assert buildDemoSourceFiles(basedir=tmp_path)
     with pymupdf.open(tmp_path / "sourceVersions/version1.pdf") as d:
         p = 3
-        qr = create_QR_codes(6, p, 1, "12345", tmp_path)
+        qr = create_QR_codes(6, p, 1, "123456", tmp_path)
         assert len(qr) == 4
         for q in qr:
             assert isinstance(q, Path)
@@ -54,7 +54,7 @@ def test_stamp_QRs(tmp_path) -> None:
         pdf_page_add_labels_QRs(d[p - 1], "foo", f"0006 Q1 p. {p}", qr, odd=bool(p % 2))
 
         p = 4
-        qr2 = create_QR_codes(6, p, 1, "12345", tmp_path)
+        qr2 = create_QR_codes(6, p, 1, "123456", tmp_path)
         # QR codes are different for the new page
         for k in range(4):
             assert qr[k] != qr2[k]
@@ -78,16 +78,16 @@ def test_stamp_QRs(tmp_path) -> None:
     d = QRextract_legacy(files[2], write_to_file=False)
     assert d is not None
     assert not d["NW"]
-    assert d["NE"] == ["00006003001112345"]
-    assert d["SW"] == ["00006003001312345"]
-    assert d["SE"] == ["00006003001412345"]
+    assert d["NE"] == ["00006003011123456"]
+    assert d["SW"] == ["00006003013123456"]
+    assert d["SE"] == ["00006003014123456"]
 
     d = QRextract_legacy(files[3], write_to_file=False)
     assert d is not None
     assert not d["NE"]
-    assert d["NW"] == ["00006004001212345"]
-    assert d["SW"] == ["00006004001312345"]
-    assert d["SE"] == ["00006004001412345"]
+    assert d["NW"] == ["00006004012123456"]
+    assert d["SW"] == ["00006004013123456"]
+    assert d["SE"] == ["00006004014123456"]
 
 
 def test_qr_stamp_all_pages(tmp_path) -> None:
