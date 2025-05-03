@@ -16,6 +16,9 @@ from rest_framework import status
 from plom.plom_exceptions import PlomDependencyConflict
 from plom_server.Papers.services import SpecificationService
 from plom_server.Preparation.services import SourceService
+from plom_server.Preparation.services.preparation_dependency_service import (
+    assert_can_modify_sources,
+)
 
 #
 # from .utils import debugnote
@@ -82,15 +85,25 @@ class SourceDetail(APIView):
 
         Returns:
             (200) Dict describing the freshly-uploaded source, just like for GET
-            (400) No PDF file provided (empty files are OK), or version number out of range
+            (400) File provided is absent or invalid (empty files are OK),
+                  or version number out of range, or upload failed for some reason
             (401) User does not belong to "manager" group
-            (409) Changing the source is not allowed. Typically because the server is in an advanced state.
+            (409) Changing the source is not allowed.
+                  Typically because the server is either too raw or too advanced.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list:
             return _error_response(
                 'Only users in the "manager" group can upload an assessment source.',
                 status.HTTP_401_FORBIDDEN,
+            )
+
+        try:
+            assert_can_modify_sources()
+        except PlomDependencyConflict as e:
+            return _error_response(
+                e,
+                status.HTTP_409_CONFLICT,
             )
 
         if "source_pdf" not in request.FILES:
@@ -105,27 +118,25 @@ class SourceDetail(APIView):
                 status.HTTP_409_CONFLICT,
             )
 
+        SourceService.delete_source_pdf(version)
+
         source_pdf = request.FILES["source_pdf"]
-        if source_pdf is None or source_pdf.size == 0:
-            SourceService.delete_source_pdf(version)
-        else:
+        if source_pdf is not None and source_pdf.size > 0:
             try:
-                SourceService.delete_source_pdf(version)
                 success, message = SourceService.take_source_from_upload(
                     version, request.FILES["source_pdf"]
                 )
             except PlomDependencyConflict as e:
                 return _error_response(
-                    f"Modifying source {version} is not allowed. Details: " + f"{e}",
+                    f"Modifying source {version} is not allowed. {e}",
                     status.HTTP_409_CONFLICT,
                 )
 
+        if not success:
+            return _error_response(message, status.HTTP_400_BAD_REQUEST)
+
         ListOfSources = SourceService.get_list_of_sources()
         sourcenotes = ListOfSources[version - 1]
-        if sourcenotes["version"] != version:
-            return _error_response(
-                "Coding error by Philip", status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
 
         return Response(sourcenotes)
 
@@ -140,6 +151,21 @@ class SourceDetail(APIView):
         Returns:
             (200) The updated list of dicts as described in SourceOverview.get(), above
         """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
+            return _error_response(
+                'Only users in the "manager" group can upload an assessment source.',
+                status.HTTP_401_FORBIDDEN,
+            )
+
+        try:
+            assert_can_modify_sources()
+        except PlomDependencyConflict as e:
+            return _error_response(
+                e,
+                status.HTTP_409_CONFLICT,
+            )
+
         SourceService.delete_source_pdf(version)
         LOS = SourceService.get_list_of_sources()
         return Response(LOS)
