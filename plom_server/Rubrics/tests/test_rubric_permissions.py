@@ -11,9 +11,9 @@ from django.test import TestCase
 
 from model_bakery import baker
 
+from plom_server.Base.tests import config_test
 from plom_server.Base.models import SettingsModel
 from ..services import RubricService
-from plom_server.Papers.models import SpecQuestion
 
 
 def _make_ex():
@@ -30,11 +30,10 @@ def _make_ex():
 class RubricServiceTests_permissions(TestCase):
     """Tests related to rubric permissions."""
 
+    @config_test({"test_spec": "demo"})
     def setUp(self) -> None:
         baker.make(User, username="xenia")
         baker.make(User, username="yvonne")
-        baker.make(SpecQuestion, question_index=1, mark=5)
-        baker.make(SpecQuestion, question_index=2, mark=5)
 
     def test_rubrics_None_user_can_modify_when_locked(self) -> None:
         s = SettingsModel.load()

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2025 Aidan Murphy
 
 [[rubric]]
 kind = "absolute"
@@ -53,7 +54,7 @@ meta = "Note this rubric differs between versions of the question."
 username = "manager"
 question_index = 4
 versions = []
-parameters = [["{param1}", ["s", "year"]]]
+parameters = [["{param1}", ["s", "year", "ms"]]]
 
 
 [[rubric]]
