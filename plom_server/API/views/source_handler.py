@@ -70,9 +70,10 @@ class SourceDetail(APIView):
                     # TODO: would this append junk if we cycle a few times?
                     # filename=abstract_django_file.name,
                 )
-            except ObjectDoesNotExist:
+            except ObjectDoesNotExist as e:
                 return _error_response(
-                    f"PDF for source {version} not found.", status.HTTP_404_NOT_FOUND
+                    f"PDF for source {version} not found: {e}",
+                    status.HTTP_404_NOT_FOUND,
                 )
 
     # POST /api/v0/source/<int:ver>
