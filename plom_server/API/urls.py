@@ -107,12 +107,6 @@ urlpatterns = [
         SpecificationHandler.as_view(),
         name="api_spec_handler",
     ),
-    path(
-        "info/spec",
-        #        An old URI. Just aim it at the same endpoint as above.
-        SpecificationHandler.as_view(),
-        name="api_spec_handler",
-    ),
 ]
 
 experimental_router = DefaultRouter(trailing_slash=True)
