@@ -20,8 +20,6 @@ from plom_server.Preparation.services.preparation_dependency_service import (
     assert_can_modify_sources,
 )
 
-#
-# from .utils import debugnote
 from .utils import _error_response
 
 
@@ -54,29 +52,32 @@ class SourceDetail(APIView):
     """Handle transactions involving specific assessment Sources."""
 
     # GET /api/v0/source/<int:ver>
-    def get(self, request: Request, version: int) -> Response:
+    def get(self, request: Request, *, version: int) -> Response:
         """Get a copy of the numbered assessment source PDF.
 
         Returns:
-            (200) Here is the file you requested.
-            (404) File not found.
+            Http response 200 with the PDF file as the payload.
+            A 404 response if that version isn't found.
         """
-        spec = SpecificationService.get_the_spec()
-        name = "".join(char for char in spec["name"] if char.isalnum())
+        abstract_django_file = SourceService._get_source_file(version)
+        slug = SpecificationService.get_short_name_slug()
         if version is not None:
             try:
                 return FileResponse(
-                    SourceService._get_source_file(version),
+                    abstract_django_file,
                     as_attachment=True,
-                    filename=f"{name.lower()}_source{version}.pdf",
+                    filename=f"{slug}_source{version}.pdf",
+                    # TODO: would this append junk if we cycle a few times?
+                    # filename=abstract_django_file.name,
                 )
-            except ObjectDoesNotExist:
+            except ObjectDoesNotExist as e:
                 return _error_response(
-                    f"PDF for source {version} not found.", status.HTTP_404_NOT_FOUND
+                    f"PDF for source {version} not found: {e}",
+                    status.HTTP_404_NOT_FOUND,
                 )
 
     # POST /api/v0/source/<int:ver>
-    def post(self, request: Request, version: int) -> Response:
+    def post(self, request: Request, *, version: int) -> Response:
         """Create, replace, or delete a source version.
 
         Args:
@@ -84,7 +85,8 @@ class SourceDetail(APIView):
             version: The version number of the source to operate on.
 
         Returns:
-            (200) Dict describing the freshly-uploaded source, just like for GET
+            Http response 200 with a dict describing the freshly-uploaded source,
+            which is one entry of the list in :class:`SourceOverview`.
             (400) File provided is absent or invalid (empty files are OK),
                   or version number out of range, or upload failed for some reason
             (401) User does not belong to "manager" group
@@ -111,10 +113,10 @@ class SourceDetail(APIView):
                 "No source PDF supplied.", status.HTTP_400_BAD_REQUEST
             )
 
-        ListOfSources = SourceService.get_list_of_sources()
-        if version < 0 or version > len(ListOfSources):
+        n_versions = SpecificationService.get_n_versions()
+        if version < 1 or version > n_versions:
             return _error_response(
-                f"Source version number {version} is invalid.",
+                f"Source version number {version} is out of range [1, {n_versions}].",
                 status.HTTP_409_CONFLICT,
             )
 
@@ -131,9 +133,8 @@ class SourceDetail(APIView):
                     f"Modifying source {version} is not allowed. {e}",
                     status.HTTP_409_CONFLICT,
                 )
-
-        if not success:
-            return _error_response(message, status.HTTP_400_BAD_REQUEST)
+            if not success:
+                return _error_response(message, status.HTTP_400_BAD_REQUEST)
 
         ListOfSources = SourceService.get_list_of_sources()
         sourcenotes = ListOfSources[version - 1]
@@ -141,7 +142,7 @@ class SourceDetail(APIView):
         return Response(sourcenotes)
 
     # DELETE /api/v0/source/<int:ver>
-    def delete(self, request: Request, version: int) -> Response:
+    def delete(self, request: Request, *, version: int) -> Response:
         """Delete the specified source version.
 
         Args:
@@ -149,7 +150,12 @@ class SourceDetail(APIView):
             version: The version number of the source to operate on.
 
         Returns:
-            (200) The updated list of dicts as described in SourceOverview.get(), above
+            HTTP response 200 with the updated list of dicts as described
+            in :class:`SourceOverview`.  200 is returned even in the case
+            where no such source version exists (that's not an error).
+            Only managers can do this; others get a 401.
+            409 is returned if the source is "in use", typically b/c
+            server configuration has progressed further.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list:
@@ -158,14 +164,18 @@ class SourceDetail(APIView):
                 status.HTTP_401_FORBIDDEN,
             )
 
-        try:
-            assert_can_modify_sources()
-        except PlomDependencyConflict as e:
+        n_versions = SpecificationService.get_n_versions()
+        if version < 1 or version > n_versions:
             return _error_response(
-                e,
-                status.HTTP_409_CONFLICT,
+                f"Source version number {version} is out of range [1, {n_versions}]",
+                status.HTTP_400_BAD_REQUEST,
             )
 
-        SourceService.delete_source_pdf(version)
+        try:
+            # note: no error if that source version does not exist
+            SourceService.delete_source_pdf(version)
+        except PlomDependencyConflict as e:
+            return _error_response(e, status.HTTP_409_CONFLICT)
+
         LOS = SourceService.get_list_of_sources()
         return Response(LOS)

@@ -68,6 +68,12 @@ suppress_warnings = [
     "ref.python",
 ]
 
+# In 2025-May Stackoverflow links failed with 403
+linkcheck_ignore = [
+    r"https://stackoverflow.com/.*",
+]
+
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
