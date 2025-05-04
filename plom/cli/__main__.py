@@ -145,7 +145,11 @@ def get_parser() -> argparse.ArgumentParser:
         help="A PDF file containing a valid assessment source.",
     )
     s.add_argument(
-        "-v", type=int, dest="version", help="Source version number (default 1)."
+        "-v",
+        dest="version",
+        type=int,
+        default=1,
+        help="Source version number (default 1).",
     )
 
     s = sub.add_parser(
@@ -155,7 +159,11 @@ def get_parser() -> argparse.ArgumentParser:
     )
     _add_server_args(s)
     s.add_argument(
-        "-v", type=int, dest="version", help="Source version number (default 1)."
+        "-v",
+        dest="version",
+        type=int,
+        default=1,
+        help="Source version number (default 1).",
     )
 
     s = sub.add_parser(
@@ -349,19 +357,12 @@ def main():
 
     elif args.command == "upload-source":
         ver = args.version
-        if ver is None:
-            print("No source version specified, using default 1.")
-            ver = 1
-
         r = upload_source(
             ver, Path(args.source_pdf), msgr=(args.server, args.username, args.password)
         )
 
     elif args.command == "delete-source":
         ver = args.version
-        if ver is None:
-            print("No source version specified, using default 1.")
-            ver = 1
         r = delete_source(ver, msgr=(args.server, args.username, args.password))
 
     elif args.command == "upload-spec":
