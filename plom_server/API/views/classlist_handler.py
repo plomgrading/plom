@@ -49,6 +49,9 @@ class ClasslistHandler(APIView):
     def get(self, request: Request) -> FileResponse:
         """Fetch the classlist held by the server.
 
+        This is a transparent wrapper for the GET method
+        implemented in :class:'ClasslistDownloadView'.
+
         Args:
             request: A Request object that gets ignored.
 
@@ -61,15 +64,45 @@ class ClasslistHandler(APIView):
     # POST /api/v0/classlist
     def post(self, request: Request) -> Response:
         # TODO: Build this.
-        """Fetch the classlist held by the server.
+        """Extend classlist on server with rows from an uploaded classlist.
+
+        This is a transparent wrapper for the POST method
+        implemented to serve the web UI in :class:'StagingStudentService'.
+
+        But that class has design glitches, so fix that next.
+
+        All students in the upload must be not-yet-known to the server.
+        If the upload mentions even one student ID that the server
+        already holds, the whole operation will be cancelled.
 
         Args:
-            request: A Request object that gets ignored.
+            request: A Request object that includes a file object.
 
         Returns:
-            (200)
+            A Response with status code 200 containing a 2-tuple (s,l), where
+            s is the boolean value of the statement "The operation succeeded",
+            l is a list of dicts describing warnings, errors, or notes.
+
+            When s==False, the classlist in the database remains unchanged.
         """
+        # Here we want a thin wrapper around plom_server/Preparation/views/...
+        # But that code has no error-defence. So put it there, not here!
+
+        if not request.FILES["classlist_csv"]:
+            success = False
+            werr = [{"errors": "No classlist provided."}]
+            return (success, werr)
+
+        classlist_csv = request.FILES["classlist_csv"]
+
         SSS = StagingStudentService()
-        zzz = SSS.get_students()
-        print(f"In ClasslistHandler.get(), type(zzz) = {type(zzz)}.")
+        zzz = SSS.validate_and_use_classlist_csv(classlist_csv)
         return Response(zzz)
+
+        # Elsewhere:
+        # Form the set of student IDs already in the database.
+        # known_ids = { _["student_id"] for _ in SSS.get_students()}
+        # print(f"In ClasslistHandler.post(), type(known_ids) = {type(known_ids)}.")
+
+        # Extract the set of student IDs present in the proffered upload.
+        # Make sure these sets have empty intersection.

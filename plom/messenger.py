@@ -1311,10 +1311,12 @@ class Messenger(BaseMessenger):
         return csv_content
 
     def new_server_upload_classlist(self, csvpath: Path) -> int:
-        # TODO - Build this!
-        """Upload the given CSV file to the server.
+        """Use the given CSV file to extend the classlist on the server.
 
-           Check first that it will not overwrite any known student ID's.
+           Typically the server classlist starts empty and this is used just once.
+           Alternatively, it will add new students to a nonempty classlist.
+           But the extension must be strict: if the upload mentions a student ID
+           that is already known to the server, the whole upload gets cancelled.
 
         Returns:
             Nstudents, the number of student ID's known to the server after update.
@@ -1324,7 +1326,9 @@ class Messenger(BaseMessenger):
         """
         with self.SRmutex:
             try:
-                response = self.post_auth("/api/v0/classlist", files=None)
+                with csvpath.open("rb") as f:
+                    filedict = {"classlist_csv": f}
+                    response = self.post_auth("/api/v0/classlist", files=filedict)
                 response.raise_for_status()
             except requests.HTTPError as e:
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
@@ -1332,6 +1336,6 @@ class Messenger(BaseMessenger):
         print("In new_server_upload_classlist, here is the response content:")
         print(response.content)
 
+        # This is wrong, still room for thinking and design anyway
         Nstudents = 0
-
         return Nstudents
