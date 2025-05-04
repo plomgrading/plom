@@ -8,8 +8,10 @@ Python modules
 
 Most Plom code can be found in one of two directories in the
 `project repository <https://gitlab.com/plom/plom>`_:
- * ``plom/``
- * ``plom_server/``
+
+  * ``plom/``
+  * ``plom_server/``
+
 The former is currently (2025 March) "in-flux" as the marking client has
 moved to a separate `Plom-Client repo <https://gitlab.com/plom/plom-client>`_
 and the legacy server has been deprecated and subsequently removed.
