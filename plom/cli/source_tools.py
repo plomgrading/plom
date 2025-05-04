@@ -13,10 +13,10 @@ def upload_source(version: int, source_pdf: Path, *, msgr) -> bool:
 
     Args:
         version: integer number of source version
-        source_pdf:  Path to a PDF file containing a valid assessment source
+        source_pdf: Path to a PDF file containing a valid assessment source
 
     Keyword Args:
-        msgr:  An active Messenger object.
+        msgr: An active Messenger object.
 
     Returns:
         True if the server's source was updated, otherwise False.
@@ -59,7 +59,7 @@ def delete_source(version: int, *, msgr) -> bool:
         version: integer number of source version
 
     Keyword Args:
-        msgr:  An active Messenger object.
+        msgr: An active Messenger object.
 
     Returns:
         True if the server's source was updated, otherwise False.
