@@ -23,15 +23,15 @@ def upload_classlist(csvname: Path, *, msgr) -> bool:
     Keyword Args:
         msgr:  An active Messenger object.
     """
-    print(f"In plom-cli, planning to process file {csvname}.")
-
     try:
-        retval = msgr.new_server_upload_classlist(csvname)
+        success, werr = msgr.new_server_upload_classlist(csvname)
     except (PlomAuthenticationException, PlomConflict, ValueError) as e:
         print(f"Upload failed with exception: {e}")
         return False
 
-    print("In plom-cli, here is the return value.")
-    print(retval)
+    if success:
+        return True
 
-    return True
+    print("Upload rejected. No changes made. Details:")
+    print(werr)
+    return False

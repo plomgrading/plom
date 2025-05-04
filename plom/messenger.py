@@ -1310,7 +1310,9 @@ class Messenger(BaseMessenger):
 
         return csv_content
 
-    def new_server_upload_classlist(self, csvpath: Path) -> int:
+    def new_server_upload_classlist(
+        self, csvpath: Path
+    ) -> tuple[bool, list[dict[str, Any]]]:
         """Use the given CSV file to extend the classlist on the server.
 
            Typically the server classlist starts empty and this is used just once.
@@ -1333,9 +1335,6 @@ class Messenger(BaseMessenger):
             except requests.HTTPError as e:
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-        print("In new_server_upload_classlist, here is the response content:")
-        print(response.content)
+        zzz = tuple(response.json())
 
-        # This is wrong, still room for thinking and design anyway
-        Nstudents = 0
-        return Nstudents
+        return zzz

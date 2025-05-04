@@ -69,8 +69,6 @@ class ClasslistHandler(APIView):
         This is a transparent wrapper for the POST method
         implemented to serve the web UI in :class:'StagingStudentService'.
 
-        But that class has design glitches, so fix that next.
-
         All students in the upload must be not-yet-known to the server.
         If the upload mentions even one student ID that the server
         already holds, the whole operation will be cancelled.
@@ -98,11 +96,3 @@ class ClasslistHandler(APIView):
         SSS = StagingStudentService()
         zzz = SSS.validate_and_use_classlist_csv(classlist_csv)
         return Response(zzz)
-
-        # Elsewhere:
-        # Form the set of student IDs already in the database.
-        # known_ids = { _["student_id"] for _ in SSS.get_students()}
-        # print(f"In ClasslistHandler.post(), type(known_ids) = {type(known_ids)}.")
-
-        # Extract the set of student IDs present in the proffered upload.
-        # Make sure these sets have empty intersection.

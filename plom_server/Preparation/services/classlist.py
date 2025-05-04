@@ -153,18 +153,20 @@ class StagingStudentService:
                 the validator expressed warnings.
 
         Returns:
-            2-tuple, the first entry is a bool indicating success.  In case of
-            success the 2nd entry is an empty list (or might contain
-            ignored warnings).  In case of errors the second list contains dicts
-            which elaborate on errors or warnings.
+            a 2-tuple (s,l), where ...
+            s is the boolean value of the statement "The operation succeeded",
+            l is a list of dicts describing warnings, errors, or notes.
+
+            When s==True, the list l may be empty or contain ignored warnings.
+            When s==False, the classlist in the database remains unchanged.
 
         Raises:
             PlomDependencyConflict: If dependencies not met.
         """
         assert_can_modify_classlist()
 
-        # now save the in-memory file to a tempfile and validate
-        # Note: we must be careful to unlink this file ourselves
+        # Save the in-memory file to a tempfile and validate it.
+        # Note: we must be careful to unlink this file ourselves.
         tmp_csv = Path(NamedTemporaryFile(delete=False).name)
 
         with open(tmp_csv, "wb") as fh:
@@ -181,20 +183,46 @@ class StagingStudentService:
             tmp_csv.unlink()
             return (success, werr)
 
-        # either no warnings, or warnings but ignore them - so read the csv
-        with open(tmp_csv) as fh:
+        # TODO PDL
+        # Enforce empty-intersection between sets of incoming and known ID's.
+        known_ids = set([_["student_id"] for _ in self.get_students()])
+        new_ids = set()
+        with open(tmp_csv, newline="") as fh:
+            prereader = csv.DictReader(fh)
+            # We accept "id", "ID", "Id", but code is messy #3822 #1140
+            headers = prereader.fieldnames
+            (id_key,) = [x for x in headers if x.casefold() == "id"]
+            (name_key,) = [x for x in headers if x.casefold() == "name"]
+            # paper_number is a bit harder b/c it might not be present
+            papernum_key = "paper_number"
+            _tmp = [x for x in headers if x.casefold() == papernum_key]
+            if len(_tmp) == 1:
+                papernum_key = _tmp[0]
+
+            for r in prereader:
+                new_ids.add(r[id_key])
+
+        overlap = known_ids & new_ids
+
+        if False:
+            print("DEBUGGING classlist.py: Here are the known ID's:")
+            print(known_ids)
+            print("DEBUGGING classlist.py: Here are the new ID's:")
+            print(new_ids)
+            print("DEBUGGING classlist.py: Here is the set intersection:")
+            print(overlap)
+            print(f"DEBUGGING classlist.py: len(overlap) = {len(overlap)}.")
+
+        if len(overlap) > 0:
+            success = False
+            errmsg = f"Incoming classlist collides with {len(overlap)} known ID's. "
+            errmsg += "Server's classlist unchanged."
+            werr = [{"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}]
+            return success, werr
+
+        with open(tmp_csv, newline="") as fh:
             csv_reader = csv.DictReader(fh, skipinitialspace=True)
             try:
-                # We accept "id", "ID", "Id", but code is messy #3822 #1140
-                headers = csv_reader.fieldnames
-                assert headers, "Expectedly empty csv header"
-                (id_key,) = [x for x in headers if x.casefold() == "id"]
-                (name_key,) = [x for x in headers if x.casefold() == "name"]
-                # paper_number is a bit harder b/c it might not be present
-                papernum_key = "paper_number"
-                _tmp = [x for x in headers if x.casefold() == papernum_key]
-                if len(_tmp) == 1:
-                    papernum_key = _tmp[0]
                 for row in csv_reader:
                     self._add_student(
                         row[id_key],
@@ -211,6 +239,38 @@ class StagingStudentService:
                 werr.append(
                     {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
                 )
+
+        #        newinfo = []
+        #        # either no warnings, or warnings but ignore them - so read the csv
+        #        with open(tmp_csv) as fh:
+        #            csv_reader = csv.DictReader(fh, skipinitialspace=True)
+        #            try:
+        #                # We accept "id", "ID", "Id", but code is messy #3822 #1140
+        #                headers = csv_reader.fieldnames
+        #                assert headers, "Expectedly empty csv header"
+        #                (id_key,) = [x for x in headers if x.casefold() == "id"]
+        #                (name_key,) = [x for x in headers if x.casefold() == "name"]
+        #                # paper_number is a bit harder b/c it might not be present
+        #                papernum_key = "paper_number"
+        #                _tmp = [x for x in headers if x.casefold() == papernum_key]
+        #                if len(_tmp) == 1:
+        #                    papernum_key = _tmp[0]
+        #                for row in csv_reader:
+        #                    self._add_student(
+        #                        row[id_key],
+        #                        row[name_key],
+        #                        paper_number=row.get(papernum_key, None),
+        #                    )
+        #            except (IntegrityError, ValueError, KeyError, AssertionError) as e:
+        #                # in theory, we "asked permission" using vlad the validator
+        #                # so the input must be perfect and this can never fail---haha!
+        #                success = False
+        #                errmsg = "Unexpected error, "
+        #                errmsg += f"likely a bug in Plom's classlist validator: {str(e)}"
+        #                # see :method:`PlomClasslistValidator.validate_csv` for this format
+        #                werr.append(
+        #                    {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
+        #                )
 
         tmp_csv.unlink()
         return (success, werr)
