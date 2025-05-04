@@ -65,4 +65,5 @@ def delete_source(version: int, *, msgr) -> bool:
         True if the server's source was updated, otherwise False.
     """
     msgr.new_server_delete_source(version)
+    print(f"Source version {version} deleted.")
     return True

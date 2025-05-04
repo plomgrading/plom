@@ -350,7 +350,7 @@ def main():
     elif args.command == "upload-source":
         ver = args.version
         if ver is None:
-            print("No version specified, using default 1.")
+            print("No source version specified, using default 1.")
             ver = 1
 
         r = upload_source(
@@ -360,7 +360,7 @@ def main():
     elif args.command == "delete-source":
         ver = args.version
         if ver is None:
-            print("No version specified, using default 1.")
+            print("No source version specified, using default 1.")
             ver = 1
         r = delete_source(ver, msgr=(args.server, args.username, args.password))
 

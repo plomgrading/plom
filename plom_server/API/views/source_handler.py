@@ -123,7 +123,7 @@ class SourceDetail(APIView):
         SourceService.delete_source_pdf(version)
 
         source_pdf = request.FILES["source_pdf"]
-        if source_pdf is not None and source_pdf.size > 0:
+        if source_pdf.size > 0:
             try:
                 success, message = SourceService.take_source_from_upload(
                     version, request.FILES["source_pdf"]
