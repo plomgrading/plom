@@ -1294,7 +1294,7 @@ class Messenger(BaseMessenger):
 
         Returns:
             BytesIO object with the classlist in standard form, i.e.,
-                one header row followed by rows of student data.
+            one header row followed by rows of student data.
 
         Raises:
             PlomSeriousException - if the GET request produces an HTTPError
@@ -1315,13 +1315,17 @@ class Messenger(BaseMessenger):
     ) -> tuple[bool, list[dict[str, Any]]]:
         """Use the given CSV file to extend the classlist on the server.
 
-           Typically the server classlist starts empty and this is used just once.
-           Alternatively, it will add new students to a nonempty classlist.
-           But the extension must be strict: if the upload mentions a student ID
-           that is already known to the server, the whole upload gets cancelled.
+        Typically the server classlist starts empty and this is used just once.
+        Alternatively, it will add new students to a nonempty classlist.
+        But the extension must be strict: if the upload mentions a student ID
+        or a paper number that is already known to the server,
+        the whole upload gets cancelled and the server classlist stays as-is.
 
         Returns:
-            Nstudents, the number of student ID's known to the server after update.
+            2-tuple of (success,werr), with success boolean and werr a list
+            of dicts, each entry providing details on an error or warning.
+            It's possible for werr to contain interesting reading even when
+            success==True.
 
         Raises:
             PlomSeriousException - if the GET request produces an HTTPError
@@ -1336,5 +1340,4 @@ class Messenger(BaseMessenger):
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
         zzz = tuple(response.json())
-
         return zzz
