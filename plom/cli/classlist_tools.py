@@ -32,6 +32,8 @@ def upload_classlist(csvname: Path, *, msgr) -> bool:
     if success:
         return True
 
-    print("Upload rejected. No changes made. Details:")
-    print(werr)
+    print("Upload rejected. No changes made to server's classlist. Details follow.")
+    for D in werr:
+        print(f"  {D.get('warn_or_err','  *')}: {D['werr_text']}")
+
     return False

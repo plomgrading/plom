@@ -183,10 +183,15 @@ class StagingStudentService:
             tmp_csv.unlink()
             return (success, werr)
 
-        # TODO PDL
+        werr = []
+
         # Enforce empty-intersection between sets of incoming and known ID's.
         known_ids = set([_["student_id"] for _ in self.get_students()])
+        known_paper_numbers = set(
+            [r.get("paper_number", -1) for r in self.get_students()]
+        )
         new_ids = set()
+        new_paper_numbers = set()
         with open(tmp_csv, newline="") as fh:
             prereader = csv.DictReader(fh)
             # We accept "id", "ID", "Id", but code is messy #3822 #1140
@@ -201,23 +206,38 @@ class StagingStudentService:
 
             for r in prereader:
                 new_ids.add(r[id_key])
+                new_paper_numbers.add(int("0" + r.get(papernum_key, "0")))
 
-        overlap = known_ids & new_ids
+        known_paper_numbers.discard(0)
+        new_paper_numbers.discard(0)
+
+        id_overlap = known_ids & new_ids
+        paper_number_overlap = known_paper_numbers & new_paper_numbers
 
         if False:
-            print("DEBUGGING classlist.py: Here are the known ID's:")
-            print(known_ids)
-            print("DEBUGGING classlist.py: Here are the new ID's:")
-            print(new_ids)
+            print("\nDEBUGGING classlist.py: Here are the known paper_numbers:")
+            print(known_paper_numbers)
+            print("DEBUGGING classlist.py: Here are the new paper_numbers:")
+            print(new_paper_numbers)
             print("DEBUGGING classlist.py: Here is the set intersection:")
-            print(overlap)
-            print(f"DEBUGGING classlist.py: len(overlap) = {len(overlap)}.")
+            print(paper_number_overlap)
+            print(
+                f"DEBUGGING classlist.py: len(paper_number_overlap) = {len(paper_number_overlap)}."
+            )
 
-        if len(overlap) > 0:
+        if len(id_overlap) > 0:
             success = False
-            errmsg = f"Incoming classlist collides with {len(overlap)} known ID's. "
-            errmsg += "Server's classlist unchanged."
-            werr = [{"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}]
+            errmsg = f"Incoming classlist collides with {len(id_overlap)} known ID's."
+            werr.append({"warn_or_err": "Error", "werr_text": errmsg})
+
+        if len(paper_number_overlap) > 0:
+            success = False
+            errmsg = f"Incoming classlist duplicates {len(paper_number_overlap)} paper numbers."
+            werr.append({"warn_or_err": "Error", "werr_text": errmsg})
+
+        if not success:
+            errmsg = "Server's classlist unchanged."
+            werr.append({"warn_or_err": "Warning", "werr_text": errmsg})
             return success, werr
 
         with open(tmp_csv, newline="") as fh:
