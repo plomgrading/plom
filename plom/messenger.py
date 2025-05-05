@@ -1272,7 +1272,7 @@ class Messenger(BaseMessenger):
 
         return response.json()
 
-    def new_server_delete_classlist(self) -> str:
+    def new_server_delete_classlist(self) -> None:
         """Delete the classlist (if any) held by the server.
 
         Returns:
@@ -1287,7 +1287,7 @@ class Messenger(BaseMessenger):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-        return response.text[1:-1]
+        return None
 
     def new_server_download_classlist(self) -> BytesIO:
         """Download the classlist (if any) held by the server.

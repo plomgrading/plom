@@ -33,6 +33,8 @@ from plom import Default_Port, __version__
 from plom.cli import (
     bundle_map_page,
     clear_login,
+    delete_classlist,
+    delete_source,
     get_reassembled,
     id_paper,
     un_id_paper,
@@ -41,17 +43,10 @@ from plom.cli import (
     upload_bundle,
     upload_classlist,
     upload_source,
-    delete_source,
+    download_classlist,
     upload_spec,
     reset_task,
 )
-
-from plom.plom_exceptions import (
-    PlomConflict,
-)
-
-
-# from plom.cli import clear_login
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -347,6 +342,7 @@ def main():
         args.password = getpass("password: ")
 
     m = (args.server, args.username, args.password)
+
     if args.command == "upload-bundle":
         r = upload_bundle(Path(args.pdf), msgr=m)
         print(r)
@@ -419,32 +415,25 @@ def main():
             msgr.stop()
 
     elif args.command == "delete-classlist":
-        msgr = start_messenger(args.server, args.username, args.password)
-        rc = 1
-        try:
-            r = msgr.new_server_delete_classlist()
-            print(r)
-            rc = 0
-        except PlomConflict as e:
-            print(f"PlomConflict exception: {e}")
-        finally:
-            msgr.closeUser()
-            msgr.stop()
-        return rc
+        messenger = start_messenger(*m)
+        success = delete_classlist(msgr=messenger)
+        messenger.closeUser()
+        messenger.stop()
+        sys.exit(0 if success else 1)
 
     elif args.command == "download-classlist":
-        msgr = start_messenger(args.server, args.username, args.password)
-        csvstream = msgr.new_server_download_classlist()
-        msgr.closeUser()
-        msgr.stop()
-        for chunk in csvstream:
-            sys.stdout.buffer.write(chunk)
+        messenger = start_messenger(*m)
+        success = download_classlist(msgr=messenger)
+        messenger.closeUser()
+        messenger.stop()
+        sys.exit(0 if success else 1)
 
     elif args.command == "upload-classlist":
-        r = upload_classlist(
-            Path(args.csvfile), msgr=(args.server, args.username, args.password)
-        )
-        print(f"upload_classlist returns {r}.")
+        messenger = start_messenger(*m)
+        success = upload_classlist(Path(args.csvfile), msgr=messenger)
+        messenger.closeUser()
+        messenger.stop()
+        sys.exit(0 if success else 1)
 
     elif args.command == "clear":
         clear_login(args.server, args.username, args.password)

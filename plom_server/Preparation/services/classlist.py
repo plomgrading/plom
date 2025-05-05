@@ -206,7 +206,8 @@ class StagingStudentService:
 
             for r in prereader:
                 new_ids.add(r[id_key])
-                new_paper_numbers.add(int("0" + r.get(papernum_key, "0")))
+                # Next line correctly turns '' into 0:
+                new_paper_numbers.add(int(r.get(papernum_key, "0") or 0))
 
         known_paper_numbers.discard(0)
         new_paper_numbers.discard(0)
