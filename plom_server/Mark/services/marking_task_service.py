@@ -124,7 +124,7 @@ class MarkingTaskService:
         existing_tasks = (
             MarkingTask.objects.filter(code__in=task_codes)
             .exclude(status=MarkingTask.OUT_OF_DATE)
-            .prefetch_related("markingtasktag")
+            .prefetch_related("markingtasktag_set")
         )
         # set all as out of date but keep any priorities and tags
         priorities = {}
