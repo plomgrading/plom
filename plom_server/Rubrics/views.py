@@ -457,8 +457,21 @@ class RubricCreateView(ManagerRequiredView):
             "question_index": form.cleaned_data["question_index"],
             "pedagogy_tags": form.cleaned_data["pedagogy_tags"],
         }
-        RubricService.create_rubric(rubric_data)
-        messages.success(request, "Rubric created successfully.")
+        try:
+            RubricService.create_rubric(rubric_data)
+
+        except ValueError as e:
+            messages.error(request, f"Error: {e}")
+
+        except PermissionDenied as e:
+            messages.error(request, f"Error: {e}")
+
+        except serializers.ValidationError as e:
+            messages.error(request, f"{e.detail.get("value", "Invalid Error")}")
+
+        else:
+            messages.success(request, "Rubric created successfully.")
+
         return redirect("rubrics_landing")
 
 
