@@ -16,6 +16,7 @@ import csv
 import os
 import re
 import subprocess
+import time
 from pathlib import Path
 from shlex import split
 from tempfile import TemporaryDirectory
@@ -26,8 +27,25 @@ from plom_server import __version__
 
 # TODO: not a fan of global variables, and mypy needs this to be defined
 global demo_files
-# so temporarily set to "."; we've fix it in main()
+# so temporarily set it to "."; we'll fix it in main()
 demo_files = Path(".")
+
+global t0, t_prev
+
+
+def saytime(comment) -> None:
+    global t_prev
+    dt = time.monotonic() - t_prev
+    elapsed = time.monotonic() - t0
+    t_prev = time.monotonic()
+    now = time.localtime()
+    print("\n" + comment if len(comment) > 0 else "")
+    print(
+        f"It's {time.strftime('%H:%M:%S',now)}, "
+        f"{dt:.0f} seconds since last note, "
+        f"{elapsed:.0f} seconds since launch.\n"
+    )
+    return None
 
 
 def wait_for_user_to_type_quit() -> None:
@@ -470,15 +488,23 @@ def run_demo_preparation_commands(
     """
     # in order the demo will
 
+    saytime("Setup complete.")
+
     # TODO = remove this demo-specific command
     run_django_manage_command("plom_create_demo_users")
     run_django_manage_command("plom_leadmarker_membership --toggle demoMarker1")
     run_django_manage_command("plom_leadmarker_membership --toggle demoMarker2")
+
+    saytime("Users created.")
+
     if stop_after == "users":
         print("Stopping after users created.")
         return False
 
     upload_demo_assessment_spec_file()
+
+    saytime("Assessment specification is uploaded.")
+
     if stop_after == "spec":
         print("Stopping after assessment specification uploaded.")
         return False
@@ -488,6 +514,9 @@ def run_demo_preparation_commands(
     if solutions:
         upload_demo_solution_files()
     upload_demo_classlist(length, prename)
+
+    saytime("Finished uploading assessment sources and classlist.")
+
     if stop_after == "sources":
         print("Stopping after assessment sources and classlist uploaded.")
         return False
@@ -504,11 +533,16 @@ def run_demo_preparation_commands(
             read_hack_and_resave_qvmap(tmp_qv_path)
             upload_the_qvmap(tmp_qv_path)
 
+    saytime("Finished populating the database and tweaking the qvmap.")
+
     if stop_after == "populate":
         print("Stopping after paper-database populated.")
         return False
 
     build_all_papers_and_wait()
+
+    saytime("Finished building the papers.")
+
     if stop_after == "papers-built":
         print("Stopping after papers_built.")
         return False
@@ -523,6 +557,8 @@ def run_demo_preparation_commands(
     print("For testing purposes, set papers are not printed and then set it again.")
     run_django_manage_command("plom_preparation_status --set todo")
     run_django_manage_command("plom_preparation_status --set finished")
+
+    saytime("")
 
     return True
 
@@ -802,6 +838,11 @@ def main():
     # TODO: I guess?
     os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
 
+    global t0, t_prev
+    t_prev = time.monotonic()
+    t0 = time.monotonic()
+    saytime("Starting main().")
+
     args = get_parser().parse_args()
 
     # cast stop-after, wait-after from list of options to a singleton or None
@@ -831,6 +872,9 @@ def main():
 
     # clean out old db and misc files, then rebuild blank db
     run_django_manage_command("plom_clean_all_and_build_db")
+
+    saytime("Finished refreshing the database.")
+
     # build the user-groups and the admin and manager users
     run_django_manage_command("plom_make_groups_and_first_users")
     # build extra-page and scrap-paper PDFs
