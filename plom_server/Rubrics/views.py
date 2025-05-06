@@ -6,6 +6,7 @@
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copytight (C) 2025 Bryan Tanady
 
 import difflib
 import json
@@ -467,7 +468,7 @@ class RubricCreateView(ManagerRequiredView):
             messages.error(request, f"Error: {e}")
 
         except serializers.ValidationError as e:
-            messages.error(request, f"{e.detail.get("value", "Invalid Error")}")
+            messages.error(request, f"{e.detail.get('value', 'Invalid Error')}")
 
         else:
             messages.success(request, "Rubric created successfully.")
@@ -529,7 +530,7 @@ class RubricEditView(ManagerRequiredView):
             messages.error(request, f"Error: {e}")
 
         except serializers.ValidationError as e:
-            messages.error(request, f"{e.detail.get("value", "Invalid Error")}")
+            messages.error(request, f"{e.detail.get('value', 'Invalid Error')}")
 
         except PlomConflict as e:
             messages.error(request, f"Error: {e}")
