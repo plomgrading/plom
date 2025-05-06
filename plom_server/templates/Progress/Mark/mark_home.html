@@ -21,12 +21,11 @@
         </div>
     {% endif %}
     {% if missing_task_count > 0 %}
-        <div class="container w-100 alert alert-warning" >
+        <div class="container w-100 alert alert-warning">
             There are {{ missing_task_count }} missing tasks. <a href="{% url 'scan_list_incomplete' %}">Click here</a> to view the
             missing tasks.
         </div>
     {% endif %}
-
     <div class="container w-100">
         {% for qn in questions %}
             <div class="row">
