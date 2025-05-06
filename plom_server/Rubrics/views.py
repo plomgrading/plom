@@ -41,6 +41,7 @@ from .forms import (
 )
 from .models import RubricTable
 
+
 class RubricAdminPageView(ManagerRequiredView):
     """Initializing rubrics, maybe other features in the future."""
 
@@ -507,15 +508,20 @@ class RubricEditView(ManagerRequiredView):
                 tag_tasks=tag_tasks,
                 is_minor_change=is_minor_change,
             )
-            messages.success(request, "Rubric edited successfully.")
 
-        except PlomConflict as e:
-            messages.error(request, f"Conflict Error: {e}")
+        except ValueError as e:
+            messages.error(request, f"Error: {e}")
 
         except PermissionDenied as e:
-            messages.error(request, "Unauthorized to modify the rubric")
-        
+            messages.error(request, f"Error: {e}")
+
         except serializers.ValidationError as e:
             messages.error(request, f"{e.detail.get("value", "Invalid Error")}")
+
+        except PlomConflict as e:
+            messages.error(request, f"Error: {e}")
+
+        else:
+            messages.success(request, "Rubric edited successfully.")
 
         return redirect("rubric_item", rid)
