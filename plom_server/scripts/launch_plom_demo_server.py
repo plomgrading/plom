@@ -41,7 +41,7 @@ def saytime(comment) -> None:
     now = time.localtime()
     print("\n" + comment if len(comment) > 0 else "")
     print(
-        f"It's {time.strftime('%H:%M:%S',now)}, "
+        f"It's {time.strftime('%H:%M:%S', now)}, "
         f"{dt:.0f} seconds since last note, "
         f"{elapsed:.0f} seconds since launch.\n"
     )
