@@ -33,7 +33,7 @@ demo_files = Path(".")
 global t0, t_prev
 
 
-def saytime(comment) -> None:
+def saytime(comment: str) -> None:
     global t_prev
     dt = time.monotonic() - t_prev
     elapsed = time.monotonic() - t0
