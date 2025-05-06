@@ -6,7 +6,7 @@
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
-# Copytight (C) 2025 Bryan Tanady
+# Copyright (C) 2025 Bryan Tanady
 
 import difflib
 import json
