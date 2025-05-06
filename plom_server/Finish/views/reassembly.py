@@ -68,18 +68,18 @@ class ReassemblePapersView(ManagerRequiredView):
             [X["paper_num"] for X in all_paper_status if X["used"]],
             default=None,
         )
-        partially_scanned_papers_list = list(
+        partially_scanned_papers = list(
             ManageScanService.get_all_incomplete_papers().keys()
         )
-        pp_partially_scanned_papers_list = format_int_list_with_runs(
-            partially_scanned_papers_list
+        partially_scanned_papers_abbrev_list = format_int_list_with_runs(
+            partially_scanned_papers
         )
 
         context.update(
             {
                 "papers": all_paper_status,
-                "partially_scanned_papers_list": partially_scanned_papers_list,
-                "pp_partially_scanned_papers_list": pp_partially_scanned_papers_list,
+                "partially_scanned_papers": partially_scanned_papers,
+                "partially_scanned_papers_abbrev_list": partially_scanned_papers_abbrev_list,
                 "n_papers": n_papers,
                 "n_not_ready": n_not_ready,
                 "n_ready": n_ready,
