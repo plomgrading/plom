@@ -16,6 +16,7 @@ import csv
 import os
 import re
 import subprocess
+import sys
 import time
 from pathlib import Path
 from shlex import split
@@ -30,7 +31,12 @@ global demo_files
 # so temporarily set it to "."; we'll fix it in main()
 demo_files = Path(".")
 
+# These times may be legit global vars, but (as above)
+# they need to start with fake values to silence our
+# linters
 global t0, t_prev
+t0 = 0.0
+t_prev = 0.0
 
 
 def saytime(comment: str) -> None:
@@ -42,9 +48,11 @@ def saytime(comment: str) -> None:
     print("\n" + comment if len(comment) > 0 else "")
     print(
         f"It's {time.strftime('%H:%M:%S', now)}, "
-        f"{dt:.0f} seconds since last note, "
-        f"{elapsed:.0f} seconds since launch.\n"
+        f"{dt:2.0f} seconds since last note, "
+        f"{elapsed:3.0f} seconds since launch.\n"
     )
+    sys.stdout.flush()
+    sys.stderr.flush()
     return None
 
 
@@ -880,6 +888,8 @@ def main():
     # build extra-page and scrap-paper PDFs
     run_django_manage_command("plom_build_scrap_extra_pdfs")
 
+    saytime("Finished making groups and early users, extra pages, and scrap paper.")
+
     if not args.development:
         run_django_manage_command("collectstatic --clear --no-input")
 
@@ -917,6 +927,7 @@ def main():
             ):
                 break
 
+            saytime("Launching scanning process ...")
             print(">> Scanning of papers")
             if not run_demo_bundle_scan_commands(
                 length=args.length,
@@ -927,6 +938,7 @@ def main():
                 break
 
             print("*" * 50)
+            saytime("Launching marking process ...")
             print(">> Ready for marking")
             if not run_marking_commands(
                 port=args.port, stop_after=stop_after, half_marks=args.half_marks
@@ -935,10 +947,12 @@ def main():
 
             print("*" * 50)
             print(">> Ready for finishing")
+            saytime("Launching finishing process ....")
             run_finishing_commands(stop_after=stop_after, solutions=args.solutions)
             break
 
         if args.development:
+            saytime("Development server is running, with all setup complete.")
             if wait_at_end:
                 wait_for_user_to_type_quit()
             else:
@@ -953,6 +967,7 @@ def main():
             hp.terminate()
         if server_process:
             server_process.terminate()
+        saytime("Cleanup commands all issued. Stopping now.")
         print("^" * 50)
 
 
