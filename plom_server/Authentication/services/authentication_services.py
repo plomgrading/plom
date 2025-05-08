@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2025 Colin B. Macdonald
-# Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024-2025 Aidan Murphy
 
 import csv
 import os
@@ -192,7 +192,12 @@ class AuthenticationServices:
                         f'Error near row {idx + 1}: Group "{group}" does not exist? {e}'
                     ) from e
                 user = User.objects.get(username=user_dict["username"])
-                user_dict["reset_link"] = self.generate_link(user)
+                # remove extraneous columns
+                new_user_list[idx] = {
+                    "username": user_dict["username"],
+                    "usergroup": group,
+                    "reset_link": self.generate_link(user),
+                }
 
         return new_user_list
 
