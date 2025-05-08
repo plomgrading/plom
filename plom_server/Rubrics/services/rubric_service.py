@@ -9,7 +9,7 @@
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024-2025 Aden Chan
-# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2024-2025 Aidan Murphy
 
 import ast
@@ -1043,6 +1043,40 @@ class RubricService:
                 </tr>
             </table>
         """
+    
+    def create_rubric_template(self, q_idx: int) -> list[dict[str, Any]]:
+        """Create a template rubric for a particular question.
+
+        The template has one absolute rubric entry for each score from 0 to
+        out_of (inclusive). It also creates one relative and neutral rubric.
+        
+        Args:
+            q_idx: index of the question the rubric template is for.
+
+        Returns:
+            A list of dict, each represents a rubric.
+
+        """
+
+        template = []
+
+        max_mark = SpecificationService.get_question_max_mark(q_idx)
+        # Construct absolute rubric
+        for value in range(max_mark + 1):
+            single_rubric = self._create_single_rubric_template(kind=RubricK, value=value)
+            template.append(single_rubric)
+
+
+
+
+        return []
+    
+    def _create_single_rubric_template(self, kind: str, value: int | float | None) -> dict[str, Any]:
+        essential_cols = ["kind", "value", "out_of", "text", "tags", "meta", "question_index", "versions", "pedagogy_tags"]
+        template = {key: None for key in essential_cols}
+
+        return {}
+        
 
     def get_rubric_data(self, filetype: str, question_idx: int | None) -> str:
         """Get the rubric data as the string contents of file of a specified type.
