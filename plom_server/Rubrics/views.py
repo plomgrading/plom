@@ -439,12 +439,39 @@ class UploadRubricView(ManagerRequiredView):
 class DownloadRubricTemplateView(ManagerRequiredView):
     def get(self, request: HttpRequest):
         service = RubricService()
-        data_string = service.create_rubric_template(
-            question_index=None, filetype="csv"
-        )
-        buf3 = StringIO(data_string)
-        response = HttpResponse(buf3.getvalue(), content_type="text/csv")
-        response["Content-Disposition"] = "attachment; filename=rubrics_template.csv"
+        # TODO: Obtain q_index and filetype from form
+        # question = request.GET.get("question_filter")
+        # filetype = request.GET.get("file_type")
+
+        question = None
+        filetype = "toml"
+
+        if question is not None and len(question) != 0:
+            question = int(question)
+        else:
+            question = None
+
+        if filetype == "json":
+            data_string = service.create_rubric_template(
+                question_index=question, filetype="json"
+            )
+            buf = StringIO(data_string)
+            response = HttpResponse(buf.getvalue(), content_type="text/json")
+            response["Content-Disposition"] = "attachment; filename=rubrics.json"
+        elif filetype == "toml":
+            data_string = service.create_rubric_template(
+                question_index=question, filetype="toml"
+            )
+            buf2 = BytesIO(data_string.encode("utf-8"))
+            response = HttpResponse(buf2.getvalue(), content_type="application/toml")
+            response["Content-Disposition"] = "attachment; filename=rubrics.toml"
+        else:
+            data_string = service.create_rubric_template(
+                question_index=question, filetype="csv"
+            )
+            buf3 = StringIO(data_string)
+            response = HttpResponse(buf3.getvalue(), content_type="text/csv")
+            response["Content-Disposition"] = "attachment; filename=rubrics.csv"
         return response
 
 

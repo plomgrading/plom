@@ -1075,6 +1075,16 @@ class RubricService:
             writer.writeheader()
             writer.writerows(rubrics)
             data_string = f.getvalue()
+        elif filetype == "json":
+            data_string = json.dumps(rubrics, indent="  ")
+        elif filetype == "toml":
+            for dictionary in rubrics:
+                filtered = {k: v for k, v in dictionary.items() if v is not None}
+                dictionary.clear()
+                dictionary.update(filtered)
+            data_string = tomlkit.dumps({"rubric": rubrics})
+        else:
+            raise ValueError(f"Unsupported file type: {filetype}")
 
         return data_string
 
