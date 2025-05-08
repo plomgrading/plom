@@ -1043,40 +1043,98 @@ class RubricService:
                 </tr>
             </table>
         """
-    
-    def create_rubric_template(self, q_idx: int) -> list[dict[str, Any]]:
-        """Create a template rubric for a particular question.
+
+    def create_rubric_template(self, question_index: int, filetype: str) -> str:
+        """Create a template rubric for a particular question in the specified format.
 
         The template has one absolute rubric entry for each score from 0 to
-        out_of (inclusive). It also creates one relative and neutral rubric.
-        
+        out_of (inclusive). It also creates two relative (one positive and negative),
+        and one neutral rubric.
+
         Args:
-            q_idx: index of the question the rubric template is for.
+            question_index: index of the question the rubric template is for.
+            filetype: The type of the file (json, toml, csv).
+
+        Returns:
+            A string containing the rubric data from the specified file format.
+        """
+        rubrics = self._create_rubric_template(question_index=question_index)
+
+        if filetype == "csv":
+            f = io.StringIO()
+            writer = csv.DictWriter(f, fieldnames=rubrics[0].keys())
+            writer.writeheader()
+            writer.writerows(rubrics)
+            data_string = f.getvalue()
+
+        return data_string
+
+    def _create_rubric_template(self, question_index: int) -> list[dict[str, Any]]:
+        """Create a template rubric in list of dicts format for a particular question.
+
+        Args:
+            question_index: index of the question the rubric template is for.
 
         Returns:
             A list of dict, each represents a rubric.
-
         """
-
         template = []
 
-        max_mark = SpecificationService.get_question_max_mark(q_idx)
+        max_mark = SpecificationService.get_question_max_mark(question_index)
+
         # Construct absolute rubric
         for value in range(max_mark + 1):
-            single_rubric = self._create_single_rubric_template(kind=RubricK, value=value)
-            template.append(single_rubric)
+            abs_rubric = self._create_single_rubric_template(
+                kind=Rubric.RubricKind.ABSOLUTE,
+                value=value,
+                question_index=question_index,
+            )
+            template.append(abs_rubric)
 
+        # Construct relative rubric
+        relative_rubric_pos = self._create_single_rubric_template(
+            kind=Rubric.RubricKind.RELATIVE, value=1, question_index=question_index
+        )
+        relative_rubric_neg = self._create_single_rubric_template(
+            kind=Rubric.RubricKind.RELATIVE, value=-1, question_index=question_index
+        )
+        template.extend([relative_rubric_pos, relative_rubric_neg])
 
+        # Construct neutral rubric
+        neutral_rubric = self._create_single_rubric_template(
+            kind=Rubric.RubricKind.NEUTRAL, value=0, question_index=question_index
+        )
+        template.append(neutral_rubric)
 
+        return template
 
-        return []
-    
-    def _create_single_rubric_template(self, kind: str, value: int | float | None) -> dict[str, Any]:
-        essential_cols = ["kind", "value", "out_of", "text", "tags", "meta", "question_index", "versions", "pedagogy_tags"]
-        template = {key: None for key in essential_cols}
+    def _create_single_rubric_template(
+        self, kind: str, value: int | float, question_index: int
+    ) -> dict[str, Any]:
+        if kind == Rubric.RubricKind.ABSOLUTE:
+            out_of = SpecificationService.get_question_max_mark(question_index)
+        else:
+            out_of = 0
 
-        return {}
-        
+        rubric = {
+            "kind": kind,
+            "value": value,
+            "out_of": out_of,
+            "text": "",
+            "tags": "",
+            "meta": "",
+            "question_index": question_index,
+            "versions": [],
+            "pedagogy_tags": [],
+        }
+
+        # Validate key, fail-fast suppose Rubric's attribute name is changed
+        for key in rubric.keys():
+            # Validate key
+            if key not in Rubric.__dict__:
+                raise ValueError(f"{key} is not a valid Rubric Attribute.")
+
+        return rubric
 
     def get_rubric_data(self, filetype: str, question_idx: int | None) -> str:
         """Get the rubric data as the string contents of file of a specified type.

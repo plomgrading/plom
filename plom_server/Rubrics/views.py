@@ -6,6 +6,8 @@
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2025 Bryan Tanady
+
 
 import difflib
 import json
@@ -432,6 +434,16 @@ class UploadRubricView(ManagerRequiredView):
         else:
             messages.success(request, "Rubric file uploaded successfully.")
         return redirect("rubrics_admin")
+
+
+class DownloadRubricTemplateView(ManagerRequiredView):
+    def get(self, request: HttpRequest):
+        service = RubricService()
+        data_string = service.create_rubric_template(question_index=1, filetype="csv")
+        buf3 = StringIO(data_string)
+        response = HttpResponse(buf3.getvalue(), content_type="text/csv")
+        response["Content-Disposition"] = "attachment; filename=rubrics_template.csv"
+        return response
 
 
 class RubricCreateView(ManagerRequiredView):
