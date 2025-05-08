@@ -218,7 +218,11 @@ class RubricService:
 
     @classmethod
     def create_rubric(
-        cls, rubric_data: dict[str, Any], *, creating_user: User | None = None
+        cls,
+        rubric_data: dict[str, Any],
+        *,
+        creating_user: User | None = None,
+        from_upload: bool = False,
     ) -> dict[str, Any]:
         """Create a rubric using data submitted by a marker.
 
@@ -230,6 +234,7 @@ class RubricService:
             creating_user: who is trying to create the rubric.  ``None``
                 means you don't care who (probably for internal use only).
                 ``None`` also bypasses the rubric access settings.
+            from_upload: true if the rubric creation is made by uploading rubrics.
 
         Returns:
             The new rubric data, in dict key-value format.
@@ -242,30 +247,43 @@ class RubricService:
             PermissionDenied: user are not allowed to create rubrics.
                 This could be "this user" or "all users".
         """
-        rubric_obj = cls._create_rubric(rubric_data, creating_user=creating_user)
+        rubric_obj = cls._create_rubric(
+            rubric_data, creating_user=creating_user, from_upload=from_upload
+        )
         return _Rubric_to_dict(rubric_obj)
 
     # implementation detail of the above, independently testable
     @classmethod
     def _create_rubric(
-        cls, incoming_data: dict[str, Any], *, creating_user: User | None = None
+        cls,
+        incoming_data: dict[str, Any],
+        *,
+        creating_user: User | None = None,
+        from_upload: bool,
     ) -> Rubric:
         incoming_data = incoming_data.copy()
 
-        # some mangling around user/username here
-        if "user" not in incoming_data.keys():
-            username = incoming_data.pop("username", None)
-            if not username:
-                # TODO: revisit this in the context of uploading rubrics from files
-                raise KeyError(
-                    "user or username is required (for now, might change in future)"
-                )
-            try:
-                user = User.objects.get(username=username)
-                incoming_data["user"] = user.pk
-                incoming_data["modified_by_user"] = user.pk
-            except ObjectDoesNotExist as e:
-                raise ValueError(f"User {username} does not exist.") from e
+        if from_upload:
+            if not creating_user:
+                raise ValueError("Uploader of rubrics is unknown")
+            incoming_data["user"] = creating_user.pk
+            incoming_data["modified_by_user"] = creating_user.pk
+
+        else:
+            # some mangling around user/username here
+            if "user" not in incoming_data.keys():
+                username = incoming_data.pop("username", None)
+                if not username:
+                    # TODO: revisit this in the context of uploading rubrics from files
+                    raise KeyError(
+                        "user or username is required (for now, might change in future)"
+                    )
+                try:
+                    user = User.objects.get(username=username)
+                    incoming_data["user"] = user.pk
+                    incoming_data["modified_by_user"] = user.pk
+                except ObjectDoesNotExist as e:
+                    raise ValueError(f"User {username} does not exist.") from e
 
         if "rid" in incoming_data.keys():
             # could potentially allow blank rid...
@@ -305,7 +323,7 @@ class RubricService:
                     " rubrics on this server"
                 )
             pass
-
+        
         return cls._create_rubric_lowlevel(incoming_data)
 
     @staticmethod
@@ -1104,7 +1122,7 @@ class RubricService:
         # Construct absolute rubric
         for value in range(max_mark + 1):
             abs_rubric = self._create_single_rubric_template(
-                kind=Rubric.RubricKind.ABSOLUTE,
+                kind=Rubric.RubricKind.ABSOLUTE.value,
                 value=value,
                 question_index=question_index,
             )
@@ -1112,16 +1130,16 @@ class RubricService:
 
         # Construct relative rubric
         relative_rubric_pos = self._create_single_rubric_template(
-            kind=Rubric.RubricKind.RELATIVE, value=1, question_index=question_index
+            kind=Rubric.RubricKind.RELATIVE.value, value=1, question_index=question_index
         )
         relative_rubric_neg = self._create_single_rubric_template(
-            kind=Rubric.RubricKind.RELATIVE, value=-1, question_index=question_index
+            kind=Rubric.RubricKind.RELATIVE.value, value=-1, question_index=question_index
         )
         template.extend([relative_rubric_pos, relative_rubric_neg])
 
         # Construct neutral rubric
         neutral_rubric = self._create_single_rubric_template(
-            kind=Rubric.RubricKind.NEUTRAL, value=0, question_index=question_index
+            kind=Rubric.RubricKind.NEUTRAL.value, value=0, question_index=question_index
         )
         template.append(neutral_rubric)
 
@@ -1195,12 +1213,16 @@ class RubricService:
 
         return data_string
 
-    def update_rubric_data(self, data: str, filetype: str) -> list[dict[str, Any]]:
+    def update_rubric_data(
+        self, data: str, filetype: str, requesting_user: str | None = None
+    ) -> list[dict[str, Any]]:
         """Retrieves rubrics from a file.
 
         Args:
             data: The file object containing the rubrics.
             filetype: The type of the file (json, toml, csv).
+            requesting_user: the user who requested to update the rubric data.
+            ``None`` means you don't care who (probably for internal use only).
 
         Returns:
             A list of the rubrics created.
@@ -1258,5 +1280,13 @@ class RubricService:
                 r["parameters"] = parameters
 
         # ensure either all rubrics succeed or all fail
+        if requesting_user:
+            user = User.objects.get(username=requesting_user)
+        else:
+            user = None
+
         with transaction.atomic():
-            return [self.create_rubric(r) for r in rubrics]
+            return [
+                self.create_rubric(r, creating_user=user, from_upload=True)
+                for r in rubrics
+            ]

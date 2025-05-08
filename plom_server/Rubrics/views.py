@@ -407,6 +407,7 @@ class UploadRubricView(ManagerRequiredView):
     def post(self, request: HttpRequest):
         service = RubricService()
         suffix = request.FILES["rubric_file"].name.split(".")[-1]
+        username = request.user.username
 
         if suffix == "csv" or suffix == "json":
             f = TextIOWrapper(request.FILES["rubric_file"], encoding="utf-8")
@@ -419,7 +420,7 @@ class UploadRubricView(ManagerRequiredView):
             return redirect("rubrics_admin")
 
         try:
-            service.update_rubric_data(data_string, suffix)
+            service.update_rubric_data(data_string, suffix, username)
         except ValueError as e:
             messages.error(request, f"Error: {e}")
         except serializers.ValidationError as e:
@@ -443,13 +444,8 @@ class DownloadRubricTemplateView(ManagerRequiredView):
         # question = request.GET.get("question_filter")
         # filetype = request.GET.get("file_type")
 
-        question = None
-        filetype = "toml"
-
-        if question is not None and len(question) != 0:
-            question = int(question)
-        else:
-            question = None
+        question = 1
+        filetype = "csv"
 
         if filetype == "json":
             data_string = service.create_rubric_template(
