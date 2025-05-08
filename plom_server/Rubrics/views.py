@@ -439,7 +439,9 @@ class UploadRubricView(ManagerRequiredView):
 class DownloadRubricTemplateView(ManagerRequiredView):
     def get(self, request: HttpRequest):
         service = RubricService()
-        data_string = service.create_rubric_template(question_index=1, filetype="csv")
+        data_string = service.create_rubric_template(
+            question_index=None, filetype="csv"
+        )
         buf3 = StringIO(data_string)
         response = HttpResponse(buf3.getvalue(), content_type="text/csv")
         response["Content-Disposition"] = "attachment; filename=rubrics_template.csv"

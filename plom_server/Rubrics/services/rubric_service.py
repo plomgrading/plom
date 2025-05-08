@@ -1044,7 +1044,7 @@ class RubricService:
             </table>
         """
 
-    def create_rubric_template(self, question_index: int, filetype: str) -> str:
+    def create_rubric_template(self, question_index: int | None, filetype: str) -> str:
         """Create a template rubric for a particular question in the specified format.
 
         The template has one absolute rubric entry for each score from 0 to
@@ -1052,13 +1052,22 @@ class RubricService:
         and one neutral rubric.
 
         Args:
-            question_index: index of the question the rubric template is for.
+            question_index: index of the question the rubric template is for, if None,
+            all questions will be included.
             filetype: The type of the file (json, toml, csv).
 
         Returns:
             A string containing the rubric data from the specified file format.
         """
-        rubrics = self._create_rubric_template(question_index=question_index)
+        if question_index:
+            rubrics = self._create_rubric_template(question_index=question_index)
+        else:
+            q_indices = SpecificationService.get_question_indices()
+            rubrics = [
+                r
+                for q in q_indices
+                for r in self._create_rubric_template(question_index=q)
+            ]
 
         if filetype == "csv":
             f = io.StringIO()
