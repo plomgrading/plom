@@ -349,7 +349,7 @@ class RubricService:
         if data["question_index"] < 1 or data["question_index"] > max_q_index:
             raise serializers.ValidationError(
                 {
-                    "question_index": f"{data["question_index"]} out of range, must be within [1, {max_q_index}]"
+                    "question_index": f"{data['question_index']} out of range, must be within [1, {max_q_index}]"
                 }
             )
 
