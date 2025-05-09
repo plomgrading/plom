@@ -253,29 +253,19 @@ class RubricService:
         return _Rubric_to_dict(rubric_obj)
 
     # implementation detail of the above, independently testable
-
-    @staticmethod
-    def validate_rubric_from_upload(
-        incoming_data: dict[str, Any], creating_user: User | None
-    ):
-        if not creating_user:
-            raise ValueError("Uploader of rubrics is unknown")
-
-        elif not incoming_data["value"] or str(incoming_data["value"]).strip() == "":
-            raise ValueError("'value' cannot be empty or only contain whitespace.")
-
     @classmethod
     def _create_rubric(
         cls,
         incoming_data: dict[str, Any],
+        from_upload: bool = False,
         *,
         creating_user: User | None = None,
-        from_upload: bool,
     ) -> Rubric:
         incoming_data = incoming_data.copy()
 
         if from_upload:
-            cls.validate_rubric_from_upload(incoming_data, creating_user)
+            if not creating_user:
+                raise ValueError("Uploader of rubrics is unknown")
             incoming_data["user"] = creating_user.pk
             incoming_data["modified_by_user"] = creating_user.pk
 
@@ -1132,7 +1122,7 @@ class RubricService:
         # Construct absolute rubric
         for value in range(max_mark + 1):
             abs_rubric = self._create_single_rubric_template(
-                kind=Rubric.RubricKind.ABSOLUTE.value,
+                kind=Rubric.RubricKind.ABSOLUTE[0],
                 value=value,
                 question_index=question_index,
             )
@@ -1140,12 +1130,12 @@ class RubricService:
 
         # Construct relative rubric
         relative_rubric_pos = self._create_single_rubric_template(
-            kind=Rubric.RubricKind.RELATIVE.value,
+            kind=Rubric.RubricKind.RELATIVE[0],
             value=1,
             question_index=question_index,
         )
         relative_rubric_neg = self._create_single_rubric_template(
-            kind=Rubric.RubricKind.RELATIVE.value,
+            kind=Rubric.RubricKind.RELATIVE[0],
             value=-1,
             question_index=question_index,
         )
@@ -1153,7 +1143,7 @@ class RubricService:
 
         # Construct neutral rubric
         neutral_rubric = self._create_single_rubric_template(
-            kind=Rubric.RubricKind.NEUTRAL.value, value=0, question_index=question_index
+            kind=Rubric.RubricKind.NEUTRAL[0], value=0, question_index=question_index
         )
         template.append(neutral_rubric)
 
