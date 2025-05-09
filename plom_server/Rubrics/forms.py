@@ -146,3 +146,25 @@ class RubricItemForm(forms.ModelForm):
 
         for field in self.fields:
             self.fields[field].widget.attrs["class"] = "form-control"
+
+
+
+
+class RubricTemplateDownloadForm(forms.Form):
+    """Form for downloading a template of rubrics."""
+    FILE_TYPE_CHOICES = [("csv", ".csv"), ("json", ".json"), ("toml", ".toml")]
+    question_filter = forms.TypedChoiceField(required=False)
+    file_type = forms.TypedChoiceField(
+        choices=FILE_TYPE_CHOICES, required=False, initial=".csv"
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        question_choices = [
+            (str(q_idx), q_label)
+            for q_idx, q_label in SpecificationService.get_question_index_label_pairs()
+        ]
+
+        question_choices.insert(0, ("", "All Questions"))
+
+        self.fields["question_filter"].choices = question_choices

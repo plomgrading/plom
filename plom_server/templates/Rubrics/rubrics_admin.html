@@ -54,6 +54,35 @@
                 Upload rubrics from .csv, .toml, or .json file (beta!). <a href={% url 'rubric_template_download' %}>Download template</a>
             </p>
             <!-- TODO: Issue #3755: should we provide an example? -->
+             <a href="#" class="text-primary" data-bs-toggle="modal" data-bs-target="#rubricTemplateModal">
+                Download Template
+            </a>
+            
+            <div class="modal fade" id="rubricTemplateModal" tabindex="-1" role="dialog" aria-labelledby="rubricTemplateModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="rubricTemplateModalLabel">Download Template Rubric</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="get" action="{% url 'rubric_template_download' %}">
+                                <div class="form-group mb-2">
+                                    {{ rubric_template_form.question_filter.label_tag }}
+                                    {{ rubric_template_form.question_filter }}
+                                </div>
+                                <div class="form-group mb-3">
+                                    {{ rubric_template_form.file_type.label_tag }}
+                                    {{ rubric_template_form.file_type }}
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-success me-2">Download</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock main_content %}
