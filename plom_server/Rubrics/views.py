@@ -444,7 +444,7 @@ class DownloadRubricTemplateView(ManagerRequiredView):
         # question = request.GET.get("question_filter")
         # filetype = request.GET.get("file_type")
 
-        question = 1
+        question = 3
         filetype = "csv"
 
         if filetype == "json":

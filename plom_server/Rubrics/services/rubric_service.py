@@ -253,6 +253,17 @@ class RubricService:
         return _Rubric_to_dict(rubric_obj)
 
     # implementation detail of the above, independently testable
+
+    @staticmethod
+    def validate_rubric_from_upload(
+        incoming_data: dict[str, Any], creating_user: User | None
+    ):
+        if not creating_user:
+            raise ValueError("Uploader of rubrics is unknown")
+
+        elif not incoming_data["value"] or str(incoming_data["value"]).strip() == "":
+            raise ValueError("'value' cannot be empty or only contain whitespace.")
+
     @classmethod
     def _create_rubric(
         cls,
@@ -264,8 +275,7 @@ class RubricService:
         incoming_data = incoming_data.copy()
 
         if from_upload:
-            if not creating_user:
-                raise ValueError("Uploader of rubrics is unknown")
+            cls.validate_rubric_from_upload(incoming_data, creating_user)
             incoming_data["user"] = creating_user.pk
             incoming_data["modified_by_user"] = creating_user.pk
 
@@ -323,7 +333,7 @@ class RubricService:
                     " rubrics on this server"
                 )
             pass
-        
+
         return cls._create_rubric_lowlevel(incoming_data)
 
     @staticmethod
@@ -1130,10 +1140,14 @@ class RubricService:
 
         # Construct relative rubric
         relative_rubric_pos = self._create_single_rubric_template(
-            kind=Rubric.RubricKind.RELATIVE.value, value=1, question_index=question_index
+            kind=Rubric.RubricKind.RELATIVE.value,
+            value=1,
+            question_index=question_index,
         )
         relative_rubric_neg = self._create_single_rubric_template(
-            kind=Rubric.RubricKind.RELATIVE.value, value=-1, question_index=question_index
+            kind=Rubric.RubricKind.RELATIVE.value,
+            value=-1,
+            question_index=question_index,
         )
         template.extend([relative_rubric_pos, relative_rubric_neg])
 
@@ -1157,11 +1171,12 @@ class RubricService:
             "kind": kind,
             "value": value,
             "out_of": out_of,
-            "text": "",
+            "text": "==> CHANGE ME",
             "tags": "",
             "meta": "",
             "question_index": question_index,
             "versions": [],
+            "parameters": [],
             "pedagogy_tags": [],
         }
 
