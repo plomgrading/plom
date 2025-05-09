@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 
 import csv
@@ -37,11 +37,7 @@ class Command(BaseCommand):
         self.stdout.write(str(tabulate(user_list, tablefmt="simple")))
 
     def handle_import(self, file_path: Path, *, set_password: bool = False) -> None:
-        """Imports users from a file.
-
-        Input file must be a .csv containing fields: 'username', 'usergroup'
-        created users are written to stdout in the format of a .csv.
-        """
+        """Imports users from a csv file and display to stdout."""
         try:
             new_user_list = AuthenticationServices().create_users_from_csv(file_path)
         except (IntegrityError, ObjectDoesNotExist, KeyError) as e:
@@ -80,7 +76,7 @@ class Command(BaseCommand):
             help="""
                 A path to the .csv file specifying new users.
 
-                Should contain fields "username","usergroup".
+                Should contain fields "username", "usergroup".
             """,
         )
 

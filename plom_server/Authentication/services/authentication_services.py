@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2025 Colin B. Macdonald
-# Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2024-2025 Aidan Murphy
 
 import csv
 import os
@@ -159,31 +159,33 @@ class AuthenticationServices:
             f: a path to the .csv file, or the bytes of a .csv file.
 
         Returns:
-            A list of dicts containing information for each user.
+            A list of dicts containing information for each user, each entry
+            has keys `username`, `usergroup`, and `reset_link`.
 
         Raises:
-            KeyError: .csv file is missing required fields: `username`;`usergroup`.
+            KeyError: .csv file is missing required fields: `username`, `usergroup`.
             IntegrityError: attempted to create a user that already exists.
             ObjectDoesNotExist: specified usergroup doesn't exist.
         """
         if isinstance(f, bytes):
-            new_user_list = list(csv.DictReader(f.decode("utf-8").splitlines()))
+            user_list = list(csv.DictReader(f.decode("utf-8").splitlines()))
             _filename = "csv file"
         else:
             _filename = str(f)
             with open(f) as csvfile:
-                new_user_list = list(csv.DictReader(csvfile))
+                user_list = list(csv.DictReader(csvfile))
 
         required_fields = set(["username", "usergroup"])
-        if not required_fields.issubset(new_user_list[0].keys()):
+        if not required_fields.issubset(user_list[0].keys()):
             raise KeyError(
                 f"{_filename} is missing required fields,"
                 f" it must contain: {required_fields}"
             )
 
+        users_added = []
         # either all succeed or all fail
         with transaction.atomic():
-            for idx, user_dict in enumerate(new_user_list):
+            for idx, user_dict in enumerate(user_list):
                 group = user_dict["usergroup"]
                 try:
                     self.create_user_and_add_to_group(user_dict["username"], group)
@@ -192,9 +194,15 @@ class AuthenticationServices:
                         f'Error near row {idx + 1}: Group "{group}" does not exist? {e}'
                     ) from e
                 user = User.objects.get(username=user_dict["username"])
-                user_dict["reset_link"] = self.generate_link(user)
+                users_added.append(
+                    {
+                        "username": user_dict["username"],
+                        "usergroup": group,
+                        "reset_link": self.generate_link(user),
+                    }
+                )
 
-        return new_user_list
+        return users_added
 
     def generate_list_of_funky_usernames(
         self, group_name: str, num_users: int
