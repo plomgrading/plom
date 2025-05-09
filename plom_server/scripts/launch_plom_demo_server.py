@@ -36,16 +36,14 @@ demo_files = Path(".")
 global _demo_script_launch_time
 _demo_script_launch_time: None | float = None
 
+
 def saytime(comment: str) -> None:
     global _demo_script_launch_time
     now = time.localtime()
-    
+
     if _demo_script_launch_time is None:
         _demo_script_launch_time = time.monotonic()
-        print(
-            f"\n{time.strftime('%H:%M:%S', now)}: "
-            f"Launching the timer.\n"
-        )
+        print(f"\n{time.strftime('%H:%M:%S', now)}: Launching the timer.\n")
     else:
         elapsed = time.monotonic() - _demo_script_launch_time
         print(
@@ -53,10 +51,10 @@ def saytime(comment: str) -> None:
             f"{comment} "
             f"[{elapsed:.0f} s since launch]\n"
         )
-        
+
     sys.stdout.flush()
     sys.stderr.flush()
-    
+
 
 def wait_for_user_to_type_quit() -> None:
     """Wait for correct user input and then return."""
@@ -846,7 +844,7 @@ def main():
     # TODO: I guess?
     os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
 
-    saytime("")  # Launch the chatty timer. 
+    saytime("")  # Launch the chatty timer.
 
     args = get_parser().parse_args()
 
