@@ -11,6 +11,7 @@
 # Copyright (C) 2024-2025 Aden Chan
 # Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2024-2025 Aidan Murphy
+# Copyright (C) 2025 Deep Shah
 
 import ast
 import csv
@@ -64,11 +65,18 @@ def _validate_versions(vers: None | list | str) -> None:
         raise serializers.ValidationError(
             f'nonempty "versions" must be a list of ints but got "{vers}"'
         )
+    
+    n_versions = SpecificationService.get_n_versions()
+
     for v in vers:
         if not isinstance(v, int):
             raise serializers.ValidationError(
                 f'nonempty "versions" must be a list of ints but got "{vers}"'
             )
+        if v < 1 or v > n_versions:
+            raise serializers.ValidationError(
+                {"versions": f"Version {v} is out of range — must be in [1, {n_versions}]"}
+            )   
 
 
 def _validate_parameters(parameters: None | list, num_versions: None | int = 1) -> None:
@@ -293,8 +301,14 @@ class RubricService:
             )
 
         # some mangling because client still uses "question"
-        if "question_index" not in incoming_data.keys():
-            incoming_data["question_index"] = incoming_data.pop("question")
+        # checking if question_index/question column is present
+        if "question_index" not in incoming_data:
+            if "question" in incoming_data:
+                incoming_data["question_index"] = incoming_data.pop("question")
+            else:
+                raise serializers.ValidationError(
+                    {"question_index": "question index is required."}
+                )
 
         if "kind" not in incoming_data.keys():
             raise serializers.ValidationError({"kind": "Kind is required."})
@@ -383,8 +397,16 @@ class RubricService:
             return new_rubric
 
         serializer = RubricSerializer(data=data)
+
+        # user-friendly text error messages
         if not serializer.is_valid():
-            raise serializers.ValidationError(serializer.errors)
+            errors = serializer.errors
+            friendly = {
+                field: str(err[0]) if isinstance(err, list) else err
+                for field, err in errors.items()
+            }
+            raise serializers.ValidationError(friendly)
+
         new_rubric = serializer.save()
         # TODO: if its new why do we need to clear these?
         # new_rubric.pedagogy_tags.clear()
