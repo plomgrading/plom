@@ -32,29 +32,31 @@ global demo_files
 demo_files = Path(".")
 
 # These times may be legit global vars, but (as above)
-# they need to start with fake values to silence our
-# linters
-global t0, t_prev
-t0 = 0.0
-t_prev = 0.0
-
+# they need to start with values to silence our linters
+global _demo_script_launch_time
+_demo_script_launch_time: None | float = None
 
 def saytime(comment: str) -> None:
-    global t_prev
-    dt = time.monotonic() - t_prev
-    elapsed = time.monotonic() - t0
-    t_prev = time.monotonic()
+    global _demo_script_launch_time
     now = time.localtime()
-    print("\n" + comment if len(comment) > 0 else "")
-    print(
-        f"It's {time.strftime('%H:%M:%S', now)}, "
-        f"{dt:2.0f} seconds since last note, "
-        f"{elapsed:3.0f} seconds since launch.\n"
-    )
+    
+    if _demo_script_launch_time is None:
+        _demo_script_launch_time = time.monotonic()
+        print(
+            f"\n{time.strftime('%H:%M:%S', now)}: "
+            f"Launching the timer.\n"
+        )
+    else:
+        elapsed = time.monotonic() - _demo_script_launch_time
+        print(
+            f"\n{time.strftime('%H:%M:%S', now)}: "
+            f"{comment} "
+            f"[{elapsed:.0f} s since launch]\n"
+        )
+        
     sys.stdout.flush()
     sys.stderr.flush()
-    return None
-
+    
 
 def wait_for_user_to_type_quit() -> None:
     """Wait for correct user input and then return."""
@@ -496,8 +498,6 @@ def run_demo_preparation_commands(
     """
     # in order the demo will
 
-    saytime("Setup complete.")
-
     # TODO = remove this demo-specific command
     run_django_manage_command("plom_create_demo_users")
     run_django_manage_command("plom_leadmarker_membership --toggle demoMarker1")
@@ -846,10 +846,7 @@ def main():
     # TODO: I guess?
     os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
 
-    global t0, t_prev
-    t_prev = time.monotonic()
-    t0 = time.monotonic()
-    saytime("Starting main().")
+    saytime("")  # Launch the chatty timer. 
 
     args = get_parser().parse_args()
 
