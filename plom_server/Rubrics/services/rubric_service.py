@@ -65,7 +65,7 @@ def _validate_versions(vers: None | list | str) -> None:
         raise serializers.ValidationError(
             f'nonempty "versions" must be a list of ints but got "{vers}"'
         )
-    
+
     n_versions = SpecificationService.get_n_versions()
 
     for v in vers:
@@ -75,8 +75,10 @@ def _validate_versions(vers: None | list | str) -> None:
             )
         if v < 1 or v > n_versions:
             raise serializers.ValidationError(
-                {"versions": f"Version {v} is out of range — must be in [1, {n_versions}]"}
-            )   
+                {
+                    "versions": f"Version {v} is out of range — must be in [1, {n_versions}]"
+                }
+            )
 
 
 def _validate_parameters(parameters: None | list, num_versions: None | int = 1) -> None:
@@ -373,7 +375,9 @@ class RubricService:
         # TODO: Perhaps the serializer should do this
         if data["kind"] == "absolute":
             if "value" not in data:
-                raise serializers.ValidationError({"value": "missing value"})
+                raise serializers.ValidationError(
+                    {"value": "Absolute rubric requires value"}
+                )
             _validate_value_out_of(data["value"], data["out_of"], max_mark)
 
         # TODO: more validation of JSONFields that the model/form/serializer should
