@@ -42,7 +42,7 @@ def saytime(comment: str) -> None:
     if _demo_script_launch_time is None:
         _demo_script_launch_time = time.monotonic()
         print(f"\n{time.strftime('%H:%M:%S', now)}: Launching the timer.\n")
-    else:
+    if comment:
         elapsed = time.monotonic() - _demo_script_launch_time
         print(
             f"\n{time.strftime('%H:%M:%S', now)}: "
