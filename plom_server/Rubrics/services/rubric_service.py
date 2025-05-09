@@ -316,7 +316,9 @@ class RubricService:
             raise serializers.ValidationError({"kind": "Kind is required."})
 
         if incoming_data["kind"] not in ("absolute", "relative", "neutral"):
-            raise serializers.ValidationError({"kind": "Invalid kind."})
+            raise serializers.ValidationError(
+                {"kind": f"{incoming_data['kind']} is not a valid kind."}
+            )
 
         # Check permissions
         s = SettingsModel.load()
