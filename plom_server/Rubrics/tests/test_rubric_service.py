@@ -7,6 +7,7 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2025 Andrew Rechnitzer
 # Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025 Bryan Tanady
 
 from django.contrib.auth.models import User
 from django.test import TestCase
