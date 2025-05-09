@@ -23,7 +23,7 @@ def debugnote(text: str, newline: bool = False) -> None:
     myZone = "America/Vancouver"
     now = datetime.datetime.now(pytz.timezone(myZone))
     prefix = now.strftime("%Y-%m-%d %H:%M:%S.%f")[:22]
-    print(("\n" if newline else "") + prefix + ": " + text)
+    print(("\n" if newline else "") + prefix + ": " + text, file=sys.stderr)
     sys.stdout.flush()  # Don't let buffering delay delivery!
     sys.stderr.flush()
 

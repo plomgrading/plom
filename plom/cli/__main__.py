@@ -38,6 +38,8 @@ from plom.cli import (
     list_bundles,
     start_messenger,
     upload_bundle,
+    upload_source,
+    delete_source,
     upload_spec,
     reset_task,
 )
@@ -130,8 +132,43 @@ def get_parser() -> argparse.ArgumentParser:
     s.add_argument("bundle_id", type=int)
 
     s = sub.add_parser(
+        "upload-source",
+        help="Upload an assessment source PDF.",
+        description="""
+            Upload a PDF file containing a valid assessment source version,
+            replacing the existing source, if any.
+        """,
+    )
+    _add_server_args(s)
+    s.add_argument(
+        "source_pdf",
+        help="A PDF file containing a valid assessment source.",
+    )
+    s.add_argument(
+        "-v",
+        dest="version",
+        type=int,
+        default=1,
+        help="Source version number (default 1).",
+    )
+
+    s = sub.add_parser(
+        "delete-source",
+        help="Delete an assessment source PDF.",
+        description="Remove the indicated assessment source.",
+    )
+    _add_server_args(s)
+    s.add_argument(
+        "-v",
+        dest="version",
+        type=int,
+        default=1,
+        help="Source version number (default 1).",
+    )
+
+    s = sub.add_parser(
         "upload-spec",
-        help="Upload assessment spec",
+        help="Upload an assessment spec",
         description="Upload a .toml file containing an assessment specification.",
     )
     s.add_argument("tomlfile", help="The assessment specification.")
@@ -317,6 +354,16 @@ def main():
             f"wrote reassembled paper number {args.papernum} to "
             f'file {r["filename"]} [{r["content-length"]} bytes]'
         )
+
+    elif args.command == "upload-source":
+        ver = args.version
+        r = upload_source(
+            ver, Path(args.source_pdf), msgr=(args.server, args.username, args.password)
+        )
+
+    elif args.command == "delete-source":
+        ver = args.version
+        r = delete_source(ver, msgr=(args.server, args.username, args.password))
 
     elif args.command == "upload-spec":
         r = upload_spec(
