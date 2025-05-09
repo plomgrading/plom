@@ -31,8 +31,6 @@ global demo_files
 # so temporarily set it to "."; we'll fix it in main()
 demo_files = Path(".")
 
-# These times may be legit global vars, but (as above)
-# they need to start with values to silence our linters
 global _demo_script_launch_time
 _demo_script_launch_time: None | float = None
 
