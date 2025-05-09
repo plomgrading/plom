@@ -50,13 +50,43 @@ rubric as they see fit.
 The default is somewhere in the middle; anyone can create their own
 rubrics, and some users can modify all rubrics.
 
+As a manager, you can change these settings under "Rubrics" in the
+web interface.
+
+
+Rubric revisions
+^^^^^^^^^^^^^^^^
+
+When changing rubrics, either in the client or via the web interface,
+you can indicate whether your changes are major or minor.
+Generally minor changes are things such as typos where you *would not*
+necessarily need to update any existing use of the rubric, nor would
+you want to track changes.
+
 .. warning::
-   Currently, there is no mechanism to revisit papers that were
-   affected by modifying a rubric.  For example if you change "-1 not
-   the chain rule" into "-2 not the chain rule" then previously-marked
-   papers will still have the "-1" version.  Developing a workflow for
-   updating for such changes is of considerable interest:
-   see `Issue #3351 <https://gitlab.com/plom/plom/-/issues/3351>`_.
+   If you make major changes to a rubric, such as changing
+   "-1 not the chain rule" into "-2 not the chain rule" then your
+   previously-marked papers will still have the "-1" version.
+   Those papers will by default be tagged.
+   You can sort by tags to easily find them.
+   The client will then highlight the old rubrics when you revisit
+   those papers; you can then replace the old rubric with the new
+   revision.
+   Work on improving this workflow is ongoing and we hope to make
+   it easier in the future.
+
+
+Rubric Rendering
+----------------
+
+By default, the text field of a rubric is plain text.
+You can use TeX commands, e.g., rendering math using ``$\sin \theta$``:
+simply prepending your text with ``tex:``.
+
+The client will try to remind you of this, if it notices multiple
+dollar signs in your text.
+
+We hope to offer partial Markdown support in the future.
 
 
 Rubric Scope
