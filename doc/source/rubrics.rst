@@ -65,7 +65,7 @@ you want to track changes.
 
 .. warning::
    If you make major changes to a rubric, such as changing
-   "-1 not the chain rule" into "-2 not the chain rule" then you
+   "-1 not the chain rule" into "-2 not the chain rule" then your
    previously-marked papers will still have the "-1" version.
    Those papers will by default be tagged.
    You can sort by tags to easily find them.
