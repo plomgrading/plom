@@ -436,8 +436,8 @@ class UploadRubricView(ManagerRequiredView):
             # which is messy for end-users.  This args hack makes it render like:
             #    Error: invalid row in "parameters"...
             # See also API/views/utils.py which does a similar hack.
-            (nicer_error_msg,) = e.args
-            messages.error(request, f"Error: {nicer_error_msg}")
+            problematic_col, err_msg = next(iter(e.args[0].items()))
+            messages.error(request, f"Error: '{problematic_col}': {err_msg}")
         else:
             messages.success(request, "Rubric file uploaded successfully.")
         return redirect("rubrics_admin")
@@ -448,6 +448,11 @@ class DownloadRubricTemplateView(ManagerRequiredView):
         service = RubricService()
         question = request.GET.get("question_filter")
         filetype = request.GET.get("file_type")
+
+        if question is not None and len(question) != 0:
+            question = int(question)
+        else:
+            question = None
 
         if filetype == "json":
             data_string = service.create_rubric_template(

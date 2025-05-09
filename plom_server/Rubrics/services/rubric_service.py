@@ -327,6 +327,49 @@ class RubricService:
         return cls._create_rubric_lowlevel(incoming_data)
 
     @staticmethod
+    def _validate_rubric_fields(data: dict[str, Any]) -> None:
+        """Validate data that will be used to create rubric.
+
+        Args:
+            data: a dictionary representing a rubric.
+        """
+        # Ensure text is not empty or whitespace only
+        if str(data["text"]).strip() == "":
+            raise serializers.ValidationError(
+                {"text": "Text can't be empty or contain only whitespace"}
+            )
+
+        if not isinstance(data["question_index"], int):
+            raise serializers.ValidationError(
+                {"question_index": "question_index should be integer"}
+            )
+
+        # Ensure question index (indexed from 1) is within range
+        max_q_index = SpecificationService.get_n_questions()
+        if data["question_index"] < 1 or data["question_index"] > max_q_index:
+            raise serializers.ValidationError(
+                {
+                    "question_index": f"{data["question_index"]} out of range, must be within [1, {max_q_index}]"
+                }
+            )
+
+        # check that the "value" lies in [-max_mark, max_mark]
+        max_mark = SpecificationService.get_question_max_mark(data["question_index"])
+        _validate_value(data.get("value", 0), max_mark)
+        # TODO: Perhaps the serializer should do this
+        if data["kind"] == "absolute":
+            if "value" not in data:
+                raise serializers.ValidationError({"value": "missing value"})
+            _validate_value_out_of(data["value"], data["out_of"], max_mark)
+
+        # TODO: more validation of JSONFields that the model/form/serializer should
+        # be doing (see `clean_versions` commented out in Rubrics/models.py)
+        _validate_versions(data.get("versions"))
+        _validate_parameters(
+            data.get("parameters"), SpecificationService.get_n_versions()
+        )
+
+    @staticmethod
     def _create_rubric_lowlevel(
         data: dict[str, Any],
         *,
@@ -347,19 +390,8 @@ class RubricService:
                 data["kind"],
                 data.get("out_of", None),
             )
-        # check that the "value" lies in [-max_mark, max_mark]
-        max_mark = SpecificationService.get_question_max_mark(data["question_index"])
-        _validate_value(data.get("value", 0), max_mark)
-        # TODO: Perhaps the serializer should do this
-        if data["kind"] == "absolute":
-            _validate_value_out_of(data["value"], data["out_of"], max_mark)
 
-        # TODO: more validation of JSONFields that the model/form/serializer should
-        # be doing (see `clean_versions` commented out in Rubrics/models.py)
-        _validate_versions(data.get("versions"))
-        _validate_parameters(
-            data.get("parameters"), SpecificationService.get_n_versions()
-        )
+        RubricService._validate_rubric_fields(data)
 
         data["latest"] = True
         if _bypass_serializer:
@@ -1156,7 +1188,6 @@ class RubricService:
             out_of = SpecificationService.get_question_max_mark(question_index)
         else:
             out_of = 0
-
         rubric = {
             "kind": kind,
             "value": value,
