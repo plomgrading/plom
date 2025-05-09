@@ -37,12 +37,11 @@ class ExamMockerService:
         source_path = Path(_get_source_file(version).path)
 
         # ensure mocked papers won't scan by using wrong public code
-        # Future proof for https://gitlab.com/plom/plom/-/merge_requests/3178
-        assert len(spec["publicCode"]) == 5
-        if spec["publicCode"] == "00000":
-            spec["publicCode"] = "99999"
+        assert len(spec["publicCode"]) == 6
+        if spec["publicCode"] == "000000":
+            spec["publicCode"] = "999999"
         else:
-            spec["publicCode"] = "00000"
+            spec["publicCode"] = "000000"
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             tmpdir = Path(tmpdirname)

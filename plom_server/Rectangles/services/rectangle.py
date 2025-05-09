@@ -78,7 +78,8 @@ def get_reference_rectangle_for_page(page: int, *, version: int) -> dict[str, fl
 
 
 def _get_affine_transf_matrix_ref_to_QR_target(
-    reference_region, qr_dict: dict[str, dict[str, Any]]
+    reference_region: tuple[float, float, float, float],
+    qr_dict: dict[str, dict[str, Any]],
 ) -> None | np.ndarray:
     """Given QR data for a target image, determine the affine transformation that maps coords in the reference image to coordinates in the target.
 

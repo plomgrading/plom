@@ -8,10 +8,9 @@
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers, status
-from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.request import Request
-from rest_framework.viewsets import ViewSet
+from rest_framework.views import APIView
 
 from plom.plom_exceptions import (
     PlomConflict,
@@ -26,12 +25,11 @@ from plom_server.Progress.services import UserInfoServices
 from .utils import _error_response
 
 
-class QuestionMarkingViewSet(ViewSet):
-    """Controller for the question marking workflow."""
+class MarkTaskNextAvailable(APIView):
+    """Get the next currently-available marking task."""
 
     # GET: /MK/tasks/available
-    @action(detail=False, methods=["get"], url_path="available")
-    def available(self, request: Request, *args) -> Response:
+    def get(self, request: Request) -> Response:
         """Get the next currently-available marking task.
 
         Responds with a code for the next available marking task.
@@ -89,28 +87,12 @@ class QuestionMarkingViewSet(ViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(task.code, status=status.HTTP_200_OK)
 
-    # POST: /MK/tasks/{code}
+
+class MarkTask(APIView):
+    """Handles patch and post for tasks, corresponding to claiming and submitting annotations."""
+
     # PATCH: /MK/tasks/{code}
-    @action(detail=False, methods=["patch", "post"], url_path="(?P<code>q.+)")
-    def claim_or_mark_task(self, request: Request, code: str) -> Response:
-        """Attach a user to a marking task, or accept a grade and annotation.
-
-        patch:
-        Attach a user to a marking task.
-
-        post:
-        Accept a marker's grade and annotation.
-
-        Methods:
-            PATCH: see self.claim_task()
-            POST: see self.mark_task()
-        """
-        if request.method == "PATCH":
-            return self.claim_task(request, code=code)
-        elif request.method == "POST":
-            return self.mark_task(request, code=code)
-
-    def claim_task(self, request: Request, *, code: str) -> Response:
+    def patch(self, request: Request, *, code: str) -> Response:
         """Attach a user to a marking task and return the task's metadata.
 
         Reply with status 200, or 409 if someone else has claimed this
@@ -148,7 +130,8 @@ class QuestionMarkingViewSet(ViewSet):
             tags = MarkingTaskService().get_tags_for_task_pk(task.pk)
             return Response([question_data, tags, task.pk])
 
-    def mark_task(self, request: Request, *, code: str) -> Response:
+    # POST: /MK/tasks/{code}
+    def post(self, request: Request, *, code: str) -> Response:
         """Accept a marker's grade and annotation for a task.
 
         Returns:

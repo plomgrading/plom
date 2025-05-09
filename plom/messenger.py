@@ -11,13 +11,13 @@
 from __future__ import annotations
 
 import hashlib
-from io import BytesIO
 import json
 import logging
 import mimetypes
 import pathlib
 import tempfile
 from email.message import EmailMessage
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
@@ -28,16 +28,17 @@ from tqdm import tqdm
 from plom.baseMessenger import BaseMessenger
 from plom.scanMessenger import ScanMessenger
 from plom.managerMessenger import ManagerMessenger
-from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomConflict,
+    PlomDependencyConflict,
     PlomNoBundle,
     PlomNoPaper,
     PlomNoPermission,
     PlomNoServerSupportException,
     PlomQuotaLimitExceeded,
     PlomRangeException,
+    PlomSeriousException,
     PlomTakenException,
     PlomTaskChangedError,
     PlomTaskDeletedError,
@@ -904,9 +905,7 @@ class Messenger(BaseMessenger):
         with self.SRmutex:
             try:
                 with pdf.open("rb") as f:
-                    files = {
-                        "pdf_file": f,
-                    }
+                    files = {"pdf_file": f}
                     response = self.post_auth("/api/beta/scan/bundles", files=files)
                 response.raise_for_status()
                 return response.json()
@@ -1155,19 +1154,102 @@ class Messenger(BaseMessenger):
                     raise PlomSeriousException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_upload_spec(self, spec_toml_string: str) -> dict:
+    def new_server_upload_source(
+        self, version: int, source_pdf: Path
+    ) -> dict[str, Any]:
+        """Upload an assessment source to the server.
+
+        Args:
+            version: The source version number. Must be compatible with the spec.
+            source_pdf: The path to a valid source file.
+                (Passing an empty file will vacate the corresponding source slot.)
+
+        Exceptions:
+            PlomAuthenticationException: user not logged in, or not in manager group
+            PlomDependencyConflict: server state is incompatible with changes to a source.
+            PlomVersionMismatchException: source number out of range set by spec
+            PlomSeriousException: other errors.
+
+        Returns:
+            The dict produced by SourceService, as documented elsewhere.
+            ("version": int, "uploaded": bool, "hash": str)
+        """
+        with self.SRmutex:
+            try:
+                with source_pdf.open("rb") as f:
+                    files = {"source_pdf": f}
+                    response = self.post_auth(
+                        f"/api/v0/source/{version:d}", files=files
+                    )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomVersionMismatchException(response.reason) from None
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomSeriousException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomDependencyConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+        return response.json()
+
+    def new_server_delete_source(self, version: int) -> dict[str, Any]:
+        """Delete the specified assessment source from the server.
+
+        Args:
+            version: The source version number. Must be compatible with the spec.
+
+        Exceptions:
+            PlomAuthenticationException: user not logged in, or not in manager group
+            PlomDependencyConflict: server state is incompatible with changes to a source.
+            PlomVersionMismatchException: source number out of range set by spec
+            PlomSeriousException: other errors.
+
+        Returns:
+            The updated list of dicts, one for each source expected by the spec,
+            describing the status of the sources in the database. Typically,
+            {"version": int, "uploaded": bool, "hash": str}
+        """
+        with self.SRmutex:
+            try:
+                response = self.delete_auth(f"/api/v0/source/{version:d}")
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomVersionMismatchException(response.reason) from None
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomSeriousException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomDependencyConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+        return response.json()
+
+    def new_server_upload_spec(
+        self, spec_toml_string: str, *, force_public_code: bool = False
+    ) -> dict[str, Any]:
         """Upload an assessment spec to the server.
 
         Args:
             spec_toml_string: The utf-8 string you get by reading a valid spec.toml file
 
-        Exceptions:
-            PlomConflict: server already has a database, cannot accept spec.
-            ValueError: invalid spec.
-            PlomSeriousException: other errors.
+        Keyword Args:
+            force_public_code: Usually you may not include "publicCode" in
+                the specification.  Pass True to allow overriding that default.
 
         Returns:
             The newly-uploaded spec, as a dict.
+
+        Exceptions:
+            PlomConflict: server already has a database, cannot accept spec.
+            PlomNoPermission: user is not in the group required to make
+                these changes.
+            ValueError: invalid spec.
+            PlomSeriousException: other errors unexpected errors.
         """
         with self.SRmutex:
             try:
@@ -1175,6 +1257,7 @@ class Messenger(BaseMessenger):
                     "/api/v0/spec",
                     json={
                         "spec_toml": spec_toml_string,
+                        "force_public_code": force_public_code,
                     },
                 )
                 response.raise_for_status()
@@ -1182,6 +1265,8 @@ class Messenger(BaseMessenger):
                 if response.status_code == 400:
                     raise ValueError(response.reason) from None
                 if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 409:
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 

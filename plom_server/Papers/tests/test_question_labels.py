@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from django.test import TestCase
 
@@ -24,7 +24,7 @@ class SpecficiationServiceQuestionLabelTests(TestCase):
                 4: {"pages": [5], "mark": 5, "label": "Q4"},
             },
         }
-        serv.store_validated_spec(spec_dict)
+        serv._store_validated_spec(spec_dict)
         return super().setUp()
 
     def test_qlabels(self) -> None:

@@ -430,7 +430,7 @@ pyright:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install pyright~=1.1.398
+    - pip install pyright~=1.1.400
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -454,7 +454,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.11.4
+    - pip install ruff~=0.11.8
   script:
     - ruff check .
     # ruff format .
@@ -465,7 +465,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.11.4
+    - pip install ruff~=0.11.8
   script:
     # run once just for log out but don't fail
     - EXCEPTIONS="D101,D102,D103,D104,D106"
@@ -596,7 +596,7 @@ out-of-tree:
     - django-admin --version
     - django-admin -h
     - django-admin -h | grep plom
-    - django-admin plom_demo_spec -h
+    - django-admin plom_preparation_spec -h
     - django-admin test plom_server
     - popd
   allow_failure: true
@@ -617,7 +617,8 @@ out-of-tree-scratch:
   image: fedora:42
   # when: manual
   before_script:
-    - dnf install -y gcc gcc-c++ cmake
+    - dnf install -y --setopt=install_weak_deps=False
+          gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview tex-charter tex-exam tex-preprint
           python3-passlib python3-pyqt6
@@ -654,7 +655,7 @@ out-of-tree-scratch:
     - django-admin --version
     - django-admin -h
     - django-admin -h | grep plom
-    - django-admin plom_demo_spec -h
+    - django-admin plom_preparation_spec -h
     - django-admin test plom_server
     - popd
   allow_failure: true
@@ -702,7 +703,8 @@ fedora-django-tests:
   image: fedora:42
   when: manual
   before_script:
-    - dnf install -y gcc gcc-c++ cmake
+    - dnf install -y --setopt=install_weak_deps=False
+          gcc gcc-c++ cmake
           latexmk tex-dvipng texlive-scheme-basic
           tex-preview tex-charter tex-exam tex-preprint
           python3-passlib python3-pyqt6

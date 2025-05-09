@@ -2,6 +2,7 @@
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2025 Philip D. Loewen
 
 from plom.plom_exceptions import PlomDependencyConflict
 
@@ -19,7 +20,7 @@ from plom.plom_exceptions import PlomDependencyConflict
 # give assert raising tests followed by true/false returning functions
 
 
-# 1 the spec depends on nothing, but sources and QVMap depend on the spec
+# 1 = the spec depends on nothing, but sources and QVMap depend on the spec
 def assert_can_modify_spec():
     from plom_server.Papers.services import PaperInfoService
     from . import PapersPrinted, SourceService
@@ -55,7 +56,7 @@ def assert_can_modify_sources():
         raise PlomDependencyConflict("Papers have been printed.")
     # if there is no spec, then cannot modify sources
     if not SpecificationService.is_there_a_spec():
-        raise PlomDependencyConflict("There is no specification")
+        raise PlomDependencyConflict("There is no specification.")
     # cannot modify sources if any papers have been produced
     if BuildPapersService().are_any_papers_built():
         raise PlomDependencyConflict(
@@ -157,7 +158,7 @@ def assert_can_modify_qv_mapping_database():
         raise PlomDependencyConflict("Papers have been printed.")
     # cannot modify the qv-mapping if there is no spec
     if not SpecificationService.is_there_a_spec():
-        raise PlomDependencyConflict("There is no specification")
+        raise PlomDependencyConflict("There is no specification.")
 
     # if prenaming set, then we must have a classlist before can modify qv-map.
     # else we can modify independent of the classlist.

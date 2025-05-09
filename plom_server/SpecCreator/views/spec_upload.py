@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -9,7 +9,10 @@ from plom_server.Papers.services import SpecificationService
 
 
 class SpecUploadView(ManagerRequiredView):
-    """Serves an "upload file" page but somewhat strangely doesn't process the form."""
+    """Serves an "upload file" page but somewhat strangely doesn't process the form.
+
+    Processing is handled by :class:`SpecEditorView`.
+    """
 
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()

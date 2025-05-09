@@ -19,6 +19,8 @@ from .list_bundles import list_bundles
 from .bundle_tools import upload_bundle, bundle_map_page
 from .identify_tools import id_paper, un_id_paper
 from .finish_tools import get_reassembled
+from .source_tools import upload_source
+from .source_tools import delete_source
 from .spec_tools import upload_spec
 from .task_tools import reset_task
 
@@ -30,6 +32,8 @@ __all__ = [
     "list_bundles",
     "upload_bundle",
     "get_reassembled",
+    "delete_source",
+    "upload_source",
     "upload_spec",
     "reset_task",
 ]

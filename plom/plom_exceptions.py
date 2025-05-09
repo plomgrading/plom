@@ -69,6 +69,8 @@ class PlomRangeException(PlomBenignException):
 
 
 class PlomVersionMismatchException(PlomBenignException):
+    """Used for either software version mismatches *or* Plom question version mismatches."""
+
     pass
 
 
