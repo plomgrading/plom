@@ -3,8 +3,8 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
 
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter, SimpleRouter
+from django.urls import include, path, re_path
+from rest_framework.routers import DefaultRouter
 
 from .views.experimental import (
     RubricViewSet,
@@ -23,7 +23,9 @@ from .routes import (
 )
 
 from .views import (
-    QuestionMarkingViewSet,
+    GetTasks,
+    MarkTaskNextAvailable,
+    MarkTask,
     ReassignTask,
     ResetTask,
     # TODO: these are possibly temporary
@@ -47,9 +49,10 @@ Handle URL patterns for the plom-client / server API.
 See docs for including other URLconfs:
 https://docs.djangoproject.com/en/4.2/topics/http/urls/#including-other-urlconfs
 
-Note: The URL Patterns classes are made in order to seamlessly split up urls.py
-across multiple files. In the future, once we're able to start changing the design
-of the plom-client URLS, we ought to transition to using Django REST Framework
+Note: The URL Patterns classes are made in order to split up urls.py
+across multiple files.  These files are found in routes/
+
+Note: In the future, we might consider transitioning to using Django REST Framework
 routers: https://www.django-rest-framework.org/api-guide/routers/
 """
 
@@ -128,12 +131,14 @@ experimental_router.register(
     "marking-tasks", MarkingTaskViewSet, basename="marking-tasks"
 )
 
-marking_router = SimpleRouter(trailing_slash=False)
-marking_router.register("tasks", QuestionMarkingViewSet, basename="tasks")
-
 urlpatterns += [
     path("experimental/", include(experimental_router.urls)),
-    path("MK/", include(marking_router.urls)),
+    # Note: other MK/ paths are in routes/mark_patterns.py
+    path(
+        "MK/tasks/available", MarkTaskNextAvailable.as_view(), name="api_mark_task_next"
+    ),
+    path("MK/tasks/all", GetTasks.as_view(), name="api_MK_get_tasks_all"),
+    re_path("MK/tasks/(?P<code>q.+)", MarkTask.as_view(), name="api_mark_task"),
     path(
         "api/v0/tasks/<int:papernum>/<int:qidx>/reassign/<str:new_username>",
         ReassignTask.as_view(),
