@@ -184,7 +184,7 @@ class Command(BaseCommand):
             raise CommandError(f"Unsupported file type: {filename}")
 
         service = RubricService()
-        rubrics = service.update_rubric_data(data, suffix[1:])
+        rubrics = service.update_rubric_data(data, suffix[1:], by_system=True)
         return len(rubrics)
 
     def add_arguments(self, parser):

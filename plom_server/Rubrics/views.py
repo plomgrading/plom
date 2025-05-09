@@ -420,7 +420,9 @@ class UploadRubricView(ManagerRequiredView):
             return redirect("rubrics_admin")
 
         try:
-            service.update_rubric_data(data_string, suffix, username)
+            service.update_rubric_data(
+                data_string, suffix, by_system=False, requesting_user=username
+            )
         except ValueError as e:
             messages.error(request, f"Error: {e}")
         except serializers.ValidationError as e:

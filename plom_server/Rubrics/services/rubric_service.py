@@ -220,7 +220,7 @@ class RubricService:
     def create_rubric(
         cls,
         rubric_data: dict[str, Any],
-        from_upload: bool = False,
+        by_system: bool = True,
         *,
         creating_user: User | None = None,
     ) -> dict[str, Any]:
@@ -234,7 +234,7 @@ class RubricService:
             creating_user: who is trying to create the rubric.  ``None``
                 means you don't care who (probably for internal use only).
                 ``None`` also bypasses the rubric access settings.
-            from_upload: true if the rubric creation is made by uploading rubrics.
+            by_system: true if the rubric creation is made by system.
 
         Returns:
             The new rubric data, in dict key-value format.
@@ -248,7 +248,7 @@ class RubricService:
                 This could be "this user" or "all users".
         """
         rubric_obj = cls._create_rubric(
-            rubric_data, creating_user=creating_user, from_upload=from_upload
+            rubric_data, creating_user=creating_user, by_system=by_system
         )
         return _Rubric_to_dict(rubric_obj)
 
@@ -257,13 +257,13 @@ class RubricService:
     def _create_rubric(
         cls,
         incoming_data: dict[str, Any],
-        from_upload: bool = False,
+        by_system: bool = True,
         *,
         creating_user: User | None = None,
     ) -> Rubric:
         incoming_data = incoming_data.copy()
 
-        if from_upload:
+        if not by_system:
             if not creating_user:
                 raise ValueError("Uploader of rubrics is unknown")
             incoming_data["user"] = creating_user.pk
@@ -1122,7 +1122,7 @@ class RubricService:
         # Construct absolute rubric
         for value in range(max_mark + 1):
             abs_rubric = self._create_single_rubric_template(
-                kind=Rubric.RubricKind.ABSOLUTE[0],
+                kind="absolute",
                 value=value,
                 question_index=question_index,
             )
@@ -1130,12 +1130,12 @@ class RubricService:
 
         # Construct relative rubric
         relative_rubric_pos = self._create_single_rubric_template(
-            kind=Rubric.RubricKind.RELATIVE[0],
+            kind="relative",
             value=1,
             question_index=question_index,
         )
         relative_rubric_neg = self._create_single_rubric_template(
-            kind=Rubric.RubricKind.RELATIVE[0],
+            kind="relative",
             value=-1,
             question_index=question_index,
         )
@@ -1143,7 +1143,7 @@ class RubricService:
 
         # Construct neutral rubric
         neutral_rubric = self._create_single_rubric_template(
-            kind=Rubric.RubricKind.NEUTRAL[0], value=0, question_index=question_index
+            kind="neutral", value=0, question_index=question_index
         )
         template.append(neutral_rubric)
 
@@ -1152,7 +1152,7 @@ class RubricService:
     def _create_single_rubric_template(
         self, kind: str, value: int | float, question_index: int
     ) -> dict[str, Any]:
-        if kind == Rubric.RubricKind.ABSOLUTE:
+        if kind == "absolute":
             out_of = SpecificationService.get_question_max_mark(question_index)
         else:
             out_of = 0
@@ -1219,15 +1219,21 @@ class RubricService:
         return data_string
 
     def update_rubric_data(
-        self, data: str, filetype: str, requesting_user: str | None = None
+        self,
+        data: str,
+        filetype: str,
+        by_system: bool,
+        requesting_user: str | None = None,
     ) -> list[dict[str, Any]]:
         """Retrieves rubrics from a file.
 
         Args:
             data: The file object containing the rubrics.
             filetype: The type of the file (json, toml, csv).
+            by_system: true if the update is called by system and requesting_user is irrelevant.
             requesting_user: the user who requested to update the rubric data.
             ``None`` means you don't care who (probably for internal use only).
+
 
         Returns:
             A list of the rubrics created.
@@ -1292,6 +1298,6 @@ class RubricService:
 
         with transaction.atomic():
             return [
-                self.create_rubric(r, creating_user=user, from_upload=True)
+                self.create_rubric(r, creating_user=user, by_system=by_system)
                 for r in rubrics
             ]
