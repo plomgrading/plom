@@ -7,6 +7,7 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2025 Deep Shah
 
 
 import difflib
@@ -37,6 +38,7 @@ from .forms import (
     RubricUploadForm,
     RubricDownloadForm,
     RubricItemForm,
+    RubricTemplateDownloadForm,
 )
 from .models import RubricTable
 
@@ -54,6 +56,7 @@ class RubricAdminPageView(ManagerRequiredView):
         rubric_halfmark_form = RubricHalfMarkForm(request.GET)
         download_form = RubricDownloadForm(request.GET)
         upload_form = RubricUploadForm()
+        template_form = RubricTemplateDownloadForm()
         rubrics = RubricService.get_all_rubrics()
         half_point_rubrics = rubrics.filter(value__exact=0.5).filter(text__exact=".")
         context.update(
@@ -63,6 +66,7 @@ class RubricAdminPageView(ManagerRequiredView):
                 "rubric_halfmark_form": rubric_halfmark_form,
                 "rubric_download_form": download_form,
                 "rubric_upload_form": upload_form,
+                "rubric_template_form": template_form,
             }
         )
         return render(request, template_name, context=context)
@@ -442,12 +446,8 @@ class UploadRubricView(ManagerRequiredView):
 class DownloadRubricTemplateView(ManagerRequiredView):
     def get(self, request: HttpRequest):
         service = RubricService()
-        # TODO: Obtain q_index and filetype from form
-        # question = request.GET.get("question_filter")
-        # filetype = request.GET.get("file_type")
-
-        question = 3
-        filetype = "csv"
+        question = request.GET.get("question_filter")
+        filetype = request.GET.get("file_type")
 
         if filetype == "json":
             data_string = service.create_rubric_template(

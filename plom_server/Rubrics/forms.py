@@ -3,6 +3,7 @@
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2025 Deep Shah
 
 from django import forms
 
@@ -148,10 +149,9 @@ class RubricItemForm(forms.ModelForm):
             self.fields[field].widget.attrs["class"] = "form-control"
 
 
-
-
 class RubricTemplateDownloadForm(forms.Form):
     """Form for downloading a template of rubrics."""
+
     FILE_TYPE_CHOICES = [("csv", ".csv"), ("json", ".json"), ("toml", ".toml")]
     question_filter = forms.TypedChoiceField(required=False)
     file_type = forms.TypedChoiceField(
