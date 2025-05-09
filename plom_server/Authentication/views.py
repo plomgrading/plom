@@ -4,6 +4,7 @@
 # Copyright (C) 2022-2025 Colin B. Macdonald
 # Copyright (C) 2022 Natalie Balashov
 # Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2025 Philip D. Loewen
 
 from typing import Any
 
@@ -138,7 +139,10 @@ class LoginView(View):
             password=request.POST.get("password"),
         )
         if user is None:
-            messages.info(request, "Username or Password is incorrect!")
+            messages.info(
+                request,
+                "Authentication failed. The given username / password pair is not enabled.",
+            )
             return render(request, self.template_name)
 
         login(request, user)

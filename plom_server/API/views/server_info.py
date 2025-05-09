@@ -207,9 +207,9 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
 
         Returns:
             200 and a token in json if user logged in successfully.
-            400 for poorly formed requests, such as no client version or
-            bad client version.  If the callers asks for exclusive access,
-            then reply with 409 if user already has a token (see Issue #3845).
+            400 for poorly formed requests, such as no client version or bad client version.
+            401 for requests with an inactive (or invalid) user/passwd combo.
+            409 if the caller asks for exclusive access but already has a token (see Issue #3845).
         """
         # Idea from
         # https://stackoverflow.com/questions/28613102/last-login-field-is-not-updated-when-authenticating-using-tokenauthentication-in
@@ -252,7 +252,7 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
         )
         if not serializer.is_valid():
             return _error_response(
-                "The username / password pair are not authorized",
+                "The given username / password pair is not enabled.",
                 status.HTTP_401_UNAUTHORIZED,
             )
         user = serializer.validated_data["user"]
@@ -283,7 +283,7 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
         )
         if not serializer.is_valid():
             return _error_response(
-                "The username / password pair are not authorized",
+                "The given username / password pair is not enabled.",
                 status.HTTP_401_UNAUTHORIZED,
             )
         # note this differs from request.user which is AnonymousUser
