@@ -141,7 +141,7 @@ class LoginView(View):
         if user is None:
             messages.info(
                 request,
-                "Authentication failed. The given username / password pair is not enabled.",
+                "Access denied. Check username, password, and 'enabled' status.",
             )
             return render(request, self.template_name)
 

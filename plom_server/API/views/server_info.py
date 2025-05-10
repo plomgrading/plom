@@ -252,7 +252,7 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
         )
         if not serializer.is_valid():
             return _error_response(
-                "The given username / password pair is not enabled.",
+                "Access denied. Check username, password, and 'enabled' status.",
                 status.HTTP_401_UNAUTHORIZED,
             )
         user = serializer.validated_data["user"]
@@ -283,7 +283,7 @@ class ObtainAuthTokenUpdateLastLogin(ObtainAuthToken):
         )
         if not serializer.is_valid():
             return _error_response(
-                "The given username / password pair is not enabled.",
+                "Access denied. Check username, password, and 'enabled' status.",
                 status.HTTP_401_UNAUTHORIZED,
             )
         # note this differs from request.user which is AnonymousUser
