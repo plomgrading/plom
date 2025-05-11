@@ -415,24 +415,15 @@ def main():
             msgr.stop()
 
     elif args.command == "delete-classlist":
-        messenger = start_messenger(*m)
-        success = delete_classlist(msgr=messenger)
-        messenger.closeUser()
-        messenger.stop()
+        success = delete_classlist(msgr=m)
         sys.exit(0 if success else 1)
 
     elif args.command == "download-classlist":
-        messenger = start_messenger(*m)
-        success = download_classlist(msgr=messenger)
-        messenger.closeUser()
-        messenger.stop()
+        success = download_classlist(msgr=m)
         sys.exit(0 if success else 1)
 
     elif args.command == "upload-classlist":
-        messenger = start_messenger(*m)
-        success = upload_classlist(Path(args.csvfile), msgr=messenger)
-        messenger.closeUser()
-        messenger.stop()
+        success = upload_classlist(Path(args.csvfile), msgr=m)
         sys.exit(0 if success else 1)
 
     elif args.command == "clear":

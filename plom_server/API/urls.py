@@ -24,7 +24,6 @@ from .routes import (
 
 from .views import (
     ClasslistHandler,
-    QuestionMarkingViewSet,
     GetTasks,
     MarkTaskNextAvailable,
     MarkTask,

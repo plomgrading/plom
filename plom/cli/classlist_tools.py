@@ -18,16 +18,11 @@ def delete_classlist(msgr) -> bool:
         msgr:  An active Messenger object.
 
     Returns:
-        True if the server's classlist was purged, otherwise False.
+        True if the server's classlist was purged.
     """
-    success = True
-    try:
-        msgr.new_server_delete_classlist()
-        print("OK, server's classlist is now empty.")
-    except PlomConflict as e:
-        success = False
-        print(f"PlomConflict exception: {e}")
-    return success
+    msgr.new_server_delete_classlist()
+    print("OK, server's classlist is now empty.")
+    return True
 
 
 @with_messenger
@@ -65,11 +60,16 @@ def upload_classlist(csvname: Path, *, msgr) -> bool:
     """
     try:
         success, werr = msgr.new_server_upload_classlist(csvname)
-        if success:
-            return True
     except (PlomAuthenticationException, PlomConflict, ValueError) as e:
         success = False
         print(f"Upload failed with exception: {e}")
+
+    if success:
+        if len(werr) > 0:
+            print(f"Upload succeeded, with {len(werr)} note(s) shown below.")
+            for D in werr:
+                print(f"  {D.get('warn_or_err', '  *')}: {D['werr_text']}")
+        return True
 
     print("Upload rejected. No changes made to server's classlist. Details follow.")
     for D in werr:

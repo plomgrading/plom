@@ -58,12 +58,10 @@ class ClasslistHandler(APIView):
         Returns:
             (200) FileResponse
         """
-        zzz = ClasslistDownloadView().get(request)
-        return zzz
+        return ClasslistDownloadView().get(request)
 
     # POST /api/v0/classlist
     def post(self, request: Request) -> Response:
-        # TODO: Build this.
         """Extend classlist on server with rows from an uploaded classlist.
 
         This is a transparent wrapper for the POST method

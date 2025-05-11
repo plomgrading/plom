@@ -65,25 +65,17 @@ class StagingStudentService:
         }
 
     def get_students_as_csv_string(self, *, prename: bool = False) -> str:
-        """Write the data from the classlist table into a string in CSV format.
+        """Write the classlist headers and data into a string in CSV format.
 
-        Return (id, name) when prename==False,
-        return (id, name, paper_number) when prename==True.
-
-        Quote headers and names, but not ids or paper numbers.
+        Quote all headers and student names, but not ids or paper numbers.
         """
-        txt = '"id","name"\n'
-        if prename:
-            txt = '"id","name","paper_number"\n'
-
+        txt = '"id","name","paper_number"\n'
         for row in self.get_students():
-            if prename and row["paper_number"]:
-                txt += f"{row['student_id']},\"{row['student_name']}\",{row['paper_number']}\n"
-            elif prename:
-                # don't print the -1 for non-prename.
+            if not prename or row["paper_number"] is None or row["paper_number"] < 0:
+                # Leave paper_number empty when any of our non-prename sentinels appear.
                 txt += f"{row['student_id']},\"{row['student_name']}\",\n"
             else:
-                txt += f"{row['student_id']},\"{row['student_name']}\"\n"
+                txt += f"{row['student_id']},\"{row['student_name']}\",{row['paper_number']}\n"
         return txt
 
     @transaction.atomic()
@@ -139,7 +131,6 @@ class StagingStudentService:
         assert_can_modify_classlist()
         StagingStudent.objects.all().delete()
 
-    @transaction.atomic()
     def validate_and_use_classlist_csv(
         self, in_memory_csv_file: File, ignore_warnings: bool = False
     ) -> tuple[bool, list[dict[str, Any]]]:
@@ -156,9 +147,8 @@ class StagingStudentService:
             a 2-tuple (s,l), where ...
             s is the boolean value of the statement "The operation succeeded",
             l is a list of dicts describing warnings, errors, or notes.
-
-            When s==True, the list l may be empty or contain ignored warnings.
-            When s==False, the classlist in the database remains unchanged.
+            When s is True, the list l may be empty or contain ignored warnings.
+            When s is False, the classlist in the database remains unchanged.
 
         Raises:
             PlomDependencyConflict: If dependencies not met.
@@ -206,11 +196,11 @@ class StagingStudentService:
 
             for r in prereader:
                 new_ids.add(r[id_key])
-                # Next line correctly turns '' into 0:
-                new_paper_numbers.add(int(r.get(papernum_key, "0") or 0))
+                # Next line correctly turns '' into -1:
+                new_paper_numbers.add(int(r.get(papernum_key, "-1") or "-1"))
 
-        known_paper_numbers.discard(0)
-        new_paper_numbers.discard(0)
+        known_paper_numbers.discard(-1)
+        new_paper_numbers.discard(-1)
 
         id_overlap = known_ids & new_ids
         paper_number_overlap = known_paper_numbers & new_paper_numbers
@@ -241,15 +231,20 @@ class StagingStudentService:
             werr.append({"warn_or_err": "Warning", "werr_text": errmsg})
             return success, werr
 
+        # Having developed some trust in the given CSV,
+        # we reopen it and transfer its contents into the server's classlist.
         with open(tmp_csv, newline="") as fh:
             csv_reader = csv.DictReader(fh, skipinitialspace=True)
             try:
-                for row in csv_reader:
-                    self._add_student(
-                        row[id_key],
-                        row[name_key],
-                        paper_number=row.get(papernum_key, None),
-                    )
+                with transaction.atomic():
+                    # The 'atomic' wrapper gives the next loop an all-or-nothing property:
+                    # https://docs.djangoproject.com/en/5.2/topics/db/transactions/
+                    for row in csv_reader:
+                        self._add_student(
+                            row[id_key],
+                            row[name_key],
+                            paper_number=row.get(papernum_key, None),
+                        )
             except (IntegrityError, ValueError, KeyError, AssertionError) as e:
                 # in theory, we "asked permission" using vlad the validator
                 # so the input must be perfect and this can never fail---haha!
@@ -260,38 +255,6 @@ class StagingStudentService:
                 werr.append(
                     {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
                 )
-
-        #        newinfo = []
-        #        # either no warnings, or warnings but ignore them - so read the csv
-        #        with open(tmp_csv) as fh:
-        #            csv_reader = csv.DictReader(fh, skipinitialspace=True)
-        #            try:
-        #                # We accept "id", "ID", "Id", but code is messy #3822 #1140
-        #                headers = csv_reader.fieldnames
-        #                assert headers, "Expectedly empty csv header"
-        #                (id_key,) = [x for x in headers if x.casefold() == "id"]
-        #                (name_key,) = [x for x in headers if x.casefold() == "name"]
-        #                # paper_number is a bit harder b/c it might not be present
-        #                papernum_key = "paper_number"
-        #                _tmp = [x for x in headers if x.casefold() == papernum_key]
-        #                if len(_tmp) == 1:
-        #                    papernum_key = _tmp[0]
-        #                for row in csv_reader:
-        #                    self._add_student(
-        #                        row[id_key],
-        #                        row[name_key],
-        #                        paper_number=row.get(papernum_key, None),
-        #                    )
-        #            except (IntegrityError, ValueError, KeyError, AssertionError) as e:
-        #                # in theory, we "asked permission" using vlad the validator
-        #                # so the input must be perfect and this can never fail---haha!
-        #                success = False
-        #                errmsg = "Unexpected error, "
-        #                errmsg += f"likely a bug in Plom's classlist validator: {str(e)}"
-        #                # see :method:`PlomClasslistValidator.validate_csv` for this format
-        #                werr.append(
-        #                    {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
-        #                )
 
         tmp_csv.unlink()
         return (success, werr)

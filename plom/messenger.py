@@ -1325,7 +1325,7 @@ class Messenger(BaseMessenger):
             2-tuple of (success,werr), with success boolean and werr a list
             of dicts, each entry providing details on an error or warning.
             It's possible for werr to contain interesting reading even when
-            success==True.
+            success==True. Dealing with those messages is the caller's job.
 
         Raises:
             PlomSeriousException - if the GET request produces an HTTPError
@@ -1339,5 +1339,4 @@ class Messenger(BaseMessenger):
             except requests.HTTPError as e:
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-        zzz = tuple(response.json())
-        return zzz
+        return tuple(response.json())
