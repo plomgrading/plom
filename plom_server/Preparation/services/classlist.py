@@ -198,7 +198,8 @@ class StagingStudentService:
             except ValueError as e:
                 success = False
                 errmsg = (
-                    f"Headers {headers} has repeats differing only in case: {str(e)}"
+                    "Bug in classlist validator?  Lower-level code did not notice "
+                    f"headers {headers} with repeats differing only in case: {str(e)}"
                 )
                 werr.append(
                     {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
