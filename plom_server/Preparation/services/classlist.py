@@ -184,15 +184,26 @@ class StagingStudentService:
         new_paper_numbers = set()
         with open(tmp_csv, newline="") as fh:
             prereader = csv.DictReader(fh)
-            # We accept "id", "ID", "Id", but code is messy #3822 #1140
             headers = prereader.fieldnames
-            (id_key,) = [x for x in headers if x.casefold() == "id"]
-            (name_key,) = [x for x in headers if x.casefold() == "name"]
-            # paper_number is a bit harder b/c it might not be present
-            papernum_key = "paper_number"
-            _tmp = [x for x in headers if x.casefold() == papernum_key]
-            if len(_tmp) == 1:
-                papernum_key = _tmp[0]
+            # We accept "id", "ID", "Id", but code is messy #3822 #1140
+            # TODO: shouldn't this be Vlad's job?
+            try:
+                (id_key,) = [x for x in headers if x.casefold() == "id"]
+                (name_key,) = [x for x in headers if x.casefold() == "name"]
+                # paper_number is a bit harder b/c it might not be present
+                papernum_key = "paper_number"
+                _tmp = [x for x in headers if x.casefold() == papernum_key]
+                if len(_tmp) == 1:
+                    papernum_key = _tmp[0]
+            except ValueError as e:
+                success = False
+                errmsg = (
+                    f"Headers {headers} has repeats differing only in case: {str(e)}"
+                )
+                werr.append(
+                    {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
+                )
+                return success, werr
 
             for r in prereader:
                 new_ids.add(r[id_key])
