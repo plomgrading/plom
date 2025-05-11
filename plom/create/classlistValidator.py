@@ -29,7 +29,7 @@ potential_column_names = [
 class PlomClasslistValidator:
     """The Plom Classlist Validator has methods to help ensure compatible classlists."""
 
-    def readClassList(self, filename: Path | str) -> list[dict[str, Any]]:
+    def _readClassList(self, filename: Path | str) -> list[dict[str, Any]]:
         """Read classlist from filename and return as list of dicts.
 
         Arguments:
@@ -64,7 +64,7 @@ class PlomClasslistValidator:
                 raise ValueError("The CSV header has no fields that Plom recognises")
 
             # Check for repeated column names, Issue #3667.
-            # (cannot be in checkHeaders because DictReader picks one silently)
+            # (cannot be in _checkHeaders because DictReader picks one silently)
             for x in potential_column_names:
                 if sum([x == y for y in column_names]) > 1:
                     raise ValueError(
@@ -79,7 +79,7 @@ class PlomClasslistValidator:
             # return the list
             return classAsDict
 
-    def checkHeaders(self, rowFromDict: dict[str, Any]) -> dict[str, Any]:
+    def _checkHeaders(self, rowFromDict: dict[str, Any]) -> dict[str, Any]:
         """Check existence of id and name columns in the classlist.
 
         Checks the column titles (as given by the supplied row from
@@ -307,7 +307,7 @@ class PlomClasslistValidator:
         """
         werr = []
         try:
-            cl_as_dicts = self.readClassList(filename)
+            cl_as_dicts = self._readClassList(filename)
         except (ValueError, FileNotFoundError) as err:
             werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": f"{err}"})
             return (False, werr)
@@ -321,7 +321,7 @@ class PlomClasslistValidator:
             return (True, [])
 
         # check the headers - potentially un-recoverable errors here
-        cl_header_info = self.checkHeaders(cl_as_dicts[0])
+        cl_header_info = self._checkHeaders(cl_as_dicts[0])
         if cl_header_info["success"] is False:  # format errors and bail-out
             for e in cl_header_info["errors"]:
                 werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": e})
