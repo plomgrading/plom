@@ -134,7 +134,11 @@ class StagingStudentService:
     def validate_and_use_classlist_csv(
         self, in_memory_csv_file: File, ignore_warnings: bool = False
     ) -> tuple[bool, list[dict[str, Any]]]:
-        """Validate and store the classlist from the in-memory file, if possible.
+        """Validate and store the classlist from the in-memory file, if possible, appending to existing classlist.
+
+        If there are no conflicts, this appends to an existing classlist.
+        The operation is atomic so either all new entries in the classlist
+        are added or none are.
 
         Args:
             in_memory_csv_file: some kind of Django file thing.
