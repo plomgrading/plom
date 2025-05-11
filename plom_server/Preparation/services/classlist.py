@@ -204,6 +204,7 @@ class StagingStudentService:
                 werr.append(
                     {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
                 )
+                tmp_csv.unlink()
                 return success, werr
 
             for r in prereader:
@@ -241,6 +242,7 @@ class StagingStudentService:
         if not success:
             errmsg = "Server's classlist unchanged."
             werr.append({"warn_or_err": "Warning", "werr_text": errmsg})
+            tmp_csv.unlink()
             return success, werr
 
         # Having developed some trust in the given CSV,
