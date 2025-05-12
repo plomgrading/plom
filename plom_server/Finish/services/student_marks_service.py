@@ -3,7 +3,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023-2024 Andrew Rechnitzer
-# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Andreas Buttenschoen
 # Copyright (C) 2025 Aden Chan
@@ -14,6 +14,7 @@ from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
+from django.db.models import Count, Q
 
 from plom_server.Identify.models import PaperIDTask
 from plom_server.Mark.services import MarkingTaskService
@@ -37,11 +38,19 @@ class StudentMarkService:
         Returns:
             bool: True when all questions in the given paper are marked.
         """
-        paper_tasks = MarkingTask.objects.filter(paper=paper)
-        n_completed_tasks = paper_tasks.filter(status=MarkingTask.COMPLETE).count()
-        n_out_of_date_tasks = paper_tasks.filter(status=MarkingTask.OUT_OF_DATE).count()
-        n_all_tasks = paper_tasks.count()
+
+        # Use .aggregate to Select all Counts(*) in one query
+        counts = MarkingTask.objects.filter(paper=paper).aggregate(
+            completed = Count("id", filter=Q(status=MarkingTask.COMPLETE)),
+            out_of_date = Count("id", filter=Q(status=MarkingTask.OUT_OF_DATE)),
+            all = Count("id")
+        )
+
+        n_completed_tasks = counts["completed"]
+        n_out_of_date_tasks = counts["out_of_date"]
+        n_all_tasks = counts["all"]
         n_questions = SpecificationService.get_n_questions()
+
         # make sure one completed task for each question and that all tasks are complete or out of date.
         return (n_completed_tasks == n_questions) and (
             n_completed_tasks + n_out_of_date_tasks == n_all_tasks
