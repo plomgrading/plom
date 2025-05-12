@@ -5,6 +5,7 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
 
+import json
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
@@ -25,8 +26,8 @@ class SpecificationHandler(APIView):
         """Get the current assessment spec.
 
         Returns:
-            (200) JsonResponse: the current spec.
-            (400) spec not found.
+            The current spec, as a string in the Response's json,
+            with status 200 on success. Status 400 indicates "spec not found."
         """
         if not SpecificationService.is_there_a_spec():
             return _error_response(
@@ -40,20 +41,19 @@ class SpecificationHandler(APIView):
 
     # POST /api/v0/spec
     def post(self, request: Request) -> Response:
-        """Use a string containing TOML to replace the server's current spec, or to instantiate a brand new one.
+        """Replace the server's current spec, or instantiate a brand new one.
 
         Args:
-            request: An HTTP request in which the data dict has a string-type
-                key named "spec_toml" whose corresponding value is a
-                utf-8 string containing everything read from a well-formed
-                spec file in TOML format.
+            request: An HTTP request that includes a serialized file
+                accessible through key "spec_toml" and a boolean with
+                key "force_public_code".
 
         Returns:
-            (200) JsonResponse: the freshly-installed new spec.
-            (400) TOML didn't parse correctly.
-            (403) User does not belong to "manager" group.
-            (409) Changing the spec is not allowed. Typically because
-                the server is in an advanced state.
+            A Response object whose json field contains the freshly-installed spec,
+            with status 200, when everything works. Status 400 means TOML didn't
+            parse correctly; status 403 indicates user is not in the "manager" group.
+            Status 409 indicates that changing the spec is not allowed,
+            typically because the server is in an advanced state.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list:
@@ -62,9 +62,22 @@ class SpecificationHandler(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
 
-        spec_toml_string = request.data.get("spec_toml", "")
+        try:
+            incoming = request.FILES["spec_toml"]
+            spec_toml_string = incoming.read().decode("utf-8")
+        except UnicodeDecodeError:
+            return _error_response(
+                "Unicode error makes progress impossible. Assessment spec unchanged.",
+                status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Note to self: Mixing json with a file upload imposes a special structure
+        # on the incoming request object. It's easy to lose the json component.
+        # Keeping it seems to require the explicit-serialization approach used here.
+
         # TODO: could instead use a query_param in the URL?
-        force_public_code = request.data.get("force_public_code")
+        data = json.loads(request.data["json_data"])
+        force_public_code = data.get("force_public_code", False)
 
         # would be handled by next block but with a more verbose errors
         if not spec_toml_string:

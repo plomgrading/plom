@@ -1230,12 +1230,12 @@ class Messenger(BaseMessenger):
         return response.json()
 
     def new_server_upload_spec(
-        self, spec_toml_string: str, *, force_public_code: bool = False
+        self, spec_toml: Path, *, force_public_code: bool = False
     ) -> dict[str, Any]:
         """Upload an assessment spec to the server.
 
         Args:
-            spec_toml_string: The utf-8 string you get by reading a valid spec.toml file
+            spec_toml: The standard Python Path of a valid spec.toml file
 
         Keyword Args:
             force_public_code: Usually you may not include "publicCode" in
@@ -1251,15 +1251,22 @@ class Messenger(BaseMessenger):
             ValueError: invalid spec.
             PlomSeriousException: other errors unexpected errors.
         """
+        # Note to self: Mixing json with a file upload imposes a special structure
+        # on the incoming request object. It's easy to lose the json component.
+        # Keeping it seems to require the explicit-serialization approach used here.
+
+        json_data = {
+            "force_public_code": force_public_code,
+        }
+
         with self.SRmutex:
             try:
-                response = self.post_auth(
-                    "/api/v0/spec",
-                    json={
-                        "spec_toml": spec_toml_string,
-                        "force_public_code": force_public_code,
-                    },
-                )
+                with spec_toml.open("rb") as f:
+                    response = self.post_auth(
+                        "/api/v0/spec",
+                        files={"spec_toml": f},
+                        data={"json_data": json.dumps(json_data)},
+                    )
                 response.raise_for_status()
             except requests.HTTPError as e:
                 if response.status_code == 400:
