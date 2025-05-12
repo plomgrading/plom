@@ -41,12 +41,12 @@ class StudentMarkService:
         """
         # Use .aggregate to Select all Counts(*) in one query
         counts = MarkingTask.objects.filter(paper=paper).aggregate(
-            completed=Count("id", filter=Q(status=MarkingTask.COMPLETE)),
+            complete=Count("id", filter=Q(status=MarkingTask.COMPLETE)),
             out_of_date=Count("id", filter=Q(status=MarkingTask.OUT_OF_DATE)),
             all=Count("id"),
         )
 
-        n_completed_tasks = counts["completed"]
+        n_completed_tasks = counts["complete"]
         n_out_of_date_tasks = counts["out_of_date"]
         n_all_tasks = counts["all"]
 

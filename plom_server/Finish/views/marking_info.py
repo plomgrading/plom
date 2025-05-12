@@ -55,7 +55,8 @@ class MarkingInformationView(ManagerRequiredView):
             for qi in SpecificationService.get_question_indices()
         ]
 
-        total_tasks = mts.get_n_total_tasks()  # TODO: OUT_OF_DATE tasks? #2924
+        task_count_dict = mts.get_task_counts_dict()
+        total_tasks = task_count_dict["all"]  # TODO: OUT_OF_DATE tasks? #2924
         all_marked = StudentMarkService.are_all_papers_marked() and total_tasks > 0
 
         # histogram of grades per question
