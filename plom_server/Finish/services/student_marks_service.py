@@ -10,7 +10,7 @@
 
 import csv
 from io import StringIO
-from typing import Any
+from typing import Any, Optional
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
@@ -29,27 +29,29 @@ class StudentMarkService:
     """Service for the Student Marks page."""
 
     @staticmethod
-    def is_paper_marked(paper: Paper) -> bool:
+    def is_paper_marked(paper: Paper, n_questions: Optional[int] = None) -> bool:
         """Return True if all of the marking tasks are completed.
 
         Args:
-            paper: a reference to a Paper instance
+            paper: a reference to a Paper instance.
+            n_questions: number of questions in the test.
 
         Returns:
             bool: True when all questions in the given paper are marked.
         """
-
         # Use .aggregate to Select all Counts(*) in one query
         counts = MarkingTask.objects.filter(paper=paper).aggregate(
-            completed = Count("id", filter=Q(status=MarkingTask.COMPLETE)),
-            out_of_date = Count("id", filter=Q(status=MarkingTask.OUT_OF_DATE)),
-            all = Count("id")
+            completed=Count("id", filter=Q(status=MarkingTask.COMPLETE)),
+            out_of_date=Count("id", filter=Q(status=MarkingTask.OUT_OF_DATE)),
+            all=Count("id"),
         )
 
         n_completed_tasks = counts["completed"]
         n_out_of_date_tasks = counts["out_of_date"]
         n_all_tasks = counts["all"]
-        n_questions = SpecificationService.get_n_questions()
+
+        if not n_questions:
+            n_questions = SpecificationService.get_n_questions()
 
         # make sure one completed task for each question and that all tasks are complete or out of date.
         return (n_completed_tasks == n_questions) and (
@@ -60,9 +62,10 @@ class StudentMarkService:
     def are_all_papers_marked(cls) -> bool:
         """Return True if all of the papers that have a task are marked."""
         papers_with_tasks = Paper.objects.exclude(markingtask__isnull=True)
+        n_questions = SpecificationService.get_n_questions()
 
         for paper in papers_with_tasks:
-            if not cls.is_paper_marked(paper):
+            if not cls.is_paper_marked(paper, n_questions=n_questions):
                 return False
         return True
 
