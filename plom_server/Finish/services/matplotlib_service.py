@@ -74,6 +74,9 @@ class MatplotlibService:
         self.ta_df = self.des._get_ta_data()
         self.formats = _acceptable_formats
 
+        self.q_label_map = SpecificationService.get_question_labels_map()
+        self.q_max_mark_map = SpecificationService.get_questions_max_marks()
+
     @staticmethod
     def ensure_all_figures_closed() -> None:
         """Assert that all Matplotlib figures are closed."""
@@ -172,7 +175,7 @@ class MatplotlibService:
         assert format in self.formats
         self.ensure_all_figures_closed()
 
-        qlabel = SpecificationService.get_question_label(question_idx)
+        qlabel = self.q_label_map[question_idx]
         ver_column = "q" + str(question_idx) + "_version"
         mark_column = "q" + str(question_idx) + "_mark"
         plot_series = []
@@ -189,7 +192,7 @@ class MatplotlibService:
             plot_series.append(student_df[mark_column])
         fig, ax = plt.subplots(figsize=(6.8, 4.2), tight_layout=True)
 
-        maxmark = SpecificationService.get_question_mark(question_idx)
+        maxmark = self.q_max_mark_map[question_idx]
         bins = np.arange(maxmark + RANGE_BIN_OFFSET) - 0.5
 
         ax.hist(
