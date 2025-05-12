@@ -5,11 +5,12 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 from typing import Any
 
 from django.db import transaction
-from django.db.models import Exists, OuterRef, Prefetch
+from django.db.models import Exists, OuterRef, Prefetch, Count
 
 from plom_server.Papers.models import (
     FixedPage,
@@ -123,6 +124,28 @@ class ManageScanService:
         # paper is not completely scanned in those cases
         return False
 
+    def get_all_complete_paper_ids() -> list[int]:
+        """Get the paper IDs for all 'complete' papers."""
+        # this is the query we want:
+        """
+            SELECT paper_number, COUNT(DISTINCT question_index) as counts
+            FROM MobilePages
+            GROUP BY paper_id
+            HAVING counts = 4 {or whatever the question count is};
+        """
+        # TODO - do this in django-object queries *agonizing screaming*
+        # This is untested
+        paper_nums = MobilePages.objects.values(
+                "paper"
+                ).annotate(
+                counts=Count("question_index", distinct=True)
+                ).filter(
+                counts=4
+                )
+        print(paper_nums)
+        print(type(paper_nums))
+        return paper_nums
+
     @staticmethod
     @transaction.atomic
     def get_all_complete_papers() -> dict[int, dict[str, list[dict[str, Any]]]]:
@@ -171,6 +194,7 @@ class ManageScanService:
         # again - we use a subquery to get mobile pages to avoid
         # duplications when executing the main query (see the
         # get_number_completed_test_papers function above.
+
         mobile_pages = MobilePage.objects.filter(paper=OuterRef("pk"))
         no_fixed_but_some_mobile = Paper.objects.filter(
             ~Exists(fixed_with_scan), Exists(mobile_pages)
@@ -181,6 +205,7 @@ class ManageScanService:
             ),
             "mobilepage_set__image",
         )
+
         # again since we loop over the mobile pages within the paper
         # in a specified order, and ref the image in those mobile-pages
         # we do all this prefetching.
