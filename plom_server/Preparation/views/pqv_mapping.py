@@ -135,7 +135,7 @@ class PQVMappingView(ManagerRequiredView):
         labels_fix = ", ".join(t[2] for t in triples if fixshuf[t[0]] == "fix")
         labels_shf = ", ".join(t[2] for t in triples if fixshuf[t[0]] == "shuffle")
 
-        num_students = StagingStudentService().how_many_students()
+        num_students = StagingStudentService.how_many_students()
 
         context = {
             "question_indices": question_indices,
@@ -147,7 +147,7 @@ class PQVMappingView(ManagerRequiredView):
             "number_of_students": num_students,
             "number_plus_twenty": num_students + 20,
             "number_times_1dot1": (num_students * 11) // 10,
-            "student_list_present": StagingStudentService().are_there_students(),
+            "student_list_present": StagingStudentService.are_there_students(),
             "have_papers_been_printed": PapersPrinted.have_papers_been_printed(),
             "chore_status": PaperCreatorService.get_chore_status(),
             "chore_message": PaperCreatorService.get_chore_message(),

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022 Natalie Balashov
-# Copyright (C) 2023 Colin B. Macdonald
+# Copyright (C) 2023, 2025 Colin B. Macdonald
 
 from pathlib import Path
 
@@ -18,8 +18,7 @@ class Command(BaseCommand):
     help = "Displays the current status of the classlist, and allows user upload/download/remove it."
 
     def show_status(self):
-        sss = StagingStudentService()
-        n = sss.how_many_students()
+        n = StagingStudentService.how_many_students()
         if n:
             self.stdout.write(f"A classlist with {n} students is on the server.")
         else:
@@ -31,9 +30,7 @@ class Command(BaseCommand):
                 "Papers have been printed. You cannot change the classlist."
             )
 
-        sss = StagingStudentService()
-
-        if sss.are_there_students():
+        if StagingStudentService.are_there_students():
             self.stderr.write("There is already a classlist on the server. Stopping.")
             return
         source_path = Path(source_csv)
@@ -41,7 +38,7 @@ class Command(BaseCommand):
             self.stderr.write(f"Cannot open {source_csv}. Stopping.")
 
         with open(source_path, "rb") as fh:
-            success, warnings = sss.validate_and_use_classlist_csv(
+            success, warnings = StagingStudentService.validate_and_use_classlist_csv(
                 fh, ignore_warnings=ignore_warnings
             )
 
@@ -73,10 +70,9 @@ class Command(BaseCommand):
             return
 
     def download_classlist(self, dest_csv):
-        sss = StagingStudentService()
         pss = PrenameSettingService()
 
-        if not sss.are_there_students():
+        if not StagingStudentService.are_there_students():
             self.stderr.write("There is no classlist on the server.")
             return
         self.stdout.write(f"Downloading classlist to '{dest_csv}'")
@@ -97,7 +93,7 @@ class Command(BaseCommand):
                 return
             else:
                 self.stdout.write(f"Overwriting {save_path}.")
-        csv_text = sss.get_students_as_csv_string(prename=prename)
+        csv_text = StagingStudentService.get_students_as_csv_string(prename=prename)
         with open(save_path, "w") as fh:
             fh.write(csv_text)
 
@@ -107,10 +103,9 @@ class Command(BaseCommand):
                 "Papers have been printed. You cannot remove the classlist."
             )
 
-        sss = StagingStudentService()
-        if sss.are_there_students():
+        if StagingStudentService.are_there_students():
             self.stdout.write("Removing classlist from the server")
-            sss.remove_all_students()
+            StagingStudentService.remove_all_students()
             return
         else:
             self.stderr.write("There is no classlist on the server.")

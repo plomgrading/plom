@@ -72,14 +72,14 @@ class StagingStudentsTests(TestCase):
         for p in (None, -1, "", "-1"):
             n += 1
             sid = str(n)
-            StagingStudentService()._add_student(sid, "mdme X", paper_number=p)
+            StagingStudentService._add_student(sid, "mdme X", paper_number=p)
 
     def test_valid_paper_number_integers_in_strings(self) -> None:
         n = 10000000
         n += 1
-        StagingStudentService()._add_student(str(n), "X", paper_number=17)
+        StagingStudentService._add_student(str(n), "X", paper_number=17)
         n += 1
-        StagingStudentService()._add_student(str(n), "X", paper_number="17")
+        StagingStudentService._add_student(str(n), "X", paper_number="17")
         n += 1
         with self.assertRaises(ValueError):
-            StagingStudentService()._add_student(str(n), "X", paper_number="MCML")
+            StagingStudentService._add_student(str(n), "X", paper_number="MCML")

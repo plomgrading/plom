@@ -25,16 +25,16 @@ log = logging.getLogger("ClasslistService")
 
 
 class StagingStudentService:
-    @transaction.atomic
-    def how_many_students(self) -> int:
+    @staticmethod
+    def how_many_students() -> int:
         return StagingStudent.objects.all().count()
 
-    @transaction.atomic
-    def are_there_students(self) -> bool:
+    @staticmethod
+    def are_there_students() -> bool:
         return StagingStudent.objects.exists()
 
-    @transaction.atomic()
-    def get_students(self) -> list[dict[str, str | int]]:
+    @staticmethod
+    def get_students() -> list[dict[str, str | int]]:
         """Get a list of students, empty if there are none."""
         return list(
             StagingStudent.objects.all().values(
@@ -64,13 +64,14 @@ class StagingStudentService:
             for s_obj in StagingStudent.objects.filter(paper_number__isnull=False)
         }
 
-    def get_students_as_csv_string(self, *, prename: bool = False) -> str:
+    @classmethod
+    def get_students_as_csv_string(cls, *, prename: bool = False) -> str:
         """Write the classlist headers and data into a string in CSV format.
 
         Quote all headers and student names, but not ids or paper numbers.
         """
         txt = '"id","name","paper_number"\n'
-        for row in self.get_students():
+        for row in cls.get_students():
             if not prename or row["paper_number"] is None or row["paper_number"] < 0:
                 # Leave paper_number empty when any of our non-prename sentinels appear.
                 txt += f"{row['student_id']},\"{row['student_name']}\",\n"
@@ -78,9 +79,8 @@ class StagingStudentService:
                 txt += f"{row['student_id']},\"{row['student_name']}\",{row['paper_number']}\n"
         return txt
 
-    @transaction.atomic()
+    @staticmethod
     def _add_student(
-        self,
         student_id: str,
         student_name: str,
         *,
@@ -121,8 +121,8 @@ class StagingStudentService:
         s_obj.paper_number = paper_number
         s_obj.save()
 
-    @transaction.atomic()
-    def remove_all_students(self):
+    @staticmethod
+    def remove_all_students() -> None:
         """Remove all the students from the staging classlist.
 
         Raises:
@@ -131,8 +131,9 @@ class StagingStudentService:
         assert_can_modify_classlist()
         StagingStudent.objects.all().delete()
 
+    @classmethod
     def validate_and_use_classlist_csv(
-        self, in_memory_csv_file: File, ignore_warnings: bool = False
+        cls, in_memory_csv_file: File, ignore_warnings: bool = False
     ) -> tuple[bool, list[dict[str, Any]]]:
         """Validate and store the classlist from the in-memory file, if possible, appending to existing classlist.
 
@@ -180,9 +181,9 @@ class StagingStudentService:
         werr = []
 
         # Enforce empty-intersection between sets of incoming and known ID's.
-        known_ids = set([_["student_id"] for _ in self.get_students()])
+        known_ids = set([_["student_id"] for _ in cls.get_students()])
         known_paper_numbers = set(
-            [r.get("paper_number", -1) for r in self.get_students()]
+            [r.get("paper_number", -1) for r in cls.get_students()]
         )
         new_ids = set()
         new_paper_numbers = set()
@@ -260,7 +261,7 @@ class StagingStudentService:
                     # The 'atomic' wrapper gives the next loop an all-or-nothing property:
                     # https://docs.djangoproject.com/en/5.2/topics/db/transactions/
                     for row in csv_reader:
-                        self._add_student(
+                        cls._add_student(
                             row[id_key],
                             row[name_key],
                             paper_number=row.get(papernum_key, None),
