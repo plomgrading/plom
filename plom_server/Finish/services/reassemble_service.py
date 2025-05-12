@@ -294,7 +294,6 @@ class ReassembleService:
             status[paper.paper_number] = {
                 "paper_num": int(paper.paper_number),
                 "used": False,
-                "scanned": False,
                 "identified": False,
                 "marked": False,
                 "number_marked": 0,
@@ -311,8 +310,6 @@ class ReassembleService:
 
         for pn in ManageScanService.get_all_used_papers():
             status[pn]["used"] = True
-        for pn in ManageScanService.get_all_complete_papers():
-            status[pn]["scanned"] = True
 
         def latest_update(time_a: datetime | None, time_b: datetime) -> datetime:
             if time_a is None:
