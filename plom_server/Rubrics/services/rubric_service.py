@@ -357,22 +357,19 @@ class RubricService:
                 {"text": "Text can't be empty or contain only whitespace"}
             )
 
-        if not isinstance(data["question_index"], int):
-            raise serializers.ValidationError(
-                {"question_index": "question_index should be integer"}
-            )
+        q_index = int(data["question_index"])
 
         # Ensure question index (indexed from 1) is within range
         max_q_index = SpecificationService.get_n_questions()
-        if data["question_index"] < 1 or data["question_index"] > max_q_index:
+        if q_index < 1 or q_index > max_q_index:
             raise serializers.ValidationError(
                 {
-                    "question_index": f"{data['question_index']} out of range, must be within [1, {max_q_index}]"
+                    "question_index": f"{q_index} out of range, must be within [1, {max_q_index}]"
                 }
             )
 
         # check that the "value" lies in [-max_mark, max_mark]
-        max_mark = SpecificationService.get_question_max_mark(data["question_index"])
+        max_mark = SpecificationService.get_question_max_mark(q_index)
         _validate_value(data.get("value", 0), max_mark)
         # TODO: Perhaps the serializer should do this
         if data["kind"] == "absolute":
@@ -401,6 +398,13 @@ class RubricService:
         Careful with ``_pypass_serializer``.  I think this stuff was introduced
         to decrease the number of database queries when making many rubrics.
         """
+        # As stated in Rubric's model: out_of must be 0 for non-absolute kind and value is 0 for neutral
+        if data["kind"] != "absolute":
+            data["out_of"] = 0
+            data["value"] = 0 if data["kind"] == "neutral" else data["value"]
+
+        RubricService._validate_rubric_fields(data)
+
         if data.get("display_delta", None) is None:
             # if we don't have a display_delta, we'll generate a default one
             data["display_delta"] = _generate_display_delta(
@@ -410,8 +414,6 @@ class RubricService:
                 data["kind"],
                 data.get("out_of", None),
             )
-
-        RubricService._validate_rubric_fields(data)
 
         data["latest"] = True
         if _bypass_serializer:
@@ -435,7 +437,6 @@ class RubricService:
             return new_rubric
 
         serializer = RubricSerializer(data=data)
-
         # user-friendly text error messages
         if not serializer.is_valid():
             errors = serializer.errors

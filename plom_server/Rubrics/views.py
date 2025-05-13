@@ -511,8 +511,8 @@ class RubricCreateView(ManagerRequiredView):
             messages.error(request, f"Error: {e}")
 
         except serializers.ValidationError as e:
-            messages.error(request, f"{e.detail.get('value', 'Invalid Error')}")
-
+            problematic_col, err_msg = next(iter(e.args[0].items()))
+            messages.error(request, f"Error: '{problematic_col}': {err_msg}")
         else:
             messages.success(request, "Rubric created successfully.")
 
@@ -573,7 +573,8 @@ class RubricEditView(ManagerRequiredView):
             messages.error(request, f"Error: {e}")
 
         except serializers.ValidationError as e:
-            messages.error(request, f"{e.detail.get('value', 'Invalid Error')}")
+            problematic_col, err_msg = next(iter(e.args[0].items()))
+            messages.error(request, f"Error: '{problematic_col}': {err_msg}")
 
         except PlomConflict as e:
             messages.error(request, f"Error: {e}")
