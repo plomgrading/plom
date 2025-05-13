@@ -74,6 +74,7 @@ class MatplotlibService:
         self.ta_df = self.des._get_ta_data()
         self.formats = _acceptable_formats
 
+        # Maps to minimize db query for every conversion of index to label or max_mark
         self.q_label_map = SpecificationService.get_question_labels_map()
         self.q_max_mark_map = SpecificationService.get_questions_max_marks()
 

@@ -36,6 +36,7 @@ class DataExtractionService:
         ta_keys = tms.get_csv_header()
         self.ta_df = pd.DataFrame(ta_dict, columns=ta_keys)
 
+        # Maps to minimize db query for every conversion of index to label or max_mark
         self.q_label_map = SpecificationService.get_question_labels_map()
         self.q_max_mark_map = SpecificationService.get_questions_max_marks()
 
