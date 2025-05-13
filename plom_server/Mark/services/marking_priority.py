@@ -56,9 +56,7 @@ def set_marking_piority_shuffle():
     """Set the priority to shuffle: every marking task gets a random priority value."""
     tasks = get_tasks_to_update_priority()
     for task in tasks:
-        old = task.marking_priority
         task.marking_priority = random.randint(0, 1000)
-        print(f"Task {task.id}: {old} -> {task.marking_priority}")
 
     MarkingTask.objects.bulk_update(tasks, ["marking_priority"])
     set_marking_priority_strategy(MarkingTaskPriority.SHUFFLE)
