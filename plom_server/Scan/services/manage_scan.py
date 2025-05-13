@@ -251,7 +251,9 @@ class ManageScanService:
     def get_all_incomplete_papers() -> dict[int, dict[str, list[dict[str, Any]]]]:
         """Dicts of info about papers that are partially but not completely scanned.
 
-        A paper is not completely scanned when it has *some* but not all its fixed pages.
+        A paper is not completely scanned when it has *some* but not all its
+        fixed pages. A paper is also incomplete when it contains no fixed
+        pages, but has mobile pages for some but not all questions.
 
         Returns:
             Dict keyed by paper number and then for each we have keys
@@ -283,6 +285,30 @@ class ManageScanService:
             "fixedpage_set__image",
             "mobilepage_set__image",
         )
+        
+        # Get papers without fixed pages and some, but not all,
+        # questions covered by mobile pages
+        mobile_pages = MobilePage.objects.values(
+                    "paper"
+                ).annotate(
+                    counts=Count("question_index", distinct=True)
+                ).filter(
+                    counts__lt=SpecificationService.get_n_questions(),
+                    counts__gt=0
+                ).values_list("paper", flat=True)
+        some_mobile_pages = MobilePage.objects.filter(paper__in=mobile_pages, paper=OuterRef("pk"))
+
+        no_fixed_but_some_mobile = Paper.objects.filter(
+                ~Exists(fixed_with_scan), Exists(some_mobile_pages)
+        ).prefetch_related(
+            Prefetch(
+                "mobilepage_set",
+                queryset=MobilePage.objects.order_by("question_index"),
+            ),
+            "mobilepage_set__image",
+        )
+
+
 
         incomplete: dict[int, Any] = {}  # more precise typing in defn
         for paper in some_but_not_all_fixed_present:
@@ -325,13 +351,30 @@ class ManageScanService:
                     }
                 )
 
+        for paper in no_fixed_but_some_mobile:
+            incomplete[paper.paper_number] = {"fixed": [], "mobile": []}
+            # again we don't specify order or prefetch here because of the work above
+            for mp in paper.mobilepage_set.all():
+                incomplete[paper.paper_number]["mobile"].append(
+                    {
+                        "question_number": mp.question_index,
+                        "img_pk": mp.image.pk,
+                        "page_pk": mp.pk,
+                        "page_label": (
+                            f"qi.{mp.question_index}" if mp.question_index else "dnm"
+                        ),
+                    }
+                )
+
         return incomplete
 
     @transaction.atomic
     def get_number_incomplete_test_papers(self) -> int:
         """Return the number of test-papers that are partially but not completely scanned.
 
-        A paper is not completely scanned when it has *some* but not all its fixed pages.
+        A paper is not completely scanned when it has *some* but not all its
+        fixed pages. A paper is also incomplete when it contains no fixed
+        pages, but mobile pages for some, but not all, questions.
         """
         # Get fixed pages with no image - ie not scanned.
         fixed_with_no_scan = FixedPage.objects.filter(paper=OuterRef("pk"), image=None)
@@ -344,7 +387,20 @@ class ManageScanService:
             Exists(fixed_with_no_scan), Exists(fixed_with_scan)
         )
 
-        return some_but_not_all_fixed_present.count()
+        mobile_pages = MobilePage.objects.values(
+                    "paper"
+                ).annotate(
+                    counts=Count("question_index", distinct=True)
+                ).filter(
+                    counts__lt=SpecificationService.get_n_questions(),
+                    counts__gt=0
+                ).values_list("paper", flat=True)
+        some_mobile_pages = MobilePage.objects.filter(paper__in=mobile_pages, paper=OuterRef("pk"))
+
+        no_fixed_but_some_mobile = Paper.objects.filter(
+                ~Exists(fixed_with_scan), Exists(some_mobile_pages)
+        )
+        return some_but_not_all_fixed_present.count() + no_fixed_but_some_mobile.count()
 
     @transaction.atomic
     def get_number_unused_test_papers(self) -> int:
