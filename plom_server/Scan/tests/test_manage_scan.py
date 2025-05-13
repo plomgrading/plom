@@ -7,6 +7,7 @@
 from django.test import TestCase
 from model_bakery import baker
 
+from plom_server.Base.tests import config_test
 from plom_server.Papers.models import Image, FixedPage, MobilePage, Bundle, Paper
 from ..services import ManageScanService
 
@@ -14,6 +15,7 @@ from ..services import ManageScanService
 class ManageScanServiceTests(TestCase):
     """Tests for Progress.services.ManageScanService."""
 
+    @config_test({"test_spec": "demo"})
     def setUp(self):
         self.bundle = baker.make(
             Bundle,
@@ -192,7 +194,7 @@ class ManageScanServiceTests(TestCase):
         # paper 1 has 6 fixed and 1 mobile.
         # papers 2,3,4,5 = should have all 6 fixed pages - returned in page-number order
         # papers 12,13,14,15 should have 3 mobile pages (one each for q 1,2,3) - returned in question order
-        assert len(mss_complete) == 9
+        assert len(mss_complete) == 9, f"mss_complete ({len(mss_complete)}) should be 9"
 
         for pn in [1]:
             assert pn in mss_complete

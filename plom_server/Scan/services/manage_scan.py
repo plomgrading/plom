@@ -76,9 +76,16 @@ class ManageScanService:
         # match for papers that have mobile pages. This also allows us
         # to avoid duplications since "exists" stops the query as soon
         # as one item is found - see below
-        mobile_pages = MobilePage.objects.filter(paper=OuterRef("pk"))
-        no_fixed_but_some_mobile = Paper.objects.filter(
-            ~Exists(fixed_with_scan), Exists(mobile_pages)
+        mobile_pages = MobilePage.objects.values(
+                    "paper"
+                ).annotate(
+                    counts=Count("question_index", distinct=True)
+                ).filter(
+                    counts=SpecificationService.get_n_questions()
+                ).values_list("paper", flat=True)
+        all_mobile_pages = MobilePage.objects.filter(paper__in=mobile_pages, paper=OuterRef("pk"))
+        no_fixed_but_all_mobile = Paper.objects.filter(
+            ~Exists(fixed_with_scan), Exists(all_mobile_pages)
         )
         # We can also do the above query as:
         #
@@ -90,13 +97,14 @@ class ManageScanService:
         # one needs to append the 'distinct'. This is a common problem
         # when querying backwards across foreign key fields
 
-        return all_fixed_present.count() + no_fixed_but_some_mobile.count()
+        return all_fixed_present.count() + no_fixed_but_all_mobile.count()
 
     def is_paper_completely_scanned(self, paper_number: int) -> bool:
         """Test whether given paper has been completely scanned.
 
         A paper is complete when it either has **all** its fixed
-        pages, or it has no fixed pages but has some extra-pages.
+        pages, or it has no fixed pages but extra-pages assigned to
+        all questions.
         """
         # paper is completely scanned
         try:
@@ -116,7 +124,9 @@ class ManageScanService:
         if fixed_with_no_scan_count == 0:
             return True
         # if no fixed pages have scans, but have some mobile pages, then complete
-        mobile_page_count = MobilePage.objects.filter(paper=paper_obj).count()
+        mobile_page_count = MobilePage.objects.filter(paper=paper_obj).distinct(
+            "question_index"
+        ).count()
         if fixed_with_scan_count == 0 and mobile_page_count > 0:
             return True
         # else we have (fixed_no_scan > 0) and (fixed_with_scan > 0 or mobile_pages==0)
@@ -124,35 +134,14 @@ class ManageScanService:
         # paper is not completely scanned in those cases
         return False
 
-    def get_all_complete_paper_ids() -> list[int]:
-        """Get the paper IDs for all 'complete' papers."""
-        # this is the query we want:
-        """
-            SELECT paper_number, COUNT(DISTINCT question_index) as counts
-            FROM MobilePages
-            GROUP BY paper_id
-            HAVING counts = 4 {or whatever the question count is};
-        """
-        # TODO - do this in django-object queries *agonizing screaming*
-        # This is untested
-        paper_nums = MobilePages.objects.values(
-                "paper"
-                ).annotate(
-                counts=Count("question_index", distinct=True)
-                ).filter(
-                counts=4
-                )
-        print(paper_nums)
-        print(type(paper_nums))
-        return paper_nums
-
     @staticmethod
     @transaction.atomic
     def get_all_complete_papers() -> dict[int, dict[str, list[dict[str, Any]]]]:
         """Dicts of info about papers that are completely scanned.
 
         A paper is complete when it either has **all** its fixed
-        pages, or it has no fixed pages but has some extra-pages.
+        pages, or it has no fixed pages but has extra-pages for all
+        spec questions.
 
         Returns:
             Dict keyed by paper number and then for each we have keys
@@ -195,9 +184,16 @@ class ManageScanService:
         # duplications when executing the main query (see the
         # get_number_completed_test_papers function above.
 
-        mobile_pages = MobilePage.objects.filter(paper=OuterRef("pk"))
+        mobile_pages = MobilePage.objects.values(
+                    "paper"
+                ).annotate(
+                    counts=Count("question_index", distinct=True)
+                ).filter(
+                    counts=SpecificationService.get_n_questions()
+                ).values_list("paper", flat=True)
+        all_mobile_pages = MobilePage.objects.filter(paper__in=mobile_pages, paper=OuterRef("pk"))
         no_fixed_but_some_mobile = Paper.objects.filter(
-            ~Exists(fixed_with_scan), Exists(mobile_pages)
+            ~Exists(fixed_with_scan), Exists(all_mobile_pages)
         ).prefetch_related(
             Prefetch(
                 "mobilepage_set",
