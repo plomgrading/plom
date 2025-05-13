@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023-2025 Colin B. Macdonald
-# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2025 Aden Chan
 
@@ -35,6 +35,9 @@ class DataExtractionService:
         ta_dict = tms.build_csv_data()
         ta_keys = tms.get_csv_header()
         self.ta_df = pd.DataFrame(ta_dict, columns=ta_keys)
+
+        self.q_label_map = SpecificationService.get_question_labels_map()
+        self.q_max_mark_map = SpecificationService.get_questions_max_marks()
 
     def _get_ta_data(self) -> pd.DataFrame:
         """Return the dataframe of TA data.
@@ -119,7 +122,7 @@ class DataExtractionService:
         return (
             100
             * self.student_df[f"q{question_index}_mark"].mean()
-            / SpecificationService.get_question_max_mark(question_index)
+            / self.q_max_mark_map[question_index]
         )
 
     def _get_average_on_question_version_as_percentage(
@@ -132,7 +135,7 @@ class DataExtractionService:
         return (
             100
             * version_df[f"q{question_index}_mark"].mean()
-            / SpecificationService.get_question_max_mark(question_index)
+            / self.q_max_mark_map[question_index]
         )
 
     def get_averages_on_all_questions_as_percentage(self) -> list[float]:
@@ -163,7 +166,7 @@ class DataExtractionService:
 
         for v in SpecificationService.get_list_of_versions():
             _averages = []
-            for q in SpecificationService.get_question_indices():
+            for q in self.q_label_map.keys():
                 _averages.append(
                     self._get_average_on_question_version_as_percentage(q, v)
                 )
@@ -239,7 +242,7 @@ class DataExtractionService:
         )
 
         for i, name in enumerate(marks_corr.columns):
-            qlabel = SpecificationService.get_question_label(i + 1)
+            qlabel = self.q_label_map[i + 1]
             marks_corr.rename({name: qlabel}, axis=1, inplace=True)
             marks_corr.rename({name: qlabel}, axis=0, inplace=True)
 

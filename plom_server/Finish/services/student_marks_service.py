@@ -34,11 +34,15 @@ class StudentMarkService:
 
         Args:
             paper: a reference to a Paper instance.
-            n_questions: number of questions in the test.
+            n_questions: number of questions in the test. Pass n_questions to reduce
+            repetitive db_query of n_questions.
 
         Returns:
             bool: True when all questions in the given paper are marked.
         """
+        if not n_questions:
+            n_questions = SpecificationService.get_n_questions()
+
         # Use .aggregate to Select all Counts(*) in one query
         counts = MarkingTask.objects.filter(paper=paper).aggregate(
             complete=Count("id", filter=Q(status=MarkingTask.COMPLETE)),
@@ -49,9 +53,6 @@ class StudentMarkService:
         n_completed_tasks = counts["complete"]
         n_out_of_date_tasks = counts["out_of_date"]
         n_all_tasks = counts["all"]
-
-        if not n_questions:
-            n_questions = SpecificationService.get_n_questions()
 
         # make sure one completed task for each question and that all tasks are complete or out of date.
         return (n_completed_tasks == n_questions) and (
