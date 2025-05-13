@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024-2025 Colin B. Macdonald
-# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024-2025 Bryan Tanady
 
 from plom_server.Mark.models import MarkingTask
 from plom_server.Mark.services import marking_priority
