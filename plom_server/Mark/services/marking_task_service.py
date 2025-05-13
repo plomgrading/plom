@@ -329,6 +329,18 @@ class MarkingTaskService:
             assigned_user=None, status=MarkingTask.TO_DO
         )
 
+    def get_n_marked_tasks(self) -> int:
+        """Return the number of marking tasks that are completed."""
+        return MarkingTask.objects.filter(status=MarkingTask.COMPLETE).count()
+
+    def get_n_total_tasks(self) -> int:
+        """Return the total number of tasks in the database."""
+        return MarkingTask.objects.all().count()
+
+    def get_n_valid_tasks(self) -> int:
+        """Return the total number of tasks in the database, excluding out of date tasks."""
+        return MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE).count()
+
     def get_task_counts_dict(self) -> dict[str, int]:
         """Get a dict of task count for various task status.
 

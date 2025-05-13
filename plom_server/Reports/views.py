@@ -4,7 +4,6 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Elisa Pan
-# Copyright (C) 2025 Bryan Tanady
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -29,8 +28,7 @@ class ReportLandingPageView(ManagerRequiredView):
         if not SpecificationService.is_there_a_spec():
             return render(request, "Finish/finish_no_spec.html", context=context)
 
-        task_count_dict = MarkingTaskService().get_task_counts_dict()
-        total_tasks = task_count_dict["valid"]
+        total_tasks = MarkingTaskService().get_n_valid_tasks()
         all_marked = StudentMarkService.are_all_papers_marked() and total_tasks > 0
 
         context.update(
