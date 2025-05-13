@@ -230,9 +230,9 @@ class RubricService:
     def create_rubric(
         cls,
         rubric_data: dict[str, Any],
-        by_system: bool = True,
         *,
         creating_user: User | None = None,
+        by_system: bool = True,
     ) -> dict[str, Any]:
         """Create a rubric using data submitted by a marker.
 
@@ -267,9 +267,9 @@ class RubricService:
     def _create_rubric(
         cls,
         incoming_data: dict[str, Any],
-        by_system: bool = True,
         *,
         creating_user: User | None = None,
+        by_system: bool = True,
     ) -> Rubric:
         incoming_data = incoming_data.copy()
 
