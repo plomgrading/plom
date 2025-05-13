@@ -56,6 +56,13 @@ class PlomClasslistValidator:
             # instead check that we have some of the potential keys - careful of case
             if not reader.fieldnames:
                 raise ValueError("The CSV file has no header")
+
+            cl_header_info = self._checkHeaders(reader.fieldnames)
+            if cl_header_info["success"] is False:  # format errors and bail-out
+                raise ValueError("; ".join(cl_header_info["errors"]))
+            #        werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": e})
+            #    return (False, werr)
+
             column_names = [x.casefold() for x in reader.fieldnames]
             if any(x in potential_column_names for x in column_names):
                 pass
@@ -79,7 +86,7 @@ class PlomClasslistValidator:
             # return the list
             return classAsDict
 
-    def _checkHeaders(self, rowFromDict: dict[str, Any]) -> dict[str, Any]:
+    def _checkHeaders(self, headers: list[str]) -> dict[str, Any]:
         """Check existence of id and name columns in the classlist.
 
         Checks the column titles (as given by the supplied row from
@@ -89,8 +96,7 @@ class PlomClasslistValidator:
         by casefolding.
 
         Arguments:
-            rowFromDict: a row from the classlist encoded as a dictionary.
-                The keys give the column titles.
+            headers: the list of keys of the column titles.
 
         Returns:
             dict: If errors then return ``{'success': False, 'errors': error-list}``,
@@ -101,7 +107,6 @@ class PlomClasslistValidator:
         id_keys = []
         fullname_keys = []
         papernumber_keys: list[str | None] = []
-        headers = list(rowFromDict.keys())
         for x in headers:
             cfx = x.casefold()
             if cfx == sid_field:
@@ -295,7 +300,7 @@ class PlomClasslistValidator:
 
         Keyword Args:
             spec (None/dict/SpecVerifier): an optional test specification,
-                 if given then run additional classlist-related tests.
+                if given then run additional classlist-related tests.
 
         Returns:
             ``(valid, warnings_and_errors)`` where "valid" is either
@@ -321,7 +326,7 @@ class PlomClasslistValidator:
             return (True, [])
 
         # check the headers - potentially un-recoverable errors here
-        cl_header_info = self._checkHeaders(cl_as_dicts[0])
+        cl_header_info = self._checkHeaders(cl_as_dicts[0].keys())
         if cl_header_info["success"] is False:  # format errors and bail-out
             for e in cl_header_info["errors"]:
                 werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": e})
