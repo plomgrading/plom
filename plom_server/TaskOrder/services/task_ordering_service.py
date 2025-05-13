@@ -110,7 +110,7 @@ class TaskOrderService:
         """
         custom_priorities = {}
         for row in csv_data:
-            key = (int(row[0]), int(row[1]))
-            custom_priorities[key] = int(row[2])
+            key = (int(row["Paper Number"]), int(row["Question Index"]))
+            custom_priorities[key] = int(row["Priority Value"])
 
         return custom_priorities
