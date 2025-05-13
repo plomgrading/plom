@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Elisa Pan
+# Copyright (C) 2025 Bryan Tanady
 
 from django.shortcuts import render
 from django.http import HttpResponse
