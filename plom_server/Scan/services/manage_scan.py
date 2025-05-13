@@ -76,14 +76,15 @@ class ManageScanService:
         # match for papers that have mobile pages. This also allows us
         # to avoid duplications since "exists" stops the query as soon
         # as one item is found - see below
-        mobile_pages = MobilePage.objects.values(
-                    "paper"
-                ).annotate(
-                    counts=Count("question_index", distinct=True)
-                ).filter(
-                    counts=SpecificationService.get_n_questions()
-                ).values_list("paper", flat=True)
-        all_mobile_pages = MobilePage.objects.filter(paper__in=mobile_pages, paper=OuterRef("pk"))
+        mobile_pages = (
+            MobilePage.objects.values("paper")
+            .annotate(counts=Count("question_index", distinct=True))
+            .filter(counts=SpecificationService.get_n_questions())
+            .values_list("paper", flat=True)
+        )
+        all_mobile_pages = MobilePage.objects.filter(
+            paper__in=mobile_pages, paper=OuterRef("pk")
+        )
         no_fixed_but_all_mobile = Paper.objects.filter(
             ~Exists(fixed_with_scan), Exists(all_mobile_pages)
         )
@@ -124,9 +125,11 @@ class ManageScanService:
         if fixed_with_no_scan_count == 0:
             return True
         # if no fixed pages have scans, but have some mobile pages, then complete
-        mobile_page_count = MobilePage.objects.filter(paper=paper_obj).distinct(
-            "question_index"
-        ).count()
+        mobile_page_count = (
+            MobilePage.objects.filter(paper=paper_obj)
+            .distinct("question_index")
+            .count()
+        )
         if fixed_with_scan_count == 0 and mobile_page_count > 0:
             return True
         # else we have (fixed_no_scan > 0) and (fixed_with_scan > 0 or mobile_pages==0)
@@ -184,14 +187,15 @@ class ManageScanService:
         # duplications when executing the main query (see the
         # get_number_completed_test_papers function above.
 
-        mobile_pages = MobilePage.objects.values(
-                    "paper"
-                ).annotate(
-                    counts=Count("question_index", distinct=True)
-                ).filter(
-                    counts=SpecificationService.get_n_questions()
-                ).values_list("paper", flat=True)
-        all_mobile_pages = MobilePage.objects.filter(paper__in=mobile_pages, paper=OuterRef("pk"))
+        mobile_pages = (
+            MobilePage.objects.values("paper")
+            .annotate(counts=Count("question_index", distinct=True))
+            .filter(counts=SpecificationService.get_n_questions())
+            .values_list("paper", flat=True)
+        )
+        all_mobile_pages = MobilePage.objects.filter(
+            paper__in=mobile_pages, paper=OuterRef("pk")
+        )
         no_fixed_but_some_mobile = Paper.objects.filter(
             ~Exists(fixed_with_scan), Exists(all_mobile_pages)
         ).prefetch_related(
@@ -285,21 +289,20 @@ class ManageScanService:
             "fixedpage_set__image",
             "mobilepage_set__image",
         )
-        
         # Get papers without fixed pages and some, but not all,
         # questions covered by mobile pages
-        mobile_pages = MobilePage.objects.values(
-                    "paper"
-                ).annotate(
-                    counts=Count("question_index", distinct=True)
-                ).filter(
-                    counts__lt=SpecificationService.get_n_questions(),
-                    counts__gt=0
-                ).values_list("paper", flat=True)
-        some_mobile_pages = MobilePage.objects.filter(paper__in=mobile_pages, paper=OuterRef("pk"))
+        mobile_pages = (
+            MobilePage.objects.values("paper")
+            .annotate(counts=Count("question_index", distinct=True))
+            .filter(counts__lt=SpecificationService.get_n_questions(), counts__gt=0)
+            .values_list("paper", flat=True)
+        )
+        some_mobile_pages = MobilePage.objects.filter(
+            paper__in=mobile_pages, paper=OuterRef("pk")
+        )
 
         no_fixed_but_some_mobile = Paper.objects.filter(
-                ~Exists(fixed_with_scan), Exists(some_mobile_pages)
+            ~Exists(fixed_with_scan), Exists(some_mobile_pages)
         ).prefetch_related(
             Prefetch(
                 "mobilepage_set",
@@ -307,8 +310,6 @@ class ManageScanService:
             ),
             "mobilepage_set__image",
         )
-
-
 
         incomplete: dict[int, Any] = {}  # more precise typing in defn
         for paper in some_but_not_all_fixed_present:
@@ -387,18 +388,18 @@ class ManageScanService:
             Exists(fixed_with_no_scan), Exists(fixed_with_scan)
         )
 
-        mobile_pages = MobilePage.objects.values(
-                    "paper"
-                ).annotate(
-                    counts=Count("question_index", distinct=True)
-                ).filter(
-                    counts__lt=SpecificationService.get_n_questions(),
-                    counts__gt=0
-                ).values_list("paper", flat=True)
-        some_mobile_pages = MobilePage.objects.filter(paper__in=mobile_pages, paper=OuterRef("pk"))
+        mobile_pages = (
+            MobilePage.objects.values("paper")
+            .annotate(counts=Count("question_index", distinct=True))
+            .filter(counts__lt=SpecificationService.get_n_questions(), counts__gt=0)
+            .values_list("paper", flat=True)
+        )
+        some_mobile_pages = MobilePage.objects.filter(
+            paper__in=mobile_pages, paper=OuterRef("pk")
+        )
 
         no_fixed_but_some_mobile = Paper.objects.filter(
-                ~Exists(fixed_with_scan), Exists(some_mobile_pages)
+            ~Exists(fixed_with_scan), Exists(some_mobile_pages)
         )
         return some_but_not_all_fixed_present.count() + no_fixed_but_some_mobile.count()
 

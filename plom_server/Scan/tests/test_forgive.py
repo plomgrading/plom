@@ -13,6 +13,7 @@ from ..services import ForgiveMissingService
 
 class TestForgiveMissingService(TestCase):
     """Test various facets which replace missing fixed pages."""
+
     # A bit minimal: TODO: test properly
 
     @config_test({"test_spec": "demo"})
