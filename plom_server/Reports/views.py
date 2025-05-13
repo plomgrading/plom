@@ -27,7 +27,6 @@ class ReportLandingPageView(ManagerRequiredView):
         context = self.build_context()
         if not SpecificationService.is_there_a_spec():
             return render(request, "Finish/finish_no_spec.html", context=context)
-
         total_tasks = MarkingTaskService().get_n_valid_tasks()
         all_marked = StudentMarkService.are_all_papers_marked() and total_tasks > 0
 
