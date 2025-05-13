@@ -102,7 +102,8 @@ class TaskOrderService:
         """Handle uploaded file data of task priorities.
 
         Args:
-            csv_data: The CSV data.
+            csv_data: The CSV data parsed with DictReader and has been
+            validated to have these cols: ["Paper Number", "Question Index", "Priority Value"].
 
         Returns:
             A dictionary of task priorities, keyed by
