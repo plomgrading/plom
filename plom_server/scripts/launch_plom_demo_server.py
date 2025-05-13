@@ -16,6 +16,8 @@ import csv
 import os
 import re
 import subprocess
+import sys
+import time
 from pathlib import Path
 from shlex import split
 from tempfile import TemporaryDirectory
@@ -26,8 +28,30 @@ from plom_server import __version__
 
 # TODO: not a fan of global variables, and mypy needs this to be defined
 global demo_files
-# so temporarily set to "."; we've fix it in main()
+# so temporarily set it to "."; we'll fix it in main()
 demo_files = Path(".")
+
+global _demo_script_launch_time
+_demo_script_launch_time: None | float = None
+
+
+def saytime(comment: str) -> None:
+    global _demo_script_launch_time
+    now = time.localtime()
+
+    if _demo_script_launch_time is None:
+        _demo_script_launch_time = time.monotonic()
+        print(f"\n{time.strftime('%H:%M:%S', now)}: Launching the timer.\n")
+    if comment:
+        elapsed = time.monotonic() - _demo_script_launch_time
+        print(
+            f"\n{time.strftime('%H:%M:%S', now)}: "
+            f"{comment} "
+            f"[{elapsed:.0f} s since launch]\n"
+        )
+
+    sys.stdout.flush()
+    sys.stderr.flush()
 
 
 def wait_for_user_to_type_quit() -> None:
@@ -474,11 +498,17 @@ def run_demo_preparation_commands(
     run_django_manage_command("plom_create_demo_users")
     run_django_manage_command("plom_leadmarker_membership --toggle demoMarker1")
     run_django_manage_command("plom_leadmarker_membership --toggle demoMarker2")
+
+    saytime("Users created.")
+
     if stop_after == "users":
         print("Stopping after users created.")
         return False
 
     upload_demo_assessment_spec_file()
+
+    saytime("Assessment specification is uploaded.")
+
     if stop_after == "spec":
         print("Stopping after assessment specification uploaded.")
         return False
@@ -488,6 +518,9 @@ def run_demo_preparation_commands(
     if solutions:
         upload_demo_solution_files()
     upload_demo_classlist(length, prename)
+
+    saytime("Finished uploading assessment sources and classlist.")
+
     if stop_after == "sources":
         print("Stopping after assessment sources and classlist uploaded.")
         return False
@@ -504,11 +537,16 @@ def run_demo_preparation_commands(
             read_hack_and_resave_qvmap(tmp_qv_path)
             upload_the_qvmap(tmp_qv_path)
 
+    saytime("Finished populating the database and tweaking the qvmap.")
+
     if stop_after == "populate":
         print("Stopping after paper-database populated.")
         return False
 
     build_all_papers_and_wait()
+
+    saytime("Finished building the papers.")
+
     if stop_after == "papers-built":
         print("Stopping after papers_built.")
         return False
@@ -523,6 +561,8 @@ def run_demo_preparation_commands(
     print("For testing purposes, set papers are not printed and then set it again.")
     run_django_manage_command("plom_preparation_status --set todo")
     run_django_manage_command("plom_preparation_status --set finished")
+
+    saytime("")
 
     return True
 
@@ -802,6 +842,8 @@ def main():
     # TODO: I guess?
     os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
 
+    saytime("")  # Launch the chatty timer.
+
     args = get_parser().parse_args()
 
     # cast stop-after, wait-after from list of options to a singleton or None
@@ -831,10 +873,15 @@ def main():
 
     # clean out old db and misc files, then rebuild blank db
     run_django_manage_command("plom_clean_all_and_build_db")
+
+    saytime("Finished refreshing the database.")
+
     # build the user-groups and the admin and manager users
     run_django_manage_command("plom_make_groups_and_first_users")
     # build extra-page and scrap-paper PDFs
     run_django_manage_command("plom_build_scrap_extra_pdfs")
+
+    saytime("Finished making groups and early users, extra pages, and scrap paper.")
 
     if not args.development:
         run_django_manage_command("collectstatic --clear --no-input")
@@ -873,6 +920,7 @@ def main():
             ):
                 break
 
+            saytime("Launching scanning process ...")
             print(">> Scanning of papers")
             if not run_demo_bundle_scan_commands(
                 length=args.length,
@@ -883,6 +931,7 @@ def main():
                 break
 
             print("*" * 50)
+            saytime("Launching marking process ...")
             print(">> Ready for marking")
             if not run_marking_commands(
                 port=args.port, stop_after=stop_after, half_marks=args.half_marks
@@ -891,10 +940,12 @@ def main():
 
             print("*" * 50)
             print(">> Ready for finishing")
+            saytime("Launching finishing process ....")
             run_finishing_commands(stop_after=stop_after, solutions=args.solutions)
             break
 
         if args.development:
+            saytime("Development server is running, with all setup complete.")
             if wait_at_end:
                 wait_for_user_to_type_quit()
             else:
@@ -909,6 +960,7 @@ def main():
             hp.terminate()
         if server_process:
             server_process.terminate()
+        saytime("Cleanup commands all issued. Stopping now.")
         print("^" * 50)
 
 
