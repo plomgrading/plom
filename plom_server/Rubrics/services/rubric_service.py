@@ -1230,10 +1230,10 @@ class RubricService:
             "pedagogy_tags": [],
         }
 
-        # Validate key, fail-fast suppose Rubric's attribute name is changed
+        # Validate keys in our hand-rolled dict to those in the official Rubric model
         for key in rubric.keys():
             # Validate key
-            if key not in Rubric.__dict__:
+            if key not in Rubric.__dict__.keys():
                 raise ValueError(f"{key} is not a valid Rubric Attribute.")
 
         return rubric
