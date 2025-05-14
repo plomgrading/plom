@@ -53,7 +53,7 @@ class PQVMappingService:
         if prenaming:
             sss = StagingStudentService
             for papernum, student in sss.get_prenamed_papers().items():
-                if paper_number in pqv_table:
+                if papernum in pqv_table:
                     pqv_table[papernum]["prename"] = student
                 else:
                     # TODO - issue a warning - means we are trying to prename a
