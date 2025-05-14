@@ -42,8 +42,8 @@ class PQVMappingService:
         # sort in paper-number-order so that the table renders in this order
         # python keeps keys in insertion order since v3.7
         # see https://docs.python.org/3/whatsnew/3.7.html
-        for paper_number, qvmap in sorted(pqvmapping.items()):
-            pqv_table[paper_number] = {
+        for papernum, qvmap in sorted(pqvmapping.items()):
+            pqv_table[papernum] = {
                 "prename": None,
                 "qvlist": [qvmap[q] for q in question_indices],
                 "id_ver": 1 if "id" not in qvmap.keys() else qvmap["id"],
@@ -53,7 +53,7 @@ class PQVMappingService:
         if prenaming:
             sss = StagingStudentService
             for papernum, student in sss.get_prenamed_papers().items():
-                if paper_number in pqv_table:
+                if papernum in pqv_table:
                     pqv_table[papernum]["prename"] = student
                 else:
                     # TODO - issue a warning - means we are trying to prename a
