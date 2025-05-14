@@ -441,7 +441,7 @@ class RubricService:
         if not serializer.is_valid():
             errors = serializer.errors
             friendly = {
-                field: str(err[0]) if isinstance(err, list) else err
+                field: "; ".join(err) if isinstance(err, list) else err
                 for field, err in errors.items()
             }
             raise serializers.ValidationError(friendly)
@@ -1221,7 +1221,7 @@ class RubricService:
         )
         value = None if kind == "neutral" else value
 
-        rubric = {
+        rubric: dict[str, Any] = {
             "kind": kind,
             "value": value,
             "out_of": out_of,
