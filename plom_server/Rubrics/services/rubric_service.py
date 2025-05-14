@@ -1211,12 +1211,16 @@ class RubricService:
         return template
 
     def _create_single_rubric_template(
-        self, kind: str, value: int | float, question_index: int
+        self, kind: str, value: int | float | None, question_index: int
     ) -> dict[str, Any]:
-        if kind == "absolute":
-            out_of = SpecificationService.get_question_max_mark(question_index)
-        else:
-            out_of = 0
+
+        out_of = (
+            SpecificationService.get_question_max_mark(question_index)
+            if kind == "absolute"
+            else None
+        )
+        value = None if kind == "neutral" else value
+
         rubric = {
             "kind": kind,
             "value": value,
