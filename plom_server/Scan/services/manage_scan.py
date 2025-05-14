@@ -129,42 +129,16 @@ class ManageScanService:
 
         return complete_papers_queryset.count()
 
-    def is_paper_completely_scanned(self, paper_number: int) -> bool:
+    def is_paper_completely_scanned(self, paper_num: int) -> bool:
         """Test whether given paper has been completely scanned.
 
         A paper is complete when it either has **all** its fixed
         pages, or it has no fixed pages but extra-pages assigned to
         all questions.
         """
-        # paper is completely scanned
-        try:
-            paper_obj = Paper.objects.get(paper_number=paper_number)
-        except Paper.DoesNotExist:
-            return False
+        complete_papers_queryset, _ = self._get_complete_incomplete_paper_querysets()
 
-        # fixed_count = FixedPage.objects.filter(paper=paper_obj).count()
-        fixed_with_no_scan_count = FixedPage.objects.filter(
-            paper=paper_obj, image=None
-        ).count()
-        fixed_with_scan_count = FixedPage.objects.filter(
-            paper=paper_obj, image__isnull=False
-        ).count()
-
-        # if all fixed pages have scans - then complete
-        if fixed_with_no_scan_count == 0:
-            return True
-        # if no fixed pages have scans, but have some mobile pages, then complete
-        mobile_page_count = (
-            MobilePage.objects.filter(paper=paper_obj)
-            .distinct("question_index")
-            .count()
-        )
-        if fixed_with_scan_count == 0 and mobile_page_count > 0:
-            return True
-        # else we have (fixed_no_scan > 0) and (fixed_with_scan > 0 or mobile_pages==0)
-        # = (fixed no scan>0, fixed with scan > 0) or (fixed no scan > 0 and mobile pages = 0)
-        # paper is not completely scanned in those cases
-        return False
+        return complete_papers_queryset.filter(paper_number=paper_num).exists()
 
     @staticmethod
     @transaction.atomic

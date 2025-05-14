@@ -232,3 +232,12 @@ class ManageScanServiceTests(TestCase):
                 assert (
                     "img_pk" in m_page_data[qn - 1]
                 )  # not testing the actual value of image_pk
+
+    def test_is_paper_completely_scanned(self) -> None:
+        """Test whether we can tell if a paper is scanned."""
+        # papers 6, 7, 10, 11 are incomplete
+
+        mss = ManageScanService()
+        assert mss.is_paper_completely_scanned(1)
+        assert mss.is_paper_completely_scanned(12)
+        assert not mss.is_paper_completely_scanned(6)
