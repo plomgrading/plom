@@ -675,6 +675,8 @@ class Messenger(BaseMessenger):
             with self.SRmutex:
                 try:
                     with open(annotated_img, "rb") as fh, open(hack_pfile, "rb") as f2:
+                        # Note this is not passed as JSON: its key-value strings
+                        # (and note you cannot pass json= when using files=)
                         # doesn't like ints, so convert ints to strings
                         param = {
                             "user": self.user,
