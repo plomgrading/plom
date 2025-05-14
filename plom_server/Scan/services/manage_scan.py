@@ -208,7 +208,7 @@ class ManageScanService:
             for mp in paper.mobilepage_set.all():
                 complete[paper.paper_number]["mobile"].append(
                     {
-                        "question_number": mp.question_index,
+                        "question_idx": mp.question_index,
                         "img_pk": mp.image.pk,
                         "page_pk": mp.pk,
                         "page_label": (
@@ -289,7 +289,7 @@ class ManageScanService:
             for mp in paper.mobilepage_set.all():
                 incomplete[paper.paper_number]["mobile"].append(
                     {
-                        "question_number": mp.question_index,
+                        "question_idx": mp.question_index,
                         "img_pk": mp.image.pk,
                         "page_pk": mp.pk,
                         "page_label": (

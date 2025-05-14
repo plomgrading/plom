@@ -183,7 +183,7 @@ class ManageScanServiceTests(TestCase):
                 assert "img_pk" not in f_pg_data[pg - 1]
             for pg in range(1, 3):
                 assert (
-                    m_pg_data[pg - 1]["question_number"] == pg
+                    m_pg_data[pg - 1]["question_idx"] == pg
                 )  # 7th, 8th entries are q's 1,2.
                 assert (
                     "img_pk" in m_pg_data[pg - 1]
@@ -210,7 +210,7 @@ class ManageScanServiceTests(TestCase):
                 )  # not testing the actual value of image_pk
 
             for qn in [1]:  # is the 7th page of the test
-                self.assertEqual(m_page_data[0]["question_number"], qn)
+                self.assertEqual(m_page_data[0]["question_idx"], qn)
                 assert (
                     "img_pk" in m_page_data[qn - 1]
                 )  # not testing the actual value of image_pk
@@ -228,7 +228,7 @@ class ManageScanServiceTests(TestCase):
             assert pn in mss_complete
             m_page_data = mss_complete[pn]["mobile"]
             for qn in range(1, 4):
-                self.assertEqual(m_page_data[qn - 1]["question_number"], qn)
+                self.assertEqual(m_page_data[qn - 1]["question_idx"], qn)
                 assert (
                     "img_pk" in m_page_data[qn - 1]
                 )  # not testing the actual value of image_pk
