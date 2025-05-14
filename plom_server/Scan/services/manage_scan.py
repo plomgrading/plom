@@ -53,8 +53,8 @@ class ManageScanService:
         mobile = MobilePage.objects.all()
         return scanned_fixed.count() + mobile.count()
 
-    def get_total_test_papers(self) -> int:
-        """Return the total number of test-papers in the exam."""
+    def get_total_papers(self) -> int:
+        """Return the total number of papers in the exam."""
         return Paper.objects.all().count()
 
     def _get_used_unused_paper_querysets(self) -> tuple[QuerySet, QuerySet]:
@@ -143,7 +143,7 @@ class ManageScanService:
         return complete_papers_queryset, incomplete_papers_queryset
 
     @transaction.atomic
-    def get_number_completed_test_papers(self) -> int:
+    def get_number_completed_papers(self) -> int:
         """Returns the number of complete papers."""
         complete_papers_queryset, _ = self._get_complete_incomplete_paper_querysets()
         return complete_papers_queryset.count()
@@ -300,22 +300,22 @@ class ManageScanService:
         return incomplete
 
     @transaction.atomic
-    def get_number_incomplete_test_papers(self) -> int:
-        """Return the number of test-papers that are partially but not completely scanned."""
+    def get_number_incomplete_papers(self) -> int:
+        """Return the number of papers partially but not completely scanned."""
         _, incomplete_papers_queryset = self._get_complete_incomplete_paper_querysets()
 
         return incomplete_papers_queryset.count()
 
     @transaction.atomic
-    def get_number_unused_test_papers(self) -> int:
-        """Return the number of test-papers that are usused."""
+    def get_number_unused_papers(self) -> int:
+        """Return the number of papers that are usused."""
         _, unused_papers_queryset = self._get_used_unused_paper_querysets()
         return unused_papers_queryset.count()
 
     @staticmethod
     @transaction.atomic
     def get_all_unused_papers() -> list[int]:
-        """Return a list of paper-numbers of all unused test-papers.
+        """Return a list of paper-numbers of all unused papers.
 
         see :func: `_get_used_unused_paper_querysets` for definitions
         of used and unused papers.

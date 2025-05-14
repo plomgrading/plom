@@ -108,16 +108,16 @@ class ManageScanServiceTests(TestCase):
         # * 10,11 = 2 scanned fixed pages, 4 unscanned, 2 mobile pages = incomplete  (2*2 scanned, 2*2 mobile)
         # * 12,13,14,15 = three mobile pages each (questions 1, 2, 3). (3*2 mobile)
         mss = ManageScanService()
-        assert mss.get_total_test_papers() == 15
+        assert mss.get_total_papers() == 15
         assert mss.get_total_fixed_pages() == 15 * 6
         assert mss.get_total_mobile_pages() == 1 + 2 * 2 + 4 * 3
         assert (
             mss.get_number_of_scanned_pages()
             == 5 * 6 + 1 + 2 * 2 + 2 * 2 + 2 * 2 + 4 * 3
         )
-        assert mss.get_number_unused_test_papers() == 2
-        assert mss.get_number_completed_test_papers() == 5 + 4
-        assert mss.get_number_incomplete_test_papers() == 2 + 2
+        assert mss.get_number_unused_papers() == 2
+        assert mss.get_number_completed_papers() == 5 + 4
+        assert mss.get_number_incomplete_papers() == 2 + 2
 
     def test_get_all_used_and_unused_papers(self) -> None:
         unused = [8, 9]
