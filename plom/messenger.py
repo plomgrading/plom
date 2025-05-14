@@ -1253,13 +1253,12 @@ class Messenger(BaseMessenger):
             ValueError: invalid spec.
             PlomSeriousException: other errors unexpected errors.
         """
-        # Note to self: Mixing json with a file upload imposes a special structure
-        # on the incoming request object. It's easy to lose the json component.
-        # Keeping it seems to require the explicit-serialization approach used here.
-
-        json_data = {
-            "force_public_code": force_public_code,
-        }
+        # Caution: don't use json= with post when files= is used: use data= instead
+        # https://requests.readthedocs.io/en/latest/user/quickstart/#more-complicated-post-requests
+        if force_public_code:
+            data = {"force_public_code": "on"}
+        else:
+            data = {}
 
         with self.SRmutex:
             try:
@@ -1267,7 +1266,7 @@ class Messenger(BaseMessenger):
                     response = self.post_auth(
                         "/api/v0/spec",
                         files={"spec_toml": f},
-                        data={"json_data": json.dumps(json_data)},
+                        data=data,
                     )
                 response.raise_for_status()
             except requests.HTTPError as e:

@@ -5,7 +5,6 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
 
-import json
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
@@ -45,8 +44,8 @@ class SpecificationHandler(APIView):
 
         Args:
             request: An HTTP request that includes a serialized file
-                accessible through key "spec_toml" and a boolean with
-                key "force_public_code".
+                accessible through key "spec_toml" and optionally the
+                string "on" from the key "force_public_code" in data.
 
         Returns:
             A Response object whose json field contains the freshly-installed spec,
@@ -71,13 +70,12 @@ class SpecificationHandler(APIView):
                 status.HTTP_400_BAD_REQUEST,
             )
 
-        # Note to self: Mixing json with a file upload imposes a special structure
-        # on the incoming request object. It's easy to lose the json component.
-        # Keeping it seems to require the explicit-serialization approach used here.
-
         # TODO: could instead use a query_param in the URL?
-        data = json.loads(request.data["json_data"])
-        force_public_code = data.get("force_public_code", False)
+        _force_public_code = request.data.get("force_public_code", "")
+        if _force_public_code.casefold() == "on":
+            force_public_code = True
+        else:
+            force_public_code = False
 
         # would be handled by next block but with a more verbose errors
         if not spec_toml_string:
