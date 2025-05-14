@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [0.18.0] - 2025-05-14
 
 ### Added
 * New support for multi-versioned ID pages, for example if different students should see different cover pages.  Currently, this uses the custom QV-map feature.
@@ -1467,7 +1467,7 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.17.4...main
+[0.18.0]: https://gitlab.com/plom/plom/-/compare/v0.17.4...v0.18.0
 [0.17.4]: https://gitlab.com/plom/plom/-/compare/v0.17.3...v0.17.4
 [0.17.3]: https://gitlab.com/plom/plom/-/compare/v0.17.2...v0.17.3
 [0.17.2]: https://gitlab.com/plom/plom/-/compare/v0.17.1...v0.17.2
