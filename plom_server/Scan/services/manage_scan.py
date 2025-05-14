@@ -58,7 +58,16 @@ class ManageScanService:
         return Paper.objects.all().count()
 
     def _get_used_unused_paper_querysets(self) -> tuple[QuerySet, QuerySet]:
-        """Return lazy querysets for all used and unused papers."""
+        """Return lazy querysets for all used and unused papers.
+
+        A paper is used when it has at least one fixed page image, or at
+        least one mobile page. A paper is unused when it has no fixed pages,
+        and no mobile pages.
+
+        Returns:
+            A tuple containing two (lazy) querysets - the first queryset contains
+            all used papers, the second contains all unused papers.
+        """
         # Get fixed pages with image - ie scanned.
         fixed_with_scan = FixedPage.objects.filter(
             paper=OuterRef("pk"), image__isnull=False
@@ -79,7 +88,22 @@ class ManageScanService:
         return used_papers_queryset, unused_papers_queryset
 
     def _get_complete_incomplete_paper_querysets(self) -> tuple[QuerySet, QuerySet]:
-        """Return lazy querysets for all complete and incomplete papers."""
+        """Return lazy querysets for all complete and incomplete papers.
+
+        A paper is complete when it either has **all** its fixed
+        pages, or it has no fixed pages but has mobile pages for all
+        spec questions.
+        A paper is incomplete when it has *some* but not all its
+        fixed pages. A paper is also incomplete when it contains no fixed
+        pages, but has mobile pages for all questions.
+        Note that the sets of complete and incomplete papers are: mutually exclusive
+        and exhaustive of all used papers, i.e. all used papers must be complete
+        or incomplete.
+
+        Returns:
+            A tuple containing two (lazy) querysets - the first queryset contains
+            all complete papers, the second contains all incomplete papers.
+        """
         # Get fixed pages with no image
         fixed_with_no_scan = FixedPage.objects.filter(paper=OuterRef("pk"), image=None)
         # Get papers without fixed-page-with-no-scan
@@ -120,24 +144,13 @@ class ManageScanService:
 
     @transaction.atomic
     def get_number_completed_test_papers(self) -> int:
-        """Return a dict of completed papers and their fixed/mobile pages.
-
-        A paper is complete when it either has **all** its fixed
-        pages, or it has no fixed pages but has some extra-pages.
-        """
+        """Returns the number of complete papers."""
         complete_papers_queryset, _ = self._get_complete_incomplete_paper_querysets()
-
         return complete_papers_queryset.count()
 
     def is_paper_completely_scanned(self, paper_num: int) -> bool:
-        """Test whether given paper has been completely scanned.
-
-        A paper is complete when it either has **all** its fixed
-        pages, or it has no fixed pages but extra-pages assigned to
-        all questions.
-        """
+        """Check whether the given paper has been completely scanned."""
         complete_papers_queryset, _ = self._get_complete_incomplete_paper_querysets()
-
         return complete_papers_queryset.filter(paper_number=paper_num).exists()
 
     @staticmethod
@@ -145,9 +158,8 @@ class ManageScanService:
     def get_all_complete_papers() -> dict[int, dict[str, list[dict[str, Any]]]]:
         """Dicts of info about papers that are completely scanned.
 
-        A paper is complete when it either has **all** its fixed
-        pages, or it has no fixed pages but has extra-pages for all
-        spec questions.
+        see :func: `_get_complete_incomplete_paper_querysets` for definitions
+        of complete and incomplete papers.
 
         Returns:
             Dict keyed by paper number and then for each we have keys
@@ -211,9 +223,8 @@ class ManageScanService:
     def get_all_incomplete_papers() -> dict[int, dict[str, list[dict[str, Any]]]]:
         """Dicts of info about papers that are partially but not completely scanned.
 
-        A paper is not completely scanned when it has *some* but not all its
-        fixed pages. A paper is also incomplete when it contains no fixed
-        pages, but has mobile pages for some but not all questions.
+        see :func: `_get_complete_incomplete_paper_querysets` for definitions
+        of complete and incomplete papers.
 
         Returns:
             Dict keyed by paper number and then for each we have keys
@@ -290,33 +301,27 @@ class ManageScanService:
 
     @transaction.atomic
     def get_number_incomplete_test_papers(self) -> int:
-        """Return the number of test-papers that are partially but not completely scanned.
-
-        A paper is not completely scanned when it has *some* but not all its
-        fixed pages. A paper is also incomplete when it contains no fixed
-        pages, but mobile pages for some, but not all, questions.
-        """
+        """Return the number of test-papers that are partially but not completely scanned."""
         _, incomplete_papers_queryset = self._get_complete_incomplete_paper_querysets()
 
         return incomplete_papers_queryset.count()
 
     @transaction.atomic
     def get_number_unused_test_papers(self) -> int:
-        """Return the number of test-papers that are usused.
-
-        A paper is unused when it has no fixed page images nor any mobile pages.
-        """
+        """Return the number of test-papers that are usused."""
         _, unused_papers_queryset = self._get_used_unused_paper_querysets()
-
         return unused_papers_queryset.count()
 
     @staticmethod
     @transaction.atomic
     def get_all_unused_papers() -> list[int]:
-        """Return a list of paper-numbers of all unused test-papers. Is sorted into paper-number order.
+        """Return a list of paper-numbers of all unused test-papers.
 
-        A paper is unused when it has no fixed page images nor any mobile pages.
+        see :func: `_get_used_unused_paper_querysets` for definitions
+        of used and unused papers.
 
+        Returns:
+            a list of integers sorted in paper-number order.
         TODO: currently, and ironically, "unused" (but tested)
         """
         _, unused_papers_queryset = (
@@ -327,12 +332,15 @@ class ManageScanService:
     @staticmethod
     @transaction.atomic
     def get_all_used_papers() -> list[int]:
-        """Return a list of paper-numbers of all used papers. Is sorted into paper-number order.
+        """Return a list of paper-numbers of all used papers.
 
-        A paper is used when it has at least one fixed page image or any mobile page.
+        see :func: `_get_used_unused_paper_querysets` for definitions
+        of used and unused papers.
+
+        Returns:
+            a list of paper-numbers sorted numerically.
         """
         used_papers_queryset, _ = ManageScanService()._get_used_unused_paper_querysets()
-
         return sorted([paper.paper_number for paper in used_papers_queryset])
 
     @transaction.atomic
