@@ -11,6 +11,7 @@ from typing import Any
 
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Prefetch, Count
+from django.db.models.query import QuerySet
 
 from plom_server.Papers.models import (
     FixedPage,
@@ -56,13 +57,29 @@ class ManageScanService:
         """Return the total number of test-papers in the exam."""
         return Paper.objects.all().count()
 
-    @transaction.atomic
-    def get_number_completed_test_papers(self) -> int:
-        """Return a dict of completed papers and their fixed/mobile pages.
+    def _get_used_unused_paper_querysets(self) -> tuple[QuerySet, QuerySet]:
+        """Return lazy querysets for all used and unused papers."""
+        # Get fixed pages with image - ie scanned.
+        fixed_with_scan = FixedPage.objects.filter(
+            paper=OuterRef("pk"), image__isnull=False
+        )
+        # Get papers with neither fixed-with-scan nor mobile-pages
+        no_images_at_all = Paper.objects.filter(
+            ~Exists(fixed_with_scan), mobilepage__isnull=True
+        )
 
-        A paper is complete when it either has **all** its fixed
-        pages, or it has no fixed pages but has some extra-pages.
-        """
+        unused_papers_queryset = no_images_at_all
+        # all papers must be used or unused
+        used_papers_queryset = Paper.objects.filter(
+            ~Exists(
+                unused_papers_queryset.filter(paper_number=OuterRef("paper_number"))
+            )
+        )
+
+        return used_papers_queryset, unused_papers_queryset
+
+    def _get_complete_incomplete_paper_querysets(self) -> tuple[QuerySet, QuerySet]:
+        """Return lazy querysets for all complete and incomplete papers."""
         # Get fixed pages with no image
         fixed_with_no_scan = FixedPage.objects.filter(paper=OuterRef("pk"), image=None)
         # Get papers without fixed-page-with-no-scan
@@ -88,17 +105,29 @@ class ManageScanService:
         no_fixed_but_all_mobile = Paper.objects.filter(
             ~Exists(fixed_with_scan), Exists(all_mobile_pages)
         )
-        # We can also do the above query as:
-        #
-        # no_fixed_but_some_mobile = Paper.objects.filter(
-        # ~Exists(fixed_with_scan), mobilepages_set__isnull=False
-        # ).distinct()
-        #
-        # however this returns one result for **each** mobile-page, so
-        # one needs to append the 'distinct'. This is a common problem
-        # when querying backwards across foreign key fields
 
-        return all_fixed_present.count() + no_fixed_but_all_mobile.count()
+        complete_papers_queryset = all_fixed_present | no_fixed_but_all_mobile
+
+        # all used papers must be complete or incomplete
+        used_papers_queryset, _ = self._get_used_unused_paper_querysets()
+        incomplete_papers_queryset = used_papers_queryset.filter(
+            ~Exists(
+                complete_papers_queryset.filter(paper_number=OuterRef("paper_number"))
+            )
+        )
+
+        return complete_papers_queryset, incomplete_papers_queryset
+
+    @transaction.atomic
+    def get_number_completed_test_papers(self) -> int:
+        """Return a dict of completed papers and their fixed/mobile pages.
+
+        A paper is complete when it either has **all** its fixed
+        pages, or it has no fixed pages but has some extra-pages.
+        """
+        complete_papers_queryset, _ = self._get_complete_incomplete_paper_querysets()
+
+        return complete_papers_queryset.count()
 
     def is_paper_completely_scanned(self, paper_number: int) -> bool:
         """Test whether given paper has been completely scanned.
@@ -153,12 +182,16 @@ class ManageScanService:
             "fixed" and "mobile" case is different, for example "mobile"
             have page labels and "fixed" do not.
         """
-        # Subquery of fixed pages with no image
-        fixed_with_no_scan = FixedPage.objects.filter(paper=OuterRef("pk"), image=None)
-        # Get all papers without fixed-page-with-no-scan
-        all_fixed_present = Paper.objects.filter(
-            ~Exists(fixed_with_no_scan)
-        ).prefetch_related(
+        # Foreign key objects (in this case FixedPage and MobilePage) aren't
+        # fetched until they are requested by a Model-object (Paper)
+        # referencing them. If we are iterating over many Paper objects (1000's)
+        # we must "prefetch" the foreign keys to prevent several DB queries for
+        # each iteration (i.e. each Paper).
+        complete_papers_queryset, _ = (
+            ManageScanService()._get_complete_incomplete_paper_querysets()
+        )
+
+        complete_papers_queryset = complete_papers_queryset.prefetch_related(
             Prefetch(
                 "fixedpage_set", queryset=FixedPage.objects.order_by("page_number")
             ),
@@ -169,53 +202,16 @@ class ManageScanService:
             "fixedpage_set__image",
             "mobilepage_set__image",
         )
-        # Notice all the prefetching here - this is to avoid N+1
-        # problems.  Below we loop over these papers and their pages /
-        # images we tell django to prefetch the fixed and mobile
-        # pages, and the images in the fixed and mobile pages.  Since
-        # there are many fixed/mobile pages for a given paper, these
-        # are fixedpage_set and mobilepage_set. Now because we want to
-        # loop over the fixed/mobile pages in specific orders we use
-        # the Prefetch object to specify that order at the time of
-        # prefetching.
-
-        # now subquery papers with **no** fixed page scans
-        fixed_with_scan = FixedPage.objects.filter(
-            paper=OuterRef("pk"), image__isnull=False
-        )
-        # again - we use a subquery to get mobile pages to avoid
-        # duplications when executing the main query (see the
-        # get_number_completed_test_papers function above.
-
-        mobile_pages = (
-            MobilePage.objects.values("paper")
-            .annotate(counts=Count("question_index", distinct=True))
-            .filter(counts=SpecificationService.get_n_questions())
-            .values_list("paper", flat=True)
-        )
-        all_mobile_pages = MobilePage.objects.filter(
-            paper__in=mobile_pages, paper=OuterRef("pk")
-        )
-        no_fixed_but_some_mobile = Paper.objects.filter(
-            ~Exists(fixed_with_scan), Exists(all_mobile_pages)
-        ).prefetch_related(
-            Prefetch(
-                "mobilepage_set",
-                queryset=MobilePage.objects.order_by("question_index"),
-            ),
-            "mobilepage_set__image",
-        )
-
-        # again since we loop over the mobile pages within the paper
-        # in a specified order, and ref the image in those mobile-pages
-        # we do all this prefetching.
 
         complete: dict[int, Any] = {}  # more precise typing in defn
-        for paper in all_fixed_present:
+        for paper in complete_papers_queryset:
             complete[paper.paper_number] = {"fixed": [], "mobile": []}
             # notice we don't specify order or prefetch in the loops
             # below here because we did the hard work above
             for fp in paper.fixedpage_set.all():
+                # TODO: only need to check the first fixed page before skipping
+                if fp.image_id is None:
+                    continue
                 complete[paper.paper_number]["fixed"].append(
                     {
                         "page_number": fp.page_number,
@@ -223,20 +219,6 @@ class ManageScanService:
                         "page_pk": fp.pk,
                     }
                 )
-            for mp in paper.mobilepage_set.all():
-                complete[paper.paper_number]["mobile"].append(
-                    {
-                        "question_number": mp.question_index,
-                        "img_pk": mp.image.pk,
-                        "page_pk": mp.pk,
-                        "page_label": (
-                            f"qi.{mp.question_index}" if mp.question_index else "dnm"
-                        ),
-                    }
-                )
-        for paper in no_fixed_but_some_mobile:
-            complete[paper.paper_number] = {"fixed": [], "mobile": []}
-            # again we don't specify order or prefetch here because of the work above
             for mp in paper.mobilepage_set.all():
                 complete[paper.paper_number]["mobile"].append(
                     {
@@ -266,19 +248,11 @@ class ManageScanService:
             "fixed" and "mobile" case is different, for example "mobile"
             have page labels and "fixed" do not.
         """
-        # Get fixed pages with no image - ie not scanned.
-        fixed_with_no_scan = FixedPage.objects.filter(
-            paper=OuterRef("pk"), image__isnull=True
-        )
-        # Get fixed pages with image - ie scanned.
-        fixed_with_scan = FixedPage.objects.filter(
-            paper=OuterRef("pk"), image__isnull=False
+        _, incomplete_papers_queryset = (
+            ManageScanService()._get_complete_incomplete_paper_querysets()
         )
 
-        # Get papers with some but not all scanned fixed pages
-        some_but_not_all_fixed_present = Paper.objects.filter(
-            Exists(fixed_with_no_scan), Exists(fixed_with_scan)
-        ).prefetch_related(
+        incomplete_papers_queryset = incomplete_papers_queryset.prefetch_related(
             Prefetch(
                 "fixedpage_set", queryset=FixedPage.objects.order_by("page_number")
             ),
@@ -289,30 +263,9 @@ class ManageScanService:
             "fixedpage_set__image",
             "mobilepage_set__image",
         )
-        # Get papers without fixed pages and some, but not all,
-        # questions covered by mobile pages
-        mobile_pages = (
-            MobilePage.objects.values("paper")
-            .annotate(counts=Count("question_index", distinct=True))
-            .filter(counts__lt=SpecificationService.get_n_questions(), counts__gt=0)
-            .values_list("paper", flat=True)
-        )
-        some_mobile_pages = MobilePage.objects.filter(
-            paper__in=mobile_pages, paper=OuterRef("pk")
-        )
-
-        no_fixed_but_some_mobile = Paper.objects.filter(
-            ~Exists(fixed_with_scan), Exists(some_mobile_pages)
-        ).prefetch_related(
-            Prefetch(
-                "mobilepage_set",
-                queryset=MobilePage.objects.order_by("question_index"),
-            ),
-            "mobilepage_set__image",
-        )
 
         incomplete: dict[int, Any] = {}  # more precise typing in defn
-        for paper in some_but_not_all_fixed_present:
+        for paper in incomplete_papers_queryset:
             incomplete[paper.paper_number] = {"fixed": [], "mobile": []}
             for fp in paper.fixedpage_set.all():
                 if fp.image:
@@ -340,6 +293,14 @@ class ManageScanService:
                         }
                     )
                     del kind
+            # if no fixed pages, assume mobile page only paper
+            paper_checks = [
+                p["status"] == "missing"
+                for p in incomplete[paper.paper_number]["fixed"]
+            ]
+            if all(paper_checks):
+                incomplete[paper.paper_number]["fixed"] = []
+
             for mp in paper.mobilepage_set.all():
                 incomplete[paper.paper_number]["mobile"].append(
                     {
@@ -351,22 +312,6 @@ class ManageScanService:
                         ),
                     }
                 )
-
-        for paper in no_fixed_but_some_mobile:
-            incomplete[paper.paper_number] = {"fixed": [], "mobile": []}
-            # again we don't specify order or prefetch here because of the work above
-            for mp in paper.mobilepage_set.all():
-                incomplete[paper.paper_number]["mobile"].append(
-                    {
-                        "question_number": mp.question_index,
-                        "img_pk": mp.image.pk,
-                        "page_pk": mp.pk,
-                        "page_label": (
-                            f"qi.{mp.question_index}" if mp.question_index else "dnm"
-                        ),
-                    }
-                )
-
         return incomplete
 
     @transaction.atomic
@@ -377,31 +322,9 @@ class ManageScanService:
         fixed pages. A paper is also incomplete when it contains no fixed
         pages, but mobile pages for some, but not all, questions.
         """
-        # Get fixed pages with no image - ie not scanned.
-        fixed_with_no_scan = FixedPage.objects.filter(paper=OuterRef("pk"), image=None)
-        # Get fixed pages with image - ie scanned.
-        fixed_with_scan = FixedPage.objects.filter(
-            paper=OuterRef("pk"), image__isnull=False
-        )
-        # Get papers with some but not all scanned fixed pages
-        some_but_not_all_fixed_present = Paper.objects.filter(
-            Exists(fixed_with_no_scan), Exists(fixed_with_scan)
-        )
+        _, incomplete_papers_queryset = self._get_complete_incomplete_paper_querysets()
 
-        mobile_pages = (
-            MobilePage.objects.values("paper")
-            .annotate(counts=Count("question_index", distinct=True))
-            .filter(counts__lt=SpecificationService.get_n_questions(), counts__gt=0)
-            .values_list("paper", flat=True)
-        )
-        some_mobile_pages = MobilePage.objects.filter(
-            paper__in=mobile_pages, paper=OuterRef("pk")
-        )
-
-        no_fixed_but_some_mobile = Paper.objects.filter(
-            ~Exists(fixed_with_scan), Exists(some_mobile_pages)
-        )
-        return some_but_not_all_fixed_present.count() + no_fixed_but_some_mobile.count()
+        return incomplete_papers_queryset.count()
 
     @transaction.atomic
     def get_number_unused_test_papers(self) -> int:
@@ -409,16 +332,9 @@ class ManageScanService:
 
         A paper is unused when it has no fixed page images nor any mobile pages.
         """
-        # Get fixed pages with image - ie scanned.
-        fixed_with_scan = FixedPage.objects.filter(
-            paper=OuterRef("pk"), image__isnull=False
-        )
-        # Get papers with neither fixed-with-scan nor mobile-pages
-        no_images_at_all = Paper.objects.filter(
-            ~Exists(fixed_with_scan), mobilepage__isnull=True
-        )
+        _, unused_papers_queryset = self._get_used_unused_paper_querysets()
 
-        return no_images_at_all.count()
+        return unused_papers_queryset.count()
 
     @staticmethod
     @transaction.atomic
@@ -429,15 +345,10 @@ class ManageScanService:
 
         TODO: currently, and ironically, "unused" (but tested)
         """
-        # Get fixed pages with image - ie scanned.
-        fixed_with_scan = FixedPage.objects.filter(
-            paper=OuterRef("pk"), image__isnull=False
+        _, unused_papers_queryset = (
+            ManageScanService()._get_used_unused_paper_querysets()
         )
-        # Get papers with neither fixed-with-scan nor mobile-pages
-        no_images_at_all = Paper.objects.filter(
-            ~Exists(fixed_with_scan), mobilepage__isnull=True
-        )
-        return sorted([paper.paper_number for paper in no_images_at_all])
+        return sorted([paper.paper_number for paper in unused_papers_queryset])
 
     @staticmethod
     @transaction.atomic
@@ -446,16 +357,9 @@ class ManageScanService:
 
         A paper is used when it has at least one fixed page image or any mobile page.
         """
-        # Get fixed pages with image - ie scanned.
-        fixed_with_scan = FixedPage.objects.filter(
-            paper=OuterRef("pk"), image__isnull=False
-        )
-        has_mobile_page = MobilePage.objects.filter(paper=OuterRef("pk"))
-        has_some_image = Paper.objects.filter(
-            Exists(fixed_with_scan)
-        ) | Paper.objects.filter(Exists(has_mobile_page))
+        used_papers_queryset, _ = ManageScanService()._get_used_unused_paper_querysets()
 
-        return sorted([paper.paper_number for paper in has_some_image])
+        return sorted([paper.paper_number for paper in used_papers_queryset])
 
     @transaction.atomic
     def get_page_image(self, test_paper: int, index: int) -> Image:
