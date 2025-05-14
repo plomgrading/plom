@@ -14,6 +14,7 @@ __copyright__ = "Copyright (C) 2018-2025 Andrew Rechnitzer, Colin B. Macdonald, 
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
+# Also in plom_server/__init__.py
 __version__ = "0.18.0"
 
 import sys
