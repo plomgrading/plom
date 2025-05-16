@@ -112,11 +112,8 @@ class ManageScanService:
         fixed_with_scan = FixedPage.objects.filter(
             paper=OuterRef("pk"), image__isnull=False
         )
-        # build a subquery to help us find papers which have some
-        # mobile_pages the outer-ref in the subquery allows us to
-        # match for papers that have mobile pages. This also allows us
-        # to avoid duplications since "exists" stops the query as soon
-        # as one item is found - see below
+        # build a subquery to help us find papers which have at least one mobile page
+        # with a distinct question_index for each question
         mobile_pages = (
             MobilePage.objects.values("paper")
             .annotate(counts=Count("question_index", distinct=True))
@@ -169,10 +166,10 @@ class ManageScanService:
             have page labels and "fixed" do not.
         """
         # Foreign key objects (in this case FixedPage and MobilePage) aren't
-        # fetched until they are requested by a Model-object (Paper)
-        # referencing them. If we are iterating over many Paper objects (1000's)
+        # fetched until they are accessed by a Model-object (Paper)
+        # they reference. If we are iterating over many Paper objects (1000's)
         # we must "prefetch" the foreign keys to prevent several DB queries for
-        # each iteration (i.e. each Paper).
+        # each paper (a db query for each mobile/fixed page accessed).
         complete_papers_queryset, _ = (
             ManageScanService()._get_complete_incomplete_paper_querysets()
         )
@@ -308,7 +305,7 @@ class ManageScanService:
 
     @transaction.atomic
     def get_number_unused_papers(self) -> int:
-        """Return the number of papers that are usused."""
+        """Return the number of papers that are unused."""
         _, unused_papers_queryset = self._get_used_unused_paper_querysets()
         return unused_papers_queryset.count()
 
