@@ -57,7 +57,7 @@ if not SECRET_KEY:
 # Notes on ports:
 #   - PLOM_PUBLIC_FACING_PORT: where nginx or whoever will be expecting connections typically HTTPS
 #     TODO: we need to know this (for CSRF), probably can be omitted if its 443
-#   - PLOM_CONTAINER_PORT: the localhost port that django binds to for HTTP, default 8000
+#   - the localhost port that django binds to for HTTP, defaults 8000 but can be changed on the command line
 env_port = os.environ.get("PLOM_PUBLIC_FACING_PORT")
 _port = ""
 if env_port:
