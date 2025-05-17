@@ -192,11 +192,11 @@ class StagingStudentService:
             # We accept "id", "ID", "Id", but code is messy #3822 #1140
             # TODO: shouldn't this be Vlad's job?
             try:
-                (id_key,) = [x for x in headers if x.casefold() == "id"]
-                (name_key,) = [x for x in headers if x.casefold() == "name"]
+                (id_key,) = [x for x in headers if x.casefold() == "id"]  # type: ignore
+                (name_key,) = [x for x in headers if x.casefold() == "name"]  # type: ignore
                 # paper_number is a bit harder b/c it might not be present
                 papernum_key = "paper_number"
-                _tmp = [x for x in headers if x.casefold() == papernum_key]
+                _tmp = [x for x in headers if x.casefold() == papernum_key]  # type: ignore
                 if len(_tmp) == 1:
                     papernum_key = _tmp[0]
             except ValueError as e:
