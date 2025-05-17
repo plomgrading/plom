@@ -23,7 +23,8 @@ class SpecQuestion(models.Model):
             happens if the version-map in practice contradicts this setting.
             See also Issue #2261 which proposes a more general mechanism.
         label: a human identifiable label for this question, e.g. Q1, Ex1, etc.
-        question_index: a 0 based index used internally.
+        question_index: a one-based index, used for unambiguous access and
+            to define label if label isn't specified.
     """
 
     pages = models.JSONField()
