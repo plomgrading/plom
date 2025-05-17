@@ -3,7 +3,7 @@
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aden Chan
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 
 """Command Line Tool to simulate PDF errors while scanning."""
 
@@ -560,13 +560,13 @@ def compress(doc: pymupdf.Document, page_num, severity: float) -> None:
     doc[page_num].insert_image(page.rect, pixmap=pix)
 
 
-def lighten(doc: pymupdf.Document, page_num, severity: float) -> None:
+def lighten(doc: pymupdf.Document, page_num: int, severity: float) -> None:
     """Lighten an image, increasing its average brightness.
 
     Args:
-        doc(pymupdf.Document): The target document.
-        page_num(int): The target page number (0 indexed).
-        severity(float): How much lighter the image gets.
+        doc: The target document.
+        page_num: The target page number (0 indexed).
+        severity: How much lighter the image gets.
     """
     page = doc[page_num]
 
@@ -577,13 +577,13 @@ def lighten(doc: pymupdf.Document, page_num, severity: float) -> None:
     page.insert_image(page.rect, pixmap=pix)
 
 
-def darken(doc: pymupdf.Document, page_num, severity: float) -> None:
+def darken(doc: pymupdf.Document, page_num: int, severity: float) -> None:
     """Darken an image, decreasing its average brightness.
 
     Args:
-        doc(pymupdf.Document): The target document.
-        page_num(int): The target page number (0 indexed).
-        severity(float): How much darker the image gets.
+        doc: The target document.
+        page_num: The target page number (0 indexed).
+        severity: How much darker the image gets.
     """
     page = doc[page_num]
 
