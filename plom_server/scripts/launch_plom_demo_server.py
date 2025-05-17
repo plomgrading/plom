@@ -26,6 +26,12 @@ from time import sleep
 from plom.textools import buildLaTeX
 from plom_server import __version__
 
+from plom_server.scripts.launch_plom_server import (
+    launch_gunicorn_production_server_process,
+    launch_django_dev_server_process,
+)
+
+
 # TODO: not a fan of global variables, and mypy needs this to be defined
 global demo_files
 # so temporarily set it to "."; we'll fix it in main()
@@ -235,60 +241,6 @@ def launch_huey_processes() -> list[subprocess.Popen]:
         popen_django_manage_command("djangohuey --queue chores"),
         popen_django_manage_command("djangohuey --queue parentchores"),
     ]
-
-
-def launch_django_dev_server_process(*, port: int | None = None) -> subprocess.Popen:
-    """Launch Django's native development server.
-
-    Note that this should never be used in production.
-
-    KWargs:
-        port: the port for the server.
-
-    """
-    # TODO - put in an 'are we in production' check.
-
-    print("Launching Django development server.")
-    # this needs to be run in the background
-    if port:
-        print(f"Dev server will run on port {port}")
-        return popen_django_manage_command(f"runserver {port}")
-    else:
-        return popen_django_manage_command("runserver")
-
-
-def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
-    """Launch the Gunicorn web server.
-
-    Note that for production, this should be used instead of Django's
-    built-in development server.
-
-    If the WEB_CONCURRENCY environment variable is set, we use that many
-    worker processes.  Otherwise we use a default value (currently 2).
-
-    Args:
-        port: the port for the server.
-
-    Returns:
-        Open ``Popen`` on the gunicorn process.
-    """
-    print("Launching Gunicorn web-server.")
-    # TODO - put in an 'are we in production' check.
-    num_workers = int(os.environ.get("WEB_CONCURRENCY", 2))
-    cmd = f"gunicorn wsgi --workers {num_workers}"
-
-    # TODO: temporary increase to 60s by default, Issue #3676
-    timeout = os.environ.get("PLOM_GUNICORN_TIMEOUT", 180)
-    cmd += f" --timeout {timeout}"
-
-    # TODO: long-term code here:
-    # timeout = os.environ.get("PLOM_GUNICORN_TIMEOUT", "")
-    # # just omit and use gunicorn's default if unspecified
-    # if timeout:
-    #     cmd += f" --timeout {timeout}"
-
-    cmd += f" --bind 0.0.0.0:{port}"
-    return subprocess.Popen(split(cmd))
 
 
 def upload_demo_assessment_spec_file() -> None:
