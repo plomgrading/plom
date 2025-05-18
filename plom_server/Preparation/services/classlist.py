@@ -178,6 +178,11 @@ class StagingStudentService:
             tmp_csv.unlink()
             return (success, werr)
 
+        # The validator can also get us the classlist as a list of dicts with
+        # canonical field names "id", "name", and "paper_number".
+        # TODO: maybe the validate could also return the validated stuff?
+        cl_as_dicts = vlad.readClassList(tmp_csv)
+
         werr = []
 
         # Enforce empty-intersection between sets of incoming and known ID's.
@@ -187,37 +192,11 @@ class StagingStudentService:
         )
         new_ids = set()
         new_paper_numbers = set()
-        # Note newline: https://docs.python.org/3/library/csv.html#id4
-        with open(tmp_csv, newline="") as fh:
-            prereader = csv.DictReader(fh)
-            headers = prereader.fieldnames
-            assert headers is not None  # Vlad would've noticed but MyPy doesn't know
-            # We accept "id", "ID", "Id", but code is messy #3822 #1140
-            # TODO: shouldn't this be Vlad's job?
-            try:
-                (id_key,) = [x for x in headers if x.casefold() == "id"]
-                (name_key,) = [x for x in headers if x.casefold() == "name"]
-                # paper_number is a bit harder b/c it might not be present
-                papernum_key = "paper_number"
-                _tmp = [x for x in headers if x.casefold() == papernum_key]
-                if len(_tmp) == 1:
-                    papernum_key = _tmp[0]
-            except ValueError as e:
-                success = False
-                errmsg = (
-                    "Bug in classlist validator?  Lower-level code did not notice "
-                    f"headers {headers} with repeats differing only in case: {str(e)}"
-                )
-                werr.append(
-                    {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
-                )
-                tmp_csv.unlink()
-                return success, werr
 
-            for r in prereader:
-                new_ids.add(r[id_key])
-                # Next line correctly turns '' into -1:
-                new_paper_numbers.add(int(r.get(papernum_key, "-1") or "-1"))
+        for row in cl_as_dicts:
+            new_ids.add(row["id"])
+            # Next line correctly turns '' into -1:
+            new_paper_numbers.add(int(row.get("paper_number", "-1") or "-1"))
 
         known_paper_numbers.discard(-1)
         new_paper_numbers.discard(-1)
@@ -262,9 +241,9 @@ class StagingStudentService:
                     # https://docs.djangoproject.com/en/5.2/topics/db/transactions/
                     for row in csv_reader:
                         cls._add_student(
-                            row[id_key],
-                            row[name_key],
-                            paper_number=row.get(papernum_key, None),
+                            row["id"],
+                            row["name"],
+                            paper_number=row.get("paper_number", None),
                         )
             except (IntegrityError, ValueError, KeyError, AssertionError) as e:
                 # in theory, we "asked permission" using vlad the validator
