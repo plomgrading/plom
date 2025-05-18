@@ -15,8 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
-
-
+* Uploading a broken classlist no longer adds some of the students.
 
 
 ## [0.18.1] - 2025-05-17

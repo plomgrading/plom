@@ -1279,3 +1279,72 @@ class Messenger(BaseMessenger):
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
         return response.json()
+
+    def new_server_delete_classlist(self) -> None:
+        """Delete the classlist (if any) held by the server.
+
+        Returns:
+            None
+        """
+        with self.SRmutex:
+            try:
+                response = self.delete_auth("/api/v0/classlist")
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+        return None
+
+    def new_server_download_classlist(self) -> BytesIO:
+        """Download the classlist (if any) held by the server.
+
+        Returns:
+            BytesIO object with the classlist in standard form, i.e.,
+            one header row followed by rows of student data.
+
+        Raises:
+            PlomSeriousException - if the GET request produces an HTTPError
+        """
+        with self.SRmutex:
+            try:
+                response = self.get_auth("/api/v0/classlist", stream=True)
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+        csv_content = BytesIO(response.content)
+
+        return csv_content
+
+    def new_server_upload_classlist(
+        self, csvpath: Path
+    ) -> tuple[bool, list[dict[str, Any]]]:
+        """Use the given CSV file to extend the classlist on the server.
+
+        Typically the server classlist starts empty and this is used just once.
+        Alternatively, it will add new students to a nonempty classlist.
+        But the extension must be strict: if the upload mentions a student ID
+        or a paper number that is already known to the server,
+        the whole upload gets cancelled and the server classlist stays as-is.
+
+        Returns:
+            2-tuple of (success,werr), with success boolean and werr a list
+            of dicts, each entry providing details on an error or warning.
+            It's possible for werr to contain interesting reading even when
+            success==True. Dealing with those messages is the caller's job.
+
+        Raises:
+            PlomSeriousException - if the GET request produces an HTTPError
+        """
+        with self.SRmutex:
+            try:
+                with csvpath.open("rb") as f:
+                    filedict = {"classlist_csv": f}
+                    response = self.post_auth("/api/v0/classlist", files=filedict)
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+        return tuple(response.json())

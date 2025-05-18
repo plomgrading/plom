@@ -23,6 +23,7 @@ from .routes import (
 )
 
 from .views import (
+    ClasslistHandler,
     GetTasks,
     MarkTaskNextAvailable,
     MarkTask,
@@ -148,6 +149,11 @@ urlpatterns += [
         "api/v0/tasks/<int:papernum>/<int:qidx>/reset",
         ResetTask.as_view(),
         name="api_task_reset",
+    ),
+    path(
+        "api/v0/classlist",
+        ClasslistHandler.as_view(),
+        name="api_classlist_handler",
     ),
     path(
         "rubrics/<int:rid>/tasks",

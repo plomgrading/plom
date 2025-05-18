@@ -25,6 +25,7 @@ __license__ = "AGPL-3.0-or-later"
 import argparse
 import os
 from pathlib import Path
+import sys
 
 from stdiomask import getpass
 
@@ -32,19 +33,20 @@ from plom import Default_Port, __version__
 from plom.cli import (
     bundle_map_page,
     clear_login,
+    delete_classlist,
+    delete_source,
     get_reassembled,
     id_paper,
     un_id_paper,
     list_bundles,
     start_messenger,
     upload_bundle,
+    upload_classlist,
     upload_source,
-    delete_source,
+    download_classlist,
     upload_spec,
     reset_task,
 )
-
-# from plom.cli import clear_login
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -91,6 +93,36 @@ def get_parser() -> argparse.ArgumentParser:
                 environment variable PLOM_PASSWORD.
             """,
         )
+
+    s = sub.add_parser(
+        "delete-classlist",
+        help="Delete the classlist held by the server.",
+        description="Delete the classlist held by the server.",
+    )
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "download-classlist",
+        help="Download the classlist held by the server.",
+        description="Copy the classlist held by the server to stdout, in CSV format.",
+    )
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "upload-classlist",
+        help="Augment server classlist with rows from this CSV file.",
+        description="""
+            Add student info from this CSV file to server's classlist.
+            Any info already on server will be retained, BUT
+            the whole operation will be rejected if the upload
+            mentions even a single student ID already present on the server.
+        """,
+    )
+    _add_server_args(s)
+    s.add_argument(
+        "csvfile",
+        help="a CSV file with column headers 'id','name', and [optionally] 'paper_number'.",
+    )
 
     s = sub.add_parser(
         "get-reassembled",
@@ -310,6 +342,7 @@ def main():
         args.password = getpass("password: ")
 
     m = (args.server, args.username, args.password)
+
     if args.command == "upload-bundle":
         r = upload_bundle(Path(args.pdf), msgr=m)
         print(r)
@@ -380,6 +413,18 @@ def main():
         finally:
             msgr.closeUser()
             msgr.stop()
+
+    elif args.command == "delete-classlist":
+        success = delete_classlist(msgr=m)
+        sys.exit(0 if success else 1)
+
+    elif args.command == "download-classlist":
+        success = download_classlist(msgr=m)
+        sys.exit(0 if success else 1)
+
+    elif args.command == "upload-classlist":
+        success = upload_classlist(Path(args.csvfile), msgr=m)
+        sys.exit(0 if success else 1)
 
     elif args.command == "clear":
         clear_login(args.server, args.username, args.password)

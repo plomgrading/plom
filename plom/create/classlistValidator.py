@@ -316,6 +316,10 @@ class PlomClasslistValidator:
             werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": e})
             return (False, werr)
 
+        if len(cl_as_dicts) == 0:
+            # Headers were OK, followed by no data. That's degenerate, but valid.
+            return (True, [])
+
         # check the headers - potentially un-recoverable errors here
         cl_header_info = self.checkHeaders(cl_as_dicts[0])
         if cl_header_info["success"] is False:  # format errors and bail-out

@@ -20,6 +20,7 @@ from .source_handler import (
 )
 
 from .spec_handler import SpecificationHandler
+from .classlist_handler import ClasslistHandler
 
 from .identify import (
     GetClasslist,
