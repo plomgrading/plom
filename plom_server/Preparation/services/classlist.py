@@ -72,7 +72,11 @@ class StagingStudentService:
         """
         txt = '"id","name","paper_number"\n'
         for row in cls.get_students():
-            if not prename or row["paper_number"] is None or row["paper_number"] < 0:
+            if (
+                not prename
+                or row["paper_number"] is None
+                or int(row["paper_number"]) < 0
+            ):
                 # Leave paper_number empty when any of our non-prename sentinels appear.
                 txt += f"{row['student_id']},\"{row['student_name']}\",\n"
             else:
