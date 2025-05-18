@@ -50,7 +50,7 @@
                 </a>
                 <a class="list-group-item list-group-item-action list-group-item-light"
                    href="{% url 'scan_list_complete' %}">
-                    <p class="fs-4">View complete pushed papers  ({{ completed_papers }} available)</p>
+                    <p class="fs-4">View complete pushed papers ({{ completed_papers }} available)</p>
                 </a>
                 <a class="list-group-item list-group-item-action list-group-item-light"
                    href="{% url 'scan_list_incomplete' %}">
@@ -66,7 +66,7 @@
                 </a>
                 <a class="list-group-item list-group-item-action list-group-item-light"
                    href="{% url 'scan_list_discard' %}">
-                    <p class="fs-4">View discarded images from pushed bundles</p>
+                    <p class="fs-4">View discarded images from pushed bundles ({{ number_of_discards }} available)</p>
                     <p>
                         &emsp;&ensp;View images discarded from bundles when pushed to the main server
                         {% if user_is_manager %}&mdash; a manager can reassign them if needed.{% endif %}
