@@ -23,7 +23,7 @@ canvas_columns_format = ("Student", "ID", "SIS User ID", "SIS Login ID")
 class PlomClasslistValidator:
     """The Plom Classlist Validator has methods to help ensure compatible classlists."""
 
-    def _readClassList(self, filename: Path | str) -> list[dict[str, Any]]:
+    def readClassList(self, filename: Path | str) -> list[dict[str, Any]]:
         """Read classlist from filename and return as list of dicts.
 
         Arguments:
@@ -41,7 +41,8 @@ class PlomClasslistValidator:
                 there is some other problem with the headers.
         """
         classAsDicts = []
-        with open(filename) as csvfile:
+        # Note newline: https://docs.python.org/3/library/csv.html#id4
+        with open(filename, newline="") as csvfile:
             # look at start of file to guess 'dialect', and then return to start of file
             sample = csvfile.read(1024)
             csvfile.seek(0)
@@ -298,7 +299,7 @@ class PlomClasslistValidator:
         """
         werr = []
         try:
-            cl_as_dicts = self._readClassList(filename)
+            cl_as_dicts = self.readClassList(filename)
         except (ValueError, FileNotFoundError) as err:
             werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": f"{err}"})
             return (False, werr)
@@ -352,7 +353,8 @@ class PlomClasslistValidator:
             True if we think the input was from Canvas, based on
             presence of certain header names.  Otherwise False.
         """
-        with open(csv_file_name) as f:
+        # Note newline: https://docs.python.org/3/library/csv.html#id4
+        with open(csv_file_name, newline="") as f:
             csv_reader = csv.DictReader(f, skipinitialspace=True)
             csv_fields = csv_reader.fieldnames
             if csv_fields is None:
@@ -372,7 +374,8 @@ class PlomClasslistValidator:
             bool
         """
         print(f'Loading from non-Canvas csv file to check file: "{csv_file_name}"')
-        with open(csv_file_name) as f:
+        # Note newline: https://docs.python.org/3/library/csv.html#id4
+        with open(csv_file_name, newline="") as f:
             csv_reader = csv.DictReader(f, skipinitialspace=True)
             column_names = csv_reader.fieldnames
             if column_names is None:
