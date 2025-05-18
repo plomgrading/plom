@@ -44,6 +44,7 @@ class PlomClasslistValidator:
         # Note newline: https://docs.python.org/3/library/csv.html#id4
         with open(filename, newline="") as csvfile:
             # look at start of file to guess 'dialect', and then return to start of file
+            # TODO: what if there isn't 1024 bytes?
             sample = csvfile.read(1024)
             csvfile.seek(0)
             # guess the dialect
