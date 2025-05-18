@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Removed
+
+### Fixed
+
+
+
+
+## [0.18.1] - 2025-05-17
+
+### Fixed
+* Regression in production container: default to port 8000 if unspecified.
+* Fixed crash in production server about undefined wsgi module.
+
+
+## [0.18.0] - 2025-05-14
+
+### Added
 * New support for multi-versioned ID pages, for example if different students should see different cover pages.  Currently, this uses the custom QV-map feature.
 * New API to remotely reset tasks, usable via the client as well as `plom-cli`.
 * Rubrics can be created in the web UI as well as the client.
@@ -27,7 +47,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Student reports have been re-enabled using more efficient database queries.
 * The API can optionally enforce a "single session" model again, which should fix some confusing behaviour involving multiple simultaneous logins.
-
 
 
 ## [0.17.4] - 2025-03-26
@@ -1467,7 +1486,9 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.17.4...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.18.1...main
+[0.18.1]: https://gitlab.com/plom/plom/-/compare/v0.18.0...v0.18.1
+[0.18.0]: https://gitlab.com/plom/plom/-/compare/v0.17.4...v0.18.0
 [0.17.4]: https://gitlab.com/plom/plom/-/compare/v0.17.3...v0.17.4
 [0.17.3]: https://gitlab.com/plom/plom/-/compare/v0.17.2...v0.17.3
 [0.17.2]: https://gitlab.com/plom/plom/-/compare/v0.17.1...v0.17.2

@@ -675,6 +675,8 @@ class Messenger(BaseMessenger):
             with self.SRmutex:
                 try:
                     with open(annotated_img, "rb") as fh, open(hack_pfile, "rb") as f2:
+                        # Note this is not passed as JSON: its key-value strings
+                        # (and note you cannot pass json= when using files=)
                         # doesn't like ints, so convert ints to strings
                         param = {
                             "user": self.user,
@@ -1230,12 +1232,12 @@ class Messenger(BaseMessenger):
         return response.json()
 
     def new_server_upload_spec(
-        self, spec_toml_string: str, *, force_public_code: bool = False
+        self, spec_toml: Path, *, force_public_code: bool = False
     ) -> dict[str, Any]:
         """Upload an assessment spec to the server.
 
         Args:
-            spec_toml_string: The utf-8 string you get by reading a valid spec.toml file
+            spec_toml: The standard Python Path of a valid spec.toml file
 
         Keyword Args:
             force_public_code: Usually you may not include "publicCode" in
@@ -1251,15 +1253,21 @@ class Messenger(BaseMessenger):
             ValueError: invalid spec.
             PlomSeriousException: other errors unexpected errors.
         """
+        # Caution: don't use json= with post when files= is used: use data= instead
+        # https://requests.readthedocs.io/en/latest/user/quickstart/#more-complicated-post-requests
+        if force_public_code:
+            data = {"force_public_code": "on"}
+        else:
+            data = {}
+
         with self.SRmutex:
             try:
-                response = self.post_auth(
-                    "/api/v0/spec",
-                    json={
-                        "spec_toml": spec_toml_string,
-                        "force_public_code": force_public_code,
-                    },
-                )
+                with spec_toml.open("rb") as f:
+                    response = self.post_auth(
+                        "/api/v0/spec",
+                        files={"spec_toml": f},
+                        data=data,
+                    )
                 response.raise_for_status()
             except requests.HTTPError as e:
                 if response.status_code == 400:

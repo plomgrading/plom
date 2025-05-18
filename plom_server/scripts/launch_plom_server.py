@@ -130,8 +130,8 @@ def launch_django_dev_server_process(*, port: int | None = None) -> subprocess.P
 
     Note that this should never be used in production.
 
-    KWargs:
-        port: the port for the server.
+    Keyword Args:
+        port: the port for the server, or a default if omitted.
     """
     # TODO - put in an 'are we in production' check.
 
@@ -144,7 +144,9 @@ def launch_django_dev_server_process(*, port: int | None = None) -> subprocess.P
         return popen_django_manage_command("runserver")
 
 
-def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
+def launch_gunicorn_production_server_process(
+    *, port: int | None = None
+) -> subprocess.Popen:
     """Launch the Gunicorn web server.
 
     Note that this should always be used in production.
@@ -152,8 +154,8 @@ def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
     If the WEB_CONCURRENCY environment variable is set, we use that many
     worker processes.  Otherwise we use a default value (currently 2).
 
-    Args:
-        port: the port for the server.
+    Keyword Args:
+        port: the port for the server.  Defaults to 8000 if omitted.
 
     Returns:
         Open ``Popen`` on the gunicorn process.
@@ -161,7 +163,7 @@ def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
     print("Launching Gunicorn web-server.")
     # TODO - put in an 'are we in production' check.
     num_workers = int(os.environ.get("WEB_CONCURRENCY", 2))
-    cmd = f"gunicorn wsgi --workers {num_workers}"
+    cmd = f"gunicorn plom_server.wsgi --workers {num_workers}"
 
     # TODO: temporary increase to 60s by default, Issue #3676
     timeout = os.environ.get("PLOM_GUNICORN_TIMEOUT", 180)
@@ -173,6 +175,11 @@ def launch_gunicorn_production_server_process(port: int) -> subprocess.Popen:
     # if timeout:
     #     cmd += f" --timeout {timeout}"
 
+    if port is None:
+        port = 8000
+    # TODO: I'm inclined to omit this --bind altogether, as gunicorn defaults to 8000
+    # But is there some important Container-related reason to specify 0.0.0.0 here?
+    # (the Gunicorn default is 127.0.0.1:8000, see Issue #3918)
     cmd += f" --bind 0.0.0.0:{port}"
     return subprocess.Popen(split(cmd))
 
@@ -190,9 +197,6 @@ def main():
     os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
 
     args = get_parser().parse_args()
-
-    if not args.development and not args.port:
-        print("You must supply a port for the production server.")
 
     # Note: run_django_manage_command("plom_database --check-for-database") has no
     # return value, so we call the service directly (isn't this better anyway?)
