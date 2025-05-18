@@ -33,7 +33,7 @@ class PlomClasslistValidator:
             List of dictionaries (keys are column titles).  We canonicalize the
             header names so that we have at least ``"id", "name", "paper_number"``
             and ``"_src_line"``, the latter used for error messages in further
-            validation.
+            validation.  The ``"paper_number"`` key might or might not be present.
 
         Raises:
             ValueError: the file does not contain a header line, or if the file
@@ -64,7 +64,8 @@ class PlomClasslistValidator:
                 # canonicalize cases, replacing whatever case was there before
                 row["id"] = row.pop(id_key)
                 row["name"] = row.pop(name_key)
-                row["paper_number"] = row.pop(paper_number_key)
+                if paper_number_key is not None:
+                    row["paper_number"] = row.pop(paper_number_key)
                 classAsDicts.append(row)
             return classAsDicts
 
@@ -305,7 +306,7 @@ class PlomClasslistValidator:
             werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": f"{err}"})
             return (False, werr)
         except Exception as err:
-            e = f"Some other sort of error reading {filename}: {err}"
+            e = f"Some other sort of error reading {filename}: {type(err)} {err}"
             werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": e})
             return (False, werr)
 
