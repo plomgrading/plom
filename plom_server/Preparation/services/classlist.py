@@ -186,6 +186,7 @@ class StagingStudentService:
         )
         new_ids = set()
         new_paper_numbers = set()
+        # Note newline: https://docs.python.org/3/library/csv.html#id4
         with open(tmp_csv, newline="") as fh:
             prereader = csv.DictReader(fh)
             headers = prereader.fieldnames
