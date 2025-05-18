@@ -8,7 +8,7 @@
 from collections import defaultdict
 import csv
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 from plom.rules import validateStudentID
 
@@ -69,7 +69,7 @@ class PlomClasslistValidator:
                 classAsDicts.append(row)
             return classAsDicts
 
-    def _checkHeaders(self, headers: list[str]) -> list[str | None]:
+    def _checkHeaders(self, headers: Sequence[str]) -> list[str | None]:
         """Check existence of id and name columns in the classlist.
 
         Checks the column titles (as given by the supplied row from
