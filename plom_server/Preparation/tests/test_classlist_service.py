@@ -10,7 +10,7 @@ from ..services import StagingStudentService as Service
 
 
 class TestClasslistService(TestCase):
-    """Test the classlist service valdiate_and_use_classlist_csv.
+    """Test the classlist service validate_and_use_classlist_csv.
 
     Note Vlad the validator also has its own tests in plom/create/test_classlist.py.
     """
