@@ -187,7 +187,10 @@ class StagingStudentService:
         cl_as_dicts = vlad.readClassList(tmp_csv)
         tmp_csv.unlink()
 
-        # Enforce empty-intersection between sets of incoming and known ID's.
+        # Enforce empty-intersection between sets of incoming and known papernums
+        # TODO: maybe this can be a constraint at the database level, which would
+        # TODO: save a lot of code here and also be more robust.  It appears that
+        # TODO: id already works this way...
         known_paper_numbers = set(
             [r.get("paper_number", -1) for r in cls.get_students()]
         )
