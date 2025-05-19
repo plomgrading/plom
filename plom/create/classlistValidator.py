@@ -340,6 +340,7 @@ class PlomClasslistValidator:
                 {"warn_or_err": "warning", "werr_line": w[0], "werr_text": w[1]}
             )
 
+        # TODO: return cl_as_dicts as well?
         return (validity, werr)
 
     def check_is_canvas_csv(self, csv_file_name: Path | str) -> bool:
