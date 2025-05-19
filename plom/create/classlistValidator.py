@@ -53,6 +53,7 @@ class PlomClasslistValidator:
             reader = csv.DictReader(csvfile, dialect=dialect)
 
             # check it has a header - csv.sniffer.has_header is a bit flakey
+            # (I think this can't fail, but keeps MyPy happy)
             if not reader.fieldnames:
                 raise ValueError("The CSV file has no header")
 
