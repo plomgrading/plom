@@ -185,6 +185,7 @@ class StagingStudentService:
         # canonical field names "id", "name", and "paper_number".
         # TODO: maybe the validate could also return the validated stuff?
         cl_as_dicts = vlad.readClassList(tmp_csv)
+        tmp_csv.unlink()
 
         werr = []
 
@@ -222,7 +223,6 @@ class StagingStudentService:
         if not success:
             errmsg = "Server's classlist unchanged."
             werr.append({"warn_or_err": "Warning", "werr_text": errmsg})
-            tmp_csv.unlink()
             return success, werr
 
         # Having developed some trust in the given CSV,
@@ -255,7 +255,6 @@ class StagingStudentService:
                 {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
             )
 
-        tmp_csv.unlink()
         return (success, werr)
 
     @transaction.atomic()
