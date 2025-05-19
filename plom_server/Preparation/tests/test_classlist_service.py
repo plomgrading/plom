@@ -115,3 +115,17 @@ class TestClasslistService(TestCase):
             self.assertTrue("duplicates 1 paper number" in warn_err[0]["werr_text"])
             # Atomic: neither new student was added
             self.assertEqual(Service.how_many_students(), 1)
+
+    def test_duplicate_IDs_in_one_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpfile = Path(tmpdir) / "foo.csv"
+            with tmpfile.open("w") as f:
+                f.write('"id","name"\n')
+                f.write('11111111,"Uno, Ursula"\n')
+                f.write('22222222,"Dos, Damian"\n')
+                f.write('11111111,"Tres, SameID"\n')
+            with tmpfile.open("rb") as f:
+                success, warn_err = Service.validate_and_use_classlist_csv(f)
+            self.assertFalse(success)
+            (row,) = warn_err
+            self.assertTrue("'11111111' is used multiple" in row["werr_text"])
