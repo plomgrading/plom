@@ -33,7 +33,7 @@
         {% endif %}
         {% if student_list_present %}
             <div class="alert alert-primary">
-                <span>Classlist present with {{ student_list|length }} students:</span>
+                <span>Classlist present with {{ student_list|length }} student{{ student_list|length|pluralize }}:</span>
                 <a href="{% url 'prep_classlist_download' %}" class="btn btn-info">download</a>
                 <button class="btn btn-danger"
                         hx-delete="."
