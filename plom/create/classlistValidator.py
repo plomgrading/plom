@@ -58,10 +58,10 @@ class PlomClasslistValidator:
             for row in reader:
                 row["_src_line"] = reader.line_num
                 # canonicalize cases, replacing whatever case was there before
-                row["id"] = row.pop(id_key)
-                row["name"] = row.pop(name_key)
+                row[sid_field] = row.pop(id_key)
+                row[fullname_field] = row.pop(name_key)
                 if paper_number_key is not None:
-                    row["paper_number"] = row.pop(paper_number_key)
+                    row[papernumber_field] = row.pop(paper_number_key)
                 classAsDicts.append(row)
             return classAsDicts
 
@@ -313,7 +313,7 @@ class PlomClasslistValidator:
         # collect all errors and warnings before bailing out.
         validity = True
         # check the ID column - again, potentially errors here (not just warnings)
-        success, errors = self.check_ID_column("id", cl_as_dicts)
+        success, errors = self.check_ID_column(sid_field, cl_as_dicts)
         if not success:  # format errors and set invalid
             validity = False
             for e in errors:
@@ -322,7 +322,7 @@ class PlomClasslistValidator:
                 )
 
         # check the paperNumber column - again, potentially errors here (not just warnings)
-        success, errors = self.check_paper_number_column("paper_number", cl_as_dicts)
+        success, errors = self.check_paper_number_column(papernumber_field, cl_as_dicts)
         if not success:  # format errors and set invalid
             validity = False
             for e in errors:
@@ -334,7 +334,7 @@ class PlomClasslistValidator:
         for w in self.check_classlist_against_spec(spec, len(cl_as_dicts)):
             werr.append({"warn_or_err": "warning", "werr_line": 0, "werr_text": w})
         # check the name column - only warnings returned
-        for w in self.check_name_column("name", cl_as_dicts):
+        for w in self.check_name_column(fullname_field, cl_as_dicts):
             werr.append(
                 {"warn_or_err": "warning", "werr_line": w[0], "werr_text": w[1]}
             )
