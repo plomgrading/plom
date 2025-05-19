@@ -187,8 +187,6 @@ class StagingStudentService:
         cl_as_dicts = vlad.readClassList(tmp_csv)
         tmp_csv.unlink()
 
-        werr = []
-
         # Enforce empty-intersection between sets of incoming and known ID's.
         known_paper_numbers = set(
             [r.get("paper_number", -1) for r in cls.get_students()]
