@@ -90,6 +90,5 @@ class TestClasslistService(TestCase):
             with tmpfile.open("rb") as f:
                 success, warn_err = Service.validate_and_use_classlist_csv(f)
             self.assertFalse(success)
-            # TODO: this should *not* hit the "bug in classlist validitor text"
-            # print(warn_err)
+            self.assertTrue("Missing 'name'" in warn_err[0]["werr_text"])
             self.assertEqual(Service.how_many_students(), 0)
