@@ -7,6 +7,7 @@
 from plom_server.Mark.models import MarkingTask
 from plom_server.Mark.services import marking_priority
 from plom_server.Papers.services import SpecificationService
+from csv import DictReader
 
 
 class TaskOrderService:
@@ -98,12 +99,12 @@ class TaskOrderService:
             ) in task_priorities.items()
         ]
 
-    def handle_file_upload(self, csv_data) -> dict[tuple[int, int], int]:
+    def handle_file_upload(self, csv_data: DictReader) -> dict[tuple[int, int], int]:
         """Handle uploaded file data of task priorities.
 
         Args:
-            csv_data: The CSV data parsed with DictReader and has been
-            validated to have these cols: ["Paper Number", "Question Index", "Priority Value"].
+            csv_data: The CSV data parsed with DictReader and caller must have
+            validated that each row contains the keys: ["Paper Number", "Question Index", "Priority Value"].
 
         Returns:
             A dictionary of task priorities, keyed by
