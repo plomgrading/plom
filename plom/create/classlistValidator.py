@@ -52,10 +52,6 @@ class PlomClasslistValidator:
             # build the dict_reader
             reader = csv.DictReader(csvfile, dialect=dialect)
 
-            # check it has a header - csv.sniffer.has_header is a bit flakey
-            if not reader.fieldnames:
-                raise ValueError("The CSV file has no header")
-
             id_key, name_key, paper_number_key = self._checkHeaders(reader.fieldnames)
 
             # now actually read the entries
