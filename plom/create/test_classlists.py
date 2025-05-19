@@ -475,3 +475,12 @@ def test_leading_zero_sid(tmp_path) -> None:
     # and 00123400 still in there!
     d = df["id"].to_dict()
     assert "00123400" in d.values()
+
+
+def test_nearly_empty_file(tmp_path) -> None:
+    vlad = PlomClasslistValidator()
+    foo = tmp_path / "foo.csv"
+    with foo.open("w") as f:
+        f.write("\n")
+    success, warn_err, _ = vlad.validate_csv(foo, spec=None)
+    assert not success
