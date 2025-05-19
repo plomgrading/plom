@@ -277,7 +277,7 @@ class PlomClasslistValidator:
 
     def validate_csv(
         self, filename: Path | str, *, spec=None
-    ) -> tuple[bool, list[dict[str, Any]]]:
+    ) -> tuple[bool, list[dict[str, Any]], list[dict[str, Any]]]:
         """Validate the classlist csv and return summaries of any errors and warnings.
 
         Args:
@@ -288,10 +288,12 @@ class PlomClasslistValidator:
                 if given then run additional classlist-related tests.
 
         Returns:
-            ``(valid, warnings_and_errors)`` where "valid" is either
-            True or False and "warnings_and_errors" is a list of
-            dicts.  Each dict encodes a single warning or an error: see
-            code for precise format.  It is possible for "valid" to be True
+            ``(valid, warnings_and_errors, cl_as_list_of_dicts)`` where
+            "valid" is True/False, "warnings_and_errors" is a list of dicts
+            and "cl_as_dicts" is a list of dicts of the actual classlist,
+            with canonicalized fieldnames, at least "id", "name", "paper_number".
+            In the 2nd output, each dict encodes a single warning or an error:
+            see code for precise format.  It is possible for "valid" to be True
             and still have non-empty "warnings_and_errors" for example
             when there are only warnings.
         """
@@ -300,11 +302,11 @@ class PlomClasslistValidator:
             cl_as_dicts = self.readClassList(filename)
         except (ValueError, FileNotFoundError) as err:
             werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": f"{err}"})
-            return (False, werr)
+            return (False, werr, [])
         except Exception as err:
             e = f"Some other sort of error reading {filename}: {type(err)} {err}"
             werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": e})
-            return (False, werr)
+            return (False, werr, [])
 
         if len(cl_as_dicts) == 0:
             # Headers were OK, followed by no data. That's degenerate, but valid.
@@ -340,8 +342,7 @@ class PlomClasslistValidator:
                 {"warn_or_err": "warning", "werr_line": w[0], "werr_text": w[1]}
             )
 
-        # TODO: return cl_as_dicts as well?
-        return (validity, werr)
+        return (validity, werr, cl_as_dicts)
 
     def check_is_canvas_csv(self, csv_file_name: Path | str) -> bool:
         """Detect if a csv file is likely a Canvas-exported classlist.

@@ -172,20 +172,15 @@ class StagingStudentService:
                 fh.write(chunk)
 
         vlad = PlomClasslistValidator()
-        success, werr = vlad.validate_csv(tmp_csv)
+        success, werr, cl_as_dicts = vlad.validate_csv(tmp_csv)
         # success = False means warnings+errors - listed in werr
         # success = True means no errors, but could be warnings in werr.
+        # cl_as_dicts has canonical field names "id", "name", and "paper_number".
 
         if (not success) or (werr and not ignore_warnings):
             # errors, or non-ignorable warnings.
             tmp_csv.unlink()
             return (success, werr)
-
-        # The validator can also get us the classlist as a list of dicts with
-        # canonical field names "id", "name", and "paper_number".
-        # TODO: maybe the validate could also return the validated stuff?
-        cl_as_dicts = vlad.readClassList(tmp_csv)
-        tmp_csv.unlink()
 
         # Enforce empty-intersection between sets of incoming and known papernums
         # TODO: maybe this can be a constraint at the database level, which would
