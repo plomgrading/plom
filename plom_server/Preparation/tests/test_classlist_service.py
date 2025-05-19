@@ -93,3 +93,25 @@ class TestClasslistService(TestCase):
             self.assertFalse(success)
             self.assertTrue("Missing 'name'" in warn_err[0]["werr_text"])
             self.assertEqual(Service.how_many_students(), 0)
+
+    def test_classlist_duplicates_papernum(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpfile = Path(tmpdir) / "foo.csv"
+            with tmpfile.open("w") as f:
+                f.write('"id","name","paper_number"\n')
+                f.write('11111111,"Uno, Ursula",11\n')
+            with tmpfile.open("rb") as f:
+                success, warn_err = Service.validate_and_use_classlist_csv(f)
+            self.assertTrue(success)
+            self.assertEqual(Service.how_many_students(), 1)
+
+            with tmpfile.open("w") as f:
+                f.write('"id","name","paper_number"\n')
+                f.write('22222222,"Dos, Damian",12\n')
+                f.write('33333333,"Duplicating papernum",11\n')
+            with tmpfile.open("rb") as f:
+                success, warn_err = Service.validate_and_use_classlist_csv(f)
+            self.assertFalse(success)
+            self.assertTrue("duplicates 1 paper number" in warn_err[0]["werr_text"])
+            # Atomic: neither new student was added
+            self.assertEqual(Service.how_many_students(), 1)
