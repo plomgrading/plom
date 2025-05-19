@@ -5,7 +5,6 @@
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
 
-import csv
 import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -190,22 +189,18 @@ class StagingStudentService:
         werr = []
 
         # Enforce empty-intersection between sets of incoming and known ID's.
-        known_ids = set([_["student_id"] for _ in cls.get_students()])
         known_paper_numbers = set(
             [r.get("paper_number", -1) for r in cls.get_students()]
         )
-        new_ids = set()
         new_paper_numbers = set()
 
         for row in cl_as_dicts:
-            new_ids.add(row["id"])
             # Next line correctly turns '' into -1:
             new_paper_numbers.add(int(row.get("paper_number", "-1") or "-1"))
 
         known_paper_numbers.discard(-1)
         new_paper_numbers.discard(-1)
 
-        id_overlap = known_ids & new_ids
         paper_number_overlap = known_paper_numbers & new_paper_numbers
 
         if False:
@@ -219,11 +214,6 @@ class StagingStudentService:
                 f"DEBUGGING classlist.py: len(paper_number_overlap) = {len(paper_number_overlap)}."
             )
 
-        if len(id_overlap) > 0:
-            success = False
-            errmsg = f"Incoming classlist collides with {len(id_overlap)} known ID's."
-            werr.append({"warn_or_err": "Error", "werr_text": errmsg})
-
         if len(paper_number_overlap) > 0:
             success = False
             errmsg = f"Incoming classlist duplicates {len(paper_number_overlap)} paper numbers."
@@ -236,29 +226,34 @@ class StagingStudentService:
             return success, werr
 
         # Having developed some trust in the given CSV,
-        # we reopen it and transfer its contents into the server's classlist.
-        with open(tmp_csv, newline="") as fh:
-            csv_reader = csv.DictReader(fh, skipinitialspace=True)
-            try:
-                with transaction.atomic():
-                    # The 'atomic' wrapper gives the next loop an all-or-nothing property:
-                    # https://docs.djangoproject.com/en/5.2/topics/db/transactions/
-                    for row in csv_reader:
-                        cls._add_student(
-                            row["id"],
-                            row["name"],
-                            paper_number=row.get("paper_number", None),
-                        )
-            except (IntegrityError, ValueError, KeyError, AssertionError) as e:
-                # in theory, we "asked permission" using vlad the validator
-                # so the input must be perfect and this can never fail---haha!
-                success = False
-                errmsg = "Unexpected error, "
-                errmsg += f"likely a bug in Plom's classlist validator: {str(e)}"
-                # see :method:`PlomClasslistValidator.validate_csv` for this format
-                werr.append(
-                    {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
-                )
+        # we transfer its contents into the server's classlist.
+        try:
+            with transaction.atomic():
+                # The 'atomic' wrapper gives the next loop an all-or-nothing property:
+                # https://docs.djangoproject.com/en/5.2/topics/db/transactions/
+                for row in cl_as_dicts:
+                    cls._add_student(
+                        row["id"],
+                        row["name"],
+                        paper_number=row.get("paper_number", None),
+                    )
+        except IntegrityError as e:
+            success = False
+            errmsg = f"Incoming classlist collides with existing student: {e}"
+            # see :method:`PlomClasslistValidator.validate_csv` for this format
+            werr.append(
+                {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
+            )
+        except (ValueError, KeyError, AssertionError) as e:
+            # in theory, we "asked permission" using vlad the validator
+            # so the input must be perfect and this can never fail---haha!
+            success = False
+            errmsg = "Unexpected error, "
+            errmsg += f"likely a bug in Plom's classlist validator: {str(e)}"
+            # see :method:`PlomClasslistValidator.validate_csv` for this format
+            werr.append(
+                {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
+            )
 
         tmp_csv.unlink()
         return (success, werr)
