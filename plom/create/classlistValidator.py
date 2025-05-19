@@ -308,7 +308,8 @@ class PlomClasslistValidator:
 
         if len(cl_as_dicts) == 0:
             # Headers were OK, followed by no data. That's degenerate, but valid.
-            return (True, [])
+            e = ("CSV file seems to be empty (headers only)",)
+            werr.append({"warn_or_err": "warn", "werr_line": 0, "werr_text": e})
 
         # collect all errors and warnings before bailing out.
         validity = True

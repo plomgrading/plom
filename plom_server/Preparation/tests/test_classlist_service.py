@@ -78,8 +78,9 @@ class TestClasslistService(TestCase):
             with tmpfile.open("rb") as f:
                 success, warn_err = Service.validate_and_use_classlist_csv(f)
             self.assertTrue(success)
-            # TODO: or should we generate a warning here?
-            assert warn_err == []
+            (row,) = warn_err
+            self.assertEqual(row["warn_or_err"], "warn")
+            self.assertTrue("empty" in row["werr_text"])
             self.assertEqual(Service.how_many_students(), 0)
 
     def test_degenerate_classlist_headers_still_checked(self) -> None:
