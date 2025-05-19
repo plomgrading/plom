@@ -32,15 +32,13 @@ class ProfileView(LoginRequiredMixin, View):
         """
         form = EditProfileForm(instance=request.user)
         try:
-            groupNames = [g.name for g in request.user.groups.all()]
-
             # concatenate group names separated with a comma and a space
-            group = ", ".join(groupNames)
+            groups = ", ".join([g.name for g in request.user.groups.all()])
         except IndexError:
-            group = None
+            groups = None
         context = {
             "form": form,
-            "user_group": group,
+            "user_groups": groups,
             "email": request.user.email,
         }
         return render(request, self.profile_page, context)
