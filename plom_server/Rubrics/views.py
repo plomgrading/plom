@@ -439,8 +439,8 @@ class UploadRubricView(ManagerRequiredView):
             # which is messy for end-users.  This args hack makes it render like:
             #    Error: invalid row in "parameters"...
             # See also API/views/utils.py which does a similar hack.
-            problematic_col, err_msg = next(iter(e.args[0].items()))
-            messages.error(request, f"Error: '{problematic_col}': {err_msg}")
+            (nicer_err_msgs,) = e.args
+            messages.error(request, f"Error: {nicer_err_msgs}")
         else:
             messages.success(request, "Rubric file uploaded successfully.")
         return redirect("rubrics_admin")
@@ -511,8 +511,7 @@ class RubricCreateView(ManagerRequiredView):
             messages.error(request, f"Error: {e}")
 
         except serializers.ValidationError as e:
-            problematic_col, err_msg = next(iter(e.args[0].items()))
-            messages.error(request, f"Error: '{problematic_col}': {err_msg}")
+            messages.error(request, f"{e.detail.get('value', 'Invalid Error')}")
         else:
             messages.success(request, "Rubric created successfully.")
 
