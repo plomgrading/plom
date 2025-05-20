@@ -30,6 +30,17 @@ from plom_server.Preparation.services import (
 from . import PlomConfigCreationError, PlomServerConfig
 
 
+def list_files_recursively(path):
+    print("+" * 20)
+    for item in path.iterdir():
+        if item.is_file():
+            print(f"File: {item}")
+        elif item.is_dir():
+            print(f"Directory: {item}")
+            list_files_recursively(item)
+    print("+" * 20)
+
+
 def create_specification(config: PlomServerConfig):
     """Create a test specification from a config."""
     spec_path = config.test_spec
@@ -38,6 +49,7 @@ def create_specification(config: PlomServerConfig):
 
     try:
         if spec_path == "demo":
+            list_files_recursively(resources.files(useful_files))
             spec_src = resources.files(useful_files) / "testing_test_spec.toml"
         else:
             spec_src = config.parent_dir / spec_path
@@ -51,6 +63,7 @@ def upload_test_sources(config: PlomServerConfig) -> None:
     """Upload test sources specified in a config."""
     source_paths = config.test_sources
     if source_paths == "demo":
+        list_files_recursively(resources.files(useful_files))
         version1 = resources.files(useful_files) / "test_version1.pdf"
         version2 = resources.files(useful_files) / "test_version2.pdf"
         # mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
@@ -73,6 +86,7 @@ def upload_classlist(config: PlomServerConfig):
     """Upload classlist specified in a config."""
     classlist_path = config.classlist
     if classlist_path == "demo":
+        list_files_recursively(resources.files(useful_files))
         # mypy stumbling over Traverseable?  but abc.Traversable added in Python 3.11
         classlist_path = resources.files(useful_files) / "cl_for_demo.csv"  # type: ignore[assignment]
 
