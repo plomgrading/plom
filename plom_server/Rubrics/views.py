@@ -512,7 +512,7 @@ class RubricCreateView(ManagerRequiredView):
 
         except serializers.ValidationError as e:
             messages.error(request, f"{e.detail.get('value', 'Invalid Error')}")
-            
+
         else:
             messages.success(request, "Rubric created successfully.")
 
