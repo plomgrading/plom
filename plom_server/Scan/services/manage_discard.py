@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -138,11 +139,17 @@ class ManageDiscardService:
             ) from e
 
         msg = ""
+        mobile_only = True
 
         for fp in paper_obj.fixedpage_set.all():
             # check if that fixedpage has an image
             if fp.image:
                 msg += self.discard_pushed_fixed_page(user_obj, fp.pk, dry_run=dry_run)
+                # TODO: only need to check ID page
+                mobile_only = False
+        if mobile_only:
+            IdentifyTaskService().set_paper_idtask_outdated(paper_number)
+
         for mp in paper_obj.mobilepage_set.all():
             msg += self.discard_pushed_mobile_page(user_obj, mp.pk, dry_run=dry_run)
         return msg
