@@ -432,15 +432,15 @@ class UploadRubricView(ManagerRequiredView):
             )
         except ValueError as e:
             messages.error(request, f"Error: {e}")
-        except serializers.ValidationError as e:
-            # Not sure the "right way" to render a ValidationError:
-            # If we use {e} like for ValueError above, it renders like this:
-            #    Error: [ErrorDetails(string='invalid row in "parameters"...', code='invalid')]
-            # which is messy for end-users.  This args hack makes it render like:
-            #    Error: invalid row in "parameters"...
-            # See also API/views/utils.py which does a similar hack.
-            (nicer_err_msgs,) = e.args
-            messages.error(request, f"Error: {nicer_err_msgs}")
+        # except serializers.ValidationError as e:
+        #     # Not sure the "right way" to render a ValidationError:
+        #     # If we use {e} like for ValueError above, it renders like this:
+        #     #    Error: [ErrorDetails(string='invalid row in "parameters"...', code='invalid')]
+        #     # which is messy for end-users.  This args hack makes it render like:
+        #     #    Error: invalid row in "parameters"...
+        #     # See also API/views/utils.py which does a similar hack.
+        #     (nicer_err_msgs,) = e.args
+        #     messages.error(request, f"Error: {nicer_err_msgs}")
         else:
             messages.success(request, "Rubric file uploaded successfully.")
         return redirect("rubrics_admin")
@@ -512,7 +512,7 @@ class RubricCreateView(ManagerRequiredView):
 
         except serializers.ValidationError as e:
             messages.error(request, f"{e.detail.get('value', 'Invalid Error')}")
-            
+
         else:
             messages.success(request, "Rubric created successfully.")
 
