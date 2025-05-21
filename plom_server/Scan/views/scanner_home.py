@@ -5,6 +5,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2025 Philip D. Loewen
 
 from datetime import datetime
 from typing import Any
@@ -40,6 +41,7 @@ class ScannerOverview(ScannerRequiredView):
         incomplete_papers = mss.get_number_incomplete_test_papers()
         pushed_bundles = mss.get_number_pushed_bundles()
         unpushed_bundles = mss.get_number_unpushed_bundles()
+        discards = mss.get_discarded_page_info()
 
         context.update(
             {
@@ -48,6 +50,7 @@ class ScannerOverview(ScannerRequiredView):
                 "incomplete_papers": incomplete_papers,
                 "pushed_bundles": pushed_bundles,
                 "unpushed_bundles": unpushed_bundles,
+                "number_of_discards": len(discards),
             }
         )
         return render(request, "Scan/overview.html", context)
