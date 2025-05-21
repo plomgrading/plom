@@ -8,7 +8,7 @@
 from collections import defaultdict
 import csv
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 from plom.rules import validateStudentID
 
@@ -18,12 +18,6 @@ fullname_field = "name".casefold()
 papernumber_field = "paper_number".casefold()
 
 canvas_columns_format = ("Student", "ID", "SIS User ID", "SIS Login ID")
-# combine all of these potential column headers into one casefolded list
-potential_column_names = [
-    sid_field,
-    fullname_field,
-    papernumber_field,
-] + [x.casefold() for x in canvas_columns_format]
 
 
 class PlomClasslistValidator:
@@ -36,15 +30,21 @@ class PlomClasslistValidator:
             filename: csv-file to be loaded.
 
         Returns:
-            List of dictionaries (keys are column titles).
+            List of dictionaries (keys are column titles).  We canonicalize the
+            header names so that we have at least ``"id", "name", "paper_number"``
+            and ``"_src_line"``, the latter used for error messages in further
+            validation.  The ``"paper_number"`` key might or might not be present.
 
         Raises:
-            ValueError: the file does not contain a header line, or if the file
-                does not contain any of the header names we might expect.
+            ValueError: the file does not contain a header line, or the file
+                does not contain any of the header names we might expect, or
+                there is some other problem with the headers.
         """
-        classAsDict = []
-        with open(filename) as csvfile:
+        classAsDicts = []
+        # Note newline: https://docs.python.org/3/library/csv.html#id4
+        with open(filename, newline="") as csvfile:
             # look at start of file to guess 'dialect', and then return to start of file
+            # TODO: what if there isn't 1024 bytes?
             sample = csvfile.read(1024)
             csvfile.seek(0)
             # guess the dialect
@@ -53,33 +53,24 @@ class PlomClasslistValidator:
             reader = csv.DictReader(csvfile, dialect=dialect)
 
             # check it has a header - csv.sniffer.has_header is a bit flakey
-            # instead check that we have some of the potential keys - careful of case
+            # (I think this can't fail, but keeps MyPy happy)
             if not reader.fieldnames:
                 raise ValueError("The CSV file has no header")
-            column_names = [x.casefold() for x in reader.fieldnames]
-            if any(x in potential_column_names for x in column_names):
-                pass
-                # print("Appears to have reasonable header - continuing.")
-            else:
-                raise ValueError("The CSV header has no fields that Plom recognises")
 
-            # Check for repeated column names, Issue #3667.
-            # (cannot be in checkHeaders because DictReader picks one silently)
-            for x in potential_column_names:
-                if sum([x == y for y in column_names]) > 1:
-                    raise ValueError(
-                        f'Column "{x}" is repeated multiple times in the '
-                        f'CSV header: {", ".join(x for x in reader.fieldnames)}'
-                    )
+            id_key, name_key, paper_number_key = self._checkHeaders(reader.fieldnames)
 
             # now actually read the entries
             for row in reader:
                 row["_src_line"] = reader.line_num
-                classAsDict.append(row)
-            # return the list
-            return classAsDict
+                # canonicalize cases, replacing whatever case was there before
+                row[sid_field] = row.pop(id_key)
+                row[fullname_field] = row.pop(name_key)
+                if paper_number_key is not None:
+                    row[papernumber_field] = row.pop(paper_number_key)
+                classAsDicts.append(row)
+            return classAsDicts
 
-    def checkHeaders(self, rowFromDict: dict[str, Any]) -> dict[str, Any]:
+    def _checkHeaders(self, headers: Sequence[str]) -> list[str | None]:
         """Check existence of id and name columns in the classlist.
 
         Checks the column titles (as given by the supplied row from
@@ -89,19 +80,22 @@ class PlomClasslistValidator:
         by casefolding.
 
         Arguments:
-            rowFromDict: a row from the classlist encoded as a dictionary.
-                The keys give the column titles.
+            headers: the list of keys of the column titles.
 
         Returns:
-            dict: If errors then return ``{'success': False, 'errors': error-list}``,
-            else return ``{'success': True, 'id': id_key, 'fullname': fullname_key, 'papernumber': papernumber_key}``.
+            A list of the key names, dict of the form
+            ``[id_key, fullname_key, papernumber_key]``.
             If there is no ``"paper_number"`` column, then the
             ``paper_number_key`` will be `None`.
+
+        Raises:
+            ValueError: with a message about what column header problem we found.
+                You might need to call multiple times to get all the problems:
+                this fails fast on the first problem found.
         """
         id_keys = []
         fullname_keys = []
         papernumber_keys: list[str | None] = []
-        headers = list(rowFromDict.keys())
         for x in headers:
             cfx = x.casefold()
             if cfx == sid_field:
@@ -111,39 +105,40 @@ class PlomClasslistValidator:
             if cfx == papernumber_field:
                 papernumber_keys.append(x)
 
-        err = []
-        # Must have at most one of each column
+        # Check for repeated column names, Issue #3667.
         if len(id_keys) > 1:
-            err.append("Cannot have multiple id columns")
+            raise ValueError(
+                f'Column "id" is repeated multiple times in the '
+                f'CSV header: {", ".join(x for x in headers)}'
+            )
         if len(fullname_keys) > 1:  # must have exactly one such column
-            err.append("Cannot have multiple name columns")
+            raise ValueError(
+                f'Column "name" is repeated multiple times in the '
+                f'CSV header: {", ".join(x for x in headers)}'
+            )
         if len(papernumber_keys) > 1:
-            err.append("Cannot have multiple paper number columns")
+            raise ValueError(
+                f'Column "paper_number" is repeated multiple times in the '
+                f'CSV header: {", ".join(x for x in headers)}'
+            )
         # Must have an id, name and paper_number columns
         if not id_keys:
-            err.append(f"Missing 'id' column in columns {headers}")
+            raise ValueError(f"Missing 'id' column in columns {headers}")
         if not fullname_keys:
-            err.append(f"Missing 'name' column in columns {headers}")
+            raise ValueError(f"Missing 'name' column in columns {headers}")
         if not papernumber_keys:
             # Issue #2273
-            # err.append("Missing paper number column")
+            # raise ValueError("Missing paper_number column")
             papernumber_keys = [None]
 
         # We explicitly allow casefolding (but could change our minds?)
         # See #3822 and #1140.
         # if id_keys != [sid_field]:
-        #     err.append(f"'id' present but incorrect case; header: {headers}")
+        #     raise ValueError(f"'id' present but incorrect case; header: {headers}")
         # if fullname_keys != [fullname_field]:
-        #     err.append(f"'name' present but incorrect case; header: {headers}")
+        #     raise ValueError(f"'name' present but incorrect case; header: {headers}")
 
-        if err:
-            return {"success": False, "errors": err}
-        return {
-            "success": True,
-            "id": id_keys[0],
-            "name": fullname_keys[0],
-            "papernumber": papernumber_keys[0],
-        }
+        return [id_keys[0], fullname_keys[0], papernumber_keys[0]]
 
     def check_ID_column(self, id_key, classList) -> tuple[bool, list]:
         """Check the ID column of the classlist."""
@@ -177,7 +172,7 @@ class PlomClasslistValidator:
         """
         return x in ("", None, "-1", -1)
 
-    def check_papernumber_column(self, papernum_key, classList) -> tuple[bool, list]:
+    def check_paper_number_column(self, papernum_key, classList) -> tuple[bool, list]:
         """Check the papernumber column of the classlist.
 
         Entries must either be blank, or integers >= -1.
@@ -208,7 +203,7 @@ class PlomClasslistValidator:
         err = []
         numbers_used = defaultdict(list)
         for x in classList:
-            pn = x[papernum_key]
+            pn = x.get(papernum_key, None)
             # see #3099 - we can reuse papernum = -1 since it is a sentinel value, so ignore any -1's
             if self.is_paper_number_sentinel(pn):
                 continue  # notice that this handles pn being None.
@@ -287,7 +282,7 @@ class PlomClasslistValidator:
 
     def validate_csv(
         self, filename: Path | str, *, spec=None
-    ) -> tuple[bool, list[dict[str, Any]]]:
+    ) -> tuple[bool, list[dict[str, Any]], list[dict[str, Any]]]:
         """Validate the classlist csv and return summaries of any errors and warnings.
 
         Args:
@@ -295,13 +290,15 @@ class PlomClasslistValidator:
 
         Keyword Args:
             spec (None/dict/SpecVerifier): an optional test specification,
-                 if given then run additional classlist-related tests.
+                if given then run additional classlist-related tests.
 
         Returns:
-            ``(valid, warnings_and_errors)`` where "valid" is either
-            True or False and "warnings_and_errors" is a list of
-            dicts.  Each dict encodes a single warning or an error: see
-            code for precise format.  It is possible for "valid" to be True
+            ``(valid, warnings_and_errors, cl_as_list_of_dicts)`` where
+            "valid" is True/False, "warnings_and_errors" is a list of dicts
+            and "cl_as_dicts" is a list of dicts of the actual classlist,
+            with canonicalized fieldnames, at least "id", "name", "paper_number".
+            In the 2nd output, each dict encodes a single warning or an error:
+            see code for precise format.  It is possible for "valid" to be True
             and still have non-empty "warnings_and_errors" for example
             when there are only warnings.
         """
@@ -310,27 +307,21 @@ class PlomClasslistValidator:
             cl_as_dicts = self.readClassList(filename)
         except (ValueError, FileNotFoundError) as err:
             werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": f"{err}"})
-            return (False, werr)
+            return (False, werr, [])
         except Exception as err:
-            e = f"Some other sort of error reading {filename}: {err}"
+            e = f"Some other sort of error reading {filename}: {type(err)} {err}"
             werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": e})
-            return (False, werr)
+            return (False, werr, [])
 
         if len(cl_as_dicts) == 0:
             # Headers were OK, followed by no data. That's degenerate, but valid.
-            return (True, [])
-
-        # check the headers - potentially un-recoverable errors here
-        cl_header_info = self.checkHeaders(cl_as_dicts[0])
-        if cl_header_info["success"] is False:  # format errors and bail-out
-            for e in cl_header_info["errors"]:
-                werr.append({"warn_or_err": "error", "werr_line": 0, "werr_text": e})
-            return (False, werr)
+            e = "CSV file seems to be empty (headers only)"
+            werr.append({"warn_or_err": "warn", "werr_line": 0, "werr_text": e})
 
         # collect all errors and warnings before bailing out.
         validity = True
         # check the ID column - again, potentially errors here (not just warnings)
-        success, errors = self.check_ID_column(cl_header_info["id"], cl_as_dicts)
+        success, errors = self.check_ID_column(sid_field, cl_as_dicts)
         if not success:  # format errors and set invalid
             validity = False
             for e in errors:
@@ -339,27 +330,24 @@ class PlomClasslistValidator:
                 )
 
         # check the paperNumber column - again, potentially errors here (not just warnings)
-        if cl_header_info["papernumber"] is not None:
-            success, errors = self.check_papernumber_column(
-                cl_header_info["papernumber"], cl_as_dicts
-            )
-            if not success:  # format errors and set invalid
-                validity = False
-                for e in errors:
-                    werr.append(
-                        {"warn_or_err": "error", "werr_line": e[0], "werr_text": e[1]}
-                    )
+        success, errors = self.check_paper_number_column(papernumber_field, cl_as_dicts)
+        if not success:  # format errors and set invalid
+            validity = False
+            for e in errors:
+                werr.append(
+                    {"warn_or_err": "error", "werr_line": e[0], "werr_text": e[1]}
+                )
 
         # check against spec - only warnings returned
         for w in self.check_classlist_against_spec(spec, len(cl_as_dicts)):
             werr.append({"warn_or_err": "warning", "werr_line": 0, "werr_text": w})
         # check the name column - only warnings returned
-        for w in self.check_name_column(cl_header_info["name"], cl_as_dicts):
+        for w in self.check_name_column(fullname_field, cl_as_dicts):
             werr.append(
                 {"warn_or_err": "warning", "werr_line": w[0], "werr_text": w[1]}
             )
 
-        return (validity, werr)
+        return (validity, werr, cl_as_dicts)
 
     def check_is_canvas_csv(self, csv_file_name: Path | str) -> bool:
         """Detect if a csv file is likely a Canvas-exported classlist.
@@ -371,7 +359,8 @@ class PlomClasslistValidator:
             True if we think the input was from Canvas, based on
             presence of certain header names.  Otherwise False.
         """
-        with open(csv_file_name) as f:
+        # Note newline: https://docs.python.org/3/library/csv.html#id4
+        with open(csv_file_name, newline="") as f:
             csv_reader = csv.DictReader(f, skipinitialspace=True)
             csv_fields = csv_reader.fieldnames
             if csv_fields is None:
@@ -391,7 +380,8 @@ class PlomClasslistValidator:
             bool
         """
         print(f'Loading from non-Canvas csv file to check file: "{csv_file_name}"')
-        with open(csv_file_name) as f:
+        # Note newline: https://docs.python.org/3/library/csv.html#id4
+        with open(csv_file_name, newline="") as f:
             csv_reader = csv.DictReader(f, skipinitialspace=True)
             column_names = csv_reader.fieldnames
             if column_names is None:

@@ -53,7 +53,7 @@ def upload_classlist(csvname: Path, *, msgr) -> bool:
         csvname: The path to a valid classlist CSV file.
 
     Keyword Args:
-        msgr:  An active Messenger object.
+        msgr: An active Messenger object.
 
     Returns:
         True iff the server's classlist now includes all uploaded records.

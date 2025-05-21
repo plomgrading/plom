@@ -5,7 +5,6 @@
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
 
-import csv
 import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -25,16 +24,16 @@ log = logging.getLogger("ClasslistService")
 
 
 class StagingStudentService:
-    @transaction.atomic
-    def how_many_students(self) -> int:
+    @staticmethod
+    def how_many_students() -> int:
         return StagingStudent.objects.all().count()
 
-    @transaction.atomic
-    def are_there_students(self) -> bool:
+    @staticmethod
+    def are_there_students() -> bool:
         return StagingStudent.objects.exists()
 
-    @transaction.atomic()
-    def get_students(self) -> list[dict[str, str | int]]:
+    @staticmethod
+    def get_students() -> list[dict[str, str | int]]:
         """Get a list of students, empty if there are none."""
         return list(
             StagingStudent.objects.all().values(
@@ -64,23 +63,27 @@ class StagingStudentService:
             for s_obj in StagingStudent.objects.filter(paper_number__isnull=False)
         }
 
-    def get_students_as_csv_string(self, *, prename: bool = False) -> str:
+    @classmethod
+    def get_students_as_csv_string(cls, *, prename: bool = False) -> str:
         """Write the classlist headers and data into a string in CSV format.
 
         Quote all headers and student names, but not ids or paper numbers.
         """
         txt = '"id","name","paper_number"\n'
-        for row in self.get_students():
-            if not prename or row["paper_number"] is None or row["paper_number"] < 0:
+        for row in cls.get_students():
+            if (
+                not prename
+                or row["paper_number"] is None
+                or int(row["paper_number"]) < 0
+            ):
                 # Leave paper_number empty when any of our non-prename sentinels appear.
                 txt += f"{row['student_id']},\"{row['student_name']}\",\n"
             else:
                 txt += f"{row['student_id']},\"{row['student_name']}\",{row['paper_number']}\n"
         return txt
 
-    @transaction.atomic()
+    @staticmethod
     def _add_student(
-        self,
         student_id: str,
         student_name: str,
         *,
@@ -121,8 +124,8 @@ class StagingStudentService:
         s_obj.paper_number = paper_number
         s_obj.save()
 
-    @transaction.atomic()
-    def remove_all_students(self):
+    @staticmethod
+    def remove_all_students() -> None:
         """Remove all the students from the staging classlist.
 
         Raises:
@@ -131,8 +134,9 @@ class StagingStudentService:
         assert_can_modify_classlist()
         StagingStudent.objects.all().delete()
 
+    @classmethod
     def validate_and_use_classlist_csv(
-        self, in_memory_csv_file: File, ignore_warnings: bool = False
+        cls, in_memory_csv_file: File, ignore_warnings: bool = False
     ) -> tuple[bool, list[dict[str, Any]]]:
         """Validate and store the classlist from the in-memory file, if possible, appending to existing classlist.
 
@@ -168,60 +172,32 @@ class StagingStudentService:
                 fh.write(chunk)
 
         vlad = PlomClasslistValidator()
-        success, werr = vlad.validate_csv(tmp_csv)
+        success, werr, cl_as_dicts = vlad.validate_csv(tmp_csv)
         # success = False means warnings+errors - listed in werr
         # success = True means no errors, but could be warnings in werr.
+        # cl_as_dicts has canonical field names "id", "name", and "paper_number".
 
         if (not success) or (werr and not ignore_warnings):
             # errors, or non-ignorable warnings.
             tmp_csv.unlink()
             return (success, werr)
 
-        werr = []
-
-        # Enforce empty-intersection between sets of incoming and known ID's.
-        known_ids = set([_["student_id"] for _ in self.get_students()])
+        # Enforce empty-intersection between sets of incoming and known papernums
+        # TODO: maybe this can be a constraint at the database level, which would
+        # TODO: save a lot of code here and also be more robust.  It appears that
+        # TODO: id already works this way...
         known_paper_numbers = set(
-            [r.get("paper_number", -1) for r in self.get_students()]
+            [r.get("paper_number", -1) for r in cls.get_students()]
         )
-        new_ids = set()
         new_paper_numbers = set()
-        # Note newline: https://docs.python.org/3/library/csv.html#id4
-        with open(tmp_csv, newline="") as fh:
-            prereader = csv.DictReader(fh)
-            headers = prereader.fieldnames
-            assert headers is not None  # Vlad would've noticed but MyPy doesn't know
-            # We accept "id", "ID", "Id", but code is messy #3822 #1140
-            # TODO: shouldn't this be Vlad's job?
-            try:
-                (id_key,) = [x for x in headers if x.casefold() == "id"]
-                (name_key,) = [x for x in headers if x.casefold() == "name"]
-                # paper_number is a bit harder b/c it might not be present
-                papernum_key = "paper_number"
-                _tmp = [x for x in headers if x.casefold() == papernum_key]
-                if len(_tmp) == 1:
-                    papernum_key = _tmp[0]
-            except ValueError as e:
-                success = False
-                errmsg = (
-                    "Bug in classlist validator?  Lower-level code did not notice "
-                    f"headers {headers} with repeats differing only in case: {str(e)}"
-                )
-                werr.append(
-                    {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
-                )
-                tmp_csv.unlink()
-                return success, werr
 
-            for r in prereader:
-                new_ids.add(r[id_key])
-                # Next line correctly turns '' into -1:
-                new_paper_numbers.add(int(r.get(papernum_key, "-1") or "-1"))
+        for row in cl_as_dicts:
+            # Next line correctly turns '' into -1:
+            new_paper_numbers.add(int(row.get("paper_number", "-1") or "-1"))
 
         known_paper_numbers.discard(-1)
         new_paper_numbers.discard(-1)
 
-        id_overlap = known_ids & new_ids
         paper_number_overlap = known_paper_numbers & new_paper_numbers
 
         if False:
@@ -235,11 +211,6 @@ class StagingStudentService:
                 f"DEBUGGING classlist.py: len(paper_number_overlap) = {len(paper_number_overlap)}."
             )
 
-        if len(id_overlap) > 0:
-            success = False
-            errmsg = f"Incoming classlist collides with {len(id_overlap)} known ID's."
-            werr.append({"warn_or_err": "Error", "werr_text": errmsg})
-
         if len(paper_number_overlap) > 0:
             success = False
             errmsg = f"Incoming classlist duplicates {len(paper_number_overlap)} paper numbers."
@@ -248,35 +219,38 @@ class StagingStudentService:
         if not success:
             errmsg = "Server's classlist unchanged."
             werr.append({"warn_or_err": "Warning", "werr_text": errmsg})
-            tmp_csv.unlink()
             return success, werr
 
         # Having developed some trust in the given CSV,
-        # we reopen it and transfer its contents into the server's classlist.
-        with open(tmp_csv, newline="") as fh:
-            csv_reader = csv.DictReader(fh, skipinitialspace=True)
-            try:
-                with transaction.atomic():
-                    # The 'atomic' wrapper gives the next loop an all-or-nothing property:
-                    # https://docs.djangoproject.com/en/5.2/topics/db/transactions/
-                    for row in csv_reader:
-                        self._add_student(
-                            row[id_key],
-                            row[name_key],
-                            paper_number=row.get(papernum_key, None),
-                        )
-            except (IntegrityError, ValueError, KeyError, AssertionError) as e:
-                # in theory, we "asked permission" using vlad the validator
-                # so the input must be perfect and this can never fail---haha!
-                success = False
-                errmsg = "Unexpected error, "
-                errmsg += f"likely a bug in Plom's classlist validator: {str(e)}"
-                # see :method:`PlomClasslistValidator.validate_csv` for this format
-                werr.append(
-                    {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
-                )
+        # we transfer its contents into the server's classlist.
+        try:
+            with transaction.atomic():
+                # The 'atomic' wrapper gives the next loop an all-or-nothing property:
+                # https://docs.djangoproject.com/en/5.2/topics/db/transactions/
+                for row in cl_as_dicts:
+                    cls._add_student(
+                        row["id"],
+                        row["name"],
+                        paper_number=row.get("paper_number", None),
+                    )
+        except IntegrityError as e:
+            success = False
+            errmsg = f"Incoming classlist collides with existing student: {e}"
+            # see :method:`PlomClasslistValidator.validate_csv` for this format
+            werr.append(
+                {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
+            )
+        except (ValueError, KeyError, AssertionError) as e:
+            # in theory, we "asked permission" using vlad the validator
+            # so the input must be perfect and this can never fail---haha!
+            success = False
+            errmsg = "Unexpected error, "
+            errmsg += f"likely a bug in Plom's classlist validator: {str(e)}"
+            # see :method:`PlomClasslistValidator.validate_csv` for this format
+            werr.append(
+                {"warn_or_err": "error", "werr_line": None, "werr_text": errmsg}
+            )
 
-        tmp_csv.unlink()
         return (success, werr)
 
     @transaction.atomic()

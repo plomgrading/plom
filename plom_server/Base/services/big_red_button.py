@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
 
@@ -28,7 +28,7 @@ def reset_assessment_preparation_database():
     PaperCreatorService.remove_all_papers_from_db(background=False)
 
     # Remove classlist
-    StagingStudentService().remove_all_students()
+    StagingStudentService.remove_all_students()
     PrenameSettingService().set_prenaming_setting(False)
 
     # Remove and delete source PDFs

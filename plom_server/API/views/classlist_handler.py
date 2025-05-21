@@ -34,9 +34,8 @@ class ClasslistHandler(APIView):
             (200) Response with nothing but confirming text.
             (409) Manipulating the classlist is not allowed.
         """
-        SSS = StagingStudentService()
         try:
-            SSS.remove_all_students()
+            StagingStudentService.remove_all_students()
         except PlomDependencyConflict as e:
             return _error_response(
                 f"Manipulating the classlist is not allowed. {e}",
@@ -91,6 +90,6 @@ class ClasslistHandler(APIView):
 
         classlist_csv = request.FILES["classlist_csv"]
 
-        SSS = StagingStudentService()
-        zzz = SSS.validate_and_use_classlist_csv(classlist_csv)
-        return Response(zzz)
+        return Response(
+            StagingStudentService.validate_and_use_classlist_csv(classlist_csv)
+        )
