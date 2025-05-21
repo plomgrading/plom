@@ -36,7 +36,7 @@ class PlomClasslistValidator:
             validation.  The ``"paper_number"`` key might or might not be present.
 
         Raises:
-            ValueError: the file does not contain a header line, or if the file
+            ValueError: the file does not contain a header line, or the file
                 does not contain any of the header names we might expect, or
                 there is some other problem with the headers.
         """

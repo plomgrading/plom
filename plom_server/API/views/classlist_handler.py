@@ -90,5 +90,6 @@ class ClasslistHandler(APIView):
 
         classlist_csv = request.FILES["classlist_csv"]
 
-        zzz = StagingStudentService.validate_and_use_classlist_csv(classlist_csv)
-        return Response(zzz)
+        return Response(
+            StagingStudentService.validate_and_use_classlist_csv(classlist_csv)
+        )
