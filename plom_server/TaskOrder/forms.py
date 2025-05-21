@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025 Bryan Tanady
 
 import csv
 from io import StringIO
@@ -50,11 +51,11 @@ class UploadFileForm(forms.Form):
         try:
             file = self.cleaned_data["file"].read().decode("utf-8")
             # Attempt to parse the file as csv
-            data = csv.reader(StringIO(file), delimiter=",")
-            # check that the header is correct
-            header = next(data)
+            data = csv.DictReader(StringIO(file))
+            header = data.fieldnames
             expected_header = ["Paper Number", "Question Index", "Priority Value"]
-            if header != expected_header:
+            # check that the header contains all required cols
+            if not header or not set(expected_header).issubset(set(header)):
                 raise ValidationError(
                     "Invalid csv header. Please use the following headers: "
                     f"Expecting {expected_header} but got {header}"

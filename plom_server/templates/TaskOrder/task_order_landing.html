@@ -13,6 +13,7 @@
     Task Ordering
 {% endblock page_heading %}
 {% block main_content %}
+    {% include "../base/alert_messages.html" with messages=messages %}
     <div class="row">
         <div class="col">
             <form action="{% url 'upload_task_priorities' %}"
