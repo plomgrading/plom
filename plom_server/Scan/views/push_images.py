@@ -51,6 +51,8 @@ class PushAllPageImages(ScannerRequiredView):
                 reverse("scan_bundle_push_error", args=[bundle_id])
             )
         except Exception as err:
+            # TODO: we don't like generic exception handlers but we got bit by
+            # Issue #3926 so now catch all the unexpected errors too.
             messages.add_message(
                 request, messages.ERROR, f"Plom bug: unexpected error: {err}"
             )
