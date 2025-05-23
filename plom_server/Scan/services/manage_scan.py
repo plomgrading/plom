@@ -95,7 +95,7 @@ class ManageScanService:
         spec questions.
         A paper is incomplete when it has *some* but not all its
         fixed pages. A paper is also incomplete when it contains no fixed
-        pages, but has mobile pages for all questions.
+        pages, but has mobile pages for some, but not all, questions.
         Note that the sets of complete and incomplete papers are: mutually exclusive
         and exhaustive of all used papers, i.e. all used papers must be complete
         or incomplete.
