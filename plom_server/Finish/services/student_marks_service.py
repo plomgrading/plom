@@ -7,6 +7,7 @@
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Andreas Buttenschoen
 # Copyright (C) 2025 Aden Chan
+# Copyright (C) 2025 Aidan Murphy
 
 import csv
 from io import StringIO
@@ -26,6 +27,8 @@ import hashlib
 
 class StudentMarkService:
     """Service for the Student Marks page."""
+
+    # TODO: unit tests for many of these methods
 
     @staticmethod
     def is_paper_marked(paper: Paper) -> bool:
@@ -49,10 +52,14 @@ class StudentMarkService:
 
     @classmethod
     def are_all_papers_marked(cls) -> bool:
-        """Return True if all of the papers that have a task are marked."""
-        papers_with_tasks = Paper.objects.exclude(markingtask__isnull=True)
+        """Return True if all used papers are marked.
 
-        for paper in papers_with_tasks:
+        See :func: ManageScanService._get_used_unused_paper_querysets() for
+        definitions of used and unused papers.
+        """
+        used_papers, _ = ManageScanService()._get_used_unused_paper_querysets()
+
+        for paper in used_papers:
             if not cls.is_paper_marked(paper):
                 return False
         return True
