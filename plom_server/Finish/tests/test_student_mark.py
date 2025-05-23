@@ -11,7 +11,7 @@ from ..services import StudentMarkService
 NUM_PAPERS = 10
 
 
-class StudentMarkServiceTests(TestCase):
+class TestStudentMarkService(TestCase):
     """Tests for Finish.service.StudentMarkService."""
 
     sms = StudentMarkService
