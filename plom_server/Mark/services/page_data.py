@@ -221,7 +221,7 @@ class PageDataService:
             pages_metadata.append(
                 {
                     "pagename": pagename,
-                    "md5": page.image.image__baseimage.image_hash,
+                    "md5": page.image.baseimage.image_hash,
                     "included": qidx == question,
                     # WARNING - HACKERY HERE vvvvvvvv
                     "order": len(pages_metadata) + 1,
