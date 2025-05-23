@@ -9,8 +9,9 @@
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024-2025 Aden Chan
-# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2024-2025 Aidan Murphy
+# Copyright (C) 2025 Deep Shah
 
 import ast
 import csv
@@ -64,10 +65,19 @@ def _validate_versions(vers: None | list | str) -> None:
         raise serializers.ValidationError(
             f'nonempty "versions" must be a list of ints but got "{vers}"'
         )
+
+    n_versions = SpecificationService.get_n_versions()
+
     for v in vers:
         if not isinstance(v, int):
             raise serializers.ValidationError(
                 f'nonempty "versions" must be a list of ints but got "{vers}"'
+            )
+        if v < 1 or v > n_versions:
+            raise serializers.ValidationError(
+                {
+                    "versions": f"Version {v} is out of range — must be in [1, {n_versions}]"
+                }
             )
 
 
@@ -218,7 +228,11 @@ class RubricService:
 
     @classmethod
     def create_rubric(
-        cls, rubric_data: dict[str, Any], *, creating_user: User | None = None
+        cls,
+        rubric_data: dict[str, Any],
+        *,
+        creating_user: User | None = None,
+        by_system: bool = True,
     ) -> dict[str, Any]:
         """Create a rubric using data submitted by a marker.
 
@@ -230,6 +244,7 @@ class RubricService:
             creating_user: who is trying to create the rubric.  ``None``
                 means you don't care who (probably for internal use only).
                 ``None`` also bypasses the rubric access settings.
+            by_system: true if the rubric creation is made by system.
 
         Returns:
             The new rubric data, in dict key-value format.
@@ -242,30 +257,43 @@ class RubricService:
             PermissionDenied: user are not allowed to create rubrics.
                 This could be "this user" or "all users".
         """
-        rubric_obj = cls._create_rubric(rubric_data, creating_user=creating_user)
+        rubric_obj = cls._create_rubric(
+            rubric_data, creating_user=creating_user, by_system=by_system
+        )
         return _Rubric_to_dict(rubric_obj)
 
     # implementation detail of the above, independently testable
     @classmethod
     def _create_rubric(
-        cls, incoming_data: dict[str, Any], *, creating_user: User | None = None
+        cls,
+        incoming_data: dict[str, Any],
+        *,
+        creating_user: User | None = None,
+        by_system: bool = True,
     ) -> Rubric:
         incoming_data = incoming_data.copy()
 
-        # some mangling around user/username here
-        if "user" not in incoming_data.keys():
-            username = incoming_data.pop("username", None)
-            if not username:
-                # TODO: revisit this in the context of uploading rubrics from files
-                raise KeyError(
-                    "user or username is required (for now, might change in future)"
-                )
-            try:
-                user = User.objects.get(username=username)
-                incoming_data["user"] = user.pk
-                incoming_data["modified_by_user"] = user.pk
-            except ObjectDoesNotExist as e:
-                raise ValueError(f"User {username} does not exist.") from e
+        if not by_system:
+            if not creating_user:
+                raise ValueError("Uploader of rubrics is unknown")
+            incoming_data["user"] = creating_user.pk
+            incoming_data["modified_by_user"] = creating_user.pk
+
+        else:
+            # some mangling around user/username here
+            if "user" not in incoming_data.keys():
+                username = incoming_data.pop("username", None)
+                if not username:
+                    # TODO: revisit this in the context of uploading rubrics from files
+                    raise KeyError(
+                        "user or username is required (for now, might change in future)"
+                    )
+                try:
+                    user = User.objects.get(username=username)
+                    incoming_data["user"] = user.pk
+                    incoming_data["modified_by_user"] = user.pk
+                except ObjectDoesNotExist as e:
+                    raise ValueError(f"User {username} does not exist.") from e
 
         if "rid" in incoming_data.keys():
             # could potentially allow blank rid...
@@ -275,14 +303,22 @@ class RubricService:
             )
 
         # some mangling because client still uses "question"
-        if "question_index" not in incoming_data.keys():
-            incoming_data["question_index"] = incoming_data.pop("question")
+        # checking if question_index/question column is present
+        if "question_index" not in incoming_data:
+            if "question" in incoming_data:
+                incoming_data["question_index"] = incoming_data.pop("question")
+            else:
+                raise serializers.ValidationError(
+                    {"question_index": "question index is required."}
+                )
 
         if "kind" not in incoming_data.keys():
             raise serializers.ValidationError({"kind": "Kind is required."})
 
         if incoming_data["kind"] not in ("absolute", "relative", "neutral"):
-            raise serializers.ValidationError({"kind": "Invalid kind."})
+            raise serializers.ValidationError(
+                {"kind": f"{incoming_data['kind']} is not a valid kind."}
+            )
 
         # Check permissions
         s = SettingsModel.load()
@@ -309,6 +345,48 @@ class RubricService:
         return cls._create_rubric_lowlevel(incoming_data)
 
     @staticmethod
+    def _validate_rubric_fields(data: dict[str, Any]) -> None:
+        """Validate data that will be used to create rubric.
+
+        Args:
+            data: a dictionary representing a rubric.
+        """
+        # Ensure text is not empty or whitespace only
+        if str(data["text"]).strip() == "":
+            raise serializers.ValidationError(
+                {"text": "Text can't be empty or contain only whitespace"}
+            )
+
+        q_index = int(data["question_index"])
+
+        # Ensure question index (indexed from 1) is within range
+        max_q_index = SpecificationService.get_n_questions()
+        if q_index < 1 or q_index > max_q_index:
+            raise serializers.ValidationError(
+                {
+                    "question_index": f"{q_index} out of range, must be within [1, {max_q_index}]"
+                }
+            )
+
+        # check that the "value" lies in [-max_mark, max_mark]
+        max_mark = SpecificationService.get_question_max_mark(q_index)
+        _validate_value(data.get("value", 0), max_mark)
+        # TODO: Perhaps the serializer should do this
+        if data["kind"] == "absolute":
+            if "value" not in data:
+                raise serializers.ValidationError(
+                    {"value": "Absolute rubric requires value"}
+                )
+            _validate_value_out_of(data["value"], data["out_of"], max_mark)
+
+        # TODO: more validation of JSONFields that the model/form/serializer should
+        # be doing (see `clean_versions` commented out in Rubrics/models.py)
+        _validate_versions(data.get("versions"))
+        _validate_parameters(
+            data.get("parameters"), SpecificationService.get_n_versions()
+        )
+
+    @staticmethod
     def _create_rubric_lowlevel(
         data: dict[str, Any],
         *,
@@ -320,6 +398,13 @@ class RubricService:
         Careful with ``_pypass_serializer``.  I think this stuff was introduced
         to decrease the number of database queries when making many rubrics.
         """
+        # As stated in Rubric's model: out_of must be 0 for non-absolute kind and value is 0 for neutral
+        if data["kind"] != "absolute":
+            data["out_of"] = 0
+            data["value"] = 0 if data["kind"] == "neutral" else data["value"]
+
+        RubricService._validate_rubric_fields(data)
+
         if data.get("display_delta", None) is None:
             # if we don't have a display_delta, we'll generate a default one
             data["display_delta"] = _generate_display_delta(
@@ -329,19 +414,6 @@ class RubricService:
                 data["kind"],
                 data.get("out_of", None),
             )
-        # check that the "value" lies in [-max_mark, max_mark]
-        max_mark = SpecificationService.get_question_max_mark(data["question_index"])
-        _validate_value(data.get("value", 0), max_mark)
-        # TODO: Perhaps the serializer should do this
-        if data["kind"] == "absolute":
-            _validate_value_out_of(data["value"], data["out_of"], max_mark)
-
-        # TODO: more validation of JSONFields that the model/form/serializer should
-        # be doing (see `clean_versions` commented out in Rubrics/models.py)
-        _validate_versions(data.get("versions"))
-        _validate_parameters(
-            data.get("parameters"), SpecificationService.get_n_versions()
-        )
 
         data["latest"] = True
         if _bypass_serializer:
@@ -365,8 +437,15 @@ class RubricService:
             return new_rubric
 
         serializer = RubricSerializer(data=data)
+        # user-friendly text error messages
         if not serializer.is_valid():
-            raise serializers.ValidationError(serializer.errors)
+            errors = serializer.errors
+            friendly = {
+                field: "; ".join(err) if isinstance(err, list) else err
+                for field, err in errors.items()
+            }
+            raise serializers.ValidationError(friendly)
+
         new_rubric = serializer.save()
         # TODO: if its new why do we need to clear these?
         # new_rubric.pedagogy_tags.clear()
@@ -1044,6 +1123,125 @@ class RubricService:
             </table>
         """
 
+    def create_rubric_template(self, question_index: int | None, filetype: str) -> str:
+        """Create a template rubric for a particular question in the specified format.
+
+        The template has one absolute rubric entry for each score from 0 to
+        out_of (inclusive). It also creates two relative (one positive and negative),
+        and one neutral rubric.
+
+        Args:
+            question_index: index of the question the rubric template is for, if None,
+            all questions will be included.
+            filetype: The type of the file (json, toml, csv).
+
+        Returns:
+            A string containing the rubric data from the specified file format.
+        """
+        if question_index:
+            rubrics = self._create_rubric_template(question_index=question_index)
+        else:
+            q_indices = SpecificationService.get_question_indices()
+            rubrics = [
+                r
+                for q in q_indices
+                for r in self._create_rubric_template(question_index=q)
+            ]
+
+        if filetype == "csv":
+            f = io.StringIO()
+            writer = csv.DictWriter(f, fieldnames=rubrics[0].keys())
+            writer.writeheader()
+            writer.writerows(rubrics)
+            data_string = f.getvalue()
+        elif filetype == "json":
+            data_string = json.dumps(rubrics, indent="  ")
+        elif filetype == "toml":
+            for dictionary in rubrics:
+                filtered = {k: v for k, v in dictionary.items() if v is not None}
+                dictionary.clear()
+                dictionary.update(filtered)
+            data_string = tomlkit.dumps({"rubric": rubrics})
+        else:
+            raise ValueError(f"Unsupported file type: {filetype}")
+
+        return data_string
+
+    def _create_rubric_template(self, question_index: int) -> list[dict[str, Any]]:
+        """Create a template rubric in list of dicts format for a particular question.
+
+        Args:
+            question_index: index of the question the rubric template is for.
+
+        Returns:
+            A list of dict, each represents a rubric.
+        """
+        template = []
+
+        max_mark = SpecificationService.get_question_max_mark(question_index)
+
+        # Construct absolute rubric
+        for value in range(max_mark + 1):
+            abs_rubric = self._create_single_rubric_template(
+                kind="absolute",
+                value=value,
+                question_index=question_index,
+            )
+            template.append(abs_rubric)
+
+        # Construct relative rubric
+        relative_rubric_pos = self._create_single_rubric_template(
+            kind="relative",
+            value=1,
+            question_index=question_index,
+        )
+        relative_rubric_neg = self._create_single_rubric_template(
+            kind="relative",
+            value=-1,
+            question_index=question_index,
+        )
+        template.extend([relative_rubric_pos, relative_rubric_neg])
+
+        # Construct neutral rubric
+        neutral_rubric = self._create_single_rubric_template(
+            kind="neutral", value=0, question_index=question_index
+        )
+        template.append(neutral_rubric)
+
+        return template
+
+    def _create_single_rubric_template(
+        self, kind: str, value: int | float | None, question_index: int
+    ) -> dict[str, Any]:
+
+        out_of = (
+            SpecificationService.get_question_max_mark(question_index)
+            if kind == "absolute"
+            else None
+        )
+        value = None if kind == "neutral" else value
+
+        rubric: dict[str, Any] = {
+            "kind": kind,
+            "value": value,
+            "out_of": out_of,
+            "text": "==> CHANGE ME",
+            "tags": "",
+            "meta": "",
+            "question_index": question_index,
+            "versions": [],
+            "parameters": [],
+            "pedagogy_tags": [],
+        }
+
+        # Validate keys in our hand-rolled dict to those in the official Rubric model
+        for key in rubric.keys():
+            # Validate key
+            if key not in Rubric.__dict__.keys():
+                raise ValueError(f"{key} is not a valid Rubric Attribute.")
+
+        return rubric
+
     def get_rubric_data(self, filetype: str, question_idx: int | None) -> str:
         """Get the rubric data as the string contents of file of a specified type.
 
@@ -1084,12 +1282,22 @@ class RubricService:
 
         return data_string
 
-    def update_rubric_data(self, data: str, filetype: str) -> list[dict[str, Any]]:
+    def update_rubric_data(
+        self,
+        data: str,
+        filetype: str,
+        by_system: bool,
+        requesting_user: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Retrieves rubrics from a file.
 
         Args:
             data: The file object containing the rubrics.
             filetype: The type of the file (json, toml, csv).
+            by_system: true if the update is called by system and requesting_user is irrelevant.
+            requesting_user: the user who requested to update the rubric data.
+            ``None`` means you don't care who (probably for internal use only).
+
 
         Returns:
             A list of the rubrics created.
@@ -1147,5 +1355,13 @@ class RubricService:
                 r["parameters"] = parameters
 
         # ensure either all rubrics succeed or all fail
+        if requesting_user:
+            user = User.objects.get(username=requesting_user)
+        else:
+            user = None
+
         with transaction.atomic():
-            return [self.create_rubric(r) for r in rubrics]
+            return [
+                self.create_rubric(r, creating_user=user, by_system=by_system)
+                for r in rubrics
+            ]

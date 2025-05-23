@@ -7,6 +7,8 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
 # Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2025 Deep Shah
+
 
 import difflib
 import json
@@ -39,6 +41,7 @@ from .forms import (
     RubricUploadForm,
     RubricDownloadForm,
     RubricItemForm,
+    RubricTemplateDownloadForm,
 )
 from .models import RubricTable
 
@@ -56,6 +59,7 @@ class RubricAdminPageView(ManagerRequiredView):
         rubric_halfmark_form = RubricHalfMarkForm(request.GET)
         download_form = RubricDownloadForm(request.GET)
         upload_form = RubricUploadForm()
+        template_form = RubricTemplateDownloadForm()
         rubrics = RubricService.get_all_rubrics()
         half_point_rubrics = rubrics.filter(value__exact=0.5).filter(text__exact=".")
         context.update(
@@ -65,6 +69,7 @@ class RubricAdminPageView(ManagerRequiredView):
                 "rubric_halfmark_form": rubric_halfmark_form,
                 "rubric_download_form": download_form,
                 "rubric_upload_form": upload_form,
+                "rubric_template_form": template_form,
             }
         )
         return render(request, template_name, context=context)
@@ -409,6 +414,7 @@ class UploadRubricView(ManagerRequiredView):
     def post(self, request: HttpRequest):
         service = RubricService()
         suffix = request.FILES["rubric_file"].name.split(".")[-1]
+        username = request.user.username
 
         if suffix == "csv" or suffix == "json":
             f = TextIOWrapper(request.FILES["rubric_file"], encoding="utf-8")
@@ -421,7 +427,9 @@ class UploadRubricView(ManagerRequiredView):
             return redirect("rubrics_admin")
 
         try:
-            service.update_rubric_data(data_string, suffix)
+            service.update_rubric_data(
+                data_string, suffix, by_system=False, requesting_user=username
+            )
         except ValueError as e:
             messages.error(request, f"Error: {e}")
         except serializers.ValidationError as e:
@@ -431,11 +439,46 @@ class UploadRubricView(ManagerRequiredView):
             # which is messy for end-users.  This args hack makes it render like:
             #    Error: invalid row in "parameters"...
             # See also API/views/utils.py which does a similar hack.
-            (nicer_error_msg,) = e.args
-            messages.error(request, f"Error: {nicer_error_msg}")
+            (nicer_err_msgs,) = e.args
+            messages.error(request, f"Error: {nicer_err_msgs}")
         else:
             messages.success(request, "Rubric file uploaded successfully.")
         return redirect("rubrics_admin")
+
+
+class DownloadRubricTemplateView(ManagerRequiredView):
+    def get(self, request: HttpRequest):
+        service = RubricService()
+        question = request.GET.get("question_filter")
+        filetype = request.GET.get("file_type")
+
+        if question is not None and len(question) != 0:
+            question = int(question)
+        else:
+            question = None
+
+        if filetype == "json":
+            data_string = service.create_rubric_template(
+                question_index=question, filetype="json"
+            )
+            buf = StringIO(data_string)
+            response = HttpResponse(buf.getvalue(), content_type="text/json")
+            response["Content-Disposition"] = "attachment; filename=rubrics.json"
+        elif filetype == "toml":
+            data_string = service.create_rubric_template(
+                question_index=question, filetype="toml"
+            )
+            buf2 = BytesIO(data_string.encode("utf-8"))
+            response = HttpResponse(buf2.getvalue(), content_type="application/toml")
+            response["Content-Disposition"] = "attachment; filename=rubrics.toml"
+        else:
+            data_string = service.create_rubric_template(
+                question_index=question, filetype="csv"
+            )
+            buf3 = StringIO(data_string)
+            response = HttpResponse(buf3.getvalue(), content_type="text/csv")
+            response["Content-Disposition"] = "attachment; filename=rubrics.csv"
+        return response
 
 
 class RubricCreateView(ManagerRequiredView):

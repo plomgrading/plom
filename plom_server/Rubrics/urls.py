@@ -5,6 +5,7 @@
 # Copyright (C) 2024 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2025 Bryan Tanady
 
 from django.urls import path
 
@@ -23,6 +24,11 @@ urlpatterns = [
     ),
     path("<int:rid>/", views.RubricItemView.as_view(), name="rubric_item"),
     path("admin/download/", views.DownloadRubricView.as_view(), name="rubric_download"),
+    path(
+        "admin/download_rubric_template/",
+        views.DownloadRubricTemplateView.as_view(),
+        name="rubric_template_download",
+    ),
     path("admin/upload/", views.UploadRubricView.as_view(), name="rubric_upload"),
     path("<int:rid>/compare", views.compare_rubrics, name="compare_rubrics"),
     path("rubrics/create", views.RubricCreateView.as_view(), name="rubric_create"),
