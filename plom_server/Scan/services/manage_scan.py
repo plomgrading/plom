@@ -145,6 +145,8 @@ class ManageScanService:
         complete_papers_queryset, _ = self._get_complete_incomplete_paper_querysets()
         return complete_papers_queryset.count()
 
+    # do not call this in a loop - write a function:
+    # def are_papers_completely_scanned(self, paper_nums: list[int]) -> dict[int: bool]
     def is_paper_completely_scanned(self, paper_num: int) -> bool:
         """Check whether the given paper has been completely scanned."""
         complete_papers_queryset, _ = self._get_complete_incomplete_paper_querysets()
