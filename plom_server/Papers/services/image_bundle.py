@@ -433,6 +433,9 @@ class ImageBundleService:
         question_pages = QuestionPage.objects.filter(image__bundle=bundle)
         # find all mobile pages (extra pages) that attach to images in the current bundle
         extras = MobilePage.objects.filter(image__bundle=bundle)
+        # Note ready/nonready is about *questions*, so any MobilePages attached to DNM don't
+        # count (including them will lead to bugs, Issue #3925); we filter them out.
+        extras = extras.exclude(question_index=MobilePage.DNM_qidx)
 
         # now make list of all papers/questions updated by this bundle
         # note that values_list does not return a list, it returns a "query-set"
