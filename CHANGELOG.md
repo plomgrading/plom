@@ -9,13 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Rubric templates can be downloaded showing what is needed in csv/json/toml if you want to make rubrics outside of Plom.
 
 ### Changed
 
 ### Removed
 
 ### Fixed
-* Uploading a broken classlist no longer adds some of the students.
+* Uploading a broken/conflicting classlist no longer adds some of the students.
+* Improvements to setting TaskOrder from a file.
 
 
 ## [0.18.1] - 2025-05-17
