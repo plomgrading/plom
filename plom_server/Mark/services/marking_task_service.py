@@ -117,7 +117,22 @@ class MarkingTaskService:
         paper_question_version_list: list[tuple[int, int, int]],
         *,
         copy_old_tags: bool = True,
-    ):
+    ) -> None:
+        """In an efficient way, create and update all marking tasks at once.
+
+        This was added for DB performance reasons, and the caller presumably
+        does some work to pre-assemble the inputs, rather than looping one
+        at a time.
+
+        Args:
+            paper_question_version_list: each entry is a tuple of
+                `paper_number`, `question_index`, and `version`.
+
+        Keyword Args:
+            copy_old_tags: copy over any old tags from the previous tasks.
+                Note this currently may have a performance hit as it uses
+                a loop.
+        """
         # create all the task codes
         task_codes = [f"q{X[0]:04}g{X[1]}" for X in paper_question_version_list]
         # use this to get all existing marking tasks

@@ -9,13 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-* Rubric templates can be downloaded showing what is needed in csv/json/toml if you want to make rubrics outside of Plom.
-
-### Changed
 
 ### Removed
 
+### Changed
+
 ### Fixed
+
+
+
+## [0.18.2] - 2025-05-23
+
+### Added
+* Rubric templates can be downloaded showing what is needed in csv/json/toml if you want to make rubrics outside of Plom.
+* Improved error handling of unexpected errors during staged bundle push.
+
+### Fixed
+* Fixed regression and crash when clients gets info on extra pages.
+* Fixed regression and crash when extra page is set to DNM.
 * Uploading a broken/conflicting classlist no longer adds some of the students.
 * Improvements to setting TaskOrder from a file.
 
@@ -1487,7 +1498,8 @@ in most cases.
 This is the first release of Plom, Paperless Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.18.1...main
+[Unreleased]: https://gitlab.com/plom/plom/-/compare/v0.18.2...main
+[0.18.2]: https://gitlab.com/plom/plom/-/compare/v0.18.1...v0.18.2
 [0.18.1]: https://gitlab.com/plom/plom/-/compare/v0.18.0...v0.18.1
 [0.18.0]: https://gitlab.com/plom/plom/-/compare/v0.17.4...v0.18.0
 [0.17.4]: https://gitlab.com/plom/plom/-/compare/v0.17.3...v0.17.4
