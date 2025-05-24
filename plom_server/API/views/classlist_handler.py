@@ -86,7 +86,7 @@ class ClasslistHandler(APIView):
         if not request.FILES["classlist_csv"]:
             success = False
             werr = [{"errors": "No classlist provided."}]
-            return (success, werr)
+            return Response((success, werr))
 
         classlist_csv = request.FILES["classlist_csv"]
 
