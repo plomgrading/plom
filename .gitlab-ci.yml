@@ -142,10 +142,10 @@ copyright_year:
     # Note that "upstream" is used as the local name for plom/plom
     - git remote add upstream https://gitlab.com/plom/plom.git
     - echo "Consider these various open merge requests"
-    - glab mr list --source-branch="${CI_COMMIT_BRANCH:-}" --repo=plom/plom
-    - read TARGET_REPO_NAME TARGET_BRANCH_NAME <<< $(./maint/find-MR-target-branch.py --source "${CI_COMMIT_BRANCH:-}" --repo plom/plom --default "origin main")
+    - glab mr list --source-branch=$CI_COMMIT_BRANCH --repo=plom/plom
+    - read TARGET_REPO_NAME TARGET_BRANCH_NAME <<< $(./maint/find_MR_target_branch.py --source $CI_COMMIT_BRANCH --repo plom/plom --default "origin main")
     # we expect to find at most one MR
-    - NUM_MRS=$(./maint/find-MR-target-branch.py --source "${CI_COMMIT_BRANCH:-}" --repo plom/plom --default "origin main" | wc -l)
+    - NUM_MRS=$(./maint/find-MR-target-branch.py --source $CI_COMMIT_BRANCH --repo plom/plom --default "origin main" | wc -l)
     - TARGET_BRANCH=${TARGET_REPO_NAME}/${TARGET_BRANCH_NAME}
     - echo "We think the target branch is '$TARGET_BRANCH'"
     - echo "Next ensure we have that target branch for comparing"
