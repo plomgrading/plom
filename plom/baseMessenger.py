@@ -102,18 +102,18 @@ class BaseMessenger:
             server: URL or None to default to localhost.
 
         Keyword Arguments:
-            port: What port to try to connect to.  Defaults
-                to 41984 if omitted and cannot be determined from the
-                URI string.
-            scheme: What scheme to use to connect.  Defaults
-                to ``"https"`` if omitted and cannot be determined from
-                the URI string.
-            verify_ssl (True/False): controls where SSL certs are
-                checked, see the `requests` library parameter
-                ``Session.verify`` which ultimately receives this.
+            port: What port to connect to. Fall back to this if the server
+                string does not specify a port. If neither of the above
+                sources settle the issue, default to 41984.
+            scheme: What scheme to connect with. Fall back to this if the server
+                parameter does not include a scheme prefix. If neither
+                of the above sources settle the issue, default to ``"https"``.
+            verify_ssl (True/False): controls whether SSL certs are checked.
+                See the `requests` library parameter named
+                ``Session.verify``, which ultimately receives this.
             _server_API_version: internal use, for cloning a Messenger.
                 We want to recall the API of the server we are talking
-                to without computing itagain.
+                to without computing it again.
 
         Returns:
             None
@@ -138,6 +138,8 @@ class BaseMessenger:
             # "localhost:1234" parses this way: we do it ourselves :(
             if scheme is None:
                 scheme = "https"
+                if os.environ.get("PLOM_NO_SSL_VERIFY"):
+                    scheme = "http"
             self._raw_init(f"{scheme}://{server}", verify_ssl=verify_ssl)
             return
 
@@ -145,6 +147,8 @@ class BaseMessenger:
         if not parsed_url.scheme:
             if scheme is None:
                 scheme = "https"
+                if os.environ.get("PLOM_NO_SSL_VERIFY"):
+                    scheme = "http"
             server = f"{scheme}://{server}"
 
         # postfix with default port if not specified
