@@ -100,9 +100,8 @@ class RubricItemForm(forms.ModelForm):
         empty_value="",
     )
 
-    # Explicit IntegerField for value for now
-    # TODO: Change this to a DecimalField when ready
-    value = forms.IntegerField(required=True)
+    # Note: DecimalField seems to result in ugly "+3.0" rubrics
+    value = forms.FloatField(required=True)
 
     kind = forms.ChoiceField(
         choices=Rubric.RubricKind.choices,
