@@ -650,36 +650,34 @@ class BaseMessenger:
             self._requestAndSaveToken_webplom(user, pw, exclusive=exclusive)
 
     def _requestAndSaveToken_legacy(self, user: str, pw: str) -> None:
-        self.SRmutex.acquire()
-        try:
-            response = self.put(
-                f"/users/{user}",
-                json={
-                    "user": user,
-                    "pw": pw,
-                    "api": str(Plom_Legacy_Server_API_Version),
-                    "client_ver": __version__,
-                },
-                timeout=5,
-            )
-            # throw errors when response code != 200.
-            response.raise_for_status()
-            self.token = response.json()
-            self.user = user
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException(response.json()) from None
-            elif response.status_code == 400:
-                raise PlomAPIException(response.json()) from None
-            elif response.status_code == 409:
-                raise PlomExistingLoginException(response.json()) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        except requests.ConnectionError as err:
-            raise PlomSeriousException(
-                f"Cannot connect to server {self.base}\n{err}\n\nPlease check details and try again."
-            ) from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.put(
+                    f"/users/{user}",
+                    json={
+                        "user": user,
+                        "pw": pw,
+                        "api": str(Plom_Legacy_Server_API_Version),
+                        "client_ver": __version__,
+                    },
+                    timeout=5,
+                )
+                # throw errors when response code != 200.
+                response.raise_for_status()
+                self.token = response.json()
+                self.user = user
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.json()) from None
+                elif response.status_code == 400:
+                    raise PlomAPIException(response.json()) from None
+                elif response.status_code == 409:
+                    raise PlomExistingLoginException(response.json()) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+            except requests.ConnectionError as err:
+                raise PlomSeriousException(
+                    f"Cannot connect to server {self.base}\n{err}\n\nPlease check details and try again."
+                ) from None
 
     def _requestAndSaveToken_webplom(
         self, user: str, pw: str, *, exclusive: bool = False
@@ -930,29 +928,27 @@ class BaseMessenger:
             PlomNoClasslist: server has no classlist.
             PlomSeriousException: any other unexpected failures.
         """
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/ID/classlist",
-                json={"user": self.user, "token": self.token},
-            )
-            # throw errors when response code != 200.
-            response.raise_for_status()
-            # you can assign to the encoding to override the autodetection
-            # TODO: define API such that classlist must be utf-8?
-            # print(response.encoding)
-            # response.encoding = 'utf-8'
-            # classlist = StringIO(response.text)
-            classlist = response.json()
-            return classlist
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException(response.reason) from None
-            if response.status_code == 404:
-                raise PlomNoClasslist(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/ID/classlist",
+                    json={"user": self.user, "token": self.token},
+                )
+                # throw errors when response code != 200.
+                response.raise_for_status()
+                # you can assign to the encoding to override the autodetection
+                # TODO: define API such that classlist must be utf-8?
+                # print(response.encoding)
+                # response.encoding = 'utf-8'
+                # classlist = StringIO(response.text)
+                classlist = response.json()
+                return classlist
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoClasslist(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def IDgetPredictions(self):
         """Get all the predicted student ids.
