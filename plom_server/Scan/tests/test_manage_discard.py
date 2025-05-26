@@ -1,11 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 from django.test import TestCase
 from django.contrib.auth.models import User
 from model_bakery import baker
 
+from plom_server.Base.tests import config_test
+from plom_server.Mark.models import MarkingTask
 from plom_server.Papers.models import (
     Image,
     FixedPage,
@@ -19,12 +22,29 @@ from plom_server.Papers.models import (
 from ..services import ManageDiscardService
 
 
-class ManageScanTests(TestCase):
-    """Tests for Progress.services.ManageScanService."""
+class TestManageDiscard(TestCase):
+    """Tests for Scan.services.ManageDiscardService."""
 
+    @config_test(
+        {
+            "test_spec": "demo",
+            "test_sources": "demo",
+            "classlist": "demo",
+            "num_to_produce": 1,
+            "auto_init_tasks": True,
+        }
+    )
     def setUp(self) -> None:
         self.user0: User = baker.make(User, username="user0")
-        self.paper1 = baker.make(Paper, paper_number=1)
+        self.paper1 = Paper.objects.get(paper_number=1)
+
+        tasks = MarkingTask.objects.all()
+        papers = Paper.objects.all()
+        for paper in papers[0:6]:
+            for j in range(1, 2):
+                task = tasks.get(paper=paper, question_index=j)
+                task.status = MarkingTask.COMPLETE
+                task.save()
 
         return super().setUp()
 
@@ -77,17 +97,14 @@ class ManageScanTests(TestCase):
         )
 
     def test_discard_mobile_page(self) -> None:
+        """Test discard_mobile_page."""
         mds = ManageDiscardService()
 
         img1 = baker.make(Image)
         baker.make(QuestionPage, paper=self.paper1, page_number=2, question_index=1)
         baker.make(QuestionPage, paper=self.paper1, page_number=2, question_index=2)
-        mp1 = baker.make(MobilePage, paper=self.paper1, question_index=1, image=img1)
-        mp2 = baker.make(MobilePage, paper=self.paper1, question_index=2, image=img1)
+        baker.make(MobilePage, paper=self.paper1, question_index=1, image=img1)
         pk_not_there = MobilePage.objects.latest("pk").pk + 1
-
-        mds.discard_pushed_mobile_page(self.user0, mp1.pk, dry_run=True)
-        mds.discard_pushed_mobile_page(self.user0, mp2.pk, dry_run=False)
 
         self.assertRaises(
             ValueError,
@@ -96,6 +113,58 @@ class ManageScanTests(TestCase):
             pk_not_there,
             dry_run=False,
         )
+
+    def test__discard_mobile_page(self) -> None:
+        """Test _discard_mobile_page."""
+        mds = ManageDiscardService()
+
+        img1 = baker.make(Image)
+        baker.make(QuestionPage, paper=self.paper1, page_number=2, question_index=1)
+        baker.make(QuestionPage, paper=self.paper1, page_number=2, question_index=2)
+        mp1 = baker.make(MobilePage, paper=self.paper1, question_index=1, image=img1)
+        mp2 = baker.make(MobilePage, paper=self.paper1, question_index=2, image=img1)
+
+        # this should only delete the mobile page passed in
+        # it also shouldn't create a Discard page because mp2 still references img1
+        # it also should out of date the associated marking task
+        assert (
+            MarkingTask.objects.get(paper=self.paper1, question_index=1).status
+            != MarkingTask.OUT_OF_DATE
+        )
+        mds._discard_mobile_page(self.user0, mp1)
+        assert (
+            MarkingTask.objects.get(paper=self.paper1, question_index=1).status
+            == MarkingTask.OUT_OF_DATE
+        )
+        mp2.refresh_from_db()
+        with self.assertRaisesRegex(MobilePage.DoesNotExist, "does not exist"):
+            mp1.refresh_from_db()
+        assert not DiscardPage.objects.filter(image=img1).exists()
+
+        # this should create the DiscardPage, because no MobilePage references img1
+        mds._discard_mobile_page(self.user0, mp2)
+        with self.assertRaisesRegex(MobilePage.DoesNotExist, "does not exist"):
+            mp2.refresh_from_db()
+        assert DiscardPage.objects.filter(image=img1).exists()
+
+    def test__discard_mobile_page_cascade(self) -> None:
+        """Test _discard_mobile_page 'cascade' kwarg."""
+        mds = ManageDiscardService()
+
+        img1 = baker.make(Image)
+        baker.make(QuestionPage, paper=self.paper1, page_number=2, question_index=1)
+        baker.make(QuestionPage, paper=self.paper1, page_number=2, question_index=2)
+        mp1 = baker.make(MobilePage, paper=self.paper1, question_index=1, image=img1)
+        mp2 = baker.make(MobilePage, paper=self.paper1, question_index=2, image=img1)
+
+        # this should only delete all mobile pages referencing img1 (mp1, mp2)
+        # and create a DiscardPage referencing img1
+        mds._discard_mobile_page(self.user0, mp1, cascade=True)
+        with self.assertRaisesRegex(MobilePage.DoesNotExist, "does not exist"):
+            mp1.refresh_from_db()
+        with self.assertRaisesRegex(MobilePage.DoesNotExist, "does not exist"):
+            mp2.refresh_from_db()
+        assert DiscardPage.objects.filter(image=img1).exists()
 
     def test_discard_image_from_pk(self) -> None:
         mds = ManageDiscardService()
@@ -198,6 +267,11 @@ class ManageScanTests(TestCase):
         disc4 = baker.make(DiscardPage, image=img4)
 
         img0 = baker.make(Image)
+        qp3 = QuestionPage.objects.get(paper=self.paper1, page_number=3)
+        qp3.image = img0
+        qp3.save()
+        baker.make(FixedPage, paper=self.paper1, page_number=7, image=None)
+        """
         baker.make(
             IDPage,
             paper=self.paper1,
@@ -224,7 +298,7 @@ class ManageScanTests(TestCase):
             page_number=4,
             image=None,
         )
-        baker.make(FixedPage, paper=self.paper1, page_number=5, image=None)
+        """
 
         pk_not_there = DiscardPage.objects.latest("pk").pk + 1
         # try with non-existent image pk
@@ -243,19 +317,19 @@ class ManageScanTests(TestCase):
             self.user0,
             disc1.pk,
             1,
-            2,
+            3,
         )
         # now assign to a question page
         mds.assign_discard_page_to_fixed_page(
             self.user0,
             disc1.pk,
             1,
-            3,
+            4,
         )
         # and an ID-page
         mds.assign_discard_page_to_fixed_page(self.user0, disc2.pk, 1, 1)
         # and a DNM-page
-        mds.assign_discard_page_to_fixed_page(self.user0, disc3.pk, 1, 4)
+        mds.assign_discard_page_to_fixed_page(self.user0, disc3.pk, 1, 2)
         # and this should raise an exception since the fixed page is not a Q,ID or DNM-page
         self.assertRaises(
             RuntimeError,
@@ -263,13 +337,14 @@ class ManageScanTests(TestCase):
             self.user0,
             disc4.pk,
             1,
-            5,
+            7,
         )
 
     def test_some_reassign_exceptions(self) -> None:
         mds = ManageDiscardService()
         # there are no discard pages, so can choose pk = 17 and it won't be there.
         pk_not_there = 17
+        page_not_there = 12000  # this is lazy, should check spec
         # test non-existent discardpage
         self.assertRaises(
             ValueError,
@@ -307,5 +382,10 @@ class ManageScanTests(TestCase):
         # test non-existent fixed page.
         # there are no fixed pages, so can just pick 1
         self.assertRaises(
-            ValueError, mds._assign_discard_to_fixed_page, self.user0, dp1.pk, 1, 1
+            ValueError,
+            mds._assign_discard_to_fixed_page,
+            self.user0,
+            dp1.pk,
+            1,
+            page_not_there,
         )
