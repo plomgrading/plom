@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018-2025 Colin B. Macdonald
+# Copyright (C) 2025 Philip D. Loewen
 
 import functools
 
@@ -22,9 +23,9 @@ def start_messenger(
         msgr.requestAndSaveToken(usr, pwd)
     except PlomExistingLoginException:
         print(
-            "You appear to be already logged in!\n\n"
+            f"User {usr} appears to be already logged in!\n\n"
             "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another scanner-script running,\n"
+            "  * Do you have another script running,\n"
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-cli clear"'
         )

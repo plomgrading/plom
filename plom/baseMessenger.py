@@ -467,7 +467,7 @@ class BaseMessenger:
                 as invalid URL.
         """
         if self.session:
-            log.debug("already have an requests-session")
+            log.debug("already have a requests-session")
         else:
             log.debug("starting a new requests-session")
             self._start_session()
