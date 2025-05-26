@@ -13,6 +13,8 @@ from rest_framework.request import Request
 from rest_framework.views import APIView
 from rest_framework import status
 
+from plom_server.Preparation.models import PaperSourcePDF
+
 from plom.plom_exceptions import PlomDependencyConflict
 from plom_server.Papers.services import SpecificationService
 from plom_server.Preparation.services import SourceService
@@ -59,7 +61,14 @@ class SourceDetail(APIView):
             Http response 200 with the PDF file as the payload.
             A 404 response if that version isn't found.
         """
-        abstract_django_file = SourceService._get_source_file(version)
+        try:
+            abstract_django_file = SourceService._get_source_file(version)
+        except PaperSourcePDF.DoesNotExist as e:
+            return _error_response(
+                f"PDF for source {version} not found: {e}",
+                status.HTTP_404_NOT_FOUND,
+            )
+
         slug = SpecificationService.get_short_name_slug()
         if version is not None:
             try:
