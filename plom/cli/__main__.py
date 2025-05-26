@@ -73,10 +73,9 @@ def get_parser() -> argparse.ArgumentParser:
             action="store",
             help=f"""
                 URL of server to contact. If omitted, the environment variable
-                PLOM_SERVER will be used instead.
-                Protocol prefix is optional:
-                'https://' is the default, but 'http://' is accepted.
-                Port is optional: default is {Default_Port}.
+                PLOM_SERVER will be used instead. Protocol prefix is optional:
+                'https://' is the default, but 'http://' is accepted. Port is
+                optional: default is {Default_Port}.
             """,
         )
         x.add_argument(
