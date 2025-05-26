@@ -77,44 +77,71 @@ class ManageDiscardService:
         )
 
     @transaction.atomic
-    def _discard_mobile_page(self, user_obj: User, mpage_obj: MobilePage) -> None:
-        # note that a single mobile page is attached to an image that
-        # might be associated with multiple questions. Accordingly
-        # when we discard this mobile-page we also discard any other
-        # mobile pages associated with this image **and** also flag
-        # the marking tasks associated with those mobile pages as 'out
-        # of date'
+    def _discard_mobile_page(
+        self, user_obj: User, mpage_obj: MobilePage, *, cascade: bool = False
+    ) -> None | DiscardPage:
+        """Delete a MobilePage object.
 
-        img_to_disc = mpage_obj.image
-        paper_number = mpage_obj.paper.paper_number
+        This function **must** do all three things (hence the transaction decorator):
+        (1) delete the MobilePage.
+        (2) check if the MobilePage was relevant to any MarkingTask objects.
+        If it was, out of date those MarkingTask objects.
+        (3) Check if the page image in the discarded MobilePage is still
+        referenced by other MobilePages. If not, create a DiscardPage referencing it.
 
-        DiscardPage.objects.create(
-            image=img_to_disc,
-            discard_reason=(
-                f"User {user_obj.username} discarded mobile "
-                f"paper {paper_number} "
-                f"question index {mpage_obj.question_index}."
-            ),
-        )
+        Args:
+            user_obj: The user to attribute this action to.
+            mpage_obj: The mobile page object to discard.
 
-        # find all the mobile pages associated with this image
-        # set the associated marking tasks to "OUT_OF_DATE"
-        qn_to_outdate = [mpg.question_index for mpg in img_to_disc.mobilepage_set.all()]
-        # and now delete each of those mobile pages
-        for mpg in img_to_disc.mobilepage_set.all():
-            mpg.delete()
-        # outdate any associated marking tasks
-        # this also makes new marking tasks if possible
-        for qn in qn_to_outdate:
-            # the ones that were DNM cannot effect tasks
-            if qn == MobilePage.DNM_qidx:
+        Keyword Args:
+            cascade: Whether this function should find other MobilePage objects
+            referencing the same img attribute, and also delete those.
+
+        Returns:
+            The DiscardPage object, if one was created, or None.
+        """
+        page_img = mpage_obj.image
+        if cascade:
+            mobile_pages = page_img.mobilepage_set.all().select_related("paper")
+        else:
+            # turns the MobilePage into a queryset, but +1 query
+            mobile_pages = MobilePage.objects.filter(id=mpage_obj.id)
+        paper_qidx_dicts = [
+            {"paper_number": m.paper.paper_number, "question_index": m.question_index}
+            for m in mobile_pages
+        ]
+
+        # (1)
+        mobile_pages.delete()
+
+        # (2)
+        mts = MarkingTaskService()
+        for pqdict in paper_qidx_dicts:
+            if pqdict["question_index"] == MobilePage.DNM_qidx:
                 continue
-            MarkingTaskService().set_paper_marking_task_outdated(paper_number, qn)
+            mts.set_paper_marking_task_outdated(
+                pqdict["paper_number"], pqdict["question_index"]
+            )
+
+        # (3)
+        if cascade or page_img.mobilepage_set.count() < 1:
+            ood_tasks = ", ".join(
+                [f"{d['paper_number']}-{d['question_index']}" for d in paper_qidx_dicts]
+            )
+            return DiscardPage.objects.create(
+                image=page_img,
+                discard_reason=(
+                    f"User {user_obj.username} discarded mobile attached "
+                    "to marking tasks (paper number, question index): " + ood_tasks
+                ),
+            )
+
+        return None
 
     def discard_whole_paper_by_number(
         self, user_obj: User, paper_number: int, *, dry_run: bool = True
     ):
-        """Discard all pushed images from the given paper.
+        """Discard all pushed pages from the given paper.
 
         Args:
             user_obj (User): the User who is discarding
@@ -255,23 +282,26 @@ class ManageDiscardService:
         )
 
     def discard_pushed_image_from_pk(self, user_obj: User, image_pk: int) -> None:
-        """Given pk of a pushed image, discard it."""
+        """Discard all pushed pages referencing the keyed Image.
+
+        Args:
+            user_obj: the user to attribute this action to.
+            image_pk: the id of the image to discard and cascade.
+        """
         try:
             image_obj = Image.objects.get(pk=image_pk)
         except ObjectDoesNotExist as e:
             raise ValueError(f"An image with pk {image_pk} does not exist.") from e
-        # is either a fixed page, mobile page or discard page
+        # Assume FixedPage, MobilePage, or DiscardPage
         if image_obj.fixedpage_set.exists():
             self.discard_pushed_fixed_page(
                 user_obj, image_obj.fixedpage_set.first().pk, dry_run=False
             )
         elif image_obj.mobilepage_set.exists():
-            # notice that this will discard all mobile pages with that image.
-            self.discard_pushed_mobile_page(
-                user_obj, image_obj.mobilepage_set.first().pk, dry_run=False
+            self._discard_mobile_page(
+                user_obj, image_obj.mobilepage_set.first(), cascade=True
             )
         else:
-            # is already a discard page, so nothing to do.
             pass
 
     def discard_pushed_page_cmd(
@@ -282,10 +312,10 @@ class ManageDiscardService:
         mobilepage_pk: int | None = None,
         dry_run: bool = True,
     ) -> str:
-        """Given the pk of either a fixed-page or a mobile-page discard it to a discard-page.
+        """Given the pk of either a fixed-page or a mobile-page discard it.
 
-        This is a simple wrapper around the discard_pushed_fixed_page
-        and discard_pushed_mobile_page functions.
+        This is a wrapper for the :func:`discard_pushed_fixed_page`
+        and :func:`discard_pushed_mobile_page` functions.
 
         Args:
             username: the name of the user doing the discarding. Note - must be a manager.
