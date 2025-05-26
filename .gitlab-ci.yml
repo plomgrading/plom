@@ -514,7 +514,7 @@ no-question-numbers:
     # For now, just ensure the total does not increase
     - echo $HOW_MANY
     # Future hackers: consider trying to decrease this number
-    - bash -c "[[ $HOW_MANY -le 23 ]]"
+    - bash -c "[[ $HOW_MANY -le 16 ]]"
   allow_failure: true
 
 

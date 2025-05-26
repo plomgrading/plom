@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2025 Andrew Rechnitzer
+# Copyright (C) 2025 Aidan Murphy
 
 from datetime import datetime
 from pathlib import Path
@@ -292,7 +293,7 @@ class ReassembleService:
         for paper in all_papers:
             status[paper.paper_number] = {
                 "paper_num": int(paper.paper_number),
-                "scanned": False,
+                "used": False,
                 "identified": False,
                 "marked": False,
                 "number_marked": 0,
@@ -307,8 +308,8 @@ class ReassembleService:
             }
         number_of_questions = SpecificationService.get_n_questions()
 
-        for pn in ManageScanService.get_all_complete_papers():
-            status[pn]["scanned"] = True
+        for pn in ManageScanService.get_all_used_papers():
+            status[pn]["used"] = True
 
         def latest_update(time_a: datetime | None, time_b: datetime) -> datetime:
             if time_a is None:

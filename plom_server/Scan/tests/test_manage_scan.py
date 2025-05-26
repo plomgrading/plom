@@ -3,10 +3,12 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 from django.test import TestCase
 from model_bakery import baker
 
+from plom_server.Base.tests import config_test
 from plom_server.Papers.models import Image, FixedPage, MobilePage, Bundle, Paper
 from ..services import ManageScanService
 
@@ -14,6 +16,7 @@ from ..services import ManageScanService
 class ManageScanServiceTests(TestCase):
     """Tests for Progress.services.ManageScanService."""
 
+    @config_test({"test_spec": "demo"})
     def setUp(self):
         self.bundle = baker.make(
             Bundle,
@@ -82,7 +85,7 @@ class ManageScanServiceTests(TestCase):
                 img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
                 baker.make(MobilePage, paper=paper, question_index=qn, image=img)
 
-        # make 4 papers with 3 mobile pages and all fixed pages unscanned
+        # make 4 papers with 3 mobile pages and all fixed pages unscanned ("complete")
         for paper_number in [12, 13, 14, 15]:
             paper = baker.make(Paper, paper_number=paper_number)
             for pg in range(1, 7):
@@ -90,6 +93,18 @@ class ManageScanServiceTests(TestCase):
                     FixedPage, paper=paper, image=None, version=1, page_number=pg
                 )
             for qn in range(1, 4):
+                ord += 1
+                img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
+                baker.make(MobilePage, paper=paper, question_index=qn, image=img)
+
+        # make 3 papers with 2 mobile pages and all fixed pages unscanned ("incomplete")
+        for paper_number in [16, 17, 18]:
+            paper = baker.make(Paper, paper_number=paper_number)
+            for pg in range(1, 7):
+                baker.make(
+                    FixedPage, paper=paper, image=None, version=1, page_number=pg
+                )
+            for qn in range(1, 3):
                 ord += 1
                 img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
                 baker.make(MobilePage, paper=paper, question_index=qn, image=img)
@@ -104,27 +119,28 @@ class ManageScanServiceTests(TestCase):
         # * 8,9 = completely unscanned = unused
         # * 10,11 = 2 scanned fixed pages, 4 unscanned, 2 mobile pages = incomplete  (2*2 scanned, 2*2 mobile)
         # * 12,13,14,15 = three mobile pages each (questions 1, 2, 3). (3*2 mobile)
+        # * 16,17,18 = two mobile pages each (questions 1, 2, 3). (2*2 mobile)
         mss = ManageScanService()
-        assert mss.get_total_test_papers() == 15
-        assert mss.get_total_fixed_pages() == 15 * 6
-        assert mss.get_total_mobile_pages() == 1 + 2 * 2 + 4 * 3
+        assert mss.get_total_papers() == 18
+        assert mss.get_total_fixed_pages() == 18 * 6
+        assert mss.get_total_mobile_pages() == 1 + 2 * 2 + 4 * 3 + 3 * 2
         assert (
             mss.get_number_of_scanned_pages()
-            == 5 * 6 + 1 + 2 * 2 + 2 * 2 + 2 * 2 + 4 * 3
+            == 5 * 6 + 1 + 2 * 2 + 2 * 2 + 2 * 2 + 4 * 3 + 3 * 2
         )
-        assert mss.get_number_unused_test_papers() == 2
-        assert mss.get_number_completed_test_papers() == 5 + 4
-        assert mss.get_number_incomplete_test_papers() == 2 + 2
+        assert mss.get_number_unused_papers() == 2
+        assert mss.get_number_completed_papers() == 5 + 4
+        assert mss.get_number_incomplete_papers() == 2 + 2 + 3
 
     def test_get_all_used_and_unused_papers(self) -> None:
         unused = [8, 9]
         self.assertEqual(ManageScanService.get_all_unused_papers(), unused)
-        used = [x for x in range(1, 16) if x not in unused]
+        used = [x for x in range(1, 19) if x not in unused]
         self.assertEqual(ManageScanService.get_all_used_papers(), used)
 
     def test_get_all_incomplete_papers(self) -> None:
         mss_incomplete = ManageScanService.get_all_incomplete_papers()
-        # papers 6,7,10,11 is incomplete - should return dict of the form
+        # papers 6,7,10,11 are incomplete - should return dict of the form
         #
         # 6: {'fixed': [{'status': 'present', 'page_number': 1,
         # 'page_pk': 211, 'img_pk': 142}, {'status': 'present',
@@ -136,8 +152,14 @@ class ManageScanServiceTests(TestCase):
         # 'kind': 'QuestionPage'}, {'status': 'missing',
         # 'page_number': 6, 'page_pk': 216, 'kind': 'QuestionPage'}],
         # 'mobile': []},
+        #
+        # papers 16, 17, 18 also incomplete - should return dict of the form
+        #
+        # 16: {'fixed': [], 'mobile': [{'question_idx': 1,'img_pk': 345,
+        # 'page_pk': 678, 'page_label': 'qi.1'}, {'question_idx': 2,
+        # 'img_pk': 346, 'page_pk': 679, 'page_label': 'qi.2'}]}
 
-        assert len(mss_incomplete) == 4
+        assert len(mss_incomplete) == 7
         for pn in [6, 7]:
             assert 6 in mss_incomplete
             # it is missing pages 3,4,5,6, but has fixed pages 1,2 - the img_pk of those we can ignore.
@@ -180,7 +202,22 @@ class ManageScanServiceTests(TestCase):
                 assert "img_pk" not in f_pg_data[pg - 1]
             for pg in range(1, 3):
                 assert (
-                    m_pg_data[pg - 1]["question_number"] == pg
+                    m_pg_data[pg - 1]["question_idx"] == pg
+                )  # 7th, 8th entries are q's 1,2.
+                assert (
+                    "img_pk" in m_pg_data[pg - 1]
+                )  # not testing the actual value of image_pk
+
+        for pn in [16, 17, 18]:
+            assert pn in mss_incomplete
+            # it is missing pages 3,4,5,6, but has fixed pages 1,2 and mobile for q1,2- the img_pk of those we can ignore.
+            f_pg_data = mss_incomplete[pn]["fixed"]
+            m_pg_data = mss_incomplete[pn]["mobile"]
+            assert len(f_pg_data) == 0
+            assert len(m_pg_data) == 2
+            for pg in range(1, 3):
+                assert (
+                    m_pg_data[pg - 1]["question_idx"] == pg
                 )  # 7th, 8th entries are q's 1,2.
                 assert (
                     "img_pk" in m_pg_data[pg - 1]
@@ -192,7 +229,7 @@ class ManageScanServiceTests(TestCase):
         # paper 1 has 6 fixed and 1 mobile.
         # papers 2,3,4,5 = should have all 6 fixed pages - returned in page-number order
         # papers 12,13,14,15 should have 3 mobile pages (one each for q 1,2,3) - returned in question order
-        assert len(mss_complete) == 9
+        assert len(mss_complete) == 9, f"mss_complete ({len(mss_complete)}) should be 9"
 
         for pn in [1]:
             assert pn in mss_complete
@@ -207,7 +244,7 @@ class ManageScanServiceTests(TestCase):
                 )  # not testing the actual value of image_pk
 
             for qn in [1]:  # is the 7th page of the test
-                self.assertEqual(m_page_data[0]["question_number"], qn)
+                self.assertEqual(m_page_data[0]["question_idx"], qn)
                 assert (
                     "img_pk" in m_page_data[qn - 1]
                 )  # not testing the actual value of image_pk
@@ -225,7 +262,17 @@ class ManageScanServiceTests(TestCase):
             assert pn in mss_complete
             m_page_data = mss_complete[pn]["mobile"]
             for qn in range(1, 4):
-                self.assertEqual(m_page_data[qn - 1]["question_number"], qn)
+                self.assertEqual(m_page_data[qn - 1]["question_idx"], qn)
                 assert (
                     "img_pk" in m_page_data[qn - 1]
                 )  # not testing the actual value of image_pk
+
+    def test_is_paper_completely_scanned(self) -> None:
+        """Test whether we can tell if a paper is scanned."""
+        # papers 6, 7, 10, 11, 16, 17, 18 are incomplete
+
+        mss = ManageScanService()
+        assert mss.is_paper_completely_scanned(1)
+        assert mss.is_paper_completely_scanned(12)
+        assert not mss.is_paper_completely_scanned(6)
+        assert not mss.is_paper_completely_scanned(16)

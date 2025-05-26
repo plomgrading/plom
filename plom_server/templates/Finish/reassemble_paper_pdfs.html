@@ -4,6 +4,7 @@
     Copyright (C) 2022 Brennen Chiu
     Copyright (C) 2023-2025 Andrew Rechnitzer
     Copyright (C) 2023, 2025 Colin B. Macdonald
+    Copyright (C) 2025 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% load static %}
@@ -77,6 +78,14 @@
                 {% if n_errors %}
                     <li>
                         <i class="bi bi-exclamation-diamond-fill text-danger"></i> {{ n_errors }} errors in reassembly
+                    </li>
+                {% endif %}
+                {% if partially_scanned_papers_abbrev_list %}
+                    <li>
+                        <i class="bi bi-question-diamond-fill text-warning"></i>
+                        paper{{ partially_scanned_papers|length|pluralize }} {{ partially_scanned_papers_abbrev_list }}
+                        may be missing page[s]
+                        (see <a href="{% url 'scan_list_incomplete' %}">'incomplete' papers</a>)
                     </li>
                 {% endif %}
             </ul>
@@ -155,7 +164,7 @@
                     <th scope="col">Action</th>
                 </tr>
                 {% for row in papers %}
-                    {% if row.scanned %}
+                    {% if row.used %}
                         <tr style="{% if row.obsolete %} text-decoration: line-through;
                                    {% endif %}">
                             <td>{{ row.paper_num }}</td>

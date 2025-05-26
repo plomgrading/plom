@@ -36,9 +36,9 @@ class ScannerOverview(ScannerRequiredView):
         context = self.build_context()
         mss = ManageScanService()
 
-        total_papers = mss.get_total_test_papers()
-        completed_papers = mss.get_number_completed_test_papers()
-        incomplete_papers = mss.get_number_incomplete_test_papers()
+        total_papers = mss.get_total_papers()
+        completed_papers = mss.get_number_completed_papers()
+        incomplete_papers = mss.get_number_incomplete_papers()
         pushed_bundles = mss.get_number_pushed_bundles()
         unpushed_bundles = mss.get_number_unpushed_bundles()
         discards = mss.get_discarded_page_info()
