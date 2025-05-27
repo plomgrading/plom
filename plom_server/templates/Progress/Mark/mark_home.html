@@ -22,8 +22,12 @@
     {% endif %}
     {% if missing_task_count > 0 %}
         <div class="container w-100 alert alert-warning">
-            There are {{ missing_task_count }} missing tasks. Manager can <a href="{% url 'scan_list_incomplete' %}">click here</a> to view the
-            missing tasks.
+            There are {{ missing_task_count }} missing tasks.
+            {% if user_is_manager %}
+                <a href="{% url 'scan_list_incomplete' %}">Click here</a> to examine the tasks.
+            {% else %}
+                Manager can examine the missing tasks.
+            {% endif %}
         </div>
     {% endif %}
     <div class="container w-100">
