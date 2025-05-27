@@ -6,6 +6,7 @@
 # Copyright (C) 2022 Nicholas J H Lai
 # Copyright (C) 2023 Philip Loewen
 
+
 """Build and populate a Plom server from a Canvas Assignment.
 
 The goal is automate using Plom as an alternative to Canvas's
@@ -45,7 +46,7 @@ if sys.version_info < (3, 11):
 else:
     import tomllib
 
-import pymupdf as fitz
+import pymupdf
 import PIL.Image
 import requests
 from tqdm import tqdm
@@ -399,7 +400,7 @@ def get_submissions(
                 f.write(r.content)
 
             if suffix != "pdf":
-                # TODO: fitz can do this too
+                # TODO: pymupdf can do this too
                 img = PIL.Image.open(filename)
                 img = img.convert("RGB")
                 filename = filename.with_suffix(".pdf")
@@ -415,10 +416,10 @@ def get_submissions(
             attachment_filenames[0].rename(final_name)
         else:
             # TODO: stitching not ideal: prefer bundles from original files
-            doc = fitz.Document()
+            doc = pymupdf.Document()
             for f in attachment_filenames:
                 try:
-                    doc.insert_pdf(fitz.open(f))
+                    doc.insert_pdf(pymupdf.open(f))
                 except RuntimeError:
                     print(f"We had problems with {sub} because of error on {f}")
                     errors.append(sub)
@@ -510,7 +511,7 @@ def scan_submissions(
 
         # try to open pdf first, continue on error
         try:
-            num_pages = len(fitz.open(pdf))
+            num_pages = len(pymupdf.open(pdf))
         except RuntimeError as e:
             print(f"Error processing student {sid} due to file error on {pdf}")
             errors.append((sid, e))

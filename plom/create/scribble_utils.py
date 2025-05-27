@@ -5,7 +5,6 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Elizabeth Xiao
 # Copyright (C) 2023 Sarah Oskuei
-
 """Plom tools for scribbling fake answers on PDF files."""
 
 import base64
@@ -14,7 +13,7 @@ import random
 from importlib import resources
 from pathlib import Path
 
-import pymupdf as fitz
+import pymupdf 
 
 import plom.create
 import plom.create.fonts
@@ -272,10 +271,10 @@ def scribble_name_and_id(
     seed=None,
     y_offset: int = 0,
 ):
-    """Write name/number on coverpage of fitz pdf_doc.
+    """Write name/number on coverpage of pymupdf pdf_doc.
 
     Args:
-        pdf_doc (fitz.Document): an open pdf file, we'll modify it
+        pdf_doc (pymupdf.Document): an open pdf file, we'll modify it
             implicitly but not close it.
         student_id (str): student id number to write on page.
         student_name (str): student name to write on page.
@@ -306,7 +305,7 @@ def scribble_name_and_id(
     width = 28
     border = 8
     for n, digit in enumerate(student_id):
-        rect1 = fitz.Rect(
+        rect1 = pymupdf.Rect(
             220 + border * n + width * n,
             265 + y_offset,
             220 + border * n + width * (n + 1),
@@ -319,7 +318,7 @@ def scribble_name_and_id(
         # TODO - there should be an assert or something here after insert?
 
     fontname, ttf = "ejx", "ejx_handwriting.ttf"
-    rect = fitz.Rect(220 + random.randrange(0, 16), 406 + y_offset, 600, 511 + y_offset)
+    rect = pymupdf.Rect(220 + random.randrange(0, 16), 406 + y_offset, 600, 511 + y_offset)
     fontres = resources.files(plom.create.fonts) / ttf
     excess = id_page.insert_textbox(
         rect,
@@ -335,10 +334,10 @@ def scribble_name_and_id(
 
 
 def scribble_pages(pdf_doc, exclude=(0, 1)):
-    """Scribble on most pages of fitz pdf_doc.
+    """Scribble on most pages of pymupdf pdf_doc.
 
     Arguments:
-        pdf_doc (fitz.Document): an open pdf file, we'll modify it
+        pdf_doc (pymupdf.Document): an open pdf file, we'll modify it
             implicitly but not close it.
 
     Keyword Args:
@@ -355,7 +354,7 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
 
     # Write some random answers on the pages
     for page_index, pdf_page in enumerate(pdf_doc):
-        answer_rect = fitz.Rect(
+        answer_rect = pymupdf.Rect(
             100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
         )
         answer_text = random.choice(possible_answers)
@@ -411,7 +410,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, *, which=None):
     if not extra_pages_pdf_path.exists():
         build_extra_page_pdf(destination_dir=Path.cwd())
 
-    with fitz.open(extra_pages_pdf_path) as extra_pages_pdf:
+    with pymupdf.open(extra_pages_pdf_path) as extra_pages_pdf:
 
         print("Annotating papers with fake student data and scribbling on pages...")
         if which:
@@ -459,7 +458,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, *, which=None):
         random.shuffle(use_these_students)
 
         # A complete collection of the pdfs created
-        with fitz.open() as all_pdf_documents:
+        with pymupdf.open() as all_pdf_documents:
 
             for index, f in enumerate(papers_paths):
                 if f in named_papers_paths:
@@ -471,7 +470,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, *, which=None):
                     student_name = x["name"]
                     print(f"{f.name} - scribbled using {student_id} {student_name}")
 
-                with fitz.open(f) as pdf_document:
+                with pymupdf.open(f) as pdf_document:
                     if f not in named_papers_paths:
                         # TODO: use spec.IDpage
                         scribble_name_and_id(pdf_document, student_id, student_name)
@@ -508,16 +507,16 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, *, which=None):
                     )
                     page_rect = all_pdf_documents[-1].rect
                     # stamp some info on it - TODO - make this look better.
-                    tw = fitz.TextWriter(page_rect, color=(0, 0, 1))
+                    tw = pymupdf.TextWriter(page_rect, color=(0, 0, 1))
                     # TODO - make these numbers less magical
-                    maxbox = fitz.Rect(25, 400, 500, 600)
+                    maxbox = pymupdf.Rect(25, 400, 500, 600)
                     # page.draw_rect(maxbox, color=(1, 0, 0))
                     excess = tw.fill_textbox(
                         maxbox,
                         f"EXTRA PAGE - t{test_number} Q1 - {student_id}",
-                        align=fitz.TEXT_ALIGN_LEFT,
+                        align=pymupdf.TEXT_ALIGN_LEFT,
                         fontsize=extra_page_font_size,
-                        font=fitz.Font("helv"),
+                        font=pymupdf.Font("helv"),
                     )
                     assert not excess, "Text didn't fit: is extra-page text too long?"
                     tw.write_text(all_pdf_documents[-1])
@@ -549,7 +548,7 @@ def make_garbage_pages(pdf_file, number_of_garbage_pages=2):
     """
     green = [0, 0.75, 0]
 
-    with fitz.open(pdf_file) as doc:
+    with pymupdf.open(pdf_file) as doc:
         print("Doc has {} pages".format(len(doc)))
         for _ in range(number_of_garbage_pages):
             garbage_page_index = random.randint(-1, len(doc))
@@ -576,13 +575,13 @@ def make_colliding_pages(paper_dir, outfile):
     paper_dir = Path(paper_dir)
     outfile = Path(outfile)
 
-    with fitz.open(outfile) as all_pdf_documents:
+    with pymupdf.open(outfile) as all_pdf_documents:
         # Customizable data
         colliding_page_font_size = 18
 
         papers_paths = sorted(paper_dir.glob("exam_*.pdf"))
         for file_name in papers_paths[1:3]:  # just grab papers 2 and 3.
-            with fitz.open(file_name) as pdf_document:
+            with pymupdf.open(file_name) as pdf_document:
                 test_length = len(pdf_document)
                 colliding_page_index = random.randint(-1, len(all_pdf_documents))
                 print(
@@ -597,7 +596,7 @@ def make_colliding_pages(paper_dir, outfile):
                     start_at=colliding_page_index,
                 )
             excess = all_pdf_documents[colliding_page_index].insert_textbox(
-                fitz.Rect(100, 100, 500, 500),
+                pymupdf.Rect(100, 100, 500, 500),
                 "I was dropped on the floor and rescanned.",
                 fontsize=colliding_page_font_size,
                 color=blue,
@@ -613,7 +612,7 @@ def make_colliding_pages(paper_dir, outfile):
 def splitFakeFile(outfile, *, parts=3):
     """Split the scribble pdf into specified number of files (defaults to 3)."""
     outfile = Path(outfile)
-    with fitz.open(outfile) as originalPDF:
+    with pymupdf.open(outfile) as originalPDF:
 
         if parts < 1:
             raise ValueError("Cannot split PDF into fewer than 1 part")
@@ -624,7 +623,7 @@ def splitFakeFile(outfile, *, parts=3):
         length = len(originalPDF) // parts
 
         for p in range(parts):
-            with fitz.open() as doc:
+            with pymupdf.open() as doc:
                 # be careful with last file.
                 if p != parts - 1:
                     doc.insert_pdf(

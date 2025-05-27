@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024 Philip D Loewen
 # Copyright (C) 2024 Andrew Rechnitzer
+# Copyright (C) 2025 Deep Shah
 
 """Generate a PDF with title text and QR codes both indicating scrap.
 
@@ -41,7 +42,7 @@ from __future__ import annotations
 
 import argparse
 
-import pymupdf as fitz
+import pymupdf 
 import segno
 import io
 
@@ -54,7 +55,7 @@ cnrSE = 4
 
 
 def stamp_page(
-    PDFpage: fitz.Page,
+    PDFpage: pymupdf.Page,
     NW: str | None = None,
     NE: str | None = None,
     SE: str | None = None,
@@ -82,32 +83,32 @@ def stamp_page(
         NWstream = io.BytesIO()
         QRNW.save(NWstream, kind="png")
 
-        PDFpage.insert_image(fitz.Rect(xmin, ymin, xmin + w, ymin + w), stream=NWstream)
+        PDFpage.insert_image(pymupdf.Rect(xmin, ymin, xmin + w, ymin + w), stream=NWstream)
 
     if NE is not None:
         QRNE = segno.make(NE, micro=True)
         NEstream = io.BytesIO()
         QRNE.save(NEstream, kind="png")
 
-        PDFpage.insert_image(fitz.Rect(xmax - w, ymin, xmax, ymin + w), stream=NEstream)
+        PDFpage.insert_image(pymupdf.Rect(xmax - w, ymin, xmax, ymin + w), stream=NEstream)
 
     if SE is not None:
         QRSE = segno.make(SE, micro=True)
         SEstream = io.BytesIO()
         QRSE.save(SEstream, kind="png")
 
-        PDFpage.insert_image(fitz.Rect(xmax - w, ymax - w, xmax, ymax), stream=SEstream)
+        PDFpage.insert_image(pymupdf.Rect(xmax - w, ymax - w, xmax, ymax), stream=SEstream)
 
     if SW is not None:
         QRSW = segno.make(SW, micro=True)
         SWstream = io.BytesIO()
         QRSW.save(SWstream, kind="png")
 
-        PDFpage.insert_image(fitz.Rect(xmin, ymax - w, xmin + w, ymax), stream=SWstream)
+        PDFpage.insert_image(pymupdf.Rect(xmin, ymax - w, xmin + w, ymax), stream=SWstream)
 
     if title is not None:
         # Centre title between QR boxes
-        tlen = fitz.get_text_length(title)
+        tlen = pymupdf.get_text_length(title)
         PDFpage.insert_text([(xmin + xmax) / 2 - tlen / 2, ymin + w / 2], title)
 
     return PDFpage
@@ -171,9 +172,9 @@ if __name__ == "__main__":
     # Build a base document to decorate.
     # This must have a positive, even number of pages
     if args.pdf is not None:
-        unstamped = fitz.Document(args.pdf)
+        unstamped = pymupdf.Document(args.pdf)
     else:
-        unstamped = fitz.Document()
+        unstamped = pymupdf.Document()
 
     while len(unstamped) % 2 != 0 or len(unstamped) == 0:
         _ = unstamped.new_page(0, width=612, height=792)
@@ -181,7 +182,7 @@ if __name__ == "__main__":
     if args.debug:
         print(f"Unstamped template doc  is ready, with {len(unstamped)} pages.")
 
-    outdoc = fitz.Document()
+    outdoc = pymupdf.Document()
     for i in range(args.copies):
         QRmessage = f"PLOM{i:04d}"
         for p in range(len(unstamped)):

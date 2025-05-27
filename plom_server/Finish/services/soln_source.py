@@ -5,7 +5,7 @@
 import hashlib
 import io
 
-import pymupdf as fitz
+import pymupdf 
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
@@ -118,7 +118,7 @@ class SolnSourceService:
         # read the file into here so we can do some correctness checks before saving it.
         file_bytes = in_memory_file.read()
 
-        with fitz.open(stream=file_bytes) as doc:
+        with pymupdf.open(stream=file_bytes) as doc:
             if len(doc) != SolnSpecService.get_n_pages():
                 raise ValueError(
                     f"Solution pdf does has {len(doc)} pages - needs {SolnSpecService.get_n_pages()}."
@@ -140,7 +140,7 @@ class SolnSourceService:
             # Assembly of solutions for each paper will use the source pdfs, not these images.
             self._create_solution_images(version, doc)
 
-    def _create_solution_images(self, version: int, doc: fitz.Document) -> None:
+    def _create_solution_images(self, version: int, doc: pymupdf.Document) -> None:
         """Create one solution image for each question of the given version, for client.
 
         Images are extracted at 150 DPI.
@@ -153,7 +153,7 @@ class SolnSourceService:
             total_w = sum([X.width for X in pix_list])
             max_h = max([X.height for X in pix_list])
             # creage a dest image on which to tile these images - with given max height and total width.
-            soln_img = fitz.Pixmap(
+            soln_img = pymupdf.Pixmap(
                 pix_list[0].colorspace, (0, 0, total_w, max_h), pix_list[0].alpha
             )
             # concat the images together into the dest image.

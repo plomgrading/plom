@@ -5,7 +5,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Sophia Vetrici
 
-import pymupdf as fitz
+import pymupdf 
 import numpy as np
 import PIL.Image
 from pytest import raises
@@ -65,7 +65,7 @@ def test_get_digit_box(tmp_path) -> None:
 
     assert buildDemoSourceFiles(basedir=tmp_path)
 
-    with fitz.open(tmp_path / "sourceVersions/version1.pdf") as d:
+    with pymupdf.open(tmp_path / "sourceVersions/version1.pdf") as d:
         scribble_name_and_id(d, "01234567", "Testy McTester")
         f = tmp_path / "foo.pdf"
         d.save(f)
@@ -116,7 +116,7 @@ def test_get_digit_box(tmp_path) -> None:
     ]
     _id_imgs = []
     for s in miniclass:
-        with fitz.open(tmp_path / "sourceVersions/version1.pdf") as d:
+        with pymupdf.open(tmp_path / "sourceVersions/version1.pdf") as d:
             scribble_name_and_id(d, s["id"], s["studentName"], seed=42)
             f = tmp_path / f"mytest_{s['id']}.pdf"
             d.save(f)

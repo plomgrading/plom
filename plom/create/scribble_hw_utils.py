@@ -7,7 +7,7 @@
 from pathlib import Path
 import random
 
-import pymupdf as fitz
+import pymupdf 
 
 from plom.create.scribble_utils import possible_answers
 
@@ -20,7 +20,7 @@ def makeFakeHW(numQuestions, paperNum, who, where, prefix, maxpages=3):
     doneQ = sorted(random.sample(list(range(1, 1 + numQuestions)), did))
     for q in doneQ:
         fname = where / "{}.{}.{}.pdf".format(prefix, student_num, q)
-        with fitz.open() as doc:
+        with pymupdf.open() as doc:
             scribble_doc(doc, student_num, name, maxpages, q)
             doc.save(fname)
 
@@ -31,7 +31,7 @@ def makeFakeHW2(numQuestions, paperNum, who, where, prefix, maxpages=4):
     name = who["name"]
     doneQ = list(range(1, 1 + numQuestions))
     fname = where / "{}.{}.{}.pdf".format(prefix, student_num, "_")
-    with fitz.open() as doc:
+    with pymupdf.open() as doc:
         for q in doneQ:
             scribble_doc(doc, student_num, name, maxpages, q)
         doc.save(fname)
@@ -44,7 +44,7 @@ def scribble_doc(doc, student_num, name, maxpages, q):
             page = doc.new_page(-1, 612, 792)  # page at end
             if pn == 0:
                 # put name and student number on p1 of the Question
-                rect1 = fitz.Rect(24, 24, page.rect.width - 24, 100)
+                rect1 = pymupdf.Rect(24, 24, page.rect.width - 24, 100)
                 rc = page.insert_textbox(
                     rect1,
                     f"Q.{q} - {name}:{student_num}",
@@ -55,9 +55,9 @@ def scribble_doc(doc, student_num, name, maxpages, q):
                     align=0,
                 )
                 # page.draw_rect(rect1, color=(1, 0, 0), width=0.25)
-                assert rc > 0, f"overfull fitz textbox by {rc}"
+                assert rc > 0, f"overfull pymupdf textbox by {rc}"
 
-            rect = fitz.Rect(
+            rect = pymupdf.Rect(
                 100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
             )
             text = random.choice(possible_answers)
@@ -71,7 +71,7 @@ def scribble_doc(doc, student_num, name, maxpages, q):
                 align=0,
             )
             # page.draw_rect(rect, color=(1, 0, 0), width=0.25)
-            assert rc > 0, f"overfull fitz textbox by {rc}"
+            assert rc > 0, f"overfull pymupdf textbox by {rc}"
 
 
 def download_classlist_and_spec(server=None, password=None):

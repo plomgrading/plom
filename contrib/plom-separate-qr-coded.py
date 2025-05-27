@@ -4,6 +4,7 @@
 # Copyright (C) 2021 Andrew Rechnitzer
 # Copyright (C) 2021 Nicholas JH Lai
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2025 Deep Shah
 
 """Separate qr_coded pages from blank pages.
 
@@ -21,7 +22,7 @@ from pathlib import Path
 import sys
 import tempfile
 
-import pymupdf as fitz
+import pymupdf
 from PIL import Image
 from zxingcpp import read_barcodes, BarcodeFormat
 
@@ -66,7 +67,7 @@ with tempfile.TemporaryDirectory() as td:
             print(f"# - Page {pn} is blank")
             blank_pages.append(pn)
 
-inp = fitz.open(input_file)
+inp = pymupdf.open(input_file)
 
 if inp.page_count != len(qrd_pages) + len(blank_pages):
     print("There is a problem with total number of pages.")
@@ -82,17 +83,17 @@ if len(blank_pages) == 0:
     quit()
 
 print(f"Saving qr-coded pages {qrd_pages} to {qrd_file}")
-qr_out = fitz.open()
+qr_out = pymupdf.open()
 for pn in qrd_pages:
-    n = pn - 1  # fitz starts from 0 not 1
+    n = pn - 1  # pymupdf starts from 0 not 1
     qr_out.insert_pdf(inp, from_page=n, to_page=n, start_at=-1)
 qr_out.save(qrd_file)
 qr_out.close()
 
 print(f"Saving blank pages {blank_pages} to {blanks_file}")
-blank_out = fitz.open()
+blank_out = pymupdf.open()
 for pn in blank_pages:
-    n = pn - 1  # fitz starts from 0 not 1
+    n = pn - 1  # pymupdf starts from 0 not 1
     blank_out.insert_pdf(inp, from_page=n, to_page=n, start_at=-1)
 blank_out.save(blanks_file)
 blank_out.close()

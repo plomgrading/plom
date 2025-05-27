@@ -3,7 +3,7 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
-import pymupdf as fitz
+import pymupdf 
 from pathlib import Path
 from time import sleep
 
@@ -28,7 +28,7 @@ class DemoHWBundleCreationService:
         )
 
         out_file = Path(f"fake_hw_bundle_{paper_number}.pdf")
-        doc = fitz.Document()
+        doc = pymupdf.Document()
         for i, ql in enumerate(question_idx_lists):
             pg = i + 1
             doc.new_page(-1)
