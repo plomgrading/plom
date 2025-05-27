@@ -13,7 +13,7 @@ import random
 from importlib import resources
 from pathlib import Path
 
-import pymupdf 
+import pymupdf
 
 import plom.create
 import plom.create.fonts
@@ -318,7 +318,9 @@ def scribble_name_and_id(
         # TODO - there should be an assert or something here after insert?
 
     fontname, ttf = "ejx", "ejx_handwriting.ttf"
-    rect = pymupdf.Rect(220 + random.randrange(0, 16), 406 + y_offset, 600, 511 + y_offset)
+    rect = pymupdf.Rect(
+        220 + random.randrange(0, 16), 406 + y_offset, 600, 511 + y_offset
+    )
     fontres = resources.files(plom.create.fonts) / ttf
     excess = id_page.insert_textbox(
         rect,

@@ -5,7 +5,7 @@
 import hashlib
 import io
 
-import pymupdf 
+import pymupdf
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File

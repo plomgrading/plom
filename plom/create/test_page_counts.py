@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024 Colin B. Macdonald
 
-import pymupdf 
+import pymupdf
 
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.buildDatabaseAndPapers import check_equal_page_count

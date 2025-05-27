@@ -5,7 +5,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Sophia Vetrici
 
-import pymupdf 
+import pymupdf
 import numpy as np
 import PIL.Image
 from pytest import raises

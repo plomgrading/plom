@@ -42,7 +42,7 @@ from __future__ import annotations
 
 import argparse
 
-import pymupdf 
+import pymupdf
 import segno
 import io
 
@@ -83,28 +83,36 @@ def stamp_page(
         NWstream = io.BytesIO()
         QRNW.save(NWstream, kind="png")
 
-        PDFpage.insert_image(pymupdf.Rect(xmin, ymin, xmin + w, ymin + w), stream=NWstream)
+        PDFpage.insert_image(
+            pymupdf.Rect(xmin, ymin, xmin + w, ymin + w), stream=NWstream
+        )
 
     if NE is not None:
         QRNE = segno.make(NE, micro=True)
         NEstream = io.BytesIO()
         QRNE.save(NEstream, kind="png")
 
-        PDFpage.insert_image(pymupdf.Rect(xmax - w, ymin, xmax, ymin + w), stream=NEstream)
+        PDFpage.insert_image(
+            pymupdf.Rect(xmax - w, ymin, xmax, ymin + w), stream=NEstream
+        )
 
     if SE is not None:
         QRSE = segno.make(SE, micro=True)
         SEstream = io.BytesIO()
         QRSE.save(SEstream, kind="png")
 
-        PDFpage.insert_image(pymupdf.Rect(xmax - w, ymax - w, xmax, ymax), stream=SEstream)
+        PDFpage.insert_image(
+            pymupdf.Rect(xmax - w, ymax - w, xmax, ymax), stream=SEstream
+        )
 
     if SW is not None:
         QRSW = segno.make(SW, micro=True)
         SWstream = io.BytesIO()
         QRSW.save(SWstream, kind="png")
 
-        PDFpage.insert_image(pymupdf.Rect(xmin, ymax - w, xmin + w, ymax), stream=SWstream)
+        PDFpage.insert_image(
+            pymupdf.Rect(xmin, ymax - w, xmin + w, ymax), stream=SWstream
+        )
 
     if title is not None:
         # Centre title between QR boxes

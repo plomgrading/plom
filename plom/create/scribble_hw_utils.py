@@ -7,7 +7,7 @@
 from pathlib import Path
 import random
 
-import pymupdf 
+import pymupdf
 
 from plom.create.scribble_utils import possible_answers
 
