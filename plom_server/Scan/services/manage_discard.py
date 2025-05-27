@@ -168,7 +168,7 @@ class ManageDiscardService:
         msg = ""
         mobile_only = True
 
-        for fp in paper_obj.fixedpage_set.all():
+        for fp in paper_obj.fixedpage_set.all().select_related("image"):
             # check if that fixedpage has an image
             if fp.image:
                 msg += self.discard_pushed_fixed_page(user_obj, fp.pk, dry_run=dry_run)
