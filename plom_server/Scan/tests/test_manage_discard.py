@@ -275,34 +275,6 @@ class TestManageDiscard(TestCase):
         qp3.image = img0
         qp3.save()
         baker.make(FixedPage, paper=self.paper1, page_number=7, image=None)
-        """
-        baker.make(
-            IDPage,
-            paper=self.paper1,
-            page_number=1,
-            image=None,
-        )
-        baker.make(
-            QuestionPage,
-            paper=self.paper1,
-            page_number=2,
-            question_index=1,
-            image=img0,
-        )
-        baker.make(
-            QuestionPage,
-            paper=self.paper1,
-            page_number=3,
-            question_index=2,
-            image=None,
-        )
-        baker.make(
-            DNMPage,
-            paper=self.paper1,
-            page_number=4,
-            image=None,
-        )
-        """
 
         pk_not_there = DiscardPage.objects.latest("pk").pk + 1
         # try with non-existent image pk
