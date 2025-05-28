@@ -20,6 +20,25 @@ from .utils import _error_response
 class SpecificationHandler(APIView):
     """Handle transactions involving the Assessment Specification."""
 
+    # DELETE /api/v0/spec
+    def delete(self, request: Request) -> Response:
+        """Clear the current assessment spec.
+
+        Args:
+            request: A Request object (required, but ignored).
+
+        Returns:
+            The simple string "OK" with status 200, on success.
+        """
+        # The SpecificationService remover, used below,
+        # breaks if it can't find something nontrivial to remove.
+        # So deal with the no-op possibility right here.
+        if not SpecificationService.is_there_a_spec():
+            return Response("OK")
+
+        SpecificationService.remove_spec()
+        return Response("OK")
+
     # GET /api/v0/spec
     def get(self, request: Request) -> Response:
         """Get the current assessment spec.
