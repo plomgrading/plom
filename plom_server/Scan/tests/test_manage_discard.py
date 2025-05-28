@@ -101,8 +101,6 @@ class TestManageDiscard(TestCase):
         mds = ManageDiscardService()
 
         img1 = baker.make(Image)
-        baker.make(QuestionPage, paper=self.paper1, page_number=2, question_index=1)
-        baker.make(QuestionPage, paper=self.paper1, page_number=2, question_index=2)
         baker.make(MobilePage, paper=self.paper1, question_index=1, image=img1)
         pk_not_there = MobilePage.objects.latest("pk").pk + 1
 
@@ -115,28 +113,25 @@ class TestManageDiscard(TestCase):
         )
 
     def test__discard_mobile_page(self) -> None:
-        """Test _discard_mobile_page."""
+        """Test _discard_mobile_page.
+
+        `refresh_from_db` is sort of like 'assert_exists'.
+        """
         mds = ManageDiscardService()
 
         img1 = baker.make(Image)
-        baker.make(QuestionPage, paper=self.paper1, page_number=2, question_index=1)
-        baker.make(QuestionPage, paper=self.paper1, page_number=2, question_index=2)
         mp1 = baker.make(MobilePage, paper=self.paper1, question_index=1, image=img1)
         mp2 = baker.make(MobilePage, paper=self.paper1, question_index=2, image=img1)
+        task1 = MarkingTask.objects.get(paper=self.paper1, question_index=1)
+        assert task1.status == MarkingTask.COMPLETE
 
-        # this should only delete the mobile page passed in
-        # it also shouldn't create a Discard page because mp2 still references img1
-        # it also should out of date the associated marking task
-        assert (
-            MarkingTask.objects.get(paper=self.paper1, question_index=1).status
-            != MarkingTask.OUT_OF_DATE
-        )
+        # this should:
+        # (1) out of date the associated marking task
+        # (2) delete the mobile page
+        # (3) not create a Discard page because mp2 still references img1
         mds._discard_mobile_page(self.user0, mp1)
-        assert (
-            MarkingTask.objects.get(paper=self.paper1, question_index=1).status
-            == MarkingTask.OUT_OF_DATE
-        )
-        mp2.refresh_from_db()
+        task1.refresh_from_db()
+        assert task1.status == MarkingTask.OUT_OF_DATE
         with self.assertRaisesRegex(MobilePage.DoesNotExist, "does not exist"):
             mp1.refresh_from_db()
         assert not DiscardPage.objects.filter(image=img1).exists()
@@ -148,16 +143,25 @@ class TestManageDiscard(TestCase):
         assert DiscardPage.objects.filter(image=img1).exists()
 
     def test__discard_mobile_page_cascade(self) -> None:
-        """Test _discard_mobile_page 'cascade' kwarg."""
+        """Test _discard_mobile_page 'cascade' kwarg.
+
+        `refresh_from_db` is sort of like 'assert_exists'.
+        """
         mds = ManageDiscardService()
 
         img1 = baker.make(Image)
-        baker.make(QuestionPage, paper=self.paper1, page_number=2, question_index=1)
-        baker.make(QuestionPage, paper=self.paper1, page_number=2, question_index=2)
         mp1 = baker.make(MobilePage, paper=self.paper1, question_index=1, image=img1)
         mp2 = baker.make(MobilePage, paper=self.paper1, question_index=2, image=img1)
+        mp3 = baker.make(MobilePage, paper=self.paper1, question_index=3, image=img1)
 
-        # this should only delete all mobile pages referencing img1 (mp1, mp2)
+        # this should only delete the specified MobilePage (default behaviour)
+        mds._discard_mobile_page(self.user0, mp3, cascade=False)
+        with self.assertRaisesRegex(MobilePage.DoesNotExist, "does not exist"):
+            mp3.refresh_from_db()
+        mp2.refresh_from_db()
+        mp1.refresh_from_db()
+
+        # this should delete all mobile pages referencing img1 (mp1, mp2)
         # and create a DiscardPage referencing img1
         mds._discard_mobile_page(self.user0, mp1, cascade=True)
         with self.assertRaisesRegex(MobilePage.DoesNotExist, "does not exist"):
