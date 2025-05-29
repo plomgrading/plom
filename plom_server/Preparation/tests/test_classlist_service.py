@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Colin B. Macdonald
 
+import codecs
 import tempfile
 from pathlib import Path
 
@@ -129,3 +130,18 @@ class TestClasslistService(TestCase):
             self.assertFalse(success)
             (row,) = warn_err
             self.assertTrue("'11111111' is used multiple" in row["werr_text"])
+
+    def test_feffid_bom_classlist_issue_3200(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpfile = Path(tmpdir) / "foo.csv"
+            # tmpfile = Path("/home/cbm") / "foo.csv"
+            with tmpfile.open("wb") as f:
+                f.write(codecs.BOM_UTF8)
+                f.write("id,name\n".encode("utf8"))
+                f.write('11111111,"Doe, 学生"\n'.encode("utf8"))
+            with tmpfile.open("rb") as f:
+                success, warn_err = Service.validate_and_use_classlist_csv(f)
+            self.assertTrue(success)
+            self.assertListEqual(warn_err, [])
+        (row,) = Service.get_students()
+        self.assertEqual(row["student_name"], "Doe, 学生")

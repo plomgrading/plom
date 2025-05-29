@@ -27,7 +27,8 @@ class PlomClasslistValidator:
         """Read classlist from filename and return as list of dicts.
 
         Arguments:
-            filename: csv-file to be loaded.
+            filename: csv-file to be loaded.  It must be UTF-8-encoded, or
+                "utf-8-sig".
 
         Returns:
             List of dictionaries (keys are column titles).  We canonicalize the
@@ -42,7 +43,9 @@ class PlomClasslistValidator:
         """
         classAsDicts = []
         # Note newline: https://docs.python.org/3/library/csv.html#id4
-        with open(filename, newline="") as csvfile:
+        # Note: utf-8-sig is a Microsoft thing, Issue #3200 which AFAICT
+        # is harmless for us https://docs.python.org/3/library/codecs.html#encodings-and-unicode
+        with open(filename, newline="", encoding="utf-8-sig") as csvfile:
             # look at start of file to guess 'dialect', and then return to start of file
             # TODO: what if there isn't 1024 bytes?
             sample = csvfile.read(1024)
@@ -287,6 +290,8 @@ class PlomClasslistValidator:
 
         Args:
             filename: a csv file from which to try to load the classlist.
+                It must be UTF-8-encoded.  Microsoft's "utf-8-sig" with
+                "FEFF" byte-order-mark is also reluctantly accepted.
 
         Keyword Args:
             spec (None/dict/SpecVerifier): an optional test specification,
