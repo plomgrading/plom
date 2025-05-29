@@ -137,7 +137,7 @@ class ManageDiscardService:
             )
 
         return None
-
+    @transaction.atomic
     def discard_whole_paper_by_number(
         self, user_obj: User, paper_number: int, *, dry_run: bool = True
     ):
@@ -311,8 +311,7 @@ class ManageDiscardService:
     ) -> str:
         """Given the pk of either a fixed-page or a mobile-page discard it.
 
-        This is a wrapper for the :func:`discard_pushed_fixed_page`
-        and :func:`discard_pushed_mobile_page` functions.
+        This is a simple wrapper for various 'discard' functions.
 
         Args:
             username: the name of the user doing the discarding. Note - must be a manager.
