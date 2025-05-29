@@ -16,7 +16,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
 from django.http import Http404, FileResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils import timezone
 from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedirect
@@ -35,6 +35,11 @@ class ScannerOverview(ScannerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
         mss = ManageScanService()
+
+        try:
+            completed_papers = mss.get_number_completed_papers()
+        except ObjectDoesNotExist:
+            return redirect(reverse("home"))
 
         total_papers = mss.get_total_papers()
         completed_papers = mss.get_number_completed_papers()
