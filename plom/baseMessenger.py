@@ -99,18 +99,20 @@ class BaseMessenger:
         """Initialize a new BaseMessenger.
 
         Args:
-            server: URL or None to default to localhost.
+            server: URL, or None to default to localhost.
 
         Keyword Arguments:
-            port: What port to connect to. Fall back to this if the server
-                string does not specify a port. If neither of the above
-                sources settle the issue, default to 41984.
-            scheme: What scheme to connect with. Fall back to this if the server
-                parameter does not include a scheme prefix. If neither
-                of the above sources settle the issue, default to ``"https"``.
+            port: Fallback port number to use if the server
+                string does not specify one. If neither of these
+                sources settle the issue, use the default defined
+                in plom.Default_Port.
+            scheme: Fallback scheme (http or https) to use if the server
+                string does not include a scheme prefix. If neither
+                of the above sources settle the issue, defaults to ``"https"``.
             verify_ssl (True/False): controls whether SSL certs are checked.
-                See the `requests` library parameter named
-                ``Session.verify``, which ultimately receives this.
+                This is passed through to the ``Session.verify`` parameter
+                in the `requests` library. It has no effect when the
+                connection scheme is http.
             _server_API_version: internal use, for cloning a Messenger.
                 We want to recall the API of the server we are talking
                 to without computing it again.
@@ -138,8 +140,6 @@ class BaseMessenger:
             # "localhost:1234" parses this way: we do it ourselves :(
             if scheme is None:
                 scheme = "https"
-                if os.environ.get("PLOM_NO_SSL_VERIFY"):
-                    scheme = "http"
             self._raw_init(f"{scheme}://{server}", verify_ssl=verify_ssl)
             return
 
@@ -147,8 +147,6 @@ class BaseMessenger:
         if not parsed_url.scheme:
             if scheme is None:
                 scheme = "https"
-                if os.environ.get("PLOM_NO_SSL_VERIFY"):
-                    scheme = "http"
             server = f"{scheme}://{server}"
 
         # postfix with default port if not specified
