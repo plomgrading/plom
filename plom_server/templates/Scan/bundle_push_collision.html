@@ -1,6 +1,7 @@
 <!--
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023-2024 Andrew Rechnitzer
+    Copyright (C) 2025 Philip D. Loewen
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -21,11 +22,9 @@
             <div class="card-text">
                 <div class="alert alert-warning">
                     <p>
-                        If you are here then it is because the bundle <q>{{ slug }}</q> contains images of pages that have already been pushed.
+                        The bundle <q>{{ slug }}</q> contains images of pages that have already been pushed. This is a problem.
                     </p>
-                    <p>
-                        Please return to the staged bundle overview page, or to the thumbnail view of this bundle to see the collision list
-                    </p>
+                    <p>Please return to the staged bundle overview page, or to the thumbnail view of this bundle, to resolve this.</p>
                 </div>
                 <div class="card-text">
                     <ul>
