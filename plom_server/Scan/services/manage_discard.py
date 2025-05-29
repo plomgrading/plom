@@ -166,15 +166,12 @@ class ManageDiscardService:
             ) from e
 
         msg = ""
-        mobile_only = True
-
         for fp in paper_obj.fixedpage_set.all().select_related("image"):
             # check if that fixedpage has an image
             if fp.image:
                 msg += self.discard_pushed_fixed_page(user_obj, fp.pk, dry_run=dry_run)
-                # TODO: only need to check ID page
-                mobile_only = False
-        if mobile_only:
+        # Out of date ID task, even if the paper didn't have an ID page scanned
+        if "IDPage" not in msg:
             IdentifyTaskService().set_paper_idtask_outdated(paper_number)
 
         for mp in paper_obj.mobilepage_set.all():
