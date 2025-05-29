@@ -137,6 +137,7 @@ class ManageDiscardService:
             )
 
         return None
+
     @transaction.atomic
     def discard_whole_paper_by_number(
         self, user_obj: User, paper_number: int, *, dry_run: bool = True
