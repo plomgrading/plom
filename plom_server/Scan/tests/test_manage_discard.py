@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from model_bakery import baker
 
 from plom_server.Base.tests import config_test
+from plom_server.Identify.models import PaperIDTask
 from plom_server.Mark.models import MarkingTask
 from plom_server.Papers.models import (
     Image,
@@ -365,3 +366,91 @@ class TestManageDiscard(TestCase):
             1,
             page_not_there,
         )
+
+    def test_discard_whole_paper_by_number_standard(self) -> None:
+        """Test discarding a whole paper."""
+        mds = ManageDiscardService()
+
+        img1 = baker.make(Image)
+        img2 = baker.make(Image)
+        img3 = baker.make(Image)
+        img4 = baker.make(Image)
+        img5 = baker.make(Image)
+        img6 = baker.make(Image)
+        img7 = baker.make(Image)
+        img8 = baker.make(Image)
+        images = [img1, img2, img3, img4, img5, img6, img7, img8]
+        baker.make(MobilePage, paper=self.paper1, question_index=1, image=img7)
+        baker.make(MobilePage, paper=self.paper1, question_index=2, image=img7)
+        baker.make(MobilePage, paper=self.paper1, question_index=3, image=img8)
+        fp1 = FixedPage.objects.get(paper=self.paper1, page_number=1)
+        fp2 = FixedPage.objects.get(paper=self.paper1, page_number=2)
+        fp3 = FixedPage.objects.get(paper=self.paper1, page_number=3)
+        fp4 = FixedPage.objects.get(paper=self.paper1, page_number=4)
+        fp5 = FixedPage.objects.get(paper=self.paper1, page_number=5)
+        fp6 = FixedPage.objects.get(paper=self.paper1, page_number=6)
+        for index, fp in enumerate([fp1, fp2, fp3, fp4, fp5, fp6]):
+            fp.image = images[index]
+            fp.save()
+
+        idtask = PaperIDTask.objects.get(paper=self.paper1)
+        idtask.status = PaperIDTask.COMPLETE
+        idtask.save()
+
+        marking_tasks = MarkingTask.objects.all().filter(paper=self.paper1)
+        for mt in marking_tasks:
+            mt.status = MarkingTask.COMPLETE
+            mt.save()
+
+        # this is for (4) below
+        for img in images:
+            assert not DiscardPage.objects.filter(image=img).exists()
+
+        # we are checking:
+        # (1) id task is invalidated
+        # (2) marking tasks are invalidated
+        # (3) Fixed pages don't have any images, MobilePages have been deleted
+        # (4) a discard page is created for each distinct image in the original paper
+        mds.discard_whole_paper_by_number(
+            self.user0, self.paper1.paper_number, dry_run=False
+        )
+
+        # (1)
+        idtask.refresh_from_db()
+        assert idtask.status == PaperIDTask.OUT_OF_DATE, f"task status:{idtask.status}"
+
+        # (2)
+        marking_tasks = MarkingTask.objects.all().filter(paper=self.paper1)
+        for mt in marking_tasks:
+            assert mt.status == MarkingTask.OUT_OF_DATE
+
+        # (3)
+        for fp in [fp1, fp2, fp3, fp4, fp5, fp6]:
+            fp.refresh_from_db()
+            assert fp.image is None
+        assert not MobilePage.objects.filter(paper=self.paper1).exists()
+
+        # (4)
+        for img in images:
+            assert DiscardPage.objects.filter(image=img).exists()
+
+    def test_discard_whole_paper_by_number_no_id(self) -> None:
+        """Test discarding a whole paper without an id page."""
+        mds = ManageDiscardService()
+        img7 = baker.make(Image)
+        img8 = baker.make(Image)
+        baker.make(MobilePage, paper=self.paper1, question_index=1, image=img7)
+        baker.make(MobilePage, paper=self.paper1, question_index=2, image=img7)
+        baker.make(MobilePage, paper=self.paper1, question_index=3, image=img8)
+
+        idtask = PaperIDTask.objects.get(paper=self.paper1)
+        idtask.status = PaperIDTask.COMPLETE
+        idtask.save()
+
+        mds.discard_whole_paper_by_number(
+            self.user0, self.paper1.paper_number, dry_run=False
+        )
+
+        # check that id task is invalidated
+        idtask.refresh_from_db()
+        assert idtask.status == PaperIDTask.OUT_OF_DATE, f"task status:{idtask.status}"
