@@ -42,6 +42,10 @@
                     hx-delete="{% url 'scan_discard_whole_paper' page_info.paper_number %}">
                 <i class="bi bi-exclamation-diamond-fill"></i> discard this whole paper <i class="bi bi-exclamation-diamond-fill"></i>
             </button>
+            <a class="btn btn-primary"
+               href="{% url 'scan_discard_whole_paper' page_info.paper_number %}">
+                download this paper <i class="bi bi-download"></i>
+            </a>
         {% endif %}
     {% else %}
         <ul>

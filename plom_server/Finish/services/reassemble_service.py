@@ -5,6 +5,7 @@
 # Copyright (C) 2025 Aidan Murphy
 
 from datetime import datetime
+from io import BytesIO
 from pathlib import Path
 import random
 import tempfile
@@ -28,7 +29,7 @@ from plom.finish.examReassembler import reassemble
 from plom_server.Identify.models import PaperIDTask
 from plom_server.Mark.models import MarkingTask
 from plom_server.Mark.services import MarkingTaskService, MarkingStatsService
-from plom_server.Papers.models import Paper, IDPage, DNMPage, MobilePage
+from plom_server.Papers.models import Paper, IDPage, DNMPage, MobilePage, FixedPage
 from plom_server.Papers.services import SpecificationService
 from plom_server.Scan.services import ManageScanService
 
@@ -224,6 +225,90 @@ class ReassembleService:
             annotation = mts.get_latest_annotation(paper.paper_number, qi)
             marked_pages.append(annotation.image.image.path)
         return marked_pages
+
+    def get_premarked_images(self, paper: Paper) -> list[dict[str, Any]]:
+        """Get paths for a paper's images as they were scanned.
+
+        Args:
+            paper: a reference to a Paper instance
+
+        Returns:
+            List of dicts, each having keys 'filename' and 'rotation'
+            giving the path to the image and the rotation angle of the
+            image.
+        """
+        nonmarked_fixed = (
+            FixedPage.objects.filter(paper=paper)
+            .order_by("page_number")
+            .prefetch_related("image", "image__baseimage")
+        )
+        # TODO: deduplicate by page images?
+        nonmarked_mobile = (
+            MobilePage.objects.filter(paper=paper)
+            .order_by("question_index")
+            .prefetch_related("image", "image__baseimage")
+        )
+
+        premarked = []
+        for page in nonmarked_fixed:
+            if page.image is not None:
+                premarked.append(
+                    {
+                        "filename": page.image.baseimage.image_file.path,
+                        "rotation": page.image.rotation,
+                    }
+                )
+        for page in nonmarked_mobile:
+            premarked.append(
+                {
+                    "filename": page.image.baseimage.image_file.path,
+                    "rotation": page.image.rotation,
+                }
+            )
+        return premarked
+
+    def get_premarked_paper(self, papernum: int) -> bytes:
+        """Reassemble a particular paper JIT without marker annotations.
+
+        The produced file isn't cached.
+
+        Args:
+            papernum: The papernumber to reassemble.
+
+        Returns:
+            The bytes of a .pdf file.
+        """
+        try:
+            paper_obj = Paper.objects.get(paper_number=papernum)
+        except Paper.DoesNotExist:
+            raise ValueError("No paper with that number") from None
+
+        premarked_images = self.get_premarked_images(paper_obj)
+
+        paper_id = StudentMarkService.get_paper_id_or_none(paper_obj)
+        if not paper_id:
+            pdf_id_metadata = f"paper-{paper_obj.paper_number}"
+        else:
+            pdf_id_metadata = paper_id[0]  # student id
+
+        shortname = SpecificationService.get_shortname()
+
+        # need NamedTempFile otherwise it returns an fd, not compatible with reassemble
+        with tempfile.NamedTemporaryFile() as tf:
+            reassemble(
+                tf.name,
+                shortname,
+                pdf_id_metadata,
+                coverfile=None,
+                id_images=premarked_images,
+                marked_pages=[],
+                dnm_images=[],
+                nonmarked_images=[],
+            )
+            with open(tf.name, "rb") as pdf_file:
+                pdf_bytes = BytesIO(pdf_file.read())
+
+        return pdf_bytes
 
     def reassemble_paper(self, paper: Paper, *, outdir: Path | None = None) -> Path:
         """Reassemble a particular paper.
