@@ -13,10 +13,12 @@
 See help for each subcommand or consult online documentation for an
 overview of the steps in setting up a server.
 
-Most subcommands communicate with a server, which can be specified
-on the command line or by setting the environment variable PLOM_SERVER.
-Authentication can be done interactively, on the command line, or by
-setting environment variables PLOM_USERNAME and PLOM_PASSWORD.
+Most subcommands communicate with a server, which can be specified on the
+command line; the environment variable PLOM_SERVER provides the default.
+Authentication is typically required. This can be done through command-line options,
+or interactively at the command prompt, or by setting the environment variables
+PLOM_USERNAME and PLOM_PASSWORD. For details, see the extended help for any
+specific subcommand.
 """
 
 __copyright__ = "Copyright (C) 2020-2025 Andrew Rechnitzer, Colin B. Macdonald, et al"
@@ -72,10 +74,10 @@ def get_parser() -> argparse.ArgumentParser:
             metavar="SERVER[:PORT]",
             action="store",
             help=f"""
-                URL of server to contact. If omitted, the environment variable
-                PLOM_SERVER will be used instead. Protocol prefix is optional:
-                'https://' is the default, but 'http://' is accepted. Port is
-                optional: default is {Default_Port}.
+                URL of server to contact. In SERVER, the protocol prefix is semi-optional:
+                you can omit it and get https by default, or you can force http by including
+                that explicitly. If [:PORT] is omitted, SERVER:{Default_Port} will be used.
+                The environment variable PLOM_SERVER will be used if --server is not given.
             """,
         )
         x.add_argument(
