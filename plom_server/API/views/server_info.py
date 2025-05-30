@@ -175,7 +175,7 @@ class CloseUser(APIView):
     def delete(self, request: Request) -> Response:
         """Token-based logout, surrender all tasks, and optionally revoke the token.
 
-        If the ``query_params`` contains ``revoke_token`` then we'll revoke the tablet
+        If the ``query_params`` contains ``revoke_token`` then we'll revoke the token
         preventing future API calls until login creates a new token.
         """
         revoke_token = False
