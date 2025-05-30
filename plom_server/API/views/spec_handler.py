@@ -25,19 +25,27 @@ class SpecificationHandler(APIView):
         """Clear the current assessment spec.
 
         Args:
-            request: A Request object (required, but ignored).
+            request: A Request object
 
         Returns:
-            The simple string "OK" with status 200, on success.
+            A response whose body is empty, with status 204, on success.
+            A response with status 403 if the user is not in the 'manager' group.
         """
-        # The SpecificationService remover, used below,
-        # breaks if it can't find something nontrivial to remove.
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
+            return _error_response(
+                'Only users in the "manager" group can upload an assessment spec',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        # The removal service provided by SpecificationService
+        # will break if it can't find something nontrivial to remove.
         # So deal with the no-op possibility right here.
         if not SpecificationService.is_there_a_spec():
-            return Response("OK")
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         SpecificationService.remove_spec()
-        return Response("OK")
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     # GET /api/v0/spec
     def get(self, request: Request) -> Response:
