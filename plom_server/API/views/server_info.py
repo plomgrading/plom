@@ -163,12 +163,7 @@ class ExamInfo(APIView):
 
 
 class CloseUser(APIView):
-    """Delete the user's token, surrender their tasks, and log them out.
-
-    Returns:
-        (200) user is logged out successfully
-        (401) user is not signed in
-    """
+    """Delete the user's token, surrender their tasks, and log them out."""
 
     # DELETE: /close_user/
     # DELETE: /close_user/?revoke_token
@@ -177,6 +172,10 @@ class CloseUser(APIView):
 
         If the ``query_params`` contains ``revoke_token`` then we'll revoke the token
         preventing future API calls until login creates a new token.
+
+        Returns:
+            Http return code 200 when the user is logged out successfully.
+            A 401 error is returned in various error cases.
         """
         revoke_token = False
         if "revoke_token" in request.query_params:
