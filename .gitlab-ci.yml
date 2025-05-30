@@ -132,12 +132,12 @@ wet_css_js_3rd_party:
 
 # By default we assume the target is origin/main but if a MR is open,
 # we try to determine the target branch and use that instead.
-# if this ISN'T a tag, we run this job, using aggravating bash-style logic (?)
 copyright_year:
   image: fedora:42
   stage: static_analysis
   rules:
-   - if: "foo$CI_COMMIT_TAG" == "foo"
+    - if: $CI_COMMIT_TAG
+      when: never
   before_script:
     - echo $CI_COMMIT_TAG
     - dnf install -y python3 glab git
