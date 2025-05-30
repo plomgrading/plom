@@ -337,9 +337,11 @@ def isValidExtraPageCode(code: str) -> bool:
     Returns:
         The validity of the extra page code.
     """
-    code = code.lstrip("plomX")
-    if len(code) != len("O"):
+    if len(code) != len("plomX0"):
         return False
+    if not code.startswith("plomX"):
+        return False
+    code = code.lstrip("plomX")
     # now check that remaining letter is a digit in 1,2,..,8.
     if code.isnumeric():
         if 1 <= int(code) <= 8:
@@ -356,9 +358,11 @@ def isValidScrapPaperCode(code: str) -> bool:
     Returns:
         The validity of the scrap page code.
     """
-    code = code.lstrip("plomS")
-    if len(code) != len("O"):
+    if len(code) != len("plomS0"):
         return False
+    if not code.startswith("plomS"):
+        return False
+    code = code.lstrip("plomS")
     # now check that remaining letter is a digit in 1,2,..,8.
     if code.isnumeric():
         if 1 <= int(code) <= 8:
@@ -375,6 +379,10 @@ def isValidBundleSeparatorPaperCode(code: str) -> bool:
     Returns:
         The validity of the bundle separator page code.
     """
+    if len(code) != len("plomB0"):
+        return False
+    if not code.startswith("plomB"):
+        return False
     code = code.lstrip("plomB")
     if len(code) != len("O"):
         return False
@@ -406,6 +414,9 @@ def encodeBundleSeparatorPaperCode(orientation: str | int) -> str:
 def getExtraPageOrientation(code: str) -> int:
     """Extra the orientation digit from a valid Plom extra page code.
 
+    You must have verified with :func:`isValidExtraPageCode` b/c this
+    does no error checking.
+
     Args:
         code: a Plom extra page code.
 
@@ -418,6 +429,9 @@ def getExtraPageOrientation(code: str) -> int:
 def getScrapPaperOrientation(code: str) -> int:
     """Extra the orientation digit from a valid Plom scrap-paper code.
 
+    You must have verified with :func:`isValidScrapPaperCode` b/c this
+    does no error checking.
+
     Args:
         code: a Plom scrap-paper code.
 
@@ -429,6 +443,9 @@ def getScrapPaperOrientation(code: str) -> int:
 
 def getBundleSeparatorPaperOrientation(code: str) -> int:
     """Extra the orientation digit from a valid Plom bundle-separator-paper code.
+
+    You must have verified with :func:`isValidBundleSeparatorPaperCode` b/c this
+    does no error checking.
 
     Args:
         code: a Plom bundle-separator-paper code.
