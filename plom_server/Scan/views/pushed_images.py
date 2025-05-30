@@ -42,12 +42,12 @@ class WholePaperView(ScannerLeadMarkerOrManagerView):
 
     def get(self, request: HttpRequest, *, paper_number: int) -> FileResponse:
         """Get a premarked paper."""
-        pdf_bytes = ReassembleService().get_premarked_paper(paper_number)
+        pdf_bytestream = ReassembleService().get_premarked_paper(paper_number)
 
         shortname = SpecificationService.get_shortname()
 
         return FileResponse(
-            pdf_bytes,
+            pdf_bytestream,
             as_attachment=True,
             content_type="application/pdf",
             filename=f"{shortname}_{paper_number}.pdf",

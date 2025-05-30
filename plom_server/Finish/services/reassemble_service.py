@@ -265,7 +265,7 @@ class ReassembleService:
             )
         return premarked
 
-    def get_premarked_paper(self, papernum: int) -> bytes:
+    def get_premarked_paper(self, papernum: int) -> BytesIO:
         """Reassemble a particular paper JIT without marker annotations.
 
         The produced file isn't cached.
@@ -304,9 +304,9 @@ class ReassembleService:
                 nonmarked_images=[],
             )
             with open(tf.name, "rb") as pdf_file:
-                pdf_bytes = BytesIO(pdf_file.read())
+                pdf_bytestream = BytesIO(pdf_file.read())
 
-        return pdf_bytes
+        return pdf_bytestream
 
     def reassemble_paper(self, paper: Paper, *, outdir: Path | None = None) -> Path:
         """Reassemble a particular paper.
