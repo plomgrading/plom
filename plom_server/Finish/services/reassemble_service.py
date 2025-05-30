@@ -205,16 +205,14 @@ class ReassembleService:
             for img in nonmarked
         ]
 
-    def get_annotation_images(self, paper: Paper) -> list[dict[str, Any]]:
+    def get_annotation_images(self, paper: Paper) -> list[str]:
         """Get the paths for a paper's annotation images.
 
         Args:
             paper: a reference to a Paper instance.
 
         Returns:
-            List of dicts, each having keys 'filename' and 'rotation'
-            giving the path to the image and the rotation angle of the
-            image.
+            List of strings/Paths to each annotation.
         """
         marked_pages = []
         mts = MarkingTaskService()
