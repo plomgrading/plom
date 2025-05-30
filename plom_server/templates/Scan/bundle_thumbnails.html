@@ -189,12 +189,12 @@
                                     </li>
                                     <li>
                                         You can <q>discard</q> the previously-pushed
-                                        page(s) and then come back here to push
+                                        page{{ n_collisions|pluralize }} and then come back here to push
                                         this entire bundle.
                                     </li>
                                     <li>
-                                        You can discard the pages of this
-                                        bundle that collide, as detailed below,
+                                        You can discard the page{{ n_collisions|pluralize }} of this
+                                        bundle that collide{{ n_collisions|pluralize:"s," }}, as detailed below,
                                         and then push the remaining pages.
                                     </li>
                                 </ul>
