@@ -37,7 +37,7 @@ class PushedImageView(ScannerLeadMarkerOrManagerView):
         return HttpResponseClientRefresh()
 
 
-class DiscardWholePaperView(ScannerLeadMarkerOrManagerView):
+class WholePaperView(ScannerLeadMarkerOrManagerView):
     """Perform operations on all images of a given paper."""
 
     def get(self, request: HttpRequest, *, paper_number: int) -> FileResponse:

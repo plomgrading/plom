@@ -23,7 +23,7 @@
                     hx-delete="{% url 'pushed_img' image_pk %}">discard this fixed page image</button>
             <button class="btn btn-danger"
                     hx-confirm="This will invalidate any existing id-ing and marking of this paper. Are you sure you wish to proceed?"
-                    hx-delete="{% url 'scan_discard_whole_paper' page_info.paper_number %}">
+                    hx-delete="{% url 'scan_whole_paper' page_info.paper_number %}">
                 <i class="bi bi-exclamation-diamond-fill"></i> discard this whole paper <i class="bi bi-exclamation-diamond-fill"></i>
             </button>
         {% endif %}
@@ -40,11 +40,11 @@
                     hx-delete="{% url 'pushed_img' image_pk %}">discard this mobile page image</button>
             <button class="btn btn-danger"
                     hx-confirm="This will invalidate any existing id-ing and marking of this paper. Are you sure you wish to proceed?"
-                    hx-delete="{% url 'scan_discard_whole_paper' page_info.paper_number %}">
+                    hx-delete="{% url 'scan_whole_paper' page_info.paper_number %}">
                 <i class="bi bi-exclamation-diamond-fill"></i> discard this whole paper <i class="bi bi-exclamation-diamond-fill"></i>
             </button>
             <a class="btn btn-primary"
-               href="{% url 'scan_discard_whole_paper' page_info.paper_number %}">
+               href="{% url 'scan_whole_paper' page_info.paper_number %}">
                 download this paper <i class="bi bi-download"></i>
             </a>
         {% endif %}
