@@ -138,7 +138,6 @@ copyright_year:
   rules:
    - if: $CI_COMMIT_TAG
      when: never
-   - when: always
   before_script:
     - dnf install -y python3 glab git
     - git --version
