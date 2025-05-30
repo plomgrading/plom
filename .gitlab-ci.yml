@@ -147,7 +147,7 @@ copyright_year:
     - git remote add upstream https://gitlab.com/plom/plom.git
     - echo "Consider these various open merge requests"
     - glab mr list --source-branch=$CI_COMMIT_BRANCH --repo=plom/plom
-    - read TARGET_REPO_NAME TARGET_BRANCH_NAME <<< $(./maint/find_MR_target_branch.py --source $CI_COMMIT_BRANCH --repo plom/plom --default "origin main")
+    - read TARGET_REPO_NAME TARGET_BRANCH_NAME <<< $(./maint/find-MR-target-branch.py --source $CI_COMMIT_BRANCH --repo plom/plom --default "origin main")
     # we expect to find at most one MR
     - NUM_MRS=$(./maint/find-MR-target-branch.py --source $CI_COMMIT_BRANCH --repo plom/plom --default "origin main" | wc -l)
     - TARGET_BRANCH=${TARGET_REPO_NAME}/${TARGET_BRANCH_NAME}
