@@ -1740,7 +1740,7 @@ def huey_parent_split_bundle_chore(
                 for chore in task_list:
                     log.info("Parent: trying to revoke child chore %s", chore)
                     chore.revoke()
-                raise RuntimeError(f"child task failed QR read: {e}") from e
+                raise RuntimeError(f"child task failed image split: {e}") from e
 
             # remove all the nones to get list of completed tasks
             not_none_result_chunks = [
