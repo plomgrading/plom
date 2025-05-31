@@ -23,7 +23,6 @@ from django_htmx.http import HttpResponseClientRefresh, HttpResponseClientRedire
 from django.conf import settings
 
 from plom_server.Base.base_group_views import ScannerRequiredView
-from plom_server.Papers.services import SpecificationService
 from plom_server.Preparation.services import PapersPrinted
 from ..services import ScanService, ManageScanService
 from ..forms import BundleUploadForm
@@ -36,20 +35,6 @@ class ScannerOverview(ScannerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
         mss = ManageScanService()
-
-        if False and not SpecificationService.is_there_a_spec():
-            # ManageScanService functions break without a spec.
-            context.update(
-                {
-                    "total_papers": 0,
-                    "completed_papers": 0,
-                    "incomplete_papers": 0,
-                    "pushed_bundles": 0,
-                    "unpushed_bundles": 0,
-                    "number_of_discards": 0,
-                }
-            )
-            return render(request, "Scan/overview.html", context)
 
         total_papers = mss.get_total_papers()
         completed_papers = mss.get_number_completed_papers()
