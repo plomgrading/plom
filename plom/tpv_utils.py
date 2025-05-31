@@ -414,43 +414,49 @@ def encodeBundleSeparatorPaperCode(orientation: str | int) -> str:
 def getExtraPageOrientation(code: str) -> int:
     """Extra the orientation digit from a valid Plom extra page code.
 
-    You must have verified with :func:`isValidExtraPageCode` b/c this
-    does no error checking.
-
     Args:
         code: a Plom extra page code.
 
     Returns:
         The orientation as a small integer.
+
+    Raises:
+        ValueError: not a valid extra-page code.
     """
+    if not isValidExtraPageCode(code):
+        raise ValueError("Invalid extra-page code")
     return int(code[5])
 
 
 def getScrapPaperOrientation(code: str) -> int:
     """Extra the orientation digit from a valid Plom scrap-paper code.
 
-    You must have verified with :func:`isValidScrapPaperCode` b/c this
-    does no error checking.
-
     Args:
         code: a Plom scrap-paper code.
 
     Returns:
         The orientation as a small integer.
+
+    Raises:
+        ValueError: not a valid scrap-paper code.
     """
+    if not isValidScrapPaperCode(code):
+        raise ValueError("Invalid scrap-paper code")
     return int(code[5])
 
 
 def getBundleSeparatorPaperOrientation(code: str) -> int:
     """Extra the orientation digit from a valid Plom bundle-separator-paper code.
 
-    You must have verified with :func:`isValidBundleSeparatorPaperCode` b/c this
-    does no error checking.
-
     Args:
         code: a Plom bundle-separator-paper code.
 
     Returns:
         The orientation as a small integer.
+
+    Raises:
+        ValueError: not a valid bundle-separator-paper code.
     """
+    if not isValidBundleSeparatorPaperCode(code):
+        raise ValueError("Invalid bundle-separator-paper code")
     return int(code[5])
