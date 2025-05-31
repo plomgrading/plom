@@ -37,7 +37,7 @@ class ScannerOverview(ScannerRequiredView):
         context = self.build_context()
         mss = ManageScanService()
 
-        if not SpecificationService.is_there_a_spec():
+        if False and not SpecificationService.is_there_a_spec():
             # ManageScanService functions break without a spec.
             context.update(
                 {
