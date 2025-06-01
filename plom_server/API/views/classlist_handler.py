@@ -28,12 +28,19 @@ class ClasslistHandler(APIView):
         """Delete the classlist held by the server.
 
         Args:
-            request: A Request object that gets ignored.
+            request: A Request object.
 
         Returns:
-            (200) Response with nothing but confirming text.
-            (409) Manipulating the classlist is not allowed.
+            Empty response with code 204 on success. Error return codes
+            could be 401 for a user outside the 'manager' group, or
+            409 if manipulating the classlist is forbidden for another reason.
         """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
+            return _error_response(
+                'Only users in the "manager" group can delete the class list.',
+                status.HTTP_401_FORBIDDEN,
+            )
         try:
             StagingStudentService.remove_all_students()
         except PlomDependencyConflict as e:
@@ -42,7 +49,7 @@ class ClasslistHandler(APIView):
                 status.HTTP_409_CONFLICT,
             )
 
-        return Response("OK, classlist deleted.")
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     # GET /api/v0/classlist
     def get(self, request: Request) -> FileResponse:
@@ -52,19 +59,20 @@ class ClasslistHandler(APIView):
         implemented in :class:'ClasslistDownloadView'.
 
         Args:
-            request: A Request object that gets ignored.
+            request: A Request object.
 
         Returns:
-            (200) FileResponse
+            A FileResponse object (subclassed from Response) with filename
+            'classlist.csv', and status code 200.
         """
         return ClasslistDownloadView().get(request)
 
-    # POST /api/v0/classlist
-    def post(self, request: Request) -> Response:
-        """Extend classlist on server with rows from an uploaded classlist.
+    # Internal code shared by both POST and PATCH requests:
+    def _extend(self, request: Request) -> Response:
+        """Extend the server's classlist with rows from an uploaded classlist.
 
-        This is a transparent wrapper for the POST method
-        implemented to serve the web UI in :class:'StagingStudentService'.
+        This is a thin wrapper for the method named validate_and_use_classlist_csv()
+        that serves the web UI in :class:'StagingStudentService'.
 
         All students in the upload must be not-yet-known to the server.
         If the upload mentions even one student ID that the server
@@ -79,13 +87,31 @@ class ClasslistHandler(APIView):
             l is a list of dicts describing warnings, errors, or notes.
 
             When s==False, the classlist in the database remains unchanged.
+
+        Raises:
+            PlomDependencyConflict: If dependencies not met.
         """
-        # Here we want a thin wrapper around plom_server/Preparation/views/...
-        # But that code has no error-defence. So put it there, not here!
+        # The service we will call has weak defences against faulty inputs.
+        # Check here that the requested action should be allowed.
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
+            success = False
+            werr = [
+                {
+                    "errors": "Only users in the 'manager' group can manipulate the classlist."
+                }
+            ]
+            return Response((success, werr))
 
         if not request.FILES["classlist_csv"]:
             success = False
-            werr = [{"errors": "No classlist provided."}]
+            werr = [
+                {
+                    "warn_or_err": "error",
+                    "werr_line": 0,
+                    "werr_text": "No classlist provided.",
+                }
+            ]
             return Response((success, werr))
 
         classlist_csv = request.FILES["classlist_csv"]
@@ -93,3 +119,75 @@ class ClasslistHandler(APIView):
         return Response(
             StagingStudentService.validate_and_use_classlist_csv(classlist_csv)
         )
+
+    # PATCH /api/v0/classlist
+    def patch(self, request: Request) -> Response:
+        """Extend the server's classlist with info in an attached upload.
+
+        Args:
+            request: A Request object that includes a file object
+                identified by the key "classlist_csv"
+
+        Returns:
+            A Response with status code 200 containing a 2-tuple (s,l), where
+            s is the boolean value of the statement "The operation succeeded",
+            l is a list of dicts describing warnings, errors, or notes.
+
+            When s==False, the classlist in the database remains unchanged.
+
+        Raises:
+            PlomDependencyConflict: If dependencies not met.
+        """
+        return self._extend(request)
+
+    # POST /api/v0/classlist
+    def post(self, request: Request) -> Response:
+        """Upload a new classlist to the server, assuming it has none.
+
+        Args:
+            request: A Request object that includes a file object
+                identified by the key "classlist_csv"
+
+        Returns:
+            A Response with status code 200 containing a 2-tuple (s,l), where
+            s is the boolean value of the statement "The operation succeeded",
+            l is a list of dicts describing warnings, errors, or notes.
+
+            When s==False, the classlist in the database remains unchanged.
+
+        Raises:
+            PlomDependencyConflict: If dependencies not met.
+        """
+        if StagingStudentService.are_there_students():
+            success = False
+            N = StagingStudentService.how_many_students()
+            werr = [
+                {
+                    "warn_or_err": "error",
+                    "werr_line": 0,
+                    "werr_text": f"Classlist contains {N} students; POST method expects 0.",
+                }
+            ]
+            return Response((success, werr))
+        return self._extend(request)
+
+    # PUT /api/v0/classlist
+    def put(self, request: Request) -> Response:
+        """Upload a new classlist to the server, replacing whatever is there.
+
+        Args:
+            request: A Request object that includes a file object
+                identified by the key "classlist_csv"
+
+        Returns:
+            A Response with status code 200 containing a 2-tuple (s,l), where
+            s is the boolean value of the statement "The operation succeeded",
+            l is a list of dicts describing warnings, errors, or notes.
+
+            When s==False, the classlist in the database remains unchanged.
+
+        Raises:
+            PlomDependencyConflict: If dependencies not met.
+        """
+        self.delete(request)
+        return self._extend(request)
