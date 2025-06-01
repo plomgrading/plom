@@ -5,6 +5,8 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
 
+from typing import Dict, List, Union
+
 from django.http import FileResponse
 
 from rest_framework.response import Response
@@ -96,16 +98,18 @@ class ClasslistHandler(APIView):
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list:
             success = False
-            werr = [
+            werr: List[Dict[str, Union[int, None]]] = [
                 {
-                    "errors": "Only users in the 'manager' group can manipulate the classlist."
+                    "warn_or_err": "error",
+                    "werr_line": None,
+                    "werr_text": "Only users in the 'manager' group can manipulate the classlist.",
                 }
             ]
             return Response((success, werr))
 
         if not request.FILES["classlist_csv"]:
             success = False
-            werr = [
+            werr: List[Dict[str, Union[int, None]]] = [
                 {
                     "warn_or_err": "error",
                     "werr_line": None,
@@ -161,7 +165,7 @@ class ClasslistHandler(APIView):
         if StagingStudentService.are_there_students():
             success = False
             N = StagingStudentService.how_many_students()
-            werr = [
+            werr: List[Dict[str, Union[int, None]]] = [
                 {
                     "warn_or_err": "error",
                     "werr_line": None,
