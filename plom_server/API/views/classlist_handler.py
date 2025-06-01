@@ -108,7 +108,7 @@ class ClasslistHandler(APIView):
             werr = [
                 {
                     "warn_or_err": "error",
-                    "werr_line": 0,
+                    "werr_line": None,
                     "werr_text": "No classlist provided.",
                 }
             ]
@@ -164,7 +164,7 @@ class ClasslistHandler(APIView):
             werr = [
                 {
                     "warn_or_err": "error",
-                    "werr_line": 0,
+                    "werr_line": None,
                     "werr_text": f"Classlist contains {N} students; POST method expects 0.",
                 }
             ]

@@ -1342,7 +1342,7 @@ class Messenger(BaseMessenger):
             try:
                 with csvpath.open("rb") as f:
                     filedict = {"classlist_csv": f}
-                    response = self.post_auth("/api/v0/classlist", files=filedict)
+                    response = self.patch_auth("/api/v0/classlist", files=filedict)
                 response.raise_for_status()
             except requests.HTTPError as e:
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
