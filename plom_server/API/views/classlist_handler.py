@@ -93,29 +93,30 @@ class ClasslistHandler(APIView):
         Raises:
             PlomDependencyConflict: If dependencies not met.
         """
+        werr: List[Dict[str, Union[int, str, None]]] = []
         # The service we will call has weak defences against faulty inputs.
         # Check here that the requested action should be allowed.
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list:
             success = False
-            werr: List[Dict[str, Union[int, None]]] = [
+            werr.append(
                 {
                     "warn_or_err": "error",
                     "werr_line": None,
                     "werr_text": "Only users in the 'manager' group can manipulate the classlist.",
                 }
-            ]
+            )
             return Response((success, werr))
 
         if not request.FILES["classlist_csv"]:
             success = False
-            werr: List[Dict[str, Union[int, None]]] = [
+            werr.append(
                 {
                     "warn_or_err": "error",
                     "werr_line": None,
                     "werr_text": "No classlist provided.",
                 }
-            ]
+            )
             return Response((success, werr))
 
         classlist_csv = request.FILES["classlist_csv"]
@@ -162,16 +163,17 @@ class ClasslistHandler(APIView):
         Raises:
             PlomDependencyConflict: If dependencies not met.
         """
+        werr: List[Dict[str, Union[int, str, None]]] = []
         if StagingStudentService.are_there_students():
             success = False
             N = StagingStudentService.how_many_students()
-            werr: List[Dict[str, Union[int, None]]] = [
+            werr.append(
                 {
                     "warn_or_err": "error",
                     "werr_line": None,
                     "werr_text": f"Classlist contains {N} students; POST method expects 0.",
                 }
-            ]
+            )
             return Response((success, werr))
         return self._extend(request)
 
