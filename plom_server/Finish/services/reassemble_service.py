@@ -265,6 +265,8 @@ class ReassembleService:
                     "rotation": page.image.rotation,
                 }
             )
+        if not unmarked:
+            raise ValueError(f"Paper {paper.paper_number} has no unmarked images.")
         return unmarked
 
     def get_unmarked_paper(self, papernum: int) -> BytesIO:
