@@ -240,11 +240,12 @@ class ReassembleService:
             .order_by("page_number")
             .prefetch_related("image", "image__baseimage")
         )
-        # TODO: deduplicate by page images?
         nonmarked_mobile = (
             MobilePage.objects.filter(paper=paper)
-            .order_by("question_index")
             .prefetch_related("image", "image__baseimage")
+            # django requires `order_by` to include all `distinct` fields
+            .order_by("image", "question_index")
+            .distinct("image")
         )
 
         premarked = []
