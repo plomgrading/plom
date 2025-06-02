@@ -11,7 +11,6 @@ from django.contrib import messages
 
 from plom_server.Base.base_group_views import ScannerLeadMarkerOrManagerView
 from plom_server.Finish.services import ReassembleService
-from plom_server.Papers.services import SpecificationService
 from ..services import (
     hard_rotate_image_from_file_by_exif_and_angle,
     ForgiveMissingService,
@@ -44,13 +43,10 @@ class WholePaperView(ScannerLeadMarkerOrManagerView):
         """Get an unmarked paper."""
         pdf_bytestream = ReassembleService().get_unmarked_paper(paper_number)
 
-        shortname = SpecificationService.get_shortname()
-
         return FileResponse(
-            pdf_bytestream,
+            pdf_bytestream,  # filename set in service function
             as_attachment=True,
             content_type="application/pdf",
-            filename=f"{shortname}_{paper_number}.pdf",
         )
 
     def delete(self, request: HttpRequest, *, paper_number: int) -> HttpResponse:
