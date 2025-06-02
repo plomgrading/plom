@@ -237,13 +237,14 @@ class ReassembleService:
         """
         nonmarked_fixed = (
             FixedPage.objects.filter(paper=paper)
-            .order_by("page_number")
             .prefetch_related("image", "image__baseimage")
+            # django requires `order_by` to include all `distinct` fields
+            .order_by("image", "page_number")
+            .distinct("image")
         )
         nonmarked_mobile = (
             MobilePage.objects.filter(paper=paper)
             .prefetch_related("image", "image__baseimage")
-            # django requires `order_by` to include all `distinct` fields
             .order_by("image", "question_index")
             .distinct("image")
         )
