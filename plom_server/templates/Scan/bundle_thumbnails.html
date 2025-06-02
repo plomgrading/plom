@@ -4,6 +4,7 @@
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2024 Winnie Cheung
+    Copyright (C) 2025 Philip D. Loewen
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -49,7 +50,7 @@
                     <q><tt>{{ slug }}</tt></q>
                     {% if has_page_images and finished_reading_qr and is_perfect and not is_pushed %}
                         {% if n_collisions %}
-                            contains {{ n_collisions }} colliding page image{{ n_collisions|pluralize }}
+                            contains {{ n_collisions }} colliding page image{{ n_collisions|pluralize }}.
                         {% elif n_incomplete == 0 %}
                             <!-- some alpine show/hide code follows to put a spinner while we wait for the push to work -->
                             <!-- note that the midPush variable is defined in the parent html file which includes this html file -->
@@ -154,12 +155,13 @@
                 {% if n_collisions %}
                     <div class="alert alert-danger">
                         <h5>
-                            This bundle contains {{ n_collisions }} scan{{ n_collisions|pluralize }} of pages that have already been pushed
+                            {{ n_collisions }} scan{{ n_collisions|pluralize }} in this bundle
+                            show page{{ n_collisions|pluralize }} that have already been pushed.
                         </h5>
-                        <p>
-                            Generally this indicates one of the following:
-                            <ul>
-                                <li>You have scanned papers twice &mdash; this usually is not a big problem:</li>
+                        <p>Here are some possible scenarios and remedies.</p>
+                        <ul>
+                            <li>
+                                Some submissions have been rescanned by accident.
                                 <ul>
                                     <li>
                                         You can delete this bundle
@@ -170,42 +172,51 @@
                                     </li>
                                     <li>
                                         You can discard the pages of this
-                                        bundle that collide, and then push
-                                        the remaining pages.
+                                        bundle that collide, as detailed below,
+                                        and then push the remaining pages.
                                     </li>
                                 </ul>
-                                <li>You are midway through replacing some poorly-scanned papers:</li>
+                            </li>
+                            <li>
+                                Some submissions have been rescanned intentionally.
                                 <ul>
                                     <li>
-                                        you may want to <q>discard</q> the
-                                        existing (pushed) poorly-scanned
-                                        pages and then return here,
+                                        It is possible to replace poor-quality scanned images.
+                                        Decide whether you want to keep
+                                        the image{{ n_collisions|pluralize }}
+                                        in this scan or
+                                        the one{{ n_collisions|pluralize }} pushed earlier.
                                     </li>
                                     <li>
-                                        or you can discard some of these
-                                        staged pages to resolve the
-                                        collision;
+                                        You can <q>discard</q> the previously-pushed
+                                        page{{ n_collisions|pluralize }} and then come back here to push
+                                        this entire bundle.
                                     </li>
                                     <li>
-                                        it just depends whether
-                                        you want to keep the staged image
-                                        or the previously-pushed image.
+                                        You can discard the page{{ n_collisions|pluralize }} of this
+                                        bundle that collide{{ n_collisions|pluralize:"s," }}, as detailed below,
+                                        and then push the remaining pages.
                                     </li>
                                 </ul>
-                                <li>
-                                    You have accidentally reused
-                                    papers&mdash;different students have
-                                    written on the same paper&mdash;which
-                                    is a
-                                    <a href="https://plom.readthedocs.io/en/latest/faq.html#i-messed-up-by-double-printing-some-papers-now-i-have-collisions">substantial problem!</a>
-                                </li>
-                            </ul>
-                        </p>
-                        <p>The colliding image{{ n_collisions|pluralize }}: {{ colliding_images_nice_format }}</p>
+                            </li>
+                            <li>
+                                The system's expectation of unique paper numbers has been violated.
+                                <ul>
+                                    <li>
+                                        If different student input appears on pages whose QR codes
+                                        point to the same logical <q>paper</q> in the Plom database,
+                                        there is a substantial problem! Here is
+                                        <a href="https://plom.readthedocs.io/en/latest/faq.html#i-messed-up-by-double-printing-some-papers-now-i-have-collisions"
+                                           target="_blank">a further discussion</a>.
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <p>Colliding image{{ n_collisions|pluralize }} in this bundle: {{ colliding_images_nice_format }}.</p>
                     </div>
                 {% endif %}
                 <p>
-                    Summary of bundle contents
+                    Bundle <q>{{ slug }}</q> contains {{ total_pages }} page images ...
                     <button class="btn btn-light" x-on:click="show_summary =! show_summary">
                         <i class="bi bi-chevron-down" x-show="!show_summary"></i>
                         <i class="bi bi-chevron-up" x-show="show_summary"></i>
@@ -218,13 +229,14 @@
                         <div class="pb-0 alert {% if is_pushed %} alert-success {% else %} alert-info {% endif %}">
                             {% if is_pushed %}Pushed <i class="bi bi-check-circle text-success"></i>{% endif %}
                             <ul>
-                                <li>{{ known_pages }} / {{ total_pages }} known pages</li>
+                                <li>{{ known_pages }} known pages</li>
                                 {% if known_pages != total_pages %}
                                     <li>{{ unknown_pages }} unknown pages</li>
                                     <li>{{ extra_pages }} extra pages</li>
                                     <li>{{ discard_pages }} discard pages</li>
                                     <li>{{ error_pages }} error pages</li>
                                 {% endif %}
+                                {% if n_collisions != 0 %}<li>[{{ n_collisions }} colliding page{{ n_collisions|pluralize }}]</li>{% endif %}
                             </ul>
                         </div>
                     </div>
