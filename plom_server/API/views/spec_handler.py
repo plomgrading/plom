@@ -5,6 +5,7 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
 
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
@@ -30,6 +31,7 @@ class SpecificationHandler(APIView):
         Returns:
             A response whose body is empty, with status 204, on success.
             A response with status 403 if the user is not in the 'manager' group.
+            A response with status 409 if the spec cannot be removed.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list:
@@ -38,13 +40,14 @@ class SpecificationHandler(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
 
-        # The removal service provided by SpecificationService
-        # will break if it can't find something nontrivial to remove.
-        # So deal with the no-op possibility right here.
-        if not SpecificationService.is_there_a_spec():
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        try:
+            SpecificationService.remove_spec()
+        except ObjectDoesNotExist:
+            # existing spec also gives 204
+            pass
+        except PlomDependencyConflict as e:
+            return _error_response(e, status.HTTP_409_CONFLICT)
 
-        SpecificationService.remove_spec()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     # GET /api/v0/spec
