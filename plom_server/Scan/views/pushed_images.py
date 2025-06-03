@@ -41,8 +41,8 @@ class WholePaperView(ScannerLeadMarkerOrManagerView):
     """Perform operations on all images of a given paper."""
 
     def get(self, request: HttpRequest, *, paper_number: int) -> FileResponse:
-        """Get a premarked paper."""
-        pdf_bytestream = ReassembleService().get_premarked_paper(paper_number)
+        """Get an unmarked paper."""
+        pdf_bytestream = ReassembleService().get_unmarked_paper(paper_number)
 
         shortname = SpecificationService.get_shortname()
 

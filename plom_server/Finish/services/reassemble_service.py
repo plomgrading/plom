@@ -224,7 +224,7 @@ class ReassembleService:
             marked_pages.append(annotation.image.image.path)
         return marked_pages
 
-    def get_premarked_images(self, paper: Paper) -> list[dict[str, Any]]:
+    def get_unmarked_images(self, paper: Paper) -> list[dict[str, Any]]:
         """Get paths for a paper's images as they were scanned.
 
         Args:
@@ -249,25 +249,25 @@ class ReassembleService:
             .distinct("image")
         )
 
-        premarked = []
+        unmarked = []
         for page in nonmarked_fixed:
             if page.image is not None:
-                premarked.append(
+                unmarked.append(
                     {
                         "filename": page.image.baseimage.image_file.path,
                         "rotation": page.image.rotation,
                     }
                 )
         for page in nonmarked_mobile:
-            premarked.append(
+            unmarked.append(
                 {
                     "filename": page.image.baseimage.image_file.path,
                     "rotation": page.image.rotation,
                 }
             )
-        return premarked
+        return unmarked
 
-    def get_premarked_paper(self, papernum: int) -> BytesIO:
+    def get_unmarked_paper(self, papernum: int) -> BytesIO:
         """Reassemble a particular paper JIT without marker annotations.
 
         The produced file isn't cached.
@@ -283,7 +283,7 @@ class ReassembleService:
         except Paper.DoesNotExist:
             raise ValueError("No paper with that number") from None
 
-        premarked_images = self.get_premarked_images(paper_obj)
+        unmarked_images = self.get_unmarked_images(paper_obj)
 
         paper_id = StudentMarkService.get_paper_id_or_none(paper_obj)
         if not paper_id:
@@ -300,7 +300,7 @@ class ReassembleService:
                 shortname,
                 pdf_id_metadata,
                 coverfile=None,
-                id_images=premarked_images,
+                id_images=unmarked_images,
                 marked_pages=[],
                 dnm_images=[],
                 nonmarked_images=[],
