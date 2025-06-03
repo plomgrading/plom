@@ -21,6 +21,13 @@ def get_user_info() -> dict:
     return users
 
 
+def get_users_groups_info() -> dict:
+    return {
+        user.username: list(user.groups.values_list("name", flat=True))
+        for user in User.objects.all()
+    }
+
+
 def delete_user(username: str, requester_id: int | None = None) -> str:
     """Delete a user.
 

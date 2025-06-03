@@ -40,9 +40,16 @@ class MgetRubricsByQuestion(APIView):
         return Response(all_rubric_data, status=status.HTTP_200_OK)
 
 
+# GET: /MK/user/{username}/{question}
+# PUT: /MK/user/{username}/{question}
+from plom_server.UserManagement.models import User
+
+
 class MgetRubricPanes(APIView):
     def get(self, request: Request, *, username: str, question: int) -> Response:
-        pane = RubricService.get_rubric_pane(request.user, question)
+        user = User.objects.get(username=username)
+        pane = RubricService.get_rubric_pane(user, question)
+
         return Response(pane, status=status.HTTP_200_OK)
 
     def put(self, request: Request, *, username: str, question: int) -> Response:
