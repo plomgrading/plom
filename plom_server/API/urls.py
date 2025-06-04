@@ -46,6 +46,7 @@ from .views import (
     SourceDetail,
     SpecificationHandler,
     RectangleExtractorView,
+    PQVmapHandler,
 )
 
 from .views import MgetRubricMarkingTasks
@@ -144,6 +145,21 @@ urlpatterns = [
         "api/v0/source/<int:version>",
         SourceDetail.as_view(),
         name="api_source_detail",
+    ),
+    path(
+        "api/v0/source",
+        SourceOverview.as_view(),
+        name="api_source_overview",
+    ),
+    path(
+        "api/beta/pqvmap/<int:count>",
+        PQVmapHandler.as_view(),
+        name="pqvmapper_n",
+    ),
+    path(
+        "api/beta/pqvmap",
+        PQVmapHandler.as_view(),
+        name="pqvmapper",
     ),
     path(
         "api/v0/source",
