@@ -95,7 +95,7 @@ class ManageDiscardService:
 
         Keyword Args:
             cascade: Whether this function should find other MobilePage objects
-            referencing the same img attribute, and also delete those.
+                referencing the same img, and also delete those.
 
         Returns:
             The DiscardPage object, if one was created, or None.
@@ -124,15 +124,16 @@ class ManageDiscardService:
             )
 
         # (3)
+        # short-circuit `or` saves a db query when `cascade` deletes all mobile pages
         if cascade or page_img.mobilepage_set.count() < 1:
-            ood_tasks = ", ".join(
+            outdated_tasks = ", ".join(
                 [f"{d['paper_number']}-{d['question_index']}" for d in paper_qidx_dicts]
             )
             return DiscardPage.objects.create(
                 image=page_img,
                 discard_reason=(
                     f"User {user_obj.username} discarded mobile attached "
-                    "to marking tasks (paper number, question index): " + ood_tasks
+                    "to marking tasks (paper number, question index): " + outdated_tasks
                 ),
             )
 
