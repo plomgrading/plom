@@ -12,9 +12,13 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aidan Murphy
 
+import math
 from typing import Any
 
 from ..models import Rubric
+
+
+_frac_value_tolerance = 1e-7
 
 
 def _Rubric_to_dict(r: Rubric) -> dict[str, Any]:
@@ -103,6 +107,23 @@ _fraction_table = (
 )
 
 
+def fractional_part_is_nth(
+    value: int | float,
+    N: int,
+) -> bool:
+    """Is the non-zero fractional part an Nth?
+
+    For example, when N is 3, we return True on 4.333333333 or 1.666666667.
+    """
+    tol = _frac_value_tolerance
+
+    frac = value - math.trunc(value)
+    for frac in (float(x) / N for x in range(1, N)):
+        if frac - tol < value < frac + tol:
+            return True
+    return False
+
+
 def _generate_display_delta(
     value: int | float | str,
     kind: str,
@@ -135,7 +156,7 @@ def _generate_display_delta(
     value = float(value) if isinstance(value, str) else value
     out_of = float(out_of) if isinstance(out_of, str) else out_of
 
-    tol = 1e-7
+    tol = _frac_value_tolerance
 
     if kind == "absolute":
         if out_of is None:
