@@ -238,12 +238,12 @@ class ReassembleService:
         nonmarked_fixed = (
             FixedPage.objects.filter(paper=paper)
             .prefetch_related("image", "image__baseimage")
-            .distinct("image")  # postgres only
+            .order_by("page_number")
         )
         nonmarked_mobile = (
             MobilePage.objects.filter(paper=paper)
             .prefetch_related("image", "image__baseimage")
-            .distinct("image")  # postgres only
+            .order_by("question_index")
         )
 
         unmarked = []
@@ -262,8 +262,12 @@ class ReassembleService:
                     "rotation": page.image.rotation,
                 }
             )
-        print(unmarked)
-        return unmarked
+        # distinct("qidx"/"page_number") doesn't work outside of postgres
+        # so deduplicate list this way
+        unmarked_dict = {d["filename"]: d for d in unmarked}
+        unmarked_deduplicated = list(unmarked_dict.values())
+
+        return unmarked_deduplicated
 
     def get_unmarked_paper(self, papernum: int) -> BytesIO:
         """Reassemble a particular paper JIT without marker annotations.
