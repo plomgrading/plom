@@ -238,15 +238,12 @@ class ReassembleService:
         nonmarked_fixed = (
             FixedPage.objects.filter(paper=paper)
             .prefetch_related("image", "image__baseimage")
-            # django requires `order_by` to include all `distinct` fields
-            .order_by("image", "page_number")
-            .distinct("image")
+            .distinct("image")  # postgres only
         )
         nonmarked_mobile = (
             MobilePage.objects.filter(paper=paper)
             .prefetch_related("image", "image__baseimage")
-            .order_by("image", "question_index")
-            .distinct("image")
+            .distinct("image")  # postgres only
         )
 
         unmarked = []
@@ -265,6 +262,7 @@ class ReassembleService:
                     "rotation": page.image.rotation,
                 }
             )
+        print(unmarked)
         return unmarked
 
     def get_unmarked_paper(self, papernum: int) -> BytesIO:
