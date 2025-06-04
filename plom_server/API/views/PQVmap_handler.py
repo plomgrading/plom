@@ -9,6 +9,8 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
+from django.shortcuts import redirect
+
 # from rest_framework import serializers
 from rest_framework import status
 
@@ -16,6 +18,7 @@ from plom.plom_exceptions import PlomDependencyConflict
 
 from plom_server.Preparation.services import (
     PQVMappingService,
+    StagingStudentService,
 )
 
 from plom_server.Papers.services import (
@@ -117,6 +120,10 @@ class PQVmapHandler(APIView):
                 "PQV map is not empty. Consider deleting before re-generating.",
                 status.HTTP_409_CONFLICT,
             )
+
+        if count is None:
+            defaultcount = StagingStudentService().get_minimum_number_to_produce()
+            return redirect(f"/api/beta/pqvmap/{defaultcount}")
 
         try:
             # Make the PQV map. Sorry for hard-coding the lowestpapernumber.
