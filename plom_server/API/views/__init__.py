@@ -5,6 +5,10 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
 
+from .paperstoprint_handler import (
+    papersToPrintHandler,
+)
+
 from .server_info import (
     UserRole,
     ExamInfo,
