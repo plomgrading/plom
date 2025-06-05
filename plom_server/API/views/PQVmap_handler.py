@@ -9,8 +9,6 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
-from django.shortcuts import redirect
-
 # from rest_framework import serializers
 from rest_framework import status
 
@@ -122,8 +120,10 @@ class PQVmapHandler(APIView):
             )
 
         if count is None:
+            # We need the "internal redirect" here because the Django redirect
+            # shortcut changes the original method (POST) to GET.
             defaultcount = StagingStudentService().get_minimum_number_to_produce()
-            return redirect(f"/api/beta/pqvmap/{defaultcount}")
+            return self.post(request, count=defaultcount)
 
         try:
             # Make the PQV map. Sorry for hard-coding the lowestpapernumber.
