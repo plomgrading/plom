@@ -20,16 +20,15 @@ class PrenameSettingService:
         return p_obj.enabled
 
     @transaction.atomic
-    def set_prenaming_setting(self, enable_disable) -> None:
-        """Set prenaming to the given bool.
+    def set_prenaming_setting(self, enable) -> None:
+        """Use the boolean value of the input parameter to set prenaming.
 
-        Raises a PlomDependencyConflict if cannot modify.
+        Raises a PlomDependencyConflict if modification is disallowed.
         """
-        # raises a PlomDependencyConflict if fails.
         assert_can_enable_disable_prenaming()
 
         p_obj = PrenamingSetting.load()
-        p_obj.enabled = enable_disable
+        p_obj.enabled = enable
         p_obj.save()
 
     @transaction.atomic
