@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
+# Copyright (C) 2024-2025 Deep Shah
 
 import json
 from pathlib import Path
@@ -745,7 +746,21 @@ class IDBoxProcessorService:
         self.run_lap_solver(user, student_ids, probabilities)
 
     def run_greedy(self, user: User, student_ids: list[str], probabilities) -> None:
+        #start by removing any IDs that have already been used
         id_reader_service = IDReaderService()
+        for ided_stu in id_reader_service.get_already_matched_sids():
+            try:
+                student_ids.remove(ided_stu)
+            except ValueError:
+                pass
+        # do not use papers that are already ID'd
+        unidentified_papers = id_reader_service.get_unidentified_papers()
+        papers_to_id = [n for n in unidentified_papers if n in probabilities]
+        if len(papers_to_id) == 0 or len(student_ids) == 0:
+            raise IndexError(
+                f"Greedy assignment is degenerate: {len(papers_to_id)} unidentified "
+                f"machine-read papers and {len(student_ids)} unused students."
+            )
         # Different predictors go here.
         greedy_predictions = self._greedy_predictor(student_ids, probabilities)
         for prediction in greedy_predictions:
