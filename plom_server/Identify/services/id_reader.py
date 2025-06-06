@@ -746,7 +746,7 @@ class IDBoxProcessorService:
         self.run_lap_solver(user, student_ids, probabilities)
 
     def run_greedy(self, user: User, student_ids: list[str], probabilities) -> None:
-        #start by removing any IDs that have already been used
+        # start by removing any IDs that have already been used
         id_reader_service = IDReaderService()
         for ided_stu in id_reader_service.get_already_matched_sids():
             try:
