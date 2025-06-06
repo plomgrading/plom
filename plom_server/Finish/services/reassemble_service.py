@@ -238,15 +238,12 @@ class ReassembleService:
         nonmarked_fixed = (
             FixedPage.objects.filter(paper=paper)
             .prefetch_related("image", "image__baseimage")
-            # django requires `order_by` to include all `distinct` fields
-            .order_by("image", "page_number")
-            .distinct("image")
+            .order_by("page_number")
         )
         nonmarked_mobile = (
             MobilePage.objects.filter(paper=paper)
             .prefetch_related("image", "image__baseimage")
-            .order_by("image", "question_index")
-            .distinct("image")
+            .order_by("question_index")
         )
 
         unmarked = []
@@ -265,9 +262,16 @@ class ReassembleService:
                     "rotation": page.image.rotation,
                 }
             )
+
         if not unmarked:
             raise ValueError(f"Paper {paper.paper_number} has no unmarked images.")
-        return unmarked
+
+        # distinct("qidx"/"page_number") doesn't work outside of postgres
+        # so deduplicate list this way
+        unmarked_dict = {d["filename"]: d for d in unmarked}
+        unmarked_deduplicated = list(unmarked_dict.values())
+
+        return unmarked_deduplicated
 
     def get_unmarked_paper(self, papernum: int) -> BytesIO:
         """Reassemble a particular paper JIT without marker annotations.
