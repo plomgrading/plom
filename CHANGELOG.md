@@ -13,9 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Changed
+* UI tweaks, text clarifications, and misc code cleanups,
 
 ### Fixed
-
+* Single-digit microQR codes could be mistaken for extra page QR codes, sometimes leading crashes.
+* Workaround `.csv` classlists exported by Microsoft Excel with "Feff" "byte-order-mark".
 
 
 ## [0.18.2] - 2025-05-23
