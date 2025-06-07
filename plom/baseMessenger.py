@@ -99,21 +99,23 @@ class BaseMessenger:
         """Initialize a new BaseMessenger.
 
         Args:
-            server: URL or None to default to localhost.
+            server: URL, or None to default to localhost.
 
         Keyword Arguments:
-            port: What port to try to connect to.  Defaults
-                to 41984 if omitted and cannot be determined from the
-                URI string.
-            scheme: What scheme to use to connect.  Defaults
-                to ``"https"`` if omitted and cannot be determined from
-                the URI string.
-            verify_ssl (True/False): controls where SSL certs are
-                checked, see the `requests` library parameter
-                ``Session.verify`` which ultimately receives this.
+            port: Fallback port number to use if the server
+                string does not specify one. If neither of these
+                sources settle the issue, use the default defined
+                in plom.Default_Port.
+            scheme: Fallback scheme (http or https) to use if the server
+                string does not include a scheme prefix. If neither
+                of the above sources settle the issue, defaults to ``"https"``.
+            verify_ssl (True/False): controls whether SSL certs are checked.
+                This is passed through to the ``Session.verify`` parameter
+                in the `requests` library. It has no effect when the
+                connection scheme is http.
             _server_API_version: internal use, for cloning a Messenger.
                 We want to recall the API of the server we are talking
-                to without computing itagain.
+                to without computing it again.
 
         Returns:
             None
@@ -463,7 +465,7 @@ class BaseMessenger:
                 as invalid URL.
         """
         if self.session:
-            log.debug("already have an requests-session")
+            log.debug("already have a requests-session")
         else:
             log.debug("starting a new requests-session")
             self._start_session()
