@@ -85,7 +85,7 @@ class SourceDetail(APIView):
                     status.HTTP_404_NOT_FOUND,
                 )
 
-    # POST /api/v0/source/<int:ver>
+    # POST /api/v0/source/<int:version>
     def post(self, request: Request, *, version: int) -> Response:
         """Create, replace, or delete a source version.
 
@@ -150,7 +150,7 @@ class SourceDetail(APIView):
 
         return Response(sourcenotes)
 
-    # DELETE /api/v0/source/<int:ver>
+    # DELETE /api/v0/source/<int:version>
     def delete(self, request: Request, *, version: int) -> Response:
         """Delete the specified source version.
 

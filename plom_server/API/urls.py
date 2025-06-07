@@ -113,15 +113,17 @@ urlpatterns = [
         SpecificationHandler.as_view(),
         name="api_spec_handler",
     ),
-    path(
-        "api/v0/source",
-        SourceOverview.as_view(),
-        name="api_source_overview",
-    ),
+    # Django inspects patterns in order, using the first match.
+    # So the more specific one should appear first, as shown here.
     path(
         "api/v0/source/<int:version>",
         SourceDetail.as_view(),
         name="api_source_detail",
+    ),
+    path(
+        "api/v0/source",
+        SourceOverview.as_view(),
+        name="api_source_overview",
     ),
 ]
 
