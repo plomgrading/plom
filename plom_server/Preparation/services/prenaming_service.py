@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2022-2024 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
 
@@ -21,10 +21,11 @@ class PrenameSettingService:
         return p_obj.enabled
 
     @transaction.atomic
-    def set_prenaming_setting(self, enable) -> None:
+    def set_prenaming_setting(self, enable: bool) -> None:
         """Use the boolean value of the input parameter to set prenaming.
 
-        Raises a PlomDependencyConflict if modification is disallowed.
+        Raises:
+             PlomDependencyConflict: if modification is disallowed.
         """
         assert_can_enable_disable_prenaming()
 
@@ -43,10 +44,11 @@ class PrenameSettingService:
         }
 
     @transaction.atomic
-    def set_prenaming_coords(self, xcoord, ycoord) -> None:
+    def set_prenaming_coords(self, xcoord: float, ycoord: float) -> None:
         """Set prenaming box position to the given vars.
 
-        Raises a plomDependencyConflict if the position cannot be modified.
+        Raises:
+            PlomDependencyConflict: if the position cannot be modified.
         """
         assert_can_modify_prenaming_config()
 
