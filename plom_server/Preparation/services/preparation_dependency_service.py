@@ -79,11 +79,13 @@ def assert_can_modify_classlist():
     if PrenameSettingService().get_prenaming_setting():
         if PaperInfoService.is_paper_database_populated():
             raise PlomDependencyConflict(
-                "Database has been populated with some prenamed papers, so the classlist cannot be changed."
+                "Database has been populated with some prenamed papers,"
+                " so the classlist cannot be changed."
             )
         if PaperInfoService.is_paper_database_being_updated_in_background():
             raise PlomDependencyConflict(
-                "Database is now being updated with some prenamed papers, so the classlist cannot be changed."
+                "Database is now being updated with some prenamed papers,"
+                " so the classlist cannot be changed."
             )
 
 
