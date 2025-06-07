@@ -114,6 +114,9 @@ class ManageScanService:
         )
         # build a subquery to help us find papers which have at least one mobile page
         # with a distinct question_index for each question
+        if not SpecificationService.is_there_a_spec():
+            # Short-circuit return: with no spec, scanning project is degenerate
+            return Paper.objects.none(), Paper.objects.none()
         mobile_pages = (
             MobilePage.objects.values("paper")
             .annotate(counts=Count("question_index", distinct=True))
