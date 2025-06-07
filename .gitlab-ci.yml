@@ -136,6 +136,7 @@ copyright_year:
   image: fedora:42
   stage: static_analysis
   before_script:
+    - echo $CI_COMMIT_TAG
     - dnf install -y python3 glab git
     - git --version
     - glab --version
@@ -143,9 +144,9 @@ copyright_year:
     - git remote add upstream https://gitlab.com/plom/plom.git
     - echo "Consider these various open merge requests"
     - glab mr list --source-branch=$CI_COMMIT_BRANCH --repo=plom/plom
-    - read TARGET_REPO_NAME TARGET_BRANCH_NAME <<< $(./contrib/find_MR_target_branch.py --source $CI_COMMIT_BRANCH --repo plom/plom --default "origin main")
+    - read TARGET_REPO_NAME TARGET_BRANCH_NAME <<< $(./maint/find-MR-target-branch.py --source $CI_COMMIT_BRANCH --repo plom/plom --default "origin main")
     # we expect to find at most one MR
-    - NUM_MRS=$(./contrib/find_MR_target_branch.py --source $CI_COMMIT_BRANCH --repo plom/plom --default "origin main" | wc -l)
+    - NUM_MRS=$(./maint/find-MR-target-branch.py --source $CI_COMMIT_BRANCH --repo plom/plom --default "origin main" | wc -l)
     - TARGET_BRANCH=${TARGET_REPO_NAME}/${TARGET_BRANCH_NAME}
     - echo "We think the target branch is '$TARGET_BRANCH'"
     - echo "Next ensure we have that target branch for comparing"
@@ -154,12 +155,15 @@ copyright_year:
     - git checkout $CI_COMMIT_BRANCH --
     - git branch -avv
   script:
+    - echo $CI_COMMIT_TAG
+    # exit early if we think we're on a tag
+    - if [[ $CI_COMMIT_TAG ]] ; then exit 0; fi
     - echo "Considering the following commits to this branch (since '${TARGET_BRANCH}'):"
     - git shortlog ${TARGET_BRANCH}..${CI_COMMIT_BRANCH} --
     - echo "Those commits touch the following files:"
     # git show --pretty="" --name-only ${TARGET_BRANCH}..${CI_COMMIT_BRANCH} -- | uniq -u
     - git diff --name-only ${TARGET_BRANCH}...${CI_COMMIT_BRANCH} --
-    - ./contrib/is_copyright_uptodate.py `git diff --name-only ${TARGET_BRANCH}...$CI_COMMIT_BRANCH --`
+    - ./maint/is-copyright-uptodate.py `git diff --name-only ${TARGET_BRANCH}...$CI_COMMIT_BRANCH --`
     - echo "Note that there are some files that do not have/need copyright headers"
     - if [ ${NUM_MRS} -gt 1 ]; then exit 1; fi
   allow_failure: true
