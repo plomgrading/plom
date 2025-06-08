@@ -151,6 +151,11 @@ class ScanMapBundle(APIView):
         Only "scanner" users including managers can do this; others will
         get a 403.
         """
+        # print("=" * 88)
+        print(f"PDL Debug: POST has bundle_id = {bundle_id}, page = {page}. ", end="")
+        # print("PDL Debug: Here is the printable version of request.query_params.")
+        # print(request.query_params)
+
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "scanner" not in group_list:
             return _error_response(
@@ -158,7 +163,7 @@ class ScanMapBundle(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
         data = request.query_params
-        print(data)
+
         question_idx_list = data.getlist("qidx")
         try:
             question_idx_list = [int(n) for n in question_idx_list]
@@ -166,9 +171,8 @@ class ScanMapBundle(APIView):
             return _error_response(
                 f"Non-integer qidx: {e}", status.HTTP_400_BAD_REQUEST
             )
-        print(question_idx_list)
         papernum = data.get("papernum")
-        print(papernum)
+        print(f"papernum = {papernum}, question_idx_list = {question_idx_list}.")
         # if questions is None:
         #     questions = "all"
         # many types possible for ``questions`` but here we always get a str
@@ -176,6 +180,7 @@ class ScanMapBundle(APIView):
 
         # TODO: error handling to deal with: mapping the same page twice, currently an integrity error
         try:
+            # print("In scan.py, trying map_bundle_page() ...")
             ScanService().map_bundle_page(
                 bundle_id, page, papernum=papernum, question_indices=question_idx_list
             )
@@ -185,5 +190,10 @@ class ScanMapBundle(APIView):
             return _error_response(
                 f"Probably no bundle id {bundle_id} or page {page}: {e}",
                 status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return _error_response(
+                f"PDL Debug: Uncaught exception with text part {e}",
+                status.HTTP_501_NOT_IMPLEMENTED,
             )
         return Response({"hi": "hello"}, status=status.HTTP_200_OK)

@@ -950,32 +950,64 @@ class Messenger(BaseMessenger):
 
     def new_server_bundle_map_page(
         self, bundle_id: int, page: int, papernum: int, questions: str | list
-    ) -> Any:
+    ) -> None:
         """Map a page of a bundle to zero or more questions.
 
         TODO: beta: rename to something reasonable in due time.
 
+        Args:
+            bundle_id (int): the bundle's internal integer number
+            page (int): the 1-based index of the page of interest in that bundle
+            papernum (int): the target paper number for this page
+            questions (str|list): the question(s) to which this page should be attached.
+                TODO: Design and explain the accepted formats, here or nearby.
+
+        Raises:
+            PlomSeriousException
+            PlomAuthenticationException
+            PlomNoPermission
+            PlomRangeException
+            PlomSeriousException
+
         Returns:
-            TODO: nothing yet, still WIP?
+            None
         """
         if self.is_server_api_less_than(113):
             raise PlomNoServerSupportException(
                 "Server too old: does not support page mapping"
             )
+        print("DEBUG:Starting new_server_bundle_map_page.")
+        print(
+            f"DEBUG: Incoming parameter questions = {questions}, with type {type(questions)}."
+        )
+        # qall TODO?
+        # qdnm versus empty list?
+        # query_args = ["qall", f"papernum={papernum}"]
+        # Reinventing the question-list-parsing wheel here. Reconsider to stay DRY.
+        query_args = [f"papernum={papernum}"]
+        if isinstance(questions, int):
+            query_args.append(f"qidx={questions}")
+        elif isinstance(questions, str):
+            if questions.isdecimal():
+                query_args.append(f"qidx={questions}")
+            elif questions.casefold() == "all":
+                query_args.append("qall")
+            elif questions.casefold() == "dnm":
+                query_args.append("papernum=dnm")
+            else:
+                pass
+        elif hasattr(questions, "__iter__"):
+            query_args.extend([f"qidx={n}" for n in questions])
+        else:
+            print(
+                f"DEBUG: Parameter 'questions' has unexpected type {type(questions)}. Expect trouble."
+            )
+
+        p = f"/api/beta/scan/bundle/{bundle_id}/{page}/map" + "?" + "&".join(query_args)
+        print(f"DEBUG: Sending a POST request to this URL: {p}")
 
         with self.SRmutex:
             try:
-                # qall TODO?
-                # qdnm versus empty list?
-                query_args = ["qall", f"papernum={papernum}"]
-                print(questions)
-                query_args.extend([f"qidx={n}" for n in questions])
-                p = (
-                    f"/api/beta/scan/bundle/{bundle_id}/{page}/map"
-                    + "?"
-                    + "&".join(query_args)
-                )
-                print(p)
                 response = self.post_auth(p)
                 response.raise_for_status()
                 return response.json()
@@ -987,7 +1019,7 @@ class Messenger(BaseMessenger):
                 if response.status_code == 403:
                     raise PlomNoPermission(response.reason) from None
                 if response.status_code == 404:
-                    raise PlomRangeException(response.reason) from None
+                    raise PlomRangeException("404 " + response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def new_server_push_bundle(self, bundle_id: int):

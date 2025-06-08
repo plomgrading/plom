@@ -678,12 +678,18 @@ class ScanService:
         Raises:
             ObjectDoesNotExist: no such BundleImage, e.g., invalid bundle id or page
         """
+        print(
+            f"DEBUG: Starting map_bundle_page with bundle_id={bundle_id}, page={page} "
+        )
+        print(f"and target papernum={papernum}, question_indices={question_indices}.")
+
         # TODO: is it really necessary to make these here?  should be a model problem
-        root_folder = settings.MEDIA_ROOT / "page_images"
-        print("=" * 88)
-        print(f"DEBUG: explicitly and inappropriately making {root_folder}")
-        print("DEBUG: likely rcalled by plom-cli uploads: ensure unneeded then remove")
-        root_folder.mkdir(exist_ok=True)
+        # 2025-06-08 [PDL]: Did some checking without this stuff and nothing broke.
+        # root_folder = settings.MEDIA_ROOT / "page_images"
+        # print("=" * 88)
+        # print(f"DEBUG: explicitly and inappropriately making root folder {root_folder}")
+        # print("DEBUG: likely recalled by plom-cli uploads: ensure unneeded then remove")
+        # root_folder.mkdir(exist_ok=True)
 
         # TODO: assert the length of question is same as pages in bundle
 
