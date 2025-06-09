@@ -78,3 +78,5 @@ from .latex import (
 )
 
 from .mark_question import MarkTaskNextAvailable, MarkTask
+
+from .rectangle_extractor import RectangleExtractorView

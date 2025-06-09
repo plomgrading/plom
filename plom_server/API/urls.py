@@ -41,6 +41,7 @@ from .views import (
     SourceOverview,
     SourceDetail,
     SpecificationHandler,
+    RectangleExtractorView
 )
 
 from .views import MgetRubricMarkingTasks
@@ -161,5 +162,10 @@ urlpatterns += [
         "rubrics/<int:rid>/tasks",
         MgetRubricMarkingTasks.as_view(),
         name="api_rubrics_tasks",
+    ),
+    path(
+        "api/rectangle/<int:version>/<int:page_num>",
+        RectangleExtractorView.as_view(),
+        name="api_rectangle_extractor",
     ),
 ]
