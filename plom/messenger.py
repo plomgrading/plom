@@ -1348,3 +1348,27 @@ class Messenger(BaseMessenger):
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
         return tuple(response.json())
+
+    def rectangle_extraction(
+        self, bulk: bool, paper_num: int, page_num: int, region: dict[str, float]
+    ) -> BytesIO:
+        """Download the extracted region of page(s).
+
+        Args:
+            bulk: True to extract multiple pages. Otherwise, the args must be specific
+            enough to refer to a page in a paper.
+            paper_num: the paper_num of paper to be extracted.
+            page_num: the page_num to be extracted
+            region: the
+
+        """
+        with self.SRmutex:
+            try:
+                response = self.get_auth("/api/v0/classlist", stream=True)
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+        csv_content = BytesIO(response.content)
+
+        return csv_content

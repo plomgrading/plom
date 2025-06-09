@@ -433,6 +433,9 @@ def main():
 
     elif args.command == "clear":
         clear_login(args.server, args.username, args.password)
+    
+    elif args.command == "rectangle-extractor":
+        success = 
     else:
         get_parser().print_help()
 
