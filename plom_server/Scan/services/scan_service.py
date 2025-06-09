@@ -6,6 +6,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2024 Forest Kobayashi
 # Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025 Philip D. Loewen
 
 import hashlib
 import logging
@@ -821,6 +822,10 @@ class ScanService:
     @transaction.atomic
     def get_n_known_images(self, bundle: StagingBundle) -> int:
         return bundle.stagingimage_set.filter(image_type=StagingImage.KNOWN).count()
+
+    @transaction.atomic
+    def get_n_unread_images(self, bundle: StagingBundle) -> int:
+        return bundle.stagingimage_set.filter(image_type=StagingImage.UNREAD).count()
 
     @transaction.atomic
     def get_n_unknown_images(self, bundle: StagingBundle) -> int:
