@@ -1061,7 +1061,7 @@ class Messenger(BaseMessenger):
             A dict including key `"filename"` for the file that was written
             and other information about the download.
         """
-        if self.is_server_api_less_than(113):
+        if self.is_server_api_less_than(114):
             raise PlomNoServerSupportException(
                 "Server too old: API does not support getting unmarked papers"
             )

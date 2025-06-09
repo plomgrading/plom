@@ -47,7 +47,7 @@ class FinishUnmarked(APIView):
     def get(self, request: Request, *, papernum: int) -> FileResponse:
         """API to download one unmarked paper.
 
-        Only scanners, managers, and lead_markers can access this,
+        Only managers and lead_markers can access this,
         others will receive a 403.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
