@@ -724,7 +724,7 @@ class ScanService:
                 nq = SpecificationService.get_n_questions()
                 for qi in question_indices:
                     if qi < 1 or qi > nq:
-                        raise ValueError(f"Requested question number {qi} is invalid.")
+                        raise ValueError(f"Requested question index {qi} is invalid.")
 
                 ExtraStagingImage.objects.create(
                     staging_image=page_img,
