@@ -23,6 +23,8 @@
     <p>The approximation distribution of marks for the assessment; the student's score is indicated.</p>
     <br>
     <p style="break-before: page;"></p>
+
+    {% if pedagogy_tags %}
     <h3>Student achievement by topic or learning objective</h3>
     <img src="data:image/png;base64,{{ pedagogy_tags_graph }}" />
     <p>
@@ -60,6 +62,8 @@
     </p>
     <br>
     <p style="break-before: page;"></p>
+    {% endif %}
+    
     <h3>Boxplot of marks by question</h3>
     <p>
         In the boxplots below the distribution of marks for each question is shown.
