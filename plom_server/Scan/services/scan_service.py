@@ -47,7 +47,7 @@ from plom.tpv_utils import (
 )
 
 from plom_server.Papers.services import ImageBundleService, SpecificationService
-from plom_server.Papers.models import FixedPage
+from plom_server.Papers.models import FixedPage, MobilePage
 from plom_server.Base.models import HueyTaskTracker, BaseImage
 from ..models import (
     StagingBundle,
@@ -661,7 +661,7 @@ class ScanService:
         papernum: int,
         question_indices: list[int],
     ) -> None:
-        """Maps one page of a bundle onto zero or more questions.
+        """Map one page of a bundle onto zero or more questions.
 
         Args:
             bundle_id: primary key of bundle DB object.
@@ -670,43 +670,62 @@ class ScanService:
         Keyword Args:
             papernum: the number of the test-paper
             question_indices: a variable-length list of which questions (by
-                one-based question index) to attach the page to.  If empty,
-                it means to drop (discard) the page.
-                TODO: no, it should attach it to the proto DNM group:
-                TODO: https://gitlab.com/plom/plom/-/merge_requests/2771
+                one-based question index) to attach the page to. Two special
+                cases are available. If the list is empty the page gets discarded.
+                If the list is the singleton [MobilePage.DNM_qidx], the page
+                is attached to the DNM group.
 
         Raises:
             ObjectDoesNotExist: no such BundleImage, e.g., invalid bundle id or page
+            ValueError: question_indices gives impossible or contradictory advice,
+                e.g., some index is out of range or DNM is not the only list-element.
         """
         print(
             f"DEBUG: Starting map_bundle_page with bundle_id={bundle_id}, page={page} "
+            f"and target papernum={papernum}, question_indices={question_indices}."
         )
-        print(f"and target papernum={papernum}, question_indices={question_indices}.")
-
-        # TODO: is it really necessary to make these here?  should be a model problem
-        # 2025-06-08 [PDL]: Did some checking without this stuff and nothing broke.
-        # root_folder = settings.MEDIA_ROOT / "page_images"
-        # print("=" * 88)
-        # print(f"DEBUG: explicitly and inappropriately making root folder {root_folder}")
-        # print("DEBUG: likely recalled by plom-cli uploads: ensure unneeded then remove")
-        # root_folder.mkdir(exist_ok=True)
-
-        # TODO: assert the length of question is same as pages in bundle
 
         with transaction.atomic():
             page_img = StagingImage.objects.get(bundle__pk=bundle_id, bundle_order=page)
 
+            # TODO: Think about this part of the current setup. Interpreting []
+            # as DISCARD disagrees with the interpretation in the function
+            # check_question_list() found in plom/scan/question_list_utils.py,
+            # but maybe it's nice to have some way to forcibly discard a page.
             if not question_indices:
-                # TODO: see MR !2771 for later improvements
                 page_img.image_type = StagingImage.DISCARD
                 page_img.save()
                 DiscardStagingImage.objects.create(
                     staging_image=page_img, discard_reason="map said drop this page"
                 )
+
+            # TODO: What follows seems like a sensible way to indicate that a page
+            # should go into the category DNM. But note that it's inconsistent with
+            # the interpretation in the function mentioned just above. Should we
+            # change here, or there, or live with the mismatch?
+            if MobilePage.DNM_qidx in question_indices:
+                if len(question_indices) > 1:
+                    raise ValueError(
+                        "A page of type DNM cannot be mapped to a question."
+                    )
+                # Map the page to category DNM. PDL guessing here. TODO - test and verify this.
+                page_img.image_type = StagingImage.EXTRA
+                page_img.save()
+                ExtraStagingImage.objects.create(
+                    staging_image=page_img,
+                    paper_number=papernum,
+                    question_idx_list=[MobilePage.DNM_qidx],
+                )
             else:
                 page_img.image_type = StagingImage.EXTRA
                 # TODO = update the qr-code info in the underlying image
                 page_img.save()
+
+                nq = SpecificationService.get_n_questions()
+                for qi in question_indices:
+                    if qi < 1 or qi > nq:
+                        raise ValueError(f"Requested question number {qi} is invalid.")
+
                 ExtraStagingImage.objects.create(
                     staging_image=page_img,
                     paper_number=papernum,

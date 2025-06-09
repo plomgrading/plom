@@ -45,6 +45,8 @@ from plom.plom_exceptions import (
     PlomTimeoutError,
     PlomVersionMismatchException,
 )
+from plom_server.Papers.models import MobilePage
+from plom_server.Papers.services import SpecificationService
 
 __all__ = [
     "Messenger",
@@ -949,18 +951,21 @@ class Messenger(BaseMessenger):
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def new_server_bundle_map_page(
-        self, bundle_id: int, page: int, papernum: int, questions: str | list
+        self, bundle_id: int, page: int, papernum: int, questions: int | list[int] | str
     ) -> None:
-        """Map a page of a bundle to zero or more questions.
+        """Map the indicated page of the specified bundle all questions in a list, or to DNM.
 
         TODO: beta: rename to something reasonable in due time.
 
         Args:
-            bundle_id (int): the bundle's internal integer number
-            page (int): the 1-based index of the page of interest in that bundle
-            papernum (int): the target paper number for this page
-            questions (str|list): the question(s) to which this page should be attached.
-                TODO: Design and explain the accepted formats, here or nearby.
+            bundle_id: the (unstaged) bundle's primary key, an integer
+            page: the 1-based index of the page of interest in that bundle
+            papernum: the target paper number for this page
+            questions: A list of question(s) to which this page should be attached, with
+                some variations allowed. A bare int is converted to a 1-element list.
+                The string "all" is treated like the list of all questions; the string
+                "dnm" is converted to a special single-element list that will assign the
+                "Do Not Mark" attribute to the indicated page.
 
         Raises:
             PlomSeriousException
@@ -980,22 +985,27 @@ class Messenger(BaseMessenger):
         print(
             f"DEBUG: Incoming parameter questions = {questions}, with type {type(questions)}."
         )
-        # qall TODO?
-        # qdnm versus empty list?
-        # query_args = ["qall", f"papernum={papernum}"]
-        # Reinventing the question-list-parsing wheel here. Reconsider to stay DRY.
         query_args = [f"papernum={papernum}"]
+
+        # Reinventing the question-list-parsing wheel here. Reconsider to stay DRY.
+        # A precursor is the function check_question_list()
+        # found in plom/scan/question_list_utils.py
+
         if isinstance(questions, int):
             query_args.append(f"qidx={questions}")
         elif isinstance(questions, str):
             if questions.isdecimal():
                 query_args.append(f"qidx={questions}")
             elif questions.casefold() == "all":
-                query_args.append("qall")
+                questions = [
+                    1 + j for j in range(SpecificationService.get_n_questions())
+                ]
             elif questions.casefold() == "dnm":
-                query_args.append("papernum=dnm")
+                query_args.append(f"qidx={MobilePage.DNM_qidx}")
             else:
-                pass
+                print(
+                    f"DEBUG: Input string {questions} escaped current implementation."
+                )
         elif hasattr(questions, "__iter__"):
             query_args.extend([f"qidx={n}" for n in questions])
         else:

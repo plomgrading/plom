@@ -146,15 +146,23 @@ class ScanMapBundle(APIView):
     def post(self, request: Request, *, bundle_id: int, page: int) -> Response:
         """API to map the pages of a bundle onto questions.
 
-        On success (200), the return will be TODO: still a WIP.
+        Args:
+            request: A Request object with some important clues in the GET fields
 
-        Only "scanner" users including managers can do this; others will
-        get a 403.
+        Keyword Args:
+            bundle_id: the integer primary key (pk) of the bundle to work on
+            page: the integer position of the page to work on in that bundle.
+                The first page in the bundle has number 1 (not 0).
+
+        Returns:
+            A Response object. On success, the content is empty and the status is 204.
+            Status 403 is returned if the calling user is outside the "scanner" group;
+            status 400 indicates an error of some kind in the input parameters.
         """
-        # print("=" * 88)
-        print(f"PDL Debug: POST has bundle_id = {bundle_id}, page = {page}. ", end="")
-        # print("PDL Debug: Here is the printable version of request.query_params.")
-        # print(request.query_params)
+        print(
+            f"PDL Debug: POST request with bundle_id = {bundle_id}, page = {page}. ",
+            end="",
+        )
 
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "scanner" not in group_list:
@@ -173,14 +181,9 @@ class ScanMapBundle(APIView):
             )
         papernum = data.get("papernum")
         print(f"papernum = {papernum}, question_idx_list = {question_idx_list}.")
-        # if questions is None:
-        #     questions = "all"
-        # many types possible for ``questions`` but here we always get a str
-        # return _error_response("WIP", status.HTTP_400_BAD_REQUEST)
 
         # TODO: error handling to deal with: mapping the same page twice, currently an integrity error
         try:
-            # print("In scan.py, trying map_bundle_page() ...")
             ScanService().map_bundle_page(
                 bundle_id, page, papernum=papernum, question_indices=question_idx_list
             )
@@ -196,4 +199,4 @@ class ScanMapBundle(APIView):
                 f"PDL Debug: Uncaught exception with text part {e}",
                 status.HTTP_501_NOT_IMPLEMENTED,
             )
-        return Response({"hi": "hello"}, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
