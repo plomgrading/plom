@@ -12,8 +12,7 @@ from pathlib import Path
 class RectangleExtractorView(APIView):
     # GET api/rectangle/{version}/{page_num}
     def get(self, request: Request, version: int, page_num: int) -> Response:
-        """Get extracted regions of all scanned papers with the given version and page number.
-        """
+        """Get extracted regions of all scanned papers with the given version and page number."""
         print("RECEIVED REQUEST")
         try:
             rex = RectangleExtractor(version, page_num)
@@ -21,21 +20,24 @@ class RectangleExtractorView(APIView):
             return _error_response(
                 f"Error: {err}",
                 status.HTTP_400_BAD_REQUEST,
-        )
+            )
 
         corners = request.query_params.dict()
-        
+
         try:
+
             def get_float(val):
                 if isinstance(val, list):
-                    raise ValueError("Expected a single value for each corner, got a list")
+                    raise ValueError(
+                        "Expected a single value for each corner, got a list"
+                    )
                 return float(val)
-            
+
             left = get_float(corners["left"])
             right = get_float(corners["right"])
             top = get_float(corners["top"])
             bottom = get_float(corners["bottom"])
-    
+
         except (TypeError, ValueError) as err:
             return _error_response(
                 f"Error: {err}",
@@ -48,11 +50,8 @@ class RectangleExtractorView(APIView):
             response = FileResponse(
                 tmpzip, filename=f"extracted_rectangles_v{version}_pg{page_num}.zip"
             )
-            response['Content-Type'] = 'application/zip'
+            response["Content-Type"] = "application/zip"
             print("RETURNED ZIP")
             return response
         finally:
             Path(tmpzip.name).unlink()
-
-
-       

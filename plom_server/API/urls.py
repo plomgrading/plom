@@ -41,7 +41,7 @@ from .views import (
     SourceOverview,
     SourceDetail,
     SpecificationHandler,
-    RectangleExtractorView
+    RectangleExtractorView,
 )
 
 from .views import MgetRubricMarkingTasks
