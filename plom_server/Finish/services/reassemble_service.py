@@ -282,7 +282,7 @@ class ReassembleService:
             papernum: The papernumber to reassemble.
 
         Returns:
-            The bytes of a .pdf file.
+            The bytes of a .pdf file, wrapped in a BytesIO object.
         """
         try:
             paper_obj = Paper.objects.get(paper_number=papernum)
