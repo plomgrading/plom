@@ -706,7 +706,12 @@ class MinimalPlotService:
         assert format in _acceptable_formats
         _ensure_all_figures_closed()
         sns.set_theme()
-        sns.kdeplot(data=np.array(total_score_list), fill=True, clip=(0, SpecificationService.get_total_marks()))
+        sns.kdeplot(
+            data=np.array(total_score_list),
+            fill=True,
+            clip=(0, SpecificationService.get_total_marks()),
+        )
+        plt.xlim(0, SpecificationService.get_total_marks())
         # Overlay the student's score by highlighting the bar
         if highlighted_score is not None:
             # this gives x-coord of bar, we get the y-coord from the ylim of the plot
