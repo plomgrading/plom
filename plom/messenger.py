@@ -1350,25 +1350,32 @@ class Messenger(BaseMessenger):
         return tuple(response.json())
 
     def rectangle_extraction(
-        self, bulk: bool, paper_num: int, page_num: int, region: dict[str, float]
+        self, version: int, page_num: int, region: dict[str, float]
     ) -> BytesIO:
-        """Download the extracted region of page(s).
+        """Download the extracted region in zip of PNGs.
 
         Args:
-            bulk: True to extract multiple pages. Otherwise, the args must be specific
-            enough to refer to a page in a paper.
-            paper_num: the paper_num of paper to be extracted.
-            page_num: the page_num to be extracted
-            region: the
+            version: the version of the page to be extracted
+            page_num: the page_num to be extracted.
+            region: the boundaries of the rectangle, containing these
+                keys: ["left", "right", "top", "bottom"].
+
+        Returns:
 
         """
         with self.SRmutex:
             try:
-                response = self.get_auth("/api/v0/classlist", stream=True)
+                print("SENDING REQUEST")
+                response = self.get_auth(
+                    f"/api/rectangle/{version}/{page_num}", stream=True, params=region
+                )
                 response.raise_for_status()
             except requests.HTTPError as e:
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-        csv_content = BytesIO(response.content)
+        zip_content = BytesIO(response.content)
+        with open("extracted_region.zip", "wb") as f:
+            print("SAVED ZIP")
+            f.write(zip_content.getvalue())
 
-        return csv_content
+        return zip_content

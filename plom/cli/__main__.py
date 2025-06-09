@@ -49,6 +49,7 @@ from plom.cli import (
     download_classlist,
     upload_spec,
     reset_task,
+    extract_rectangle,
 )
 
 
@@ -325,6 +326,41 @@ def get_parser() -> argparse.ArgumentParser:
         """,
     )
     _add_server_args(sp_map)
+
+    s = sub.add_parser(
+        "extract-rectangle",
+        help="Download the classlist held by the server.",
+        description="Copy the classlist held by the server to stdout, in CSV format.",
+    )
+
+    s.add_argument("-version", type=int, help="The version of the page to extract")
+    s.add_argument(
+        "-pagenum",
+        type=int,
+        help="The page number of the papers that will be extracted",
+    )
+    s.add_argument(
+        "-left",
+        type=float,
+        help="The left boundary of the rectangle",
+    )
+    s.add_argument(
+        "-right",
+        type=float,
+        help="The right boundary of the rectangle",
+    )
+    s.add_argument(
+        "-top",
+        type=float,
+        help="The top boundary of the rectangle",
+    )
+    s.add_argument(
+        "-bottom",
+        type=float,
+        help="The bottom boundary of the rectangle",
+    )
+
+    _add_server_args(s)
     return parser
 
 
@@ -433,9 +469,19 @@ def main():
 
     elif args.command == "clear":
         clear_login(args.server, args.username, args.password)
-    
-    elif args.command == "rectangle-extractor":
-        success = 
+
+    elif args.command == "extract-rectangle":
+        pagenum = args.pagenum
+        ver = args.version
+
+        region = {
+            "left": args.left,
+            "right": args.right,
+            "top": args.top,
+            "bottom": args.bottom,
+        }
+
+        success = extract_rectangle(ver, pagenum, region, msgr=m)
     else:
         get_parser().print_help()
 

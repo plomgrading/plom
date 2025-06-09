@@ -26,6 +26,7 @@ from .task_tools import reset_task
 from .classlist_tools import delete_classlist
 from .classlist_tools import download_classlist
 from .classlist_tools import upload_classlist
+from .rectangle_extractor_tools import extract_rectangle
 
 # what you get from "from plom.cli import *"
 __all__ = [

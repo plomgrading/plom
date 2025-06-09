@@ -3,16 +3,8 @@ from plom.plom_exceptions import PlomAuthenticationException, PlomConflict
 
 
 @with_messenger
-def download_classlist(msgr) -> bool:
-    """Echo all records from the server's classlist to stdout.
-
-    Keyword Args:
-        msgr:  An active Messenger object.
-
-    Returns:
-        True iff the server's classlist was emitted.
-    """
-    success = True
-    csvstream = msgr.new_server_download_classlist()
-
-    return success
+def extract_rectangle(
+    version: int, page_num: int, region: dict[str, float], *, msgr
+) -> bool:
+    """ """
+    return msgr.rectangle_extraction(version, page_num, region)
