@@ -262,6 +262,10 @@ class ReassembleService:
                     "rotation": page.image.rotation,
                 }
             )
+
+        if not unmarked:
+            raise ValueError(f"Paper {paper.paper_number} has no unmarked images.")
+
         # distinct("qidx"/"page_number") doesn't work outside of postgres
         # so deduplicate list this way
         unmarked_dict = {d["filename"]: d for d in unmarked}
@@ -310,6 +314,7 @@ class ReassembleService:
             with open(tf.name, "rb") as pdf_file:
                 pdf_bytestream = BytesIO(pdf_file.read())
 
+        pdf_bytestream.name = f"{shortname}_{pdf_id_metadata}.pdf"
         return pdf_bytestream
 
     def reassemble_paper(self, paper: Paper, *, outdir: Path | None = None) -> Path:

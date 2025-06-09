@@ -1054,6 +1054,49 @@ class Messenger(BaseMessenger):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
+    def new_server_get_unmarked(self, papernum: int) -> dict[str, Any]:
+        """Download a unmarked PDF file from the server.
+
+        Returns:
+            A dict including key `"filename"` for the file that was written
+            and other information about the download.
+        """
+        if self.is_server_api_less_than(114):
+            raise PlomNoServerSupportException(
+                "Server too old: API does not support getting unmarked papers"
+            )
+
+        with self.SRmutex:
+            try:
+                response = self.get_auth(
+                    f"/api/beta/finish/unmarked/{papernum}", stream=True
+                )
+                response.raise_for_status()
+                # https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
+                msg = EmailMessage()
+                msg["Content-Disposition"] = response.headers.get("Content-Disposition")
+                filename = msg.get_filename()
+                assert filename is not None
+                num_bytes = 0
+                # defaults to CWD: TODO: kwarg to change that?
+                with open(filename, "wb") as f:
+                    for chunk in tqdm(response.iter_content(chunk_size=8192)):
+                        f.write(chunk)
+                        num_bytes += len(chunk)
+                r = {
+                    "filename": filename,
+                    "content-length": num_bytes,
+                }
+                return r
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomNoPaper(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
     def new_server_get_reassembled(self, papernum: int) -> dict[str, Any]:
         """Download a reassembled PDF file from the server.
 

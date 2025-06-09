@@ -36,6 +36,7 @@ from plom.cli import (
     delete_classlist,
     delete_source,
     get_reassembled,
+    get_unmarked,
     id_paper,
     un_id_paper,
     list_bundles,
@@ -130,6 +131,17 @@ def get_parser() -> argparse.ArgumentParser:
         description="""
             Download a reassembled paper as a PDF file from the server.
             Will fail if the paper is not reassembled yet.
+        """,
+    )
+    s.add_argument("papernum", type=int)
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "get-unmarked",
+        help="Get a unmarked paper.",
+        description="""
+            Download a unmarked paper as a PDF file from the server.
+            Will fail if no scanned images are associated with the paper.
         """,
     )
     s.add_argument("papernum", type=int)
@@ -385,6 +397,12 @@ def main():
         r = get_reassembled(args.papernum, msgr=m)
         print(
             f"wrote reassembled paper number {args.papernum} to "
+            f'file {r["filename"]} [{r["content-length"]} bytes]'
+        )
+    elif args.command == "get-unmarked":
+        r = get_unmarked(args.papernum, msgr=m)
+        print(
+            f"wrote unmarked paper number {args.papernum} to "
             f'file {r["filename"]} [{r["content-length"]} bytes]'
         )
 
