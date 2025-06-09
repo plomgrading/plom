@@ -17,6 +17,9 @@ from plom.plom_exceptions import (
     PlomPushCollisionException,
     PlomBundleLockedException,
 )
+
+from plom_server.Papers.models import MobilePage
+from plom_server.Papers.services import SpecificationService
 from plom_server.Scan.services import ScanService
 from .utils import _error_response
 
@@ -160,7 +163,7 @@ class ScanMapBundle(APIView):
             status 400 indicates an error of some kind in the input parameters.
         """
         print(
-            f"PDL Debug: POST request with bundle_id = {bundle_id}, page = {page}. ",
+            f"PDL Debug: Server receives a POST request with bundle_id = {bundle_id}, page = {page}. ",
             end="",
         )
 
@@ -171,6 +174,7 @@ class ScanMapBundle(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
         data = request.query_params
+        papernum = data.get("papernum")
 
         question_idx_list = data.getlist("qidx")
         try:
@@ -179,8 +183,21 @@ class ScanMapBundle(APIView):
             return _error_response(
                 f"Non-integer qidx: {e}", status.HTTP_400_BAD_REQUEST
             )
-        papernum = data.get("papernum")
-        print(f"papernum = {papernum}, question_idx_list = {question_idx_list}.")
+
+        if not question_idx_list:
+            codestring = data.get("text")  # Expect one of "all", "dnm"
+            if codestring == "all":
+                question_idx_list = [
+                    1 + j for j in range(SpecificationService.get_n_questions())
+                ]
+            elif codestring == "dnm":
+                question_idx_list = [MobilePage.DNM_qidx]
+            else:
+                return _error_response(
+                    f"Impossible to construct list of questions from {data}",
+                    status.HTTP_400_BAD_REQUEST,
+                )
+        print(f"Target papernum = {papernum}, question_idx_list = {question_idx_list}.")
 
         # TODO: error handling to deal with: mapping the same page twice, currently an integrity error
         try:

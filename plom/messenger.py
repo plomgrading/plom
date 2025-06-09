@@ -45,8 +45,6 @@ from plom.plom_exceptions import (
     PlomTimeoutError,
     PlomVersionMismatchException,
 )
-from plom_server.Papers.models import MobilePage
-from plom_server.Papers.services import SpecificationService
 
 __all__ = [
     "Messenger",
@@ -981,15 +979,11 @@ class Messenger(BaseMessenger):
             raise PlomNoServerSupportException(
                 "Server too old: does not support page mapping"
             )
-        print("DEBUG:Starting new_server_bundle_map_page.")
+        print("DEBUG: Messenger starting new_server_bundle_map_page.")
         print(
             f"DEBUG: Incoming parameter questions = {questions}, with type {type(questions)}."
         )
         query_args = [f"papernum={papernum}"]
-
-        # Reinventing the question-list-parsing wheel here. Reconsider to stay DRY.
-        # A precursor is the function check_question_list()
-        # found in plom/scan/question_list_utils.py
 
         if isinstance(questions, int):
             query_args.append(f"qidx={questions}")
@@ -997,11 +991,9 @@ class Messenger(BaseMessenger):
             if questions.isdecimal():
                 query_args.append(f"qidx={questions}")
             elif questions.casefold() == "all":
-                questions = [
-                    1 + j for j in range(SpecificationService.get_n_questions())
-                ]
+                query_args.append("text=all")
             elif questions.casefold() == "dnm":
-                query_args.append(f"qidx={MobilePage.DNM_qidx}")
+                query_args.append("text=dnm")
             else:
                 print(
                     f"DEBUG: Input string {questions} escaped current implementation."
@@ -1014,13 +1006,13 @@ class Messenger(BaseMessenger):
             )
 
         p = f"/api/beta/scan/bundle/{bundle_id}/{page}/map" + "?" + "&".join(query_args)
-        print(f"DEBUG: Sending a POST request to this URL: {p}")
+        print(f"DEBUG: Messenger sends a POST request to this URL: {p}")
 
         with self.SRmutex:
             try:
                 response = self.post_auth(p)
                 response.raise_for_status()
-                return response.json()
+                return response
             except requests.HTTPError as e:
                 if response.status_code == 400:
                     raise PlomSeriousException(response.reason) from None
