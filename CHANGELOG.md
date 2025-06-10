@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Single-digit microQR codes could be mistaken for extra page QR codes, sometimes leading crashes.
 * Workaround `.csv` classlists exported by Microsoft Excel with "Feff" "byte-order-mark".
+* Fixes related to discarding an entire paper.
+* Fixes to students reports.
 
 
 ## [0.18.2] - 2025-05-23
