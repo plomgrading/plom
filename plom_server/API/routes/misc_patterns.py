@@ -3,7 +3,7 @@
 # Copyright (C) 2022 Brennen Chiu
 # Copyright (C) 2022-2023 Colin B. Macdonald
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
 
 from django.urls import path
