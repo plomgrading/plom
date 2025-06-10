@@ -5,10 +5,7 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
 
-from typing import Dict, List, Union
-
 from django.http import FileResponse
-
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
@@ -93,7 +90,7 @@ class ClasslistHandler(APIView):
         Raises:
             PlomDependencyConflict: If dependencies not met.
         """
-        werr: List[Dict[str, Union[int, str, None]]] = []
+        werr: list[dict[str, int | str | None]] = []
         # The service we will call has weak defences against faulty inputs.
         # Check here that the requested action should be allowed.
         group_list = list(request.user.groups.values_list("name", flat=True))
@@ -163,7 +160,7 @@ class ClasslistHandler(APIView):
         Raises:
             PlomDependencyConflict: If dependencies not met.
         """
-        werr: List[Dict[str, Union[int, str, None]]] = []
+        werr: list[dict[str, int | str | None]] = []
         if StagingStudentService.are_there_students():
             success = False
             N = StagingStudentService.how_many_students()
