@@ -963,7 +963,7 @@ class Messenger(BaseMessenger):
                 some variations allowed. A bare int is converted to a 1-element list.
                 The strings "all" and "dnm" are passed through to the server, where "all"
                 will be translated into a list of all questions, and "dnm" will assign the
-                "Do Not Mark" attribute to the indicated page. If questions is None, se
+                "Do Not Mark" attribute to the indicated page. If questions is None,
                 send "all" to the server; if questions is an empty list, we send "dnm".
 
         Raises:
