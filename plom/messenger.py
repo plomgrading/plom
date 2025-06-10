@@ -961,9 +961,10 @@ class Messenger(BaseMessenger):
             papernum: the target paper number for this page
             questions: A list of question(s) to which this page should be attached, with
                 some variations allowed. A bare int is converted to a 1-element list.
-                The string "all" is treated like the list of all questions; the string
-                "dnm" is converted to a special single-element list that will assign the
-                "Do Not Mark" attribute to the indicated page.
+                The strings "all" and "dnm" are passed through to the server, where "all"
+                will be translated into a list of all questions, and "dnm" will assign the
+                "Do Not Mark" attribute to the indicated page. If questions is None, se
+                send "all" to the server; if questions is an empty list, we send "dnm".
 
         Raises:
             PlomSeriousException
@@ -981,11 +982,13 @@ class Messenger(BaseMessenger):
             )
         print("DEBUG: Messenger starting new_server_bundle_map_page.")
         print(
-            f"DEBUG: Incoming parameter questions = {questions}, with type {type(questions)}."
+            f"DEBUG: Messenger parameter questions = {questions}, with type {type(questions)}."
         )
         query_args = [f"papernum={papernum}"]
 
-        if isinstance(questions, int):
+        if questions is None:
+            query_args.append("text=all")
+        elif isinstance(questions, int):
             query_args.append(f"qidx={questions}")
         elif isinstance(questions, str):
             if questions.isdecimal():
@@ -999,7 +1002,10 @@ class Messenger(BaseMessenger):
                     f"DEBUG: Input string {questions} escaped current implementation."
                 )
         elif hasattr(questions, "__iter__"):
-            query_args.extend([f"qidx={n}" for n in questions])
+            if len(questions) == 0:
+                query_args.append("text=dnm")
+            else:
+                query_args.extend([f"qidx={n}" for n in questions])
         else:
             print(
                 f"DEBUG: Parameter 'questions' has unexpected type {type(questions)}. Expect trouble."
