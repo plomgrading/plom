@@ -40,7 +40,6 @@ class MiscellaneaDownloadScrapPaperView(ManagerRequiredView):
 
     def get(self, request: HttpRequest) -> HttpResponse:
         """Get the scrap paper PDF file."""
-
         filename = "non_db_files/scrap_paper.pdf"
         try:
             file = default_storage.open(filename, "rb")
