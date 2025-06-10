@@ -1,3 +1,5 @@
+# Copyright (C) 2025 Bryan Tanady
+
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
@@ -13,7 +15,6 @@ class RectangleExtractorView(APIView):
     # GET api/rectangle/{version}/{page_num}
     def get(self, request: Request, version: int, page_num: int) -> Response:
         """Get extracted regions of all scanned papers with the given version and page number."""
-        print("RECEIVED REQUEST")
         try:
             rex = RectangleExtractor(version, page_num)
         except ValueError as err:
@@ -45,13 +46,13 @@ class RectangleExtractorView(APIView):
             )
 
         tmpzip = NamedTemporaryFile(delete=False)
+        # Wraps in try - finally to ensure cleanup even if failure occurs.
         try:
             rex.build_zipfile(tmpzip.name, left, top, right, bottom)
             response = FileResponse(
                 tmpzip, filename=f"extracted_rectangles_v{version}_pg{page_num}.zip"
             )
             response["Content-Type"] = "application/zip"
-            print("RETURNED ZIP")
             return response
         finally:
             Path(tmpzip.name).unlink()

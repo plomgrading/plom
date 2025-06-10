@@ -2,7 +2,7 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
-# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
 # Copyright (C) 2025 Aidan Murphy
 
@@ -1352,7 +1352,7 @@ class Messenger(BaseMessenger):
     def rectangle_extraction(
         self, version: int, page_num: int, region: dict[str, float]
     ) -> BytesIO:
-        """Download the extracted region in zip of PNGs.
+        """Download the extracted region of papers with the given version and page number.
 
         Args:
             version: the version of the page to be extracted
@@ -1361,11 +1361,10 @@ class Messenger(BaseMessenger):
                 keys: ["left", "right", "top", "bottom"].
 
         Returns:
-
+            The bytes of the zip file returned by the server.
         """
         with self.SRmutex:
             try:
-                print("SENDING REQUEST")
                 response = self.get_auth(
                     f"/api/rectangle/{version}/{page_num}", stream=True, params=region
                 )
@@ -1374,8 +1373,4 @@ class Messenger(BaseMessenger):
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
         zip_content = BytesIO(response.content)
-        with open("extracted_region.zip", "wb") as f:
-            print("SAVED ZIP")
-            f.write(zip_content.getvalue())
-
         return zip_content

@@ -3,6 +3,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2025 Aidan Murphy
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2025 Bryan Tanady
 
 
 """Scriptable Plom tools for use by experts."""
@@ -43,4 +44,5 @@ __all__ = [
     "delete_classlist",
     "download_classlist",
     "upload_classlist",
+    "extract_rectangle",
 ]
