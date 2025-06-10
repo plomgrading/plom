@@ -337,7 +337,11 @@ def get_parser() -> argparse.ArgumentParser:
     )
 
     s.add_argument(
-        "-version", "-v", required=True, type=int, help="The version of the page to extract"
+        "-version",
+        "-v",
+        required=True,
+        type=int,
+        help="The version of the page to extract",
     )
     s.add_argument(
         "-pagenum",
