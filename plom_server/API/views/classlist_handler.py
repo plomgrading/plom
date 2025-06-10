@@ -38,7 +38,7 @@ class ClasslistHandler(APIView):
         if "manager" not in group_list:
             return _error_response(
                 'Only users in the "manager" group can delete the class list.',
-                status.HTTP_401_FORBIDDEN,
+                status.HTTP_401_UNAUTHORIZED,
             )
         try:
             StagingStudentService.remove_all_students()
@@ -47,6 +47,37 @@ class ClasslistHandler(APIView):
                 f"Manipulating the classlist is not allowed. {e}",
                 status.HTTP_409_CONFLICT,
             )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def _werr_to_http(self, werr: tuple) -> Response:
+        """Build a proper HTTP response from a werr tuple.
+
+        Args:
+            werr: A 2-tuple (s,l), where ...
+                s is the boolean value of the statement "The operation succeeded",
+                l is a list of dicts describing warnings, errors, or notes.
+                This thing originates mostly in Vlad, the classlist validator,
+                where further details may be found.
+
+        Returns:
+            A Response object whose status code and text value are
+            determined by the contents of the given werr tuple.
+            In the case of success with notes, the notes are returned
+            as a string and the status is 200; if the operation succeeded
+            and there are no notes, return no content with status 204.
+            If the success flag is False, return the notes with status 400.
+        """
+        notes = werr[1]
+        if not werr[0]:
+            # Something failed; presumably details are available.
+            return _error_response(
+                f"{notes}",
+                status.HTTP_400_BAD_REQUEST,
+            )
+
+        if len(notes) > 0:
+            return Response(f"{notes}")
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -75,103 +106,87 @@ class ClasslistHandler(APIView):
 
         All students in the upload must be not-yet-known to the server.
         If the upload mentions even one student ID that the server
-        already holds, the whole operation will be cancelled.
+        already holds, or even a single test number that is already in
+        use, the whole operation will be cancelled.
 
         Args:
             request: A Request object that includes a file object.
 
         Returns:
-            A Response with status code 200 containing a 2-tuple (s,l), where
-            s is the boolean value of the statement "The operation succeeded",
-            l is a list of dicts describing warnings, errors, or notes.
-
-            When s==False, the classlist in the database remains unchanged.
-
-        Raises:
-            PlomDependencyConflict: If dependencies not met.
+            The Response from the method cited above, except for two
+            short-circuit options where we don't bother activating the
+            StagingStudentService. If the caller is outside the "manager"
+            group, they get status 401; if they didn't actually send a
+            classlist, they get status 400.
         """
-        werr: list[dict[str, int | str | None]] = []
         # The service we will call has weak defences against faulty inputs.
         # Check here that the requested action should be allowed.
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list:
-            success = False
-            werr.append(
-                {
-                    "warn_or_err": "error",
-                    "werr_line": None,
-                    "werr_text": "Only users in the 'manager' group can manipulate the classlist.",
-                }
+            return _error_response(
+                'Only users in the "manager" group can delete the class list.',
+                status.HTTP_401_UNAUTHORIZED,
             )
-            return Response((success, werr))
 
         if not request.FILES["classlist_csv"]:
-            success = False
-            werr.append(
-                {
-                    "warn_or_err": "error",
-                    "werr_line": None,
-                    "werr_text": "No classlist provided.",
-                }
+            return _error_response(
+                "No classlist provided.",
+                status.HTTP_400_BAD_REQUEST,
             )
-            return Response((success, werr))
 
         classlist_csv = request.FILES["classlist_csv"]
 
-        return Response(
+        return self._werr_to_http(
             StagingStudentService.validate_and_use_classlist_csv(classlist_csv)
         )
 
     # PATCH /api/v0/classlist
     def patch(self, request: Request) -> Response:
-        """Extend the server's classlist with info in an attached upload.
+        """Extend the server's classlist with rows from an uploaded classlist.
+
+        This is a thin wrapper for the method named validate_and_use_classlist_csv()
+        that serves the web UI in :class:'StagingStudentService'.
+
+        All students in the upload must be not-yet-known to the server.
+        If the upload mentions even one student ID that the server
+        already holds, or even a single test number that is already in
+        use, the whole operation will be cancelled.
 
         Args:
-            request: A Request object that includes a file object
-                identified by the key "classlist_csv"
+            request: A Request object that includes a file object.
 
         Returns:
-            A Response with status code 200 containing a 2-tuple (s,l), where
-            s is the boolean value of the statement "The operation succeeded",
-            l is a list of dicts describing warnings, errors, or notes.
-
-            When s==False, the classlist in the database remains unchanged.
-
-        Raises:
-            PlomDependencyConflict: If dependencies not met.
+            The Response from the method cited above, except for two
+            short-circuit options where we don't bother activating the
+            StagingStudentService. If the caller is outside the "manager"
+            group, they get status 401; if they didn't actually send a
+            classlist, they get status 400.
         """
+        # Yes, the docstring above is identical to the one for _extend().
+        # The 1-line method body below explains why that is appropriate.
         return self._extend(request)
 
     # POST /api/v0/classlist
     def post(self, request: Request) -> Response:
-        """Upload a new classlist to the server, assuming it has none.
+        """Upload a new classlist to the server, insisting that it starts empty.
 
         Args:
             request: A Request object that includes a file object
                 identified by the key "classlist_csv"
 
         Returns:
-            A Response with status code 200 containing a 2-tuple (s,l), where
-            s is the boolean value of the statement "The operation succeeded",
-            l is a list of dicts describing warnings, errors, or notes.
-
-            When s==False, the classlist in the database remains unchanged.
-
-        Raises:
-            PlomDependencyConflict: If dependencies not met.
+            The Response from the method validate_and_use_classlist_csv()
+            that serves the web UI in :class:'StagingStudentService',
+            outside the following special cases. If the caller is outside
+            the "manager" group, they get status 401; if they didn't actually
+            send a classlist, they get status 400.
         """
-        werr: list[dict[str, int | str | None]] = []
         if StagingStudentService.are_there_students():
-            success = False
             N = StagingStudentService.how_many_students()
-            werr.append(
-                {
-                    "warn_or_err": "error",
-                    "werr_line": None,
-                    "werr_text": f"Classlist contains {N} students; POST method expects 0.",
-                }
+            return _error_response(
+                f"Classlist contains {N} students; POST method expects 0.",
+                status.HTTP_400_BAD_REQUEST,
             )
-            return Response((success, werr))
         return self._extend(request)
 
     # PUT /api/v0/classlist
@@ -183,14 +198,11 @@ class ClasslistHandler(APIView):
                 identified by the key "classlist_csv"
 
         Returns:
-            A Response with status code 200 containing a 2-tuple (s,l), where
-            s is the boolean value of the statement "The operation succeeded",
-            l is a list of dicts describing warnings, errors, or notes.
-
-            When s==False, the classlist in the database remains unchanged.
-
-        Raises:
-            PlomDependencyConflict: If dependencies not met.
+            The Response from the method validate_and_use_classlist_csv()
+            that serves the web UI in :class:'StagingStudentService',
+            outside the following special cases. If the caller is outside
+            the "manager" group, they get status 401; if they didn't actually
+            send a classlist, they get status 400.
         """
         self.delete(request)
         return self._extend(request)
