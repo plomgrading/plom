@@ -1012,7 +1012,7 @@ class Messenger(BaseMessenger):
             try:
                 response = self.post_auth(p)
                 response.raise_for_status()
-                return response
+                return
             except requests.HTTPError as e:
                 if response.status_code == 400:
                     raise PlomSeriousException(response.reason) from None
