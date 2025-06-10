@@ -15,6 +15,8 @@ from plom.plom_exceptions import PlomConflict
 from plom_server.Rubrics.services import RubricService
 from plom_server.Mark.serializers.tasks import MarkingTaskSerializer
 
+from plom_server.UserManagement.models import User
+
 from .utils import _error_response
 
 
@@ -42,7 +44,6 @@ class MgetRubricsByQuestion(APIView):
 
 # GET: /MK/user/{username}/{question}
 # PUT: /MK/user/{username}/{question}
-from plom_server.UserManagement.models import User
 
 
 class MgetRubricPanes(APIView):

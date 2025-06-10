@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2025 Bryan Tanady
+
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
