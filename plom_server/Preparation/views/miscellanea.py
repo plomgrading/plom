@@ -4,7 +4,6 @@
 # Copyright (C) 2024 Aden Chan
 # Copyright (C) 2025 Bryan Tanady
 
-from django.conf import settings
 from django.http import HttpRequest, HttpResponse, FileResponse, Http404
 from django.shortcuts import render
 from django.core.files.storage import default_storage
