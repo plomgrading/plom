@@ -2,10 +2,11 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2023, 2025 Colin B. Macdonald
 # Copyright (C) 2024 Aden Chan
+# Copyright (C) 2025 Bryan Tanady
 
-from django.conf import settings
-from django.http import HttpRequest, HttpResponse, FileResponse
+from django.http import HttpRequest, HttpResponse, FileResponse, Http404
 from django.shortcuts import render
+from django.core.files.storage import default_storage
 
 from plom_server.Base.base_group_views import ManagerRequiredView
 
@@ -26,9 +27,12 @@ class MiscellaneaDownloadExtraPageView(ManagerRequiredView):
         """Get the extra page PDF file."""
         # services?  who needs 'em?  well maybe here does
         # TODO: check for command line tool and what it does
-        return FileResponse(
-            str((settings.MEDIA_ROOT / "non_db_files") / "extra_page.pdf")
-        )
+        filename = "non_db_files/extra_page.pdf"
+        try:
+            file = default_storage.open(filename, "rb")
+        except (FileNotFoundError, IOError):
+            raise Http404("Extra page not found")
+        return FileResponse(file, content_type="application/pdf")
 
 
 class MiscellaneaDownloadScrapPaperView(ManagerRequiredView):
@@ -36,9 +40,12 @@ class MiscellaneaDownloadScrapPaperView(ManagerRequiredView):
 
     def get(self, request: HttpRequest) -> HttpResponse:
         """Get the scrap paper PDF file."""
-        return FileResponse(
-            str((settings.MEDIA_ROOT / "non_db_files") / "scrap_paper.pdf")
-        )
+        filename = "non_db_files/scrap_paper.pdf"
+        try:
+            file = default_storage.open(filename, "rb")
+        except (FileNotFoundError, IOError):
+            raise Http404("Scrap page not found")
+        return FileResponse(file, content_type="application/pdf")
 
 
 class MiscellaneaDownloadBundleSeparatorView(ManagerRequiredView):
@@ -46,6 +53,9 @@ class MiscellaneaDownloadBundleSeparatorView(ManagerRequiredView):
 
     def get(self, request: HttpRequest) -> HttpResponse:
         """Get the bundle separator PDF file."""
-        return FileResponse(
-            str((settings.MEDIA_ROOT / "non_db_files") / "bundle_separator_paper.pdf")
-        )
+        filename = "non_db_files/bundle_separator_paper.pdf"
+        try:
+            file = default_storage.open(filename, "rb")
+        except (FileNotFoundError, IOError):
+            raise Http404("Bundle separator not found")
+        return FileResponse(file, content_type="application/pdf")
