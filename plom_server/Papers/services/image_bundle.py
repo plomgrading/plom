@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 import pathlib
 import uuid
@@ -13,7 +14,7 @@ from collections import defaultdict
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Count, Q, OuterRef, Exists
 
 from plom.tpv_utils import encodePaperPageVersion
 from plom.plom_exceptions import PlomPushCollisionException
@@ -32,6 +33,7 @@ from ..models import (
     Paper,
 )
 from .paper_info import PaperInfoService
+from . import SpecificationService
 
 
 class ImageBundleService:
@@ -520,6 +522,100 @@ class ImageBundleService:
             bool: true when paper is ready for id-ing (ie the IDpage has an image)
         """
         return IDPage.objects.filter(paper=paper_obj, image__isnull=False).exists()
+
+    @transaction.atomic
+    def _get_ready_paper_question_pairs(self) -> list:
+        """Get paper question pairs that are ready for marking.
+
+        This function queries database images directly to determine
+        if a given paper has enough work submitted to be marked.
+        It does **not** check if a question has already been marked,
+        or if marking is in progress, for that you must query the
+        relevant MarkingTask
+        To be 'ready' a paper/question pair must either
+          * have all its fixed pages with images (and any
+            number of mobile pages), or
+          * have no fixed pages with images but some mobile pages
+
+        Returns:
+            a list of tuples, each containing a Paper and question pair
+            TODO: ideally this would return a lazy queryset
+        """
+        # get all scanned pages (relevant to questions)
+        filled_qpages = QuestionPage.objects.filter(image__isnull=False)
+        mpages = MobilePage.objects.all()
+
+        # number of pages per question
+        test_page_dict = SpecificationService.get_question_pages()
+        qidx_spec_page_count = {
+            key: len(values) for key, values in test_page_dict.items()
+        }
+
+        # case 1 - all fixed pages have images
+        filled_qpages_counts = filled_qpages.values("paper", "question_index").annotate(
+            page_count=Count("id")
+        )
+        all_pages_filter = Q()
+        for qidx, spec_page_count in qidx_spec_page_count.items():
+            all_pages_filter |= Q(question_index=qidx, page_count__gte=spec_page_count)
+
+        ready_pairs_1 = (
+            filled_qpages_counts.filter(all_pages_filter)
+            .values_list("paper", "question_index")
+            .distinct()
+        )
+
+        # case 2 - all fixed pages have no images, but there's mobile pages
+
+        # Django doesn't have easy access to outer joins :(
+        # so we are emulating this query:
+        # SELECT mp.paper, mp.question_index
+        # FROM MobilePage mp LEFT OUTER JOIN QuestionPage qp
+        # ON mp.paper = qp.paper AND mp.question_index = qp.question_index
+
+        subquery = filled_qpages.filter(
+            paper=OuterRef("paper"), question_index=OuterRef("question_index")
+        )
+        mpages_filtered = mpages.annotate(nofixed=~Exists(subquery))
+        ready_pairs_2 = (
+            mpages_filtered.filter(nofixed=True)
+            .values_list("paper", "question_index")
+            .distinct()
+        )
+
+        print(ready_pairs_1)
+        print(type(ready_pairs_1))
+        print(ready_pairs_2)
+        print(type(ready_pairs_2))
+        ready = list(ready_pairs_1) + list(ready_pairs_2)
+
+        print(ready)
+
+        return ready
+
+    @transaction.atomic
+    def are_given_paper_question_pairs_ready(
+        self, paper_qidx_pairs: list[tuple[Paper, int]]
+    ) -> dict[tuple[Paper, int], bool]:
+        """Check if provided paper/question pairs are ready for marking.
+
+        Note that to be ready a paper/question pair must either
+          * have all its fixed pages with images (and any
+            number of mobile pages), or
+          * have no fixed pages with images but some mobile pages
+        This function should be used where changes to a MarkingTask
+        are required, not as a result of marking.
+
+        Args:
+            paper_qidx_pairs: a list of tuples identifying a particular
+                question on a particular paper.
+
+        Returns:
+            A dict with the input paper/qidx tuples as keys, and True/False
+            as the values.
+        """
+        print("TODO")
+        return
 
     @transaction.atomic
     def is_given_paper_question_ready(
