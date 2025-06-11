@@ -46,7 +46,7 @@ from .views import (
     SourceDetail,
     SpecificationHandler,
     RectangleExtractorView,
-    PQVmapHandler,
+    PQVmap,
 )
 
 from .views import MgetRubricMarkingTasks
@@ -158,12 +158,12 @@ urlpatterns = [
     ),
     path(
         "api/beta/pqvmap/<int:count>",
-        PQVmapHandler.as_view(),
+        PQVmap.as_view(),
         name="pqvmapper_n",
     ),
     path(
         "api/beta/pqvmap",
-        PQVmapHandler.as_view(),
+        PQVmap.as_view(),
         name="pqvmapper",
     ),
 ]

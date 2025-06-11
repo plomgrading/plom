@@ -27,7 +27,7 @@ from plom_server.Papers.services import (
 from .utils import _error_response
 
 
-class PQVmapHandler(APIView):
+class PQVmap(APIView):
     """Handle API requests to manipulate the PQV map."""
 
     # DELETE /api/beta/pqvmap
