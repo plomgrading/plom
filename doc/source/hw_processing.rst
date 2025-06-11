@@ -41,8 +41,19 @@ Let us make a few assumptions about students' homework submissions:
 We will also need a running server with the following properties:
 
 * users  from groups 'manager' and 'scanner' exist, and their passwords are known;
-* the server contains a test-specification that details the number of questions, the point value for each, etc.; and
-* the server has allocated enough test-papers to ensure the database has at least one paper per student. (Internally, the allocation corresponds to a Paper-Question-Version mapping, or `pqvmap`. On the web-based user interface, users can set this up on the page headed "Manage the number of papers and the paper-question-version database. The corresponding printable PDFs do not actually need to be built or printed.) (Again - this can perhaps be loosened in the future)
+* the server contains an assessment specification that details the number of questions, the point value for each, etc.;
+* the server contains an assessment source PDF compatible with the specification just mentioned;
+* the server has allocated enough test-papers to ensure the database has at least one paper per student (Internally, the allocation corresponds to a Paper-Question-Version mapping, or `pqvmap`. On the web-based user interface, users can set this up on the page headed "Manage the number of papers and the paper-question-version database.);
+* the server has built printable PDFs of the assessment source, one for each student;
+* the server has been told that the individualized assessment PDFs have been printed.
+
+The last two bullets are a manifestation of Plom's genesis as a tool for
+presenting test booklets printed on paper to students. In that context it
+is impossible to scan and upload student work without creating and printing
+the booklets the students will confront. And Plom's internal logic enforces
+this expectation. So for homework, we must waste some server effort producing PDFs
+that nobody ever needs to see, and we must tell a white lie to the server about
+having printed them when we didn't.
 
 Processing a single homework pdf
 --------------------------------
