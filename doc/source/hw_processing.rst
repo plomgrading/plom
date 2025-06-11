@@ -18,7 +18,7 @@ page 7 of the submitted PDF.
 
    This feature is under active development.  Plom's primary purpose
    is to manage QR-coded hardcopy assessments; we are working
-   toward supporting scripting for other use-cases such as
+   toward supporting scripting for secondary use-cases such as
    homework.
 
 .. note::
@@ -38,9 +38,10 @@ We make the following assumptions about students' homework submissions.
 * We know an unused paper-number to which we can assign this work.
 * We know (or can reasonably guess) which questions appear on which pages of a given HW pdf -- i.e., a question-mapping.
 
-We will also need a running server with the properties listed below.
+We will also need a running server with the following properties.
+(Notes on setting this up are provided below.)
 
-* We know the server credentials of an active user from the 'manager' group.
+* The server has an active user from the 'manager' group, whose credentials we know.
 * The server contains an assessment specification that details the number of questions, the point value for each, etc.
 * The server contains an assessment source PDF compatible with the specification just mentioned.
 * The server has allocated enough test-papers to ensure the database has at least one paper per student. (Internally, the allocation corresponds to a Paper-Question-Version mapping, or `pqvmap`. On the web-based user interface, users can set this up on the page headed "Manage the number of papers and the paper-question-version database".)
@@ -50,47 +51,46 @@ We will also need a running server with the properties listed below.
 Several of these items reflect Plom's genesis as a tool for
 presenting test booklets printed on paper to students. In that context it
 is impossible to scan and upload student work without creating and printing
-the booklets the students will confront. And Plom's internal logic enforces
+the booklets the students will confront. Plom's internal logic enforces
 this expectation. So for homework, we must waste some server effort producing PDFs
-that nobody ever needs to see, and we must tell a white lie to the server about
+that no human ever needs to see, and we must tell a white lie to the server about
 having printed them when we didn't.
 
 Processing a single homework pdf
 --------------------------------
 
 To make a single homework PDF available for marking requires three actions:
-upload, process, and push.
+upload, map, and push.
 
-We will illustrate the process by tackling a specific situation,
-as detailed below.
+We will illustrate the process by tackling the following scenario.
 
 * New homework has arrived from Ken Kenson, student number 88776655.
 * The incoming file has 5 pages and its name is ``"fake_hw_bundle_kk.pdf"``.
 * The incoming page numbers and assignment question numbers are related as follows:
 
-   - p1 = q1
-   - p2 = q2
-   - p3 = garbage (i.e., no questions)
-   - p4 = q2 and q3
-   - p5 = q3
+   - page 1 addresses question 1
+   - page 2 addresses question 2
+   - page 3 is irrelevant (i.e., addresses no questions)
+   - page 4 addresses question 2 and question 3
+   - page 5 addresses question 3
 
 * Paper number 61 is available on the server and not yet in use.
 * User "demoManager1" (with password "1234") is active and in the "manager" group.
 
 Plom is built to process PDF files made by scanning bundles of physical
 paper. We treat each incoming HW file as an independent virtual bundle.
-The following command will upload the new submission::
+The following command will upload our latest submission::
 
     $ plom-cli upload-bundle fake_hw_bundle_kk.pdf
 
 The response to this command will reveal the `bundle_id` assigned to the
-file we have uploaded. Assume we get `bundle_id = 1`. This number is needed below.
+file we have uploaded. Assume we get `bundle_id = 8`. This number is needed below.
 
 A complete list of bundles in the system can be requested::
 
     $ plom-cli list-bundles
 
-This produces a table that tells us that bundle number 1 has
+This produces a table that tells us that bundle number 8 has
 been uploaded, and that it contains 5 pages,
 but that its qr-codes have not been read and it has not been pushed.
 (This is good because the submission does not have qr-codes.)
@@ -102,24 +102,29 @@ So the mapping process for this 5-page PDF takes 5 commands.
 Together these inform the server about the page-to-question
 correspondence shown above::
 
-    $ plom-cli map -t 61 -q '[1]'   1 1
-    $ plom-cli map -t 61 -q '[2]'   1 2
-    $ plom-cli map -t 61 -q '[]'    1 3
-    $ plom-cli map -t 61 -q '[2,3]' 1 4
-    $ plom-cli map -t 61 -q '[3]'   1 5
+    $ plom-cli map 8 1 -t 61 -q [1]
+    $ plom-cli map 8 2 -t 61 -q [2]
+    $ plom-cli map 8 3 -t 61 -q []
+    $ plom-cli map 8 4 -t 61 -q [2,3]
+    $ plom-cli map 8 5 -t 61 -q [3]
 
-Here parameter `-t` gives the paper number and `-q` gives the list
-of questions for the page of interest. The positional parameters
-that follow give the incoming bundle's id number (here `1`)
-and the page number in the bundle (which steps through all 5 choices).
+Here the first parameter gives the bundle id number (here `8`)
+and the second gives the page number in the bundle.
+Then the parameter `-t` gives the paper number and 
+`-q` introduces the list of questions mentioned on the page of interest. 
 
 The command-line responses to the mapping commands above are not
 (yet) very informative.
 
+There is work in progress to allow single-question lists like [3]
+to be presented as a bare integer question number, like 3. Other
+possibilities coming soon are to allow "-q dnm" (for Do Not Mark)
+and "-q all" (which would expand to [1,2,3] here).
+
 Now that the system knows which pages contain which questions,
 we can push the bundle to the marking team::
 
-    $ plom-cli push-bundle 1
+    $ plom-cli push-bundle 8
 
 The markers can assess the paper without knowing who it came from.
 After that, however, any marks earned will have to be attributed to the student.
