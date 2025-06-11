@@ -30,7 +30,7 @@ from .views import (
     ReassignTask,
     ResetTask,
     # TODO: these are possibly temporary
-    papersToPrintHandler,
+    papersToPrint,
     ScanListBundles,
     ScanBundleActions,
     ScanMapBundle,
@@ -70,17 +70,17 @@ urlpatterns = [
     # TODO: Issue #3786: eventually remove the "beta" from these provisional URLs
     path(
         "api/beta/paperstoprint",
-        papersToPrintHandler.as_view(),
+        papersToPrint.as_view(),
         name="papersToPrint",
     ),
     path(
         "api/beta/paperstoprint/<int:papernumber>",
-        papersToPrintHandler.as_view(),
+        papersToPrint.as_view(),
         name="papersToPrint-withint",
     ),
     path(
         "api/beta/paperstoprint/<str:action>",
-        papersToPrintHandler.as_view(),
+        papersToPrint.as_view(),
         name="papersToPrint-withstr",
     ),
     path(

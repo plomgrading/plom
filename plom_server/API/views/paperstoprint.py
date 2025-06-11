@@ -28,7 +28,7 @@ from plom_server.BuildPaperPDF.services import BuildPapersService
 from .utils import _error_response
 
 
-class papersToPrintHandler(APIView):
+class papersToPrint(APIView):
     """Manipulate the files in the server's papersToPrint directory."""
 
     # DELETE /api/beta/paperstoprint
