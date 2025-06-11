@@ -76,12 +76,15 @@ class papersToPrintHandler(APIView):
         Args:
             request: An HTTP request.
             papernumber (optional): Integer paper number of the PDF to return.
-            action (optional): String "getprinted" if you want to read that flag.
+            action (optional): String "getprinted" or "ready" to request status info.
 
         Returns:
-            For the URL /api/beta/paperstoprint/getprinted, return "True" or "False".
+            For the URL /api/beta/paperstoprint/getprinted, return "True" or "False"
+            in response to the assertion, "The papers have been printed."
+            For the URL /api/beta/paperstoprint/ready, return "True" or "False"
+            in response to the assertion, "The server holds a complete set of assessment PDFs."
             For the URL /api/beta/paperstoprint/42, return a streaming PDF of paper 42.
-            For the URL /api/beta/paperstoprint, return a streaing ZIP of all papers.
+            For the URL /api/beta/paperstoprint, return a streaming ZIP of all papers.
             Return status 403 if the user is not in the 'manager' group, and status 404
             if the requested paper-image information was impossible to generate.
         """
@@ -96,6 +99,9 @@ class papersToPrintHandler(APIView):
         if action is not None:
             if action == "getprinted":
                 flagvalue = have_papers_been_printed()
+                return Response(f"{flagvalue}")
+            if action == "ready":
+                flagvalue = BuildPapersService().are_all_papers_built()
                 return Response(f"{flagvalue}")
             else:
                 return _error_response(
@@ -139,14 +145,22 @@ class papersToPrintHandler(APIView):
     # POST /api/beta/paperstoprint/unsetprinted
     # POST /api/beta/paperstoprint
     def post(self, request: Request, action: str | None = None) -> Response:
-        """Create printable PDF's, or manipulate the 'printed' flag.
+        """Launch PDF-creation process, or manipulate the 'printed' flag.
+
+        Plom builds individualized PDFS, one per paper, using
+        parallel background threads managed by Huey. A well-formed
+        POST request activates the task of building all such PDFs.
+        The process is asynchronous, and may take a long time.
+        To detect whether all the PDFs are ready, review the GET
+        methods provided by this same class.
 
         Args:
             request: An HTTP request.
-            action: One of 'setprinted', 'unsetprinted', or None
+            action: One of 'setprinted', 'unsetprinted', or None.
+                Use None to launch the creation process for all PDFs.
 
         Returns:
-            The text response 'OK', with status 200, on success.
+            An empty response, with status 204, if paper-building has launched.
             Status 403 if the caller is not in the 'manager' group;
             status 400 if there are already some papers to print,
             or there is some other kind of problem with the request;
@@ -162,10 +176,22 @@ class papersToPrintHandler(APIView):
 
         if action is not None:
             if action == "setprinted":
-                set_papers_printed(True)
+                try:
+                    set_papers_printed(True)
+                except PlomDependencyConflict as e:
+                    return _error_response(
+                        e,
+                        status.HTTP_409_CONFLICT,
+                    )
                 return Response(status=status.HTTP_204_NO_CONTENT)
             elif action == "unsetprinted":
-                set_papers_printed(False)
+                try:
+                    set_papers_printed(False)
+                except PlomDependencyConflict as e:
+                    return _error_response(
+                        e,
+                        status.HTTP_409_CONFLICT,
+                    )
                 return Response(status=status.HTTP_204_NO_CONTENT)
             else:
                 return _error_response(
@@ -173,19 +199,11 @@ class papersToPrintHandler(APIView):
                 )
 
         # Here action is None, so the request is to make all the PDFs
-        bps = BuildPapersService()
-
-        if BuildPapersService().are_any_papers_built():
-            return _error_response(
-                "There are already some papers to print. Not rebuilding.",
-                status.HTTP_400_BAD_REQUEST,
-            )
-
         try:
-            bps.send_all_tasks()
+            BuildPapersService().send_all_tasks()
         except PlomDependencyConflict as err:
             return _error_response(
-                f"Request to build papers rejected--dependency conflict; {err}.",
+                f"Request to build papers rejected--dependency conflict. {err}",
                 status.HTTP_409_CONFLICT,
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
