@@ -19,7 +19,7 @@ from plom_server.Preparation.views import ClasslistDownloadView
 from .utils import _error_response
 
 
-class ClasslistHandler(APIView):
+class Classlist(APIView):
     """Handle transactions involving the classlist held by the server."""
 
     # DELETE /api/v0/classlist

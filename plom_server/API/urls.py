@@ -23,7 +23,7 @@ from .routes import (
 )
 
 from .views import (
-    ClasslistHandler,
+    Classlist,
     GetTasks,
     MarkTaskNextAvailable,
     MarkTask,
@@ -152,8 +152,8 @@ urlpatterns += [
     ),
     path(
         "api/v0/classlist",
-        ClasslistHandler.as_view(),
-        name="api_classlist_handler",
+        Classlist.as_view(),
+        name="api_classlist",
     ),
     path(
         "rubrics/<int:rid>/tasks",
