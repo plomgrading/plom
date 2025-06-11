@@ -30,24 +30,24 @@ page 7 of the submitted PDF.
 Assumptions
 -----------
 
-Let us make a few assumptions about students' homework submissions:
+We make the following assumptions about students' homework submissions.
+(Various relaxations are possible; some of these are work in progress.)
 
-* a homework submission arrives as a single PDF (though perhaps this can be
-  loosened later) containing at least 1 page;
-* we know the name and student ID of the person who submitted each HW pdf;
-* we know an unused paper-number to which we can assign this homework (again, this can potentially be loosened later); and
-* we know (or can reasonably guess) which questions appear on which pages of a given HW pdf - i.e., a question-mapping.
+* Each homework submission arrives as a single PDF containing at least 1 page.
+* We know the name and student ID of the person who should get credit for each HW pdf.
+* We know an unused paper-number to which we can assign this work.
+* We know (or can reasonably guess) which questions appear on which pages of a given HW pdf -- i.e., a question-mapping.
 
-We will also need a running server with the following properties:
+We will also need a running server with the properties listed below.
 
-* users  from groups 'manager' and 'scanner' exist, and their passwords are known;
-* the server contains an assessment specification that details the number of questions, the point value for each, etc.;
-* the server contains an assessment source PDF compatible with the specification just mentioned;
-* the server has allocated enough test-papers to ensure the database has at least one paper per student (Internally, the allocation corresponds to a Paper-Question-Version mapping, or `pqvmap`. On the web-based user interface, users can set this up on the page headed "Manage the number of papers and the paper-question-version database.);
-* the server has built printable PDFs of the assessment source, one for each student;
-* the server has been told that the individualized assessment PDFs have been printed.
+* Users  from groups 'manager' and 'scanner' exist, and we know their passwords.
+* The server contains an assessment specification that details the number of questions, the point value for each, etc.
+* The server contains an assessment source PDF compatible with the specification just mentioned.
+* The server has allocated enough test-papers to ensure the database has at least one paper per student. (Internally, the allocation corresponds to a Paper-Question-Version mapping, or `pqvmap`. On the web-based user interface, users can set this up on the page headed "Manage the number of papers and the paper-question-version database".)
+* The server has built printable PDFs of the assessment source, one for each student.
+* The server has been told that the individualized assessment PDFs have been printed.
 
-The last two bullets are a manifestation of Plom's genesis as a tool for
+Several of these items reflect Plom's genesis as a tool for
 presenting test booklets printed on paper to students. In that context it
 is impossible to scan and upload student work without creating and printing
 the booklets the students will confront. And Plom's internal logic enforces
@@ -61,11 +61,12 @@ Processing a single homework pdf
 To make a single homework PDF available for marking requires three actions:
 upload, process, and push.
 
-To illustrate with specifics,
+To illustrate with specifics, we will assume ...
 
-* we will assign this PDF the (unused) paper number 61;
-* the file name is ``"fake_hw_bundle_61.pdf"``; it has 5 pages;
-* the correspondence between page numbers and question numbers is as follows:
+* this homework comes from Ken Kenson, student number 88776655;
+* paper number 61 is available as a receptacle for the incoming PDF;
+* the incoming file has 5 pages and name ``"fake_hw_bundle_kk.pdf"``;
+* incoming page numbers and assignment question numbers are related as follows:
 
    - p1 = q1
    - p2 = q2
@@ -73,55 +74,61 @@ To illustrate with specifics,
    - p4 = q2 and q3
    - p5 = q3
 
-* The homework was submitted by student with id "88776655" and name "Kenson, Ken".
-* We will upload the homework as user "demoScanner1"
-* We will process the homework as user "demoManager1"
+* user "demoScanner1" (with password "5678") will upload the PDF; and
+* user "demoManager1" (with password "1234") will manage other parts of the process.
 
 Plom is built to process PDF files made by scanning bundles of physical
-paper. We will treat the single HW file as a virtual bundle. The following
-command will upload it::
+paper. We will treat each incoming HW file as an independent virtual bundle.
+The following command will upload it:
 
-    $ python manage.py plom_staging_bundles upload demoScanner1 fake_hw_bundle_61.pdf
-    Uploaded fake_hw_bundle_61.pdf as user demoScanner1 - processing it in the background now.
+    $ plom-cli upload-bundle fake_hw_bundle_kk.pdf
 
-We can confirm the results by giving this command::
+The response to this command will reveal the `bundle_id` assigned to the
+file we have uploaded. Assume we get `bundle_id = 1`.
 
-    $ python manage.py plom_staging_bundles status
+A complete list of bundles in the system can be requested::
 
-The response is a table that tells us that the bundle has
-been uploaded, and contains 5 pages, but its qr-codes
-have not been read and it has not been pushed.
-(This is good because Ken Kenson's submission does not have qr-codes.)
+    $ plom-cli list-bundles
 
-To process this paper, we must turn the page-to-question
-correspondence shown above into a list of lists. Each entry
-in the main list corresponds to a page number.
-The sub-list for a given page number enumerates all the questions
-answered on that page. The result is ``[ [1], [2], [], [2, 3], [3] ]``,
-and it is a key parameter in the next command::
+This produces a table that tells us that the bundle has
+been uploaded, and that it contains 5 pages,
+but that its qr-codes have not been read and it has not been pushed.
+(This is good because the submission does not have qr-codes.)
 
-    $ python manage.py plom_paper_scan list_bundles map fake_hw_bundle_61 -t 61 -q [[1],[2],[],[2,3],[3]]
+To process this paper, we inform the server of what pages to
+associate with which question. Plom designers call this process
+"mapping", and the command-line interface maps one page at a time.
+Here are the 5 commands that implement the page-to-question
+correspondence shown above:
 
-The server then returns something like::
+    $ plom-cli map -t 61 -q '[1]'   1 1 
+    $ plom-cli map -t 61 -q '[2]'   1 2 
+    $ plom-cli map -t 61 -q '[]'    1 3
+    $ plom-cli map -t 61 -q '[2,3]' 1 4
+    $ plom-cli map -t 61 -q '[3]'   1 5
 
-    CAUTION: paper_scan is an experimental tool
-    DEBUG: numpages in bundle: 5
-    DEBUG: pre-canonical question:  [[1],[2],[],[2,3],[3]]
-    DEBUG: canonical question list: [[1], [2], [], [2, 3], [3]]
+Here parameter `-t` gives the paper number and `-q` gives the list
+of questions for the page of interest. The positional parameters
+that follow give the incoming bundle's internal id number (here `1`)
+and the page number in the bundle (here running through all 5 choices).
+
+The command-line responses to the mapping commands above are not 
+(yet) very informative.
 
 Now that the system knows which pages contain which questions, we can "push" the bundle to the marking team::
 
-    $ python manage.py plom_staging_bundles push fake_hw_bundle_61 demoScanner1
-    Bundle fake_hw_bundle_61 - pushed from staging.
+    $ plom-cli push-bundle 1
 
-At this point the homework is in the system and marking can begin.
-The server knows which pages contain which questions etc.
-However the system does not yet know which student to associate with the paper.
-Accordingly we now ID the paper using ``plom_id_direct``::
+The markers can work on the paper without knowing who it came from.
+At some stage the marks will have to be attributed to the student.
+The following command makes the paper-to-student link in the system::
 
-    python manage.py plom_id_direct demoManager1 61 88776655 "Kenson, Ken"
+    $ plom-cli id-paper --sid 88776655 --name 'Kenson, Ken' 61
 
-Now the system knows that Ken Kenson should get the credit for points earned on this HW.
+The student ID number and name string are clearly visible here;
+note also the positional parameter `61` giving the paper number
+used throughout for this student's submission. Different students
+should get different numbers.
 
 
 Summary of the process
