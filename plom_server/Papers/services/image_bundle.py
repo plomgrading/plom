@@ -582,14 +582,7 @@ class ImageBundleService:
             .values_list("paper", "question_index")
             .distinct()
         )
-
-        print(ready_pairs_1)
-        print(type(ready_pairs_1))
-        print(ready_pairs_2)
-        print(type(ready_pairs_2))
         ready = list(ready_pairs_1) + list(ready_pairs_2)
-
-        print(ready)
 
         return ready
 
@@ -599,12 +592,7 @@ class ImageBundleService:
     ) -> dict[tuple[Paper, int], bool]:
         """Check if provided paper/question pairs are ready for marking.
 
-        Note that to be ready a paper/question pair must either
-          * have all its fixed pages with images (and any
-            number of mobile pages), or
-          * have no fixed pages with images but some mobile pages
-        This function should be used where changes to a MarkingTask
-        are required, not as a result of marking.
+        See :func:`_get_ready_paper_question_pairs` for what 'ready' means.
 
         Args:
             paper_qidx_pairs: a list of tuples identifying a particular
@@ -614,8 +602,11 @@ class ImageBundleService:
             A dict with the input paper/qidx tuples as keys, and True/False
             as the values.
         """
-        print("TODO")
-        return
+        ready_pairs = self._get_ready_paper_question_pairs()
+        pq_pair_ready = {}
+        for pair in paper_qidx_pairs:
+            pq_pair_ready[pair] = pair in ready_pairs
+        return pq_pair_ready
 
     @transaction.atomic
     def is_given_paper_question_ready(
