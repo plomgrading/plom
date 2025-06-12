@@ -17,7 +17,7 @@ page 7 of the submitted PDF.
 .. caution::
 
    This feature is under active development, so the description below
-   may already have been superceded. The interface described
+   may already have been superseded. The interface described
    here and its implementation behind the scenes are both subordinate
    to Plom's primary purpose of managing hardcopy assessments.
    This explains why the workflow includes some steps that would not
