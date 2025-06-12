@@ -8,7 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from ..services import SpecificationService as s
 
 
-class SpecficiationServiceMiscTests(TestCase):
+class SpecificationServiceMiscTests(TestCase):
     def setUp(self):
         spec_dict = {
             "idPage": 1,
@@ -78,7 +78,7 @@ class SpecficiationServiceMiscTests(TestCase):
         assert qidx_page_dict[4] == [5, 6, 7]
 
 
-class SpecficiationServiceMiscNoSpecTests(TestCase):
+class SpecificationServiceMiscNoSpecTests(TestCase):
     def test_get_list_of_pages(self) -> None:
         assert s.get_list_of_pages() == []
 
