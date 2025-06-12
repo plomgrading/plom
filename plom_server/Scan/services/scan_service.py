@@ -680,10 +680,10 @@ class ScanService:
             ValueError: question_indices gives impossible or contradictory advice,
                 e.g., some index is out of range or DNM is not the only list-element.
         """
-        print(
-            f"DEBUG: Starting map_bundle_page with bundle_id={bundle_id}, page={page} "
-            f"and target papernum={papernum}, question_indices={question_indices}."
-        )
+        # print(
+        #     f"DEBUG: Starting map_bundle_page with bundle_id={bundle_id}, page={page} "
+        #     f"and target papernum={papernum}, question_indices={question_indices}."
+        # )
 
         with transaction.atomic():
             page_img = StagingImage.objects.get(bundle__pk=bundle_id, bundle_order=page)

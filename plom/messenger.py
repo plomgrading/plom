@@ -964,7 +964,7 @@ class Messenger(BaseMessenger):
                 The strings "all" and "dnm" are passed through to the server, where "all"
                 will be translated into a list of all questions, and "dnm" will assign the
                 "Do Not Mark" attribute to the indicated page. If questions is None,
-                send "all" to the server; if questions is an empty list, we send "dnm".
+                send "all" to the server; if questions is an empty list, send "dnm".
 
         Raises:
             PlomSeriousException
@@ -980,10 +980,7 @@ class Messenger(BaseMessenger):
             raise PlomNoServerSupportException(
                 "Server too old: does not support page mapping"
             )
-        print("DEBUG: Messenger starting new_server_bundle_map_page.")
-        print(
-            f"DEBUG: Messenger parameter questions = {questions}, with type {type(questions)}."
-        )
+
         query_args = [f"papernum={papernum}"]
 
         if questions is None:
@@ -999,7 +996,8 @@ class Messenger(BaseMessenger):
                 query_args.append("text=dnm")
             else:
                 print(
-                    f"DEBUG: Input string {questions} escaped current implementation."
+                    "Error in messenger/new_server_bundle_map_page: "
+                    f"Input string {questions} out of scope."
                 )
         elif hasattr(questions, "__iter__"):
             if len(questions) == 0:
@@ -1008,12 +1006,11 @@ class Messenger(BaseMessenger):
                 query_args.extend([f"qidx={n}" for n in questions])
         else:
             print(
-                f"DEBUG: Parameter 'questions' has unexpected type {type(questions)}. Expect trouble."
+                "Error in messenger/new_server_bundle_map_page: "
+                f"Parameter 'questions' has unexpected type {type(questions)}. "
             )
 
         p = f"/api/beta/scan/bundle/{bundle_id}/{page}/map" + "?" + "&".join(query_args)
-        print(f"DEBUG: Messenger sends a POST request to this URL: {p}")
-
         with self.SRmutex:
             try:
                 response = self.post_auth(p)
@@ -1021,11 +1018,13 @@ class Messenger(BaseMessenger):
                 return
             except requests.HTTPError as e:
                 if response.status_code == 400:
-                    raise PlomSeriousException(response.reason) from None
+                    raise PlomSeriousException("400 " + response.reason) from None
                 if response.status_code == 401:
-                    raise PlomAuthenticationException(response.reason) from None
+                    raise PlomAuthenticationException(
+                        "401 " + response.reason
+                    ) from None
                 if response.status_code == 403:
-                    raise PlomNoPermission(response.reason) from None
+                    raise PlomNoPermission("403 " + response.reason) from None
                 if response.status_code == 404:
                     raise PlomRangeException("404 " + response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None

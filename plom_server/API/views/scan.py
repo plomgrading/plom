@@ -162,11 +162,6 @@ class ScanMapBundle(APIView):
             Status 403 is returned if the calling user is outside the "scanner" group;
             status 400 indicates an error of some kind in the input parameters.
         """
-        print(
-            f"PDL Debug: Server receives a POST request with bundle_id = {bundle_id}, page = {page}. ",
-            end="",
-        )
-
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "scanner" not in group_list:
             return _error_response(
@@ -197,9 +192,9 @@ class ScanMapBundle(APIView):
                     f"Impossible to construct list of questions from {data}",
                     status.HTTP_400_BAD_REQUEST,
                 )
-        print(f"Target papernum = {papernum}, question_idx_list = {question_idx_list}.")
 
-        # TODO: error handling to deal with: mapping the same page twice, currently an integrity error
+        # TODO: Deal with bad instructions, e.g., mapping the same page twice,
+        # currently an integrity error
         try:
             ScanService().map_bundle_page(
                 bundle_id, page, papernum=papernum, question_indices=question_idx_list
@@ -210,10 +205,5 @@ class ScanMapBundle(APIView):
             return _error_response(
                 f"Probably no bundle id {bundle_id} or page {page}: {e}",
                 status.HTTP_404_NOT_FOUND,
-            )
-        except Exception as e:
-            return _error_response(
-                f"PDL Debug: Uncaught exception with text part {e}",
-                status.HTTP_501_NOT_IMPLEMENTED,
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
