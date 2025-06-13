@@ -452,52 +452,20 @@ class ImageBundleService:
                 extras.values_list("paper__paper_number", "question_index", "version")
             )
         )
-        # now get all paper-numbers updated by the bundle
-        papers_updated_by_bundle = list(
-            set([X[0] for X in papers_questions_versions_updated_by_bundle])
+
+        # now check if pq pairs are markable
+        papers_questions_updated_by_bundle = list(
+            t[:2] for t in papers_questions_versions_updated_by_bundle
         )
-        # use this to get all QuestionPage and MobilePage in those papers
-        pq_qpage_with_img: dict[tuple[int, int, int], int] = defaultdict(int)
-        pq_qpage_no_img: dict[tuple[int, int, int], int] = defaultdict(int)
-        for qpage in QuestionPage.objects.filter(
-            paper__paper_number__in=papers_updated_by_bundle
-        ).prefetch_related("paper", "image"):
-            pnqiv = (qpage.paper.paper_number, qpage.question_index, qpage.version)
-            if qpage.image is None:
-                pq_qpage_no_img[pnqiv] += 1
-            else:
-                pq_qpage_with_img[pnqiv] += 1
-        pq_mpage: dict[tuple[int, int, int], int] = defaultdict(int)
-        for mpage in MobilePage.objects.filter(
-            paper__paper_number__in=papers_updated_by_bundle
-        ).prefetch_related("paper", "image"):
-            pnqiv = (mpage.paper.paper_number, mpage.question_index, mpage.version)
-            pq_mpage[pnqiv] += 1
-
-        # for each paper/question that has been updated, check if has either
-        # all fixed pages, or no fixed pages but some mobile-pages.
-        # if some, but not all, fixed pages then is not ready.
-        ready = []
-        not_ready = []
-        for (
-            paper_number,
-            question_index,
-            version,
-        ) in papers_questions_versions_updated_by_bundle:
-            if pq_qpage_no_img[(paper_number, question_index, version)] == 0:
-                # all fixed pages have images
-                ready.append((paper_number, question_index, version))
-                continue
-            # question has some images
-            if pq_qpage_with_img[(paper_number, question_index, version)] > 0:
-                # question has some pages with and some without images - not ready
-                not_ready.append((paper_number, question_index, version))
-                continue
-            # all fixed pages without images - check if has any mobile pages
-            if pq_mpage[(paper_number, question_index, version)] > 0:
-                ready.append((paper_number, question_index, version))
-
-        return ready, not_ready
+        paper_question_pairs_dict = ImageBundleService().are_paper_question_pairs_ready(
+            papers_questions_updated_by_bundle
+        )
+        pqv_updated_and_ready = [
+            t
+            for t in papers_questions_versions_updated_by_bundle
+            if paper_question_pairs_dict[t[:2]]
+        ]
+        return pqv_updated_and_ready
 
     @transaction.atomic
     def get_id_pages_in_bundle(self, bundle: Bundle) -> QuerySet[IDPage]:
@@ -587,7 +555,7 @@ class ImageBundleService:
         return ready
 
     @transaction.atomic
-    def are_given_paper_question_pairs_ready(
+    def are_paper_question_pairs_ready(
         self, paper_qidx_pairs: list[tuple[Paper, int]]
     ) -> dict[tuple[Paper, int], bool]:
         """Check if provided paper/question pairs are ready for marking.
