@@ -596,6 +596,8 @@ def render_html_flat_question_label_list(qindices: list[int] | None) -> str:
     """
     if not qindices:
         return "None"
+    if len(qindices) == 1 and qindices[0] == -1:
+        return "-1, which means DNM"
     T = get_question_labels_str_and_html_map()
     return ", ".join(T[qidx][1] for qidx in qindices)
 

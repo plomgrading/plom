@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Colin B. Macdonald
 # Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025 Philip D. Loewen
 
 from pathlib import Path
 
@@ -147,7 +148,7 @@ class ScanMapBundle(APIView):
 
     # POST: /api/beta/scan/bundle/{bundle_id}/{page}/map
     def post(self, request: Request, *, bundle_id: int, page: int) -> Response:
-        """API to map the pages of a bundle onto questions.
+        """API to map one page of a Staging Bundle onto questions.
 
         Args:
             request: A Request object with some important clues in the GET fields

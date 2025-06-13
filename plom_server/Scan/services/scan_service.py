@@ -663,6 +663,9 @@ class ScanService:
     ) -> None:
         """Map one page of a bundle onto zero or more questions.
 
+        Note that if the page has been mapped previously, the mapping
+        specified here will replace, not augment, the original mapping.
+
         Args:
             bundle_id: primary key of bundle DB object.
             page: one-based (TODO: check) index of the pages in the bundle.
@@ -673,26 +676,29 @@ class ScanService:
                 one-based question index) to attach the page to. Two special
                 cases are available. If the list is empty the page gets discarded.
                 If the list is the singleton [MobilePage.DNM_qidx], the page
-                is attached to the DNM group.
+                gets attached to the DNM group.
 
         Raises:
             ObjectDoesNotExist: no such BundleImage, e.g., invalid bundle id or page
             ValueError: question_indices gives impossible or contradictory advice,
                 e.g., some index is out of range or DNM is not the only list-element.
         """
-        # print(
-        #     f"DEBUG: Starting map_bundle_page with bundle_id={bundle_id}, page={page} "
-        #     f"and target papernum={papernum}, question_indices={question_indices}."
-        # )
+        print(
+            f"DEBUG: Starting map_bundle_page with bundle_id={bundle_id}, page={page} "
+            f"and target papernum={papernum}, question_indices={question_indices}."
+        )
 
         with transaction.atomic():
             page_img = StagingImage.objects.get(bundle__pk=bundle_id, bundle_order=page)
+
+            # Mapping the given page back to the same category takes extra care,
+            # because of the uniqueness constraints embedded in the model definitions.
 
             # TODO: Think about this part of the current setup. Interpreting []
             # as DISCARD disagrees with the interpretation in the function
             # check_question_list() found in plom/scan/question_list_utils.py,
             # but maybe it's nice to have some way to forcibly discard a page.
-            if not question_indices:
+            if not question_indices and page_img.image_type != StagingImage.DISCARD:
                 page_img.image_type = StagingImage.DISCARD
                 page_img.save()
                 DiscardStagingImage.objects.create(
@@ -709,28 +715,52 @@ class ScanService:
                         "A page of type DNM cannot be mapped to a question."
                     )
                 # Map the page to category DNM. PDL guessing here. TODO - test and verify this.
-                page_img.image_type = StagingImage.EXTRA
-                page_img.save()
-                ExtraStagingImage.objects.create(
-                    staging_image=page_img,
-                    paper_number=papernum,
-                    question_idx_list=[MobilePage.DNM_qidx],
-                )
+                if page_img.image_type != StagingImage.EXTRA:
+                    # Recast this image and make space for it in the collection of EXTRA pages
+                    page_img.image_type = StagingImage.EXTRA
+                    page_img.save()
+                    ExtraStagingImage.objects.create(
+                        staging_image=page_img,
+                        paper_number=papernum,
+                        question_idx_list=[MobilePage.DNM_qidx],
+                    )
+                else:
+                    # This image is already EXTRA. Just refresh its affiliation.
+                    page_img = ExtraStagingImage.objects.get(
+                        staging_image_id=page_img.id
+                    )
+                    page_img.paper_number = papernum
+                    page_img.question_idx_list = [MobilePage.DNM_qidx]
+                    page_img.save()
+
             else:
-                page_img.image_type = StagingImage.EXTRA
-                # TODO = update the qr-code info in the underlying image
-                page_img.save()
+                if page_img.image_type != StagingImage.EXTRA:
+                    # Recast this image and make space for it in the collection of EXTRA pages
+                    page_img.image_type = StagingImage.EXTRA
+                    # TODO = update the qr-code info in the underlying image
+                    page_img.save()
 
-                nq = SpecificationService.get_n_questions()
-                for qi in question_indices:
-                    if qi < 1 or qi > nq:
-                        raise ValueError(f"Requested question index {qi} is invalid.")
+                    nq = SpecificationService.get_n_questions()
+                    for qi in question_indices:
+                        if qi < 1 or qi > nq:
+                            raise ValueError(
+                                f"Requested question index {qi} is invalid."
+                            )
 
-                ExtraStagingImage.objects.create(
-                    staging_image=page_img,
-                    paper_number=papernum,
-                    question_idx_list=question_indices,
-                )
+                    ExtraStagingImage.objects.create(
+                        staging_image=page_img,
+                        paper_number=papernum,
+                        question_idx_list=question_indices,
+                    )
+                else:
+                    # This image is already EXTRA. Just refresh its affiliation.
+                    page_img = ExtraStagingImage.objects.get(
+                        staging_image_id=page_img.id
+                    )
+                    page_img.paper_number = papernum
+                    page_img.question_idx_list = question_indices
+                    page_img.save()
+
             # TODO: Issue #3770.
             # bundle_obj = (
             #     StagingBundle.objects.filter(pk=bundle_pk).select_for_update().get()
