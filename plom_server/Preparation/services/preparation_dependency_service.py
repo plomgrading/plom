@@ -194,7 +194,7 @@ def assert_can_rebuild_test_pdfs():
         raise PlomDependencyConflict("Some source PDFs have not been uploaded.")
     if not PaperInfoService.is_paper_database_populated():
         raise PlomDependencyConflict(
-            "The qv-mapping has been built and the database has been populated."
+            "The database does not contain a complete set of paper definitions."
         )
     if PaperInfoService.is_paper_database_being_updated_in_background():
         raise PlomDependencyConflict("The database is being updated.")
