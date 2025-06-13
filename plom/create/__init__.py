@@ -12,8 +12,8 @@ __license__ = "AGPL-3.0-or-later"
 
 from pathlib import Path
 
-from plom import __version__
-from plom import Default_Port
+from plom.misc import Default_Port, __version__
+
 
 paperdir = Path("papersToPrint")
 
