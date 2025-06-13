@@ -430,9 +430,6 @@ class ImageBundleService:
         """
         question_pages = QuestionPage.objects.filter(image__bundle=bundle)
         extras = MobilePage.objects.filter(image__bundle=bundle)
-        # Note ready/nonready is about *questions*, so any MobilePages attached to DNM don't
-        # count (including them will lead to bugs, Issue #3925); we filter them out.
-        extras = extras.exclude(question_index=MobilePage.DNM_qidx)
 
         # version isn't necessary for the readiness check
         # but it can be fetched here with little additional overhead
@@ -487,7 +484,7 @@ class ImageBundleService:
         return IDPage.objects.filter(paper=paper_obj, image__isnull=False).exists()
 
     @transaction.atomic
-    def _get_ready_paper_question_pairs(self) -> list:
+    def _get_ready_paper_question_pairs(self) -> list[tuple[int, int]]:
         """Get all paper question pairs that are ready for marking.
 
         This function queries database images directly to determine
@@ -516,44 +513,47 @@ class ImageBundleService:
         }
 
         # case 1 - all fixed pages have images
-        filled_qpages_counts = filled_qpages.values("paper", "question_index").annotate(
-            page_count=Count("id")
-        )
+        filled_qpages_counts = filled_qpages.values(
+            "paper__paper_number", "question_index"
+        ).annotate(page_count=Count("id"))
         all_pages_filter = Q()
         for qidx, spec_page_count in qidx_spec_page_count.items():
             all_pages_filter |= Q(question_index=qidx, page_count__gte=spec_page_count)
 
         ready_pairs_1 = (
             filled_qpages_counts.filter(all_pages_filter)
-            .values_list("paper", "question_index")
+            .values_list("paper__paper_number", "question_index")
             .distinct()
         )
 
         # case 2 - all fixed pages have no images, but there's mobile pages
 
-        # Django doesn't have easy access to outer joins :(
-        # so we are emulating this query:
+        # we are emulating this query:
         # SELECT mp.paper, mp.question_index
         # FROM MobilePage mp LEFT OUTER JOIN QuestionPage qp
         # ON mp.paper = qp.paper AND mp.question_index = qp.question_index
-
         subquery = filled_qpages.filter(
-            paper=OuterRef("paper"), question_index=OuterRef("question_index")
+            paper=OuterRef("paper"),
+            question_index=OuterRef("question_index"),
         )
         mpages_filtered = mpages.annotate(nofixed=~Exists(subquery))
+
         ready_pairs_2 = (
-            mpages_filtered.filter(nofixed=True)
-            .values_list("paper", "question_index")
+            mpages_filtered.filter(
+                nofixed=True, question_index__in=list(test_page_dict.keys())
+            )
+            .values_list("paper__paper_number", "question_index")
             .distinct()
         )
+        # By design, case 1 and case 2 pairs will never collide
         ready = list(ready_pairs_1) + list(ready_pairs_2)
 
         return ready
 
     @transaction.atomic
     def are_paper_question_pairs_ready(
-        self, paper_qidx_pairs: list[tuple[Paper, int]]
-    ) -> dict[tuple[Paper, int], bool]:
+        self, paper_qidx_pairs: list[tuple[int, int]]
+    ) -> dict[tuple[int, int], bool]:
         """Check if provided paper/question pairs are ready for marking.
 
         See :func:`_get_ready_paper_question_pairs` for what 'ready' means.
