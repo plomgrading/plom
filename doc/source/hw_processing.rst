@@ -80,16 +80,13 @@ Here we illustrate the process by tackling the following scenario.
 * User "demoManager1" (with password "1234") is active and in the "manager" group.
 
 The work proceeds using various applications of the command ``plom-cli``.
-Each of these requires authentication. Credentials can be given on each
-and every command line, or by setting so-called Environment Variables in
-the terminal session. On Linux, the following commands achieve this::
+You can avoid typing the credentials every time by setting environment
+variables, for example on some systems you can specify::
 
     $ export PLOM_USERNAME=demoManager1
     $ export PLOM_PASSWORD=1234
 
-The commands below assume that this has been done; the alternative would be to
-append the string ``-u demoManager1 -w 1234`` to each and every ``plom-cli``
-command given below.
+See ``plom-cli --help`` for other options.
 
 Plom is built to process PDF files made by scanning bundles of physical
 paper. We treat each incoming HW file as an independent virtual bundle.
@@ -139,9 +136,6 @@ The command-line responses to the mapping commands above are not
 (yet) very informative. However, the command ``plom-cli list-bundles``
 now shows 0 unknown pages, 4 extra pages, and 1 page to discard.
 With no pages in the unknown category, the next step is at hand.
-(Sticklers for logic will notice that the page counts in
-the categories "known" and "unknown" add up to 0.
-Never forget that this is free software.)
 
 There is work in progress to allow single-question lists like [3]
 to be presented as a bare integer question number, like 3. Other
