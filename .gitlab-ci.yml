@@ -410,7 +410,7 @@ mypy-type-checking:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install mypy~=1.15.0
+    - pip install mypy~=1.16.0
   script:
     - mypy --version
     - mypy plom --python-ver 3.10 --install-types --non-interactive || true
