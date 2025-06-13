@@ -271,7 +271,7 @@ class ImageBundleService:
         from plom_server.Identify.services import IDReaderService
 
         # bulk create the associated marking tasks in O(1)
-        ready, _ = self.get_ready_and_not_ready_questions(uploaded_bundle)
+        ready = self._get_ready_questions_in_bundle(uploaded_bundle)
         MarkingTaskService.bulk_create_and_update_marking_tasks(ready)
 
         # bulk create the associated ID tasks in O(1).
@@ -410,17 +410,14 @@ class ImageBundleService:
 
     @staticmethod
     @transaction.atomic
-    def get_ready_and_not_ready_questions(
-        bundle: Bundle,
-    ) -> tuple[list[tuple[int, int, int]], list[tuple[int, int, int]]]:
-        """Find questions across all papers effected by this bundle now ready, and those that are not ready.
+    def _get_ready_questions_in_bundle(bundle: Bundle) -> list[tuple[int, int, int]]:
+        """Find ready questions across all papers affected by this bundle.
 
         A question is ready when either it has all of its
         fixed-pages, or it has no fixed-pages but has some
         mobile-pages.
 
-        Note: tasks are created on a per-question basis, so a test paper across multiple bundles
-        could have some "ready" and "unready" questions.
+        Note: at any given time a paper could have some "ready" and "unready" questions.
 
         Args:
             bundle: a Bundle instance.
@@ -431,16 +428,14 @@ class ImageBundleService:
             The "not_ready" are paper_number/question_index pairs that have pages
             in this bundle, but are not ready to be marked yet.
         """
-        # find all question-pages (ie fixed pages) that attach to images in the current bundle.
         question_pages = QuestionPage.objects.filter(image__bundle=bundle)
-        # find all mobile pages (extra pages) that attach to images in the current bundle
         extras = MobilePage.objects.filter(image__bundle=bundle)
         # Note ready/nonready is about *questions*, so any MobilePages attached to DNM don't
         # count (including them will lead to bugs, Issue #3925); we filter them out.
         extras = extras.exclude(question_index=MobilePage.DNM_qidx)
 
-        # now make list of all papers/questions updated by this bundle
-        # note that values_list does not return a list, it returns a "query-set"
+        # version isn't necessary for the readiness check
+        # but it can be fetched here with little additional overhead
         # remove duplicates by casting to a set
         papers_questions_versions_updated_by_bundle = set(
             list(
@@ -493,7 +488,7 @@ class ImageBundleService:
 
     @transaction.atomic
     def _get_ready_paper_question_pairs(self) -> list:
-        """Get paper question pairs that are ready for marking.
+        """Get all paper question pairs that are ready for marking.
 
         This function queries database images directly to determine
         if a given paper has enough work submitted to be marked.
@@ -507,7 +502,8 @@ class ImageBundleService:
 
         Returns:
             a list of tuples, each containing a Paper and question pair
-            TODO: ideally this would return a lazy queryset
+            TODO: ideally this would return a lazy queryset, but that requires
+            a common relation for mobile and question pages (#2871)
         """
         # get all scanned pages (relevant to questions)
         filled_qpages = QuestionPage.objects.filter(image__isnull=False)
