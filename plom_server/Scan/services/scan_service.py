@@ -667,16 +667,16 @@ class ScanService:
         specified here will replace, not augment, the original mapping.
 
         Args:
-            bundle_id: primary key of bundle DB object.
-            page: one-based (TODO: check) index of the pages in the bundle.
+            bundle_id: unique integer identifier of bundle DB object.
+            page: one-based index of the page in the bundle to be mapped.
 
         Keyword Args:
-            papernum: the number of the test-paper
+            papernum: the number of the target test-paper
             question_indices: a variable-length list of which questions (by
                 one-based question index) to attach the page to. Two special
                 cases are available. If the list is empty the page gets discarded.
                 If the list is the singleton [MobilePage.DNM_qidx], the page
-                gets attached to the DNM group.
+                gets attached to the DNM group for the given papernum.
 
         Raises:
             ObjectDoesNotExist: no such BundleImage, e.g., invalid bundle id or page
@@ -698,12 +698,15 @@ class ScanService:
             # as DISCARD disagrees with the interpretation in the function
             # check_question_list() found in plom/scan/question_list_utils.py,
             # but maybe it's nice to have some way to forcibly discard a page.
-            if not question_indices and page_img.image_type != StagingImage.DISCARD:
-                page_img.image_type = StagingImage.DISCARD
-                page_img.save()
-                DiscardStagingImage.objects.create(
-                    staging_image=page_img, discard_reason="map said drop this page"
-                )
+            if not question_indices:
+                if page_img.image_type == StagingImage.DISCARD:
+                    pass
+                else:
+                    page_img.image_type = StagingImage.DISCARD
+                    page_img.save()
+                    DiscardStagingImage.objects.create(
+                        staging_image=page_img, discard_reason="map said drop this page"
+                    )
 
             # TODO: What follows seems like a sensible way to indicate that a page
             # should go into the category DNM. But note that it's inconsistent with
@@ -714,7 +717,7 @@ class ScanService:
                     raise ValueError(
                         "A page of type DNM cannot be mapped to a question."
                     )
-                # Map the page to category DNM. PDL guessing here. TODO - test and verify this.
+                # Map the page to category DNM. PDL guessing here.
                 if page_img.image_type != StagingImage.EXTRA:
                     # Recast this image and make space for it in the collection of EXTRA pages
                     page_img.image_type = StagingImage.EXTRA
@@ -734,18 +737,16 @@ class ScanService:
                     page_img.save()
 
             else:
+                nq = SpecificationService.get_n_questions()
+                for qi in question_indices:
+                    if qi < 1 or qi > nq:
+                        raise ValueError(f"Requested question index {qi} is invalid.")
+
                 if page_img.image_type != StagingImage.EXTRA:
                     # Recast this image and make space for it in the collection of EXTRA pages
                     page_img.image_type = StagingImage.EXTRA
                     # TODO = update the qr-code info in the underlying image
                     page_img.save()
-
-                    nq = SpecificationService.get_n_questions()
-                    for qi in question_indices:
-                        if qi < 1 or qi > nq:
-                            raise ValueError(
-                                f"Requested question index {qi} is invalid."
-                            )
 
                     ExtraStagingImage.objects.create(
                         staging_image=page_img,
@@ -753,7 +754,7 @@ class ScanService:
                         question_idx_list=question_indices,
                     )
                 else:
-                    # This image is already EXTRA. Just refresh its affiliation.
+                    # This image is already EXTRA. Just refresh its affiliation(s).
                     page_img = ExtraStagingImage.objects.get(
                         staging_image_id=page_img.id
                     )

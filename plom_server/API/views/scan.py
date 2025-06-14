@@ -154,7 +154,7 @@ class ScanMapBundle(APIView):
             request: A Request object with some important clues in the GET fields
 
         Keyword Args:
-            bundle_id: the integer primary key (pk) of the bundle to work on
+            bundle_id: the integer that uniquely identifies which bundle to work on.
             page: the integer position of the page to work on in that bundle.
                 The first page in the bundle has number 1 (not 0).
 
@@ -170,6 +170,7 @@ class ScanMapBundle(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
         data = request.query_params
+
         papernum = data.get("papernum")
 
         question_idx_list = data.getlist("qidx")
@@ -177,25 +178,26 @@ class ScanMapBundle(APIView):
             question_idx_list = [int(n) for n in question_idx_list]
         except ValueError as e:
             return _error_response(
-                f"Non-integer qidx: {e}", status.HTTP_400_BAD_REQUEST
+                f"ScanMapBundle got a non-integer qidx: {e}",
+                status.HTTP_400_BAD_REQUEST,
             )
 
         if not question_idx_list:
-            codestring = data.get("text")  # Expect one of "all", "dnm"
-            if codestring == "all":
+            page_dest = data.get("page_dest")  # Expect one of "all", "dnm", "discard"
+            if page_dest == "all":
                 question_idx_list = [
                     1 + j for j in range(SpecificationService.get_n_questions())
                 ]
-            elif codestring == "dnm":
+            elif page_dest == "dnm":
                 question_idx_list = [MobilePage.DNM_qidx]
+            elif page_dest == "discard":
+                question_idx_list = []
             else:
                 return _error_response(
                     f"Impossible to construct list of questions from {data}",
                     status.HTTP_400_BAD_REQUEST,
                 )
 
-        # TODO: Deal with bad instructions, e.g., mapping the same page twice,
-        # currently an integrity error
         try:
             ScanService().map_bundle_page(
                 bundle_id, page, papernum=papernum, question_indices=question_idx_list

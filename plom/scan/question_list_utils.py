@@ -14,6 +14,8 @@ def _parse_questions(s: Any) -> Any:
             return "all"
         if s.casefold() == "dnm":
             return "dnm"
+        if s.casefold() == "discard":
+            return "discard"
         s = ast.literal_eval(s)
     return s
 

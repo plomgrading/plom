@@ -951,7 +951,7 @@ class Messenger(BaseMessenger):
     def new_server_bundle_map_page(
         self, bundle_id: int, page: int, papernum: int, questions: int | list[int] | str
     ) -> None:
-        """Map the indicated page of the specified bundle all questions in a list, or to DNM.
+        """Map the indicated page of the specified bundle to all questions in a list, etc.
 
         TODO: beta: rename to something reasonable in due time.
 
@@ -959,12 +959,14 @@ class Messenger(BaseMessenger):
             bundle_id: the (unstaged) bundle's primary key, an integer
             page: the 1-based index of the page of interest in that bundle
             papernum: the target paper number for this page
-            questions: A list of question(s) to which this page should be attached, with
-                some variations allowed. A bare int is converted to a 1-element list.
-                The strings "all" and "dnm" are passed through to the server, where "all"
-                will be translated into a list of all questions, and "dnm" will assign the
-                "Do Not Mark" attribute to the indicated page. If questions is None,
-                send "all" to the server; if questions is an empty list, send "dnm".
+            questions: A list of question(s) to which this page should be attached.
+                Each list entry can be either an integer question index
+                compatible with the assessment spec, or one of the special strings
+                "all", "dnm", or "discard". Lists that contain any one of these strings
+                must have no other elements (i.e., they must be lists of length 1).
+                If this argument is a single int or a single string, that will be
+                upgraded to a compatible 1-element list and treated appropriately.
+                The empty list will be interpreted as ["all"].
 
         Raises:
             PlomSeriousException
@@ -983,32 +985,34 @@ class Messenger(BaseMessenger):
 
         query_args = [f"papernum={papernum}"]
 
-        if questions is None:
-            query_args.append("text=all")
-        elif isinstance(questions, int):
-            query_args.append(f"qidx={questions}")
-        elif isinstance(questions, str):
-            if questions.isdecimal():
-                query_args.append(f"qidx={questions}")
-            elif questions.casefold() == "all":
-                query_args.append("text=all")
-            elif questions.casefold() == "dnm":
-                query_args.append("text=dnm")
-            else:
-                print(
-                    "Error in messenger/new_server_bundle_map_page: "
-                    f"Input string {questions} out of scope."
-                )
-        elif hasattr(questions, "__iter__"):
-            if len(questions) == 0:
-                query_args.append("text=dnm")
-            else:
+        if isinstance(questions, str) or isinstance(questions, int):
+            questions = [questions]
+
+        if any(isinstance(n, str) for n in questions):
+            lc_questions = [n.casefold() for n in questions]
+            if len(lc_questions) > 1:
+                if (
+                    "all" in lc_questions
+                    or "dnm" in lc_questions
+                    or "discard" in lc_questions
+                ):
+                    print(
+                        "Mapping error in Messenger: keyword directives must be isolated."
+                    )
+                    return
+            if "all" in lc_questions:
+                query_args.append("page_dest=all")
+            elif "dnm" in lc_questions:
+                query_args.append("page_dest=dnm")
+            elif "discard" in lc_questions:
+                query_args.append("page_dest=discard")
+            elif all(isinstance(n, int) or n.isdecimal() for n in questions):
                 query_args.extend([f"qidx={n}" for n in questions])
         else:
-            print(
-                "Error in messenger/new_server_bundle_map_page: "
-                f"Parameter 'questions' has unexpected type {type(questions)}. "
-            )
+            if len(questions) == 0:
+                query_args.append("page_dest=all")
+            else:
+                query_args.extend([f"qidx={n}" for n in questions])
 
         p = f"/api/beta/scan/bundle/{bundle_id}/{page}/map" + "?" + "&".join(query_args)
         with self.SRmutex:
@@ -1018,15 +1022,13 @@ class Messenger(BaseMessenger):
                 return
             except requests.HTTPError as e:
                 if response.status_code == 400:
-                    raise PlomSeriousException("400 " + response.reason) from None
+                    raise PlomSeriousException(response.reason) from None
                 if response.status_code == 401:
-                    raise PlomAuthenticationException(
-                        "401 " + response.reason
-                    ) from None
+                    raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 403:
-                    raise PlomNoPermission("403 " + response.reason) from None
+                    raise PlomNoPermission(response.reason) from None
                 if response.status_code == 404:
-                    raise PlomRangeException("404 " + response.reason) from None
+                    raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def new_server_push_bundle(self, bundle_id: int):
