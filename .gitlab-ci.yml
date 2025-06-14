@@ -112,7 +112,7 @@ wet_no_drift:
     - diff -s plom/latexTemplate.tex testTemplates/latexTemplate.tex
     - diff -s plom/latexTemplatev2.tex testTemplates/latexTemplatev2.tex
     - echo "If version info duplicated, ensure same"
-    - export VER0=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/misc.py`
+    - export VER0=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/common.py`
     - echo $VER0
     - export VER1=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom_server/__init__.py`
     - echo $VER1

@@ -213,7 +213,7 @@ packages = [
 ]
 
 [tool.setuptools.dynamic]
-version = {attr = 'plom.misc.__version__'}
+version = {attr = 'plom.common.__version__'}
 
 [project.scripts]
 plom-create = "plom.create.__main__:main"

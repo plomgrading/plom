@@ -13,7 +13,7 @@ __copyright__ = "Copyright (C) 2018-2025 Andrew Rechnitzer, Colin B. Macdonald, 
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-# Also in plom/__init__.py
+# Also in plom/common.py
 __version__ = "0.19.0.dev0"
 
 Plom_API_Version = "114"
