@@ -13,13 +13,3 @@ marking/grading, and returns them online.
 __copyright__ = "Copyright (C) 2018-2025 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-
-# Also in plom_server/__init__.py
-__version__ = "0.19.0.dev0"
-
-import sys
-
-if sys.version_info[0] == 2:
-    raise RuntimeError("Plom requires Python 3; it will not work with Python 2")
-
-Default_Port = 41984

@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2024 Colin B. Macdonald
+# Copyright (C) 2019-2025 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
-
-from __future__ import annotations
 
 import tempfile
 from pathlib import Path
@@ -12,7 +10,7 @@ from typing import Any
 import PIL.Image
 import pymupdf
 
-from plom import __version__
+from plom.finish import __version__
 from plom.scan.rotate import rot_angle_from_jpeg_exif_tag
 
 
