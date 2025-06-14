@@ -24,7 +24,7 @@ which should assign paper number 17 to Colston, Jennifer.
 import argparse
 import os
 
-from plom.misc import __version__ as __plom_version__
+from plom.common import __version__ as __plom_version__
 
 from plom.create import start_messenger
 

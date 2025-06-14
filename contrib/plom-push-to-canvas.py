@@ -53,7 +53,7 @@ from canvasapi import __version__ as __canvasapi_version__
 import pandas
 from tqdm import tqdm
 
-from plom.misc import __version__ as __plom_version__
+from plom.common import __version__ as __plom_version__
 from plom.canvas import __DEFAULT_CANVAS_API_URL__
 from plom.canvas import (
     canvas_login,

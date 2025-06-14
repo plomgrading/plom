@@ -3,7 +3,7 @@
 
 from packaging.version import Version
 
-from plom.misc import __version__
+from plom.common import __version__
 
 
 def test_valid_version() -> None:

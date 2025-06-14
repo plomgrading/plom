@@ -5,7 +5,7 @@ import importlib.metadata
 import subprocess
 
 
-from plom.misc import __version__
+from plom.common import __version__
 
 
 def find_my_console_scripts(package_name):

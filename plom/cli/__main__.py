@@ -32,7 +32,7 @@ import sys
 
 from stdiomask import getpass
 
-from plom.misc import Default_Port, __version__
+from plom.common import Default_Port, __version__
 from plom.cli import (
     bundle_map_page,
     clear_login,

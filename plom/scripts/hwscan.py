@@ -31,7 +31,7 @@ import argparse
 import os
 from stdiomask import getpass
 
-from plom.misc import Default_Port, __version__
+from plom.common import Default_Port, __version__
 from plom.scan import clear_login
 from plom.scan import print_who_submitted_what
 from plom.scan import check_and_print_scan_status

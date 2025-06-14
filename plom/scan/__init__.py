@@ -9,7 +9,7 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 
-from plom.misc import Default_Port, __version__
+from plom.common import Default_Port, __version__
 
 # Image types we expect the client to be able to handle, in lowercase
 # TODO: think about JBIG, etc: other stuff that commonly lives in PDF

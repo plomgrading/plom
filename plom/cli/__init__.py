@@ -12,7 +12,7 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 
-from plom.misc import __version__
+from plom.common import __version__
 
 from .start_messenger import with_messenger, start_messenger, clear_login
 from .list_bundles import list_bundles
