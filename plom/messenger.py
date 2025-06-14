@@ -949,7 +949,11 @@ class Messenger(BaseMessenger):
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def new_server_bundle_map_page(
-        self, bundle_id: int, page: int, papernum: int, questions: int | list[int] | str
+        self,
+        bundle_id: int,
+        page: int,
+        papernum: int,
+        questions: int | str | list[int | str],
     ) -> None:
         """Map the indicated page of the specified bundle to all questions in a list, etc.
 

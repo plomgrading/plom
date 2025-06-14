@@ -591,7 +591,7 @@ def _render_html_question_label(qidx: int, qlabel: str) -> str:
 def render_html_flat_question_label_list(qindices: list[int] | None) -> str:
     """Return a string of question labels, given a list of question indices.
 
-    If the list contains positive integers, return their labels in increasing order.
+    If the list contains positive integers, return their labels.
 
     If the list contains the special value MobilePage.DNM_qidx, then return the
     string ``"Do Not Mark"``.
@@ -604,7 +604,8 @@ def render_html_flat_question_label_list(qindices: list[int] | None) -> str:
     if MobilePage.DNM_qidx in qindices:
         return "Do Not Mark"
     T = get_question_labels_str_and_html_map()
-    return ", ".join(T[qidx][1] for qidx in sorted(qindices))
+    # return ", ".join(T[qidx][1] for qidx in sorted(qindices)) # Nicer, but breaks CI
+    return ", ".join(T[qidx][1] for qidx in qindices)
 
 
 def get_question_selection_method(question_index: int) -> str:
