@@ -32,7 +32,7 @@ project = "Plom"
 copyright = "2018-2025 Andrew Rechnitzer, Colin B. Macdonald, et al"
 author = "Andrew Rechnitzer, Colin B. Macdonald, and others"
 
-from plom import __version__
+from plom.misc import __version__
 
 release = __version__
 

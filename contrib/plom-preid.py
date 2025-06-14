@@ -1,7 +1,7 @@
 #!/bin/env -S python3 -u
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2022-2024 Colin B. Macdonald
+# Copyright (C) 2022-2025 Colin B. Macdonald
 
 """Pre-ID individual papers on a Plom Server.
 
@@ -24,7 +24,7 @@ which should assign paper number 17 to Colston, Jennifer.
 import argparse
 import os
 
-from plom import __version__ as __plom_version__
+from plom.misc import __version__ as __plom_version__
 
 from plom.create import start_messenger
 
