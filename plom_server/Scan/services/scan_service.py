@@ -47,7 +47,8 @@ from plom.tpv_utils import (
 )
 
 from plom_server.Papers.services import ImageBundleService, SpecificationService
-from plom_server.Papers.models import FixedPage, MobilePage
+from plom_server.Papers.models import FixedPage
+from plom_server.Scan.services.cast_service import ScanCastService
 from plom_server.Base.models import HueyTaskTracker, BaseImage
 from ..models import (
     StagingBundle,
@@ -663,8 +664,13 @@ class ScanService:
     ) -> None:
         """Map one page of a bundle onto zero or more questions.
 
-        Note that if the page has been mapped previously, the mapping
-        specified here will replace, not augment, the original mapping.
+        After mapping, the page will have type EXTRA.
+
+        Any page with one of the types UNKNOWN, ERROR, KNOWN, or DISCARD
+        can be mapped. Only some pages of type EXTRA can be mapped:
+        if the page already has mapping info, the request fails.
+        An exception of type PlomConflict is raised for any request
+        in which the target page is not eligible for mapping.
 
         Args:
             bundle_id: unique integer identifier of bundle DB object.
@@ -680,87 +686,67 @@ class ScanService:
 
         Raises:
             ObjectDoesNotExist: no such BundleImage, e.g., invalid bundle id or page
-            ValueError: question_indices gives impossible or contradictory advice,
-                e.g., some index is out of range or DNM is not the only list-element.
+            ValueError: May be raised by supporting methods from class ScanCastService.
         """
         print(
             f"DEBUG: Starting map_bundle_page with bundle_id={bundle_id}, page={page} "
             f"and target papernum={papernum}, question_indices={question_indices}."
         )
 
+        try:
+            user_obj = User.objects.get(
+                username__iexact="manager", groups__name="scanner"
+            )
+        except ObjectDoesNotExist:
+            raise ValueError("User 'manager' does not exist or has wrong permissions!")
+
+        SCS = ScanCastService()
+
         with transaction.atomic():
             page_img = StagingImage.objects.get(bundle__pk=bundle_id, bundle_order=page)
-
-            # Mapping the given page back to the same category takes extra care,
-            # because of the uniqueness constraints embedded in the model definitions.
 
             # TODO: Think about this part of the current setup. Interpreting []
             # as DISCARD disagrees with the interpretation in the function
             # check_question_list() found in plom/scan/question_list_utils.py,
             # but maybe it's nice to have some way to forcibly discard a page.
             if not question_indices:
-                if page_img.image_type == StagingImage.DISCARD:
-                    pass
-                else:
-                    page_img.image_type = StagingImage.DISCARD
-                    page_img.save()
-                    DiscardStagingImage.objects.create(
-                        staging_image=page_img, discard_reason="map said drop this page"
+                print(f"Trying to mark page with id {page_img.pk} for DISCARD.")
+                if page_img.image_type != StagingImage.DISCARD:
+                    SCS.discard_image_type_from_bundle_id_and_order(
+                        user_obj, bundle_id, page
                     )
+                pi_updated = StagingImage.objects.get(
+                    bundle__pk=bundle_id, bundle_order=page
+                )
+                print(
+                    f"After update, id is {pi_updated.pk} and type is {pi_updated.image_type}."
+                )
 
             # TODO: What follows seems like a sensible way to indicate that a page
             # should go into the category DNM. But note that it's inconsistent with
             # the interpretation in the function mentioned just above. Should we
             # change here, or there, or live with the mismatch?
-            if MobilePage.DNM_qidx in question_indices:
-                if len(question_indices) > 1:
-                    raise ValueError(
-                        "A page of type DNM cannot be mapped to a question."
-                    )
-                # Map the page to category DNM. PDL guessing here.
-                if page_img.image_type != StagingImage.EXTRA:
-                    # Recast this image and make space for it in the collection of EXTRA pages
-                    page_img.image_type = StagingImage.EXTRA
-                    page_img.save()
-                    ExtraStagingImage.objects.create(
-                        staging_image=page_img,
-                        paper_number=papernum,
-                        question_idx_list=[MobilePage.DNM_qidx],
-                    )
-                else:
-                    # This image is already EXTRA. Just refresh its affiliation.
-                    page_img = ExtraStagingImage.objects.get(
-                        staging_image_id=page_img.id
-                    )
-                    page_img.paper_number = papernum
-                    page_img.question_idx_list = [MobilePage.DNM_qidx]
-                    page_img.save()
 
+            # NOTE: Question index -1 is rejected by the ScanCastService. Now what???
             else:
-                nq = SpecificationService.get_n_questions()
-                for qi in question_indices:
-                    if qi < 1 or qi > nq:
-                        raise ValueError(f"Requested question index {qi} is invalid.")
-
+                print(
+                    f"Mapping page with id {page_img.pk} and type {page_img.image_type} to paper {papernum} with list {question_indices}."
+                )
                 if page_img.image_type != StagingImage.EXTRA:
-                    # Recast this image and make space for it in the collection of EXTRA pages
-                    page_img.image_type = StagingImage.EXTRA
-                    # TODO = update the qr-code info in the underlying image
-                    page_img.save()
-
-                    ExtraStagingImage.objects.create(
-                        staging_image=page_img,
-                        paper_number=papernum,
-                        question_idx_list=question_indices,
-                    )
-                else:
-                    # This image is already EXTRA. Just refresh its affiliation(s).
-                    page_img = ExtraStagingImage.objects.get(
-                        staging_image_id=page_img.id
-                    )
-                    page_img.paper_number = papernum
-                    page_img.question_idx_list = question_indices
-                    page_img.save()
+                    SCS.extralise_image_from_bundle_id(user_obj, bundle_id, page)
+                SCS.assign_extra_page_from_bundle_pk_and_order(
+                    user_obj,
+                    bundle_id,
+                    page,
+                    papernum,
+                    question_indices,
+                )
+                pi_updated = StagingImage.objects.get(
+                    bundle__pk=bundle_id, bundle_order=page
+                )
+                print(
+                    f"After update, id is {pi_updated.pk} and type is {pi_updated.image_type}."
+                )
 
             # TODO: Issue #3770.
             # bundle_obj = (

@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.db import transaction, models
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 
-from plom_server.Papers.models import Paper, QuestionPage
+from plom_server.Papers.models import Paper, QuestionPage, MobilePage
 from plom_server.Papers.services import PaperInfoService, SpecificationService
 
 from ..models import (
@@ -425,9 +425,20 @@ class ScanCastService:
             raise ValueError(f"Paper {paper_number} is not in the database.")
         # now check all the questions
         # TODO: consider using question_list_utils.check_question_list: fewer DB hits?
-        for qi in assign_to_question_indices:
-            if not QuestionPage.objects.filter(paper=paper, question_index=qi).exists():
-                raise ValueError(f"No question index {qi} in database.")
+        if False:
+            for qi in assign_to_question_indices:
+                if not QuestionPage.objects.filter(
+                    paper=paper, question_index=qi
+                ).exists():
+                    raise ValueError(f"No question index {qi} in database.")
+        else:
+            nq = SpecificationService.get_n_questions()
+            if any(
+                qi < 1 or qi > nq for qi in assign_to_question_indices
+            ) and assign_to_question_indices != [MobilePage.DNM_qidx]:
+                raise ValueError(
+                    f"Question list {assign_to_question_indices} deemed invalid."
+                )
 
         # at this point the paper-number and question-list are valid, so get the image at that bundle-order.
         try:
