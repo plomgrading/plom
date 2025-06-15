@@ -993,7 +993,10 @@ class Messenger(BaseMessenger):
             questions = [questions]
 
         if any(isinstance(n, str) for n in questions):
-            lc_questions = [n.casefold() for n in questions]
+            lc_questions = [
+                n.casefold() if isinstance(n, str) else n for n in questions
+            ]
+
             if len(lc_questions) > 1:
                 if (
                     "all" in lc_questions
