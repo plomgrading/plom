@@ -143,12 +143,12 @@ class ScanCastService:
 
         if image_type == StagingImage.DISCARD:
             raise ValueError("Trying to discard an already discarded bundle image.")
-        if image_type not in [
+        if image_type not in (
             StagingImage.UNKNOWN,
             StagingImage.KNOWN,
             StagingImage.EXTRA,
             StagingImage.ERROR,
-        ]:
+        ):
             raise ValueError(f"Cannot discard an image of type '{image_type}'.")
         if img.image_type != image_type:
             raise ValueError(
@@ -305,12 +305,12 @@ class ScanCastService:
             raise ValueError(
                 "Trying to 'unknowify' and already 'unknown' bundle image."
             )
-        if image_type not in [
+        if image_type not in (
             StagingImage.DISCARD,
             StagingImage.KNOWN,
             StagingImage.EXTRA,
             StagingImage.ERROR,
-        ]:
+        ):
             raise ValueError(f"Cannot 'unknowify' and image of type '{image_type}'.")
         if img.image_type != image_type:
             raise ValueError(
