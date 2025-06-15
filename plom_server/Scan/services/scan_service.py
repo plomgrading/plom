@@ -47,7 +47,7 @@ from plom.tpv_utils import (
 )
 
 from plom_server.Papers.services import ImageBundleService, SpecificationService
-from plom_server.Papers.models import FixedPage
+from plom_server.Papers.models import FixedPage, MobilePage
 from plom_server.Scan.services.cast_service import ScanCastService
 from plom_server.Base.models import HueyTaskTracker, BaseImage
 from ..models import (
@@ -683,6 +683,8 @@ class ScanService:
                 cases are available. If the list is empty the page gets discarded.
                 If the list is the singleton [MobilePage.DNM_qidx], the page
                 gets attached to the DNM group for the given papernum.
+                See comments in the code about this interpretation: other parts
+                of the source tree do things differently!!
 
         Raises:
             ObjectDoesNotExist: no such BundleImage, e.g., invalid bundle id or page
@@ -705,30 +707,14 @@ class ScanService:
         with transaction.atomic():
             page_img = StagingImage.objects.get(bundle__pk=bundle_id, bundle_order=page)
 
-            # TODO: Think about this part of the current setup. Interpreting []
-            # as DISCARD disagrees with the interpretation in the function
-            # check_question_list() found in plom/scan/question_list_utils.py,
-            # but maybe it's nice to have some way to forcibly discard a page.
-            if not question_indices:
-                print(f"Trying to mark page with id {page_img.pk} for DISCARD.")
-                if page_img.image_type != StagingImage.DISCARD:
-                    SCS.discard_image_type_from_bundle_id_and_order(
-                        user_obj, bundle_id, page
-                    )
-                pi_updated = StagingImage.objects.get(
-                    bundle__pk=bundle_id, bundle_order=page
-                )
-                print(
-                    f"After update, id is {pi_updated.pk} and type is {pi_updated.image_type}."
-                )
-
-            # TODO: What follows seems like a sensible way to indicate that a page
-            # should go into the category DNM. But note that it's inconsistent with
-            # the interpretation in the function mentioned just above. Should we
-            # change here, or there, or live with the mismatch?
-
-            # NOTE: Question index -1 is rejected by the ScanCastService. Now what???
-            else:
+            # TODO: Check design assumptions here. We interpret [] as DISCARD,
+            # and [MobilePage.DNM_qidx] as DNM. But the downstream bundle-pusher
+            # expects [] to indicate DNM. That all gets handled below.
+            # Shout-out to check_question_list() found in plom/scan/question_list_utils.py,
+            # where competing interpretations can be found.
+            if question_indices:
+                if question_indices == [MobilePage.DNM_qidx]:
+                    question_indices = []
                 print(
                     f"Mapping page with id {page_img.pk} and type {page_img.image_type} to paper {papernum} with list {question_indices}."
                 )
@@ -741,6 +727,18 @@ class ScanService:
                     papernum,
                     question_indices,
                 )
+                pi_updated = StagingImage.objects.get(
+                    bundle__pk=bundle_id, bundle_order=page
+                )
+                print(
+                    f"After update, id is {pi_updated.pk} and type is {pi_updated.image_type}."
+                )
+            else:
+                print(f"Trying to mark page with id {page_img.pk} for DISCARD.")
+                if page_img.image_type != StagingImage.DISCARD:
+                    SCS.discard_image_type_from_bundle_id_and_order(
+                        user_obj, bundle_id, page
+                    )
                 pi_updated = StagingImage.objects.get(
                     bundle__pk=bundle_id, bundle_order=page
                 )
