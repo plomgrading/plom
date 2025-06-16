@@ -446,11 +446,8 @@ class ImageBundleService:
         )
 
         # now check if pq pairs are markable
-        papers_questions_updated_by_bundle = list(
-            t[:2] for t in papers_questions_versions_updated_by_bundle
-        )
         paper_question_pairs_dict = ImageBundleService().are_paper_question_pairs_ready(
-            papers_questions_updated_by_bundle
+            [t[:2] for t in papers_questions_versions_updated_by_bundle]
         )
         pqv_updated_and_ready = [
             t
