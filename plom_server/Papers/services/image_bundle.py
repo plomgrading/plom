@@ -527,7 +527,7 @@ class ImageBundleService:
 
         # we are emulating this query:
         # SELECT mp.paper, mp.question_index
-        # FROM MobilePage mp LEFT OUTER JOIN QuestionPage qp
+        # FROM MobilePage mp LEFT OUTER JOIN QuestionPage_withimage qp
         # ON mp.paper = qp.paper AND mp.question_index = qp.question_index
         subquery = filled_qpages.filter(
             paper=OuterRef("paper"),
