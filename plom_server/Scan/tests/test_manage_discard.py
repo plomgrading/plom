@@ -67,7 +67,9 @@ class TestManageDiscard(TestCase):
 
     def test_discard_questionpage(self) -> None:
         img1 = baker.make(Image)
-        qp1 = baker.make(QuestionPage, paper=self.paper1, page_number=3, image=img1)
+        qp1 = baker.make(
+            QuestionPage, paper=self.paper1, page_number=3, image=img1, question_index=1
+        )
 
         self.mds.discard_pushed_fixed_page(self.user0, qp1.pk, dry_run=True)
         self.mds.discard_pushed_fixed_page(self.user0, qp1.pk, dry_run=False)
