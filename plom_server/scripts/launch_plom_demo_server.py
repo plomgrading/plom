@@ -200,6 +200,18 @@ def run_django_manage_command(cmd) -> None:
     subprocess.run(split(full_cmd), check=True)
 
 
+def run_plom_cli_command(cmd) -> None:
+    """Run the given plom-cli command and wait for return.
+
+    Command must finish successfully (zero return code).
+
+    Args:
+        cmd: the full command to run, in a form that would
+            work if entered verbatim at the command line.
+    """
+    subprocess.run(split(cmd), check=True)
+
+
 def popen_django_manage_command(cmd) -> subprocess.Popen:
     """Run the given Django command using a process Popen and return a handle to the process.
 
@@ -247,7 +259,8 @@ def upload_demo_assessment_spec_file() -> None:
     """Use 'plom_preparation_spec' to upload a demo assessment spec."""
     print("Uploading demo assessment spec")
     spec_file = demo_files / "demo_assessment_spec.toml"
-    run_django_manage_command(f"plom_preparation_spec upload {spec_file}")
+    # run_django_manage_command(f"plom_preparation_spec upload {spec_file}")
+    run_plom_cli_command(f"plom-cli upload-spec {spec_file}")
 
 
 def _build_with_and_without_soln(source_path: Path) -> None:
@@ -306,7 +319,8 @@ def upload_demo_assessment_source_files():
     print("Uploading demo assessment source pdfs")
     for v in (1, 2, 3):
         source_pdf = f"assessment_v{v}.pdf"
-        run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
+        # run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
+        run_plom_cli_command(f"plom-cli upload-source {source_pdf} -v {v}")
 
 
 def upload_demo_solution_files():
@@ -331,7 +345,9 @@ def upload_demo_classlist(length="normal", prename=True):
     else:  # for normal
         cl_path = demo_files / "cl_for_demo.csv"
 
-    run_django_manage_command(f"plom_preparation_classlist upload {cl_path}")
+    # run_django_manage_command(f"plom_preparation_classlist upload {cl_path}")
+    run_plom_cli_command("plom-cli delete-classlist")
+    run_plom_cli_command(f"plom-cli upload-classlist {cl_path}")
 
     if prename:
         run_django_manage_command("plom_preparation_prenaming --enable")
