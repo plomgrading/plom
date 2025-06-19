@@ -556,6 +556,7 @@ webplom_demo:
     POSTGRES_HOST_AUTH_METHOD: trust
     PLOM_DATABASE_HOSTNAME: "postgres"
     # Testing plom-cli needs the following
+    PLOM_SERVER: "http://localhost:8000"
     PLOM_USERNAME: "manager"
     PLOM_PASSWORD: "1234"
   stage: test
@@ -697,6 +698,7 @@ fedora-django-tests:
     POSTGRES_HOST_AUTH_METHOD: trust
     PLOM_DATABASE_HOSTNAME: "postgres"
     # Testing plom-cli needs the following
+    PLOM_SERVER: "http://localhost:8000"
     PLOM_USERNAME: "manager"
     PLOM_PASSWORD: "1234"
   stage: alt_build
@@ -746,6 +748,7 @@ newOS_newdeps_django_tests:
     POSTGRES_HOST_AUTH_METHOD: trust
     PLOM_DATABASE_HOSTNAME: "postgres"
     # Testing plom-cli needs the following
+    PLOM_SERVER: "http://localhost:8000"
     PLOM_USERNAME: "manager"
     PLOM_PASSWORD: "1234"
   stage: alt_build
@@ -790,6 +793,7 @@ minpy_mindeps_django_tests:
     # ideally we'd test with OOTB pip so hide pip upgrade msg
     PIP_DISABLE_PIP_VERSION_CHECK: 1
     # Testing plom-cli needs the following
+    PLOM_SERVER: "http://localhost:8000"
     PLOM_USERNAME: "manager"
     PLOM_PASSWORD: "1234"
   stage: alt_build
