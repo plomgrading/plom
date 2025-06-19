@@ -555,6 +555,9 @@ webplom_demo:
     POSTGRES_PASSWORD: "postgres"
     POSTGRES_HOST_AUTH_METHOD: trust
     PLOM_DATABASE_HOSTNAME: "postgres"
+    # Testing plom-cli needs the following
+    PLOM_USERNAME: "manager"
+    PLOM_PASSWORD: "1234"
   stage: test
   needs: ["container-image"]
   image: $IM
@@ -693,6 +696,9 @@ fedora-django-tests:
     POSTGRES_PASSWORD: "postgres"
     POSTGRES_HOST_AUTH_METHOD: trust
     PLOM_DATABASE_HOSTNAME: "postgres"
+    # Testing plom-cli needs the following
+    PLOM_USERNAME: "manager"
+    PLOM_PASSWORD: "1234"
   stage: alt_build
   needs: []
   image: fedora:42
@@ -739,6 +745,9 @@ newOS_newdeps_django_tests:
     POSTGRES_PASSWORD: "postgres"
     POSTGRES_HOST_AUTH_METHOD: trust
     PLOM_DATABASE_HOSTNAME: "postgres"
+    # Testing plom-cli needs the following
+    PLOM_USERNAME: "manager"
+    PLOM_PASSWORD: "1234"
   stage: alt_build
   image: ubuntu:22.04
   allow_failure: true
@@ -780,6 +789,9 @@ minpy_mindeps_django_tests:
     PLOM_DATABASE_HOSTNAME: "postgres"
     # ideally we'd test with OOTB pip so hide pip upgrade msg
     PIP_DISABLE_PIP_VERSION_CHECK: 1
+    # Testing plom-cli needs the following
+    PLOM_USERNAME: "manager"
+    PLOM_PASSWORD: "1234"
   stage: alt_build
   image: python:3.10
   before_script:
