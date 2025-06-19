@@ -208,8 +208,13 @@ def run_plom_cli_command(cmd) -> None:
     Args:
         cmd: the full command to run, in a form that would
             work if entered verbatim at the command line.
+            The command will be echoed to stdout, and then
+            an authentication string will be appended, and
+            finally the modified command will run.
     """
-    subprocess.run(split(cmd), check=True)
+    print(f"\nIssuing this command: {cmd}\n")
+    cmdplus = cmd + " -u manager -w 1234"
+    subprocess.run(split(cmdplus), check=True)
 
 
 def popen_django_manage_command(cmd) -> subprocess.Popen:
