@@ -213,7 +213,14 @@ def run_plom_cli_command(cmd) -> None:
             finally the modified command will run.
     """
     print(f"\nIssuing this command: {cmd}\n")
-    cmdplus = cmd + " -u manager -w 1234"
+    # Some gitlab CI environments do not expose plom-cli
+    # as a simple executable file. Here is a nasty workaround.
+    # It relies on the current file structure.
+    demo_base_dir = Path(__file__).parent.resolve()
+    executable_path = demo_base_dir / ".." / ".." / "plom" / "cli" / "__main__.py"
+    cmdplus = (
+        cmd.replace("plom-cli", f"python3 {executable_path}") + " -u manager -w 1234"
+    )
     subprocess.run(split(cmdplus), check=True)
 
 
