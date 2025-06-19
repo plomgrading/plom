@@ -256,6 +256,7 @@ def extract_rect_region_from_image(
     )
     # convert the result to a PIL.Image
     resulting_img = Image.fromarray(cv.cvtColor(extracted_rect_img, cv.COLOR_BGR2RGB))
+
     with BytesIO() as fh:
         resulting_img.save(fh, format="png")
         return fh.getvalue()
@@ -283,6 +284,7 @@ class RectangleExtractor:
 
         try:
             rimg_obj = ReferenceImage.objects.get(version=version, page_number=page)
+            self.rimg_obj = rimg_obj
         except ReferenceImage.DoesNotExist:
             raise ValueError(f"There is no reference image for v{version} pg{page}.")
 
@@ -356,15 +358,15 @@ class RectangleExtractor:
             print("recklessly ignoring the version...")
             img_obj = (
                 FixedPage.objects.select_related("image", "image__baseimage")
-                .get(page_number=self.page_number, paper=paper_obj)
+                .filter(page_number=self.page_number, paper=paper_obj)[0]
                 .image
             )
         else:
             img_obj = (
                 FixedPage.objects.select_related("image", "image__baseimage")
-                .get(
+                .filter(
                     version=self.version, page_number=self.page_number, paper=paper_obj
-                )
+                )[0]
                 .image
             )
 
@@ -396,8 +398,11 @@ class RectangleExtractor:
         zipfile on disc. This could cause problems if large rectangles
         are selected from many pages.
         """
-        paper_numbers = PaperInfoService.get_paper_numbers_containing_page(
-            self.page_number, version=self.version, scanned=True
+        # paper_numbers may be duplicated if there are multiple quesetions on a page
+        paper_numbers = set(
+            PaperInfoService.get_paper_numbers_containing_page(
+                self.page_number, version=self.version, scanned=True
+            )
         )
 
         with zipfile.ZipFile(dest_filename, mode="w") as archive:
@@ -411,6 +416,20 @@ class RectangleExtractor:
                     # do we make an empty zip?  That's no fun.
                     continue
                 archive.writestr(fname, dat)
+
+            # DEBUG BRYAN (TEMP)
+            # need reference
+            dat = extract_rect_region_from_image(
+                self.rimg_obj.image_file.path,
+                self.rimg_obj.parsed_qr,
+                left_f,
+                top_f,
+                right_f,
+                bottom_f,
+                (self.LEFT, self.TOP, self.RIGHT, self.BOTTOM),
+            )
+            if dat:
+                archive.writestr("ref.png", dat)
 
     def get_largest_rectangle_contour(
         self, region: None | dict[str, float] = None

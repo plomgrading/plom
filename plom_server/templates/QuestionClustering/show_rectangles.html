@@ -1,0 +1,63 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2025 Bryan Tanady
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    Rectangles from v {{ version }} p {{ page_number }}
+{% endblock title %}
+{% block page_heading %}
+    Rectangles from v {{ version }} p {{ page_number }}
+{% endblock page_heading %}
+{% block main_content %}
+    <div>
+        <a class="btn btn-success" href="{% url 'question_clustering_home' %}">
+            <i class="bi bi-chevron-left"></i>
+            Return to choose version/question
+        </a>
+    </div>
+    <div class="card m-2">
+        <div class="card-body">
+            <h5 class="card-title">
+                Version {{ version }} page {{ page_number }} selected rectangles: top-left to bottom-right = ({{ left }}, {{ top }}) to ({{ right }}, {{ bottom }})
+            </h5>
+            {% if papers %}
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'zip_rectangles' version page_number %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}">download zip of images</a>
+                    <ul>
+                        {% for pn in papers %}
+                            <li>
+                                Paper {{ pn }}:
+                                <img class="border p-2 m-2"
+                                     src="{% url 'extracted_rectangle' pn version page_number %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
+                                     onerror="imgError(this)" />
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </p>
+            {% else %}
+                <p>
+                    There are no papers with version {{ version }} of page {{ page_number }}. This could be because
+                    <ul>
+                        <li>You have not finished uploading scans</li>
+                        <li>
+                            Your test specification, or question-version map, may not allow page {{ page_number }} to be chosen from version {{ version }}
+                        </li>
+                    </ul>
+                </p>
+            {% endif %}
+        </div>
+    </div>
+    <script type="text/javascript">
+  function imgError(image) {
+    var img_error_span = document.createElement('span');
+    img_error_span.classList.add("alert", "alert-warning", "mx-2", "py-0");
+    img_error_span.innerHTML = "Could not extract rectangle.";
+
+    image.parentNode.insertBefore(img_error_span, image);
+    image.parentNode.removeChild(image);
+  }
+    </script>
+{% endblock main_content %}

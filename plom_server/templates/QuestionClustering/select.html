@@ -1,0 +1,80 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2025 Bryan Tanady
+-->
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    Select rectangle for {{ q_label }} clustering from v {{ version }} p {{ page_number }}
+{% endblock title %}
+{% block page_heading %}
+    Select rectangle for {{ q_label }} clustering from v {{ version }} p {{ page_number }}
+{% endblock page_heading %}
+{% block main_content %}
+    <div>
+        <a class="btn btn-success" href="{% url 'question_clustering_home' %}">
+            <i class="bi bi-chevron-left"></i>
+            Return to choose version/question
+        </a>
+    </div>
+    <div class="card m-2">
+        <div class="card-body">
+            <h5 class="card-title">Version {{ version }} page {{ page_number }}</h5>
+            <div class="row mb-4">
+                <div class="col-6">
+                    <img id="reference_image"
+                         class="border w-100"
+                         src="{% url 'reference_image' version page_number %}">
+                </img>
+                <canvas id="canvas" style="position:absolute; left: 0px; top: 0px"></canvas>
+            </div>
+            <div class="col-6">
+                <p>The absolute coordinates of the selection.</p>
+                <ul>
+                    <li>
+                        Top-left (
+                        <input id="thb_left" readonly />
+                        ,
+                        <input id="thb_top" readonly />
+                        )
+                    </li>
+                    <li>
+                        Bottom-right (
+                        <input id="thb_right" readonly />
+                        ,
+                        <input id="thb_bottom" readonly />
+                        )
+                    </li>
+                </ul>
+                <p>The scaled coordinates of the selection.</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <ul>
+                        <li>
+                            Top-left (
+                            <input id="plom_left" name="plom_left" readonly />
+                            ,
+                            <input id="plom_top" name="plom_top" readonly />
+                            )
+                        </li>
+                        <li>
+                            Bottom-right (
+                            <input id="plom_right" name="plom_right" readonly />
+                            ,
+                            <input id="plom_bottom" name="plom_bottom" readonly />
+                            )
+                        </li>
+                    </ul>
+                    <input type="submit" value="Submit">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+  var corner_dat = {{qr_info|safe}};
+  var top_left_coord = {{top_left|safe}};
+  var bottom_right_coord = {{bottom_right|safe}};
+</script>
+<script src="{% static '/js/rectangle_select.js' %}"></script>
+{% endblock main_content %}

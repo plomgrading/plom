@@ -1,0 +1,82 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2025 Bryan Tanady
+-->
+{% extends "base/base.html" %}
+{% load custom_tags %}
+{% block main_content %}
+    <style>
+        .image-viewer{
+            display: none;
+            overflow-x: scroll;
+
+        }
+
+        .image-viewer.show{
+            display: flex;
+        }
+
+    </style>
+    {% for v in version_list %}
+        <div class="card m-2">
+            <div class="card-body">
+                <h5 class="card-title">Questions from version {{ v }}</h5>
+                {% for qidx, q_label in q_idx_label_pairs %}
+                    <a class="btn btn-info btn-question"
+                       data-version="{{ v }}"
+                       data-qidx="{{ qidx }}">{{ q_label }}</a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+    <!-- single viewer at the bottom -->
+    {% for v in version_list %}
+        <div>
+            {% for qidx in q_idx_to_pages %}
+                <div class="image-viewer" id="viewer-{{ v }}-{{ qidx }}">
+                    {% with q_idx_to_pages|get_item:qidx as pages %}
+                        {% for page_number in pages %}
+                            <a href="{% url 'question_clustering_select_rectangle' v qidx page_number %}">
+                                <img class="border w-100"
+                                     style="max-height: 600px;
+                                            max-width: fit-content"
+                                     src="{% url 'reference_image' v page_number %}">
+                            </img>
+                        </a>
+                    {% endfor %}
+                {% endwith %}
+            </div>
+        {% endfor %}
+    </div>
+{% endfor %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const viewers = document.querySelectorAll('.image-viewer');
+        const buttons = document.querySelectorAll('.btn-question')
+
+        // find all buttons
+        document.querySelectorAll('.btn-question').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const v    = btn.dataset.version;
+            const qidx = btn.dataset.qidx;
+            const target = document.getElementById(`viewer-${v}-${qidx}`);
+
+             // hide any currently shown viewer except target
+            viewers.forEach(vw => {
+                if (vw !== target) vw.classList.remove('show');
+            });
+
+            // reset all buttons except current button
+            buttons.forEach(b => {
+                if (b !== this) b.classList.remove('btn-danger');
+            });
+
+
+            // toggle current viewer on/off and button color
+            target.classList.toggle('show');
+            this.classList.toggle('btn-danger')
+        });
+        });
+    });
+</script>
+{% endblock %}

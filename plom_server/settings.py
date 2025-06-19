@@ -134,6 +134,7 @@ INSTALLED_APPS = [
     "plom_server.TaskOrder",
     "plom_server.Rectangles",
     "plom_server.QuestionTags",
+    "plom_server.QuestionClustering",
 ]
 
 MIDDLEWARE = [
