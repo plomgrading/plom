@@ -71,7 +71,7 @@ from plom.canvas import (
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.6.0"
+__script_version__ = "0.6.1"
 
 
 def sis_id_to_student_dict(student_list):
