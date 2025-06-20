@@ -5,6 +5,7 @@
     Copyright (C) 2023-2025 Colin B. Macdonald
     Copyright (C) 2024 Winnie Cheung
     Copyright (C) 2025 Philip D. Loewen
+    Copyright (C) 2025 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -304,75 +305,7 @@
                     <div class="container overflow-y-scroll ps-0" style="max-height:78vh;">
                         <div class="row row-cols-6 gy-1 gx-1">
                             {% for pg in pages %}
-                                {% if pg.status == "known" %}
-                                    <div class="col">
-                                        <div class="card text-center bg-success-subtle p-1"
-                                             data-bs-toggle="tooltip"
-                                             data-bs-placement="top"
-                                             data-bs-title="paper-{{ pg.info.paper_number }}.{{ pg.info.page_number }}">
-                                            {% include "Scan/fragments/bundle_thumbnail_container.html" with grab_speed="low" %}
-                                        </div>
-                                    </div>
-                                {% elif pg.status == "unknown" %}
-                                    <div class="col">
-                                        <div class="card text-center bg-warning-subtle col p-1 border-warning border-2"
-                                             data-bs-toggle="tooltip"
-                                             data-bs-placement="top"
-                                             data-bs-title="Unknown page">
-                                            {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                                        </div>
-                                    </div>
-                                {% elif pg.status == "extra" %}
-                                    <!-- check if it has paper+question info -->
-                                    {% if pg.info.paper_number %}
-                                        <!-- extra page info is complete -->
-                                        <div class="col">
-                                            <div class="card text-center bg-primary-subtle col p-1"
-                                                 data-bs-toggle="tooltip"
-                                                 data-bs-placement="top"
-                                                 data-bs-title="Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_idx_list }}">
-                                                {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                                            </div>
-                                        </div>
-                                    {% else %}
-                                        <div class="col">
-                                            <!-- extra page info required -->
-                                            <div class="card text-center bg-info-subtle col p-1  border-info border-2"
-                                                 data-bs-toggle="tooltip"
-                                                 data-bs-placement="top"
-                                                 data-bs-title="Extra page - no data">
-                                                {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                {% elif pg.status == "error" %}
-                                    <div class="col">
-                                        <div class="card text-center bg-danger-subtle col p-1 border-error border-2"
-                                             data-bs-toggle="tooltip"
-                                             data-bs-placement="top"
-                                             data-bs-title="error: {{ pg.info.reason }}">
-                                            {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                                        </div>
-                                    </div>
-                                {% elif pg.status == "unread" %}
-                                    <div class="col">
-                                        <div class="card text-center bg-dark-subtle col p-1"
-                                             data-bs-toggle="tooltip"
-                                             data-bs-placement="top"
-                                             data-bs-title="qr-unread">
-                                            {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                                        </div>
-                                    </div>
-                                {% elif pg.status == "discard" %}
-                                    <div class="col">
-                                        <div class="card text-center bg-dark-subtle col p-1"
-                                             data-bs-toggle="tooltip"
-                                             data-bs-placement="top"
-                                             data-bs-title="discard: {{ pg.info.reason }}">
-                                            {% include "Scan/fragments/bundle_thumbnail_container.html" %}
-                                        </div>
-                                    </div>
-                                {% endif %}
+                                {% include "Scan/fragments/bundle_thumbnail_container.html" with pg=pg %}
                             {% endfor %}
                         </div>
                     </div>

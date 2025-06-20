@@ -3,22 +3,30 @@
     Copyright (C) 2023 Andrew Rechnitzer
     Copyright (C) 2023-2024 Colin B. Macdonald
     Copyright (C) 2023 Natalie Balashov
+    Copyright (C) 2025 Aidan Murphy
 -->
-<div class="card-body p-0 d-flex align-items-center"
-     hx-get="{% url 'scan_bundle_page' the_filter bundle_id pg.order %}"
-     hx-swap="innerHTML"
-     hx-target="#updatePage">
-    <div class="bundle-thumb">
-        {% if grab_speed %}
-            <img class="img"
-                 src="{% url 'scan_get_thumbnail' bundle_id pg.order %}"
-                 fetchpriority="{{ grab_speed }}"
-                 loading="lazy" />
-        {% else %}
-            <img class="img"
-                 src="{% url 'scan_get_thumbnail' bundle_id pg.order %}"
-                 loading="lazy" />
-        {% endif %}
+<div class="col">
+    <div class="{% if pg.status == 'known' %}card text-center col p-1 bg-success-subtle {% elif pg.status == 'unknown' %}card text-center bg-warning-subtle col p-1 border-warning border-2 {% elif pg.status == 'extra' %} {% if pg.info.paper_number %}card text-center bg-primary-subtle col p-1 {% else %}card text-center bg-info-subtle col p-1 border-info border-2 {% endif %} {% elif pg.status == 'error' %}card text-center bg-danger-subtle col p-1 border-error border-2 {% elif pg.status == 'unread' %}card text-center bg-dark-subtle col p-1 {% elif pg.status == 'discard' %}card text-center bg-dark-subtle col p-1 {% endif %}"
+         data-bs-toggle="tooltip"
+         data-bs-placement="top"
+         data-bs-title="{% if pg.status == 'known' %}paper-{{ pg.info.paper_number }}.{{ pg.info.page_number }} {% elif pg.status == 'unknown' %}Unknown page {% elif pg.status == 'extra' %} {% if pg.info.paper_number %}Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_idx_list }} {% else %}Extra page - no data {% endif %} {% elif pg.status == 'error' %}error: {{ pg.info.reason }} {% elif pg.status == 'unread' %}qr-unread {% elif pg.status == 'discard' %}discard: {{ pg.info.reason }} {% endif %}">
+        <div class="card-body p-0 d-flex align-items-center"
+             hx-get="{% url 'scan_bundle_page' the_filter bundle_id pg.order %}"
+             hx-swap="innerHTML"
+             hx-target="#updatePage">
+            <div class="bundle-thumb">
+                {% if pg.status == "known" %}
+                    <img class="img"
+                         src="{% url 'scan_get_thumbnail' bundle_id pg.order %}"
+                         fetchpriority="{{ grab_speed }}"
+                         loading="lazy" />
+                {% else %}
+                    <img class="img"
+                         src="{% url 'scan_get_thumbnail' bundle_id pg.order %}"
+                         loading="lazy" />
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-footer p-0">{{ pg.order }}</div>
     </div>
 </div>
-<div class="card-footer p-0">{{ pg.order }}</div>
