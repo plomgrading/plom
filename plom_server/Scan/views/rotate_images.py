@@ -5,7 +5,7 @@
 
 from django.urls import reverse
 from django.shortcuts import render
-from django.http import HttpResponse, HttpRequest, Http404
+from django.http import HttpResponse, HttpRequest
 from django_htmx.http import HttpResponseClientRedirect
 
 from plom_server.Base.base_group_views import ScannerRequiredView
@@ -14,7 +14,6 @@ from ..services import (
     ImageRotateService,
     ScanService,
     hard_rotate_image_from_file_by_exif_and_angle,
-    ManageScanService,
 )
 
 from plom.plom_exceptions import PlomBundleLockedException
@@ -63,21 +62,4 @@ class RotateImageView(ScannerRequiredView):
                 "image": reverse("scan_get_rotated_image", args=[bundle_id, index])
                 + f"?_ts={datetime.now().timestamp()}"
             },
-        )
-
-
-class GetRotatedPushedImageView(ScannerRequiredView):
-    """Return an image from a pushed bundle."""
-
-    def get(self, request: HttpRequest, img_pk: int) -> HttpResponse:
-        img_obj = ManageScanService().get_pushed_image(img_pk)
-        if img_obj is None:
-            raise Http404(f"Cannot find pushed image with pk {img_pk}.")
-
-        theta = img_obj.rotation
-        return HttpResponse(
-            hard_rotate_image_from_file_by_exif_and_angle(
-                img_obj.baseimage.image_file, theta=theta
-            ),
-            content_type="image/png",
         )

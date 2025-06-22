@@ -41,7 +41,6 @@ from .views import (
     UnknowifyImageView,
     UnknowifyAllDiscardsHTMXView,
     RotateImageView,
-    GetRotatedPushedImageView,
     BundleLockView,
     BundlePushCollisionView,
     BundlePushBadErrorView,
@@ -149,11 +148,6 @@ urlpatterns = [
     ),
     path(
         "push/<int:bundle_id>/all/", PushAllPageImages.as_view(), name="scan_push_all"
-    ),
-    path(
-        "summary/rotated_pushed_img/<int:img_pk>",
-        GetRotatedPushedImageView.as_view(),
-        name="scan_rotated_pushed_img",
     ),
     path(
         "discard/<str:the_filter>/<int:bundle_id>/<int:index>/",
