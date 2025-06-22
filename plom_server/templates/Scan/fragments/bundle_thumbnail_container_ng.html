@@ -1,0 +1,37 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2023 Andrew Rechnitzer
+    Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2023 Natalie Balashov
+    Copyright (C) 2025 Aidan Murphy
+-->
+<div id="pg-{{ pg.order }}"
+     hx-get="{% url 'scan_bundle_page_ng' bundle_id pg.order %}"
+     hx-swap="innerHTML"
+     hx-target="#updatePage"
+     data-status="{{ pg.status }}"
+     data-paper_number="{{ pg.info.paper_number }}">
+    <input type="radio"
+           name="page"
+           id="pg-{{ pg.order }}-radio"
+           value="{{ pg.id }}">
+    <label class="radio-label" for="pg-{{ pg.order }}-radio">
+        <div class="card text-center col p-1{% if pg.status == 'known' %} bg-success-subtle {% elif pg.status == 'unknown' %} bg-warning-subtle border-warning border-2 {% elif pg.status == 'extra' %} {% if pg.info.paper_number %} bg-primary-subtle {% else %} bg-info-subtle border-info border-2 {% endif %} {% elif pg.status == 'error' %} bg-danger-subtle border-error border-2 {% elif pg.status == 'unread' %} bg-dark-subtle {% elif pg.status == 'discard' %} bg-dark-subtle {% endif %}"
+             data-bs-toggle="tooltip"
+             data-bs-placement="top"
+             data-bs-title="{% if pg.status == 'known' %}paper-{{ pg.info.paper_number }}.{{ pg.info.page_number }} {% elif pg.status == 'unknown' %}Unknown page {% elif pg.status == 'extra' %} {% if pg.info.paper_number %}Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_idx_list }} {% else %}Extra page - no data {% endif %} {% elif pg.status == 'error' %}error: {{ pg.info.reason }} {% elif pg.status == 'unread' %}qr-unread {% elif pg.status == 'discard' %}discard: {{ pg.info.reason }} {% endif %}">
+            <div class="card-body p-0 d-flex align-items-center">
+                <div class="bundle-thumb">
+                    <!-- the img width being independent of the page size means small window =/= tiny thumbnails -->
+                    <!-- TODO: why do known pages need a lower fetch priority? -->
+                    <img class="img"
+                         src="{% url 'scan_get_thumbnail' bundle_id pg.order %}"
+                         {% if pg.status == "known" %}fetchpriority="low"{% endif %}
+                         loading="lazy"
+                         style="width: 4ch" />
+                </div>
+            </div>
+            <div class="card-footer p-0">{{ pg.order }}</div>
+        </div>
+    </label>
+</div>

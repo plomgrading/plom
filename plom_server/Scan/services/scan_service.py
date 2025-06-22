@@ -1191,9 +1191,6 @@ class ScanService:
             and ``version``.  Finally for extra-pages, it contains
             ``paper_number``, and ``question_idx_list``.
         """
-        # compute number of digits in longest page number to pad the page numbering
-        n_digits = len(str(bundle_obj.number_of_pages))
-
         # We compute the list in two steps.
         # First we compute a dict of (key, value) (bundle_order, page_information)
         # Second we flatten that dict into an ordered list.
@@ -1209,7 +1206,7 @@ class ScanService:
                 "status": img.image_type.lower(),
                 "info": {},
                 # order is 1-indexed
-                "order": f"{img.bundle_order}".zfill(n_digits),
+                "order": f"{img.bundle_order}",
                 "rotation": img.rotation,
                 "n_qr_read": len(img.parsed_qr),
             }
@@ -1308,8 +1305,6 @@ class ScanService:
     def get_bundle_extra_pages_info(
         self, bundle_obj: StagingBundle
     ) -> dict[int, dict[str, Any]]:
-        # compute number of digits in longest page number to pad the page numbering
-        n_digits = len(str(bundle_obj.number_of_pages))
 
         pages = {}
         for img in bundle_obj.stagingimage_set.filter(
@@ -1321,7 +1316,7 @@ class ScanService:
                     "paper_number": img.extrastagingimage.paper_number,
                     "question_idx_list": img.extrastagingimage.question_idx_list,
                 },
-                "order": f"{img.bundle_order}".zfill(n_digits),
+                "order": f"{img.bundle_order}",
                 "rotation": img.rotation,
             }
         return pages
@@ -1340,14 +1335,11 @@ class ScanService:
     def get_bundle_single_page_info(
         self, bundle_obj: StagingBundle, index: int
     ) -> dict[str, Any]:
-        # compute number of digits in longest page number to pad the page numbering
-        n_digits = len(str(bundle_obj.number_of_pages))
-
         img = bundle_obj.stagingimage_set.get(bundle_order=index)
         current_page = {
             "status": img.image_type.lower(),
             # order is 1-indexed
-            "order": f"{img.bundle_order}".zfill(n_digits),
+            "order": f"{img.bundle_order}",
             "rotation": img.rotation,
             "qr_codes": img.parsed_qr,
         }
@@ -1474,9 +1466,6 @@ class ScanService:
     def get_bundle_unknown_pages_info(
         self, bundle_obj: StagingBundle
     ) -> list[dict[str, Any]]:
-        # compute number of digits in longest page number to pad the page numbering
-        n_digits = len(str(bundle_obj.number_of_pages))
-
         pages = []
         for img in (
             bundle_obj.stagingimage_set.filter(image_type=StagingImage.UNKNOWN)
@@ -1486,7 +1475,7 @@ class ScanService:
             pages.append(
                 {
                     "status": img.image_type,
-                    "order": f"{img.bundle_order}".zfill(n_digits),
+                    "order": f"{img.bundle_order}",
                     "rotation": img.rotation,
                 }
             )
@@ -1507,9 +1496,6 @@ class ScanService:
         self, bundle_obj: StagingBundle
     ) -> list[dict[str, Any]]:
         """Get information about the discard pages within the given staged bundle."""
-        # compute number of digits in longest page number to pad the page numbering
-        n_digits = len(str(bundle_obj.number_of_pages))
-
         pages = []
         for img in (
             bundle_obj.stagingimage_set.filter(image_type=StagingImage.DISCARD)
@@ -1520,7 +1506,7 @@ class ScanService:
             pages.append(
                 {
                     "status": img.image_type,
-                    "order": f"{img.bundle_order}".zfill(n_digits),
+                    "order": f"{img.bundle_order}",
                     "rotation": img.rotation,
                     "reason": img.discardstagingimage.discard_reason,
                 }

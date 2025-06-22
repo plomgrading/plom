@@ -25,7 +25,9 @@ from .pushed_images import (
 )
 
 from .manage_bundle import (
+    GetBundlePageFragmentViewNg,
     GetBundlePageFragmentView,
+    BundleThumbnailsViewNg,
     BundleThumbnailsView,
     GetBundleThumbnailView,
     BundleLockView,
@@ -54,9 +56,6 @@ from .cast_image_state import (
 )
 
 from .rotate_images import (
-    RotateImageOneEighty,
-    RotateImageClockwise,
-    RotateImageCounterClockwise,
-    GetRotatedBundleImageView,
+    RotateImageView,
     GetRotatedPushedImageView,
 )

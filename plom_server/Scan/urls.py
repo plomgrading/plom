@@ -27,7 +27,9 @@ from .views import (
     SubstituteImageWrapView,
     ###
     BundleThumbnailsView,
+    BundleThumbnailsViewNg,
     GetBundleView,
+    GetBundlePageFragmentViewNg,
     GetBundlePageFragmentView,
     GetBundleThumbnailView,
     GetStagedBundleFragmentView,
@@ -38,10 +40,7 @@ from .views import (
     KnowifyImageView,
     UnknowifyImageView,
     UnknowifyAllDiscardsHTMXView,
-    RotateImageClockwise,
-    RotateImageCounterClockwise,
-    RotateImageOneEighty,
-    GetRotatedBundleImageView,
+    RotateImageView,
     GetRotatedPushedImageView,
     BundleLockView,
     BundlePushCollisionView,
@@ -108,6 +107,11 @@ urlpatterns = [
     ),
     ##
     path(
+        "bundlepage/<int:bundle_id>/<int:index>/",
+        GetBundlePageFragmentViewNg.as_view(),
+        name="scan_bundle_page_ng",
+    ),
+    path(
         "bundlepage/<str:the_filter>/<int:bundle_id>/<int:index>/",
         GetBundlePageFragmentView.as_view(),
         name="scan_bundle_page",
@@ -116,6 +120,11 @@ urlpatterns = [
         "thumbnails/<int:bundle_id>/<int:index>",
         GetBundleThumbnailView.as_view(),
         name="scan_get_thumbnail",
+    ),
+    path(
+        "thumbnails/<int:bundle_id>",
+        BundleThumbnailsViewNg.as_view(),
+        name="scan_bundle_thumbnails_ng",
     ),
     path(
         "thumbnails/<str:the_filter>/<int:bundle_id>",
@@ -135,7 +144,7 @@ urlpatterns = [
     ),
     path(
         "bundle_rot/<int:bundle_id>/<int:index>/",
-        GetRotatedBundleImageView.as_view(),
+        RotateImageView.as_view(),
         name="scan_get_rotated_image",
     ),
     path(
@@ -177,19 +186,9 @@ urlpatterns = [
         name="extralise_image",
     ),
     path(
-        "rotate/clockwise/<str:the_filter>/<int:bundle_id>/<int:index>/",
-        RotateImageClockwise.as_view(),
-        name="rotate_img_cw",
-    ),
-    path(
-        "rotate/counterclockwise/<str:the_filter>/<int:bundle_id>/<int:index>/",
-        RotateImageCounterClockwise.as_view(),
-        name="rotate_img_ccw",
-    ),
-    path(
-        "rotate/oneeighty/<str:the_filter>/<int:bundle_id>/<int:index>/",
-        RotateImageOneEighty.as_view(),
-        name="rotate_img_one_eighty",
+        "rotate/<int:bundle_id>/<int:index>/<int:rotation>",
+        RotateImageView.as_view(),
+        name="rotate_img",
     ),
     path(
         "bundle_lock/<int:bundle_id>/",

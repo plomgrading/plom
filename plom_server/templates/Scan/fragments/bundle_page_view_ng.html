@@ -22,33 +22,25 @@
         <div class="col-4">
             <div class="card">
                 <div class="card-header ps-0 pe-0 d-flex justify-content-between align-items-center">
-                    {% if index == 1 %}
-                        <button type="button" class="btn btn-secondary mx-2" disabled>
-                            <i class="bi bi-chevron-left"></i>
-                        </button>
-                    {% else %}
-                        <button type="button"
-                                class="btn btn-secondary mx-2"
-                                hx-get="{% url 'scan_bundle_page' the_filter bundle_id prev_idx %}"
-                                hx-target="#updatePage"
-                                hx-swap="innerHTML">
-                            <i class="bi bi-chevron-left"></i>
-                        </button>
-                    {% endif %}
+                    <button type="button"
+                            class="btn btn-secondary mx-2"
+                            onclick="clickThumbnail({{ index|add:-1 }})"
+                            {% if index == 1 %}disabled{% endif %}>
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
                     <h6 class="text-center" id="pageShowLabel">Page {{ index }} of {{ total_pages }}</h6>
-                    {% if index == total_pages %}
-                        <button type="button" class="btn btn-secondary mx-2" disabled>
-                            <i class="bi bi-chevron-right"></i>
-                        </button>
-                    {% else %}
-                        <button type="button"
-                                class="btn btn-secondary mx-2"
-                                hx-get="{% url 'scan_bundle_page' the_filter bundle_id next_idx %}"
-                                hx-target="#updatePage"
-                                hx-swap="innerHTML">
-                            <i class="bi bi-chevron-right"></i>
-                        </button>
-                    {% endif %}
+                    <button type="button"
+                            class="btn btn-secondary mx-2"
+                            onclick="clickThumbnail({{ index|add:1 }})"
+                            {% if index == total_pages %}disabled{% endif %}>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <script>
+			function clickThumbnail(bundle_index) {
+			const target_thumbnail = document.getElementById("pg-" + bundle_index + "-radio");
+			target_thumbnail.click();
+			}
+                    </script>
                 </div>
                 <div class="card-body p-2">
                     {% if current_page.status == 'known' %}
@@ -179,54 +171,31 @@
                         <!-- what we can do depends on the status -->
                         {% if current_page.status == 'known' %}
                             <!-- known page can discard -->
-                            <a class="btn btn-danger text-center w-100 mb-3"
-                               hx-post="{% url 'discard_image' the_filter bundle_id index %}"
-                               hx-confirm="Are you sure you wish to discard this known page?">Discard</a>
+                            <a class="btn btn-danger text-center w-100 mb-3">Discard</a>
                         {% elif current_page.status == 'error' %}
                             <!-- error page can cast to discard, extra, known (but caution) -->
                             <div>
-                                <a class="btn btn-warning text-center w-100 mb-3"
-                                   hx-put="{% url 'extralise_image' the_filter bundle_id index %}"
-                                   hx-confirm="Do you want to change this error page into a known page? Please also consider rescanning because error pages can indicate more serious canning problems.">
-                                    Cast to extra page
-                                </a>
+                                <a class="btn btn-warning text-center w-100 mb-3">Cast to extra page</a>
                             </div>
                             <div>
-                                <a class="btn btn-outline-success text-center w-100 mb-3"
-                                   hx-get="{% url 'knowify_image' the_filter bundle_id index %}"
-                                   hx-confirm="Do you want to change this error page into a known page? Please also consider rescanning because error pages can indicate more serious canning problems."
-                                   hx-target="#bundlePageFragment">Cast to known page</a>
+                                <a class="btn btn-outline-success text-center w-100 mb-3">Cast to known page</a>
                             </div>
-                            <a class="btn btn-danger text-center w-100 mb-3"
-                               hx-post="{% url 'discard_image' the_filter bundle_id index %}"
-                               hx-confirm="Are you sure you wish to discard this error page? Please also consider rescanning because error pages can indicate more serious canning problems.">
-                                Discard
-                            </a>
+                            <a class="btn btn-danger text-center w-100 mb-3">Discard</a>
                         {% elif current_page.status == 'unread' %}
                             <!-- cannot do anything with an unread page -->
                         {% elif current_page.status == 'discard' %}
                             <!-- discard can cast to known, extra, unknown -->
                             <div>
-                                <a class="btn btn-warning text-center w-100 mb-3"
-                                   hx-put="{% url 'extralise_image' the_filter bundle_id index %}">
-                                    Cast to extra page
-                                </a>
+                                <a class="btn btn-warning text-center w-100 mb-3">Cast to extra page</a>
                             </div>
                             <div>
-                                <a class="btn btn-outline-success text-center w-100 mb-3"
-                                   hx-get="{% url 'knowify_image' the_filter bundle_id index %}"
-                                   hx-target="#bundlePageFragment">Cast to known page</a>
+                                <a class="btn btn-outline-success text-center w-100 mb-3">Cast to known page</a>
                             </div>
                             <div>
-                                <a class="btn btn-outline-warning text-center w-100 mb-3"
-                                   hx-post="{% url 'unknowify_image' the_filter bundle_id index %}">
-                                    Cast to unknown page
-                                </a>
+                                <a class="btn btn-outline-warning text-center w-100 mb-3">Cast to unknown page</a>
                             </div>
                             <div>
-                                <a class="btn btn-outline-danger text-center w-100 mb-3"
-                                   hx-post="{% url 'unknowify_all_discards' the_filter bundle_id index %}"
-                                   hx-confirm="Are you sure you want to set all discarded pages as unknown pages?">
+                                <a class="btn btn-outline-danger text-center w-100 mb-3">
                                     <i class="bi bi-exclamation-diamond-fill text-danger"></i>
                                     Cast all discards to unknown pages
                                     <i class="bi bi-exclamation-diamond-fill text-danger"></i>
@@ -235,24 +204,16 @@
                         {% elif current_page.status == 'unknown' %}
                             <!-- unknown page can discard, extralise, knowify-->
                             <div>
-                                <a class="btn btn-danger text-center w-100 mb-3"
-                                   hx-post="{% url 'discard_image' the_filter bundle_id index %}">Discard</a>
+                                <a class="btn btn-danger text-center w-100 mb-3">Discard</a>
                             </div>
                             <div>
-                                <a class="btn btn-warning text-center w-100 mb-3"
-                                   hx-put="{% url 'extralise_image' the_filter bundle_id index %}">
-                                    Cast to extra page
-                                </a>
+                                <a class="btn btn-warning text-center w-100 mb-3">Cast to extra page</a>
                             </div>
                             <div>
-                                <a class="btn btn-outline-success text-center w-100 mb-3"
-                                   hx-get="{% url 'knowify_image' the_filter bundle_id index %}"
-                                   hx-target="#bundlePageFragment">Cast to known page</a>
+                                <a class="btn btn-outline-success text-center w-100 mb-3">Cast to known page</a>
                             </div>
                             <div>
-                                <a class="btn btn-danger text-centre w-100 mb-3"
-                                   hx-post="{% url 'discard_all_unknowns' the_filter bundle_id index %}"
-                                   hx-confirm="Are you sure you want to discard all remaining unknowns?">
+                                <a class="btn btn-danger text-centre w-100 mb-3">
                                     <i class="bi bi-exclamation-diamond-fill text-bg-danger"></i>
                                     Discard all unknown pages
                                     <i class="bi bi-exclamation-diamond-fill text-bg-danger"></i>
@@ -261,22 +222,16 @@
                         {% elif current_page.status == 'extra' %}
                             <!-- can discard  -->
                             <div>
-                                <a class="btn btn-danger text-center w-100 mb-3"
-                                   hx-post="{% url 'discard_image' the_filter bundle_id index %}">Discard</a>
+                                <a class="btn btn-danger text-center w-100 mb-3">Discard</a>
                             </div>
                             {% if current_page.info.paper_number %}
                                 <div>
-                                    <a class="btn btn-danger text-center w-100 mb-3"
-                                       hx-delete="{% url 'extralise_image' the_filter bundle_id index %}">
-                                        Clear information
-                                    </a>
+                                    <a class="btn btn-danger text-center w-100 mb-3">Clear information (extralise_image)</a>
                                 </div>
                             {% else %}
                                 <div class="alert alert-secondary">
                                     <h5>Set extra page information</h5>
-                                    <form hx-post="{% url 'extralise_image' the_filter bundle_id index %}"
-                                          hx-target="#invalidmessage"
-                                          hx-swap="innerHTML">
+                                    <form>
                                         <div class="input-group">
                                             <div x-data="{bundlepapers: true}">
                                                 Paper:

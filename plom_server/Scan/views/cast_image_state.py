@@ -173,8 +173,8 @@ class KnowifyImageView(ScannerRequiredView):
                 "timestamp": bundle.timestamp,
                 "index": index,
                 "total_pages": n_pages,
-                "prev_idx": index - 1,
-                "next_idx": index + 1,
+                "prev_idx": index - 1,  # TODO: delete this
+                "next_idx": index + 1,  # TODO: delete this
                 "current_page": current_page,
                 "the_filter": the_filter,
             }
