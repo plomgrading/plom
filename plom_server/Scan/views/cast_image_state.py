@@ -21,6 +21,27 @@ from ..services import (
 from plom.plom_exceptions import PlomBundleLockedException
 
 
+class DiscardImageViewNg(ScannerRequiredView):
+    """Discard a particular StagingImage type."""
+
+    def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
+        try:
+            ScanCastService().discard_image_type_from_bundle_id_and_order(
+                request.user, bundle_id, index
+            )
+        except ValueError as e:
+            raise Http404(e)
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[bundle_id])
+            )
+        return render(
+            request,
+            "Scan/fragments/bundle_page_view_ng.html",
+            {"bundle_id": bundle_id, "index": index},
+        )
+
+
 class DiscardImageView(ScannerRequiredView):
     """Discard a particular StagingImage type."""
 

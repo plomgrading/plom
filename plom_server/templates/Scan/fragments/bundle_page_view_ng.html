@@ -209,7 +209,11 @@
                         {% elif current_page.status == 'unknown' %}
                             <!-- unknown page can discard, extralise, knowify-->
                             <div>
-                                <a class="btn btn-danger text-center w-100 mb-3">Discard</a>
+                                <a class="btn btn-danger text-center w-100 mb-3"
+                                   hx-post="{% url 'discard_image_ng' bundle_id index %}"
+                                   hx-swap="none"
+                                   hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                                Discard</a>
                             </div>
                             <div>
                                 <a class="btn btn-warning text-center w-100 mb-3">Cast to extra page</a>

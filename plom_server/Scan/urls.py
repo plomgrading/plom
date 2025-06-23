@@ -35,6 +35,7 @@ from .views import (
     GetBundleThumbnailView,
     GetStagedBundleFragmentView,
     PushAllPageImages,
+    DiscardImageViewNg,
     DiscardImageView,
     DiscardAllUnknownsHTMXView,
     ExtraliseImageView,
@@ -160,6 +161,11 @@ urlpatterns = [
         "discard/<str:the_filter>/<int:bundle_id>/<int:index>/",
         DiscardImageView.as_view(),
         name="discard_image",
+    ),
+    path(
+        "discard_ng/<int:bundle_id>/<int:index>/",
+        DiscardImageViewNg.as_view(),
+        name="discard_image_ng",
     ),
     path(
         "discard_unknowns/<str:the_filter>/<int:bundle_id>/<int:pop_index>/",

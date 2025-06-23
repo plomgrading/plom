@@ -48,6 +48,7 @@ from .scanner_summary import (
 )
 
 from .cast_image_state import (
+    DiscardImageViewNg,
     DiscardImageView,
     DiscardAllUnknownsHTMXView,
     ExtraliseImageView,
