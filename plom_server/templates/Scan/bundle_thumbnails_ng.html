@@ -307,70 +307,88 @@
             {% endif %}
             <!-- HTMX will fill this in -->
         </div>
-        <!-- page toggle uses radios, this changes radio appearance -->
+        <!-- thumbnail container toggle uses radios, this changes radio appearance -->
         <style>
-  input[type="radio"] {
-    display: none;
-  }
+	  input[type="radio"] {
+	    display: none;
+	  }
 
-  .radio-label {
-    outline: none;
-    border-radius: 6px;
-    user-select: none;
-  }
+	  .radio-label {
+	    outline: none;
+	    border-radius: 6px;
+	    user-select: none;
+	  }
 
-  input[type="radio"]:checked + .radio-label {
-    outline: 3px solid #000000;
-  }
+	  input[type="radio"]:checked + .radio-label {
+	    outline: 3px solid #000000;
+	  }
 
-  .radio-label:hover {
-    cursor: pointer;
-  }
+	  .radio-label:hover {
+	    cursor: pointer;
+	  }
         </style>
         <script>
-function filterPages(filter) {
-// iterate over the thumbnail containers and decide which to show/hide
-// important to keep track of different None/none/null references between html, js, py
-  document.querySelectorAll('div[id^="pg-"]').forEach(div => {
-    const status_ = div.dataset.status;
-    const paper_number = div.dataset.paper_number;
-    const extra_missing_info = status_ == "extra" && paper_number == "None";
+	// iterate over the thumbnail containers and decide which to show/hide
+	// important to keep track of different None/none/null references between html, js, py
+	function filterPages(filter) {
+	  document.querySelectorAll('div[id^="pgcontainer-"]').forEach(div => {
+	    const status_ = div.dataset.status;
+	    const paper_number = div.dataset.paper_number;
+	    const extra_missing_info = status_ == "extra" && paper_number == "None";
 
-    switch (filter) {
-	case "needs your attention":
-		    if (extra_missing_info || status_ == "unknown" || status_ == "error")
+	    switch (filter) {
+		case "needs your attention":
+			    if (extra_missing_info || status_ == "unknown" || status_ == "error")
+				    div.style.display = '';
+			    else
+				    div.style.display = 'none';
+			    break;
+		case "known pages": div.style.display = status_ == "known" ? '': 'none' ;break;
+		case "extra pages": div.style.display = status_ == "extra" ? '': 'none' ;break;
+		case "extra pages without information":
+			    if (extra_missing_info)
+				    div.style.display = '';
+			    else
+				    div.style.display = 'none';
+			    break;
+		case "errors": div.style.display = status_ == "error" ? '': 'none' ;break;
+		case "discarded pages": div.style.display = status_ == "discard" ? '': 'none' ;break;
+		case "unknown pages": div.style.display = status_ == "unknown" ? '': 'none' ;break;
+		case "unread pages": div.style.display = status_ == "unread" ? '': 'none' ;break;
+		case "all": ;
+		default:
 			    div.style.display = '';
-		    else
-			    div.style.display = 'none';
-		    break;
-	case "known pages": div.style.display = status_ == "known" ? '': 'none' ;break;
-	case "extra pages": div.style.display = status_ == "extra" ? '': 'none' ;break;
-	case "extra pages without information":
-		    if (extra_missing_info)
-			    div.style.display = '';
-		    else
-			    div.style.display = 'none';
-		    break;
-	case "errors": div.style.display = status_ == "error" ? '': 'none' ;break;
-	case "discarded pages": div.style.display = status_ == "discard" ? '': 'none' ;break;
-	case "unknown pages": div.style.display = status_ == "unknown" ? '': 'none' ;break;
-	case "unread pages": div.style.display = status_ == "unread" ? '': 'none' ;break;
-	case "all": ;
-	default:
-		    div.style.display = '';
-    }
-  });
-}
+	    }
+	  });
+	}
 
+	// trigger a thumbnail to refresh using information from the server
+	// htmx.trigger triggers an asynchronous event - this function is untrackably asynchronous
+	function refreshThumbnailContainer(index) {
+	    htmx.trigger(document.getElementById("pgcontainer-" + index), "customRefresh");
+	}
 
-function refreshThumbnailContainer(index) {
-	htmx.trigger(document.getElementById("pgcontainer-" + index), "customRefresh");
-}
+        // https://getbootstrap.com/docs/5.3/components/tooltips
+	// create all tooltips when page is initially loaded
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+	// add a new tooltip to a thumbnail
+	function refreshThumbnailTooltip(index) {
+	    new bootstrap.Tooltip(document.getElementById("pgcontainer-" + index));
+	}
+
+	// TODO: this is what updates tooltips after a thumbnail is refreshed, but hard to follow
+	// this listens for any 'afterSwap' events on htmx requests
+	// it is necessary because the thumbnail containers replace themselves and therefore
+	// the 'afterSwap' on the old thumbnail container is destroyed before it can execute
+	document.body.addEventListener('htmx:afterSwap', function(event_) {
+	    const htmx_target = event_.detail.target;
+	    if (htmx_target.id && htmx_target.id.startsWith('pgcontainer-')) {
+	    	const index = htmx_target.id.split('-')[1];
+	    	refreshThumbnailTooltip(index);
+	    }
+	});
+
         </script>
     </div>
-    <!-- https://getbootstrap.com/docs/5.3/components/tooltips -->
-    <script>
-      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-      const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
-    </script>
 {% endblock main_content %}

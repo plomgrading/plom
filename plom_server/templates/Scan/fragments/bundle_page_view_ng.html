@@ -159,7 +159,7 @@
                                    hx-post="{% url 'rotate_img' bundle_id index 180 %}"
                                    hx-target="#selected-page"
                                    hx-swap="outerHTML"
-                                   hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}; clickThumbnail({{ index }});)">
+                                   hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
                                     <i class="bi-arrow-repeat fs-5"></i>
                                 </a>
                                 <a class="btn btn-secondary w-75"
