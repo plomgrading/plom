@@ -27,6 +27,7 @@ from .pushed_images import (
 from .manage_bundle import (
     GetBundlePageFragmentViewNg,
     GetBundlePageFragmentView,
+    ThumbnailContainerFragmentView,
     BundleThumbnailsViewNg,
     BundleThumbnailsView,
     GetBundleThumbnailView,

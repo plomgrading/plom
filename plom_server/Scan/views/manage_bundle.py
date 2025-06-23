@@ -18,6 +18,36 @@ from plom_server.Papers.services import SpecificationService, PaperInfoService
 from ..services import ScanService
 
 from plom.misc_utils import format_int_list_with_runs
+from datetime import datetime
+
+
+class ThumbnailContainerFragmentView(ScannerRequiredView):
+    """For http requests involving thumbnail container fragments."""
+
+    def get(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
+        """Renders a thumbnail container for the specified page in a bundle."""
+        # list of dicts of page info, in bundle order
+        scanner = ScanService()
+        bundle = scanner.get_bundle_from_pk(bundle_id)
+        bundle_page_info_list = scanner.get_bundle_pages_info_list(bundle)
+        # get the specific page we want.
+        # TODO: a dict of bundle page dicts keyed by 'order' would be more convenient
+        bundle_page = 0
+        for i, item in enumerate(bundle_page_info_list):
+            # TODO: order was originally just for show, but the server is now reusing it
+            if int(item["order"]) == index:
+                bundle_page = bundle_page_info_list[i]
+                break
+
+        context = {
+            "pg": bundle_page,
+            "bundle_id": bundle_id,
+            "timestamp": datetime.now().timestamp(),
+        }
+
+        return render(
+            request, "Scan/fragments/bundle_thumbnail_container_ng.html", context
+        )
 
 
 class BundleThumbnailsViewNg(ScannerRequiredView):
@@ -345,10 +375,11 @@ class GetBundlePageFragmentViewNg(ScannerRequiredView):
                 "is_push_locked": bundle.is_push_locked,
                 "slug": bundle.slug,
                 "bundle_id": bundle.pk,
-                "timestamp": bundle.timestamp,
+                "bundle_timestamp": bundle.timestamp,
                 "index": index,
                 "total_pages": n_pages,
                 "current_page": current_page,
+                "timestamp": datetime.now().timestamp(),
             }
         )
         # If page is an extra page then we grab some data for the

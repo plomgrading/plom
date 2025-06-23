@@ -12,9 +12,10 @@
         <div class="col-8">
             <div>
                 <!-- Not happy with this 80vh here: sometimes that is too much, sometimes too little -->
+                <!-- timestamp forces a refresh, otherwise img is loaded from cache (by most browsers) -->
                 <img id="selected-page"
                      class="shadow border rounded"
-                     src="{% url 'scan_get_rotated_image' bundle_id index %}"
+                     src="{% url 'scan_get_rotated_image' bundle_id index %}?_ts={{ timestamp }}"
                      style="max-height: 83vh;
                             max-width: 100%" />
             </div>
@@ -37,7 +38,7 @@
                     </button>
                     <script>
 			function clickThumbnail(bundle_index) {
-			const target_thumbnail = document.getElementById("pg-" + bundle_index + "-radio");
+			const target_thumbnail = document.getElementById("pgradio-" + bundle_index);
 			target_thumbnail.click();
 			}
                     </script>
@@ -142,12 +143,14 @@
                         <!-- add in the stuff we can do before pushing -->
                         <div>
                             <div class="d-flex mb-3">
+                                <!-- rotations target the thumbnail container for a swap, then click on them -->
                                 <a class="btn btn-secondary w-75"
                                    data-bs-toggle="tooltip"
                                    title="Rotate counter-clockwise"
                                    hx-post="{% url 'rotate_img' bundle_id index 90 %}"
                                    hx-target="#selected-page"
-                                   hx-swap="outerHTML">
+                                   hx-swap="outerHTML"
+                                   hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
                                     <i class="bi-arrow-counterclockwise fs-5"></i>
                                 </a>
                                 <a class="btn btn-secondary mx-2 w-100"
@@ -155,7 +158,8 @@
                                    title="Rotate 180"
                                    hx-post="{% url 'rotate_img' bundle_id index 180 %}"
                                    hx-target="#selected-page"
-                                   hx-swap="outerHTML">
+                                   hx-swap="outerHTML"
+                                   hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}; clickThumbnail({{ index }});)">
                                     <i class="bi-arrow-repeat fs-5"></i>
                                 </a>
                                 <a class="btn btn-secondary w-75"
@@ -163,7 +167,8 @@
                                    title="Rotate clockwise"
                                    hx-post="{% url 'rotate_img' bundle_id index 270 %}"
                                    hx-target="#selected-page"
-                                   hx-swap="outerHTML">
+                                   hx-swap="outerHTML"
+                                   hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
                                     <i class="bi-arrow-clockwise fs-5"></i>
                                 </a>
                             </div>

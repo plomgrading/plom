@@ -357,10 +357,14 @@ function filterPages(filter) {
 	case "unread pages": div.style.display = status_ == "unread" ? '': 'none' ;break;
 	case "all": ;
 	default:
-		    console.log("default or all");
 		    div.style.display = '';
     }
   });
+}
+
+
+function refreshThumbnailContainer(index) {
+	htmx.trigger(document.getElementById("pgcontainer-" + index), "customRefresh");
 }
         </script>
     </div>

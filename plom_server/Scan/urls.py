@@ -27,6 +27,7 @@ from .views import (
     SubstituteImageWrapView,
     ###
     BundleThumbnailsView,
+    ThumbnailContainerFragmentView,
     BundleThumbnailsViewNg,
     GetBundleView,
     GetBundlePageFragmentViewNg,
@@ -115,10 +116,16 @@ urlpatterns = [
         GetBundlePageFragmentView.as_view(),
         name="scan_bundle_page",
     ),
+    # TODO: is this different to RotateImageView?
     path(
         "thumbnails/<int:bundle_id>/<int:index>",
         GetBundleThumbnailView.as_view(),
         name="scan_get_thumbnail",
+    ),
+    path(
+        "thumbnail_container/<int:bundle_id>/<int:index>",
+        ThumbnailContainerFragmentView.as_view(),
+        name="single_thumbnail_container",
     ),
     path(
         "thumbnails/<int:bundle_id>",
