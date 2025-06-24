@@ -41,6 +41,7 @@ from .views import (
     ExtraliseImageView,
     ExtraliseImageViewNg,
     KnowifyImageView,
+    KnowifyImageViewNg,
     UnknowifyImageView,
     UnknowifyImageViewNg,
     UnknowifyAllDiscardsHTMXView,
@@ -193,6 +194,11 @@ urlpatterns = [
         "knowify/<str:the_filter>/<int:bundle_id>/<int:index>/",
         KnowifyImageView.as_view(),
         name="knowify_image",
+    ),
+    path(
+        "knowify/<int:bundle_id>/<int:index>/",
+        KnowifyImageViewNg.as_view(),
+        name="knowify_image_ng",
     ),
     path(
         "extralise/<str:the_filter>/<int:bundle_id>/<int:index>/",

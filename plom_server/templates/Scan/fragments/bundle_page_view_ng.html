@@ -193,13 +193,17 @@
                                 Cast to extra page</a>
                             </div>
                         {% endif %}
+                        {% if current_page.status == 'error' or current_page.status == 'discard' or current_page.status == 'unknown' %}
+                            <div>
+                                <a class="btn btn-outline-success text-center w-100 mb-3"
+                                   hx-get="{% url 'knowify_image_ng' bundle_id index %}"
+                                   hx-target="#bundlePageFragment">Cast to known page</a>
+                            </div>
+                        {% endif %}
                         {% if current_page.status == 'known' %}
                             <!-- stuff unique to known pages -->
                         {% elif current_page.status == 'error' %}
                             <!-- stuff unique to error pages -->
-                            <div>
-                                <a class="btn btn-outline-success text-center w-100 mb-3">Cast to known page</a>
-                            </div>
                         {% elif current_page.status == 'unread' %}
                             <!-- cannot do anything with an unread page -->
                         {% elif current_page.status == 'discard' %}
@@ -212,9 +216,6 @@
                                 Cast to unknown page</a>
                             </div>
                             <div>
-                                <a class="btn btn-outline-success text-center w-100 mb-3">Cast to known page</a>
-                            </div>
-                            <div>
                                 <a class="btn btn-outline-danger text-center w-100 mb-3">
                                     <i class="bi bi-exclamation-diamond-fill text-danger"></i>
                                     Cast all discards to unknown pages
@@ -223,9 +224,6 @@
                             </div>
                         {% elif current_page.status == 'unknown' %}
                             <!-- stuff unique to unknown pages -->
-                            <div>
-                                <a class="btn btn-outline-success text-center w-100 mb-3">Cast to known page</a>
-                            </div>
                             <div>
                                 <a class="btn btn-danger text-centre w-100 mb-3">
                                     <i class="bi bi-exclamation-diamond-fill text-bg-danger"></i>

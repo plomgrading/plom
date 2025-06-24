@@ -20,6 +20,8 @@ from ..services import (
 
 from plom.plom_exceptions import PlomBundleLockedException
 
+from datetime import datetime
+
 
 class DiscardImageViewNg(ScannerRequiredView):
     """Discard a particular StagingImage type."""
@@ -181,6 +183,104 @@ class UnknowifyAllDiscardsHTMXView(ScannerRequiredView):
                 reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
                 + f"?pop={pop_index}"
             )
+
+
+class KnowifyImageViewNg(ScannerRequiredView):
+    """Knowify a particular StagingImage type."""
+
+    def get(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
+        context = super().build_context()
+        scanner = ScanService()
+        paper_info = PaperInfoService()
+        bundle = scanner.get_bundle_from_pk(bundle_id)
+
+        try:
+            check_bundle_object_is_neither_locked_nor_pushed(bundle)
+        except PlomBundleLockedException:
+            # TODO: this would confuse me as a user:
+            # bounce user back to scanner home page if not allowed to change things
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[bundle_id])
+            )
+
+        n_pages = scanner.get_n_images(bundle)
+
+        if index < 0 or index > n_pages:
+            raise Http404("Bundle page does not exist.")
+
+        context.update(
+            {
+                "is_pushed": bundle.pushed,
+                "bundle_id": bundle_id,
+                "index": index,
+                "total_pages": n_pages,
+                "timestamp": datetime.now().timestamp(),
+            }
+        )
+
+        page_labels = [
+            f"page {n + 1}" for n in range(SpecificationService.get_n_pages())
+        ]
+        all_paper_numbers = paper_info.which_papers_in_database()
+        missing_papers_pages = scanner.get_bundle_missing_paper_page_numbers(bundle)
+        context.update(
+            {
+                "page_labels": page_labels,
+                "all_paper_numbers": all_paper_numbers,
+                "missing_papers_pages": missing_papers_pages,
+            }
+        )
+
+        return render(request, "Scan/fragments/knowify_image_ng.html", context)
+
+    def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
+        # TODO - improve this form processing
+
+        knowify_page_data = request.POST
+
+        if knowify_page_data.get("bundleOrArbitrary", "off") == "on":
+            try:
+                paper_number, page_number = knowify_page_data.get(
+                    "missingPaperPage", ","
+                ).split(",")
+            except ValueError:
+                return HttpResponse(
+                    """<div class="alert alert-danger">Choose paper/page</div>"""
+                )
+        else:
+            paper_number = knowify_page_data.get("arbitraryPaper", None)
+            page_number = knowify_page_data.get("pageSelect", None)
+
+        try:
+            paper_number = int(paper_number)
+        except ValueError:
+            return HttpResponse(
+                """<div class="alert alert-danger">Invalid paper number</div>"""
+            )
+
+        try:
+            page_number = int(page_number)
+        except ValueError:
+            return HttpResponse(
+                """<div class="alert alert-danger">Select a page</div>"""
+            )
+
+        try:
+            ScanCastService().knowify_image_from_bundle_id(
+                request.user, bundle_id, index, paper_number, page_number
+            )
+        except ValueError as err:
+            return HttpResponse(f"""<div class="alert alert-danger">{err}</div>""")
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[bundle_id])
+            )
+
+        return render(
+            request,
+            "Scan/fragments/bundle_page_view_ng.html",
+            {"bundle_id": bundle_id, "index": index},
+        )
 
 
 class KnowifyImageView(ScannerRequiredView):
