@@ -237,12 +237,18 @@
                             <!-- stuff unique to extra pages  -->
                             {% if current_page.info.paper_number %}
                                 <div>
-                                    <a class="btn btn-danger text-center w-100 mb-3">Clear information (extralise_image)</a>
+                                    <a class="btn btn-danger text-center w-100 mb-3"
+                                       hx-delete="{% url 'extralise_image_ng' bundle_id index %}"
+                                       hx-swap="none"
+                                       hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                                    Clear information</a>
                                 </div>
                             {% else %}
                                 <div class="alert alert-secondary">
                                     <h5>Set extra page information</h5>
-                                    <form>
+                                    <form hx-post="{% url 'extralise_image_ng' bundle_id index %}"
+                                          hx-swap="none"
+                                          hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
                                         <div class="input-group">
                                             <div x-data="{bundlepapers: true}">
                                                 Paper:

@@ -343,8 +343,10 @@ class ExtraliseImageViewNg(ScannerRequiredView):
                 f"""<div class="alert alert-danger"><p>{e}</p><p>Try reloading this page.</p></div>"""
             )
 
-        return HttpResponseClientRedirect(
-            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
+        return render(
+            request,
+            "Scan/fragments/bundle_page_view_ng.html",
+            {"bundle_id": bundle_id, "index": index},
         )
 
     # TODO: Post and Put are the wrong way around? Put should update the existing extra page, Post should create a new one?
@@ -364,6 +366,24 @@ class ExtraliseImageViewNg(ScannerRequiredView):
             print(f"Issue #3878: got ValueError we're unsure how to handle: {err}")
             # TODO: redirect ala scan_bundle_lock?
             raise
+
+        return render(
+            request,
+            "Scan/fragments/bundle_page_view_ng.html",
+            {"bundle_id": bundle_id, "index": index},
+        )
+
+    def delete(
+        self, request: HttpRequest, *, bundle_id: int, index: int
+    ) -> HttpResponse:
+        try:
+            ScanCastService().clear_extra_page_info_from_bundle_pk_and_order(
+                request.user, bundle_id, index
+            )
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[bundle_id])
+            )
 
         return render(
             request,
