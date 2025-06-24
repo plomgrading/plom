@@ -72,7 +72,7 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
         # get all scanned papers with that page,version
         # paper_numbers may be duplicated if there are multiple questions on a page
         paper_numbers = PaperInfoService.get_paper_numbers_containing_page(
-            page, version=version, scanned=True, limit=5
+            page, version=version, scanned=True, limit=4
         )
 
         context.update(
@@ -87,3 +87,18 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
             }
         )
         return render(request, "QuestionClustering/show_rectangles.html", context)
+
+
+class QuestionClusteringJobsHome(ManagerRequiredView):
+    def get(self, request: HttpRequest) -> HttpResponse:
+        context = self.build_context()
+        if not SpecificationService.is_there_a_spec():
+            return render(request, "Finish/finish_no_spec.html", context=context)
+        context.update(
+            {
+                "version_list": SpecificationService.get_list_of_versions(),
+                "q_idx_label_pairs": SpecificationService.get_question_index_label_pairs(),
+                "q_idx_to_pages": SpecificationService.get_question_pages(),
+            }
+        )
+        return render(request, "QuestionClustering/clustering_jobs.html", context)

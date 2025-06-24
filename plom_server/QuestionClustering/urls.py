@@ -3,7 +3,11 @@
 
 from django.urls import path
 
-from .views import QuestionClusteringHomeView, SelectRectangleForClusteringView
+from .views import (
+    QuestionClusteringHomeView,
+    SelectRectangleForClusteringView,
+    QuestionClusteringJobsHome,
+)
 
 urlpatterns = [
     path("", QuestionClusteringHomeView.as_view(), name="question_clustering_home"),
@@ -11,5 +15,10 @@ urlpatterns = [
         "select/<int:version>/<int:qidx>/<int:page>",
         SelectRectangleForClusteringView.as_view(),
         name="question_clustering_select_rectangle",
+    ),
+    path(
+        "question_clustering_jobs",
+        QuestionClusteringJobsHome.as_view(),
+        name="question_clustering_jobs",
     ),
 ]

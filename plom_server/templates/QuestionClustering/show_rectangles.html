@@ -19,22 +19,24 @@
     </div>
     <div class="card m-2">
         <div class="card-body">
-            <h5 class="card-title">
-                Version {{ version }} page {{ page_number }} selected rectangles: top-left to bottom-right = ({{ left }}, {{ top }}) to ({{ right }}, {{ bottom }})
-            </h5>
+            <h5 class="card-title">Preview of extracted rectangles for Version {{ version }} page {{ page_number }}</h5>
+            <a class="btn btn-primary" href="{% url 'question_clustering_jobs' %}">Begin clustering</a>
             {% if papers %}
                 <p>
-                    <a class="btn btn-primary"
-                       href="{% url 'zip_rectangles' version page_number %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}">download zip of images</a>
                     <ul>
-                        {% for pn in papers %}
-                            <li>
-                                Paper {{ pn }}:
-                                <img class="border p-2 m-2"
-                                     src="{% url 'extracted_rectangle' pn version page_number %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
-                                     onerror="imgError(this)" />
-                            </li>
-                        {% endfor %}
+                        <div class="container">
+                            <div class="row">
+                                {% for pn in papers %}
+                                    <div class="col-6 mb-4">
+                                        <strong>Paper {{ pn }}:</strong>
+                                        <br />
+                                        <img class="img-fluid border p-2"
+                                             src="{% url 'extracted_rectangle' pn version page_number %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
+                                             onerror="imgError(this)" />
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
                     </ul>
                 </p>
             {% else %}

@@ -4,6 +4,12 @@
 -->
 {% extends "base/base.html" %}
 {% load custom_tags %}
+{% block title %}
+    Cluster questions based on written answer
+{% endblock title %}
+{% block page_heading %}
+    Cluster questions based on written answer
+{% endblock page_heading %}
 {% block main_content %}
     <style>
         .image-viewer{
@@ -16,25 +22,32 @@
             display: flex;
         }
 
+        /* When there’s exactly one <a> in .image-viewer, center it */
+        .image-viewer > a:only-child {
+            margin: 0 auto;
+        }
     </style>
-    {% for v in version_list %}
-        <div class="card m-2">
-            <div class="card-body">
+    <div class="flex">
+        <a class="btn btn-success" href="{% url 'question_clustering_jobs' %}">clustering jobs</a>
+    </div>
+    <div class="card my-2">
+        <div class="card-body">
+            {% for v in version_list %}
                 <h5 class="card-title">Questions from version {{ v }}</h5>
                 {% for qidx, q_label in q_idx_label_pairs %}
                     <a class="btn btn-info btn-question"
                        data-version="{{ v }}"
                        data-qidx="{{ qidx }}">{{ q_label }}</a>
                 {% endfor %}
-            </div>
+            {% endfor %}
         </div>
-    {% endfor %}
+    </div>
     <!-- single viewer at the bottom -->
     {% for v in version_list %}
         <div>
             {% for qidx in q_idx_to_pages %}
-                <div class="image-viewer" id="viewer-{{ v }}-{{ qidx }}">
-                    {% with q_idx_to_pages|get_item:qidx as pages %}
+                {% with q_idx_to_pages|get_item:qidx as pages %}
+                    <div class="image-viewer " id="viewer-{{ v }}-{{ qidx }}">
                         {% for page_number in pages %}
                             <a href="{% url 'question_clustering_select_rectangle' v qidx page_number %}">
                                 <img class="border w-100"
@@ -44,8 +57,8 @@
                             </img>
                         </a>
                     {% endfor %}
-                {% endwith %}
-            </div>
+                </div>
+            {% endwith %}
         {% endfor %}
     </div>
 {% endfor %}

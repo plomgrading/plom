@@ -1,0 +1,60 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}
+    Question clustering jobs
+{% endblock title %}
+{% block page_heading %}
+    Question clustering jobs
+{% endblock page_heading %}
+{% block main_content %}
+    <div>
+        <a class="btn btn-success" href="{% url 'question_clustering_home' %}">
+            <i class="bi bi-chevron-left"></i>
+            Return to choose version/question
+        </a>
+    </div>
+    <div class="card my-2">
+        <div class="card-body">
+            <!-- {% if pushed_bundles %} -->
+            <table class="table table-sm table-bordered text-center sortable">
+                <thead>
+                    <!-- make sure thumbnail not too wide -->
+                    <th style="width: 8vw;">Thumbnail</th>
+                    <th>Bundle name</th>
+                    <th>Uploaded by</th>
+                    <th>Pages/Papers</th>
+                    <th>Actions</th>
+                </thead>
+                <tbody>
+                    {% for bundle in pushed_bundles %}
+                        <tr>
+                            <td>
+                                <div class="bundle-thumb">
+                                    <img src="{% url 'scan_get_thumbnail' bundle.id 1 %}" />
+                                </div>
+                            </td>
+                            <td>.pdf</td>
+                            <td></td>
+                            <td class="text-start">
+                                <ul>
+                                    <li>pages</li>
+                                    <li>paper</li>
+                                </ul>
+                            </td>
+                            <td>
+                                <a class="btn btn-success"
+                                   href="{% url 'scan_bundle_thumbnails' 'all' bundle.id %}">View</a>
+                                <a class="btn btn-secondary"
+                                   target="_"
+                                   href="{% url 'scan_get_bundle' bundle.id %}">Download</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <!-- {% else %}
+                <h6>No clustering jobs</h6>
+            {% endif %} -->
+        </div>
+    </div>
+{% endblock main_content %}

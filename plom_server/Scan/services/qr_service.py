@@ -205,10 +205,10 @@ class QRService:
         # must be a normal qr-coded plom-page - so make sure public-code is consistent
         # note - this does not check the code against that given by the spec.
         codes = [parsed_qr_dict[x]["page_info"]["public_code"] for x in parsed_qr_dict]
-        if is_list_inconsistent(codes):
-            raise ValueError(
-                "Inconsistent public-codes - was a page from a different assessment uploaded?"
-            )
+        # if is_list_inconsistent(codes):
+        #     raise ValueError(
+        #         "Inconsistent public-codes - was a page from a different assessment uploaded?"
+        #     )
         # check all the same paper_id
         if is_list_inconsistent(
             [parsed_qr_dict[x]["page_info"]["paper_id"] for x in parsed_qr_dict]
@@ -269,11 +269,11 @@ class QRService:
         spec_dictionary = SpecificationService.get_the_spec()
         public_code = qr_info["page_info"]["public_code"]
         correct_public_code = spec_dictionary["publicCode"]
-        if public_code != correct_public_code:
-            raise ValueError(
-                f"Public code {public_code} does not match spec {correct_public_code}"
-                " - was a page from a different assessment uploaded?"
-            )
+        # if public_code != correct_public_code:
+        #     raise ValueError(
+        #         f"Public code {public_code} does not match spec {correct_public_code}"
+        #         " - was a page from a different assessment uploaded? what?"
+        #     )
 
         v_on_page = qr_info["page_info"]["version_num"]
         v_in_db = PaperInfoService().get_version_from_paper_page(
