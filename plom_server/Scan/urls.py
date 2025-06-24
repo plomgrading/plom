@@ -39,8 +39,10 @@ from .views import (
     DiscardImageView,
     DiscardAllUnknownsHTMXView,
     ExtraliseImageView,
+    ExtraliseImageViewNg,
     KnowifyImageView,
     UnknowifyImageView,
+    UnknowifyImageViewNg,
     UnknowifyAllDiscardsHTMXView,
     RotateImageView,
     BundleLockView,
@@ -178,6 +180,11 @@ urlpatterns = [
         name="unknowify_image",
     ),
     path(
+        "unknowify/<int:bundle_id>/<int:index>/",
+        UnknowifyImageViewNg.as_view(),
+        name="unknowify_image_ng",
+    ),
+    path(
         "unknowify_discards/<str:the_filter>/<int:bundle_id>/<int:pop_index>/",
         UnknowifyAllDiscardsHTMXView.as_view(),
         name="unknowify_all_discards",
@@ -191,6 +198,11 @@ urlpatterns = [
         "extralise/<str:the_filter>/<int:bundle_id>/<int:index>/",
         ExtraliseImageView.as_view(),
         name="extralise_image",
+    ),
+    path(
+        "extralise/<int:bundle_id>/<int:index>/",
+        ExtraliseImageViewNg.as_view(),
+        name="extralise_image_ng",
     ),
     path(
         "rotate/<int:bundle_id>/<int:index>/<int:rotation>",

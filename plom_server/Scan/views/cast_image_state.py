@@ -101,6 +101,28 @@ class DiscardAllUnknownsHTMXView(ScannerRequiredView):
             )
 
 
+class UnknowifyImageViewNg(ScannerRequiredView):
+    """Unknowify a particular StagingImage type."""
+
+    def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
+        try:
+            ScanCastService().unknowify_image_type_from_bundle_id_and_order(
+                request.user, bundle_id, index
+            )
+        except ValueError as e:
+            raise Http404(e)
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[bundle_id])
+            )
+
+        return render(
+            request,
+            "Scan/fragments/bundle_page_view_ng.html",
+            {"bundle_id": bundle_id, "index": index},
+        )
+
+
 class UnknowifyImageView(ScannerRequiredView):
     """Unknowify a particular StagingImage type."""
 
@@ -267,6 +289,89 @@ class KnowifyImageView(ScannerRequiredView):
         )
 
 
+class ExtraliseImageViewNg(ScannerRequiredView):
+    """Extralise a particular StagingImage type."""
+
+    def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
+        # TODO - improve this form processing
+
+        extra_page_data = request.POST
+
+        if extra_page_data.get("bundleOrArbitrary", "off") == "on":
+            paper_number = extra_page_data.get("bundlePaper", None)
+        else:
+            paper_number = extra_page_data.get("arbitraryPaper", None)
+
+        try:
+            paper_number = int(paper_number)
+        except ValueError:
+            return HttpResponse(
+                """<span class="alert alert-danger">Invalid paper number</span>"""
+            )
+
+        choice = extra_page_data.get("question_all_dnm", "")
+        if choice == "choose_all":
+            # set all the questions
+            to_questions = SpecificationService.get_question_indices()
+        elif choice == "choose_dnm":
+            # TODO: or explicitly empty list or ...?
+            to_questions = []
+        elif choice == "choose_q":
+            # caution: `get` would return just the last entry
+            to_questions = [int(q) for q in extra_page_data.getlist("questions")]
+            if not to_questions:
+                return HttpResponse(
+                    """<span class="alert alert-danger">At least one question</span>"""
+                )
+        else:
+            return HttpResponse(
+                """<span class="alert alert-danger">
+                    Unexpected radio choice: this is a bug; please file an issue!
+                </span>"""
+            )
+
+        try:
+            ScanCastService().assign_extra_page_from_bundle_pk_and_order(
+                request.user, bundle_id, index, paper_number, to_questions
+            )
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[bundle_id])
+            )
+        except ValueError as e:
+            return HttpResponse(
+                f"""<div class="alert alert-danger"><p>{e}</p><p>Try reloading this page.</p></div>"""
+            )
+
+        return HttpResponseClientRedirect(
+            reverse("scan_bundle_thumbnails", args=[bundle_id]) + f"?pop={index}"
+        )
+
+    # TODO: Post and Put are the wrong way around? Put should update the existing extra page, Post should create a new one?
+    def put(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
+        """Cast an existing bundle page to an extra page (unassigned)."""
+        try:
+            ScanCastService().extralise_image_from_bundle_id(
+                request.user, bundle_id, index
+            )
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[bundle_id])
+            )
+        except ObjectDoesNotExist as err:
+            return Http404(err)
+        except ValueError as err:
+            print(f"Issue #3878: got ValueError we're unsure how to handle: {err}")
+            # TODO: redirect ala scan_bundle_lock?
+            raise
+
+        return render(
+            request,
+            "Scan/fragments/bundle_page_view_ng.html",
+            {"bundle_id": bundle_id, "index": index},
+        )
+
+
 class ExtraliseImageView(ScannerRequiredView):
     """Extralise a particular StagingImage type."""
 
@@ -328,6 +433,7 @@ class ExtraliseImageView(ScannerRequiredView):
             + f"?pop={index}"
         )
 
+    # TODO: Post and Put are the wrong way around? Put should update the existing extra page, Post should create a new one?
     def put(
         self, request: HttpRequest, *, the_filter: str, bundle_id: int, index: int
     ) -> HttpResponse:

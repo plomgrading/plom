@@ -52,8 +52,10 @@ from .cast_image_state import (
     DiscardImageView,
     DiscardAllUnknownsHTMXView,
     ExtraliseImageView,
+    ExtraliseImageViewNg,
     KnowifyImageView,
     UnknowifyImageView,
+    UnknowifyImageViewNg,
     UnknowifyAllDiscardsHTMXView,
 )
 

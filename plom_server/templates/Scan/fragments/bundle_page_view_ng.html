@@ -174,30 +174,45 @@
                             </div>
                         </div>
                         <!-- what we can do depends on the status -->
-                        {% if current_page.status == 'known' %}
-                            <!-- known page can discard -->
-                            <a class="btn btn-danger text-center w-100 mb-3">Discard</a>
-                        {% elif current_page.status == 'error' %}
-                            <!-- error page can cast to discard, extra, known (but caution) -->
+                        <!-- TODO: deduplicate all of this garbage -->
+                        {% if current_page.status == 'known' or current_page.status == 'error' or current_page.status == 'extra' or current_page.status == 'unknown' %}
                             <div>
-                                <a class="btn btn-warning text-center w-100 mb-3">Cast to extra page</a>
+                                <a class="btn btn-danger text-center w-100 mb-3"
+                                   hx-post="{% url 'discard_image_ng' bundle_id index %}"
+                                   hx-swap="none"
+                                   hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                                Discard</a>
                             </div>
+                        {% endif %}
+                        {% if current_page.status == 'error' or current_page.status == 'discard' or current_page.status == 'unknown' %}
+                            <div>
+                                <a class="btn btn-warning text-center w-100 mb-3"
+                                   hx-put="{% url 'extralise_image_ng' bundle_id index %}"
+                                   hx-swap="none"
+                                   hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                                Cast to extra page</a>
+                            </div>
+                        {% endif %}
+                        {% if current_page.status == 'known' %}
+                            <!-- stuff unique to known pages -->
+                        {% elif current_page.status == 'error' %}
+                            <!-- stuff unique to error pages -->
                             <div>
                                 <a class="btn btn-outline-success text-center w-100 mb-3">Cast to known page</a>
                             </div>
-                            <a class="btn btn-danger text-center w-100 mb-3">Discard</a>
                         {% elif current_page.status == 'unread' %}
                             <!-- cannot do anything with an unread page -->
                         {% elif current_page.status == 'discard' %}
-                            <!-- discard can cast to known, extra, unknown -->
+                            <!-- stuff unique to discard pages -->
                             <div>
-                                <a class="btn btn-warning text-center w-100 mb-3">Cast to extra page</a>
+                                <a class="btn btn-outline-warning text-center w-100 mb-3"
+                                   hx-post="{% url 'unknowify_image_ng' bundle_id index %}"
+                                   hx-swap="none"
+                                   hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
+                                Cast to unknown page</a>
                             </div>
                             <div>
                                 <a class="btn btn-outline-success text-center w-100 mb-3">Cast to known page</a>
-                            </div>
-                            <div>
-                                <a class="btn btn-outline-warning text-center w-100 mb-3">Cast to unknown page</a>
                             </div>
                             <div>
                                 <a class="btn btn-outline-danger text-center w-100 mb-3">
@@ -207,17 +222,7 @@
                                 </a>
                             </div>
                         {% elif current_page.status == 'unknown' %}
-                            <!-- unknown page can discard, extralise, knowify-->
-                            <div>
-                                <a class="btn btn-danger text-center w-100 mb-3"
-                                   hx-post="{% url 'discard_image_ng' bundle_id index %}"
-                                   hx-swap="none"
-                                   hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
-                                Discard</a>
-                            </div>
-                            <div>
-                                <a class="btn btn-warning text-center w-100 mb-3">Cast to extra page</a>
-                            </div>
+                            <!-- stuff unique to unknown pages -->
                             <div>
                                 <a class="btn btn-outline-success text-center w-100 mb-3">Cast to known page</a>
                             </div>
@@ -229,10 +234,7 @@
                                 </a>
                             </div>
                         {% elif current_page.status == 'extra' %}
-                            <!-- can discard  -->
-                            <div>
-                                <a class="btn btn-danger text-center w-100 mb-3">Discard</a>
-                            </div>
+                            <!-- stuff unique to extra pages  -->
                             {% if current_page.info.paper_number %}
                                 <div>
                                     <a class="btn btn-danger text-center w-100 mb-3">Clear information (extralise_image)</a>
