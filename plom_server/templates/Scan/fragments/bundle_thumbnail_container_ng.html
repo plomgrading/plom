@@ -7,8 +7,7 @@
 -->
 <!-- the outer div htmx listens for a 'refreshThumbnailContainer' event on this html element - WET -->
 <!-- the htmx:afterSwap functions never execute, but a listener on the page body will hear it and execute it's own functions. It doesn't actually matter what function is called here-->
-<div class="col-6 col-sm-4 col-md-3 col-lg-2"
-     id="pgcontainer-{{ pg.order }}"
+<div id="pgcontainer-{{ pg.order }}"
      hx-get="{% url 'single_thumbnail_container' bundle_id pg.order %}"
      hx-trigger="customRefresh"
      hx-swap="outerHTML"
