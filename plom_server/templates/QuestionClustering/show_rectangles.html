@@ -5,10 +5,10 @@
 {% extends "base/base.html" %}
 {% load static %}
 {% block title %}
-    Rectangles from v {{ version }} p {{ page_number }}
+    Rectangles from v {{ version }} p {{ page_num }}
 {% endblock title %}
 {% block page_heading %}
-    Rectangles from v {{ version }} p {{ page_number }}
+    Rectangles from v {{ version }} p {{ page_num }}
 {% endblock page_heading %}
 {% block main_content %}
     <div>
@@ -19,8 +19,20 @@
     </div>
     <div class="card m-2">
         <div class="card-body">
-            <h5 class="card-title">Preview of extracted rectangles for Version {{ version }} page {{ page_number }}</h5>
-            <a class="btn btn-primary" href="{% url 'question_clustering_jobs' %}">Begin clustering</a>
+            <h5 class="card-title">Preview of extracted rectangles for Version {{ version }} page {{ page_num }}</h5>
+            <form method="post" action="{% url 'question_clustering_jobs_home' %}">
+                {% csrf_token %}
+                <ul hidden>
+                    <input name="question" value="{{ question_index }}" readonly>
+                    <input name="version" value="{{ version }}" readonly>
+                    <input name="page_num" value="{{ page_num }}" readonly>
+                    <input name="plom_top" value="{{ top }}" readonly>
+                    <input name="plom_left" value="{{ left }}" readonly>
+                    <input name="plom_bottom" value="{{ bottom }}" readonly>
+                    <input name="plom_right" value="{{ right }}" readonly>
+                </ul>
+                <button type="submit" class="btn btn-primary">Begin clustering</button>
+            </form>
             {% if papers %}
                 <p>
                     <ul>
@@ -31,7 +43,7 @@
                                         <strong>Paper {{ pn }}:</strong>
                                         <br />
                                         <img class="img-fluid border p-2"
-                                             src="{% url 'extracted_rectangle' pn version page_number %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
+                                             src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
                                              onerror="imgError(this)" />
                                     </div>
                                 {% endfor %}
@@ -41,11 +53,11 @@
                 </p>
             {% else %}
                 <p>
-                    There are no papers with version {{ version }} of page {{ page_number }}. This could be because
+                    There are no papers with version {{ version }} of page {{ page_num }}. This could be because
                     <ul>
                         <li>You have not finished uploading scans</li>
                         <li>
-                            Your test specification, or question-version map, may not allow page {{ page_number }} to be chosen from version {{ version }}
+                            Your test specification, or question-version map, may not allow page {{ page_num }} to be chosen from version {{ version }}
                         </li>
                     </ul>
                 </p>

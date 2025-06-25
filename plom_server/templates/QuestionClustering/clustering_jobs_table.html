@@ -1,0 +1,59 @@
+<div id="tasks-table"
+     hx-get="{% url 'get_question_clustering_tasks' %}"
+     hx-trigger="every 1s"
+     hx-target="#tasks-table"
+     hx-swap="innerHTML">
+    {% if tasks %}
+        <table class="table table-sm table-bordered text-center w-100">
+            <thead>
+                <tr>
+                    <th>Question Index</th>
+                    <th>Version</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                    <tr id="task-{{ task.id }}">
+                        <td>{{ task.question_idx }}</td>
+                        <td>{{ task.version }}</td>
+                        <td>
+                            {{ task.status }}
+                            {% if task.status == "Running" %}
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">Loading…</span>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if task.status == "Error" %}
+                                <a class="btn btn-warning btn-sm"
+                                   hx-post=""
+                                   hx-target="#tasks-table"
+                                   hx-swap="outerHTML">Restart</a>
+                                <a class="btn btn-danger btn-sm"
+                                   hx-delete=""
+                                   hx-target="#tasks-table"
+                                   hx-swap="outerHTML">Remove</a>
+                            {% elif task.status == "Complete" %}
+                                <a class="btn btn-success btn-sm"
+                                   href="{% url 'cluster_groups' task.question_idx task.version task.page_num %}">
+                                    View
+                                </a>
+                                <a class="btn btn-danger btn-sm"
+                                   hx-delete=""
+                                   hx-target="#tasks-table"
+                                   hx-swap="outerHTML">Remove</a>
+                            {% else %}
+                                <i class="bi bi-clock-history text-info"></i>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <h6>No clustering jobs</h6>
+    {% endif %}
+</div>

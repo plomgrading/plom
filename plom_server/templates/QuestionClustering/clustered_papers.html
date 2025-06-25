@@ -1,0 +1,111 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% load custom_tags %}
+{% block title %}
+    Cluster {{ clusterId }} for {{ question_label }} V{{ version }} Page {{ page_num }} ({{ papers|length }} items)
+{% endblock title %}
+{% block page_heading %}
+    Clustered Papers for {{ question_label }} V{{ version }} Page {{ page_num }} ({{ papers|length }} items)
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="mb-3">
+        <a class="btn btn-success"
+           href="{% url 'cluster_groups' question_idx version page_num %}">
+            <i class="bi bi-chevron-left"></i>
+            Return to cluster groups
+        </a>
+    </div>
+    <div class="card my-2 px-3 py-3">
+        <form method="post" action="">
+            {% csrf_token %}
+            <div class="row row-cols-2 row-cols-md-4 g-3 mt-3">
+                {% for pn in papers %}
+                    <div class="col">
+                        <div class="card position-relative">
+                            {# 1) Visible checkbox for delete selection #}
+                            <input type="checkbox"
+                                   class="form-check-input position-absolute top-0 start-0 m-2 opacity-0"
+                                   name="delete_ids"
+                                   value="{{ pn }}"
+                                   id="chk-{{ pn }}">
+                            {# 2) Thumbnail label toggles the checkbox only #}
+                            <label class="form-check-label d-block" for="chk-{{ pn }}">
+                                <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
+                                     class="card-img-top"
+                                     style="cursor: pointer"
+                                     onerror="imgError(this)">
+                            </label>
+                            {# 3) Big red “X” overlay when marked (no d-none) #}
+                            <span class="delete-cross position-absolute top-50 start-50 translate-middle">
+                                <i class="bi bi-x-circle-fill fs-1 text-danger"></i>
+                            </span>
+                            {# 4) Zoom button in top-right (circular with red glow) #}
+                            <button type="button"
+                                    class="btn btn-primary btn-sm position-absolute top-0 end-0 m-2 zoom-circle"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modal-{{ pn }}">
+                                <i class="bi bi-arrows-angle-expand fs-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {# 5) Bootstrap modal for zoom #}
+                    <div class="modal fade"
+                         id="modal-{{ pn }}"
+                         tabindex="-1"
+                         aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content border-0 bg-transparent">
+                                <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
+                                     class="w-100 rounded">
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="submit"
+                    class="btn btn-danger mt-4"
+                    onclick="return confirm('Really delete selected images?');">Delete Selected</button>
+        </form>
+    </div>
+    <style>
+  /* hide the X by default, show when checked */
+  .delete-cross {
+    opacity: 0;
+    transition: opacity .2s ease;
+    z-index: 2;
+    pointer-events: none;
+  }
+  /* darken image when checked */
+  .form-check-input:checked + .form-check-label img {
+    filter: brightness(50%);
+  }
+  /* show the X overlay when checked */
+  .form-check-input:checked + .form-check-label + .delete-cross {
+    opacity: 1;
+  }
+  /* ensure checkbox remains on top and its checkmark is red */
+  .form-check-input {
+    z-index: 3;
+    accent-color: #dc3545;
+  }
+  /* style for the circular zoom button */
+  .zoom-circle {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+    </style>
+    <script>
+  function imgError(image) {
+    var span = document.createElement('span');
+    span.classList.add("alert", "alert-warning", "mx-2", "py-0");
+    span.innerText = "Could not extract rectangle.";
+    image.parentNode.insertBefore(span, image);
+    image.remove();
+  }
+    </script>
+{% endblock main_content %}

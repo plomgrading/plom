@@ -5,10 +5,10 @@
 {% extends "base/base.html" %}
 {% load static %}
 {% block title %}
-    Select rectangle for {{ q_label }} clustering from v {{ version }} p {{ page_number }}
+    Select rectangle for {{ q_label }} clustering from v {{ version }} p {{ page_num }}
 {% endblock title %}
 {% block page_heading %}
-    Select rectangle for {{ q_label }} clustering from v {{ version }} p {{ page_number }}
+    Select rectangle for {{ q_label }} clustering from v {{ version }} p {{ page_num }}
 {% endblock page_heading %}
 {% block main_content %}
     <div>
@@ -19,12 +19,12 @@
     </div>
     <div class="card m-2">
         <div class="card-body">
-            <h5 class="card-title">Version {{ version }} page {{ page_number }}</h5>
+            <h5 class="card-title">Version {{ version }} page {{ page_num }}</h5>
             <div class="row mb-4">
                 <div class="col-6">
                     <img id="reference_image"
                          class="border w-100"
-                         src="{% url 'reference_image' version page_number %}">
+                         src="{% url 'reference_image' version page_num %}">
                 </img>
                 <canvas id="canvas" style="position:absolute; left: 0px; top: 0px"></canvas>
             </div>

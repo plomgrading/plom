@@ -1,0 +1,42 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% load custom_tags %}
+{% block title %}
+    Cluster groups for {{ question_label }} V{{ version }} Page {{ page_num }}
+{% endblock title %}
+{% block page_heading %}
+    Cluster groups for {{ question_label }} V{{ version }} Page {{ page_num }}
+{% endblock page_heading %}
+{% block main_content %}
+    <div class="mb-3">
+        <a class="btn btn-success"
+           href="{% url 'question_clustering_jobs_home' %}">
+            <i class="bi bi-chevron-left"></i>
+            Return to question clustering jobs page
+        </a>
+    </div>
+    <div>
+        <table class="table table-sm table-bordered text-center sortable w-50">
+            <thead>
+                <tr>
+                    <th>ClusterId</th>
+                    <th>Counts</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for clusterId in cluster_groups %}
+                    <tr>
+                        <td>{{ clusterId }}</td>
+                        <td>{{ cluster_groups|get_item:clusterId }}</td>
+                        <td>
+                            <a class="btn btn-success btn-sm"
+                               href="{% url 'clustered_papers' question_idx version page_num clusterId %}">View</a>
+                            <a class="btn btn-danger btn-sm">Remove</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock main_content %}
