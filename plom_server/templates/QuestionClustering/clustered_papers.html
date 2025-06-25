@@ -22,24 +22,24 @@
                 {% for pn in papers %}
                     <div class="col">
                         <div class="card position-relative">
-                            {# 1) Visible checkbox for delete selection #}
+                            {# Visible checkbox for delete selection #}
                             <input type="checkbox"
                                    class="form-check-input position-absolute top-0 start-0 m-2 opacity-0"
                                    name="delete_ids"
                                    value="{{ pn }}"
                                    id="chk-{{ pn }}">
-                            {# 2) Thumbnail label toggles the checkbox only #}
+                            {# Thumbnail label toggles the checkbox only #}
                             <label class="form-check-label d-block" for="chk-{{ pn }}">
                                 <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
                                      class="card-img-top"
                                      style="cursor: pointer"
                                      onerror="imgError(this)">
                             </label>
-                            {# 3) Big red “X” overlay when marked (no d-none) #}
+                            {# Big red “X” overlay when marked (no d-none) #}
                             <span class="delete-cross position-absolute top-50 start-50 translate-middle">
                                 <i class="bi bi-x-circle-fill fs-1 text-danger"></i>
                             </span>
-                            {# 4) Zoom button in top-right (circular with red glow) #}
+                            {# Zoom button in top-right (circular with red glow) #}
                             <button type="button"
                                     class="btn btn-primary btn-sm position-absolute top-0 end-0 m-2 zoom-circle"
                                     data-bs-toggle="modal"
@@ -48,7 +48,7 @@
                             </button>
                         </div>
                     </div>
-                    {# 5) Bootstrap modal for zoom #}
+                    {# Bootstrap modal for zoom #}
                     <div class="modal fade"
                          id="modal-{{ pn }}"
                          tabindex="-1"
