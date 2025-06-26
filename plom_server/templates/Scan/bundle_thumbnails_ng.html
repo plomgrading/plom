@@ -61,7 +61,13 @@
                         <div class="row row-cols-auto gy-1 gx-1">
                             {% for pg in pages %}
                                 <!-- each of these fragments is in a div with a unique id - easy to target with htmx -->
-                                {% include "Scan/fragments/bundle_thumbnail_container_ng.html" with pg=pg %}
+                                <div id="fragmentcontainer-{{ pg.order }}"
+                                     hx-get="{% url 'single_thumbnail_container' bundle_id pg.order %}"
+                                     hx-trigger="thumbnailRefresh"
+                                     hx-swap="innerHTML"
+                                     hx-on="htmx:afterSwap: refreshThumbnailTooltip({{ pg.order }});refreshBundleSummary();clickThumbnail({{ pg.order }})">
+                                    {% include "Scan/fragments/bundle_thumbnail_container_ng.html" with pg=pg %}
+                                </div>
                             {% endfor %}
                         </div>
                     </div>
@@ -80,17 +86,17 @@
         </div>
         <!-- thumbnail container toggle uses radios, this changes radio appearance -->
         <style>
-	  input[type="radio"] {
+	  input[type="radio"][id^="pgradio-"] {
 	    display: none;
 	  }
 
 	  .radio-label {
-	    outline: none;
+	    outline:inner;
 	    border-radius: 6px;
 	    user-select: none;
 	  }
 
-	  input[type="radio"]:checked + .radio-label {
+	  input[type="radio"][id^="pgradio-"]:checked + .radio-label {
 	    outline: 3px solid #000000;
 	  }
 
@@ -99,6 +105,11 @@
 	  }
         </style>
         <script>
+        // https://getbootstrap.com/docs/5.3/components/tooltips
+	// create all tooltips when page is initially loaded
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
 	// iterate over the thumbnail containers and decide which to show/hide
 	// important to keep track of different None/none/null references between html, js, py
 	function filterPages(filter) {
@@ -134,37 +145,21 @@
 	}
 
 	// trigger a thumbnail to refresh using information from the server
-	// htmx.trigger triggers an asynchronous event - this function is untrackably asynchronous
+	// htmx.trigger isn't itself async, but it is used to trigger an async event
 	function refreshThumbnailContainer(index) {
-	    htmx.trigger(document.getElementById("pgcontainer-" + index), "customRefresh");
+	    htmx.trigger(document.getElementById("fragmentcontainer-" + index), "thumbnailRefresh");
 	}
 
 
+	// trigger the summary at the top of the page to refresh
 	function refreshBundleSummary() {
 	    htmx.trigger(document.getElementById("bundleSummary"), "summaryRefresh");
 	}
 
-        // https://getbootstrap.com/docs/5.3/components/tooltips
-	// create all tooltips when page is initially loaded
-        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 	// add a new tooltip to a thumbnail
 	function refreshThumbnailTooltip(index) {
 	    new bootstrap.Tooltip(document.getElementById("pgcontainer-" + index));
 	}
-
-	// TODO: this is what updates tooltips and the page summary after a thumbnail is refreshed.
-	// this listens for any 'afterSwap' events on htmx requests
-	// it is necessary because the thumbnail containers replace themselves and therefore
-	// the 'afterSwap' on the old thumbnail container is destroyed before it can execute
-	document.body.addEventListener('htmx:afterSwap', function(event_) {
-	    const htmx_target = event_.detail.target;
-	    if (htmx_target.id && htmx_target.id.startsWith('pgcontainer-')) {
-	    	const index = htmx_target.id.split('-')[1];
-	    	refreshThumbnailTooltip(index);
-		refreshBundleSummary();
-	    }
-	});
 
 	// click a particular thumbnail
 	function clickThumbnail(bundle_index) {

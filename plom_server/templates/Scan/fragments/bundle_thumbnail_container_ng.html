@@ -10,10 +10,6 @@
 <div id="pgcontainer-{{ pg.order }}"
      style="width: 6ch;
             height: 10ch"
-     hx-get="{% url 'single_thumbnail_container' bundle_id pg.order %}"
-     hx-trigger="customRefresh"
-     hx-swap="outerHTML"
-     hx-on="htmx:afterSwap: refreshThumbnailContainer({{ pg.order }})"
      data-status="{{ pg.status }}"
      data-paper_number="{{ pg.info.paper_number }}"
      data-bs-toggle="tooltip"
