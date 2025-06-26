@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2025 Aidan Murphy
 
 """Command line tool to start a Plom demonstration server."""
 
@@ -615,6 +616,7 @@ def _ensure_client_available():
     try:
         # tell MyPy to ignore this for testing
         import plomclient  # type: ignore[import-not-found]
+        from plomclient.common import __version__ as clientversion
     except ImportError as err:
         print("*" * 64)
         print()
@@ -623,7 +625,10 @@ def _ensure_client_available():
             f"which is not installed:\n  {err}.\n"
             "Either install plom-client, or stop the demo earlier."
         ) from None
-    print(f"Good we have plom-client installed, version {plomclient.__version__}")
+    print(
+        f"Good we have plom-client installed, version {clientversion},"
+        f" found at {plomclient}"
+    )
 
 
 def run_the_randoider(*, port):
