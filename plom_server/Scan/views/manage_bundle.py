@@ -328,6 +328,52 @@ class BundleThumbnailsView(ScannerRequiredView):
         return render(request, "Scan/bundle_thumbnails.html", context)
 
 
+class BundleThumbnailsSummaryFragmentView(ScannerRequiredView):
+    """Render summary information for a bundle.
+
+    Per the name this is only a fragment of an HTML page.
+    """
+
+    def get(self, request: HttpRequest, *, bundle_id: int) -> HttpResponse:
+
+        context = super().build_context()
+        scanner = ScanService()
+        bundle = scanner.get_bundle_from_pk(bundle_id)
+
+        # an ordered list of papers in the bundle and info about the pages for each paper that are in this bundle.
+        bundle_papers_pages_list = scanner.get_bundle_papers_pages_list(bundle)
+        bundle_incomplete_papers_list = [
+            X[0] for X in scanner.get_bundle_missing_paper_page_numbers(bundle)
+        ]
+        bundle_colliding_images = scanner.get_bundle_colliding_images(bundle)
+
+        context.update(
+            {
+                "slug": bundle.slug,
+                "n_collisions": len(bundle_colliding_images),
+                "n_incomplete": len(bundle_incomplete_papers_list),
+                "colliding_images_nice_format": format_int_list_with_runs(
+                    bundle_colliding_images
+                ),
+                "total_pages": scanner.get_n_images(bundle),
+                "known_pages": scanner.get_n_known_images(bundle),
+                "unknown_pages": scanner.get_n_unknown_images(bundle),
+                "extra_pages": scanner.get_n_extra_images(bundle),
+                "discard_pages": scanner.get_n_discard_images(bundle),
+                "error_pages": scanner.get_n_error_images(bundle),
+                "papers_pages_list": bundle_papers_pages_list,
+                "is_pushed": bundle.pushed,
+                "is_perfect": scanner.is_bundle_perfect(bundle.pk),
+                "has_page_images": bundle.has_page_images,
+                "finished_reading_qr": bundle.has_qr_codes,
+                "bundle": bundle,
+                "bundle_id": bundle.pk,
+            }
+        )
+
+        return render(request, "Scan/fragments/bundle_summary_ng.html", context)
+
+
 class GetBundleThumbnailView(ScannerRequiredView):
     """Return an image from a user-uploaded bundle."""
 

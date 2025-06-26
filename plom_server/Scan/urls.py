@@ -26,9 +26,10 @@ from .views import (
     SubstituteImageView,
     SubstituteImageWrapView,
     ###
+    BundleThumbnailsSummaryFragmentView,
     BundleThumbnailsView,
-    ThumbnailContainerFragmentView,
     BundleThumbnailsViewNg,
+    ThumbnailContainerFragmentView,
     GetBundleView,
     GetBundlePageFragmentViewNg,
     GetBundlePageFragmentView,
@@ -130,6 +131,11 @@ urlpatterns = [
         "thumbnail_container/<int:bundle_id>/<int:index>",
         ThumbnailContainerFragmentView.as_view(),
         name="single_thumbnail_container",
+    ),
+    path(
+        "thumbnails/summary-fragment/<int:bundle_id>",
+        BundleThumbnailsSummaryFragmentView.as_view(),
+        name="scan_bundle_summary",
     ),
     path(
         "thumbnails/<int:bundle_id>",

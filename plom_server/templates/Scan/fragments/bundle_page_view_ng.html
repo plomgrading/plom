@@ -36,12 +36,6 @@
                             {% if index == total_pages %}disabled{% endif %}>
                         <i class="bi bi-chevron-right"></i>
                     </button>
-                    <script>
-			function clickThumbnail(bundle_index) {
-			const target_thumbnail = document.getElementById("pgradio-" + bundle_index);
-			target_thumbnail.click();
-			}
-                    </script>
                 </div>
                 <div class="card-body p-2">
                     {% if current_page.status == 'known' %}

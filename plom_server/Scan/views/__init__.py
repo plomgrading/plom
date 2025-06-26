@@ -30,6 +30,7 @@ from .manage_bundle import (
     ThumbnailContainerFragmentView,
     BundleThumbnailsViewNg,
     BundleThumbnailsView,
+    BundleThumbnailsSummaryFragmentView,
     GetBundleThumbnailView,
     BundleLockView,
     BundlePushCollisionView,
