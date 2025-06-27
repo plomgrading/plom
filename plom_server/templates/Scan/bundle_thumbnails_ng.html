@@ -113,9 +113,10 @@
 	// iterate over the thumbnail containers and decide which to show/hide
 	// important to keep track of different None/none/null references between html, js, py
 	function filterPages(filter) {
-	  document.querySelectorAll('div[id^="pgcontainer-"]').forEach(div => {
-	    const status_ = div.dataset.status;
-	    const paper_number = div.dataset.paper_number;
+	  document.querySelectorAll('div[id^="fragmentcontainer-"]').forEach(div => {
+	    const pg_container = div.firstElementChild;
+	    const status_ = pg_container.dataset.status;
+	    const paper_number = pg_container.dataset.paper_number;
 	    const extra_missing_info = status_ == "extra" && paper_number == "None";
 
 	    switch (filter) {
