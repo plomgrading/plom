@@ -210,7 +210,8 @@
                                 Cast to unknown page</a>
                             </div>
                             <div>
-                                <a class="btn btn-outline-danger text-center w-100 mb-3">
+                                <a class="btn btn-outline-danger text-center w-100 mb-3"
+                                   hx-post="{% url 'unknowify_all_discards_ng' bundle_id %}">
                                     <i class="bi bi-exclamation-diamond-fill text-danger"></i>
                                     Cast all discards to unknown pages
                                     <i class="bi bi-exclamation-diamond-fill text-danger"></i>
@@ -219,7 +220,8 @@
                         {% elif current_page.status == 'unknown' %}
                             <!-- stuff unique to unknown pages -->
                             <div>
-                                <a class="btn btn-danger text-centre w-100 mb-3">
+                                <a class="btn btn-danger text-centre w-100 mb-3"
+                                   hx-post="{% url 'discard_all_unknowns_ng' bundle_id %}">
                                     <i class="bi bi-exclamation-diamond-fill text-bg-danger"></i>
                                     Discard all unknown pages
                                     <i class="bi bi-exclamation-diamond-fill text-bg-danger"></i>

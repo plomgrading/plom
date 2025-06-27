@@ -39,6 +39,7 @@ from .views import (
     DiscardImageViewNg,
     DiscardImageView,
     DiscardAllUnknownsHTMXView,
+    DiscardAllUnknownsHTMXViewNg,
     ExtraliseImageView,
     ExtraliseImageViewNg,
     KnowifyImageView,
@@ -46,6 +47,7 @@ from .views import (
     UnknowifyImageView,
     UnknowifyImageViewNg,
     UnknowifyAllDiscardsHTMXView,
+    UnknowifyAllDiscardsHTMXViewNg,
     RotateImageView,
     BundleLockView,
     BundlePushCollisionView,
@@ -182,6 +184,11 @@ urlpatterns = [
         name="discard_all_unknowns",
     ),
     path(
+        "discard_unknowns/<int:bundle_id>/",
+        DiscardAllUnknownsHTMXViewNg.as_view(),
+        name="discard_all_unknowns_ng",
+    ),
+    path(
         "unknowify/<str:the_filter>/<int:bundle_id>/<int:index>/",
         UnknowifyImageView.as_view(),
         name="unknowify_image",
@@ -195,6 +202,11 @@ urlpatterns = [
         "unknowify_discards/<str:the_filter>/<int:bundle_id>/<int:pop_index>/",
         UnknowifyAllDiscardsHTMXView.as_view(),
         name="unknowify_all_discards",
+    ),
+    path(
+        "unknowify_discards/<int:bundle_id>/",
+        UnknowifyAllDiscardsHTMXViewNg.as_view(),
+        name="unknowify_all_discards_ng",
     ),
     path(
         "knowify/<str:the_filter>/<int:bundle_id>/<int:index>/",

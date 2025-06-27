@@ -7,7 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import render
 from django.urls import reverse
-from django_htmx.http import HttpResponseClientRedirect
+from django_htmx.http import HttpResponseClientRedirect, HttpResponseClientRefresh
 
 from plom_server.Base.base_group_views import ScannerRequiredView
 from plom_server.Papers.services import SpecificationService, PaperInfoService
@@ -103,6 +103,27 @@ class DiscardAllUnknownsHTMXView(ScannerRequiredView):
             )
 
 
+class DiscardAllUnknownsHTMXViewNg(ScannerRequiredView):
+    def post(
+        self,
+        request: HttpRequest,
+        *,
+        bundle_id: int,
+    ) -> HttpResponse:
+        """View that discards all unknowns from the given bundle."""
+        try:
+            ScanCastService().discard_all_unknowns_from_bundle_id(
+                request.user, bundle_id
+            )
+        except ValueError as e:
+            raise Http404(e)
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[bundle_id])
+            )
+        return HttpResponseClientRefresh()
+
+
 class UnknowifyImageViewNg(ScannerRequiredView):
     """Unknowify a particular StagingImage type."""
 
@@ -146,6 +167,27 @@ class UnknowifyImageView(ScannerRequiredView):
             reverse("scan_bundle_thumbnails", args=[the_filter, bundle_id])
             + f"?pop={index}"
         )
+
+
+class UnknowifyAllDiscardsHTMXViewNg(ScannerRequiredView):
+    def post(
+        self,
+        request: HttpRequest,
+        *,
+        bundle_id: int,
+    ) -> HttpResponse:
+        """View that casts all discards in the given bundle as unknowns."""
+        try:
+            ScanCastService().unknowify_all_discards_from_bundle_id(
+                request.user, bundle_id
+            )
+        except ValueError as e:
+            raise Http404(e)
+        except PlomBundleLockedException:
+            return HttpResponseClientRedirect(
+                reverse("scan_bundle_lock", args=[bundle_id])
+            )
+        return HttpResponseClientRefresh()
 
 
 class UnknowifyAllDiscardsHTMXView(ScannerRequiredView):

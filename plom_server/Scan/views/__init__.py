@@ -52,6 +52,7 @@ from .cast_image_state import (
     DiscardImageViewNg,
     DiscardImageView,
     DiscardAllUnknownsHTMXView,
+    DiscardAllUnknownsHTMXViewNg,
     ExtraliseImageView,
     ExtraliseImageViewNg,
     KnowifyImageView,
@@ -59,6 +60,7 @@ from .cast_image_state import (
     UnknowifyImageView,
     UnknowifyImageViewNg,
     UnknowifyAllDiscardsHTMXView,
+    UnknowifyAllDiscardsHTMXViewNg,
 )
 
 from .rotate_images import RotateImageView
