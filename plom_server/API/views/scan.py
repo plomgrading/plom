@@ -189,7 +189,9 @@ class ScanMapBundle(APIView):
 
         if page_dest == "discard":
             try:
-                ScanService.discard_staging_bundle_page(bundle_id, page)
+                ScanService.discard_staging_bundle_page(
+                    bundle_id, page, user=request.user
+                )
             except ValueError as e:
                 return _error_response(e, status.HTTP_400_BAD_REQUEST)
             except ObjectDoesNotExist as e:
@@ -221,7 +223,11 @@ class ScanMapBundle(APIView):
 
         try:
             ScanService().map_bundle_page(
-                bundle_id, page, papernum=papernum, question_indices=question_idx_list
+                bundle_id,
+                page,
+                user=request.user,
+                papernum=papernum,
+                question_indices=question_idx_list,
             )
         except ValueError as e:
             return _error_response(e, status.HTTP_400_BAD_REQUEST)

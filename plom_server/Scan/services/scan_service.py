@@ -659,6 +659,7 @@ class ScanService:
         bundle_id: int,
         page: int,
         *,
+        user: User,
         papernum: int,
         question_indices: list[int],
     ) -> None:
@@ -677,6 +678,7 @@ class ScanService:
             page: one-based index of the page in the bundle to be mapped.
 
         Keyword Args:
+            user: who is doing this operation?
             papernum: the number of the target paper.
             question_indices: a variable-length list of which questions (by
                 one-based question index) to attach the page to.
@@ -695,13 +697,6 @@ class ScanService:
             f"and target papernum={papernum}, question_indices={question_indices}."
         )
 
-        try:
-            user_obj = User.objects.get(
-                username__iexact="manager", groups__name="scanner"
-            )
-        except ObjectDoesNotExist:
-            raise ValueError("User 'manager' does not exist or has wrong permissions!")
-
         if not question_indices:
             raise ValueError("You must supply a list of question indices")
 
@@ -719,11 +714,9 @@ class ScanService:
                 f"to paper {papernum} with list {question_indices}."
             )
             if page_img.image_type != StagingImage.EXTRA:
-                ScanCastService.extralise_image_from_bundle_id(
-                    user_obj, bundle_id, page
-                )
+                ScanCastService.extralise_image_from_bundle_id(user, bundle_id, page)
             ScanCastService.assign_extra_page_from_bundle_pk_and_order(
-                user_obj,
+                user,
                 bundle_id,
                 page,
                 papernum,
@@ -746,9 +739,7 @@ class ScanService:
 
     @classmethod
     def discard_staging_bundle_page(
-        cls,
-        bundle_id: int,
-        page: int,
+        cls, bundle_id: int, page: int, *, user: User
     ) -> None:
         """Discard one page of a staged bundle.
 
@@ -762,18 +753,15 @@ class ScanService:
             bundle_id: unique integer identifier of bundle DB object.
             page: one-based index of the page in the bundle to be discarded.
 
+        Keyword Args:
+            user: who is doing this operation?
+
         Raises:
             ObjectDoesNotExist: no such BundleImage, e.g., invalid bundle id or page
+            PermissionDenied: not in the scanner group.
             ValueError: May be raised by supporting methods from class ScanCastService.
         """
         log.debug(f"Starting discard of bundle_id={bundle_id}, page={page}")
-
-        try:
-            user_obj = User.objects.get(
-                username__iexact="manager", groups__name="scanner"
-            )
-        except ObjectDoesNotExist:
-            raise ValueError("User 'manager' does not exist or has wrong permissions!")
 
         with transaction.atomic():
             page_img = StagingImage.objects.get(bundle__pk=bundle_id, bundle_order=page)
@@ -781,7 +769,7 @@ class ScanService:
             log.info(f"Trying to mark page with id {page_img.pk} for DISCARD.")
             if page_img.image_type != StagingImage.DISCARD:
                 ScanCastService.discard_image_type_from_bundle_id_and_order(
-                    user_obj, bundle_id, page
+                    user, bundle_id, page
                 )
             pi_updated = StagingImage.objects.get(
                 bundle__pk=bundle_id, bundle_order=page
