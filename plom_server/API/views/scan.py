@@ -177,6 +177,15 @@ class ScanMapBundle(APIView):
         data = request.query_params
 
         page_dest = data.get("page_dest")  # Expect one of "all", "dnm", "discard"
+        question_idx_list = data.getlist("qidx")
+        papernum = data.get("papernum")
+
+        if page_dest is not None and question_idx_list:
+            return _error_response(
+                f'Do not specify both a keyword "{page_dest}" and'
+                f' qidx "{question_idx_list}" in the same call',
+                status.HTTP_400_BAD_REQUEST,
+            )
 
         if page_dest == "discard":
             try:
@@ -191,7 +200,6 @@ class ScanMapBundle(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         if page_dest is None:
-            question_idx_list = data.getlist("qidx")
             try:
                 question_idx_list = [int(n) for n in question_idx_list]
             except ValueError as e:
@@ -210,8 +218,6 @@ class ScanMapBundle(APIView):
                 f"Cannot construct list of questions from {data}",
                 status.HTTP_400_BAD_REQUEST,
             )
-
-        papernum = data.get("papernum")
 
         try:
             ScanService().map_bundle_page(
