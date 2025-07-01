@@ -321,7 +321,6 @@ def get_parser() -> argparse.ArgumentParser:
             particular paper but sets it "Do Not Mark".
             `-q discard` discards the page.
             An empty list will is currently the same as `-q all`.
-            TODO: discard, dnm and all are currently "in-flux".
         """,
     )
     _add_server_args(sp_map)
