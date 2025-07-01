@@ -161,6 +161,8 @@ class TestClasslistService(TestCase):
             self.assertListEqual(warn_err, [])
 
     def test_misdetected_dialect_bom_crlf_issue_3938_example2(self) -> None:
+        # This looks similar to the previous test, but the old sniffer-based code
+        # would fail differently: I think it detect "e" as the separator here.
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpfile = Path(tmpdir) / "foo.csv"
             # tmpfile = Path("/home/cbm") / "foo.csv"
