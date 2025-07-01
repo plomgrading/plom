@@ -721,7 +721,7 @@ class ScanService:
                 if papernum is None:
                     raise ValueError("You must specify papernum when mapping a page")
                 if page_img.image_type != StagingImage.EXTRA:
-                    ScanCastService().extralise_image_from_bundle_id(
+                    ScanCastService.extralise_image_from_bundle_id(
                         user_obj, bundle_id, page
                     )
                 ScanCastService.assign_extra_page_from_bundle_pk_and_order(
