@@ -85,7 +85,7 @@ class ScanCastServiceTests(TestCase):
                 "user1", "testbundle", ord, image_type=StagingImage.ERROR
             )
         with self.assertRaises(PermissionDenied):
-            ScanCastService().nknowify_image_type_from_bundle_cmd(
+            ScanCastService().unknowify_image_type_from_bundle_cmd(
                 "user1", "testbundle", ord, image_type=StagingImage.ERROR
             )
 
