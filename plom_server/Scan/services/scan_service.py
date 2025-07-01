@@ -691,8 +691,8 @@ class ScanService:
             ObjectDoesNotExist: no such BundleImage, e.g., invalid bundle id or page
             ValueError: May be raised by supporting methods from class ScanCastService.
         """
-        print(
-            f"DEBUG: Starting map_bundle_page with bundle_id={bundle_id}, page={page} "
+        log.debug(
+            f"Starting map_bundle_page with bundle_id={bundle_id}, page={page} "
             f"and target papernum={papernum}, question_indices={question_indices}."
         )
 
@@ -716,7 +716,7 @@ class ScanService:
             if question_indices:
                 if question_indices == [MobilePage.DNM_qidx]:
                     question_indices = []
-                print(
+                log.info(
                     f"Mapping page with id {page_img.pk} and type {page_img.image_type} "
                     f"to paper {papernum} with list {question_indices}."
                 )
@@ -734,13 +734,13 @@ class ScanService:
                 pi_updated = StagingImage.objects.get(
                     bundle__pk=bundle_id, bundle_order=page
                 )
-                print(
+                log.debug(
                     f"After update, id is {pi_updated.pk} and type is {pi_updated.image_type}."
                 )
             else:
                 # if papernum is not None:
                 #     warn("papernum was specified while discarding; ignored")
-                print(f"Trying to mark page with id {page_img.pk} for DISCARD.")
+                log.debug(f"Trying to mark page with id {page_img.pk} for DISCARD.")
                 if page_img.image_type != StagingImage.DISCARD:
                     SCS.discard_image_type_from_bundle_id_and_order(
                         user_obj, bundle_id, page
@@ -748,7 +748,7 @@ class ScanService:
                 pi_updated = StagingImage.objects.get(
                     bundle__pk=bundle_id, bundle_order=page
                 )
-                print(
+                log.debug(
                     f"After update, id is {pi_updated.pk} and type is {pi_updated.image_type}."
                 )
 
