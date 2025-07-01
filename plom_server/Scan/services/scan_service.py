@@ -663,7 +663,7 @@ class ScanService:
         papernum: int,
         question_indices: list[int],
     ) -> None:
-        """Map one page of a bundle onto zero or more questions.
+        """Map one page of a staged bundle onto zero or more questions.
 
         After mapping, the page will have type EXTRA.
 
