@@ -387,9 +387,9 @@ class ScanCastService:
             UnknownStagingImage.objects.create(staging_image=img)
             img.save()
 
+    @staticmethod
     @transaction.atomic
     def _assign_extra_page(
-        self,
         user_obj: User,
         bundle_obj: StagingBundle,
         bundle_order: int,
@@ -467,9 +467,9 @@ class ScanCastService:
         eximg.question_idx_list = assign_to_question_indices
         eximg.save()
 
-    @transaction.atomic
+    @classmethod
     def assign_extra_page_from_bundle_pk_and_order(
-        self,
+        cls,
         user_obj: User,
         bundle_id: int,
         bundle_order: int,
@@ -477,7 +477,7 @@ class ScanCastService:
         assign_to_question_indices: list[int],
     ) -> None:
         bundle_obj = StagingBundle.objects.get(pk=bundle_id)
-        self._assign_extra_page(
+        cls._assign_extra_page(
             user_obj,
             bundle_obj,
             bundle_order,
@@ -485,9 +485,9 @@ class ScanCastService:
             assign_to_question_indices,
         )
 
-    @transaction.atomic
+    @classmethod
     def assign_extra_page_cmd(
-        self,
+        cls,
         username: str,
         bundle_name: str,
         bundle_order: int,
@@ -525,7 +525,7 @@ class ScanCastService:
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
-        self._assign_extra_page(
+        cls._assign_extra_page(
             user_obj,
             bundle_obj,
             bundle_order,

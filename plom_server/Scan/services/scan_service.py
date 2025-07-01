@@ -703,8 +703,6 @@ class ScanService:
         except ObjectDoesNotExist:
             raise ValueError("User 'manager' does not exist or has wrong permissions!")
 
-        SCS = ScanCastService()
-
         with transaction.atomic():
             page_img = StagingImage.objects.get(bundle__pk=bundle_id, bundle_order=page)
 
@@ -723,8 +721,10 @@ class ScanService:
                 if papernum is None:
                     raise ValueError("You must specify papernum when mapping a page")
                 if page_img.image_type != StagingImage.EXTRA:
-                    SCS.extralise_image_from_bundle_id(user_obj, bundle_id, page)
-                SCS.assign_extra_page_from_bundle_pk_and_order(
+                    ScanCastService().extralise_image_from_bundle_id(
+                        user_obj, bundle_id, page
+                    )
+                ScanCastService.assign_extra_page_from_bundle_pk_and_order(
                     user_obj,
                     bundle_id,
                     page,
@@ -742,7 +742,7 @@ class ScanService:
                 #     warn("papernum was specified while discarding; ignored")
                 log.debug(f"Trying to mark page with id {page_img.pk} for DISCARD.")
                 if page_img.image_type != StagingImage.DISCARD:
-                    SCS.discard_image_type_from_bundle_id_and_order(
+                    ScanCastService().discard_image_type_from_bundle_id_and_order(
                         user_obj, bundle_id, page
                     )
                 pi_updated = StagingImage.objects.get(
