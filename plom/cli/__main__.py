@@ -305,9 +305,6 @@ def get_parser() -> argparse.ArgumentParser:
             Which paper number to attach the page to.
             It must exist; you must create it first with appropriate
             versions.
-            TODO: argparse has this as optional but no default setting
-            for this yet: maybe it should assign to the next available
-            paper number or something like that?
         """,
     )
     sp_map.add_argument(
