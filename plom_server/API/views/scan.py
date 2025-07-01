@@ -151,7 +151,11 @@ class ScanMapBundle(APIView):
         """API to map one page of a Staging Bundle onto questions.
 
         Args:
-            request: A Request object with some important clues in the GET fields
+            request: A Request object with some important clues in the
+                query parameters: `papernum` indicates to which paper to
+                assign the page.  `qidx` indicates a question index and
+                maybe be repeated.  `page_dest` specifies a string, "all",
+                "dnm" or "discard".
 
         Keyword Args:
             bundle_id: the integer that uniquely identifies which bundle to work on.
@@ -171,7 +175,7 @@ class ScanMapBundle(APIView):
             )
         data = request.query_params
 
-        papernum = data.get("papernum")
+        papernum = data.get("papernum", None)
 
         question_idx_list = data.getlist("qidx")
         try:

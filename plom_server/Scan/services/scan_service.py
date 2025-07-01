@@ -659,7 +659,7 @@ class ScanService:
         bundle_id: int,
         page: int,
         *,
-        papernum: int,
+        papernum: int | None = None,
         question_indices: list[int],
     ) -> None:
         """Map one page of a bundle onto zero or more questions.
@@ -677,7 +677,8 @@ class ScanService:
             page: one-based index of the page in the bundle to be mapped.
 
         Keyword Args:
-            papernum: the number of the target test-paper
+            papernum: the number of the target paper, can be None if we're
+                discarding the page.
             question_indices: a variable-length list of which questions (by
                 one-based question index) to attach the page to. Two special
                 cases are available. If the list is empty the page gets discarded.
@@ -716,8 +717,11 @@ class ScanService:
                 if question_indices == [MobilePage.DNM_qidx]:
                     question_indices = []
                 print(
-                    f"Mapping page with id {page_img.pk} and type {page_img.image_type} to paper {papernum} with list {question_indices}."
+                    f"Mapping page with id {page_img.pk} and type {page_img.image_type} "
+                    f"to paper {papernum} with list {question_indices}."
                 )
+                if papernum is None:
+                    raise ValueError("You must specify papernum when mapping a page")
                 if page_img.image_type != StagingImage.EXTRA:
                     SCS.extralise_image_from_bundle_id(user_obj, bundle_id, page)
                 SCS.assign_extra_page_from_bundle_pk_and_order(
@@ -734,6 +738,8 @@ class ScanService:
                     f"After update, id is {pi_updated.pk} and type is {pi_updated.image_type}."
                 )
             else:
+                # if papernum is not None:
+                #     warn("papernum was specified while discarding; ignored")
                 print(f"Trying to mark page with id {page_img.pk} for DISCARD.")
                 if page_img.image_type != StagingImage.DISCARD:
                     SCS.discard_image_type_from_bundle_id_and_order(
