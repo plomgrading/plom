@@ -616,7 +616,7 @@ def _ensure_client_available():
     try:
         # tell MyPy to ignore this for testing
         import plomclient  # type: ignore[import-not-found]
-        from plomclient.common import __version__ as clientversion  # type: ignore
+        from plomclient.client import __version__ as clientversion  # type: ignore
     except ImportError as err:
         print("*" * 64)
         print()
