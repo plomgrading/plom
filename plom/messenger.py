@@ -1018,6 +1018,8 @@ class Messenger(BaseMessenger):
                 query_args.append("page_dest=discard")
             elif all(isinstance(n, int) or n.isdecimal() for n in questions):
                 query_args.extend([f"qidx={n}" for n in questions])
+            else:
+                raise ValueError(f"unexpected input: questions={questions}")
         else:
             if len(questions) == 0:
                 query_args.append("page_dest=all")
