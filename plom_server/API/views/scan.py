@@ -155,7 +155,8 @@ class ScanMapBundle(APIView):
                 query parameters: `papernum` indicates to which paper to
                 assign the page.  `qidx` indicates a question index and
                 maybe be repeated.  `page_dest` specifies a string, "all",
-                "dnm" or "discard".
+                "dnm" or "discard".  If you pass `page_dest`, you should
+                *not* pass `qidx` as well.
 
         Keyword Args:
             bundle_id: the integer that uniquely identifies which bundle to work on.
@@ -175,32 +176,42 @@ class ScanMapBundle(APIView):
             )
         data = request.query_params
 
-        papernum = data.get("papernum", None)
+        page_dest = data.get("page_dest")  # Expect one of "all", "dnm", "discard"
 
-        question_idx_list = data.getlist("qidx")
-        try:
-            question_idx_list = [int(n) for n in question_idx_list]
-        except ValueError as e:
+        if page_dest == "discard":
+            try:
+                ScanService.discard_staging_bundle_page(bundle_id, page)
+            except ValueError as e:
+                return _error_response(e, status.HTTP_400_BAD_REQUEST)
+            except ObjectDoesNotExist as e:
+                return _error_response(
+                    f"Probably no bundle id {bundle_id} or page {page}: {e}",
+                    status.HTTP_404_NOT_FOUND,
+                )
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        if page_dest is None:
+            question_idx_list = data.getlist("qidx")
+            try:
+                question_idx_list = [int(n) for n in question_idx_list]
+            except ValueError as e:
+                return _error_response(
+                    f"ScanMapBundle got a non-integer qidx: {e}",
+                    status.HTTP_400_BAD_REQUEST,
+                )
+        elif page_dest == "all":
+            question_idx_list = [
+                1 + j for j in range(SpecificationService.get_n_questions())
+            ]
+        elif page_dest == "dnm":
+            question_idx_list = [MobilePage.DNM_qidx]
+        else:
             return _error_response(
-                f"ScanMapBundle got a non-integer qidx: {e}",
+                f"Cannot construct list of questions from {data}",
                 status.HTTP_400_BAD_REQUEST,
             )
 
-        if not question_idx_list:
-            page_dest = data.get("page_dest")  # Expect one of "all", "dnm", "discard"
-            if page_dest == "all":
-                question_idx_list = [
-                    1 + j for j in range(SpecificationService.get_n_questions())
-                ]
-            elif page_dest == "dnm":
-                question_idx_list = [MobilePage.DNM_qidx]
-            elif page_dest == "discard":
-                question_idx_list = []
-            else:
-                return _error_response(
-                    f"Impossible to construct list of questions from {data}",
-                    status.HTTP_400_BAD_REQUEST,
-                )
+        papernum = data.get("papernum")
 
         try:
             ScanService().map_bundle_page(

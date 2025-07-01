@@ -659,7 +659,7 @@ class ScanService:
         bundle_id: int,
         page: int,
         *,
-        papernum: int | None = None,
+        papernum: int,
         question_indices: list[int],
     ) -> None:
         """Map one page of a bundle onto zero or more questions.
@@ -677,11 +677,10 @@ class ScanService:
             page: one-based index of the page in the bundle to be mapped.
 
         Keyword Args:
-            papernum: the number of the target paper, can be None if we're
-                discarding the page.
+            papernum: the number of the target paper.
             question_indices: a variable-length list of which questions (by
-                one-based question index) to attach the page to. Two special
-                cases are available. If the list is empty the page gets discarded.
+                one-based question index) to attach the page to.
+                It is an error if the list is empty.
                 If the list is the singleton [MobilePage.DNM_qidx], the page
                 gets attached to the DNM group for the given papernum.
                 See comments in the code about this interpretation: other parts
@@ -703,54 +702,39 @@ class ScanService:
         except ObjectDoesNotExist:
             raise ValueError("User 'manager' does not exist or has wrong permissions!")
 
+        if not question_indices:
+            raise ValueError("You must supply a list of question indices")
+
         with transaction.atomic():
             page_img = StagingImage.objects.get(bundle__pk=bundle_id, bundle_order=page)
 
-            # TODO: Check design assumptions here. We interpret [] as DISCARD,
-            # and [MobilePage.DNM_qidx] as DNM. But the downstream bundle-pusher
-            # expects [] to indicate DNM. That all gets handled below.
+            # TODO: Check design assumptions here. We interpret [MobilePage.DNM_qidx]
+            # as DNM. But the downstream bundle-pusher expects [] to indicate DNM.
             # Shout-out to check_question_list() found in plom/scan/question_list_utils.py,
             # where competing interpretations can be found.
-            if question_indices:
-                if question_indices == [MobilePage.DNM_qidx]:
-                    question_indices = []
-                log.info(
-                    f"Mapping page with id {page_img.pk} and type {page_img.image_type} "
-                    f"to paper {papernum} with list {question_indices}."
+            if question_indices == [MobilePage.DNM_qidx]:
+                question_indices = []
+            log.info(
+                f"Mapping page with id {page_img.pk} and type {page_img.image_type} "
+                f"to paper {papernum} with list {question_indices}."
+            )
+            if page_img.image_type != StagingImage.EXTRA:
+                ScanCastService.extralise_image_from_bundle_id(
+                    user_obj, bundle_id, page
                 )
-                if papernum is None:
-                    raise ValueError("You must specify papernum when mapping a page")
-                if page_img.image_type != StagingImage.EXTRA:
-                    ScanCastService.extralise_image_from_bundle_id(
-                        user_obj, bundle_id, page
-                    )
-                ScanCastService.assign_extra_page_from_bundle_pk_and_order(
-                    user_obj,
-                    bundle_id,
-                    page,
-                    papernum,
-                    question_indices,
-                )
-                pi_updated = StagingImage.objects.get(
-                    bundle__pk=bundle_id, bundle_order=page
-                )
-                log.debug(
-                    f"After update, id is {pi_updated.pk} and type is {pi_updated.image_type}."
-                )
-            else:
-                # if papernum is not None:
-                #     warn("papernum was specified while discarding; ignored")
-                log.debug(f"Trying to mark page with id {page_img.pk} for DISCARD.")
-                if page_img.image_type != StagingImage.DISCARD:
-                    ScanCastService.discard_image_type_from_bundle_id_and_order(
-                        user_obj, bundle_id, page
-                    )
-                pi_updated = StagingImage.objects.get(
-                    bundle__pk=bundle_id, bundle_order=page
-                )
-                log.debug(
-                    f"After update, id is {pi_updated.pk} and type is {pi_updated.image_type}."
-                )
+            ScanCastService.assign_extra_page_from_bundle_pk_and_order(
+                user_obj,
+                bundle_id,
+                page,
+                papernum,
+                question_indices,
+            )
+            pi_updated = StagingImage.objects.get(
+                bundle__pk=bundle_id, bundle_order=page
+            )
+            log.debug(
+                f"After update, id is {pi_updated.pk} and type is {pi_updated.image_type}."
+            )
 
             # TODO: Issue #3770.
             # bundle_obj = (
@@ -759,6 +743,52 @@ class ScanService:
             # finally - mark the bundle as having had its qr-codes read.
             # bundle_obj.has_qr_codes = True
             # bundle_obj.save()
+
+    @classmethod
+    def discard_staging_bundle_page(
+        cls,
+        bundle_id: int,
+        page: int,
+    ) -> None:
+        """Discard one page of a staged bundle.
+
+        Any page with one of the types UNKNOWN, ERROR, KNOWN, or DISCARD
+        can be discarded.  This is a frontend to some lower-level routines:
+        at a lower-level it is an error to re-discard an already discarded
+        page so this routine checks and does a no-op if the page is already
+        discarded.
+
+        Args:
+            bundle_id: unique integer identifier of bundle DB object.
+            page: one-based index of the page in the bundle to be discarded.
+
+        Raises:
+            ObjectDoesNotExist: no such BundleImage, e.g., invalid bundle id or page
+            ValueError: May be raised by supporting methods from class ScanCastService.
+        """
+        log.debug(f"Starting discard of bundle_id={bundle_id}, page={page}")
+
+        try:
+            user_obj = User.objects.get(
+                username__iexact="manager", groups__name="scanner"
+            )
+        except ObjectDoesNotExist:
+            raise ValueError("User 'manager' does not exist or has wrong permissions!")
+
+        with transaction.atomic():
+            page_img = StagingImage.objects.get(bundle__pk=bundle_id, bundle_order=page)
+
+            log.info(f"Trying to mark page with id {page_img.pk} for DISCARD.")
+            if page_img.image_type != StagingImage.DISCARD:
+                ScanCastService.discard_image_type_from_bundle_id_and_order(
+                    user_obj, bundle_id, page
+                )
+            pi_updated = StagingImage.objects.get(
+                bundle__pk=bundle_id, bundle_order=page
+            )
+            log.debug(
+                f"After update, id is {pi_updated.pk} and type is {pi_updated.image_type}."
+            )
 
     def map_bundle_pages(
         self,
