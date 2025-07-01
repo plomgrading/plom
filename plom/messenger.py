@@ -978,6 +978,7 @@ class Messenger(BaseMessenger):
             PlomNoPermission
             PlomRangeException
             PlomSeriousException
+            ValueError: malformed input that we detected before communication.
 
         Returns:
             None
@@ -1003,10 +1004,9 @@ class Messenger(BaseMessenger):
                     or "dnm" in lc_questions
                     or "discard" in lc_questions
                 ):
-                    print(
+                    raise ValueError(
                         "Mapping error in Messenger: keyword directives must be isolated."
                     )
-                    return
             if "all" in lc_questions:
                 query_args.append("page_dest=all")
             elif "dnm" in lc_questions:
