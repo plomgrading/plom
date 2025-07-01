@@ -28,5 +28,7 @@ def bundle_map_page(
     # TODO: deal with "all" and "dnm"
     if questions == "all":
         questions = list(msgr.get_spec()["question"].keys())
-    r = msgr.new_server_bundle_map_page(bundle_id, page, papernum, questions)
+    r = msgr.new_server_bundle_map_page(
+        bundle_id, page, papernum=papernum, questions=questions
+    )
     print(r)

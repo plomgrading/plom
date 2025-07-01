@@ -952,6 +952,7 @@ class Messenger(BaseMessenger):
         self,
         bundle_id: int,
         page: int,
+        *,
         papernum: int,
         questions: int | str | list[int | str],
     ) -> None:
@@ -962,6 +963,8 @@ class Messenger(BaseMessenger):
         Args:
             bundle_id: the (unstaged) bundle's primary key, an integer
             page: the 1-based index of the page of interest in that bundle
+
+        Keyword Args:
             papernum: the target paper number for this page
             questions: A list of question(s) to which this page should be attached.
                 Each list entry can be either an integer question index
