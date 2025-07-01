@@ -68,9 +68,9 @@ class ScanCastService:
     # Page casting
     # ----------------------------------------
 
-    @transaction.atomic
+    @classmethod
     def discard_image_type_from_bundle_id_and_order(
-        self, user_obj: User, bundle_id: int, bundle_order: int
+        cls, user_obj: User, bundle_id: int, bundle_order: int
     ) -> None:
         """A wrapper around ``discard_image_type_from_bundle``.
 
@@ -98,13 +98,13 @@ class ScanCastService:
             raise ValueError(
                 f"Cannot find an image for bundle {bundle_id} order {bundle_order}"
             )
-        self.discard_image_type_from_bundle(
+        cls.discard_image_type_from_bundle(
             user_obj, bundle_obj, bundle_order, image_type=img_obj.image_type
         )
 
+    @staticmethod
     @transaction.atomic
     def discard_image_type_from_bundle(
-        self,
         user_obj: User,
         bundle_obj: StagingBundle,
         bundle_order: int,
@@ -180,9 +180,9 @@ class ScanCastService:
         DiscardStagingImage.objects.create(staging_image=img, discard_reason=reason)
         img.save()
 
-    @transaction.atomic
+    @classmethod
     def discard_image_type_from_bundle_cmd(
-        self,
+        cls,
         username: str,
         bundle_name: str,
         bundle_order: int,
@@ -195,7 +195,7 @@ class ScanCastService:
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
-        self.discard_image_type_from_bundle(
+        cls.discard_image_type_from_bundle(
             user_obj, bundle_obj, bundle_order, image_type=image_type
         )
 

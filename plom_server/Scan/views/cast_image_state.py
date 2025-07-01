@@ -28,7 +28,7 @@ class DiscardImageView(ScannerRequiredView):
         self, request: HttpRequest, *, the_filter: str, bundle_id: int, index: int
     ) -> HttpResponse:
         try:
-            ScanCastService().discard_image_type_from_bundle_id_and_order(
+            ScanCastService.discard_image_type_from_bundle_id_and_order(
                 request.user, bundle_id, index
             )
         except ValueError as e:

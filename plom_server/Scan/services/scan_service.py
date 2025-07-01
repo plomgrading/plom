@@ -742,7 +742,7 @@ class ScanService:
                 #     warn("papernum was specified while discarding; ignored")
                 log.debug(f"Trying to mark page with id {page_img.pk} for DISCARD.")
                 if page_img.image_type != StagingImage.DISCARD:
-                    ScanCastService().discard_image_type_from_bundle_id_and_order(
+                    ScanCastService.discard_image_type_from_bundle_id_and_order(
                         user_obj, bundle_id, page
                     )
                 pi_updated = StagingImage.objects.get(
