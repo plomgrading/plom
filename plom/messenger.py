@@ -14,7 +14,6 @@ import hashlib
 import json
 import logging
 import mimetypes
-import pathlib
 import tempfile
 from email.message import EmailMessage
 from io import BytesIO
@@ -666,7 +665,7 @@ class Messenger(BaseMessenger):
 
         orig_plomfile_name = plomfile.name
         with tempfile.TemporaryDirectory() as td:
-            hack_pfile = pathlib.Path(td) / plomfile.name
+            hack_pfile = Path(td) / plomfile.name
             with open(hack_pfile, "w") as f:
                 json.dump(pdict, f, indent="  ")
                 f.write("\n")
