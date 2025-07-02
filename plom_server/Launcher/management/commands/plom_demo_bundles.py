@@ -158,7 +158,16 @@ class Command(BaseCommand):
             for n in range(len(demo_config.bundles)):
                 bundle_name = f"fake_bundle{n+1}"
                 call_command("plom_staging_bundles", "read_qr", bundle_name)
-                sleep(0.5)  # small sleep to not overwhelm huey's db
+                sleep(0.25)
+
+        # TODO: currently we need to read qr codes in the hw bundles
+        if demo_config.hw_bundles is not None:
+            for bundle in demo_config.hw_bundles:
+                paper_number = bundle["paper_number"]
+                bundle_name = f"fake_hw_bundle_{paper_number}"
+                call_command("plom_staging_bundles", "read_qr", bundle_name)
+                sleep(0.25)
+
         # no qr codes in the hw bundles, but we map them
         # according to the config
         if demo_config.hw_bundles is not None:
