@@ -33,13 +33,14 @@ import sys
 
 from stdiomask import getpass
 
-from plom import Default_Port, __version__
+from plom.common import Default_Port, __version__
 from plom.cli import (
     bundle_map_page,
     clear_login,
     delete_classlist,
     delete_source,
     get_reassembled,
+    get_unmarked,
     id_paper,
     un_id_paper,
     list_bundles,
@@ -137,6 +138,17 @@ def get_parser() -> argparse.ArgumentParser:
         description="""
             Download a reassembled paper as a PDF file from the server.
             Will fail if the paper is not reassembled yet.
+        """,
+    )
+    s.add_argument("papernum", type=int)
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "get-unmarked",
+        help="Get a unmarked paper.",
+        description="""
+            Download a unmarked paper as a PDF file from the server.
+            Will fail if no scanned images are associated with the paper.
         """,
     )
     s.add_argument("papernum", type=int)
@@ -307,9 +319,6 @@ def get_parser() -> argparse.ArgumentParser:
             Which paper number to attach the page to.
             It must exist; you must create it first with appropriate
             versions.
-            TODO: argparse has this as optional but no default setting
-            for this yet: maybe it should assign to the next available
-            paper number or something like that?
         """,
     )
     sp_map.add_argument(
@@ -320,10 +329,12 @@ def get_parser() -> argparse.ArgumentParser:
             Which question(s) are answered on the page.
             You can pass a single integer, or a list like `-q [1,2,3]`
             which attaches the page to questions 1, 2 and 3.
-            You can also pass the special string `-q all` which attaches
-            the page to all questions (this is also the default).
-            An empty list will "discard" that particular page.
-            TODO: discard, dnm and all are currently "in-flux".
+            You can also pass one of several special strings:
+            `-q all` attaches the page to all questions (this is
+            also the default).  `-q dnm` attaches the page to a
+            particular paper but sets it "Do Not Mark".
+            `-q discard` discards the page.
+            An empty list will is currently the same as `-q all`.
         """,
     )
     _add_server_args(sp_map)
@@ -465,6 +476,12 @@ def main():
         r = get_reassembled(args.papernum, msgr=m)
         print(
             f"wrote reassembled paper number {args.papernum} to "
+            f'file {r["filename"]} [{r["content-length"]} bytes]'
+        )
+    elif args.command == "get-unmarked":
+        r = get_unmarked(args.papernum, msgr=m)
+        print(
+            f"wrote unmarked paper number {args.papernum} to "
             f'file {r["filename"]} [{r["content-length"]} bytes]'
         )
 

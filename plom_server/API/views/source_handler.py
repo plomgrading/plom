@@ -106,7 +106,7 @@ class SourceDetail(APIView):
         if "manager" not in group_list:
             return _error_response(
                 'Only users in the "manager" group can upload an assessment source.',
-                status.HTTP_401_FORBIDDEN,
+                status.HTTP_401_UNAUTHORIZED,
             )
 
         try:
@@ -170,7 +170,7 @@ class SourceDetail(APIView):
         if "manager" not in group_list:
             return _error_response(
                 'Only users in the "manager" group can upload an assessment source.',
-                status.HTTP_401_FORBIDDEN,
+                status.HTTP_401_UNAUTHORIZED,
             )
 
         n_versions = SpecificationService.get_n_versions()

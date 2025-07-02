@@ -112,7 +112,7 @@ wet_no_drift:
     - diff -s plom/latexTemplate.tex testTemplates/latexTemplate.tex
     - diff -s plom/latexTemplatev2.tex testTemplates/latexTemplatev2.tex
     - echo "If version info duplicated, ensure same"
-    - export VER0=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/__init__.py`
+    - export VER0=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/common.py`
     - echo $VER0
     - export VER1=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom_server/__init__.py`
     - echo $VER1
@@ -518,7 +518,7 @@ no-question-numbers:
     # For now, just ensure the total does not increase
     - echo $HOW_MANY
     # Future hackers: consider trying to decrease this number
-    - bash -c "[[ $HOW_MANY -le 16 ]]"
+    - bash -c "[[ $HOW_MANY -le 15 ]]"
   allow_failure: true
 
 

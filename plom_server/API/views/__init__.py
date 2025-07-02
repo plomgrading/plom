@@ -4,6 +4,11 @@
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Bryan Tanady
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2025 Aidan Murphy
+
+from .paperstoprint import (
+    papersToPrint,
+)
 
 from .server_info import (
     UserRole,
@@ -55,6 +60,7 @@ from .scan import (
 
 from .finish import (
     FinishReassembled,
+    FinishUnmarked,
 )
 
 from .report import (

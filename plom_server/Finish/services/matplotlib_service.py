@@ -4,6 +4,7 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Elisa Pan
 # Copyright (C) 2024-2025 Andrew Rechnitzer
+# Copyright (C) 2025 Deep Shah
 
 import base64
 from io import BytesIO
@@ -707,7 +708,7 @@ class MinimalPlotService:
         sns.set_theme()
         sns.kdeplot(data=np.array(total_score_list), fill=True)
         # Overlay the student's score by highlighting the bar
-        if highlighted_score:
+        if highlighted_score is not None:
             # this gives x-coord of bar, we get the y-coord from the ylim of the plot
             plt.bar(highlighted_score, plt.ylim()[1], color=HIGHLIGHT_COLOR, alpha=0.5)
 

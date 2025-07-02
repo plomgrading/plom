@@ -42,11 +42,9 @@ numpy==1.21.2
 opencv-python-headless==4.5.4.60
 Pillow==10.2.0
 pandas==1.5.0
-platformdirs==3.0.0
 pymupdf==1.24.8
 PyMySQL==1.0.2
 pyOpenSSL==23.2.0
-pyspellchecker==0.8.1
 pytest==7.2.0
 pytest-qt==4.2.0
 psycopg[binary]==3.1.8

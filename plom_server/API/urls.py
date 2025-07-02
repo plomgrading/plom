@@ -3,6 +3,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
 # Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2025 Aidan Murphy
 
 from django.urls import include, path, re_path
 from rest_framework.routers import DefaultRouter
@@ -31,10 +32,12 @@ from .views import (
     ReassignTask,
     ResetTask,
     # TODO: these are possibly temporary
+    papersToPrint,
     ScanListBundles,
     ScanBundleActions,
     ScanMapBundle,
     FinishReassembled,
+    FinishUnmarked,
     REPspreadsheet,
     REPidentified,
     REPcompletionStatus,
@@ -70,6 +73,21 @@ urlpatterns = [
     path(TagsURLPatterns.prefix, include(TagsURLPatterns.patterns())),
     # TODO: Issue #3786: eventually remove the "beta" from these provisional URLs
     path(
+        "api/beta/paperstoprint",
+        papersToPrint.as_view(),
+        name="papersToPrint",
+    ),
+    path(
+        "api/beta/paperstoprint/<int:papernumber>",
+        papersToPrint.as_view(),
+        name="papersToPrint-withint",
+    ),
+    path(
+        "api/beta/paperstoprint/<str:action>",
+        papersToPrint.as_view(),
+        name="papersToPrint-withstr",
+    ),
+    path(
         "api/beta/scan/bundles",
         ScanListBundles.as_view(),
         name="api_Scan_bundles",
@@ -89,6 +107,11 @@ urlpatterns = [
         "api/beta/finish/reassembled/<int:papernum>",
         FinishReassembled.as_view(),
         name="api_Finish_reassembled",
+    ),
+    path(
+        "api/beta/finish/unmarked/<int:papernum>",
+        FinishUnmarked.as_view(),
+        name="api_Finish_unmarked",
     ),
     path(
         "REP/spreadsheet",
