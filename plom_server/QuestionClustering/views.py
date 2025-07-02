@@ -20,18 +20,52 @@ from plom_server.Preparation.services import SourceService
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Rectangles.services import get_reference_qr_coords_for_page
 from plom_server.QuestionClustering.services import QuestionClusteringService
-
+from plom_server.Base.models import HueyTaskTracker
+from plom_server.QuestionClustering.models import QVCluster, QVClusterLink
 
 class Debug(ManagerRequiredView):
     def get(self, request):
-        from plom_server.Base.models import HueyTaskTracker
-        from plom_server.QuestionClustering.models import QVCluster, QVClusterLink
+
 
         HueyTaskTracker.set_every_task_obsolete()
         QVClusterLink.objects.all().delete()
         QVCluster.objects.all().delete()
 
         return render(request, "QuestionClustering/clustering_jobs.html")
+
+class DeleteClusterMember(ManagerRequiredView):
+    def post(self, request: HttpRequest,
+        question_idx: int,
+        version: int,
+        page_num: int,
+        clusterId: int):
+
+        qcs = QuestionClusteringService()
+        papers_to_delete = request.POST.getlist('delete_ids')
+        for pn in papers_to_delete:
+            qcs.delete_cluster_member(question_idx=question_idx, version=version, clusterId=clusterId, paper_num=int(pn))
+
+        corners = qcs.get_corners_used_for_clustering(
+            question_idx=question_idx, version=version
+        )
+        papers = qcs.get_paper_nums_in_clusters(
+            question_idx=question_idx, version=version
+        )[clusterId]
+
+        context = {
+            "question_label": SpecificationService.get_question_label(question_idx),
+            "question_idx": question_idx,
+            "version": version,
+            "page_num": page_num,
+            "clusterId": clusterId,
+            "papers": papers,
+            "top": corners["top"],
+            "left": corners["left"],
+            "bottom": corners["bottom"],
+            "right": corners["right"],
+        }
+        messages.success(request, f"Removed {len(papers_to_delete)} papers from cluster {clusterId}")
+        return render(request, "QuestionClustering/clustered_papers.html", context=context)
 
 
 class ClusteredPapersView(ManagerRequiredView):
@@ -43,7 +77,6 @@ class ClusteredPapersView(ManagerRequiredView):
         page_num: int,
         clusterId: int,
     ) -> HttpResponse:
-        print("BRUH")
         qcs = QuestionClusteringService()
         papers = qcs.get_paper_nums_in_clusters(
             question_idx=question_idx, version=version

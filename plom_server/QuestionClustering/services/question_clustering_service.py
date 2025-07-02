@@ -248,6 +248,13 @@ class QuestionClusteringService:
             "bottom": qvc.bottom,
             "right": qvc.right,
         }
+    
+    def delete_cluster_member(self, question_idx: int, version: int, clusterId: int, paper_num: int):
+        paper = Paper.objects.get(paper_number=paper_num)
+        qvc = QVCluster.objects.get(question_idx=question_idx, version=version, clusterId=clusterId)
+
+        qvcl = QVClusterLink.objects.get(paper=paper, qv_cluster=qvc)
+        qvcl.delete()
 
 
 # The decorated function returns a ``huey.api.Result``

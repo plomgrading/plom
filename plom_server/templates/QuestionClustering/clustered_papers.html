@@ -8,6 +8,9 @@
     Clustered Papers for {{ question_label }} V{{ version }} Page {{ page_num }} ({{ papers|length }} items)
 {% endblock page_heading %}
 {% block main_content %}
+
+    {% include "../base/alert_messages.html" with messages=messages %}
+
     <div class="mb-3">
         <a class="btn btn-success"
            href="{% url 'cluster_groups' question_idx version page_num %}">
@@ -16,18 +19,20 @@
         </a>
     </div>
     <div class="card my-2 px-3 py-3">
-        <form method="post" action="">
+        <form method="post" action="{% url 'delete_cluster_member' question_idx version page_num clusterId %}">
             {% csrf_token %}
-            <div class="row row-cols-2 row-cols-md-4 g-3 mt-3">
+            <div class="row row-cols-3 g-5">
                 {% for pn in papers %}
                     <div class="col">
                         <div class="card position-relative">
-                            {# Visible checkbox for delete selection #}
+
+                            {# checkbox keeping track of clicked item #}
                             <input type="checkbox"
-                                   class="form-check-input position-absolute top-0 start-0 m-2 opacity-0"
+                                   class="form-check-input position-absolute top-0 opacity-0"
                                    name="delete_ids"
                                    value="{{ pn }}"
                                    id="chk-{{ pn }}">
+
                             {# Thumbnail label toggles the checkbox only #}
                             <label class="form-check-label d-block" for="chk-{{ pn }}">
                                 <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
@@ -35,19 +40,23 @@
                                      style="cursor: pointer"
                                      onerror="imgError(this)">
                             </label>
-                            {# Big red “X” overlay when marked (no d-none) #}
+
+                            {# Big red “X” overlay when marked #}
                             <span class="delete-cross position-absolute top-50 start-50 translate-middle">
                                 <i class="bi bi-x-circle-fill fs-1 text-danger"></i>
                             </span>
-                            {# Zoom button in top-right (circular with red glow) #}
+
+                            {# Zoom button in top-right #}
                             <button type="button"
                                     class="btn btn-primary btn-sm position-absolute top-0 end-0 m-2 zoom-circle"
                                     data-bs-toggle="modal"
                                     data-bs-target="#modal-{{ pn }}">
                                 <i class="bi bi-arrows-angle-expand fs-4"></i>
                             </button>
+
                         </div>
                     </div>
+                    
                     {# Bootstrap modal for zoom #}
                     <div class="modal fade"
                          id="modal-{{ pn }}"
@@ -60,52 +69,63 @@
                             </div>
                         </div>
                     </div>
+
                 {% endfor %}
             </div>
+            
             <button type="submit"
                     class="btn btn-danger mt-4"
-                    onclick="return confirm('Really delete selected images?');">Delete Selected</button>
+                    onclick="return confirm('Really delete selected images?');">Delete Selected
+            </button>
         </form>
     </div>
-    <style>
-  /* hide the X by default, show when checked */
-  .delete-cross {
-    opacity: 0;
-    transition: opacity .2s ease;
-    z-index: 2;
-    pointer-events: none;
-  }
-  /* darken image when checked */
-  .form-check-input:checked + .form-check-label img {
-    filter: brightness(50%);
-  }
-  /* show the X overlay when checked */
-  .form-check-input:checked + .form-check-label + .delete-cross {
-    opacity: 1;
-  }
-  /* ensure checkbox remains on top and its checkmark is red */
-  .form-check-input {
-    z-index: 3;
-    accent-color: #dc3545;
-  }
-  /* style for the circular zoom button */
-  .zoom-circle {
-    width: 30px;
-    height: 30px;
-    padding: 0;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-    </style>
-    <script>
-  function imgError(image) {
-    var span = document.createElement('span');
-    span.classList.add("alert", "alert-warning", "mx-2", "py-0");
-    span.innerText = "Could not extract rectangle.";
-    image.parentNode.insertBefore(span, image);
-    image.remove();
-  }
-    </script>
+  <style>
+
+    /* hide the X by default, show when checked */
+    .delete-cross {
+      opacity: 0;
+      transition: opacity .2s ease;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* darken image when checked */
+    .form-check-input:checked + .form-check-label img {
+      filter: brightness(40%);
+    }
+
+    /* show the X overlay when checked */
+    .form-check-input:checked + .form-check-label + .delete-cross {
+      opacity: 1;
+    }
+
+    /* ensure checkbox remains on top and its checkmark is red */
+    .form-check-input {
+      z-index: 3;
+      accent-color: #dc3545;
+    }
+
+    /* style for the circular zoom button */
+    .zoom-circle {
+      width: 30px;
+      height: 30px;
+      padding: 10px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+  </style>
+
+  {# Adopted from show_rectangles.html #}
+  <script>
+    function imgError(image) {
+      var span = document.createElement('span');
+      span.classLaist.add("alert", "alert-warning", "mx-2", "py-0");
+      span.innerText = "Could not extract rectangle.";
+      image.parentNode.insertBefore(span, image);
+      image.remove();
+    }
+  </script>
 {% endblock main_content %}

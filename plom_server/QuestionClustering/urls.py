@@ -10,6 +10,7 @@ from .views import (
     GetQuestionClusteringJobs,
     ClusterGroupsView,
     ClusteredPapersView,
+    DeleteClusterMember,
     Debug,
 )
 
@@ -40,6 +41,11 @@ urlpatterns = [
         "clustered_papers/<int:question_idx>/<int:version>/<int:page_num>/<int:clusterId>",
         ClusteredPapersView.as_view(),
         name="clustered_papers",
+    ),
+    path(
+        "delete_cluster_member/<int:question_idx>/<int:version>/<int:page_num>/<int:clusterId>",
+        DeleteClusterMember.as_view(),
+        name="delete_cluster_member",
     ),
     path("remove-huey-debug/", Debug.as_view(), name="remove_huey_debug"),
 ]
