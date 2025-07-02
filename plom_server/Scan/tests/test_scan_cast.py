@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2023 Andrew Rechnitzer
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from django.test import TestCase
 from django.contrib.auth.models import User, Group
@@ -73,7 +73,6 @@ class ScanCastServiceTests(TestCase):
             self.make_image(img)
 
     def test_permissions(self) -> None:
-        scs = ScanCastService()
         # get the ord of an error page from the bundle
         ord = (
             self.bundle.stagingimage_set.filter(image_type=StagingImage.ERROR)
@@ -82,15 +81,15 @@ class ScanCastServiceTests(TestCase):
         )
 
         with self.assertRaises(PermissionDenied):
-            scs.discard_image_type_from_bundle_cmd(
+            ScanCastService.discard_image_type_from_bundle_cmd(
                 "user1", "testbundle", ord, image_type=StagingImage.ERROR
             )
         with self.assertRaises(PermissionDenied):
-            scs.unknowify_image_type_from_bundle_cmd(
+            ScanCastService().unknowify_image_type_from_bundle_cmd(
                 "user1", "testbundle", ord, image_type=StagingImage.ERROR
             )
 
-        scs.discard_image_type_from_bundle_cmd(
+        ScanCastService.discard_image_type_from_bundle_cmd(
             "user0", "testbundle", ord, image_type=StagingImage.ERROR
         )
         # get the ord of another error page from the bundle
@@ -99,7 +98,7 @@ class ScanCastServiceTests(TestCase):
             .first()
             .bundle_order
         )
-        scs.unknowify_image_type_from_bundle_cmd(
+        ScanCastService().unknowify_image_type_from_bundle_cmd(
             "user0", "testbundle", ord, image_type=StagingImage.ERROR
         )
 
@@ -144,7 +143,7 @@ class ScanCastServiceTests(TestCase):
             with self.assertRaises(ObjectDoesNotExist):
                 DiscardStagingImage.objects.get(staging_image=stimg)
             # cast it to a discard
-            ScanCastService().discard_image_type_from_bundle_cmd(
+            ScanCastService.discard_image_type_from_bundle_cmd(
                 "user0", "testbundle", ord, image_type=img_type
             )
             # verify that no error image remains and that a discard image now exists
@@ -196,7 +195,7 @@ class ScanCastServiceTests(TestCase):
             .bundle_order
         )
         with self.assertRaises(ValueError):
-            ScanCastService().discard_image_type_from_bundle_cmd(
+            ScanCastService.discard_image_type_from_bundle_cmd(
                 "user0", "testbundle", ord, image_type=StagingImage.DISCARD
             )
 
@@ -222,7 +221,7 @@ class ScanCastServiceTests(TestCase):
             .bundle_order
         )
         with self.assertRaises(PlomBundleLockedException):
-            ScanCastService().discard_image_type_from_bundle_cmd(
+            ScanCastService.discard_image_type_from_bundle_cmd(
                 "user0", "testbundle", ord, image_type=StagingImage.ERROR
             )
         with self.assertRaises(PlomBundleLockedException):

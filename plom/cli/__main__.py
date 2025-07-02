@@ -305,9 +305,6 @@ def get_parser() -> argparse.ArgumentParser:
             Which paper number to attach the page to.
             It must exist; you must create it first with appropriate
             versions.
-            TODO: argparse has this as optional but no default setting
-            for this yet: maybe it should assign to the next available
-            paper number or something like that?
         """,
     )
     sp_map.add_argument(
@@ -318,10 +315,12 @@ def get_parser() -> argparse.ArgumentParser:
             Which question(s) are answered on the page.
             You can pass a single integer, or a list like `-q [1,2,3]`
             which attaches the page to questions 1, 2 and 3.
-            You can also pass the special string `-q all` which attaches
-            the page to all questions (this is also the default).
-            An empty list will "discard" that particular page.
-            TODO: discard, dnm and all are currently "in-flux".
+            You can also pass one of several special strings:
+            `-q all` attaches the page to all questions (this is
+            also the default).  `-q dnm` attaches the page to a
+            particular paper but sets it "Do Not Mark".
+            `-q discard` discards the page.
+            An empty list will is currently the same as `-q all`.
         """,
     )
     _add_server_args(sp_map)
