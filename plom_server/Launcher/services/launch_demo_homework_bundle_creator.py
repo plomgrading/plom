@@ -55,7 +55,7 @@ class DemoHWBundleCreationService:
             bundle_name = f"fake_hw_bundle_{paper_number}"
             print(
                 f"Assigning pages in {bundle_name} to paper {paper_number}"
-                f"via the mapping {question_idx_lists}"
+                f" via the mapping {question_idx_lists}"
             )
             subprocess.run(
                 [
