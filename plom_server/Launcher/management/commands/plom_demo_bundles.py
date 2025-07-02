@@ -151,8 +151,10 @@ class Command(BaseCommand):
             call_command("plom_staging_bundles", "upload", scanner_user, bundle_file)
             sleep(0.5)  # small sleep to not overwhelm huey's db
 
-    def read_qr_codes_in_bundles(self, demo_config: DemoAllBundlesConfig) -> None:
-        """Read QR-codes of the uploaded bundles, and wait for process to finish."""
+    def read_qr_codes_in_bundles(
+        self, demo_config: DemoAllBundlesConfig, *, wait: bool = False
+    ) -> None:
+        """Trigger reads of the QR-codes of the uploaded bundles, by default don't wait."""
         if demo_config.bundles is not None:
             for n in range(len(demo_config.bundles)):
                 bundle_name = f"fake_bundle{n+1}"
@@ -166,6 +168,9 @@ class Command(BaseCommand):
                 bundle_name = f"fake_hw_bundle_{paper_number}"
                 call_command("plom_staging_bundles", "read_qr", bundle_name)
                 sleep(0.25)
+
+        if wait:
+            call_command("plom_staging_bundles", "wait")
 
         # no qr codes in the hw bundles, but we map them
         # according to the config
