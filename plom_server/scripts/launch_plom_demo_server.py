@@ -580,6 +580,7 @@ def upload_the_bundles(length="normal"):
     # now trigger reading of qr-codes
     run_django_manage_command(f"plom_demo_bundles --length {length} --action read")
     run_django_manage_command("plom_staging_bundles wait")
+    run_django_manage_command(f"plom_demo_bundles --length {length} --action map_hw")
 
 
 def push_the_bundles(length):
