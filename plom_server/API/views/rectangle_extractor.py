@@ -25,15 +25,12 @@ class RectangleExtractorView(APIView):
 
         corners = request.query_params.dict()
 
+        def get_float(val):
+            if isinstance(val, list):
+                raise ValueError("Expected a single value for each corner, got a list")
+            return float(val)
+
         try:
-
-            def get_float(val):
-                if isinstance(val, list):
-                    raise ValueError(
-                        "Expected a single value for each corner, got a list"
-                    )
-                return float(val)
-
             left = get_float(corners["left"])
             right = get_float(corners["right"])
             top = get_float(corners["top"])
