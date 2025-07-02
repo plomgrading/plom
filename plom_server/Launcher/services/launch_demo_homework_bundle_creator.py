@@ -58,6 +58,7 @@ class DemoHWBundleCreationService:
                 ["python3", "-m", "plom.cli", "list-bundles"]
             )
             output = output.decode()
+            print(output)
             for l in output.splitlines():
                 if l.startswith(bundle_name):
                     bundle_id = int(l.split()[1])
