@@ -57,13 +57,21 @@ class DemoHWBundleCreationService:
                 f"Assigning pages in {bundle_name} to paper {paper_number}"
                 f" via the mapping {question_idx_lists}"
             )
+            # we need the bundle id: annoying to have to scrape it
+            output = subprocess.check_output(
+                ["python3", "-m", "plom.cli", "list-bundles"]
+            )
+            output = output.decode()
+            for l in output.splitlines():
+                if l.startswith(bundle_name):
+                    bundle_id = int(l.split()[1])
             subprocess.run(
                 [
                     "python3",
                     "-m",
                     "plom.cli",
                     "map",
-                    bundle_name,
+                    bundle_id,
                     "-t",
                     paper_number,
                     "-q",
