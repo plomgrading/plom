@@ -46,17 +46,11 @@ class PlomClasslistValidator:
         # Note: utf-8-sig is a Microsoft thing, Issue #3200 which AFAICT
         # is harmless for us https://docs.python.org/3/library/codecs.html#encodings-and-unicode
         with open(filename, newline="", encoding="utf-8-sig") as csvfile:
-            # look at start of file to guess 'dialect', and then return to start of file
-            # TODO: what if there isn't 1024 bytes?
-            sample = csvfile.read(1024)
-            csvfile.seek(0)
-            # guess the dialect
-            dialect = csv.Sniffer().sniff(sample)
-            # build the dict_reader
-            reader = csv.DictReader(csvfile, dialect=dialect)
+            # Issue #3938: we previously did "Sniffer" stuff here before opening it,
+            # not quite sure why, and it eventually caused trouble.
+            reader = csv.DictReader(csvfile)
 
-            # check it has a header - csv.sniffer.has_header is a bit flakey
-            # (I think this can't fail, but keeps MyPy happy)
+            # check it has a header (I think this can't fail, but keeps MyPy happy)
             if not reader.fieldnames:
                 raise ValueError("The CSV file has no header")
 

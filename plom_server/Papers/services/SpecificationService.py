@@ -26,7 +26,7 @@ from ..serializers import SpecSerializer
 from plom_server.Preparation.services.preparation_dependency_service import (
     assert_can_modify_spec,
 )
-
+from plom_server.Papers.models import MobilePage
 
 log = logging.getLogger("SpecificationService")
 
@@ -589,14 +589,22 @@ def _render_html_question_label(qidx: int, qlabel: str) -> str:
 
 
 def render_html_flat_question_label_list(qindices: list[int] | None) -> str:
-    """HTML code for rendering a specified list of question labels.
+    """Return a string of question labels, given a list of question indices.
+
+    If the list contains positive integers, return their labels.
+
+    If the list contains the special value MobilePage.DNM_qidx, then return the
+    string ``"Do Not Mark"``.
 
     If the list is empty or the special value ``None``, then return the
     string ``"None"``.
     """
     if not qindices:
         return "None"
+    if MobilePage.DNM_qidx in qindices:
+        return "Do Not Mark"
     T = get_question_labels_str_and_html_map()
+    # return ", ".join(T[qidx][1] for qidx in sorted(qindices)) # Nicer, but breaks CI
     return ", ".join(T[qidx][1] for qidx in qindices)
 
 

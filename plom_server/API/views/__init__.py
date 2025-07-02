@@ -6,6 +6,10 @@
 # Copyright (C) 2025 Philip D. Loewen
 # Copyright (C) 2025 Aidan Murphy
 
+from .paperstoprint import (
+    papersToPrint,
+)
+
 from .server_info import (
     UserRole,
     ExamInfo,

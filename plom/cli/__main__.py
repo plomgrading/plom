@@ -13,9 +13,12 @@
 See help for each subcommand or consult online documentation for an
 overview of the steps in setting up a server.
 
-Most subcommands communicate with a server, which can be specified
-on the command line or by setting environment variables PLOM_SERVER
-PLOM_USERNAME and PLOM_PASSWORD.
+Most subcommands communicate with a server, which can be specified on the
+command line; the environment variable PLOM_SERVER provides the default.
+Authentication is typically required. This can be done through command-line options,
+or interactively at the command prompt, or by setting the environment variables
+PLOM_USERNAME and PLOM_PASSWORD. For details, see the extended help for any
+specific subcommand.
 """
 
 __copyright__ = "Copyright (C) 2020-2025 Andrew Rechnitzer, Colin B. Macdonald, et al"
@@ -29,7 +32,7 @@ import sys
 
 from stdiomask import getpass
 
-from plom import Default_Port, __version__
+from plom.common import Default_Port, __version__
 from plom.cli import (
     bundle_map_page,
     clear_login,
@@ -72,8 +75,10 @@ def get_parser() -> argparse.ArgumentParser:
             metavar="SERVER[:PORT]",
             action="store",
             help=f"""
-                Which server to contact, port defaults to {Default_Port}.
-                Also checks the environment variable PLOM_SERVER if omitted.
+                URL of server to contact. In SERVER, the protocol prefix is semi-optional:
+                you can omit it and get https by default, or you can force http by including
+                that explicitly. If [:PORT] is omitted, SERVER:{Default_Port} will be used.
+                The environment variable PLOM_SERVER will be used if --server is not given.
             """,
         )
         x.add_argument(
@@ -312,9 +317,6 @@ def get_parser() -> argparse.ArgumentParser:
             Which paper number to attach the page to.
             It must exist; you must create it first with appropriate
             versions.
-            TODO: argparse has this as optional but no default setting
-            for this yet: maybe it should assign to the next available
-            paper number or something like that?
         """,
     )
     sp_map.add_argument(
@@ -325,10 +327,12 @@ def get_parser() -> argparse.ArgumentParser:
             Which question(s) are answered on the page.
             You can pass a single integer, or a list like `-q [1,2,3]`
             which attaches the page to questions 1, 2 and 3.
-            You can also pass the special string `-q all` which attaches
-            the page to all questions (this is also the default).
-            An empty list will "discard" that particular page.
-            TODO: discard, dnm and all are currently "in-flux".
+            You can also pass one of several special strings:
+            `-q all` attaches the page to all questions (this is
+            also the default).  `-q dnm` attaches the page to a
+            particular paper but sets it "Do Not Mark".
+            `-q discard` discards the page.
+            An empty list will is currently the same as `-q all`.
         """,
     )
     _add_server_args(sp_map)

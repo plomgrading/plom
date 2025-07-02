@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Aidan Murphy
 
+from django.contrib.auth.models import User
 from django.test import TestCase
 from model_bakery import baker
 
 from plom_server.Base.tests import config_test
-from plom_server.Papers.models import Paper, Image, FixedPage, MobilePage, Bundle
+from plom_server.Papers.models import Paper, Image, MobilePage, Bundle, QuestionPage
 from plom_server.Mark.models import MarkingTask
+from plom_server.Scan.services import ManageDiscardService
 from ..services import StudentMarkService
-
-NUM_PAPERS = 10
 
 
 class TestStudentMarkService(TestCase):
@@ -22,11 +22,12 @@ class TestStudentMarkService(TestCase):
             "test_spec": "demo",
             "test_sources": "demo",
             "classlist": "demo",
-            "num_to_produce": NUM_PAPERS,
+            "num_to_produce": 10,
             "auto_init_tasks": True,
         }
     )
     def setUp(self):
+        self.user0: User = baker.make(User, username="user0")
         return
 
     def test_is_paper_marked(self) -> None:
@@ -67,7 +68,14 @@ class TestStudentMarkService(TestCase):
             for pg in range(1, 7):
                 ord += 1
                 img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
-                baker.make(FixedPage, paper=paper, image=img, version=1, page_number=pg)
+                baker.make(
+                    QuestionPage,
+                    paper=paper,
+                    image=img,
+                    version=1,
+                    page_number=pg,
+                    question_index=(pg % 5),
+                )
             for qn in [1]:
                 ord += 1
                 img = baker.make(Image, bundle=self.bundle, bundle_order=ord)
@@ -110,6 +118,14 @@ class TestStudentMarkService(TestCase):
                 task.save()
         assert sms_instance.are_all_papers_marked()
 
+        # discard a paper - this will out of date marking tasks
+        # but they belong to a paper which is now 'unused'
+        ManageDiscardService().discard_whole_paper_by_number(
+            self.user0, papers[9].paper_number, dry_run=False
+        )
+        assert MarkingTask.objects.filter(status=MarkingTask.OUT_OF_DATE).exists()
+        assert sms_instance.are_all_papers_marked()
+
         # out of date the first paper:
         for paper in papers[1:2]:
             for j in [1]:
@@ -117,7 +133,3 @@ class TestStudentMarkService(TestCase):
                 task.status = MarkingTask.OUT_OF_DATE
                 task.save()
         assert not sms_instance.are_all_papers_marked()
-
-        # TODO: need to unit test the discard_whole_paper use case.
-        # This will out of date associated marking tasks, but this
-        # shouldn't return false on `are_all_papers_marked`

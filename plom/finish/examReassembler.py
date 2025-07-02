@@ -11,7 +11,7 @@ from typing import Any
 import PIL.Image
 import pymupdf
 
-from plom import __version__
+from plom.finish import __version__
 from plom.scan.rotate import rot_angle_from_jpeg_exif_tag
 
 
