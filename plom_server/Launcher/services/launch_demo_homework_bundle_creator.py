@@ -50,13 +50,9 @@ class DemoHWBundleCreationService:
         print("Mapping homework pages to questions")
         for bundle in homework_bundles:
             paper_number = bundle["paper_number"]
-            question_idx_lists = bundle["pages"]
 
             bundle_name = f"fake_hw_bundle_{paper_number}"
-            print(
-                f"Assigning pages in {bundle_name} to paper {paper_number}"
-                f" via the mapping {question_idx_lists}"
-            )
+            print(f"Scraping bundle id from bundle {bundle_name}...")
             # we need the bundle id: annoying to have to scrape it
             output = subprocess.check_output(
                 ["python3", "-m", "plom.cli", "list-bundles"]
@@ -65,18 +61,25 @@ class DemoHWBundleCreationService:
             for l in output.splitlines():
                 if l.startswith(bundle_name):
                     bundle_id = int(l.split()[1])
-            subprocess.run(
-                [
+
+            for i, qidx_list in enumerate(bundle["pages"]):
+                pg = i + 1
+                print(
+                    f"Bundle {bundle_name} id {bundle_id} page {pg} "
+                    f"to paper {paper_number} question indices {qidx_list}"
+                )
+                cmd = [
                     "python3",
                     "-m",
                     "plom.cli",
                     "map",
-                    bundle_id,
+                    str(bundle_id),
+                    str(pg),
                     "-t",
-                    paper_number,
+                    str(paper_number),
                     "-q",
-                    str(question_idx_lists),
-                ],
-                check=True,
-            )
-            sleep(0.5)
+                    str(qidx_list),
+                ]
+                print("Running command: " + " ".join(cmd))
+                subprocess.run(cmd, check=True)
+            sleep(0.25)
