@@ -953,7 +953,7 @@ class Messenger(BaseMessenger):
         bundle_id: int,
         page: int,
         *,
-        papernum: int,
+        papernum: int | None = None,
         questions: int | str | list[int | str],
     ) -> None:
         """Map the indicated page of the specified bundle to all questions in a list, etc.
@@ -965,7 +965,8 @@ class Messenger(BaseMessenger):
             page: the 1-based index of the page of interest in that bundle
 
         Keyword Args:
-            papernum: the target paper number for this page
+            papernum: the target paper number for this page.  If discarding, you
+                may omit this.
             questions: A list of question(s) to which this page should be attached.
                 Each list entry can be either an integer question index
                 compatible with the assessment spec, or one of the special strings
@@ -991,7 +992,9 @@ class Messenger(BaseMessenger):
                 "Server too old: does not support page mapping"
             )
 
-        query_args = [f"papernum={papernum}"]
+        query_args = []
+        if papernum is not None:
+            query_args.append(f"papernum={papernum}")
 
         if isinstance(questions, str) or isinstance(questions, int):
             questions = [questions]

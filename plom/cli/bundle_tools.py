@@ -20,7 +20,6 @@ def bundle_map_page(
 ) -> None:
     """Map a page of a bundle to zero or more questions."""
     questions = _parse_questions(questions)
-    r = msgr.new_server_bundle_map_page(
+    msgr.new_server_bundle_map_page(
         bundle_id, page, papernum=papernum, questions=questions
     )
-    print(r)
