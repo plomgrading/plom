@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
-import pymupdf
+import subprocess
 from pathlib import Path
 from time import sleep
 
-from django.core.management import call_command
+import pymupdf
 
 
 class DemoHWBundleCreationService:
@@ -57,13 +57,18 @@ class DemoHWBundleCreationService:
                 f"Assigning pages in {bundle_name} to paper {paper_number}"
                 f"via the mapping {question_idx_lists}"
             )
-            call_command(
-                "plom_paper_scan",
-                "map",
-                bundle_name,
-                "-t",
-                paper_number,
-                "-q",
-                str(question_idx_lists),
+            subprocess.run(
+                [
+                    "python3",
+                    "-m",
+                    "plom.cli",
+                    "map",
+                    bundle_name,
+                    "-t",
+                    paper_number,
+                    "-q",
+                    str(question_idx_lists),
+                ],
+                check=True,
             )
             sleep(0.5)
