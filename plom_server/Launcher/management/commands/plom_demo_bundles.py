@@ -94,13 +94,12 @@ class Command(BaseCommand):
         parser.add_argument(
             "--action",
             action="store",
-            choices=["build", "upload", "delreup", "read", "wait", "push", "id_hw"],
+            choices=["build", "upload", "delreup", "read", "push", "id_hw"],
             required=True,
             help="""(build) demo bundles,
             (upload) demo bundles,
             (delreup) remove and re-upload the first demo bundle,
             (read) qr-codes in uploaded demo bundles,
-            (wait) for background processing of upload and qr-code reading,
             (push) processed bundles from staging,
             (id_hw) ID pushed demo homework bundles.""",
         )
@@ -233,3 +232,5 @@ class Command(BaseCommand):
             self.push_and_wait()
         elif options["action"] == "id_hw":
             self.direct_id_hw(demo_config)
+        else:
+            raise RuntimeError(f"action {options['action']} not implemented")
