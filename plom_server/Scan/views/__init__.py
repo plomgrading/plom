@@ -17,7 +17,7 @@ from .scan_discards import ScannerDiscardView, ScannerReassignView
 
 from .pushed_images import (
     PushedImageView,
-    DiscardWholePaperView,
+    WholePaperView,
     PushedImageRotatedView,
     PushedImageWrapView,
     SubstituteImageView,

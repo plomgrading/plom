@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2025 Aidan Murphy
 
 from django.urls import include, path, re_path
 from rest_framework.routers import DefaultRouter
@@ -35,6 +36,7 @@ from .views import (
     ScanBundleActions,
     ScanMapBundle,
     FinishReassembled,
+    FinishUnmarked,
     REPspreadsheet,
     REPidentified,
     REPcompletionStatus,
@@ -103,6 +105,11 @@ urlpatterns = [
         "api/beta/finish/reassembled/<int:papernum>",
         FinishReassembled.as_view(),
         name="api_Finish_reassembled",
+    ),
+    path(
+        "api/beta/finish/unmarked/<int:papernum>",
+        FinishUnmarked.as_view(),
+        name="api_Finish_unmarked",
     ),
     path(
         "REP/spreadsheet",

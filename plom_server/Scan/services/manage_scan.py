@@ -532,7 +532,11 @@ class ManageScanService:
             raise ValueError(f"Paper {paper_number} is not in the database") from e
 
         page_images = []
-        for fp_obj in paper_obj.fixedpage_set.all().order_by("page_number"):
+        for fp_obj in (
+            paper_obj.fixedpage_set.all()
+            .order_by("page_number")
+            .select_related("image")
+        ):
             dat = {
                 "page_type": "fixed",
                 "page_number": fp_obj.page_number,
@@ -543,7 +547,11 @@ class ManageScanService:
             else:
                 dat.update({"image": None})
             page_images.append(dat)
-        for mp_obj in paper_obj.mobilepage_set.all().order_by("question_index"):
+        for mp_obj in (
+            paper_obj.mobilepage_set.all()
+            .order_by("question_index")
+            .select_related("image")
+        ):
             dat = {
                 "page_type": "mobile",
                 "question_number": mp_obj.question_index,
