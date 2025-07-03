@@ -7,6 +7,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2025 Philip D. Loewen
 # Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025 Bryan Tanady
 
 """Plom tools for pushing and manipulating bundles from the command line.
 
@@ -50,6 +51,7 @@ from plom.cli import (
     download_classlist,
     upload_spec,
     reset_task,
+    extract_rectangle,
 )
 
 
@@ -336,6 +338,90 @@ def get_parser() -> argparse.ArgumentParser:
         """,
     )
     _add_server_args(sp_map)
+
+    s = sub.add_parser(
+        "extract-rectangle",
+        help="Extract rectangle from a paper, saving as a png file",
+        description="""Given version, page number, paper number, and boundaries of the rectangle,
+        extract the rectangle from the scanned paper with that page number and version.
+        """,
+    )
+
+    s.add_argument(
+        "--version",
+        "-v",
+        required=True,
+        type=int,
+        help="The version of the page to extract",
+    )
+    s.add_argument(
+        "--pagenum",
+        type=int,
+        required=True,
+        help="The page number of the paper that will be extracted",
+    )
+
+    s.add_argument(
+        "--papernum",
+        type=int,
+        required=True,
+        help="The paper number to be extracted",
+    )
+
+    s.add_argument(
+        "--left",
+        "-l",
+        required=False,
+        type=float,
+        help="""x coordinate of the rectangle's top left corner. The coordinate is relative
+        to the QR codes so values are in the interval [0,1] (plus some overhang for the margins).
+        If not provided then default to 0
+        """,
+    )
+    s.add_argument(
+        "--top",
+        "-t",
+        required=False,
+        type=float,
+        help="""y coordinate of the rectangle's top left corner. The coordinate is relative
+        to the QR codes so values are in the interval [0,1] (plus some overhang for the margins).
+        If not provided then default to 0
+        """,
+    )
+
+    s.add_argument(
+        "--right",
+        "-r",
+        required=False,
+        type=float,
+        help="""x coordinate of the rectangle's bottom right corner. The coordinate is relative
+        to the QR codes so values are in the interval [0,1] (plus some overhang for the margins).
+        If not provided then default to 1
+        """,
+    )
+
+    s.add_argument(
+        "--bottom",
+        "-b",
+        required=False,
+        type=float,
+        help="""y coordinate of the rectangle's top bottom right corner. The coordinate is relative
+        to the QR codes so values are in the interval [0,1] (plus some overhang for the margins).
+        If not provided then default to 1
+        """,
+    )
+    s.add_argument(
+        "--out-path",
+        type=str,
+        required=False,
+        help="""
+        The output path of the extracted rectangle image. If not provided, the image will be saved as:
+            "./extracted_region_V{version}_page{page_num}_paper{paper_num}.png"
+        where {version}, {page_num}, and {paper_num} are replaced by their respective values.
+        """,
+    )
+
+    _add_server_args(s)
     return parser
 
 
@@ -450,6 +536,18 @@ def main():
 
     elif args.command == "clear":
         clear_login(args.server, args.username, args.password)
+
+    elif args.command == "extract-rectangle":
+        region = {
+            "left": args.left if args.left else 0,
+            "top": args.top if args.top else 0,
+            "right": args.right if args.right else 1,
+            "bottom": args.bottom if args.bottom else 1,
+        }
+
+        success = extract_rectangle(
+            args.version, args.pagenum, args.papernum, region, args.out_path, msgr=m
+        )
     else:
         get_parser().print_help()
 

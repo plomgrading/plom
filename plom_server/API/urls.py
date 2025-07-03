@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2025 Aidan Murphy
 
 from django.urls import include, path, re_path
@@ -44,6 +45,7 @@ from .views import (
     SourceOverview,
     SourceDetail,
     SpecificationHandler,
+    RectangleExtractorView,
 )
 
 from .views import MgetRubricMarkingTasks
@@ -184,5 +186,10 @@ urlpatterns += [
         "rubrics/<int:rid>/tasks",
         MgetRubricMarkingTasks.as_view(),
         name="api_rubrics_tasks",
+    ),
+    path(
+        "api/rectangle/<int:version>/<int:page_num>/<int:paper_num>",
+        RectangleExtractorView.as_view(),
+        name="api_rectangle_extractor",
     ),
 ]

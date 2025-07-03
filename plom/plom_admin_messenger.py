@@ -593,3 +593,29 @@ class PlomAdminMessenger(Messenger):
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
         return tuple(response.json())
+
+    def rectangle_extraction(
+        self, version: int, page_num: int, paper_num: int, region: dict[str, float]
+    ) -> bytes:
+        """Download the extracted region of the paper with the given version and page number.
+
+        Args:
+            version: the version of the page to be extracted
+            page_num: the page_num to be extracted.
+            paper_num: the paper_num to be extracted.
+            region: the boundaries of the rectangle, containing these
+                keys: ["left", "right", "top", "bottom"].
+
+        Returns:
+            The PNG bytes of the extracted rectangle returned by the server.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get_auth(
+                    f"/api/rectangle/{version}/{page_num}/{paper_num}", params=region
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+        return response.content
