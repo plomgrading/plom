@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 from django.urls import path
 
@@ -18,7 +19,7 @@ from .views import (
     ScannerReassignView,
     ###
     PushedImageView,
-    DiscardWholePaperView,
+    WholePaperView,
     PushedImageRotatedView,
     PushedImageWrapView,
     ###
@@ -81,9 +82,9 @@ urlpatterns = [
         name="pushed_img",
     ),
     path(
-        "discard_whole/<int:paper_number>",
-        DiscardWholePaperView.as_view(),
-        name="scan_discard_whole_paper",
+        "whole_paper/<int:paper_number>",
+        WholePaperView.as_view(),
+        name="scan_whole_paper",
     ),
     path(
         "pushed_img_rot/<int:img_pk>",

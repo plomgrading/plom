@@ -1,6 +1,7 @@
 /*
     SPDX-License-Identifier: AGPL-3.0-or-later
-    Copyright (C) 2024-2025 Andrew Rechnitzer
+    Copyright (C) 2024-2025 Andrew Rechnitze
+    Copyright (C) 2024-2025 Bryan Tanady
 */
 
 // Code idea copied from 
@@ -108,7 +109,7 @@ function drawPlomBits()
   ctx.strokeStyle = "#ff8000";
   ctx.setLineDash([2,4])
   ctx.fillStyle = "#ff8000";
-  for (let [k,v] of Object.entries(corner_data)) {
+  for (let [k,v] of Object.entries(rect)) {
     ctx.beginPath();
     ctx.arc(v[0]*ratio_w,v[1]*ratio_h,8, 0,2*Math.PI);
     ctx.fill();

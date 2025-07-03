@@ -2,6 +2,7 @@
     SPDX-License-Identifier: AGPL-3.0-or-later
     Copyright (C) 2023-2025 Andrew Rechnitzer
     Copyright (C) 2023-2024 Colin B. Macdonald
+    Copyright (C) 2025 Aidan Murphy
 -->
 <div style="justify-content: center; display:flex; align-items:center">
     <img class="m-1 p-1 border"
@@ -22,9 +23,13 @@
                     hx-delete="{% url 'pushed_img' image_pk %}">discard this fixed page image</button>
             <button class="btn btn-danger"
                     hx-confirm="This will invalidate any existing id-ing and marking of this paper. Are you sure you wish to proceed?"
-                    hx-delete="{% url 'scan_discard_whole_paper' page_info.paper_number %}">
+                    hx-delete="{% url 'scan_whole_paper' page_info.paper_number %}">
                 <i class="bi bi-exclamation-diamond-fill"></i> discard this whole paper <i class="bi bi-exclamation-diamond-fill"></i>
             </button>
+            <a class="btn btn-primary"
+               href="{% url 'scan_whole_paper' page_info.paper_number %}">
+                download this paper <i class="bi bi-download"></i>
+            </a>
         {% endif %}
     {% elif page_info.page_type == 'mobile' %}
         <ul>
@@ -39,9 +44,13 @@
                     hx-delete="{% url 'pushed_img' image_pk %}">discard this mobile page image</button>
             <button class="btn btn-danger"
                     hx-confirm="This will invalidate any existing id-ing and marking of this paper. Are you sure you wish to proceed?"
-                    hx-delete="{% url 'scan_discard_whole_paper' page_info.paper_number %}">
+                    hx-delete="{% url 'scan_whole_paper' page_info.paper_number %}">
                 <i class="bi bi-exclamation-diamond-fill"></i> discard this whole paper <i class="bi bi-exclamation-diamond-fill"></i>
             </button>
+            <a class="btn btn-primary"
+               href="{% url 'scan_whole_paper' page_info.paper_number %}">
+                download this paper <i class="bi bi-download"></i>
+            </a>
         {% endif %}
     {% else %}
         <ul>

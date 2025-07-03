@@ -3,6 +3,7 @@
     Copyright (C) 2023-2024 Andrew Rechnitzer
     Copyright (C) 2023 Colin B. Macdonald
     Copyright (C) 2024 Aden Chan
+    Copyright (C) 2025 Aidan Murphy
 -->
 {% extends "base/base.html" %}
 {% block title %}
@@ -32,7 +33,7 @@
                                             <th>Order</th>
                                             <th>Reason</th>
                                             <th>Discarded Image</th>
-                                            <th>Discard Key</th>
+                                            <th>Keys (page, image)</th>
                                         </tr>
                                     </thead>
                                     {% for disc in discards %}
@@ -46,7 +47,7 @@
                                                         hx-replace="innerHTML"
                                                         class="btn btn-outline-primary">view</button>
                                             </td>
-                                            <td>{{ disc.discard_pk }}</td>
+                                            <td>{{ disc.page_pk }}, {{ disc.image_pk }}</td>
                                         </tr>
                                     {% endfor %}
                                 </table>

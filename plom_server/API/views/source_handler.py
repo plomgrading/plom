@@ -85,7 +85,7 @@ class SourceDetail(APIView):
                     status.HTTP_404_NOT_FOUND,
                 )
 
-    # POST /api/v0/source/<int:ver>
+    # POST /api/v0/source/<int:version>
     def post(self, request: Request, *, version: int) -> Response:
         """Create, replace, or delete a source version.
 
@@ -106,7 +106,7 @@ class SourceDetail(APIView):
         if "manager" not in group_list:
             return _error_response(
                 'Only users in the "manager" group can upload an assessment source.',
-                status.HTTP_401_FORBIDDEN,
+                status.HTTP_401_UNAUTHORIZED,
             )
 
         try:
@@ -150,7 +150,7 @@ class SourceDetail(APIView):
 
         return Response(sourcenotes)
 
-    # DELETE /api/v0/source/<int:ver>
+    # DELETE /api/v0/source/<int:version>
     def delete(self, request: Request, *, version: int) -> Response:
         """Delete the specified source version.
 
@@ -170,7 +170,7 @@ class SourceDetail(APIView):
         if "manager" not in group_list:
             return _error_response(
                 'Only users in the "manager" group can upload an assessment source.',
-                status.HTTP_401_FORBIDDEN,
+                status.HTTP_401_UNAUTHORIZED,
             )
 
         n_versions = SpecificationService.get_n_versions()

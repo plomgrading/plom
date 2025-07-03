@@ -51,7 +51,7 @@ import PIL.Image
 import requests
 from tqdm import tqdm
 
-from plom import __version__ as __plom_version__
+from plom.common import __version__ as __plom_version__
 from plom.misc_utils import working_directory
 
 # TODO: no such thing anymore

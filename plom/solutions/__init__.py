@@ -8,8 +8,7 @@ __copyright__ = "Copyright (C) 2020-2025 Andrew Rechnitzer, Colin B. Macdonald, 
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-from plom import __version__
-from plom import Default_Port
+from plom.common import Default_Port, __version__
 
 from plom.finish import clear_manager_login
 from plom.create import with_manager_messenger
