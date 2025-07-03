@@ -526,21 +526,19 @@ class PlomAdminMessenger(Messenger):
         return response.json()
 
     def new_server_delete_classlist(self) -> None:
-        """Delete the classlist (if any) held by the server.
-
-        Returns:
-            None
-        """
+        """Delete the classlist (if any) held by the server."""
         with self.SRmutex:
             try:
                 response = self.delete_auth("/api/v0/classlist")
                 response.raise_for_status()
             except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
                 if response.status_code == 409:
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
-
-        return None
 
     def new_server_download_classlist(self) -> BytesIO:
         """Download the classlist (if any) held by the server.
@@ -557,6 +555,10 @@ class PlomAdminMessenger(Messenger):
                 response = self.get_auth("/api/v0/classlist", stream=True)
                 response.raise_for_status()
             except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
         csv_content = BytesIO(response.content)
@@ -590,6 +592,10 @@ class PlomAdminMessenger(Messenger):
                     response = self.patch_auth("/api/v0/classlist", files=filedict)
                 response.raise_for_status()
             except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 403:
+                    raise PlomNoPermission(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
         return tuple(response.json())

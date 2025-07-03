@@ -31,14 +31,14 @@ class Classlist(APIView):
 
         Returns:
             Empty response with code 204 on success. Error return codes
-            could be 401 for a user outside the 'manager' group, or
+            could be 403 for a user outside the 'manager' group, or
             409 if manipulating the classlist is forbidden for another reason.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list:
             return _error_response(
                 'Only users in the "manager" group can delete the class list.',
-                status.HTTP_401_UNAUTHORIZED,
+                status.HTTP_403_FORBIDDEN,
             )
         try:
             StagingStudentService.remove_all_students()
@@ -116,7 +116,7 @@ class Classlist(APIView):
             The Response from the method cited above, except for two
             short-circuit options where we don't bother activating the
             StagingStudentService. If the caller is outside the "manager"
-            group, they get status 401; if they didn't actually send a
+            group, they get status 403; if they didn't actually send a
             classlist, they get status 400.
         """
         # The service we will call has weak defences against faulty inputs.
@@ -125,7 +125,7 @@ class Classlist(APIView):
         if "manager" not in group_list:
             return _error_response(
                 'Only users in the "manager" group can delete the class list.',
-                status.HTTP_401_UNAUTHORIZED,
+                status.HTTP_403_FORBIDDEN,
             )
 
         if not request.FILES["classlist_csv"]:
@@ -159,7 +159,7 @@ class Classlist(APIView):
             The Response from the method cited above, except for two
             short-circuit options where we don't bother activating the
             StagingStudentService. If the caller is outside the "manager"
-            group, they get status 401; if they didn't actually send a
+            group, they get status 403; if they didn't actually send a
             classlist, they get status 400.
         """
         # Yes, the docstring above is identical to the one for _extend().
@@ -178,7 +178,7 @@ class Classlist(APIView):
             The Response from the method validate_and_use_classlist_csv()
             that serves the web UI in :class:'StagingStudentService',
             outside the following special cases. If the caller is outside
-            the "manager" group, they get status 401; if they didn't actually
+            the "manager" group, they get status 403; if they didn't actually
             send a classlist, they get status 400.
         """
         if StagingStudentService.are_there_students():
@@ -201,7 +201,7 @@ class Classlist(APIView):
             The Response from the method validate_and_use_classlist_csv()
             that serves the web UI in :class:'StagingStudentService',
             outside the following special cases. If the caller is outside
-            the "manager" group, they get status 401; if they didn't actually
+            the "manager" group, they get status 403; if they didn't actually
             send a classlist, they get status 400.
         """
         self.delete(request)
