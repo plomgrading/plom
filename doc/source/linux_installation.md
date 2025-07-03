@@ -27,7 +27,7 @@ Tested on Fedora 41.  Some stuff from the package manager:
         python3-jsmin python3-defusedxml python3-yaml \
         python3-more-itertools python3-chardet \
         python3-seaborn python3-cairosvg \
-        python3-platformdirs python3-arrow \
+        python3-arrow \
         python3-pillow python3-pandas \
         python3-PyMuPDF python3-scikit-learn \
         python3-stdiomask python3-requests-toolbelt \

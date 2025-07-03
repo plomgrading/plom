@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse
@@ -37,3 +38,30 @@ class FinishReassembled(APIView):
                 status.HTTP_404_NOT_FOUND,
             )
         return FileResponse(pdf_file, status=status.HTTP_200_OK)
+
+
+class FinishUnmarked(APIView):
+    """API related to unmarked papers."""
+
+    # GET: /api/beta/finish/unmarked/{papernum}
+    def get(self, request: Request, *, papernum: int) -> FileResponse:
+        """API to download one unmarked paper.
+
+        Only managers and lead_markers can access this,
+        others will receive a 403.
+        """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if not ("manager" in group_list or "lead_marker" in group_list):
+            return _error_response(
+                'Only "manager" and "lead_marker" users can download reassembled papers',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            pdf_bytestream = ReassembleService().get_unmarked_paper(papernum)
+        except ValueError as err:
+            return _error_response(
+                f"Unable to retrieve the 'unmarked' paper: {err}",
+                status.HTTP_404_NOT_FOUND,
+            )
+        return FileResponse(pdf_bytestream, status=status.HTTP_200_OK)

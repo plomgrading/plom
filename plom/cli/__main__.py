@@ -7,6 +7,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2025 Philip D. Loewen
 # Copyright (C) 2025 Aidan Murphy
+# Copyright (C) 2025 Bryan Tanady
 
 """Plom tools for pushing and manipulating bundles from the command line.
 
@@ -32,13 +33,14 @@ import sys
 
 from stdiomask import getpass
 
-from plom import Default_Port, __version__
+from plom.common import Default_Port, __version__
 from plom.cli import (
     bundle_map_page,
     clear_login,
     delete_classlist,
     delete_source,
     get_reassembled,
+    get_unmarked,
     id_paper,
     un_id_paper,
     list_bundles,
@@ -49,6 +51,7 @@ from plom.cli import (
     download_classlist,
     upload_spec,
     reset_task,
+    extract_rectangle,
 )
 
 
@@ -135,6 +138,17 @@ def get_parser() -> argparse.ArgumentParser:
         description="""
             Download a reassembled paper as a PDF file from the server.
             Will fail if the paper is not reassembled yet.
+        """,
+    )
+    s.add_argument("papernum", type=int)
+    _add_server_args(s)
+
+    s = sub.add_parser(
+        "get-unmarked",
+        help="Get a unmarked paper.",
+        description="""
+            Download a unmarked paper as a PDF file from the server.
+            Will fail if no scanned images are associated with the paper.
         """,
     )
     s.add_argument("papernum", type=int)
@@ -305,9 +319,6 @@ def get_parser() -> argparse.ArgumentParser:
             Which paper number to attach the page to.
             It must exist; you must create it first with appropriate
             versions.
-            TODO: argparse has this as optional but no default setting
-            for this yet: maybe it should assign to the next available
-            paper number or something like that?
         """,
     )
     sp_map.add_argument(
@@ -318,13 +329,99 @@ def get_parser() -> argparse.ArgumentParser:
             Which question(s) are answered on the page.
             You can pass a single integer, or a list like `-q [1,2,3]`
             which attaches the page to questions 1, 2 and 3.
-            You can also pass the special string `-q all` which attaches
-            the page to all questions (this is also the default).
-            An empty list will "discard" that particular page.
-            TODO: discard, dnm and all are currently "in-flux".
+            You can also pass one of several special strings:
+            `-q all` attaches the page to all questions (this is
+            also the default).  `-q dnm` attaches the page to a
+            particular paper but sets it "Do Not Mark".
+            `-q discard` discards the page.
+            An empty list will is currently the same as `-q all`.
         """,
     )
     _add_server_args(sp_map)
+
+    s = sub.add_parser(
+        "extract-rectangle",
+        help="Extract rectangle from a paper, saving as a png file",
+        description="""Given version, page number, paper number, and boundaries of the rectangle,
+        extract the rectangle from the scanned paper with that page number and version.
+        """,
+    )
+
+    s.add_argument(
+        "--version",
+        "-v",
+        required=True,
+        type=int,
+        help="The version of the page to extract",
+    )
+    s.add_argument(
+        "--pagenum",
+        type=int,
+        required=True,
+        help="The page number of the paper that will be extracted",
+    )
+
+    s.add_argument(
+        "--papernum",
+        type=int,
+        required=True,
+        help="The paper number to be extracted",
+    )
+
+    s.add_argument(
+        "--left",
+        "-l",
+        required=False,
+        type=float,
+        help="""x coordinate of the rectangle's top left corner. The coordinate is relative
+        to the QR codes so values are in the interval [0,1] (plus some overhang for the margins).
+        If not provided then default to 0
+        """,
+    )
+    s.add_argument(
+        "--top",
+        "-t",
+        required=False,
+        type=float,
+        help="""y coordinate of the rectangle's top left corner. The coordinate is relative
+        to the QR codes so values are in the interval [0,1] (plus some overhang for the margins).
+        If not provided then default to 0
+        """,
+    )
+
+    s.add_argument(
+        "--right",
+        "-r",
+        required=False,
+        type=float,
+        help="""x coordinate of the rectangle's bottom right corner. The coordinate is relative
+        to the QR codes so values are in the interval [0,1] (plus some overhang for the margins).
+        If not provided then default to 1
+        """,
+    )
+
+    s.add_argument(
+        "--bottom",
+        "-b",
+        required=False,
+        type=float,
+        help="""y coordinate of the rectangle's top bottom right corner. The coordinate is relative
+        to the QR codes so values are in the interval [0,1] (plus some overhang for the margins).
+        If not provided then default to 1
+        """,
+    )
+    s.add_argument(
+        "--out-path",
+        type=str,
+        required=False,
+        help="""
+        The output path of the extracted rectangle image. If not provided, the image will be saved as:
+            "./extracted_region_V{version}_page{page_num}_paper{paper_num}.png"
+        where {version}, {page_num}, and {paper_num} are replaced by their respective values.
+        """,
+    )
+
+    _add_server_args(s)
     return parser
 
 
@@ -392,6 +489,12 @@ def main():
             f"wrote reassembled paper number {args.papernum} to "
             f'file {r["filename"]} [{r["content-length"]} bytes]'
         )
+    elif args.command == "get-unmarked":
+        r = get_unmarked(args.papernum, msgr=m)
+        print(
+            f"wrote unmarked paper number {args.papernum} to "
+            f'file {r["filename"]} [{r["content-length"]} bytes]'
+        )
 
     elif args.command == "upload-source":
         ver = args.version
@@ -433,6 +536,18 @@ def main():
 
     elif args.command == "clear":
         clear_login(args.server, args.username, args.password)
+
+    elif args.command == "extract-rectangle":
+        region = {
+            "left": args.left if args.left else 0,
+            "top": args.top if args.top else 0,
+            "right": args.right if args.right else 1,
+            "bottom": args.bottom if args.bottom else 1,
+        }
+
+        success = extract_rectangle(
+            args.version, args.pagenum, args.papernum, region, args.out_path, msgr=m
+        )
     else:
         get_parser().print_help()
 

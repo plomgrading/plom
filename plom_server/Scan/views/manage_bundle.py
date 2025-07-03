@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2024-2025 Philip D. Loewen
 
 from typing import Any
 
@@ -75,6 +76,7 @@ class BundleThumbnailsView(ScannerRequiredView):
         bundle = scanner.get_bundle_from_pk(bundle_id)
         n_pages = scanner.get_n_images(bundle)
         known_pages = scanner.get_n_known_images(bundle)
+        unread_pages = scanner.get_n_unread_images(bundle)
         unknown_pages = scanner.get_n_unknown_images(bundle)
         extra_pages = scanner.get_n_extra_images(bundle)
         discard_pages = scanner.get_n_discard_images(bundle)
@@ -127,6 +129,7 @@ class BundleThumbnailsView(ScannerRequiredView):
                 "n_collisions": len(bundle_colliding_images),
                 "total_pages": n_pages,
                 "known_pages": known_pages,
+                "unread_pages": unread_pages,
                 "unknown_pages": unknown_pages,
                 "extra_pages": extra_pages,
                 "discard_pages": discard_pages,

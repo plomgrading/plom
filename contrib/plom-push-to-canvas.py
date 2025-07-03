@@ -53,7 +53,7 @@ from canvasapi import __version__ as __canvasapi_version__
 import pandas
 from tqdm import tqdm
 
-from plom import __version__ as __plom_version__
+from plom.common import __version__ as __plom_version__
 from plom.canvas import __DEFAULT_CANVAS_API_URL__
 from plom.canvas import (
     canvas_login,
@@ -71,7 +71,7 @@ from plom.canvas import (
 
 
 # bump this a bit if you change this script
-__script_version__ = "0.6.0"
+__script_version__ = "0.6.1"
 
 
 def sis_id_to_student_dict(student_list):
