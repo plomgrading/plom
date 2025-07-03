@@ -348,14 +348,14 @@ def get_parser() -> argparse.ArgumentParser:
     )
 
     s.add_argument(
-        "-version",
+        "--version",
         "-v",
         required=True,
         type=int,
         help="The version of the page to extract",
     )
     s.add_argument(
-        "-pagenum",
+        "--pagenum",
         type=int,
         required=True,
         help="The page number of the papers that will be extracted",
@@ -370,7 +370,7 @@ def get_parser() -> argparse.ArgumentParser:
 
     s.add_argument(
         "--left",
-        "--l",
+        "-l",
         required=False,
         type=float,
         help="""x coordinate of the rectangle's top left corner. The coordinate is relative
@@ -380,7 +380,7 @@ def get_parser() -> argparse.ArgumentParser:
     )
     s.add_argument(
         "--top",
-        "--T",
+        "-t",
         required=False,
         type=float,
         help="""y coordinate of the rectangle's top left corner. The coordinate is relative
@@ -391,7 +391,7 @@ def get_parser() -> argparse.ArgumentParser:
 
     s.add_argument(
         "--right",
-        "--R",
+        "-r",
         required=False,
         type=float,
         help="""x coordinate of the rectangle's bottom right corner. The coordinate is relative
@@ -402,7 +402,7 @@ def get_parser() -> argparse.ArgumentParser:
 
     s.add_argument(
         "--bottom",
-        "--b",
+        "-b",
         required=False,
         type=float,
         help="""y coordinate of the rectangle's top bottom right corner. The coordinate is relative
