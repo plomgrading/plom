@@ -123,10 +123,7 @@ class MiscIncomingAnnotationsTests(TestCase):
         self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 3)
 
     def test_marking_outdated4(self) -> None:
-        """Test correct use case for marking_outdated.
-
-        TODO: what does 'correct' mean?
-        """
+        """Test marking_outdated when there are multiple editions."""
         mts = MarkingTaskService()
         user0: User = baker.make(User)
         paper2 = baker.make(Paper, paper_number=2)
@@ -165,15 +162,19 @@ class MiscIncomingAnnotationsTests(TestCase):
                 ]
             },
         )
+        task.refresh_from_db()
+        # creating the new annotation replaces the task's latest annotation
         task.latest_annotation != a1
         task.latest_annotation == a2
 
         assert a2.edition > a1.edition
 
+        # now we make the task outdated
         mts.set_paper_marking_task_outdated(2, 1)
+        task.refresh_from_db()
+        assert task.status == MarkingTask.OUT_OF_DATE
         # Do we care?  Maybe is illdefined what latest should point to?
         task.latest_annotation == a2
-        # TODO: test the effects of setting something out of date.
 
     def test_marking_submits_non_existent_rubrics(self) -> None:
         user0: User = baker.make(User)
