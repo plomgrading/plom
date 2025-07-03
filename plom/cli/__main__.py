@@ -341,9 +341,9 @@ def get_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser(
         "extract-rectangle",
-        help="Extract rectangles from papers, saving as a zip file",
-        description="""Given version, page number and boundaries of the rectangle,
-        extract all rectangles from scanned papers with that page number and version.
+        help="Extract rectangle from a paper, saving as a png file",
+        description="""Given version, page number, paper number, and boundaries of the rectangle,
+        extract the rectangle from the scanned paper with that page number and version.
         """,
     )
 
@@ -358,7 +358,7 @@ def get_parser() -> argparse.ArgumentParser:
         "--pagenum",
         type=int,
         required=True,
-        help="The page number of the papers that will be extracted",
+        help="The page number of the paper that will be extracted",
     )
 
     s.add_argument(
@@ -414,7 +414,10 @@ def get_parser() -> argparse.ArgumentParser:
         "--out-path",
         type=str,
         required=False,
-        help="""The output path of the zip file, if not provided then it will be saved at "./extracted_region.zip"
+        help="""
+        The output path of the extracted rectangle image. If not provided, the image will be saved as:
+            "./extracted_region_V{version}_page{page_num}_paper{paper_num}.png"
+        where {version}, {page_num}, and {paper_num} are replaced by their respective values.
         """,
     )
 

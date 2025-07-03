@@ -1450,7 +1450,7 @@ class Messenger(BaseMessenger):
     def rectangle_extraction(
         self, version: int, page_num: int, paper_num: int, region: dict[str, float]
     ) -> bytes:
-        """Download the extracted region of papers with the given version and page number.
+        """Download the extracted region of the paper with the given version and page number.
 
         Args:
             version: the version of the page to be extracted
