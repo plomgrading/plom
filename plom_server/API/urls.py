@@ -188,7 +188,7 @@ urlpatterns += [
         name="api_rubrics_tasks",
     ),
     path(
-        "api/rectangle/<int:version>/<int:page_num>",
+        "api/rectangle/<int:version>/<int:page_num>/<int:paper_num>",
         RectangleExtractorView.as_view(),
         name="api_rectangle_extractor",
     ),

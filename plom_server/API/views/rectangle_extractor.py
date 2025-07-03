@@ -8,13 +8,15 @@ from plom_server.Rectangles.services import RectangleExtractor
 from django.http import FileResponse
 from .utils import _error_response
 from rest_framework import status
-from pathlib import Path
+from io import BytesIO
 
 
 class RectangleExtractorView(APIView):
     # GET api/rectangle/{version}/{page_num}
-    def get(self, request: Request, version: int, page_num: int) -> Response:
-        """Get extracted regions of all scanned papers with the given version and page number."""
+    def get(
+        self, request: Request, version: int, page_num: int, paper_num: int
+    ) -> Response:
+        """Get extracted region a scanned paper with the given version and page number."""
         try:
             rex = RectangleExtractor(version, page_num)
         except ValueError as err:
@@ -42,14 +44,17 @@ class RectangleExtractorView(APIView):
                 status.HTTP_400_BAD_REQUEST,
             )
 
-        tmpzip = NamedTemporaryFile(delete=False)
-        # Wraps in try - finally to ensure cleanup even if failure occurs.
-        try:
-            rex.build_zipfile(tmpzip.name, left, top, right, bottom)
-            response = FileResponse(
-                tmpzip, filename=f"extracted_rectangles_v{version}_pg{page_num}.zip"
-            )
-            response["Content-Type"] = "application/zip"
-            return response
-        finally:
-            Path(tmpzip.name).unlink()
+        image_bytes = rex.extract_rect_region(
+            paper_number=paper_num,
+            left_f=left,
+            top_f=top,
+            right_f=right,
+            bottom_f=bottom,
+        )
+
+        response = FileResponse(
+            BytesIO(image_bytes),
+            filename=f"extracted_rectangles_v{version}_pg{page_num}_paper{paper_num}.png",
+        )
+        response["Content-Type"] = "image/png"
+        return response
