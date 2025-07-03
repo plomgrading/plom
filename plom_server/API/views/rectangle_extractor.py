@@ -3,7 +3,6 @@
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
-from tempfile import NamedTemporaryFile
 from plom_server.Rectangles.services import RectangleExtractor
 from django.http import FileResponse
 from .utils import _error_response
@@ -44,6 +43,7 @@ class RectangleExtractorView(APIView):
                 status.HTTP_400_BAD_REQUEST,
             )
 
+        # Get the image bytes
         image_bytes = rex.extract_rect_region(
             paper_number=paper_num,
             left_f=left,
@@ -52,9 +52,13 @@ class RectangleExtractorView(APIView):
             bottom_f=bottom,
         )
 
+        # serve back as PNG
+        buf = BytesIO(image_bytes)
+        buf.seek(0)
         response = FileResponse(
-            BytesIO(image_bytes),
+            buf,
             filename=f"extracted_rectangles_v{version}_pg{page_num}_paper{paper_num}.png",
+            content_type="image/png",
         )
-        response["Content-Type"] = "image/png"
+
         return response
