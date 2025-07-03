@@ -59,9 +59,14 @@ class DemoHWBundleCreationService:
             )
             output = output.decode()
             print(output)
+            bundle_id = None
             for l in output.splitlines():
                 if l.startswith(bundle_name):
                     bundle_id = int(l.split()[1])
+            if bundle_id is None:
+                raise ValueError(
+                    f'Could not find a bundle id associated with name "{bundle_name}"'
+                )
 
             for i, qidx_list in enumerate(bundle["pages"]):
                 pg = i + 1
