@@ -34,7 +34,13 @@ class PQVmap(APIView):
     def delete(self, request: Request) -> Response:
         """Remove the current PQV map, if any, from the database.
 
-            This work is done by Huey, taking a blocking foreground approach.
+        This work is done by Huey, taking a blocking foreground approach.
+
+        The response will be generated only after all the deletions are
+        complete. For large classes, this may take so long that the
+        requester gives up and declares an HTTP timeout. This has not yet
+        been observed in the wild, but we note it here in case some
+        unfortunate colleague in the future needs a pointer on what's breaking.
 
         Args:
             request: An HTTP request.
@@ -89,10 +95,16 @@ class PQVmap(APIView):
     def post(self, request: Request, count: int | None = None) -> Response:
         """Create a PQV map with 'count' entries and put it into the database.
 
-            This work is done by Huey, taking a blocking foreground approach.
-            If 'count' is not provided, use the default suggested number.
-            The request will be rejected if there is already a PQV map in place.
-            (Note that the DELETE method is available on the same endpoint.)
+        This work is done by Huey, taking a blocking foreground approach.
+        If 'count' is not provided, use the default suggested number.
+        The request will be rejected if there is already a PQV map in place.
+        (Note that the DELETE method is available on the same endpoint.)
+
+        The response will be generated only after all the PQV map entries are
+        built and installed. For large classes, this may take so long that the
+        requester gives up and declares an HTTP timeout. This has not yet
+        been observed in the wild, but we note it here in case some unfortunate
+        colleague in the future needs a pointer on what's breaking.
 
         Args:
             request: An HTTP request.
@@ -120,10 +132,7 @@ class PQVmap(APIView):
             )
 
         if count is None:
-            # We need the "internal redirect" here because the Django redirect
-            # shortcut changes the original method (POST) to GET.
-            defaultcount = StagingStudentService().get_minimum_number_to_produce()
-            return self.post(request, count=defaultcount)
+            count = StagingStudentService().get_minimum_number_to_produce()
 
         try:
             # Make the PQV map. Sorry for hard-coding the lowestpapernumber.
@@ -139,7 +148,7 @@ class PQVmap(APIView):
     def put(self, request: Request) -> Response:
         """Replace the PQV map with the one attached to the request.
 
-            Not built yet! (But relevant infrastructure is available, thanks to others.)
+        Not built yet! (But relevant infrastructure is available, thanks to others.)
 
         Args:
             request: An HTTP request, with a PQV map in the FILES container.
