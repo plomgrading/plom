@@ -52,6 +52,14 @@ class RectangleExtractorView(APIView):
             bottom_f=bottom,
         )
 
+        # extract_rect_region returns None on error
+        if not image_bytes:
+            return _error_response(
+                "Error: Rectangle extractor returns none, implying there"
+                "is an error in extract_rect_region ",
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
         # serve back as PNG
         buf = BytesIO(image_bytes)
         buf.seek(0)
