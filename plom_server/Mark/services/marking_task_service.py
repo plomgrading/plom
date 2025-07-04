@@ -765,7 +765,8 @@ class MarkingTaskService:
             pass
 
         # now all existing tasks are out of date, so if the question is ready create a new marking task for it.
-        if ibs.is_given_paper_question_ready(paper_obj, question_index):
+        pq_pair = (paper_obj.paper_number, question_index)
+        if ibs.are_paper_question_pairs_ready([pq_pair])[pq_pair]:
             self.create_task(paper_obj, question_index)
 
     @transaction.atomic

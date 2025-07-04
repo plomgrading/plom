@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 from django.test import TestCase
 from django.core.exceptions import ObjectDoesNotExist
@@ -7,12 +8,12 @@ from django.core.exceptions import ObjectDoesNotExist
 from ..services import SpecificationService as s
 
 
-class SpecficiationServiceMiscTests(TestCase):
+class SpecificationServiceMiscTests(TestCase):
     def setUp(self):
         spec_dict = {
             "idPage": 1,
             "numberOfVersions": 2,
-            "numberOfPages": 5,
+            "numberOfPages": 7,
             "totalMarks": 20,
             "numberOfQuestions": 4,
             "name": "testing",
@@ -22,7 +23,7 @@ class SpecficiationServiceMiscTests(TestCase):
                 1: {"pages": [2], "mark": 5},
                 2: {"pages": [3], "mark": 5, "select": "fix"},
                 3: {"pages": [4], "mark": 5, "select": "shuffle"},
-                4: {"pages": [5], "mark": 5, "select": "shuffle"},
+                4: {"pages": [5, 6, 7], "mark": 5, "select": "shuffle"},
             },
         }
         s._store_validated_spec(spec_dict)
@@ -41,7 +42,7 @@ class SpecficiationServiceMiscTests(TestCase):
 
     def test_get_list_of_pages(self) -> None:
         pp = s.get_list_of_pages()
-        assert pp == list(range(1, 5 + 1))
+        assert pp == list(range(1, 7 + 1))
 
     def test_get_short_and_long_names_or_empty(self) -> None:
         assert s.get_short_and_long_names_or_empty() == ("testing", "Testing")
@@ -69,8 +70,15 @@ class SpecficiationServiceMiscTests(TestCase):
         with self.assertRaises(ObjectDoesNotExist):
             s.remove_spec()
 
+    def test_get_question_pages(self) -> None:
+        qidx_page_dict = s.get_question_pages()
+        assert qidx_page_dict[1] == [2]
+        assert qidx_page_dict[2] == [3]
+        assert qidx_page_dict[3] == [4]
+        assert qidx_page_dict[4] == [5, 6, 7]
 
-class SpecficiationServiceMiscNoSpecTests(TestCase):
+
+class SpecificationServiceMiscNoSpecTests(TestCase):
     def test_get_list_of_pages(self) -> None:
         assert s.get_list_of_pages() == []
 
@@ -94,3 +102,7 @@ class SpecficiationServiceMiscNoSpecTests(TestCase):
     def test_remove_spec(self) -> None:
         with self.assertRaises(ObjectDoesNotExist):
             s.remove_spec()
+
+    def test_get_question_pages(self) -> None:
+        with self.assertRaises(ObjectDoesNotExist):
+            s.get_question_pages()

@@ -5,6 +5,7 @@
 # Copyright (C) 2023 Natalie Balashov
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 import pathlib
 import uuid
@@ -13,7 +14,7 @@ from collections import defaultdict
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Count, Q, OuterRef, Exists
 
 from plom.tpv_utils import encodePaperPageVersion
 from plom.plom_exceptions import PlomPushCollisionException
@@ -32,6 +33,7 @@ from ..models import (
     Paper,
 )
 from .paper_info import PaperInfoService
+from . import SpecificationService
 
 
 class ImageBundleService:
@@ -269,7 +271,7 @@ class ImageBundleService:
         from plom_server.Identify.services import IDReaderService
 
         # bulk create the associated marking tasks in O(1)
-        ready, _ = self.get_ready_and_not_ready_questions(uploaded_bundle)
+        ready = self._get_ready_questions_in_bundle(uploaded_bundle)
         MarkingTaskService.bulk_create_and_update_marking_tasks(ready)
 
         # bulk create the associated ID tasks in O(1).
@@ -408,37 +410,27 @@ class ImageBundleService:
 
     @staticmethod
     @transaction.atomic
-    def get_ready_and_not_ready_questions(
-        bundle: Bundle,
-    ) -> tuple[list[tuple[int, int, int]], list[tuple[int, int, int]]]:
-        """Find questions across all papers effected by this bundle now ready, and those that are not ready.
+    def _get_ready_questions_in_bundle(bundle: Bundle) -> list[tuple[int, int, int]]:
+        """Find ready questions across all papers affected by this bundle.
 
         A question is ready when either it has all of its
         fixed-pages, or it has no fixed-pages but has some
         mobile-pages.
 
-        Note: tasks are created on a per-question basis, so a test paper across multiple bundles
-        could have some "ready" and "unready" questions.
+        Note: at any given time a paper could have some "ready" and "unready" questions.
 
         Args:
             bundle: a Bundle instance.
 
         Returns:
-            Two lists, the first is the "ready" list of paper_number/question_index/version
-            triples that have pages in this bundle, and are now ready to be marked.
-            The "not_ready" are paper_number/question_index pairs that have pages
-            in this bundle, but are not ready to be marked yet.
+            A list containing tuples of paper_number, question_index, version,
+            for each paper question pair that's 'ready'.
         """
-        # find all question-pages (ie fixed pages) that attach to images in the current bundle.
         question_pages = QuestionPage.objects.filter(image__bundle=bundle)
-        # find all mobile pages (extra pages) that attach to images in the current bundle
         extras = MobilePage.objects.filter(image__bundle=bundle)
-        # Note ready/nonready is about *questions*, so any MobilePages attached to DNM don't
-        # count (including them will lead to bugs, Issue #3925); we filter them out.
-        extras = extras.exclude(question_index=MobilePage.DNM_qidx)
 
-        # now make list of all papers/questions updated by this bundle
-        # note that values_list does not return a list, it returns a "query-set"
+        # version isn't necessary for the readiness check
+        # but it can be fetched here with little additional overhead
         # remove duplicates by casting to a set
         papers_questions_versions_updated_by_bundle = set(
             list(
@@ -450,52 +442,17 @@ class ImageBundleService:
                 extras.values_list("paper__paper_number", "question_index", "version")
             )
         )
-        # now get all paper-numbers updated by the bundle
-        papers_updated_by_bundle = list(
-            set([X[0] for X in papers_questions_versions_updated_by_bundle])
+
+        # now check if pq pairs are markable
+        paper_question_pairs_dict = ImageBundleService().are_paper_question_pairs_ready(
+            [t[:2] for t in papers_questions_versions_updated_by_bundle]
         )
-        # use this to get all QuestionPage and MobilePage in those papers
-        pq_qpage_with_img: dict[tuple[int, int, int], int] = defaultdict(int)
-        pq_qpage_no_img: dict[tuple[int, int, int], int] = defaultdict(int)
-        for qpage in QuestionPage.objects.filter(
-            paper__paper_number__in=papers_updated_by_bundle
-        ).prefetch_related("paper", "image"):
-            pnqiv = (qpage.paper.paper_number, qpage.question_index, qpage.version)
-            if qpage.image is None:
-                pq_qpage_no_img[pnqiv] += 1
-            else:
-                pq_qpage_with_img[pnqiv] += 1
-        pq_mpage: dict[tuple[int, int, int], int] = defaultdict(int)
-        for mpage in MobilePage.objects.filter(
-            paper__paper_number__in=papers_updated_by_bundle
-        ).prefetch_related("paper", "image"):
-            pnqiv = (mpage.paper.paper_number, mpage.question_index, mpage.version)
-            pq_mpage[pnqiv] += 1
-
-        # for each paper/question that has been updated, check if has either
-        # all fixed pages, or no fixed pages but some mobile-pages.
-        # if some, but not all, fixed pages then is not ready.
-        ready = []
-        not_ready = []
-        for (
-            paper_number,
-            question_index,
-            version,
-        ) in papers_questions_versions_updated_by_bundle:
-            if pq_qpage_no_img[(paper_number, question_index, version)] == 0:
-                # all fixed pages have images
-                ready.append((paper_number, question_index, version))
-                continue
-            # question has some images
-            if pq_qpage_with_img[(paper_number, question_index, version)] > 0:
-                # question has some pages with and some without images - not ready
-                not_ready.append((paper_number, question_index, version))
-                continue
-            # all fixed pages without images - check if has any mobile pages
-            if pq_mpage[(paper_number, question_index, version)] > 0:
-                ready.append((paper_number, question_index, version))
-
-        return ready, not_ready
+        pqv_updated_and_ready = [
+            t
+            for t in papers_questions_versions_updated_by_bundle
+            if paper_question_pairs_dict[t[:2]]
+        ]
+        return pqv_updated_and_ready
 
     @transaction.atomic
     def get_id_pages_in_bundle(self, bundle: Bundle) -> QuerySet[IDPage]:
@@ -522,58 +479,97 @@ class ImageBundleService:
         return IDPage.objects.filter(paper=paper_obj, image__isnull=False).exists()
 
     @transaction.atomic
-    def is_given_paper_question_ready(
-        self, paper_obj: Paper, question_index: int
-    ) -> bool:
-        """Check if a given paper/question is ready for marking.
+    def _get_ready_paper_question_pairs(self) -> list[tuple[int, int]]:
+        """Get all paper question pairs that are ready for marking.
 
-        Note that to be ready the question must either
+        This function queries database images directly to determine
+        if a given paper has enough work submitted to be marked.
+        It does **not** check if a question has already been marked,
+        or if marking is in progress, for that you must query the
+        relevant MarkingTask
+        To be 'ready' a paper/question pair must either
           * have all its fixed pages with images (and any
             number of mobile pages), or
           * have no fixed pages with images but some mobile pages
 
+        Returns:
+            a list of tuples, each containing a paper number and question pair
+            TODO: ideally this would return a lazy queryset, but that requires
+            a common relation for mobile and question pages (#2871)
+        """
+        # get all scanned pages (relevant to questions)
+        filled_qpages = QuestionPage.objects.filter(image__isnull=False)
+        mpages = MobilePage.objects.all()
+
+        # number of pages per question
+        test_page_dict = SpecificationService.get_question_pages()
+        qidx_spec_page_count = {
+            key: len(values) for key, values in test_page_dict.items()
+        }
+
+        # case 1 - all fixed pages have images
+        filled_qpages_counts = filled_qpages.values(
+            "paper__paper_number", "question_index"
+        ).annotate(page_count=Count("id"))
+        all_pages_filter = Q()
+        for qidx, spec_page_count in qidx_spec_page_count.items():
+            all_pages_filter |= Q(question_index=qidx, page_count__gte=spec_page_count)
+
+        ready_pairs_1 = (
+            filled_qpages_counts.filter(all_pages_filter)
+            .values_list("paper__paper_number", "question_index")
+            .distinct()
+        )
+
+        # case 2 - all fixed pages have no images, but there's mobile pages
+
+        # we are emulating this query:
+        # SELECT mp.paper, mp.question_index
+        # FROM MobilePage mp LEFT OUTER JOIN QuestionPage_withimage qp
+        # ON mp.paper = qp.paper AND mp.question_index = qp.question_index
+        subquery = filled_qpages.filter(
+            paper=OuterRef("paper"),
+            question_index=OuterRef("question_index"),
+        )
+        mpages_filtered = mpages.annotate(nofixed=~Exists(subquery))
+
+        ready_pairs_2 = (
+            mpages_filtered.filter(
+                nofixed=True, question_index__in=list(test_page_dict.keys())
+            )
+            .values_list("paper__paper_number", "question_index")
+            .distinct()
+        )
+        # By design, case 1 and case 2 pairs will never collide
+        ready = list(ready_pairs_1) + list(ready_pairs_2)
+
+        return ready
+
+    @transaction.atomic
+    def are_paper_question_pairs_ready(
+        self, paper_qidx_pairs: list[tuple[int, int]]
+    ) -> dict[tuple[int, int], bool]:
+        """Check if provided paper/question pairs are ready for marking.
+
+        See :func:`_get_ready_paper_question_pairs` for what 'ready' means.
 
         Args:
-            paper_obj: the database paper object to check.
-            question_index: the question to check.
+            paper_qidx_pairs: a list of tuples identifying a particular
+                question on a particular paper. The tuples should be formatted
+                as (paper_number, qidx).
 
         Returns:
-            True when the question of the given paper is ready for marking, false otherwise.
-
-        Raises:
-            ValueError: when there does not exist any question pages for
-                that paper (eg when the question index is out of range).
+            A dict with the input paper number/qidx tuples as keys, and True/False
+            as the values.
         """
-        q_pages = QuestionPage.objects.filter(
-            paper=paper_obj, question_index=question_index
-        )
-        # todo - this should likely be replaced with a spec check
-        if not q_pages.exists():
-            raise ValueError(
-                f"There are no question_pages at all for paper {paper_obj.paper_number}"
-                f" question index {question_index}"
-            )
-
-        qp_no_img = q_pages.filter(image__isnull=True).exists()
-        qp_with_img = q_pages.filter(image__isnull=False).exists()
-        # note that (qp_no_img or qp_with_img == True)
-        mp_present = MobilePage.objects.filter(
-            paper=paper_obj, question_index=question_index
-        ).exists()
-
-        if qp_with_img:
-            # there are some fixed pages with images
-            if qp_no_img:
-                # there are some fixed pages without images, so partially scanned. not ready.
-                return False
-            else:
-                # all fixed question pages have images, so it is ready
-                return True
-        else:
-            # all fixed pages have no images.
-            if mp_present:
-                # the question has no fixed pages scanned, but does have a mobile page, so ready.
-                return True
-            else:
-                # no images present at all, so not ready
-                return False
+        test_questions = list(SpecificationService.get_question_pages().keys())
+        ready_pairs = self._get_ready_paper_question_pairs()
+        pq_pair_ready = {}
+        for pair in paper_qidx_pairs:
+            if pair[1] not in test_questions:
+                raise ValueError(
+                    f"question index '{pair[1]}' doesn't correspond"
+                    " to any question on this assessment."
+                )
+            pq_pair_ready[pair] = pair in ready_pairs
+        return pq_pair_ready

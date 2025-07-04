@@ -74,7 +74,7 @@ class TestStudentMarkService(TestCase):
                     image=img,
                     version=1,
                     page_number=pg,
-                    question_index=(pg % 5),
+                    question_index=(pg % 3) + 1,
                 )
             for qn in [1]:
                 ord += 1
