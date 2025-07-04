@@ -423,10 +423,8 @@ class ImageBundleService:
             bundle: a Bundle instance.
 
         Returns:
-            Two lists, the first is the "ready" list of paper_number/question_index/version
-            triples that have pages in this bundle, and are now ready to be marked.
-            The "not_ready" are paper_number/question_index pairs that have pages
-            in this bundle, but are not ready to be marked yet.
+            A list containing tuples of paper_number, question_index, version,
+            for each paper question pair that's 'ready'.
         """
         question_pages = QuestionPage.objects.filter(image__bundle=bundle)
         extras = MobilePage.objects.filter(image__bundle=bundle)
@@ -495,7 +493,7 @@ class ImageBundleService:
           * have no fixed pages with images but some mobile pages
 
         Returns:
-            a list of tuples, each containing a Paper and question pair
+            a list of tuples, each containing a paper number and question pair
             TODO: ideally this would return a lazy queryset, but that requires
             a common relation for mobile and question pages (#2871)
         """
@@ -557,10 +555,11 @@ class ImageBundleService:
 
         Args:
             paper_qidx_pairs: a list of tuples identifying a particular
-                question on a particular paper.
+                question on a particular paper. The tuples should be formatted
+                as (paper_number, qidx).
 
         Returns:
-            A dict with the input paper/qidx tuples as keys, and True/False
+            A dict with the input paper number/qidx tuples as keys, and True/False
             as the values.
         """
         test_questions = list(SpecificationService.get_question_pages().keys())
