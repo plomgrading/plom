@@ -81,7 +81,7 @@ class MiscIncomingAnnotationsTests(TestCase):
         mts = MarkingTaskService()
         self.assertRaises(ValueError, mts.set_paper_marking_task_outdated, 1, 1)
         baker.make(Paper, paper_number=1)
-        mts.set_paper_marking_task_outdated(1,1) #confirm no errors raised
+        mts.set_paper_marking_task_outdated(1, 1)  # confirm no errors raised
 
     def test_marking_outdated2(self) -> None:
         mts = MarkingTaskService()
