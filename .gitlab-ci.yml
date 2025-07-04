@@ -337,7 +337,7 @@ coverage:
   needs: ["container-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov coverage[toml]~=7.8.0
+    - pip install pytest pytest-cov coverage[toml]~=7.9.2
     - coverage run -m pytest --ignore plom_server
     - coverage report --precision=2
     - coverage xml
@@ -392,8 +392,8 @@ pylint:
   image: $IM
   before_script:
     # These are pinned at 3.x.*: should be manually bumped sometimes
-    - pip install astroid~=3.3.9  # codespell:ignore astroid
-    - pip install pylint~=3.3.6
+    - pip install astroid~=3.3.10  # codespell:ignore astroid
+    - pip install pylint~=3.3.7
   script:
     - pylint plom
     - pylint plom_server
@@ -410,7 +410,7 @@ mypy-type-checking:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install mypy~=1.15.0
+    - pip install mypy~=1.16.1
   script:
     - mypy --version
     - mypy plom --python-ver 3.10 --install-types --non-interactive || true
@@ -425,7 +425,7 @@ pyright:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install pyright~=1.1.400
+    - pip install pyright~=1.1.402
   script:
     # for now, just display errors but don't fail (Issue #3237)
     - pyright || true
@@ -436,7 +436,7 @@ flake8:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install flake8~=7.2.0
+    - pip install flake8~=7.3.0
   script:
     # first show all errors and warnings but don't fail
     - flake8 --exit-zero
@@ -449,7 +449,7 @@ ruff:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.11.9
+    - pip install ruff~=0.12.2
   script:
     - ruff check .
     # ruff format .
@@ -460,7 +460,7 @@ count-no-docstring:
   image: python:3
   stage: static_analysis
   before_script:
-    - pip install ruff~=0.11.9
+    - pip install ruff~=0.12.2
   script:
     # run once just for log out but don't fail
     - EXCEPTIONS="D101,D102,D103,D104,D106"
@@ -527,7 +527,7 @@ webplom_test:
   needs: ["container-image"]
   image: $IM
   before_script:
-    - pip install coverage~=7.8.0
+    - pip install coverage~=7.9.2
   script:
     - export PYTHONPATH=$PWD
     - export PLOM_DATABASE_BACKEND=sqlite
