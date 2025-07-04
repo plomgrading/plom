@@ -70,9 +70,7 @@ def test_stamp_QRs(tmp_path) -> None:
 
     d = QRextract_legacy(files[0], write_to_file=False)
     assert d is not None
-    for k, v in d.items():
-        print(k)
-        print(v)
+    for _, v in d.items():
         assert len(v) == 0
 
     d = QRextract_legacy(files[2], write_to_file=False)
