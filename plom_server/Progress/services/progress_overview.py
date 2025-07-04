@@ -144,35 +144,76 @@ class ProgressOverviewService:
         return dat
 
     @transaction.atomic
-    def get_mark_task_status_counts(
-        self, n_papers: int | None = None
-    ) -> dict[int, dict[str, int]]:
-        """Return a dict of counts of marking tasks by their status for each question.
-
-        Note that, if n_papers is supplied, then the number of missing
-        tasks is also computed. Also note that this excludes
-        out-of-date tasks.
+    def get_mark_task_status_counts(self, n_papers: int, question_idx: int = None, version: int = None) -> dict:
         """
-        # return a dict of dict - one for each question-index.
-        # for each index the dict is {status: count} for each of todo, complete, out
-        # exclude OUT OF DATE tasks
-        dat = {
-            qi: {"To Do": 0, "Complete": 0, "Out": 0}
-            for qi in SpecificationService.get_question_indices()
+        Get the counts of marking tasks by their status.
+        Now optionally filters by question index and version.
+        """
+        # Start with a base query
+        tasks_query = MarkingTask.objects.all()
+
+        # Apply filters if they are provided
+        if question_idx is not None:
+            tasks_query = tasks_query.filter(question_index=question_idx)
+        if version is not None:
+            tasks_query = tasks_query.filter(question_version=version)
+
+        # Group by status and count
+        status_counts = (
+            tasks_query.values("status")
+            .annotate(count=Count("status"))
+            .order_by("status")
+        )
+
+        # Initialize counts with all statuses at 0
+        counts = {
+            "Complete": 0,
+            "To Do": 0,
+            "Out": 0,
+            "Out Of Date": 0,
+            "Missing": n_papers,
         }
-        for X in (
-            MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
-            .values("status", "question_index")
-            .annotate(the_count=Count("status"))
-        ):
-            dat[X["question_index"]][
-                MarkingTask(status=X["status"]).get_status_display()
-            ] = X["the_count"]
-        if n_papers:
-            for qi in SpecificationService.get_question_indices():
-                present = sum([v for x, v in dat[qi].items()])
-                dat[qi].update({"Missing": n_papers - present})
-        return dat
+
+        total_tasks = 0
+        for item in status_counts:
+            status_label = MarkingTask.StatusChoices(item["status"]).label
+            if status_label in counts:
+                counts[status_label] = item["count"]
+                total_tasks += item["count"]
+
+        # Calculate missing tasks accurately
+        counts["Missing"] = max(0, n_papers - total_tasks)
+
+        return counts
+    # def get_mark_task_status_counts(
+    #     self, n_papers: int | None = None
+    # ) -> dict[int, dict[str, int]]:
+    #     """Return a dict of counts of marking tasks by their status for each question.
+
+    #     Note that, if n_papers is supplied, then the number of missing
+    #     tasks is also computed. Also note that this excludes
+    #     out-of-date tasks.
+    #     """
+    #     # return a dict of dict - one for each question-index.
+    #     # for each index the dict is {status: count} for each of todo, complete, out
+    #     # exclude OUT OF DATE tasks
+    #     dat = {
+    #         qi: {"To Do": 0, "Complete": 0, "Out": 0}
+    #         for qi in SpecificationService.get_question_indices()
+    #     }
+    #     for X in (
+    #         MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
+    #         .values("status", "question_index")
+    #         .annotate(the_count=Count("status"))
+    #     ):
+    #         dat[X["question_index"]][
+    #             MarkingTask(status=X["status"]).get_status_display()
+    #         ] = X["the_count"]
+    #     if n_papers:
+    #         for qi in SpecificationService.get_question_indices():
+    #             present = sum([v for x, v in dat[qi].items()])
+    #             dat[qi].update({"Missing": n_papers - present})
+    #     return dat
 
     @transaction.atomic
     def get_mark_task_status_counts_by_qv(

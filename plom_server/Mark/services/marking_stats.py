@@ -5,7 +5,7 @@
 # Copyright (C) 2024 Bryan Tanady
 
 import statistics
-from typing import Any, Tuple
+from typing import Any, Tuple, List, cast
 
 import arrow
 from numpy import histogram
@@ -56,6 +56,29 @@ def score_histogram(score_list, max_score, min_score=0, bin_width=1):
 
 class MarkingStatsService:
     """Functions for getting marking stats."""
+
+
+    def get_scores_for_question_version(self, question_idx: int, version: int) -> List[int]:
+        """
+        Retrieves a list of all scores for a specific question and version
+        from the latest annotations of completed tasks.
+        """
+        scores: List[int] = [] # Explicitly type the list
+        
+        # Find all completed tasks matching the question and version
+        completed_tasks = MarkingTask.objects.filter(
+            question_index=question_idx,
+            question_version=version,
+            status=MarkingTask.StatusChoices.COMPLETE
+        ).select_related('latest_annotation')
+
+        # Use a standard for-loop which is easier for type checkers to parse
+        for task in completed_tasks:
+            if task.latest_annotation is not None:
+                # We can be sure score is an int here
+                scores.append(task.latest_annotation.score)
+        
+        return scores
 
     @transaction.atomic
     def get_basic_marking_stats(
