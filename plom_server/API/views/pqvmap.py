@@ -91,9 +91,11 @@ class PQVmap(APIView):
         PIS = PaperInfoService()
         return Response(PIS.get_pqv_map_dict())
 
-    # POST /api/beta/pqvmap, or /api/beta/pqvmap/<int:n>
-    def post(self, request: Request, count: int | None = None) -> Response:
-        """Create a PQV map with 'count' entries and put it into the database.
+    # POST /api/beta/pqvmap
+    def post(self, request: Request) -> Response:
+        """Create a PQV map and put it into the database.
+
+        POST data is checked for guidance on the map to make. See below.
 
         This work is done by Huey, taking a blocking foreground approach.
         If 'count' is not provided, use the default suggested number.
@@ -108,9 +110,15 @@ class PQVmap(APIView):
 
         Args:
             request: An HTTP request.
-            count: The number of papers to define, or None.
-                (When count is 0, this works just like DELETE; when count is None,
-                redirect to the same method but with count set to the default number.)
+
+        POST Data:
+            "number_to_produce": The number of papers to define, or None.
+                (Given None, make the default number.)
+            "startn_value": The smallest integer to use for a test number.
+                (Given None, use integer 1.)
+            "first_paper_num" (optional): Text field from GUI radio buttons
+                that short-circuits defaults for startn_value. Possible values
+                are "0", "1", and "n".
 
         Returns:
             An empty response with status code 204, on success. Status code 403
@@ -121,7 +129,7 @@ class PQVmap(APIView):
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list:
             return _error_response(
-                'Only users in the "manager" group can clean the database.',
+                'Only users in the "manager" group can populate the database.',
                 status.HTTP_403_FORBIDDEN,
             )
 
@@ -131,13 +139,21 @@ class PQVmap(APIView):
                 status.HTTP_409_CONFLICT,
             )
 
-        if count is None:
-            count = StagingStudentService().get_minimum_number_to_produce()
+        ntp_default = StagingStudentService().get_minimum_number_to_produce()
+        ntp = request.POST.get("number_to_produce", ntp_default)
+        number_to_produce = int(ntp)
 
         try:
-            # Make the PQV map. Sorry for hard-coding the lowestpapernumber.
-            lowestpapernumber = 1
-            qvmap = PQVMappingService().make_version_map(count, first=lowestpapernumber)
+            first_paper_hint = int(request.POST.get("first_paper_num", 1))
+        except ValueError:
+            first_paper_hint = 1
+
+        startn = int(request.POST.get("startn_value", first_paper_hint))
+
+        try:
+            qvmap = PQVMappingService().make_version_map(
+                number_to_produce, first=startn
+            )
             PaperCreatorService.add_all_papers_in_qv_map(qvmap, background=False)
         except PlomDependencyConflict as err:
             return _error_response(err, status.HTTP_409_CONFLICT)
