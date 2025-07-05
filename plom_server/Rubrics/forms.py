@@ -12,9 +12,32 @@ from plom_server.Papers.services import SpecificationService
 from .models import Rubric
 
 
-class RubricHalfMarkForm(forms.Form):
+class RubricCreateHalfMarkForm(forms.Form):
     # creates half-mark rubrics
     pass
+
+
+class RubricFractionalPreferencesForm(forms.Form):
+    half_point_rubrics = forms.BooleanField(
+        required=False,
+        label="Enable half-point rubrics (such as +\N{VULGAR FRACTION ONE HALF})",
+    )
+    third_point_rubrics = forms.BooleanField(
+        required=False,
+        label="Enable third-point rubrics (such as +\N{VULGAR FRACTION ONE THIRD})",
+    )
+    quarter_point_rubrics = forms.BooleanField(
+        required=False,
+        label="Enable quarter-point rubrics (such as +\N{VULGAR FRACTION ONE QUARTER})",
+    )
+    eighth_point_rubrics = forms.BooleanField(
+        required=False,
+        label="Enable eighth-point rubrics (such as +\N{VULGAR FRACTION ONE EIGHTH})",
+    )
+    tenth_point_rubrics = forms.BooleanField(
+        required=False,
+        label="Enable tenth-point rubrics (such as +\N{VULGAR FRACTION ONE TENTH})",
+    )
 
 
 class RubricFilterForm(forms.Form):

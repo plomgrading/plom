@@ -9,7 +9,6 @@
 # Copyright (C) 2025 Bryan Tanady
 # Copyright (C) 2025 Deep Shah
 
-
 import difflib
 import json
 from copy import deepcopy
@@ -35,7 +34,8 @@ from plom_server.Papers.services import SpecificationService
 from plom_server.Preparation.services import PapersPrinted
 from .services import RubricService
 from .forms import (
-    RubricHalfMarkForm,
+    RubricCreateHalfMarkForm,
+    RubricFractionalPreferencesForm,
     RubricDiffForm,
     RubricFilterForm,
     RubricUploadForm,
@@ -56,7 +56,8 @@ class RubricAdminPageView(ManagerRequiredView):
             return render(request, "Finish/finish_not_printed.html", context=context)
 
         template_name = "Rubrics/rubrics_admin.html"
-        rubric_halfmark_form = RubricHalfMarkForm(request.GET)
+        rubric_create_halfmark_form = RubricCreateHalfMarkForm(request.GET)
+        rubric_fractional_pref_form = RubricFractionalPreferencesForm(request.GET)
         download_form = RubricDownloadForm(request.GET)
         upload_form = RubricUploadForm()
         template_form = RubricTemplateDownloadForm()
@@ -66,7 +67,8 @@ class RubricAdminPageView(ManagerRequiredView):
             {
                 "rubrics": rubrics,
                 "half_point_rubrics": half_point_rubrics,
-                "rubric_halfmark_form": rubric_halfmark_form,
+                "rubric_fractional_pref_form": rubric_fractional_pref_form,
+                "rubric_create_halfmark_form": rubric_create_halfmark_form,
                 "rubric_download_form": download_form,
                 "rubric_upload_form": upload_form,
                 "rubric_template_form": template_form,
@@ -75,8 +77,8 @@ class RubricAdminPageView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
 
-class RubricHalfMarksView(ManagerRequiredView):
-    """Create demo rubrics."""
+class RubricCreateHalfMarksView(ManagerRequiredView):
+    """Create half-point rubrics."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
         any_manager = User.objects.filter(groups__name="manager").first()
@@ -85,6 +87,30 @@ class RubricHalfMarksView(ManagerRequiredView):
                 request,
                 "\N{VULGAR FRACTION ONE HALF} mark rubrics could not be created.",
             )
+        return redirect("rubrics_admin")
+
+
+class RubricFractionalPreferencesView(ManagerRequiredView):
+    """Set fractional rubric preferences."""
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        print(request)
+        print(request.POST)
+        if request.POST.get("half_point_rubrics") == "on":
+            print("turning on half-point rubrics")
+            SettingsModel.cset("allow-half-point-rubrics", True)
+        if request.POST.get("third_point_rubrics") == "on":
+            print("turning on third-point rubrics")
+            SettingsModel.cset("allow-third-point-rubrics", True)
+        if request.POST.get("quarter_point_rubrics") == "on":
+            # TODO: invalid to enable these but not half-point
+            SettingsModel.cset("allow-quarter-point-rubrics", True)
+        if request.POST.get("fifth_point_rubrics") == "on":
+            SettingsModel.cset("allow-fifth-point-rubrics", True)
+        if request.POST.get("eighth_point_rubrics") == "on":
+            SettingsModel.cset("allow-eighth-point-rubrics", True)
+        if request.POST.get("tenth_point_rubrics") == "on":
+            SettingsModel.cset("allow-tenth-point-rubrics", True)
         return redirect("rubrics_admin")
 
 

@@ -317,8 +317,8 @@ class SettingsModel(SingletonABCModel):
         print(x)
         print(type(x))
         x[key] = value
-        cls.misc = x
-        cls.save()
+        s.misc = x
+        s.save()
 
     def get(self, key, default: bool | None = None):
         x = self.misc
