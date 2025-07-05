@@ -95,14 +95,21 @@ class PQVmap(APIView):
     def post(self, request: Request) -> Response:
         """Create a PQV map and put it into the database.
 
-        POST data is checked for guidance on the map to make. See below.
+        POST data determines the map to make. See below.
 
         This work is done by Huey, taking a blocking foreground approach.
         If 'count' is not provided, use the default suggested number.
         The request will be rejected if there is already a PQV map in place.
         (Note that the DELETE method is available on the same endpoint.)
 
-        The response will be generated only after all the PQV map entries are
+        Callers are expected to do their own consistency checking. If some
+        paper numbers have already been allocated through prenaming,
+        it is strongly recommended to specify a range of paper numbers
+        that includes all the ones to which names have already been assigned.
+        Leaving some out will not cause a problem here, but the results may
+        perplex both examiners and candidates on the day of the test.
+
+        The HTTP response will be generated only after all the PQV map entries are
         built and installed. For large classes, this may take so long that the
         requester gives up and declares an HTTP timeout. This has not yet
         been observed in the wild, but we note it here in case some unfortunate
@@ -138,6 +145,10 @@ class PQVmap(APIView):
                 "PQV map is not empty. Consider deleting before re-generating.",
                 status.HTTP_409_CONFLICT,
             )
+
+        print("\nPDL DEBUG: Here comes request.POST.")
+        print(request.POST)
+        print("")
 
         ntp_default = StagingStudentService().get_minimum_number_to_produce()
         ntp = request.POST.get("number_to_produce", ntp_default)
