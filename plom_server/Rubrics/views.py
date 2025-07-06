@@ -130,12 +130,30 @@ class RubricFractionalPreferencesView(ManagerRequiredView):
             "allow-eighth-point-rubrics",
             "allow-tenth-point-rubrics",
         )
+        options_implies = {
+            "allow-half-point-rubrics": [],
+            "allow-third-point-rubrics": [],
+            "allow-quarter-point-rubrics": ["allow-half-point-rubrics"],
+            "allow-fifth-point-rubrics": [],
+            "allow-eighth-point-rubrics": [
+                "allow-quarter-point-rubrics",
+                "allow-half-point-rubrics",
+            ],
+            "allow-tenth-point-rubrics": [
+                "allow-fifth-point-rubrics",
+                "allow-half-point-rubrics",
+            ],
+        }
         for a in options:
             if request.POST.get(a) == "on":
                 SettingsModel.cset(a, True)
             else:
                 SettingsModel.cset(a, False)
-        # TODO: invalid to enable quarter but not half-point
+        # some options imply others
+        for a, implies in options_implies.items():
+            if SettingsModel.cget(a):
+                for i in implies:
+                    SettingsModel.cset(i, True)
         return redirect("rubrics_admin")
 
 
