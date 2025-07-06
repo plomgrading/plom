@@ -31,7 +31,7 @@
                 {% csrf_token %}
                 <fieldset>
                     {% for opt in rubric_fractional_options %}
-                        <div class="form-check">
+                        <div class="form-check ms-{{ opt.indent }}">
                             <input class="form-check-input"
                                    type="checkbox"
                                    id="{{ opt.name }}"

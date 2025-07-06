@@ -60,31 +60,38 @@ class RubricAdminPageView(ManagerRequiredView):
         upload_form = RubricUploadForm()
         template_form = RubricTemplateDownloadForm()
         rubrics = RubricService.get_all_rubrics()
+        # TODO: flaky?
         half_point_rubrics = rubrics.filter(value__exact=0.5).filter(text__exact=".")
         rubric_fractional_options = [
             {
                 "name": "allow-half-point-rubrics",
                 "label": "Enable half-point rubrics (such as +\N{VULGAR FRACTION ONE HALF})",
-            },
-            {
-                "name": "allow-third-point-rubrics",
-                "label": "Enable third-point rubrics (such as +\N{VULGAR FRACTION ONE THIRD})",
+                "indent": 0,
             },
             {
                 "name": "allow-quarter-point-rubrics",
                 "label": "Enable quarter-point rubrics (such as +\N{VULGAR FRACTION ONE QUARTER})",
-            },
-            {
-                "name": "allow-fifth-point-rubrics",
-                "label": "Enable fifth-point rubrics (such as +\N{VULGAR FRACTION ONE FIFTH})",
+                "indent": 4,
             },
             {
                 "name": "allow-eighth-point-rubrics",
                 "label": "Enable eighth-point rubrics (such as +\N{VULGAR FRACTION ONE EIGHTH})",
+                "indent": 5,
+            },
+            {
+                "name": "allow-third-point-rubrics",
+                "label": "Enable third-point rubrics (such as +\N{VULGAR FRACTION ONE THIRD})",
+                "indent": 0,
+            },
+            {
+                "name": "allow-fifth-point-rubrics",
+                "label": "Enable fifth-point rubrics (such as +\N{VULGAR FRACTION ONE FIFTH})",
+                "indent": 0,
             },
             {
                 "name": "allow-tenth-point-rubrics",
                 "label": "Enable tenth-point rubrics (such as +\N{VULGAR FRACTION ONE TENTH})",
+                "indent": 4,
             },
         ]
         # figure out which are currently checked by checking settings
