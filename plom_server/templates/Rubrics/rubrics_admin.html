@@ -25,10 +25,22 @@
             <p>
                 Some people have strong feelings about non-integer marks.
                 You can allow or disallow their creation by changing these preferences.
+                (Note that this doesn't effect which rubrics can be <em>used</em>).
             </p>
             <form method="post" action="{% url 'rubric_fractional_pref' %}">
                 {% csrf_token %}
-                <div class="form-group mr-2">{{ rubric_fractional_pref_form }}</div>
+                <fieldset>
+                    {% for opt in rubric_fractional_options %}
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   id="{{ opt.name }}"
+                                   name="{{ opt.name }}"
+                                   {% if opt.checked %}checked{% endif %} />
+                            <label class="form-check-label" for="{{ opt.name }}">{{ opt.label }}</label>
+                        </div>
+                    {% endfor %}
+                </fieldset>
                 <button type="submit" class="btn btn-secondary" name="todo_needed_or_not">Submit</button>
             </form>
             <hr />

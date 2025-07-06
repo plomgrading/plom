@@ -35,7 +35,6 @@ from plom_server.Preparation.services import PapersPrinted
 from .services import RubricService
 from .forms import (
     RubricCreateHalfMarkForm,
-    RubricFractionalPreferencesForm,
     RubricDiffForm,
     RubricFilterForm,
     RubricUploadForm,
@@ -57,17 +56,46 @@ class RubricAdminPageView(ManagerRequiredView):
 
         template_name = "Rubrics/rubrics_admin.html"
         rubric_create_halfmark_form = RubricCreateHalfMarkForm(request.GET)
-        rubric_fractional_pref_form = RubricFractionalPreferencesForm(request.GET)
         download_form = RubricDownloadForm(request.GET)
         upload_form = RubricUploadForm()
         template_form = RubricTemplateDownloadForm()
         rubrics = RubricService.get_all_rubrics()
         half_point_rubrics = rubrics.filter(value__exact=0.5).filter(text__exact=".")
+        rubric_fractional_options = [
+            {
+                "name": "allow-half-point-rubrics",
+                "label": "Enable half-point rubrics (such as +\N{VULGAR FRACTION ONE HALF})",
+            },
+            {
+                "name": "allow-third-point-rubrics",
+                "label": "Enable third-point rubrics (such as +\N{VULGAR FRACTION ONE THIRD})",
+            },
+            {
+                "name": "allow-quarter-point-rubrics",
+                "label": "Enable quarter-point rubrics (such as +\N{VULGAR FRACTION ONE QUARTER})",
+            },
+            {
+                "name": "allow-fifth-point-rubrics",
+                "label": "Enable fifth-point rubrics (such as +\N{VULGAR FRACTION ONE FIFTH})",
+            },
+            {
+                "name": "allow-eighth-point-rubrics",
+                "label": "Enable eighth-point rubrics (such as +\N{VULGAR FRACTION ONE EIGHTH})",
+            },
+            {
+                "name": "allow-tenth-point-rubrics",
+                "label": "Enable tenth-point rubrics (such as +\N{VULGAR FRACTION ONE TENTH})",
+            },
+        ]
+        # figure out which are currently checked by checking settings
+        for opt in rubric_fractional_options:
+            opt["checked"] = SettingsModel.cget(opt["name"])
+
         context.update(
             {
                 "rubrics": rubrics,
                 "half_point_rubrics": half_point_rubrics,
-                "rubric_fractional_pref_form": rubric_fractional_pref_form,
+                "rubric_fractional_options": rubric_fractional_options,
                 "rubric_create_halfmark_form": rubric_create_halfmark_form,
                 "rubric_download_form": download_form,
                 "rubric_upload_form": upload_form,
@@ -94,23 +122,20 @@ class RubricFractionalPreferencesView(ManagerRequiredView):
     """Set fractional rubric preferences."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        print(request)
-        print(request.POST)
-        if request.POST.get("half_point_rubrics") == "on":
-            print("turning on half-point rubrics")
-            SettingsModel.cset("allow-half-point-rubrics", True)
-        if request.POST.get("third_point_rubrics") == "on":
-            print("turning on third-point rubrics")
-            SettingsModel.cset("allow-third-point-rubrics", True)
-        if request.POST.get("quarter_point_rubrics") == "on":
-            # TODO: invalid to enable these but not half-point
-            SettingsModel.cset("allow-quarter-point-rubrics", True)
-        if request.POST.get("fifth_point_rubrics") == "on":
-            SettingsModel.cset("allow-fifth-point-rubrics", True)
-        if request.POST.get("eighth_point_rubrics") == "on":
-            SettingsModel.cset("allow-eighth-point-rubrics", True)
-        if request.POST.get("tenth_point_rubrics") == "on":
-            SettingsModel.cset("allow-tenth-point-rubrics", True)
+        options = (
+            "allow-half-point-rubrics",
+            "allow-third-point-rubrics",
+            "allow-quarter-point-rubrics",
+            "allow-fifth-point-rubrics",
+            "allow-eighth-point-rubrics",
+            "allow-tenth-point-rubrics",
+        )
+        for a in options:
+            if request.POST.get(a) == "on":
+                SettingsModel.cset(a, True)
+            else:
+                SettingsModel.cset(a, False)
+        # TODO: invalid to enable quarter but not half-point
         return redirect("rubrics_admin")
 
 
