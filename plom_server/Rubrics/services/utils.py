@@ -113,13 +113,17 @@ def fractional_part_is_nth(
 ) -> bool:
     """Is the non-zero fractional part an Nth?
 
-    For example, when N is 3, we return True on 4.333333333 or 1.666666667.
+    For example, when N is 3, we return True on 4.333333333, 1.666666667,
+    or -1.33333333.
     """
     tol = _frac_value_tolerance
 
-    frac = value - math.trunc(value)
+    if value < 0:
+        value = -value
+
+    frac_part = value - math.trunc(value)
     for frac in (float(x) / N for x in range(1, N)):
-        if frac - tol < value < frac + tol:
+        if frac - tol < frac_part < frac + tol:
             return True
     return False
 
