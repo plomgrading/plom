@@ -19,7 +19,6 @@ import io
 import html
 import json
 import logging
-import math
 import sys
 from operator import itemgetter
 from typing import Any
@@ -47,7 +46,8 @@ from plom_server.QuestionTags.models import PedagogyTag
 from ..serializers import RubricSerializer
 from ..models import Rubric
 from ..models import RubricPane
-from .utils import _generate_display_delta, _Rubric_to_dict, fractional_part_is_nth
+from .rubric_permissions import RubricPermissionsService
+from .utils import _generate_display_delta, _Rubric_to_dict
 
 
 log = logging.getLogger("RubricService")
@@ -345,30 +345,7 @@ class RubricService:
 
         if "value" in incoming_data.keys():
             v = incoming_data["value"]
-            f = v - math.trunc(v)
-            if fractional_part_is_nth(v, 2):
-                # TODO: the detection uses a tolerance but maybe/probably we should
-                # round to that tolerance
-                if not s.get("allow-half-point-rubrics"):
-                    raise PermissionDenied("Half-point rubrics are currently disabled")
-            elif fractional_part_is_nth(v, 3):
-                if s.get("allow-third-point-rubrics"):
-                    raise PermissionDenied("Third-point rubrics are currently disabled")
-            elif fractional_part_is_nth(v, 4):
-                if s.get("allow-quarter-point-rubrics"):
-                    raise PermissionDenied(
-                        "Quarter-point rubrics are currently disabled"
-                    )
-            elif fractional_part_is_nth(v, 8):
-                if s.get("allow-eighth-point-rubrics"):
-                    raise PermissionDenied(
-                        "Eighth-point rubrics are currently disabled"
-                    )
-            elif fractional_part_is_nth(v, 10):
-                if s.get("allow-tenth-point-rubrics"):
-                    raise PermissionDenied("Tenth-point rubrics are currently disabled")
-            elif f:
-                raise PermissionDenied(f"Fractional scores of {f} are not supported")
+            RubricPermissionsService.confirm_allowed_fraction(v)
 
         return cls._create_rubric_lowlevel(incoming_data)
 

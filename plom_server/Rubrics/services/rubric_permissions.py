@@ -2,10 +2,12 @@
 # Copyright (C) 2025 Colin B. Macdonald
 
 import logging
+import math
 from copy import deepcopy
 from typing import Any
 
 from plom_server.Base.models import SettingsModel
+from .utils import fractional_part_is_nth
 
 
 log = logging.getLogger("RubricService")
@@ -20,35 +22,47 @@ _frac_opt_table = [
     {
         "name": "allow-half-point-rubrics",
         "label": "Enable half-point rubrics (such as +\N{VULGAR FRACTION ONE HALF})",
+        "denom": 2,
+        "readable": "half",  # TODO: presentation_string?
         "indent": 0,
     },
     {
         "name": "allow-quarter-point-rubrics",
         "label": "Enable quarter-point rubrics (such as +\N{VULGAR FRACTION ONE QUARTER})",
-        "indent": 4,
+        "denom": 4,
+        "readable": "quarter",
         "implies": ["allow-half-point-rubrics"],
+        "indent": 4,
     },
     {
         "name": "allow-eighth-point-rubrics",
         "label": "Enable eighth-point rubrics (such as +\N{VULGAR FRACTION ONE EIGHTH})",
-        "indent": 5,
+        "denom": 8,
+        "readable": "eighth",
         "implies": ["allow-quarter-point-rubrics", "allow-half-point-rubrics"],
+        "indent": 5,
     },
     {
         "name": "allow-third-point-rubrics",
         "label": "Enable third-point rubrics (such as +\N{VULGAR FRACTION ONE THIRD})",
+        "denom": 3,
+        "readable": "third",
         "indent": 0,
     },
     {
         "name": "allow-fifth-point-rubrics",
         "label": "Enable fifth-point rubrics (such as +\N{VULGAR FRACTION ONE FIFTH})",
+        "denom": 5,
+        "readable": "fifth",
         "indent": 0,
     },
     {
         "name": "allow-tenth-point-rubrics",
         "label": "Enable tenth-point rubrics (such as +\N{VULGAR FRACTION ONE TENTH})",
-        "indent": 4,
+        "denom": 10,
+        "readable": "tenth",
         "implies": ["allow-fifth-point-rubrics", "allow-half-point-rubrics"],
+        "indent": 4,
     },
 ]
 
@@ -73,6 +87,7 @@ class RubricPermissionsService:
             rp: a dict-like, probably `requests.POST`.  It has keys corresponding
                 to zero or more of the `allow-X-point-rubrics`.  Their value should
                 be the string `"on"`.  Any settings not present will be turned off.
+                Some settings imply others: these will be applied too.
         """
         for opt in _frac_opt_table:
             a = opt["name"]
@@ -86,3 +101,30 @@ class RubricPermissionsService:
             if SettingsModel.cget(a):
                 for i in implies:
                     SettingsModel.cset(i, True)
+
+    @staticmethod
+    def confirm_allowed_fraction(v: float | int) -> None:
+        """Against the current settings, if a value isn't a supported fraction raise an exception.
+
+        Raises:
+            ValueError: that value isn't supported or is currently disallowed.
+        """
+        f = v - math.trunc(v)
+        if not f:
+            # zero fractional part, nothing to do here
+            return
+
+        s = SettingsModel.load()
+        for opt in _frac_opt_table:
+            name = opt["name"]
+            N = opt["denom"]
+            readable_denom = opt["readable"]
+            if fractional_part_is_nth(v, N):
+                # TODO: the detection uses a tolerance but maybe/probably we should
+                # round to that tolerance
+                if not s.get(name):
+                    raise ValueError(
+                        f"{readable_denom}-point rubrics are currently not allowed"
+                    )
+        # got all the way through the table, and it wasn't allowed
+        raise ValueError(f"Score {v} with fractional part {f} are not supported")
