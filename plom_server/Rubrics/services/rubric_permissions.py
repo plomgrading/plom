@@ -26,6 +26,7 @@ _frac_opt_table = [
         "label": "Enable half-point rubrics (such as +\N{VULGAR FRACTION ONE HALF})",
         "denom": 2,
         "readable": "half",  # TODO: presentation_string?
+        "implies": [],
         "indent": 0,
     },
     {
@@ -49,6 +50,7 @@ _frac_opt_table = [
         "label": "Enable third-point rubrics (such as +\N{VULGAR FRACTION ONE THIRD})",
         "denom": 3,
         "readable": "third",
+        "implies": [],
         "indent": 0,
     },
     {
@@ -56,6 +58,7 @@ _frac_opt_table = [
         "label": "Enable fifth-point rubrics (such as +\N{VULGAR FRACTION ONE FIFTH})",
         "denom": 5,
         "readable": "fifth",
+        "implies": [],
         "indent": 0,
     },
     {
@@ -99,7 +102,7 @@ class RubricPermissionsService:
                 SettingsModel.cset(a, False)
         for opt in _frac_opt_table:
             a = str(opt["name"])
-            implies = opt.get("implies", [])
+            implies = opt["implies"]
             assert isinstance(implies, list)  # help mypy
             if SettingsModel.cget(a):
                 for i in implies:
