@@ -32,11 +32,7 @@ from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Base.models import SettingsModel
 from plom_server.Papers.services import SpecificationService
 from plom_server.Preparation.services import PapersPrinted
-from .services import (
-    RubricService,
-    get_fractional_rubric_settings,
-    change_fractional_rubric_settings,
-)
+from .services import RubricService, RubricPermissionsService
 from .forms import (
     RubricCreateHalfMarkForm,
     RubricDiffForm,
@@ -66,7 +62,7 @@ class RubricAdminPageView(ManagerRequiredView):
         rubrics = RubricService.get_all_rubrics()
         # TODO: flaky?
         half_point_rubrics = rubrics.filter(value__exact=0.5).filter(text__exact=".")
-        rubric_fractional_options = get_fractional_rubric_settings()
+        rubric_fractional_options = RubricPermissionsService.get_fractional_settings()
         context.update(
             {
                 "rubrics": rubrics,
@@ -98,7 +94,7 @@ class RubricFractionalPreferencesView(ManagerRequiredView):
     """Set fractional rubric preferences."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        change_fractional_rubric_settings(request.POST)
+        RubricPermissionsService.change_fractional_settings(request.POST)
         return redirect("rubrics_admin")
 
 

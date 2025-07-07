@@ -53,31 +53,35 @@ _frac_opt_table = [
 ]
 
 
-def get_fractional_rubric_settings() -> list[dict[str, Any]]:
-    rubric_fractional_options = deepcopy(_frac_opt_table)
-    # figure out which are currently checked by checking settings
-    for opt in rubric_fractional_options:
-        opt["checked"] = SettingsModel.cget(opt["name"])
-    return rubric_fractional_options
+class RubricPermissionsService:
+    """Handles setting/getting and other aspects of Rubric permissions."""
 
+    @staticmethod
+    def get_fractional_settings() -> list[dict[str, Any]]:
+        rubric_fractional_options = deepcopy(_frac_opt_table)
+        # figure out which are currently checked by checking settings
+        for opt in rubric_fractional_options:
+            opt["checked"] = SettingsModel.cget(opt["name"])
+        return rubric_fractional_options
 
-def change_fractional_rubric_settings(rp) -> None:
-    """Change the settings related to fractional rubrics.
+    @staticmethod
+    def change_fractional_settings(rp) -> None:
+        """Change the settings related to fractional rubrics.
 
-    Args:
-        rp: a dict-like, probably `requests.POST`.  It has keys corresponding
-            to zero or more of the `allow-X-point-rubrics`.  Their value should
-            be the string `"on"`.  Any settings not present will be turned off.
-    """
-    for opt in _frac_opt_table:
-        a = opt["name"]
-        if rp.get(a) == "on":
-            SettingsModel.cset(a, True)
-        else:
-            SettingsModel.cset(a, False)
-    for opt in _frac_opt_table:
-        a = opt["name"]
-        implies = opt.get("implies", [])
-        if SettingsModel.cget(a):
-            for i in implies:
-                SettingsModel.cset(i, True)
+        Args:
+            rp: a dict-like, probably `requests.POST`.  It has keys corresponding
+                to zero or more of the `allow-X-point-rubrics`.  Their value should
+                be the string `"on"`.  Any settings not present will be turned off.
+        """
+        for opt in _frac_opt_table:
+            a = opt["name"]
+            if rp.get(a) == "on":
+                SettingsModel.cset(a, True)
+            else:
+                SettingsModel.cset(a, False)
+        for opt in _frac_opt_table:
+            a = opt["name"]
+            implies = opt.get("implies", [])
+            if SettingsModel.cget(a):
+                for i in implies:
+                    SettingsModel.cset(i, True)
