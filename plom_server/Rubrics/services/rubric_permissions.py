@@ -58,6 +58,7 @@ class RubricPermissionsService:
 
     @staticmethod
     def get_fractional_settings() -> list[dict[str, Any]]:
+        """Get a table of the current fractional rubric settings, suitable for making HTML forms."""
         rubric_fractional_options = deepcopy(_frac_opt_table)
         # figure out which are currently checked by checking settings
         for opt in rubric_fractional_options:
