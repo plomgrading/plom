@@ -50,7 +50,7 @@ from ..models import RubricPane
 from .utils import _generate_display_delta, _Rubric_to_dict, fractional_part_is_nth
 
 
-log = logging.getLogger("RubricServer")
+log = logging.getLogger("RubricService")
 
 
 # TODO: more validation of JSONFields that the model/form/serializer should

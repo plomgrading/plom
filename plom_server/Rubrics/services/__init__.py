@@ -4,3 +4,7 @@
 
 from .rubric_service import RubricService
 from .utils import _list_of_rubrics_to_dict_of_dict, _Rubric_to_dict
+from .rubric_permissions import (
+    get_fractional_rubric_settings,
+    change_fractional_rubric_settings,
+)
