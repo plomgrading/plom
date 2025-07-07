@@ -80,7 +80,7 @@ class RubricPermissionsService:
         return rubric_fractional_options
 
     @staticmethod
-    def change_fractional_settings(rp) -> None:
+    def change_fractional_settings(rp: dict[str, str]) -> None:
         """Change the settings related to fractional rubrics.
 
         Args:
@@ -90,14 +90,15 @@ class RubricPermissionsService:
                 Some settings imply others: these will be applied too.
         """
         for opt in _frac_opt_table:
-            a = opt["name"]
+            a = str(opt["name"])
             if rp.get(a) == "on":
                 SettingsModel.cset(a, True)
             else:
                 SettingsModel.cset(a, False)
         for opt in _frac_opt_table:
-            a = opt["name"]
+            a = str(opt["name"])
             implies = opt.get("implies", [])
+            assert isinstance(implies, list)  # help mypy
             if SettingsModel.cget(a):
                 for i in implies:
                     SettingsModel.cset(i, True)
@@ -118,6 +119,7 @@ class RubricPermissionsService:
         for opt in _frac_opt_table:
             name = opt["name"]
             N = opt["denom"]
+            assert isinstance(N, int)  # help mypy
             readable_denom = opt["readable"]
             if fractional_part_is_nth(v, N):
                 # TODO: the detection uses a tolerance but maybe/probably we should
