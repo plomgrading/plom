@@ -13,7 +13,9 @@ from .utils import fractional_part_is_nth
 log = logging.getLogger("RubricService")
 
 
-# The order of this list is the order shown on screen.
+# The order of this list is the order shown on screen.  It also
+# matters for validity checking: for example we need to check quarter
+# before eighth, if the input is 4.25.
 # * indent is used to visually indicate which rubrics imply others,
 #   it is used with the Bootstrap "ms-n" margin setting.
 # * some options imply others.
@@ -128,5 +130,6 @@ class RubricPermissionsService:
                     raise ValueError(
                         f"{readable_denom}-point rubrics are currently not allowed"
                     )
+                return
         # got all the way through the table, and it wasn't allowed
         raise ValueError(f"Score {v} with fractional part {f} are not supported")
