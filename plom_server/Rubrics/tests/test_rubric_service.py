@@ -250,8 +250,8 @@ class RubricServiceTests(TestCase):
         self.relative_rubric = baker.make(
             Rubric,
             kind="relative",
-            display_delta="+2.5",
-            value=2.5,
+            display_delta="+2.0",
+            value=2.0,
             out_of=0.0,
             text="yuiop",
             question_index=1,
@@ -265,16 +265,16 @@ class RubricServiceTests(TestCase):
         self.modified_relative_rubric = baker.make(
             Rubric,
             kind="relative",
-            display_delta="+2.5",
-            value=2.5,
+            display_delta="+3.0",
+            value=3.0,
             user=user2,
         )
 
         self.absolute_rubric = baker.make(
             Rubric,
             kind="absolute",
-            display_delta="1.5 of 5.0",
-            value=1.5,
+            display_delta="2.0 of 5.0",
+            value=2.0,
             out_of=5.0,
             text="mnbvc",
             question_index=3,
@@ -288,8 +288,8 @@ class RubricServiceTests(TestCase):
         self.modified_absolute_rubric = baker.make(
             Rubric,
             kind="absolute",
-            display_delta="1.5 of 5.0",
-            value=1.5,
+            display_delta="3.0 of 5.0",
+            value=3.0,
             out_of=5.0,
             user=user2,
         )
@@ -326,8 +326,8 @@ class RubricServiceTests(TestCase):
     def test_create_relative_rubric(self) -> None:
         simulated_client_data = {
             "kind": "relative",
-            "display_delta": "+2.5",
-            "value": 2.5,
+            "display_delta": "+2.0",
+            "value": 2.0,
             "out_of": 0.0,
             "text": "yuiop",
             "tags": "",
@@ -353,8 +353,8 @@ class RubricServiceTests(TestCase):
     def test_create_absolute_rubric(self) -> None:
         simulated_client_data = {
             "kind": "absolute",
-            "display_delta": "1.5 of 5.0",
-            "value": 1.5,
+            "display_delta": "2.0 of 5.0",
+            "value": 2.0,
             "out_of": 5.0,
             "text": "mnbvc",
             "tags": "",
@@ -419,8 +419,8 @@ class RubricServiceTests(TestCase):
         simulated_client_data = {
             "rid": rid,
             "kind": "relative",
-            "display_delta": "+2.5",
-            "value": 2.5,
+            "display_delta": "+3.0",
+            "value": 3.0,
             "out_of": 0.0,
             "text": "yuiop",
             "tags": "",
@@ -447,8 +447,8 @@ class RubricServiceTests(TestCase):
         simulated_client_data = {
             "rid": rid,
             "kind": "absolute",
-            "display_delta": "1.5 of 5.0",
-            "value": 1.5,
+            "display_delta": "3.0 of 5.0",
+            "value": 3.0,
             "out_of": 5.0,
             "text": "yuiop",
             "tags": "",
