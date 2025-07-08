@@ -302,35 +302,25 @@ class SettingsModel(SingletonABCModel):
 
     @classmethod
     def cget(cls, key, default: bool | None = None):
-        print("class level getter")
         s = cls.load()
         x = s.misc
-        print(x)
-        print(type(x))
         return x.get(key, default)
 
     @classmethod
     def cset(cls, key, value):
-        print("class level setter")
         s = cls.load()
         x = s.misc
-        print(x)
-        print(type(x))
         x[key] = value
         s.misc = x
         s.save()
 
     def get(self, key, default: bool | None = None):
         x = self.misc
-        print(x)
-        print(type(x))
         return x.get(key, default)
 
     def set(self, key, value):
         # TODO: will the caller need to do a refresh after using this?
         x = self.misc
-        print(x)
-        print(type(x))
         x[key] = value
         self.misc = x
         self.save()
