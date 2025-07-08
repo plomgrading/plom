@@ -28,7 +28,7 @@ class RubricServiceTests_fractional_permissions(TestCase):
     def setUp(self) -> None:
         baker.make(User, username="xenia")
 
-    def test_rubrics_no_fractions_by_default(self) -> None:
+    def test_rubrics_create_no_fractions_by_default(self) -> None:
         data_half = {
             "kind": "relative",
             "value": 1.5,
@@ -40,7 +40,7 @@ class RubricServiceTests_fractional_permissions(TestCase):
         with self.assertRaises(ValueError):
             RubricService._create_rubric(data_half)
 
-    def test_rubrics_turn_on_fractions(self) -> None:
+    def test_rubrics_create_turn_on_fractions(self) -> None:
         data_quarter = {
             "kind": "relative",
             "value": 1.75,
@@ -50,7 +50,7 @@ class RubricServiceTests_fractional_permissions(TestCase):
         }
         data_eighth = {
             "kind": "relative",
-            "value": 1.825,
+            "value": 1.875,
             "text": "meh",
             "username": "xenia",
             "question_index": 1,
@@ -63,3 +63,46 @@ class RubricServiceTests_fractional_permissions(TestCase):
         RubricService._create_rubric(data_quarter)
         with self.assertRaises(ValueError):
             RubricService._create_rubric(data_eighth)
+
+    def test_rubrics_modify_turn_on_fractions(self) -> None:
+        data_int = {
+            "kind": "relative",
+            "value": -1,
+            "text": "meh",
+            "username": "xenia",
+            "question_index": 1,
+        }
+        r = RubricService._create_rubric(data_int)
+        rid = r.rid
+        data_eighth = {
+            "kind": "relative",
+            "value": 1.875,
+            "text": "meh",
+            "username": "xenia",
+            "question_index": 1,
+        }
+        # OOTB, you cannot modify to fractional
+        with self.assertRaises(ValueError):
+            RubricService.modify_rubric(rid, data_eighth)
+
+        # enabled 1/4 still gives error
+        RubricPermissionsService.change_fractional_settings(
+            {"allow-quarter-point-rubrics": "on"}
+        )
+        with self.assertRaises(ValueError):
+            RubricService.modify_rubric(rid, data_eighth)
+
+        # finally enabled 1/8 makes it possible
+        RubricPermissionsService.change_fractional_settings(
+            {"allow-eighth-point-rubrics": "on"}
+        )
+        r = RubricService.modify_rubric(rid, data_eighth)
+
+        # if we disable fractions, can still modify it *back* to integer
+        RubricPermissionsService.change_fractional_settings(
+            {"allow-quarter-point-rubrics": "off", "allow-eighth-point-rubrics": "off"}
+        )
+        # (as always, need to have the latest revision in our data)
+        data_int["revision"] = r["revision"]
+        data_int["subrevision"] = r["subrevision"]
+        RubricService.modify_rubric(rid, data_int)

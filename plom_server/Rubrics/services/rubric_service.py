@@ -138,6 +138,7 @@ def _validate_value(value, max_mark) -> None:
         raise serializers.ValidationError(
             {"value": f"Value out of range: must lie in [-{max_mark}, {max_mark}]"}
         )
+    RubricPermissionsService.confirm_allowed_fraction(value)
 
 
 def _validate_value_out_of(value, out_of, max_mark) -> None:
@@ -343,10 +344,6 @@ class RubricService:
                 )
             pass
 
-        if "value" in incoming_data.keys():
-            v = incoming_data["value"]
-            RubricPermissionsService.confirm_allowed_fraction(v)
-
         return cls._create_rubric_lowlevel(incoming_data)
 
     @staticmethod
@@ -376,6 +373,7 @@ class RubricService:
         # check that the "value" lies in [-max_mark, max_mark]
         max_mark = SpecificationService.get_question_max_mark(q_index)
         _validate_value(data.get("value", 0), max_mark)
+
         # TODO: Perhaps the serializer should do this
         if data["kind"] == "absolute":
             if "value" not in data:
