@@ -11,7 +11,10 @@ import random
 
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.validators import MinValueValidator
+from django.core.validators import (
+    MinValueValidator,
+    validate_comma_separated_integer_list,
+)
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 import django_tables2
@@ -154,15 +157,12 @@ class Rubric(models.Model):
     question_index = models.IntegerField(null=False, blank=False)
     tags = models.TextField(null=True, blank=True, default="")  # can be long
     meta = models.TextField(null=True, blank=True, default="")  # can be long
-    versions = models.JSONField(null=True, blank=True, default=list)
-    # TODO: might be simpler to validate:
-    # but is DB change so careful when doing this, and must be "1, 2" not "[1, 2]"
-    # versions = models.CharField(
-    #     null=False,
-    #     blank=True,
-    #     default='',
-    #     validators=[validate_comma_separated_integer_list]
-    # )
+    versions = models.CharField(
+        null=False,
+        blank=True,
+        default="",
+        validators=[validate_comma_separated_integer_list],
+    )
     parameters = models.JSONField(null=True, blank=True, default=list)
     annotations = models.ManyToManyField(Annotation, blank=True)
     system_rubric = models.BooleanField(null=False, blank=True, default=False)
