@@ -433,7 +433,7 @@ class RubricService:
                 user=_bypass_user,
                 modified_by_user=_bypass_user,
                 latest=data.get("latest"),
-                versions=data.get("versions"),
+                versions=data.get("versions", ""),
             )
             for tag in data.get("pedagogy_tags", []):
                 new_rubric.pedagogy_tags.add(tag)
@@ -791,6 +791,7 @@ class RubricService:
                 "meta": "Is this answer blank or nearly blank?  Please do not use "
                 + "if there is any possibility of relevant writing on the page.",
                 "tags": "",
+                "versions": "",
             }
             create_system_rubric(rubric)
             # log.info("Built no-answer-rubric Q%s: key %s", q, r.pk)
@@ -803,6 +804,7 @@ class RubricService:
                 "question_index": q,
                 "meta": "There is writing here but its not sufficient for any points.",
                 "tags": "",
+                "versions": "",
             }
             create_system_rubric(rubric)
             # log.info("Built no-marks-rubric Q%s: key %s", q, r.pk)
@@ -814,6 +816,7 @@ class RubricService:
                 "text": "full marks",
                 "question_index": q,
                 "tags": "",
+                "versions": "",
             }
             create_system_rubric(rubric)
             # log.info("Built full-marks-rubric Q%s: key %s", q, r.pk)
@@ -1232,7 +1235,7 @@ class RubricService:
             "tags": "",
             "meta": "",
             "question_index": question_index,
-            "versions": [],
+            "versions": "",
             "parameters": [],
             "pedagogy_tags": [],
         }
@@ -1331,8 +1334,6 @@ class RubricService:
             # Fixes for Issue #3807: csv often scramble empty lists or otherwise makes strings
             if r.get("pedagogy_tags") == "[]":
                 r["pedagogy_tags"] = []
-            if r.get("versions") == "[]":
-                r["versions"] = []
             if isinstance(r.get("versions"), str) and r.get("versions") != "":
                 versions = r["versions"]
                 try:

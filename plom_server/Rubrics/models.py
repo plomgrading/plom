@@ -80,15 +80,14 @@ class Rubric(models.Model):
             parameterized rubrics.
         annotations: a mapping to Annotation objects.  Its many-to-many
             so that multiple rubrics can link to multiple Annotations.
-        versions: a JSON list containing the versions of ``question``
+        versions: a string containing the versions of ``question``
             this rubric is assigned to, a comma-separated list of integers
-            such as ``[1, 3]``.
-            An empty list should be interpreted the same as a list of
+            such as ``1, 3``.
+            An empty string should be interpreted the same as a list of
             all possible values.
             All should be strictly positive and less than the maximum
             number of versions, although this is not enforced at the database
             level.
-            TODO: a future change might remove the brackets and use CharField.
         system_rubric: this Rubric was created by or is otherwise
             important to the functioning of the Plom system.  Probably
             readonly or at least extreme caution before poking at.
@@ -253,7 +252,6 @@ class RubricTable(django_tables2.Table):
 
     rid = django_tables2.Column("rid", linkify=True)
     # prevent newlines from rendering in json fields
-    versions = django_tables2.JSONColumn(json_dumps_kwargs={})
     parameters = django_tables2.JSONColumn(json_dumps_kwargs={})
     # TODO: issue #3648, seeking a way to display how often they are used
     # times_used = django_tables2.Column(
