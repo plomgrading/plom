@@ -160,7 +160,7 @@ class RubricServiceTests_extra_validation(TestCase):
             RubricService.create_rubric(rub)
 
     def test_create_rubric_invalid_versions(self) -> None:
-        for bad_versions in ("[1, 1.2]", "[1, sth]", "{1, 2}", [1, 1.2], [1, "abc"]):
+        for bad_versions in ("[1, 2]", [1, 1.2], "1, 1.2", "1, sth", "abc", "-1, 2"):
             rub = {
                 "kind": "neutral",
                 "value": 0,
@@ -228,7 +228,7 @@ class RubricServiceTests(TestCase):
             user=user1,
             tags="",
             meta="asdfg",
-            versions=[],
+            versions="",
             parameters=[],
         )
 
@@ -243,7 +243,7 @@ class RubricServiceTests(TestCase):
             user=user2,
             tags="",
             meta="hjklz",
-            versions=[],
+            versions="",
             parameters=[],
         )
 
@@ -258,7 +258,7 @@ class RubricServiceTests(TestCase):
             user=user2,
             tags="",
             meta="hjklz",
-            versions=[],
+            versions="",
             parameters=[],
         )
 
@@ -281,7 +281,7 @@ class RubricServiceTests(TestCase):
             user=user1,
             tags="",
             meta="lkjhg",
-            versions=[],
+            versions="",
             parameters=[],
         )
 
@@ -307,7 +307,6 @@ class RubricServiceTests(TestCase):
             "meta": "asdfg",
             "username": "Liam",
             "question_index": 1,
-            "versions": [],
             "parameters": [],
         }
         r = RubricService._create_rubric(simulated_client_data)
@@ -334,7 +333,6 @@ class RubricServiceTests(TestCase):
             "meta": "hjklz",
             "username": "Olivia",
             "question_index": 1,
-            "versions": [],
             "parameters": [],
         }
         r = RubricService._create_rubric(simulated_client_data)
@@ -361,7 +359,6 @@ class RubricServiceTests(TestCase):
             "meta": "lkjhg",
             "username": "Liam",
             "question_index": 3,
-            "versions": [],
             "parameters": [],
         }
         r = RubricService._create_rubric(simulated_client_data)
@@ -403,7 +400,6 @@ class RubricServiceTests(TestCase):
             "meta": "hjklz",
             "username": "Olivia",
             "question_index": 1,
-            "versions": [],
             "parameters": [],
         }
         r = RubricService.modify_rubric(rid, simulated_client_data)
@@ -427,7 +423,6 @@ class RubricServiceTests(TestCase):
             "meta": "hjklz",
             "username": "Olivia",
             "question_index": 1,
-            "versions": [],
             "parameters": [],
         }
         r = RubricService.modify_rubric(rid, simulated_client_data)
@@ -455,7 +450,6 @@ class RubricServiceTests(TestCase):
             "meta": "hjklz",
             "username": "Olivia",
             "question_index": 1,
-            "versions": [],
             "parameters": [],
         }
         r = RubricService.modify_rubric(rid, simulated_client_data)
