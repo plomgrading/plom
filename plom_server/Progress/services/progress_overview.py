@@ -153,20 +153,17 @@ class ProgressOverviewService:
         """
         tasks_query = MarkingTask.objects.all()
 
-
         if question_idx is not None:
             tasks_query = tasks_query.filter(question_index=question_idx)
         if version is not None:
             tasks_query = tasks_query.filter(question_version=version)
 
-    
         status_counts = (
             tasks_query.values("status")
             .annotate(count=Count("status"))
             .order_by("status")
         )
 
-     
         counts = {
             "Complete": 0,
             "To Do": 0,
@@ -182,7 +179,6 @@ class ProgressOverviewService:
                 counts[status_label] = item["count"]
                 total_tasks += item["count"]
 
-      
         counts["Missing"] = max(0, n_papers - total_tasks)
 
         return counts
