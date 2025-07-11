@@ -8,22 +8,17 @@
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
-
-# from rest_framework import serializers
 from rest_framework import status
 
 from plom.plom_exceptions import PlomDependencyConflict
-
 from plom_server.Preparation.services import (
     PQVMappingService,
     StagingStudentService,
 )
-
 from plom_server.Papers.services import (
     PaperCreatorService,
     PaperInfoService,
 )
-
 from .utils import _error_response
 
 
@@ -62,7 +57,7 @@ class PQVmap(APIView):
             PaperCreatorService.remove_all_papers_from_db(background=False)
         except PlomDependencyConflict as err:
             return _error_response(
-                f"Dependency Conflict. The database cannot be cleaned right now. {err}",
+                f"Dependency Conflict. The database cannot be cleared right now. {err}",
                 status.HTTP_409_CONFLICT,
             )
 
@@ -88,8 +83,7 @@ class PQVmap(APIView):
                 status.HTTP_403_FORBIDDEN,
             )
 
-        PIS = PaperInfoService()
-        return Response(PIS.get_pqv_map_dict())
+        return Response(PaperInfoService().get_pqv_map_dict())
 
     # POST /api/beta/pqvmap
     def post(self, request: Request) -> Response:
@@ -119,13 +113,14 @@ class PQVmap(APIView):
             request: An HTTP request.
 
         POST Data:
-            "number_to_produce": The number of papers to define, or None.
+            number_to_produce: The number of papers to define, or None.
                 (Given None, make the default number.)
-            "startn_value": The smallest integer to use for a test number.
+            startn_value: The smallest integer to use for a test number.
                 (Given None, use integer 1.)
-            "first_paper_num" (optional): Text field from GUI radio buttons
+            first_paper_num (optional): Text field from GUI radio buttons
                 that short-circuits defaults for startn_value. Possible values
-                are "0", "1", and "n".
+                are "0", "1", and "n".  TODO: consider removing this in the
+                future, or even right now.
 
         Returns:
             An empty response with status code 204, on success. Status code 403
@@ -145,10 +140,6 @@ class PQVmap(APIView):
                 "PQV map is not empty. Consider deleting before re-generating.",
                 status.HTTP_409_CONFLICT,
             )
-
-        print("\nPDL DEBUG: Here comes request.POST.")
-        print(request.POST)
-        print("")
 
         ntp_default = StagingStudentService().get_minimum_number_to_produce()
         ntp = request.POST.get("number_to_produce", ntp_default)
