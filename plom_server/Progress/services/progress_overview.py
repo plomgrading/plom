@@ -144,7 +144,9 @@ class ProgressOverviewService:
         return dat
 
     @transaction.atomic
-    def get_mark_task_status_counts(self, n_papers: int, question_idx: int = None, version: int = None) -> dict:
+    def get_mark_task_status_counts(
+        self, n_papers: int, question_idx: int = None, version: int = None
+    ) -> dict:
         """
         Get the counts of marking tasks by their status.
         Now optionally filters by question index and version.
@@ -185,6 +187,7 @@ class ProgressOverviewService:
         counts["Missing"] = max(0, n_papers - total_tasks)
 
         return counts
+
     # def get_mark_task_status_counts(
     #     self, n_papers: int | None = None
     # ) -> dict[int, dict[str, int]]:

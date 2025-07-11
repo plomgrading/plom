@@ -69,7 +69,9 @@ class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
 
     #     return render(request, "Progress/Mark/mark_stats_card.html", context)
 
-    def get(self, request: HttpRequest, *, question_idx: int, version: int) -> HttpResponse:
+    def get(
+        self, request: HttpRequest, *, question_idx: int, version: int
+    ) -> HttpResponse:
         context = self.build_context()
         pos = ProgressOverviewService()
         mss = MarkingStatsService()
@@ -84,16 +86,16 @@ class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
         score_counts = Counter(scores)
 
         # --- FINAL LOGIC USING YOUR EXISTING FUNCTION ---
-        
+
         # Get all max marks and then find the one for our specific question
         all_max_marks = SpecificationService.get_questions_max_marks()
-        max_mark = all_max_marks.get(question_idx, 0) # Get max mark, default to 0
-        
+        max_mark = all_max_marks.get(question_idx, 0)  # Get max mark, default to 0
+
         histogram_data = []
 
         if max_mark > 0:
             max_count = max(score_counts.values()) if score_counts else 1
-            
+
             svg_height = 30
             svg_bar_max_height = 20
             # Bar width is based on the full range of possible marks
@@ -102,26 +104,35 @@ class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
             # Loop from 0 to the maximum possible mark
             for mark in range(max_mark + 1):
                 count = score_counts.get(mark, 0)
-                bar_height = (count / max_count) * svg_bar_max_height if count > 0 else 0
+                bar_height = (
+                    (count / max_count) * svg_bar_max_height if count > 0 else 0
+                )
 
-                histogram_data.append({
-                    "score": mark,
-                    "count": count,
-                    "height": bar_height,
-                    "x": mark * bar_width_percentage,
-                    "y": svg_height - bar_height - 10,
-                    "width": bar_width_percentage,
-                    "text_x": (mark * bar_width_percentage) + (bar_width_percentage / 2),
-                })
+                histogram_data.append(
+                    {
+                        "score": mark,
+                        "count": count,
+                        "height": bar_height,
+                        "x": mark * bar_width_percentage,
+                        "y": svg_height - bar_height - 10,
+                        "width": bar_width_percentage,
+                        "text_x": (mark * bar_width_percentage)
+                        + (bar_width_percentage / 2),
+                    }
+                )
 
-        context.update({
-            "question_idx": question_idx,
-            "question_label": SpecificationService.get_question_label(question_index=question_idx),
-            "version": version,
-            "n_papers": n_papers,
-            "marking_task_status_counts": marking_task_status_counts,
-            "histogram_data": histogram_data,
-        })
+        context.update(
+            {
+                "question_idx": question_idx,
+                "question_label": SpecificationService.get_question_label(
+                    question_index=question_idx
+                ),
+                "version": version,
+                "n_papers": n_papers,
+                "marking_task_status_counts": marking_task_status_counts,
+                "histogram_data": histogram_data,
+            }
+        )
         return render(request, "Progress/Mark/mark_stats_card.html", context)
 
 
