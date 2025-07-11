@@ -60,9 +60,9 @@ class MarkingStatsService:
     def get_scores_for_question_version(
         self, question_idx: int, version: int
     ) -> List[int]:
-        """
-        Retrieves a list of all scores for a specific question and version
-        from the latest annotations of completed tasks.
+        """Retrieves a list of all scores for a specific question and version.
+
+        From the latest annotations of completed tasks.
         """
         scores: List[int] = []  # Explicitly type the list
 

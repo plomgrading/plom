@@ -147,27 +147,26 @@ class ProgressOverviewService:
     def get_mark_task_status_counts(
         self, n_papers: int, question_idx: int = None, version: int = None
     ) -> dict:
-        """
-        Get the counts of marking tasks by their status.
+        """Get the counts of marking tasks by their status.
+
         Now optionally filters by question index and version.
         """
-        # Start with a base query
         tasks_query = MarkingTask.objects.all()
 
-        # Apply filters if they are provided
+
         if question_idx is not None:
             tasks_query = tasks_query.filter(question_index=question_idx)
         if version is not None:
             tasks_query = tasks_query.filter(question_version=version)
 
-        # Group by status and count
+    
         status_counts = (
             tasks_query.values("status")
             .annotate(count=Count("status"))
             .order_by("status")
         )
 
-        # Initialize counts with all statuses at 0
+     
         counts = {
             "Complete": 0,
             "To Do": 0,
@@ -183,7 +182,7 @@ class ProgressOverviewService:
                 counts[status_label] = item["count"]
                 total_tasks += item["count"]
 
-        # Calculate missing tasks accurately
+      
         counts["Missing"] = max(0, n_papers - total_tasks)
 
         return counts
