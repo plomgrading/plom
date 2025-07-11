@@ -12,6 +12,8 @@ from plom_server.Base.base_group_views import (
     LeadMarkerOrManagerView,
 )
 
+from collections import Counter
+
 from plom_server.Authentication.services import AuthenticationServices
 from plom_server.Papers.services import SpecificationService
 from plom_server.Mark.services import MarkingStatsService
@@ -44,27 +46,82 @@ class ProgressMarkStartMarking(MarkerLeadMarkerOrManagerView):
 
 
 class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
-    def get(
-        self, request: HttpRequest, *, question_idx: int, version: int
-    ) -> HttpResponse:
-        context = super().build_context()
+    # def get(
+    #     self, request: HttpRequest, *, question_idx: int, version: int
+    # ) -> HttpResponse:
+    #     context = super().build_context()
+    #     mss = MarkingStatsService()
+    #     question_label, question_label_html = (
+    #         SpecificationService.get_question_label_str_and_html(question_idx)
+    #     )
+    #     context.update(
+    #         {
+    #             "question_idx": question_idx,
+    #             "question_label": question_label,
+    #             "question_label_html": question_label_html,
+    #             "version": version,
+    #             "stats": mss.get_basic_marking_stats(question_idx, version=version),
+    #             "status_counts": ProgressOverviewService().get_mark_task_status_counts_by_qv(
+    #                 question_idx, version
+    #             ),
+    #         }
+    #     )
+
+    #     return render(request, "Progress/Mark/mark_stats_card.html", context)
+
+    def get(self, request: HttpRequest, *, question_idx: int, version: int) -> HttpResponse:
+        context = self.build_context()
+        pos = ProgressOverviewService()
         mss = MarkingStatsService()
-        question_label, question_label_html = (
-            SpecificationService.get_question_label_str_and_html(question_idx)
-        )
-        context.update(
-            {
-                "question_idx": question_idx,
-                "question_label": question_label,
-                "question_label_html": question_label_html,
-                "version": version,
-                "stats": mss.get_basic_marking_stats(question_idx, version=version),
-                "status_counts": ProgressOverviewService().get_mark_task_status_counts_by_qv(
-                    question_idx, version
-                ),
-            }
+
+        n_papers = len(pos.get_task_overview()[0])
+
+        marking_task_status_counts = pos.get_mark_task_status_counts(
+            n_papers=n_papers, question_idx=question_idx, version=version
         )
 
+        scores = mss.get_scores_for_question_version(question_idx, version)
+        score_counts = Counter(scores)
+
+        # --- FINAL LOGIC USING YOUR EXISTING FUNCTION ---
+        
+        # Get all max marks and then find the one for our specific question
+        all_max_marks = SpecificationService.get_questions_max_marks()
+        max_mark = all_max_marks.get(question_idx, 0) # Get max mark, default to 0
+        
+        histogram_data = []
+
+        if max_mark > 0:
+            max_count = max(score_counts.values()) if score_counts else 1
+            
+            svg_height = 30
+            svg_bar_max_height = 20
+            # Bar width is based on the full range of possible marks
+            bar_width_percentage = 100 / (max_mark + 1)
+
+            # Loop from 0 to the maximum possible mark
+            for mark in range(max_mark + 1):
+                count = score_counts.get(mark, 0)
+                bar_height = (count / max_count) * svg_bar_max_height if count > 0 else 0
+
+                histogram_data.append({
+                    "score": mark,
+                    "count": count,
+                    "height": bar_height,
+                    "x": mark * bar_width_percentage,
+                    "y": svg_height - bar_height - 10,
+                    "width": bar_width_percentage,
+                    "text_x": (mark * bar_width_percentage) + (bar_width_percentage / 2),
+                })
+
+        context.update({
+            "question_idx": question_idx,
+            "question_label": SpecificationService.get_question_label(question_index=question_idx),
+            "version": version,
+            "n_papers": n_papers,
+            "marking_task_status_counts": marking_task_status_counts,
+            "histogram_data": histogram_data,
+        })
         return render(request, "Progress/Mark/mark_stats_card.html", context)
 
 
