@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 
-import pymupdf
+import subprocess
 from pathlib import Path
 from time import sleep
 
-from django.core.management import call_command
+import pymupdf
 
 
 class DemoHWBundleCreationService:
@@ -50,20 +50,42 @@ class DemoHWBundleCreationService:
         print("Mapping homework pages to questions")
         for bundle in homework_bundles:
             paper_number = bundle["paper_number"]
-            question_idx_lists = bundle["pages"]
 
             bundle_name = f"fake_hw_bundle_{paper_number}"
-            print(
-                f"Assigning pages in {bundle_name} to paper {paper_number}"
-                f"via the mapping {question_idx_lists}"
+            print(f"Scraping bundle id from bundle {bundle_name}...")
+            # we need the bundle id: annoying to have to scrape it
+            output = subprocess.check_output(
+                ["python3", "-m", "plom.cli", "list-bundles"]
             )
-            call_command(
-                "plom_paper_scan",
-                "map",
-                bundle_name,
-                "-t",
-                paper_number,
-                "-q",
-                str(question_idx_lists),
-            )
-            sleep(0.5)
+            output = output.decode()
+            print(output)
+            bundle_id = None
+            for l in output.splitlines():
+                if l.startswith(bundle_name):
+                    bundle_id = int(l.split()[1])
+            if bundle_id is None:
+                raise ValueError(
+                    f'Could not find a bundle id associated with name "{bundle_name}"'
+                )
+
+            for i, qidx_list in enumerate(bundle["pages"]):
+                pg = i + 1
+                print(
+                    f"Bundle {bundle_name} id {bundle_id} page {pg} "
+                    f"to paper {paper_number} question indices {qidx_list}"
+                )
+                cmd = [
+                    "python3",
+                    "-m",
+                    "plom.cli",
+                    "map",
+                    str(bundle_id),
+                    str(pg),
+                    "-t",
+                    str(paper_number),
+                    "-q",
+                    str(qidx_list),
+                ]
+                print("Running command: " + " ".join(cmd))
+                subprocess.run(cmd, check=True)
+            sleep(0.25)

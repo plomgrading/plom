@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.db import transaction, models
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 
-from plom_server.Papers.models import Paper, QuestionPage
+from plom_server.Papers.models import Paper, QuestionPage, MobilePage
 from plom_server.Papers.services import PaperInfoService, SpecificationService
 
 from ..models import (
@@ -68,9 +68,9 @@ class ScanCastService:
     # Page casting
     # ----------------------------------------
 
-    @transaction.atomic
+    @classmethod
     def discard_image_type_from_bundle_id_and_order(
-        self, user_obj: User, bundle_id: int, bundle_order: int
+        cls, user_obj: User, bundle_id: int, bundle_order: int
     ) -> None:
         """A wrapper around ``discard_image_type_from_bundle``.
 
@@ -98,13 +98,13 @@ class ScanCastService:
             raise ValueError(
                 f"Cannot find an image for bundle {bundle_id} order {bundle_order}"
             )
-        self.discard_image_type_from_bundle(
+        cls.discard_image_type_from_bundle(
             user_obj, bundle_obj, bundle_order, image_type=img_obj.image_type
         )
 
+    @staticmethod
     @transaction.atomic
     def discard_image_type_from_bundle(
-        self,
         user_obj: User,
         bundle_obj: StagingBundle,
         bundle_order: int,
@@ -143,12 +143,12 @@ class ScanCastService:
 
         if image_type == StagingImage.DISCARD:
             raise ValueError("Trying to discard an already discarded bundle image.")
-        if image_type not in [
+        if image_type not in (
             StagingImage.UNKNOWN,
             StagingImage.KNOWN,
             StagingImage.EXTRA,
             StagingImage.ERROR,
-        ]:
+        ):
             raise ValueError(f"Cannot discard an image of type '{image_type}'.")
         if img.image_type != image_type:
             raise ValueError(
@@ -180,9 +180,9 @@ class ScanCastService:
         DiscardStagingImage.objects.create(staging_image=img, discard_reason=reason)
         img.save()
 
-    @transaction.atomic
+    @classmethod
     def discard_image_type_from_bundle_cmd(
-        self,
+        cls,
         username: str,
         bundle_name: str,
         bundle_order: int,
@@ -195,7 +195,7 @@ class ScanCastService:
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
-        self.discard_image_type_from_bundle(
+        cls.discard_image_type_from_bundle(
             user_obj, bundle_obj, bundle_order, image_type=image_type
         )
 
@@ -305,12 +305,12 @@ class ScanCastService:
             raise ValueError(
                 "Trying to 'unknowify' and already 'unknown' bundle image."
             )
-        if image_type not in [
+        if image_type not in (
             StagingImage.DISCARD,
             StagingImage.KNOWN,
             StagingImage.EXTRA,
             StagingImage.ERROR,
-        ]:
+        ):
             raise ValueError(f"Cannot 'unknowify' and image of type '{image_type}'.")
         if img.image_type != image_type:
             raise ValueError(
@@ -387,9 +387,9 @@ class ScanCastService:
             UnknownStagingImage.objects.create(staging_image=img)
             img.save()
 
+    @staticmethod
     @transaction.atomic
     def _assign_extra_page(
-        self,
         user_obj: User,
         bundle_obj: StagingBundle,
         bundle_order: int,
@@ -425,9 +425,20 @@ class ScanCastService:
             raise ValueError(f"Paper {paper_number} is not in the database.")
         # now check all the questions
         # TODO: consider using question_list_utils.check_question_list: fewer DB hits?
-        for qi in assign_to_question_indices:
-            if not QuestionPage.objects.filter(paper=paper, question_index=qi).exists():
-                raise ValueError(f"No question index {qi} in database.")
+        if False:
+            for qi in assign_to_question_indices:
+                if not QuestionPage.objects.filter(
+                    paper=paper, question_index=qi
+                ).exists():
+                    raise ValueError(f"No question index {qi} in database.")
+        else:
+            nq = SpecificationService.get_n_questions()
+            if any(
+                qi < 1 or qi > nq for qi in assign_to_question_indices
+            ) and assign_to_question_indices != [MobilePage.DNM_qidx]:
+                raise ValueError(
+                    f"Question list {assign_to_question_indices} deemed invalid."
+                )
 
         # at this point the paper-number and question-list are valid, so get the image at that bundle-order.
         try:
@@ -456,9 +467,9 @@ class ScanCastService:
         eximg.question_idx_list = assign_to_question_indices
         eximg.save()
 
-    @transaction.atomic
+    @classmethod
     def assign_extra_page_from_bundle_pk_and_order(
-        self,
+        cls,
         user_obj: User,
         bundle_id: int,
         bundle_order: int,
@@ -466,7 +477,7 @@ class ScanCastService:
         assign_to_question_indices: list[int],
     ) -> None:
         bundle_obj = StagingBundle.objects.get(pk=bundle_id)
-        self._assign_extra_page(
+        cls._assign_extra_page(
             user_obj,
             bundle_obj,
             bundle_order,
@@ -474,9 +485,9 @@ class ScanCastService:
             assign_to_question_indices,
         )
 
-    @transaction.atomic
+    @classmethod
     def assign_extra_page_cmd(
-        self,
+        cls,
         username: str,
         bundle_name: str,
         bundle_order: int,
@@ -514,7 +525,7 @@ class ScanCastService:
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
-        self._assign_extra_page(
+        cls._assign_extra_page(
             user_obj,
             bundle_obj,
             bundle_order,
@@ -578,8 +589,9 @@ class ScanCastService:
 
         self.clear_extra_page(user_obj, bundle_obj, bundle_order)
 
+    @classmethod
     def extralise_image_from_bundle_id(
-        self, user_obj: User, bundle_id: int, bundle_order: int
+        cls, user_obj: User, bundle_id: int, bundle_order: int
     ) -> None:
         """A wrapper around extralise_image_from_bundle taking a bundle id instead of bundle object.
 
@@ -592,11 +604,11 @@ class ScanCastService:
         #     bundle_obj = StagingBundle.objects.get(pk=bundle_id)
         # except ObjectDoesNotExist:
         #     raise ValueError(f"Bundle id {bundle_id} does not exist!")
-        self.extralise_image_from_bundle(user_obj, bundle_obj, bundle_order)
+        cls.extralise_image_from_bundle(user_obj, bundle_obj, bundle_order)
 
+    @staticmethod
     @transaction.atomic
     def extralise_image_from_bundle(
-        self,
         user_obj: User,
         bundle_obj: StagingBundle,
         bundle_order: int,
@@ -680,8 +692,9 @@ class ScanCastService:
         )
         img.save()
 
+    @classmethod
     def extralise_image_from_bundle_cmd(
-        self,
+        cls,
         username: str,
         bundle_name: str,
         bundle_order: int,
@@ -695,7 +708,7 @@ class ScanCastService:
         except ObjectDoesNotExist:
             raise ValueError(f"Bundle '{bundle_name}' does not exist!")
 
-        self.extralise_image_from_bundle(
+        cls.extralise_image_from_bundle(
             user_obj, bundle_obj, bundle_order, image_type=image_type
         )
 

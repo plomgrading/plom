@@ -949,36 +949,92 @@ class Messenger(BaseMessenger):
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def new_server_bundle_map_page(
-        self, bundle_id: int, page: int, papernum: int, questions: str | list
-    ) -> Any:
-        """Map a page of a bundle to zero or more questions.
+        self,
+        bundle_id: int,
+        page: int,
+        *,
+        papernum: int | None = None,
+        questions: int | str | list[int | str],
+    ) -> None:
+        """Map the indicated page of the specified bundle to all questions in a list, etc.
 
         TODO: beta: rename to something reasonable in due time.
 
+        Args:
+            bundle_id: the (unstaged) bundle's primary key, an integer
+            page: the 1-based index of the page of interest in that bundle
+
+        Keyword Args:
+            papernum: the target paper number for this page.  If discarding, you
+                may omit this.
+            questions: A list of question(s) to which this page should be attached.
+                Each list entry can be either an integer question index
+                compatible with the assessment spec, or one of the special strings
+                "all", "dnm", or "discard". Lists that contain any one of these strings
+                must have no other elements (i.e., they must be lists of length 1).
+                If this argument is a single int or a single string, that will be
+                upgraded to a compatible 1-element list and treated appropriately.
+                The empty list will be interpreted as ["all"].
+
+        Raises:
+            PlomSeriousException
+            PlomAuthenticationException
+            PlomNoPermission
+            PlomRangeException
+            PlomSeriousException
+            ValueError: malformed input that we detected before communication.
+
         Returns:
-            TODO: nothing yet, still WIP?
+            None
         """
         if self.is_server_api_less_than(113):
             raise PlomNoServerSupportException(
                 "Server too old: does not support page mapping"
             )
 
+        query_args = []
+        if papernum is not None:
+            query_args.append(f"papernum={papernum}")
+
+        if isinstance(questions, str) or isinstance(questions, int):
+            questions = [questions]
+
+        if any(isinstance(n, str) for n in questions):
+            lc_questions = [
+                n.casefold() if isinstance(n, str) else n for n in questions
+            ]
+
+            if len(lc_questions) > 1:
+                if (
+                    "all" in lc_questions
+                    or "dnm" in lc_questions
+                    or "discard" in lc_questions
+                ):
+                    raise ValueError(
+                        "Mapping error in Messenger: keyword directives must be isolated."
+                    )
+            if "all" in lc_questions:
+                query_args.append("page_dest=all")
+            elif "dnm" in lc_questions:
+                query_args.append("page_dest=dnm")
+            elif "discard" in lc_questions:
+                query_args.append("page_dest=discard")
+            elif all(isinstance(n, int) or n.isdecimal() for n in questions):
+                query_args.extend([f"qidx={n}" for n in questions])
+            else:
+                raise ValueError(f"unexpected input: questions={questions}")
+        else:
+            if len(questions) == 0:
+                query_args.append("page_dest=all")
+            else:
+                query_args.extend([f"qidx={n}" for n in questions])
+
+        p = f"/api/beta/scan/bundle/{bundle_id}/{page}/map" + "?" + "&".join(query_args)
         with self.SRmutex:
             try:
-                # qall TODO?
-                # qdnm versus empty list?
-                query_args = ["qall", f"papernum={papernum}"]
-                print(questions)
-                query_args.extend([f"qidx={n}" for n in questions])
-                p = (
-                    f"/api/beta/scan/bundle/{bundle_id}/{page}/map"
-                    + "?"
-                    + "&".join(query_args)
-                )
-                print(p)
                 response = self.post_auth(p)
                 response.raise_for_status()
-                return response.json()
+                return
             except requests.HTTPError as e:
                 if response.status_code == 400:
                     raise PlomSeriousException(response.reason) from None

@@ -27,7 +27,7 @@ class Command(BaseCommand):
                 f"Attempting to extralise image of type '{image_type}' at position {order} from bundle {bundle_name} as user {username}"
             )
         try:
-            ScanCastService().extralise_image_from_bundle_cmd(
+            ScanCastService.extralise_image_from_bundle_cmd(
                 username, bundle_name, order, image_type=image_type
             )
         except ValueError as err:

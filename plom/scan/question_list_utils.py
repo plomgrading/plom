@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020, 2023 Andrew Rechnitzer
 # Copyright (C) 2020-2024 Colin B. Macdonald
+# Copyright (C) 2025 Philip D. Loewen
 
 from __future__ import annotations
 
@@ -14,6 +15,8 @@ def _parse_questions(s: Any) -> Any:
             return "all"
         if s.casefold() == "dnm":
             return "dnm"
+        if s.casefold() == "discard":
+            return "discard"
         s = ast.literal_eval(s)
     return s
 

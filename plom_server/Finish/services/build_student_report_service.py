@@ -2,6 +2,7 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
+# Copyright (C) 2025 Philip D. Loewen
 
 from datetime import datetime
 from pathlib import Path
@@ -22,7 +23,16 @@ def _get_descriptive_statistics_from_score_list(
 
     Gives dict of count, max, min, median, mean, mode, stddev, percentile25, percentile75.
     """
-    quants = quantiles(scores)
+    if len(scores) > 1:
+        quants = quantiles(scores)
+        standard_deviation = stdev(scores)
+    else:
+        # Functions quantiles() and stdev() don't work in the
+        # degenerate case of just one score. Define appropriate
+        # results directly.
+        quants = [scores[0], scores[0], scores[0]]
+        standard_deviation = 0.0
+
     return {
         "count": len(scores),
         "max": max(scores),
@@ -30,9 +40,9 @@ def _get_descriptive_statistics_from_score_list(
         "median": median(scores),
         "mean": mean(scores),
         "mode": mode(scores),
-        "stddev": stdev(scores),
+        "stddev": standard_deviation,
         "percentile25": quants[0],
-        "percentile75": quants[1],
+        "percentile75": quants[2],
     }
 
 

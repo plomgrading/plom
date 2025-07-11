@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2025 Aidan Murphy
 
 """Command line tool to start a Plom demonstration server."""
 
@@ -200,28 +201,21 @@ def run_django_manage_command(cmd) -> None:
     subprocess.run(split(full_cmd), check=True)
 
 
-def run_plom_cli_command(cmd) -> None:
+def run_plom_cli_command(cmd: str) -> None:
     """Run the given plom-cli command and wait for return.
 
     Command must finish successfully (zero return code).
 
     Args:
-        cmd: the full command to run, in a form that would
-            work if entered verbatim at the command line.
-            The command will be echoed to stdout, and then
-            an authentication string will be appended, and
-            finally the modified command will run.
+        cmd: the command to run, in a form close to what would be entered
+            after `plom-cli` or `python3 -m plom.cli` on the command line.
+            The full command will be echoed to stdout.
     """
+    cmd = "python3 -m plom.cli " + cmd
     print(f"\nIssuing this command: {cmd}\n")
     # Some gitlab CI environments do not expose plom-cli
-    # as a simple executable file. Here is a nasty workaround.
-    # It relies on the current file structure.
-    demo_base_dir = Path(__file__).parent.resolve()
-    executable_path = demo_base_dir / ".." / ".." / "plom" / "cli" / "__main__.py"
-    cmdplus = (
-        cmd.replace("plom-cli", f"python3 {executable_path}") + " -u manager -w 1234"
-    )
-    subprocess.run(split(cmdplus), check=True)
+    # (but things are in a bad way if python3 -m doesn't work)
+    subprocess.run(split(cmd), check=True)
 
 
 def popen_django_manage_command(cmd) -> subprocess.Popen:
@@ -272,7 +266,7 @@ def upload_demo_assessment_spec_file() -> None:
     print("Uploading demo assessment spec")
     spec_file = demo_files / "demo_assessment_spec.toml"
     # run_django_manage_command(f"plom_preparation_spec upload {spec_file}")
-    run_plom_cli_command(f"plom-cli upload-spec {spec_file}")
+    run_plom_cli_command(f"upload-spec {spec_file}")
 
 
 def _build_with_and_without_soln(source_path: Path) -> None:
@@ -332,7 +326,7 @@ def upload_demo_assessment_source_files():
     for v in (1, 2, 3):
         source_pdf = f"assessment_v{v}.pdf"
         # run_django_manage_command(f"plom_preparation_source upload -v {v} {source_pdf}")
-        run_plom_cli_command(f"plom-cli upload-source {source_pdf} -v {v}")
+        run_plom_cli_command(f"upload-source {source_pdf} -v {v}")
 
 
 def upload_demo_solution_files():
@@ -358,8 +352,8 @@ def upload_demo_classlist(length="normal", prename=True):
         cl_path = demo_files / "cl_for_demo.csv"
 
     # run_django_manage_command(f"plom_preparation_classlist upload {cl_path}")
-    run_plom_cli_command("plom-cli delete-classlist")
-    run_plom_cli_command(f"plom-cli upload-classlist {cl_path}")
+    run_plom_cli_command("delete-classlist")
+    run_plom_cli_command(f"upload-classlist {cl_path}")
 
     if prename:
         run_django_manage_command("plom_preparation_prenaming --enable")
@@ -585,6 +579,7 @@ def upload_the_bundles(length="normal"):
     # now trigger reading of qr-codes
     run_django_manage_command(f"plom_demo_bundles --length {length} --action read")
     run_django_manage_command("plom_staging_bundles wait")
+    run_django_manage_command(f"plom_demo_bundles --length {length} --action map_hw")
 
 
 def push_the_bundles(length):
@@ -643,6 +638,7 @@ def _ensure_client_available():
     try:
         # tell MyPy to ignore this for testing
         import plomclient  # type: ignore[import-not-found]
+        from plomclient.client import __version__ as clientversion  # type: ignore
     except ImportError as err:
         print("*" * 64)
         print()
@@ -651,7 +647,10 @@ def _ensure_client_available():
             f"which is not installed:\n  {err}.\n"
             "Either install plom-client, or stop the demo earlier."
         ) from None
-    print(f"Good we have plom-client installed, version {plomclient.__version__}")
+    print(
+        f"Good we have plom-client installed, version {clientversion},"
+        f" found at {plomclient}"
+    )
 
 
 def run_the_randoider(*, port):
