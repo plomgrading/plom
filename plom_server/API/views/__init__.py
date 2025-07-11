@@ -26,6 +26,7 @@ from .source_handler import (
 
 from .spec_handler import SpecificationHandler
 from .classlist import Classlist
+from .pqvmap import PQVmap
 
 from .identify import (
     GetClasslist,
