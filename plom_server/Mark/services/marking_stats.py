@@ -5,7 +5,7 @@
 # Copyright (C) 2024 Bryan Tanady
 
 import statistics
-from typing import Any, Tuple, List, cast
+from typing import Any, Tuple, List
 
 import arrow
 from numpy import histogram
