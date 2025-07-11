@@ -3,6 +3,7 @@
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024 Aidan Murphy
 # Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2025 Deep Shah
 
 import statistics
 from typing import Any, Tuple, List
