@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2025 Philip D. Loewen
 
 from pathlib import Path
 
@@ -12,8 +13,19 @@ from plom_server.Papers.services import SpecificationService
 from ...services import SourceService, PapersPrinted
 
 
+def PrintDeprecationNotice() -> None:
+    print(
+        "NOTE: plom_preparation_source is going out of style.\n"
+        "Please use appropriate plom-cli subcommands to manipulate sources.\n"
+        "This suite of Django management commands is no longer being maintained."
+    )
+
+
 class Command(BaseCommand):
     help = "Displays the uploaded source pdfs and allows users to upload/download/remove source pdfs."
+
+    def __init__(self) -> None:
+        PrintDeprecationNotice()
 
     def check_duplicates(self):
         duplicates = SourceService.check_pdf_duplication()

@@ -47,7 +47,9 @@ class DemoHWBundleCreationService:
 
     def map_homework_pages(self, homework_bundles=[]):
         """Assign questions to the pages homework bundles."""
-        print("Mapping homework pages to questions")
+        print(
+            f"Mapping homework pages to questions in {len(homework_bundles)} homework_bundles."
+        )
         for bundle in homework_bundles:
             paper_number = bundle["paper_number"]
 
@@ -63,6 +65,7 @@ class DemoHWBundleCreationService:
             for l in output.splitlines():
                 if l.startswith(bundle_name):
                     bundle_id = int(l.split()[1])
+            print(f'Scraping returns bundle_id {bundle_id} for "{bundle_name}".')
             if bundle_id is None:
                 raise ValueError(
                     f'Could not find a bundle id associated with name "{bundle_name}"'

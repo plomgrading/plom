@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022 Natalie Balashov
 # Copyright (C) 2023, 2025 Colin B. Macdonald
+# Copyright (C) 2025 Philip D. Loewen
 
 from pathlib import Path
 
@@ -14,8 +15,19 @@ from ...services import (
 )
 
 
+def PrintDeprecationNotice() -> None:
+    print(
+        "NOTE: plom_preparation_classlist is going out of style.\n"
+        "Please use appropriate plom-cli subcommands to manipulate the class list.\n"
+        "This suite of Django management commands is no longer being maintained."
+    )
+
+
 class Command(BaseCommand):
     help = "Displays the current status of the classlist, and allows user upload/download/remove it."
+
+    def __init__(self) -> None:
+        PrintDeprecationNotice()
 
     def show_status(self):
         n = StagingStudentService.how_many_students()

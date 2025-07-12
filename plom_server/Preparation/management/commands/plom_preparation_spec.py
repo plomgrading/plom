@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023, 2025 Colin B. Macdonald
+# Copyright (C) 2025 Philip D. Loewen
 
 from pathlib import Path
 
@@ -13,8 +14,19 @@ from plom.plom_exceptions import PlomDependencyConflict
 from plom_server.Papers.services import SpecificationService
 
 
+def PrintDeprecationNotice() -> None:
+    print(
+        "NOTE: plom_preparation_spec is going out of style.\n"
+        "Please use appropriate plom-cli subcommands to manipulate the spec.\n"
+        "This suite of Django management commands is no longer being maintained."
+    )
+
+
 class Command(BaseCommand):
     help = "Displays the current status of the spec, and allows user to upload/download/remove."
+
+    def __init__(self) -> None:
+        PrintDeprecationNotice()
 
     def show_status(self) -> None:
         if not SpecificationService.is_there_a_spec():
