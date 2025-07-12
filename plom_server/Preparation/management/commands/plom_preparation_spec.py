@@ -14,19 +14,13 @@ from plom.plom_exceptions import PlomDependencyConflict
 from plom_server.Papers.services import SpecificationService
 
 
-def PrintDeprecationNotice() -> None:
-    print(
-        "NOTE: plom_preparation_spec is going out of style.\n"
-        "Please use appropriate plom-cli subcommands to manipulate the spec.\n"
-        "This suite of Django management commands is no longer being maintained."
-    )
+DeprecationNotice = """NOTE: plom_preparation_spec is going out of style.
+    Please use appropriate plom-cli subcommands to manipulate the spec.
+    This suite of Django management commands is no longer being maintained."""
 
 
 class Command(BaseCommand):
     help = "Displays the current status of the spec, and allows user to upload/download/remove."
-
-    def __init__(self) -> None:
-        PrintDeprecationNotice()
 
     def show_status(self) -> None:
         if not SpecificationService.is_there_a_spec():
@@ -109,6 +103,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        self.stdout.write(DeprecationNotice)
         if options["command"] == "status":
             self.show_status()
         elif options["command"] == "upload":

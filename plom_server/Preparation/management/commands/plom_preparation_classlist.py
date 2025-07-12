@@ -15,19 +15,13 @@ from ...services import (
 )
 
 
-def PrintDeprecationNotice() -> None:
-    print(
-        "NOTE: plom_preparation_classlist is going out of style.\n"
-        "Please use appropriate plom-cli subcommands to manipulate the class list.\n"
-        "This suite of Django management commands is no longer being maintained."
-    )
+DeprecationNotice = """NOTE: plom_preparation_classlist is going out of style.
+    Please use appropriate plom-cli subcommands to manipulate the class list.
+    This suite of Django management commands is no longer being maintained."""
 
 
 class Command(BaseCommand):
     help = "Displays the current status of the classlist, and allows user upload/download/remove it."
-
-    def __init__(self) -> None:
-        PrintDeprecationNotice()
 
     def show_status(self):
         n = StagingStudentService.how_many_students()
@@ -149,6 +143,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        self.stdout.write(DeprecationNotice)
         if options["command"] == "status":
             self.show_status()
         elif options["command"] == "upload":

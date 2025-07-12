@@ -13,19 +13,13 @@ from plom_server.Papers.services import SpecificationService
 from ...services import SourceService, PapersPrinted
 
 
-def PrintDeprecationNotice() -> None:
-    print(
-        "NOTE: plom_preparation_source is going out of style.\n"
-        "Please use appropriate plom-cli subcommands to manipulate sources.\n"
-        "This suite of Django management commands is no longer being maintained."
-    )
+DeprecationNotice = """NOTE: plom_preparation_source is going out of style.
+    Please use appropriate plom-cli subcommands to manipulate sources.
+    This suite of Django management commands is no longer being maintained."""
 
 
 class Command(BaseCommand):
     help = "Displays the uploaded source pdfs and allows users to upload/download/remove source pdfs."
-
-    def __init__(self) -> None:
-        PrintDeprecationNotice()
 
     def check_duplicates(self):
         duplicates = SourceService.check_pdf_duplication()
@@ -190,6 +184,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        self.stdout.write(DeprecationNotice)
         if options["command"] == "status":
             self.show_status()
         elif options["command"] == "upload":
