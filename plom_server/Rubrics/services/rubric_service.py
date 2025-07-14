@@ -53,7 +53,7 @@ from .utils import _generate_display_delta, _Rubric_to_dict
 log = logging.getLogger("RubricService")
 
 
-# TODO: more validation of JSONFields that the model/form/serializer should
+# TODO: validation of JSONFields that the model/form/serializer could/should
 # be doing (see `clean_versions` commented out in Rubrics/models.py)
 # These `_validate_...` functions are written something like `clean_<field>`
 # in Django's model/form.
@@ -387,7 +387,7 @@ class RubricService:
                 )
             _validate_value_out_of(data["value"], data["out_of"], max_mark)
 
-        # TODO: more validation of JSONFields that the model/form/serializer should
+        # TODO: more validation of fields that the model/form/serializer could/should
         # be doing (see `clean_versions` commented out in Rubrics/models.py)
         _validate_versions_in_range(data.get("versions"))
         _validate_parameters(
