@@ -55,25 +55,31 @@ log = logging.getLogger("RubricService")
 
 # TODO: more validation of JSONFields that the model/form/serializer should
 # be doing (see `clean_versions` commented out in Rubrics/models.py)
-# These `_validate_...` functions are written somelike like `clean_<field>`
+# These `_validate_...` functions are written something like `clean_<field>`
 # in Django's model/form.
-def _validate_versions(vers: None | list | str) -> None:
+def _validate_versions(vers: None | str) -> None:
     if not vers:
         # empty string is ok for versions
         return
 
-    if not isinstance(vers, list):
-        raise serializers.ValidationError(
-            f'nonempty "versions" must be a list of ints but got "{vers}"'
-        )
+    # TODO: the real validator is going to do all this, except for the range check!
+
+    # TODO: the duplication here bugs me.
+    if not isinstance(vers, str):
+        raise serializers.ValidationError("Input must be string")
 
     n_versions = SpecificationService.get_n_versions()
 
-    for v in vers:
-        if not isinstance(v, int):
+    parsed_vers = [x.strip() for x in vers.split(",")]
+    for vstr in parsed_vers:
+        # TODO: the duplication here bugs me.
+        try:
+            v = int(vstr)
+        except ValueError as e:
             raise serializers.ValidationError(
-                f'nonempty "versions" must be a list of ints but got "{vers}"'
+                f'nonempty "versions" must be a comma-separated list of ints but got "{vers}": {e}'
             )
+        # TODO: here we finally get to the non-duplicated part of this validation
         if v < 1 or v > n_versions:
             raise serializers.ValidationError(
                 {
@@ -1334,16 +1340,6 @@ class RubricService:
             # Fixes for Issue #3807: csv often scramble empty lists or otherwise makes strings
             if r.get("pedagogy_tags") == "[]":
                 r["pedagogy_tags"] = []
-            if isinstance(r.get("versions"), str) and r.get("versions") != "":
-                versions = r["versions"]
-                try:
-                    versions = ast.literal_eval(versions)
-                except (SyntaxError, ValueError) as e:
-                    raise serializers.ValidationError(
-                        f'Invalid "versions" field type {type(versions)}'
-                        f' "{versions}"; {e}'
-                    ) from e
-                r["versions"] = versions
 
             if r.get("parameters") in ("[]", ""):
                 r["parameters"] = []

@@ -182,6 +182,7 @@ class Rubric(models.Model):
     pedagogy_tags = models.ManyToManyField("QuestionTags.PedagogyTag", blank=True)
 
     # TODO: how to make this work?  never seems to be called...
+    # TODO: can we do the range checks on versions here?  cheaply?
     # def clean_versions(self):
     #     print(self.cleaned_data["versions"])
     #     print("TODO: ensure positive integers etc")
