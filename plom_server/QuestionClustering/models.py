@@ -7,6 +7,13 @@ from plom_server.Base.models import HueyTaskTracker
 from plom_server.Papers.models import Paper
 
 
+class ClusteringModelType(models.TextChoices):
+    """Defines what clustering models exist in the system"""
+
+    MCQ = "mcq", "Multiple choice (A-F, a-f)"
+    HME = "hme", "Generic handwritten math expression"
+
+
 class QuestionClusteringChore(HueyTaskTracker):
     """A tracker for the huey chore of clustering students' answer for a (question, version).
 
@@ -16,6 +23,7 @@ class QuestionClusteringChore(HueyTaskTracker):
     left: top left corner's x coordinate of the extracted rectangle used for clustering
     bottom: bottom right corner's y coordinate of the extracted rectangle used for clustering
     right: bottom right corner's x coordinate of the extracted rectangle used for clustering
+
     """
 
     question_idx = models.PositiveIntegerField(null=False)
@@ -25,6 +33,11 @@ class QuestionClusteringChore(HueyTaskTracker):
     left = models.FloatField(null=False)
     bottom = models.FloatField(null=False)
     right = models.FloatField(null=False)
+    clustering_model = models.CharField(
+        max_length=10,
+        choices=ClusteringModelType.choices,
+        null=False
+    )
 
     def __str__(self):
         """Stringify task using its related question, version number."""

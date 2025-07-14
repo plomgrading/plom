@@ -4,29 +4,46 @@ from torchvision import models, transforms
 from PIL import Image
 import numpy as np
 from pathlib import Path
+from plom_server.QuestionClustering.models import ClusteringModelType
+from functools import lru_cache
+
+
+class ClusteringModel():
+    """A wrapper to get the model for inference.
+    
+    The wrapper lazy loads and caches the model, so every inference uses the same loaded
+    model.
+    """
+
+    @lru_cache()
+    def get_model(self, model_type: ClusteringModelType):
+        """Lazily load and cache one model instance per type, per process"""
+        if model_type == ClusteringModelType.MCQ:
+            return MCQClusteringModel()
+        # elif model_type == ClusteringModel.HME:
 
 
 class AttentionPooling(nn.Module):
-    def __init__(self, in_features):
-        super().__init__()
-        self.attention = nn.Sequential(
-            nn.Linear(in_features, 512), nn.Tanh(), nn.Linear(512, 1), nn.Softmax(dim=1)
-        )
+        def __init__(self, in_features):
+            super().__init__()
+            self.attention = nn.Sequential(
+                nn.Linear(in_features, 512), nn.Tanh(), nn.Linear(512, 1), nn.Softmax(dim=1)
+            )
 
-    def forward(self, x):
-        # Input: [batch, channels, height, width]
-        batch, channels, h, w = x.size()
-        # Flatten spatial dimensions: [batch, channels, h*w]
-        flattened = x.view(batch, channels, h * w)
-        # Permute: [batch, h*w, channels]
-        flattened = flattened.permute(0, 2, 1)
-        # Compute attention weights: [batch, h*w, 1]
-        attn_weights = self.attention(flattened)
-        # Weighted sum: [batch, channels]
-        return torch.sum(attn_weights * flattened, dim=1)
+        def forward(self, x):
+            # Input: [batch, channels, height, width]
+            batch, channels, h, w = x.size()
+            # Flatten spatial dimensions: [batch, channels, h*w]
+            flattened = x.view(batch, channels, h * w)
+            # Permute: [batch, h*w, channels]
+            flattened = flattened.permute(0, 2, 1)
+            # Compute attention weights: [batch, h*w, 1]
+            attn_weights = self.attention(flattened)
+            # Weighted sum: [batch, channels]
+            return torch.sum(attn_weights * flattened, dim=1)
+        
 
-
-class QuestionClusteringModel:
+class MCQClusteringModel():
     def __init__(self):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

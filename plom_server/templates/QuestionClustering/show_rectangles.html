@@ -20,19 +20,83 @@
     <div class="card m-2">
         <div class="card-body">
             <h5 class="card-title">Preview of extracted rectangles for Version {{ version }} page {{ page_num }}</h5>
-            <form method="post" action="{% url 'question_clustering_jobs_home' %}">
-                {% csrf_token %}
-                <ul hidden>
-                    <input name="question" value="{{ question_index }}" readonly>
-                    <input name="version" value="{{ version }}" readonly>
-                    <input name="page_num" value="{{ page_num }}" readonly>
-                    <input name="plom_top" value="{{ top }}" readonly>
-                    <input name="plom_left" value="{{ left }}" readonly>
-                    <input name="plom_bottom" value="{{ bottom }}" readonly>
-                    <input name="plom_right" value="{{ right }}" readonly>
-                </ul>
-                <button type="submit" class="btn btn-primary">Begin clustering</button>
-            </form>
+
+            <!-- Button that pops up the clustering model dialog -->
+            <button 
+                type="submit"
+                class="btn btn-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#modelSelectionModal">
+                Begin clustering
+            </button>
+
+            <!-- The modal dialog for choosing clustering model -->
+            <div
+                class="modal fade"
+                id="modelSelectionModal"
+                tabindex="-1"
+                aria-labelledby="modelSelectionModalLabel"
+                aria-hidden="true">
+
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modelSelectionModalLabel">
+                                Choose answer type for clustering.
+                            </h5>
+
+                             <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close">
+                            </button>
+                        </div>
+
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="modal-body">
+
+                                    <!-- Render hidden inputs-->
+                                    {% for hidden in clustering_job_form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+
+                                    {% for radio in clustering_job_form.choice %}
+                                        <div class="form-check">
+                                            {{ radio.tag }}
+                                            <label
+                                            class="form-check-label"
+                                            for="{{ radio.id_for_label }}"
+                                            >
+                                            {{ radio.choice_label }}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                    {% if clustering_job_form.choice.errors %}
+                                        <div class="text-danger small mt-2">
+                                            {{ clustering_job_form.choice.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    data-bs-dismiss="modal"
+                                    >
+                                    Cancel
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">Submit</button>
+                                </div>
+                            </form>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- </form> -->
             {% if papers %}
                 <p>
                     <ul>

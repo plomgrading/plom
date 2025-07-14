@@ -27,17 +27,15 @@ import pandas as pd
 from io import BytesIO
 from PIL import Image
 from django.db.models import Count
+from plom_server.QuestionClustering.models import ClusteringModelType
 
 
 class QuestionClusteringService:
 
-    def __init__(self):
-        self.model = QuestionClusteringModel()
-
     def start_cluster_qv_job(
-        self, question_idx: int, version: int, page_num: int, rects: dict
+        self, question_idx: int, version: int, page_num: int, rects: dict, clustering_model: ClusteringModelType
     ):
-        """Run a background job to cluster papers for a (q, v) at the given page_num and bbox.
+        """Run a background job to cluster papers for a (q, v) for the given page_num and rects.
 
         question_idx: The question index used for clustering
         version: The question version used for clustering
@@ -45,6 +43,7 @@ class QuestionClusteringService:
             multi-pages question
         rects: the coordinates of the four corners of the rectangle used for clustering.
             Rects should have these keys: [top, left, bottom, right].
+        clustering_model: the model used to cluster the papers.
         """
         expected_keys = {"top", "left", "bottom", "right"}
         if expected_keys.intersection(set(rects.keys())) != expected_keys:
@@ -61,6 +60,7 @@ class QuestionClusteringService:
                 left=rects["left"],
                 bottom=rects["bottom"],
                 right=rects["right"],
+                clustering_model=clustering_model,
                 status=HueyTaskTracker.STARTING,
             )
             tracker_pk = x.pk
@@ -71,12 +71,13 @@ class QuestionClusteringService:
             page_num=page_num,
             rects=rects,
             tracker_pk=tracker_pk,
+            clustering_model=clustering_model,
             _debug_be_flaky=False,
         )
         # print(f"Just enqueued Huey parent_split_and_save task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
-
-    def cluster_qv(self, question_idx: int, version: int, page_num: int, rects: dict):
+    
+    def _cluster_mcq(self, question_idx: int, version: int, page_num: int, rects: dict):
         top = rects["top"]
         left = rects["left"]
         bottom = rects["bottom"]
@@ -146,6 +147,20 @@ class QuestionClusteringService:
                 right=right,
             )
             QVClusterLink.objects.create(paper=paper, qv_cluster=qv_cluster)
+    
+    def _cluster_hme(self, question_idx: int, version: int, page_num: int, rects: dict):
+
+
+
+
+    def cluster_qv(self, question_idx: int, version: int, page_num: int, rects: dict, clustering_model: ClusteringModelType):
+        if clustering_model == ClusteringModelType.MCQ:
+            self._cluster_mcq(question_idx, version, page_num, rects)
+        
+        
+        elif clustering_model == ClusteringModelType.HME:
+            self._cluster_hme(question_idx, version, page_num, rects)
+        
 
     def predict(self, ref: np.ndarray, scanned: np.ndarray) -> list:
         """Predict handwritten answer by outputting vector of probability.
@@ -248,10 +263,14 @@ class QuestionClusteringService:
             "bottom": qvc.bottom,
             "right": qvc.right,
         }
-    
-    def delete_cluster_member(self, question_idx: int, version: int, clusterId: int, paper_num: int):
+
+    def delete_cluster_member(
+        self, question_idx: int, version: int, clusterId: int, paper_num: int
+    ):
         paper = Paper.objects.get(paper_number=paper_num)
-        qvc = QVCluster.objects.get(question_idx=question_idx, version=version, clusterId=clusterId)
+        qvc = QVCluster.objects.get(
+            question_idx=question_idx, version=version, clusterId=clusterId
+        )
 
         qvcl = QVClusterLink.objects.get(paper=paper, qv_cluster=qvc)
         qvcl.delete()
@@ -264,6 +283,7 @@ def huey_cluster_single_qv(
     version: int,
     page_num: int,
     rects: dict,
+    clustering_model: ClusteringModelType,
     *,
     tracker_pk: int,
     _debug_be_flaky: bool = False,
@@ -277,6 +297,7 @@ def huey_cluster_single_qv(
         page_num: page_num for the clustering, used to resolve ambiguity in multi-pages question.
         rects: dict of coordinates of the rectangle used for clustering. Ideally should primarily
         contain final answer.
+        clustering_model: the model used for the clustering
 
     Keyword Args:
         tracker_pk: a key into the database for anyone interested in
@@ -295,7 +316,7 @@ def huey_cluster_single_qv(
 
     HueyTaskTracker.transition_to_running(tracker_pk, task.id)
     qcs = QuestionClusteringService()
-    qcs.cluster_qv(question_idx, version, page_num, rects)
+    qcs.cluster_qv(question_idx, version, page_num, rects, clustering_model)
 
     HueyTaskTracker.transition_to_complete(tracker_pk)
     return True

@@ -6,6 +6,7 @@ from django.urls import path
 from .views import (
     QuestionClusteringHomeView,
     SelectRectangleForClusteringView,
+    PreviewSelectedRectsView,
     QuestionClusteringJobsHome,
     GetQuestionClusteringJobs,
     ClusterGroupsView,
@@ -21,6 +22,11 @@ urlpatterns = [
         "select/<int:version>/<int:qidx>/<int:page>",
         SelectRectangleForClusteringView.as_view(),
         name="question_clustering_select_rectangle",
+    ),
+    path(
+        "clustering_region_preview",
+        PreviewSelectedRectsView.as_view(),
+        name="preview_clustering_region",
     ),
     path(
         "question_clustering_jobs_home",
