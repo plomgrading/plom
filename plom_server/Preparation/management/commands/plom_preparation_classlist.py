@@ -15,8 +15,8 @@ from ...services import (
 )
 
 
-DeprecationNotice = """NOTE: plom_preparation_classlist is going out of style.
-    Please use appropriate plom-cli subcommands to manipulate the class list.
+DeprecationNotice = """DEPRECATION NOTICE: plom_preparation_classlist (Issue #3981).
+    Consider using plom-cli subcommands to manipulate the class list.
     This suite of Django management commands is no longer being maintained."""
 
 

@@ -14,8 +14,8 @@ from plom.plom_exceptions import PlomDependencyConflict
 from plom_server.Papers.services import SpecificationService
 
 
-DeprecationNotice = """NOTE: plom_preparation_spec is going out of style.
-    Please use appropriate plom-cli subcommands to manipulate the spec.
+DeprecationNotice = """DEPRECATION NOTICE: plom_preparation_spec (Issue #3981).
+    Consider using plom-cli subcommands to manipulate the spec.
     This suite of Django management commands is no longer being maintained."""
 
 
