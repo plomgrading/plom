@@ -159,8 +159,8 @@ class RubricServiceTests_extra_validation(TestCase):
         with self.assertRaises(serializers.ValidationError):
             RubricService.create_rubric(rub)
 
-    def test_create_rubric_invalid_versions(self) -> None:
-        for bad_versions in ("[1, 2]", [1, 1.2], "1, 1.2", "1, sth", "abc", "-1, 2"):
+    def test_create_rubric_versions_invalid(self) -> None:
+        for bad_versions in ("[1, 2]", [1, 1.2], "1, 1.2", "1, sth", "abc"):
             rub = {
                 "kind": "neutral",
                 "value": 0,
@@ -168,6 +168,19 @@ class RubricServiceTests_extra_validation(TestCase):
                 "username": "Liam",
                 "question_index": 1,
                 "versions": bad_versions,
+            }
+            with self.assertRaises(serializers.ValidationError):
+                RubricService.create_rubric(rub)
+
+    def test_create_rubric_versions_out_of_range(self) -> None:
+        for oor_versions in ("-1", "999", "-1, 1", "-1, 999"):
+            rub = {
+                "kind": "neutral",
+                "value": 0,
+                "text": "qwerty",
+                "username": "Liam",
+                "question_index": 1,
+                "versions": oor_versions,
             }
             with self.assertRaises(serializers.ValidationError):
                 RubricService.create_rubric(rub)
