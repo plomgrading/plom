@@ -820,6 +820,10 @@ def main():
     """The Plom demo script."""
     # TODO: I guess?
     os.environ["DJANGO_SETTINGS_MODULE"] = "plom_server.settings"
+    # TODO: needed for plom-cli, not entirely comfortable with the hardcoding here
+    os.environ["PLOM_SERVER"] = "http://localhost:8000"
+    os.environ["PLOM_USERNAME"] = "manager"
+    os.environ["PLOM_PASSWORD"] = "1234"
 
     saytime("")  # Launch the chatty timer.
 
