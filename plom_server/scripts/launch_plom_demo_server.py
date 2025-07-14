@@ -262,7 +262,7 @@ def launch_huey_processes() -> list[subprocess.Popen]:
 
 
 def upload_demo_assessment_spec_file() -> None:
-    """Use 'plom_preparation_spec' to upload a demo assessment spec."""
+    """Upload a demo assessment spec."""
     print("Uploading demo assessment spec")
     spec_file = demo_files / "demo_assessment_spec.toml"
     # run_django_manage_command(f"plom_preparation_spec upload {spec_file}")
@@ -321,7 +321,7 @@ def build_demo_assessment_source_pdfs() -> None:
 
 
 def upload_demo_assessment_source_files():
-    """Use 'plom_preparation_source' to upload a demo assessment source pdfs."""
+    """Upload demo assessment source pdfs."""
     print("Uploading demo assessment source pdfs")
     for v in (1, 2, 3):
         source_pdf = f"assessment_v{v}.pdf"
@@ -341,7 +341,7 @@ def upload_demo_solution_files():
 
 
 def upload_demo_classlist(length="normal", prename=True):
-    """Use 'plom_preparation_classlist' to the appropriate classlist for the demo."""
+    """Upload a classlist for the demo."""
     if length == "long":
         cl_path = demo_files / "cl_for_long_demo.csv"
     elif length == "plaid":
