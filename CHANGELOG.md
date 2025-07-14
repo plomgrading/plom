@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Papers can be downloaded in their "unmarked" state.
 
 ### Removed
+* Several not-very-maintained `manage.py` commands in favour of `plom-cli`, which works remotely over the API.
 
 ### Changed
 
