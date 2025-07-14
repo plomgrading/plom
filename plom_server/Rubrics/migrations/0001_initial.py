@@ -64,6 +64,7 @@ class Migration(migrations.Migration):
                     models.CharField(
                         blank=True,
                         default="",
+                        max_length=255,
                         validators=[
                             django.core.validators.RegexValidator(
                                 re.compile("^\\d+(?:,\\d+)*\\Z"),

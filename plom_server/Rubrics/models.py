@@ -160,6 +160,7 @@ class Rubric(models.Model):
         null=False,
         blank=True,
         default="",
+        max_length=255,
         validators=[validate_comma_separated_integer_list],
     )
     parameters = models.JSONField(null=True, blank=True, default=list)
