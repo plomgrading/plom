@@ -57,29 +57,28 @@ log = logging.getLogger("RubricService")
 # be doing (see `clean_versions` commented out in Rubrics/models.py)
 # These `_validate_...` functions are written something like `clean_<field>`
 # in Django's model/form.
-def _validate_versions(vers: None | str) -> None:
+
+
+def _validate_versions_in_range(vers: None | str) -> None:
     if not vers:
-        # empty string is ok for versions
         return
 
-    # TODO: the real validator is going to do all this, except for the range check!
+    # The serialzer is going to do all this, except for the range check,
+    # but b/c the seralizer hasn't run yet, we need to parse.  We could
+    # consider moving this check to the serializer but its does require
+    # looking up the number of versions in another table...
 
-    # TODO: the duplication here bugs me.
     if not isinstance(vers, str):
         raise serializers.ValidationError("Input must be string")
+    try:
+        parsed_vers = [int(x.strip()) for x in vers.split(",")]
+    except ValueError as e:
+        raise serializers.ValidationError(
+            f'nonempty "versions" must be a comma-separated list of ints but got "{vers}": {e}'
+        )
 
     n_versions = SpecificationService.get_n_versions()
-
-    parsed_vers = [x.strip() for x in vers.split(",")]
-    for vstr in parsed_vers:
-        # TODO: the duplication here bugs me.
-        try:
-            v = int(vstr)
-        except ValueError as e:
-            raise serializers.ValidationError(
-                f'nonempty "versions" must be a comma-separated list of ints but got "{vers}": {e}'
-            )
-        # TODO: here we finally get to the non-duplicated part of this validation
+    for v in parsed_vers:
         if v < 1 or v > n_versions:
             raise serializers.ValidationError(
                 {
@@ -390,7 +389,7 @@ class RubricService:
 
         # TODO: more validation of JSONFields that the model/form/serializer should
         # be doing (see `clean_versions` commented out in Rubrics/models.py)
-        _validate_versions(data.get("versions"))
+        _validate_versions_in_range(data.get("versions"))
         _validate_parameters(
             data.get("parameters"), SpecificationService.get_n_versions()
         )
@@ -617,7 +616,7 @@ class RubricService:
                 new_rubric_data["value"], new_rubric_data["out_of"], max_mark
             )
 
-        _validate_versions(new_rubric_data.get("versions"))
+        _validate_versions_in_range(new_rubric_data.get("versions"))
         _validate_parameters(
             new_rubric_data.get("parameters"), SpecificationService.get_n_versions()
         )
