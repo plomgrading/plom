@@ -62,6 +62,7 @@ def upload_classlist(csvname: Path, *, msgr) -> bool:
         success, werr = msgr.new_server_upload_classlist(csvname)
     except (PlomAuthenticationException, PlomConflict, ValueError) as e:
         success = False
+        werr = []
         print(f"Upload failed with exception: {e}")
 
     if success:
