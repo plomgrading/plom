@@ -421,8 +421,10 @@ class DownloadRubricView(ManagerRequiredView):
 
 
 class UploadRubricView(ManagerRequiredView):
+    """Handles uploading of rubrics from data containing in a file."""
+
     def post(self, request: HttpRequest):
-        service = RubricService()
+        """Posting a file of rubric data creates new rubrics."""
         suffix = request.FILES["rubric_file"].name.split(".")[-1]
         username = request.user.username
 
@@ -437,7 +439,7 @@ class UploadRubricView(ManagerRequiredView):
             return redirect("rubrics_admin")
 
         try:
-            service.update_rubric_data(
+            RubricService.create_rubrics_from_file_data(
                 data_string, suffix, by_system=False, requesting_user=username
             )
         except ValueError as e:

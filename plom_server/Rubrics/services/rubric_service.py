@@ -1293,14 +1293,15 @@ class RubricService:
 
         return data_string
 
-    def update_rubric_data(
-        self,
+    @classmethod
+    def create_rubrics_from_file_data(
+        cls,
         data: str,
         filetype: str,
         by_system: bool,
         requesting_user: str | None = None,
     ) -> list[dict[str, Any]]:
-        """Retrieves rubrics from a file.
+        """Retrieves rubric data from a file and create rubric for each.
 
         Args:
             data: The file object containing the rubrics.
@@ -1308,7 +1309,6 @@ class RubricService:
             by_system: true if the update is called by system and requesting_user is irrelevant.
             requesting_user: the user who requested to update the rubric data.
             ``None`` means you don't care who (probably for internal use only).
-
 
         Returns:
             A list of the rubrics created.
@@ -1353,14 +1353,14 @@ class RubricService:
                     ) from e
                 r["parameters"] = parameters
 
-        # ensure either all rubrics succeed or all fail
         if requesting_user:
             user = User.objects.get(username=requesting_user)
         else:
             user = None
 
+        # ensure either all rubrics succeed or all fail
         with transaction.atomic():
             return [
-                self.create_rubric(r, creating_user=user, by_system=by_system)
+                cls.create_rubric(r, creating_user=user, by_system=by_system)
                 for r in rubrics
             ]
