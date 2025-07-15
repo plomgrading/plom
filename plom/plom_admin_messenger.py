@@ -600,10 +600,19 @@ class PlomAdminMessenger(Messenger):
                 if response.status_code == 403:
                     raise PlomNoPermission(response.reason) from None
                 if response.status_code == 400:
+                    # TODO: maybe we are expected to unpack json from this?
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-        return tuple(response.json())
+        print("getting response")
+        print(response)
+        if response.status_code == 204:
+            # TODO or is it True, None?
+            return True, {}
+        r = response.json()
+        print(r)
+        print(type(r))
+        return True, response.json()
 
     def rectangle_extraction(
         self, version: int, page_num: int, paper_num: int, region: dict[str, float]
