@@ -29,11 +29,7 @@ class SpecQuestion(models.Model):
 
     pages = models.JSONField()
     mark = models.PositiveIntegerField(null=False)
-    select = models.CharField(
-        choices=[("fix", "fix"), ("shuffle", "shuffle")],
-        default="shuffle",
-        max_length=7,  # length of the string "shuffle"
-    )
+    select = models.JSONField(null=True)
     label = models.TextField(null=True)
     question_index = models.PositiveIntegerField(null=False, unique=True)
 

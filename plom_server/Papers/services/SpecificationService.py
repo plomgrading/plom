@@ -608,25 +608,7 @@ def render_html_flat_question_label_list(qindices: list[int] | None) -> str:
     return ", ".join(T[qidx][1] for qidx in qindices)
 
 
-def get_question_selection_method(question_index: int) -> str:
-    """Get the selection method (shuffle/fix) of the given question.
-
-    Args:
-        question_index: question indexed from 1.
-
-    Returns:
-        The version selection method (shuffle or fix) as string.
-
-    Raises:
-        ObjectDoesNotExist: no question exists with the given index.
-
-    As of Oct 2024, no one is calling this.  Deprecated?
-    """
-    question = SpecQuestion.objects.get(question_index=question_index)
-    return question.select
-
-
-def get_selection_method_of_all_questions() -> dict[int, str]:
+def get_selection_method_of_all_questions() -> dict[int, list[int] | None]:
     """Get the selection method (shuffle/fix) all questions.
 
     Returns:

@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2025 Colin B. Macdonald
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Brennen Chiu
+# Copyright (C) 2025 Aidan Murphy
 
 from __future__ import annotations
 
@@ -609,7 +610,7 @@ class SpecVerifier:
         self._check_IDPage(lastPage, print=prnt)
         self._check_doNotMarkPages(lastPage, print=prnt)
         prnt("Checking question groups")
-        self._check_questions(print=prnt)
+        self._check_questions(print=prnt, _legacy=_legacy)
         # Note: enable all-or-none check for labels
         # prnt("Checking either all or no questions have labels")
         # has_label = [
@@ -772,7 +773,7 @@ class SpecVerifier:
                 f'Specification error - "numberToProduce" cannot be greater than {MAX_PAPERS_TO_PRODUCE}.'
             )
 
-    def _check_questions(self, print=print) -> None:
+    def _check_questions(self, print=print, *, _legacy: bool = True) -> None:
         if "numberOfQuestions" not in self.spec:
             N = len(self.spec["question"])
             self.spec["numberOfQuestions"] = N
@@ -792,7 +793,13 @@ class SpecVerifier:
             print(f"    Found question {k} of {N}{chk}")
 
         for k in range(1, N + 1):
-            self._check_question_group(k, self.spec["numberOfPages"], print=print)
+            self._check_question_group(
+                k,
+                self.spec["numberOfPages"],
+                self.spec["numberOfVersions"],
+                print=print,
+                _legacy=_legacy,
+            )
 
         print("  Checking mark totals")
         K = sum(m["mark"] for m in self.spec["question"].values())
@@ -850,7 +857,9 @@ class SpecVerifier:
         else:
             print("    DoNotMark pages is list of positive integers" + chk)
 
-    def _check_question_group(self, g, lastPage, print=print) -> None:
+    def _check_question_group(
+        self, g, lastPage, numVersions, print=print, *, _legacy: bool = True
+    ) -> None:
         """Check and in some cases modify the spec of one particular question group."""
         g = str(g)  # TODO: why?
         print("  Checking question group #{}".format(g))
@@ -886,16 +895,36 @@ class SpecVerifier:
                 f"Question error - mark {question['mark']} is not a positive integer"
             )
         print("    mark {} is positive integer{}".format(question["mark"], chk))
-        select = question.get("select")
-        if not select:
-            select = "shuffle"
-            question["select"] = select
-            print(f'    missing select key, add default "{select}"' + chk)
-        if select not in ("fix", "shuffle"):
-            raise ValueError(
-                f'Question error - select "{select}" is not "fix" or "shuffle"'
-            )
-        print('    select is "fix" or "shuffle"' + chk)
+        if _legacy:
+            select = question.get("select")
+            if not select:
+                select = "shuffle"
+                question["select"] = select
+                print(f'    missing select key, add default "{select}"' + chk)
+            if select not in ("fix", "shuffle"):
+                raise ValueError(
+                    f'Question error - select "{select}" is not "fix" or "shuffle"'
+                )
+            print('    select is "fix" or "shuffle"' + chk)
+        elif question.get("select") is not None:
+            # attempt to massage select into a list of integers
+            if isinstance(question["select"], int):
+                question["select"] = [question["select"]]
+            select = question["select"]
+            if not isinstance(select, list):
+                raise ValueError(
+                    f'Question error - select "{select}" is not an integer or a list'
+                )
+            if any(not isinstance(v, int) for v in question["select"]):
+                raise ValueError(
+                    f'Question error - select "{select}" contains non-integer elements'
+                )
+            versions = range(1, numVersions + 1)
+            if any(v not in versions for v in question["select"]):
+                raise ValueError(
+                    f'Question error - select "{select}" contains integers'
+                    f'outside the range of numberOfVersions ("{numVersions}")'
+                )
 
     def _check_pages(self, *, print=print, _legacy: bool = True) -> None:
         print("Checking which pages are used:")
