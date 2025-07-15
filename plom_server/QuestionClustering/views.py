@@ -39,7 +39,7 @@ class Debug(ManagerRequiredView):
 
 
 class QuestionClusteringHomeView(ManagerRequiredView):
-    """Render clustering home page for choosing question-version pair for clustering. """
+    """Render clustering home page for choosing question-version pair for clustering."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
@@ -122,8 +122,8 @@ class PreviewSelectedRectsView(ManagerRequiredView):
         and begin clustering button
 
     POST:
-        Validate the clustering job form. 
-        On success: start clustering job then redirect to job 
+        Validate the clustering job form.
+        On success: start clustering job then redirect to job
             page (POST/REDIRECT/GET design practice).
         On Failure: rerender current page with error messages.
     """
@@ -151,42 +151,40 @@ class PreviewSelectedRectsView(ManagerRequiredView):
         }
         form = ClusteringJobForm(initial=initial)
 
-
         context.update(initial)
-        context.update(
-            {
-                "clustering_job_form": form,
-                "papers": paper_numbers
-            }
-        )
+        context.update({"clustering_job_form": form, "papers": paper_numbers})
 
         return render(request, "QuestionClustering/show_rectangles.html", context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
         form = ClusteringJobForm(request.POST)
         if form.is_valid():
-            choice        = form.cleaned_data['choice']
-            question_idx  = form.cleaned_data['question']
-            version       = form.cleaned_data['version']
-            page_num      = form.cleaned_data['page_num']
-            left          = form.cleaned_data['left']
-            top           = form.cleaned_data['top']
-            right         = form.cleaned_data['right']
-            bottom        = form.cleaned_data['bottom']
+            choice = form.cleaned_data["choice"]
+            question_idx = form.cleaned_data["question"]
+            version = form.cleaned_data["version"]
+            page_num = form.cleaned_data["page_num"]
+            left = form.cleaned_data["left"]
+            top = form.cleaned_data["top"]
+            right = form.cleaned_data["right"]
+            bottom = form.cleaned_data["bottom"]
 
             qcs = QuestionClusteringService()
 
             rects = {"left": left, "top": top, "right": right, "bottom": bottom}
             qcs.start_cluster_qv_job(
-                question_idx=question_idx, version=version, page_num=page_num, rects=rects, clustering_model=choice
+                question_idx=question_idx,
+                version=version,
+                page_num=page_num,
+                rects=rects,
+                clustering_model=choice,
             )
-            
+
             messages.success(
                 request,
                 f"Started {choice} clustering for {SpecificationService.get_question_label(question_idx)}, V{version}",
             )
             return redirect("question_clustering_jobs_home")
-        
+
         else:
             for field, errs in form.errors.items():
                 for err in errs:
@@ -195,8 +193,10 @@ class PreviewSelectedRectsView(ManagerRequiredView):
 
             return render(request, "QuestionClustering/show_rectangles.html")
 
+
 class QuestionClusteringJobsHome(ManagerRequiredView):
     """Render the page with all clustering jobs"""
+
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
         if not SpecificationService.is_there_a_spec():
@@ -246,7 +246,6 @@ class QuestionClusteringJobsHome(ManagerRequiredView):
         )
 
 
-
 class GetQuestionClusteringJobs(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
 
@@ -255,7 +254,6 @@ class GetQuestionClusteringJobs(ManagerRequiredView):
         return render(
             request, "QuestionClustering/clustering_jobs_table.html", {"tasks": tasks}
         )
-
 
 
 class DeleteClusterMember(ManagerRequiredView):

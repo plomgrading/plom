@@ -86,8 +86,7 @@ class ImageProcessingService:
         return final
 
     def merge_components_by_proximity(self, stats, tol):
-        """
-        Given stats from cv2.connectedComponentsWithStats,
+        """Given stats from cv2.connectedComponentsWithStats,
         merge any components whose bounding-boxes are within tol pixels.
         Returns a list of groups; each group is a list of component labels.
         """

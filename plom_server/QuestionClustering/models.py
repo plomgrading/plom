@@ -34,9 +34,7 @@ class QuestionClusteringChore(HueyTaskTracker):
     bottom = models.FloatField(null=False)
     right = models.FloatField(null=False)
     clustering_model = models.CharField(
-        max_length=10,
-        choices=ClusteringModelType.choices,
-        null=False
+        max_length=10, choices=ClusteringModelType.choices, null=False
     )
 
     def __str__(self):

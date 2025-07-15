@@ -20,7 +20,7 @@ import huey
 import huey.api
 import numpy as np
 from .image_processing_service import ImageProcessingService
-from .inference_model import QuestionClusteringModel
+from .inference_pipeline import ClusteringModel
 import cv2
 from sklearn.cluster import AgglomerativeClustering
 import pandas as pd
@@ -33,7 +33,12 @@ from plom_server.QuestionClustering.models import ClusteringModelType
 class QuestionClusteringService:
 
     def start_cluster_qv_job(
-        self, question_idx: int, version: int, page_num: int, rects: dict, clustering_model: ClusteringModelType
+        self,
+        question_idx: int,
+        version: int,
+        page_num: int,
+        rects: dict,
+        clustering_model: ClusteringModelType,
     ):
         """Run a background job to cluster papers for a (q, v) for the given page_num and rects.
 
@@ -76,7 +81,7 @@ class QuestionClusteringService:
         )
         # print(f"Just enqueued Huey parent_split_and_save task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
-    
+
     def _cluster_mcq(self, question_idx: int, version: int, page_num: int, rects: dict):
         top = rects["top"]
         left = rects["left"]
@@ -147,20 +152,22 @@ class QuestionClusteringService:
                 right=right,
             )
             QVClusterLink.objects.create(paper=paper, qv_cluster=qv_cluster)
-    
-    def _cluster_hme(self, question_idx: int, version: int, page_num: int, rects: dict):
 
+    # def _cluster_hme(self, question_idx: int, version: int, page_num: int, rects: dict):
 
-
-
-    def cluster_qv(self, question_idx: int, version: int, page_num: int, rects: dict, clustering_model: ClusteringModelType):
+    def cluster_qv(
+        self,
+        question_idx: int,
+        version: int,
+        page_num: int,
+        rects: dict,
+        clustering_model: ClusteringModelType,
+    ):
         if clustering_model == ClusteringModelType.MCQ:
             self._cluster_mcq(question_idx, version, page_num, rects)
-        
-        
+
         elif clustering_model == ClusteringModelType.HME:
             self._cluster_hme(question_idx, version, page_num, rects)
-        
 
     def predict(self, ref: np.ndarray, scanned: np.ndarray) -> list:
         """Predict handwritten answer by outputting vector of probability.
@@ -211,13 +218,12 @@ class QuestionClusteringService:
         return bestProbs
 
     def get_question_clustering_tasks(self) -> list[dict]:
-        """Get all non-obsolete clustering tasks
+        """Get all non-obsolete clustering tasks.
 
         Returns:
             A list of dicts each representing a non-obsolete clustering task. The dict
             has these keys: [question_idx, version, status].
         """
-
         return [
             {
                 "question_idx": task.question_idx,
