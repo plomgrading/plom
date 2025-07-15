@@ -583,7 +583,10 @@ class PlomAdminMessenger(Messenger):
             success==True. Dealing with those messages is the caller's job.
 
         Raises:
-            PlomSeriousException - if the GET request produces an HTTPError
+            PlomConflict: error with the classlist.
+            PlomAuthenticationException: not authenticated.
+            PlomNoPermission: you don't have permission to upload classlists.
+            PlomSeriousException: unexpected errors.
         """
         with self.SRmutex:
             try:
@@ -596,6 +599,8 @@ class PlomAdminMessenger(Messenger):
                     raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 403:
                     raise PlomNoPermission(response.reason) from None
+                if response.status_code == 400:
+                    raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
         return tuple(response.json())
