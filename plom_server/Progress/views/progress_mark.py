@@ -65,7 +65,7 @@ class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
         score_counts = Counter(scores)
 
         all_max_marks = SpecificationService.get_questions_max_marks()
-        max_mark = all_max_marks.get(question_idx, 0)  
+        max_mark = all_max_marks.get(question_idx, 0)
 
         histogram_data = []
 
@@ -74,10 +74,9 @@ class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
 
             svg_height = 30
             svg_bar_max_height = 20
- 
+
             bar_width_percentage = 100 / (max_mark + 1)
 
-           
             for mark in range(max_mark + 1):
                 count = score_counts.get(mark, 0)
                 bar_height = (
@@ -121,7 +120,7 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
         stats = mss.get_basic_marking_stats(question_idx, version=version)
         histogram = mss.get_mark_histogram(question_idx, version=version)
         hist_keys, hist_values = zip(*histogram.items())
-    
+
         user_hists_and_stats = mss.get_mark_histogram_and_stats_by_users(
             question_idx, version=version
         )
