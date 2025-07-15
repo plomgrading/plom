@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2025 Deep Shah
 
 from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpRequest, HttpResponse
@@ -46,28 +47,6 @@ class ProgressMarkStartMarking(MarkerLeadMarkerOrManagerView):
 
 
 class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
-    # def get(
-    #     self, request: HttpRequest, *, question_idx: int, version: int
-    # ) -> HttpResponse:
-    #     context = super().build_context()
-    #     mss = MarkingStatsService()
-    #     question_label, question_label_html = (
-    #         SpecificationService.get_question_label_str_and_html(question_idx)
-    #     )
-    #     context.update(
-    #         {
-    #             "question_idx": question_idx,
-    #             "question_label": question_label,
-    #             "question_label_html": question_label_html,
-    #             "version": version,
-    #             "stats": mss.get_basic_marking_stats(question_idx, version=version),
-    #             "status_counts": ProgressOverviewService().get_mark_task_status_counts_by_qv(
-    #                 question_idx, version
-    #             ),
-    #         }
-    #     )
-
-    #     return render(request, "Progress/Mark/mark_stats_card.html", context)
 
     def get(
         self, request: HttpRequest, *, question_idx: int, version: int
@@ -85,11 +64,8 @@ class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
         scores = mss.get_scores_for_question_version(question_idx, version)
         score_counts = Counter(scores)
 
-        # --- FINAL LOGIC USING YOUR EXISTING FUNCTION ---
-
-        # Get all max marks and then find the one for our specific question
         all_max_marks = SpecificationService.get_questions_max_marks()
-        max_mark = all_max_marks.get(question_idx, 0)  # Get max mark, default to 0
+        max_mark = all_max_marks.get(question_idx, 0)  
 
         histogram_data = []
 
@@ -98,10 +74,10 @@ class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
 
             svg_height = 30
             svg_bar_max_height = 20
-            # Bar width is based on the full range of possible marks
+ 
             bar_width_percentage = 100 / (max_mark + 1)
 
-            # Loop from 0 to the maximum possible mark
+           
             for mark in range(max_mark + 1):
                 count = score_counts.get(mark, 0)
                 bar_height = (
@@ -145,12 +121,10 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
         stats = mss.get_basic_marking_stats(question_idx, version=version)
         histogram = mss.get_mark_histogram(question_idx, version=version)
         hist_keys, hist_values = zip(*histogram.items())
-        # user_list = mss.get_list_of_users_who_marked(question, version=version)
+    
         user_hists_and_stats = mss.get_mark_histogram_and_stats_by_users(
             question_idx, version=version
         )
-        # for the charts we need a list of histogram values for each user, hence the following
-        # we also want to show it against scaled histogram of all users
         for upk in user_hists_and_stats:
             user_hists_and_stats[upk]["hist_values"] = [
                 v for k, v in user_hists_and_stats[upk]["histogram"].items()
@@ -161,7 +135,6 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
             user_hists_and_stats[upk]["hist_everyone_values"] = [
                 v * scale for v in hist_values
             ]
-        # to show incomplete pie-chart need this value
         remaining_tasks = stats["all_task_count"] - stats["number_of_completed_tasks"]
         question_label, question_label_html = (
             SpecificationService.get_question_label_str_and_html(question_idx)
@@ -197,8 +170,6 @@ class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
         version_hists_and_stats = mss.get_mark_histogram_and_stats_by_versions(
             question_idx
         )
-        # for the charts we need a list of histogram values for each version, hence the following
-        # we also want to show it against scaled histogram of all versions
         for ver in version_hists_and_stats:
             version_hists_and_stats[ver]["hist_values"] = [
                 val for k, val in version_hists_and_stats[ver]["histogram"].items()
