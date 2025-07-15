@@ -184,36 +184,6 @@ class ProgressOverviewService:
 
         return counts
 
-    # def get_mark_task_status_counts(
-    #     self, n_papers: int | None = None
-    # ) -> dict[int, dict[str, int]]:
-    #     """Return a dict of counts of marking tasks by their status for each question.
-
-    #     Note that, if n_papers is supplied, then the number of missing
-    #     tasks is also computed. Also note that this excludes
-    #     out-of-date tasks.
-    #     """
-    #     # return a dict of dict - one for each question-index.
-    #     # for each index the dict is {status: count} for each of todo, complete, out
-    #     # exclude OUT OF DATE tasks
-    #     dat = {
-    #         qi: {"To Do": 0, "Complete": 0, "Out": 0}
-    #         for qi in SpecificationService.get_question_indices()
-    #     }
-    #     for X in (
-    #         MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE)
-    #         .values("status", "question_index")
-    #         .annotate(the_count=Count("status"))
-    #     ):
-    #         dat[X["question_index"]][
-    #             MarkingTask(status=X["status"]).get_status_display()
-    #         ] = X["the_count"]
-    #     if n_papers:
-    #         for qi in SpecificationService.get_question_indices():
-    #             present = sum([v for x, v in dat[qi].items()])
-    #             dat[qi].update({"Missing": n_papers - present})
-    #     return dat
-
     @transaction.atomic
     def get_mark_task_status_counts_by_qv(
         self, question_index: int, version: int | None = None
@@ -228,7 +198,6 @@ class ProgressOverviewService:
         query = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE).filter(
             question_index=question_index
         )
-        # filter by version if supplied
         if version:
             query = query.filter(question_version=version)
 
