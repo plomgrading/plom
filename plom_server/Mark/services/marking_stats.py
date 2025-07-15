@@ -65,19 +65,16 @@ class MarkingStatsService:
 
         From the latest annotations of completed tasks.
         """
-        scores: List[int] = []  # Explicitly type the list
+        scores: List[int] = []
 
-        # Find all completed tasks matching the question and version
         completed_tasks = MarkingTask.objects.filter(
             question_index=question_idx,
             question_version=version,
             status=MarkingTask.StatusChoices.COMPLETE,
         ).select_related("latest_annotation")
 
-        # Use a standard for-loop which is easier for type checkers to parse
         for task in completed_tasks:
             if task.latest_annotation is not None:
-                # We can be sure score is an int here
                 scores.append(task.latest_annotation.score)
 
         return scores
