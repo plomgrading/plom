@@ -6,8 +6,9 @@
 # Copyright (C) 2025 Philip D. Loewen
 # Copyright (C) 2025 Aidan Murphy
 
-"""Extended bits 'n bobs for advanced non-stable feataures of Plom server."""
+"""Extended bits 'n bobs for advanced non-stable features of Plom server."""
 
+import json
 import logging
 from email.message import EmailMessage
 from io import BytesIO
@@ -600,19 +601,20 @@ class PlomAdminMessenger(Messenger):
                 if response.status_code == 403:
                     raise PlomNoPermission(response.reason) from None
                 if response.status_code == 400:
-                    # TODO: maybe we are expected to unpack json from this?
-                    raise PlomConflict(response.reason) from None
+                    try:
+                        raise PlomConflict(response.json()) from None
+                    except json.JSONDecodeError:
+                        raise PlomConflict("Classlist upload failed") from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-        print("getting response")
-        print(response)
-        if response.status_code == 204:
-            # TODO or is it True, None?
-            return True, {}
-        r = response.json()
-        print(r)
-        print(type(r))
-        return True, response.json()
+        try:
+            werr = response.json()
+        except json.JSONDecodeError:
+            werr = []
+
+        # print("Upload succeeded. Detailed response follows.")
+        # print(response)
+        return True, werr
 
     def rectangle_extraction(
         self, version: int, page_num: int, paper_num: int, region: dict[str, float]

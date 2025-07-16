@@ -62,19 +62,15 @@ def upload_classlist(csvname: Path, *, msgr) -> bool:
         success, werr = msgr.new_server_upload_classlist(csvname)
     except (PlomAuthenticationException, PlomConflict) as e:
         success = False
-        werr = []
         print(f"Upload failed with exception: {e}")
+        return False
 
     if success:
+        print("Upload succeeded.")
         if len(werr) > 0:
-            print(f"Upload succeeded, with {len(werr)} note(s) shown below.")
+            print(f"Successful upload came with {len(werr)} note(s):")
             for D in werr:
                 print(f"  {D.get('warn_or_err', '  *')}: {D['werr_text']}")
         return True
 
-    print("Upload rejected. No changes made to server's classlist. Details follow.")
-    print(type(werr))
-    print(werr)
-    for D in werr:
-        print(f"  {D.get('warn_or_err', '  *')}: {D['werr_text']}")
     return False
