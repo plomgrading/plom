@@ -57,7 +57,7 @@ _frac_opt_table = [
         "readable": "third",
         "implies": [],
         "indent": 0,
-        "show-in-ui": False,
+        "show-in-ui": True,
     },
     {
         "name": "allow-fifth-point-rubrics",
