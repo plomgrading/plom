@@ -21,25 +21,114 @@ import cv2
 from .image_processing_service import ImageProcessingService
 import numpy as np
 from io import BytesIO
+from transformers import TrOCRProcessor
+from .embedder import SymbolicEmbedder, TrOCREmbedder
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import silhouette_score, davies_bouldin_score
+from sklearn.decomposition import PCA
 
 
 class ClusteringModel:
     """Interface for clustering model"""
 
     @abstractmethod
-    def cluster_papers(
-        self, paper_to_image: Mapping[int, Sequence[np.ndarray]]
-    ) -> dict[int, int]:
+    def cluster_papers(self, paper_to_image: dict[int, np.ndarray]) -> dict[int, int]:
         """Cluster the given papers
 
         Args:
-            paper_to_image: a dictionary mapping paper number to the
-                cropped region used for clustering.
+            paper_to_image: a dictionary mapping paper number to a (processed) image
 
         Returns:
             A dictionary mapping the paper number to their cluster id
         """
         pass
+
+
+class HMEClusteringModel(ClusteringModel):
+    def __init__(self):
+
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        symbolic_model_path = "model_cache/hme_symbolic.pth"
+        trocr_model_path = "model_cache/hme_trOCR.pth"
+        self.symbolic = SymbolicEmbedder(symbolic_model_path, device)
+        self.trOCR = TrOCREmbedder(trocr_model_path, device)
+
+    def get_embeddings(self, img: np.ndarray) -> list:
+        """Get the feature vector for the given image that will be used for clustering.
+
+        Args:
+            img: the image whose feature vector will be generated and used for clustering.
+
+        Returns:
+            a list representing feature used for clustering. In this model, each feature
+            represents a probability for a character.
+        """
+        feat_sym = self.symbolic.embed(img)
+        feat_trocr = self.trOCR.embed(img)
+        # concatenate on feature‐axis → (N × (D_sym+D_ocr))
+        return list(np.concatenate((feat_sym, feat_trocr)))
+
+    def tune_threshold(
+        self, X, thresholds=np.linspace(4, 10, 100), metric="silhouette"
+    ):
+        """
+        Try AgglomerativeClustering(distance_threshold=t) for each t in thresholds,
+        score it with the chosen metric, and return the best labels + threshold.
+        """
+        best = {
+            "score": -np.inf if metric == "silhouette" else np.inf,
+            "threshold": None,
+            "labels": None,
+        }
+
+        for t in thresholds:
+            clustering = AgglomerativeClustering(
+                n_clusters=None, metric="euclidean", distance_threshold=t
+            )
+            labels = clustering.fit_predict(X)
+            # need at least 2 clusters to score
+            if len(set(labels)) < 2:
+                continue
+
+            if metric == "silhouette":
+                score = silhouette_score(X, labels)
+                # silhouette: higher → better
+                if score > best["score"]:
+                    best.update(score=score, threshold=t, labels=labels)
+
+            elif metric == "davies":
+                score = davies_bouldin_score(X, labels)
+                # DB index: lower → better
+                if score < best["score"]:
+                    best.update(score=score, threshold=t, labels=labels)
+
+        print(f"BEST distance: {best["threshold"]:.2f}")
+        return best["labels"]
+
+    def cluster_papers(self, paper_to_image: dict[int, np.ndarray]) -> dict[int, int]:
+        """Cluster the given papers
+
+        Args:
+            paper_to_image: a dictionary mapping paper number to a (processed) image
+
+        Returns:
+            A dictionary mapping the paper number to their cluster id
+        """
+
+        # Build feature matrix
+        X = np.vstack(
+            [self.get_embeddings(image) for pn, image in paper_to_image.items()]
+        )
+
+        X_reduced = PCA(n_components=min(len(paper_to_image), 50)).fit_transform(X)
+
+        # cluster on that matrix
+        # clustering_model = AgglomerativeClustering(
+        #     n_clusters=None, distance_threshold=7.0, linkage="ward"
+        # )
+
+        clusterIDs = self.tune_threshold(X_reduced, np.linspace(4, 10, 100), "davies")
+        return dict(zip(list(paper_to_image.keys()), clusterIDs))
 
 
 class AttentionPooling(nn.Module):
@@ -63,6 +152,7 @@ class AttentionPooling(nn.Module):
 
 
 class MCQClusteringModel(ClusteringModel):
+
     def __init__(self):
         self.out_features = 11
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -149,9 +239,7 @@ class MCQClusteringModel(ClusteringModel):
 
         return bestFeatures
 
-    def cluster_papers(
-        self, paper_to_image: dict[int, Sequence[np.ndarray]]
-    ) -> dict[int, int]:
+    def cluster_papers(self, paper_to_image: dict[int, np.ndarray]) -> dict[int, int]:
         """Cluster papers based on written MCQ responses
 
         Args:
@@ -161,43 +249,16 @@ class MCQClusteringModel(ClusteringModel):
         Returns:
             A dictionary mapping the paper number to their cluster id
         """
-        data = []
-        for pn, image in paper_to_image.items():
 
-            with BytesIO(image) as fh:
-                img_pil = Image.open(fh)
-                img_arr = np.array(img_pil)
+        # Build feature matrix
+        X = np.vstack(
+            [self.get_embeddings(image) for pn, image in paper_to_image.items()]
+        )
 
-            probs = self.get_embeddings(img_arr)
-
-            datum: dict[Any, Any] = {i: p for i, p in enumerate(probs)}
-            datum["paper_num"] = pn
-            data.append(datum)
-
-        df = pd.DataFrame(data)
-
-        # Extract the probabilites that will be clustered on
-        feature_cols = [i for i in range(11)]
-        df[feature_cols] = df[feature_cols].fillna(0)
-        X = df[feature_cols].values
-
-        # Cluster based on the probabilities
+        # cluster on that matrix
         clustering_model = AgglomerativeClustering(
             n_clusters=None, distance_threshold=1.0, linkage="ward"
         )
-        df["clusterId"] = clustering_model.fit_predict(X)
 
-        # Store into db
-        for pn, clusterId in zip(df["paper_num"], df["clusterId"]):
-            paper = Paper.objects.get(paper_number=pn)
-            qv_cluster, _ = QVCluster.objects.get_or_create(
-                question_idx=question_idx,
-                version=version,
-                clusterId=clusterId,
-                page_num=page_num,
-                top=top,
-                left=left,
-                bottom=bottom,
-                right=right,
-            )
-            QVClusterLink.objects.create(paper=paper, qv_cluster=qv_cluster)
+        clusterIDs = clustering_model.fit_predict(X)
+        return dict(zip(list(paper_to_image.keys()), clusterIDs))

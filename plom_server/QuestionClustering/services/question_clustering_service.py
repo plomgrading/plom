@@ -20,7 +20,8 @@ import huey
 import huey.api
 import numpy as np
 from .image_processing_service import ImageProcessingService
-from .inference_pipeline import ClusteringModel
+from .clustering_pipeline import ClusteringPipeline
+from .preprocessor import DiffProcessor
 import cv2
 from sklearn.cluster import AgglomerativeClustering
 import pandas as pd
@@ -28,6 +29,7 @@ from io import BytesIO
 from PIL import Image
 from django.db.models import Count
 from plom_server.QuestionClustering.models import ClusteringModelType
+from django.db import transaction
 
 
 class QuestionClusteringService:
@@ -82,78 +84,86 @@ class QuestionClusteringService:
         # print(f"Just enqueued Huey parent_split_and_save task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
-    def _cluster_mcq(self, question_idx: int, version: int, page_num: int, rects: dict):
-        top = rects["top"]
-        left = rects["left"]
-        bottom = rects["bottom"]
-        right = rects["right"]
+    def _store_clustered_result(
+        self,
+        paper_to_clusterId: dict[int, int],
+        question_idx: int,
+        version: int,
+        page_num: int,
+        rects,
+    ) -> None:
+        """Store clustering result to database.
 
-        # Get reference image within the rectangle
-        rex = RectangleExtractor(version, page_num)
-        ref_img = rex.rimg_obj
-        cropped_ref_bytes = extract_rect_region_from_image(
-            ref_img.image_file.path,
-            ref_img.parsed_qr,
-            left,
-            top,
-            right,
-            bottom,
-            (rex.LEFT, rex.TOP, rex.RIGHT, rex.BOTTOM),
-        )
-
-        # Convert bytes to NumPy array
-        with BytesIO(cropped_ref_bytes) as fh:
-            pil_img = Image.open(fh)
-            cropped_ref = np.array(pil_img)
-
-        # Get scanned images within the rectangle then run clustering system (get probabilities)
-        paper_numbers = PaperInfoService.get_paper_numbers_containing_page(
-            page_num, version=version, scanned=True
-        )
-
-        # Build df of probabilities
-        data = []
-        for pn in paper_numbers:
-            cropped_scanned_bytes = rex.extract_rect_region(
-                pn, left, top, right, bottom
-            )
-            with BytesIO(cropped_scanned_bytes) as fh:
-                pil_img = Image.open(fh)
-                cropped_scanned = np.array(pil_img)
-
-            probs = self.predict(cropped_ref, cropped_scanned)
-            datum = {i: p for i, p in enumerate(probs)}
-            datum["paper_num"] = pn
-            data.append(datum)
-        df = pd.DataFrame(data)
-
-        # Extract the probabilites that will be clustered on
-        feature_cols = [i for i in range(11)]
-        df[feature_cols] = df[feature_cols].fillna(0)
-        X = df[feature_cols].values
-
-        # Cluster based on the probabilities
-        clustering_model = AgglomerativeClustering(
-            n_clusters=None, distance_threshold=1.0, linkage="ward"
-        )
-        df["clusterId"] = clustering_model.fit_predict(X)
-
-        # Store into db
-        for pn, clusterId in zip(df["paper_num"], df["clusterId"]):
+        Args:
+            paper-to_cluster_Id: clustering result that maps paper number to their cluster group.
+        """
+        for pn, clusterId in paper_to_clusterId.items():
             paper = Paper.objects.get(paper_number=pn)
             qv_cluster, _ = QVCluster.objects.get_or_create(
                 question_idx=question_idx,
                 version=version,
                 clusterId=clusterId,
                 page_num=page_num,
-                top=top,
-                left=left,
-                bottom=bottom,
-                right=right,
+                top=rects["top"],
+                left=rects["left"],
+                bottom=rects["bottom"],
+                right=rects["right"],
             )
             QVClusterLink.objects.create(paper=paper, qv_cluster=qv_cluster)
 
-    # def _cluster_hme(self, question_idx: int, version: int, page_num: int, rects: dict):
+    def cluster_mcq(self, question_idx: int, version: int, page_num: int, rects: dict):
+        """Cluster mcq responses within the given rects for a qv pair."""
+        # Get reference image within the rectangle
+        rex = RectangleExtractor(version, page_num)
+        ref = rex.get_cropped_ref_img(rects)
+
+        paper_numbers = PaperInfoService.get_paper_numbers_containing_page(
+            page_num, version=version, scanned=True
+        )
+
+        # get paper_num to ref, scanned mapping used for clustering input
+        paper_to_images = {
+            pn: (ref, rex.get_cropped_scanned_img(pn, rects)) for pn in paper_numbers
+        }
+
+        # run clustering pipeline
+        clustering_pipeline = ClusteringPipeline(
+            model_type=ClusteringModelType.MCQ,
+            preprocessor=DiffProcessor(dilation_strength=1, invert=False),
+        )
+        paper_to_clusterId = clustering_pipeline.cluster(paper_to_images)
+
+        # store clustered results into db
+        self._store_clustered_result(
+            paper_to_clusterId, question_idx, version, page_num, rects
+        )
+
+    def cluster_hme(self, question_idx: int, version: int, page_num: int, rects: dict):
+        """Cluster handwritten math responses within the given rects for a qv pair."""
+        # Get reference image within the rectangle
+        rex = RectangleExtractor(version, page_num)
+        ref = rex.get_cropped_ref_img(rects)
+
+        paper_numbers = PaperInfoService.get_paper_numbers_containing_page(
+            page_num, version=version, scanned=True
+        )
+
+        # get paper_num to ref, scanned mapping used for clustering input
+        paper_to_images = {
+            pn: (ref, rex.get_cropped_scanned_img(pn, rects)) for pn in paper_numbers
+        }
+
+        # run clustering pipeline
+        clustering_pipeline = ClusteringPipeline(
+            model_type=ClusteringModelType.HME,
+            preprocessor=DiffProcessor(dilation_strength=1, invert=True),
+        )
+        paper_to_clusterId = clustering_pipeline.cluster(paper_to_images)
+
+        # store clustered results into db
+        self._store_clustered_result(
+            paper_to_clusterId, question_idx, version, page_num, rects
+        )
 
     def cluster_qv(
         self,
@@ -164,10 +174,10 @@ class QuestionClusteringService:
         clustering_model: ClusteringModelType,
     ):
         if clustering_model == ClusteringModelType.MCQ:
-            self._cluster_mcq(question_idx, version, page_num, rects)
+            self.cluster_mcq(question_idx, version, page_num, rects)
 
         elif clustering_model == ClusteringModelType.HME:
-            self._cluster_hme(question_idx, version, page_num, rects)
+            self.cluster_hme(question_idx, version, page_num, rects)
 
     def predict(self, ref: np.ndarray, scanned: np.ndarray) -> list:
         """Predict handwritten answer by outputting vector of probability.
@@ -242,6 +252,7 @@ class QuestionClusteringService:
             )
             .values("qv_cluster__clusterId")
             .annotate(count=Count("id"))
+            .order_by("-count")
         )
         return {item["qv_cluster__clusterId"]: item["count"] for item in qs}
 
@@ -269,6 +280,37 @@ class QuestionClusteringService:
             "bottom": qvc.bottom,
             "right": qvc.right,
         }
+
+    def merge_clusters(self, question_idx: int, version: int, clusterIds: list[int]):
+        with transaction.atomic():
+            # assign all clusters to an arbritrary cluster id
+            target_cluster_id = clusterIds[0]
+            target_cluster = QVCluster.objects.get(
+                question_idx=question_idx, version=version, clusterId=target_cluster_id
+            )
+
+            clusters_to_merge = QVCluster.objects.filter(
+                question_idx=question_idx,
+                version=version,
+                clusterId__in=set(clusterIds),
+            )
+
+            # reassign cluster membership
+            QVClusterLink.objects.filter(qv_cluster__in=set(clusters_to_merge)).update(
+                qv_cluster=target_cluster
+            )
+
+            # remove obsolete cluster groups
+            clusters_to_merge.exclude(clusterId=target_cluster_id).delete()
+
+    def delete_clusters(self, question_idx: int, version: int, clusterIds: list[int]):
+        with transaction.atomic():
+
+            QVCluster.objects.filter(
+                question_idx=question_idx,
+                version=version,
+                clusterId__in=set(clusterIds),
+            ).delete()
 
     def delete_cluster_member(
         self, question_idx: int, version: int, clusterId: int, paper_num: int

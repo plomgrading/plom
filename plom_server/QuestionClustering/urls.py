@@ -12,6 +12,8 @@ from .views import (
     ClusterGroupsView,
     ClusteredPapersView,
     DeleteClusterMember,
+    ClusterMergeView,
+    ClusterBulkDeleteView,
     Debug,
 )
 
@@ -52,6 +54,12 @@ urlpatterns = [
         "delete_cluster_member/<int:question_idx>/<int:version>/<int:page_num>/<int:clusterId>",
         DeleteClusterMember.as_view(),
         name="delete_cluster_member",
+    ),
+    path("merge_clusters/", ClusterMergeView.as_view(), name="merge_clusters"),
+    path(
+        "bulk_delete_clusters/",
+        ClusterBulkDeleteView.as_view(),
+        name="bulk_delete_clusters",
     ),
     path("remove-huey-debug/", Debug.as_view(), name="remove_huey_debug"),
 ]

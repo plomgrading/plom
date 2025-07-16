@@ -3,7 +3,9 @@
 
 from abc import abstractmethod
 import numpy as np
-from image_processing_service import ImageProcessingService
+from .image_processing_service import ImageProcessingService
+from plom_server.QuestionClustering.models import ClusteringModelType
+import cv2
 
 
 class Preprocessor:
@@ -20,15 +22,16 @@ class Preprocessor:
 
 
 class DiffProcessor(Preprocessor):
-    """Handwriting extractor preprocessor
+    """Handwriting extractor preprocessor.
 
     Args:
         dilation_strength: larger value makes reference more dilated, such that it's more
             robust to noise, but more likely to erase student's work.
     """
 
-    def __init__(self, dilation_strength: int):
+    def __init__(self, dilation_strength: int, invert: bool):
         self.dilation_strength = dilation_strength
+        self.invert = invert
 
     def process(self, ref: np.ndarray, scanned: np.ndarray) -> np.ndarray:
         """Get the "difference" between reference and scanned pages.
@@ -41,4 +44,5 @@ class DiffProcessor(Preprocessor):
             An image representing the extracted handwriting from scanned.
         """
         imp = ImageProcessingService()
-        return imp.get_diff(ref, scanned, self.dilation_strength)
+        diff = imp.get_diff(ref, scanned, self.dilation_strength)
+        return cv2.bitwise_not(diff) if self.invert else diff

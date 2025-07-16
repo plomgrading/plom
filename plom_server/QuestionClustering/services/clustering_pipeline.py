@@ -8,6 +8,7 @@ from plom_server.QuestionClustering.models import ClusteringModelType
 from plom_server.QuestionClustering.services.clustering_models import (
     ClusteringModel,
     MCQClusteringModel,
+    HMEClusteringModel,
 )
 from functools import lru_cache
 import pandas as pd
@@ -20,7 +21,8 @@ def get_model(model_type: ClusteringModelType) -> ClusteringModel:
     """Lazily load and cache one model instance per type, per process"""
     if model_type == ClusteringModelType.MCQ:
         return MCQClusteringModel()
-    # elif model_type == ClusteringModel.HME:
+    elif model_type == ClusteringModelType.HME:
+        return HMEClusteringModel()
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
 
@@ -44,8 +46,10 @@ class ClusteringPipeline:
         Args:
             paper_to_image: a dictionary mapping paper number to one or more images
                 representing that paper.
-                Note: We may need multiple input images, eg: we need the blank and the scanned
-                representation of the page to extract the handwritten strokes.
+
+                Note: images are made as a sequence because We may need more than one input images,
+                    eg: we need the blank and the scanned representation of the page to
+                    extract the handwritten strokes.
 
 
         Returns:
@@ -53,8 +57,10 @@ class ClusteringPipeline:
         """
 
         # Preprocess the images
-        preprocessed_paper_to_images = {
+        processed_paper_to_images = {
             pn: self.preprocessor.process(*images)
             for pn, images in paper_to_images.items()
         }
-        return self.model.cluster_papers(preprocessed_paper_to_images)
+
+        # Feed the processed inputs to the model
+        return self.model.cluster_papers(processed_paper_to_images)

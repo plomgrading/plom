@@ -215,36 +215,6 @@ class QuestionClusteringJobsHome(ManagerRequiredView):
         )
         return render(request, "QuestionClustering/clustering_jobs.html", context)
 
-    def post(self, request: HttpRequest) -> HttpResponse:
-
-        question_idx = int(request.POST.get("question"))
-        version = int(request.POST.get("version"))
-        page_num = int(request.POST.get("page_num"))
-
-        left = round(float(request.POST.get("plom_left")), 6)
-        top = round(float(request.POST.get("plom_top")), 6)
-        right = round(float(request.POST.get("plom_right")), 6)
-        bottom = round(float(request.POST.get("plom_bottom")), 6)
-
-        rects = {"left": left, "top": top, "right": right, "bottom": bottom}
-
-        qcs = QuestionClusteringService()
-        tasks = qcs.get_question_clustering_tasks()
-
-        context = {"tasks": tasks}
-
-        qcs.start_cluster_qv_job(
-            question_idx=question_idx, version=version, page_num=page_num, rects=rects
-        )
-
-        messages.success(
-            request,
-            f"Started clustering for {SpecificationService.get_question_label(question_idx)}, V{version}",
-        )
-        return render(
-            request, "QuestionClustering/clustering_jobs.html", context=context
-        )
-
 
 class GetQuestionClusteringJobs(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
@@ -347,13 +317,64 @@ class ClusterGroupsView(ManagerRequiredView):
             question_idx=question_idx, version=version
         )
 
+        # Grab mapping used for preview
+        cluster_to_paper_map = qcs.get_paper_nums_in_clusters(
+            question_idx=question_idx, version=version
+        )
+
+        # Grab corners used for clustering
+        rects = qcs.get_corners_used_for_clustering(
+            question_idx=question_idx, version=version
+        )
+
         context = {
             "question_label": SpecificationService.get_question_label(question_idx),
             "question_idx": question_idx,
             "version": version,
             "page_num": page_num,
             "cluster_groups": cluster_groups,
+            "cluster_to_paper_map": cluster_to_paper_map,
+            "top": rects["top"],
+            "left": rects["left"],
+            "right": rects["right"],
+            "bottom": rects["bottom"],
         }
         return render(
             request, "QuestionClustering/cluster_groups.html", context=context
         )
+
+
+class ClusterMergeView(ManagerRequiredView):
+    def post(self, request: HttpRequest):
+        clusterIds = request.POST.getlist("selected_clusters")
+        clusterIds = list(map(int, clusterIds))
+
+        question_idx = int(request.POST["question_idx"])
+        version = int(request.POST["version"])
+        next_url = request.POST.get("next")
+
+        qcs = QuestionClusteringService()
+        qcs.merge_clusters(question_idx, version, clusterIds)
+
+        messages.success(
+            request,
+            f"Merged {len(clusterIds)} clusters into cluster with id: {clusterIds[0]}",
+        )
+        return redirect(next_url)
+
+
+class ClusterBulkDeleteView(ManagerRequiredView):
+    def post(self, request: HttpRequest) -> HttpResponse:
+        clusterIds = request.POST.getlist("selected_clusters")
+        clusterIds = list(map(int, clusterIds))
+
+        question_idx = int(request.POST["question_idx"])
+        version = int(request.POST["version"])
+        next_url = request.POST.get("next")
+
+        qcs = QuestionClusteringService()
+
+        qcs.delete_clusters(question_idx, version, clusterIds)
+
+        messages.success(request, f"Deleted {len(clusterIds)} clusters")
+        return redirect(next_url)
