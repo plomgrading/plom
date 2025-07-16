@@ -602,7 +602,7 @@ class PlomAdminMessenger(Messenger):
                     raise PlomNoPermission(response.reason) from None
                 if response.status_code == 400:
                     try:
-                        raise PlomConflict(response.json()) from None
+                        raise PlomConflict(f"{response.json()}") from None
                     except json.JSONDecodeError:
                         raise PlomConflict("Classlist upload failed") from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None

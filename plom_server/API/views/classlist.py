@@ -82,11 +82,16 @@ class Classlist(APIView):
             request: A Request object that includes a file object.
 
         Returns:
-            The Response from the method cited above, except for two
-            short-circuit options where we don't bother activating the
-            StagingStudentService. If the caller is outside the "manager"
-            group, they get status 403; if they didn't actually send a
-            classlist, they get status 400.
+            A Response containing the werr chunk of the result from
+            validate_and_use_classlist_csv() in its .json() attribute,
+            with the HTTP status of the response determined by the
+            'success' part of validate_and_use_classlist_csv().
+            There are two short-circuit options where we don't bother
+            activating the StagingStudentService. If the caller is
+            outside the "manager" group, they get status 403; if they
+            didn't actually send a CSV file, they get status 400.
+            Note that status 400 can also indicate that a CSV file was
+            present, but rejected for some reason.
         """
         # The service we will call has weak defences against faulty inputs.
         # Check here that the requested action should be allowed.
