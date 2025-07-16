@@ -32,8 +32,14 @@ class RubricServiceTests_misc(TestCase):
 
     def test_fractional_part_accurate_value(self) -> None:
         pin = pin_to_fractional_nth
-        self.assertAlmostEqual(pin(1.1, 10), 11.0 / 10)
-        self.assertTrue(abs(pin(1.1, 10) - 11.0 / 10) <= 1e-15)
+        p = pin(1.1, 10)
+        self.assertIsNotNone(p)
+        assert p is not None  # mypy doesn't know self.assert
+        self.assertAlmostEqual(p, 11.0 / 10)
+        self.assertTrue(abs(p - 11.0 / 10) <= 1e-15)
 
-        self.assertAlmostEqual(pin(-1.666666667, 3), -5.0 / 3)
-        self.assertTrue(abs(pin(1.1, 10) - 11.0 / 10) <= 1e-15)
+        p = pin(-1.666666667, 3)
+        self.assertIsNotNone(p)
+        assert p is not None  # mypy doesn't know self.assert
+        self.assertAlmostEqual(p, -5.0 / 3)
+        self.assertTrue(abs(p - 11.0 / 10) <= 1e-15)
