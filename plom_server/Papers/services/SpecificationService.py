@@ -609,10 +609,10 @@ def render_html_flat_question_label_list(qindices: list[int] | None) -> str:
 
 
 def get_selection_method_of_all_questions() -> dict[int, list[int] | None]:
-    """Get the selection method (shuffle/fix) all questions.
+    """Get the selection method for all questions.
 
     Returns:
-        Dict of {q_index: selection} where selection is 'fix' or 'shuffle'.
+        Dict of {q_index: selection} where selection is a list of versions, or None.
     """
     selection_method = {}
     for question in SpecQuestion.objects.all().order_by("question_index"):
