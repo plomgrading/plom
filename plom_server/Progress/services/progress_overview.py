@@ -198,6 +198,7 @@ class ProgressOverviewService:
         query = MarkingTask.objects.exclude(status=MarkingTask.OUT_OF_DATE).filter(
             question_index=question_index
         )
+        # filter by version if supplied
         if version:
             query = query.filter(question_version=version)
 
