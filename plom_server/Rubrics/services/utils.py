@@ -116,16 +116,40 @@ def fractional_part_is_nth(
     For example, when N is 3, we return True on 4.333333333, 1.666666667,
     or -1.33333333.
     """
+    value_pin = pin_to_fractional_nth(value, N)
+    if value_pin is None:
+        return False
+    return True
+
+
+def pin_to_fractional_nth(
+    value: int | float,
+    N: int,
+) -> float | None:
+    """Replace the value with a nearby fraction of Nth.
+
+    For example, when N is 3, we return more accurate values for
+    4.333333333, 1.666666667, or -1.33333333.  For 1.25, we return
+    None.
+
+    TODO: maybe we need a `tuple(bool, float | None)` return?
+    """
     tol = _frac_value_tolerance
 
     if value < 0:
-        value = -value
+        local_value = -value
+    else:
+        local_value = value
 
-    frac_part = value - math.trunc(value)
+    int_part = math.trunc(local_value)
+    frac_part = local_value - int_part
     for frac in (float(x) / N for x in range(1, N)):
         if frac - tol < frac_part < frac + tol:
-            return True
-    return False
+            if value < 0:
+                return -(int_part + frac)
+            else:
+                return int_part + frac
+    return None
 
 
 def _generate_display_delta(
