@@ -142,7 +142,7 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
             user_hists_and_stats[upk]["hist_everyone_values"] = [
                 v * scale for v in hist_values
             ]
-            # to show incomplete pie-chart need this value
+        # to show incomplete pie-chart need this value
         remaining_tasks = stats["all_task_count"] - stats["number_of_completed_tasks"]
         question_label, question_label_html = (
             SpecificationService.get_question_label_str_and_html(question_idx)
