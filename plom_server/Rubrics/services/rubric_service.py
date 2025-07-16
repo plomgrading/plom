@@ -467,7 +467,7 @@ class RubricService:
     def modify_rubric(
         cls,
         rid: int,
-        new_rubric_data: dict[str, Any],
+        new_data: dict[str, Any],
         *,
         modifying_user: User | None = None,
         tag_tasks: bool = False,
@@ -479,7 +479,7 @@ class RubricService:
             rid: uniquely identify a rubric, but not a particular revision.
                 Generally not the same as the "primary key" used
                 internally.
-            new_rubric_data: data for a rubric submitted by a web request.
+            new_data: data for a rubric submitted by a web request.
                 This input will not be modified by this call.
 
         Keyword Args:
@@ -517,8 +517,8 @@ class RubricService:
         # addresses a circular import?
         from plom_server.Mark.services import MarkingTaskService
 
-        new_rubric_data = new_rubric_data.copy()
-        username = new_rubric_data.pop("username")
+        data = new_data.copy()
+        username = data.pop("username")
 
         try:
             user = User.objects.get(username=username)
@@ -533,26 +533,26 @@ class RubricService:
             raise ValueError(f"Rubric {rid} does not exist.") from e
 
         # default revision if missing from incoming data
-        new_rubric_data.setdefault("revision", 0)
-        new_rubric_data.setdefault("subrevision", 0)
+        data.setdefault("revision", 0)
+        data.setdefault("subrevision", 0)
 
         # Mid-air collision detection
         if not (
-            new_rubric_data["revision"] == old_rubric.revision
-            and new_rubric_data["subrevision"] == old_rubric.subrevision
+            data["revision"] == old_rubric.revision
+            and data["subrevision"] == old_rubric.subrevision
         ):
             # TODO: record who last modified and when
             raise PlomConflict(
                 "Your rubric is a change based on revision "
-                f'{new_rubric_data["revision"]}.{new_rubric_data["subrevision"]};'
+                f'{data["revision"]}.{data["subrevision"]};'
                 " this does not match database content "
                 f"(revision {old_rubric.revision}.{old_rubric.subrevision}): "
                 f"most likely your edits have collided with those of someone else."
             )
 
         # some mangling because client still uses "question"
-        if "question_index" not in new_rubric_data.keys():
-            new_rubric_data["question_index"] = new_rubric_data.pop("question")
+        if "question_index" not in data.keys():
+            data["question_index"] = data.pop("question")
 
         # Generally, omitting modifying_user bypasses checks
         if modifying_user is None:
@@ -585,43 +585,41 @@ class RubricService:
                     f' rubrics created by other users (here "{user}")'
                 )
 
-        new_rubric_data.pop("modified_by_username", None)
+        data.pop("modified_by_username", None)
 
         if modifying_user is not None:
-            new_rubric_data["modified_by_user"] = modifying_user.pk
+            data["modified_by_user"] = modifying_user.pk
 
         # To be changed by future MR  (TODO: what does this comment mean?)
-        new_rubric_data["user"] = old_rubric.user.pk
+        data["user"] = old_rubric.user.pk
 
-        new_rubric_data["rid"] = old_rubric.rid
+        data["rid"] = old_rubric.rid
 
-        if new_rubric_data.get("display_delta", None) is None:
+        if data.get("display_delta", None) is None:
             # if we don't have a display_delta, we'll generate a default one
-            new_rubric_data["display_delta"] = _generate_display_delta(
-                new_rubric_data.get("value", 0),
-                new_rubric_data["kind"],
-                new_rubric_data.get("out_of", None),
+            # This might involve a tolerance (in the case of fractions); if
+            # so, we'll adjust the value below using that same tolerance
+            data["display_delta"] = _generate_display_delta(
+                data.get("value", 0),
+                data["kind"],
+                data.get("out_of", None),
             )
 
-        if new_rubric_data["kind"] in ("relative", "neutral"):
-            new_rubric_data["out_of"] = 0
+        if data["kind"] in ("relative", "neutral"):
+            data["out_of"] = 0
 
         # TODO: Perhaps the serializer should do this
-        max_mark = SpecificationService.get_question_max_mark(
-            new_rubric_data["question_index"]
-        )
-        _validate_value(new_rubric_data.get("value", 0), max_mark)
-        if new_rubric_data["kind"] == "absolute":
-            _validate_value_out_of(
-                new_rubric_data["value"], new_rubric_data["out_of"], max_mark
-            )
+        max_mark = SpecificationService.get_question_max_mark(data["question_index"])
+        _validate_value(data.get("value", 0), max_mark)
+        if data["kind"] == "absolute":
+            _validate_value_out_of(data["value"], data["out_of"], max_mark)
 
-        _validate_versions_in_range(new_rubric_data.get("versions"))
+        _validate_versions_in_range(data.get("versions"))
         _validate_parameters(
-            new_rubric_data.get("parameters"), SpecificationService.get_n_versions()
+            data.get("parameters"), SpecificationService.get_n_versions()
         )
 
-        serializer = RubricSerializer(data=new_rubric_data)
+        serializer = RubricSerializer(data=data)
 
         if not serializer.is_valid():
             raise serializers.ValidationError(serializer.errors)
@@ -639,11 +637,11 @@ class RubricService:
         else:
             new_rubric = _modify_rubric_by_making_new_one(old_rubric, serializer)
 
-        if isinstance(new_rubric_data.get("pedagogy_tags"), list):
-            new_rubric_data["pedagogy_tags"] = PedagogyTag.objects.filter(
-                tag_name__in=new_rubric_data["pedagogy_tags"]
+        if isinstance(data.get("pedagogy_tags"), list):
+            data["pedagogy_tags"] = PedagogyTag.objects.filter(
+                tag_name__in=data["pedagogy_tags"]
             ).values_list("pk", flat=True)
-        new_rubric.pedagogy_tags.set(new_rubric_data.get("pedagogy_tags", []))
+        new_rubric.pedagogy_tags.set(data.get("pedagogy_tags", []))
 
         if not is_minor_change and tag_tasks:
             # TODO: or do we need some "system tags" that definitely already exist?

@@ -575,7 +575,7 @@ class RubricEditView(ManagerRequiredView):
         try:
             RubricService.modify_rubric(
                 rid,
-                new_rubric_data=rubric_data,
+                rubric_data,
                 modifying_user=User.objects.get(username=request.user.username),
                 tag_tasks=tag_tasks,
                 is_minor_change=is_minor_change,
