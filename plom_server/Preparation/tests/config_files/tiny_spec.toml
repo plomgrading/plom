@@ -15,9 +15,8 @@ doNotMarkPages = []
 [[question]]
 pages = [2]
 mark = 1
-select = "shuffle"
 
 [[question]]
 pages = [3,4]
 mark = 1
-select = "fix"
+select = 1
