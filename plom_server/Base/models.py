@@ -273,7 +273,11 @@ class SettingsModel(SingletonABCModel):
     # TODO: intention is a tri-state: "permissive", "per-user", "locked"
     who_can_create_rubrics = models.TextField(default="permissive")
     who_can_modify_rubrics = models.TextField(default="per-user")
+
     feedback_rules = models.JSONField(default=dict)
+
+    # a general key-value store in JSON
+    misc = models.JSONField(default=dict)
 
     @classmethod
     def load(cls):
@@ -284,6 +288,7 @@ class SettingsModel(SingletonABCModel):
                 "who_can_create_rubrics": "permissive",
                 "who_can_modify_rubrics": "per-user",
                 "feedback_rules": {},
+                "misc": {},
             },
         )
         return obj
@@ -294,6 +299,31 @@ class SettingsModel(SingletonABCModel):
         if not rules:
             return static_feedback_rules
         return rules
+
+    @classmethod
+    def cget(cls, key, default: bool | None = None):
+        s = cls.load()
+        x = s.misc
+        return x.get(key, default)
+
+    @classmethod
+    def cset(cls, key, value):
+        s = cls.load()
+        x = s.misc
+        x[key] = value
+        s.misc = x
+        s.save()
+
+    def get(self, key, default: bool | None = None):
+        x = self.misc
+        return x.get(key, default)
+
+    def set(self, key, value):
+        # TODO: will the caller need to do a refresh after using this?
+        x = self.misc
+        x[key] = value
+        self.misc = x
+        self.save()
 
 
 class BaseImage(models.Model):

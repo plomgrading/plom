@@ -46,10 +46,11 @@ from plom_server.QuestionTags.models import PedagogyTag
 from ..serializers import RubricSerializer
 from ..models import Rubric
 from ..models import RubricPane
+from .rubric_permissions import RubricPermissionsService
 from .utils import _generate_display_delta, _Rubric_to_dict
 
 
-log = logging.getLogger("RubricServer")
+log = logging.getLogger("RubricService")
 
 
 # TODO: more validation of JSONFields that the model/form/serializer should
@@ -137,6 +138,7 @@ def _validate_value(value, max_mark) -> None:
         raise serializers.ValidationError(
             {"value": f"Value out of range: must lie in [-{max_mark}, {max_mark}]"}
         )
+    RubricPermissionsService.confirm_allowed_fraction(value)
 
 
 def _validate_value_out_of(value, out_of, max_mark) -> None:
@@ -371,6 +373,7 @@ class RubricService:
         # check that the "value" lies in [-max_mark, max_mark]
         max_mark = SpecificationService.get_question_max_mark(q_index)
         _validate_value(data.get("value", 0), max_mark)
+
         # TODO: Perhaps the serializer should do this
         if data["kind"] == "absolute":
             if "value" not in data:
