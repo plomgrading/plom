@@ -52,7 +52,7 @@ class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
     def get(
         self, request: HttpRequest, *, question_idx: int, version: int
     ) -> HttpResponse:
-        context = self.build_context()
+        context = super().build_context()
         pos = ProgressOverviewService()
         mss = MarkingStatsService()
 
@@ -125,10 +125,13 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
         stats = mss.get_basic_marking_stats(question_idx, version=version)
         histogram = mss.get_mark_histogram(question_idx, version=version)
         hist_keys, hist_values = zip(*histogram.items())
+        # user_list = mss.get_list_of_users_who_marked(question, version=version)
 
         user_hists_and_stats = mss.get_mark_histogram_and_stats_by_users(
             question_idx, version=version
         )
+        # for the charts we need a list of histogram values for each user, hence the following
+        # we also want to show it against scaled histogram of all users
         for upk in user_hists_and_stats:
             user_hists_and_stats[upk]["hist_values"] = [
                 v for k, v in user_hists_and_stats[upk]["histogram"].items()
@@ -139,6 +142,7 @@ class ProgressMarkDetailsView(LeadMarkerOrManagerView):
             user_hists_and_stats[upk]["hist_everyone_values"] = [
                 v * scale for v in hist_values
             ]
+            # to show incomplete pie-chart need this value
         remaining_tasks = stats["all_task_count"] - stats["number_of_completed_tasks"]
         question_label, question_label_html = (
             SpecificationService.get_question_label_str_and_html(question_idx)
@@ -174,6 +178,8 @@ class ProgressMarkVersionCompareView(LeadMarkerOrManagerView):
         version_hists_and_stats = mss.get_mark_histogram_and_stats_by_versions(
             question_idx
         )
+        # for the charts we need a list of histogram values for each version, hence the following
+        # we also want to show it against scaled histogram of all versions
         for ver in version_hists_and_stats:
             version_hists_and_stats[ver]["hist_values"] = [
                 val for k, val in version_hists_and_stats[ver]["histogram"].items()
