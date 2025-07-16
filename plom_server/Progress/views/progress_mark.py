@@ -15,6 +15,7 @@ from plom_server.Base.base_group_views import (
 
 from collections import Counter
 
+from plom_server.Mark.models import MarkingTask
 from plom_server.Authentication.services import AuthenticationServices
 from plom_server.Papers.services import SpecificationService
 from plom_server.Mark.services import MarkingStatsService
@@ -55,7 +56,11 @@ class ProgressMarkStatsView(MarkerLeadMarkerOrManagerView):
         pos = ProgressOverviewService()
         mss = MarkingStatsService()
 
-        n_papers = len(pos.get_task_overview()[0])
+        tasks = MarkingTask.objects.filter(
+            question_index=question_idx, question_version=version
+        )
+
+        n_papers = tasks.values("paper").distinct().count()
 
         marking_task_status_counts = pos.get_mark_task_status_counts(
             n_papers=n_papers, question_idx=question_idx, version=version

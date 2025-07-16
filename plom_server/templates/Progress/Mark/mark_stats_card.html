@@ -9,7 +9,10 @@
                      style="cursor: pointer">
                 <div>
                     <h5 class="card-title d-inline-block mb-0">Question {{ question_label }} - Version {{ version }}</h5>
-                    <p class="card-text d-inline-block text-muted ms-2">Click to expand</p>
+                    <div class="mt-1 d-flex align-items-center">
+                        <span class="triangle-indicator me-1"></span>
+                        <span class="text-muted small">Details</span>
+                    </div>
                 </div>
                 <div style="width: 150px;">
                     {% with dat=marking_task_status_counts %}
@@ -50,3 +53,17 @@
         </details>
     </div>
 </div>
+<style>
+/* Triangle indicator for details <summary> */
+.triangle-indicator::before {
+  content: "▶";
+  display: inline-block;
+  width: 1em;
+  transition: transform 0.2s;
+}
+
+/* Change to down-arrow when expanded */
+details[open] .triangle-indicator::before {
+  content: "▼";
+}
+</style>
