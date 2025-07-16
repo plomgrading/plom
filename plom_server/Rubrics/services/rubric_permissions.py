@@ -20,6 +20,8 @@ log = logging.getLogger("RubricService")
 #   it is used with the Bootstrap "ms-n" margin setting.
 # * some options imply others.
 # TODO: would we ever want to default any of these on?
+# Lots of these are supported but currently most are turned off in the UI
+# by the `"show-in-ui"` key: change that to True to enable more fractions
 _frac_opt_table = [
     {
         "name": "allow-half-point-rubrics",
@@ -28,6 +30,7 @@ _frac_opt_table = [
         "readable": "half",  # TODO: presentation_string?
         "implies": [],
         "indent": 0,
+        "show-in-ui": True,
     },
     {
         "name": "allow-quarter-point-rubrics",
@@ -36,6 +39,7 @@ _frac_opt_table = [
         "readable": "quarter",
         "implies": ["allow-half-point-rubrics"],
         "indent": 4,
+        "show-in-ui": True,
     },
     {
         "name": "allow-eighth-point-rubrics",
@@ -44,6 +48,7 @@ _frac_opt_table = [
         "readable": "eighth",
         "implies": ["allow-quarter-point-rubrics", "allow-half-point-rubrics"],
         "indent": 5,
+        "show-in-ui": False,
     },
     {
         "name": "allow-third-point-rubrics",
@@ -52,6 +57,7 @@ _frac_opt_table = [
         "readable": "third",
         "implies": [],
         "indent": 0,
+        "show-in-ui": False,
     },
     {
         "name": "allow-fifth-point-rubrics",
@@ -60,6 +66,7 @@ _frac_opt_table = [
         "readable": "fifth",
         "implies": [],
         "indent": 0,
+        "show-in-ui": False,
     },
     {
         "name": "allow-tenth-point-rubrics",
@@ -68,6 +75,7 @@ _frac_opt_table = [
         "readable": "tenth",
         "implies": ["allow-fifth-point-rubrics", "allow-half-point-rubrics"],
         "indent": 4,
+        "show-in-ui": False,
     },
 ]
 
@@ -82,6 +90,11 @@ class RubricPermissionsService:
         # figure out which are currently checked by checking settings
         for opt in rubric_fractional_options:
             opt["checked"] = SettingsModel.cget(opt["name"])
+        rubric_fractional_options = [
+            opt
+            for opt in rubric_fractional_options
+            if opt["show-in-ui"] or opt["checked"]
+        ]
         return rubric_fractional_options
 
     @staticmethod
