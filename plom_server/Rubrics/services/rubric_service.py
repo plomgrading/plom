@@ -690,9 +690,13 @@ class RubricService:
 
         new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))
 
+        # quick hack b/c API still sends list of ints instead of str of versions
         if _convert_versions_to_list_of_ints:
             for r in new_rubric_data:
-                r["versions"] = [int(v.strip()) for v in r["versions"].split(",")]
+                if r["versions"] == "":
+                    r["versions"] = []
+                else:
+                    r["versions"] = [int(v.strip()) for v in r["versions"].split(",")]
         return new_rubric_data
 
     @staticmethod
