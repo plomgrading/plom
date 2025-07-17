@@ -86,6 +86,7 @@ class Classlist(APIView):
             validate_and_use_classlist_csv() in its .json() attribute,
             with the HTTP status of the response determined by the
             'success' part of validate_and_use_classlist_csv().
+            If 'success' is false, return status 406 with diagnostics.
             There are two short-circuit options where we don't bother
             activating the StagingStudentService. If the caller is
             outside the "manager" group, they get status 403; if they
@@ -114,7 +115,7 @@ class Classlist(APIView):
         )
         if success:
             return Response(werr)
-        return Response(werr, status=status.HTTP_400_BAD_REQUEST)
+        return Response(werr, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     # PATCH /api/v0/classlist
     def patch(self, request: Request) -> Response:

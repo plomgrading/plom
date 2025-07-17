@@ -8,7 +8,6 @@
 
 """Extended bits 'n bobs for advanced non-stable features of Plom server."""
 
-import json
 import logging
 from email.message import EmailMessage
 from io import BytesIO
@@ -596,24 +595,23 @@ class PlomAdminMessenger(Messenger):
                     response = self.patch_auth("/api/v0/classlist", files=filedict)
                 response.raise_for_status()
             except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomConflict(
+                        f"Classlist upload failed: {response.reason}"
+                    ) from None
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 403:
                     raise PlomNoPermission(response.reason) from None
-                if response.status_code == 400:
-                    try:
-                        raise PlomConflict(f"{response.json()}") from None
-                    except json.JSONDecodeError:
-                        raise PlomConflict("Classlist upload failed") from None
-                raise PlomSeriousException(f"Some other sort of error {e}") from None
+                if response.status_code == 406:
+                    raise PlomConflict(
+                        f"Classlist upload failed: {response.json()}"
+                    ) from None
+                raise PlomSeriousException(
+                    f"Classlist upload failed: error {e}"
+                ) from None
 
-        try:
-            werr = response.json()
-        except json.JSONDecodeError:
-            werr = []
-
-        # print("Upload succeeded. Detailed response follows.")
-        # print(response)
+        werr = response.json()
         return True, werr
 
     def rectangle_extraction(
