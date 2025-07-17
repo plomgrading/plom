@@ -352,9 +352,8 @@ def upload_demo_classlist(length="normal", prename=True):
         cl_path = demo_files / "cl_for_demo.csv"
 
     run_plom_cli_command("delete-classlist")
-    # TODO: crashes with the plom-cli port here, e-enable after Issue #3986
-    run_django_manage_command(f"plom_preparation_classlist upload {cl_path}")
-    # run_plom_cli_command(f"upload-classlist {cl_path}")
+    # run_django_manage_command(f"plom_preparation_classlist upload {cl_path}")
+    run_plom_cli_command(f"upload-classlist {cl_path}")
 
     if prename:
         run_django_manage_command("plom_preparation_prenaming --enable")

@@ -50,37 +50,6 @@ class Classlist(APIView):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    def _werr_to_http(self, werr: tuple) -> Response:
-        """Build a proper HTTP response from a werr tuple.
-
-        Args:
-            werr: A 2-tuple (s,l), where ...
-                s is the boolean value of the statement "The operation succeeded",
-                l is a list of dicts describing warnings, errors, or notes.
-                This thing originates mostly in Vlad, the classlist validator,
-                where further details may be found.
-
-        Returns:
-            A Response object whose status code and text value are
-            determined by the contents of the given werr tuple.
-            In the case of success with notes, the notes are returned
-            as a string and the status is 200; if the operation succeeded
-            and there are no notes, return no content with status 204.
-            If the success flag is False, return the notes with status 400.
-        """
-        notes = werr[1]
-        if not werr[0]:
-            # Something failed; presumably details are available.
-            return _error_response(
-                f"{notes}",
-                status.HTTP_400_BAD_REQUEST,
-            )
-
-        if len(notes) > 0:
-            return Response(f"{notes}")
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
     # GET /api/v0/classlist
     def get(self, request: Request) -> FileResponse:
         """Fetch the classlist held by the server.
@@ -113,11 +82,15 @@ class Classlist(APIView):
             request: A Request object that includes a file object.
 
         Returns:
-            The Response from the method cited above, except for two
-            short-circuit options where we don't bother activating the
-            StagingStudentService. If the caller is outside the "manager"
-            group, they get status 403; if they didn't actually send a
-            classlist, they get status 400.
+            A Response containing the werr chunk of the result from
+            validate_and_use_classlist_csv() in its .json() attribute,
+            with the HTTP status of the response determined by the
+            'success' part of validate_and_use_classlist_csv().
+            If 'success' is false, return status 406 with diagnostics.
+            There are two short-circuit options where we don't bother
+            activating the StagingStudentService. If the caller is
+            outside the "manager" group, they get status 403; if they
+            didn't actually send a CSV file, they get status 400.
         """
         # The service we will call has weak defences against faulty inputs.
         # Check here that the requested action should be allowed.
@@ -135,10 +108,12 @@ class Classlist(APIView):
             )
 
         classlist_csv = request.FILES["classlist_csv"]
-
-        return self._werr_to_http(
-            StagingStudentService.validate_and_use_classlist_csv(classlist_csv)
+        success, werr = StagingStudentService.validate_and_use_classlist_csv(
+            classlist_csv
         )
+        if success:
+            return Response(werr)
+        return Response(werr, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     # PATCH /api/v0/classlist
     def patch(self, request: Request) -> Response:
