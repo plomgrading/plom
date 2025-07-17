@@ -91,8 +91,6 @@ class Classlist(APIView):
             activating the StagingStudentService. If the caller is
             outside the "manager" group, they get status 403; if they
             didn't actually send a CSV file, they get status 400.
-            Note that status 400 can also indicate that a CSV file was
-            present, but rejected for some reason.
         """
         # The service we will call has weak defences against faulty inputs.
         # Check here that the requested action should be allowed.
