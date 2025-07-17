@@ -69,6 +69,7 @@ coverage.xml
 *.log
 local_settings.py
 db.sqlite3
+*migrations
 
 # Leftovers from Huey and test server
 *hueydb*.sqlite3
