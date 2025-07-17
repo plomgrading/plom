@@ -662,12 +662,17 @@ class RubricService:
 
     @classmethod
     def get_rubrics_as_dicts(
-        cls, *, question_idx: int | None = None
+        cls,
+        *,
+        question_idx: int | None = None,
+        _convert_versions_to_list_of_ints: bool = False,
     ) -> list[dict[str, Any]]:
         """Get the rubrics, possibly filtered by question.
 
         Keyword Args:
             question_idx: question index or ``None`` for all.
+            _convert_versions_to_list_of_ints: the API 114 still hands out
+                rubrics using versions as a list of ints.
 
         Returns:
             Collection of dictionaries, one for each rubric.
@@ -689,6 +694,9 @@ class RubricService:
 
         new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))
 
+        if _convert_versions_to_list_of_ints:
+            for r in new_rubric_data:
+                r["versions"] = [int(v.strip()) for v in r["versions"].split(",")]
         return new_rubric_data
 
     @staticmethod
