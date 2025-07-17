@@ -119,6 +119,7 @@ class HMEClusteringModel(ClusteringModel):
         X = np.vstack(
             [self.get_embeddings(image) for pn, image in paper_to_image.items()]
         )
+        print(f"SHAPE: {X.shape}")
 
         X_reduced = PCA(n_components=min(len(paper_to_image), 50)).fit_transform(X)
 

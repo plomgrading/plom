@@ -358,7 +358,7 @@ class ClusterMergeView(ManagerRequiredView):
 
         messages.success(
             request,
-            f"Merged {len(clusterIds)} clusters into cluster with id: {clusterIds[0]}",
+            f"Merged {len(clusterIds)} clusters into cluster with id: {min(clusterIds)}",
         )
         return redirect(next_url)
 

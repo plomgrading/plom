@@ -252,7 +252,7 @@ class QuestionClusteringService:
             )
             .values("qv_cluster__clusterId")
             .annotate(count=Count("id"))
-            .order_by("-count")
+            .order_by("qv_cluster__clusterId")
         )
         return {item["qv_cluster__clusterId"]: item["count"] for item in qs}
 
@@ -283,8 +283,8 @@ class QuestionClusteringService:
 
     def merge_clusters(self, question_idx: int, version: int, clusterIds: list[int]):
         with transaction.atomic():
-            # assign all clusters to an arbritrary cluster id
-            target_cluster_id = clusterIds[0]
+            # assign all clusters to the minimum clusterId
+            target_cluster_id = min(clusterIds)
             target_cluster = QVCluster.objects.get(
                 question_idx=question_idx, version=version, clusterId=target_cluster_id
             )
