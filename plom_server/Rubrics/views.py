@@ -518,16 +518,12 @@ class RubricCreateView(ManagerRequiredView):
         }
         try:
             RubricService.create_rubric(rubric_data)
-
-        except ValueError as e:
+        except (ValueError, PermissionDenied) as e:
             messages.error(request, f"Error: {e}")
-
-        except PermissionDenied as e:
-            messages.error(request, f"Error: {e}")
-
         except serializers.ValidationError as e:
-            messages.error(request, f"{e.detail.get('value', 'Invalid Error')}")
-
+            # see comments elsewhere about formatting serializer.ValidationError
+            (nicer_err_msgs,) = e.args
+            messages.error(request, f"Error: {nicer_err_msgs}")
         else:
             messages.success(request, "Rubric created successfully.")
 
@@ -580,19 +576,12 @@ class RubricEditView(ManagerRequiredView):
                 tag_tasks=tag_tasks,
                 is_minor_change=is_minor_change,
             )
-
-        except ValueError as e:
+        except (ValueError, PermissionDenied, PlomConflict) as e:
             messages.error(request, f"Error: {e}")
-
-        except PermissionDenied as e:
-            messages.error(request, f"Error: {e}")
-
         except serializers.ValidationError as e:
-            messages.error(request, f"{e.detail.get('value', 'Invalid Error')}")
-
-        except PlomConflict as e:
-            messages.error(request, f"Error: {e}")
-
+            # see comments elsewhere about formatting serializer.ValidationError
+            (nicer_err_msgs,) = e.args
+            messages.error(request, f"Error: {nicer_err_msgs}")
         else:
             messages.success(request, "Rubric edited successfully.")
 

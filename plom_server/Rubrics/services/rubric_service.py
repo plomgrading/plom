@@ -69,22 +69,18 @@ def _validate_versions_in_range(vers: None | str) -> None:
     # looking up the number of versions in another table...
 
     if not isinstance(vers, str):
-        raise serializers.ValidationError("Input must be string")
+        raise serializers.ValidationError({"versions": "Input must be string"})
     try:
         parsed_vers = [int(x.strip()) for x in vers.split(",")]
     except ValueError as e:
-        raise serializers.ValidationError(
-            f'nonempty "versions" must be a comma-separated list of ints but got "{vers}": {e}'
-        )
+        _errmsg = f'nonempty "versions" must be a comma-separated list of ints but got "{vers}": {e}'
+        raise serializers.ValidationError({"versions": _errmsg})
 
     n_versions = SpecificationService.get_n_versions()
     for v in parsed_vers:
         if v < 1 or v > n_versions:
-            raise serializers.ValidationError(
-                {
-                    "versions": f"Version {v} is out of range — must be in [1, {n_versions}]"
-                }
-            )
+            _errmsg = f"Version {v} is out of range — must be in [1, {n_versions}]"
+            raise serializers.ValidationError({"versions": _errmsg})
 
 
 def _validate_parameters(parameters: None | list, num_versions: None | int = 1) -> None:

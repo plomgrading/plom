@@ -182,7 +182,7 @@ class RubricServiceTests_extra_validation(TestCase):
                 "question_index": 1,
                 "versions": oor_versions,
             }
-            with self.assertRaises(serializers.ValidationError):
+            with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
                 RubricService.create_rubric(rub)
 
     def test_create_rubric_valid_parameters(self) -> None:
