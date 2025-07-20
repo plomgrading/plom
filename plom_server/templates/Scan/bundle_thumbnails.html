@@ -41,51 +41,49 @@
                     <div class="card-title">
                         <div class="dropdown">
                             <!-- WET, see <script> tag further down. -->
-                            <select class="form-select" onchange="filterPages(this.value)">
-                                <option>all</option>
-                                <option>needs your attention</option>
-                                <option>known pages</option>
-                                <option>extra pages</option>
-                                <option>extra pages without information</option>
-                                <option>errors</option>
-                                <option>discarded pages</option>
-                                <option>unknown pages</option>
-                                <option>unread pages</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body p-2 pe-0">
-                    <!-- Not happy with this 80vh here: sometimes that is too much, sometimes too little -->
-                    <div class="container overflow-y-scroll p-2" style="max-height:78vh;">
-                        <div class="row row-cols-auto gy-1 gx-1">
-                            {% for pg in pages %}
-                                <!-- each of these fragments is in a div with a unique id - easy to target with htmx -->
-                                <div id="fragmentcontainer-{{ pg.order }}"
-                                     hx-get="{% url 'single_thumbnail_container' bundle_id pg.order %}"
-                                     hx-trigger="thumbnailRefresh"
-                                     hx-swap="innerHTML"
-                                     hx-on="htmx:afterSwap: refreshThumbnailTooltip({{ pg.order }});refreshBundleSummary();clickThumbnail({{ pg.order }})">
-                                    {% include "Scan/fragments/bundle_thumbnail_container.html" with pg=pg %}
-                                </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-8" id="updatePage">
-            <!-- TODO: what is this for -->
-            {% if pop %}
-                <div hx-get="{% url 'scan_bundle_page_ng' bundle_id pop %}"
-                     hx-swap="innerHTML"
-                     hx-target="#updatePage"
-                     hx-trigger="load"></div>
-            {% endif %}
-            <!-- HTMX will fill this in -->
-        </div>
-        <!-- thumbnail container toggle uses radios, this changes radio appearance -->
-        <style>
+                            <!-- autocomplete is Firefox-specific fix:
+			     https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->
+<select class="form-select" onchange="filterPages(this.value)" autocomplete="off">
+<option>all</option>
+<option>needs your attention</option>
+<option>known pages</option>
+<option>extra pages</option>
+<option>extra pages without information</option>
+<option>errors</option>
+<option>discarded pages</option>
+<option>unknown pages</option>
+<option>unread pages</option>
+</select>
+</div>
+</div>
+</div>
+<div class="card-body p-2 pe-0">
+<!-- Not happy with this 80vh here: sometimes that is too much, sometimes too little -->
+<div class="container overflow-y-scroll p-2" style="max-height:78vh;">
+<div class="row row-cols-auto gy-1 gx-1">
+<!-- autocomplete is Firefox-specific fix:
+			     https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->
+{% for pg in pages %}
+<!-- each of these fragments is in a div with a unique id - easy to target with htmx -->
+<div id="fragmentcontainer-{{ pg.order }}" hx-get="{% url 'single_thumbnail_container' bundle_id pg.order %}" hx-trigger="thumbnailRefresh" hx-swap="innerHTML" hx-on="htmx:afterSwap: refreshThumbnailTooltip({{ pg.order }});refreshBundleSummary();clickThumbnail({{ pg.order }})">
+{% include "Scan/fragments/bundle_thumbnail_container.html" with pg=pg %}
+</div>
+{% endfor %}
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="col-8" id="updatePage">
+<!-- TODO: what is this for -->
+{% if pop %}
+<div hx-get="{% url 'scan_bundle_page_ng' bundle_id pop %}" hx-swap="innerHTML" hx-target="#updatePage" hx-trigger="load">
+</div>
+{% endif %}
+<!-- HTMX will fill this in -->
+</div>
+<!-- thumbnail container border uses radios, this changes radio appearance -->
+<style>
 	  input[type="radio"][id^="pgradio-"] {
 	    display: none;
 	  }
@@ -103,8 +101,8 @@
 	  .radio-label:hover {
 	    cursor: pointer;
 	  }
-        </style>
-        <script>
+</style>
+<script>
         // https://getbootstrap.com/docs/5.3/components/tooltips
 	// create all tooltips when page is initially loaded
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
@@ -167,6 +165,6 @@
 	    const target_thumbnail = document.getElementById("pgradio-" + bundle_index);
 	    target_thumbnail.click();
 	}
-        </script>
-    </div>
+</script>
+</div>
 {% endblock main_content %}
