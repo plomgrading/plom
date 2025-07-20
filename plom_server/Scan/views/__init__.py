@@ -3,6 +3,7 @@
 # Copyright (C) 2022-2023 Brennen Chiu
 # Copyright (C) 2023-2025 Andrew Rechnitzer
 # Copyright (C) 2024 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 from .scanner_home import (
     ScannerOverview,

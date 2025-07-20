@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2023-2025 Andrew Rechnitzer
+# Copyright (C) 2025 Aidan Murphy
 
 from django.urls import reverse
 from django.shortcuts import render

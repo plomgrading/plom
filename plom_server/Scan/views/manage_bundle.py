@@ -4,6 +4,7 @@
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Philip D. Loewen
+# Copyright (C) 2025 Aidan Murphy
 
 from typing import Any
 

@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023-2024 Andrew Rechnitzer
 # Copyright (C) 2024-2025 Colin B. Macdonald
+# Copyright (C) 2025 Aidan Murphy
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest, HttpResponse, Http404
