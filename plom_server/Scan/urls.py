@@ -27,26 +27,18 @@ from .views import (
     SubstituteImageWrapView,
     ###
     BundleThumbnailsSummaryFragmentView,
-    BundleThumbnailsView,
     BundleThumbnailsViewNg,
     ThumbnailContainerFragmentView,
     GetBundleView,
     GetBundlePageFragmentViewNg,
-    GetBundlePageFragmentView,
     GetBundleThumbnailView,
     GetStagedBundleFragmentView,
     PushAllPageImages,
     DiscardImageViewNg,
-    DiscardImageView,
-    DiscardAllUnknownsHTMXView,
     DiscardAllUnknownsHTMXViewNg,
-    ExtraliseImageView,
     ExtraliseImageViewNg,
-    KnowifyImageView,
     KnowifyImageViewNg,
-    UnknowifyImageView,
     UnknowifyImageViewNg,
-    UnknowifyAllDiscardsHTMXView,
     UnknowifyAllDiscardsHTMXViewNg,
     RotateImageView,
     BundleLockView,
@@ -118,11 +110,6 @@ urlpatterns = [
         GetBundlePageFragmentViewNg.as_view(),
         name="scan_bundle_page_ng",
     ),
-    path(
-        "bundlepage/<str:the_filter>/<int:bundle_id>/<int:index>/",
-        GetBundlePageFragmentView.as_view(),
-        name="scan_bundle_page",
-    ),
     # TODO: is this different to RotateImageView?
     path(
         "thumbnails/<int:bundle_id>/<int:index>",
@@ -145,11 +132,6 @@ urlpatterns = [
         name="scan_bundle_thumbnails_ng",
     ),
     path(
-        "thumbnails/<str:the_filter>/<int:bundle_id>",
-        BundleThumbnailsView.as_view(),
-        name="scan_bundle_thumbnails",
-    ),
-    path(
         "bundle/<int:bundle_id>/",
         GetBundleView.as_view(),
         name="scan_get_bundle",
@@ -169,19 +151,9 @@ urlpatterns = [
         "push/<int:bundle_id>/all/", PushAllPageImages.as_view(), name="scan_push_all"
     ),
     path(
-        "discard/<str:the_filter>/<int:bundle_id>/<int:index>/",
-        DiscardImageView.as_view(),
-        name="discard_image",
-    ),
-    path(
         "discard_ng/<int:bundle_id>/<int:index>/",
         DiscardImageViewNg.as_view(),
         name="discard_image_ng",
-    ),
-    path(
-        "discard_unknowns/<str:the_filter>/<int:bundle_id>/<int:pop_index>/",
-        DiscardAllUnknownsHTMXView.as_view(),
-        name="discard_all_unknowns",
     ),
     path(
         "discard_unknowns/<int:bundle_id>/",
@@ -189,19 +161,9 @@ urlpatterns = [
         name="discard_all_unknowns_ng",
     ),
     path(
-        "unknowify/<str:the_filter>/<int:bundle_id>/<int:index>/",
-        UnknowifyImageView.as_view(),
-        name="unknowify_image",
-    ),
-    path(
         "unknowify/<int:bundle_id>/<int:index>/",
         UnknowifyImageViewNg.as_view(),
         name="unknowify_image_ng",
-    ),
-    path(
-        "unknowify_discards/<str:the_filter>/<int:bundle_id>/<int:pop_index>/",
-        UnknowifyAllDiscardsHTMXView.as_view(),
-        name="unknowify_all_discards",
     ),
     path(
         "unknowify_discards/<int:bundle_id>/",
@@ -209,19 +171,9 @@ urlpatterns = [
         name="unknowify_all_discards_ng",
     ),
     path(
-        "knowify/<str:the_filter>/<int:bundle_id>/<int:index>/",
-        KnowifyImageView.as_view(),
-        name="knowify_image",
-    ),
-    path(
         "knowify/<int:bundle_id>/<int:index>/",
         KnowifyImageViewNg.as_view(),
         name="knowify_image_ng",
-    ),
-    path(
-        "extralise/<str:the_filter>/<int:bundle_id>/<int:index>/",
-        ExtraliseImageView.as_view(),
-        name="extralise_image",
     ),
     path(
         "extralise/<int:bundle_id>/<int:index>/",

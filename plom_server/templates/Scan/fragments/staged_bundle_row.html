@@ -125,8 +125,6 @@
             </span>
             {% if has_been_processed %}
                 <a class="btn btn-success"
-                   href="{% url 'scan_bundle_thumbnails' 'all' bundle_id %}">View</a>
-                <a class="btn btn-success"
                    href="{% url 'scan_bundle_thumbnails_ng' bundle_id %}">Ng-View</a>
                 {% if has_qr_codes %}
                     <span>
