@@ -23,7 +23,7 @@ from plom.plom_exceptions import PlomBundleLockedException
 from datetime import datetime
 
 
-class DiscardImageViewNg(ScannerRequiredView):
+class DiscardImageView(ScannerRequiredView):
     """Discard a particular StagingImage type."""
 
     def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
@@ -39,12 +39,12 @@ class DiscardImageViewNg(ScannerRequiredView):
             )
         return render(
             request,
-            "Scan/fragments/bundle_page_view_ng.html",
+            "Scan/fragments/bundle_page_panel.html",
             {"bundle_id": bundle_id, "index": index},
         )
 
 
-class DiscardAllUnknownsHTMXViewNg(ScannerRequiredView):
+class DiscardAllUnknownsHTMXView(ScannerRequiredView):
     def post(
         self,
         request: HttpRequest,
@@ -65,7 +65,7 @@ class DiscardAllUnknownsHTMXViewNg(ScannerRequiredView):
         return HttpResponseClientRefresh()
 
 
-class UnknowifyImageViewNg(ScannerRequiredView):
+class UnknowifyImageView(ScannerRequiredView):
     """Unknowify a particular StagingImage type."""
 
     def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
@@ -82,12 +82,12 @@ class UnknowifyImageViewNg(ScannerRequiredView):
 
         return render(
             request,
-            "Scan/fragments/bundle_page_view_ng.html",
+            "Scan/fragments/bundle_page_panel.html",
             {"bundle_id": bundle_id, "index": index},
         )
 
 
-class UnknowifyAllDiscardsHTMXViewNg(ScannerRequiredView):
+class UnknowifyAllDiscardsHTMXView(ScannerRequiredView):
     def post(
         self,
         request: HttpRequest,
@@ -108,7 +108,7 @@ class UnknowifyAllDiscardsHTMXViewNg(ScannerRequiredView):
         return HttpResponseClientRefresh()
 
 
-class KnowifyImageViewNg(ScannerRequiredView):
+class KnowifyImageView(ScannerRequiredView):
     """Knowify a particular StagingImage type."""
 
     def get(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
@@ -154,7 +154,7 @@ class KnowifyImageViewNg(ScannerRequiredView):
             }
         )
 
-        return render(request, "Scan/fragments/knowify_image_ng.html", context)
+        return render(request, "Scan/fragments/knowify_image.html", context)
 
     def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
         # TODO - improve this form processing
@@ -201,12 +201,12 @@ class KnowifyImageViewNg(ScannerRequiredView):
 
         return render(
             request,
-            "Scan/fragments/bundle_page_view_ng.html",
+            "Scan/fragments/bundle_page_panel.html",
             {"bundle_id": bundle_id, "index": index},
         )
 
 
-class ExtraliseImageViewNg(ScannerRequiredView):
+class ExtraliseImageView(ScannerRequiredView):
     """Extralise a particular StagingImage type."""
 
     def post(self, request: HttpRequest, *, bundle_id: int, index: int) -> HttpResponse:
@@ -262,7 +262,7 @@ class ExtraliseImageViewNg(ScannerRequiredView):
 
         return render(
             request,
-            "Scan/fragments/bundle_page_view_ng.html",
+            "Scan/fragments/bundle_page_panel.html",
             {"bundle_id": bundle_id, "index": index},
         )
 
@@ -286,7 +286,7 @@ class ExtraliseImageViewNg(ScannerRequiredView):
 
         return render(
             request,
-            "Scan/fragments/bundle_page_view_ng.html",
+            "Scan/fragments/bundle_page_panel.html",
             {"bundle_id": bundle_id, "index": index},
         )
 
@@ -304,6 +304,6 @@ class ExtraliseImageViewNg(ScannerRequiredView):
 
         return render(
             request,
-            "Scan/fragments/bundle_page_view_ng.html",
+            "Scan/fragments/bundle_page_panel.html",
             {"bundle_id": bundle_id, "index": index},
         )

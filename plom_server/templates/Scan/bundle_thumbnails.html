@@ -32,7 +32,7 @@
          hx-trigger="summaryRefresh"
          hx-swap="innerHTML"
          hx-target="#bundleSummary">
-        {% include "Scan/fragments/bundle_summary_ng.html" with slug=slug n_collisions=n_collisions n_incomplete=n_incomplete colliding_images_nice_format=colliding_images_nice_format total_pages=total_pages known_pages=known_pages unknown_pages=unknown_pages extra_pages=extra_pages discard_pages=discard_pages error_pages=error_pages paper_pages_list=paper_pages_list %}
+        {% include "Scan/fragments/bundle_summary.html" with slug=slug n_collisions=n_collisions n_incomplete=n_incomplete colliding_images_nice_format=colliding_images_nice_format total_pages=total_pages known_pages=known_pages unknown_pages=unknown_pages extra_pages=extra_pages discard_pages=discard_pages error_pages=error_pages paper_pages_list=paper_pages_list %}
     </div>
     <div class="row pt-3">
         <div class="col-4">
@@ -66,7 +66,7 @@
                                      hx-trigger="thumbnailRefresh"
                                      hx-swap="innerHTML"
                                      hx-on="htmx:afterSwap: refreshThumbnailTooltip({{ pg.order }});refreshBundleSummary();clickThumbnail({{ pg.order }})">
-                                    {% include "Scan/fragments/bundle_thumbnail_container_ng.html" with pg=pg %}
+                                    {% include "Scan/fragments/bundle_thumbnail_container.html" with pg=pg %}
                                 </div>
                             {% endfor %}
                         </div>

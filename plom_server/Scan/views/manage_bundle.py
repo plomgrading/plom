@@ -46,11 +46,11 @@ class ThumbnailContainerFragmentView(ScannerRequiredView):
         }
 
         return render(
-            request, "Scan/fragments/bundle_thumbnail_container_ng.html", context
+            request, "Scan/fragments/bundle_thumbnail_container.html", context
         )
 
 
-class BundleThumbnailsViewNg(ScannerRequiredView):
+class BundleThumbnailsView(ScannerRequiredView):
     """Handles the creation and perhaps some of the interaction with a page of thumbnails of a bundle."""
 
     def build_context(
@@ -164,7 +164,7 @@ class BundleThumbnailsViewNg(ScannerRequiredView):
         except ObjectDoesNotExist as e:
             raise Http404(e)
 
-        return render(request, "Scan/bundle_thumbnails_ng.html", context)
+        return render(request, "Scan/bundle_thumbnails.html", context)
 
 
 class BundleThumbnailsSummaryFragmentView(ScannerRequiredView):
@@ -210,7 +210,7 @@ class BundleThumbnailsSummaryFragmentView(ScannerRequiredView):
             }
         )
 
-        return render(request, "Scan/fragments/bundle_summary_ng.html", context)
+        return render(request, "Scan/fragments/bundle_summary.html", context)
 
 
 class GetBundleThumbnailView(ScannerRequiredView):
@@ -240,7 +240,7 @@ class GetBundleThumbnailView(ScannerRequiredView):
         return FileResponse(image.image_file)
 
 
-class GetBundlePageFragmentViewNg(ScannerRequiredView):
+class GetBundlePageFragmentView(ScannerRequiredView):
     """Return the image display fragment from a user-uploaded bundle."""
 
     def get(self, request: HttpResponse, *, bundle_id: int, index: int) -> HttpResponse:
@@ -283,7 +283,7 @@ class GetBundlePageFragmentViewNg(ScannerRequiredView):
                 }
             )
 
-        return render(request, "Scan/fragments/bundle_page_view_ng.html", context)
+        return render(request, "Scan/fragments/bundle_page_panel.html", context)
 
 
 class BundleLockView(ScannerRequiredView):
@@ -330,4 +330,4 @@ class RecentStagedBundleRedirectView(ScannerRequiredView):
         if bundle is None:
             return redirect(reverse("scan_list_staged"))
         else:
-            return redirect(reverse("scan_bundle_thumbnails_ng", args=[bundle.pk]))
+            return redirect(reverse("scan_bundle_thumbnails", args=[bundle.pk]))

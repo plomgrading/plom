@@ -19,7 +19,7 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="py-4" id="invalidmessage"></div>
-                        <form hx-post="{% url 'knowify_image_ng' bundle_id index %}"
+                        <form hx-post="{% url 'knowify_image' bundle_id index %}"
                               hx-target="#invalidmessage"
                               hx-swap="none"
                               hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">

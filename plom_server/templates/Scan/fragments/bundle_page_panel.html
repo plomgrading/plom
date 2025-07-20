@@ -168,11 +168,10 @@
                             </div>
                         </div>
                         <!-- what we can do depends on the status -->
-                        <!-- TODO: deduplicate all of this garbage -->
                         {% if current_page.status == 'known' or current_page.status == 'error' or current_page.status == 'extra' or current_page.status == 'unknown' %}
                             <div>
                                 <a class="btn btn-danger text-center w-100 mb-3"
-                                   hx-post="{% url 'discard_image_ng' bundle_id index %}"
+                                   hx-post="{% url 'discard_image' bundle_id index %}"
                                    hx-swap="none"
                                    hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
                                 Discard</a>
@@ -181,7 +180,7 @@
                         {% if current_page.status == 'error' or current_page.status == 'discard' or current_page.status == 'unknown' %}
                             <div>
                                 <a class="btn btn-warning text-center w-100 mb-3"
-                                   hx-put="{% url 'extralise_image_ng' bundle_id index %}"
+                                   hx-put="{% url 'extralise_image' bundle_id index %}"
                                    hx-swap="none"
                                    hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
                                 Cast to extra page</a>
@@ -190,7 +189,7 @@
                         {% if current_page.status == 'error' or current_page.status == 'discard' or current_page.status == 'unknown' %}
                             <div>
                                 <a class="btn btn-outline-success text-center w-100 mb-3"
-                                   hx-get="{% url 'knowify_image_ng' bundle_id index %}"
+                                   hx-get="{% url 'knowify_image' bundle_id index %}"
                                    hx-target="#bundlePageFragment">Cast to known page</a>
                             </div>
                         {% endif %}
@@ -204,14 +203,14 @@
                             <!-- stuff unique to discard pages -->
                             <div>
                                 <a class="btn btn-outline-warning text-center w-100 mb-3"
-                                   hx-post="{% url 'unknowify_image_ng' bundle_id index %}"
+                                   hx-post="{% url 'unknowify_image' bundle_id index %}"
                                    hx-swap="none"
                                    hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
                                 Cast to unknown page</a>
                             </div>
                             <div>
                                 <a class="btn btn-outline-danger text-center w-100 mb-3"
-                                   hx-post="{% url 'unknowify_all_discards_ng' bundle_id %}">
+                                   hx-post="{% url 'unknowify_all_discards' bundle_id %}">
                                     <i class="bi bi-exclamation-diamond-fill text-danger"></i>
                                     Cast all discards to unknown pages
                                     <i class="bi bi-exclamation-diamond-fill text-danger"></i>
@@ -221,7 +220,7 @@
                             <!-- stuff unique to unknown pages -->
                             <div>
                                 <a class="btn btn-danger text-centre w-100 mb-3"
-                                   hx-post="{% url 'discard_all_unknowns_ng' bundle_id %}">
+                                   hx-post="{% url 'discard_all_unknowns' bundle_id %}">
                                     <i class="bi bi-exclamation-diamond-fill text-bg-danger"></i>
                                     Discard all unknown pages
                                     <i class="bi bi-exclamation-diamond-fill text-bg-danger"></i>
@@ -232,7 +231,7 @@
                             {% if current_page.info.paper_number %}
                                 <div>
                                     <a class="btn btn-danger text-center w-100 mb-3"
-                                       hx-delete="{% url 'extralise_image_ng' bundle_id index %}"
+                                       hx-delete="{% url 'extralise_image' bundle_id index %}"
                                        hx-swap="none"
                                        hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
                                     Clear information</a>
@@ -240,7 +239,7 @@
                             {% else %}
                                 <div class="alert alert-secondary">
                                     <h5>Set extra page information</h5>
-                                    <form hx-post="{% url 'extralise_image_ng' bundle_id index %}"
+                                    <form hx-post="{% url 'extralise_image' bundle_id index %}"
                                           hx-swap="none"
                                           hx-on="htmx:afterRequest: refreshThumbnailContainer({{ index }}); clickThumbnail({{ index }});">
                                         <div class="input-group">

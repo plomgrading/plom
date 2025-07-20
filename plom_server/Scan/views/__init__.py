@@ -25,9 +25,9 @@ from .pushed_images import (
 )
 
 from .manage_bundle import (
-    GetBundlePageFragmentViewNg,
+    GetBundlePageFragmentView,
     ThumbnailContainerFragmentView,
-    BundleThumbnailsViewNg,
+    BundleThumbnailsView,
     BundleThumbnailsSummaryFragmentView,
     GetBundleThumbnailView,
     BundleLockView,
@@ -47,12 +47,12 @@ from .scanner_summary import (
 )
 
 from .cast_image_state import (
-    DiscardImageViewNg,
-    DiscardAllUnknownsHTMXViewNg,
-    ExtraliseImageViewNg,
-    KnowifyImageViewNg,
-    UnknowifyImageViewNg,
-    UnknowifyAllDiscardsHTMXViewNg,
+    DiscardImageView,
+    DiscardAllUnknownsHTMXView,
+    ExtraliseImageView,
+    KnowifyImageView,
+    UnknowifyImageView,
+    UnknowifyAllDiscardsHTMXView,
 )
 
 from .rotate_images import RotateImageView
