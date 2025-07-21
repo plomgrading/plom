@@ -76,11 +76,6 @@
 </div>
 </div>
 <div class="col-8" id="updatePage">
-<!-- TODO: what is this for -->
-{% if pop %}
-<div hx-get="{% url 'scan_bundle_page_ng' bundle_id pop %}" hx-swap="innerHTML" hx-target="#updatePage" hx-trigger="load">
-</div>
-{% endif %}
 <!-- HTMX will fill this in -->
 </div>
 <!-- thumbnail container border uses radios, this changes radio appearance -->
