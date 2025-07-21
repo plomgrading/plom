@@ -100,12 +100,12 @@ def makeCover(
 
     cover = pymupdf.open()
     align = pymupdf.TEXT_ALIGN_CENTER
-    
+
     font = pymupdf.Font("helvetica")
     textsize = 12
     headersize = 16
     xxlsize = 20
-    
+
     paper_width, paper_height = papersize_portrait
     page = cover.new_page(width=paper_width, height=paper_height)
 
@@ -114,23 +114,23 @@ def makeCover(
     # Style and print the assessment title, if available
     if exam_name:
         titlewriter = pymupdf.TextWriter(page.rect)
-        titlewriter.color = (0.66,0,0)
+        titlewriter.color = (0.66, 0, 0)
         title_width = font.text_length(exam_name, xxlsize)
         x = (paper_width - title_width) / 2
         y = 100  # Near the top of the page
-        titlewriter.append((x,y), exam_name, fontsize=xxlsize)
+        titlewriter.append((x, y), exam_name, fontsize=xxlsize)
         titlewriter.write_text(page)
-        vpos += 3*xxlsize
-        
+        vpos += 3 * xxlsize
+
     # Style and print the info line.
     infowriter = pymupdf.TextWriter(page.rect)
     # infowriter.color = (0,0,1)
-        
+
     if solution:
         text = "Solutions"
     else:
         text = "Results"
-    
+
     if info:
         text += " for "
         sname, sid = info
@@ -139,7 +139,7 @@ def makeCover(
         else:
             nnn = [_.strip() for _ in sname.split(",")]
             nnn.reverse()
-            text += " ".join(nnn)        
+            text += " ".join(nnn)
         if sid is None:
             text += " (no ID yet)"
         else:
@@ -148,28 +148,28 @@ def makeCover(
     info_width = font.text_length(text, xxlsize)
     x = (paper_width - info_width) / 2
     y = vpos
-    infowriter.append((x,y), text, fontsize=xxlsize)
+    infowriter.append((x, y), text, fontsize=xxlsize)
     infowriter.write_text(page)
-    vpos += 1.5*xxlsize
-    
+    vpos += 1.5 * xxlsize
+
     # Style and print the test number
     tnwriter = pymupdf.TextWriter(page.rect)
-    #tnwriter.color = (0,1,0)
-    
+    # tnwriter.color = (0,1,0)
+
     if isinstance(test_num, int):
-            text = f"Test number {test_num:04}"
+        text = f"Test number {test_num:04}"
     else:
         text = f"Test number {test_num}"
     tn_width = font.text_length(text, headersize)
     x = (paper_width - tn_width) / 2
     y = vpos
-    tnwriter.append((x,y), text, fontsize=headersize)
+    tnwriter.append((x, y), text, fontsize=headersize)
     tnwriter.write_text(page)
-    vpos += 3*xxlsize
-    
-    # Style and print the table of scores    
+    vpos += 3 * xxlsize
+
+    # Style and print the table of scores
     tw = pymupdf.TextWriter(page.rect)
-    
+
     shape = page.new_shape()
 
     # rectangles for header that we will shift downwards as we go
