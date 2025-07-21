@@ -101,7 +101,7 @@ def brief_report_pdf_builder(
         "pedagogy_tags": None,
         "pedagogy_tags_graph": None,
     }
-    # don't generate the lollypop graph is there are no pedagogy tags
+    # don't generate the lollipop graph if there are no pedagogy tags
     tag_to_questions = QuestionTagService.get_tag_to_question_links()
     if tag_to_questions:
         qidx_to_html = SpecificationService.get_question_labels_str_and_html_map()
@@ -114,7 +114,7 @@ def brief_report_pdf_builder(
             )
             for ptag, qidx_list in tag_to_questions.items()
         }
-        context["pedagogy_tags_graph"] = MinimalPlotService().lollypop_of_pedagogy_tags(
+        context["pedagogy_tags_graph"] = MinimalPlotService().lollipop_of_pedagogy_tags(
             tag_to_questions,
             {qi: paper_info[qi] for qi in question_score_lists},
             paper_info["question_max_marks"],
