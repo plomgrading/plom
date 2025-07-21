@@ -226,7 +226,8 @@
                     {% for paper,pages in papers_pages_list %}
                         {% with pg=pages|dictsort:"order"|first %}
                             {% if paper in incomplete_papers_list %}
-                                <button class="btn m-1 btn-warning"
+                                <button id="paper-btn-{{ paper }}"
+                                        class="btn m-1 btn-warning"
                                         data-bs-toggle="tooltip"
                                         data-bs-placement="top"
                                         data-bs-title="Is missing pages: TODO - which pages?"

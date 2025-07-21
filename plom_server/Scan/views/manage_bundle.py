@@ -208,6 +208,7 @@ class BundleThumbnailsSummaryFragmentView(ScannerRequiredView):
                 "finished_reading_qr": bundle.has_qr_codes,
                 "bundle": bundle,
                 "bundle_id": bundle.pk,
+                "incomplete_papers_list": bundle_incomplete_papers_list,
             }
         )
 

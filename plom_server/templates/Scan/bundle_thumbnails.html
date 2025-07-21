@@ -31,8 +31,9 @@
          hx-get="{% url 'scan_bundle_summary' bundle_id %}"
          hx-trigger="summaryRefresh"
          hx-swap="innerHTML"
-         hx-target="#bundleSummary">
-        {% include "Scan/fragments/bundle_summary.html" with slug=slug n_collisions=n_collisions n_incomplete=n_incomplete colliding_images_nice_format=colliding_images_nice_format total_pages=total_pages known_pages=known_pages unknown_pages=unknown_pages extra_pages=extra_pages discard_pages=discard_pages error_pages=error_pages paper_pages_list=paper_pages_list %}
+         hx-target="#bundleSummary"
+         hx-on="htmx:afterSwap: refreshBundleSummaryTooltips()">
+        {% include "Scan/fragments/bundle_summary.html" with slug=slug n_collisions=n_collisions n_incomplete=n_incomplete colliding_images_nice_format=colliding_images_nice_format total_pages=total_pages known_pages=known_pages unknown_pages=unknown_pages extra_pages=extra_pages discard_pages=discard_pages error_pages=error_pages paper_pages_list=paper_pages_list incomplete_papers_list=incomplete_papers_list %}
     </div>
     <div class="row pt-3">
         <div class="col-4">
@@ -153,6 +154,13 @@
 	// trigger the summary at the top of the page to refresh
 	function refreshBundleSummary() {
 	    htmx.trigger(document.getElementById("bundleSummary"), "summaryRefresh");
+	}
+
+	// trigger the tooltips in the summary to refresh
+	function refreshBundleSummaryTooltips() {
+	    var summaryTooltipTriggerList = document.querySelectorAll('button[id^="paper-btn-"]');
+	    console.log(summaryTooltipTriggerList)
+	    var updatedTooltipList = [...summaryTooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 	}
 
 	// add a new tooltip to a thumbnail
