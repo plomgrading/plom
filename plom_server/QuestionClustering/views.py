@@ -317,13 +317,18 @@ class ClusterGroupsView(ManagerRequiredView):
             question_idx=question_idx, version=version
         )
 
-        # Grab mapping used for preview
+        # cluster_id to paper mapping used for preview
         cluster_to_paper_map = qcs.get_paper_nums_in_clusters(
             question_idx=question_idx, version=version
         )
 
-        # Grab corners used for clustering
+        # corners used for clustering (for preview)
         rects = qcs.get_corners_used_for_clustering(
+            question_idx=question_idx, version=version
+        )
+
+        # cluster_id to priority mapping
+        cluster_to_priority = qcs.get_cluster_priority_map(
             question_idx=question_idx, version=version
         )
 
@@ -334,6 +339,7 @@ class ClusterGroupsView(ManagerRequiredView):
             "page_num": page_num,
             "cluster_groups": cluster_groups,
             "cluster_to_paper_map": cluster_to_paper_map,
+            "cluster_to_priority": cluster_to_priority,
             "top": rects["top"],
             "left": rects["left"],
             "right": rects["right"],
@@ -342,6 +348,21 @@ class ClusterGroupsView(ManagerRequiredView):
         return render(
             request, "QuestionClustering/cluster_groups.html", context=context
         )
+
+
+class UpdateClusterPriorityView(ManagerRequiredView):
+    def post(self, request: HttpRequest) -> HttpResponse:
+        next_url = request.POST.get("next") or request.META.get("HTTP_REFERER", "/")
+        new_order = request.POST.getlist("cluster_order")
+        question_idx = int(request.POST["question_idx"])
+        version = int(request.POST["version"])
+
+        qcs = QuestionClusteringService()
+        new_order_int = list(map(int, new_order))
+        qcs.update_priority_based_on_scene(new_order_int, question_idx, version)
+
+        messages.success(request, "Updated priority to match scene")
+        return redirect(next_url)
 
 
 class ClusterMergeView(ManagerRequiredView):

@@ -30,6 +30,11 @@ from PIL import Image
 from django.db.models import Count
 from plom_server.QuestionClustering.models import ClusteringModelType
 from django.db import transaction
+from plom_server.Mark.services.marking_priority import (
+    get_tasks_to_update_priority,
+    modify_task_priority,
+)
+from typing import Optional
 
 
 class QuestionClusteringService:
@@ -109,7 +114,7 @@ class QuestionClusteringService:
                 bottom=rects["bottom"],
                 right=rects["right"],
             )
-            QVClusterLink.objects.create(paper=paper, qv_cluster=qv_cluster)
+            qv_cluster.paper.add(paper)
 
     def cluster_mcq(self, question_idx: int, version: int, page_num: int, rects: dict):
         """Cluster mcq responses within the given rects for a qv pair."""
@@ -247,30 +252,102 @@ class QuestionClusteringService:
     def get_cluster_groups_and_count(self, question_idx: int, version: int) -> dict:
         """Get."""
         qs = (
-            QVClusterLink.objects.filter(
-                qv_cluster__question_idx=question_idx, qv_cluster__version=version
-            )
-            .values("qv_cluster__clusterId")
-            .annotate(count=Count("id"))
-            .order_by("qv_cluster__clusterId")
+            QVCluster.objects.filter(question_idx=question_idx, version=version)
+            .annotate(count=Count("paper"))
+            .values("clusterId", "count")
+            .order_by("clusterId")
         )
-        return {item["qv_cluster__clusterId"]: item["count"] for item in qs}
+        return {item["clusterId"]: item["count"] for item in qs}
 
     def get_paper_nums_in_clusters(self, question_idx: int, version: int):
-        qs = QVClusterLink.objects.filter(
-            qv_cluster__question_idx=question_idx, qv_cluster__version=version
+        qs = QVCluster.objects.filter(
+            question_idx=question_idx, version=version
         ).prefetch_related("paper")
 
         result = {}
         for item in qs:
-            cluster_id = item.qv_cluster.clusterId
-            paper_num = item.paper.paper_number
-
-            if cluster_id not in result:
-                result[cluster_id] = []
-            result[cluster_id].append(paper_num)
+            cluster_id = item.clusterId
+            result[cluster_id] = [paper.paper_number for paper in item.paper.all()]
 
         return result
+
+    def get_cluster_priority(
+        self, question_idx: int, version: int, clusterId: int
+    ) -> Optional[float]:
+
+        papers = QVCluster.objects.get(
+            question_idx=question_idx, version=version, clusterId=clusterId
+        ).paper.all()
+        all_tasks = get_tasks_to_update_priority().filter(
+            question_index=question_idx, question_version=version
+        )
+        unique_priorities = (
+            all_tasks.filter(paper__in=papers)
+            .values_list("marking_priority", flat=True)
+            .distinct()
+        )
+        return unique_priorities[0] if len(unique_priorities) == 1 else None
+
+    def get_cluster_priority_map(
+        self, question_idx: int, version: int
+    ) -> dict[int, Optional[float]]:
+        """Get the mapping of cluster id to priority values.
+
+        Note: If there exists tasks under same cluster with conflicting priorities, the priority
+            is set to None
+
+        Returns:
+            A dict mapping clusterId to the priority val. Priority val is None if there are task
+            priorities under the same cluster"""
+
+        return {
+            cluster.clusterId: self.get_cluster_priority(
+                question_idx, version, cluster.clusterId
+            )
+            for cluster in QVCluster.objects.filter(
+                question_idx=question_idx, version=version
+            )
+        }
+
+    def update_priority_based_on_scene(
+        self, cluster_order: list[int], question_idx: int, version: int
+    ):
+        """Update priority values based on the cluster table's order.
+
+        Note: the priority valus is given in the range of [0, len(cluster_order)],
+            priority 0 is given to the papers that are not part of any clsuters
+
+        cluster_order: a list of clusterIds sorted based on decreasing priority.
+        """
+        # grab the relevant clusters in a (q, v) context
+        clusters = QVCluster.objects.filter(
+            question_idx=question_idx, version=version
+        ).prefetch_related("paper")
+
+        # grab all tasks
+        tasks = get_tasks_to_update_priority().filter(
+            question_index=question_idx, question_version=version
+        )
+
+        clustered_papers = set()
+
+        for i, clusterId in enumerate(cluster_order):
+            # get the relevant tasks for every cluster
+            curr_cluster = clusters.get(clusterId=clusterId)
+            curr_papers = curr_cluster.paper.all()
+            curr_tasks = tasks.filter(paper__in=curr_papers)
+
+            # update all tasks under that cluster to the same priority val
+            priority = len(cluster_order) - i
+            for task in curr_tasks:
+                modify_task_priority(task, priority)
+
+            clustered_papers.update(p.pk for p in curr_papers)
+
+        # update priority for paper not part of any cluster to 0
+        task_not_in_cluster = tasks.exclude(paper__in=clustered_papers)
+        for task in task_not_in_cluster:
+            modify_task_priority(task, 0)
 
     def get_corners_used_for_clustering(self, question_idx: int, version: int):
         qvc = QVCluster.objects.filter(question_idx=question_idx, version=version)[0]
@@ -319,9 +396,7 @@ class QuestionClusteringService:
         qvc = QVCluster.objects.get(
             question_idx=question_idx, version=version, clusterId=clusterId
         )
-
-        qvcl = QVClusterLink.objects.get(paper=paper, qv_cluster=qvc)
-        qvcl.delete()
+        qvc.paper.remove(paper)
 
 
 # The decorated function returns a ``huey.api.Result``

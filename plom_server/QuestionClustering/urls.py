@@ -14,6 +14,7 @@ from .views import (
     DeleteClusterMember,
     ClusterMergeView,
     ClusterBulkDeleteView,
+    UpdateClusterPriorityView,
     Debug,
 )
 
@@ -54,6 +55,11 @@ urlpatterns = [
         "delete_cluster_member/<int:question_idx>/<int:version>/<int:page_num>/<int:clusterId>",
         DeleteClusterMember.as_view(),
         name="delete_cluster_member",
+    ),
+    path(
+        "update_cluster_priority/",
+        UpdateClusterPriorityView.as_view(),
+        name="update_cluster_priority",
     ),
     path("merge_clusters/", ClusterMergeView.as_view(), name="merge_clusters"),
     path(

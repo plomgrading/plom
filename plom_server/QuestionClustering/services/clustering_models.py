@@ -1,11 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
-from plom_server.QuestionClustering.models import (
-    QuestionClusteringChore,
-    QVClusterLink,
-    QVCluster,
-)
-
 from plom_server.Papers.models import Paper
 from plom_server.Papers.services import PaperInfoService
 import torch

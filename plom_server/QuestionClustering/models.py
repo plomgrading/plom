@@ -64,6 +64,7 @@ class QVCluster(models.Model):
     left = models.FloatField(null=False)
     bottom = models.FloatField(null=False)
     right = models.FloatField(null=False)
+    paper = models.ManyToManyField(Paper, through="QVClusterLink")
 
     class Meta:
         unique_together = ("question_idx", "version", "clusterId")
