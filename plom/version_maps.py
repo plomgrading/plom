@@ -102,10 +102,10 @@ def check_version_map(
                 # TODO: unsure about this: maybe we should doc that we ignore "select"
                 # when custom version maps are used.
                 # TODO: revisit this when working on Issue #2261.
-                if spec["question"][str(q)]["select"] == "fix":
-                    if not v == 1:
+                if spec["question"][str(q)].get("select") is not None:
+                    if v not in spec["question"][str(q)]["select"]:
                         raise ValueError(
-                            f'version "{v}" is not 1 but question is "fix" in spec {spec}'
+                            f'version "{v}" is not in question\'s "select" in spec {spec}'
                         )
 
     if not len(rowlens) <= 1:
@@ -160,31 +160,32 @@ def make_random_version_map(
     if seed is not None:
         random.seed(seed)
 
-    # generate a list of legal question versions with even distribution (#1470)
-    qv_list: list[dict[int, int]] = []
+    # For each question, generate a list of legal versions with even
+    # distribution (#1470)
+    qv_list: list[list[int]] = [[] for i in range(spec["numberOfQuestions"] + 1)]
     for paper_num in range(1, spec["numberToProduce"] + 1):
-        paper_map = {}
-
         for q_1index_str, question in spec["question"].items():
             q_1index = int(q_1index_str)
-            # no preferences for version provided, draw from all versions
             if question.get("select") is None:
-                paper_map.update({q_1index: (paper_num % spec["numberOfVersions"]) + 1})
+                qv_list[q_1index].append((paper_num % spec["numberOfVersions"]) + 1)
             # (assume) preferences provided, draw only from those versions
             else:
                 version_list = question["select"]
                 num_options = len(question["select"])
-                paper_map.update({q_1index: version_list[paper_num % num_options]})
+                qv_list[q_1index].append(version_list[paper_num % num_options])
 
-        qv_list.append(paper_map)
-
-    # randomise the order
-    random.shuffle(qv_list)
+    # shuffle each list of question versions:
+    for v_list in qv_list:
+        random.shuffle(v_list)
 
     # assign each question version to a paper
     vmap: dict[int, dict[int, int]] = {}
     for paper_num in range(1, spec["numberToProduce"] + 1):
-        vmap[paper_num] = qv_list.pop()
+        paper_map = {}
+        for q_1index_str in spec["question"].keys():
+            q_1index = int(q_1index_str)
+            paper_map.update({q_1index: qv_list[q_1index].pop()})
+        vmap[paper_num] = paper_map
 
     return vmap
 
