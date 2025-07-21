@@ -7,6 +7,7 @@
 # Copyright (C) 2023 Tam Nguyen
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024 Aidan Murphy
+# Copyright (C) 2025 Philip D. Loewen
 
 from __future__ import annotations
 
@@ -99,44 +100,76 @@ def makeCover(
 
     cover = pymupdf.open()
     align = pymupdf.TEXT_ALIGN_CENTER
-    fontsize = 12
-    big_font = 14
-
+    
+    font = pymupdf.Font("helvetica")
+    textsize = 12
+    headersize = 16
+    xxlsize = 20
+    
     paper_width, paper_height = papersize_portrait
     page = cover.new_page(width=paper_width, height=paper_height)
 
     vpos = page_top
-    tw = pymupdf.TextWriter(page.rect)
 
-    # put things on the page
+    # Style and print the assessment title, if available
     if exam_name:
-        tw.append((m, vpos), exam_name, fontsize=big_font)
-        vpos += deltav
-        vpos += deltav // 2
+        titlewriter = pymupdf.TextWriter(page.rect)
+        titlewriter.color = (0.66,0,0)
+        title_width = font.text_length(exam_name, xxlsize)
+        x = (paper_width - title_width) / 2
+        y = 100  # Near the top of the page
+        titlewriter.append((x,y), exam_name, fontsize=xxlsize)
+        titlewriter.write_text(page)
+        vpos += 3*xxlsize
+        
+    # Style and print the info line.
+    infowriter = pymupdf.TextWriter(page.rect)
+    # infowriter.color = (0,0,1)
+        
     if solution:
         text = "Solutions"
     else:
         text = "Results"
-    tw.append((m, vpos), text, fontsize=big_font)
-    bullet = "\N{BULLET}"
+    
     if info:
+        text += " for "
         sname, sid = info
         if sname is None:
-            sname = "Not ID'd yet"
-        if sid is None:
-            sid = "Not ID'd yet"
-        tw.append((m + 100, vpos), f"{bullet} Name: {sname}", fontsize=big_font)
-        vpos += deltav
-        tw.append((m + 100, vpos), f"{bullet} ID: {sid}", fontsize=big_font)
-        vpos += deltav
-    if test_num is not None:
-        if isinstance(test_num, int):
-            text = f"{bullet} Test number: {test_num:04}"
+            text += "Unknown Student"
         else:
-            text = f"{bullet} Test number: {test_num}"
-        tw.append((m + 100, vpos), text, fontsize=big_font)
-        vpos += deltav
+            nnn = [_.strip() for _ in sname.split(",")]
+            nnn.reverse()
+            text += " ".join(nnn)        
+        if sid is None:
+            text += " (no ID yet)"
+        else:
+            text += f" ({sid})"
 
+    info_width = font.text_length(text, xxlsize)
+    x = (paper_width - info_width) / 2
+    y = vpos
+    infowriter.append((x,y), text, fontsize=xxlsize)
+    infowriter.write_text(page)
+    vpos += 1.5*xxlsize
+    
+    # Style and print the test number
+    tnwriter = pymupdf.TextWriter(page.rect)
+    #tnwriter.color = (0,1,0)
+    
+    if isinstance(test_num, int):
+            text = f"Test number {test_num:04}"
+    else:
+        text = f"Test number {test_num}"
+    tn_width = font.text_length(text, headersize)
+    x = (paper_width - tn_width) / 2
+    y = vpos
+    tnwriter.append((x,y), text, fontsize=headersize)
+    tnwriter.write_text(page)
+    vpos += 3*xxlsize
+    
+    # Style and print the table of scores    
+    tw = pymupdf.TextWriter(page.rect)
+    
     shape = page.new_shape()
 
     # rectangles for header that we will shift downwards as we go
@@ -153,14 +186,14 @@ def makeCover(
             # Draw the header
             for header, r in zip(headers, make_boxes(vpos)):
                 shape.draw_rect(r)
-                excess = tw.fill_textbox(r, header, align=align, fontsize=fontsize)
+                excess = tw.fill_textbox(r, header, align=align, fontsize=textsize)
                 assert not excess, f'Table header "{header}" too long for box'
             vpos += deltav + extra_sep
             page_row += 1
 
         for txt, r in zip(row, make_boxes(vpos)):
             shape.draw_rect(r)
-            excess = tw.fill_textbox(r, txt, align=align, fontsize=fontsize)
+            excess = tw.fill_textbox(r, txt, align=align, fontsize=textsize)
             assert not excess, f'Table entry "{txt}" too long for box'
         vpos += deltav
         page_row += 1
@@ -172,7 +205,7 @@ def makeCover(
             shape.commit()
             text = "Table continues on next page..."
             p = pymupdf.Point(m, page.rect.height - m)
-            tw.append(p, text, fontsize=fontsize)
+            tw.append(p, text, fontsize=textsize)
             tw.write_text(page)
             page = cover.new_page(width=paper_width, height=paper_height)
             tw = pymupdf.TextWriter(page.rect)
@@ -183,7 +216,7 @@ def makeCover(
     # Draw the final totals row
     for txt, r in zip(totals, make_boxes(vpos + extra_sep)):
         shape.draw_rect(r)
-        excess = tw.fill_textbox(r, txt, align=align, fontsize=fontsize)
+        excess = tw.fill_textbox(r, txt, align=align, fontsize=textsize)
         assert not excess, f'Table entry "{txt}" too long for box'
     shape.finish(width=0.3, color=(0, 0, 0))
     shape.commit()
@@ -192,7 +225,7 @@ def makeCover(
         # Last words
         text = "Cover page produced on {}".format(local_now_to_simple_string())
         p = pymupdf.Point(m, page.rect.height - m)
-        tw.append(p, text, fontsize=fontsize)
+        tw.append(p, text, fontsize=textsize)
 
     tw.write_text(page)
 
