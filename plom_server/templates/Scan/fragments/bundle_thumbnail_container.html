@@ -14,7 +14,7 @@
      data-bs-placement="top"
      data-bs-title="{% if pg.status == 'known' %}paper-{{ pg.info.paper_number }}.{{ pg.info.page_number }} {% elif pg.status == 'unknown' %}Unknown page {% elif pg.status == 'extra' %} {% if pg.info.paper_number %}Extra page - {{ pg.info.paper_number }}.{{ pg.info.question_idx_list }} {% else %}Extra page - no data {% endif %} {% elif pg.status == 'error' %}error: {{ pg.info.reason }} {% elif pg.status == 'unread' %}qr-unread {% elif pg.status == 'discard' %}discard: {{ pg.info.reason }} {% endif %}">
     <!-- this div handles the click event -->
-    <div hx-get="{% url 'scan_bundle_page_ng' bundle_id pg.order %}"
+    <div hx-get="{% url 'scan_bundle_page' bundle_id pg.order %}"
          hx-swap="innerHTML"
          hx-target="#updatePage">
         <input type="radio"

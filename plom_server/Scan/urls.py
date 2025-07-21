@@ -108,7 +108,7 @@ urlpatterns = [
     path(
         "bundlepage/<int:bundle_id>/<int:index>/",
         GetBundlePageFragmentView.as_view(),
-        name="scan_bundle_page_ng",
+        name="scan_bundle_page",
     ),
     # TODO: is this different to RotateImageView?
     path(
@@ -151,7 +151,7 @@ urlpatterns = [
         "push/<int:bundle_id>/all/", PushAllPageImages.as_view(), name="scan_push_all"
     ),
     path(
-        "discard_ng/<int:bundle_id>/<int:index>/",
+        "discard/<int:bundle_id>/<int:index>/",
         DiscardImageView.as_view(),
         name="discard_image",
     ),
