@@ -595,6 +595,13 @@ class RubricService:
 
         data["rid"] = old_rubric.rid
 
+        if data["kind"] in ("relative", "neutral"):
+            data["out_of"] = 0
+
+        # TODO: Perhaps the serializer should do this
+        max_mark = SpecificationService.get_question_max_mark(data["question_index"])
+        _validate_value(data.get("value", 0), max_mark)
+
         if data.get("display_delta", None) is None:
             # if we don't have a display_delta, we'll generate a default one
             # This might involve a tolerance (in the case of fractions); if
@@ -604,14 +611,6 @@ class RubricService:
                 data["kind"],
                 data.get("out_of", None),
             )
-
-        if data["kind"] in ("relative", "neutral"):
-            data["out_of"] = 0
-
-        # TODO: Perhaps the serializer should do this
-        max_mark = SpecificationService.get_question_max_mark(data["question_index"])
-        _validate_value(data.get("value", 0), max_mark)
-
         if data.get("value", None) is not None:
             # do this only if value is present
             data["value"] = RubricPermissionsService.pin_to_allowed_fraction(
