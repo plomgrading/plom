@@ -42,4 +42,4 @@ class RubricServiceTests_misc(TestCase):
         self.assertIsNotNone(p)
         assert p is not None  # mypy doesn't know self.assert
         self.assertAlmostEqual(p, -5.0 / 3)
-        self.assertTrue(abs(p - 11.0 / 10) <= 1e-15)
+        self.assertTrue(abs(p - -5.0 / 3) <= 1e-15)
