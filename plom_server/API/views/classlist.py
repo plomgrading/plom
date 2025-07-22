@@ -64,17 +64,16 @@ class Classlist(APIView):
             request: A Request object.
 
         GET Data:
-            q: A string encoding the information requested.
+            prename: A string encoding the information requested.
 
         Returns:
             By default, a FileResponse object (subclassed from Response)
             with filename 'classlist.csv'.
-            Alternatively, when the GET parameter "q" has the
-            exact value "prename", return a Response whose body text is
-            the string "True" if prenaming is enabled, "False" otherwise.
+            Alternatively, when the GET parameter "prename" appears,
+            return a Response whose body text is the string "True"
+            if prenaming is enabled, "False" otherwise.
         """
-        q = request.GET.get("q", "nomatch")
-        if q == "prename":
+        if "prename" in request.GET:
             flag = PrenameSettingService().get_prenaming_setting()
             return Response(f"{flag}")
         else:
@@ -164,20 +163,22 @@ class Classlist(APIView):
                 identified by the key "classlist_csv"
 
         POST Data:
-            prename: One of the strings "True" or "False", to be used
-                as the prenaming setting.
+            prename: A string whose casefold() value is "true", to enable
+                prenaming; or any other string, to disable prenaming.
 
         Returns:
-            If a CSV file is provided, you get the Response
+            If a CSV file is provided, we return the Response
             from the method validate_and_use_classlist_csv()
             that serves the web UI in :class:'StagingStudentService'.
-            If that Response has ok status, or there is no CSV file,
+            If that Response has OK status, or there is no CSV file,
             the POST data is consulted to update the prenaming setting.
             For a prenaming update with no classlist, the response is
             empty with status 204.
 
-            If the caller is outside the "manager" group,
-            they get status 403. If
+            Callers outside the "manager" group get status 403
+            no matter what input they may provide. Calling this
+            too late in the assessment preparation sequence will
+            raise exceptions documented elsewhere.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list:
@@ -188,7 +189,7 @@ class Classlist(APIView):
 
         response = Response(status=status.HTTP_204_NO_CONTENT)
 
-        if request.FILES["classlist_csv"]:
+        if "classlist_csv" in request.FILES:
             if StagingStudentService.are_there_students():
                 N = StagingStudentService.how_many_students()
                 return _error_response(
@@ -197,7 +198,8 @@ class Classlist(APIView):
                 )
             response = self._extend(request)
 
-        if response.ok:
+        if 200 <= response.status_code < 300:
+            # Either the classlist uploaded OK, or no CSV was provided.
             if "prename" in request.POST:
                 enable = request.POST["prename"].casefold() == "true"
                 PrenameSettingService().set_prenaming_setting(enable)
