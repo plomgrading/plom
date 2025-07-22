@@ -88,7 +88,6 @@ class QuestionClusteringService:
             clustering_model=clustering_model,
             _debug_be_flaky=False,
         )
-        # print(f"Just enqueued Huey parent_split_and_save task id={res.id}")
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
     def _store_clustered_result(
@@ -404,14 +403,14 @@ class QuestionClusteringService:
         }
 
     def _get_merged_component(self, question_idx: int, version: int, clusterId: int):
-        a = QVCluster.objects.get(
+        qs = QVCluster.objects.get(
             question_idx=question_idx,
             version=version,
             clusterId=clusterId,
             type=ClusteringGroupType.user_facing,
         ).original_cluster.all()
-        print("merged: ", a)
-        return a
+
+        return qs
 
     def get_merged_component_count(self, question_idx: int, version: int):
         return {
