@@ -5,6 +5,7 @@ from plom_server.QuestionClustering.models import (
     QuestionClusteringChore,
     QVClusterLink,
     QVCluster,
+    ClusteringGroupType,
 )
 
 from plom_server.Papers.models import Paper
@@ -35,6 +36,7 @@ from plom_server.Mark.services.marking_priority import (
     modify_task_priority,
 )
 from typing import Optional
+from collections import defaultdict
 
 
 class QuestionClusteringService:
@@ -102,19 +104,46 @@ class QuestionClusteringService:
         Args:
             paper-to_cluster_Id: clustering result that maps paper number to their cluster group.
         """
+
+        # get id to paper_nums mapping
+        clusterId_to_papers = defaultdict(set)
         for pn, clusterId in paper_to_clusterId.items():
-            paper = Paper.objects.get(paper_number=pn)
-            qv_cluster, _ = QVCluster.objects.get_or_create(
-                question_idx=question_idx,
-                version=version,
-                clusterId=clusterId,
-                page_num=page_num,
-                top=rects["top"],
-                left=rects["left"],
-                bottom=rects["bottom"],
-                right=rects["right"],
-            )
-            qv_cluster.paper.add(paper)
+            clusterId_to_papers[clusterId].add(pn)
+
+        with transaction.atomic():
+
+            for clusterId, paper_nums in clusterId_to_papers.items():
+
+                # create user facing grouping
+                user_facing_cluster = QVCluster.objects.create(
+                    question_idx=question_idx,
+                    version=version,
+                    clusterId=clusterId,
+                    type=ClusteringGroupType.user_facing,
+                    page_num=page_num,
+                    top=rects["top"],
+                    left=rects["left"],
+                    bottom=rects["bottom"],
+                    right=rects["right"],
+                )
+
+                base_cluster = QVCluster.objects.create(
+                    question_idx=question_idx,
+                    version=version,
+                    clusterId=clusterId,
+                    type=ClusteringGroupType.original,
+                    page_num=page_num,
+                    top=rects["top"],
+                    left=rects["left"],
+                    bottom=rects["bottom"],
+                    right=rects["right"],
+                    user_cluster=user_facing_cluster,
+                )
+
+                # Use .filter instead of .get in for loop to avoid n+1 queries
+                papers = Paper.objects.filter(paper_number__in=paper_nums)
+                base_cluster.paper.add(*papers)
+                user_facing_cluster.paper.add(*papers)
 
     def cluster_mcq(self, question_idx: int, version: int, page_num: int, rects: dict):
         """Cluster mcq responses within the given rects for a qv pair."""
@@ -249,19 +278,28 @@ class QuestionClusteringService:
             for task in QuestionClusteringChore.objects.filter(obsolete=False)
         ]
 
-    def get_cluster_groups_and_count(self, question_idx: int, version: int) -> dict:
-        """Get."""
+    def get_user_facing_clusters(self, question_idx: int, version: int) -> dict:
+        """Get a mapping of clusterId to the count of the members"""
         qs = (
-            QVCluster.objects.filter(question_idx=question_idx, version=version)
+            QVCluster.objects.filter(
+                question_idx=question_idx,
+                version=version,
+                type=ClusteringGroupType.user_facing,
+            )
             .annotate(count=Count("paper"))
             .values("clusterId", "count")
             .order_by("clusterId")
         )
         return {item["clusterId"]: item["count"] for item in qs}
 
-    def get_paper_nums_in_clusters(self, question_idx: int, version: int):
+    def get_paper_nums_in_clusters(
+        self, question_idx: int, version: int
+    ) -> dict[int, list[int]]:
+        """Get a mapping from clusterId to the paper_num of papers under the given cluster"""
         qs = QVCluster.objects.filter(
-            question_idx=question_idx, version=version
+            question_idx=question_idx,
+            version=version,
+            type=ClusteringGroupType.user_facing,
         ).prefetch_related("paper")
 
         result = {}
@@ -276,7 +314,10 @@ class QuestionClusteringService:
     ) -> Optional[float]:
 
         papers = QVCluster.objects.get(
-            question_idx=question_idx, version=version, clusterId=clusterId
+            question_idx=question_idx,
+            version=version,
+            clusterId=clusterId,
+            type=ClusteringGroupType.user_facing,
         ).paper.all()
         all_tasks = get_tasks_to_update_priority().filter(
             question_index=question_idx, question_version=version
@@ -305,7 +346,9 @@ class QuestionClusteringService:
                 question_idx, version, cluster.clusterId
             )
             for cluster in QVCluster.objects.filter(
-                question_idx=question_idx, version=version
+                question_idx=question_idx,
+                version=version,
+                type=ClusteringGroupType.user_facing,
             )
         }
 
@@ -321,7 +364,9 @@ class QuestionClusteringService:
         """
         # grab the relevant clusters in a (q, v) context
         clusters = QVCluster.objects.filter(
-            question_idx=question_idx, version=version
+            question_idx=question_idx,
+            version=version,
+            type=ClusteringGroupType.user_facing,
         ).prefetch_related("paper")
 
         # grab all tasks
@@ -358,18 +403,44 @@ class QuestionClusteringService:
             "right": qvc.right,
         }
 
+    def _get_merged_component(self, question_idx: int, version: int, clusterId: int):
+        a = QVCluster.objects.get(
+            question_idx=question_idx,
+            version=version,
+            clusterId=clusterId,
+            type=ClusteringGroupType.user_facing,
+        ).original_cluster.all()
+        print("merged: ", a)
+        return a
+
+    def get_merged_component_count(self, question_idx: int, version: int):
+        return {
+            cluster.clusterId: len(
+                self._get_merged_component(question_idx, version, cluster.clusterId)
+            )
+            for cluster in QVCluster.objects.filter(
+                question_idx=question_idx,
+                version=version,
+                type=ClusteringGroupType.user_facing,
+            )
+        }
+
     def merge_clusters(self, question_idx: int, version: int, clusterIds: list[int]):
         with transaction.atomic():
-            # assign all clusters to the minimum clusterId
+            # assign to the minimum clusterId
             target_cluster_id = min(clusterIds)
             target_cluster = QVCluster.objects.get(
-                question_idx=question_idx, version=version, clusterId=target_cluster_id
+                question_idx=question_idx,
+                version=version,
+                clusterId=target_cluster_id,
+                type=ClusteringGroupType.user_facing,
             )
 
             clusters_to_merge = QVCluster.objects.filter(
                 question_idx=question_idx,
                 version=version,
                 clusterId__in=set(clusterIds),
+                type=ClusteringGroupType.user_facing,
             )
 
             # reassign cluster membership
@@ -377,16 +448,27 @@ class QuestionClusteringService:
                 qv_cluster=target_cluster
             )
 
+            QVCluster.objects.filter(
+                type=ClusteringGroupType.original, user_cluster__in=clusters_to_merge
+            ).update(user_cluster=target_cluster)
+
             # remove obsolete cluster groups
             clusters_to_merge.exclude(clusterId=target_cluster_id).delete()
 
     def delete_clusters(self, question_idx: int, version: int, clusterIds: list[int]):
         with transaction.atomic():
 
+            # BaseQVCluster.objects.filter(
+            #     question_idx=question_idx,
+            #     version=version,
+            #     clusterId__in=set(clusterIds),
+            # ).delete()
+
             QVCluster.objects.filter(
                 question_idx=question_idx,
                 version=version,
                 clusterId__in=set(clusterIds),
+                type=ClusteringGroupType.user_facing,
             ).delete()
 
     def delete_cluster_member(
@@ -394,9 +476,60 @@ class QuestionClusteringService:
     ):
         paper = Paper.objects.get(paper_number=paper_num)
         qvc = QVCluster.objects.get(
-            question_idx=question_idx, version=version, clusterId=clusterId
+            question_idx=question_idx,
+            version=version,
+            clusterId=clusterId,
+            type=ClusteringGroupType.user_facing,
         )
         qvc.paper.remove(paper)
+
+    def reset_clusters(self, question_idx: int, version: int, clusterIds: list[int]):
+        for cid in clusterIds:
+            self._reset_cluster(question_idx, version, cid)
+
+        return len(clusterIds)
+
+    def _reset_cluster(self, question_idx: int, version: int, clusterId: int):
+        user_facing_cluster = QVCluster.objects.get(
+            question_idx=question_idx,
+            version=version,
+            clusterId=clusterId,
+            type=ClusteringGroupType.user_facing,
+        )
+        # grab base clusters that pointed at this user_facing (UF) cluster
+        originals = list(user_facing_cluster.original_cluster.all())
+
+        with transaction.atomic():
+            # delete the old UF cluster
+            user_facing_cluster.delete()
+
+            # create new UF clusters and collect them
+            new_clusters = []
+            for oc in originals:
+                new = QVCluster.objects.create(
+                    question_idx=oc.question_idx,
+                    version=oc.version,
+                    clusterId=oc.clusterId,
+                    type=ClusteringGroupType.user_facing,
+                    page_num=oc.page_num,
+                    top=oc.top,
+                    left=oc.left,
+                    bottom=oc.bottom,
+                    right=oc.right,
+                )
+                new_clusters.append(new)
+
+            # copy M2M links in bulk via the through‐model
+            links = []
+            for new, oc in zip(new_clusters, originals):
+                for paper in oc.paper.all():
+                    links.append(QVClusterLink(paper=paper, qv_cluster=new))
+            QVClusterLink.objects.bulk_create(links)
+
+            # point each original at its matching new UF cluster
+            for oc, new in zip(originals, new_clusters):
+                oc.user_cluster = new
+            QVCluster.objects.bulk_update(originals, ["user_cluster"])
 
 
 # The decorated function returns a ``huey.api.Result``

@@ -5,6 +5,9 @@
 from django.db import models
 from plom_server.Base.models import HueyTaskTracker
 from plom_server.Papers.models import Paper
+from django.db.models import Q
+from django.db.models import Max
+from django.db import transaction
 
 
 class ClusteringModelType(models.TextChoices):
@@ -42,6 +45,13 @@ class QuestionClusteringChore(HueyTaskTracker):
         return f"Cluster question: {self.question_idx}, version: {self.version}"
 
 
+class ClusteringGroupType(models.TextChoices):
+    """Defines what clustering models exist in the system"""
+
+    original = "original", "Original clustering created"
+    user_facing = "user_facing", "Clustering group that user sees"
+
+
 class QVCluster(models.Model):
     """A cluster in a (question, version) pair.
 
@@ -58,7 +68,18 @@ class QVCluster(models.Model):
     question_idx = models.PositiveIntegerField(null=False)
     version = models.PositiveIntegerField(null=False)
     page_num = models.PositiveIntegerField(null=False)
-    clusterId = models.IntegerField(null=False)
+    clusterId = models.IntegerField(blank=True, null=False)
+    type = models.CharField(
+        choices=ClusteringGroupType.choices, null=False, max_length=20
+    )
+    user_cluster = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="original_cluster",
+        limit_choices_to={"type": ClusteringGroupType.user_facing},
+    )
 
     top = models.FloatField(null=False)
     left = models.FloatField(null=False)
@@ -67,7 +88,30 @@ class QVCluster(models.Model):
     paper = models.ManyToManyField(Paper, through="QVClusterLink")
 
     class Meta:
-        unique_together = ("question_idx", "version", "clusterId")
+        unique_together = ("question_idx", "version", "clusterId", "type")
+        constraints = [
+            models.CheckConstraint(
+                check=(
+                    Q(type=ClusteringGroupType.user_facing, user_cluster__isnull=True)
+                    | ~Q(type=ClusteringGroupType.user_facing)
+                ),
+                name="cluster_type_user_cluster_consistency",
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        # Only assign if no value given
+        if self.clusterId in (None, ""):
+            # atomic to avoid two processes picking the same next ID
+            with transaction.atomic():
+                last = (
+                    QVCluster.objects.filter(
+                        question_idx=self.question_idx, version=self.version
+                    ).aggregate(Max("clusterId"))["clusterId__max"]
+                ) or 0
+                self.clusterId = last + 1
+
+        super().save(*args, **kwargs)
 
 
 class QVClusterLink(models.Model):

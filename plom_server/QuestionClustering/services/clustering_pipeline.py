@@ -1,9 +1,4 @@
-import torch
-import torch.nn as nn
-from torchvision import models, transforms
-from PIL import Image
 import numpy as np
-from pathlib import Path
 from plom_server.QuestionClustering.models import ClusteringModelType
 from plom_server.QuestionClustering.services.clustering_models import (
     ClusteringModel,
@@ -11,7 +6,6 @@ from plom_server.QuestionClustering.services.clustering_models import (
     HMEClusteringModel,
 )
 from functools import lru_cache
-import pandas as pd
 from typing import Sequence, Mapping
 from .preprocessor import Preprocessor
 

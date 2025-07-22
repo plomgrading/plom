@@ -60,7 +60,27 @@
                     <button type="submit"
                             class="btn btn-danger"
                             :disabled="selected.length == 0"
-                            onclick="return confirm('Are you sure deleting?');">Delete Selected</button>
+                            onclick="return confirm('Are you sure deleting the selected clusters?');">
+                        Delete Selected
+                    </button>
+                </form>
+                <!-- Reset form -->
+                <form action="{% url 'bulk_reset_clusters' %}"
+                      method="post"
+                      class="d-inline-flex align-items-center me-3">
+                    {% csrf_token %}
+                    <input type="hidden" name="question_idx" value="{{ question_idx }}">
+                    <input type="hidden" name="version" value="{{ version }}">
+                    <template x-for="id in selected" :key="id">
+                        <input type="hidden" name="selected_clusters" :value="id" />
+                    </template>
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit"
+                            class="btn btn-info"
+                            :disabled="selected.length == 0"
+                            onclick="return confirm('Are you sure resetting the selected clusters?');">
+                        Reset Selected
+                    </button>
                 </form>
                 <form class="d-inline-flex align-items-center">
                     <button type="button"
@@ -91,12 +111,14 @@
                     <thead class="bg-gray-100">
                         <tr>
                             <th class="text-center">
-                                <input type="checkbox"
+                                <input T="checkbox"
+                                       hidden
                                        class="form-check-input"
                                        x-model="all"
                                        @change="selected = all ? ids : []">
                             </th>
                             <th class="text-center" data-sort-method="none">Preview</th>
+                            <th class="text-center" data-sort-method="none"># Merged</th>
                             <th class="text-center" data-sort-method="number">
                                 <span class="d-flex justify-content-center align-items-center gap-1">
                                     ClusterId
@@ -105,7 +127,7 @@
                             </th>
                             <th class="text-center" data-sort-method="number">
                                 <span class="d-flex justify-content-center align-items-center gap-1">
-                                    Counts
+                                    # Members
                                     <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
                                 </span>
                             </th>
@@ -144,6 +166,9 @@
                                             {% endwith %}
                                         {% endif %}
                                     {% endwith %}
+                                </td>
+                                <td class="text-center align-middle">
+                                    {% with count=merged_count|get_item:clusterId %}{{ count }}{% endwith %}
                                 </td>
                                 <td class="text-center align-middle">{{ clusterId }}</td>
                                 <td class="text-center align-middle">{{ count }}</td>
@@ -186,7 +211,9 @@
             dataIdAttr: 'data-cluster-id',
             onEnd: () => this.order = s.toArray(),
             });
+            this.order = s.toArray();
         },
+        
 
         submit() {
             // Alpine will re‐render hidden inputs from `order`
@@ -199,7 +226,7 @@
     const table = document.querySelector('[x-ref="clusterTable"]');
     const ts = new Tablesort(table);
     
-    // Update icons
+    //
     table.addEventListener('afterSort', () => {
         table.querySelectorAll('th').forEach(th => {
         const icon = th.querySelector('.sort-icon');
@@ -217,14 +244,14 @@
     const priorityHeader = document.getElementById('priority-col');
 
     // Click it to trigger the default sort
-    if (priorityHeader) {
-        for (let count = 1; count <= 2; count ++) {
-            if (priorityHeader.getAttribute("aria-sort") == "descending"){
-                break;
-            }
-            priorityHeader.click()
-        }
-    }
+    // if (priorityHeader) {
+    //     for (let count = 1; count <= 2; count ++) {
+    //         if (priorityHeader.getAttribute("aria-sort") == "descending"){
+    //             break;
+    //         }
+    //         priorityHeader.click()
+    //     }
+    // }
     });
 
     function imgError(image) {

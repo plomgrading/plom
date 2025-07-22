@@ -313,7 +313,7 @@ class ClusterGroupsView(ManagerRequiredView):
     ) -> HttpResponse:
 
         qcs = QuestionClusteringService()
-        cluster_groups = qcs.get_cluster_groups_and_count(
+        cluster_groups = qcs.get_user_facing_clusters(
             question_idx=question_idx, version=version
         )
 
@@ -332,6 +332,11 @@ class ClusterGroupsView(ManagerRequiredView):
             question_idx=question_idx, version=version
         )
 
+        # cluster_id to types
+        merged_component_count = qcs.get_merged_component_count(
+            question_idx=question_idx, version=version
+        )
+
         context = {
             "question_label": SpecificationService.get_question_label(question_idx),
             "question_idx": question_idx,
@@ -340,6 +345,7 @@ class ClusterGroupsView(ManagerRequiredView):
             "cluster_groups": cluster_groups,
             "cluster_to_paper_map": cluster_to_paper_map,
             "cluster_to_priority": cluster_to_priority,
+            "merged_count": merged_component_count,
             "top": rects["top"],
             "left": rects["left"],
             "right": rects["right"],
@@ -359,6 +365,7 @@ class UpdateClusterPriorityView(ManagerRequiredView):
 
         qcs = QuestionClusteringService()
         new_order_int = list(map(int, new_order))
+        print(f"test: {new_order_int}")
         qcs.update_priority_based_on_scene(new_order_int, question_idx, version)
 
         messages.success(request, "Updated priority to match scene")
@@ -398,4 +405,21 @@ class ClusterBulkDeleteView(ManagerRequiredView):
         qcs.delete_clusters(question_idx, version, clusterIds)
 
         messages.success(request, f"Deleted {len(clusterIds)} clusters")
+        return redirect(next_url)
+
+
+class ClusterBulkResetView(ManagerRequiredView):
+    def post(self, request: HttpRequest) -> HttpResponse:
+        clusterIds = request.POST.getlist("selected_clusters")
+        clusterIds = list(map(int, clusterIds))
+
+        question_idx = int(request.POST["question_idx"])
+        version = int(request.POST["version"])
+        next_url = request.POST.get("next")
+
+        qcs = QuestionClusteringService()
+
+        qcs.reset_clusters(question_idx, version, clusterIds)
+
+        messages.success(request, f"reset {len(clusterIds)} clusters")
         return redirect(next_url)
