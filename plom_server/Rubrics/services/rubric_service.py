@@ -53,33 +53,34 @@ from .utils import _generate_display_delta, _Rubric_to_dict
 log = logging.getLogger("RubricService")
 
 
-# TODO: more validation of JSONFields that the model/form/serializer should
+# TODO: validation of JSONFields that the model/form/serializer could/should
 # be doing (see `clean_versions` commented out in Rubrics/models.py)
-# These `_validate_...` functions are written somelike like `clean_<field>`
+# These `_validate_...` functions are written something like `clean_<field>`
 # in Django's model/form.
-def _validate_versions(vers: None | list | str) -> None:
+
+
+def _validate_versions_in_range(vers: None | str) -> None:
     if not vers:
-        # empty string is ok for versions
         return
 
-    if not isinstance(vers, list):
-        raise serializers.ValidationError(
-            f'nonempty "versions" must be a list of ints but got "{vers}"'
-        )
+    # The serialzer is going to do all this, except for the range check,
+    # but b/c the seralizer hasn't run yet, we need to parse.  We could
+    # consider moving this check to the serializer but its does require
+    # looking up the number of versions in another table...
+
+    if not isinstance(vers, str):
+        raise serializers.ValidationError({"versions": "Input must be string"})
+    try:
+        parsed_vers = [int(x.strip()) for x in vers.split(",")]
+    except ValueError as e:
+        _errmsg = f'nonempty "versions" must be a comma-separated list of ints but got "{vers}": {e}'
+        raise serializers.ValidationError({"versions": _errmsg})
 
     n_versions = SpecificationService.get_n_versions()
-
-    for v in vers:
-        if not isinstance(v, int):
-            raise serializers.ValidationError(
-                f'nonempty "versions" must be a list of ints but got "{vers}"'
-            )
+    for v in parsed_vers:
         if v < 1 or v > n_versions:
-            raise serializers.ValidationError(
-                {
-                    "versions": f"Version {v} is out of range — must be in [1, {n_versions}]"
-                }
-            )
+            _errmsg = f"Version {v} is out of range — must be in [1, {n_versions}]"
+            raise serializers.ValidationError({"versions": _errmsg})
 
 
 def _validate_parameters(parameters: None | list, num_versions: None | int = 1) -> None:
@@ -381,9 +382,9 @@ class RubricService:
                 )
             _validate_value_out_of(data["value"], data["out_of"], max_mark)
 
-        # TODO: more validation of JSONFields that the model/form/serializer should
+        # TODO: more validation of fields that the model/form/serializer could/should
         # be doing (see `clean_versions` commented out in Rubrics/models.py)
-        _validate_versions(data.get("versions"))
+        _validate_versions_in_range(data.get("versions"))
         _validate_parameters(
             data.get("parameters"), SpecificationService.get_n_versions()
         )
@@ -437,7 +438,7 @@ class RubricService:
                 user=_bypass_user,
                 modified_by_user=_bypass_user,
                 latest=data.get("latest"),
-                versions=data.get("versions"),
+                versions=data.get("versions", ""),
             )
             for tag in data.get("pedagogy_tags", []):
                 new_rubric.pedagogy_tags.add(tag)
@@ -610,6 +611,7 @@ class RubricService:
         # TODO: Perhaps the serializer should do this
         max_mark = SpecificationService.get_question_max_mark(data["question_index"])
         _validate_value(data.get("value", 0), max_mark)
+
         if data.get("value", None) is not None:
             # do this only if value is present
             data["value"] = RubricPermissionsService.pin_to_allowed_fraction(
@@ -619,7 +621,8 @@ class RubricService:
         if data["kind"] == "absolute":
             _validate_value_out_of(data["value"], data["out_of"], max_mark)
 
-        _validate_versions(data.get("versions"))
+        _validate_versions_in_range(data.get("versions"))
+
         _validate_parameters(
             data.get("parameters"), SpecificationService.get_n_versions()
         )
@@ -667,12 +670,17 @@ class RubricService:
 
     @classmethod
     def get_rubrics_as_dicts(
-        cls, *, question_idx: int | None = None
+        cls,
+        *,
+        question_idx: int | None = None,
+        _convert_versions_to_list_of_ints: bool = False,
     ) -> list[dict[str, Any]]:
         """Get the rubrics, possibly filtered by question.
 
         Keyword Args:
             question_idx: question index or ``None`` for all.
+            _convert_versions_to_list_of_ints: the API 114 still hands out
+                rubrics using versions as a list of ints.
 
         Returns:
             Collection of dictionaries, one for each rubric.
@@ -694,6 +702,13 @@ class RubricService:
 
         new_rubric_data = sorted(rubric_data, key=itemgetter("kind"))
 
+        # quick hack b/c API still sends list of ints instead of str of versions
+        if _convert_versions_to_list_of_ints:
+            for r in new_rubric_data:
+                if r["versions"] == "":
+                    r["versions"] = []
+                else:
+                    r["versions"] = [int(v.strip()) for v in r["versions"].split(",")]
         return new_rubric_data
 
     @staticmethod
@@ -799,6 +814,7 @@ class RubricService:
                 "meta": "Is this answer blank or nearly blank?  Please do not use "
                 + "if there is any possibility of relevant writing on the page.",
                 "tags": "",
+                "versions": "",
             }
             create_system_rubric(rubric)
             # log.info("Built no-answer-rubric Q%s: key %s", q, r.pk)
@@ -811,6 +827,7 @@ class RubricService:
                 "question_index": q,
                 "meta": "There is writing here but its not sufficient for any points.",
                 "tags": "",
+                "versions": "",
             }
             create_system_rubric(rubric)
             # log.info("Built no-marks-rubric Q%s: key %s", q, r.pk)
@@ -822,6 +839,7 @@ class RubricService:
                 "text": "full marks",
                 "question_index": q,
                 "tags": "",
+                "versions": "",
             }
             create_system_rubric(rubric)
             # log.info("Built full-marks-rubric Q%s: key %s", q, r.pk)
@@ -1240,7 +1258,7 @@ class RubricService:
             "tags": "",
             "meta": "",
             "question_index": question_index,
-            "versions": [],
+            "versions": "",
             "parameters": [],
             "pedagogy_tags": [],
         }
@@ -1293,14 +1311,15 @@ class RubricService:
 
         return data_string
 
-    def update_rubric_data(
-        self,
+    @classmethod
+    def create_rubrics_from_file_data(
+        cls,
         data: str,
         filetype: str,
         by_system: bool,
         requesting_user: str | None = None,
     ) -> list[dict[str, Any]]:
-        """Retrieves rubrics from a file.
+        """Retrieves rubric data from a file and create rubric for each.
 
         Args:
             data: The file object containing the rubrics.
@@ -1308,7 +1327,6 @@ class RubricService:
             by_system: true if the update is called by system and requesting_user is irrelevant.
             requesting_user: the user who requested to update the rubric data.
             ``None`` means you don't care who (probably for internal use only).
-
 
         Returns:
             A list of the rubrics created.
@@ -1339,18 +1357,6 @@ class RubricService:
             # Fixes for Issue #3807: csv often scramble empty lists or otherwise makes strings
             if r.get("pedagogy_tags") == "[]":
                 r["pedagogy_tags"] = []
-            if r.get("versions") == "[]":
-                r["versions"] = []
-            if isinstance(r.get("versions"), str) and r.get("versions") != "":
-                versions = r["versions"]
-                try:
-                    versions = ast.literal_eval(versions)
-                except (SyntaxError, ValueError) as e:
-                    raise serializers.ValidationError(
-                        f'Invalid "versions" field type {type(versions)}'
-                        f' "{versions}"; {e}'
-                    ) from e
-                r["versions"] = versions
 
             if r.get("parameters") in ("[]", ""):
                 r["parameters"] = []
@@ -1365,14 +1371,14 @@ class RubricService:
                     ) from e
                 r["parameters"] = parameters
 
-        # ensure either all rubrics succeed or all fail
         if requesting_user:
             user = User.objects.get(username=requesting_user)
         else:
             user = None
 
+        # ensure either all rubrics succeed or all fail
         with transaction.atomic():
             return [
-                self.create_rubric(r, creating_user=user, by_system=by_system)
+                cls.create_rubric(r, creating_user=user, by_system=by_system)
                 for r in rubrics
             ]

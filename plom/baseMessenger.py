@@ -53,7 +53,7 @@ Supported_Server_API_Versions = [
     Plom_Legacy_Server_API_Version,
     112,  # 2024-09
     113,  # 2025-01
-    114,  # 2025-
+    114,  # 2025-05
 ]
 # Brief changelog
 #

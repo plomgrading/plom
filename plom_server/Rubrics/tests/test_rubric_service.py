@@ -159,8 +159,8 @@ class RubricServiceTests_extra_validation(TestCase):
         with self.assertRaises(serializers.ValidationError):
             RubricService.create_rubric(rub)
 
-    def test_create_rubric_invalid_versions(self) -> None:
-        for bad_versions in ("[1, 1.2]", "[1, sth]", "{1, 2}", [1, 1.2], [1, "abc"]):
+    def test_create_rubric_versions_invalid(self) -> None:
+        for bad_versions in ("[1, 2]", [1, 1.2], "1, 1.2", "1, sth", "abc"):
             rub = {
                 "kind": "neutral",
                 "value": 0,
@@ -170,6 +170,19 @@ class RubricServiceTests_extra_validation(TestCase):
                 "versions": bad_versions,
             }
             with self.assertRaises(serializers.ValidationError):
+                RubricService.create_rubric(rub)
+
+    def test_create_rubric_versions_out_of_range(self) -> None:
+        for oor_versions in ("-1", "999", "-1, 1", "-1, 999"):
+            rub = {
+                "kind": "neutral",
+                "value": 0,
+                "text": "qwerty",
+                "username": "Liam",
+                "question_index": 1,
+                "versions": oor_versions,
+            }
+            with self.assertRaisesRegex(serializers.ValidationError, "out of range"):
                 RubricService.create_rubric(rub)
 
     def test_create_rubric_valid_parameters(self) -> None:
@@ -228,7 +241,7 @@ class RubricServiceTests(TestCase):
             user=user1,
             tags="",
             meta="asdfg",
-            versions=[],
+            versions="",
             parameters=[],
         )
 
@@ -243,7 +256,7 @@ class RubricServiceTests(TestCase):
             user=user2,
             tags="",
             meta="hjklz",
-            versions=[],
+            versions="",
             parameters=[],
         )
 
@@ -258,7 +271,7 @@ class RubricServiceTests(TestCase):
             user=user2,
             tags="",
             meta="hjklz",
-            versions=[],
+            versions="",
             parameters=[],
         )
 
@@ -281,7 +294,7 @@ class RubricServiceTests(TestCase):
             user=user1,
             tags="",
             meta="lkjhg",
-            versions=[],
+            versions="",
             parameters=[],
         )
 
@@ -307,7 +320,6 @@ class RubricServiceTests(TestCase):
             "meta": "asdfg",
             "username": "Liam",
             "question_index": 1,
-            "versions": [],
             "parameters": [],
         }
         r = RubricService._create_rubric(simulated_client_data)
@@ -334,7 +346,6 @@ class RubricServiceTests(TestCase):
             "meta": "hjklz",
             "username": "Olivia",
             "question_index": 1,
-            "versions": [],
             "parameters": [],
         }
         r = RubricService._create_rubric(simulated_client_data)
@@ -361,7 +372,6 @@ class RubricServiceTests(TestCase):
             "meta": "lkjhg",
             "username": "Liam",
             "question_index": 3,
-            "versions": [],
             "parameters": [],
         }
         r = RubricService._create_rubric(simulated_client_data)
@@ -403,7 +413,6 @@ class RubricServiceTests(TestCase):
             "meta": "hjklz",
             "username": "Olivia",
             "question_index": 1,
-            "versions": [],
             "parameters": [],
         }
         r = RubricService.modify_rubric(rid, simulated_client_data)
@@ -427,7 +436,6 @@ class RubricServiceTests(TestCase):
             "meta": "hjklz",
             "username": "Olivia",
             "question_index": 1,
-            "versions": [],
             "parameters": [],
         }
         r = RubricService.modify_rubric(rid, simulated_client_data)
@@ -455,7 +463,6 @@ class RubricServiceTests(TestCase):
             "meta": "hjklz",
             "username": "Olivia",
             "question_index": 1,
-            "versions": [],
             "parameters": [],
         }
         r = RubricService.modify_rubric(rid, simulated_client_data)

@@ -6,7 +6,7 @@
 # Copyright (C) 2025 Philip D. Loewen
 # Copyright (C) 2025 Aidan Murphy
 
-"""Extended bits 'n bobs for advanced non-stable feataures of Plom server."""
+"""Extended bits 'n bobs for advanced non-stable features of Plom server."""
 
 import logging
 from email.message import EmailMessage
@@ -583,7 +583,10 @@ class PlomAdminMessenger(Messenger):
             success==True. Dealing with those messages is the caller's job.
 
         Raises:
-            PlomSeriousException - if the GET request produces an HTTPError
+            PlomConflict: error with the classlist.
+            PlomAuthenticationException: not authenticated.
+            PlomNoPermission: you don't have permission to upload classlists.
+            PlomSeriousException: unexpected errors.
         """
         with self.SRmutex:
             try:
@@ -592,13 +595,24 @@ class PlomAdminMessenger(Messenger):
                     response = self.patch_auth("/api/v0/classlist", files=filedict)
                 response.raise_for_status()
             except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomConflict(
+                        f"Classlist upload failed: {response.reason}"
+                    ) from None
                 if response.status_code == 401:
                     raise PlomAuthenticationException(response.reason) from None
                 if response.status_code == 403:
                     raise PlomNoPermission(response.reason) from None
-                raise PlomSeriousException(f"Some other sort of error {e}") from None
+                if response.status_code == 406:
+                    raise PlomConflict(
+                        f"Classlist upload failed: {response.json()}"
+                    ) from None
+                raise PlomSeriousException(
+                    f"Classlist upload failed: error {e}"
+                ) from None
 
-        return tuple(response.json())
+        werr = response.json()
+        return True, werr
 
     def rectangle_extraction(
         self, version: int, page_num: int, paper_num: int, region: dict[str, float]
