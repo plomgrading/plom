@@ -16,6 +16,8 @@ from .views import (
     ClusterBulkDeleteView,
     ClusterBulkResetView,
     UpdateClusterPriorityView,
+    ClusterBulkTaggingView,
+    RemoveTagFromClusterView,
     Debug,
 )
 
@@ -57,11 +59,6 @@ urlpatterns = [
         DeleteClusterMember.as_view(),
         name="delete_cluster_member",
     ),
-    path(
-        "update_cluster_priority/",
-        UpdateClusterPriorityView.as_view(),
-        name="update_cluster_priority",
-    ),
     path("merge_clusters/", ClusterMergeView.as_view(), name="merge_clusters"),
     path(
         "bulk_delete_clusters/",
@@ -72,6 +69,21 @@ urlpatterns = [
         "bulk_reset_clusters/",
         ClusterBulkResetView.as_view(),
         name="bulk_reset_clusters",
+    ),
+    path(
+        "update_cluster_priority/",
+        UpdateClusterPriorityView.as_view(),
+        name="update_cluster_priority",
+    ),
+    path(
+        "bulk_cluster_tagging/",
+        ClusterBulkTaggingView.as_view(),
+        name="bulk_cluster_tagging",
+    ),
+    path(
+        "remove_tag_from_cluster",
+        RemoveTagFromClusterView.as_view(),
+        name="remove_tag_from_cluster",
     ),
     path("remove-huey-debug/", Debug.as_view(), name="remove_huey_debug"),
 ]

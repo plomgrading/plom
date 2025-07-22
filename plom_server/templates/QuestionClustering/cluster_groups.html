@@ -86,8 +86,7 @@
                     </form>
                 </div>
                 <div class="ms-auto"></div>
-                <!-- Right side dropdown (pure Alpine) -->
-                <!-- Right side dropdown (pure Alpine, no Bootstrap JS) -->
+                <!-- Right side dropdown -->
                 <div class="position-relative" @click.away="openMenu=false">
                     <button class="btn btn-secondary"
                             type="button"
@@ -108,9 +107,11 @@
                                 min-width:12rem">
                         <a class="dropdown-item"
                            href="#"
+                           title="Set priorities based on table order, higher row has higher priority"
                            @click.prevent="$dispatch('update-priority'); openMenu=false;">Update priority</a>
                         <a class="dropdown-item"
                            href="#"
+                           title="Tag each cluster with cluster_{qidx}_{version}_{clusterId}"
                            @click.prevent="document.getElementById('bulk-tag-form').submit(); openMenu=false;">
                             Bulk tagging
                         </a>
@@ -118,7 +119,10 @@
                 </div>
             </div>
             <!-- Hidden Bulk Tagging form -->
-            <form id="bulk-tag-form" action="" method="post" class="d-none">
+            <form id="bulk-tag-form"
+                  action="{% url 'bulk_cluster_tagging' %}"
+                  method="post"
+                  class="d-none">
                 {% csrf_token %}
                 <input type="hidden" name="question_idx" value="{{ question_idx }}">
                 <input type="hidden" name="version" value="{{ version }}">
@@ -150,94 +154,99 @@
                     <thead class="bg-gray-100">
                         <tr>
                             <th class="text-center">
-                                <input T="checkbox"
-                                       hidden
+                                <input type="checkbox"
                                        class="form-check-input"
-                                       x-model="all"
-                                       @change="selected = all ? ids : []">
-                            </th>
-                            <th class="text-center" data-sort-method="none">Preview</th>
-                            <th class="text-center" data-sort-method="none"># Merged</th>
-                            <th class="text-center" data-sort-method="number">
-                                <span class="d-flex justify-content-center align-items-center gap-1">
-                                    ClusterId
-                                    <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
-                                </span>
-                            </th>
-                            <th class="text-center" data-sort-method="number">
-                                <span class="d-flex justify-content-center align-items-center gap-1">
-                                    # Members
-                                    <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
-                                </span>
-                            </th>
-                            <th id="priority-col" class="text-center" data-sort-method="number">
-                                <span class="d-flex justify-content-center align-items-center gap-1">
-                                    Priority
-                                    <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
-                                </span>
-                            </th>
-                            <th class="text-center" data-sort-method="none">Actions</th>
-                            <th class="text-center" data-sort-method="none">&nbsp;</th>
-                        </tr>
-                    </thead>
-                    <tbody x-ref="tbody">
-                        {% for clusterId, count in cluster_groups.items %}
-                            <tr data-cluster-id="{{ clusterId }}"
-                                :class="{ 'table-primary': selected.includes('{{ clusterId }}') }">
-                                <td class="text-center align-middle">
-                                    <input type="checkbox"
-                                           name="selected_clusters"
-                                           value="{{ clusterId }}"
-                                           class="form-check-input"
-                                           x-model="selected">
-                                </td>
-                                <!-- Preview img col -->
-                                <td class="align-middle">
-                                    {% with papers=cluster_to_paper_map|get_item:clusterId %}
-                                        {% if papers %}
-                                            {% with pn=papers.0 %}
-                                                <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
-                                                     class="img-fluid rounded mx-auto d-block"
-                                                     style="max-height:100px"
-                                                     loading="lazy"
-                                                     alt="cluster {{ clusterId }}"
-                                                     onerror="imgError(this)">
-                                            {% endwith %}
-                                        {% endif %}
-                                    {% endwith %}
-                                </td>
-                                <td class="text-center align-middle">
-                                    {% with count=merged_count|get_item:clusterId %}{{ count }}{% endwith %}
-                                </td>
-                                <td class="text-center align-middle">{{ clusterId }}</td>
-                                <td class="text-center align-middle">{{ count }}</td>
-                                {% with priority=cluster_to_priority|get_item:clusterId %}
-                                    <!-- Modify class based on whether the priority is set -->
-                                    <td class="text-center align-middle {% if priority %} set-priority {% else %} unset-priority {% endif %}">
-                                        {% if priority %}
-                                            {{ priority }}
-                                        {% else %}
-                                            Unset
-                                        {% endif %}
-                                    {% endwith %}
-                                </td>
-                                <td class="align-middle text-center">
-                                    <a class="btn btn-success btn-sm"
-                                       href="{% url 'clustered_papers' question_idx version page_num clusterId %}">
-                                        View members
-                                    </a>
-                                </td>
-                                <td class="text-center align-middle drag-handle" style="cursor:move;">
-                                    <i class="bi bi-list"></i>
-                                </td>
+                                       x-ref="master"
+                                       @change=" const checked = $event.target.checked; selected = checked ? [...ids] : []; "
+                                       :checked="selected.length === ids.length && ids.length > 0"
+                                       x-effect="$refs.master.indeterminate = (selected.length > 0 && selected.length < ids.length)">
+                                </th>
+                                <th class="text-center" data-sort-method="none">Preview</th>
+                                <th class="text-center" data-sort-method="none"># Merged</th>
+                                <th class="text-center" data-sort-method="number">
+                                    <span class="d-flex justify-content-center align-items-center gap-1">
+                                        ClusterId
+                                        <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
+                                    </span>
+                                </th>
+                                <th class="text-center" data-sort-method="number">
+                                    <span class="d-flex justify-content-center align-items-center gap-1">
+                                        # Members
+                                        <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
+                                    </span>
+                                </th>
+                                <th id="priority-col" class="text-center" data-sort-method="number">
+                                    <span class="d-flex justify-content-center align-items-center gap-1">
+                                        Priority
+                                        <i class="sort-icon bi bi-chevron-expand" aria-hidden="true"></i>
+                                    </span>
+                                </th>
+                                <th class="text-center" data-sort-method="none">Tags</th>
+                                <th class="text-center" data-sort-method="none">Actions</th>
+                                <th class="text-center" data-sort-method="none">&nbsp;</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </form>
+                        </thead>
+                        <tbody x-ref="tbody">
+                            {% for clusterId, count in cluster_groups.items %}
+                                <tr data-cluster-id="{{ clusterId }}"
+                                    :class="{ 'table-primary': selected.includes('{{ clusterId }}') }">
+                                    <td class="text-center align-middle">
+                                        <input type="checkbox"
+                                               name="selected_clusters"
+                                               value="{{ clusterId }}"
+                                               class="form-check-input"
+                                               x-model="selected">
+                                    </td>
+                                    <!-- Preview img col -->
+                                    <td class="align-middle">
+                                        {% with papers=cluster_to_paper_map|get_item:clusterId %}
+                                            {% if papers %}
+                                                {% with pn=papers.0 %}
+                                                    <img src="{% url 'extracted_rectangle' pn version page_num %}?left={{ left }}&top={{ top }}&right={{ right }}&bottom={{ bottom }}"
+                                                         class="img-fluid rounded mx-auto d-block"
+                                                         style="max-height:100px"
+                                                         loading="lazy"
+                                                         alt="cluster {{ clusterId }}"
+                                                         onerror="imgError(this)">
+                                                {% endwith %}
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td class="text-center align-middle">
+                                        {% with count=merged_count|get_item:clusterId %}{{ count }}{% endwith %}
+                                    </td>
+                                    <td class="text-center align-middle">{{ clusterId }}</td>
+                                    <td class="text-center align-middle">{{ count }}</td>
+                                    {% with priority=cluster_to_priority|get_item:clusterId %}
+                                        <!-- Modify class based on whether the priority is set -->
+                                        <td class="text-center align-middle {% if priority %} set-priority {% else %} unset-priority {% endif %}">
+                                            {% if priority %}
+                                                {{ priority }}
+                                            {% else %}
+                                                Unset
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td class="text-center align-middle" id="tag-{{ clusterId }}">
+                                        {% include "QuestionClustering/fragments/clustering_tag_cell.html" with clusterId=clusterId tags=cluster_to_tags|get_item:clusterId question_idx=question_idx version=version %}
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <a class="btn btn-success btn-sm"
+                                           href="{% url 'clustered_papers' question_idx version page_num clusterId %}">
+                                            View members
+                                        </a>
+                                    </td>
+                                    <td class="text-center align-middle drag-handle" style="cursor:move;">
+                                        <i class="bi bi-list"></i>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </form>
+            </div>
         </div>
-    </div>
-    <script>
+        <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('clusterOrdering', () => ({
         order: [],
@@ -281,11 +290,10 @@
             });
         });
         
-        // Sort by priority if most rows have priorities set
-        const set_count = document.querySelectorAll(".set-priority").length;
+        // Sort by priority if there are unset priorities
         const unset_count = document.querySelectorAll(".unset-priority").length;
         
-        if (set_count > 0.5 * (set_count+unset_count)){
+        if (unset_count == 0){
             const priorityHeader = document.getElementById('priority-col');
             // Click it to trigger the default sort
             if (priorityHeader) {
@@ -306,5 +314,5 @@
         image.parentNode.insertBefore(span, image);
         image.remove();
         }
-    </script>
-{% endblock %}
+        </script>
+    {% endblock %}

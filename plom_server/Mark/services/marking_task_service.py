@@ -572,6 +572,55 @@ class MarkingTaskService:
             tag_obj = MarkingTaskTag.objects.create(user=user, text=tag_text)
         return tag_obj
 
+    @transaction.atomic
+    def bulk_get_or_create_tag(
+        self, user: User, tag_texts: list[str]
+    ) -> list[MarkingTaskTag]:
+        """Get existing tags, or create if necessary, based on the given texts.
+
+        Args:
+            user: the user creating/attaching the tag.
+            tag_texts: the text of the tags.
+
+        Returns:
+            a list referencing the tags
+
+        Raises:
+            serializers.ValidationError: if the tag text is not legal.
+        """
+        # Validation
+        for text in tag_texts:
+            if not is_valid_tag_text(text):
+                raise serializers.ValidationError(
+                    f'Invalid tag text: "{text}"; contains disallowed characters'
+                )
+
+        # Remove duplicates (preserve order)
+        seen = set()
+        tag_texts_unique = [x for x in tag_texts if not (x in seen or seen.add(x))]
+
+        # Get all existing tags for this user
+        existing_tags = MarkingTaskTag.objects.filter(
+            user=user, text__in=tag_texts_unique
+        )
+
+        existing_map = {tag.text: tag for tag in existing_tags}
+
+        # Figure out which tags need to be created
+        to_create = [text for text in tag_texts_unique if text not in existing_map]
+        new_tags = [MarkingTaskTag(user=user, text=text) for text in to_create]
+
+        if new_tags:
+            MarkingTaskTag.objects.bulk_create(new_tags)
+
+            # Re-query just the new ones
+            new_objs = MarkingTaskTag.objects.filter(user=user, text__in=to_create)
+            for tag in new_objs:
+                existing_map[tag.text] = tag
+
+        # Return in original order (de-duped)
+        return [existing_map[text] for text in tag_texts_unique]
+
     def _add_tag(self, tag: MarkingTaskTag, task: MarkingTask) -> None:
         """Add an existing tag to an existing marking task.
 

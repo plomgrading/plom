@@ -7,7 +7,7 @@ from tempfile import NamedTemporaryFile
 from django.http import (
     HttpRequest,
     HttpResponse,
-    FileResponse,
+    QueryDict,
     Http404,
 )
 
@@ -26,6 +26,7 @@ from plom_server.QuestionClustering.forms import ClusteringJobForm
 from django.shortcuts import redirect
 from django.urls import reverse
 from urllib.parse import urlencode
+from django_htmx.http import HttpResponseClientRefresh
 
 
 class Debug(ManagerRequiredView):
@@ -337,6 +338,11 @@ class ClusterGroupsView(ManagerRequiredView):
             question_idx=question_idx, version=version
         )
 
+        # cluster_id to tags
+        cluster_to_tags = qcs.cluster_ids_to_tags(
+            question_idx=question_idx, version=version
+        )
+
         context = {
             "question_label": SpecificationService.get_question_label(question_idx),
             "question_idx": question_idx,
@@ -345,6 +351,7 @@ class ClusterGroupsView(ManagerRequiredView):
             "cluster_groups": cluster_groups,
             "cluster_to_paper_map": cluster_to_paper_map,
             "cluster_to_priority": cluster_to_priority,
+            "cluster_to_tags": cluster_to_tags,
             "merged_count": merged_component_count,
             "top": rects["top"],
             "left": rects["left"],
@@ -354,22 +361,6 @@ class ClusterGroupsView(ManagerRequiredView):
         return render(
             request, "QuestionClustering/cluster_groups.html", context=context
         )
-
-
-class UpdateClusterPriorityView(ManagerRequiredView):
-    def post(self, request: HttpRequest) -> HttpResponse:
-        next_url = request.POST.get("next") or request.META.get("HTTP_REFERER", "/")
-        new_order = request.POST.getlist("cluster_order")
-        question_idx = int(request.POST["question_idx"])
-        version = int(request.POST["version"])
-
-        qcs = QuestionClusteringService()
-        new_order_int = list(map(int, new_order))
-        print(f"test: {new_order_int}")
-        qcs.update_priority_based_on_scene(new_order_int, question_idx, version)
-
-        messages.success(request, "Updated priority to match scene")
-        return redirect(next_url)
 
 
 class ClusterMergeView(ManagerRequiredView):
@@ -382,12 +373,15 @@ class ClusterMergeView(ManagerRequiredView):
         next_url = request.POST.get("next")
 
         qcs = QuestionClusteringService()
-        qcs.merge_clusters(question_idx, version, clusterIds)
+        try:
+            qcs.merge_clusters(question_idx, version, clusterIds)
 
-        messages.success(
-            request,
-            f"Merged {len(clusterIds)} clusters into cluster with id: {min(clusterIds)}",
-        )
+            messages.success(
+                request,
+                f"Merged {len(clusterIds)} clusters into cluster with id: {min(clusterIds)}",
+            )
+        except ValueError as e:
+            messages.error(request, str(e))
         return redirect(next_url)
 
 
@@ -423,3 +417,63 @@ class ClusterBulkResetView(ManagerRequiredView):
 
         messages.success(request, f"reset {len(clusterIds)} clusters")
         return redirect(next_url)
+
+
+class UpdateClusterPriorityView(ManagerRequiredView):
+    def post(self, request: HttpRequest) -> HttpResponse:
+        next_url = request.POST.get("next") or request.META.get("HTTP_REFERER", "/")
+        new_order = request.POST.getlist("cluster_order")
+        question_idx = int(request.POST["question_idx"])
+        version = int(request.POST["version"])
+
+        qcs = QuestionClusteringService()
+        new_order_int = list(map(int, new_order))
+        qcs.update_priority_based_on_scene(new_order_int, question_idx, version)
+
+        messages.success(request, "Updated priority to match scene")
+        return redirect(next_url)
+
+
+class ClusterBulkTaggingView(ManagerRequiredView):
+    def post(self, request: HttpRequest) -> HttpResponse:
+        next_url = request.POST.get("next") or request.META.get("HTTP_REFERER", "/")
+        question_idx = int(request.POST["question_idx"])
+        version = int(request.POST["version"])
+        uid = request.user.id
+
+        qcs = QuestionClusteringService()
+        qcs.bulk_tagging(question_idx=question_idx, version=version, userid=uid)
+
+        messages.success(request, "Bulk tagged")
+        return redirect(next_url)
+
+
+class RemoveTagFromClusterView(ManagerRequiredView):
+    def delete(self, request: HttpRequest):
+
+        qd = QueryDict(request.body.decode())
+        question_idx = int(qd.get("question_idx"))
+        version = int(qd.get("version"))
+        clusterId = int(qd.get("clusterId"))
+        tag_pk = int(qd.get("tag_pk"))
+
+        qcs = QuestionClusteringService()
+        qcs.remove_tag_from_a_cluster(
+            question_idx=question_idx,
+            version=version,
+            clusterId=clusterId,
+            tag_pk=tag_pk,
+        )
+        tags = qcs.cluster_ids_to_tags(question_idx=question_idx, version=version)[
+            clusterId
+        ]
+        context = {
+            "clusterId": clusterId,
+            "tags": tags,
+            "question_idx": question_idx,
+            "version": version,
+        }
+
+        return render(
+            request, "QuestionClustering/fragments/clustering_tag_cell.html", context=context
+        )

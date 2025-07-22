@@ -35,6 +35,9 @@ from plom_server.Mark.services.marking_priority import (
     get_tasks_to_update_priority,
     modify_task_priority,
 )
+from plom_server.Base.models import User
+from plom_server.Mark.models import MarkingTask, MarkingTaskTag
+from plom_server.Mark.services.marking_task_service import MarkingTaskService
 from typing import Optional
 from collections import defaultdict
 
@@ -393,6 +396,144 @@ class QuestionClusteringService:
         for task in task_not_in_cluster:
             modify_task_priority(task, 0)
 
+    def get_clusterid_to_paper_mapping(
+        self, question_idx: int, version: int
+    ) -> dict[int, list[Paper]]:
+        """Get a dict mapping clusterId to list of papers under a q,v contenxt."""
+        clusters = QVCluster.objects.filter(
+            question_idx=question_idx,
+            version=version,
+            type=ClusteringGroupType.user_facing,
+        ).prefetch_related("paper")
+
+        return {cluster.clusterId: list(cluster.paper.all()) for cluster in clusters}
+
+    @transaction.atomic
+    def bulk_tagging(self, question_idx: int, version: int, userid: int):
+        """Bulk tag all clusters with default cluster tag.
+
+        Note: current default cluster tag is cluster_{question_idx}_{version}_{clusterId}.
+        """
+        mts = MarkingTaskService()
+        user = User.objects.get(id=userid)
+
+        # get cluster_id to paper mapping
+        clusterid_to_papers = self.get_clusterid_to_paper_mapping(question_idx, version)
+
+        # get tag_texts
+        tag_texts = [
+            f"cluster_{question_idx}_{version}_{cid}"
+            for cid in clusterid_to_papers.keys()
+        ]
+
+        # get/create tags
+        tags = mts.bulk_get_or_create_tag(user=user, tag_texts=tag_texts)
+
+        # cluster_id to tag.pk
+        cid_to_tag = {self._get_cluster_id_from_cluster_tag(t.text): t for t in tags}
+
+        # get paper_num to tag.pk
+        paper_num_to_tag_pk = {
+            paper.paper_number: cid_to_tag[cid].pk
+            for cid, papers in clusterid_to_papers.items()
+            for paper in papers
+        }
+
+        # fetch all tasks
+        task_tuples = MarkingTask.objects.filter(
+            question_index=question_idx,
+            question_version=version,
+            paper__paper_number__in=paper_num_to_tag_pk.keys(),
+        ).values_list("pk", "paper__paper_number")
+
+        # use through for efficient bulk operation
+        Through = MarkingTaskTag.task.through
+        rows = [
+            Through(markingtasktag_id=paper_num_to_tag_pk[pnum], markingtask_id=task_pk)
+            for task_pk, pnum in task_tuples
+        ]
+
+        # Insert once
+        Through.objects.bulk_create(rows, ignore_conflicts=True)
+
+    def remove_tag_from_a_cluster(
+        self, question_idx: int, version: int, clusterId: int, tag_pk: int
+    ):
+        # Get all tasks in the cluster
+        tasks = self.get_all_tasks_in_a_cluster(question_idx, version, clusterId)
+
+        # get all relevant MarkingTaskTag
+        task_tags = MarkingTaskTag.objects.filter(task__in=tasks, id=tag_pk)
+
+        task_tags.delete()
+
+    def _get_cluster_id_from_cluster_tag(self, cluster_tag_text: str) -> int:
+        return int(cluster_tag_text.rsplit("_", 1)[-1])
+
+    def get_all_tasks_in_a_cluster(
+        self, question_idx: int, version: int, clusterId: int
+    ):
+        paper_nums = self.get_paper_nums_in_clusters(
+            question_idx=question_idx, version=version
+        )[clusterId]
+        return MarkingTask.objects.filter(
+            question_index=question_idx,
+            question_version=version,
+            paper__paper_number__in=set(paper_nums),
+        )
+
+    @transaction.atomic
+    def cluster_ids_to_tags(
+        self, question_idx: int, version: int
+    ) -> dict[int, list[tuple[int, str]]]:
+        """Return {cluster_id: [(tag_pk, tag_text), ...]} where each tag appears on **every MarkingTask in that cluster**."""
+
+        # cluster -> papers
+        cluster_to_papers = self.get_clusterid_to_paper_mapping(question_idx, version)
+        paper_nums = [p.paper_number for ps in cluster_to_papers.values() for p in ps]
+
+        # Fetch all tasks (with tags) in one go
+        tasks = (
+            MarkingTask.objects.filter(
+                question_index=question_idx,
+                question_version=version,
+                paper_id__in=paper_nums,
+            )
+            .select_related(
+                "paper"
+            )  # so we can read paper_number without extra queries
+            .prefetch_related("markingtasktag_set")
+        )
+
+        # paper_id -> list[task]
+        paper_to_tasks = defaultdict(list)
+        for t in tasks:
+            paper_to_tasks[t.paper.paper_number].append(t)
+
+        # cluster_id -> set of tag tuples (pk, text) that are common across ALL tasks
+        cluster_to_common = {}
+
+        for cid, papers in cluster_to_papers.items():
+            # Get all tasks for this cluster (via its papers)
+            task_list = []
+            for p in papers:
+                task_list.extend(paper_to_tasks.get(p.id, []))
+
+            if not task_list:
+                cluster_to_common[cid] = []
+                continue
+
+            # Start with tags from first task, then intersect
+            common = {(tg.pk, tg.text) for tg in task_list[0].markingtasktag_set.all()}
+            for t in task_list[1:]:
+                common &= {
+                    (tg.pk, tg.text) for tg in t.markingtasktag_set.all()
+                }  # set intersection
+
+            cluster_to_common[cid] = common
+
+        return cluster_to_common
+
     def get_corners_used_for_clustering(self, question_idx: int, version: int):
         qvc = QVCluster.objects.filter(question_idx=question_idx, version=version)[0]
         return {
@@ -425,7 +566,19 @@ class QuestionClusteringService:
         }
 
     def merge_clusters(self, question_idx: int, version: int, clusterIds: list[int]):
+        if not clusterIds:
+            return
+
         with transaction.atomic():
+            # Check if clusters have conflicting tags:
+            cluster_to_tags = self.cluster_ids_to_tags(question_idx, version)
+            ref = cluster_to_tags[0]
+
+            clusterIdSet = set(clusterIds)
+            for clusterId, tag in cluster_to_tags.items():
+                if clusterId in clusterIdSet and tag != cluster_to_tags[clusterIds[0]]:
+                    raise ValueError("Merge failed: there are conflicting tags")
+
             # assign to the minimum clusterId
             target_cluster_id = min(clusterIds)
             target_cluster = QVCluster.objects.get(
@@ -499,6 +652,12 @@ class QuestionClusteringService:
         originals = list(user_facing_cluster.original_cluster.all())
 
         with transaction.atomic():
+            # reset tags
+            tasks = self.get_all_tasks_in_a_cluster(question_idx, version, clusterId)
+            MarkingTaskTag.objects.filter(
+                task__in=tasks, text__startswith=f"cluster_{question_idx}_{version}_"
+            ).delete()
+
             # delete the old UF cluster
             user_facing_cluster.delete()
 
