@@ -176,9 +176,11 @@ class Classlist(APIView):
             empty with status 204.
 
             Callers outside the "manager" group get status 403
-            no matter what input they may provide. Calling this
-            too late in the assessment preparation sequence will
-            raise exceptions documented elsewhere.
+            no matter what input they may provide. Status 406
+            indicates a problem with the incoming CSV file (which also
+            disables updates to the prename flag). Status 409 means
+            there was no CSV, but it's too late to change the prename
+            setting.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list:
