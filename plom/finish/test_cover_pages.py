@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2023-2025 Colin B. Macdonald
 
 from pytest import raises
 
@@ -17,7 +17,7 @@ def test_cover_page(tmp_path) -> None:
         pg = doc[0]
         text = pg.get_text()
         assert "Agnesi" in text
-        assert "Test number: 1234" in text
+        assert "Test number 1234" in text
         assert "12345678" in text
 
 
@@ -26,7 +26,7 @@ def test_cover_page_test_num_leading_zero_pad(tmp_path) -> None:
     data = [["Q1", 1, 3, 4], ["Q2", 1, 4, 6], ["Q3", 2, 0, 5]]
     makeCover(data, f, test_num=12, info=("Agnesi", "12345678"))
     with pymupdf.open(f) as doc:
-        assert "Test number: 0012" in doc[0].get_text()
+        assert "Test number 0012" in doc[0].get_text()
 
 
 def test_cover_page_leading_zero_sid(tmp_path) -> None:
