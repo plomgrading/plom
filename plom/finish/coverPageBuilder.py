@@ -150,7 +150,7 @@ def makeCover(
     y = vpos
     infowriter.append((x, y), text, fontsize=xxlsize)
     infowriter.write_text(page)
-    vpos += 1.5 * xxlsize
+    vpos += 3 * xxlsize // 2
 
     # Style and print the test number
     tnwriter = pymupdf.TextWriter(page.rect)
