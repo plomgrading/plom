@@ -14,6 +14,7 @@ from rest_framework import status
 from plom.plom_exceptions import PlomDependencyConflict
 from plom_server.Preparation.services import StagingStudentService
 from plom_server.Preparation.views import ClasslistDownloadView
+from plom_server.Preparation.services import PrenameSettingService
 
 # from .utils import debugnote
 from .utils import _error_response
@@ -51,20 +52,33 @@ class Classlist(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     # GET /api/v0/classlist
-    def get(self, request: Request) -> FileResponse:
-        """Fetch the classlist held by the server.
+    def get(self, request: Request) -> FileResponse | Response:
+        """Fetch the classlist held by the server, or query prenaming.
 
-        This is a transparent wrapper for the GET method
-        implemented in :class:'ClasslistDownloadView'.
+        By default, this is a transparent wrapper for the GET method
+        implemented in :class:'ClasslistDownloadView'. But with extra
+        parameters, this endpoint will answer simple questions with a
+        Response carrying plain text.
 
         Args:
             request: A Request object.
 
+        GET Data:
+            q: A string encoding the information requested.
+
         Returns:
-            A FileResponse object (subclassed from Response) with filename
-            'classlist.csv', and status code 200.
+            By default, a FileResponse object (subclassed from Response)
+            with filename 'classlist.csv'.
+            Alternatively, when the GET parameter "q" has the
+            exact value "prename", return a Response whose body text is
+            the string "True" if prenaming is enabled, "False" otherwise.
         """
-        return ClasslistDownloadView().get(request)
+        q = request.GET.get("q", "nomatch")
+        if q == "prename":
+            flag = PrenameSettingService().get_prenaming_setting()
+            return Response(f"{flag}")
+        else:
+            return ClasslistDownloadView().get(request)
 
     # Internal code shared by both POST and PATCH requests:
     def _extend(self, request: Request) -> Response:
@@ -149,20 +163,46 @@ class Classlist(APIView):
             request: A Request object that includes a file object
                 identified by the key "classlist_csv"
 
+        POST Data:
+            prename: One of the strings "True" or "False", to be used
+                as the prenaming setting.
+
         Returns:
-            The Response from the method validate_and_use_classlist_csv()
-            that serves the web UI in :class:'StagingStudentService',
-            outside the following special cases. If the caller is outside
-            the "manager" group, they get status 403; if they didn't actually
-            send a classlist, they get status 400.
+            If a CSV file is provided, you get the Response
+            from the method validate_and_use_classlist_csv()
+            that serves the web UI in :class:'StagingStudentService'.
+            If that Response has ok status, or there is no CSV file,
+            the POST data is consulted to update the prenaming setting.
+            For a prenaming update with no classlist, the response is
+            empty with status 204.
+
+            If the caller is outside the "manager" group,
+            they get status 403. If
         """
-        if StagingStudentService.are_there_students():
-            N = StagingStudentService.how_many_students()
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
             return _error_response(
-                f"Classlist contains {N} students; POST method expects 0.",
-                status.HTTP_400_BAD_REQUEST,
+                'Only users in the "manager" group can manipulate the classlist.',
+                status.HTTP_403_FORBIDDEN,
             )
-        return self._extend(request)
+
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+
+        if request.FILES["classlist_csv"]:
+            if StagingStudentService.are_there_students():
+                N = StagingStudentService.how_many_students()
+                return _error_response(
+                    f"Classlist contains {N} students; POST method expects 0.",
+                    status.HTTP_400_BAD_REQUEST,
+                )
+            response = self._extend(request)
+
+        if response.ok:
+            if "prename" in request.POST:
+                enable = request.POST["prename"].casefold() == "true"
+                PrenameSettingService().set_prenaming_setting(enable)
+
+        return response
 
     # PUT /api/v0/classlist
     def put(self, request: Request) -> Response:
