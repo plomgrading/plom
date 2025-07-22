@@ -202,7 +202,13 @@ class Classlist(APIView):
             # Either the classlist uploaded OK, or no CSV was provided.
             if "prename" in request.POST:
                 enable = request.POST["prename"].casefold() == "true"
-                PrenameSettingService().set_prenaming_setting(enable)
+                try:
+                    PrenameSettingService().set_prenaming_setting(enable)
+                except PlomDependencyConflict as e:
+                    return _error_response(
+                        e,
+                        status.HTTP_409_CONFLICT,
+                    )
 
         return response
 
