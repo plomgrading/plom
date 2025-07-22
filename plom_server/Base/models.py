@@ -267,6 +267,20 @@ class Tag(models.Model):
         return str(self.text)
 
 
+class NewSettingsModel(models.Model):
+    key = models.CharField(max_length=64, unique=True)
+    value = models.JSONField(default=str)
+
+    def __str__(self):
+        """Convert a key-value setting to a string representation."""
+        return f"Key-Value setting id {self.id}: {self.key} = {self.value}"
+
+
+class NewSettingsBooleanModel(models.Model):
+    key = models.CharField(max_length=64, unique=True)
+    value = models.BooleanField()
+
+
 class SettingsModel(SingletonABCModel):
     """Global configurable settings."""
 
