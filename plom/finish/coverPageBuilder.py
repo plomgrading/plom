@@ -114,7 +114,7 @@ def makeCover(
     # Style and print the assessment title, if available
     if exam_name:
         titlewriter = pymupdf.TextWriter(page.rect)
-        titlewriter.color = (0.66, 0, 0)
+        titlewriter.color = (0, 0, 0)
         title_width = font.text_length(exam_name, xxlsize)
         x = (paper_width - title_width) / 2
         y = 100  # Near the top of the page
