@@ -315,29 +315,21 @@ class SettingsModel(SingletonABCModel):
         return rules
 
     @classmethod
-    def cget(cls, key, default: bool | None = None):
-        s = cls.load()
-        x = s.misc
-        return x.get(key, default)
+    def cget(cls, key: str, default: bool | None = None):
+        try:
+            o = NewSettingsModel.objects.get(key=key)
+            return o.value
+        except NewSettingsModel.DoesNotExist:
+            return default
 
     @classmethod
-    def cset(cls, key, value):
-        s = cls.load()
-        x = s.misc
-        x[key] = value
-        s.misc = x
-        s.save()
+    def cset(cls, key: str, value):
+        o, created = NewSettingsModel.objects.get_or_create(key=key)
+        o.value = value
+        o.save()
 
     def get(self, key, default: bool | None = None):
-        x = self.misc
-        return x.get(key, default)
-
-    def set(self, key, value):
-        # TODO: will the caller need to do a refresh after using this?
-        x = self.misc
-        x[key] = value
-        self.misc = x
-        self.save()
+        return SettingsModel.cget(key, default)
 
 
 class BaseImage(models.Model):
