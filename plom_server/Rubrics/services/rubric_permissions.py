@@ -6,7 +6,7 @@ import math
 from copy import deepcopy
 from typing import Any
 
-from plom_server.Base.models import SettingsModel
+from plom_server.Base.services import Settings
 from .utils import pin_to_fractional_nth
 
 
@@ -89,7 +89,7 @@ class RubricPermissionsService:
         rubric_fractional_options = deepcopy(_frac_opt_table)
         # figure out which are currently checked by checking settings
         for opt in rubric_fractional_options:
-            opt["checked"] = SettingsModel.cget(opt["name"])
+            opt["checked"] = Settings.key_value_store_get(opt["name"])
         rubric_fractional_options = [
             opt
             for opt in rubric_fractional_options
@@ -110,16 +110,16 @@ class RubricPermissionsService:
         for opt in _frac_opt_table:
             a = str(opt["name"])
             if rp.get(a) == "on":
-                SettingsModel.cset(a, True)
+                Settings.key_value_store_set(a, True)
             else:
-                SettingsModel.cset(a, False)
+                Settings.key_value_store_set(a, False)
         for opt in _frac_opt_table:
             a = str(opt["name"])
             implies = opt["implies"]
             assert isinstance(implies, list)  # help mypy
-            if SettingsModel.cget(a):
+            if Settings.key_value_store_get(a):
                 for i in implies:
-                    SettingsModel.cset(i, True)
+                    Settings.key_value_store_set(i, True)
 
     @staticmethod
     def pin_to_allowed_fraction(v: float | int) -> float:
@@ -137,7 +137,6 @@ class RubricPermissionsService:
             # zero fractional part, nothing to do here
             return v
 
-        s = SettingsModel.load()
         for opt in _frac_opt_table:
             name = opt["name"]
             N = opt["denom"]
@@ -146,7 +145,8 @@ class RubricPermissionsService:
             vpin = pin_to_fractional_nth(v, N)
             if vpin is None:
                 continue
-            if not s.get(name):
+            # TODO: query them all at once for better DB access?
+            if not Settings.key_value_store_get(name):
                 raise ValueError(
                     f"{readable_denom}-point rubrics are currently not allowed"
                 )

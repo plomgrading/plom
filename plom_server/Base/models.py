@@ -314,23 +314,6 @@ class SettingsModel(SingletonABCModel):
             return static_feedback_rules
         return rules
 
-    @classmethod
-    def cget(cls, key: str, default: bool | None = None):
-        try:
-            o = NewSettingsModel.objects.get(key=key)
-            return o.value
-        except NewSettingsModel.DoesNotExist:
-            return default
-
-    @classmethod
-    def cset(cls, key: str, value):
-        o, created = NewSettingsModel.objects.get_or_create(key=key)
-        o.value = value
-        o.save()
-
-    def get(self, key, default: bool | None = None):
-        return SettingsModel.cget(key, default)
-
 
 class BaseImage(models.Model):
     """Table to store an image (usually a scanned page image).
