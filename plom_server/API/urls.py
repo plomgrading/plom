@@ -192,7 +192,7 @@ urlpatterns += [
     path(
         "api/v0/classlist/prenaming",
         Prenaming.as_view(),
-        name="api_cl_prenaming",
+        name="api_classlist_prenaming",
     ),
     path(
         "rubrics/<int:rid>/tasks",

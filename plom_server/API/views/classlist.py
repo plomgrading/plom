@@ -211,7 +211,7 @@ class Prenaming(APIView):
     """Read or write the prenaming flag."""
 
     # GET /api/v0/classlist/prenaming
-    def get(self, request: Request) -> FileResponse | Response:
+    def get(self, request: Request) -> Response:
         """Report the current value of the prenaming flag.
 
         Args:
@@ -238,7 +238,6 @@ class Prenaming(APIView):
 
         Returns:
             An empty response, with status 204, on success.
-
             Callers outside the "manager" group get status 403
             no matter what input they may provide. Status 400 indicates
             that the POST data has no key "newvalue". Status 409 means
