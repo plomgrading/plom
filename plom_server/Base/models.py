@@ -290,9 +290,6 @@ class SettingsModel(SingletonABCModel):
 
     feedback_rules = models.JSONField(default=dict)
 
-    # a general key-value store in JSON
-    misc = models.JSONField(default=dict)
-
     @classmethod
     def load(cls):
         """Return the singleton instance of the SettingsModel."""
@@ -302,7 +299,6 @@ class SettingsModel(SingletonABCModel):
                 "who_can_create_rubrics": "permissive",
                 "who_can_modify_rubrics": "per-user",
                 "feedback_rules": {},
-                "misc": {},
             },
         )
         return obj
