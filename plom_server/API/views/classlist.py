@@ -69,15 +69,15 @@ class Classlist(APIView):
         Returns:
             By default, a FileResponse object (subclassed from Response)
             with filename 'classlist.csv'.
-            Alternatively, when the GET parameter "prename" appears,
-            return a Response whose body text is the string "True"
-            if prenaming is enabled, "False" otherwise.
         """
-        if "prename" in request.GET:
-            flag = PrenameSettingService().get_prenaming_setting()
-            return Response(f"{flag}")
-        else:
-            return ClasslistDownloadView().get(request)
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
+            return _error_response(
+                'Only users in the "manager" group can see the class list.',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        return ClasslistDownloadView().get(request)
 
     # Internal code shared by both POST and PATCH requests:
     def _extend(self, request: Request, startempty: bool = False) -> Response:
