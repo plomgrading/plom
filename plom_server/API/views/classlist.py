@@ -80,7 +80,7 @@ class Classlist(APIView):
             return ClasslistDownloadView().get(request)
 
     # Internal code shared by both POST and PATCH requests:
-    def _extend(self, request: Request) -> Response:
+    def _extend(self, request: Request, startempty: bool = False) -> Response:
         """Extend the server's classlist with rows from an uploaded classlist.
 
         This is a thin wrapper for the method named validate_and_use_classlist_csv()
@@ -93,6 +93,8 @@ class Classlist(APIView):
 
         Args:
             request: A Request object that includes a file object.
+            startempty: A flag saying whether to insist that there is
+                no class list before the operation begins.
 
         Returns:
             A Response containing the werr chunk of the result from
@@ -120,13 +122,21 @@ class Classlist(APIView):
                 status.HTTP_400_BAD_REQUEST,
             )
 
+        if startempty and StagingStudentService.are_there_students():
+            N = StagingStudentService.how_many_students()
+            return _error_response(
+                f"Classlist contains {N} students; POST method expects 0.",
+                status.HTTP_400_BAD_REQUEST,
+            )
+
         classlist_csv = request.FILES["classlist_csv"]
         success, werr = StagingStudentService.validate_and_use_classlist_csv(
             classlist_csv
         )
-        if success:
-            return Response(werr)
-        return Response(werr, status=status.HTTP_406_NOT_ACCEPTABLE)
+        if not success:
+            return Response(werr, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+        return Response(werr)
 
     # PATCH /api/v0/classlist
     def patch(self, request: Request) -> Response:
@@ -156,63 +166,27 @@ class Classlist(APIView):
 
     # POST /api/v0/classlist
     def post(self, request: Request) -> Response:
-        """Upload a new classlist to the server, insisting that it starts empty.
+        """Upload a new classlist to the server, requiring none yet.
 
         Args:
             request: A Request object that includes a file object
-                identified by the key "classlist_csv"
-
-        POST Data:
-            prename: A string whose casefold() value is "true", to enable
-                prenaming; or any other string, to disable prenaming.
+                identified by the key "classlist_csv".
 
         Returns:
-            If a CSV file is provided, we return the Response
-            from the method validate_and_use_classlist_csv()
-            that serves the web UI in :class:'StagingStudentService'.
-            If that Response has OK status, or there is no CSV file,
-            the POST data is consulted to update the prenaming setting.
-            For a prenaming update with no classlist, the response is
-            empty with status 204.
+            On success, the Response from the method
+            validate_and_use_classlist_csv() that serves the web UI
+            in :class:'StagingStudentService'.
+
+            Attempting to POST a CSV file when the server's classlist
+            is nonempty is an error, and triggers status code 400.
+            (Note that the PATCH and PUT methods do not enforce this.)
 
             Callers outside the "manager" group get status 403
-            no matter what input they may provide. Status 406
-            indicates a problem with the incoming CSV file (which also
-            disables updates to the prename flag). Status 409 means
-            there was no CSV, but it's too late to change the prename
-            setting.
+            no matter what input they provide. If there is no CSV
+            file, we return status 400. If the incoming CSV file has a
+            problem, we return status 406.
         """
-        group_list = list(request.user.groups.values_list("name", flat=True))
-        if "manager" not in group_list:
-            return _error_response(
-                'Only users in the "manager" group can manipulate the classlist.',
-                status.HTTP_403_FORBIDDEN,
-            )
-
-        response = Response(status=status.HTTP_204_NO_CONTENT)
-
-        if "classlist_csv" in request.FILES:
-            if StagingStudentService.are_there_students():
-                N = StagingStudentService.how_many_students()
-                return _error_response(
-                    f"Classlist contains {N} students; POST method expects 0.",
-                    status.HTTP_400_BAD_REQUEST,
-                )
-            response = self._extend(request)
-
-        if 200 <= response.status_code < 300:
-            # Either the classlist uploaded OK, or no CSV was provided.
-            if "prename" in request.POST:
-                enable = request.POST["prename"].casefold() == "true"
-                try:
-                    PrenameSettingService().set_prenaming_setting(enable)
-                except PlomDependencyConflict as e:
-                    return _error_response(
-                        e,
-                        status.HTTP_409_CONFLICT,
-                    )
-
-        return response
+        return self._extend(request, startempty=True)
 
     # PUT /api/v0/classlist
     def put(self, request: Request) -> Response:
@@ -231,3 +205,65 @@ class Classlist(APIView):
         """
         self.delete(request)
         return self._extend(request)
+
+
+class Prenaming(APIView):
+    """Read or write the prenaming flag."""
+
+    # GET /api/v0/classlist/prenaming
+    def get(self, request: Request) -> FileResponse | Response:
+        """Report the current value of the prenaming flag.
+
+        Args:
+            request: A Request object.
+
+        Returns:
+            A Response whose body text is the string "True"
+            if prenaming is enabled, and "False" otherwise.
+        """
+        flag = PrenameSettingService().get_prenaming_setting()
+        return Response(f"{flag}")
+
+    # POST /api/v0/classlist/prenaming
+    def post(self, request: Request) -> Response:
+        """Set the prenaming flag.
+
+        Args:
+            request: A Request object whose POST data carries the new
+                value for the prenaming setting.
+
+        POST Data:
+            newvalue: A string. If the casefold() value is "true",
+                enable prenaming; for anything else, disable prenaming.
+
+        Returns:
+            An empty response, with status 204, on success.
+
+            Callers outside the "manager" group get status 403
+            no matter what input they may provide. Status 400 indicates
+            that the POST data has no key "newvalue". Status 409 means
+            it's too late in the process to change prenaming.
+        """
+        group_list = list(request.user.groups.values_list("name", flat=True))
+        if "manager" not in group_list:
+            return _error_response(
+                'Only users in the "manager" group can manipulate the classlist.',
+                status.HTTP_403_FORBIDDEN,
+            )
+
+        if "newvalue" not in request.POST:
+            return _error_response(
+                "Expected key 'newvalue' not found",
+                status.HTTP_400_BAD_REQUEST,
+            )
+
+        enable = request.POST["newvalue"].casefold() == "true"
+        try:
+            PrenameSettingService().set_prenaming_setting(enable)
+        except PlomDependencyConflict as e:
+            return _error_response(
+                e,
+                status.HTTP_409_CONFLICT,
+            )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
