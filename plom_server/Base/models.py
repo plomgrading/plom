@@ -15,7 +15,6 @@ from django.db import models, transaction
 from django.utils import timezone
 from django_huey import get_queue
 
-from plom.feedback_rules import feedback_rules as static_feedback_rules
 
 # TODO: Using the @signal decorator did not work with both queues
 # from django_huey import signal
@@ -288,8 +287,6 @@ class SettingsModel(SingletonABCModel):
     who_can_create_rubrics = models.TextField(default="permissive")
     who_can_modify_rubrics = models.TextField(default="per-user")
 
-    feedback_rules = models.JSONField(default=dict)
-
     @classmethod
     def load(cls):
         """Return the singleton instance of the SettingsModel."""
@@ -298,17 +295,9 @@ class SettingsModel(SingletonABCModel):
             defaults={
                 "who_can_create_rubrics": "permissive",
                 "who_can_modify_rubrics": "per-user",
-                "feedback_rules": {},
             },
         )
         return obj
-
-    @classmethod
-    def get_feedback_rules(cls):
-        rules = cls.load().feedback_rules
-        if not rules:
-            return static_feedback_rules
-        return rules
 
 
 class BaseImage(models.Model):

@@ -11,7 +11,6 @@
 
 import difflib
 import json
-from copy import deepcopy
 from io import TextIOWrapper, StringIO, BytesIO
 from typing import Any
 
@@ -25,11 +24,11 @@ from rest_framework import serializers
 
 from plom.plom_exceptions import PlomConflict
 
-from plom.feedback_rules import feedback_rules as static_feedback_rules
 from plom.misc_utils import pprint_score
 
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Base.models import SettingsModel
+from plom_server.Base.services import Settings
 from plom_server.Papers.services import SpecificationService
 from plom_server.Preparation.services import PapersPrinted
 from .services import RubricService, RubricPermissionsService
@@ -344,10 +343,7 @@ class FeedbackRulesView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/feedback_rules.html"
         context = self.build_context()
-        settings = SettingsModel.load()
-        rules = settings.feedback_rules
-        if not rules:
-            rules = static_feedback_rules
+        rules = Settings.get_feedback_rules()
         context.update(
             {
                 "feedback_rules": _rules_as_list(rules),
@@ -357,15 +353,11 @@ class FeedbackRulesView(ManagerRequiredView):
 
     def post(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/feedback_rules.html"
-        settings = SettingsModel.load()
         # decide if we are resetting or updating the rules from the form
         if request.POST.get("_whut_do") == "reset":
             rules = {}
         else:
-            rules = settings.feedback_rules
-            if not rules:
-                # carefully make a copy so we don't mess with the static data
-                rules = deepcopy(static_feedback_rules)
+            rules = Settings.get_feedback_rules()
             for code in rules.keys():
                 x = request.POST.get(f"{code}-allowed", None)
                 rules[code]["allowed"] = True if x is not None else False
@@ -373,15 +365,11 @@ class FeedbackRulesView(ManagerRequiredView):
                 rules[code]["warn"] = True if x is not None else False
                 x = request.POST.get(f"{code}-dama_allowed", None)
                 rules[code]["dama_allowed"] = True if x is not None else False
-        settings.feedback_rules = rules
-        settings.save()
+        Settings.key_value_store_set("feedback_rules", rules)
 
         # essentially a copy-paste of get from here :(
         context = self.build_context()
-        settings = SettingsModel.load()
-        rules = settings.feedback_rules
-        if not rules:
-            rules = static_feedback_rules
+        Settings.get_feedback_rules()
         context.update(
             {
                 "successful_post": True,

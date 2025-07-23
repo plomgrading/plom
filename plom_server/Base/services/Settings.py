@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Colin B. Macdonald
 
+from copy import deepcopy
 from typing import Any
 
+from plom.feedback_rules import feedback_rules as static_feedback_rules
 from ..models import NewSettingsModel
 
 
@@ -39,3 +41,10 @@ def key_value_store_set(key: str, value: Any) -> None:
     obj, created = NewSettingsModel.objects.get_or_create(key=key)
     obj.value = value
     obj.save()
+
+
+def get_feedback_rules():
+    rules = key_value_store_get("feedback_rules")
+    if not rules:
+        return deepcopy(static_feedback_rules)
+    return rules
