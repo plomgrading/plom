@@ -102,12 +102,8 @@ class RubricAccessPageView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/rubrics_access.html"
 
-        # TODO: where to store these defaults?
-        create_default = "permissive"
-        modify_default = "per-user"
-
-        create = Settings.key_value_store_get("who_can_create_rubrics", create_default)
-        modify = Settings.key_value_store_get("who_can_modify_rubrics", modify_default)
+        create = Settings.who_can_create_rubrics
+        modify = Settings.who_can_modify_rubrics
 
         if create == "permissive":
             create_checked = (True, False, False)
