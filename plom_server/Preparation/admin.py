@@ -7,7 +7,6 @@ from django.contrib import admin
 from .models import (
     PaperSourcePDF,
     PapersPrintedSettingModel,
-    PrenamingSetting,
     StagingPQVMapping,
     StagingStudent,
 )
@@ -15,6 +14,5 @@ from .models import (
 # This makes models appear in the admin interface
 admin.site.register(PaperSourcePDF)
 admin.site.register(PapersPrintedSettingModel)
-admin.site.register(PrenamingSetting)
 admin.site.register(StagingPQVMapping)
 admin.site.register(StagingStudent)

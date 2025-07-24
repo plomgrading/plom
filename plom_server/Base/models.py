@@ -217,8 +217,6 @@ class HueyTaskTracker(models.Model):
 # ---------------------------------
 # Define a singleton model as per
 # https://steelkiwi.com/blog/practical-application-singleton-design-pattern/
-#
-# Then use this to define tables for PrenamingSetting and ClasslistCSV
 # ---------------------------------
 
 

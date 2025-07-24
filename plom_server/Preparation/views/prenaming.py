@@ -16,7 +16,6 @@ from django.shortcuts import redirect, render
 from plom.plom_exceptions import PlomDependencyConflict
 from plom_server.Base.base_group_views import ManagerRequiredView
 from ..services import PrenameSettingService, ExamMockerService
-from ..models import PrenamingSetting
 
 
 class PrenamingView(ManagerRequiredView):
@@ -65,13 +64,13 @@ class PrenamingConfigView(ManagerRequiredView):
 
     def post(self, request: HttpRequest) -> HttpResponse:
         success_url = "configure_prenaming"
-        ps_meta = PrenamingSetting._meta
         pss = PrenameSettingService()
         # guard inputs
+        (default_xcoord, default_ycoord) = pss._default_prenaming_coords()
         x_pos = request.POST.get("xPos")
-        x_pos = float(x_pos) if x_pos else ps_meta.get_field("xcoord").get_default()
+        x_pos = float(x_pos) if x_pos else default_xcoord
         y_pos = request.POST.get("yPos")
-        y_pos = float(y_pos) if y_pos else ps_meta.get_field("ycoord").get_default()
+        y_pos = float(y_pos) if y_pos else default_ycoord
 
         if "set_config" in request.POST:
             try:

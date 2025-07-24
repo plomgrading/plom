@@ -16,31 +16,6 @@ class PaperSourcePDF(models.Model):
     hash = models.CharField(null=False, max_length=64)
 
 
-class PrenamingSetting(SingletonABCModel):
-    """Server-wide settings for prenaming.
-
-    enabled (bool): Whether the server should prename *any* built PDFs.
-    xcoord (float): Determines the horizontal position of theprenaming box.
-    ycoord (float): Determines the vertical position of the prenaming box.
-
-    """
-
-    enabled = models.BooleanField(default=False, null=False)
-    xcoord = models.FloatField(default=50, null=False)
-    ycoord = models.FloatField(default=42, null=False)
-
-    @classmethod
-    def load(cls):
-        """Return the singleton instance of the PrenamingSettings model."""
-        obj, created = cls.objects.get_or_create(
-            pk=1,
-            defaults={
-                "enabled": False,
-            },
-        )
-        return obj
-
-
 # TODO: consider moving this field to Base.SettingsModel
 class PapersPrintedSettingModel(SingletonABCModel):
     """Set this once user has printed papers."""
