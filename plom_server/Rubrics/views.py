@@ -100,6 +100,7 @@ class RubricAccessPageView(ManagerRequiredView):
     """Highlevel control of who can modify/create rubrics."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """Render the form for who can modify/create rubrics."""
         template_name = "Rubrics/rubrics_access.html"
 
         create = Settings.get_who_can_create_rubrics()
@@ -134,6 +135,7 @@ class RubricAccessPageView(ManagerRequiredView):
         return render(request, template_name, context=context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        """Accept changes to who can modify/create rubrics."""
         template_name = "Rubrics/rubrics_access.html"
         create = request.POST.get("create", None)
         modify = request.POST.get("modify", None)
