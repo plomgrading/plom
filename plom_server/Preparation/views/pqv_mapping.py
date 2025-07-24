@@ -137,10 +137,11 @@ class PQVMappingView(ManagerRequiredView):
         selection_dict = {}
         # iterate over all questions in the spec
         for t in question_triples:
-            if selection[t[0]] is None:
+            version_list = selection[t[0]]
+            if version_list is None:
                 selection_dict.update({t[2]: "select from all versions."})
             else:
-                str_list = list(map(str, selection[t[0]]))
+                str_list = list(map(str, version_list))
                 selection_dict.update({t[2]: ", ".join(str_list)})
 
         num_students = StagingStudentService.how_many_students()
