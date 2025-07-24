@@ -8,14 +8,14 @@ from .services import Settings
 
 class PapersPrintedSettingTests(TestCase):
     def test_settings_create_rubrics_tristates(self) -> None:
-        Settings.key_value_store_set("who_can_create_rubrics", "locked")
-        Settings.key_value_store_set("who_can_create_rubrics", "permissive")
-        Settings.key_value_store_set("who_can_create_rubrics", "per-user")
+        Settings.set_who_can_create_rubrics("locked")
+        Settings.set_who_can_create_rubrics("permissive")
+        Settings.set_who_can_create_rubrics("per-user")
 
     def test_settings_modify_rubrics_tristates(self) -> None:
-        Settings.key_value_store_set("who_can_modify_rubrics", "locked")
-        Settings.key_value_store_set("who_can_modify_rubrics", "permissive")
-        Settings.key_value_store_set("who_can_modify_rubrics", "per-user")
+        Settings.set_who_can_modify_rubrics("locked")
+        Settings.set_who_can_modify_rubrics("permissive")
+        Settings.set_who_can_modify_rubrics("per-user")
 
     def test_settings_create_rubrics_some_other_state(self) -> None:
         with self.assertRaises(ValueError):
