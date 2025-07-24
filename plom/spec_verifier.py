@@ -610,7 +610,7 @@ class SpecVerifier:
         self._check_IDPage(lastPage, print=prnt)
         self._check_doNotMarkPages(lastPage, print=prnt)
         prnt("Checking question groups")
-        self._check_questions(print=prnt, _legacy=_legacy)
+        self._check_questions(print=prnt)
         # Note: enable all-or-none check for labels
         # prnt("Checking either all or no questions have labels")
         # has_label = [
@@ -773,7 +773,7 @@ class SpecVerifier:
                 f'Specification error - "numberToProduce" cannot be greater than {MAX_PAPERS_TO_PRODUCE}.'
             )
 
-    def _check_questions(self, print=print, *, _legacy: bool = True) -> None:
+    def _check_questions(self, print=print) -> None:
         if "numberOfQuestions" not in self.spec:
             N = len(self.spec["question"])
             self.spec["numberOfQuestions"] = N
@@ -798,7 +798,6 @@ class SpecVerifier:
                 self.spec["numberOfPages"],
                 self.spec["numberOfVersions"],
                 print=print,
-                _legacy=_legacy,
             )
 
         print("  Checking mark totals")
@@ -857,9 +856,7 @@ class SpecVerifier:
         else:
             print("    DoNotMark pages is list of positive integers" + chk)
 
-    def _check_question_group(
-        self, g, lastPage, numVersions, print=print, *, _legacy: bool = True
-    ) -> None:
+    def _check_question_group(self, g, lastPage, numVersions, print=print) -> None:
         """Check and in some cases modify the spec of one particular question group."""
         g = str(g)  # TODO: why?
         print("  Checking question group #{}".format(g))
