@@ -42,132 +42,136 @@
                     <div class="card-title">
                         <div class="dropdown">
                             <!-- WET, see <script> tag further down. -->
-                            <!-- autocomplete is Firefox-specific fix:
-			     https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->
-<select class="form-select" onchange="filterPages(this.value)" autocomplete="off">
-<option>all</option>
-<option>needs your attention</option>
-<option>known pages</option>
-<option>extra pages</option>
-<option>extra pages without information</option>
-<option>errors</option>
-<option>discarded pages</option>
-<option>unknown pages</option>
-<option>unread pages</option>
-</select>
-</div>
-</div>
-</div>
-<div class="card-body p-2 pe-0">
-<!-- Not happy with this 80vh here: sometimes that is too much, sometimes too little -->
-<div class="container overflow-y-scroll p-2" style="max-height:78vh;">
-<div class="row row-cols-auto gy-1 gx-1">
-<!-- autocomplete is Firefox-specific fix:
-			     https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->
-{% for pg in pages %}
-<!-- each of these fragments is in a div with a unique id - easy to target with htmx -->
-<div id="fragmentcontainer-{{ pg.order }}" hx-get="{% url 'single_thumbnail_container' bundle_id pg.order %}" hx-trigger="thumbnailRefresh" hx-swap="innerHTML" hx-on="htmx:afterSwap: refreshThumbnailTooltip({{ pg.order }});refreshBundleSummary();clickThumbnail({{ pg.order }})">
-{% include "Scan/fragments/bundle_thumbnail_container.html" with pg=pg %}
-</div>
-{% endfor %}
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="col-8" id="updatePage" style="min-height: 83vh;">
-<!-- HTMX will fill this in -->
-</div>
-<!-- thumbnail container border uses radios, this changes radio appearance -->
-<style>
-	  input[type="radio"][id^="pgradio-"] {
-	    display: none;
-	  }
+                            <!-- autocomplete is Firefox-specific fix: https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->
+                            <select class="form-select"
+                                    onchange="filterPages(this.value)"
+                                    autocomplete="off">
+                                <option>all</option>
+                                <option>needs your attention</option>
+                                <option>known pages</option>
+                                <option>extra pages</option>
+                                <option>extra pages without information</option>
+                                <option>errors</option>
+                                <option>discarded pages</option>
+                                <option>unknown pages</option>
+                                <option>unread pages</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-2 pe-0">
+                    <!-- Not happy with this 80vh here: sometimes that is too much, sometimes too little -->
+                    <div class="container overflow-y-scroll p-2" style="max-height:78vh;">
+                        <div class="row row-cols-auto gy-1 gx-1">
+                            <!-- autocomplete is Firefox-specific fix: https://bugzilla.mozilla.org/show_bug.cgi?id=654072 -->
+                            {% for pg in pages %}
+                                <!-- each of these fragments is in a div with a unique id - easy to target with htmx -->
+                                <div id="fragmentcontainer-{{ pg.order }}"
+                                     hx-get="{% url 'single_thumbnail_container' bundle_id pg.order %}"
+                                     hx-trigger="thumbnailRefresh"
+                                     hx-swap="innerHTML"
+                                     hx-on="htmx:afterSwap: refreshThumbnailTooltip({{ pg.order }});refreshBundleSummary();clickThumbnail({{ pg.order }})">
+                                    {% include "Scan/fragments/bundle_thumbnail_container.html" with pg=pg %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-8" id="updatePage" style="min-height: 83vh;">
+            <!-- HTMX will fill this in -->
+        </div>
+        <!-- thumbnail container border uses radios, this changes radio appearance -->
+        <style>
+			  input[type="radio"][id^="pgradio-"] {
+				display: none;
+			  }
 
-	  .radio-label {
-	    outline:inner;
-	    border-radius: 6px;
-	    user-select: none;
-	  }
+			  .radio-label {
+				outline:inner;
+				border-radius: 6px;
+				user-select: none;
+			  }
 
-	  input[type="radio"][id^="pgradio-"]:checked + .radio-label {
-	    outline: 3px solid #000000;
-	  }
+			  input[type="radio"][id^="pgradio-"]:checked + .radio-label {
+				outline: 3px solid #000000;
+			  }
 
-	  .radio-label:hover {
-	    cursor: pointer;
-	  }
-</style>
-<script>
-        // https://getbootstrap.com/docs/5.3/components/tooltips
-	// create all tooltips when page is initially loaded
-        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+			  .radio-label:hover {
+				cursor: pointer;
+			  }
+        </style>
+        <script>
+				// https://getbootstrap.com/docs/5.3/components/tooltips
+			// create all tooltips when page is initially loaded
+				const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+				const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
-	// iterate over the thumbnail containers and decide which to show/hide
-	// important to keep track of different None/none/null references between html, js, py
-	function filterPages(filter) {
-	  document.querySelectorAll('div[id^="fragmentcontainer-"]').forEach(div => {
-	    const pg_container = div.firstElementChild;
-	    const status_ = pg_container.dataset.status;
-	    const paper_number = pg_container.dataset.paper_number;
-	    const extra_missing_info = status_ == "extra" && paper_number == "None";
+			// iterate over the thumbnail containers and decide which to show/hide
+			// important to keep track of different None/none/null references between html, js, py
+			function filterPages(filter) {
+			  document.querySelectorAll('div[id^="fragmentcontainer-"]').forEach(div => {
+				const pg_container = div.firstElementChild;
+				const status_ = pg_container.dataset.status;
+				const paper_number = pg_container.dataset.paper_number;
+				const extra_missing_info = status_ == "extra" && paper_number == "None";
 
-	    switch (filter) {
-		case "needs your attention":
-			    if (extra_missing_info || status_ == "unknown" || status_ == "error")
-				    div.style.display = '';
-			    else
-				    div.style.display = 'none';
-			    break;
-		case "known pages": div.style.display = status_ == "known" ? '': 'none' ;break;
-		case "extra pages": div.style.display = status_ == "extra" ? '': 'none' ;break;
-		case "extra pages without information":
-			    if (extra_missing_info)
-				    div.style.display = '';
-			    else
-				    div.style.display = 'none';
-			    break;
-		case "errors": div.style.display = status_ == "error" ? '': 'none' ;break;
-		case "discarded pages": div.style.display = status_ == "discard" ? '': 'none' ;break;
-		case "unknown pages": div.style.display = status_ == "unknown" ? '': 'none' ;break;
-		case "unread pages": div.style.display = status_ == "unread" ? '': 'none' ;break;
-		case "all": ;
-		default:
-			    div.style.display = '';
-	    }
-	  });
-	}
+				switch (filter) {
+				case "needs your attention":
+						if (extra_missing_info || status_ == "unknown" || status_ == "error")
+							div.style.display = '';
+						else
+							div.style.display = 'none';
+						break;
+				case "known pages": div.style.display = status_ == "known" ? '': 'none' ;break;
+				case "extra pages": div.style.display = status_ == "extra" ? '': 'none' ;break;
+				case "extra pages without information":
+						if (extra_missing_info)
+							div.style.display = '';
+						else
+							div.style.display = 'none';
+						break;
+				case "errors": div.style.display = status_ == "error" ? '': 'none' ;break;
+				case "discarded pages": div.style.display = status_ == "discard" ? '': 'none' ;break;
+				case "unknown pages": div.style.display = status_ == "unknown" ? '': 'none' ;break;
+				case "unread pages": div.style.display = status_ == "unread" ? '': 'none' ;break;
+				case "all": ;
+				default:
+						div.style.display = '';
+				}
+			  });
+			}
 
-	// trigger a thumbnail to refresh using information from the server
-	// htmx.trigger isn't itself async, but it is used to trigger an async event
-	function refreshThumbnailContainer(index) {
-	    htmx.trigger(document.getElementById("fragmentcontainer-" + index), "thumbnailRefresh");
-	}
+			// trigger a thumbnail to refresh using information from the server
+			// htmx.trigger isn't itself async, but it is used to trigger an async event
+			function refreshThumbnailContainer(index) {
+				htmx.trigger(document.getElementById("fragmentcontainer-" + index), "thumbnailRefresh");
+			}
 
 
-	// trigger the summary at the top of the page to refresh
-	function refreshBundleSummary() {
-	    htmx.trigger(document.getElementById("bundleSummary"), "summaryRefresh");
-	}
+			// trigger the summary at the top of the page to refresh
+			function refreshBundleSummary() {
+				htmx.trigger(document.getElementById("bundleSummary"), "summaryRefresh");
+			}
 
-	// trigger the tooltips in the summary to refresh
-	function refreshBundleSummaryTooltips() {
-	    var summaryTooltipTriggerList = document.querySelectorAll('button[id^="paper-btn-"]');
-	    console.log(summaryTooltipTriggerList)
-	    var updatedTooltipList = [...summaryTooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
-	}
+			// trigger the tooltips in the summary to refresh
+			function refreshBundleSummaryTooltips() {
+				var summaryTooltipTriggerList = document.querySelectorAll('button[id^="paper-btn-"]');
+				console.log(summaryTooltipTriggerList)
+				var updatedTooltipList = [...summaryTooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+			}
 
-	// add a new tooltip to a thumbnail
-	function refreshThumbnailTooltip(index) {
-	    new bootstrap.Tooltip(document.getElementById("pgcontainer-" + index));
-	}
+			// add a new tooltip to a thumbnail
+			function refreshThumbnailTooltip(index) {
+				new bootstrap.Tooltip(document.getElementById("pgcontainer-" + index));
+			}
 
-	// click a particular thumbnail
-	function clickThumbnail(bundle_index) {
-	    const target_thumbnail = document.getElementById("pgradio-" + bundle_index);
-	    target_thumbnail.click();
-	}
-</script>
-</div>
+			// click a particular thumbnail
+			function clickThumbnail(bundle_index) {
+				const target_thumbnail = document.getElementById("pgradio-" + bundle_index);
+				target_thumbnail.click();
+			}
+        </script>
+    </div>
 {% endblock main_content %}
