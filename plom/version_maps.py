@@ -99,9 +99,6 @@ def check_version_map(
                         f" number of versions = {num_versions}"
                     )
             if spec:
-                # TODO: unsure about this: maybe we should doc that we ignore "select"
-                # when custom version maps are used.
-                # TODO: revisit this when working on Issue #2261.
                 if spec["question"][str(q)].get("select") is not None:
                     if v not in spec["question"][str(q)]["select"]:
                         raise ValueError(
