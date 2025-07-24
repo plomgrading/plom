@@ -53,12 +53,10 @@ class Classlist(APIView):
 
     # GET /api/v0/classlist
     def get(self, request: Request) -> FileResponse | Response:
-        """Fetch the classlist held by the server, or query prenaming.
+        """Fetch the classlist held by the server.
 
         By default, this is a transparent wrapper for the GET method
-        implemented in :class:'ClasslistDownloadView'. But with extra
-        parameters, this endpoint will answer simple questions with a
-        Response carrying plain text.
+        implemented in :class:'ClasslistDownloadView'.
 
         Args:
             request: A Request object.
