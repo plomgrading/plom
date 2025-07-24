@@ -44,6 +44,7 @@ def key_value_store_set(key: str, value: Any) -> None:
 
 
 def get_feedback_rules():
+    """Get a copy of the current value of the feedback rules."""
     rules = key_value_store_get("feedback_rules")
     if not rules:
         return deepcopy(static_feedback_rules)
@@ -51,11 +52,13 @@ def get_feedback_rules():
 
 
 def get_who_can_create_rubrics() -> str:
+    """Get the level of restrictions on who can create rubrics, or a default if not set."""
     # note default hardcoded here
     return key_value_store_get("who_can_create_rubrics", "permissive")
 
 
 def set_who_can_create_rubrics(x: str) -> None:
+    """Set the restriction for who can create rubrics to one of "permissive", "per-user" or "locked."""
     choices = ("permissive", "per-user", "locked")
     if x not in choices:
         raise ValueError(f'"{x}" is invalid, must be one of {choices}')
@@ -63,11 +66,13 @@ def set_who_can_create_rubrics(x: str) -> None:
 
 
 def get_who_can_modify_rubrics() -> str:
+    """Get the level of restrictions on who can modify rubrics, or a default if not set."""
     # note default hardcoded here
     return key_value_store_get("who_can_modify_rubrics", "per-user")
 
 
 def set_who_can_modify_rubrics(x: str) -> None:
+    """Set the restriction for who can modify rubrics to one of "permissive", "per-user" or "locked."""
     choices = ("permissive", "per-user", "locked")
     if x not in choices:
         raise ValueError(f'"{x}" is invalid, must be one of {choices}')
