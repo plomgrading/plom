@@ -50,8 +50,7 @@ def get_feedback_rules():
     return rules
 
 
-@property
-def who_can_create_rubrics() -> str:
+def get_who_can_create_rubrics() -> str:
     # note default hardcoded here
     return key_value_store_get("who_can_create_rubrics", "permissive")
 
@@ -63,8 +62,7 @@ def set_who_can_create_rubrics(x: str) -> None:
     key_value_store_set("who_can_create_rubrics", x)
 
 
-@property
-def who_can_modify_rubrics() -> str:
+def get_who_can_modify_rubrics() -> str:
     # note default hardcoded here
     return key_value_store_get("who_can_modify_rubrics", "per-user")
 

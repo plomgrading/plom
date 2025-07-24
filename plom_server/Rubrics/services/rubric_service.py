@@ -323,7 +323,7 @@ class RubricService:
             )
 
         # Check permissions
-        who_can_create_rubrics = Settings.who_can_create_rubrics
+        who_can_create_rubrics = Settings.get_who_can_create_rubrics()
         if creating_user is None:
             pass
         elif who_can_create_rubrics == "permissive":
@@ -562,7 +562,7 @@ class RubricService:
                 f'User "{modifying_user}" is not allowed to modify system rubrics'
             )
 
-        who_can_modify_rubrics = Settings.who_can_modify_rubrics
+        who_can_modify_rubrics = Settings.get_who_can_modify_rubrics()
         if modifying_user is None:
             pass
         elif who_can_modify_rubrics == "permissive":
