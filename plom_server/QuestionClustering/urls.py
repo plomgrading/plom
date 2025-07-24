@@ -8,7 +8,7 @@ from .views import (
     SelectRectangleForClusteringView,
     PreviewSelectedRectsView,
     QuestionClusteringJobsHome,
-    GetQuestionClusteringJobs,
+    QuestionClusteringJobTable,
     ClusterGroupsView,
     ClusteredPapersView,
     DeleteClusterMember,
@@ -18,11 +18,13 @@ from .views import (
     UpdateClusterPriorityView,
     ClusterBulkTaggingView,
     RemoveTagFromClusterView,
+    ClusteringErrorJobInfoView,
     Debug,
 )
 
 
 urlpatterns = [
+    # ======= Question Clustering Page URLs =======
     path("", QuestionClusteringHomeView.as_view(), name="question_clustering_home"),
     path(
         "select/<int:version>/<int:qidx>/<int:page>",
@@ -41,7 +43,7 @@ urlpatterns = [
     ),
     path(
         "question_clustering_jobs",
-        GetQuestionClusteringJobs.as_view(),
+        QuestionClusteringJobTable.as_view(),
         name="get_question_clustering_tasks",
     ),
     path(
@@ -55,10 +57,11 @@ urlpatterns = [
         name="clustered_papers",
     ),
     path(
-        "delete_cluster_member/<int:question_idx>/<int:version>/<int:page_num>/<int:clusterId>",
-        DeleteClusterMember.as_view(),
-        name="delete_cluster_member",
+        "cluster_error_job_info/<int:task_id>",
+        ClusteringErrorJobInfoView.as_view(),
+        name="cluster_error_job_info",
     ),
+    # ======= Clustering-cleanup  =======
     path("merge_clusters/", ClusterMergeView.as_view(), name="merge_clusters"),
     path(
         "bulk_delete_clusters/",
@@ -71,6 +74,12 @@ urlpatterns = [
         name="bulk_reset_clusters",
     ),
     path(
+        "delete_cluster_member/<int:question_idx>/<int:version>/<int:page_num>/<int:clusterId>",
+        DeleteClusterMember.as_view(),
+        name="delete_cluster_member",
+    ),
+    # ======= Post-clustering-cleanup utilis =======
+    path(
         "update_cluster_priority/",
         UpdateClusterPriorityView.as_view(),
         name="update_cluster_priority",
@@ -80,6 +89,7 @@ urlpatterns = [
         ClusterBulkTaggingView.as_view(),
         name="bulk_cluster_tagging",
     ),
+    # ======= Misc clustering features =======
     path(
         "remove_tag_from_cluster",
         RemoveTagFromClusterView.as_view(),

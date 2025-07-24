@@ -1,3 +1,6 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2025 Bryan Tanady -->
+
 <div id="tasks-table"
      hx-get="{% url 'get_question_clustering_tasks' %}"
      hx-trigger="every 1s"
@@ -15,7 +18,7 @@
             </thead>
             <tbody>
                 {% for task in tasks %}
-                    <tr id="task-{{ task.id }}">
+                    <tr id="task-{{ task.task_id }}">
                         <td>{{ task.question_idx }}</td>
                         <td>{{ task.version }}</td>
                         <td>
@@ -28,10 +31,13 @@
                         </td>
                         <td>
                             {% if task.status == "Error" %}
-                                <a class="btn btn-warning btn-sm"
-                                   hx-post=""
-                                   hx-target="#tasks-table"
-                                   hx-swap="outerHTML">Restart</a>
+                                <a class="btn btn-info btn-sm"
+                                   hx-get="{% url 'cluster_error_job_info' task.task_id %}"
+                                   hx-target="#errorModal"
+                                   hx-swap="outerHTML"
+                                   hx-on::after-request="bootstrap.Modal.getOrCreateInstance(document.getElementById('errorModal')).show()">
+                                    Detail
+                                </a>
                                 <a class="btn btn-danger btn-sm"
                                    hx-delete=""
                                    hx-target="#tasks-table"

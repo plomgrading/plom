@@ -11,7 +11,7 @@ from django.http import (
     Http404,
 )
 
-from django.core.files.base import ContentFile
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render
 from django.contrib import messages
 
@@ -217,13 +217,34 @@ class QuestionClusteringJobsHome(ManagerRequiredView):
         return render(request, "QuestionClustering/clustering_jobs.html", context)
 
 
-class GetQuestionClusteringJobs(ManagerRequiredView):
+class QuestionClusteringJobTable(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
 
         qcs = QuestionClusteringService()
         tasks = qcs.get_question_clustering_tasks()
         return render(
-            request, "QuestionClustering/clustering_jobs_table.html", {"tasks": tasks}
+            request,
+            "QuestionClustering/fragments/clustering_jobs_table.html",
+            {"tasks": tasks},
+        )
+
+
+class ClusteringErrorJobInfoView(ManagerRequiredView):
+    """Render the info dialog for failed job."""
+
+    def get(self, request: HttpRequest, task_id: int) -> HttpResponse:
+        qcs = QuestionClusteringService()
+        try:
+            task = qcs.get_clustering_job(task_id)
+            context = {"message": task["message"]}
+
+        except ObjectDoesNotExist as err:
+            context = {"message": err}
+
+        return render(
+            request,
+            "QuestionClustering/fragments/error_detail_modal.html",
+            context=context,
         )
 
 
@@ -475,5 +496,7 @@ class RemoveTagFromClusterView(ManagerRequiredView):
         }
 
         return render(
-            request, "QuestionClustering/fragments/clustering_tag_cell.html", context=context
+            request,
+            "QuestionClustering/fragments/clustering_tag_cell.html",
+            context=context,
         )

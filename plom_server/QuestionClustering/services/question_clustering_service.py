@@ -12,11 +12,11 @@ from plom_server.Papers.models import Paper
 from plom_server.Papers.services import PaperInfoService
 from plom_server.Rectangles.services import (
     RectangleExtractor,
-    extract_rect_region_from_image,
 )
 from plom_server.Base.models import HueyTaskTracker
 from django.db import transaction
-from django_huey import db_task, get_queue
+from django.core.exceptions import ObjectDoesNotExist
+from django_huey import db_task
 import huey
 import huey.api
 import numpy as np
@@ -24,10 +24,6 @@ from .image_processing_service import ImageProcessingService
 from .clustering_pipeline import ClusteringPipeline
 from .preprocessor import DiffProcessor
 import cv2
-from sklearn.cluster import AgglomerativeClustering
-import pandas as pd
-from io import BytesIO
-from PIL import Image
 from django.db.models import Count
 from plom_server.QuestionClustering.models import ClusteringModelType
 from django.db import transaction
@@ -40,6 +36,8 @@ from plom_server.Mark.models import MarkingTask, MarkingTaskTag
 from plom_server.Mark.services.marking_task_service import MarkingTaskService
 from typing import Optional
 from collections import defaultdict
+from typing import Any
+from django.forms.models import model_to_dict
 
 
 class QuestionClusteringService:
@@ -270,15 +268,31 @@ class QuestionClusteringService:
             A list of dicts each representing a non-obsolete clustering task. The dict
             has these keys: [question_idx, version, status].
         """
-        return [
-            {
-                "question_idx": task.question_idx,
-                "version": task.version,
-                "page_num": task.page_num,
-                "status": task.get_status_display(),
-            }
-            for task in QuestionClusteringChore.objects.filter(obsolete=False)
-        ]
+        # return [
+        #     {
+        #         "question_idx": task.question_idx,
+        #         "version": task.version,
+        #         "page_num": task.page_num,
+        #         "status": task.get_status_display(),
+        #         "message": task.message
+        #     }
+        #     for task in QuestionClusteringChore.objects.filter(obsolete=False)
+        # ]
+
+        temp = []
+        for task in QuestionClusteringChore.objects.filter(obsolete=False):
+            temp.append(
+                {
+                    "task_id": task.id,
+                    "question_idx": task.question_idx,
+                    "version": task.version,
+                    "page_num": task.page_num,
+                    "status": task.get_status_display(),
+                    "message": task.message,
+                }
+            )
+
+        return temp
 
     def get_user_facing_clusters(self, question_idx: int, version: int) -> dict:
         """Get a mapping of clusterId to the count of the members"""
@@ -688,6 +702,21 @@ class QuestionClusteringService:
             for oc, new in zip(originals, new_clusters):
                 oc.user_cluster = new
             QVCluster.objects.bulk_update(originals, ["user_cluster"])
+
+    @transaction.atomic
+    def get_clustering_job(self, task_id: int) -> dict[str, Any]:
+        """Get clustering job representation in dict.
+
+        Args:
+            task_id: the clustering job id.
+
+        Returns:
+            A dict with these keys: [status, message, last_update, obsolete].
+        """
+        job = QuestionClusteringChore.objects.get(id=task_id)
+        return model_to_dict(
+            job, fields=["status", "message", "last_update", "obsolete"]
+        )
 
 
 # The decorated function returns a ``huey.api.Result``

@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later
+Copyright (C) 2025 Bryan Tanady -->
 {% extends "base/base.html" %}
 {% load static %}
 {% block title %}
@@ -16,6 +18,7 @@
         <a class="btn btn-warning" href="{% url 'remove_huey_debug' %}">Remove all jobs (For DEBUG)</a>
     </div>
     <div class="card my-2">
-        <div class="card-body">{% include "QuestionClustering/clustering_jobs_table.html" with tasks=tasks %}</div>
+        <div class="card-body">{% include "QuestionClustering/fragments/clustering_jobs_table.html" with tasks=tasks %}</div>
     </div>
+    {% include "QuestionClustering/fragments/error_detail_modal.html" %}
 {% endblock main_content %}
