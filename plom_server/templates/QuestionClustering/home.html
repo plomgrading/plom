@@ -5,17 +5,16 @@
 {% extends "base/base.html" %}
 {% load custom_tags %}
 {% block title %}
-    Cluster questions based on written answer
+    Cluster papers based on written answer
 {% endblock title %}
 {% block page_heading %}
-    Cluster questions based on written answer
+    Cluster papers based on written answer
 {% endblock page_heading %}
 {% block main_content %}
     <style>
         .image-viewer{
             display: none;
             overflow-x: scroll;
-
         }
 
         .image-viewer.show{
@@ -36,25 +35,26 @@
             {% for v in version_list %}
                 <h5 class="card-title">Questions from version {{ v }}</h5>
                 {% for qidx, q_label in q_idx_label_pairs %}
-                    <a class="btn btn-info btn-question"
-                       data-version="{{ v }}"
-                       data-qidx="{{ qidx }}">{{ q_label }}</a>
+                    <button class="btn btn-info btn-question"
+                            data-version="{{ v }}"
+                            data-qidx="{{ qidx }}">{{ q_label }}</button>
                 {% endfor %}
             {% endfor %}
         </div>
     </div>
-    <!-- single viewer at the bottom -->
+    <!-- Page image viewer (render all, hide/show dynamically)-->
     {% for v in version_list %}
         <div>
             {% for qidx in q_idx_to_pages %}
                 {% with q_idx_to_pages|get_item:qidx as pages %}
-                    <div class="image-viewer " id="viewer-{{ v }}-{{ qidx }}">
+                    <div class="image-viewer" id="viewer-{{ v }}-{{ qidx }}">
                         {% for page_num in pages %}
                             <a href="{% url 'question_clustering_select_rectangle' v qidx page_num %}">
                                 <img class="border w-100"
                                      style="max-height: 600px;
                                             max-width: fit-content"
-                                     src="{% url 'reference_image' v page_num %}">
+                                     src="{% url 'reference_image' v page_num %}"
+                                     alt="Preview page for q{{ qidx }} v{{ v }} page {{ page_num }}">
                             </img>
                         </a>
                     {% endfor %}
@@ -64,33 +64,33 @@
     </div>
 {% endfor %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const viewers = document.querySelectorAll('.image-viewer');
-        const buttons = document.querySelectorAll('.btn-question')
+        // Script controls image viewer show/hidden and highlights the question button that is
+        // currently active
+        document.addEventListener('DOMContentLoaded', function() {
+            const viewers = document.querySelectorAll('.image-viewer');
+            const question_buttons = document.querySelectorAll('.btn-question')
 
-        // find all buttons
-        document.querySelectorAll('.btn-question').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            const v    = btn.dataset.version;
-            const qidx = btn.dataset.qidx;
-            const target = document.getElementById(`viewer-${v}-${qidx}`);
+            question_buttons.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const v    = btn.dataset.version;
+                    const qidx = btn.dataset.qidx;
+                    const target = document.getElementById(`viewer-${v}-${qidx}`);
 
-             // hide any currently shown viewer except target
-            viewers.forEach(vw => {
-                if (vw !== target) vw.classList.remove('show');
+                    // hide any currently shown viewer except target
+                    viewers.forEach(vw => {
+                        if (vw !== target) vw.classList.remove('show');
+                    });
+
+                    // remove all buttons highlight except current button
+                    question_buttons.forEach(b => {
+                        if (b !== this) b.classList.remove('btn-danger');
+                    });
+
+                    // toggle current viewer on/off and button color (highlight)
+                    target.classList.toggle('show');
+                    this.classList.toggle('btn-danger')
+                });
             });
-
-            // reset all buttons except current button
-            buttons.forEach(b => {
-                if (b !== this) b.classList.remove('btn-danger');
-            });
-
-
-            // toggle current viewer on/off and button color
-            target.classList.toggle('show');
-            this.classList.toggle('btn-danger')
         });
-        });
-    });
 </script>
 {% endblock %}

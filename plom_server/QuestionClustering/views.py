@@ -63,14 +63,13 @@ class QuestionClusteringHomeView(ManagerRequiredView):
 
 # ========== Rectangle selector for clustering ===============
 class SelectRectangleForClusteringView(ManagerRequiredView):
-    """Render rectangle selection used for clustering
+    """Render rectangle selection used for clustering.
 
     GET:
-        Display rectangle extractor page for selecting region for clustering
+        Display rectangle extractor page for selecting region for clustering.
 
     POST:
-        Submit the selected region and redirect to preview page using
-        POST/REDIRECT/GET design practice
+        Submit the selected region and redirect to preview page.
     """
 
     def get(
@@ -122,11 +121,11 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
 
 # ======== Page to preview selected regions ===============
 class PreviewSelectedRectsView(ManagerRequiredView):
-    """Render page to show previews of selected regions
+    """Render page to show previews of selected regions.
 
     GET:
         Display the page with previews of selected regions for clustering
-        and begin clustering button
+        and begin clustering button.
 
     POST:
         Validate the clustering job form.
@@ -142,9 +141,10 @@ class PreviewSelectedRectsView(ManagerRequiredView):
         page_num = int(params["page_num"])
         version = int(params["version"])
 
-        # get 4 scanned papers for previews
+        # get some scanned papers for previews
+        num_previews = 4
         paper_numbers = PaperInfoService.get_paper_numbers_containing_page(
-            page_num, version=version, scanned=True, limit=4
+            page_num, version=version, scanned=True, limit=num_previews
         )
 
         initial = {
@@ -206,7 +206,7 @@ class PreviewSelectedRectsView(ManagerRequiredView):
             return render(request, "QuestionClustering/show_rectangles.html")
 
 
-# ============== List of clustering jobs page (table jobs) =====================
+# ============== List of clustering jobs page (table of jobs) =====================
 class QuestionClusteringJobsHome(ManagerRequiredView):
     """Render the page with all clustering jobs"""
 
@@ -230,6 +230,8 @@ class QuestionClusteringJobsHome(ManagerRequiredView):
 
 
 class QuestionClusteringJobTable(ManagerRequiredView):
+    """Render a fragment html for the table of jobs."""
+
     def get(self, request: HttpRequest) -> HttpResponse:
 
         qcs = QuestionClusteringService()
@@ -242,7 +244,7 @@ class QuestionClusteringJobTable(ManagerRequiredView):
 
 
 class ClusteringErrorJobInfoView(ManagerRequiredView):
-    """Render the info modal dialog for failed job."""
+    """Render the error info modal dialog for failed job."""
 
     def get(self, request: HttpRequest, task_id: int) -> HttpResponse:
         qcs = QuestionClusteringService()

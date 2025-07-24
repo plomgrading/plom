@@ -15,7 +15,6 @@ from plom_server.Rectangles.services import (
 )
 from plom_server.Base.models import HueyTaskTracker
 from django.db import transaction
-from django.core.exceptions import ObjectDoesNotExist
 from django_huey import db_task
 import huey
 import huey.api
@@ -280,7 +279,7 @@ class QuestionClusteringService:
 
         Returns:
             A list of dicts each representing a non-obsolete clustering task. The dict
-            has these keys: [question_idx, version, status].
+            has these keys: [task_id, question_idx, version, page_num, status, message].
         """
         return [
             {
