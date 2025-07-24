@@ -37,7 +37,7 @@ from django.db.models import QuerySet
 from rest_framework import serializers
 
 from plom.plom_exceptions import PlomConflict
-from plom_server.Base.models import SettingsModel
+from plom_server.Base.services import Settings
 from plom_server.Mark.models import Annotation
 from plom_server.Mark.models.tasks import MarkingTask
 from plom_server.Papers.models import Paper
@@ -323,12 +323,15 @@ class RubricService:
             )
 
         # Check permissions
-        s = SettingsModel.load()
+        # TODO: default hardcoded here
+        who_can_create_rubrics = Settings.key_value_store_get(
+            "who_can_create_rubrics", "permissive"
+        )
         if creating_user is None:
             pass
-        elif s.who_can_create_rubrics == "permissive":
+        elif who_can_create_rubrics == "permissive":
             pass
-        elif s.who_can_create_rubrics == "locked":
+        elif who_can_create_rubrics == "locked":
             raise PermissionDenied(
                 "No users are allowed to create rubrics on this server"
             )
@@ -562,12 +565,15 @@ class RubricService:
                 f'User "{modifying_user}" is not allowed to modify system rubrics'
             )
 
-        s = SettingsModel.load()
+        # TODO: default hardcoded here
+        who_can_modify_rubrics = Settings.key_value_store_get(
+            "who_can_modify_rubrics", "per-user"
+        )
         if modifying_user is None:
             pass
-        elif s.who_can_modify_rubrics == "permissive":
+        elif who_can_modify_rubrics == "permissive":
             pass
-        elif s.who_can_modify_rubrics == "locked":
+        elif who_can_modify_rubrics == "locked":
             raise PermissionDenied(
                 "No users are allowed to modify rubrics on this server"
             )

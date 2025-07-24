@@ -27,7 +27,6 @@ from plom.plom_exceptions import PlomConflict
 from plom.misc_utils import pprint_score
 
 from plom_server.Base.base_group_views import ManagerRequiredView
-from plom_server.Base.models import SettingsModel
 from plom_server.Base.services import Settings
 from plom_server.Papers.services import SpecificationService
 from plom_server.Preparation.services import PapersPrinted
@@ -103,18 +102,23 @@ class RubricAccessPageView(ManagerRequiredView):
     def get(self, request: HttpRequest) -> HttpResponse:
         template_name = "Rubrics/rubrics_access.html"
 
-        settings = SettingsModel.load()
+        # TODO: where to store these defaults?
+        create_default = "permissive"
+        modify_default = "per-user"
 
-        if settings.who_can_create_rubrics == "permissive":
+        create = Settings.key_value_store_get("who_can_create_rubrics", create_default)
+        modify = Settings.key_value_store_get("who_can_modify_rubrics", modify_default)
+
+        if create == "permissive":
             create_checked = (True, False, False)
-        elif settings.who_can_create_rubrics == "locked":
+        elif create == "locked":
             create_checked = (False, False, True)
         else:
             create_checked = (False, True, False)
 
-        if settings.who_can_modify_rubrics == "permissive":
+        if modify == "permissive":
             modify_checked = (True, False, False)
-        elif settings.who_can_modify_rubrics == "locked":
+        elif modify == "locked":
             modify_checked = (False, False, True)
         else:
             modify_checked = (False, True, False)
@@ -138,30 +142,26 @@ class RubricAccessPageView(ManagerRequiredView):
         create = request.POST.get("create", None)
         modify = request.POST.get("modify", None)
 
-        settings = SettingsModel.load()
-
         if create not in ("permissive", "per-user", "locked"):
             # TODO: 406?
             raise ValueError(f"create={create} is invalid")
-        settings.who_can_create_rubrics = create
-        settings.save()
+        Settings.key_value_store_set("who_can_create_rubrics", create)
 
         if modify not in ("permissive", "per-user", "locked"):
             # TODO: 406?
             raise ValueError(f"modify={modify} is invalid")
-        settings.who_can_modify_rubrics = modify
-        settings.save()
+        Settings.key_value_store_set("who_can_modify_rubrics", modify)
 
-        if settings.who_can_create_rubrics == "permissive":
+        if create == "permissive":
             create_checked = (True, False, False)
-        elif settings.who_can_create_rubrics == "locked":
+        elif create == "locked":
             create_checked = (False, False, True)
         else:
             create_checked = (False, True, False)
 
-        if settings.who_can_modify_rubrics == "permissive":
+        if modify == "permissive":
             modify_checked = (True, False, False)
-        elif settings.who_can_modify_rubrics == "locked":
+        elif modify == "locked":
             modify_checked = (False, False, True)
         else:
             modify_checked = (False, True, False)
