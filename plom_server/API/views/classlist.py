@@ -62,8 +62,7 @@ class Classlist(APIView):
             request: A Request object.
 
         Returns:
-            By default, a FileResponse object (subclassed from Response)
-            with filename 'classlist.csv'.
+            A FileResponse object with filename 'classlist.csv'.
         """
         group_list = list(request.user.groups.values_list("name", flat=True))
         if "manager" not in group_list:
