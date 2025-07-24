@@ -89,7 +89,9 @@ class RubricPermissionsService:
         rubric_fractional_options = deepcopy(_frac_opt_table)
         # figure out which are currently checked by checking settings
         for opt in rubric_fractional_options:
-            opt["checked"] = Settings.key_value_store_get(opt["name"])
+            name = opt["name"]
+            assert isinstance(name, str)
+            opt["checked"] = Settings.key_value_store_get(name)
         rubric_fractional_options = [
             opt
             for opt in rubric_fractional_options
@@ -139,6 +141,7 @@ class RubricPermissionsService:
 
         for opt in _frac_opt_table:
             name = opt["name"]
+            assert isinstance(name, str)
             N = opt["denom"]
             assert isinstance(N, int)  # help mypy
             readable_denom = opt["readable"]
