@@ -138,7 +138,7 @@ def check_version_map(
 
 def make_random_version_map(
     spec, *, seed: str | None = None
-) -> dict[int, dict[int | str, int]]:
+) -> dict[int, dict[str | int, int]]:
     """Build a random version map.
 
     Args:
@@ -179,9 +179,9 @@ def make_random_version_map(
         random.shuffle(v_list)
 
     # assign each question version to a paper
-    vmap: dict[int, dict[int, int]] = {}
+    vmap: dict[int, dict[int | str, int]] = {}
     for paper_num in range(1, spec["numberToProduce"] + 1):
-        paper_map = {}
+        paper_map: dict[int | str, int] = {}
         for q_1index_str in spec["question"].keys():
             q_1index = int(q_1index_str)
             paper_map.update({q_1index: qv_list[q_1index].pop()})
