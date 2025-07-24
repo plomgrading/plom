@@ -61,9 +61,6 @@ class Classlist(APIView):
         Args:
             request: A Request object.
 
-        GET Data:
-            prename: A string encoding the information requested.
-
         Returns:
             By default, a FileResponse object (subclassed from Response)
             with filename 'classlist.csv'.
