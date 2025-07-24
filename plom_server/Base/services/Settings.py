@@ -57,7 +57,9 @@ def who_can_create_rubrics() -> str:
 
 
 def set_who_can_create_rubrics(x: str) -> None:
-    assert x in ("permissive", "per-user", "locked")
+    choices = ("permissive", "per-user", "locked")
+    if x not in choices:
+        raise ValueError(f'"{x}" is invalid, must be one of {choices}')
     key_value_store_set("who_can_create_rubrics", x)
 
 
@@ -68,5 +70,7 @@ def who_can_modify_rubrics() -> str:
 
 
 def set_who_can_modify_rubrics(x: str) -> None:
-    assert x in ("permissive", "per-user", "locked")
+    choices = ("permissive", "per-user", "locked")
+    if x not in choices:
+        raise ValueError(f'"{x}" is invalid, must be one of {choices}')
     key_value_store_set("who_can_modify_rubrics", x)

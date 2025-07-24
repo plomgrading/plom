@@ -138,15 +138,9 @@ class RubricAccessPageView(ManagerRequiredView):
         create = request.POST.get("create", None)
         modify = request.POST.get("modify", None)
 
-        if create not in ("permissive", "per-user", "locked"):
-            # TODO: 406?
-            raise ValueError(f"create={create} is invalid")
-        Settings.key_value_store_set("who_can_create_rubrics", create)
-
-        if modify not in ("permissive", "per-user", "locked"):
-            # TODO: 406?
-            raise ValueError(f"modify={modify} is invalid")
-        Settings.key_value_store_set("who_can_modify_rubrics", modify)
+        # These can throw ValueError: do we want a 406?
+        Settings.set_who_can_create_rubrics(create)
+        Settings.set_who_can_modify_rubrics(modify)
 
         if create == "permissive":
             create_checked = (True, False, False)

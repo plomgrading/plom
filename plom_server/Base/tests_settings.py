@@ -18,9 +18,9 @@ class PapersPrintedSettingTests(TestCase):
         Settings.key_value_store_set("who_can_modify_rubrics", "per-user")
 
     def test_settings_create_rubrics_some_other_state(self) -> None:
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             Settings.set_who_can_create_rubrics("meh")
 
     def test_settings_modify_rubrics_some_other_state(self) -> None:
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             Settings.set_who_can_modify_rubrics("foobar")
