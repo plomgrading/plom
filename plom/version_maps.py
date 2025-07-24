@@ -138,7 +138,7 @@ def check_version_map(
 
 def make_random_version_map(
     spec, *, seed: str | None = None
-) -> dict[int, dict[int, int]]:
+) -> dict[int, dict[int | str, int]]:
     """Build a random version map.
 
     Args:
