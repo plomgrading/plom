@@ -38,6 +38,9 @@ from typing import Optional
 from collections import defaultdict
 from typing import Any
 from django.forms.models import model_to_dict
+from plom_server.QuestionClustering.exceptions.job_exception import (
+    DuplicateClusteringJobError,
+)
 
 
 class QuestionClusteringService:
@@ -59,6 +62,9 @@ class QuestionClusteringService:
         rects: the coordinates of the four corners of the rectangle used for clustering.
             Rects should have these keys: [top, left, bottom, right].
         clustering_model: the model used to cluster the papers.
+
+        Raises:
+            DuplicateClusteringJobError if there is existing non-obsolete clustering job for that question, version.
         """
         expected_keys = {"top", "left", "bottom", "right"}
         if expected_keys.intersection(set(rects.keys())) != expected_keys:
@@ -67,6 +73,14 @@ class QuestionClusteringService:
             )
 
         with transaction.atomic(durable=True):
+            # Check if there exists non-obsolete clustering job for current q,v
+            if QuestionClusteringChore.objects.filter(
+                question_idx=question_idx, version=version, obsolete=False
+            ).exists():
+                raise DuplicateClusteringJobError(
+                    f"clustering job for q{question_idx}, v{version} already exists"
+                )
+
             x = QuestionClusteringChore.objects.create(
                 question_idx=question_idx,
                 version=version,
@@ -268,31 +282,17 @@ class QuestionClusteringService:
             A list of dicts each representing a non-obsolete clustering task. The dict
             has these keys: [question_idx, version, status].
         """
-        # return [
-        #     {
-        #         "question_idx": task.question_idx,
-        #         "version": task.version,
-        #         "page_num": task.page_num,
-        #         "status": task.get_status_display(),
-        #         "message": task.message
-        #     }
-        #     for task in QuestionClusteringChore.objects.filter(obsolete=False)
-        # ]
-
-        temp = []
-        for task in QuestionClusteringChore.objects.filter(obsolete=False):
-            temp.append(
-                {
-                    "task_id": task.id,
-                    "question_idx": task.question_idx,
-                    "version": task.version,
-                    "page_num": task.page_num,
-                    "status": task.get_status_display(),
-                    "message": task.message,
-                }
-            )
-
-        return temp
+        return [
+            {
+                "task_id": task.id,
+                "question_idx": task.question_idx,
+                "version": task.version,
+                "page_num": task.page_num,
+                "status": task.get_status_display(),
+                "message": task.message,
+            }
+            for task in QuestionClusteringChore.objects.filter(obsolete=False)
+        ]
 
     def get_user_facing_clusters(self, question_idx: int, version: int) -> dict:
         """Get a mapping of clusterId to the count of the members"""
@@ -717,6 +717,32 @@ class QuestionClusteringService:
         return model_to_dict(
             job, fields=["status", "message", "last_update", "obsolete"]
         )
+
+    @transaction.atomic
+    def delete_clustering_job(self, task_id: int) -> None:
+        """Remove a clustering job, and remove the clusterings involved if the job is non-obsolete.
+
+        Note: We restrict clustering removal to non_obsolete jobs to avoid unexpected
+            removals clusterings.
+
+        Args:
+            task_id: the id of the clustering task to be removed.
+
+        Raises:
+            ObjectDoesNotExist: If the task does not exist.
+        """
+
+        task = QuestionClusteringChore.objects.get(id=task_id)
+
+        # remove clustering involved in it if task is non-obsolete
+        if not task.obsolete:
+            question_idx = task.question_idx
+            version = task.version
+            QVCluster.objects.filter(
+                question_idx=question_idx, version=version
+            ).delete()
+
+        task.delete()
 
 
 # The decorated function returns a ``huey.api.Result``

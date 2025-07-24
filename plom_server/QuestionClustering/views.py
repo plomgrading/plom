@@ -7,6 +7,7 @@ from tempfile import NamedTemporaryFile
 from django.http import (
     HttpRequest,
     HttpResponse,
+    HttpResponseNotFound,
     QueryDict,
     Http404,
 )
@@ -16,7 +17,6 @@ from django.shortcuts import render
 from django.contrib import messages
 
 from plom_server.Papers.services import SpecificationService, PaperInfoService
-from plom_server.Preparation.services import SourceService
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Rectangles.services import get_reference_qr_coords_for_page
 from plom_server.QuestionClustering.services import QuestionClusteringService
@@ -26,7 +26,10 @@ from plom_server.QuestionClustering.forms import ClusteringJobForm
 from django.shortcuts import redirect
 from django.urls import reverse
 from urllib.parse import urlencode
-from django_htmx.http import HttpResponseClientRefresh
+from django.db import IntegrityError
+from plom_server.QuestionClustering.exceptions.job_exception import (
+    DuplicateClusteringJobError,
+)
 
 
 class Debug(ManagerRequiredView):
@@ -39,6 +42,7 @@ class Debug(ManagerRequiredView):
         return render(request, "QuestionClustering/clustering_jobs.html")
 
 
+# ====== Clustering Home Page (choose q, v, page) =======
 class QuestionClusteringHomeView(ManagerRequiredView):
     """Render clustering home page for choosing question-version pair for clustering."""
 
@@ -57,6 +61,7 @@ class QuestionClusteringHomeView(ManagerRequiredView):
         return render(request, "QuestionClustering/home.html", context)
 
 
+# ========== Rectangle selector for clustering ===============
 class SelectRectangleForClusteringView(ManagerRequiredView):
     """Render rectangle selection used for clustering
 
@@ -115,6 +120,7 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
         return redirect(f"{url}?{urlencode(params)}")
 
 
+# ======== Page to preview selected regions ===============
 class PreviewSelectedRectsView(ManagerRequiredView):
     """Render page to show previews of selected regions
 
@@ -172,19 +178,24 @@ class PreviewSelectedRectsView(ManagerRequiredView):
             qcs = QuestionClusteringService()
 
             rects = {"left": left, "top": top, "right": right, "bottom": bottom}
-            qcs.start_cluster_qv_job(
-                question_idx=question_idx,
-                version=version,
-                page_num=page_num,
-                rects=rects,
-                clustering_model=choice,
-            )
+            try:
+                qcs.start_cluster_qv_job(
+                    question_idx=question_idx,
+                    version=version,
+                    page_num=page_num,
+                    rects=rects,
+                    clustering_model=choice,
+                )
 
-            messages.success(
-                request,
-                f"Started {choice} clustering for {SpecificationService.get_question_label(question_idx)}, V{version}",
-            )
-            return redirect("question_clustering_jobs_home")
+                messages.success(
+                    request,
+                    f"Started {choice} clustering for {SpecificationService.get_question_label(question_idx)}, V{version}",
+                )
+                return redirect("question_clustering_jobs_home")
+
+            except DuplicateClusteringJobError as err:
+                messages.error(request, f"Clustering job failed: {err}")
+                return redirect("question_clustering_jobs_home")
 
         else:
             for field, errs in form.errors.items():
@@ -195,6 +206,7 @@ class PreviewSelectedRectsView(ManagerRequiredView):
             return render(request, "QuestionClustering/show_rectangles.html")
 
 
+# ============== List of clustering jobs page (table jobs) =====================
 class QuestionClusteringJobsHome(ManagerRequiredView):
     """Render the page with all clustering jobs"""
 
@@ -230,7 +242,7 @@ class QuestionClusteringJobTable(ManagerRequiredView):
 
 
 class ClusteringErrorJobInfoView(ManagerRequiredView):
-    """Render the info dialog for failed job."""
+    """Render the info modal dialog for failed job."""
 
     def get(self, request: HttpRequest, task_id: int) -> HttpResponse:
         qcs = QuestionClusteringService()
@@ -248,85 +260,20 @@ class ClusteringErrorJobInfoView(ManagerRequiredView):
         )
 
 
-class DeleteClusterMember(ManagerRequiredView):
-    def post(
-        self,
-        request: HttpRequest,
-        question_idx: int,
-        version: int,
-        page_num: int,
-        clusterId: int,
-    ):
+class RemoveJobView(ManagerRequiredView):
+    """Delete a clustering job."""
 
+    def delete(self, request: HttpRequest, task_id: int) -> HttpResponse:
         qcs = QuestionClusteringService()
-        papers_to_delete = request.POST.getlist("delete_ids")
-        for pn in papers_to_delete:
-            qcs.delete_cluster_member(
-                question_idx=question_idx,
-                version=version,
-                clusterId=clusterId,
-                paper_num=int(pn),
-            )
+        try:
+            qcs.delete_clustering_job(task_id)
+            return HttpResponse(status=204)
 
-        corners = qcs.get_corners_used_for_clustering(
-            question_idx=question_idx, version=version
-        )
-        papers = qcs.get_paper_nums_in_clusters(
-            question_idx=question_idx, version=version
-        )[clusterId]
-
-        context = {
-            "question_label": SpecificationService.get_question_label(question_idx),
-            "question_idx": question_idx,
-            "version": version,
-            "page_num": page_num,
-            "clusterId": clusterId,
-            "papers": papers,
-            "top": corners["top"],
-            "left": corners["left"],
-            "bottom": corners["bottom"],
-            "right": corners["right"],
-        }
-        messages.success(
-            request, f"Removed {len(papers_to_delete)} papers from cluster {clusterId}"
-        )
-        return render(
-            request, "QuestionClustering/clustered_papers.html", context=context
-        )
+        except ObjectDoesNotExist as err:
+            return HttpResponseNotFound(f"Task {task_id} not found.")
 
 
-class ClusteredPapersView(ManagerRequiredView):
-    def get(
-        self,
-        request: HttpRequest,
-        question_idx: int,
-        version: int,
-        page_num: int,
-        clusterId: int,
-    ) -> HttpResponse:
-        qcs = QuestionClusteringService()
-        papers = qcs.get_paper_nums_in_clusters(
-            question_idx=question_idx, version=version
-        )[clusterId]
-        corners = qcs.get_corners_used_for_clustering(
-            question_idx=question_idx, version=version
-        )
-
-        context = {
-            "question_label": SpecificationService.get_question_label(question_idx),
-            "question_idx": question_idx,
-            "version": version,
-            "page_num": page_num,
-            "clusterId": clusterId,
-            "papers": papers,
-            "top": corners["top"],
-            "left": corners["left"],
-            "bottom": corners["bottom"],
-            "right": corners["right"],
-        }
-        return render(
-            request, "QuestionClustering/clustered_papers.html", context=context
-        )
+# ========= Cluster detail page (# members, priorities, tags, etc) =============
 
 
 class ClusterGroupsView(ManagerRequiredView):
@@ -499,4 +446,86 @@ class RemoveTagFromClusterView(ManagerRequiredView):
             request,
             "QuestionClustering/fragments/clustering_tag_cell.html",
             context=context,
+        )
+
+
+# =========== Papers inside a cluster ==============
+class ClusteredPapersView(ManagerRequiredView):
+    def get(
+        self,
+        request: HttpRequest,
+        question_idx: int,
+        version: int,
+        page_num: int,
+        clusterId: int,
+    ) -> HttpResponse:
+        qcs = QuestionClusteringService()
+        papers = qcs.get_paper_nums_in_clusters(
+            question_idx=question_idx, version=version
+        )[clusterId]
+        corners = qcs.get_corners_used_for_clustering(
+            question_idx=question_idx, version=version
+        )
+
+        context = {
+            "question_label": SpecificationService.get_question_label(question_idx),
+            "question_idx": question_idx,
+            "version": version,
+            "page_num": page_num,
+            "clusterId": clusterId,
+            "papers": papers,
+            "top": corners["top"],
+            "left": corners["left"],
+            "bottom": corners["bottom"],
+            "right": corners["right"],
+        }
+        return render(
+            request, "QuestionClustering/clustered_papers.html", context=context
+        )
+
+
+class DeleteClusterMember(ManagerRequiredView):
+    def post(
+        self,
+        request: HttpRequest,
+        question_idx: int,
+        version: int,
+        page_num: int,
+        clusterId: int,
+    ):
+
+        qcs = QuestionClusteringService()
+        papers_to_delete = request.POST.getlist("delete_ids")
+        for pn in papers_to_delete:
+            qcs.delete_cluster_member(
+                question_idx=question_idx,
+                version=version,
+                clusterId=clusterId,
+                paper_num=int(pn),
+            )
+
+        corners = qcs.get_corners_used_for_clustering(
+            question_idx=question_idx, version=version
+        )
+        papers = qcs.get_paper_nums_in_clusters(
+            question_idx=question_idx, version=version
+        )[clusterId]
+
+        context = {
+            "question_label": SpecificationService.get_question_label(question_idx),
+            "question_idx": question_idx,
+            "version": version,
+            "page_num": page_num,
+            "clusterId": clusterId,
+            "papers": papers,
+            "top": corners["top"],
+            "left": corners["left"],
+            "bottom": corners["bottom"],
+            "right": corners["right"],
+        }
+        messages.success(
+            request, f"Removed {len(papers_to_delete)} papers from cluster {clusterId}"
+        )
+        return render(
+            request, "QuestionClustering/clustered_papers.html", context=context
         )
