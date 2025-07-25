@@ -123,7 +123,6 @@ Changelog = "https://gitlab.com/plom/plom/-/blob/main/CHANGELOG.md"
 [tool.setuptools]
 packages = [
     "plom",
-    "plom_ml",
     "plom.cli",
     "plom.create",
     "plom.create.fonts",
@@ -187,6 +186,8 @@ packages = [
     "plom_server.UserManagement",
     "plom_server.UserManagement.services",
     "plom_server.Visualization",
+    "plom_ml",
+    "plom_ml.clustering"
 ]
 # TODO: fixtures?  huey?  media?
 

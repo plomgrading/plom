@@ -59,14 +59,19 @@ class ClusteringGroupType(models.TextChoices):
 class QVCluster(models.Model):
     """A cluster in a (question, version) pair.
 
-    question_idx: the question_index of the question being clustered
-    version: the version of the question being clustered
-    clusterId: the identifier used to differentiate clusters in a (question, version) pair
+    question_idx: the question_index of the question being clustered.
+    version: the version of the question being clustered.
+    page_num: the page number used in the clustering.
+    clusterId: the identifier used to differentiate clusters in a (question, version) pair.
+    type: the type of the grouping, i.e is that originally created cluster or a user-facing cluster.
+    user_cluster: If it's an original cluster, where is it used as a user_facing cluster.
+        Note that each original cluster must be mapped to exactly one user_facing cluster.
 
     top: top left corner's y coordinate of the extracted rectangle used for clustering
     left: top left corner's x coordinate of the extracted rectangle used for clustering
     bottom: bottom right corner's y coordinate of the extracted rectangle used for clustering
     right: bottom right corner's x coordinate of the extracted rectangle used for clustering
+    paper: the members under this cluster.
     """
 
     question_idx = models.PositiveIntegerField(null=False)
@@ -92,6 +97,14 @@ class QVCluster(models.Model):
     paper = models.ManyToManyField(Paper, through="QVClusterLink")
 
     class Meta:
+        """Django model metadata and database constraints.
+
+        Current constraints:
+            1. The model is unique by (q, v, clusterId, type) and
+            2. If it's a user_facing cluster then it must not have user_cluster field.
+            3. If it's an origianlly created cluster then it must point to one user_facing QVCluster.
+        """
+
         unique_together = ("question_idx", "version", "clusterId", "type")
         constraints = [
             models.CheckConstraint(
@@ -102,20 +115,6 @@ class QVCluster(models.Model):
                 name="cluster_type_user_cluster_consistency",
             )
         ]
-
-    def save(self, *args, **kwargs):
-        # Only assign if no value given
-        if self.clusterId in (None, ""):
-            # atomic to avoid two processes picking the same next ID
-            with transaction.atomic():
-                last = (
-                    QVCluster.objects.filter(
-                        question_idx=self.question_idx, version=self.version
-                    ).aggregate(Max("clusterId"))["clusterId__max"]
-                ) or 0
-                self.clusterId = last + 1
-
-        super().save(*args, **kwargs)
 
 
 class QVClusterLink(models.Model):
