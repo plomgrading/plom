@@ -6,5 +6,5 @@ class ClusteringCleanupError(Exception):
     """Base exception for clustering-cleanup related operations."""
 
 
-class NoSelectedClusterError(ClusteringCleanupError):
-    """Exception when there is no selected cluster in selecting-based operations."""
+class EmptySelectedError(ClusteringCleanupError):
+    """Exception when there is no selection in selecting-based operations."""

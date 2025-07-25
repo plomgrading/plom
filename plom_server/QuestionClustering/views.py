@@ -27,7 +27,7 @@ from plom_server.QuestionClustering.exceptions.job_exception import (
     DuplicateClusteringJobError,
 )
 from plom_server.QuestionClustering.exceptions.clustering_exception import (
-    NoSelectedClusterError,
+    EmptySelectedError,
 )
 from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Base.models import HueyTaskTracker
@@ -212,7 +212,7 @@ class PreviewSelectedRectsView(ManagerRequiredView):
 
 # ============== List of clustering jobs page (table of jobs) =====================
 class QuestionClusteringJobsHome(ManagerRequiredView):
-    """Render the page with all clustering jobs"""
+    """Render the page with all clustering jobs."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
         context = self.build_context()
@@ -358,7 +358,7 @@ class ClusterMergeView(ManagerRequiredView):
                 request,
                 f"Merged {len(clusterIds)} clusters into cluster with id: {merged_cluster}",
             )
-        except (ValueError, NoSelectedClusterError) as e:
+        except (ValueError, EmptySelectedError) as e:
             messages.error(request, f"Merge failed: {e}")
         return redirect(next_url)
 
