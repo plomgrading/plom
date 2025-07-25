@@ -48,7 +48,7 @@ class QuestionClusteringChore(HueyTaskTracker):
 
 
 class ClusteringGroupType(models.TextChoices):
-    """Defines what clustering models exist in the system"""
+    """Defines what clustering models exist in the system."""
 
     original = "original", "Original clustering created"
     user_facing = "user_facing", "Clustering group that user sees"
