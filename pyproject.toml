@@ -149,6 +149,8 @@ packages = [
     "plom_server.Identify.services",
     "plom_server.QuestionTags",
     "plom_server.QuestionTags.services",
+    "plom_server.QuestionClustering",
+    "plom_server.QuestionClustering.services",
     "plom_server.Launcher",
     "plom_server.Launcher.services",
     "plom_server.Launcher.management.commands",
