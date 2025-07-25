@@ -192,13 +192,14 @@ class PlomAdminMessenger(Messenger):
                     raise PlomRangeException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def new_server_push_bundle(self, bundle_id: int):
+    def new_server_push_bundle(self, bundle_id: int) -> dict[str, Any]:
         """Push a bundle from the staging area.
 
         TODO: beta: rename to something reasonable in due time.
 
         Returns:
-            TODO: WIP
+            A dictionary, with sole key "bundle_id" mapping to int,
+            and maybe other information in the future.
         """
         if self.is_server_api_less_than(113):
             raise PlomNoServerSupportException(
