@@ -22,10 +22,14 @@ def get_model(model_type: ClusteringModelType) -> ClusteringModel:
 
 
 class ClusteringPipeline:
-    """A wrapper to use clustering model for inference.
+    """A wrapper to use clustering model for inference that outputs paper_num to clusterId map.
 
-    The wrapper lazy loads and caches the model, so every inference of the same type
-    uses the same loaded model.
+    The wrapper caches the model so every inference of the same type and
+    same process uses the same loaded model .
+
+    Args:
+        model_type: The type of clustering model to use.
+        preprocessor: The preprocessing pipeline applied before inference.
     """
 
     def __init__(self, model_type: ClusteringModelType, preprocessor: Preprocessor):
@@ -38,7 +42,7 @@ class ClusteringPipeline:
         """Cluster the given papers with the given preprocessor and clustering model.
 
         Args:
-            paper_to_image: a dictionary mapping paper number to one or more images
+            paper_to_images: a dictionary mapping paper number to one or more images
                 representing that paper.
 
                 Note: images are made as a sequence because We may need more than one input images,
@@ -47,7 +51,7 @@ class ClusteringPipeline:
 
 
         Returns:
-            A dictionary mapping the paper number to their cluster id
+            A dictionary mapping the paper number to their cluster id.
         """
         # Preprocess the images
         processed_paper_to_images = {

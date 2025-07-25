@@ -1,44 +1,54 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
-from plom_server.Papers.models import Paper
-from plom_server.Papers.services import PaperInfoService
-import torch
-import torch.nn as nn
-from torchvision import models, transforms
-from PIL import Image
-import pandas as pd
-from abc import abstractmethod
-from typing import Any, Sequence, Mapping
-from PIL import Image
-from sklearn.cluster import AgglomerativeClustering
-import cv2
-from .image_processing_service import ImageProcessingService
-import numpy as np
-from io import BytesIO
-from transformers import TrOCRProcessor
-from .embedder import SymbolicEmbedder, TrOCREmbedder
-from sklearn.preprocessing import StandardScaler
+
+# sklearn
 from sklearn.metrics import silhouette_score, davies_bouldin_score
 from sklearn.decomposition import PCA
 
+# plom_ml
+from .embedder import SymbolicEmbedder, TrOCREmbedder
+from sklearn.cluster import AgglomerativeClustering
+
+# torch
+import torch
+import torch.nn as nn
+from torchvision import models, transforms
+
+# misc
+from PIL import Image
+from abc import abstractmethod
+from PIL import Image
+import cv2
+import numpy as np
+
 
 class ClusteringModel:
-    """Interface for clustering model"""
+    """Interface for clustering model.
+
+    This interface enforces cluster_papers method which enforces clustering functionality
+    with uniform input and output formats.
+    """
 
     @abstractmethod
     def cluster_papers(self, paper_to_image: dict[int, np.ndarray]) -> dict[int, int]:
-        """Cluster the given papers
+        """Cluster the given papers into a mapping of paper_num to clusterId.
+
+        This method directly calls inference models on the provided images. Therefore, if
+        there are expected preprocessing steps the images must be preprocessed before
+        feeding them into this function.
 
         Args:
             paper_to_image: a dictionary mapping paper number to a (processed) image
 
         Returns:
-            A dictionary mapping the paper number to their cluster id
+            A dictionary mapping the paper number to their cluster id.
         """
         pass
 
 
 class HMEClusteringModel(ClusteringModel):
+    """Handwritten math expression model."""
+
     def __init__(self):
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -62,11 +72,21 @@ class HMEClusteringModel(ClusteringModel):
         # concatenate on feature‐axis → (N × (D_sym+D_ocr))
         return list(np.concatenate((feat_sym, feat_trocr)))
 
-    def tune_threshold(
-        self, X, thresholds=np.linspace(4, 10, 100), metric="silhouette"
-    ):
-        """Try AgglomerativeClustering(distance_threshold=t) for each t in thresholds,
-        score it with the chosen metric, and return the best labels + threshold.
+    def get_best_clustering(
+        self, X: np.ndarray, thresholds: list[float], metric="silhouette"
+    ) -> np.ndarray:
+        """Get the best clustering of X by searching for optimal threshold that maximizes the metric.
+
+        This function defaults with AgglomerativeClustering clustering algorithm.
+
+        Args:
+            X: the feature matrix.
+            thresholds: the choices of distance thresholds.
+            metric: which metric to optimize. Currently supports: "silhouette" and "davies".
+
+        Returns:
+            A numpy array of clusterId where the order matches with the
+            inputs (index 0 provides Id for row 0 of X)
         """
         best = {
             "score": -np.inf if metric == "silhouette" else np.inf,
@@ -91,36 +111,35 @@ class HMEClusteringModel(ClusteringModel):
 
             elif metric == "davies":
                 score = davies_bouldin_score(X, labels)
-                # DB index: lower → better
+                # DB index: lower -> better
                 if score < best["score"]:
                     best.update(score=score, threshold=t, labels=labels)
 
-        print(f"BEST distance: {best["threshold"]:.2f}")
         return best["labels"]
 
     def cluster_papers(self, paper_to_image: dict[int, np.ndarray]) -> dict[int, int]:
-        """Cluster the given papers
+        """Cluster the given papers.
 
         Args:
-            paper_to_image: a dictionary mapping paper number to a (processed) image
+            paper_to_image: a dictionary mapping paper number to a (processed) image.
 
         Returns:
-            A dictionary mapping the paper number to their cluster id
+            A dictionary mapping the paper number to their cluster id.
         """
         # Build feature matrix
         X = np.vstack(
             [self.get_embeddings(image) for pn, image in paper_to_image.items()]
         )
-        print(f"SHAPE: {X.shape}")
 
         X_reduced = PCA(n_components=min(len(paper_to_image), 50)).fit_transform(X)
 
-        # cluster on that matrix
-        # clustering_model = AgglomerativeClustering(
-        #     n_clusters=None, distance_threshold=7.0, linkage="ward"
-        # )
+        # set up distance threshold search space
+        min_thresh = 4
+        max_thresh = 10
+        thresh_counts = 100
+        thresholds = list(np.linspace(min_thresh, max_thresh, thresh_counts))
 
-        clusterIDs = self.tune_threshold(X_reduced, np.linspace(4, 10, 100), "davies")
+        clusterIDs = self.get_best_clustering(X_reduced, thresholds, "davies")
         return dict(zip(list(paper_to_image.keys()), clusterIDs))
 
 
@@ -145,6 +164,7 @@ class AttentionPooling(nn.Module):
 
 
 class MCQClusteringModel(ClusteringModel):
+    """Handwritten MCQ clustering model."""
 
     def __init__(self):
         self.out_features = 11
@@ -174,7 +194,7 @@ class MCQClusteringModel(ClusteringModel):
 
         self.model = model
 
-    def _get_embeddings(self, image: np.ndarray, thresh: float = 0.5):
+    def _get_embeddings(self, image: np.ndarray):
         """Generate the embeddings (probabilities) for the given image.
 
         Note: Each feature generated by this model represents a probability.
@@ -233,7 +253,7 @@ class MCQClusteringModel(ClusteringModel):
         return bestFeatures
 
     def cluster_papers(self, paper_to_image: dict[int, np.ndarray]) -> dict[int, int]:
-        """Cluster papers based on written MCQ responses
+        """Cluster papers based on handwritten MCQ.
 
         Args:
             paper_to_image: a dictionary mapping paper number to the
@@ -244,7 +264,7 @@ class MCQClusteringModel(ClusteringModel):
         """
         # Build feature matrix
         X = np.vstack(
-            [self.get_embeddings(image) for pn, image in paper_to_image.items()]
+            [self.get_embeddings(image) for _, image in paper_to_image.items()]
         )
 
         # cluster on that matrix

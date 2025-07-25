@@ -1,11 +1,14 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2025 Bryan Tanady
+
+import torch
+import torch.nn as nn
+from torchvision import transforms, models
 from abc import ABC, abstractmethod
 from typing import Sequence
 import numpy as np
-import torch
-from torchvision import transforms, models
 from transformers import TrOCRProcessor
 from PIL import Image
-import torch.nn as nn
 import cv2
 
 
