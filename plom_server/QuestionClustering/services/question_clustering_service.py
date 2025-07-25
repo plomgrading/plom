@@ -41,8 +41,12 @@ from plom_server.QuestionClustering.exceptions.job_exception import (
     DuplicateClusteringJobError,
 )
 
+from plom_server.QuestionClustering.exceptions.clustering_exception import (
+    NoSelectedClusterError,
+)
 
-class QuestionClusteringService:
+
+class QuestionClusteringJobService:
 
     def start_cluster_qv_job(
         self,
@@ -104,6 +108,50 @@ class QuestionClusteringService:
         )
         HueyTaskTracker.transition_to_queued_or_running(tracker_pk, res.id)
 
+    @transaction.atomic
+    def get_clustering_job(self, task_id: int) -> dict[str, Any]:
+        """Get clustering job representation in dict.
+
+        Args:
+            task_id: the clustering job id.
+
+        Returns:
+            A dict with these keys: [status, message, last_update, obsolete].
+        """
+        job = QuestionClusteringChore.objects.get(id=task_id)
+        return model_to_dict(
+            job, fields=["status", "message", "last_update", "obsolete"]
+        )
+
+    @transaction.atomic
+    def delete_clustering_job(self, task_id: int) -> None:
+        """Remove a clustering job, and remove the clusterings involved if the job is non-obsolete.
+
+        Note: We restrict clustering removal to non_obsolete jobs to avoid unexpected
+            removals clusterings.
+
+        Args:
+            task_id: the id of the clustering task to be removed.
+
+        Raises:
+            ObjectDoesNotExist: If the task does not exist.
+        """
+
+        task = QuestionClusteringChore.objects.get(id=task_id)
+
+        # remove clustering involved in it if task is non-obsolete
+        if not task.obsolete:
+            question_idx = task.question_idx
+            version = task.version
+            QVCluster.objects.filter(
+                question_idx=question_idx, version=version
+            ).delete()
+
+        task.delete()
+
+
+class QuestionClusteringService:
+
     def _store_clustered_result(
         self,
         paper_to_clusterId: dict[int, int],
@@ -115,7 +163,11 @@ class QuestionClusteringService:
         """Store clustering result to database.
 
         Args:
-            paper-to_cluster_Id: clustering result that maps paper number to their cluster group.
+            paper_to_clusterId: a mapping from paper_number to clusterId.
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+            page_num: the page used in the clustering.
+            rects: the rectangular region used in the clustering.
         """
 
         # get id to paper_nums mapping
@@ -293,8 +345,19 @@ class QuestionClusteringService:
             for task in QuestionClusteringChore.objects.filter(obsolete=False)
         ]
 
-    def get_user_facing_clusters(self, question_idx: int, version: int) -> dict:
-        """Get a mapping of clusterId to the count of the members"""
+    def get_clusters_and_member_count(
+        self, question_idx: int, version: int
+    ) -> list[tuple]:
+        """Get a a list of (clusterId, member_count) for all clusters in a (q, v) context.
+
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+
+        Returns:
+            A list of tuple of (clusterId, member_count) for all clsuters in a (q, v) context.
+            The list is sorted by clusterId
+        """
         qs = (
             QVCluster.objects.filter(
                 question_idx=question_idx,
@@ -305,28 +368,49 @@ class QuestionClusteringService:
             .values("clusterId", "count")
             .order_by("clusterId")
         )
-        return {item["clusterId"]: item["count"] for item in qs}
+
+        return [(q["clusterId"], q["count"]) for q in qs]
 
     def get_paper_nums_in_clusters(
         self, question_idx: int, version: int
     ) -> dict[int, list[int]]:
-        """Get a mapping from clusterId to the paper_num of papers under the given cluster"""
+        """Get a mapping from clusterId to the paper_num of papers under the given cluster.
+
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+
+        Returns:
+            A dict mapping clusterId to a list of paper_numbers for all clusters in a (q, v) context.
+        """
         qs = QVCluster.objects.filter(
             question_idx=question_idx,
             version=version,
             type=ClusteringGroupType.user_facing,
         ).prefetch_related("paper")
 
-        result = {}
-        for item in qs:
-            cluster_id = item.clusterId
-            result[cluster_id] = [paper.paper_number for paper in item.paper.all()]
+        result = {
+            item.clusterId: [paper.paper_number for paper in item.paper.all()]
+            for item in qs
+        }
 
         return result
 
     def get_cluster_priority(
         self, question_idx: int, version: int, clusterId: int
     ) -> Optional[float]:
+        """Get the priority value of a cluster in a (q, v) context. If there
+            exists some tasks with different priority values then the priority is None.
+
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+            clusterId: the id of the cluster in query.
+
+        Returns:
+            Priority value of all the tasks in the cluster. If there exists some tasks with different
+            priority values then returns None.
+        """
 
         papers = QVCluster.objects.get(
             question_idx=question_idx,
@@ -334,9 +418,11 @@ class QuestionClusteringService:
             clusterId=clusterId,
             type=ClusteringGroupType.user_facing,
         ).paper.all()
+
         all_tasks = get_tasks_to_update_priority().filter(
             question_index=question_idx, question_version=version
         )
+
         unique_priorities = (
             all_tasks.filter(paper__in=papers)
             .values_list("marking_priority", flat=True)
@@ -347,10 +433,14 @@ class QuestionClusteringService:
     def get_cluster_priority_map(
         self, question_idx: int, version: int
     ) -> dict[int, Optional[float]]:
-        """Get the mapping of cluster id to priority values.
+        """Get the mapping of cluster id to priority value.
 
         Note: If there exists tasks under same cluster with conflicting priorities, the priority
             is set to None
+
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
 
         Returns:
             A dict mapping clusterId to the priority val. Priority val is None if there are task
@@ -372,8 +462,13 @@ class QuestionClusteringService:
     ):
         """Update priority values based on the cluster table's order.
 
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+
         Note: the priority valus is given in the range of [0, len(cluster_order)],
             priority 0 is given to the papers that are not part of any clsuters
+
 
         cluster_order: a list of clusterIds sorted based on decreasing priority.
         """
@@ -412,7 +507,13 @@ class QuestionClusteringService:
     def get_clusterid_to_paper_mapping(
         self, question_idx: int, version: int
     ) -> dict[int, list[Paper]]:
-        """Get a dict mapping clusterId to list of papers under a q,v contenxt."""
+        """Get a dict mapping clusterId to list of papers under a q,v contenxt.
+
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+
+        """
         clusters = QVCluster.objects.filter(
             question_idx=question_idx,
             version=version,
@@ -426,6 +527,12 @@ class QuestionClusteringService:
         """Bulk tag all clusters with default cluster tag.
 
         Note: current default cluster tag is cluster_{question_idx}_{version}_{clusterId}.
+
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+            userid: the id of the user who calls the tagging.
+
         """
         mts = MarkingTaskService()
         user = User.objects.get(id=userid)
@@ -472,6 +579,13 @@ class QuestionClusteringService:
     def remove_tag_from_a_cluster(
         self, question_idx: int, version: int, clusterId: int, tag_pk: int
     ):
+        """
+
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+
+        """
         # Get all tasks in the cluster
         tasks = self.get_all_tasks_in_a_cluster(question_idx, version, clusterId)
 
@@ -499,7 +613,19 @@ class QuestionClusteringService:
     def cluster_ids_to_tags(
         self, question_idx: int, version: int
     ) -> dict[int, list[tuple[int, str]]]:
-        """Return {cluster_id: [(tag_pk, tag_text), ...]} where each tag appears on **every MarkingTask in that cluster**."""
+        """Return a mapping from clusterId to a set of tags in the cluster.
+
+        Note: The tags that are included in the set are those that are shared across all tasks
+            within the cluster.
+
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+
+        Returns:
+            A mapping from clusterId to a set of tags shared across all tasks in the cluster.
+            Each tag is represented as (tag.pk, tag.text).
+        """
 
         # cluster -> papers
         cluster_to_papers = self.get_clusterid_to_paper_mapping(question_idx, version)
@@ -524,7 +650,7 @@ class QuestionClusteringService:
             paper_to_tasks[t.paper.paper_number].append(t)
 
         # cluster_id -> set of tag tuples (pk, text) that are common across ALL tasks
-        cluster_to_common = {}
+        cluster_to_common_tag = {}
 
         for cid, papers in cluster_to_papers.items():
             # Get all tasks for this cluster (via its papers)
@@ -533,21 +659,33 @@ class QuestionClusteringService:
                 task_list.extend(paper_to_tasks.get(p.id, []))
 
             if not task_list:
-                cluster_to_common[cid] = []
+                cluster_to_common_tag[cid] = []
                 continue
 
             # Start with tags from first task, then intersect
             common = {(tg.pk, tg.text) for tg in task_list[0].markingtasktag_set.all()}
             for t in task_list[1:]:
-                common &= {
-                    (tg.pk, tg.text) for tg in t.markingtasktag_set.all()
-                }  # set intersection
+                common = common.intersection(
+                    {(tg.pk, tg.text) for tg in t.markingtasktag_set.all()}
+                )  # set intersection
 
-            cluster_to_common[cid] = common
+            cluster_to_common_tag[cid] = common
 
-        return cluster_to_common
+        return cluster_to_common_tag
 
-    def get_corners_used_for_clustering(self, question_idx: int, version: int):
+    def get_corners_used_for_clustering(
+        self, question_idx: int, version: int
+    ) -> dict[str, float]:
+        """Get the rectangle used for clustering in a (q, v) context.
+
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+
+        Returns:
+            A dict representing the rectangular region and has these
+            keys: [top, left, bottom, right].
+        """
         qvc = QVCluster.objects.filter(question_idx=question_idx, version=version)[0]
         return {
             "top": qvc.top,
@@ -566,7 +704,18 @@ class QuestionClusteringService:
 
         return qs
 
-    def get_merged_component_count(self, question_idx: int, version: int):
+    def get_merged_component_count(
+        self, question_idx: int, version: int
+    ) -> dict[int, int]:
+        """Get a mapping from clusterId to the count of count of merged components.
+
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+
+        Returns:
+            A dict mapping clusterId to count of merged clusters.
+        """
         return {
             cluster.clusterId: len(
                 self._get_merged_component(question_idx, version, cluster.clusterId)
@@ -578,67 +727,96 @@ class QuestionClusteringService:
             )
         }
 
-    def merge_clusters(self, question_idx: int, version: int, clusterIds: list[int]):
-        if not clusterIds:
-            return
+    @transaction.atomic
+    def merge_clusters(
+        self, question_idx: int, version: int, clusterIds: list[int]
+    ) -> int:
+        """Merge all clusters in clusterIDs within a (q, v) context.
 
-        with transaction.atomic():
-            # Check if clusters have conflicting tags:
-            cluster_to_tags = self.cluster_ids_to_tags(question_idx, version)
-            ref = cluster_to_tags[0]
+        Note: the resulting cluster is the cluster of minimum ID.
 
-            clusterIdSet = set(clusterIds)
-            for clusterId, tag in cluster_to_tags.items():
-                if clusterId in clusterIdSet and tag != cluster_to_tags[clusterIds[0]]:
-                    raise ValueError("Merge failed: there are conflicting tags")
+        Args:
+            question_idx: The
+            version:
+            clusterIds:
 
-            # assign to the minimum clusterId
-            target_cluster_id = min(clusterIds)
-            target_cluster = QVCluster.objects.get(
-                question_idx=question_idx,
-                version=version,
-                clusterId=target_cluster_id,
-                type=ClusteringGroupType.user_facing,
-            )
+        Returns:
+            Cluster id of the merged clusters.
 
-            clusters_to_merge = QVCluster.objects.filter(
-                question_idx=question_idx,
-                version=version,
-                clusterId__in=set(clusterIds),
-                type=ClusteringGroupType.user_facing,
-            )
+        Raises:
+            NoSelectedClusterError if attempting to merge 0 cluster
+        """
+        if len(clusterIds) == 0:
+            raise NoSelectedClusterError("attempting to merge empty clusters")
 
-            # reassign cluster membership
-            QVClusterLink.objects.filter(qv_cluster__in=set(clusters_to_merge)).update(
-                qv_cluster=target_cluster
-            )
+        # Check if clusters have conflicting tags:
+        cluster_to_tags = self.cluster_ids_to_tags(question_idx, version)
 
-            QVCluster.objects.filter(
-                type=ClusteringGroupType.original, user_cluster__in=clusters_to_merge
-            ).update(user_cluster=target_cluster)
+        clusterIdSet = set(clusterIds)
+        for clusterId, tag in cluster_to_tags.items():
+            if clusterId in clusterIdSet and tag != cluster_to_tags[clusterIds[0]]:
+                raise ValueError("Merge failed: there are conflicting tags")
 
-            # remove obsolete cluster groups
-            clusters_to_merge.exclude(clusterId=target_cluster_id).delete()
+        # assign to the minimum clusterId
+        target_cluster_id = min(clusterIds)
+        target_cluster = QVCluster.objects.get(
+            question_idx=question_idx,
+            version=version,
+            clusterId=target_cluster_id,
+            type=ClusteringGroupType.user_facing,
+        )
 
+        clusters_to_merge = QVCluster.objects.filter(
+            question_idx=question_idx,
+            version=version,
+            clusterId__in=set(clusterIds),
+            type=ClusteringGroupType.user_facing,
+        )
+
+        # reassign cluster membership
+        QVClusterLink.objects.filter(qv_cluster__in=set(clusters_to_merge)).update(
+            qv_cluster=target_cluster
+        )
+
+        QVCluster.objects.filter(
+            type=ClusteringGroupType.original, user_cluster__in=clusters_to_merge
+        ).update(user_cluster=target_cluster)
+
+        # remove obsolete cluster groups
+        clusters_to_merge.exclude(clusterId=target_cluster_id).delete()
+
+    @transaction.atomic
     def delete_clusters(self, question_idx: int, version: int, clusterIds: list[int]):
-        with transaction.atomic():
+        """Delete clusters in clusterIds in a (q, v) context.
 
-            # BaseQVCluster.objects.filter(
-            #     question_idx=question_idx,
-            #     version=version,
-            #     clusterId__in=set(clusterIds),
-            # ).delete()
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+        """
+        QVCluster.objects.filter(
+            question_idx=question_idx,
+            version=version,
+            clusterId__in=set(clusterIds),
+            type=ClusteringGroupType.user_facing,
+        ).delete()
 
-            QVCluster.objects.filter(
-                question_idx=question_idx,
-                version=version,
-                clusterId__in=set(clusterIds),
-                type=ClusteringGroupType.user_facing,
-            ).delete()
-
+    @transaction.atomic
     def delete_cluster_member(
         self, question_idx: int, version: int, clusterId: int, paper_num: int
-    ):
+    ) -> int:
+        """Remove a paper from a cluster.
+
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+
+        Raises:
+            ObjectDoesNotExist: paper_num is not a valid paper_number or (q, v, clusterId) is not a valid
+                cluster, or the paper is not part of the cluster.
+
+        Returns:
+            the count of member in the cluster post-removal.
+        """
         paper = Paper.objects.get(paper_number=paper_num)
         qvc = QVCluster.objects.get(
             question_idx=question_idx,
@@ -648,13 +826,63 @@ class QuestionClusteringService:
         )
         qvc.paper.remove(paper)
 
+        member_count = len(qvc.paper.all())
+
+        return member_count
+
+    @transaction.atomic
+    def bulk_delete_cluster_members(
+        self, question_idx: int, version: int, clusterId: int, paper_nums: list[int]
+    ) -> int:
+        """Bulk remove paper_nums from a cluster.
+
+        Note: this function is optimized to avoid N+1 queries, such that it avoids calling delete_cluster_member.
+
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+            clusterId: the id of the cluster whose members will be deleted.
+            paper_nums: the paper numbers of those to be removed from the cluster.
+
+        Raises:
+            ObjectDoesNotExist: paper_num is not a valid paper_number or (q, v, clusterId) is not a valid
+                cluster, or the paper is not part of the cluster.
+
+        Returns:
+            The count of the members in the cluster post-removal.
+        """
+        papers_to_remove = Paper.objects.filter(paper_number__in=set(paper_nums))
+
+        qvc = QVCluster.objects.get(
+            question_idx=question_idx,
+            version=version,
+            clusterId=clusterId,
+            type=ClusteringGroupType.user_facing,
+        )
+
+        qvc.paper.remove(*papers_to_remove)
+
+        member_count = len(qvc.paper.all())
+
+        return member_count
+
     def reset_clusters(self, question_idx: int, version: int, clusterIds: list[int]):
+        """
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+        """
         for cid in clusterIds:
             self._reset_cluster(question_idx, version, cid)
 
         return len(clusterIds)
 
     def _reset_cluster(self, question_idx: int, version: int, clusterId: int):
+        """
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+        """
         user_facing_cluster = QVCluster.objects.get(
             question_idx=question_idx,
             version=version,
@@ -701,47 +929,6 @@ class QuestionClusteringService:
             for oc, new in zip(originals, new_clusters):
                 oc.user_cluster = new
             QVCluster.objects.bulk_update(originals, ["user_cluster"])
-
-    @transaction.atomic
-    def get_clustering_job(self, task_id: int) -> dict[str, Any]:
-        """Get clustering job representation in dict.
-
-        Args:
-            task_id: the clustering job id.
-
-        Returns:
-            A dict with these keys: [status, message, last_update, obsolete].
-        """
-        job = QuestionClusteringChore.objects.get(id=task_id)
-        return model_to_dict(
-            job, fields=["status", "message", "last_update", "obsolete"]
-        )
-
-    @transaction.atomic
-    def delete_clustering_job(self, task_id: int) -> None:
-        """Remove a clustering job, and remove the clusterings involved if the job is non-obsolete.
-
-        Note: We restrict clustering removal to non_obsolete jobs to avoid unexpected
-            removals clusterings.
-
-        Args:
-            task_id: the id of the clustering task to be removed.
-
-        Raises:
-            ObjectDoesNotExist: If the task does not exist.
-        """
-
-        task = QuestionClusteringChore.objects.get(id=task_id)
-
-        # remove clustering involved in it if task is non-obsolete
-        if not task.obsolete:
-            question_idx = task.question_idx
-            version = task.version
-            QVCluster.objects.filter(
-                question_idx=question_idx, version=version
-            ).delete()
-
-        task.delete()
 
 
 # The decorated function returns a ``huey.api.Result``

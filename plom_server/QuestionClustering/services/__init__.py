@@ -1,4 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 
-from .question_clustering_service import QuestionClusteringService
+from .question_clustering_service import (
+    QuestionClusteringJobService,
+    QuestionClusteringService,
+)

@@ -187,7 +187,7 @@
                             </tr>
                         </thead>
                         <tbody x-ref="tbody">
-                            {% for clusterId, count in cluster_groups.items %}
+                            {% for clusterId, count in cluster_groups %}
                                 <tr data-cluster-id="{{ clusterId }}"
                                     :class="{ 'table-primary': selected.includes('{{ clusterId }}') }">
                                     <td class="text-center align-middle">

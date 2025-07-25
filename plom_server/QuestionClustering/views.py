@@ -1,35 +1,39 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 
-from pathlib import Path
-from tempfile import NamedTemporaryFile
-
+# Django
 from django.http import (
     HttpRequest,
     HttpResponse,
     HttpResponseNotFound,
-    QueryDict,
     Http404,
+    QueryDict,
 )
-
-from django.core.exceptions import ObjectDoesNotExist
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.contrib import messages
+from django.core.exceptions import ObjectDoesNotExist
 
+# application
 from plom_server.Papers.services import SpecificationService, PaperInfoService
-from plom_server.Base.base_group_views import ManagerRequiredView
 from plom_server.Rectangles.services import get_reference_qr_coords_for_page
-from plom_server.QuestionClustering.services import QuestionClusteringService
-from plom_server.Base.models import HueyTaskTracker
+from plom_server.QuestionClustering.services import (
+    QuestionClusteringJobService,
+    QuestionClusteringService,
+)
 from plom_server.QuestionClustering.models import QVCluster, QVClusterLink
 from plom_server.QuestionClustering.forms import ClusteringJobForm
-from django.shortcuts import redirect
-from django.urls import reverse
-from urllib.parse import urlencode
-from django.db import IntegrityError
 from plom_server.QuestionClustering.exceptions.job_exception import (
     DuplicateClusteringJobError,
 )
+from plom_server.QuestionClustering.exceptions.clustering_exception import (
+    NoSelectedClusterError,
+)
+from plom_server.Base.base_group_views import ManagerRequiredView
+from plom_server.Base.models import HueyTaskTracker
+
+# misc
+from urllib.parse import urlencode
 
 
 class Debug(ManagerRequiredView):
@@ -175,11 +179,11 @@ class PreviewSelectedRectsView(ManagerRequiredView):
             right = form.cleaned_data["right"]
             bottom = form.cleaned_data["bottom"]
 
-            qcs = QuestionClusteringService()
+            qcjs = QuestionClusteringJobService()
 
             rects = {"left": left, "top": top, "right": right, "bottom": bottom}
             try:
-                qcs.start_cluster_qv_job(
+                qcjs.start_cluster_qv_job(
                     question_idx=question_idx,
                     version=version,
                     page_num=page_num,
@@ -247,9 +251,9 @@ class ClusteringErrorJobInfoView(ManagerRequiredView):
     """Render the error info modal dialog for failed job."""
 
     def get(self, request: HttpRequest, task_id: int) -> HttpResponse:
-        qcs = QuestionClusteringService()
+        qcjs = QuestionClusteringJobService()
         try:
-            task = qcs.get_clustering_job(task_id)
+            task = qcjs.get_clustering_job(task_id)
             context = {"message": task["message"]}
 
         except ObjectDoesNotExist as err:
@@ -266,9 +270,9 @@ class RemoveJobView(ManagerRequiredView):
     """Delete a clustering job."""
 
     def delete(self, request: HttpRequest, task_id: int) -> HttpResponse:
-        qcs = QuestionClusteringService()
+        qcjs = QuestionClusteringJobService()
         try:
-            qcs.delete_clustering_job(task_id)
+            qcjs.delete_clustering_job(task_id)
             return HttpResponse(status=204)
 
         except ObjectDoesNotExist as err:
@@ -276,15 +280,17 @@ class RemoveJobView(ManagerRequiredView):
 
 
 # ========= Cluster detail page (# members, priorities, tags, etc) =============
-
-
 class ClusterGroupsView(ManagerRequiredView):
+    """Render a page for a summary of all clusters in a (q, v) context."""
+
     def get(
         self, request: HttpRequest, question_idx: int, version: int, page_num: int
     ) -> HttpResponse:
 
         qcs = QuestionClusteringService()
-        cluster_groups = qcs.get_user_facing_clusters(
+        # A list of (cluster_id, member_count) sorted by cluster_id
+        # NOTE: use a sorted list so the default order is by cluster_id
+        cluster_groups = qcs.get_clusters_and_member_count(
             question_idx=question_idx, version=version
         )
 
@@ -303,7 +309,7 @@ class ClusterGroupsView(ManagerRequiredView):
             question_idx=question_idx, version=version
         )
 
-        # cluster_id to types
+        # cluster_id to merged count
         merged_component_count = qcs.get_merged_component_count(
             question_idx=question_idx, version=version
         )
@@ -334,6 +340,8 @@ class ClusterGroupsView(ManagerRequiredView):
 
 
 class ClusterMergeView(ManagerRequiredView):
+    """Handle merge of multiple clusters in a (q, v) context."""
+
     def post(self, request: HttpRequest):
         clusterIds = request.POST.getlist("selected_clusters")
         clusterIds = list(map(int, clusterIds))
@@ -344,18 +352,20 @@ class ClusterMergeView(ManagerRequiredView):
 
         qcs = QuestionClusteringService()
         try:
-            qcs.merge_clusters(question_idx, version, clusterIds)
+            merged_cluster = qcs.merge_clusters(question_idx, version, clusterIds)
 
             messages.success(
                 request,
-                f"Merged {len(clusterIds)} clusters into cluster with id: {min(clusterIds)}",
+                f"Merged {len(clusterIds)} clusters into cluster with id: {merged_cluster}",
             )
-        except ValueError as e:
-            messages.error(request, str(e))
+        except (ValueError, NoSelectedClusterError) as e:
+            messages.error(request, f"Merge failed: {e}")
         return redirect(next_url)
 
 
 class ClusterBulkDeleteView(ManagerRequiredView):
+    """Handle delete of one or multiple clusters in a (q, v) context."""
+
     def post(self, request: HttpRequest) -> HttpResponse:
         clusterIds = request.POST.getlist("selected_clusters")
         clusterIds = list(map(int, clusterIds))
@@ -487,6 +497,8 @@ class ClusteredPapersView(ManagerRequiredView):
 
 
 class DeleteClusterMember(ManagerRequiredView):
+    """Handle removal of a paper from a cluster."""
+
     def post(
         self,
         request: HttpRequest,
@@ -498,13 +510,12 @@ class DeleteClusterMember(ManagerRequiredView):
 
         qcs = QuestionClusteringService()
         papers_to_delete = request.POST.getlist("delete_ids")
-        for pn in papers_to_delete:
-            qcs.delete_cluster_member(
-                question_idx=question_idx,
-                version=version,
-                clusterId=clusterId,
-                paper_num=int(pn),
-            )
+        qcs.bulk_delete_cluster_members(
+            question_idx=question_idx,
+            version=version,
+            clusterId=clusterId,
+            paper_nums=list(map(int, papers_to_delete)),
+        )
 
         corners = qcs.get_corners_used_for_clustering(
             question_idx=question_idx, version=version
