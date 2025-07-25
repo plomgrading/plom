@@ -1,49 +1,56 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2025 Bryan Tanady
 
+# django
+from django.forms.models import model_to_dict
+from django.db import transaction
+from django_huey import db_task
+import huey
+import huey.api
+from django.db.models import Count
+from django.db import transaction
+
+# plom models
+from plom_server.Base.models import User
+from plom_server.Mark.models import MarkingTask, MarkingTaskTag
 from plom_server.QuestionClustering.models import (
     QuestionClusteringChore,
     QVClusterLink,
     QVCluster,
     ClusteringGroupType,
 )
-
 from plom_server.Papers.models import Paper
-from plom_server.Papers.services import PaperInfoService
-from plom_server.Rectangles.services import (
-    RectangleExtractor,
-)
 from plom_server.Base.models import HueyTaskTracker
-from django.db import transaction
-from django_huey import db_task
-import huey
-import huey.api
-import numpy as np
-from .image_processing_service import ImageProcessingService
-from .clustering_pipeline import ClusteringPipeline
-from .preprocessor import DiffProcessor
-import cv2
-from django.db.models import Count
 from plom_server.QuestionClustering.models import ClusteringModelType
-from django.db import transaction
+
+
+# plom_server services
+from plom_server.Mark.services.marking_task_service import MarkingTaskService
 from plom_server.Mark.services.marking_priority import (
     get_tasks_to_update_priority,
     modify_task_priority,
 )
-from plom_server.Base.models import User
-from plom_server.Mark.models import MarkingTask, MarkingTaskTag
-from plom_server.Mark.services.marking_task_service import MarkingTaskService
-from typing import Optional
-from collections import defaultdict
-from typing import Any
-from django.forms.models import model_to_dict
+from plom_server.Papers.services import PaperInfoService
+from plom_server.Rectangles.services import (
+    RectangleExtractor,
+)
+
+# exception
+from plom_server.QuestionClustering.exceptions.clustering_exception import (
+    EmptySelectedError,
+)
 from plom_server.QuestionClustering.exceptions.job_exception import (
     DuplicateClusteringJobError,
 )
 
-from plom_server.QuestionClustering.exceptions.clustering_exception import (
-    EmptySelectedError,
-)
+# ML
+from plom_ml.clustering.clustering_pipeline import ClusteringPipeline
+from plom_ml.clustering.preprocessor import DiffProcessor
+
+# misc
+from typing import Optional
+from collections import defaultdict
+from typing import Any
 
 
 class QuestionClusteringJobService:

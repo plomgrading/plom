@@ -517,13 +517,8 @@ class RectangleExtractor:
 
         Args:
             paper_num: the paper number whose scanned page will be extracted
-            left: fractional value in roughly in ``[0, 1]`` which define
-                the left boundary of the desired subsection of the image.
-                Measured relative to the ``reference_region`` which is
-                typically the centres of the QR codes.
-            top: similarly defining the top boundary.
-            right: similarly defining the right boundary.
-            bottom: similarly defining the bottom boundary.
+            rects: a dictionary defining the cropped region. Must have these keys:
+                [left, top, right, bottom].
 
         Returns:
             A numpy array of the cropped scanned image.

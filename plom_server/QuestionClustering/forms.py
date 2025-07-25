@@ -6,7 +6,7 @@ from .models import ClusteringModelType
 
 
 class ClusteringJobForm(forms.Form):
-    """Form used to create a background clustering job"""
+    """Form used to create a background clustering job."""
 
     choice = forms.ChoiceField(
         choices=ClusteringModelType.choices,

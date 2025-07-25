@@ -65,8 +65,7 @@ class HMEClusteringModel(ClusteringModel):
     def tune_threshold(
         self, X, thresholds=np.linspace(4, 10, 100), metric="silhouette"
     ):
-        """
-        Try AgglomerativeClustering(distance_threshold=t) for each t in thresholds,
+        """Try AgglomerativeClustering(distance_threshold=t) for each t in thresholds,
         score it with the chosen metric, and return the best labels + threshold.
         """
         best = {
@@ -108,7 +107,6 @@ class HMEClusteringModel(ClusteringModel):
         Returns:
             A dictionary mapping the paper number to their cluster id
         """
-
         # Build feature matrix
         X = np.vstack(
             [self.get_embeddings(image) for pn, image in paper_to_image.items()]
@@ -244,7 +242,6 @@ class MCQClusteringModel(ClusteringModel):
         Returns:
             A dictionary mapping the paper number to their cluster id
         """
-
         # Build feature matrix
         X = np.vstack(
             [self.get_embeddings(image) for pn, image in paper_to_image.items()]

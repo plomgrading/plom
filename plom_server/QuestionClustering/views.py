@@ -181,13 +181,13 @@ class PreviewSelectedRectsView(ManagerRequiredView):
 
             qcjs = QuestionClusteringJobService()
 
-            rects = {"left": left, "top": top, "right": right, "bottom": bottom}
+            rect = {"left": left, "top": top, "right": right, "bottom": bottom}
             try:
                 qcjs.start_cluster_qv_job(
                     question_idx=question_idx,
                     version=version,
                     page_num=page_num,
-                    rects=rects,
+                    rect=rect,
                     clustering_model=choice,
                 )
 
@@ -364,7 +364,7 @@ class ClusterMergeView(ManagerRequiredView):
 
 
 class ClusterBulkDeleteView(ManagerRequiredView):
-    """Handle delete of one or multiple clusters in a (q, v) context."""
+    """Handle deletion of one or multiple clusters in a (q, v) context."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
         clusterIds = request.POST.getlist("selected_clusters")
@@ -383,6 +383,8 @@ class ClusterBulkDeleteView(ManagerRequiredView):
 
 
 class ClusterBulkResetView(ManagerRequiredView):
+    """Handle reset of one or multiple clusters in a (q, v) context."""
+
     def post(self, request: HttpRequest) -> HttpResponse:
         clusterIds = request.POST.getlist("selected_clusters")
         clusterIds = list(map(int, clusterIds))
@@ -400,6 +402,8 @@ class ClusterBulkResetView(ManagerRequiredView):
 
 
 class UpdateClusterPriorityView(ManagerRequiredView):
+    """Update cluster priorities."""
+
     def post(self, request: HttpRequest) -> HttpResponse:
         next_url = request.POST.get("next") or request.META.get("HTTP_REFERER", "/")
         new_order = request.POST.getlist("cluster_order")
@@ -415,6 +419,8 @@ class UpdateClusterPriorityView(ManagerRequiredView):
 
 
 class ClusterBulkTaggingView(ManagerRequiredView):
+    """Tag one or multiple clusters."""
+
     def post(self, request: HttpRequest) -> HttpResponse:
         next_url = request.POST.get("next") or request.META.get("HTTP_REFERER", "/")
         question_idx = int(request.POST["question_idx"])
@@ -429,6 +435,8 @@ class ClusterBulkTaggingView(ManagerRequiredView):
 
 
 class RemoveTagFromClusterView(ManagerRequiredView):
+    """Remove tag from a particular cluster."""
+
     def delete(self, request: HttpRequest):
 
         qd = QueryDict(request.body.decode())
@@ -463,6 +471,8 @@ class RemoveTagFromClusterView(ManagerRequiredView):
 
 # =========== Papers inside a cluster ==============
 class ClusteredPapersView(ManagerRequiredView):
+    """Render a page of papers in a particular cluster."""
+
     def get(
         self,
         request: HttpRequest,

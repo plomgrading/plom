@@ -9,12 +9,12 @@ from django.db.models import Q
 from django.db.models import Max
 from django.db import transaction
 
+from plom_ml.clustering.model_type import ClusteringModelType as MLClusteringModelType
+
 
 class ClusteringModelType(models.TextChoices):
-    """Defines what clustering models exist in the system"""
-
-    MCQ = "mcq", "Multiple choice (A-F, a-f)"
-    HME = "hme", "Generic handwritten math expression"
+    MCQ = MLClusteringModelType.MCQ.value, "Multiple choice (A-F, a-f)"
+    HME = MLClusteringModelType.HME.value, "Generic handwritten math expression"
 
 
 class QuestionClusteringChore(HueyTaskTracker):
@@ -37,7 +37,9 @@ class QuestionClusteringChore(HueyTaskTracker):
     bottom = models.FloatField(null=False)
     right = models.FloatField(null=False)
     clustering_model = models.CharField(
-        max_length=10, choices=ClusteringModelType.choices, null=False
+        max_length=10,
+        choices=ClusteringModelType.choices,
+        null=False,
     )
 
     def __str__(self):

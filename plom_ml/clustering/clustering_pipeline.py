@@ -1,6 +1,6 @@
 import numpy as np
 from plom_server.QuestionClustering.models import ClusteringModelType
-from plom_server.QuestionClustering.services.clustering_models import (
+from .clustering_models import (
     ClusteringModel,
     MCQClusteringModel,
     HMEClusteringModel,
@@ -12,7 +12,7 @@ from .preprocessor import Preprocessor
 
 @lru_cache()
 def get_model(model_type: ClusteringModelType) -> ClusteringModel:
-    """Lazily load and cache one model instance per type, per process"""
+    """Lazily load and cache one model instance per type, per process."""
     if model_type == ClusteringModelType.MCQ:
         return MCQClusteringModel()
     elif model_type == ClusteringModelType.HME:
@@ -49,7 +49,6 @@ class ClusteringPipeline:
         Returns:
             A dictionary mapping the paper number to their cluster id
         """
-
         # Preprocess the images
         processed_paper_to_images = {
             pn: self.preprocessor.process(*images)

@@ -28,8 +28,7 @@ class ProjectionHead(nn.Module):
 class Embedder(ABC):
     @abstractmethod
     def embed(self, images: Sequence[np.ndarray]) -> np.ndarray:
-        """
-        Convert a batch of image arrays into a feature matrix.
+        """Convert a batch of image arrays into a feature matrix.
 
         Args:
             images: Sequence of numpy arrays, each shape (H, W) or (H, W, C).
@@ -41,9 +40,7 @@ class Embedder(ABC):
 
 
 class SymbolicEmbedder(Embedder):
-    """
-    Embeds images using a ResNet-34 backbone + projection head.
-    """
+    """Embeds images using a ResNet-34 backbone + projection head."""
 
     def __init__(self, model_path: str, device: torch.device):
         self.device = device
@@ -76,10 +73,11 @@ class SymbolicEmbedder(Embedder):
         )
 
     def embed(self, image: np.ndarray) -> np.ndarray:
-        """
-        Embed a single grayscale image into a 1D feature vector.
+        """Embed a single grayscale image into a 1D feature vector.
+
         Args:
             image: np.ndarray of shape (H, W) or (H, W, 1), dtype uint8 or convertible.
+
         Returns:
             1D np.ndarray of length emb_dim (e.g. 128).
         """
@@ -111,9 +109,7 @@ class SymbolicEmbedder(Embedder):
 
 
 class TrOCREmbedder(Embedder):
-    """
-    Embeds images using an 8-bit TrOCR encoder (last_hidden_state CLS token).
-    """
+    """Embeds images using an 8-bit TrOCR encoder (last_hidden_state CLS token)."""
 
     def __init__(self, model_path: str, device: torch.device):
         self.device = device
@@ -126,8 +122,7 @@ class TrOCREmbedder(Embedder):
         )
 
     def embed(self, arr: np.ndarray) -> np.ndarray:
-        """
-        Embed a single image via the 8-bit TrOCR encoder’s [CLS] token.
+        """Embed a single image via the 8-bit TrOCR encoder's [CLS] token.
 
         Args:
             arr: np.ndarray of shape (H, W) or (H, W, 3).

@@ -4,29 +4,33 @@
 from abc import abstractmethod
 import numpy as np
 from .image_processing_service import ImageProcessingService
-from plom_server.QuestionClustering.models import ClusteringModelType
 import cv2
 
 
 class Preprocessor:
-    """Interface for preprocess images before being inputted to clustering model"""
+    """Interface for preprocessing images before being inputted to clustering model."""
 
     @abstractmethod
     def process(self, *imgs: np.ndarray) -> np.ndarray:
-        """Takes one or more images to preprocess it into another image for clustering model input
+        """Takes one or more images to preprocess it into another image for clustering model input.
+
+        Args:
+            *imgs: one or more numpy array images to process.
 
         Returns:
-            A processed image that is more optimized for feature extraction for the clustering model
+            A processed image that is optimized for feature extraction for the clustering model.
         """
         pass
 
 
 class DiffProcessor(Preprocessor):
-    """Handwriting extractor preprocessor.
+    """Handwriting extractor preprocessor through "diffing" reference and scanned page.
 
     Args:
         dilation_strength: larger value makes reference more dilated, such that it's more
             robust to noise, but more likely to erase student's work.
+        invert: set to true to invert the preprocessed output through bitwise_not. Otherwise, there
+            is no invertion applied.
     """
 
     def __init__(self, dilation_strength: int, invert: bool):
