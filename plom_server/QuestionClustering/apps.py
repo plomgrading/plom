@@ -4,6 +4,8 @@
 from django.apps import AppConfig
 
 
-class RectanglesConfig(AppConfig):
+class QuestionClusteringConfig(AppConfig):
+    """Configuration for the QuestionClustering Django app."""
+
     default_auto_field = "django.db.models.BigAutoField"
     name = "plom_server.QuestionClustering"

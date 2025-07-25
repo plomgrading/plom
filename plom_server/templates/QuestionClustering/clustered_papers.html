@@ -22,9 +22,13 @@
     </div>
     <div class="card my-2 px-3 py-3">
         {% if papers %}
-            <form method="post"
-                  action="{% url 'delete_cluster_member' question_idx version page_num clusterId %}">
+            <form method="post" action="{% url 'delete_cluster_member' %}">
                 {% csrf_token %}
+                <!-- Params in request body -->
+                <input type="hidden" name="question_idx" value="{{ question_idx }}">
+                <input type="hidden" name="version" value="{{ version }}">
+                <input type="hidden" name="clusterId" value="{{ clusterId }}">
+                <input type="hidden" name="page_num" value="{{ page_num }}">
                 <div class="row row-cols-3 g-5">
                     {% for pn in papers %}
                         <div class="col">

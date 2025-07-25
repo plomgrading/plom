@@ -8,6 +8,7 @@ from django_huey import db_task
 import huey
 import huey.api
 from django.db.models import Count
+from django.db.models import QuerySet
 
 # plom models
 from plom_server.Base.models import User
@@ -53,6 +54,7 @@ from typing import Any
 
 
 class QuestionClusteringJobService:
+    """Manage CRUDs of clustering jobs."""
 
     def start_cluster_qv_job(
         self,
@@ -156,6 +158,7 @@ class QuestionClusteringJobService:
 
 
 class QuestionClusteringService:
+    """Service handling clustering and querying of cluster-related models."""
 
     def _store_clustered_result(
         self,
@@ -576,11 +579,30 @@ class QuestionClusteringService:
         task_tags.delete()
 
     def _get_cluster_id_from_cluster_tag(self, cluster_tag_text: str) -> int:
+        """Get the cluster id given a cluster tag.
+
+        Args:
+            cluster_tag_text: the text of the cluster tag, currently following the format
+                of clsuter_{question_index}_{version}_{clusterId}.
+
+        Returns:
+            the clusterId parsed from the cluster tag text.
+        """
         return int(cluster_tag_text.rsplit("_", 1)[-1])
 
     def get_all_tasks_in_a_cluster(
         self, question_idx: int, version: int, clusterId: int
-    ):
+    ) -> QuerySet[MarkingTask]:
+        """Get all tasks in a cluster.
+
+        Args:
+            question_idx: question_index of the clustering context.
+            version: version of the clustering context.
+            clusterId: the identifier of the cluster.
+
+        Returns:
+            QuerySet of all MarkingTask in the queried cluster.
+        """
         paper_nums = self.get_paper_nums_in_clusters(
             question_idx=question_idx, version=version
         )[clusterId]

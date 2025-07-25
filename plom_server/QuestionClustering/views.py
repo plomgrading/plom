@@ -37,8 +37,10 @@ from urllib.parse import urlencode
 
 
 class Debug(ManagerRequiredView):
-    def get(self, request):
+    """Temp debug."""
 
+    def get(self, request):
+        """Temp debug."""
         HueyTaskTracker.set_every_task_obsolete()
         QVClusterLink.objects.all().delete()
         QVCluster.objects.all().delete()
@@ -51,6 +53,7 @@ class QuestionClusteringHomeView(ManagerRequiredView):
     """Render clustering home page for choosing question-version pair for clustering."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """Render clustering home page for choosing question-version pair for clustering."""
         context = self.build_context()
         if not SpecificationService.is_there_a_spec():
             return render(request, "Finish/finish_no_spec.html", context=context)
@@ -79,6 +82,7 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
     def get(
         self, request: HttpRequest, version: int, qidx: int, page: int
     ) -> HttpResponse:
+        """Display rectangle extractor page for selecting region for clustering."""
         context = self.build_context()
         try:
             qr_info = get_reference_qr_coords_for_page(page, version=version)
@@ -104,7 +108,7 @@ class SelectRectangleForClusteringView(ManagerRequiredView):
     def post(
         self, request: HttpRequest, version: int, qidx: int, page: int
     ) -> HttpResponse:
-
+        """Submit the selected region and redirect to preview page."""
         left = round(float(request.POST.get("plom_left")), 6)
         top = round(float(request.POST.get("plom_top")), 6)
         right = round(float(request.POST.get("plom_right")), 6)
@@ -128,8 +132,7 @@ class PreviewSelectedRectsView(ManagerRequiredView):
     """Render page to show previews of selected regions.
 
     GET:
-        Display the page with previews of selected regions for clustering
-        and begin clustering button.
+        Display the page with previews of selected regions for clustering.
 
     POST:
         Validate the clustering job form.
@@ -139,6 +142,7 @@ class PreviewSelectedRectsView(ManagerRequiredView):
     """
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """Display the page with previews of selected regions for clustering."""
         context = self.build_context()
 
         params = request.GET
@@ -168,6 +172,12 @@ class PreviewSelectedRectsView(ManagerRequiredView):
         return render(request, "QuestionClustering/show_rectangles.html", context)
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        """Validate the clustering job form.
+
+        On success: start clustering job then redirect to job
+            page (POST/REDIRECT/GET design practice).
+        On Failure: rerender current page with error messages.
+        """
         form = ClusteringJobForm(request.POST)
         if form.is_valid():
             choice = form.cleaned_data["choice"]
@@ -215,6 +225,7 @@ class QuestionClusteringJobsHome(ManagerRequiredView):
     """Render the page with all clustering jobs."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """Render the page with all clustering jobs."""
         context = self.build_context()
         if not SpecificationService.is_there_a_spec():
             return render(request, "Finish/finish_no_spec.html", context=context)
@@ -237,7 +248,7 @@ class QuestionClusteringJobTable(ManagerRequiredView):
     """Render a fragment html for the table of jobs."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
-
+        """Render a fragment html for the table of jobs."""
         qcs = QuestionClusteringService()
         tasks = qcs.get_question_clustering_tasks()
         return render(
@@ -251,6 +262,7 @@ class ClusteringErrorJobInfoView(ManagerRequiredView):
     """Render the error info modal dialog for failed job."""
 
     def get(self, request: HttpRequest, task_id: int) -> HttpResponse:
+        """Render the error info modal dialog for failed job."""
         qcjs = QuestionClusteringJobService()
         try:
             task = qcjs.get_clustering_job(task_id)
@@ -270,6 +282,7 @@ class RemoveJobView(ManagerRequiredView):
     """Delete a clustering job."""
 
     def delete(self, request: HttpRequest, task_id: int) -> HttpResponse:
+        """Delete a clustering job."""
         qcjs = QuestionClusteringJobService()
         try:
             qcjs.delete_clustering_job(task_id)
@@ -286,7 +299,7 @@ class ClusterGroupsView(ManagerRequiredView):
     def get(
         self, request: HttpRequest, question_idx: int, version: int, page_num: int
     ) -> HttpResponse:
-
+        """Render a page for a summary of all clusters in a (q, v) context."""
         qcs = QuestionClusteringService()
         # A list of (cluster_id, member_count) sorted by cluster_id
         # NOTE: use a sorted list so the default order is by cluster_id
@@ -343,6 +356,7 @@ class ClusterMergeView(ManagerRequiredView):
     """Handle merge of multiple clusters in a (q, v) context."""
 
     def post(self, request: HttpRequest):
+        """Handle merge of multiple clusters in a (q, v) context."""
         clusterIds = request.POST.getlist("selected_clusters")
         clusterIds = list(map(int, clusterIds))
 
@@ -367,6 +381,7 @@ class ClusterBulkDeleteView(ManagerRequiredView):
     """Handle deletion of one or multiple clusters in a (q, v) context."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        """Handle deletion of one or multiple clusters in a (q, v) context."""
         clusterIds = request.POST.getlist("selected_clusters")
         clusterIds = list(map(int, clusterIds))
 
@@ -386,6 +401,7 @@ class ClusterBulkResetView(ManagerRequiredView):
     """Handle reset of one or multiple clusters in a (q, v) context."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        """Handle reset of one or multiple clusters in a (q, v) context."""
         clusterIds = request.POST.getlist("selected_clusters")
         clusterIds = list(map(int, clusterIds))
 
@@ -405,6 +421,7 @@ class UpdateClusterPriorityView(ManagerRequiredView):
     """Update cluster priorities."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        """Update cluster priorities."""
         next_url = request.POST.get("next") or request.META.get("HTTP_REFERER", "/")
         new_order = request.POST.getlist("cluster_order")
         question_idx = int(request.POST["question_idx"])
@@ -422,6 +439,7 @@ class ClusterBulkTaggingView(ManagerRequiredView):
     """Tag one or multiple clusters."""
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        """Tag one or multiple clusters."""
         next_url = request.POST.get("next") or request.META.get("HTTP_REFERER", "/")
         question_idx = int(request.POST["question_idx"])
         version = int(request.POST["version"])
@@ -438,7 +456,7 @@ class RemoveTagFromClusterView(ManagerRequiredView):
     """Remove tag from a particular cluster."""
 
     def delete(self, request: HttpRequest):
-
+        """Remove tag from a particular cluster."""
         qd = QueryDict(request.body.decode())
         question_idx = int(qd.get("question_idx"))
         version = int(qd.get("version"))
@@ -481,6 +499,7 @@ class ClusteredPapersView(ManagerRequiredView):
         page_num: int,
         clusterId: int,
     ) -> HttpResponse:
+        """Render a page of papers in a particular cluster."""
         qcs = QuestionClusteringService()
         papers = qcs.get_paper_nums_in_clusters(
             question_idx=question_idx, version=version
@@ -488,6 +507,7 @@ class ClusteredPapersView(ManagerRequiredView):
         corners = qcs.get_corners_used_for_clustering(
             question_idx=question_idx, version=version
         )
+        """Render a page of papers in a particular cluster."""
 
         context = {
             "question_label": SpecificationService.get_question_label(question_idx),
@@ -512,11 +532,12 @@ class DeleteClusterMember(ManagerRequiredView):
     def post(
         self,
         request: HttpRequest,
-        question_idx: int,
-        version: int,
-        page_num: int,
-        clusterId: int,
-    ):
+    ) -> HttpResponse:
+        """Handle removal of a paper from a cluster."""
+        question_idx = int(request.POST.get("question_idx"))
+        version = int(request.POST.get("version"))
+        clusterId = int(request.POST.get("clusterId"))
+        page_num = int(request.POST.get("page_num"))
 
         qcs = QuestionClusteringService()
         papers_to_delete = request.POST.getlist("delete_ids")

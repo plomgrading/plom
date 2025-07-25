@@ -79,7 +79,7 @@ urlpatterns = [
         name="bulk_reset_clusters",
     ),
     path(
-        "delete_cluster_member/<int:question_idx>/<int:version>/<int:page_num>/<int:clusterId>",
+        "delete_cluster_member",
         DeleteClusterMember.as_view(),
         name="delete_cluster_member",
     ),
