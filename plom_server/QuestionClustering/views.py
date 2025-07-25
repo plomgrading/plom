@@ -275,7 +275,7 @@ class RemoveJobView(ManagerRequiredView):
             qcjs.delete_clustering_job(task_id)
             return HttpResponse(status=204)
 
-        except ObjectDoesNotExist as err:
+        except ObjectDoesNotExist:
             return HttpResponseNotFound(f"Task {task_id} not found.")
 
 

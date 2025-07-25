@@ -8,7 +8,6 @@ from django_huey import db_task
 import huey
 import huey.api
 from django.db.models import Count
-from django.db import transaction
 
 # plom models
 from plom_server.Base.models import User

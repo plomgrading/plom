@@ -17,7 +17,6 @@ from torchvision import models, transforms
 # misc
 from PIL import Image
 from abc import abstractmethod
-from PIL import Image
 import cv2
 import numpy as np
 
