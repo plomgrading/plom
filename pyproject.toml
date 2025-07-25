@@ -150,7 +150,7 @@ packages = [
     "plom_server.QuestionTags",
     "plom_server.QuestionTags.services",
     "plom_server.QuestionClustering",
-    "plom_server.QuestionClustering.services"
+    "plom_server.QuestionClustering.services",
     "plom_server.QuestionClustering.exceptions",
     "plom_server.Launcher",
     "plom_server.Launcher.services",
