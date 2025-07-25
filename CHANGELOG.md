@@ -9,8 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Papers can be downloaded in their "unmarked" state.
+* Support for fractional rubrics has improved: instructions can set their preferences about fractional rubrics, currently 1/2 and 1/4 points are visible in the UI.
 
 ### Removed
+* Several not-very-maintained `manage.py` commands in favour of `plom-cli`, which works remotely over the API.
 
 ### Changed
 

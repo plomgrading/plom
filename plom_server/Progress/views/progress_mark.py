@@ -2,6 +2,7 @@
 # Copyright (C) 2023 Brennen Chiu
 # Copyright (C) 2023 Andrew Rechnitzer
 # Copyright (C) 2023-2024 Colin B. Macdonald
+# Copyright (C) 2025 Bryan Tanady
 
 from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpRequest, HttpResponse
@@ -21,10 +22,24 @@ from ..services import ProgressOverviewService
 class ProgressMarkHome(MarkerLeadMarkerOrManagerView):
     def get(self, request: HttpRequest) -> HttpResponse:
         context = super().build_context()
+
+        pos = ProgressOverviewService()
+        id_task_overview, _ = pos.get_task_overview()
+        papers_with_a_task = list(id_task_overview.keys())
+        n_papers = len(papers_with_a_task)
+        mark_task_status_counts = pos.get_mark_task_status_counts(n_papers=n_papers)
+        missing_task_count = sum(
+            [
+                count_dict["Missing"]
+                for qi, count_dict in mark_task_status_counts.items()
+            ]
+        )
+
         context.update(
             {
                 "versions": SpecificationService.get_list_of_versions(),
                 "questions": SpecificationService.get_question_indices(),
+                "missing_task_count": missing_task_count,
             }
         )
         return render(request, "Progress/Mark/mark_home.html", context)

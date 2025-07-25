@@ -2,6 +2,8 @@
 # Copyright (C) 2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
 # Copyright (C) 2025 Philip D. Loewen
+# Copyright (C) 2025 Bryan Tanady
+# Copyright (C) 2025 Aidan Murphy
 
 from django.urls import include, path, re_path
 from rest_framework.routers import DefaultRouter
@@ -23,10 +25,11 @@ from .routes import (
 )
 
 from .views import (
-    ClasslistHandler,
+    Classlist,
     GetTasks,
     MarkTaskNextAvailable,
     MarkTask,
+    Prenaming,
     ReassignTask,
     ResetTask,
     # TODO: these are possibly temporary
@@ -35,6 +38,7 @@ from .views import (
     ScanBundleActions,
     ScanMapBundle,
     FinishReassembled,
+    FinishUnmarked,
     REPspreadsheet,
     REPidentified,
     REPcompletionStatus,
@@ -42,6 +46,8 @@ from .views import (
     SourceOverview,
     SourceDetail,
     SpecificationHandler,
+    RectangleExtractorView,
+    PQVmap,
 )
 
 from .views import MgetRubricMarkingTasks
@@ -105,6 +111,11 @@ urlpatterns = [
         name="api_Finish_reassembled",
     ),
     path(
+        "api/beta/finish/unmarked/<int:papernum>",
+        FinishUnmarked.as_view(),
+        name="api_Finish_unmarked",
+    ),
+    path(
         "REP/spreadsheet",
         REPspreadsheet.as_view(),
         name="api_REP_spreadsheet",
@@ -141,6 +152,11 @@ urlpatterns = [
         SourceOverview.as_view(),
         name="api_source_overview",
     ),
+    path(
+        "api/beta/pqvmap",
+        PQVmap.as_view(),
+        name="pqvmapper",
+    ),
 ]
 
 experimental_router = DefaultRouter(trailing_slash=True)
@@ -170,12 +186,22 @@ urlpatterns += [
     ),
     path(
         "api/v0/classlist",
-        ClasslistHandler.as_view(),
-        name="api_classlist_handler",
+        Classlist.as_view(),
+        name="api_classlist",
+    ),
+    path(
+        "api/v0/classlist/prenaming",
+        Prenaming.as_view(),
+        name="api_classlist_prenaming",
     ),
     path(
         "rubrics/<int:rid>/tasks",
         MgetRubricMarkingTasks.as_view(),
         name="api_rubrics_tasks",
+    ),
+    path(
+        "api/rectangle/<int:version>/<int:page_num>/<int:paper_num>",
+        RectangleExtractorView.as_view(),
+        name="api_rectangle_extractor",
     ),
 ]

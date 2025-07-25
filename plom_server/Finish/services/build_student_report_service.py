@@ -2,6 +2,7 @@
 # Copyright (C) 2024 Bryan Tanady
 # Copyright (C) 2024-2025 Colin B. Macdonald
 # Copyright (C) 2024-2025 Andrew Rechnitzer
+# Copyright (C) 2025 Philip D. Loewen
 
 from datetime import datetime
 from pathlib import Path
@@ -22,7 +23,16 @@ def _get_descriptive_statistics_from_score_list(
 
     Gives dict of count, max, min, median, mean, mode, stddev, percentile25, percentile75.
     """
-    quants = quantiles(scores)
+    if len(scores) > 1:
+        quants = quantiles(scores)
+        standard_deviation = stdev(scores)
+    else:
+        # Functions quantiles() and stdev() don't work in the
+        # degenerate case of just one score. Define appropriate
+        # results directly.
+        quants = [scores[0], scores[0], scores[0]]
+        standard_deviation = 0.0
+
     return {
         "count": len(scores),
         "max": max(scores),
@@ -30,9 +40,9 @@ def _get_descriptive_statistics_from_score_list(
         "median": median(scores),
         "mean": mean(scores),
         "mode": mode(scores),
-        "stddev": stdev(scores),
+        "stddev": standard_deviation,
         "percentile25": quants[0],
-        "percentile75": quants[1],
+        "percentile75": quants[2],
     }
 
 
@@ -91,7 +101,7 @@ def brief_report_pdf_builder(
         "pedagogy_tags": None,
         "pedagogy_tags_graph": None,
     }
-    # don't generate the lollypop graph is there are no pedagogy tags
+    # don't generate the lollipop graph if there are no pedagogy tags
     tag_to_questions = QuestionTagService.get_tag_to_question_links()
     if tag_to_questions:
         qidx_to_html = SpecificationService.get_question_labels_str_and_html_map()
@@ -104,7 +114,7 @@ def brief_report_pdf_builder(
             )
             for ptag, qidx_list in tag_to_questions.items()
         }
-        context["pedagogy_tags_graph"] = MinimalPlotService().lollypop_of_pedagogy_tags(
+        context["pedagogy_tags_graph"] = MinimalPlotService().lollipop_of_pedagogy_tags(
             tag_to_questions,
             {qi: paper_info[qi] for qi in question_score_lists},
             paper_info["question_max_marks"],

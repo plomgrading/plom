@@ -2,6 +2,7 @@
 # Copyright (C) 2022-2024 Andrew Rechnitzer
 # Copyright (C) 2022-2023 Edith Coates
 # Copyright (C) 2023-2025 Colin B. Macdonald
+# Copyright (C) 2025 Philip D. Loewen
 
 from pathlib import Path
 
@@ -10,6 +11,11 @@ from django.core.management.base import BaseCommand, CommandError
 from plom_server.Papers.services import SpecificationService
 
 from ...services import SourceService, PapersPrinted
+
+
+DeprecationNotice = """DEPRECATION NOTICE: plom_preparation_source (Issue #3981).
+    Consider using plom-cli subcommands to manipulate sources.
+    This suite of Django management commands is no longer being maintained."""
 
 
 class Command(BaseCommand):
@@ -178,6 +184,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        self.stdout.write(DeprecationNotice)
         if options["command"] == "status":
             self.show_status()
         elif options["command"] == "upload":
