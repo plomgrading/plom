@@ -364,6 +364,8 @@ doctests:
 
 # Ensure the migrations have been updated
 # needs full dependencies, cannot easily run with other early static analysis
+# Note to devs: if this job is failing, it probably means you have made database changes.
+# You should probably run `./maint/maint-wipe-rebuild-migrations.sh` and commit the results.
 migrations-uptodate:
   stage: test
   needs: ["container-image"]
