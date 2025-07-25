@@ -127,7 +127,7 @@ def _validate_parameters(parameters: None | list, num_versions: None | int = 1) 
 
 
 # TODO: this code belongs in model/serializer?
-def _validate_value(value, max_mark) -> None:
+def _validate_value(value: int | float, max_mark: int) -> None:
     # check that the "value" lies in [-max_mark, max_mark]
     try:
         value = float(value)
@@ -139,7 +139,6 @@ def _validate_value(value, max_mark) -> None:
         raise serializers.ValidationError(
             {"value": f"Value out of range: must lie in [-{max_mark}, {max_mark}]"}
         )
-    RubricPermissionsService.confirm_allowed_fraction(value)
 
 
 def _validate_value_out_of(value, out_of, max_mark) -> None:
@@ -418,6 +417,11 @@ class RubricService:
                 data["kind"],
                 data.get("out_of", None),
             )
+        if data.get("value", None) is not None:
+            # do this only if value is present
+            data["value"] = RubricPermissionsService.pin_to_allowed_fraction(
+                data["value"]
+            )
 
         data["latest"] = True
         if _bypass_serializer:
@@ -591,6 +595,13 @@ class RubricService:
 
         data["rid"] = old_rubric.rid
 
+        if data["kind"] in ("relative", "neutral"):
+            data["out_of"] = 0
+
+        # TODO: Perhaps the serializer should do this
+        max_mark = SpecificationService.get_question_max_mark(data["question_index"])
+        _validate_value(data.get("value", 0), max_mark)
+
         if data.get("display_delta", None) is None:
             # if we don't have a display_delta, we'll generate a default one
             # This might involve a tolerance (in the case of fractions); if
@@ -600,17 +611,17 @@ class RubricService:
                 data["kind"],
                 data.get("out_of", None),
             )
+        if data.get("value", None) is not None:
+            # do this only if value is present
+            data["value"] = RubricPermissionsService.pin_to_allowed_fraction(
+                data["value"]
+            )
 
-        if data["kind"] in ("relative", "neutral"):
-            data["out_of"] = 0
-
-        # TODO: Perhaps the serializer should do this
-        max_mark = SpecificationService.get_question_max_mark(data["question_index"])
-        _validate_value(data.get("value", 0), max_mark)
         if data["kind"] == "absolute":
             _validate_value_out_of(data["value"], data["out_of"], max_mark)
 
         _validate_versions_in_range(data.get("versions"))
+
         _validate_parameters(
             data.get("parameters"), SpecificationService.get_n_versions()
         )
