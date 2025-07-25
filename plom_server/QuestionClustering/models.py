@@ -6,8 +6,6 @@ from django.db import models
 from plom_server.Base.models import HueyTaskTracker
 from plom_server.Papers.models import Paper
 from django.db.models import Q
-from django.db.models import Max
-from django.db import transaction
 
 from plom_ml.clustering.model_type import ClusteringModelType as MLClusteringModelType
 
@@ -102,7 +100,7 @@ class QVCluster(models.Model):
         Current constraints:
             1. The model is unique by (q, v, clusterId, type) and
             2. If it's a user_facing cluster then it must not have user_cluster field.
-            3. If it's an origianlly created cluster then it must point to one user_facing QVCluster.
+            3. If it's an originally created cluster then it must point to one user_facing QVCluster.
         """
 
         unique_together = ("question_idx", "version", "clusterId", "type")
