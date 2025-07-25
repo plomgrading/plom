@@ -398,7 +398,7 @@ class RectangleExtractor:
         zipfile on disc. This could cause problems if large rectangles
         are selected from many pages.
         """
-        # paper_numbers may be duplicated if there are multiple quesetions on a page
+        # paper_numbers may be duplicated if there are multiple questions on a page
         paper_numbers = set(
             PaperInfoService.get_paper_numbers_containing_page(
                 self.page_number, version=self.version, scanned=True

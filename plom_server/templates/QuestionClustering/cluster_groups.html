@@ -1,3 +1,7 @@
+<!--
+    SPDX-License-Identifier: AGPL-3.0-or-later
+    Copyright (C) 2025 Bryan Tanady
+-->
 {% extends "base/base.html" %}
 {% load static %}
 {% load custom_tags %}
@@ -139,7 +143,7 @@
              @update-priority.window="submit()">
             <form x-ref="form"
                   method="post"
-                  action="{% url 'update_cluster_priority' %} ">
+                  action="{% url 'update_cluster_priority' %}">
                 {% csrf_token %}
                 <template x-for="id in order" :key="id">
                     <input type="hidden" name="cluster_order" :value="id">

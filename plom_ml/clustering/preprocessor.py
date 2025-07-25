@@ -30,7 +30,7 @@ class DiffProcessor(Preprocessor):
         dilation_strength: larger value makes reference more dilated, such that it's more
             robust to noise, but more likely to erase student's work.
         invert: set to true to invert the preprocessed output through bitwise_not. Otherwise, there
-            is no invertion applied.
+            is no inversion applied.
     """
 
     def __init__(self, dilation_strength: int, invert: bool):

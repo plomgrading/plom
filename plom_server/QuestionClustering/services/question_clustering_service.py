@@ -442,7 +442,7 @@ class QuestionClusteringService:
     ):
         """Update priority values based on the cluster table's order.
 
-        NOTE: the priority valus is given in the range of [0, len(cluster_order)],
+        NOTE: the priority values is given in the range of [0, len(cluster_order)],
             priority 0 is given to the papers that are not part of any clsuters
 
         Args:
@@ -879,7 +879,7 @@ class QuestionClusteringService:
             EmptySelectedError: attempts to reset 0 cluster.
         """
         if not clusterIds:
-            raise EmptySelectedError("attemping to reset 0 cluster.")
+            raise EmptySelectedError("attempting to reset 0 cluster.")
 
         for cid in clusterIds:
             self._reset_cluster(question_idx, version, cid)

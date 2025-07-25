@@ -67,7 +67,7 @@ class SelectRectangleView(ManagerRequiredView):
         right = round(float(request.POST.get("plom_right")), 6)
         bottom = round(float(request.POST.get("plom_bottom")), 6)
         # get all scanned papers with that page,version
-        # paper_numbers may be duplicated if there are multiple quesetions on a page
+        # paper_numbers may be duplicated if there are multiple questions on a page
         paper_numbers = set(
             PaperInfoService.get_paper_numbers_containing_page(
                 page, version=version, scanned=True

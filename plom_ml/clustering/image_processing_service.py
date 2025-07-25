@@ -9,7 +9,7 @@ import cv2
 class ImageProcessingService:
 
     def addContrast(self, img: np.ndarray, alpha: float, iterations: int) -> np.ndarray:
-        """Increase img constrast.
+        """Increase img contrast.
 
         This operation does not modify original image.
 
