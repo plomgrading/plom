@@ -8,7 +8,7 @@
 # Copyright (C) 2023 Julian Lapenna
 # Copyright (C) 2023 Divy Patel
 # Copyright (C) 2023 Natalie Balashov
-# Copyright (C) 2024 Bryan Tanady
+# Copyright (C) 2024-2025 Bryan Tanady
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -123,6 +123,7 @@ Changelog = "https://gitlab.com/plom/plom/-/blob/main/CHANGELOG.md"
 [tool.setuptools]
 packages = [
     "plom",
+    "plom_ml",
     "plom.cli",
     "plom.create",
     "plom.create.fonts",
