@@ -159,6 +159,7 @@ def make_random_version_map(
 
     # For each question, generate a list of legal versions with even
     # distribution (#1470)
+    # Note: 0th-entry of this temporary list is unused, but needs to be present for 1-indexing
     qv_list: list[list[int]] = [[] for i in range(spec["numberOfQuestions"] + 1)]
     for paper_num in range(1, spec["numberToProduce"] + 1):
         for q_1index_str, question in spec["question"].items():
